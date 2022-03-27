@@ -41,7 +41,10 @@ class GraphdbService {
             .setReadTimeout(readTimeout)
             .setWriteTimeout(writeTimeout);
 
-        this.repository = await this.server.getRepository(this.config.repositoryName, repositoryServerConfig);
+        this.repository = await this.server.getRepository(
+            this.config.repositoryName,
+            repositoryServerConfig,
+        );
         this.repository.registerParser(new SparqlXmlResultParser());
         this.logger.info('GraphDB module initialized successfully');
     }
@@ -117,7 +120,6 @@ class GraphdbService {
     }
 
     async resolve(uri) {
-        let isAsset = false;
         const query = `PREFIX schema: <http://schema.org/>
                         CONSTRUCT { ?s ?p ?o }
                         WHERE {
@@ -127,26 +129,6 @@ class GraphdbService {
                         }`;
         let nquads = await this.construct(query);
 
-        if (!nquads.length) {
-            const query = `PREFIX schema: <http://schema.org/>
-            CONSTRUCT { ?s ?p ?o }
-            WHERE {
-                GRAPH ?g { ?s ?p ?o }
-                {
-                    SELECT ?ng
-                    WHERE {
-                        ?ng schema:hasUALs "${uri}" ;
-                            schema:hasTimestamp ?timestamp .
-                    }
-                    ORDER BY DESC(?timestamp)
-                    LIMIT 1
-                }
-                FILTER (?g = ?ng) .
-            }`;
-            nquads = await this.construct(query);
-            isAsset = true;
-        }
-
         if (nquads.length) {
             nquads = nquads.toString();
             nquads = nquads.replace(/_:genid(.){37}/gm, '_:$1');
@@ -155,9 +137,8 @@ class GraphdbService {
         } else {
             nquads = null;
         }
-        return { nquads, isAsset };
+        return nquads;
     }
-
 
     async assertionsByAsset(uri) {
         const query = `PREFIX schema: <http://schema.org/>
@@ -168,7 +149,7 @@ class GraphdbService {
                      schema:hasIssuer ?issuer .
             }
             ORDER BY DESC(?timestamp)`;
-        let result = await this.execute(query);
+        const result = await this.execute(query);
 
         return JSON.parse(result).results.bindings;
     }

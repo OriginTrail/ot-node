@@ -9,7 +9,49 @@ exports.DID = 'DID';
  * @constant {number} MAX_FILE_SIZE
  * - Max file size for publish
  */
-exports.MAX_FILE_SIZE = 26214400;
+exports.MAX_FILE_SIZE = 2621440;
+
+/**
+ * @constant {number} SERVICE_API_RATE_LIMIT_TIME_WINDOW_MILLS
+ * - Express rate limit time window in milliseconds
+ */
+exports.SERVICE_API_RATE_LIMIT_TIME_WINDOW_MILLS = 1 * 60 * 1000;
+
+/**
+ * @constant {number} SERVICE_API_RATE_LIMIT_MAX_NUMBER
+ * - Express rate limit max number of requests allowed in the specified time window
+ */
+exports.SERVICE_API_RATE_LIMIT_MAX_NUMBER = 10;
+
+/**
+ * @constant {number} SERVICE_API_SLOW_DOWN_TIME_WINDOW_MILLS
+ * - Express slow down time window in milliseconds
+ */
+exports.SERVICE_API_SLOW_DOWN_TIME_WINDOW_MILLS = 1 * 60 * 1000;
+
+/**
+ * @constant {number} SERVICE_API_SLOW_DOWN_DELAY_AFTER
+ * - Express slow down number of seconds after which it starts delaying requests
+ */
+exports.SERVICE_API_SLOW_DOWN_DELAY_AFTER = 5;
+
+/**
+ * @constant {number} SERVICE_API_SLOW_DOWN_DELAY_MILLS
+ * - Express slow down delay between requests in milliseconds
+ */
+exports.SERVICE_API_SLOW_DOWN_DELAY_MILLS = 3 * 1000;
+
+/**
+ * @constant {number} NETWORK_API_RATE_LIMIT_TIME_WINDOW_MILLS
+ * - Network (Libp2p) rate limit time window in milliseconds
+ */
+exports.NETWORK_API_RATE_LIMIT_TIME_WINDOW_MILLS = 1 * 60 * 1000;
+
+/**
+ * @constant {number} NETWORK_API_RATE_LIMIT_MAX_NUMBER
+ * - Network (Libp2p) rate limit max number of requests allowed in the specified time window
+ */
+exports.NETWORK_API_RATE_LIMIT_MAX_NUMBER = 10;
 
 /**
  * @constant {number} DID_PREFIX
@@ -64,10 +106,51 @@ exports.TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 exports.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10; // 10 seconds
 
 /**
+ * @constant {number} TRIPLE_STORE_QUEUE_LIMIT
+ * - Triple store queue limit
+ */
+exports.TRIPLE_STORE_QUEUE_LIMIT = 5000;
+
+/**
  * @constant {number} BLOCKCHAIN_QUEUE_LIMIT
  * - Blockchain queue limit
  */
 exports.BLOCKCHAIN_QUEUE_LIMIT = 25000;
+
+/**
+ * @constant {number} RESOLVE_MAX_TIME_MILLIS
+ * - Maximum time for resolve operation
+ */
+exports.RESOLVE_MAX_TIME_MILLIS = 15 * 1000;
+
+/**
+ * @constant {number} STORE_MAX_RETRIES
+ * - Maximum number of retries
+ */
+exports.STORE_MAX_RETRIES = 3;
+
+/**
+ * @constant {number} STORE_BUSY_REPEAT_INTERVAL_IN_MILLS
+ * - Wait interval between retries for sending store requests
+ */
+exports.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS = 4 * 1000;
+
+/**
+ * @constant {number} BUSYNESS_LIMITS
+ * - Max number of operations in triple store queue that indicate busyness
+ */
+exports.BUSYNESS_LIMITS = {
+    HANDLE_STORE: 20,
+    HANDLE_RESOLVE: 20,
+    HANDLE_SEARCH_ASSERTIONS: 20,
+    HANDLE_SEARCH_ENTITIES: 15,
+};
+
+/**
+ * @constant {number} STORE_MIN_SUCCESS_RATE
+ * - Min rate of successful responses from store queries for publish to be maked as COMPLETED
+ */
+exports.STORE_MIN_SUCCESS_RATE = 0.8;
 
 /**
  * @constant {object} TRIPLE_STORE_IMPLEMENTATION -
@@ -79,6 +162,36 @@ exports.TRIPLE_STORE_IMPLEMENTATION = {
 };
 
 /**
+ * @constant {number} NETWORK_HANDLER_TIMEOUT -
+ * Timeout for all handler methods for network requests
+ */
+exports.NETWORK_HANDLER_TIMEOUT = 120e3;
+
+/**
+ * @constant {object} NETWORK_RESPONSES -
+ *  Types of known network responses
+ */
+exports.NETWORK_RESPONSES = {
+    TRUE: true,
+    FALSE: false,
+    ACK: 'ack',
+    BUSY: 'busy',
+    BLOCKED: 'blocked',
+    ERROR: 'error',
+};
+
+/**
+ * @constant {object} STRINGIFIED_NETWORK_RESPONSES -
+ *  Stringified types of known network responses
+ */
+exports.STRINGIFIED_NETWORK_RESPONSES = {
+    ack: '"ack"',
+    busy: '"busy"',
+    blocked: '"blocked"',
+    error: '"error"',
+};
+
+/**
  * @constant {object} ERROR_TYPE -
  *  Types of errors supported
  */
@@ -86,6 +199,7 @@ exports.ERROR_TYPE = {
     INSERT_ASSERTION_ERROR: 'InsertAssertionError',
     SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
     SEND_ASSERTION_ERROR: 'SendAssertionError',
+    SEND_ASSERTION_ERROR_BUSY: 'SendAssertionErrorBusy',
     SENDING_TELEMETRY_DATA_ERROR: 'SendingDataTelemetryError',
     CHECKING_UPDATE_ERROR: 'CheckingUpdateError',
     API_ERROR_400: 'ApiError400',
@@ -98,6 +212,7 @@ exports.ERROR_TYPE = {
     PROOFS_ROUTE_ERROR: 'ProofsRouteError',
     RESULTS_ROUTE_ERROR: 'ResultsRouteError',
     NODE_INFO_ROUTE_ERROR: 'NodeInfoRouteError',
+    HANDLE_STORE_ERROR: 'HandleStoreError',
     EXTRACT_METADATA_ERROR: 'ExtractMetadataError',
     TRIPLE_STORE_UNAVAILABLE_ERROR: 'TripleStoreUnavailableError',
     TRIPLE_STORE_INSERT_ERROR: 'TripleStoreInsertError',

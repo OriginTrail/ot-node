@@ -3,14 +3,13 @@ const DeepExtend = require('deep-extend');
 const AutoGitUpdate = require('auto-git-update');
 const rc = require('rc');
 const fs = require('fs');
+const queue = require('fastq');
 const DependencyInjection = require('./modules/service/dependency-injection');
 const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
 const db = require('./models');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
-const queue = require('fastq')
-
 
 class OTNode {
     constructor(config) {
@@ -47,7 +46,6 @@ class OTNode {
         const defaultConfig = JSON.parse(JSON.stringify(configjson[process.env.NODE_ENV]));
 
         if (process.env.NODE_ENV === 'development' && process.argv.length === 3) {
-            // eslint-disable-next-line prefer-destructuring
             userConfig = JSON.parse(fs.readFileSync(process.argv[2]));
         }
 
@@ -56,8 +54,10 @@ class OTNode {
         } else {
             this.config = rc(pjson.name, defaultConfig);
         }
-        if (!this.config.blockchain[0].hubContractAddress && this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId) {
-            this.config.blockchain[0].hubContractAddress = configjson[process.env.NODE_ENV].blockchain[0].hubContractAddress;
+        if (!this.config.blockchain[0].hubContractAddress
+            && this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId) {
+            this.config.blockchain[0].hubContractAddress = configjson[process.env.NODE_ENV]
+                .blockchain[0].hubContractAddress;
         }
     }
 
@@ -67,6 +67,7 @@ class OTNode {
         DependencyInjection.registerValue(this.container, 'logger', this.logger);
         DependencyInjection.registerValue(this.container, 'constants', constants);
         DependencyInjection.registerValue(this.container, 'blockchainQueue', queue);
+        DependencyInjection.registerValue(this.container, 'tripleStoreQueue', queue);
 
         this.logger.info('Dependency injection module is initialized');
     }

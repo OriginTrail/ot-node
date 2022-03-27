@@ -1,5 +1,6 @@
-const {v1: uuidv1} = require('uuid');
+const { v1: uuidv1 } = require('uuid');
 const N3 = require('n3');
+const toobusy = require('toobusy-js');
 const constants = require('../constants');
 const GraphDB = require('../../external/graphdb-service');
 const Blazegraph = require('../../external/blazegraph-service');
@@ -14,8 +15,16 @@ class DataService {
         this.nodeService = ctx.nodeService;
         this.workerPool = ctx.workerPool;
         this.blockchainService = ctx.blockchainService;
-        this.N3Parser = new N3.Parser({format: 'N-Triples', baseIRI: 'http://schema.org/'});
+        this.tripleStoreQueue = ctx.tripleStoreQueue.promise(
+            this,
+            this.handleTripleStoreRequest,
+            1,
+        );
+        this.N3Parser = new N3.Parser({ format: 'N-Triples', baseIRI: 'http://schema.org/' });
+    }
 
+    getTripleStoreQueueLength() {
+        return this.tripleStoreQueue.length();
     }
 
     getName() {
@@ -23,7 +32,10 @@ class DataService {
     }
 
     async initialize() {
-        if (this.config.graphDatabase.implementation === constants.TRIPLE_STORE_IMPLEMENTATION.BLAZEGRAPH) {
+        if (
+            this.config.graphDatabase.implementation
+            === constants.TRIPLE_STORE_IMPLEMENTATION.BLAZEGRAPH
+        ) {
             this.implementation = new Blazegraph({
                 url: this.config.graphDatabase.url,
             });
@@ -41,7 +53,12 @@ class DataService {
         while (!ready && retries < constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
             retries += 1;
             this.logger.warn(`Cannot connect to Triple store (${this.getName()}), retry number: ${retries}/${constants.TRIPLE_STORE_CONNECT_MAX_RETRIES}. Retrying in ${constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds again.`);
-            await new Promise((resolve) => setTimeout(resolve, constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000));
+            await new Promise(
+                (resolve) => setTimeout(
+                    resolve,
+                    constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000,
+                ),
+            );
             ready = await this.healthCheck();
         }
         if (retries === constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
@@ -67,40 +84,41 @@ class DataService {
 
     async canonize(fileContent, fileExtension) {
         switch (fileExtension) {
-            case '.json':
-                const assertion = {
-                    metadata: {
-                        timestamp: new Date().toISOString()
-                    },
-                    data: await this.workerPool.exec('JSONParse', [fileContent.toString()])
-                }
-                const nquads = await this.workerPool.exec('toNQuads', [assertion.data])
-                if (nquads && nquads.length === 0) {
-                    throw new Error(`File format is corrupted, no n-quads extracted.`);
-                }
+        case '.json':
+            const assertion = {
+                metadata: {
+                    timestamp: new Date().toISOString(),
+                },
+                data: await this.workerPool.exec('JSONParse', [fileContent.toString()]),
+            };
+            const nquads = await this.workerPool.exec('toNQuads', [assertion.data]);
+            if (nquads && nquads.length === 0) {
+                throw new Error('File format is corrupted, no n-quads extracted.');
+            }
 
-                let type;
-                if (assertion.data['@type']) {
-                    type = assertion.data['@type'];
-                    delete assertion.data['@type'];
-                } else if (assertion.data['type']) {
-                    type = assertion.data['type'];
-                    delete assertion.data['type'];
-                }else {
-                    type = 'default';
-                }
-                assertion.metadata.type = type;
-                assertion.data = await this.fromNQuads(nquads, type);
+            let type;
+            if (assertion.data['@type']) {
+                type = assertion.data['@type'];
+                delete assertion.data['@type'];
+            } else if (assertion.data['type']) {
+                type = assertion.data['type'];
+                delete assertion.data['type'];
+            } else {
+                type = 'default';
+            }
+            assertion.metadata.type = type;
+            assertion.data = await this.fromNQuads(nquads, type);
 
-                return {assertion, nquads};
-            default:
-                throw new Error(`File extension ${fileExtension} is not supported.`);
+            return { assertion, nquads };
+        default:
+            throw new Error(`File extension ${fileExtension} is not supported.`);
         }
     }
 
     async insert(data, assertionId) {
         try {
-            return this.implementation.insert(data, assertionId);
+            const result = await this.tripleStoreQueue.push({ operation: 'insert', data, assertionId });
+            return result;
         } catch (e) {
             // TODO: Check situation when inserting data recieved from other node
             this.handleUnavailableTripleStoreError(e);
@@ -109,14 +127,16 @@ class DataService {
 
     async resolve(id, localQuery = false, metadataOnly = false) {
         try {
-            let {nquads, isAsset} = await this.implementation.resolve(id);
+            let nquads = await this.tripleStoreQueue.push({ operation: 'resolve', id });
+
+            // TODO: add function for this conditional expr for increased readability
             if (!localQuery && nquads && nquads.find((x) => x.includes(`<${constants.DID_PREFIX}:${id}> <http://schema.org/hasVisibility> "private" .`))) {
                 return null;
             }
             if (metadataOnly) {
                 nquads = nquads.filter((x) => x.startsWith(`<${constants.DID_PREFIX}:${id}>`));
             }
-            return {nquads, isAsset};
+            return nquads;
         } catch (e) {
             this.handleUnavailableTripleStoreError(e);
         }
@@ -124,12 +144,12 @@ class DataService {
 
     async assertionsByAsset(id) {
         try {
-            let assertions = await this.implementation.assertionsByAsset(id);
+            const assertions = await this.tripleStoreQueue.push({ operation: 'assertionsByAsset', id });
 
-            return assertions.map(x => ({
+            return assertions.map((x) => ({
                 id: x.assertionId.value.slice(8),
                 issuer: x.issuer.value,
-                timestamp: x.timestamp.value
+                timestamp: x.timestamp.value,
             }));
         } catch (e) {
             this.handleUnavailableTripleStoreError(e);
@@ -141,17 +161,18 @@ class DataService {
         const data = [];
         const nquads = [];
         rawNQuads.forEach((nquad) => {
-            if (nquad.startsWith(`<${constants.DID_PREFIX}:`))
+            if (nquad.startsWith(`<${constants.DID_PREFIX}:`)) {
                 metadata.push(nquad);
-            else
+            } else {
                 data.push(nquad);
-
-            if (!nquad.includes('hasRootHash') && !nquad.includes('hasBlockchain') && !nquad.includes('hasTransactionHash'))
+            }
+            if (!nquad.includes('hasRootHash') && !nquad.includes('hasBlockchain') && !nquad.includes('hasTransactionHash')) {
                 nquads.push(nquad);
+            }
         });
         const jsonld = await this.extractMetadata(metadata);
         jsonld.data = data;
-        return {jsonld, nquads};
+        return { jsonld, nquads };
     }
 
     verifyAssertion(assertion, rdf, options = undefined) {
@@ -159,15 +180,17 @@ class DataService {
             try {
                 // let dataHash;
                 // if (assertion.metadata.visibility) {
-                //     const framedData = await this.fromRDF(assertion.data, assertion.metadata.type);
+                //   const framedData = await this.fromRDF(assertion.data, assertion.metadata.type);
                 //     dataHash = this.validationService.calculateHash(framedData);
                 // } else {
                 //     dataHash = assertion.metadata.dataHash;
                 // }
-                const {dataHash} = assertion.metadata;
+                const { dataHash } = assertion.metadata;
 
                 const metadataHash = this.validationService.calculateHash(assertion.metadata);
-                const calculatedAssertionId = this.validationService.calculateHash(metadataHash + dataHash);
+                const calculatedAssertionId = this.validationService.calculateHash(
+                    metadataHash + dataHash,
+                );
                 if (assertion.id !== calculatedAssertionId) {
                     this.logger.error({
                         msg: `Assertion Id ${assertion.id} doesn't match with calculated ${calculatedAssertionId}`,
@@ -177,7 +200,11 @@ class DataService {
                     return resolve(false);
                 }
 
-                if (!this.validationService.verify(assertion.id, assertion.signature, assertion.metadata.issuer)) {
+                if (!this.validationService.verify(
+                    assertion.id,
+                    assertion.signature,
+                    assertion.metadata.issuer,
+                )) {
                     this.logger.error({
                         msg: 'Signature and issuer don\'t match',
                         Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
@@ -190,7 +217,7 @@ class DataService {
                     if (assertion.metadata.UALs && (!options || (options && options.isAsset))) {
                         const {
                             issuer,
-                            assertionId
+                            assertionId,
                         } = await this.blockchainService.getAssetProofs(assertion.metadata.UALs[0]);
                         if (assertionId !== assertion.id) {
                             this.logger.error({
@@ -209,8 +236,11 @@ class DataService {
                             return resolve(false);
                         }
                     } else {
-                        const calculateRootHash = this.validationService.calculateRootHash([...new Set(rdf)]);
-                        const {rootHash, issuer} = await this.blockchainService.getAssertionProofs(assertion.id);
+                        const calculateRootHash = this.validationService.calculateRootHash(
+                            [...new Set(rdf)],
+                        );
+                        const { rootHash, issuer } = await this.blockchainService
+                            .getAssertionProofs(assertion.id);
                         if (rootHash !== `0x${calculateRootHash}`) {
                             this.logger.error({
                                 msg: `Root hash ${rootHash} doesn't match with calculated 0x${calculateRootHash}`,
@@ -238,21 +268,27 @@ class DataService {
 
     async searchByQuery(query, options, localQuery = false) {
         try {
-            const assertions = await this.implementation.findAssetsByKeyword(query, options, localQuery);
+            const assertions = await this.tripleStoreQueue.push({
+                operation: 'findAssetsByKeyword', query, options, localQuery,
+            });
             if (!assertions) return null;
 
             const result = [];
             for (let assertion of assertions) {
                 const assertionId = assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
 
-                assertion = await this.resolve(assertion.assertionId, localQuery, true);
-                if (!assertion) continue;
-
+                const nquads = await this.resolve(assertion.assertionId, localQuery, true);
+                if (!nquads) {
+                    continue;
+                }
 
                 if (localQuery) {
-                    assertion = await this.createAssertion(assertion.nquads);
+                    assertion = await this.createAssertion(nquads);
 
-                    let object = result.find((x) => x.type === assertion.jsonld.metadata.type && x.id === assertion.jsonld.metadata.UALs[0]);
+                    let object = result.find(
+                        (x) => x.type === assertion.jsonld.metadata.type
+                            && x.id === assertion.jsonld.metadata.UALs[0],
+                    );
                     if (!object) {
                         object = {
                             id: assertion.jsonld.metadata.UALs[0],
@@ -272,7 +308,9 @@ class DataService {
                     if (object.assertions.indexOf(assertion.jsonld.id) === -1) {
                         object.assertions.push(assertion.jsonld.id);
                     }
-                    if (new Date(object.timestamp) < new Date(assertion.jsonld.metadata.timestamp)) {
+                    if (
+                        new Date(object.timestamp) < new Date(assertion.jsonld.metadata.timestamp)
+                    ) {
                         object.timestamp = assertion.jsonld.metadata.timestamp;
                     }
                 } else {
@@ -281,7 +319,7 @@ class DataService {
                         object = {
                             assertionId,
                             node: this.networkService.getPeerId(),
-                            nquads: assertion.nquads,
+                            nquads,
                         };
                         result.push(object);
                     }
@@ -296,18 +334,22 @@ class DataService {
 
     async searchAssertions(query, options, localQuery = false) {
         try {
-            const assertions = await this.implementation.findAssertionsByKeyword(query, options, localQuery);
+            const assertions = await this.tripleStoreQueue.push({
+                operation: 'findAssertionsByKeyword', query, options, localQuery,
+            });
             if (!assertions) return null;
 
             const result = [];
             for (let assertion of assertions) {
                 const assertionId = assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
 
-                assertion = await this.resolve(assertion.assertionId, localQuery, true);
-                if (!assertion) continue;
+                const nquads = await this.resolve(assertion.assertionId, localQuery, true);
+                if (!nquads) {
+                    continue;
+                }
 
                 if (localQuery) {
-                    assertion = await this.createAssertion(assertion.nquads);
+                    assertion = await this.createAssertion(nquads);
                     let object = result.find((x) => x.id === assertion.id);
                     if (!object) {
                         object = {
@@ -324,7 +366,7 @@ class DataService {
                         object = {
                             assertionId,
                             node: this.networkService.getPeerId(),
-                            nquads: assertion.nquads,
+                            nquads,
                         };
                         result.push(object);
                     }
@@ -341,7 +383,7 @@ class DataService {
         try {
             let assertions = [];
             for (const nquad of nquads) {
-                const result = await this.implementation.findAssertions(nquad);
+                const result = await this.tripleStoreQueue.push({ operation: 'findAssertions', nquad });
                 assertions = [...new Set(assertions.concat(result))];
             }
 
@@ -360,40 +402,42 @@ class DataService {
             Operation_name: 'query_node',
             Id_operation,
         });
+        const quads = [];
+
         try {
             switch (type) {
-                // case 'SELECT':
-                //     result = this.implementation.execute(query);
-                //     break;
-                case 'CONSTRUCT':
-                    result = await this.implementation.construct(query);
-                    result = result.toString();
-                    if (result) {
-                        result = result.split('\n').filter((x) => x !== '');
-                    } else {
-                        result = [];
-                    }
-                    break;
-                // case 'ASK':
-                //     result = this.implementation.ask(query);
-                //     break;
-                default:
-                    throw Error('Query type not supported');
+            case 'SELECT':
+                result = await this.tripleStoreQueue.push({ operation: 'select', query });
+                break;
+            case 'CONSTRUCT':
+                result = await this.tripleStoreQueue.push({ operation: 'construct', query });
+                result = result.toString();
+                if (result) {
+                    result = result.split('\n').filter((x) => x !== '');
+                } else {
+                    result = [];
+                }
+                await this.N3Parser.parse(
+                    result.join('\n'),
+                    (error, quad, prefixes) => {
+                        if (quad) {
+                            quads.push({
+                                subject: quad._subject.id,
+                                predicate: quad.predicate.id,
+                                object: quad.object.id,
+                            });
+                        }
+                    },
+                );
+                result = quads;
+
+                break;
+            // case 'ASK':
+            //     result = this.implementation.ask(query);
+            //     break;
+            default:
+                throw Error('Query type not supported');
             }
-            const quads = [];
-            await this.N3Parser.parse(
-                result.join('\n'),
-                (error, quad, prefixes) => {
-                    if (quad) {
-                        quads.push({
-                            subject: quad._subject.id,
-                            predicate: quad.predicate.id,
-                            object: quad.object.id
-                        });
-                    }
-                },
-            );
-            result = quads;
 
             return result;
         } catch (e) {
@@ -420,44 +464,44 @@ class DataService {
         let
             frame;
         switch (type.toLowerCase()) {
-            case this.constants.GS1EPCIS:
-                context = {
-                    '@context': [
-                        'https://gs1.github.io/EPCIS/epcis-context.jsonld',
-                        {
-                            example: 'http://ns.example.com/epcis/',
-                        },
-                    ],
-                };
+        case this.constants.GS1EPCIS:
+            context = {
+                '@context': [
+                    'https://gs1.github.io/EPCIS/epcis-context.jsonld',
+                    {
+                        example: 'http://ns.example.com/epcis/',
+                    },
+                ],
+            };
 
-                frame = {
-                    '@context': [
-                        'https://gs1.github.io/EPCIS/epcis-context.jsonld',
-                        {
-                            example: 'http://ns.example.com/epcis/',
-                        },
-                    ],
-                    isA: 'EPCISDocument',
-                };
-                break;
-            case this.constants.ERC721:
-            case this.constants.OTTELEMETRY:
-                context = {
-                    "@context": "https://www.schema.org/"
-                }
-                frame = {
-                    "@context": "https://www.schema.org/",
-                    "@type": type
-                }
-                break;
-            default:
-                context = {
-                    '@context': ['https://www.schema.org/'],
-                };
+            frame = {
+                '@context': [
+                    'https://gs1.github.io/EPCIS/epcis-context.jsonld',
+                    {
+                        example: 'http://ns.example.com/epcis/',
+                    },
+                ],
+                isA: 'EPCISDocument',
+            };
+            break;
+        case this.constants.ERC721:
+        case this.constants.OTTELEMETRY:
+            context = {
+                '@context': 'https://www.schema.org/',
+            };
+            frame = {
+                '@context': 'https://www.schema.org/',
+                '@type': type,
+            };
+            break;
+        default:
+            context = {
+                '@context': ['https://www.schema.org/'],
+            };
 
-                frame = {};
+            frame = {};
         }
-        const json = await this.workerPool.exec('fromNQuads', [nquads, context, frame])
+        const json = await this.workerPool.exec('fromNQuads', [nquads, context, frame]);
 
         this.logger.emit({
             msg: 'Finished measuring execution of fromRDF command',
@@ -496,8 +540,9 @@ class DataService {
             hasKeywords: assertion.metadata.keywords,
         };
 
-        if (assertion.metadata.UALs)
+        if (assertion.metadata.UALs) {
             metadata.hasUALs = assertion.metadata.UALs;
+        }
 
         const result = await this.workerPool.exec('toNQuads', [metadata]);
         return result;
@@ -516,7 +561,7 @@ class DataService {
 
     async extractMetadata(rdf) {
         return new Promise(async (accept, reject) => {
-            const parser = new N3.Parser({format: 'N-Triples', baseIRI: 'http://schema.org/'});
+            const parser = new N3.Parser({ format: 'N-Triples', baseIRI: 'http://schema.org/' });
             const result = {
                 metadata: {
                     keywords: [],
@@ -538,46 +583,45 @@ class DataService {
                 },
             );
 
-
             for (const quad of quads) {
                 try {
                     switch (quad._predicate.id) {
-                        case 'http://schema.org/hasType':
-                            result.metadata.type = JSON.parse(quad._object.id);
-                            result.id = quad._subject.id.replace(`${constants.DID_PREFIX}:`, '');
-                            break;
-                        case 'http://schema.org/hasTimestamp':
-                            result.metadata.timestamp = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasUALs':
-                            result.metadata.UALs.push(JSON.parse(quad._object.id));
-                            break;
-                        case 'http://schema.org/hasIssuer':
-                            result.metadata.issuer = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasVisibility':
-                            result.metadata.visibility = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasDataHash':
-                            result.metadata.dataHash = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasKeywords':
-                            result.metadata.keywords.push(JSON.parse(quad._object.id));
-                            break;
-                        case 'http://schema.org/hasSignature':
-                            result.signature = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasRootHash':
-                            result.rootHash = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasBlockchain':
-                            result.blockchain.name = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasTransactionHash':
-                            result.blockchain.transactionHash = JSON.parse(quad._object.id);
-                            break;
-                        default:
-                            break;
+                    case 'http://schema.org/hasType':
+                        result.metadata.type = JSON.parse(quad._object.id);
+                        result.id = quad._subject.id.replace(`${constants.DID_PREFIX}:`, '');
+                        break;
+                    case 'http://schema.org/hasTimestamp':
+                        result.metadata.timestamp = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasUALs':
+                        result.metadata.UALs.push(JSON.parse(quad._object.id));
+                        break;
+                    case 'http://schema.org/hasIssuer':
+                        result.metadata.issuer = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasVisibility':
+                        result.metadata.visibility = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasDataHash':
+                        result.metadata.dataHash = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasKeywords':
+                        result.metadata.keywords.push(JSON.parse(quad._object.id));
+                        break;
+                    case 'http://schema.org/hasSignature':
+                        result.signature = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasRootHash':
+                        result.rootHash = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasBlockchain':
+                        result.blockchain.name = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasTransactionHash':
+                        result.blockchain.transactionHash = JSON.parse(quad._object.id);
+                        break;
+                    default:
+                        break;
                     }
                 } catch (e) {
                     this.logger.error({
@@ -598,6 +642,53 @@ class DataService {
         });
     }
 
+    async handleTripleStoreRequest(args) {
+        if (this.getTripleStoreQueueLength() > constants.TRIPLE_STORE_QUEUE_LIMIT) {
+            throw new Error('Triple store queue is full');
+        }
+        const { operation } = args;
+        let result;
+
+        switch (operation) {
+        case 'insert':
+            result = await this.implementation.insert(args.data, args.assertionId);
+            break;
+        case 'resolve':
+            result = await this.implementation.resolve(args.id);
+            break;
+        case 'assertionsByAsset':
+            result = await this.implementation.assertionsByAsset(args.id);
+            break;
+        case 'findAssetsByKeyword':
+            result = await this.implementation.findAssetsByKeyword(
+                args.query,
+                args.options,
+                args.localQuery,
+            );
+            break;
+        case 'findAssertionsByKeyword':
+            result = await this.implementation.findAssertionsByKeyword(
+                args.query,
+                args.options,
+                args.localQuery,
+            );
+            break;
+        case 'construct':
+            result = await this.implementation.construct(args.query);
+            break;
+        case 'findAssertions':
+            result = await this.implementation.findAssertions(args.nquad);
+            break;
+        case 'select':
+            result = await this.implementation.execute(args.query);
+            break;
+        default:
+            throw new Error('Unknown operation for triple store');
+        }
+
+        return result;
+    }
+
     handleUnavailableTripleStoreError(e) {
         if (e.code === 'ECONNREFUSED') {
             this.logger.error({
@@ -609,6 +700,18 @@ class DataService {
         } else {
             throw e;
         }
+    }
+
+    isNodeBusy(busynessLimit) {
+        const isTripleStoreBusy = this.getTripleStoreQueueLength() > busynessLimit;
+        const isToobusy = toobusy();
+        if (isTripleStoreBusy) {
+            this.logger.info('TripleStore is busy.');
+        }
+        if (isToobusy) {
+            this.logger.info('Node is busy.');
+        }
+        return isToobusy || isTripleStoreBusy;
     }
 }
 
