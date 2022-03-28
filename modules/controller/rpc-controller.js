@@ -96,12 +96,12 @@ class RpcController {
             const apiException = new ApiException(error.error, error.message);
             if (error && error.code) {
                 switch (error.code) {
-                    case 400:
-                        apiException.status = 'BAD_REQUEST';
-                        code = 400;
-                        break;
-                    default:
-                        return next(apiException);
+                case 400:
+                    apiException.status = 'BAD_REQUEST';
+                    code = 400;
+                    break;
+                default:
+                    return next(apiException);
                 }
                 this.logger.error({
                     msg: apiException.getExceptionForLogging(),
