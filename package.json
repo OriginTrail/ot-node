@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/"
+    "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+    "prepare": "husky install",
+    "lint-staged": "lint-staged"
   },
   "repository": {
     "type": "git",
@@ -33,12 +35,12 @@
     "eslint": "^7.32.0",
     "eslint-config-airbnb": "^18.2.1",
     "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-plugin-import": "^2.24.2",
-    "eslint-plugin-jsx-a11y": "^6.4.1",
-    "eslint-plugin-react": "^7.25.1",
-    "eslint-plugin-react-hooks": "^4.2.0",
+    "eslint-config-prettier": "^8.5.0",
     "form-data": "^4.0.0",
+    "husky": "^6.0.0",
+    "lint-staged": "^12.3.7",
     "nodemon": "^2.0.15",
+    "prettier": "^2.6.1",
     "request": "^2.88.2"
   },
   "dependencies": {
@@ -88,6 +90,7 @@
     "pino-pretty": "^7.2.0",
     "qs": "^6.10.3",
     "rc": "^1.2.8",
+    "remove": "^0.1.5",
     "rolling-rate-limiter": "^0.2.13",
     "semver": "^7.3.5",
     "sequelize": "^6.9.0",
