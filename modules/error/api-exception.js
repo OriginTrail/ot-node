@@ -1,4 +1,4 @@
-class ApplicationException {
+class ApiException {
     constructor(error, details) {
         this.error = error;
         this.details = [].concat(details);
@@ -13,4 +13,4 @@ class ApplicationException {
     }
 }
 
-module.exports = ApplicationException;
+module.exports = ApiException;

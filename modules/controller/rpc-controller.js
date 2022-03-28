@@ -96,12 +96,12 @@ class RpcController {
             const apiException = new ApiException(error.error, error.message);
             if (error && error.code) {
                 switch (error.code) {
-                case 400:
-                    apiException.status = 'BAD_REQUEST';
-                    code = 400;
-                    break;
-                default:
-                    return next(error);
+                    case 400:
+                        apiException.status = 'BAD_REQUEST';
+                        code = 400;
+                        break;
+                    default:
+                        return next(apiException);
                 }
                 this.logger.error({
                     msg: apiException.getExceptionForLogging(),
@@ -209,7 +209,7 @@ class RpcController {
             });
 
             if (!req.query.ids) {
-                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_RESOLVE_PARAMETER_VALUES, message: 'Param ids is required.' });
+                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_RESOLVE_PARAMETER_VALUES, message: "Query parameter 'ids' is required." });
             }
 
             if (req.query.load === undefined) {
@@ -436,7 +436,7 @@ class RpcController {
 
         this.app.get('/assertions::search', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
-                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_ASSERTION_SEARCH_PARAMETER_VALUES, message: 'Params query is necessary.' });
+                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_ASSERTION_SEARCH_PARAMETER_VALUES, message: "Query parameter 'query' is required." });
             }
 
             let { prefix } = req.query;
@@ -522,7 +522,7 @@ class RpcController {
 
         this.app.get('/entities::search', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
-                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_ENTITY_SEARCH_PARAMETER_VALUES, message: 'Params query or ids are necessary.' });
+                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_ENTITY_SEARCH_PARAMETER_VALUES, message: "Query parameter 'query' is required." });
             }
             const operationId = uuidv1();
             let handlerId = null;
@@ -633,14 +633,15 @@ class RpcController {
         });
 
         this.app.post('/query', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            if (!req.body.query || !req.query.type) {
-                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_QUERY_PARAMETER_VALUES, message: 'Params query and type are necessary.' });
+            const errorMessages = this.validateQueryParameters(req);
+            if (errorMessages.length > 0) {
+                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_QUERY_PARAMETER_VALUES, message: errorMessages });
             }
 
             const allowedQueries = ['construct', 'select'];
             // Handle allowed query types, TODO: expand to select, ask and construct
             if (!allowedQueries.includes(req.query.type.toLowerCase())) {
-                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_QUERY_TYPE, message: `Unallowed query type, currently supported types: ${allowedQueries.join(', ')}` });
+                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_QUERY_TYPE, message: `Invalid query type, currently supported types: ${allowedQueries.join(', ')}` });
             }
             const operationId = uuidv1();
             let handlerId = null;
@@ -706,8 +707,8 @@ class RpcController {
         });
 
         this.app.post('/proofs::get', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            if (!req.body.nquads) {
-                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_PROOFS_PARAMETER_VALUES, message: 'Params query and type are necessary.' });
+            if (!req.body || (!req.body.nquads || !Utilities.isArrayOfStrings(req.body.nquads))) {
+                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_PROOFS_PARAMETER_VALUES, message: "Form data value 'nquads' is required and must be a non-empty array of strings. All strings must have double quotes." });
             }
             const operationId = uuidv1();
             const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
@@ -1080,16 +1081,27 @@ class RpcController {
             errorMessages.push(`File size limit is ${constants.MAX_FILE_SIZE / (1024 * 1024)}MB.`);
         }
 
-        if (req.body.keywords && !Utilities.isArrayOfStrings(req.body.keywords)) {
+        if (req.body && req.body.keywords && !Utilities.isArrayOfStrings(req.body.keywords)) {
             errorMessages.push('Keywords must be a non-empty array of strings, all strings must have double quotes.');
         }
 
-        if (req.body.visibility && !['public', 'private'].includes(req.body.visibility)) {
+        if (req.body && req.body.visibility && !['public', 'private'].includes(req.body.visibility)) {
             errorMessages.push('Visibility must be a string, value can be public or private.');
         }
 
-        if (options.isUpdate && !req.body.ual) {
-            errorMessages.push('UAL must be a string.');
+        if (options.isUpdate && (!req.body || !req.body.ual)) {
+            errorMessages.push('UAL required and must be a string.');
+        }
+        return errorMessages;
+    }
+
+    validateQueryParameters(req) {
+        const errorMessages = [];
+        if (!req.body || !req.body.query) {
+            errorMessages.push("Form data value 'query' is required.");
+        }
+        if (!req.query.type) {
+            errorMessages.push("Query parameter 'type' is required.");
         }
         return errorMessages;
     }
