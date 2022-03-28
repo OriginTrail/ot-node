@@ -14,6 +14,7 @@ const Models = require('../../models/index');
 const constants = require('../constants');
 const pjson = require('../../package.json');
 const Utilities = require('../utilities');
+const ApiException = require('../error/api-exception');
 
 class RpcController {
     constructor(ctx) {
@@ -91,24 +92,33 @@ class RpcController {
 
     async initializeErrorMiddleware() {
         await this.app.use((error, req, res, next) => {
-            let code; let message;
+            let code;
+            const apiException = new ApiException(error.error, error.message);
             if (error && error.code) {
                 switch (error.code) {
                 case 400:
+                    apiException.status = 'BAD_REQUEST';
                     code = 400;
-                    message = `Bad request. ${error.message}`;
                     break;
                 default:
                     return next(error);
                 }
-                this.logger.error({ msg: message, Event_name: constants.ERROR_TYPE.API_ERROR_400 });
-                return res.status(code).send(message);
+                this.logger.error({
+                    msg: apiException.getExceptionForLogging(),
+                    Event_name: constants.ERROR_TYPE.API_ERROR_400,
+                });
+                return res.status(code).send(apiException);
             }
-            return next(error);
+            return next(apiException);
         });
 
         this.app.use((error, req, res, next) => {
-            this.logger.error({ msg: error, Event_name: constants.ERROR_TYPE.API_ERROR_500 });
+            error.status = 'INTERNAL_SERVER_ERROR';
+            error.error = 'UNEXPECTED_INTERNAL_SERVER_ERROR';
+            this.logger.error({
+                msg: error.getExceptionForLogging(),
+                Event_name: constants.ERROR_TYPE.API_ERROR_500,
+            });
             return res.status(500).send(error);
         });
     }
@@ -171,21 +181,15 @@ class RpcController {
         this.logger.info(`Service API module enabled, server running on port ${this.config.rpcPort}`);
 
         this.app.post('/publish', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            await this.publish(req, res, next, {isAsset: false});
+            await this.publish(req, res, next, { isAsset: false });
         });
-      
+
         this.app.post('/provision', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            await this.publish(req, res, next, {isAsset: true, ual: null});
+            await this.publish(req, res, next, { isAsset: true, isUpdate: false });
         });
-      
+
         this.app.post('/update', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            if (!req.body.ual) {
-                return next({
-                    code: 400,
-                    message: 'UAL must be a string.',
-                });
-            }
-            await this.publish(req, res, next, { isAsset: true, ual: req.body.ual });
+            await this.publish(req, res, next, { isAsset: true, isUpdate: true });
         });
 
         this.app.get('/resolve', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
@@ -205,7 +209,7 @@ class RpcController {
             });
 
             if (!req.query.ids) {
-                return next({ code: 400, message: 'Param ids is required.' });
+                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_RESOLVE_REQUEST_ARGUMENTS, message: 'Param ids is required.' });
             }
 
             if (req.query.load === undefined) {
@@ -432,7 +436,7 @@ class RpcController {
 
         this.app.get('/assertions::search', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
-                return next({ code: 400, message: 'Params query is necessary.' });
+                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_ASSERTION_SEARCH_REQUEST_ARGUMENTS, message: 'Params query is necessary.' });
             }
 
             let { prefix } = req.query;
@@ -518,7 +522,7 @@ class RpcController {
 
         this.app.get('/entities::search', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
-                return next({ code: 400, message: 'Params query or ids are necessary.' });
+                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_ENTITY_SEARCH_REQUEST_ARGUMENTS, message: 'Params query or ids are necessary.' });
             }
             const operationId = uuidv1();
             let handlerId = null;
@@ -630,13 +634,13 @@ class RpcController {
 
         this.app.post('/query', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.body.query || !req.query.type) {
-                return next({ code: 400, message: 'Params query and type are necessary.' });
+                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_QUERY_REQUEST_ARGUMENTS, message: 'Params query and type are necessary.' });
             }
 
             const allowedQueries = ['construct', 'select'];
             // Handle allowed query types, TODO: expand to select, ask and construct
             if (!allowedQueries.includes(req.query.type.toLowerCase())) {
-                return next({ code: 400, message: `Unallowed query type, currently supported types: ${allowedQueries.join(', ')}` });
+                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_QUERY_TYPE, message: `Unallowed query type, currently supported types: ${allowedQueries.join(', ')}` });
             }
             const operationId = uuidv1();
             let handlerId = null;
@@ -703,7 +707,7 @@ class RpcController {
 
         this.app.post('/proofs::get', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.body.nquads) {
-                return next({ code: 400, message: 'Params query and type are necessary.' });
+                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_PROOFS_REQUEST_ARGUMENTS, message: 'Params query and type are necessary.' });
             }
             const operationId = uuidv1();
             const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
@@ -779,7 +783,8 @@ class RpcController {
             if (!['provision', 'update', 'publish', 'resolve', 'query', 'entities:search', 'assertions:search', 'proofs:get'].includes(req.params.operation)) {
                 return next({
                     code: 400,
-                    message: 'Unexisting operation, available operations are: provision, update, publish, resolve, entities:search, assertions:search, query and proofs:get',
+                    error: constants.ERROR_TYPE.INVALID_RESULT_OPERATION,
+                    message: 'Invalid result operation, available operations are: provision, update, publish, resolve, entities:search, assertions:search, query and proofs:get',
                 });
             }
 
@@ -787,6 +792,7 @@ class RpcController {
             if (!validator.isUUID(handler_id)) {
                 return next({
                     code: 400,
+                    error: constants.ERROR_TYPE.INVALID_UUID_FORMAT,
                     message: 'Handler id is in wrong format',
                 });
             }
@@ -911,7 +917,7 @@ class RpcController {
                         break;
                     }
                 } else {
-                    next({ code: 404, message: `Handler with id: ${handler_id} does not exist.` });
+                    next({ code: 404, error: constants.ERROR_TYPE.HANDLER_ID_NOT_FOUND, message: `Handler with id: ${handler_id} does not exist.` });
                 }
             } catch (e) {
                 this.logger.error({
@@ -920,7 +926,7 @@ class RpcController {
                     Event_value1: e.message,
                     Id_operation: handler_id,
                 });
-                next({ code: 400, message: `Unexpected error at getting results: ${e}` });
+                next({ code: 400, error: constants.ERROR_TYPE.UNEXPECTED_GET_RESULT_ERROR, message: `Unexpected error at getting results: ${e}` });
             }
         });
 
@@ -941,7 +947,11 @@ class RpcController {
                     Event_value1: e.message,
                     Id_operation: 'Undefined',
                 });
-                return next({ code: 400, message: `Error while fetching node info: ${e}. ${e.stack}` });
+                return next({
+                    code: 400,
+                    error: constants.ERROR_TYPE.GET_NODE_INFO_ERROR,
+                    message: `Error while fetching node info: ${e}. ${e.stack}`,
+                });
             }
         });
     }
@@ -960,35 +970,13 @@ class RpcController {
             Operation_name: 'publish_init',
             Id_operation: operationId,
         });
-        if ((!req.files || !req.files.file || path.extname(req.files.file.name).toLowerCase() !== '.json') && (!req.body.data)) {
-            return next({ code: 400, message: 'No data provided. It is required to have assertion file or data in body, they must be in JSON-LD format.' });
-        }
 
-        if (req.files && req.files.file && req.files.file.size > constants.MAX_FILE_SIZE) {
+        const errorMessages = this.validatePublishParameters(req, options);
+        if (errorMessages.length > 0) {
             return next({
                 code: 400,
-                message: `File size limit is ${constants.MAX_FILE_SIZE / (1024 * 1024)}MB.`,
-            });
-        }
-
-        if (req.body && req.body.data && Buffer.byteLength(req.body.data, 'utf-8') > constants.MAX_FILE_SIZE) {
-            return next({
-                code: 400,
-                message: `File size limit is ${constants.MAX_FILE_SIZE / (1024 * 1024)}MB.`,
-            });
-        }
-
-        if (req.body.keywords && !Utilities.isArrayOfStrings(req.body.keywords)) {
-            return next({
-                code: 400,
-                message: 'Keywords must be a non-empty array of strings, all strings must have double quotes.',
-            });
-        }
-
-        if (req.body.visibility && !['public', 'private'].includes(req.body.visibility)) {
-            return next({
-                code: 400,
-                message: 'Visibility must be a string, value can be public or private.',
+                error: constants.ERROR_TYPE.INVALID_PUBLISH_REQUEST_ARGUMENTS,
+                message: errorMessages,
             });
         }
 
@@ -1025,7 +1013,7 @@ class RpcController {
             fileExtension = '.json';
         }
         const visibility = req.body.visibility ? req.body.visibility.toLowerCase() : 'public';
-        const ual = options.isAsset ? options.ual : undefined;
+        const ual = options.isAsset ? req.body.ual : undefined;
 
         let promise;
         if (req.body.keywords) {
@@ -1081,6 +1069,31 @@ class RpcController {
             });
     }
 
+    validatePublishParameters(req, options) {
+        const errorMessages = [];
+        if ((!req.files || !req.files.file || path.extname(req.files.file.name).toLowerCase() !== '.json') && (!req.body.data)) {
+            errorMessages.push('No data provided. It is required to have assertion file or data in body, they must be in JSON-LD format.');
+        }
+
+        if ((req.files && req.files.file && req.files.file.size > constants.MAX_FILE_SIZE)
+            || (req.body && req.body.data && Buffer.byteLength(req.body.data, 'utf-8') > constants.MAX_FILE_SIZE)) {
+            errorMessages.push(`File size limit is ${constants.MAX_FILE_SIZE / (1024 * 1024)}MB.`);
+        }
+
+        if (req.body.keywords && !Utilities.isArrayOfStrings(req.body.keywords)) {
+            errorMessages.push('Keywords must be a non-empty array of strings, all strings must have double quotes.');
+        }
+
+        if (req.body.visibility && !['public', 'private'].includes(req.body.visibility)) {
+            errorMessages.push('Visibility must be a string, value can be public or private.');
+        }
+
+        if (options.isUpdate && !req.body.ual) {
+            errorMessages.push('UAL must be a string.');
+        }
+        return errorMessages;
+    }
+
     updateFailedHandlerId(handlerId, error, next) {
         if (handlerId !== null) {
             Models.handler_ids.update(
@@ -1096,6 +1109,7 @@ class RpcController {
         } else {
             return next({
                 code: 400,
+                error: constants.ERROR_TYPE.UPDATE_FAILED_HANDLER_ID_ERROR,
                 message: 'Something went wrong with the requested operation, try again.',
             });
         }
