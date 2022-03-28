@@ -209,7 +209,7 @@ class RpcController {
             });
 
             if (!req.query.ids) {
-                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_RESOLVE_REQUEST_ARGUMENTS, message: 'Param ids is required.' });
+                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_RESOLVE_PARAMETER_VALUES, message: 'Param ids is required.' });
             }
 
             if (req.query.load === undefined) {
@@ -436,7 +436,7 @@ class RpcController {
 
         this.app.get('/assertions::search', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
-                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_ASSERTION_SEARCH_REQUEST_ARGUMENTS, message: 'Params query is necessary.' });
+                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_ASSERTION_SEARCH_PARAMETER_VALUES, message: 'Params query is necessary.' });
             }
 
             let { prefix } = req.query;
@@ -522,7 +522,7 @@ class RpcController {
 
         this.app.get('/entities::search', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
-                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_ENTITY_SEARCH_REQUEST_ARGUMENTS, message: 'Params query or ids are necessary.' });
+                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_ENTITY_SEARCH_PARAMETER_VALUES, message: 'Params query or ids are necessary.' });
             }
             const operationId = uuidv1();
             let handlerId = null;
@@ -634,7 +634,7 @@ class RpcController {
 
         this.app.post('/query', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.body.query || !req.query.type) {
-                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_QUERY_REQUEST_ARGUMENTS, message: 'Params query and type are necessary.' });
+                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_QUERY_PARAMETER_VALUES, message: 'Params query and type are necessary.' });
             }
 
             const allowedQueries = ['construct', 'select'];
@@ -707,7 +707,7 @@ class RpcController {
 
         this.app.post('/proofs::get', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.body.nquads) {
-                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_PROOFS_REQUEST_ARGUMENTS, message: 'Params query and type are necessary.' });
+                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_PROOFS_PARAMETER_VALUES, message: 'Params query and type are necessary.' });
             }
             const operationId = uuidv1();
             const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
@@ -975,7 +975,7 @@ class RpcController {
         if (errorMessages.length > 0) {
             return next({
                 code: 400,
-                error: constants.ERROR_TYPE.INVALID_PUBLISH_REQUEST_ARGUMENTS,
+                error: constants.ERROR_TYPE.INVALID_PUBLISH_PARAMETER_VALUES,
                 message: errorMessages,
             });
         }
