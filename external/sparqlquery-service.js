@@ -41,7 +41,32 @@ class SparqlqueryService {
     }
 
     async findAssertionsByKeyword(query, options, localQuery) {
-        this.logger.info('dummy for ESLint');
+        if (options.prefix && !(typeof options.prefix === 'boolean')) {
+            this.logger.error(`Failed FindassertionsByKeyword: ${options.prefix} is not a boolean`);
+            throw new Error('Prefix is not an boolean');
+        }
+        if (localQuery && !(typeof localQuery === 'boolean')) {
+            this.logger.error(`Failed FindassertionsByKeyword: ${localQuery} is not a boolean`);
+            throw new Error('Localquery is not an boolean');
+        }
+        let limitQuery = '';
+        query = this.cleanEscapeCharacter(query);
+        limitQuery = this.createLimitQuery(options);
+
+        const publicVisibilityQuery = !localQuery ? ' ?assertionId schema:hasVisibility "public" .' : '';
+        const filterQuery = options.prefix ? `FILTER contains(lcase(?keyword),'${query}')` : `FILTER (lcase(?keyword) = '${query}')`;
+
+        const sparqlQuery = `PREFIX schema: <http://schema.org/>
+                            SELECT distinct ?assertionId
+                            WHERE {
+                                ?assertionId schema:hasKeywords ?keyword .
+                                ${publicVisibilityQuery}
+                                ${filterQuery}
+                            }
+                        ${limitQuery}`;
+
+        const result = await this.execute(sparqlQuery);
+        return result;
     }
 
     async findAssetsByKeyword(query, options, localQuery) {
@@ -58,11 +83,29 @@ class SparqlqueryService {
     }
 
     async execute(query) {
-        this.logger.info('dummy for ESLint');
+        const test = await this.queryEngine.queryBindings(query, {
+            sources: [{
+                type: 'sparql',
+                value: `${this.config.url}`,
+            }],
+            log: this.logger,
+        });
+        return test.toArray();
     }
 
-    queryCleanup(query) {
-        this.logger.info('dummy for ESLint');
+    cleanEscapeCharacter(query) {
+        return query.replace(/['|[\]\\]/g, '\\$&');
+    }
+
+    createLimitQuery(options) {
+        if (options.limit && !Number.isInteger(options.limit)) {
+            this.logger.error(`Failed FindassertionsByKeyword: ${options.limit} is not a number`);
+            throw new Error('Limit is not a number');
+        } else if (Number.isInteger(options.limit) && options.limit < 0) {
+            this.logger.error(`Failed FindassertionsByKeyword: ${options.limit} is negative number`);
+            throw new Error('Limit is not a number');
+        }
+        return options.limit ? `LIMIT ${options.limit}` : '';
     }
 }
 
