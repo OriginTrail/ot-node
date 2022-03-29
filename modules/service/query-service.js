@@ -162,6 +162,10 @@ class QueryService {
     }
 
     async handleSearchResult(request) {
+        if (request === constants.NETWORK_RESPONSES.BUSY) {
+            return false;
+        }
+
         // TODO: add mutex
         const operationId = uuidv1();
         this.logger.emit({
@@ -265,6 +269,10 @@ class QueryService {
     }
 
     async handleSearchAssertionsResult(request) {
+        if (request === constants.NETWORK_RESPONSES.BUSY) {
+            return false;
+        }
+
         // TODO: add mutex
         const operationId = uuidv1();
         this.logger.emit({
@@ -274,10 +282,6 @@ class QueryService {
             Id_operation: operationId,
         });
         const { handlerId, response } = request;
-
-        if (response === constants.NETWORK_RESPONSES.BUSY) {
-            return false;
-        }
 
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
         const handlerData = await this.fileService.loadJsonFromFile(documentPath);
