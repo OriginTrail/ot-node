@@ -14,7 +14,7 @@ const {
 const Sparql = require('../../external/sparqlquery-service');
 const Logger = require('../../modules/logger/logger');
 
-const config = { url: 'http://35.217.28.54:9999/blazegraph/namespace/kb/sparql' };
+const config = { url: 'http://localhost:9999/blazegraph/namespace/kb/sparql' };
 
 let sparqlService = null;
 let logger = null;
