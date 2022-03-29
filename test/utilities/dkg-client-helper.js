@@ -80,7 +80,7 @@ class DkgClientHelper {
             });
     }
 
-    async getResult(operation, handler_id) {
+    async getResult(handler_id, operation) {
         return this.client
             ._getResult({
                 handler_id,

@@ -113,7 +113,6 @@ class LocalBlockchain {
 
     async initialize() {
         return new Promise((accept, reject) => {
-            console.log('Listen server local bockchain');
             this.server.listen(this.port, async (err, blockchain) => {
                 if (err) {
                     reject(err);

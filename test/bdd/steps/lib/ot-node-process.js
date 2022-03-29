@@ -10,21 +10,21 @@ process.on('message', async (data) => {
         process.env.OPERATIONAL_DB_PASSWORD = 'password';
         const newNode = new OTNode(config);
         newNode.start().then(async () => {
-            let started = false;
-            const httpApiHelper = new HttpApiHelper();
-            while (!started) {
-                try {
-                    const nodeHostname = `http://localhost:${config.rpcPort}`;
-                    // eslint-disable-next-line no-await-in-loop
-                    await httpApiHelper.info(nodeHostname);
-                    started = true;
-                    console.log(`Node with hostname: ${nodeHostname} started`);
-                } catch (error) {
-                    console.log('Waiting for the node to start sleeping for 1 sec');
-                    // eslint-disable-next-line no-await-in-loop
-                    await sleep.sleep(1000);
-                }
-            }
+            // let started = false;
+            // const httpApiHelper = new HttpApiHelper();
+            // while (!started) {
+            //     try {
+            //         const nodeHostname = `http://localhost:${config.rpcPort}`;
+            //         // eslint-disable-next-line no-await-in-loop
+            //         await httpApiHelper.info(nodeHostname);
+            //         started = true;
+            //         console.log(`Node with hostname: ${nodeHostname} started`);
+            //     } catch (error) {
+            //         console.log('Waiting for the node to start sleeping for 1 sec');
+            //         // eslint-disable-next-line no-await-in-loop
+            //         await sleep.sleep(1000);
+            //     }
+            // }
 
             process.send({ status: 'STARTED' });
         });

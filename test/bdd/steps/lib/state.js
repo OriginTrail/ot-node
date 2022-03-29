@@ -7,6 +7,21 @@ const state = {
     // this is local blockchain object look at test/bdd/steps/lib/local-blockchain.js
     localBlockchain: {},
     // array of nodes
-    nodes: [],
+    nodes: {
+        0: {
+            client: {},
+            fork: {},
+        },
+        1: {
+            client: {},
+            fork: {},
+        },
+    },
     bootstraps: [],
+    lastPublishData: {
+        nodeId: 1,
+        handlerId: '',
+        keywords: ['', ''],
+        assertion: {},
+    },
 };
