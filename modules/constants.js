@@ -45,14 +45,14 @@ exports.NETWORK_API_RATE_LIMIT = {
  */
 exports.NETWORK_API_SPAM_DETECTION = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    MAX_NUMBER: this.SERVICE_API_RATE_LIMIT.MAX_NUMBER * (1 + this.STORE_MAX_RETRIES),
+    MAX_NUMBER: 20,
 };
 
 /**
- * @constant {object} NETWORK_API_BLACK_LIST_TIME_WINDOW_MILLS
- * - Network (Libp2p) black list time window in milliseconds
+ * @constant {object} NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES
+ * - Network (Libp2p) black list time window in minutes
  */
-exports.NETWORK_API_BLACK_LIST_TIME_WINDOW_MILLS = 60 * 60 * 1000;
+exports.NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
 
 /**
  * @constant {number} DID_PREFIX

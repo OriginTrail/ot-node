@@ -283,9 +283,8 @@ class Libp2pService {
     async limitRequest(remotePeerId) {
         if(this.blackList[remotePeerId]){
             const remainingMinutes = Math.floor(
-              (constants.NETWORK_API_BLACK_LIST_TIME_WINDOW_MILLS -
-                (Date.now() - this.blackList[remotePeerId])) /
-                (1000 * 60)
+              constants.NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES -
+                (Date.now() - this.blackList[remotePeerId]) / (1000 * 60)
             );
             
             if(remainingMinutes > 0) {
@@ -299,10 +298,8 @@ class Libp2pService {
         
         if(await this.rateLimiter.spamDetection.limit(remotePeerId)) {
             this.blackList[remotePeerId] = Date.now();
-            const blackListTimeWindowMinutes =
-                constants.NETWORK_API_BLACK_LIST_TIME_WINDOW_MILLS / (60 * 1000);
             this.logger.info(
-                `Blocking request from ${remotePeerId}. Spammer detected and blacklisted for ${blackListTimeWindowMinutes} minutes.`
+                `Blocking request from ${remotePeerId}. Spammer detected and blacklisted for ${constants.NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES} minutes.`
             );
 
             return true;
