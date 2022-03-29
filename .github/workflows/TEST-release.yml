@@ -18,7 +18,7 @@ jobs:
           MYSQL_DATABASE: operationaldb
           MYSQL_USER: node
           MYSQL_PASSWORD: password
-          MYSQL_ROOT_PASSWORD:
+          MYSQL_ROOT_PASSWORD: password
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
@@ -36,7 +36,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm install
-      - run: mysql -u root -e "update mysql.user set plugin = 'mysql_native_password' where User='root';"
       - run: mkdir -p $ARTIFACTS_DIR
       - run: cp .origintrail_noderc.tests .origintrail_noderc
       - run: sudo chmod -R 777 $ARTIFACTS_DIR
