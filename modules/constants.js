@@ -192,6 +192,19 @@ exports.STRINGIFIED_NETWORK_RESPONSES = {
 };
 
 /**
+ * @constant {object} STRINGIFIED_NETWORK_RESPONSES -
+ *  Stringified types of known network responses
+ */
+exports.NETWORK_PROTOCOLS = {
+    STORE: '/store/1.0.0',
+    RESOLVE: '/resolve/1.0.0',
+    SEARCH: '/search/1.0.0',
+    SEARCH_RESULT: '/search/result/1.0.0',
+    SEARCH_ASSERTIONS: '/search/assertions/1.0.0',
+    SEARCH_ASSERTIONS_RESULT: '/search/assertions/result/1.0.0',
+};
+
+/**
  * @constant {object} ERROR_TYPE -
  *  Types of errors supported
  */

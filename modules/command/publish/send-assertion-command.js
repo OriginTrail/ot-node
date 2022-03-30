@@ -38,6 +38,7 @@ class SendAssertionCommand extends Command {
             );
             const foundNodes = await this.networkService.findNodes(
                 keyword,
+                constants.NETWORK_PROTOCOLS.STORE,
                 this.config.replicationFactor,
             );
             if (foundNodes.length < this.config.replicationFactor) {

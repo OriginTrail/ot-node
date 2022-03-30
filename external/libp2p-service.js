@@ -111,14 +111,16 @@ class Libp2pService {
         this.logger.debug(`Node ${this.node.peerId._idB58String} connected to ${connection.remotePeer.toB58String()}`);
     }
 
-    async findNodes(key, limit) {
+    async findNodes(key, protocol) {
         const encodedKey = new TextEncoder().encode(key);
         // Creates a DHT ID by hashing a given Uint8Array
         const id = (await sha256.digest(encodedKey)).digest;
         const nodes = this.node._dht.peerRouting.getClosestPeers(id);
         const result = new Set();
         for await (const node of nodes) {
-            result.add(node);
+            if(this.node.peerStore.peers.get(node._idB58String).protocols.includes(protocol)){
+                result.add(node);
+            }
         }
         this.logger.info(`Found ${result.size} nodes`);
 
