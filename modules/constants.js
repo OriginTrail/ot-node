@@ -12,46 +12,47 @@ exports.DID = 'DID';
 exports.MAX_FILE_SIZE = 2621440;
 
 /**
- * @constant {number} SERVICE_API_RATE_LIMIT_TIME_WINDOW_MILLS
- * - Express rate limit time window in milliseconds
+ * @constant {object} SERVICE_API_RATE_LIMIT
+ * - Express rate limit configuration constants
  */
-exports.SERVICE_API_RATE_LIMIT_TIME_WINDOW_MILLS = 1 * 60 * 1000;
+exports.SERVICE_API_RATE_LIMIT = {
+    TIME_WINDOW_MILLS: 1 * 60 * 1000,
+    MAX_NUMBER: 10,
+};
 
 /**
- * @constant {number} SERVICE_API_RATE_LIMIT_MAX_NUMBER
- * - Express rate limit max number of requests allowed in the specified time window
+ * @constant {object} SERVICE_API_SLOW_DOWN
+ * - Express slow down configuration constants
  */
-exports.SERVICE_API_RATE_LIMIT_MAX_NUMBER = 10;
+exports.SERVICE_API_SLOW_DOWN = {
+    TIME_WINDOW_MILLS: 1 * 60 * 1000,
+    DELAY_AFTER_SECONDS: 5,
+    DELAY_MILLS: 3 * 1000,
+};
 
 /**
- * @constant {number} SERVICE_API_SLOW_DOWN_TIME_WINDOW_MILLS
- * - Express slow down time window in milliseconds
+ * @constant {object} NETWORK_API_RATE_LIMIT
+ * - Network (Libp2p) rate limiter configuration constants
  */
-exports.SERVICE_API_SLOW_DOWN_TIME_WINDOW_MILLS = 1 * 60 * 1000;
+exports.NETWORK_API_RATE_LIMIT = {
+    TIME_WINDOW_MILLS: 1 * 60 * 1000,
+    MAX_NUMBER: this.SERVICE_API_RATE_LIMIT.MAX_NUMBER,
+};
 
 /**
- * @constant {number} SERVICE_API_SLOW_DOWN_DELAY_AFTER
- * - Express slow down number of seconds after which it starts delaying requests
+ * @constant {object} NETWORK_API_SPAM_DETECTION
+ * - Network (Libp2p) spam detection rate limiter configuration constants
  */
-exports.SERVICE_API_SLOW_DOWN_DELAY_AFTER = 5;
+exports.NETWORK_API_SPAM_DETECTION = {
+    TIME_WINDOW_MILLS: 1 * 60 * 1000,
+    MAX_NUMBER: 20,
+};
 
 /**
- * @constant {number} SERVICE_API_SLOW_DOWN_DELAY_MILLS
- * - Express slow down delay between requests in milliseconds
+ * @constant {object} NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES
+ * - Network (Libp2p) black list time window in minutes
  */
-exports.SERVICE_API_SLOW_DOWN_DELAY_MILLS = 3 * 1000;
-
-/**
- * @constant {number} NETWORK_API_RATE_LIMIT_TIME_WINDOW_MILLS
- * - Network (Libp2p) rate limit time window in milliseconds
- */
-exports.NETWORK_API_RATE_LIMIT_TIME_WINDOW_MILLS = 1 * 60 * 1000;
-
-/**
- * @constant {number} NETWORK_API_RATE_LIMIT_MAX_NUMBER
- * - Network (Libp2p) rate limit max number of requests allowed in the specified time window
- */
-exports.NETWORK_API_RATE_LIMIT_MAX_NUMBER = 10;
+exports.NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
 
 /**
  * @constant {number} DID_PREFIX

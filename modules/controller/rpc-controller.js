@@ -126,9 +126,9 @@ class RpcController {
 
     initializeRateLimitMiddleware() {
         this.rateLimitMiddleware = rateLimit({
-            windowMs: constants.SERVICE_API_RATE_LIMIT_TIME_WINDOW_MILLS,
-            max: constants.SERVICE_API_RATE_LIMIT_MAX_NUMBER,
-            message: `Too many requests sent, maximum number of requests per minute is ${constants.SERVICE_API_RATE_LIMIT_MAX_NUMBER}`,
+            windowMs: constants.SERVICE_API_RATE_LIMIT.TIME_WINDOW_MILLS,
+            max: constants.SERVICE_API_RATE_LIMIT.MAX_NUMBER,
+            message: `Too many requests sent, maximum number of requests per minute is ${constants.SERVICE_API_RATE_LIMIT.MAX_NUMBER}`,
             standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
             legacyHeaders: false, // Disable the `X-RateLimit-*` headers
         });
@@ -136,9 +136,9 @@ class RpcController {
 
     initializeSlowDownMiddleWare() {
         this.slowDownMiddleware = slowDown({
-            windowMs: constants.SERVICE_API_SLOW_DOWN_TIME_WINDOW_MILLS,
-            delayAfter: constants.SERVICE_API_SLOW_DOWN_DELAY_AFTER,
-            delayMs: constants.SERVICE_API_SLOW_DOWN_DELAY_MILLS,
+            windowMs: constants.SERVICE_API_SLOW_DOWN.TIME_WINDOW_MILLS,
+            delayAfter: constants.SERVICE_API_SLOW_DOWN.DELAY_AFTER_SECONDS,
+            delayMs: constants.SERVICE_API_SLOW_DOWN.DELAY_MILLS,
         });
     }
 
@@ -191,11 +191,11 @@ class RpcController {
         this.logger.info(`Service API module enabled, server running on port ${this.config.rpcPort}`);
 
         this.app.post('/publish', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            await this.publish(req, res, next, {isAsset: false});
+            await this.publish(req, res, next, { isAsset: false });
         });
 
         this.app.post('/provision', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            await this.publish(req, res, next, {isAsset: true, ual: null});
+            await this.publish(req, res, next, { isAsset: true, ual: null });
         });
 
         this.app.post('/update', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
