@@ -41,7 +41,7 @@ jobs:
       - run: sudo chmod -R 777 $ARTIFACTS_DIR
       - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR
       - run: sudo chmod -R 777 $CUCUMBER_ARTIFACTS_DIR
-      - run: npm run test:bdd;
+      - run: npm run test:bdd:release;
       - uses: actions/upload-artifact@v2
         if: ${{ always() }}
         with:

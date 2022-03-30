@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/"
+    "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+    "test:bdd:release": "cucumber-js --tags=@release --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/"
   },
   "repository": {
     "type": "git",

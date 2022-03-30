@@ -1,10 +1,8 @@
 const { When, Then, Given } = require('@cucumber/cucumber');
-const assert = require('assert');
-const uuid = require('uuid');
-const { expect } = require('chai');
+const { expect, assert } = require('chai');
+const sleep = require('sleep-async')().Promise;
 const data = require('./datasets/data.json');
 const utilities = require('../../../utilities/utilities');
-const sleep = require('sleep-async')().Promise;
 
 When(/^I call publish on node (\d+) with keywords:*$/, { timeout: 120000 }, async function (node, keywords) {
     this.logger.log('I call publish route successfully');
@@ -26,14 +24,33 @@ Given('I wait for last publish to finalize', { timeout: 120000 }, async function
     expect(!!this.state.lastPublishData, 'Last publish data is undefined. Publish is not started.').to.be.equal(true);
     const publishData = this.state.lastPublishData;
     let loopForPublishResult = true;
+    let retryCount = 0;
+    const maxRetryCount = 2;
     while (loopForPublishResult) {
         this.logger.log(`Getting publish result for handler id: ${publishData.handlerId} on node: ${publishData.nodeId}`);
+        // eslint-disable-next-line no-await-in-loop
         const publishResult = await this.state.nodes[publishData.nodeId].client.getResult(publishData.handlerId, 'publish');
-        console.log(publishResult);
-        await sleep.sleep(5000);
-        loopForPublishResult = false;
+        if (publishResult) {
+            this.state.lastPublishData.result = publishResult;
+            loopForPublishResult = false;
+        }
+        if (retryCount === maxRetryCount) {
+            loopForPublishResult = true;
+            assert.fail('Unable to get publish result');
+        } else {
+            retryCount += 1;
+            // eslint-disable-next-line no-await-in-loop
+            await sleep.sleep(5000);
+        }
     }
-    //done();
+});
+
+Given(/Last publish finished with status: ([COMPLETED|FAILED]+)$/, { timeout: 120000 }, async function (status) {
+    this.logger.log(`Last publish finished with status: ${status}`);
+    expect(!!this.state.lastPublishData, 'Last publish data is undefined. Publish is not started.').to.be.equal(true);
+    expect(!!this.state.lastPublishData.result, 'Last publish data result is undefined. Publish is not finished.').to.be.equal(true);
+    const publishData = this.state.lastPublishData;
+    expect(publishData.result.status, 'Publish result status validation failed').to.be.equal(status);
 });
 
 // Then('The returned handler_id is a valid uuid', () => {

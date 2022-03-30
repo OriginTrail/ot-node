@@ -18,9 +18,7 @@ process.on('message', async (data) => {
                     // eslint-disable-next-line no-await-in-loop
                     await httpApiHelper.info(nodeHostname);
                     started = true;
-                    console.log(`Node with hostname: ${nodeHostname} started`);
                 } catch (error) {
-                    console.log('Waiting for the node to start sleeping for 1 sec');
                     // eslint-disable-next-line no-await-in-loop
                     await sleep.sleep(1000);
                 }

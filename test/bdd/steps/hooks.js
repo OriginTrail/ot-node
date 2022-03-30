@@ -11,7 +11,7 @@ BeforeAll(() => {
 
 Before(function (testCase, done) {
     this.logger = console;
-    // this.logger.log('Starting scenario: ', testCase.pickle.name, `${testCase.sourceLocation.uri}:${testCase.sourceLocation.line}`);
+    this.logger.log('Starting scenario: ', testCase.pickle.name, `${testCase.pickle.uri}`);
     // Initialize variables
     this.state = {};
     this.state.localBlockchain = null;
@@ -53,7 +53,6 @@ After(function (testCase, done) {
 
 AfterAll(async () => {
     // todo Delete database data
-    // process.exit(0);
 });
 
 process.on('unhandledRejection', (reason, p) => {

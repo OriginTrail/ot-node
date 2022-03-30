@@ -14,7 +14,7 @@ function getBlockchainConfiguration(localBlockchain, privateKey, publicKey) {
         rpcEndpoints: [
             'http://localhost:7545',
         ],
-        hubContractAddress: localBlockchain.dkgContractAddress(),
+        hubContractAddress: localBlockchain.uaiRegistryContractAddress(),
         publicKey,
         privateKey,
     }];

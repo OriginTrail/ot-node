@@ -1,8 +1,8 @@
 {
   "@context": "http://schema.org/",
-  "@type": ["Person", "Book"],
+  "@type": "Person",
   "name": "Claude Shànnon",
-  "description": "Claude Elwood Shannon was an American mathematician, electrical engineer, and cryptographer known as \"the father of information theory\". ",
+  "description": "Claude Elwood Shannon was an American mathematician, electrical engineer, and cryptographer known as the father of information theory. ",
   "born": "Born: April 30, 1916, Petoskey, Michigan, United States",
   "died": "Died: February 24, 2001, Medford, Massachusetts, United States"
 }

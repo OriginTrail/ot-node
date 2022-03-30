@@ -8,8 +8,10 @@ Feature: Release related tests
 #    When I call info route on node 1
 #    Then The node version should start with number 6
 
+  @release
   Scenario: Publish returns expected result
     Given I setup 4 nodes
     When I call publish on node 1 with keywords:
-    | "keyword 1" | "keyword 2" |
+    | keyword 1 | keyword 2 |
     And I wait for last publish to finalize
+    And Last publish finished with status: COMPLETED
