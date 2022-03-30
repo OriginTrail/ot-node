@@ -2,11 +2,9 @@ require('dotenv').config();
 const {
     Before, BeforeAll, After, AfterAll,
 } = require('@cucumber/cucumber');
+const mysql = require("mysql2");
 
-if (process.env.NODE_ENV !== 'development') {
-    console.error('This process requires to run in "development" environment. Please change NODE_ENV.');
-    process.abort();
-}
+process.env.NODE_ENV = 'test';
 
 BeforeAll(() => {
 });
@@ -32,24 +30,9 @@ After(function (testCase, done) {
         this.logger.log(testCase.result.exception);
     }
 
-    // Clean.
-    const nodesWaits = [...this.state.nodes, ...this.state.bootstraps]
-        .filter((node) => node.isRunning)
-        .map((node) => new Promise((accept, reject) => {
-            node.on('finished', (code) => {
-                if (code === 0) {
-                    if (this.parameters.keepFailedArtifacts
-                            && testCase.result.status === 'passed') {
-                        // rimraf(node.options.configDir, () => accept());
-                    } else {
-                        accept();
-                    }
-                } else {
-                    reject();
-                }
-            });
-        }));
-    this.state.nodes.forEach((node) => (node.forkedNode.kill()));
+    for (const key in this.state.nodes) {
+        this.state.nodes[key].forkedNode.kill();
+    }
     this.state.bootstraps.forEach((node) => (node.forkedNode.kill()));
     if (this.state.localBlockchain) {
         if (Array.isArray(this.state.localBlockchain)) {
@@ -62,22 +45,15 @@ After(function (testCase, done) {
             this.state.localBlockchain.server.close();
         }
     }
-
-    Promise.all(nodesWaits).then(() => {
-        this.state.localBlockchain = null;
-        this.state.nodes = [];
-        this.state.bootstraps = [];
-        done();
-    }).catch((error) => {
-        this.logger.error(error);
-        this.state.localBlockchain = null;
-        this.state.nodes = [];
-        this.state.bootstraps = [];
-    });
+    this.state.localBlockchain = null;
+    this.state.nodes = [];
+    this.state.bootstraps = [];
+    done();
 });
 
 AfterAll(async () => {
     // todo Delete database data
+    // process.exit(0);
 });
 
 process.on('unhandledRejection', (reason, p) => {

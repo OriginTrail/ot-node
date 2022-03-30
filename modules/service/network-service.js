@@ -15,6 +15,7 @@ class NetworkService {
         this.implementation = new Libp2p({
             bootstrapMultiAddress: this.config.network.bootstrap,
             port: this.config.network.port,
+            privateKey: this.config.network.privateKey,
             configFilename,
             workerPool: this.workerPool,
         });

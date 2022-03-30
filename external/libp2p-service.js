@@ -57,16 +57,25 @@ class Libp2pService {
             };
 
             if (!this.config.peerId) {
-                const configFile = JSON.parse(fs.readFileSync(this.config.configFilename));
-                if (!configFile.network.privateKey) {
-                    const id = await PeerId.create({bits: 1024, keyType: 'RSA'})
-                    configFile.network.privateKey = id.toJSON().privKey;
-                    if(process.env.NODE_ENV !== 'development') {
-                        fs.writeFileSync(this.config.configFilename, JSON.stringify(configFile, null, 2));
+                if (process.env.NODE_ENV === 'test') {
+                    if (!this.config.privateKey) {
+                        const id = await PeerId.create({bits: 1024, keyType: 'RSA'})
+                        this.config.privateKey = id.toJSON().privKey;
                     }
+                    this.config.peerId = await PeerId.createFromPrivKey(this.config.privateKey);
+                } else {
+                    const configFile = JSON.parse(fs.readFileSync(this.config.configFilename));
+                    if (!configFile.network.privateKey) {
+                        const id = await PeerId.create({bits: 1024, keyType: 'RSA'})
+                        configFile.network.privateKey = id.toJSON().privKey;
+                        if(process.env.NODE_ENV !== 'development') {
+                            fs.writeFileSync(this.config.configFilename, JSON.stringify(configFile, null, 2));
+                        }
+                    }
+                    this.config.privateKey = configFile.network.privateKey;
+                    this.config.peerId = await PeerId.createFromPrivKey(this.config.privateKey);
                 }
-                this.config.privateKey = configFile.network.privateKey;
-                this.config.peerId = await PeerId.createFromPrivKey(this.config.privateKey);
+
             }
 
             initializationObject.peerId = this.config.peerId;
