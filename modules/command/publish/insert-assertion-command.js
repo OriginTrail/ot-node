@@ -1,5 +1,4 @@
 const Command = require('../command');
-const Models = require('../../../models/index');
 const constants = require('../../constants');
 
 class InsertAssertionCommand extends Command {
@@ -16,19 +15,26 @@ class InsertAssertionCommand extends Command {
      */
     async execute(command) {
         const { documentPath, handlerId, operationId } = command.data;
-        let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
+
+        this.logger.emit({
+            msg: 'Started measuring execution of storing publishing data into local triple store',
+            Event_name: 'publish_local_store_start',
+            Operation_name: 'publish_local_store',
+            Id_operation: operationId,
+        });
+        const { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
         try {
             await this.dataService.insert(nquads.join('\n'), `${constants.DID_PREFIX}:${assertion.id}`);
             this.logger.info(`Assertion ${assertion.id} has been successfully inserted`);
-        } catch (e) {
-            await this.handleError(handlerId, e, constants.ERROR_TYPE.INSERT_ASSERTION_ERROR, true);
             this.logger.emit({
-                msg: 'Finished measuring execution of publish command',
-                Event_name: 'publish_end',
-                Operation_name: 'publish',
+                msg: 'Finished measuring execution of storing publishing data into local triple store',
+                Event_name: 'publish_local_store_end',
+                Operation_name: 'publish_local_store',
                 Id_operation: operationId,
             });
+        } catch (e) {
+            await this.handleError(handlerId, e, constants.ERROR_TYPE.INSERT_ASSERTION_ERROR, true);
             return Command.empty();
         }
 

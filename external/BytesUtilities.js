@@ -61,7 +61,6 @@ class BytesUtilities {
     }
 
     static fromNat(bn) {
-        // eslint-disable-next-line no-nested-ternary
         return bn === '0x0' ? '0x' : bn.length % 2 === 0 ? bn : `0x0${bn.slice(2)}`;
     }
 

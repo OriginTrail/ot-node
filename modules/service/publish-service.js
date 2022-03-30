@@ -14,26 +14,39 @@ class PublishService {
         this.workerPool = ctx.workerPool;
     }
 
-    async publish(fileContent, fileExtension, keywords, visibility, ual, handlerId, isTelemetry = false) {
-        const operationId = uuidv1();
-        this.logger.emit({
-            msg: 'Started measuring execution of publish command',
-            Event_name: 'publish_start',
-            Operation_name: 'publish',
-            Id_operation: operationId,
-        });
-
+    async publish(
+        fileContent,
+        fileExtension,
+        keywords,
+        visibility,
+        ual,
+        handlerId,
+        operationId,
+        isTelemetry = false,
+    ) {
         try {
+            this.logger.emit({
+                msg: 'Started measuring execution of data canonization',
+                Event_name: 'publish_canonization_start',
+                Operation_name: 'publish_canonization',
+                Id_operation: operationId,
+            });
             let {
                 assertion,
                 nquads,
             } = await this.dataService.canonize(fileContent, fileExtension);
-
-            if (keywords.length > 10) {
-                keywords = keywords.slice(0, 10);
-                this.logger.warn('Too many keywords provided, limit is 10. Publishing only to the first 10 keywords.');
-            }
-
+            this.logger.emit({
+                msg: 'Finished measuring execution of data canonization',
+                Event_name: 'publish_canonization_end',
+                Operation_name: 'publish_canonization',
+                Id_operation: operationId,
+            });
+            this.logger.emit({
+                msg: 'Started measuring execution of generate metadata',
+                Event_name: 'publish_generate_metadata_start',
+                Operation_name: 'publish_generate_metadata',
+                Id_operation: operationId,
+            });
             assertion.metadata.issuer = this.validationService.getIssuer();
             assertion.metadata.visibility = visibility;
             assertion.metadata.keywords = keywords;
@@ -41,7 +54,11 @@ class PublishService {
             let method = 'publish';
             if (ual === null) {
                 method = 'provision';
-                ual = this.validationService.calculateHash(assertion.metadata.timestamp + assertion.metadata.type + assertion.metadata.issuer);
+                ual = this.validationService.calculateHash(
+                    assertion.metadata.timestamp
+                    + assertion.metadata.type
+                    + assertion.metadata.issuer,
+                );
                 assertion.metadata.UALs = [ual];
             } else if (ual !== undefined) {
                 method = 'update';
@@ -50,7 +67,9 @@ class PublishService {
 
             assertion.metadata.dataHash = this.validationService.calculateHash(assertion.data);
             assertion.metadataHash = this.validationService.calculateHash(assertion.metadata);
-            assertion.id = this.validationService.calculateHash(assertion.metadataHash + assertion.metadata.dataHash);
+            assertion.id = this.validationService.calculateHash(
+                assertion.metadataHash + assertion.metadata.dataHash,
+            );
             assertion.signature = this.validationService.sign(assertion.id);
 
             nquads = await this.dataService.appendMetadata(nquads, assertion);
@@ -66,13 +85,19 @@ class PublishService {
             this.logger.info(`Assertion signature: ${assertion.signature}`);
             this.logger.info(`Assertion length in N-QUADS format: ${nquads.length}`);
             this.logger.info(`Keywords: ${keywords}`);
+            this.logger.emit({
+                msg: assertion.id,
+                Event_name: 'publish_assertion_id',
+                Operation_name: 'publish_assertion_id',
+                Id_operation: operationId,
+            });
 
             const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
 
             const documentPath = await this.fileService
                 .writeContentsToFile(handlerIdCachePath, handlerId,
                     await this.workerPool.exec('JSONStringify', [{
-                        nquads, assertion
+                        nquads, assertion,
                     }]));
 
             const commandSequence = [
@@ -90,15 +115,14 @@ class PublishService {
                 },
                 transactional: false,
             });
-
-            return assertion;
-        } catch (e) {
             this.logger.emit({
-                msg: 'Finished measuring execution of publish command',
-                Event_name: 'publish_end',
-                Operation_name: 'publish',
+                msg: 'Finished measuring execution of generate metadata',
+                Event_name: 'publish_generate_metadata_end',
+                Operation_name: 'publish_generate_metadata',
                 Id_operation: operationId,
             });
+            return assertion;
+        } catch (e) {
             return null;
         }
     }
@@ -121,9 +145,10 @@ class PublishService {
 
     async handleStore(data) {
         if (!data || data.rdf) return false;
-        if (this.dataService.getTripleStoreQueueLength() > constants.HANDLE_STORE_BUSINESS_LIMIT) {
+        if (this.dataService.isNodeBusy(constants.BUSYNESS_LIMITS.HANDLE_STORE)) {
             return constants.NETWORK_RESPONSES.BUSY;
         }
+
         const operationId = uuidv1();
         this.logger.emit({
             msg: 'Started measuring execution of handle store command',

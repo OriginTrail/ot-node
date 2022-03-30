@@ -2,9 +2,9 @@ const fs = require('fs-extra');
 const path = require('path');
 const appRootPath = require('app-root-path');
 const { exec, execSync } = require('child_process');
+const rc = require('rc');
 const OTNode = require('./ot-node');
 const pjson = require('./package.json');
-const rc = require('rc');
 
 const configjson = require('./config/config.json');
 
