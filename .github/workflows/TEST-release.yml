@@ -3,7 +3,7 @@ name: TEST-release
 #todo this test should be execute when opening PR to prerelease/release branches
 on: [pull_request]
 env:
-  NODE_ENV: development
+  NODE_ENV: test
   ARTIFACTS_DIR: artifacts
   CUCUMBER_ARTIFACTS_DIR: artifacts/cucumber
 jobs:
