@@ -530,7 +530,7 @@ class RpcController {
                     options: { limit, prefix },
                     handlerId,
                 }, node));
-                await Promise.all(searchPromises);
+                await Promise.allSettled(searchPromises);
             } catch (e) {
                 this.logger.error({
                     msg: `Unexpected error at search assertions route: ${e.message}. ${e.stack}`,
@@ -643,7 +643,7 @@ class RpcController {
                     limit,
                     handlerId,
                 }, node));
-                await Promise.all(searchPromises);
+                await Promise.allSettled(searchPromises);
             } catch (e) {
                 this.logger.error({
                     msg: `Unexpected error at search entities route: ${e.message}. ${e.stack}`,
