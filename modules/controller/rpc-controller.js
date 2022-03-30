@@ -39,7 +39,6 @@ class RpcController {
         // TODO add body-parser middleware
         this.initializeNetworkApi();
         this.initializeAuthenticationMiddleware();
-        this.initializeSlowDownMiddleWare();
         this.initializeServiceApi();
         await this.initializeErrorMiddleware();
         if (this.sslEnabled) {
