@@ -314,6 +314,7 @@ class RpcController {
                         let nodes = await this.networkService.findNodes(id, this.config.replicationFactor);
                         if (nodes.length < this.config.replicationFactor) {
                             this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${id}`);
+                        }
 
                         nodes = [...new Set(nodes)];
 
