@@ -336,15 +336,38 @@ class RpcController {
                         let nodes = await this.networkService.findNodes(id, this.config.replicationFactor);
                         if (nodes.length < this.config.replicationFactor) {
                             this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${id}`);
-                        }
+
+                        nodes = [...new Set(nodes)];
+
+                        console.log(`RESOLVE_LOGS : About to send resolve queries to ${nodes.length} nodes.`);
+                        const start = Date.now();
+
                         for (const node of nodes) {
                             try {
-                                const assertion = await this.queryService.resolve(
-                                    id, req.query.load, isAsset, node, operationId,
-                                );
+                                console.log(`RESOLVE_LOGS :     About to send resolve queries to node : ${node._idB58String}`);
+                                const assertion = await this.queryService.resolve(id, req.query.load, isAsset, node, operationId);
+                                console.log(`RESOLVE_LOGS :     Returned nquads length : ${assertion && assertion !== null ? assertion.nquads.length : assertion}`);
                                 if (assertion) {
-                                    assertion.jsonld.metadata = JSON.parse(
-                                        sortedStringify(assertion.jsonld.metadata),
+                                    assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
+                                    assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
+                                    if (!assertion.jsonld.data.data 
+                                        || assertion.jsonld.data.data.length === 0) continue;
+                                    response.push(isAsset ? {
+                                            type: 'asset',
+                                            id: assertion.jsonld.metadata.UALs[0],
+                                            result: {
+                                                metadata: {
+                                                    type: assertion.jsonld.metadata.type,
+                                                    issuer: assertion.jsonld.metadata.issuer,
+                                                    latestState: assertion.jsonld.metadata.timestamp,
+                                                },
+                                                data: assertion.jsonld.data
+                                            }
+                                        } : {
+                                            type: 'assertion',
+                                            id: id,
+                                            assertion: assertion.jsonld
+                                        }
                                     );
                                     assertion.jsonld.data = JSON.parse(
                                         sortedStringify(
@@ -381,6 +404,9 @@ class RpcController {
                                 });
                             }
                         }
+                        const end = Date.now();
+                        console.log(`RESOLVE_LOGS : total time for resolving : ${(end - start) / 1000}`);
+                        console.log('RESOLVE_LOGS : ');
                     }
                 }
 

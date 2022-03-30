@@ -235,29 +235,27 @@ class DataService {
                             });
                             return resolve(false);
                         }
-                    } else {
-                        const calculateRootHash = this.validationService.calculateRootHash(
-                            [...new Set(rdf)],
-                        );
-                        const { rootHash, issuer } = await this.blockchainService
-                            .getAssertionProofs(assertion.id);
-                        if (rootHash !== `0x${calculateRootHash}`) {
-                            this.logger.error({
-                                msg: `Root hash ${rootHash} doesn't match with calculated 0x${calculateRootHash}`,
-                                Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
-                                Event_value1: 'Root hash not matching calculated',
-                            });
-                            return resolve(false);
-                        }
-                        if (issuer.toLowerCase() !== assertion.metadata.issuer.toLowerCase()) {
-                            this.logger.error({
-                                msg: `Issuer ${issuer} doesn't match with received ${assertion.metadata.issuer}`,
-                                Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
-                                Event_value1: 'Issuer not matching',
-                            });
-                            return resolve(false);
-                        }
                     }
+                    // else {
+                    //     const calculateRootHash = this.validationService.calculateRootHash([...new Set(rdf)]);
+                    //     const {rootHash, issuer} = await this.blockchainService.getAssertionProofs(assertion.id);
+                    //     if (rootHash !== `0x${calculateRootHash}`) {
+                    //         this.logger.error({
+                    //             msg: `Root hash ${rootHash} doesn't match with calculated 0x${calculateRootHash}`,
+                    //             Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
+                    //             Event_value1: 'Root hash not matching calculated',
+                    //         });
+                    //         return resolve(false);
+                    //     }
+                    //     if (issuer.toLowerCase() !== assertion.metadata.issuer.toLowerCase()) {
+                    //         this.logger.error({
+                    //             msg: `Issuer ${issuer} doesn't match with received ${assertion.metadata.issuer}`,
+                    //             Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
+                    //             Event_value1: 'Issuer not matching',
+                    //         });
+                    //         return resolve(false);
+                    //     }
+                    // }
                 }
                 return resolve(true);
             } catch (e) {
