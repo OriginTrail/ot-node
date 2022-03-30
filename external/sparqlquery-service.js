@@ -1,5 +1,8 @@
 const axios = require('axios');
+const qs = require('qs');
+const constants = require('../modules/constants');
 const Engine = require('@comunica/query-sparql').QueryEngine;
+const N3 = require('n3');
 
 class SparqlqueryService {
     constructor(config) {
@@ -25,7 +28,8 @@ class SparqlqueryService {
     }
 
     async construct(query) {
-        this.logger.info('dummy for ESLint');
+        const result = await this.executeQuery(query);
+        return result;
     }
 
     async ask(query) {
@@ -33,11 +37,62 @@ class SparqlqueryService {
     }
 
     async resolve(uri) {
-        this.logger.info('dummy for ESLint');
+        const query = `PREFIX schema: <http://schema.org/>
+                        CONSTRUCT { ?s ?p ?o }
+                        WHERE {
+                          GRAPH <${constants.DID_PREFIX}:${uri}> {
+                            ?s ?p ?o
+                          }
+                        }`;
+        let nquads = await this.construct(query);
+
+        const writer = new N3.Writer();
+        writer.addQuads(nquads);
+        writer.end(async (error, result) => {
+            if (nquads.length) {
+                nquads = result;
+                nquads = nquads.split('\n');
+                nquads = nquads.filter((x) => x !== '');
+                nquads = await this.transformBlankNodes(nquads);
+            } else {
+                nquads = null;
+            }
+            return nquads;
+        });
     }
 
     async transformBlankNodes(nquads) {
-        this.logger.info('dummy for ESLint');
+        // Find minimum blank node value to assign it to _:c14n0
+        let minimumBlankNodeValue = -1;
+        for (const nquad of nquads) {
+            if (nquad.includes('_:t')) {
+                const blankNodes = nquad.split(' ')
+                    .filter((s) => s.includes('_:t'));
+                for (const bn of blankNodes) {
+                    const bnValue = Number(bn.substring(3));
+                    if (minimumBlankNodeValue === -1 || minimumBlankNodeValue > bnValue) {
+                        minimumBlankNodeValue = bnValue;
+                    }
+                }
+            }
+        }
+
+        // Transform blank nodes, example: _:t145 -> _:c14n3
+        let bnName;
+        for (const nquadIndex in nquads) {
+            const nquad = nquads[nquadIndex];
+            if (nquad.includes('_:t')) {
+                const blankNodes = nquad.split(' ')
+                    .filter((s) => s.includes('_:t'));
+                for (const bn of blankNodes) {
+                    const bnValue = Number(bn.substring(3));
+                    bnName = `_:c14n${bnValue - minimumBlankNodeValue}`;
+                    nquads[nquadIndex] = nquads[nquadIndex].replace(bn, bnName);
+                }
+            }
+        }
+
+        return nquads;
     }
 
     async assertionsByAsset(uri) {
@@ -126,6 +181,18 @@ class SparqlqueryService {
         } catch (e) {
             return false;
         }
+    }
+
+    async executeQuery(query) {
+
+        const test = await this.queryEngine.queryQuads(query, {
+            sources: [{
+                type: 'sparql',
+                value: `${this.config.url}`,
+            }],
+            log: this.logger,
+        });
+        return test.toArray();
     }
 
     async execute(query) {
