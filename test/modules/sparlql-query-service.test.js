@@ -68,22 +68,11 @@ describe('Sparql module', () => {
             .throw(Error);
     });
 
-    it('Check FindAssertionsByKeyword', async () => {
+    it('Check FindAssertionsByKeyword Errorhandling', async () => {
         await expect(sparqlService.findAssertionsByKeyword('abc', { limit: 'aaaa' }, false))
             .to
             .be
             .rejectedWith(Error);
-
-        const test = await sparqlService.findAssertionsByKeyword('pub', {
-            limit: 5,
-            prefix: true
-        }, true);
-        // eslint-disable-next-line no-unused-expressions
-        expect(test)
-            .to
-            .be
-            .not
-            .null;
 
         await expect(sparqlService.findAssertionsByKeyword('abc', { limit: '90' }, 'test'))
             .to
@@ -102,6 +91,77 @@ describe('Sparql module', () => {
             .to
             .be
             .rejectedWith(Error);
+    });
+
+    it('Check FindAssertionsByKeyword functionality', async () => {
+        // This can also be mocked if necessary
+        const test = await sparqlService.findAssertionsByKeyword('pub', {
+            limit: 5,
+            prefix: true,
+        }, true);
+        // eslint-disable-next-line no-unused-expressions
+        expect(test)
+            .to
+            .be
+            .not
+            .null;
+
+        const testTwo = await sparqlService.findAssertionsByKeyword('pub', {
+            limit: 5,
+            prefix: false,
+        }, true);
+        // eslint-disable-next-line no-unused-expressions
+        expect(testTwo)
+            .to
+            .be
+            .not
+            .null;
     })
-        .timeout(100000);
+        .timeout(600000);
+
+    it('Check createFilterParameter', async () => {
+        expect(sparqlService.createFilterParameter('', ''))
+            .to
+            .equal('');
+
+        expect(sparqlService.createFilterParameter('\'', ''))
+            .to
+            .equal('');
+
+        expect(sparqlService.createFilterParameter('\'', sparqlService.filtertype.KEYWORD))
+            .to
+            .equal('FILTER (lcase(?keyword) = \'\\\'\')');
+
+        expect(sparqlService.createFilterParameter('abcd', sparqlService.filtertype.KEYWORD))
+            .to
+            .equal('FILTER (lcase(?keyword) = \'abcd\')');
+
+        expect(sparqlService.createFilterParameter('abcd', sparqlService.filtertype.KEYWORDPREFIX))
+            .to
+            .equal('FILTER contains(lcase(?keyword),\'abcd\')');
+
+        expect(sparqlService.createFilterParameter('abcd', sparqlService.filtertype.TYPES))
+            .to
+            .equal('FILTER (?type IN (abcd))');
+
+        expect(sparqlService.createFilterParameter('abcd', sparqlService.filtertype.ISSUERS))
+            .to
+            .equal('FILTER (?issuer IN (abcd))');
+    });
+    it('Check FindAssetsByKeyword functionality', async () => {
+        // This can also be mocked if necessary
+        const test = await sparqlService.findAssetsByKeyword('pub', {
+            limit: 5,
+            prefix: true,
+            issuers: '<did:dkg:99999>',
+            types: '<did:dkg:33333>',
+        }, true);
+        // eslint-disable-next-line no-unused-expressions
+        expect(test)
+            .to
+            .be
+            .not
+            .null;
+    })
+        .timeout(600000);
 });
