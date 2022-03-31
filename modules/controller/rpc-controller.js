@@ -122,23 +122,43 @@ class RpcController {
     initializeNetworkApi() {
         this.logger.info(`Network API module enabled on port ${this.config.network.port}`);
 
-        this.networkService.handleMessage('/store', (result) => this.publishService.handleStore(result));
+        this.networkService.handleMessage(
+            constants.NETWORK_PROTOCOLS.STORE,
+            (result) => this.publishService.handleStore(result),
+        );
 
-        this.networkService.handleMessage('/resolve', (result) => this.queryService.handleResolve(result));
+        this.networkService.handleMessage(
+            constants.NETWORK_PROTOCOLS.RESOLVE,
+            (result) => this.queryService.handleResolve(result),
+        );
 
-        this.networkService.handleMessage('/search', (result) => this.queryService.handleSearch(result), {
-            async: true,
-            timeout: 60e3,
-        });
+        this.networkService.handleMessage(
+            constants.NETWORK_PROTOCOLS.SEARCH,
+            (result) => this.queryService.handleSearch(result),
+            {
+                async: true,
+                timeout: constants.NETWORK_HANDLER_TIMEOUT,
+            },
+        );
 
-        this.networkService.handleMessage('/search/result', (result) => this.queryService.handleSearchResult(result));
+        this.networkService.handleMessage(
+            constants.NETWORK_PROTOCOLS.SEARCH_RESULT,
+            (result) => this.queryService.handleSearchResult(result),
+        );
 
-        this.networkService.handleMessage('/search/assertions', (result) => this.queryService.handleSearchAssertions(result), {
-            async: true,
-            timeout: 60e3,
-        });
+        this.networkService.handleMessage(
+            constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS,
+            (result) => this.queryService.handleSearchAssertions(result),
+            {
+                async: true,
+                timeout: constants.NETWORK_HANDLER_TIMEOUT,
+            },
+        );
 
-        this.networkService.handleMessage('/search/assertions/result', (result) => this.queryService.handleSearchAssertionsResult(result));
+        this.networkService.handleMessage(
+            constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS_RESULT,
+            (result) => this.queryService.handleSearchAssertionsResult(result),
+        );
 
         // this.networkService.handleMessage('/query', (result)
         // => this.queryService.handleQuery(result));
@@ -146,6 +166,7 @@ class RpcController {
 
     initializeServiceApi() {
         this.logger.info(`Service API module enabled, server running on port ${this.config.rpcPort}`);
+
 
         this.app.post('/publish', async (req, res, next) => {
             await this.publish(req, res, next, {isAsset: false});
@@ -181,127 +202,128 @@ class RpcController {
                 Id_operation: operationId,
             });
 
-            if (!req.query.ids) {
-                return next({ code: 400, message: 'Param ids is required.' });
-            }
-
-            if (req.query.load === undefined) {
-                req.query.load = false;
-            }
-
-            this.logger.emit({
-                msg: 'Finished measuring execution of resolve init',
-                Event_name: 'resolve_init_end',
-                Operation_name: 'resolve_init',
-                Id_operation: operationId,
-            });
-
-            let handlerId = null;
-            try {
-                const inserted_object = await Models.handler_ids.create({
-                    status: 'PENDING',
-                });
-                handlerId = inserted_object.dataValues.handler_id;
-                res.status(202).send({
-                    handler_id: handlerId,
-                });
-
-                let ids = [req.query.ids];
-                if (req.query.ids instanceof Array) {
-                    ids = [...new Set(req.query.ids)];
+                if (!req.query.ids) {
+                    return next({ code: 400, message: 'Param ids is required.' });
                 }
-                this.logger.info(`Resolve for ${ids} with handler id ${handlerId} initiated.`);
-                const response = [];
 
-                for (let id of ids) {
-                    let isAsset = false;
-                    const { assertionId } = await this.blockchainService.getAssetProofs(id);
-                    if (assertionId) {
-                        isAsset = true;
-                        id = assertionId;
+                if (req.query.load === undefined) {
+                    req.query.load = false;
+                }
+
+                this.logger.emit({
+                    msg: 'Finished measuring execution of resolve init',
+                    Event_name: 'resolve_init_end',
+                    Operation_name: 'resolve_init',
+                    Id_operation: operationId,
+                });
+
+                let handlerId = null;
+                try {
+                    const inserted_object = await Models.handler_ids.create({
+                        status: 'PENDING',
+                    });
+                    handlerId = inserted_object.dataValues.handler_id;
+                    res.status(202).send({
+                        handler_id: handlerId,
+                    });
+
+                    let ids = [req.query.ids];
+                    if (req.query.ids instanceof Array) {
+                        ids = [...new Set(req.query.ids)];
                     }
-                    this.logger.emit({
-                        msg: id,
-                        Event_name: 'resolve_assertion_id',
-                        Operation_name: 'resolve_assertion_id',
-                        Id_operation: operationId,
-                    });
-                    this.logger.emit({
-                        msg: 'Started measuring execution of resolve local',
-                        Event_name: 'resolve_local_start',
-                        Operation_name: 'resolve_local',
-                        Id_operation: operationId,
-                    });
+                    this.logger.info(`Resolve for ${ids} with handler id ${handlerId} initiated.`);
+                    const response = [];
 
-                    const nquads = await this.dataService.resolve(id, true);
-
-                    this.logger.emit({
-                        msg: 'Finished measuring execution of resolve local',
-                        Event_name: 'resolve_local_end',
-                        Operation_name: 'resolve_local',
-                        Id_operation: operationId,
-                    });
-
-                    if (nquads) {
+                    for (let id of ids) {
+                        let isAsset = false;
+                        const { assertionId } = await this.blockchainService.getAssetProofs(id);
+                        if (assertionId) {
+                            isAsset = true;
+                            id = assertionId;
+                        }
                         this.logger.emit({
-                            msg: 'Started measuring execution of create assertion from nquads',
-                            Event_name: 'resolve_create_assertion_from_nquads_start',
-                            Operation_name: 'resolve_create_assertion_from_nquads',
+                            msg: id,
+                            Event_name: 'resolve_assertion_id',
+                            Operation_name: 'resolve_assertion_id',
+                            Id_operation: operationId,
+                        });
+                        this.logger.emit({
+                            msg: 'Started measuring execution of resolve local',
+                            Event_name: 'resolve_local_start',
+                            Operation_name: 'resolve_local',
                             Id_operation: operationId,
                         });
 
-                        const assertion = await this.dataService.createAssertion(nquads);
+                        const nquads = await this.dataService.resolve(id, true);
 
                         this.logger.emit({
-                            msg: 'Finished measuring execution of create assertion from nquads',
-                            Event_name: 'resolve_create_assertion_from_nquads_end',
-                            Operation_name: 'resolve_create_assertion_from_nquads',
+                            msg: 'Finished measuring execution of resolve local',
+                            Event_name: 'resolve_local_end',
+                            Operation_name: 'resolve_local',
                             Id_operation: operationId,
                         });
 
-                        assertion.jsonld.metadata = JSON.parse(
-                            sortedStringify(assertion.jsonld.metadata),
-                        );
-                        assertion.jsonld.data = JSON.parse(
-                            sortedStringify(
-                                await this.dataService.fromNQuads(
-                                    assertion.jsonld.data,
-                                    assertion.jsonld.metadata.type,
+                        if (nquads) {
+                            this.logger.emit({
+                                msg: 'Started measuring execution of create assertion from nquads',
+                                Event_name: 'resolve_create_assertion_from_nquads_start',
+                                Operation_name: 'resolve_create_assertion_from_nquads',
+                                Id_operation: operationId,
+                            });
+
+                            const assertion = await this.dataService.createAssertion(nquads);
+
+                            this.logger.emit({
+                                msg: 'Finished measuring execution of create assertion from nquads',
+                                Event_name: 'resolve_create_assertion_from_nquads_end',
+                                Operation_name: 'resolve_create_assertion_from_nquads',
+                                Id_operation: operationId,
+                            });
+
+                            assertion.jsonld.metadata = JSON.parse(
+                                sortedStringify(assertion.jsonld.metadata),
+                            );
+                            assertion.jsonld.data = JSON.parse(
+                                sortedStringify(
+                                    await this.dataService.fromNQuads(
+                                        assertion.jsonld.data,
+                                        assertion.jsonld.metadata.type,
+                                    ),
                                 ),
-                            ),
-                        );
-                        response.push(isAsset ? {
-                            type: 'asset',
-                            id: assertion.jsonld.metadata.UALs[0],
-                            result: {
-                                assertions: await this.dataService.assertionsByAsset(
-                                    assertion.jsonld.metadata.UALs[0],
-                                ),
-                                metadata: {
-                                    type: assertion.jsonld.metadata.type,
-                                    issuer: assertion.jsonld.metadata.issuer,
-                                    latestState: assertion.jsonld.metadata.timestamp,
+                            );
+                            response.push(isAsset ? {
+                                type: 'asset',
+                                id: assertion.jsonld.metadata.UALs[0],
+                                result: {
+                                    assertions: await this.dataService.assertionsByAsset(
+                                        assertion.jsonld.metadata.UALs[0],
+                                    ),
+                                    metadata: {
+                                        type: assertion.jsonld.metadata.type,
+                                        issuer: assertion.jsonld.metadata.issuer,
+                                        latestState: assertion.jsonld.metadata.timestamp,
+                                    },
+                                    data: assertion.jsonld.data,
                                 },
-                                data: assertion.jsonld.data,
-                            },
-                        } : {
-                            type: 'assertion',
-                            id,
-                            assertion: assertion.jsonld,
-                        });
-                        response.push(isAsset ? {
-                            type: 'asset',
-                            id: assertion.jsonld.metadata.UALs[0],
-                            result: {
-                                assertions: await this.dataService.assertionsByAsset(
-                                    assertion.jsonld.metadata.UALs[0],
-                                ),
-                                metadata: {
-                                    type: assertion.jsonld.metadata.type,
-                                    issuer: assertion.jsonld.metadata.issuer,
-                                    latestState: assertion.jsonld.metadata.timestamp,
+                            } : {
+                                type: 'assertion',
+                                id,
+                                assertion: assertion.jsonld,
+                            });
+                            response.push(isAsset ? {
+                                type: 'asset',
+                                id: assertion.jsonld.metadata.UALs[0],
+                                result: {
+                                    assertions: await this.dataService.assertionsByAsset(
+                                        assertion.jsonld.metadata.UALs[0],
+                                    ),
+                                    metadata: {
+                                        type: assertion.jsonld.metadata.type,
+                                        issuer: assertion.jsonld.metadata.issuer,
+                                        latestState: assertion.jsonld.metadata.timestamp,
+                                    },
+                                    data: assertion.jsonld.data,
                                 },
-                                data: assertion.jsonld.data,
                             },
                         } : {
                             type: 'assertion',
@@ -310,7 +332,11 @@ class RpcController {
                         });
                     } else {
                         this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${id}`);
-                        let nodes = await this.networkService.findNodes(id, this.config.replicationFactor);
+                      const nodes = await this.networkService.findNodes(
+                                id,
+                                constants.NETWORK_PROTOCOLS.STORE,
+                                this.config.replicationFactor,
+                            );
                         if (nodes.length < this.config.replicationFactor) {
                             this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${id}`);
                         }
@@ -347,92 +373,101 @@ class RpcController {
                                             assertion: assertion.jsonld
                                         }
                                     );
-                                    assertion.jsonld.data = JSON.parse(
-                                        sortedStringify(
-                                            await this.dataService.fromNQuads(
-                                                assertion.jsonld.data,
-                                                assertion.jsonld.metadata.type,
+                                    if (assertion) {
+                                        assertion.jsonld.metadata = JSON.parse(
+                                            sortedStringify(assertion.jsonld.metadata),
+                                        );
+                                        assertion.jsonld.data = JSON.parse(
+                                            sortedStringify(
+                                                await this.dataService.fromNQuads(
+                                                    assertion.jsonld.data,
+                                                    assertion.jsonld.metadata.type,
+                                                ),
                                             ),
-                                        ),
-                                    );
-                                    response.push(isAsset ? {
-                                        type: 'asset',
-                                        id: assertion.jsonld.metadata.UALs[0],
-                                        result: {
-                                            metadata: {
-                                                type: assertion.jsonld.metadata.type,
-                                                issuer: assertion.jsonld.metadata.issuer,
-                                                latestState: assertion.jsonld.metadata.timestamp,
+                                        );
+                                        response.push(isAsset ? {
+                                            type: 'asset',
+                                            id: assertion.jsonld.metadata.UALs[0],
+                                            result: {
+                                                metadata: {
+                                                    type: assertion.jsonld.metadata.type,
+                                                    issuer: assertion.jsonld.metadata.issuer,
+                                                    latestState: assertion
+                                                        .jsonld.metadata.timestamp,
+                                                },
+                                                data: assertion.jsonld.data,
                                             },
-                                            data: assertion.jsonld.data,
-                                        },
-                                    } : {
-                                        type: 'assertion',
-                                        id,
-                                        assertion: assertion.jsonld,
+                                        } : {
+                                            type: 'assertion',
+                                            id,
+                                            assertion: assertion.jsonld,
+                                        });
+                                        break;
+                                    }
+                                } catch (e) {
+                                    this.logger.error({
+                                        msg: `Error while resolving data from another node: ${e.message}. ${e.stack}`,
+                                        Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
+                                        Event_value1: e.message,
+                                        Id_operation: operationId,
                                     });
-                                    break;
                                 }
-                            } catch (e) {
-                                this.logger.error({
-                                    msg: `Error while resolving data from another node: ${e.message}. ${e.stack}`,
-                                    Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
-                                    Event_value1: e.message,
-                                    Id_operation: operationId,
-                                });
                             }
                         }
                         const end = Date.now();
                         console.log(`RESOLVE_LOGS : total time for resolving : ${(end - start) / 1000}`);
                         console.log('RESOLVE_LOGS : ');
                     }
-                }
 
-                const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
+                    const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
 
-                this.logger.emit({
-                    msg: 'Started measuring execution of resolve save assertion',
-                    Event_name: 'resolve_save_assertion_start',
-                    Operation_name: 'resolve_save_assertion',
-                    Id_operation: operationId,
-                });
+                    this.logger.emit({
+                        msg: 'Started measuring execution of resolve save assertion',
+                        Event_name: 'resolve_save_assertion_start',
+                        Operation_name: 'resolve_save_assertion',
+                        Id_operation: operationId,
+                    });
 
-                await this.fileService
-                    .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(response));
+                    await this.fileService.writeContentsToFile(
+                        handlerIdCachePath,
+                        handlerId,
+                        JSON.stringify(response),
+                    );
 
-                this.logger.emit({
-                    msg: 'Finished measuring execution of resolve save assertion',
-                    Event_name: 'resolve_save_assertion_end',
-                    Operation_name: 'resolve_save_assertion',
-                    Id_operation: operationId,
-                });
+                    this.logger.emit({
+                        msg: 'Finished measuring execution of resolve save assertion',
+                        Event_name: 'resolve_save_assertion_end',
+                        Operation_name: 'resolve_save_assertion',
+                        Id_operation: operationId,
+                    });
 
-                await Models.handler_ids.update(
-                    {
-                        status: 'COMPLETED',
-                    }, {
-                        where: {
-                            handler_id: handlerId,
+                    await Models.handler_ids.update(
+                        {
+                            status: 'COMPLETED',
+                        }, {
+                            where: {
+                                handler_id: handlerId,
+                            },
                         },
-                    },
-                );
+                    );
 
-                this.logger.emit({
-                    msg: 'Finished measuring execution of resolve command',
-                    Event_name: 'resolve_end',
-                    Operation_name: 'resolve',
-                    Id_operation: operationId,
-                });
-            } catch (e) {
-                this.logger.error({
-                    msg: `Unexpected error at resolve route: ${e.message}. ${e.stack}`,
-                    Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
-                    Event_value1: e.message,
-                    Id_operation: operationId,
-                });
-                this.updateFailedHandlerId(handlerId, e, next);
-            }
-        });
+                    this.logger.emit({
+                        msg: 'Finished measuring execution of resolve command',
+                        Event_name: 'resolve_end',
+                        Operation_name: 'resolve',
+                        Id_operation: operationId,
+                    });
+                } catch (e) {
+                    this.logger.error({
+                        msg: `Unexpected error at resolve route: ${e.message}. ${e.stack}`,
+                        Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
+                        Event_value1: e.message,
+                        Id_operation: operationId,
+                    });
+                    this.updateFailedHandlerId(handlerId, e, next);
+                }
+            },
+        );
 
         this.app.get('/assertions::search', async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
@@ -490,7 +525,7 @@ class RpcController {
                 );
 
                 this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`);
-                let nodes = await this.networkService.findNodes(query, this.config.replicationFactor);
+                let nodes = await this.networkService.findNodes(query, '/assertions::search', this.config.replicationFactor);
                 if (nodes.length < this.config.replicationFactor) {
                     this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${query}`);
                 }
@@ -585,6 +620,7 @@ class RpcController {
                     this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`);
                     nodes = await this.networkService.findNodes(
                         query,
+                        '/entities::search',
                         this.config.replicationFactor,
                     );
                     if (nodes.length < this.config.replicationFactor) {

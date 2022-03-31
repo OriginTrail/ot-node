@@ -17,7 +17,11 @@ class QueryService {
                 resolve(null);
             }, constants.RESOLVE_MAX_TIME_MILLIS);
 
-            const result = await this.networkService.sendMessage('/resolve', id, node);
+            const result = await this.networkService.sendMessage(
+                constants.NETWORK_PROTOCOLS.STORE,
+                id,
+                node,
+            );
             clearTimeout(timer);
             resolve(result);
         });
@@ -125,7 +129,11 @@ class QueryService {
     }
 
     async search(data, node) {
-        const result = await this.networkService.sendMessage('/search', data, node);
+        const result = await this.networkService.sendMessage(
+            constants.NETWORK_PROTOCOLS.SEARCH,
+            data,
+            node,
+        );
         return result;
     }
 
@@ -240,7 +248,11 @@ class QueryService {
     }
 
     async searchAssertions(data, node) {
-        const result = await this.networkService.sendMessage('/search/assertions', data, node);
+        const result = await this.networkService.sendMessage(
+            constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS,
+            data,
+            node,
+        );
         return result;
     }
 
@@ -273,6 +285,7 @@ class QueryService {
         if (request === constants.NETWORK_RESPONSES.BUSY) {
             return false;
         }
+
         // TODO: add mutex
         const operationId = uuidv1();
         this.logger.emit({
