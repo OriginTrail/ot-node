@@ -1,13 +1,15 @@
 const { When, Then, Given } = require('@cucumber/cucumber');
 const { expect, assert } = require('chai');
 const sleep = require('sleep-async')().Promise;
-const data = require('./datasets/data.json');
+const assertions = require('./datasets/assertions.json');
 const utilities = require('../../../utilities/utilities');
 
-When(/^I call publish on node (\d+) with keywords:*$/, { timeout: 120000 }, async function (node, keywords) {
+When(/^I call publish on node (\d+) with ([^"]*) with keywords:*$/, { timeout: 120000 }, async function (node, assertionName, keywords) {
     this.logger.log('I call publish route successfully');
+    expect(!!assertions[assertionName], `Assertion with name: ${assertionName} not found!`).to.be.equal(true);
+
     const parsedKeywords = utilities.unpackRawTableToArray(keywords);
-    const assertion = JSON.stringify(data);
+    const assertion = JSON.stringify(assertions[assertionName]);
     const handlerId = (await this.state.nodes[node - 1].client
         .publish(assertion, parsedKeywords)).data.handler_id;
 
