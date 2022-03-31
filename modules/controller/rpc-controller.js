@@ -201,145 +201,143 @@ class RpcController {
                 Id_operation: operationId,
             });
 
-                if (!req.query.ids) {
-                    return next({ code: 400, message: 'Param ids is required.' });
-                }
+            if (!req.query.ids) {
+                return next({ code: 400, message: 'Param ids is required.' });
+            }
 
-                if (req.query.load === undefined) {
-                    req.query.load = false;
-                }
+            if (req.query.load === undefined) {
+                req.query.load = false;
+            }
 
-                this.logger.emit({
-                    msg: 'Finished measuring execution of resolve init',
-                    Event_name: 'resolve_init_end',
-                    Operation_name: 'resolve_init',
-                    Id_operation: operationId,
+            this.logger.emit({
+                msg: 'Finished measuring execution of resolve init',
+                Event_name: 'resolve_init_end',
+                Operation_name: 'resolve_init',
+                Id_operation: operationId,
+            });
+
+            let handlerId = null;
+            try {
+                const inserted_object = await Models.handler_ids.create({
+                    status: 'PENDING',
+                });
+                handlerId = inserted_object.dataValues.handler_id;
+                res.status(202).send({
+                    handler_id: handlerId,
                 });
 
-                let handlerId = null;
-                try {
-                    const inserted_object = await Models.handler_ids.create({
-                        status: 'PENDING',
-                    });
-                    handlerId = inserted_object.dataValues.handler_id;
-                    res.status(202).send({
-                        handler_id: handlerId,
-                    });
+                let ids = [req.query.ids];
+                if (req.query.ids instanceof Array) {
+                    ids = [...new Set(req.query.ids)];
+                }
+                this.logger.info(`Resolve for ${ids} with handler id ${handlerId} initiated.`);
+                const response = [];
 
-                    let ids = [req.query.ids];
-                    if (req.query.ids instanceof Array) {
-                        ids = [...new Set(req.query.ids)];
+                for (let id of ids) {
+                    let isAsset = false;
+                    const { assertionId } = await this.blockchainService.getAssetProofs(id);
+                    if (assertionId) {
+                        isAsset = true;
+                        id = assertionId;
                     }
-                    this.logger.info(`Resolve for ${ids} with handler id ${handlerId} initiated.`);
-                    const response = [];
+                    this.logger.emit({
+                        msg: id,
+                        Event_name: 'resolve_assertion_id',
+                        Operation_name: 'resolve_assertion_id',
+                        Id_operation: operationId,
+                    });
+                    this.logger.emit({
+                        msg: 'Started measuring execution of resolve local',
+                        Event_name: 'resolve_local_start',
+                        Operation_name: 'resolve_local',
+                        Id_operation: operationId,
+                    });
 
-                    for (let id of ids) {
-                        let isAsset = false;
-                        const { assertionId } = await this.blockchainService.getAssetProofs(id);
-                        if (assertionId) {
-                            isAsset = true;
-                            id = assertionId;
-                        }
+                    const nquads = await this.dataService.resolve(id, true);
+
+                    this.logger.emit({
+                        msg: 'Finished measuring execution of resolve local',
+                        Event_name: 'resolve_local_end',
+                        Operation_name: 'resolve_local',
+                        Id_operation: operationId,
+                    });
+
+                    if (nquads) {
                         this.logger.emit({
-                            msg: id,
-                            Event_name: 'resolve_assertion_id',
-                            Operation_name: 'resolve_assertion_id',
+                            msg: 'Started measuring execution of create assertion from nquads',
+                            Event_name: 'resolve_create_assertion_from_nquads_start',
+                            Operation_name: 'resolve_create_assertion_from_nquads',
                             Id_operation: operationId,
                         });
+
+                        const assertion = await this.dataService.createAssertion(nquads);
+
                         this.logger.emit({
-                            msg: 'Started measuring execution of resolve local',
-                            Event_name: 'resolve_local_start',
-                            Operation_name: 'resolve_local',
+                            msg: 'Finished measuring execution of create assertion from nquads',
+                            Event_name: 'resolve_create_assertion_from_nquads_end',
+                            Operation_name: 'resolve_create_assertion_from_nquads',
                             Id_operation: operationId,
                         });
 
-                        const nquads = await this.dataService.resolve(id, true);
-
-                        this.logger.emit({
-                            msg: 'Finished measuring execution of resolve local',
-                            Event_name: 'resolve_local_end',
-                            Operation_name: 'resolve_local',
-                            Id_operation: operationId,
-                        });
-
-                        if (nquads && false) {
-                            this.logger.emit({
-                                msg: 'Started measuring execution of create assertion from nquads',
-                                Event_name: 'resolve_create_assertion_from_nquads_start',
-                                Operation_name: 'resolve_create_assertion_from_nquads',
-                                Id_operation: operationId,
-                            });
-
-                            const assertion = await this.dataService.createAssertion(nquads);
-
-                            this.logger.emit({
-                                msg: 'Finished measuring execution of create assertion from nquads',
-                                Event_name: 'resolve_create_assertion_from_nquads_end',
-                                Operation_name: 'resolve_create_assertion_from_nquads',
-                                Id_operation: operationId,
-                            });
-
-                            assertion.jsonld.metadata = JSON.parse(
-                                sortedStringify(assertion.jsonld.metadata),
-                            );
-                            assertion.jsonld.data = JSON.parse(
-                                sortedStringify(
-                                    await this.dataService.fromNQuads(
-                                        assertion.jsonld.data,
-                                        assertion.jsonld.metadata.type,
-                                    ),
+                        assertion.jsonld.metadata = JSON.parse(
+                            sortedStringify(assertion.jsonld.metadata),
+                        );
+                        assertion.jsonld.data = JSON.parse(
+                            sortedStringify(
+                                await this.dataService.fromNQuads(
+                                    assertion.jsonld.data,
+                                    assertion.jsonld.metadata.type,
                                 ),
-                            );
-                            response.push(isAsset ? {
-                                type: 'asset',
-                                id: assertion.jsonld.metadata.UALs[0],
-                                result: {
-                                    assertions: await this.dataService.assertionsByAsset(
-                                        assertion.jsonld.metadata.UALs[0],
-                                    ),
-                                    metadata: {
-                                        type: assertion.jsonld.metadata.type,
-                                        issuer: assertion.jsonld.metadata.issuer,
-                                        latestState: assertion.jsonld.metadata.timestamp,
-                                    },
-                                    data: assertion.jsonld.data,
+                            ),
+                        );
+                        response.push(isAsset ? {
+                            type: 'asset',
+                            id: assertion.jsonld.metadata.UALs[0],
+                            result: {
+                                assertions: await this.dataService.assertionsByAsset(
+                                    assertion.jsonld.metadata.UALs[0],
+                                ),
+                                metadata: {
+                                    type: assertion.jsonld.metadata.type,
+                                    issuer: assertion.jsonld.metadata.issuer,
+                                    latestState: assertion.jsonld.metadata.timestamp,
                                 },
-                            } : {
-                                type: 'assertion',
-                                id,
-                                assertion: assertion.jsonld,
-                            });
-                            response.push(isAsset ? {
-                                type: 'asset',
-                                id: assertion.jsonld.metadata.UALs[0],
-                                result: {
-                                    assertions: await this.dataService.assertionsByAsset(
-                                        assertion.jsonld.metadata.UALs[0],
-                                    ),
-                                    metadata: {
-                                        type: assertion.jsonld.metadata.type,
-                                        issuer: assertion.jsonld.metadata.issuer,
-                                        latestState: assertion.jsonld.metadata.timestamp,
-                                    },
-                                    data: assertion.jsonld.data,
+                                data: assertion.jsonld.data,
+                            },
+                        } : {
+                            type: 'assertion',
+                            id,
+                            assertion: assertion.jsonld,
+                        });
+                        response.push(isAsset ? {
+                            type: 'asset',
+                            id: assertion.jsonld.metadata.UALs[0],
+                            result: {
+                                assertions: await this.dataService.assertionsByAsset(
+                                    assertion.jsonld.metadata.UALs[0],
+                                ),
+                                metadata: {
+                                    type: assertion.jsonld.metadata.type,
+                                    issuer: assertion.jsonld.metadata.issuer,
+                                    latestState: assertion.jsonld.metadata.timestamp,
                                 },
-                            } : {
-                                type: 'assertion',
-                                id,
-                                assertion: assertion.jsonld,
-                            });
+                                data: assertion.jsonld.data,
+                            },
+                        } : {
+                            type: 'assertion',
+                            id,
+                            assertion: assertion.jsonld,
+                        });
                     } else {
                         this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${id}`);
-                      let nodes = await this.networkService.findNodes(
-                                id,
-                                constants.NETWORK_PROTOCOLS.RESOLVE,
-                                this.config.replicationFactor,
-                            );
+                        const nodes = await this.networkService.findNodes(
+                            id,
+                            constants.NETWORK_PROTOCOLS.RESOLVE,
+                            this.config.replicationFactor,
+                        );
                         if (nodes.length < this.config.replicationFactor) {
                             this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${id}`);
                         }
-
-                        nodes = [...new Set(nodes)];
 
                         console.log(`RESOLVE_LOGS : About to send resolve queries to ${nodes.length} nodes.`);
                         const start = Date.now();
@@ -353,54 +351,23 @@ class RpcController {
                                     assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
                                     assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)));
                                     response.push(isAsset ? {
-                                            type: 'asset',
-                                            id: assertion.jsonld.metadata.UALs[0],
-                                            result: {
-                                                metadata: {
-                                                    type: assertion.jsonld.metadata.type,
-                                                    issuer: assertion.jsonld.metadata.issuer,
-                                                    latestState: assertion.jsonld.metadata.timestamp,
-                                                },
-                                                data: assertion.jsonld.data
-                                            }
-                                        } : {
-                                            type: 'assertion',
-                                            id: id,
-                                            assertion: assertion.jsonld
-                                        }
-                                    );
-                                    if (assertion) {
-                                        assertion.jsonld.metadata = JSON.parse(
-                                            sortedStringify(assertion.jsonld.metadata),
-                                        );
-                                        assertion.jsonld.data = JSON.parse(
-                                            sortedStringify(
-                                                await this.dataService.fromNQuads(
-                                                    assertion.jsonld.data,
-                                                    assertion.jsonld.metadata.type,
-                                                ),
-                                            ),
-                                        );
-                                        response.push(isAsset ? {
-                                            type: 'asset',
-                                            id: assertion.jsonld.metadata.UALs[0],
-                                            result: {
-                                                metadata: {
-                                                    type: assertion.jsonld.metadata.type,
-                                                    issuer: assertion.jsonld.metadata.issuer,
-                                                    latestState: assertion
-                                                        .jsonld.metadata.timestamp,
-                                                },
-                                                data: assertion.jsonld.data,
+                                        type: 'asset',
+                                        id: assertion.jsonld.metadata.UALs[0],
+                                        result: {
+                                            metadata: {
+                                                type: assertion.jsonld.metadata.type,
+                                                issuer: assertion.jsonld.metadata.issuer,
+                                                latestState: assertion.jsonld.metadata.timestamp,
                                             },
-                                        } : {
-                                            type: 'assertion',
-                                            id,
-                                            assertion: assertion.jsonld,
-                                        });
-                                        break;
-                                    }
-                                } 
+                                            data: assertion.jsonld.data,
+                                        },
+                                    } : {
+                                        type: 'assertion',
+                                        id,
+                                        assertion: assertion.jsonld,
+                                    });
+                                    break;
+                                }
                             } catch (e) {
                                 this.logger.error({
                                     msg: `Error while resolving data from another node: ${e.message}. ${e.stack}`,
@@ -416,55 +383,54 @@ class RpcController {
                     }
                 }
 
-                    const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
+                const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
 
-                    this.logger.emit({
-                        msg: 'Started measuring execution of resolve save assertion',
-                        Event_name: 'resolve_save_assertion_start',
-                        Operation_name: 'resolve_save_assertion',
-                        Id_operation: operationId,
-                    });
+                this.logger.emit({
+                    msg: 'Started measuring execution of resolve save assertion',
+                    Event_name: 'resolve_save_assertion_start',
+                    Operation_name: 'resolve_save_assertion',
+                    Id_operation: operationId,
+                });
 
-                    await this.fileService.writeContentsToFile(
-                        handlerIdCachePath,
-                        handlerId,
-                        JSON.stringify(response),
-                    );
+                await this.fileService.writeContentsToFile(
+                    handlerIdCachePath,
+                    handlerId,
+                    JSON.stringify(response),
+                );
 
-                    this.logger.emit({
-                        msg: 'Finished measuring execution of resolve save assertion',
-                        Event_name: 'resolve_save_assertion_end',
-                        Operation_name: 'resolve_save_assertion',
-                        Id_operation: operationId,
-                    });
+                this.logger.emit({
+                    msg: 'Finished measuring execution of resolve save assertion',
+                    Event_name: 'resolve_save_assertion_end',
+                    Operation_name: 'resolve_save_assertion',
+                    Id_operation: operationId,
+                });
 
-                    await Models.handler_ids.update(
-                        {
-                            status: 'COMPLETED',
-                        }, {
-                            where: {
-                                handler_id: handlerId,
-                            },
+                await Models.handler_ids.update(
+                    {
+                        status: 'COMPLETED',
+                    }, {
+                        where: {
+                            handler_id: handlerId,
                         },
-                    );
+                    },
+                );
 
-                    this.logger.emit({
-                        msg: 'Finished measuring execution of resolve command',
-                        Event_name: 'resolve_end',
-                        Operation_name: 'resolve',
-                        Id_operation: operationId,
-                    });
-                } catch (e) {
-                    this.logger.error({
-                        msg: `Unexpected error at resolve route: ${e.message}. ${e.stack}`,
-                        Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
-                        Event_value1: e.message,
-                        Id_operation: operationId,
-                    });
-                    this.updateFailedHandlerId(handlerId, e, next);
-                }
-            },
-        );
+                this.logger.emit({
+                    msg: 'Finished measuring execution of resolve command',
+                    Event_name: 'resolve_end',
+                    Operation_name: 'resolve',
+                    Id_operation: operationId,
+                });
+            } catch (e) {
+                this.logger.error({
+                    msg: `Unexpected error at resolve route: ${e.message}. ${e.stack}`,
+                    Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
+                    Event_value1: e.message,
+                    Id_operation: operationId,
+                });
+                this.updateFailedHandlerId(handlerId, e, next);
+            }
+        });
 
         this.app.get(constants.SERVICE_API_ROUTES.SEARCH_ASSERTIONS, async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
