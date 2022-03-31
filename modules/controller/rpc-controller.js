@@ -233,7 +233,7 @@ class RpcController {
                 });
 
                 if (!req.query.ids) {
-                    return next({ code: 400, error: constants.ERROR_TYPE.INVALID_RESOLVE_PARAMETER_VALUES, message: "Query parameter 'ids' is required." });
+                    return next({ code: 400, error: constants.SERVICE_API_ERROR.INVALID_RESOLVE_PARAMETER_VALUES, message: "Query parameter 'ids' is required." });
                 }
 
                 if (req.query.load === undefined) {
@@ -469,7 +469,7 @@ class RpcController {
 
         this.app.get(constants.SERVICE_API_ROUTES.SEARCH_ASSERTIONS, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
-                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_ASSERTION_SEARCH_PARAMETER_VALUES, message: "Query parameter 'query' is required." });
+                return next({ code: 400, error: constants.SERVICE_API_ERROR.INVALID_ASSERTION_SEARCH_PARAMETER_VALUES, message: "Query parameter 'query' is required." });
             }
 
             let { prefix } = req.query;
@@ -555,7 +555,7 @@ class RpcController {
 
         this.app.get(constants.SERVICE_API_ROUTES.SEARCH, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
-                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_ENTITY_SEARCH_PARAMETER_VALUES, message: "Query parameter 'query' is required." });
+                return next({ code: 400, error: constants.SERVICE_API_ERROR.INVALID_ENTITY_SEARCH_PARAMETER_VALUES, message: "Query parameter 'query' is required." });
             }
             const operationId = uuidv1();
             let handlerId = null;
@@ -669,13 +669,13 @@ class RpcController {
         this.app.post(constants.SERVICE_API_ROUTES.QUERY, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             const errorMessages = this.validateQueryParameters(req);
             if (errorMessages.length > 0) {
-                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_QUERY_PARAMETER_VALUES, message: errorMessages });
+                return next({ code: 400, error: constants.SERVICE_API_ERROR.INVALID_QUERY_PARAMETER_VALUES, message: errorMessages });
             }
 
             const allowedQueries = ['construct', 'select'];
             // Handle allowed query types, TODO: expand to select, ask and construct
             if (!allowedQueries.includes(req.query.type.toLowerCase())) {
-                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_QUERY_TYPE, message: `Invalid query type, currently supported types: ${allowedQueries.join(', ')}` });
+                return next({ code: 400, error: constants.SERVICE_API_ERROR.INVALID_QUERY_TYPE, message: `Invalid query type, currently supported types: ${allowedQueries.join(', ')}` });
             }
             const operationId = uuidv1();
             let handlerId = null;
@@ -742,7 +742,7 @@ class RpcController {
 
         this.app.post(constants.SERVICE_API_ROUTES.PROOFS, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.body || !req.body.nquads || !Utilities.isArrayOfStrings(req.body.nquads)) {
-                return next({ code: 400, error: constants.ERROR_TYPE.INVALID_PROOFS_PARAMETER_VALUES, message: "Form data value 'nquads' is required and must be a non-empty array of strings. All strings must have double quotes." });
+                return next({ code: 400, error: constants.SERVICE_API_ERROR.INVALID_PROOFS_PARAMETER_VALUES, message: "Form data value 'nquads' is required and must be a non-empty array of strings. All strings must have double quotes." });
             }
 
             const operationId = uuidv1();
@@ -819,7 +819,7 @@ class RpcController {
             if (!['provision', 'update', 'publish', 'resolve', 'query', 'entities:search', 'assertions:search', 'proofs:get'].includes(req.params.operation)) {
                 return next({
                     code: 400,
-                    error: constants.ERROR_TYPE.INVALID_RESULT_OPERATION,
+                    error: constants.SERVICE_API_ERROR.INVALID_RESULT_OPERATION,
                     message: 'Invalid result operation, available operations are: provision, update, publish, resolve, entities:search, assertions:search, query and proofs:get',
                 });
             }
@@ -828,7 +828,7 @@ class RpcController {
             if (!validator.isUUID(handler_id)) {
                 return next({
                     code: 400,
-                    error: constants.ERROR_TYPE.INVALID_UUID_FORMAT,
+                    error: constants.SERVICE_API_ERROR.INVALID_UUID_FORMAT,
                     message: 'Handler id is in wrong format',
                 });
             }
@@ -953,7 +953,7 @@ class RpcController {
                         break;
                     }
                 } else {
-                    next({ code: 404, error: constants.ERROR_TYPE.HANDLER_ID_NOT_FOUND, message: `Handler with id: ${handler_id} does not exist.` });
+                    next({ code: 404, error: constants.SERVICE_API_ERROR.HANDLER_ID_NOT_FOUND, message: `Handler with id: ${handler_id} does not exist.` });
                 }
             } catch (e) {
                 this.logger.error({
@@ -962,7 +962,7 @@ class RpcController {
                     Event_value1: e.message,
                     Id_operation: handler_id,
                 });
-                next({ code: 400, error: constants.ERROR_TYPE.UNEXPECTED_GET_RESULT_ERROR, message: `Unexpected error at getting results: ${e}` });
+                next({ code: 400, error: constants.SERVICE_API_ERROR.UNEXPECTED_GET_RESULT_ERROR, message: `Unexpected error at getting results: ${e}` });
             }
         });
 
@@ -984,8 +984,8 @@ class RpcController {
                     Id_operation: 'Undefined',
                 });
                 return next({
-                    code: 400,
-                    error: constants.ERROR_TYPE.GET_NODE_INFO_ERROR,
+                    code: 500,
+                    error: constants.SERVICE_API_ERROR.GET_NODE_INFO_ERROR,
                     message: `Error while fetching node info: ${e}. ${e.stack}`,
                 });
             }
@@ -1011,7 +1011,7 @@ class RpcController {
         if (errorMessages.length > 0) {
             return next({
                 code: 400,
-                error: constants.ERROR_TYPE.INVALID_PUBLISH_PARAMETER_VALUES,
+                error: constants.SERVICE_API_ERROR.INVALID_PUBLISH_PARAMETER_VALUES,
                 message: errorMessages,
             });
         }
@@ -1156,7 +1156,7 @@ class RpcController {
         } else {
             return next({
                 code: 400,
-                error: constants.ERROR_TYPE.UPDATE_FAILED_HANDLER_ID_ERROR,
+                error: constants.SERVICE_API_ERROR.UPDATE_FAILED_HANDLER_ID_ERROR,
                 message: 'Something went wrong with the requested operation, try again.',
             });
         }
