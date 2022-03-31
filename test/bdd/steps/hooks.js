@@ -4,6 +4,7 @@ const {
 } = require('@cucumber/cucumber');
 const slugify = require('slugify');
 const fs = require('fs');
+const { ServerClientConfig, GraphDBServerClient } = require('graphdb').server;
 
 process.env.NODE_ENV = 'test';
 
@@ -18,7 +19,6 @@ Before(function (testCase, done) {
     this.state.localBlockchain = null;
     this.state.nodes = {};
     this.state.bootstraps = [];
-    this.state.manualStuff = {};
     let logDir = process.env.CUCUMBER_ARTIFACTS_DIR || '.';
     logDir += `/test/bdd/log/${slugify(testCase.pickle.name)}`;
     fs.mkdirSync(logDir, { recursive: true });
@@ -35,11 +35,15 @@ After(function (testCase, done) {
         this.logger.log('Oops, exception occurred:');
         this.logger.log(testCase.result.exception);
     }
-
+    const graphRepositoryNames = [];
     for (const key in this.state.nodes) {
         this.state.nodes[key].forkedNode.kill();
+        graphRepositoryNames.push(this.state.nodes[key].configuration.graphDatabase.name);
     }
-    this.state.bootstraps.forEach((node) => (node.forkedNode.kill()));
+    this.state.bootstraps.forEach((node) => {
+        node.forkedNode.kill();
+        graphRepositoryNames.push(node.configuration.graphDatabase.name);
+    });
     if (this.state.localBlockchain) {
         if (Array.isArray(this.state.localBlockchain)) {
             for (const blockchain of this.state.localBlockchain) {
@@ -51,14 +55,24 @@ After(function (testCase, done) {
             this.state.localBlockchain.server.close();
         }
     }
-    this.state.localBlockchain = null;
-    this.state.nodes = [];
-    this.state.bootstraps = [];
-    done();
+    this.logger.log('After test hook, cleaning repositories');
+    // delete graphdb repositories
+    const serverConfig = new ServerClientConfig('http://localhost:7200')
+        .setTimeout(40000)
+        .setKeepAlive(true);
+    const server = new GraphDBServerClient(serverConfig);
+    const promises = [];
+
+    for (const name in graphRepositoryNames) {
+        promises.push(server.deleteRepository(name));
+    }
+    Promise.all(promises).then(() => {
+        // todo this will not delete repository we need to research more about this
+        done();
+    });
 });
 
 AfterAll(async () => {
-    // todo Delete database data
 });
 
 process.on('unhandledRejection', (reason, p) => {

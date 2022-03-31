@@ -10,14 +10,17 @@ When(/^I call publish on node (\d+) with ([^"]*) with keywords:*$/, { timeout: 1
 
     const parsedKeywords = utilities.unpackRawTableToArray(keywords);
     const assertion = JSON.stringify(assertions[assertionName]);
-    const handlerId = (await this.state.nodes[node - 1].client
-        .publish(assertion, parsedKeywords)).data.handler_id;
+    const result = await this.state.nodes[node - 1].client
+        .publish(assertion, parsedKeywords).catch((error) => {
+            assert.fail(`Error while trying to publish assertion. ${error}`);
+        });
+    const handlerId = result.data.handler_id;
 
     this.state.lastPublishData = {
         nodeId: node - 1,
         handlerId,
         keywords: parsedKeywords,
-        assertion,
+        assertion: assertions[assertionName],
     };
 });
 
@@ -31,7 +34,9 @@ Given('I wait for last publish to finalize', { timeout: 120000 }, async function
     while (loopForPublishResult) {
         this.logger.log(`Getting publish result for handler id: ${publishData.handlerId} on node: ${publishData.nodeId}`);
         // eslint-disable-next-line no-await-in-loop
-        const publishResult = await this.state.nodes[publishData.nodeId].client.getResult(publishData.handlerId, 'publish');
+        const publishResult = await this.state.nodes[publishData.nodeId].client.getResult(publishData.handlerId, 'publish').catch((error) => {
+            assert.fail(`Error while trying to get publish result assertion. ${error}`);
+        });
         if (publishResult) {
             this.state.lastPublishData.result = publishResult;
             loopForPublishResult = false;

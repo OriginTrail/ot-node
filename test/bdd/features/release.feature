@@ -16,16 +16,19 @@ Feature: Release related tests
     And I wait for last publish to finalize
     And Last publish finished with status: COMPLETED
 
-  @skip
+  @release
   Scenario: Node is able to resolve assertion previously published
     Given I setup 4 nodes
     When I call publish on node 1 with validAssertion with keywords:
       | keyword 1 | keyword 2 |
     And I wait for last publish to finalize
     And Last publish finished with status: COMPLETED
-    And I setup 1 additional node
-    And I call resolve on node 5 with keywords:
-      | keyword 1 |
-    And I wait for resolve to finalize
+    And I call resolve on node 1 for last published assertion
+    And I wait for last resolve to finalize
     And Last resolve finished with status: COMPLETED
-    And Last reoslve returned valid result
+    And Last resolve returned valid result
+#    And I setup 1 additional node
+#    And I call resolve on node 5 for last published assertion
+#    And I wait for last resolve to finalize
+#    And Last resolve finished with status: COMPLETED
+#    And Last resolve returned valid result

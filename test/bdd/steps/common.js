@@ -73,6 +73,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
                 this.state.nodes[i] = {
                     client,
                     forkedNode,
+                    configuration: nodeConfiguration,
                 };
             }
             nodesStarted += 1;
@@ -132,6 +133,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
             this.state.bootstraps.push({
                 client,
                 forkedNode,
+                configuration: bootstrapNodeConfiguration,
             });
         }
         done();
@@ -194,6 +196,7 @@ Given(/^I setup (\d+) additional node[s]*$/, { timeout: 120000 }, function (node
                 this.state.nodes[nodeIndex] = {
                     client,
                     forkedNode,
+                    configuration: nodeConfiguration,
                 };
             }
             nodesStarted += 1;

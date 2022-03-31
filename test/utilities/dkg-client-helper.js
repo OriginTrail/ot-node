@@ -15,8 +15,6 @@ class DkgClientHelper {
             keywords,
             method: 'provision',
             visibility: 'public',
-        }).catch((error) => {
-            console.log(`error provisioning dataset. ${error}`);
         });
     }
 
@@ -36,8 +34,6 @@ class DkgClientHelper {
             keywords,
             method: 'update',
             visibility: 'public',
-        }).catch((error) => {
-            console.log(`error publishing dataset. ${error}`);
         });
     }
 
@@ -45,8 +41,6 @@ class DkgClientHelper {
         return this.client
             ._resolveRequest({
                 ids,
-            }).catch((error) => {
-                console.log(`error resolving. ${error}`);
             });
     }
 
@@ -55,19 +49,6 @@ class DkgClientHelper {
             ._searchRequest({
                 resultType,
                 query,
-            }).catch((error) => {
-                console.log(`error searching. ${error}`);
-            });
-    }
-
-    async getSearchResult(resultType, handler_id) {
-        return this.client
-            ._getSearchResult({
-                resultType,
-                handler_id,
-            })
-            .catch((error) => {
-                console.log(`error getting search result. ${error}`);
             });
     }
 
@@ -75,8 +56,6 @@ class DkgClientHelper {
         return this.client
             ._queryRequest({
                 query,
-            }).catch((error) => {
-                console.log(`error querying. ${error}`);
             });
     }
 

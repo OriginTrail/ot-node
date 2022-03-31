@@ -23,5 +23,13 @@ const state = {
         handlerId: '',
         keywords: ['', ''],
         assertion: {},
+        result: {},
     },
+    lastResolveData: {
+        nodeId: 1,
+        handlerId: '',
+        assertionIds: ['', ''],
+        result: {},
+    },
+    scenarionLogDir: '',
 };
