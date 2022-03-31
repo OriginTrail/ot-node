@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/"
+    "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+    "test:unit": "nyc --all mocha --exit $(find test/unit -name '*.js')"
   },
   "repository": {
     "type": "git",
@@ -39,6 +40,7 @@
     "eslint-plugin-react-hooks": "^4.2.0",
     "form-data": "^4.0.0",
     "nodemon": "^2.0.15",
+    "nyc": "^15.1.0",
     "request": "^2.88.2"
   },
   "dependencies": {
@@ -49,6 +51,7 @@
     "big-number": "^2.0.0",
     "bl": "^5.0.0",
     "bn": "^1.0.5",
+    "chai": "^4.3.6",
     "crypto-js": "^4.1.1",
     "deep-extend": "^0.6.0",
     "dotenv": "^10.0.0",
@@ -77,6 +80,7 @@
     "libp2p-record": "^0.10.5",
     "libp2p-tcp": "^0.17.2",
     "merkle-tools": "^1.4.1",
+    "mocha": "^9.2.2",
     "multiformats": "^9.4.7",
     "mysql2": "^2.3.3",
     "n3": "^1.12.2",
