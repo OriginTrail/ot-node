@@ -193,16 +193,33 @@ exports.STRINGIFIED_NETWORK_RESPONSES = {
 };
 
 /**
- * @constant {object} STRINGIFIED_NETWORK_RESPONSES -
- *  Stringified types of known network responses
+ * @constant {object} NETWORK_PROTOCOLS -
+ *  Network protocols
  */
 exports.NETWORK_PROTOCOLS = {
     STORE: '/store/1.0.0',
     RESOLVE: '/resolve/1.0.0',
     SEARCH: '/search/1.0.0',
-    SEARCH_RESULT: '/search/result/1.0.0',
+    SEARCH_RESULT: '/search/1.0.0/result',
     SEARCH_ASSERTIONS: '/search/assertions/1.0.0',
-    SEARCH_ASSERTIONS_RESULT: '/search/assertions/result/1.0.0',
+    SEARCH_ASSERTIONS_RESULT: '/search/assertions/1.0.0/result',
+};
+
+/**
+ * @constant {object} SERVICE_API_ROUTES
+ *  Service api routes
+ */
+exports.SERVICE_API_ROUTES = {
+    PUBLISH: '/publish',
+    PROVISION: '/provision',
+    UPDATE: '/update',
+    RESOLVE: '/resolve',
+    SEARCH: '/entities::search',
+    SEARCH_ASSERTIONS: '/assertions::search',
+    QUERY: '/query',
+    PROOFS: '/proofs::get',
+    OPERATION_RESULT: '/:operation/result/:handler_id',
+    INFO: '/info',
 };
 
 /**
