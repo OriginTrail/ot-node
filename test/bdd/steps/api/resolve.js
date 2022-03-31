@@ -63,9 +63,6 @@ Given(/Last resolve returned valid result$/, { timeout: 120000 }, async function
     expect(!!this.state.lastResolveData.result, 'Last publish data result is undefined. Publish is not finished.').to.be.equal(true);
     const resolveData = this.state.lastResolveData;
     expect(Array.isArray(resolveData.result.data), 'Resolve result data expected to be array').to.be.equal(true);
-    console.log('*************');
-    console.log('length: ', resolveData.result.data.length);
-    console.log('*************');
     // todo only one element in array should be returned
     //expect(resolveData.result.data.length, 'Returned data array length').to.be.equal(1);
 
