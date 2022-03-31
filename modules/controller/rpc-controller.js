@@ -330,7 +330,7 @@ class RpcController {
                             });
                     } else {
                         this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${id}`);
-                      const nodes = await this.networkService.findNodes(
+                      let nodes = await this.networkService.findNodes(
                                 id,
                                 constants.NETWORK_PROTOCOLS.RESOLVE,
                                 this.config.replicationFactor,
