@@ -209,9 +209,7 @@ class RpcController {
         });
 
         this.app.get(
-            constants.NETWORK_PROTOCOLS.STORE,
-            this.rateLimitMiddleware,
-            this.slowDownMiddleware,
+            '/resolve',
             async (req, res, next) => {
                 const operationId = uuidv1();
                 this.logger.emit({
