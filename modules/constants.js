@@ -200,9 +200,9 @@ exports.NETWORK_PROTOCOLS = {
     STORE: '/store/1.0.0',
     RESOLVE: '/resolve/1.0.0',
     SEARCH: '/search/1.0.0',
-    SEARCH_RESULT: '/search/result/1.0.0',
+    SEARCH_RESULT: '/search/1.0.0/result',
     SEARCH_ASSERTIONS: '/search/assertions/1.0.0',
-    SEARCH_ASSERTIONS_RESULT: '/search/assertions/result/1.0.0',
+    SEARCH_ASSERTIONS_RESULT: '/search/assertions/1.0.0/result',
 };
 
 /**
