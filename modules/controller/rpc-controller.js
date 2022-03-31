@@ -324,12 +324,11 @@ class RpcController {
                                     },
                                     data: assertion.jsonld.data,
                                 },
-                            },
-                        } : {
-                            type: 'assertion',
-                            id,
-                            assertion: assertion.jsonld,
-                        });
+                            } : {
+                                type: 'assertion',
+                                id,
+                                assertion: assertion.jsonld,
+                            });
                     } else {
                         this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${id}`);
                       const nodes = await this.networkService.findNodes(
@@ -404,20 +403,21 @@ class RpcController {
                                         });
                                         break;
                                     }
-                                } catch (e) {
-                                    this.logger.error({
-                                        msg: `Error while resolving data from another node: ${e.message}. ${e.stack}`,
-                                        Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
-                                        Event_value1: e.message,
-                                        Id_operation: operationId,
-                                    });
-                                }
+                                } 
+                            } catch (e) {
+                                this.logger.error({
+                                    msg: `Error while resolving data from another node: ${e.message}. ${e.stack}`,
+                                    Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
+                                    Event_value1: e.message,
+                                    Id_operation: operationId,
+                                });
                             }
                         }
                         const end = Date.now();
                         console.log(`RESOLVE_LOGS : total time for resolving : ${(end - start) / 1000}`);
                         console.log('RESOLVE_LOGS : ');
                     }
+                }
 
                     const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
 
