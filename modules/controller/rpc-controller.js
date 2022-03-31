@@ -186,6 +186,7 @@ class RpcController {
             await this.publish(req, res, next, { isAsset: true, ual: req.body.ual });
         });
 
+
         this.app.get('/resolve', async (req, res, next) => {
             const operationId = uuidv1();
             this.logger.emit({
@@ -333,7 +334,7 @@ class RpcController {
                         this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${id}`);
                       const nodes = await this.networkService.findNodes(
                                 id,
-                                constants.NETWORK_PROTOCOLS.STORE,
+                                constants.NETWORK_PROTOCOLS.RESOLVE,
                                 this.config.replicationFactor,
                             );
                         if (nodes.length < this.config.replicationFactor) {
@@ -525,7 +526,7 @@ class RpcController {
                 );
 
                 this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`);
-                let nodes = await this.networkService.findNodes(query, '/assertions::search', this.config.replicationFactor);
+                let nodes = await this.networkService.findNodes(query, constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS, this.config.replicationFactor);
                 if (nodes.length < this.config.replicationFactor) {
                     this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${query}`);
                 }
@@ -620,7 +621,7 @@ class RpcController {
                     this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`);
                     nodes = await this.networkService.findNodes(
                         query,
-                        '/entities::search',
+                        constants.NETWORK_PROTOCOLS.SEARCH,
                         this.config.replicationFactor,
                     );
                     if (nodes.length < this.config.replicationFactor) {
