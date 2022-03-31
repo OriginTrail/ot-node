@@ -210,6 +210,8 @@ class RpcController {
 
         this.app.get(
             '/resolve',
+            this.rateLimitMiddleware,
+            this.slowDownMiddleware,
             async (req, res, next) => {
                 const operationId = uuidv1();
                 this.logger.emit({
