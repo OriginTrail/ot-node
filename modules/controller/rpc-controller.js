@@ -190,15 +190,15 @@ class RpcController {
     initializeServiceApi() {
         this.logger.info(`Service API module enabled, server running on port ${this.config.rpcPort}`);
 
-        this.app.post('/publish', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+        this.app.post(constants.SERVICE_API_ROUTES.PUBLISH, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             await this.publish(req, res, next, { isAsset: false });
         });
 
-        this.app.post('/provision', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+        this.app.post(constants.SERVICE_API_ROUTES.PROVISION, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             await this.publish(req, res, next, { isAsset: true, ual: null });
         });
 
-        this.app.post('/update', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+        this.app.post(constants.SERVICE_API_ROUTES.UPDATE, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.body.ual) {
                 return next({
                     code: 400,
@@ -209,7 +209,7 @@ class RpcController {
         });
 
         this.app.get(
-            constants.NETWORK_PROTOCOLS.STORE,
+            constants.SERVICE_API_ROUTES.RESOLVE,
             this.rateLimitMiddleware,
             this.slowDownMiddleware,
             async (req, res, next) => {
@@ -359,7 +359,7 @@ class RpcController {
                             this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${id}`);
                             const nodes = await this.networkService.findNodes(
                                 id,
-                                constants.NETWORK_PROTOCOLS.STORE,
+                                constants.NETWORK_PROTOCOLS.RESOLVE,
                                 this.config.replicationFactor,
                             );
                             if (nodes.length < this.config.replicationFactor) {
@@ -463,7 +463,7 @@ class RpcController {
             },
         );
 
-        this.app.get('/assertions::search', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+        this.app.get(constants.SERVICE_API_ROUTES.SEARCH_ASSERTIONS, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
                 return next({ code: 400, message: 'Params query is necessary.' });
             }
@@ -519,7 +519,7 @@ class RpcController {
                 );
 
                 this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`);
-                let nodes = await this.networkService.findNodes(query, '/assertions::search', this.config.replicationFactor);
+                let nodes = await this.networkService.findNodes(query, constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS, this.config.replicationFactor);
                 if (nodes.length < this.config.replicationFactor) {
                     this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${query}`);
                 }
@@ -549,7 +549,7 @@ class RpcController {
             }
         });
 
-        this.app.get('/entities::search', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+        this.app.get(constants.SERVICE_API_ROUTES.SEARCH, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
                 return next({ code: 400, message: 'Params query or ids are necessary.' });
             }
@@ -614,7 +614,7 @@ class RpcController {
                     this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`);
                     nodes = await this.networkService.findNodes(
                         query,
-                        '/entities::search',
+                        constants.NETWORK_PROTOCOLS.SEARCH,
                         this.config.replicationFactor,
                     );
                     if (nodes.length < this.config.replicationFactor) {
@@ -662,7 +662,7 @@ class RpcController {
             }
         });
 
-        this.app.post('/query', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+        this.app.post(constants.SERVICE_API_ROUTES.QUERY, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.body.query || !req.query.type) {
                 return next({ code: 400, message: 'Params query and type are necessary.' });
             }
@@ -735,7 +735,7 @@ class RpcController {
             }
         });
 
-        this.app.post('/proofs::get', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+        this.app.post(constants.SERVICE_API_ROUTES.PROOFS, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.body.nquads) {
                 return next({ code: 400, message: 'Params query and type are necessary.' });
             }
@@ -809,7 +809,7 @@ class RpcController {
             }
         });
 
-        this.app.get('/:operation/result/:handler_id', async (req, res, next) => {
+        this.app.get(constants.SERVICE_API_ROUTES.OPERATION_RESULT, async (req, res, next) => {
             if (!['provision', 'update', 'publish', 'resolve', 'query', 'entities:search', 'assertions:search', 'proofs:get'].includes(req.params.operation)) {
                 return next({
                     code: 400,
@@ -958,7 +958,7 @@ class RpcController {
             }
         });
 
-        this.app.get('/info', async (req, res, next) => {
+        this.app.get(constants.SERVICE_API_ROUTES.INFO, async (req, res, next) => {
             try {
                 const { version } = pjson;
 
