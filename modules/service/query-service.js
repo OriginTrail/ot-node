@@ -18,7 +18,7 @@ class QueryService {
             }, constants.RESOLVE_MAX_TIME_MILLIS);
 
             const result = await this.networkService.sendMessage(
-                constants.NETWORK_PROTOCOLS.STORE,
+                constants.NETWORK_PROTOCOLS.RESOLVE,
                 id,
                 node,
             );
