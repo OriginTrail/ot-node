@@ -262,7 +262,7 @@ class RpcController {
                             Id_operation: operationId,
                         });
 
-                        if (nquads) {
+                        if (nquads && false) {
                             this.logger.emit({
                                 msg: 'Started measuring execution of create assertion from nquads',
                                 Event_name: 'resolve_create_assertion_from_nquads_start',
@@ -351,9 +351,7 @@ class RpcController {
                                 console.log(`RESOLVE_LOGS :     Returned nquads length : ${assertion && assertion !== null ? assertion.nquads.length : assertion}`);
                                 if (assertion) {
                                     assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
-                                    assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
-                                    if (!assertion.jsonld.data.data 
-                                        || assertion.jsonld.data.data.length === 0) continue;
+                                    assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)));
                                     response.push(isAsset ? {
                                             type: 'asset',
                                             id: assertion.jsonld.metadata.UALs[0],
