@@ -33,7 +33,7 @@ class NetworkService {
      * @param {Number} limit
      * @returns Promise{Iterable<PeerId>}
      */
-    async findNodes(key, limit) {
+    async findNodes(key, protocol, limit) {
         const Id_operation = uuidv1();
         this.logger.emit({
             msg: 'Started measuring execution of find nodes', Event_name: 'find_nodes_start', Operation_name: 'find_nodes', Id_operation,
@@ -41,14 +41,14 @@ class NetworkService {
         this.logger.emit({
             msg: 'Started measuring execution of kad find nodes', Event_name: 'kad_find_nodes_start', Operation_name: 'find_nodes', Id_operation,
         });
-        const nodes = await this.implementation.findNodes(key, limit);
+        const nodes = await this.implementation.findNodes(key, protocol);
         this.logger.emit({
             msg: 'Finished measuring execution of kad find nodes ', Event_name: 'kad_find_nodes_end', Operation_name: 'find_nodes', Id_operation,
         });
         this.logger.emit({
             msg: 'Started measuring execution of rank nodes', Event_name: 'rank_nodes_start', Operation_name: 'find_nodes', Id_operation,
         });
-        const rankedNodes = await this.rankingService.rank(nodes, key, this.config.replicationFactor, ['kad-identity']);
+        const rankedNodes = await this.rankingService.rank(nodes, key, limit, ['kad-identity']);
         this.logger.emit({
             msg: 'Finished measuring execution of rank nodes', Event_name: 'rank_nodes_end', Operation_name: 'find_nodes', Id_operation,
         });
