@@ -209,7 +209,7 @@ class RpcController {
         });
 
         this.app.get(
-            constants.NETWORK_PROTOCOLS.STORE,
+            '/resolve',
             this.rateLimitMiddleware,
             this.slowDownMiddleware,
             async (req, res, next) => {
