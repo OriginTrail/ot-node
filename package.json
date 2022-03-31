@@ -46,6 +46,7 @@
     "nodemon": "^2.0.15",
     "openzeppelin-solidity": "3.4.2",
     "request": "^2.88.2",
+    "slugify": "^1.6.5",
     "solc": "0.7.6"
   },
   "dependencies": {

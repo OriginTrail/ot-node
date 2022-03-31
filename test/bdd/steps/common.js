@@ -5,7 +5,6 @@ const fs = require('fs');
 const DkgClientHelper = require('../../utilities/dkg-client-helper');
 
 const otNodeProcessPath = './test/bdd/steps/lib/ot-node-process.js';
-const logDir = process.env.CUCUMBER_ARTIFACTS_DIR || '.';
 
 function getBlockchainConfiguration(localBlockchain, privateKey, publicKey) {
     return [{
@@ -52,7 +51,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
 
         const forkedNode = fork(otNodeProcessPath, [], { silent: true });
 
-        const logFileStream = fs.createWriteStream(`${logDir}/${nodeName}.log`);
+        const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
         forkedNode.stdout.setEncoding('utf8');
         forkedNode.stdout.on('data', (data) => {
             // Here is where the output goes
@@ -111,7 +110,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
     };
     const forkedNode = fork(otNodeProcessPath, [], { silent: true });
 
-    const logFileStream = fs.createWriteStream(`${logDir}/${nodeName}.log`);
+    const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
     forkedNode.stdout.setEncoding('utf8');
     forkedNode.stdout.on('data', (data) => {
         // Here is where the output goes
@@ -137,4 +136,70 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
         }
         done();
     });
+});
+
+Given(/^I setup (\d+) additional node[s]*$/, { timeout: 120000 }, function (nodeCount, done) {
+    this.logger.log(`I setup ${nodeCount} additional node${nodeCount !== 1 ? 's' : ''}`);
+    const wallets = this.state.localBlockchain.getWallets();
+    const currentNumberOfNodes = Object.keys(this.state.nodes).length;
+    let nodesStarted = 0;
+    for (let i = 0; i < nodeCount; i += 1) {
+        const nodeIndex = currentNumberOfNodes + i;
+        const wallet = wallets[nodeIndex];
+        const rpcPort = 8901 + nodeIndex;
+        const nodeName = `origintrail-test-${nodeIndex}`;
+        const nodeConfiguration = {
+            graphDatabase: {
+                name: nodeName,
+            },
+            blockchain: getBlockchainConfiguration(
+                this.state.localBlockchain,
+                wallet.privateKey,
+                wallet.address,
+            ),
+            operationalDb: {
+                databaseName: `operationaldbnode${nodeIndex}`,
+            },
+            rpcPort,
+            network: {
+                id: 'Devnet',
+                port: 9001 + nodeIndex,
+                bootstrap: [
+                    '/ip4/0.0.0.0/tcp/9000/p2p/QmWyf3dtqJnhuCpzEDTNmNFYc5tjxTrXhGcUUmGHdg2gtj',
+                ],
+            },
+        };
+
+        const forkedNode = fork(otNodeProcessPath, [], { silent: true });
+
+        const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
+        forkedNode.stdout.setEncoding('utf8');
+        forkedNode.stdout.on('data', (data) => {
+            // Here is where the output goes
+            logFileStream.write(data);
+        });
+        forkedNode.send(JSON.stringify(nodeConfiguration));
+
+        forkedNode.on('message', (response) => {
+            if (response.error) {
+                // todo handle error
+            } else {
+                // todo if started
+                const client = new DkgClientHelper({
+                    endpoint: 'localhost',
+                    port: rpcPort,
+                    useSSL: false,
+                    timeout: 25,
+                });
+                this.state.nodes[nodeIndex] = {
+                    client,
+                    forkedNode,
+                };
+            }
+            nodesStarted += 1;
+            if (nodesStarted === nodeCount) {
+                done();
+            }
+        });
+    }
 });

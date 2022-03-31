@@ -2,7 +2,8 @@ require('dotenv').config();
 const {
     Before, BeforeAll, After, AfterAll,
 } = require('@cucumber/cucumber');
-const mysql = require("mysql2");
+const slugify = require('slugify');
+const fs = require('fs');
 
 process.env.NODE_ENV = 'test';
 
@@ -18,6 +19,11 @@ Before(function (testCase, done) {
     this.state.nodes = {};
     this.state.bootstraps = [];
     this.state.manualStuff = {};
+    let logDir = process.env.CUCUMBER_ARTIFACTS_DIR || '.';
+    logDir += `/test/bdd/log/${slugify(testCase.pickle.name)}`;
+    fs.mkdirSync(logDir, { recursive: true });
+    this.state.scenarionLogDir = logDir;
+    this.logger.log('Scenario logs can be found here: ', logDir);
     done();
 });
 
