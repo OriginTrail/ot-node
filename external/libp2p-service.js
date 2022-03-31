@@ -233,7 +233,7 @@ class Libp2pService {
                     this.logger.info(`Sending response from ${this.config.id} to ${remotePeerId}: event=${eventName};`);
                     const result = await handler(data);
                     if (Date.now() <= timestamp + timeout) {
-                        await this.sendMessage(`${eventName}/result`, result, handlerProps.connection.remotePeer);
+                        await this.sendMessage(`${eventName}/result/1.0.0`, result, handlerProps.connection.remotePeer);
                     } else {
                         this.logger.warn(`Too late to send response from ${this.config.id} to ${remotePeerId}: event=${eventName};`);
                     }
