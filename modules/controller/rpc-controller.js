@@ -8,8 +8,6 @@ const path = require('path');
 const { v1: uuidv1 } = require('uuid');
 const sortedStringify = require('json-stable-stringify');
 const validator = require('validator');
-const rateLimit = require('express-rate-limit');
-const slowDown = require('express-slow-down');
 const Models = require('../../models/index');
 const constants = require('../constants');
 const pjson = require('../../package.json');
@@ -40,10 +38,7 @@ class RpcController {
     async initialize() {
         // TODO add body-parser middleware
         this.initializeNetworkApi();
-
         this.initializeAuthenticationMiddleware();
-        this.initializeRateLimitMiddleware();
-        this.initializeSlowDownMiddleWare();
         this.initializeServiceApi();
         await this.initializeErrorMiddleware();
         if (this.sslEnabled) {
@@ -124,24 +119,6 @@ class RpcController {
         }
     }
 
-    initializeRateLimitMiddleware() {
-        this.rateLimitMiddleware = rateLimit({
-            windowMs: constants.SERVICE_API_RATE_LIMIT.TIME_WINDOW_MILLS,
-            max: constants.SERVICE_API_RATE_LIMIT.MAX_NUMBER,
-            message: `Too many requests sent, maximum number of requests per minute is ${constants.SERVICE_API_RATE_LIMIT.MAX_NUMBER}`,
-            standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-            legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-        });
-    }
-
-    initializeSlowDownMiddleWare() {
-        this.slowDownMiddleware = slowDown({
-            windowMs: constants.SERVICE_API_SLOW_DOWN.TIME_WINDOW_MILLS,
-            delayAfter: constants.SERVICE_API_SLOW_DOWN.DELAY_AFTER_SECONDS,
-            delayMs: constants.SERVICE_API_SLOW_DOWN.DELAY_MILLS,
-        });
-    }
-
     initializeNetworkApi() {
         this.logger.info(`Network API module enabled on port ${this.config.network.port}`);
 
@@ -190,15 +167,16 @@ class RpcController {
     initializeServiceApi() {
         this.logger.info(`Service API module enabled, server running on port ${this.config.rpcPort}`);
 
-        this.app.post('/publish', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            await this.publish(req, res, next, { isAsset: false });
-        });
 
-        this.app.post('/provision', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            await this.publish(req, res, next, { isAsset: true, ual: null });
+        this.app.post('/publish', async (req, res, next) => {
+            await this.publish(req, res, next, {isAsset: false});
         });
-
-        this.app.post('/update', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+      
+        this.app.post('/provision', async (req, res, next) => {
+            await this.publish(req, res, next, {isAsset: true, ual: null});
+        });
+      
+        this.app.post('/update', async (req, res, next) => {
             if (!req.body.ual) {
                 return next({
                     code: 400,
@@ -208,25 +186,21 @@ class RpcController {
             await this.publish(req, res, next, { isAsset: true, ual: req.body.ual });
         });
 
-        this.app.get(
-            constants.NETWORK_PROTOCOLS.STORE,
-            this.rateLimitMiddleware,
-            this.slowDownMiddleware,
-            async (req, res, next) => {
-                const operationId = uuidv1();
-                this.logger.emit({
-                    msg: 'Started measuring execution of resolve command',
-                    Event_name: 'resolve_start',
-                    Operation_name: 'resolve',
-                    Id_operation: operationId,
-                });
+        this.app.get('/resolve', async (req, res, next) => {
+            const operationId = uuidv1();
+            this.logger.emit({
+                msg: 'Started measuring execution of resolve command',
+                Event_name: 'resolve_start',
+                Operation_name: 'resolve',
+                Id_operation: operationId,
+            });
 
-                this.logger.emit({
-                    msg: 'Started measuring execution of resolve init',
-                    Event_name: 'resolve_init_start',
-                    Operation_name: 'resolve_init',
-                    Id_operation: operationId,
-                });
+            this.logger.emit({
+                msg: 'Started measuring execution of resolve init',
+                Event_name: 'resolve_init_start',
+                Operation_name: 'resolve_init',
+                Id_operation: operationId,
+            });
 
                 if (!req.query.ids) {
                     return next({ code: 400, message: 'Param ids is required.' });
@@ -350,25 +324,54 @@ class RpcController {
                                     },
                                     data: assertion.jsonld.data,
                                 },
-                            } : {
-                                type: 'assertion',
-                                id,
-                                assertion: assertion.jsonld,
-                            });
-                        } else {
-                            this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${id}`);
-                            const nodes = await this.networkService.findNodes(
+                            },
+                        } : {
+                            type: 'assertion',
+                            id,
+                            assertion: assertion.jsonld,
+                        });
+                    } else {
+                        this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${id}`);
+                      const nodes = await this.networkService.findNodes(
                                 id,
                                 constants.NETWORK_PROTOCOLS.STORE,
                                 this.config.replicationFactor,
                             );
-                            if (nodes.length < this.config.replicationFactor) {
-                                this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${id}`);
-                            }
-                            for (const node of nodes) {
-                                try {
-                                    const assertion = await this.queryService.resolve(
-                                        id, req.query.load, isAsset, node, operationId,
+                        if (nodes.length < this.config.replicationFactor) {
+                            this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${id}`);
+                        }
+
+                        nodes = [...new Set(nodes)];
+
+                        console.log(`RESOLVE_LOGS : About to send resolve queries to ${nodes.length} nodes.`);
+                        const start = Date.now();
+
+                        for (const node of nodes) {
+                            try {
+                                console.log(`RESOLVE_LOGS :     About to send resolve queries to node : ${node._idB58String}`);
+                                const assertion = await this.queryService.resolve(id, req.query.load, isAsset, node, operationId);
+                                console.log(`RESOLVE_LOGS :     Returned nquads length : ${assertion && assertion !== null ? assertion.nquads.length : assertion}`);
+                                if (assertion) {
+                                    assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
+                                    assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
+                                    if (!assertion.jsonld.data.data 
+                                        || assertion.jsonld.data.data.length === 0) continue;
+                                    response.push(isAsset ? {
+                                            type: 'asset',
+                                            id: assertion.jsonld.metadata.UALs[0],
+                                            result: {
+                                                metadata: {
+                                                    type: assertion.jsonld.metadata.type,
+                                                    issuer: assertion.jsonld.metadata.issuer,
+                                                    latestState: assertion.jsonld.metadata.timestamp,
+                                                },
+                                                data: assertion.jsonld.data
+                                            }
+                                        } : {
+                                            type: 'assertion',
+                                            id: id,
+                                            assertion: assertion.jsonld
+                                        }
                                     );
                                     if (assertion) {
                                         assertion.jsonld.metadata = JSON.parse(
@@ -411,6 +414,9 @@ class RpcController {
                                 }
                             }
                         }
+                        const end = Date.now();
+                        console.log(`RESOLVE_LOGS : total time for resolving : ${(end - start) / 1000}`);
+                        console.log('RESOLVE_LOGS : ');
                     }
 
                     const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
@@ -463,7 +469,7 @@ class RpcController {
             },
         );
 
-        this.app.get('/assertions::search', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+        this.app.get('/assertions::search', async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
                 return next({ code: 400, message: 'Params query is necessary.' });
             }
@@ -549,7 +555,7 @@ class RpcController {
             }
         });
 
-        this.app.get('/entities::search', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+        this.app.get('/entities::search', async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
                 return next({ code: 400, message: 'Params query or ids are necessary.' });
             }
@@ -662,7 +668,7 @@ class RpcController {
             }
         });
 
-        this.app.post('/query', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+        this.app.post('/query', async (req, res, next) => {
             if (!req.body.query || !req.query.type) {
                 return next({ code: 400, message: 'Params query and type are necessary.' });
             }
@@ -735,7 +741,7 @@ class RpcController {
             }
         });
 
-        this.app.post('/proofs::get', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+        this.app.post('/proofs::get', async (req, res, next) => {
             if (!req.body.nquads) {
                 return next({ code: 400, message: 'Params query and type are necessary.' });
             }

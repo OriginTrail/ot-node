@@ -26,6 +26,7 @@ class QueryService {
             resolve(result);
         });
 
+        const start = Date.now();
         this.logger.emit({
             msg: 'Started measuring execution of resolve fetch from nodes',
             Event_name: 'resolve_fetch_from_nodes_start',
@@ -41,9 +42,14 @@ class QueryService {
             Operation_name: 'resolve_fetch_from_nodes',
             Id_operation: operationId,
         });
-        if (!result
-            || (Array.isArray(result) && result[0] === constants.NETWORK_RESPONSES.ACK)
-            || result === constants.NETWORK_RESPONSES.BUSY) {
+        const end = Date.now();
+        const executionResult = {
+            'contacted node': node._idB58String,
+            executionTime: (end - start) / 1000,
+        };
+        console.log(`       RESOLVE_LOGS : execution of sendMessage /resolve : ${JSON.stringify(executionResult)}`);
+        if (!result || (Array.isArray(result) && result[0] === constants.NETWORK_RESPONSES.ACK)
+                       || result === constants.NETWORK_RESPONSES.BUSY) {
             return null;
         }
 
@@ -173,7 +179,6 @@ class QueryService {
         if (request === constants.NETWORK_RESPONSES.BUSY) {
             return false;
         }
-
         // TODO: add mutex
         const operationId = uuidv1();
         this.logger.emit({
