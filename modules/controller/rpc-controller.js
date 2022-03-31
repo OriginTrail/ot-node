@@ -167,16 +167,15 @@ class RpcController {
     initializeServiceApi() {
         this.logger.info(`Service API module enabled, server running on port ${this.config.rpcPort}`);
 
+        this.app.post(constants.SERVICE_API_ROUTES.PUBLISH, async (req, res, next) => {
+            await this.publish(req, res, next, { isAsset: false });
+        });
 
-        this.app.post('/publish', async (req, res, next) => {
-            await this.publish(req, res, next, {isAsset: false});
+        this.app.post(constants.SERVICE_API_ROUTES.PROVISION, async (req, res, next) => {
+            await this.publish(req, res, next, { isAsset: true, ual: null });
         });
-      
-        this.app.post('/provision', async (req, res, next) => {
-            await this.publish(req, res, next, {isAsset: true, ual: null});
-        });
-      
-        this.app.post('/update', async (req, res, next) => {
+
+        this.app.post(constants.SERVICE_API_ROUTES.UPDATE, async (req, res, next) => {
             if (!req.body.ual) {
                 return next({
                     code: 400,
@@ -186,8 +185,7 @@ class RpcController {
             await this.publish(req, res, next, { isAsset: true, ual: req.body.ual });
         });
 
-
-        this.app.get('/resolve', async (req, res, next) => {
+        this.app.get(constants.SERVICE_API_ROUTES.RESOLVE, async (req, res, next) => {
             const operationId = uuidv1();
             this.logger.emit({
                 msg: 'Started measuring execution of resolve command',
@@ -470,7 +468,7 @@ class RpcController {
             },
         );
 
-        this.app.get('/assertions::search', async (req, res, next) => {
+        this.app.get(constants.SERVICE_API_ROUTES.SEARCH_ASSERTIONS, async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
                 return next({ code: 400, message: 'Params query is necessary.' });
             }
@@ -556,7 +554,7 @@ class RpcController {
             }
         });
 
-        this.app.get('/entities::search', async (req, res, next) => {
+        this.app.get(constants.SERVICE_API_ROUTES.SEARCH, async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
                 return next({ code: 400, message: 'Params query or ids are necessary.' });
             }
@@ -669,7 +667,7 @@ class RpcController {
             }
         });
 
-        this.app.post('/query', async (req, res, next) => {
+        this.app.post(constants.SERVICE_API_ROUTES.QUERY, async (req, res, next) => {
             if (!req.body.query || !req.query.type) {
                 return next({ code: 400, message: 'Params query and type are necessary.' });
             }
@@ -742,7 +740,7 @@ class RpcController {
             }
         });
 
-        this.app.post('/proofs::get', async (req, res, next) => {
+        this.app.post(constants.SERVICE_API_ROUTES.PROOFS, async (req, res, next) => {
             if (!req.body.nquads) {
                 return next({ code: 400, message: 'Params query and type are necessary.' });
             }
@@ -816,7 +814,7 @@ class RpcController {
             }
         });
 
-        this.app.get('/:operation/result/:handler_id', async (req, res, next) => {
+        this.app.get(constants.SERVICE_API_ROUTES.OPERATION_RESULT, async (req, res, next) => {
             if (!['provision', 'update', 'publish', 'resolve', 'query', 'entities:search', 'assertions:search', 'proofs:get'].includes(req.params.operation)) {
                 return next({
                     code: 400,
@@ -965,7 +963,7 @@ class RpcController {
             }
         });
 
-        this.app.get('/info', async (req, res, next) => {
+        this.app.get(constants.SERVICE_API_ROUTES.INFO, async (req, res, next) => {
             try {
                 const { version } = pjson;
 
