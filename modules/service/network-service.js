@@ -10,12 +10,10 @@ class NetworkService {
     }
 
     initialize() {
-        const configFilename = process.argv.length === 3 && process.env.NODE_ENV === 'development'
-            ? process.argv[2] : '.origintrail_noderc';
         this.implementation = new Libp2p({
             bootstrapMultiAddress: this.config.network.bootstrap,
             port: this.config.network.port,
-            configFilename,
+            privateKey: this.config.network.privateKey,
             workerPool: this.workerPool,
         });
         return this.implementation.initialize(this.logger);

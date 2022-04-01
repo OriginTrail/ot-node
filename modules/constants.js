@@ -254,6 +254,7 @@ exports.ERROR_TYPE = {
     FAILED_COMMAND_ERROR: 'FailedCommandError',
     UPDATE_INITIALIZATION_ERROR: 'UpdateInitializationError',
     DATA_MODULE_INITIALIZATION_ERROR: 'DataModuleInitializationError',
+    OPERATIONALDB_MODULE_INITIALIZATION_ERROR: 'OperationalDbModuleInitializationError',
     NETWORK_INITIALIZATION_ERROR: 'NetworkInitializationError',
     VALIDATION_INITIALIZATION_ERROR: 'ValidationInitializationError',
     BLOCKCHAIN_INITIALIZATION_ERROR: 'BlockchainInitializationError',
