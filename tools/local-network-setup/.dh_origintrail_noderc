@@ -19,7 +19,7 @@
   "network": {
     "port": 9001,
     "bootstrap": [
-      "/ip4/0.0.0.0/tcp/9010/p2p/QmWyf3dtqJnhuCpzEDTNmNFYc5tjxTrXhGcUUmGHdg2gtj"
+      "/ip4/0.0.0.0/tcp/9000/p2p/QmWyf3dtqJnhuCpzEDTNmNFYc5tjxTrXhGcUUmGHdg2gtj"
     ]
   },
   "ipWhitelist": [

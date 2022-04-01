@@ -6,8 +6,8 @@
       "rpcEndpoints": [
         "https://rpc-mumbai.maticvigil.com/"
       ],
-      "publicKey": "<insert_here>",
-      "privateKey": "<insert_here>"
+      "publicKey": "",
+      "privateKey": ""
     }
   ],
   "graphDatabase": {
