@@ -3,29 +3,16 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
-const mysql = require('mysql2');
 
 const basename = path.basename(__filename);
 const config = require(`${__dirname}/../config/sequelizeConfig`);
 const db = {};
 let sequelize = {};
-const OPERATIONAL_DB_NAME = process.env.OPERATIONAL_DB_NAME || 'operationaldb';
-const OPERATIONAL_DB_PASSWORD = process.env.OPERATIONAL_DB_PASSWORD || '';
-
-config.password = OPERATIONAL_DB_PASSWORD;
-
-const connection = mysql.createConnection({
-    host: config.host,
-    port: config.port,
-    user: config.username,
-    password: OPERATIONAL_DB_PASSWORD,
-});
-connection.query(`CREATE DATABASE IF NOT EXISTS \`${OPERATIONAL_DB_NAME}\`;`);
 
 if (config.use_env_variable) {
     sequelize = new Sequelize(process.env[config.use_env_variable], config);
 } else {
-    sequelize = new Sequelize(OPERATIONAL_DB_NAME, config.username, config.password, config);
+    sequelize = new Sequelize(config.database, config.username, config.password, config);
 }
 
 fs
