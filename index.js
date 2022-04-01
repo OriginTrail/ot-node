@@ -18,13 +18,7 @@ config = rc(pjson.name, defaultConfig);
 
 (async () => {
     try {
-        let userConfig = null;
-        if (process.env.NODE_ENV === 'development' && process.argv.length === 3) {
-            const configurationFilename = process.argv[2];
-            userConfig = JSON.parse(fs.readFileSync(process.argv[2]));
-            userConfig.configFilename = configurationFilename;
-        }
-        const node = new OTNode(userConfig);
+        const node = new OTNode();
         await node.start();
     } catch (e) {
         console.error(`Error occurred while starting new version, error message: ${e}. ${e.stack}`);
