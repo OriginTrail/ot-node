@@ -26,6 +26,7 @@ config = rc(pjson.name, defaultConfig);
         }
     } catch (error) {
         console.log('Unable to read user configuration from file: ', process.argv[2]);
+        process.exit(1);
     }
     try {
         const node = new OTNode(userConfig);
