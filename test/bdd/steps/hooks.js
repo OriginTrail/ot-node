@@ -1,29 +1,38 @@
+/* eslint-disable prefer-arrow-callback */
 require('dotenv').config();
+const rc = require('rc');
+const { forEach } = require('p-iteration');
 const {
     Before, BeforeAll, After, AfterAll,
 } = require('@cucumber/cucumber');
-const slugify = require('slugify');
-const fs = require('fs');
-const { ServerClientConfig, GraphDBServerClient } = require('graphdb').server;
 
-process.env.NODE_ENV = 'test';
+const defaultConfig = require('../../../config/config.json').development;
+const pjson = require('../../../package.json');
+
+const config = rc(pjson.name, defaultConfig);
+
+if (process.env.NODE_ENV !== 'development') {
+    console.error('This process requires to run in "development" environment. Please change NODE_ENV.');
+    process.abort();
+}
 
 BeforeAll(() => {
 });
 
 Before(function (testCase, done) {
     this.logger = console;
-    this.logger.log('Starting scenario: ', testCase.pickle.name, `${testCase.pickle.uri}`);
+    // this.logger.log(
+    //     'Starting scenario: ',
+    //     testCase.pickle.name,
+    //     `${testCase.sourceLocation.uri}:${testCase.sourceLocation.line}`,
+    // );
+
     // Initialize variables
     this.state = {};
     this.state.localBlockchain = null;
-    this.state.nodes = {};
+    this.state.nodes = [];
     this.state.bootstraps = [];
-    let logDir = process.env.CUCUMBER_ARTIFACTS_DIR || '.';
-    logDir += `/test/bdd/log/${slugify(testCase.pickle.name)}`;
-    fs.mkdirSync(logDir, { recursive: true });
-    this.state.scenarionLogDir = logDir;
-    this.logger.log('Scenario logs can be found here: ', logDir);
+    this.state.manualStuff = {};
     done();
 });
 
@@ -35,15 +44,26 @@ After(function (testCase, done) {
         this.logger.log('Oops, exception occurred:');
         this.logger.log(testCase.result.exception);
     }
-    const graphRepositoryNames = [];
-    for (const key in this.state.nodes) {
-        this.state.nodes[key].forkedNode.kill();
-        graphRepositoryNames.push(this.state.nodes[key].configuration.graphDatabase.name);
-    }
-    this.state.bootstraps.forEach((node) => {
-        node.forkedNode.kill();
-        graphRepositoryNames.push(node.configuration.graphDatabase.name);
-    });
+
+    // Clean.
+    const nodesWaits = [...this.state.nodes, ...this.state.bootstraps]
+        .filter((node) => node.isRunning)
+        .map((node) => new Promise((accept, reject) => {
+            node.on('finished', (code) => {
+                if (code === 0) {
+                    if (this.parameters.keepFailedArtifacts
+                            && testCase.result.status === 'passed') {
+                        // rimraf(node.options.configDir, () => accept());
+                    } else {
+                        accept();
+                    }
+                } else {
+                    reject();
+                }
+            });
+        }));
+    this.state.nodes.forEach((node) => (node.stop()));
+    this.state.bootstraps.forEach((node) => (node.isRunning && node.stop()));
     if (this.state.localBlockchain) {
         if (Array.isArray(this.state.localBlockchain)) {
             for (const blockchain of this.state.localBlockchain) {
@@ -55,24 +75,22 @@ After(function (testCase, done) {
             this.state.localBlockchain.server.close();
         }
     }
-    this.logger.log('After test hook, cleaning repositories');
-    // delete graphdb repositories
-    const serverConfig = new ServerClientConfig('http://localhost:7200')
-        .setTimeout(40000)
-        .setKeepAlive(true);
-    const server = new GraphDBServerClient(serverConfig);
-    const promises = [];
 
-    for (const name in graphRepositoryNames) {
-        promises.push(server.deleteRepository(name));
-    }
-    Promise.all(promises).then(() => {
-        // todo this will not delete repository we need to research more about this
+    Promise.all(nodesWaits).then(() => {
+        this.state.localBlockchain = null;
+        this.state.nodes = [];
+        this.state.bootstraps = [];
         done();
+    }).catch((error) => {
+        this.logger.error(error);
+        this.state.localBlockchain = null;
+        this.state.nodes = [];
+        this.state.bootstraps = [];
     });
 });
 
-AfterAll(async () => {
+AfterAll(async function () {
+    // Delete database data
 });
 
 process.on('unhandledRejection', (reason, p) => {

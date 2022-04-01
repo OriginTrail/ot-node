@@ -55,18 +55,18 @@ class Libp2pService {
                 listen: [`/ip4/0.0.0.0/tcp/${this.config.port}`] // for production
                 // announce: ['/dns4/auto-relay.libp2p.io/tcp/443/wss/p2p/QmWDn2LY8nannvSWJzruUYoLZ4vV83vfCBwd8DipvdgQc3']
             };
-            let id;
-            let privKey;
+
             if (!this.config.peerId) {
-                if (!this.config.privateKey) {
-                    id = await PeerId.create({bits: 1024, keyType: 'RSA'})
-                    privKey = id.toJSON().privKey;
-                } else {
-                    privKey = this.config.privateKey;
-                    id = await PeerId.createFromPrivKey(this.config.privateKey);
+                const configFile = JSON.parse(fs.readFileSync(this.config.configFilename));
+                if (!configFile.network.privateKey) {
+                    const id = await PeerId.create({bits: 1024, keyType: 'RSA'})
+                    configFile.network.privateKey = id.toJSON().privKey;
+                    if(process.env.NODE_ENV !== 'development') {
+                        fs.writeFileSync(this.config.configFilename, JSON.stringify(configFile, null, 2));
+                    }
                 }
-                this.config.privateKey = privKey;
-                this.config.peerId = id;
+                this.config.privateKey = configFile.network.privateKey;
+                this.config.peerId = await PeerId.createFromPrivKey(this.config.privateKey);
             }
 
             initializationObject.peerId = this.config.peerId;
@@ -83,10 +83,7 @@ class Libp2pService {
                     const peerId = this.node.peerId._idB58String;
                     this.config.id = peerId;
                     this.logger.info(`Network ID is ${peerId}, connection port is ${port}`);
-                    resolve({
-                        peerId: id,
-                        privateKey: privKey,
-                    });
+                    resolve(result);
                 })
                 .catch((err) => {
                     reject(err);
@@ -291,7 +288,7 @@ class Libp2pService {
               constants.NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES -
                 (Date.now() - this.blackList[remotePeerId]) / (1000 * 60)
             );
-
+            
             if(remainingMinutes > 0) {
                 this.logger.info(`Blocking request from ${remotePeerId}. Node is blacklisted for ${remainingMinutes} minutes.`);
 
@@ -300,7 +297,7 @@ class Libp2pService {
                 delete this.blackList[remotePeerId]
             }
         }
-
+        
         if(await this.rateLimiter.spamDetection.limit(remotePeerId)) {
             this.blackList[remotePeerId] = Date.now();
             this.logger.info(
@@ -312,8 +309,8 @@ class Libp2pService {
             this.logger.info(`Blocking request from ${remotePeerId}. Max number of requests exceeded.`);
 
             return true;
-        }
-
+        } 
+            
         return false;
     }
 
