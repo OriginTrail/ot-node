@@ -11,13 +11,9 @@ const pjson = require('./package.json');
 const configjson = require('./config/config.json');
 
 class OTNode {
-    constructor(config, logger) {
+    constructor(config) {
         this.initializeConfiguration(config);
-        if (logger) {
-            this.logger = logger;
-        } else {
-            this.logger = new Logger(this.config.logLevel, this.config.telemetryHub.enabled);
-        }
+        this.logger = new Logger(this.config.logLevel, this.config.telemetryHub.enabled);
     }
 
     async start() {
@@ -49,14 +45,14 @@ class OTNode {
     initializeConfiguration(userConfig) {
         const defaultConfig = JSON.parse(JSON.stringify(configjson[process.env.NODE_ENV]));
 
-        if (process.env.NODE_ENV === 'development' && process.argv.length === 3) {
-            userConfig = JSON.parse(fs.readFileSync(process.argv[2]));
-        }
-
         if (userConfig) {
             this.config = DeepExtend(defaultConfig, userConfig);
         } else {
             this.config = rc(pjson.name, defaultConfig);
+        }
+        if (!this.config.configFilename) {
+            // set default user configuration filename
+            this.config.configFilename = '.origintrail_noderc';
         }
         if (!this.config.blockchain[0].hubContractAddress
             && this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId) {
@@ -137,7 +133,12 @@ class OTNode {
     async initializeNetworkModule() {
         try {
             const networkService = this.container.resolve('networkService');
-            await networkService.initialize();
+            const result = await networkService.initialize();
+
+            if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
+                this.savePrivateKeyInUserConfigurationFile(result.privateKey);
+            }
+
             const rankingService = this.container.resolve('rankingService');
             await rankingService.initialize();
             this.logger.info(`Network module: ${networkService.getName()} implementation`);
@@ -222,6 +223,12 @@ class OTNode {
         } catch (e) {
             this.logger.warn(`Watchdog service initialization failed. Error message: ${e.message}`);
         }
+    }
+
+    savePrivateKeyInUserConfigurationFile(privateKey) {
+        const configFile = JSON.parse(fs.readFileSync(this.config.configFilename));
+        configFile.network.privateKey = privateKey;
+        fs.writeFileSync(this.config.configFilename, JSON.stringify(configFile, null, 2));
     }
 
     stop() {

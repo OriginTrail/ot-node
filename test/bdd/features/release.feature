@@ -20,7 +20,7 @@ Feature: Release related tests
   Scenario: Node is able to resolve assertion previously published
     Given I setup 4 nodes
     When I call publish on node 1 with validAssertion with keywords:
-      | keyword 1 | keyword 2 |
+      | keyword s21 | keyword s22 |
     And I wait for last publish to finalize
     And Last publish finished with status: COMPLETED
     And I call resolve on node 1 for last published assertion

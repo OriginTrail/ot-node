@@ -36,7 +36,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
                 wallet.privateKey,
                 wallet.address,
             ),
-            operationalDb: {
+            operationalDatabase: {
                 databaseName: `operationaldbnode${i}`,
             },
             rpcPort,
@@ -99,7 +99,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
             wallets[0].privateKey,
             wallets[0].address,
         ),
-        operationalDb: {
+        operationalDatabase: {
             databaseName: 'operationaldbbootstrap',
         },
         rpcPort: 8900,
@@ -159,7 +159,7 @@ Given(/^I setup (\d+) additional node[s]*$/, { timeout: 120000 }, function (node
                 wallet.privateKey,
                 wallet.address,
             ),
-            operationalDb: {
+            operationalDatabase: {
                 databaseName: `operationaldbnode${nodeIndex}`,
             },
             rpcPort,

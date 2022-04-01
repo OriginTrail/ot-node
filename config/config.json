@@ -24,7 +24,7 @@
       "password": ""
     },
     "logLevel": "trace",
-    "replicationFactor" : 5,
+    "replicationFactor": 5,
     "rpcPort": 8900,
     "network": {
       "port": 9000,
@@ -36,14 +36,16 @@
     ],
     "telemetryHub": {
       "enabled": false,
-      "packages": ["ot-telemetry-collector"],
+      "packages": [
+        "ot-telemetry-collector"
+      ],
       "url": ""
     },
-    "operationalDb": {
+    "operationalDatabase": {
       "databaseName": "operationaldb"
     }
   },
-"test": {
+  "test": {
     "appDataPath": "data",
     "autoUpdate": {
       "enabled": false,
@@ -52,11 +54,11 @@
     },
     "blockchain": [
       {
-        "blockchainTitle": "Polygon",
-        "networkId": "polygon::mainnet",
-        "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
+        "blockchainTitle": "ganache",
+        "networkId": "ganache::testnet",
+        "hubContractAddress": "",
         "rpcEndpoints": [
-          "https://rpc-mumbai.maticvigil.com/"
+          "http://localhost:7545"
         ]
       }
     ],
@@ -68,7 +70,7 @@
       "password": ""
     },
     "logLevel": "trace",
-    "replicationFactor" : 5,
+    "replicationFactor": 5,
     "rpcPort": 8900,
     "network": {
       "port": 9000,
@@ -80,10 +82,12 @@
     ],
     "telemetryHub": {
       "enabled": false,
-      "packages": ["ot-telemetry-collector"],
+      "packages": [
+        "ot-telemetry-collector"
+      ],
       "url": ""
     },
-    "operationalDb": {
+    "operationalDatabase": {
       "databaseName": "operationaldb"
     }
   },
@@ -112,7 +116,7 @@
       "password": ""
     },
     "logLevel": "trace",
-    "replicationFactor" : 5,
+    "replicationFactor": 5,
     "rpcPort": 8900,
     "network": {
       "port": 9000,
@@ -128,10 +132,12 @@
     ],
     "telemetryHub": {
       "enabled": true,
-      "packages": ["ot-telemetry-collector"],
+      "packages": [
+        "ot-telemetry-collector"
+      ],
       "url": "https://polaris.delta.origin-trail.network/metrics/"
     },
-    "operationalDb": {
+    "operationalDatabase": {
       "databaseName": "operationaldb"
     }
   },
@@ -151,7 +157,7 @@
       "password": ""
     },
     "logLevel": "trace",
-    "replicationFactor" : 5,
+    "replicationFactor": 5,
     "rpcPort": 8900,
     "network": {
       "port": 9000,
@@ -163,10 +169,12 @@
     ],
     "telemetryHub": {
       "enabled": false,
-      "packages": ["ot-telemetry-collector"],
+      "packages": [
+        "ot-telemetry-collector"
+      ],
       "url": ""
     },
-    "operationalDb": {
+    "operationalDatabase": {
       "databaseName": "operationaldb"
     }
   }
