@@ -268,7 +268,6 @@ class DataService {
 
     async searchByQuery(query, options, localQuery = false) {
         try {
-
             const assertions = await this.tripleStoreQueue.push({
                 operation: 'findAssetsByKeyword', query, options, localQuery,
             });
@@ -295,7 +294,6 @@ class DataService {
                         (x) => x.type === assertion.jsonld.metadata.type
                             && x.id === assertion.jsonld.metadata.UALs[0],
                     );
-
                     if (!object) {
                         object = {
                             id: assertion.jsonld.metadata.UALs[0],
