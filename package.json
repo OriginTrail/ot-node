@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/"
+    "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+    "test:unit": "nyc --all mocha --exit $(find test/unit -name '*.js')",
+    "test:bdd:release": "cucumber-js --tags=@release --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/"
   },
   "repository": {
     "type": "git",
@@ -30,6 +32,8 @@
     "@babel/core": "^7.15.5",
     "@babel/eslint-parser": "^7.16.5",
     "@cucumber/cucumber": "^8.0.0-rc.2",
+    "chai": "^4.3.6",
+    "dkg-client": "6.0.0-beta.1.16",
     "eslint": "^7.32.0",
     "eslint-config-airbnb": "^18.2.1",
     "eslint-config-airbnb-base": "^14.2.1",
@@ -37,9 +41,15 @@
     "eslint-plugin-jsx-a11y": "^6.4.1",
     "eslint-plugin-react": "^7.25.1",
     "eslint-plugin-react-hooks": "^4.2.0",
+    "ethereumjs-wallet": "^1.0.2",
     "form-data": "^4.0.0",
+    "ganache": "^7.0.3",
     "nodemon": "^2.0.15",
-    "request": "^2.88.2"
+    "nyc": "^15.1.0",
+    "openzeppelin-solidity": "3.4.2",
+    "request": "^2.88.2",
+    "slugify": "^1.6.5",
+    "solc": "0.7.6"
   },
   "dependencies": {
     "app-root-path": "^3.0.0",
@@ -49,6 +59,7 @@
     "big-number": "^2.0.0",
     "bl": "^5.0.0",
     "bn": "^1.0.5",
+    "chai": "^4.3.6",
     "crypto-js": "^4.1.1",
     "deep-extend": "^0.6.0",
     "dotenv": "^10.0.0",
@@ -77,6 +88,7 @@
     "libp2p-record": "^0.10.5",
     "libp2p-tcp": "^0.17.2",
     "merkle-tools": "^1.4.1",
+    "mocha": "^9.2.2",
     "multiformats": "^9.4.7",
     "mysql2": "^2.3.3",
     "n3": "^1.12.2",
