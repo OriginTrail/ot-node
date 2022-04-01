@@ -268,6 +268,14 @@ class DataService {
 
     async searchByQuery(query, options, localQuery = false) {
         try {
+
+            // let isAsset = false;
+            // const { assertionId } = await this.blockchainService.getAssetProofs(id);
+            // if (assertionId) {
+            //     isAsset = true;
+            //     id = assertionId;
+            // }
+
             const assertions = await this.tripleStoreQueue.push({
                 operation: 'findAssetsByKeyword', query, options, localQuery,
             });
@@ -285,10 +293,16 @@ class DataService {
                 if (localQuery) {
                     assertion = await this.createAssertion(nquads);
 
+                    const { assertionId: assertionIdBlockchain } = await this.blockchainService.getAssetProofs(assertion.jsonld.metadata.UALs[0]);
+                    if (assertionIdBlockchain !== assertionId) {
+                        continue;
+                    }
+
                     let object = result.find(
                         (x) => x.type === assertion.jsonld.metadata.type
                             && x.id === assertion.jsonld.metadata.UALs[0],
                     );
+
                     if (!object) {
                         object = {
                             id: assertion.jsonld.metadata.UALs[0],

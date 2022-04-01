@@ -45,6 +45,7 @@ for (let i = 0; i < numberOfNodes; i += 1) {
 
     parsedTemplate.rpcPort = 8900 + i;
     parsedTemplate.network.port = 9000 + i;
+    parsedTemplate.graphDatabase.name = `node${i}`;
 
     fs.writeFileSync(`${configPath}`, JSON.stringify(parsedTemplate, null, 2));
 }
