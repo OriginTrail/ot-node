@@ -76,8 +76,8 @@ class NetworkService {
         this.implementation.handleMessage(eventName, handler, options);
     }
 
-    async sendMessage(eventName, data, peerId) {
-        return this.implementation.sendMessage(eventName, data, peerId);
+    async sendMessage(eventName, data, peerId, options) {
+        return this.implementation.sendMessage(eventName, data, peerId, options);
     }
 
     getPeerId() {

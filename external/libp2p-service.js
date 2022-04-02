@@ -11,6 +11,7 @@ const PeerId = require("peer-id");
 const fs = require('fs');
 const { BufferList } = require('bl')
 const { InMemoryRateLimiter } = require("rolling-rate-limiter");
+const { TimeoutController } = require('timeout-abort-controller');
 const constants = require('../modules/constants');
 
 const initializationObject = {
@@ -244,10 +245,23 @@ class Libp2pService {
         });
     }
 
-    async sendMessage(eventName, data, peerId) {
+    async sendMessage(eventName, data, peerId, options = {}) {
         this.logger.info(`Sending message from ${this.config.id} to ${peerId._idB58String}: event=${eventName};`);
         const {stream} = await this.node.dialProtocol(peerId, eventName);
         const preparedData = await this.prepareForSending(data);
+
+        let timeoutController;
+        if (options.timeout) {
+            timeoutController = new TimeoutController(options.timeout);
+            timeoutController.signal.addEventListener(
+                'abort',
+                async () => {
+                    stream.abort();
+                },
+                { once: true }
+            );
+        }
+
         const response = await pipe(
             [Buffer.from(preparedData)],
             stream,
@@ -256,13 +270,16 @@ class Libp2pService {
                 for await (const msg of source) {
                     bl.append(msg);
                 }
-                // console.log(`Receiving data using stream: ${result.toString()}`);
                 return bl;
             },
         )
+        
+        if(timeoutController) {
+            timeoutController.signal.removeEventListener('abort');
+            timeoutController.clear();
+        }
 
-        // TODO: Remove - Backwards compatibility check with 1.30 and lower
-        if(response.toString() === constants.NETWORK_RESPONSES.ACK) {
+        if(response.toString() === '') {
             return null;
         }
 
