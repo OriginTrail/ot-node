@@ -7,8 +7,7 @@ env:
   ARTIFACTS_DIR: artifacts
   CUCUMBER_ARTIFACTS_DIR: artifacts/cucumber
 jobs:
-
-  test:
+  check-lint:
     #todo think about locking the version - version should be the same as the one in official documentation
     runs-on: ubuntu-latest
     strategy:
