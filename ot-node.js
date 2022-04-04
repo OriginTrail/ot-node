@@ -135,8 +135,12 @@ class OTNode {
             const networkService = this.container.resolve('networkService');
             const result = await networkService.initialize();
 
-            if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
-                this.savePrivateKeyInUserConfigurationFile(result.privateKey);
+            this.config.network.peerId = result.peerId;
+            if (!this.config.network.privateKey && this.config.network.privateKey !== result.privateKey) {
+                this.config.network.privateKey = result.privateKey;
+                if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
+                    this.savePrivateKeyInUserConfigurationFile(result.privateKey);
+                }
             }
 
             const rankingService = this.container.resolve('rankingService');
