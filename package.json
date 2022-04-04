@@ -10,7 +10,8 @@
     "lint-staged": "lint-staged",
     "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "test:unit": "nyc --all mocha --exit $(find test/unit -name '*.js')",
-    "test:bdd:release": "cucumber-js --tags=@release --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/"
+    "test:bdd:release": "cucumber-js --tags=@release --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+    "lint": "eslint ."
   },
   "repository": {
     "type": "git",
