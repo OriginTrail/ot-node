@@ -136,7 +136,8 @@ class OTNode {
             const result = await networkService.initialize();
 
             this.config.network.peerId = result.peerId;
-            if (!this.config.network.privateKey && this.config.network.privateKey !== result.privateKey) {
+            if (!this.config.network.privateKey
+                && (this.config.network.privateKey !== result.privateKey)) {
                 this.config.network.privateKey = result.privateKey;
                 if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
                     this.savePrivateKeyInUserConfigurationFile(result.privateKey);
