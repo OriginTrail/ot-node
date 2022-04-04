@@ -25,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
         status: DataTypes.STRING,
         message: DataTypes.STRING,
         parent_id: DataTypes.UUID,
-        transactional: DataTypes.BOOLEAN,
+        transactional: DataTypes.INTEGER,
         retries: {
             type: DataTypes.INTEGER,
             defaultValue: 0,

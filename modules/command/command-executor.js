@@ -91,7 +91,7 @@ class CommandExecutor {
      * @param command Command
      */
     async _execute(command) {
-        const now = new Date().getTime() / 1000;
+        const now = Math.round(new Date().getTime() / 1000);
         await CommandExecutor._update(command, {
             started_at: now,
         });
@@ -226,7 +226,7 @@ class CommandExecutor {
      * @param insert
      */
     async add(command, delay = 0, insert = true) {
-        const now = new Date().getTime() / 1000;
+        const now = Math.round(new Date().getTime() / 1000);
 
         if (delay != null && delay > constants.MAX_COMMAND_DELAY_IN_MILLS) {
             if (command.ready_at == null) {
@@ -306,7 +306,7 @@ class CommandExecutor {
             command.sequence = command.sequence.slice(1);
         }
         if (!command.ready_at) {
-            command.ready_at = new Date().getTime() / 1000; // take current time
+            command.ready_at = Math.round(new Date().getTime() / 1000); // take current time
         }
         if (command.delay == null) {
             command.delay = 0;
