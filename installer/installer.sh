@@ -13,6 +13,19 @@ clear
 
 cd /root
 
+echo -n "Updating .bashrc file with OriginTrail node aliases: "
+if [ -f "$FILE" ]; then
+    echo "alias otnode-restart='systemctl restart otnode.service'" >> ~/.bashrc
+    echo "alias otnode-stop='systemctl stop otnode.service'" >> ~/.bashrc
+    echo "alias otnode-start='systemctl start otnode.service'" >> ~/.bashrc
+    echo "alias otnode-logs='journalctl -u otnode --output cat -f'" >> ~/.bashrc
+    echo "alias otnode-config='nano ~/ot-node/.origintrail_noderc'" >> ~/.bashrc
+    source ~/.bashrc
+    echo -e "${GREEN}SUCCESS${NC}"
+else
+    echo "$FILE does not exist. Proceeding with OriginTrail node installation."
+fi
+
 echo -n "Updating Ubuntu package repository: "
 
 OUTPUT=$(apt update 2>&1)
