@@ -158,7 +158,7 @@ if [[ $DATABASE = "blazegraph" ]]; then
     
     echo -n "Downloading Blazegraph: " 
 
-    OUTPUT=$(wget https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_2_1_6_RC/blazegraph.jar 2>&1)
+    OUTPUT=$(wget https://github.com/blazegraph/database/releases/latest/download/blazegraph.jar 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
