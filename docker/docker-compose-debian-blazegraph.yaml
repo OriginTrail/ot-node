@@ -1,26 +1,25 @@
 version: '3.8'
 services:
-  graphdb:
-    container_name: graphdb
-    image: khaller/graphdb-free:latest
+  blazegraph:
+    container_name: blazegraph
+    image: origintrail/ot-node:blazegraph
     network_mode: host
 
   ot-node:
     container_name: ot-node
-    image: origintrail/ot-node:v6.0.0-beta.1-ubuntu
+    image: origintrail/ot-node:v6.0.0-beta.1-debian
     depends_on:
-      - graphdb
+      - blazegraph
     expose:
       - 8900
       - 9000
     command: >
        bash -c "
-        /bin/sleep 35
-        service mysql restart && 
-        forever index.js                
+        /bin/sleep 30
+        service mariadb start &&
+        forever index.js
         "
     volumes:
       - ${PWD}/.origintrail_noderc:/ot-node/.origintrail_noderc
       - ~/certs/:/root/certs/
     network_mode: host
-    
