@@ -100,9 +100,9 @@ class DataService {
             if (assertion.data['@type']) {
                 type = assertion.data['@type'];
                 delete assertion.data['@type'];
-            } else if (assertion.data['type']) {
-                type = assertion.data['type'];
-                delete assertion.data['type'];
+            } else if (assertion.data.type) {
+                type = assertion.data.type;
+                delete assertion.data.type;
             } else {
                 type = 'default';
             }
@@ -272,10 +272,19 @@ class DataService {
                 operation: 'findAssetsByKeyword', query, options, localQuery,
             });
             if (!assertions) return null;
-
             const result = [];
             for (let assertion of assertions) {
-                const assertionId = assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
+                assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
+                const { assertionId } = assertion;
+                const { value: assetId } = assertion.assetId;
+
+                const {
+                    assertionId: assertionIdBlockchain,
+                } = await this.blockchainService.getAssetProofs(assetId);
+
+                if (assertionIdBlockchain !== assertionId) {
+                    continue;
+                }
 
                 const nquads = await this.resolve(assertion.assertionId, localQuery, true);
                 if (!nquads) {
@@ -284,11 +293,6 @@ class DataService {
 
                 if (localQuery) {
                     assertion = await this.createAssertion(nquads);
-
-                    const { assertionId: assertionIdBlockchain } = await this.blockchainService.getAssetProofs(assertion.jsonld.metadata.UALs[0]);
-                    if (assertionIdBlockchain !== assertionId) {
-                        continue;
-                    }
 
                     let object = result.find(
                         (x) => x.type === assertion.jsonld.metadata.type
