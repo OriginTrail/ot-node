@@ -1,9 +1,9 @@
 version: '3'
 
 services:
-  graphdb:
-    container_name: graphdb
-    image: khaller/graphdb-free:latest
+  blazegraph:
+    container_name: blazegraph
+    image: origintrail/ot-node:blazegraph
     network_mode: host
 
 
@@ -22,7 +22,7 @@ services:
     container_name: ot-node
     image: origintrail/ot-node:v6.0.0-beta.1-alpine
     depends_on:
-      - graphdb
+      - blazegraph
       - mysql
     expose:
       - 8900
