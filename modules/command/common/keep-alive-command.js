@@ -43,12 +43,14 @@ class KeepAliveCommand extends Command {
                 order: [
                     ['created_at', 'DESC'],
                 ],
-                attributes: ['hash', 'topics', 'created_at'],
+                attributes: ['hash', 'topics', 'created_at', 'triple_store', 'status'],
             })).map((x) => (
                 {
                     assertionId: x.dataValues.hash,
                     keyword: x.dataValues.topics,
                     publishTimestamp: x.dataValues.created_at,
+                    tripleStore: x.dataValues.triple_store,
+                    status: x.dataValues.status,
                 }
             ));
         } catch (e) {
