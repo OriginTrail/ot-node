@@ -336,25 +336,6 @@ class RpcController {
                                 id,
                                 assertion: assertion.jsonld,
                             });
-                            response.push(isAsset ? {
-                                type: 'asset',
-                                id: assertion.jsonld.metadata.UALs[0],
-                                result: {
-                                    assertions: await this.dataService.assertionsByAsset(
-                                        assertion.jsonld.metadata.UALs[0],
-                                    ),
-                                    metadata: {
-                                        type: assertion.jsonld.metadata.type,
-                                        issuer: assertion.jsonld.metadata.issuer,
-                                        latestState: assertion.jsonld.metadata.timestamp,
-                                    },
-                                    data: assertion.jsonld.data,
-                                },
-                            } : {
-                                type: 'assertion',
-                                id,
-                                assertion: assertion.jsonld,
-                            });
                         } else {
                             this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${id}`);
                             const nodes = await this.networkService.findNodes(
