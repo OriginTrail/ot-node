@@ -84,8 +84,8 @@ class Libp2pService {
                     this.config.id = peerId;
                     this.logger.info(`Network ID is ${peerId}, connection port is ${port}`);
                     resolve({
-                        peerId: id,
-                        privateKey: privKey,
+                        peerId: this.config.peerId,
+                        privateKey: this.config.privateKey,
                     });
                 })
                 .catch((err) => {
