@@ -16,5 +16,6 @@ module.exports = {
         'no-restricted-syntax': 0,
         'guard-for-in': 0,
         'no-console': 'warn',
+        'no-continue' : 1,
     },
 };
