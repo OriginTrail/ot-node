@@ -18,6 +18,14 @@ module.exports = (sequelize, DataTypes) => {
         topics: DataTypes.STRING,
         created_at: DataTypes.DATE,
         updated_at: DataTypes.DATE,
+        triple_store: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        status: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
     }, {
         sequelize,
         modelName: 'assertions',
