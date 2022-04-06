@@ -12,34 +12,47 @@ exports.DID = 'DID';
 exports.MAX_FILE_SIZE = 2621440;
 
 /**
- * @constant {number} SERVICE_API_RATE_LIMIT_TIME_WINDOW_MILLS
- * - Express rate limit time window in milliseconds
+ * @constant {object} SERVICE_API_RATE_LIMIT
+ * - Express rate limit configuration constants
  */
-exports.SERVICE_API_RATE_LIMIT_TIME_WINDOW_MILLS = 1 * 60 * 1000;
+exports.SERVICE_API_RATE_LIMIT = {
+    TIME_WINDOW_MILLS: 1 * 60 * 1000,
+    MAX_NUMBER: 10,
+};
 
 /**
- * @constant {number} SERVICE_API_RATE_LIMIT_MAX_NUMBER
- * - Express rate limit max number of requests allowed in the specified time window
+ * @constant {object} SERVICE_API_SLOW_DOWN
+ * - Express slow down configuration constants
  */
-exports.SERVICE_API_RATE_LIMIT_MAX_NUMBER = 10;
+exports.SERVICE_API_SLOW_DOWN = {
+    TIME_WINDOW_MILLS: 1 * 60 * 1000,
+    DELAY_AFTER_SECONDS: 5,
+    DELAY_MILLS: 3 * 1000,
+};
 
 /**
- * @constant {number} SERVICE_API_SLOW_DOWN_TIME_WINDOW_MILLS
- * - Express slow down time window in milliseconds
+ * @constant {object} NETWORK_API_RATE_LIMIT
+ * - Network (Libp2p) rate limiter configuration constants
  */
-exports.SERVICE_API_SLOW_DOWN_TIME_WINDOW_MILLS = 1 * 60 * 1000;
+exports.NETWORK_API_RATE_LIMIT = {
+    TIME_WINDOW_MILLS: 1 * 60 * 1000,
+    MAX_NUMBER: this.SERVICE_API_RATE_LIMIT.MAX_NUMBER,
+};
 
 /**
- * @constant {number} SERVICE_API_SLOW_DOWN_DELAY_AFTER
- * - Express slow down number of seconds after which it starts delaying requests
+ * @constant {object} NETWORK_API_SPAM_DETECTION
+ * - Network (Libp2p) spam detection rate limiter configuration constants
  */
-exports.SERVICE_API_SLOW_DOWN_DELAY_AFTER = 5;
+exports.NETWORK_API_SPAM_DETECTION = {
+    TIME_WINDOW_MILLS: 1 * 60 * 1000,
+    MAX_NUMBER: 20,
+};
 
 /**
- * @constant {number} SERVICE_API_SLOW_DOWN_DELAY_MILLS
- * - Express slow down delay between requests in milliseconds
+ * @constant {object} NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES
+ * - Network (Libp2p) black list time window in minutes
  */
-exports.SERVICE_API_SLOW_DOWN_DELAY_MILLS = 3 * 1000;
+exports.NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
 
 /**
  * @constant {number} DID_PREFIX
@@ -124,10 +137,21 @@ exports.STORE_MAX_RETRIES = 3;
 exports.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS = 4 * 1000;
 
 /**
- * @constant {number} HANDLE_STORE_BUSINESS_LIMIT
- * - Max number of operations in triple store queue that indicate business
+ * @constant {number} BUSYNESS_LIMITS
+ * - Max number of operations in triple store queue that indicate busyness
  */
-exports.HANDLE_STORE_BUSINESS_LIMIT = 20;
+exports.BUSYNESS_LIMITS = {
+    HANDLE_STORE: 20,
+    HANDLE_RESOLVE: 20,
+    HANDLE_SEARCH_ASSERTIONS: 20,
+    HANDLE_SEARCH_ENTITIES: 15,
+};
+
+/**
+ * @constant {number} STORE_MIN_SUCCESS_RATE
+ * - Min rate of successful responses from store queries for publish to be maked as COMPLETED
+ */
+exports.STORE_MIN_SUCCESS_RATE = 0.8;
 
 /**
  * @constant {object} TRIPLE_STORE_IMPLEMENTATION -
@@ -139,6 +163,12 @@ exports.TRIPLE_STORE_IMPLEMENTATION = {
 };
 
 /**
+ * @constant {number} NETWORK_HANDLER_TIMEOUT -
+ * Timeout for all handler methods for network requests
+ */
+exports.NETWORK_HANDLER_TIMEOUT = 120e3;
+
+/**
  * @constant {object} NETWORK_RESPONSES -
  *  Types of known network responses
  */
@@ -147,6 +177,49 @@ exports.NETWORK_RESPONSES = {
     FALSE: false,
     ACK: 'ack',
     BUSY: 'busy',
+    BLOCKED: 'blocked',
+    ERROR: 'error',
+};
+
+/**
+ * @constant {object} STRINGIFIED_NETWORK_RESPONSES -
+ *  Stringified types of known network responses
+ */
+exports.STRINGIFIED_NETWORK_RESPONSES = {
+    ack: '"ack"',
+    busy: '"busy"',
+    blocked: '"blocked"',
+    error: '"error"',
+};
+
+/**
+ * @constant {object} NETWORK_PROTOCOLS -
+ *  Network protocols
+ */
+exports.NETWORK_PROTOCOLS = {
+    STORE: '/store/1.0.0',
+    RESOLVE: '/resolve/1.0.0',
+    SEARCH: '/search/1.0.0',
+    SEARCH_RESULT: '/search/1.0.0/result',
+    SEARCH_ASSERTIONS: '/search/assertions/1.0.0',
+    SEARCH_ASSERTIONS_RESULT: '/search/assertions/1.0.0/result',
+};
+
+/**
+ * @constant {object} SERVICE_API_ROUTES
+ *  Service api routes
+ */
+exports.SERVICE_API_ROUTES = {
+    PUBLISH: '/publish',
+    PROVISION: '/provision',
+    UPDATE: '/update',
+    RESOLVE: '/resolve',
+    SEARCH: '/entities::search',
+    SEARCH_ASSERTIONS: '/assertions::search',
+    QUERY: '/query',
+    PROOFS: '/proofs::get',
+    OPERATION_RESULT: '/:operation/result/:handler_id',
+    INFO: '/info',
 };
 
 /**
@@ -181,6 +254,7 @@ exports.ERROR_TYPE = {
     FAILED_COMMAND_ERROR: 'FailedCommandError',
     UPDATE_INITIALIZATION_ERROR: 'UpdateInitializationError',
     DATA_MODULE_INITIALIZATION_ERROR: 'DataModuleInitializationError',
+    OPERATIONALDB_MODULE_INITIALIZATION_ERROR: 'OperationalDbModuleInitializationError',
     NETWORK_INITIALIZATION_ERROR: 'NetworkInitializationError',
     VALIDATION_INITIALIZATION_ERROR: 'ValidationInitializationError',
     BLOCKCHAIN_INITIALIZATION_ERROR: 'BlockchainInitializationError',

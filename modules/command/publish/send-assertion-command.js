@@ -2,7 +2,6 @@ const Command = require('../command');
 const Models = require('../../../models/index');
 const constants = require('../../constants');
 
-
 class SendAssertionCommand extends Command {
     constructor(ctx) {
         super(ctx);
@@ -32,13 +31,14 @@ class SendAssertionCommand extends Command {
             nquads = nquads.filter((x) => x.startsWith(`<${constants.DID_PREFIX}:`));
         }
 
-        let nodes = [];
+        let nodes = new Set();
         for (const keyword of assertion.metadata.keywords.concat(assertion.id)) {
             this.logger.info(
                 `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${keyword}`,
             );
             const foundNodes = await this.networkService.findNodes(
                 keyword,
+                constants.NETWORK_PROTOCOLS.STORE,
                 this.config.replicationFactor,
             );
             if (foundNodes.length < this.config.replicationFactor) {
@@ -46,30 +46,36 @@ class SendAssertionCommand extends Command {
                     `Found only ${foundNodes.length} node(s) for keyword ${keyword}`,
                 );
             }
-            nodes = nodes.concat(foundNodes);
+            for (const node of foundNodes) {
+                nodes.add(node);
+            }
         }
-        nodes = [...new Set(nodes)];
+        nodes = [...nodes];
 
+        let busyResponses = 0;
+        let failedResponses = 0;
         const storePromises = nodes.map((node) => this.publishService
             .store({ id: assertion.id, nquads }, node)
             .then((response) => {
                 if (!response) {
                     this.logger.error({
-                        msg: `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String} - receiving node didn't stored the assertion.`,
+                        msg: `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String} - receiving node didn't store the assertion.`,
                         Operation_name: 'Error',
                         Event_name: constants.ERROR_TYPE.SEND_ASSERTION_ERROR,
                         Id_operation: handlerId,
                     });
-                } else if (response === 'busy') {
+                    failedResponses += 1;
+                } else if (response === constants.NETWORK_RESPONSES.BUSY) {
                     this.logger.error({
-                        msg: `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String} - receiving node is busy to store.`,
+                        msg: `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String} - receiving node is too busy to store the assertion.`,
                         Operation_name: 'Error',
                         Event_name: constants.ERROR_TYPE.SEND_ASSERTION_ERROR_BUSY,
                         Id_operation: handlerId,
                     });
+                    busyResponses += 1;
                 }
-            })
-            .catch((e) => {
+                return response;
+            }).catch((e) => {
                 this.handleError(
                     handlerId,
                     e,
@@ -78,11 +84,13 @@ class SendAssertionCommand extends Command {
             }));
 
         await Promise.all(storePromises);
-
+        const maxFailResponses = Math.round((1 - constants.STORE_MIN_SUCCESS_RATE) * nodes.length);
+        const status = (failedResponses + busyResponses) <= maxFailResponses ? 'COMPLETED' : 'FAILED';
         await Models.handler_ids.update(
             {
-                status: 'COMPLETED',
-            }, {
+                status,
+            },
+            {
                 where: {
                     handler_id: handlerId,
                 },
@@ -97,18 +105,20 @@ class SendAssertionCommand extends Command {
             });
         }
 
-        this.logger.emit({
-            msg: 'Finished measuring execution of replicate data to network',
-            Event_name: 'publish_replicate_end',
-            Operation_name: 'publish_replicate',
-            Id_operation: operationId,
-        });
-        this.logger.emit({
-            msg: 'Finished measuring execution of publish command',
-            Event_name: 'publish_end',
-            Operation_name: 'publish',
-            Id_operation: operationId,
-        });
+        if (status === 'COMPLETED') {
+            this.logger.emit({
+                msg: 'Finished measuring execution of replicate data to network',
+                Event_name: 'publish_replicate_end',
+                Operation_name: 'publish_replicate',
+                Id_operation: operationId,
+            });
+            this.logger.emit({
+                msg: 'Finished measuring execution of publish command',
+                Event_name: 'publish_end',
+                Operation_name: 'publish',
+                Id_operation: operationId,
+            });
+        }
 
         return this.continueSequence(command.data, command.sequence);
     }
@@ -146,7 +156,6 @@ class SendAssertionCommand extends Command {
         Object.assign(command, map);
         return command;
     }
-
 }
 
 module.exports = SendAssertionCommand;

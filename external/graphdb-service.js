@@ -43,7 +43,10 @@ class GraphdbService {
             .setReadTimeout(readTimeout)
             .setWriteTimeout(writeTimeout);
 
-        this.repository = await this.server.getRepository(this.config.repositoryName, repositoryServerConfig);
+        this.repository = await this.server.getRepository(
+            this.config.repositoryName,
+            repositoryServerConfig,
+        );
         this.repository.registerParser(new SparqlXmlResultParser());
         this.logger.info('GraphDB module initialized successfully');
     }

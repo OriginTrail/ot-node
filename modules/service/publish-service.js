@@ -14,7 +14,16 @@ class PublishService {
         this.workerPool = ctx.workerPool;
     }
 
-    async publish(fileContent, fileExtension, keywords, visibility, ual, handlerId, operationId, isTelemetry = false) {
+    async publish(
+        fileContent,
+        fileExtension,
+        keywords,
+        visibility,
+        ual,
+        handlerId,
+        operationId,
+        isTelemetry = false,
+    ) {
         try {
             this.logger.emit({
                 msg: 'Started measuring execution of data canonization',
@@ -45,7 +54,11 @@ class PublishService {
             let method = 'publish';
             if (ual === null) {
                 method = 'provision';
-                ual = this.validationService.calculateHash(assertion.metadata.timestamp + assertion.metadata.type + assertion.metadata.issuer);
+                ual = this.validationService.calculateHash(
+                    assertion.metadata.timestamp
+                    + assertion.metadata.type
+                    + assertion.metadata.issuer,
+                );
                 assertion.metadata.UALs = [ual];
             } else if (ual !== undefined) {
                 method = 'update';
@@ -54,7 +67,9 @@ class PublishService {
 
             assertion.metadata.dataHash = this.validationService.calculateHash(assertion.data);
             assertion.metadataHash = this.validationService.calculateHash(assertion.metadata);
-            assertion.id = this.validationService.calculateHash(assertion.metadataHash + assertion.metadata.dataHash);
+            assertion.id = this.validationService.calculateHash(
+                assertion.metadataHash + assertion.metadata.dataHash,
+            );
             assertion.signature = this.validationService.sign(assertion.id);
 
             nquads = await this.dataService.appendMetadata(nquads, assertion);
@@ -82,7 +97,7 @@ class PublishService {
             const documentPath = await this.fileService
                 .writeContentsToFile(handlerIdCachePath, handlerId,
                     await this.workerPool.exec('JSONStringify', [{
-                        nquads, assertion
+                        nquads, assertion,
                     }]));
 
             const commandSequence = [
@@ -115,14 +130,22 @@ class PublishService {
     async store(assertion, node) {
         // await this.networkService.store(node, topic, {});
         let retries = 0;
-        let response = await this.networkService.sendMessage('/store', assertion, node);
+        let response = await this.networkService.sendMessage(
+            constants.NETWORK_PROTOCOLS.STORE,
+            assertion,
+            node,
+        );
         while (
             response === constants.NETWORK_RESPONSES.BUSY
             && retries < constants.STORE_MAX_RETRIES
         ) {
             retries += 1;
             await sleep.sleep(constants.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS);
-            response = await this.networkService.sendMessage('/store', assertion, node);
+            response = await this.networkService.sendMessage(
+                constants.NETWORK_PROTOCOLS.STORE,
+                assertion,
+                node,
+            );
         }
 
         return response;
@@ -130,9 +153,10 @@ class PublishService {
 
     async handleStore(data) {
         if (!data || data.rdf) return false;
-        if (this.dataService.getTripleStoreQueueLength() > constants.HANDLE_STORE_BUSINESS_LIMIT) {
+        if (this.dataService.isNodeBusy(constants.BUSYNESS_LIMITS.HANDLE_STORE)) {
             return constants.NETWORK_RESPONSES.BUSY;
         }
+
         const operationId = uuidv1();
         this.logger.emit({
             msg: 'Started measuring execution of handle store command',

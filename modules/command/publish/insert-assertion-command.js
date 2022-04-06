@@ -1,5 +1,4 @@
 const Command = require('../command');
-const Models = require('../../../models/index');
 const constants = require('../../constants');
 
 class InsertAssertionCommand extends Command {
@@ -16,13 +15,14 @@ class InsertAssertionCommand extends Command {
      */
     async execute(command) {
         const { documentPath, handlerId, operationId } = command.data;
+
         this.logger.emit({
             msg: 'Started measuring execution of storing publishing data into local triple store',
             Event_name: 'publish_local_store_start',
             Operation_name: 'publish_local_store',
             Id_operation: operationId,
         });
-        let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
+        const { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
         try {
             await this.dataService.insert(nquads.join('\n'), `${constants.DID_PREFIX}:${assertion.id}`);

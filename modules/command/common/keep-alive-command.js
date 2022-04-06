@@ -35,13 +35,8 @@ class KeepAliveCommand extends Command {
             },
         };
         try {
-            if (!this.config.network.privateKey) {
-                const configFile = JSON.parse(fs.readFileSync(this.config.config ? this.config.config : '.origintrail_noderc'));
-                this.config.network.privateKey = configFile.network.privateKey;
-            }
-            const peerId = await PeerId.createFromPrivKey(this.config.network.privateKey);
             signalingMessage.issuerWallet = this.config.blockchain[0].publicKey;
-            signalingMessage.kademliaNodeId = peerId._idB58String;
+            signalingMessage.kademliaNodeId = this.config.network.peerId._idB58String;
             signalingMessage.nodeVersion = pjson.version;
             signalingMessage.telemetry.latestAssertions = (await Models.assertions.findAll({
                 limit: 5,
@@ -49,7 +44,13 @@ class KeepAliveCommand extends Command {
                     ['created_at', 'DESC'],
                 ],
                 attributes: ['hash', 'topics', 'created_at'],
-            })).map(x => ({assertionId: x.dataValues.hash, keyword: x.dataValues.topics, publishTimestamp: x.dataValues.created_at}));
+            })).map((x) => (
+                {
+                    assertionId: x.dataValues.hash,
+                    keyword: x.dataValues.topics,
+                    publishTimestamp: x.dataValues.created_at,
+                }
+            ));
         } catch (e) {
             this.logger.error({
                 msg: `An error has occurred with signaling data error: ${e}, stack: ${e.stack}`,
@@ -67,14 +68,14 @@ class KeepAliveCommand extends Command {
             method: 'post',
             url: 'https://signum.origintrail.io:3000/signal',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
-            data: JSON.stringify(signalingMessage)
+            data: JSON.stringify(signalingMessage),
         };
 
         const that = this;
-        axios(config).catch(e=>{
-            that.handleError(uuidv1(), e, constants.ERROR_TYPE.KEEP_ALIVE_ERROR, false)
+        axios(config).catch((e) => {
+            that.handleError(uuidv1(), e, constants.ERROR_TYPE.KEEP_ALIVE_ERROR, false);
         });
         return Command.repeat();
     }
