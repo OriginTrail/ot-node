@@ -181,7 +181,7 @@ class GraphdbService {
 
     async findAssetsByKeyword(query, options, localQuery) {
         const sparqlQuery = `PREFIX schema: <http://schema.org/>
-                            SELECT ?assertionId
+                            SELECT ?assertionId ?assetId
                             WHERE {
                                 ?assertionId schema:hasTimestamp ?latestTimestamp ;
                             ${!localQuery ? 'schema:hasVisibility "public" ;' : ''}

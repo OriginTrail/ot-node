@@ -38,6 +38,7 @@ class SendAssertionCommand extends Command {
             );
             const foundNodes = await this.networkService.findNodes(
                 keyword,
+                constants.NETWORK_PROTOCOLS.STORE,
                 this.config.replicationFactor,
             );
             if (foundNodes.length < this.config.replicationFactor) {
@@ -95,12 +96,14 @@ class SendAssertionCommand extends Command {
                 },
             },
         );
-
+        
         if (command.data.isTelemetry) {
             await Models.assertions.create({
                 hash: assertion.id,
                 topics: JSON.stringify(assertion.metadata.keywords[0]),
-                createdAt: assertion.metadata.timestamp,
+                created_at: assertion.metadata.timestamp,
+                triple_store: this.config.graphDatabase.implementation,
+                status,
             });
         }
 

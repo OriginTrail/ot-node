@@ -126,9 +126,9 @@ class RpcController {
 
     initializeRateLimitMiddleware() {
         this.rateLimitMiddleware = rateLimit({
-            windowMs: constants.SERVICE_API_RATE_LIMIT_TIME_WINDOW_MILLS,
-            max: constants.SERVICE_API_RATE_LIMIT_MAX_NUMBER,
-            message: `Too many requests sent, maximum number of requests per minute is ${constants.SERVICE_API_RATE_LIMIT_MAX_NUMBER}`,
+            windowMs: constants.SERVICE_API_RATE_LIMIT.TIME_WINDOW_MILLS,
+            max: constants.SERVICE_API_RATE_LIMIT.MAX_NUMBER,
+            message: `Too many requests sent, maximum number of requests per minute is ${constants.SERVICE_API_RATE_LIMIT.MAX_NUMBER}`,
             standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
             legacyHeaders: false, // Disable the `X-RateLimit-*` headers
         });
@@ -136,32 +136,52 @@ class RpcController {
 
     initializeSlowDownMiddleWare() {
         this.slowDownMiddleware = slowDown({
-            windowMs: constants.SERVICE_API_SLOW_DOWN_TIME_WINDOW_MILLS,
-            delayAfter: constants.SERVICE_API_SLOW_DOWN_DELAY_AFTER,
-            delayMs: constants.SERVICE_API_SLOW_DOWN_DELAY_MILLS,
+            windowMs: constants.SERVICE_API_SLOW_DOWN.TIME_WINDOW_MILLS,
+            delayAfter: constants.SERVICE_API_SLOW_DOWN.DELAY_AFTER_SECONDS,
+            delayMs: constants.SERVICE_API_SLOW_DOWN.DELAY_MILLS,
         });
     }
 
     initializeNetworkApi() {
         this.logger.info(`Network API module enabled on port ${this.config.network.port}`);
 
-        this.networkService.handleMessage('/store', (result) => this.publishService.handleStore(result));
+        this.networkService.handleMessage(
+            constants.NETWORK_PROTOCOLS.STORE,
+            (result) => this.publishService.handleStore(result),
+        );
 
-        this.networkService.handleMessage('/resolve', (result) => this.queryService.handleResolve(result));
+        this.networkService.handleMessage(
+            constants.NETWORK_PROTOCOLS.RESOLVE,
+            (result) => this.queryService.handleResolve(result),
+        );
 
-        this.networkService.handleMessage('/search', (result) => this.queryService.handleSearch(result), {
-            async: true,
-            timeout: 60e3,
-        });
+        this.networkService.handleMessage(
+            constants.NETWORK_PROTOCOLS.SEARCH,
+            (result) => this.queryService.handleSearch(result),
+            {
+                async: true,
+                timeout: constants.NETWORK_HANDLER_TIMEOUT,
+            },
+        );
 
-        this.networkService.handleMessage('/search/result', (result) => this.queryService.handleSearchResult(result));
+        this.networkService.handleMessage(
+            constants.NETWORK_PROTOCOLS.SEARCH_RESULT,
+            (result) => this.queryService.handleSearchResult(result),
+        );
 
-        this.networkService.handleMessage('/search/assertions', (result) => this.queryService.handleSearchAssertions(result), {
-            async: true,
-            timeout: 60e3,
-        });
+        this.networkService.handleMessage(
+            constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS,
+            (result) => this.queryService.handleSearchAssertions(result),
+            {
+                async: true,
+                timeout: constants.NETWORK_HANDLER_TIMEOUT,
+            },
+        );
 
-        this.networkService.handleMessage('/search/assertions/result', (result) => this.queryService.handleSearchAssertionsResult(result));
+        this.networkService.handleMessage(
+            constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS_RESULT,
+            (result) => this.queryService.handleSearchAssertionsResult(result),
+        );
 
         // this.networkService.handleMessage('/query', (result)
         // => this.queryService.handleQuery(result));
@@ -170,15 +190,15 @@ class RpcController {
     initializeServiceApi() {
         this.logger.info(`Service API module enabled, server running on port ${this.config.rpcPort}`);
 
-        this.app.post('/publish', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            await this.publish(req, res, next, {isAsset: false});
+        this.app.post(constants.SERVICE_API_ROUTES.PUBLISH, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+            await this.publish(req, res, next, { isAsset: false });
         });
-      
-        this.app.post('/provision', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            await this.publish(req, res, next, {isAsset: true, ual: null});
+
+        this.app.post(constants.SERVICE_API_ROUTES.PROVISION, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+            await this.publish(req, res, next, { isAsset: true, ual: null });
         });
-      
-        this.app.post('/update', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+
+        this.app.post(constants.SERVICE_API_ROUTES.UPDATE, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.body.ual) {
                 return next({
                     code: 400,
@@ -188,249 +208,243 @@ class RpcController {
             await this.publish(req, res, next, { isAsset: true, ual: req.body.ual });
         });
 
-        this.app.get('/resolve', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            const operationId = uuidv1();
-            this.logger.emit({
-                msg: 'Started measuring execution of resolve command',
-                Event_name: 'resolve_start',
-                Operation_name: 'resolve',
-                Id_operation: operationId,
-            });
-
-            this.logger.emit({
-                msg: 'Started measuring execution of resolve init',
-                Event_name: 'resolve_init_start',
-                Operation_name: 'resolve_init',
-                Id_operation: operationId,
-            });
-
-            if (!req.query.ids) {
-                return next({ code: 400, message: 'Param ids is required.' });
-            }
-
-            if (req.query.load === undefined) {
-                req.query.load = false;
-            }
-
-            this.logger.emit({
-                msg: 'Finished measuring execution of resolve init',
-                Event_name: 'resolve_init_end',
-                Operation_name: 'resolve_init',
-                Id_operation: operationId,
-            });
-
-            let handlerId = null;
-            try {
-                const inserted_object = await Models.handler_ids.create({
-                    status: 'PENDING',
-                });
-                handlerId = inserted_object.dataValues.handler_id;
-                res.status(202).send({
-                    handler_id: handlerId,
-                });
-
-                let ids = [req.query.ids];
-                if (req.query.ids instanceof Array) {
-                    ids = [...new Set(req.query.ids)];
-                }
-                this.logger.info(`Resolve for ${ids} with handler id ${handlerId} initiated.`);
-                const response = [];
-
-                for (let id of ids) {
-                    let isAsset = false;
-                    const { assertionId } = await this.blockchainService.getAssetProofs(id);
-                    if (assertionId) {
-                        isAsset = true;
-                        id = assertionId;
-                    }
-                    this.logger.emit({
-                        msg: id,
-                        Event_name: 'resolve_assertion_id',
-                        Operation_name: 'resolve_assertion_id',
-                        Id_operation: operationId,
-                    });
-                    this.logger.emit({
-                        msg: 'Started measuring execution of resolve local',
-                        Event_name: 'resolve_local_start',
-                        Operation_name: 'resolve_local',
-                        Id_operation: operationId,
-                    });
-
-                    const nquads = await this.dataService.resolve(id, true);
-
-                    this.logger.emit({
-                        msg: 'Finished measuring execution of resolve local',
-                        Event_name: 'resolve_local_end',
-                        Operation_name: 'resolve_local',
-                        Id_operation: operationId,
-                    });
-
-                    if (nquads) {
-                        this.logger.emit({
-                            msg: 'Started measuring execution of create assertion from nquads',
-                            Event_name: 'resolve_create_assertion_from_nquads_start',
-                            Operation_name: 'resolve_create_assertion_from_nquads',
-                            Id_operation: operationId,
-                        });
-
-                        const assertion = await this.dataService.createAssertion(nquads);
-
-                        this.logger.emit({
-                            msg: 'Finished measuring execution of create assertion from nquads',
-                            Event_name: 'resolve_create_assertion_from_nquads_end',
-                            Operation_name: 'resolve_create_assertion_from_nquads',
-                            Id_operation: operationId,
-                        });
-
-                        assertion.jsonld.metadata = JSON.parse(
-                            sortedStringify(assertion.jsonld.metadata),
-                        );
-                        assertion.jsonld.data = JSON.parse(
-                            sortedStringify(
-                                await this.dataService.fromNQuads(
-                                    assertion.jsonld.data,
-                                    assertion.jsonld.metadata.type,
-                                ),
-                            ),
-                        );
-                        response.push(isAsset ? {
-                            type: 'asset',
-                            id: assertion.jsonld.metadata.UALs[0],
-                            result: {
-                                assertions: await this.dataService.assertionsByAsset(
-                                    assertion.jsonld.metadata.UALs[0],
-                                ),
-                                metadata: {
-                                    type: assertion.jsonld.metadata.type,
-                                    issuer: assertion.jsonld.metadata.issuer,
-                                    latestState: assertion.jsonld.metadata.timestamp,
-                                },
-                                data: assertion.jsonld.data,
-                            },
-                        } : {
-                            type: 'assertion',
-                            id,
-                            assertion: assertion.jsonld,
-                        });
-                        response.push(isAsset ? {
-                            type: 'asset',
-                            id: assertion.jsonld.metadata.UALs[0],
-                            result: {
-                                assertions: await this.dataService.assertionsByAsset(
-                                    assertion.jsonld.metadata.UALs[0],
-                                ),
-                                metadata: {
-                                    type: assertion.jsonld.metadata.type,
-                                    issuer: assertion.jsonld.metadata.issuer,
-                                    latestState: assertion.jsonld.metadata.timestamp,
-                                },
-                                data: assertion.jsonld.data,
-                            },
-                        } : {
-                            type: 'assertion',
-                            id,
-                            assertion: assertion.jsonld,
-                        });
-                    } else {
-                        this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${id}`);
-                        let nodes = await this.networkService.findNodes(id, this.config.replicationFactor);
-                        if (nodes.length < this.config.replicationFactor) {
-                            this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${id}`);
-                        }
-                        for (const node of nodes) {
-                            try {
-                                const assertion = await this.queryService.resolve(
-                                    id, req.query.load, isAsset, node, operationId,
-                                );
-                                if (assertion) {
-                                    assertion.jsonld.metadata = JSON.parse(
-                                        sortedStringify(assertion.jsonld.metadata),
-                                    );
-                                    assertion.jsonld.data = JSON.parse(
-                                        sortedStringify(
-                                            await this.dataService.fromNQuads(
-                                                assertion.jsonld.data,
-                                                assertion.jsonld.metadata.type,
-                                            ),
-                                        ),
-                                    );
-                                    response.push(isAsset ? {
-                                        type: 'asset',
-                                        id: assertion.jsonld.metadata.UALs[0],
-                                        result: {
-                                            metadata: {
-                                                type: assertion.jsonld.metadata.type,
-                                                issuer: assertion.jsonld.metadata.issuer,
-                                                latestState: assertion.jsonld.metadata.timestamp,
-                                            },
-                                            data: assertion.jsonld.data,
-                                        },
-                                    } : {
-                                        type: 'assertion',
-                                        id,
-                                        assertion: assertion.jsonld,
-                                    });
-                                    break;
-                                }
-                            } catch (e) {
-                                this.logger.error({
-                                    msg: `Error while resolving data from another node: ${e.message}. ${e.stack}`,
-                                    Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
-                                    Event_value1: e.message,
-                                    Id_operation: operationId,
-                                });
-                            }
-                        }
-                    }
-                }
-
-                const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
-
+        this.app.get(
+            constants.SERVICE_API_ROUTES.RESOLVE,
+            this.rateLimitMiddleware,
+            this.slowDownMiddleware,
+            async (req, res, next) => {
+                const operationId = uuidv1();
                 this.logger.emit({
-                    msg: 'Started measuring execution of resolve save assertion',
-                    Event_name: 'resolve_save_assertion_start',
-                    Operation_name: 'resolve_save_assertion',
-                    Id_operation: operationId,
-                });
-
-                await this.fileService
-                    .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(response));
-
-                this.logger.emit({
-                    msg: 'Finished measuring execution of resolve save assertion',
-                    Event_name: 'resolve_save_assertion_end',
-                    Operation_name: 'resolve_save_assertion',
-                    Id_operation: operationId,
-                });
-
-                await Models.handler_ids.update(
-                    {
-                        status: 'COMPLETED',
-                    }, {
-                        where: {
-                            handler_id: handlerId,
-                        },
-                    },
-                );
-
-                this.logger.emit({
-                    msg: 'Finished measuring execution of resolve command',
-                    Event_name: 'resolve_end',
+                    msg: 'Started measuring execution of resolve command',
+                    Event_name: 'resolve_start',
                     Operation_name: 'resolve',
                     Id_operation: operationId,
                 });
-            } catch (e) {
-                this.logger.error({
-                    msg: `Unexpected error at resolve route: ${e.message}. ${e.stack}`,
-                    Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
-                    Event_value1: e.message,
+
+                this.logger.emit({
+                    msg: 'Started measuring execution of resolve init',
+                    Event_name: 'resolve_init_start',
+                    Operation_name: 'resolve_init',
                     Id_operation: operationId,
                 });
-                this.updateFailedHandlerId(handlerId, e, next);
-            }
-        });
 
-        this.app.get('/assertions::search', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+                if (!req.query.ids) {
+                    return next({ code: 400, message: 'Param ids is required.' });
+                }
+
+                if (req.query.load === undefined) {
+                    req.query.load = false;
+                }
+
+                this.logger.emit({
+                    msg: 'Finished measuring execution of resolve init',
+                    Event_name: 'resolve_init_end',
+                    Operation_name: 'resolve_init',
+                    Id_operation: operationId,
+                });
+
+                let handlerId = null;
+                try {
+                    const inserted_object = await Models.handler_ids.create({
+                        status: 'PENDING',
+                    });
+                    handlerId = inserted_object.dataValues.handler_id;
+                    res.status(202).send({
+                        handler_id: handlerId,
+                    });
+
+                    let ids = [req.query.ids];
+                    if (req.query.ids instanceof Array) {
+                        ids = [...new Set(req.query.ids)];
+                    }
+                    this.logger.info(`Resolve for ${ids} with handler id ${handlerId} initiated.`);
+                    const response = [];
+
+                    for (let id of ids) {
+                        let isAsset = false;
+                        const { assertionId } = await this.blockchainService.getAssetProofs(id);
+                        if (assertionId) {
+                            isAsset = true;
+                            id = assertionId;
+                        }
+                        this.logger.emit({
+                            msg: id,
+                            Event_name: 'resolve_assertion_id',
+                            Operation_name: 'resolve_assertion_id',
+                            Id_operation: operationId,
+                        });
+                        this.logger.emit({
+                            msg: 'Started measuring execution of resolve local',
+                            Event_name: 'resolve_local_start',
+                            Operation_name: 'resolve_local',
+                            Id_operation: operationId,
+                        });
+
+                        const nquads = await this.dataService.resolve(id, true);
+
+                        this.logger.emit({
+                            msg: 'Finished measuring execution of resolve local',
+                            Event_name: 'resolve_local_end',
+                            Operation_name: 'resolve_local',
+                            Id_operation: operationId,
+                        });
+
+                        if (nquads) {
+                            this.logger.emit({
+                                msg: 'Started measuring execution of create assertion from nquads',
+                                Event_name: 'resolve_create_assertion_from_nquads_start',
+                                Operation_name: 'resolve_create_assertion_from_nquads',
+                                Id_operation: operationId,
+                            });
+
+                            const assertion = await this.dataService.createAssertion(nquads);
+
+                            this.logger.emit({
+                                msg: 'Finished measuring execution of create assertion from nquads',
+                                Event_name: 'resolve_create_assertion_from_nquads_end',
+                                Operation_name: 'resolve_create_assertion_from_nquads',
+                                Id_operation: operationId,
+                            });
+
+                            assertion.jsonld.metadata = JSON.parse(
+                                sortedStringify(assertion.jsonld.metadata),
+                            );
+                            assertion.jsonld.data = JSON.parse(
+                                sortedStringify(
+                                    await this.dataService.fromNQuads(
+                                        assertion.jsonld.data,
+                                        assertion.jsonld.metadata.type,
+                                    ),
+                                ),
+                            );
+                            response.push(isAsset ? {
+                                type: 'asset',
+                                id: assertion.jsonld.metadata.UALs[0],
+                                result: {
+                                    assertions: await this.dataService.assertionsByAsset(
+                                        assertion.jsonld.metadata.UALs[0],
+                                    ),
+                                    metadata: {
+                                        type: assertion.jsonld.metadata.type,
+                                        issuer: assertion.jsonld.metadata.issuer,
+                                        latestState: assertion.jsonld.metadata.timestamp,
+                                    },
+                                    data: assertion.jsonld.data,
+                                },
+                            } : {
+                                type: 'assertion',
+                                id,
+                                assertion: assertion.jsonld,
+                            });
+                        } else {
+                            this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${id}`);
+                            const nodes = await this.networkService.findNodes(
+                                id,
+                                constants.NETWORK_PROTOCOLS.RESOLVE,
+                                this.config.replicationFactor,
+                            );
+                            if (nodes.length < this.config.replicationFactor) {
+                                this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${id}`);
+                            }
+                            for (const node of nodes) {
+                                try {
+                                    const assertion = await this.queryService.resolve(
+                                        id, req.query.load, isAsset, node, operationId,
+                                    );
+                                    if (assertion) {
+                                        assertion.jsonld.metadata = JSON.parse(
+                                            sortedStringify(assertion.jsonld.metadata),
+                                        );
+                                        assertion.jsonld.data = JSON.parse(
+                                            sortedStringify(
+                                                await this.dataService.fromNQuads(
+                                                    assertion.jsonld.data,
+                                                    assertion.jsonld.metadata.type,
+                                                ),
+                                            ),
+                                        );
+                                        response.push(isAsset ? {
+                                            type: 'asset',
+                                            id: assertion.jsonld.metadata.UALs[0],
+                                            result: {
+                                                metadata: {
+                                                    type: assertion.jsonld.metadata.type,
+                                                    issuer: assertion.jsonld.metadata.issuer,
+                                                    latestState: assertion
+                                                        .jsonld.metadata.timestamp,
+                                                },
+                                                data: assertion.jsonld.data,
+                                            },
+                                        } : {
+                                            type: 'assertion',
+                                            id,
+                                            assertion: assertion.jsonld,
+                                        });
+                                        break;
+                                    }
+                                } catch (e) {
+                                    this.logger.error({
+                                        msg: `Error while resolving data from another node: ${e.message}. ${e.stack}`,
+                                        Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
+                                        Event_value1: e.message,
+                                        Id_operation: operationId,
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                    const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
+
+                    this.logger.emit({
+                        msg: 'Started measuring execution of resolve save assertion',
+                        Event_name: 'resolve_save_assertion_start',
+                        Operation_name: 'resolve_save_assertion',
+                        Id_operation: operationId,
+                    });
+
+                    await this.fileService.writeContentsToFile(
+                        handlerIdCachePath,
+                        handlerId,
+                        JSON.stringify(response),
+                    );
+
+                    this.logger.emit({
+                        msg: 'Finished measuring execution of resolve save assertion',
+                        Event_name: 'resolve_save_assertion_end',
+                        Operation_name: 'resolve_save_assertion',
+                        Id_operation: operationId,
+                    });
+
+                    await Models.handler_ids.update(
+                        {
+                            status: 'COMPLETED',
+                        }, {
+                            where: {
+                                handler_id: handlerId,
+                            },
+                        },
+                    );
+
+                    this.logger.emit({
+                        msg: 'Finished measuring execution of resolve command',
+                        Event_name: 'resolve_end',
+                        Operation_name: 'resolve',
+                        Id_operation: operationId,
+                    });
+                } catch (e) {
+                    this.logger.error({
+                        msg: `Unexpected error at resolve route: ${e.message}. ${e.stack}`,
+                        Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
+                        Event_value1: e.message,
+                        Id_operation: operationId,
+                    });
+                    this.updateFailedHandlerId(handlerId, e, next);
+                }
+            },
+        );
+
+        this.app.get(constants.SERVICE_API_ROUTES.SEARCH_ASSERTIONS, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
                 return next({ code: 400, message: 'Params query is necessary.' });
             }
@@ -486,7 +500,7 @@ class RpcController {
                 );
 
                 this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`);
-                let nodes = await this.networkService.findNodes(query, this.config.replicationFactor);
+                let nodes = await this.networkService.findNodes(query, constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS, this.config.replicationFactor);
                 if (nodes.length < this.config.replicationFactor) {
                     this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${query}`);
                 }
@@ -497,7 +511,7 @@ class RpcController {
                     options: { limit, prefix },
                     handlerId,
                 }, node));
-                await Promise.all(searchPromises);
+                await Promise.allSettled(searchPromises);
             } catch (e) {
                 this.logger.error({
                     msg: `Unexpected error at search assertions route: ${e.message}. ${e.stack}`,
@@ -516,7 +530,7 @@ class RpcController {
             }
         });
 
-        this.app.get('/entities::search', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+        this.app.get(constants.SERVICE_API_ROUTES.SEARCH, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
                 return next({ code: 400, message: 'Params query or ids are necessary.' });
             }
@@ -581,6 +595,7 @@ class RpcController {
                     this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`);
                     nodes = await this.networkService.findNodes(
                         query,
+                        constants.NETWORK_PROTOCOLS.SEARCH,
                         this.config.replicationFactor,
                     );
                     if (nodes.length < this.config.replicationFactor) {
@@ -609,7 +624,7 @@ class RpcController {
                     limit,
                     handlerId,
                 }, node));
-                await Promise.all(searchPromises);
+                await Promise.allSettled(searchPromises);
             } catch (e) {
                 this.logger.error({
                     msg: `Unexpected error at search entities route: ${e.message}. ${e.stack}`,
@@ -628,14 +643,16 @@ class RpcController {
             }
         });
 
-        this.app.post('/query', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            if (!req.body.query || !req.query.type) {
+        this.app.post(constants.SERVICE_API_ROUTES.QUERY, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+            if (!req.body || !req.body.query || !req.query.type) {
                 return next({ code: 400, message: 'Params query and type are necessary.' });
             }
 
+            const { query, type: queryType } = req.body;
+
             const allowedQueries = ['construct', 'select'];
             // Handle allowed query types, TODO: expand to select, ask and construct
-            if (!allowedQueries.includes(req.query.type.toLowerCase())) {
+            if (!allowedQueries.includes(queryType.toLowerCase())) {
                 return next({ code: 400, message: `Unallowed query type, currently supported types: ${allowedQueries.join(', ')}` });
             }
             const operationId = uuidv1();
@@ -646,7 +663,7 @@ class RpcController {
                     Event_name: 'query_start',
                     Operation_name: 'query',
                     Id_operation: operationId,
-                    Event_value1: req.query.type,
+                    Event_value1: queryType,
                 });
 
                 const inserted_object = await Models.handler_ids.create({
@@ -658,8 +675,8 @@ class RpcController {
                 });
                 try {
                     const response = await this.dataService.runQuery(
-                        req.body.query,
-                        req.query.type.toUpperCase(),
+                        query,
+                        queryType.toUpperCase(),
                     );
 
                     const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
@@ -696,12 +713,12 @@ class RpcController {
                     Event_name: 'query_end',
                     Operation_name: 'query',
                     Id_operation: operationId,
-                    Event_value1: req.query.type,
+                    Event_value1: queryType,
                 });
             }
         });
 
-        this.app.post('/proofs::get', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
+        this.app.post(constants.SERVICE_API_ROUTES.PROOFS, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.body.nquads) {
                 return next({ code: 400, message: 'Params query and type are necessary.' });
             }
@@ -775,7 +792,7 @@ class RpcController {
             }
         });
 
-        this.app.get('/:operation/result/:handler_id', async (req, res, next) => {
+        this.app.get(constants.SERVICE_API_ROUTES.OPERATION_RESULT, async (req, res, next) => {
             if (!['provision', 'update', 'publish', 'resolve', 'query', 'entities:search', 'assertions:search', 'proofs:get'].includes(req.params.operation)) {
                 return next({
                     code: 400,
@@ -840,6 +857,7 @@ class RpcController {
                                 kg: 'http://g.co/kg',
                             },
                             '@type': 'ItemList',
+                            'itemCount': response.length,
                             itemListElement: response,
                         });
                         break;
@@ -876,6 +894,7 @@ class RpcController {
                                 kg: 'http://g.co/kg',
                             },
                             '@type': 'ItemList',
+                            'itemCount': response.length,
                             itemListElement: response,
                         });
                         break;
@@ -924,7 +943,7 @@ class RpcController {
             }
         });
 
-        this.app.get('/info', async (req, res, next) => {
+        this.app.get(constants.SERVICE_API_ROUTES.INFO, async (req, res, next) => {
             try {
                 const { version } = pjson;
 
