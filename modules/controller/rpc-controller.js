@@ -857,6 +857,7 @@ class RpcController {
                                 kg: 'http://g.co/kg',
                             },
                             '@type': 'ItemList',
+                            'itemCount': response.length,
                             itemListElement: response,
                         });
                         break;
@@ -893,6 +894,7 @@ class RpcController {
                                 kg: 'http://g.co/kg',
                             },
                             '@type': 'ItemList',
+                            'itemCount': response.length,
                             itemListElement: response,
                         });
                         break;
