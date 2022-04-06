@@ -336,25 +336,6 @@ class RpcController {
                                 id,
                                 assertion: assertion.jsonld,
                             });
-                            response.push(isAsset ? {
-                                type: 'asset',
-                                id: assertion.jsonld.metadata.UALs[0],
-                                result: {
-                                    assertions: await this.dataService.assertionsByAsset(
-                                        assertion.jsonld.metadata.UALs[0],
-                                    ),
-                                    metadata: {
-                                        type: assertion.jsonld.metadata.type,
-                                        issuer: assertion.jsonld.metadata.issuer,
-                                        latestState: assertion.jsonld.metadata.timestamp,
-                                    },
-                                    data: assertion.jsonld.data,
-                                },
-                            } : {
-                                type: 'assertion',
-                                id,
-                                assertion: assertion.jsonld,
-                            });
                         } else {
                             this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${id}`);
                             const nodes = await this.networkService.findNodes(
@@ -663,13 +644,15 @@ class RpcController {
         });
 
         this.app.post(constants.SERVICE_API_ROUTES.QUERY, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            if (!req.body.query || !req.query.type) {
+            if (!req.body || !req.body.query || !req.query.type) {
                 return next({ code: 400, message: 'Params query and type are necessary.' });
             }
 
+            const { query, type: queryType } = req.body;
+
             const allowedQueries = ['construct', 'select'];
             // Handle allowed query types, TODO: expand to select, ask and construct
-            if (!allowedQueries.includes(req.query.type.toLowerCase())) {
+            if (!allowedQueries.includes(queryType.toLowerCase())) {
                 return next({ code: 400, message: `Unallowed query type, currently supported types: ${allowedQueries.join(', ')}` });
             }
             const operationId = uuidv1();
@@ -680,7 +663,7 @@ class RpcController {
                     Event_name: 'query_start',
                     Operation_name: 'query',
                     Id_operation: operationId,
-                    Event_value1: req.query.type,
+                    Event_value1: queryType,
                 });
 
                 const inserted_object = await Models.handler_ids.create({
@@ -692,8 +675,8 @@ class RpcController {
                 });
                 try {
                     const response = await this.dataService.runQuery(
-                        req.body.query,
-                        req.query.type.toUpperCase(),
+                        query,
+                        queryType.toUpperCase(),
                     );
 
                     const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
@@ -730,7 +713,7 @@ class RpcController {
                     Event_name: 'query_end',
                     Operation_name: 'query',
                     Id_operation: operationId,
-                    Event_value1: req.query.type,
+                    Event_value1: queryType,
                 });
             }
         });
@@ -874,6 +857,7 @@ class RpcController {
                                 kg: 'http://g.co/kg',
                             },
                             '@type': 'ItemList',
+                            'itemCount': response.length,
                             itemListElement: response,
                         });
                         break;
@@ -910,6 +894,7 @@ class RpcController {
                                 kg: 'http://g.co/kg',
                             },
                             '@type': 'ItemList',
+                            'itemCount': response.length,
                             itemListElement: response,
                         });
                         break;
