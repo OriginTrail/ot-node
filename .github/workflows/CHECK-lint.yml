@@ -1,4 +1,4 @@
-name: TEST-release
+name: CHECK-lint
 
 #todo this test should be execute when opening PR to prerelease/release branches
 on: [pull_request]
@@ -7,25 +7,9 @@ env:
   ARTIFACTS_DIR: artifacts
   CUCUMBER_ARTIFACTS_DIR: artifacts/cucumber
 jobs:
-
-  test-release:
+  check-lint:
     #todo think about locking the version - version should be the same as the one in official documentation
     runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: mysql:5.7
-        env:
-          MYSQL_DATABASE: operationaldb
-          MYSQL_USER: node
-          MYSQL_PASSWORD: password
-          MYSQL_ROOT_PASSWORD: password
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-      graphdb:
-        image: khaller/graphdb-free:latest
-        ports:
-          - 7200:7200
     strategy:
       matrix:
         node-version: [16.x]
@@ -41,7 +25,7 @@ jobs:
       - run: sudo chmod -R 777 $ARTIFACTS_DIR
       - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR
       - run: sudo chmod -R 777 $CUCUMBER_ARTIFACTS_DIR
-      - run: npm run test:bdd:release;
+      - run: npm run lint;
       - uses: actions/upload-artifact@v2
         if: ${{ always() }}
         with:
