@@ -7,7 +7,6 @@ const queue = require('fastq');
 const DependencyInjection = require('./modules/service/dependency-injection');
 const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
-const db = require('./models');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
 
@@ -33,6 +32,7 @@ class OTNode {
         this.initializeDependencyContainer();
         await this.initializeAutoUpdate();
         await this.initializeDataModule();
+        await this.initializeOperationalDbModule();
         await this.initializeValidationModule();
         await this.initializeBlockchainModule();
         await this.initializeNetworkModule();
@@ -45,18 +45,19 @@ class OTNode {
     initializeConfiguration(userConfig) {
         const defaultConfig = JSON.parse(JSON.stringify(configjson[process.env.NODE_ENV]));
 
-        if (process.env.NODE_ENV === 'development' && process.argv.length === 3) {
-            // eslint-disable-next-line prefer-destructuring
-            userConfig = JSON.parse(fs.readFileSync(process.argv[2]));
-        }
-
         if (userConfig) {
             this.config = DeepExtend(defaultConfig, userConfig);
         } else {
             this.config = rc(pjson.name, defaultConfig);
         }
-        if (!this.config.blockchain[0].hubContractAddress && this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId) {
-            this.config.blockchain[0].hubContractAddress = configjson[process.env.NODE_ENV].blockchain[0].hubContractAddress;
+        if (!this.config.configFilename) {
+            // set default user configuration filename
+            this.config.configFilename = '.origintrail_noderc';
+        }
+        if (!this.config.blockchain[0].hubContractAddress
+            && this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId) {
+            this.config.blockchain[0].hubContractAddress = configjson[process.env.NODE_ENV]
+                .blockchain[0].hubContractAddress;
         }
     }
 
@@ -107,7 +108,6 @@ class OTNode {
             const dataService = this.container.resolve('dataService');
             await dataService.initialize();
             this.logger.info(`Data module: ${dataService.getName()} implementation`);
-            db.sequelize.sync();
         } catch (e) {
             this.logger.error({
                 msg: `Data module initialization failed. Error message: ${e.message}`,
@@ -116,10 +116,34 @@ class OTNode {
         }
     }
 
+    async initializeOperationalDbModule() {
+        try {
+            this.logger.info('Operational database module: sequelize implementation');
+            // eslint-disable-next-line global-require
+            const db = require('./models');
+            await db.sequelize.sync();
+        } catch (e) {
+            this.logger.error({
+                msg: `Operational database module initialization failed. Error message: ${e.message}`,
+                Event_name: constants.ERROR_TYPE.OPERATIONALDB_MODULE_INITIALIZATION_ERROR,
+            });
+        }
+    }
+
     async initializeNetworkModule() {
         try {
             const networkService = this.container.resolve('networkService');
-            await networkService.initialize();
+            const result = await networkService.initialize();
+
+            this.config.network.peerId = result.peerId;
+            if (!this.config.network.privateKey
+                && (this.config.network.privateKey !== result.privateKey)) {
+                this.config.network.privateKey = result.privateKey;
+                if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
+                    this.savePrivateKeyInUserConfigurationFile(result.privateKey);
+                }
+            }
+
             const rankingService = this.container.resolve('rankingService');
             await rankingService.initialize();
             this.logger.info(`Network module: ${networkService.getName()} implementation`);
@@ -204,6 +228,12 @@ class OTNode {
         } catch (e) {
             this.logger.warn(`Watchdog service initialization failed. Error message: ${e.message}`);
         }
+    }
+
+    savePrivateKeyInUserConfigurationFile(privateKey) {
+        const configFile = JSON.parse(fs.readFileSync(this.config.configFilename));
+        configFile.network.privateKey = privateKey;
+        fs.writeFileSync(this.config.configFilename, JSON.stringify(configFile, null, 2));
     }
 
     stop() {

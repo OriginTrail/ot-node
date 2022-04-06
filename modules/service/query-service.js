@@ -11,29 +11,78 @@ class QueryService {
         this.workerPool = ctx.workerPool;
     }
 
-    async resolve(id, load, isAssetRequested, node) {
+    async resolve(id, load, isAssetRequested, node, operationId) {
         const resolvePromise = new Promise(async (resolve, reject) => {
             const timer = setTimeout(() => {
                 resolve(null);
             }, constants.RESOLVE_MAX_TIME_MILLIS);
 
-            const result = await this.networkService.sendMessage('/resolve', id, node);
+            const result = await this.networkService.sendMessage(
+                constants.NETWORK_PROTOCOLS.RESOLVE,
+                id,
+                node,
+            );
             clearTimeout(timer);
             resolve(result);
         });
 
+        this.logger.emit({
+            msg: 'Started measuring execution of resolve fetch from nodes',
+            Event_name: 'resolve_fetch_from_nodes_start',
+            Operation_name: 'resolve_fetch_from_nodes',
+            Id_operation: operationId,
+        });
+
         const result = await resolvePromise;
-        if (!result || (Array.isArray(result) && result[0] === constants.NETWORK_RESPONSES.ACK)) {
+
+        this.logger.emit({
+            msg: 'Finished measuring execution of resolve fetch from nodes',
+            Event_name: 'resolve_fetch_from_nodes_end',
+            Operation_name: 'resolve_fetch_from_nodes',
+            Id_operation: operationId,
+        });
+        if (!result
+            || (Array.isArray(result) && result[0] === constants.NETWORK_RESPONSES.ACK)
+            || result === constants.NETWORK_RESPONSES.BUSY) {
             return null;
         }
 
         const rawNquads = result.nquads ? result.nquads : result;
+        this.logger.emit({
+            msg: 'Started measuring execution of create assertion from nquads',
+            Event_name: 'resolve_create_assertion_from_nquads_start',
+            Operation_name: 'resolve_create_assertion_from_nquads',
+            Id_operation: operationId,
+        });
+
         const assertion = await this.dataService.createAssertion(rawNquads);
+
+        this.logger.emit({
+            msg: 'Finished measuring execution of create assertion from nquads',
+            Event_name: 'resolve_create_assertion_from_nquads_end',
+            Operation_name: 'resolve_create_assertion_from_nquads',
+            Id_operation: operationId,
+        });
+
+        this.logger.emit({
+            msg: 'Started measuring execution of resolve verify assertion',
+            Event_name: 'resolve_verify_assertion_start',
+            Operation_name: 'resolve_verify_assertion',
+            Id_operation: operationId,
+        });
+
         const status = await this.dataService.verifyAssertion(
             assertion.jsonld,
             assertion.nquads,
             { isAsset: isAssetRequested },
         );
+
+        this.logger.emit({
+            msg: 'Finished measuring execution of resolve verify assertion',
+            Event_name: 'resolve_verify_assertion_end',
+            Operation_name: 'resolve_verify_assertion',
+            Id_operation: operationId,
+        });
 
         if (status && load) {
             await this.dataService.insert(rawNquads.join('\n'), `${constants.DID_PREFIX}:${assertion.jsonld.metadata.id}`);
@@ -43,6 +92,10 @@ class QueryService {
     }
 
     async handleResolve(id) {
+        if (this.dataService.isNodeBusy(constants.BUSYNESS_LIMITS.HANDLE_RESOLVE)) {
+            return constants.NETWORK_RESPONSES.BUSY;
+        }
+
         const operationId = uuidv1();
         this.logger.emit({
             msg: 'Started measuring execution of handle resolve command',
@@ -70,11 +123,19 @@ class QueryService {
     }
 
     async search(data, node) {
-        const result = await this.networkService.sendMessage('/search', data, node);
+        const result = await this.networkService.sendMessage(
+            constants.NETWORK_PROTOCOLS.SEARCH,
+            data,
+            node,
+        );
         return result;
     }
 
     async handleSearch(request) {
+        if (this.dataService.isNodeBusy(constants.BUSYNESS_LIMITS.HANDLE_SEARCH_ENTITIES)) {
+            return constants.NETWORK_RESPONSES.BUSY;
+        }
+
         const operationId = uuidv1();
         this.logger.emit({
             msg: 'Started measuring execution of handle search command',
@@ -83,8 +144,20 @@ class QueryService {
             Id_operation: operationId,
         });
 
-        const { query, issuers, types, prefix, limit, handlerId } = request;
-        const response = await this.dataService.searchByQuery(query, { issuers, types, prefix, limit });
+        const {
+            query,
+            issuers,
+            types,
+            prefix,
+            limit,
+            handlerId,
+        } = request;
+        const response = await this.dataService.searchByQuery(query, {
+            issuers,
+            types,
+            prefix,
+            limit,
+        });
 
         this.logger.emit({
             msg: 'Finished measuring execution of handle search command',
@@ -97,6 +170,10 @@ class QueryService {
     }
 
     async handleSearchResult(request) {
+        if (request === constants.NETWORK_RESPONSES.BUSY) {
+            return false;
+        }
+
         // TODO: add mutex
         const operationId = uuidv1();
         this.logger.emit({
@@ -118,7 +195,9 @@ class QueryService {
 
             const rawNquads = assertion.nquads ? assertion.nquads : assertion.rdf;
             const jsonld = await this.dataService.createAssertion(rawNquads);
-            let object = handlerData.find((x) => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UALs[0])
+            let object = handlerData.find(
+                (x) => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UALs[0],
+            );
             if (!object) {
                 object = {
                     type: jsonld.metadata.type,
@@ -164,11 +243,19 @@ class QueryService {
     }
 
     async searchAssertions(data, node) {
-        const result = await this.networkService.sendMessage('/search/assertions', data, node);
+        const result = await this.networkService.sendMessage(
+            constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS,
+            data,
+            node,
+        );
         return result;
     }
 
     async handleSearchAssertions(request) {
+        if (this.dataService.isNodeBusy(constants.BUSYNESS_LIMITS.HANDLE_SEARCH_ASSERTIONS)) {
+            return constants.NETWORK_RESPONSES.BUSY;
+        }
+
         const operationId = uuidv1();
         this.logger.emit({
             msg: 'Started measuring execution of handle search assertions command',
@@ -190,6 +277,10 @@ class QueryService {
     }
 
     async handleSearchAssertionsResult(request) {
+        if (request === constants.NETWORK_RESPONSES.BUSY) {
+            return false;
+        }
+
         // TODO: add mutex
         const operationId = uuidv1();
         this.logger.emit({
@@ -207,11 +298,12 @@ class QueryService {
                 const assertion = handlerData.find((x) => x.id === object.assertionId);
                 if (assertion) {
                     if (assertion.nodes.indexOf(object.node) === -1) {
+                        // TODO: is set needed ?
                         assertion.nodes = [...new Set(assertion.nodes.concat(object.node))];
                     }
                 } else {
                     if (!object || !object.nquads) {
-                        continue
+                        continue;
                     }
                     const rawNquads = object.nquads ? object.nquads : object.rdf;
                     const assertion = await this.dataService.createAssertion(rawNquads);

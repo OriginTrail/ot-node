@@ -46,7 +46,6 @@ class CommandExecutor {
                         that.logger.trace('Command executor has not been started yet. Hibernating...');
                     }
 
-                    // eslint-disable-next-line
                     await sleep.sleep(1000);
                 }
                 await this._execute(command);
