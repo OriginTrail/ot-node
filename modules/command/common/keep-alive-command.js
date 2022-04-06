@@ -35,25 +35,22 @@ class KeepAliveCommand extends Command {
             },
         };
         try {
-            if (!this.config.network.privateKey) {
-                const configFile = JSON.parse(fs.readFileSync(this.config.config ? this.config.config : '.origintrail_noderc'));
-                this.config.network.privateKey = configFile.network.privateKey;
-            }
-            const peerId = await PeerId.createFromPrivKey(this.config.network.privateKey);
             signalingMessage.issuerWallet = this.config.blockchain[0].publicKey;
-            signalingMessage.kademliaNodeId = peerId._idB58String;
+            signalingMessage.kademliaNodeId = this.config.network.peerId._idB58String;
             signalingMessage.nodeVersion = pjson.version;
             signalingMessage.telemetry.latestAssertions = (await Models.assertions.findAll({
                 limit: 5,
                 order: [
                     ['created_at', 'DESC'],
                 ],
-                attributes: ['hash', 'topics', 'created_at'],
+                attributes: ['hash', 'topics', 'created_at', 'triple_store', 'status'],
             })).map((x) => (
                 {
                     assertionId: x.dataValues.hash,
                     keyword: x.dataValues.topics,
                     publishTimestamp: x.dataValues.created_at,
+                    tripleStore: x.dataValues.triple_store,
+                    status: x.dataValues.status,
                 }
             ));
         } catch (e) {

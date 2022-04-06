@@ -11,7 +11,8 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x |  bash -
 RUN apt-get -qq update
 RUN apt-get -qq -y install wget apt-transport-https
 RUN apt-get -qq -y install git nodejs
-RUN apt-get -qq -y install mysql-server unzip nano
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends mysql-server
+RUN apt-get -qq -y install unzip nano
 RUN apt-get -qq -y install make python
 
 #Install Papertrail
