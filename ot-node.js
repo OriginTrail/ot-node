@@ -82,7 +82,6 @@ class OTNode {
                 repository: 'https://github.com/OriginTrail/ot-node',
                 branch: this.config.autoUpdate.branch,
                 tempLocation: this.config.autoUpdate.backupDirectory,
-                executeOnComplete: `npx sequelize --config=./config/sequelizeConfig.js db:migrate`,
                 exitOnComplete: true,
             };
 
