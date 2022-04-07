@@ -9,7 +9,6 @@ const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
-const appRootPath = require('app-root-path');
 
 class OTNode {
     constructor(config) {
@@ -83,7 +82,6 @@ class OTNode {
                 repository: 'https://github.com/OriginTrail/ot-node',
                 branch: this.config.autoUpdate.branch,
                 tempLocation: this.config.autoUpdate.backupDirectory,
-                executeOnComplete: `cd ${appRootPath.path} && npx sequelize --config=./config/sequelizeConfig.js db:migrate`,
                 exitOnComplete: true,
             };
 
@@ -122,6 +120,7 @@ class OTNode {
             this.logger.info('Operational database module: sequelize implementation');
             // eslint-disable-next-line global-require
             const db = require('./models');
+            execSync('npx sequelize --config=./config/sequelizeConfig.js db:migrate');
             await db.sequelize.sync();
         } catch (e) {
             this.logger.error({
