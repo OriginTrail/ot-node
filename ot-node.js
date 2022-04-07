@@ -91,7 +91,7 @@ class OTNode {
 
             this.updater = new AutoGitUpdate(autoUpdateConfig);
             this.updater.setLogConfig({
-                logGeneral: false,
+                logGeneral: true,
             });
             DependencyInjection.registerValue(this.container, 'updater', this.updater);
 
