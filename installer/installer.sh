@@ -276,12 +276,24 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo -n "Installing node.js and npm: "
+echo -n "Installing node.js: "
 
  OUTPUT=$(apt-get install node.js -y 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
-    echo "There was an error installing node.js/npm."
+    echo "There was an error installing node.js."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+echo -n "Installing npm: "
+
+ OUTPUT=$(npm install -g npm@latest 2>&1)
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error installing npm."
     echo $OUTPUT
     exit 1
 else
