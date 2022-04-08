@@ -10,6 +10,8 @@ const constants = require('./modules/constants');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
 
+let updateFilePath;
+
 class OTNode {
     constructor(config) {
         this.initializeConfiguration(config);
@@ -74,6 +76,11 @@ class OTNode {
 
     async initializeAutoUpdate() {
         try {
+            updateFilePath = `./${this.config.appDataPath}/UPDATED`;
+            // check if UPDATE file exists if yes set flag updated true
+            if (fs.existsSync(updateFilePath)) {
+                this.config.otNodeUpdated = true;
+            }
             if (!this.config.autoUpdate.enabled) {
                 return;
             }
@@ -82,7 +89,7 @@ class OTNode {
                 repository: 'https://github.com/OriginTrail/ot-node',
                 branch: this.config.autoUpdate.branch,
                 tempLocation: this.config.autoUpdate.backupDirectory,
-                executeOnComplete: 'mkdir djTest && npx sequelize --config=./config/sequelizeConfig.js db:migrate',
+                executeOnComplete: `touch ${updateFilePath}`,
                 exitOnComplete: true,
             };
 
@@ -121,7 +128,13 @@ class OTNode {
             this.logger.info('Operational database module: sequelize implementation');
             // eslint-disable-next-line global-require
             const db = require('./models');
-            //execSync('npx sequelize --config=./config/sequelizeConfig.js db:migrate');
+            // todo change if statement to if (this.config.otNodeUpdated);
+            if (process.env.NODE_ENV !== 'test') {
+                execSync('npx sequelize --config=./config/sequelizeConfig.js db:migrate');
+                // todo remove UPDATE file for next release
+                // execSync('rm ${updateFilePath}');
+                // this.config.otNodeUpdated = false;
+            }
             await db.sequelize.sync();
         } catch (e) {
             this.logger.error({
