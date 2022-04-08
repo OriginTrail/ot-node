@@ -9,8 +9,9 @@ RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remot
 
 COPY config/papertrail.yml /etc/log_files.yml
 
-#Install nodemon & forever
+#Install nodemon, git & forever
 RUN npm install forever -g
+RUN apk add git
 
 WORKDIR /ot-node
 
