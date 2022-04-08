@@ -96,12 +96,14 @@ class SendAssertionCommand extends Command {
                 },
             },
         );
-
+        
         if (command.data.isTelemetry) {
             await Models.assertions.create({
                 hash: assertion.id,
                 topics: JSON.stringify(assertion.metadata.keywords[0]),
-                createdAt: assertion.metadata.timestamp,
+                created_at: assertion.metadata.timestamp,
+                triple_store: this.config.graphDatabase.implementation,
+                status,
             });
         }
 

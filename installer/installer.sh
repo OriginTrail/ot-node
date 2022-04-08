@@ -8,10 +8,24 @@ N1=$'\n'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
+FILE=/root/.bashrc
 
 clear
 
 cd /root
+
+echo -n "Updating .bashrc file with OriginTrail node aliases: "
+if [ -f "$FILE" ]; then
+    echo "alias otnode-restart='systemctl restart otnode.service'" >> ~/.bashrc
+    echo "alias otnode-stop='systemctl stop otnode.service'" >> ~/.bashrc
+    echo "alias otnode-start='systemctl start otnode.service'" >> ~/.bashrc
+    echo "alias otnode-logs='journalctl -u otnode --output cat -f'" >> ~/.bashrc
+    echo "alias otnode-config='nano ~/ot-node/.origintrail_noderc'" >> ~/.bashrc
+    source ~/.bashrc
+    echo -e "${GREEN}SUCCESS${NC}"
+else
+    echo "$FILE does not exist. Proceeding with OriginTrail node installation."
+fi
 
 echo -n "Updating Ubuntu package repository: "
 
@@ -158,7 +172,7 @@ if [[ $DATABASE = "blazegraph" ]]; then
     
     echo -n "Downloading Blazegraph: " 
 
-    OUTPUT=$(wget https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_2_1_6_RC/blazegraph.jar 2>&1)
+    OUTPUT=$(wget https://github.com/blazegraph/database/releases/latest/download/blazegraph.jar 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
