@@ -379,18 +379,6 @@ fi
 # Change directory to ot-node
 cd ot-node
 
-echo -n "Executing npm install: "
-
-OUTPUT=$(npm install 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error executing npm install."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
 echo -n "Opening firewall ports 22,8900,9000: "
 
 OUTPUT=$(ufw allow 22/tcp && ufw allow 8900 && ufw allow 9000 2>&1)
