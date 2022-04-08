@@ -381,7 +381,7 @@ cd ot-node
 
 echo -n "Executing npm install: "
 
-OUTPUT=$(npm install 2>&1)
+OUTPUT=$(npm install -g npm@latest 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error executing npm install."
