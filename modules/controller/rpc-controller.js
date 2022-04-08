@@ -644,7 +644,7 @@ class RpcController {
         });
 
         this.app.post(constants.SERVICE_API_ROUTES.QUERY, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            if (!req.body || !req.body.query || !req.query.type) {
+            if (!req.body || !req.body.query || !req.body.type) {
                 return next({ code: 400, message: 'Params query and type are necessary.' });
             }
 
