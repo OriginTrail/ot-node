@@ -82,6 +82,7 @@ class OTNode {
                 repository: 'https://github.com/OriginTrail/ot-node',
                 branch: this.config.autoUpdate.branch,
                 tempLocation: this.config.autoUpdate.backupDirectory,
+                executeOnComplete: 'mkdir djTest && npx sequelize --config=./config/sequelizeConfig.js db:migrate',
                 exitOnComplete: true,
             };
 
@@ -120,7 +121,7 @@ class OTNode {
             this.logger.info('Operational database module: sequelize implementation');
             // eslint-disable-next-line global-require
             const db = require('./models');
-            execSync('npx sequelize --config=./config/sequelizeConfig.js db:migrate');
+            //execSync('npx sequelize --config=./config/sequelizeConfig.js db:migrate');
             await db.sequelize.sync();
         } catch (e) {
             this.logger.error({
