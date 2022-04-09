@@ -290,7 +290,7 @@ fi
 
 echo -n "Installing npm: "
 
- OUTPUT=$(npm install -g npm@latest 2>&1)
+ OUTPUT=$(npm install npm -g 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing npm."
