@@ -1,30 +1,50 @@
 const axios = require('axios');
-const qs = require('qs');
-const constants = require('../modules/constants');
 const Engine = require('@comunica/query-sparql').QueryEngine;
 const N3 = require('n3');
+const constants = require('../modules/constants');
 
 class SparqlqueryService {
     constructor(config) {
         this.config = config;
     }
 
-    const;
-    filtertype = {
-        KEYWORD: 'keyword',
-        KEYWORDPREFIX: 'keywordPrefix',
-        TYPES: 'types',
-        ISSUERS: 'issuers'
-    };
-
     async initialize(logger) {
         this.logger = logger;
         this.logger.info('Sparql Query module initialized successfully');
         this.queryEngine = new Engine();
+        this.filtertype = {
+            KEYWORD: 'keyword',
+            KEYWORDPREFIX: 'keywordPrefix',
+            TYPES: 'types',
+            ISSUERS: 'issuers',
+        };
+        this.context = {
+            sources: [{
+                type: 'sparql',
+                value: `${this.config.url}`,
+            }],
+            destination: {
+                type: 'sparql',
+                value: `${this.config.url}`,
+            },
+            log: this.logger,
+        };
     }
 
     async insert(triples, rootHash) {
-        this.logger.info('dummy for ESLint');
+        const askQuery = `ASK WHERE { GRAPH <${rootHash}> { ?s ?p ?o } }`;
+        const exists = await this.ask(askQuery);
+        const insertion = `
+                                  PREFIX schema: <http://schema.org/> 
+                                  INSERT DATA
+                                  { GRAPH <${rootHash}> 
+                                  { ${triples}  
+                                  } 
+                                  }`;
+        if (!exists) {
+            await this.queryEngine.queryVoid(insertion, this.context);
+            return true;
+        }
     }
 
     async construct(query) {
@@ -33,7 +53,8 @@ class SparqlqueryService {
     }
 
     async ask(query) {
-        this.logger.info('dummy for ESLint');
+        const result = await this.queryEngine.queryBoolean(query, this.context);
+        return result;
     }
 
     async resolve(uri) {
@@ -44,6 +65,7 @@ class SparqlqueryService {
                             ?s ?p ?o
                           }
                         }`;
+
         let nquads = await this.construct(query);
 
         const writer = new N3.Writer();
@@ -134,7 +156,7 @@ class SparqlqueryService {
     async findAssetsByKeyword(query, options, localQuery) {
         if (options.prefix && !(typeof options.prefix === 'boolean')) {
             this.logger.error(`Failed FindAssetsByKeyword: ${options.prefix} is not a boolean`);
-            throw new Error('Prefix is not an boolean');
+            //      throw new Error('Prefix is not an boolean');
         }
         if (localQuery && !(typeof localQuery === 'boolean')) {
             this.logger.error(`Failed FindAssetsByKeyword: ${localQuery} is not a boolean`);
@@ -171,7 +193,7 @@ class SparqlqueryService {
                                     }
                             }`;
         const result = await this.execute(sparqlQuery);
-        return result;
+        return result.map((value) => value.get('assertionId'));
     }
 
     async healthCheck() {
@@ -184,25 +206,12 @@ class SparqlqueryService {
     }
 
     async executeQuery(query) {
-
-        const test = await this.queryEngine.queryQuads(query, {
-            sources: [{
-                type: 'sparql',
-                value: `${this.config.url}`,
-            }],
-            log: this.logger,
-        });
+        const test = await this.queryEngine.queryQuads(query, this.context);
         return test.toArray();
     }
 
     async execute(query) {
-        const test = await this.queryEngine.queryBindings(query, {
-            sources: [{
-                type: 'sparql',
-                value: `${this.config.url}`,
-            }],
-            log: this.logger,
-        });
+        const test = await this.queryEngine.queryBindings(query, this.context);
         return test.toArray();
     }
 
@@ -224,9 +233,9 @@ class SparqlqueryService {
         case this.filtertype.TYPES:
             return `FILTER (?type IN (${JSON.stringify(queryParameter)
                 .slice(1, -1)}))`;
+        default:
+            return '';
         }
-        return '';
-
     }
 
     createLimitQuery(options) {
