@@ -175,4 +175,15 @@ describe('Sparql module', () => {
             .null;
     })
         .timeout(600000);
+    it('Check insert functionality', async () => {
+        // This can also be mocked if necessary
+        const test = await sparqlService.insert('<did:dkg:90e62550721611b96321c7459e7790498240431025e46fce9cd99f2ea9763ffb0> schema:hasBlockchain "polygon::testnet" ', 'did:dkg:90e62550721611b96321c7459e7790498240431025e46fce9cd99f2ea9763ffb0');
+        // eslint-disable-next-line no-unused-expressions
+        expect(test)
+            .to
+            .be
+            .not
+            .null;
+    })
+        .timeout(600000);
 });
