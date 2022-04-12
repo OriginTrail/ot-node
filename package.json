@@ -45,7 +45,7 @@
     "request": "^2.88.2"
   },
   "dependencies": {
-    "@comunica/query-sparql": "^2.1.0",
+    "@comunica/query-sparql": "^2.2.0",
     "app-root-path": "^3.0.0",
     "auto-git-update": "^2.0.2",
     "awilix": "^5.0.1",
