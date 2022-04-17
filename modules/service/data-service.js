@@ -4,6 +4,7 @@ const toobusy = require('toobusy-js');
 const constants = require('../constants');
 const GraphDB = require('../../external/graphdb-service');
 const Blazegraph = require('../../external/blazegraph-service');
+const Fuseki = require('../../external/fuseki-service');
 
 class DataService {
     constructor(ctx) {
@@ -39,11 +40,19 @@ class DataService {
             this.implementation = new Blazegraph({
                 url: this.config.graphDatabase.url,
             });
-        } else {
+        } else if(
+            this.config.graphDatabase.implementation
+            === constants.TRIPLE_STORE_IMPLEMENTATION.GRAPHDB
+        ) {
             this.implementation = new GraphDB({
                 repositoryName: this.config.graphDatabase.name,
                 username: this.config.graphDatabase.username,
                 password: this.config.graphDatabase.password,
+                url: this.config.graphDatabase.url,
+            });
+        } else {
+            this.implementation = new Fuseki({
+                repositoryName: this.config.graphDatabase.name,
                 url: this.config.graphDatabase.url,
             });
         }
@@ -128,6 +137,13 @@ class DataService {
     async resolve(id, localQuery = false, metadataOnly = false) {
         try {
             let nquads = await this.tripleStoreQueue.push({ operation: 'resolve', id });
+            if (nquads.length) {
+                nquads = nquads.toString();
+                nquads = nquads.split('\n');
+                nquads = nquads.filter((x) => x !== '');
+            } else {
+                nquads = null;
+            }
 
             // TODO: add function for this conditional expr for increased readability
             if (!localQuery && nquads && nquads.find((x) => x.includes(`<${constants.DID_PREFIX}:${id}> <http://schema.org/hasVisibility> "private" .`))) {
@@ -136,6 +152,8 @@ class DataService {
             if (metadataOnly) {
                 nquads = nquads.filter((x) => x.startsWith(`<${constants.DID_PREFIX}:${id}>`));
             }
+            // canonize nquads before roothash validation
+            nquads = await this.workerPool.exec('toNQuads', [await this.fromNQuads(nquads, 'default')]);
             return nquads;
         } catch (e) {
             this.handleUnavailableTripleStoreError(e);
@@ -491,16 +509,6 @@ class DataService {
                     },
                 ],
                 isA: 'EPCISDocument',
-            };
-            break;
-        case this.constants.ERC721:
-        case this.constants.OTTELEMETRY:
-            context = {
-                '@context': 'https://www.schema.org/',
-            };
-            frame = {
-                '@context': 'https://www.schema.org/',
-                '@type': type,
             };
             break;
         default:

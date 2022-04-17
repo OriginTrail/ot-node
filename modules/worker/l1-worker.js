@@ -23,12 +23,13 @@ function fromNQuads(nquads, context, frame) {
         jsonld.fromRDF(nquads.join('\n'), {
             algorithm: 'URDNA2015',
             format: 'application/n-quads',
-        }).then((json) => jsonld.frame(json, frame))
-            .then((json) => jsonld.compact(json, context))
-            .then((result) => {
-                accept(result);
-            })
-            .catch((err) => reject(err));
+        })
+        .then((json) => frame && Object.keys(frame).length !== 0 ? jsonld.frame(json, frame) : json)
+        .then((json) => jsonld.compact(json, context))
+        .then((result) => {
+            accept(result);
+        })
+        .catch((err) => reject(err));
     });
 }
 
