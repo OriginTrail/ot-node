@@ -153,7 +153,7 @@ class DataService {
                 nquads = nquads.filter((x) => x.startsWith(`<${constants.DID_PREFIX}:${id}>`));
             }
             // canonize nquads before roothash validation
-            nquads = await this.workerPool.exec('toNQuads', [await this.fromNQuads(nquads, 'default')]);
+            nquads = await this.workerPool.exec('toNQuads', [nquads.join('\n'), 'application/n-quads']);
             return nquads;
         } catch (e) {
             this.handleUnavailableTripleStoreError(e);

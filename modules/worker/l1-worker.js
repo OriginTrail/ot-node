@@ -9,11 +9,15 @@ function JSONStringify(args) {
     return JSON.stringify(args);
 }
 
-async function toNQuads(json) {
-    const canonized = await jsonld.canonize(json, {
+async function toNQuads(data, inputFormat) {
+    const options = {
         algorithm: 'URDNA2015',
         format: 'application/n-quads',
-    });
+    }
+    if(inputFormat) {
+        options.inputFormat = inputFormat;
+    }
+    const canonized = await jsonld.canonize(data, options);
 
     return canonized.split('\n').filter((x) => x !== '');
 }
@@ -24,7 +28,7 @@ function fromNQuads(nquads, context, frame) {
             algorithm: 'URDNA2015',
             format: 'application/n-quads',
         })
-        .then((json) => frame && Object.keys(frame).length !== 0 ? jsonld.frame(json, frame) : json)
+        .then((json) => jsonld.frame(json, frame))
         .then((json) => jsonld.compact(json, context))
         .then((result) => {
             accept(result);
