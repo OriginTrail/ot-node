@@ -424,6 +424,11 @@ if [[ $DATABASE = "blazegraph" ]]; then
     mv $OTNODE_DIR/origintrail_noderc_temp $OTNODE_DIR/.origintrail_noderc
 fi
 
+if [[ $DATABASE = "fuseki" ]]; then
+    jq '.graphDatabase |= {"implementation": "Fuseki", "url": "http://localhost:3030/node0"} + .' $OTNODE_DIR/.origintrail_noderc >> $OTNODE_DIR/origintrail_noderc_temp
+    mv $OTNODE_DIR/origintrail_noderc_temp $OTNODE_DIR/.origintrail_noderc
+fi
+
 echo -n "Running DB migrations: "
 
 OUTPUT=$(npx sequelize --config=./config/sequelizeConfig.js db:migrate 2>&1)
