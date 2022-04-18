@@ -57,7 +57,6 @@
   },
   "dependencies": {
     "app-root-path": "^3.0.0",
-    "auto-git-update": "2.0.2",
     "awilix": "^5.0.1",
     "axios": "^0.24.0",
     "big-number": "^2.0.0",
@@ -106,6 +105,7 @@
     "semver": "^7.3.5",
     "sequelize": "^6.9.0",
     "sequelize-cli": "^6.3.0",
+    "simple-git": "^3.6.0",
     "sleep-async": "^1.0.5",
     "split": "^1.0.1",
     "streaming-iterables": "^6.0.0",
