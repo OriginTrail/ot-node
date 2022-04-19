@@ -77,11 +77,39 @@ if [[ $DATABASE = "fuseki" ]]; then
     
     echo -n "Downloading Apache Jena Fuseki: " 
 
-    OUTPUT=$(wget https://repo1.maven.org/maven2/org/apache/jena/jena-fuseki-server/4.4.0/jena-fuseki-server-4.4.0.jar 2>&1)
+    OUTPUT=$(wget https://dlcdn.apache.org/jena/binaries/apache-jena-fuseki-4.4.0.zip 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
         echo "There was an error downloading Fuseki."
+        echo $OUTPUT
+        exit 1
+    else
+        echo -e "${GREEN}SUCCESS${NC}"
+    fi
+
+    OUTPUT=$(unzip apache-jena-fuseki-4.4.0.zip 2>&1)
+
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}FAILED${NC}"
+        echo "There was an error unzipping Fuseki."
+        echo $OUTPUT
+        exit 1
+    else
+        echo -e "${GREEN}SUCCESS${NC}"
+    fi
+
+    echo -n "Setting up fuseki folder in /root/fuseki"
+
+    OUTPUT=$(rm /root/apache-jena-fuseki-4.4.0.zip &&
+            mkdir /root/fuseki &&
+            mkdir /root/fuseki/tdb &&
+            cp /root/apache-jena-fuseki-4.4.0/fuseki-server.jar /root/fuseki/ &&
+            cp -r /root/apache-jena-fuseki-4.4.0/webapp/ /root/fuseki/ 2>&1)
+    
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}FAILED${NC}"
+        echo "There was an setting up the fuseki folder in /root/fuseki."
         echo $OUTPUT
         exit 1
     else
@@ -116,7 +144,7 @@ if [[ $DATABASE = "fuseki" ]]; then
         echo -e "${GREEN}SUCCESS${NC}"
     fi
 
-    echo -n "Starting Blazegraph: "
+    echo -n "Starting Fuseki: "
 
     OUTPUT=$(systemctl start fuseki 2>&1)
 
@@ -425,7 +453,7 @@ if [[ $DATABASE = "blazegraph" ]]; then
 fi
 
 if [[ $DATABASE = "fuseki" ]]; then
-    jq '.graphDatabase |= {"implementation": "Fuseki", "url": "http://localhost:3030/node0"} + .' $OTNODE_DIR/.origintrail_noderc >> $OTNODE_DIR/origintrail_noderc_temp
+    jq '.graphDatabase |= {"name": "node0", "implementation": "Fuseki", "url": "http://localhost:3030"} + .' $OTNODE_DIR/.origintrail_noderc >> $OTNODE_DIR/origintrail_noderc_temp
     mv $OTNODE_DIR/origintrail_noderc_temp $OTNODE_DIR/.origintrail_noderc
 fi
 
