@@ -88,6 +88,7 @@ if [[ $DATABASE = "fuseki" ]]; then
         echo -e "${GREEN}SUCCESS${NC}"
     fi
 
+    echo -n "Unzipping Fuseki .zip file: "
     OUTPUT=$(unzip apache-jena-fuseki-4.4.0.zip 2>&1)
 
     if [[ $? -ne 0 ]]; then
@@ -99,7 +100,7 @@ if [[ $DATABASE = "fuseki" ]]; then
         echo -e "${GREEN}SUCCESS${NC}"
     fi
 
-    echo -n "Setting up fuseki folder in /root/fuseki"
+    echo -n "Setting up fuseki folder in /root/fuseki: "
 
     OUTPUT=$(rm /root/apache-jena-fuseki-4.4.0.zip &&
             mkdir /root/fuseki &&
