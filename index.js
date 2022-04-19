@@ -49,12 +49,12 @@ config = rc(pjson.name, defaultConfig);
             await fs.copy(source, destination);
 
             await new Promise((resolve, reject) => {
-                const command = `cd ${destination} && npm install --only=prod –-no-optional`;
+                const command = `cd ${destination} && npm install --omit=dev`;
                 const child = exec(command);
 
                 // Wait for results
                 child.stdout.on('end', resolve);
-                child.stdout.on('data', (data) => console.log(`AutoUpdater - npm install --only=prod –-no-optional: ${data.replace(/\r?\n|\r/g, '')}`));
+                child.stdout.on('data', (data) => console.log(`AutoUpdater - npm install --omit=dev: ${data.replace(/\r?\n|\r/g, '')}`));
                 child.stderr.on('data', (data) => {
                     if (data.toLowerCase().includes('error')) {
                         // npm passes warnings as errors, only reject if "error" is included

@@ -132,12 +132,12 @@ function installDependencies() {
         const destination = appRootPath.path;
         logger.info(`AutoUpdater - Installing application dependencies in ${destination}`);
         
-        const command = `cd ${destination} && npm install --only=prod –-no-optional`;
+        const command = `cd ${destination} && npm install --omit=dev`;
         const child = exec(command);
 
         
         child.stdout.on('end', resolve);
-        child.stdout.on('data', data => logger.info(`AutoUpdater - npm install --only=prod –-no-optional: ${data.replace(/\r?\n|\r/g, '')}`));
+        child.stdout.on('data', data => logger.info(`AutoUpdater - npm install --omit=dev: ${data.replace(/\r?\n|\r/g, '')}`));
         child.stderr.on('data', data => {
             if (data.toLowerCase().includes('error')) {
                 // npm passes warnings as errors, only reject if "error" is included
