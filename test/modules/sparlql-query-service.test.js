@@ -14,7 +14,7 @@ const {
 const Sparql = require('../../external/sparqlquery-service');
 const Logger = require('../../modules/logger/logger');
 
-const config = { url: 'http://localhost:9999/blazegraph/namespace/kb/sparql' };
+const config = { sparqlEndpoint: 'http://localhost:9999/blazegraph/namespace/kb/sparql' };
 
 let sparqlService = null;
 let logger = null;
@@ -25,9 +25,9 @@ describe('Sparql module', () => {
         logger = new Logger('trace', false);
     });
     before('Init Sparql Module', async () => {
-        assert.hasAllKeys(config, ['url']);
-        assert.isNotNull(config.url);
-        assert.isNotEmpty(config.url);
+        assert.hasAllKeys(config, ['sparqlEndpoint']);
+        assert.isNotNull(config.sparqlEndpoint);
+        assert.isNotEmpty(config.sparqlEndpoint);
         sparqlService = new Sparql(config);
         await sparqlService.initialize(logger);
     });
@@ -83,11 +83,6 @@ describe('Sparql module', () => {
             limit: '90',
             prefix: 'test',
         }))
-            .to
-            .be
-            .rejectedWith(Error);
-
-        await expect(sparqlService.findAssertionsByKeyword('abc', { limit: '90' }))
             .to
             .be
             .rejectedWith(Error);
