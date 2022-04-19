@@ -15,11 +15,20 @@ const Sparql = require('../../external/sparqlquery-service');
 const Logger = require('../../modules/logger/logger');
 const fs = require('fs');
 
-
-
 let sparqlService = null;
 let logger = null;
 chai.use(require('chai-as-promised'));
+
+this.makeId = function (length) {
+    let result = '';
+    const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() *
+            charactersLength));
+    }
+    return result;
+};
 
 describe('Sparql module', () => {
     before('Initialize Logger', async () => {
@@ -91,19 +100,21 @@ describe('Sparql module', () => {
     });
 
     it('Check FindAssertionsByKeyword functionality', async () => {
+
+        let id = this.makeId(65);
+        const addTriple = await sparqlService.insert(`<did:dkg:${id}> schema:hasKeywords "${id}" `, `did:dkg:${id}`);
         // This can also be mocked if necessary
-        const test = await sparqlService.findAssertionsByKeyword('pub', {
+        const test = await sparqlService.findAssertionsByKeyword(id, {
             limit: 5,
             prefix: true,
         }, true);
-        // eslint-disable-next-line no-unused-expressions
         expect(test)
             .to
             .be
             .not
-            .null;
+            .empty;
 
-        const testTwo = await sparqlService.findAssertionsByKeyword('pub', {
+        const testTwo = await sparqlService.findAssertionsByKeyword(id, {
             limit: 5,
             prefix: false,
         }, true);
@@ -112,7 +123,7 @@ describe('Sparql module', () => {
             .to
             .be
             .not
-            .null;
+            .empty;
     })
         .timeout(600000);
 
@@ -146,19 +157,44 @@ describe('Sparql module', () => {
             .equal('FILTER (?issuer IN (abcd))');
     });
     it('Check FindAssetsByKeyword functionality', async () => {
-        // This can also be mocked if necessary
-        const test = await sparqlService.findAssetsByKeyword('pub', {
+        //Add new entry, so we can check if we find it really
+
+        let id = this.makeId(65);
+        let triples = `
+                                <did:dkg:${id}> schema:hasKeywords "${id}" . 
+                                <did:dkg:${id}> schema:hasTimestamp "2022-04-18T06:48:05.123Z" .
+                                <did:dkg:${id}> schema:hasUALs "${id}" .
+                                <did:dkg:${id}> schema:hasIssuer "${id}" .
+                                <did:dkg:${id}> schema:hasType "${id}" .
+                             `;
+
+        const addTriple = await sparqlService.insert(triples, `did:dkg:${id}`);
+        expect(addTriple)
+            .to
+            .be
+            .true;
+
+        const testContains = await sparqlService.findAssetsByKeyword(id.substring(1, 20), {
             limit: 5,
             prefix: true,
-            issuers: '<did:dkg:99999>',
-            types: '<did:dkg:33333>',
         }, true);
         // eslint-disable-next-line no-unused-expressions
-        expect(test)
+        expect(testContains)
             .to
             .be
             .not
-            .null;
+            .empty;
+
+        const testExact = await sparqlService.findAssetsByKeyword(id, {
+            limit: 5,
+            prefix: true,
+        }, true);
+        // eslint-disable-next-line no-unused-expressions
+        expect(testExact)
+            .to
+            .be
+            .not
+            .empty;
     })
         .timeout(600000);
     it('Check resolve functionality', async () => {
@@ -174,13 +210,17 @@ describe('Sparql module', () => {
         .timeout(600000);
     it('Check insert functionality', async () => {
         // This can also be mocked if necessary
-        const test = await sparqlService.insert('<did:dkg:90e62550721611b96321c7459e7790498240431025e46fce9cd99f2ea9763ff11> schema:hasBlockchain "polygon::mainnet" ', 'did:dkg:90e62550721611b96321c7459e7790498240431025e46fce9cd99f2ea9763ff11');
+
+        let id = this.makeId(65);
+        const test = await sparqlService.insert(`<did:dkg:${id}> schema:hasKeywords "${id}" `, `did:dkg:${id}`);
+
         // eslint-disable-next-line no-unused-expressions
         expect(test)
             .to
             .be
-            .not
-            .null;
+            .true;
     })
         .timeout(600000);
 });
+
+
