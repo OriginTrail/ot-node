@@ -4,7 +4,14 @@
   "description": "OTNode v6 Beta 1",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "prepare": "husky install",
+    "lint-staged": "lint-staged",
+    "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+    "test:unit": "nyc --all mocha --exit $(find test/unit -name '*.js')",
+    "test:bdd:release": "cucumber-js --tags=@release --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+    "lint": "eslint ."
   },
   "repository": {
     "type": "git",
