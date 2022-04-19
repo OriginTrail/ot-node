@@ -7,14 +7,11 @@ const MPLEX = require('libp2p-mplex');
 const TCP = require('libp2p-tcp');
 const pipe = require('it-pipe');
 const {sha256} = require('multiformats/hashes/sha2');
-const {v1: uuidv1} = require("uuid");
 const PeerId = require("peer-id");
 const fs = require('fs');
-const {time} = require("streaming-iterables");
 const { BufferList } = require('bl')
+const { InMemoryRateLimiter } = require("rolling-rate-limiter");
 const constants = require('../modules/constants');
-
-
 
 const initializationObject = {
     addresses: {
@@ -58,22 +55,23 @@ class Libp2pService {
                 listen: [`/ip4/0.0.0.0/tcp/${this.config.port}`] // for production
                 // announce: ['/dns4/auto-relay.libp2p.io/tcp/443/wss/p2p/QmWDn2LY8nannvSWJzruUYoLZ4vV83vfCBwd8DipvdgQc3']
             };
-
+            let id;
+            let privKey;
             if (!this.config.peerId) {
-                const configFile = JSON.parse(fs.readFileSync(this.config.configFilename));
-                if (!configFile.network.privateKey) {
-                    const id = await PeerId.create({bits: 1024, keyType: 'RSA'})
-                    configFile.network.privateKey = id.toJSON().privKey;
-                    if(process.env.NODE_ENV !== 'development') {
-                        fs.writeFileSync(this.config.configFilename, JSON.stringify(configFile, null, 2));
-                    }
+                if (!this.config.privateKey) {
+                    id = await PeerId.create({bits: 1024, keyType: 'RSA'})
+                    privKey = id.toJSON().privKey;
+                } else {
+                    privKey = this.config.privateKey;
+                    id = await PeerId.createFromPrivKey(this.config.privateKey);
                 }
-                this.config.privateKey = configFile.network.privateKey;
-                this.config.peerId = await PeerId.createFromPrivKey(this.config.privateKey);
+                this.config.privateKey = privKey;
+                this.config.peerId = id;
             }
 
             initializationObject.peerId = this.config.peerId;
             this.workerPool = this.config.workerPool;
+            this._initializeRateLimiters();
 
             Libp2p.create(initializationObject).then((node) => {
                 this.node = node;
@@ -85,12 +83,34 @@ class Libp2pService {
                     const peerId = this.node.peerId._idB58String;
                     this.config.id = peerId;
                     this.logger.info(`Network ID is ${peerId}, connection port is ${port}`);
-                    resolve(result);
+                    resolve({
+                        peerId: this.config.peerId,
+                        privateKey: this.config.privateKey,
+                    });
                 })
                 .catch((err) => {
                     reject(err);
                 });
         });
+    }
+
+    _initializeRateLimiters() {
+        const basicRateLimiter = new InMemoryRateLimiter({
+            interval: constants.NETWORK_API_RATE_LIMIT.TIME_WINDOW_MILLS,
+            maxInInterval: constants.NETWORK_API_RATE_LIMIT.MAX_NUMBER,
+        });
+
+        const spamDetection = new InMemoryRateLimiter({
+            interval: constants.NETWORK_API_SPAM_DETECTION.TIME_WINDOW_MILLS,
+            maxInInterval: constants.NETWORK_API_SPAM_DETECTION.MAX_NUMBER,
+        });
+
+        this.rateLimiter = {
+            basicRateLimiter,
+            spamDetection,
+        }
+
+        this.blackList = {};
     }
 
     _initializeNodeListeners() {
@@ -110,18 +130,20 @@ class Libp2pService {
         this.logger.debug(`Node ${this.node.peerId._idB58String} connected to ${connection.remotePeer.toB58String()}`);
     }
 
-    async findNodes(key, limit) {
+    async findNodes(key, protocol) {
         const encodedKey = new TextEncoder().encode(key);
         // Creates a DHT ID by hashing a given Uint8Array
         const id = (await sha256.digest(encodedKey)).digest;
         const nodes = this.node._dht.peerRouting.getClosestPeers(id);
-        const result = [];
+        const result = new Set();
         for await (const node of nodes) {
-            result.push(node);
+            if(this.node.peerStore.peers.get(node._idB58String).protocols.includes(protocol)){
+                result.add(node);
+            }
         }
-        this.logger.info(`Found ${result.length} nodes`);
+        this.logger.info(`Found ${result.size} nodes`);
 
-        return result;
+        return [...result];
     }
 
     getPeers() {
@@ -144,10 +166,19 @@ class Libp2pService {
         return rec.serialize();
     }
 
+    async prepareForSending(data) {
+        if(constants.NETWORK_RESPONSES[data]) {
+            data = constants.STRINGIFIED_NETWORK_RESPONSES[data];
+        } else {
+            data = await this.workerPool.exec('JSONStringify', [data]);
+        }
+        return Buffer.from(data);
+    }
+
     async handleMessage(eventName, handler, options) {
         this.logger.info(`Enabling network protocol: ${eventName}`);
 
-        let async = false, timeout = 60e3;
+        let async = false, timeout = constants.NETWORK_HANDLER_TIMEOUT;
         if (options) {
             async = options.async;
             timeout = options.timeout;
@@ -155,7 +186,15 @@ class Libp2pService {
         this.node.handle(eventName, async (handlerProps) => {
             const {stream} = handlerProps;
             let timestamp = Date.now();
-
+            const remotePeerId = handlerProps.connection.remotePeer._idB58String;
+            if(await this.limitRequest(remotePeerId)) {
+                    const preparedBlockedResponse = await this.prepareForSending(constants.NETWORK_RESPONSES.BLOCKED);
+                    await pipe(
+                        [preparedBlockedResponse],
+                        stream
+                    );
+                    return;
+            }
             let data = await pipe(
                 stream,
                 async function (source) {
@@ -169,27 +208,28 @@ class Libp2pService {
             )
             try {
                 data = await this.workerPool.exec('JSONParse', [data.toString()]);
-                this.logger.info(`Receiving message from ${handlerProps.connection.remotePeer._idB58String} to ${this.config.id}: event=${eventName};`);
+                this.logger.info(`Receiving message from ${remotePeerId} to ${this.config.id}: event=${eventName};`);
                 if (!async) {
                     const result = await handler(data);
-                    this.logger.info(`Sending response from ${this.config.id} to ${handlerProps.connection.remotePeer._idB58String}: event=${eventName};`);
-                    const stringifiedData = await this.workerPool.exec('JSONStringify', [result]);
+                    this.logger.info(`Sending response from ${this.config.id} to ${remotePeerId}: event=${eventName};`);
+                    const preparedData = await this.prepareForSending(result);
                     await pipe(
-                        [Buffer.from(stringifiedData)],
+                        [Buffer.from(preparedData)],
                         stream,
                     )
                 } else {
+                    const preparedAckResponse = await this.prepareForSending(constants.NETWORK_RESPONSES.ACK);
                     await pipe(
-                        [constants.NETWORK_RESPONSES.ACK],
+                        [preparedAckResponse],
                         stream
                     )
 
-                    this.logger.info(`Sending response from ${this.config.id} to ${handlerProps.connection.remotePeer._idB58String}: event=${eventName};`);
+                    this.logger.info(`Sending response from ${this.config.id} to ${remotePeerId}: event=${eventName};`);
                     const result = await handler(data);
                     if (Date.now() <= timestamp + timeout) {
                         await this.sendMessage(`${eventName}/result`, result, handlerProps.connection.remotePeer);
                     } else {
-                        this.logger.warn(`Too late to send response from ${this.config.id} to ${handlerProps.connection.remotePeer._idB58String}: event=${eventName};`);
+                        this.logger.warn(`Too late to send response from ${this.config.id} to ${remotePeerId}: event=${eventName};`);
                     }
                 }
             } catch (e) {
@@ -198,11 +238,11 @@ class Libp2pService {
                    msg: `Error: ${e}, stack: ${e.stack} \n Data received: ${stringifiedData}`,
                    Event_name: constants.ERROR_TYPE.LIBP2P_HANDLE_MSG_ERROR,
                 });
+                const preparedErrorResponse = await this.prepareForSending(constants.NETWORK_RESPONSES.ERROR);
                 await pipe(
-                    [constants.NETWORK_RESPONSES.ACK],
+                    [preparedErrorResponse],
                     stream
-                )
-
+                );
             }
         });
     }
@@ -210,9 +250,9 @@ class Libp2pService {
     async sendMessage(eventName, data, peerId) {
         this.logger.info(`Sending message from ${this.config.id} to ${peerId._idB58String}: event=${eventName};`);
         const {stream} = await this.node.dialProtocol(peerId, eventName);
-        const stringifiedData = await this.workerPool.exec('JSONStringify', [data]);
+        const preparedData = await this.prepareForSending(data);
         const response = await pipe(
-            [Buffer.from(stringifiedData)],
+            [Buffer.from(preparedData)],
             stream,
             async function (source) {
                 const bl = new BufferList()
@@ -224,17 +264,56 @@ class Libp2pService {
             },
         )
 
+        // TODO: Remove - Backwards compatibility check with 1.30 and lower
         if(response.toString() === constants.NETWORK_RESPONSES.ACK) {
             return null;
         }
 
-        return JSON.parse(response);
+        const parsedData = await this.workerPool.exec('JSONParse', [response.toString()]);
+        const suppressedResponses = [constants.NETWORK_RESPONSES.ACK, constants.NETWORK_RESPONSES.BLOCKED, constants.NETWORK_RESPONSES.ERROR];
+        if(suppressedResponses.includes(parsedData)) {
+            return null;
+        }
+
+        return parsedData;
     }
 
     healthCheck() {
         // TODO: broadcast ping or sent msg to yourself
         const connectedNodes = this.node.connectionManager.size;
         if (connectedNodes > 0) return true;
+        return false;
+    }
+
+    async limitRequest(remotePeerId) {
+        if(this.blackList[remotePeerId]){
+            const remainingMinutes = Math.floor(
+              constants.NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES -
+                (Date.now() - this.blackList[remotePeerId]) / (1000 * 60)
+            );
+
+            if(remainingMinutes > 0) {
+                this.logger.info(`Blocking request from ${remotePeerId}. Node is blacklisted for ${remainingMinutes} minutes.`);
+
+                return true;
+            } else {
+                delete this.blackList[remotePeerId]
+            }
+        }
+
+        if(await this.rateLimiter.spamDetection.limit(remotePeerId)) {
+            this.blackList[remotePeerId] = Date.now();
+            this.logger.info(
+                `Blocking request from ${remotePeerId}. Spammer detected and blacklisted for ${constants.NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES} minutes.`
+            );
+
+            return true;
+        } else if (await this.rateLimiter.basicRateLimiter.limit(remotePeerId)) {
+            this.logger.info(`Blocking request from ${remotePeerId}. Max number of requests exceeded.`);
+
+            return true;
+        }
+
         return false;
     }
 

@@ -32,9 +32,18 @@ class BlockchainService {
     async createAssertionRecord(stateCommitHash, rootHash, issuer) {
         return this.implementation.createAssertionRecord(stateCommitHash, rootHash, issuer);
     }
+
     async registerAsset(uai, type, alsoKnownAs, stateCommitHash, rootHash, tokenAmount) {
-        return this.implementation.registerAsset(uai, type, alsoKnownAs, stateCommitHash, rootHash, tokenAmount);
+        return this.implementation.registerAsset(
+            uai,
+            type,
+            alsoKnownAs,
+            stateCommitHash,
+            rootHash,
+            tokenAmount,
+        );
     }
+
     async updateAsset(UAI, newStateCommitHash, rootHash) {
         return this.implementation.updateAsset(UAI, newStateCommitHash, rootHash);
     }

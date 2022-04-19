@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+  blazegraph:
+    container_name: blazegraph
+    image: origintrail/ot-node:blazegraph
+    network_mode: host
+
+
+  mysql:
+    container_name: mysql
+    image: mysql:8.0.17
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+      MYSQL_ROOT_PASSWORD: null
+      MYSQL_DATABASE: operationaldb
+    expose:
+      - 3306
+    network_mode: host
+
+  ot-node:
+    container_name: ot-node
+    image: origintrail/ot-node:v6.0.0-beta.1-alpine
+    depends_on:
+      - blazegraph
+      - mysql
+    expose:
+      - 8900
+      - 9000
+    command:
+      - '/bin/sh'
+      - '-c'
+      - '/bin/sleep 25 && npx sequelize --config=./config/sequelizeConfig.js db:migrate && forever index.js'
+                   
+        
+    volumes:
+      - ${PWD}/.origintrail_noderc:/ot-node/.origintrail_noderc
+      - ~/certs/:/root/certs/
+    network_mode: host

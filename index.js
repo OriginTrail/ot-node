@@ -1,10 +1,11 @@
+require('dotenv').config();
 const fs = require('fs-extra');
 const path = require('path');
 const appRootPath = require('app-root-path');
 const { exec, execSync } = require('child_process');
+const rc = require('rc');
 const OTNode = require('./ot-node');
 const pjson = require('./package.json');
-const rc = require('rc');
 
 const configjson = require('./config/config.json');
 
@@ -17,8 +18,19 @@ const defaultConfig = JSON.parse(JSON.stringify(configjson[process.env.NODE_ENV]
 config = rc(pjson.name, defaultConfig);
 
 (async () => {
+    let userConfig = null;
     try {
-        const node = new OTNode();
+        if (process.env.NODE_ENV === 'development' && process.argv.length === 3) {
+            const configurationFilename = process.argv[2];
+            userConfig = JSON.parse(fs.readFileSync(process.argv[2]));
+            userConfig.configFilename = configurationFilename;
+        }
+    } catch (error) {
+        console.log('Unable to read user configuration from file: ', process.argv[2]);
+        process.exit(1);
+    }
+    try {
+        const node = new OTNode(userConfig);
         await node.start();
     } catch (e) {
         console.error(`Error occurred while starting new version, error message: ${e}. ${e.stack}`);

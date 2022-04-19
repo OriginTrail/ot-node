@@ -41,7 +41,10 @@ class GraphdbService {
             .setReadTimeout(readTimeout)
             .setWriteTimeout(writeTimeout);
 
-        this.repository = await this.server.getRepository(this.config.repositoryName, repositoryServerConfig);
+        this.repository = await this.server.getRepository(
+            this.config.repositoryName,
+            repositoryServerConfig,
+        );
         this.repository.registerParser(new SparqlXmlResultParser());
         this.logger.info('GraphDB module initialized successfully');
     }
@@ -178,7 +181,7 @@ class GraphdbService {
 
     async findAssetsByKeyword(query, options, localQuery) {
         const sparqlQuery = `PREFIX schema: <http://schema.org/>
-                            SELECT ?assertionId
+                            SELECT ?assertionId ?assetId
                             WHERE {
                                 ?assertionId schema:hasTimestamp ?latestTimestamp ;
                             ${!localQuery ? 'schema:hasVisibility "public" ;' : ''}

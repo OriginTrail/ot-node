@@ -7,7 +7,7 @@ class Logger {
         this.initialize(logLevel, telemetryHubEnabled);
     }
 
-    initialize(logLevel, telemetryHubEnabled){
+    initialize(logLevel, telemetryHubEnabled) {
         try {
             const logFilename = path.join(path.resolve(__dirname, '../../'), 'logs/active.log');
             let chosenTargets = [];
@@ -36,7 +36,7 @@ class Logger {
         }
     }
 
-    restart(){
+    restart() {
         this.initialize(this.logLevel, true);
     }
 
