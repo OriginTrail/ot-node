@@ -82,6 +82,7 @@ class SparqlqueryService {
                             }
                        }`;
         let graph = await this.execute(query);
+        //TODO: Mapping from graph result. This will fail, because the result of the query has to be mapped differently
         graph = graph.results.bindings.map((x) => x.g.value.replace(`${constants.DID_PREFIX}:`, ''));
         if (graph.length && graph[0] === 'http://www.bigdata.com/rdf#nullGraph') {
             return [];

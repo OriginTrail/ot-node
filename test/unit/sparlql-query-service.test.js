@@ -223,6 +223,68 @@ describe('Sparql module', () => {
             .true;
     })
         .timeout(600000);
+
+    it('Check assertions By Asset functionality', async () => {
+        // This can also be mocked if necessary
+
+        let id = this.makeId(65);
+        let triples = `
+                                <did:dkg:${id}> schema:hasKeywords "${id}" . 
+                                <did:dkg:${id}> schema:hasTimestamp "2022-04-18T06:48:05.123Z" .
+                                <did:dkg:${id}> schema:hasUALs "${id}" .
+                                <did:dkg:${id}> schema:hasIssuer "${id}" .
+                                <did:dkg:${id}> schema:hasType "${id}" .
+                             `;
+
+        const addTriple = await sparqlService.insert(triples, `did:dkg:${id}`);
+        expect(addTriple)
+            .to
+            .be
+            .true;
+
+        const testExact = await sparqlService.assertionsByAsset(id, {
+            limit: 5,
+            prefix: true,
+        }, true);
+        // eslint-disable-next-line no-unused-expressions
+        expect(testExact)
+            .to
+            .be
+            .not
+            .empty;
+
+    })
+        .timeout(600000);
+
+    //TODO: This is intended to fail, because the mapping of the result inside findAssertions has to be reworked
+    it('Check find Assertions functionality', async () => {
+        // This can also be mocked if necessary
+
+        let id = this.makeId(65);
+        let triples = `
+                                <did:dkg:${id}> schema:hasKeywords "${id}" . 
+                                <did:dkg:${id}> schema:hasTimestamp "2022-04-18T06:48:05.123Z" .
+                                <did:dkg:${id}> schema:hasUALs "${id}" .
+                                <did:dkg:${id}> schema:hasIssuer "${id}" .
+                                <did:dkg:${id}> schema:hasType "${id}" .
+                             `;
+
+        const addTriple = await sparqlService.insert(triples, `did:dkg:${id}`);
+        expect(addTriple)
+            .to
+            .be
+            .true;
+
+        const testExact = await sparqlService.findAssertions(triples);
+        // eslint-disable-next-line no-unused-expressions
+        expect(testExact)
+            .to
+            .be
+            .not
+            .empty;
+
+    })
+        .timeout(600000);
 });
 
 
