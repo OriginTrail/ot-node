@@ -63,6 +63,19 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
+echo -n "Installing build-essential: "
+
+OUTPUT=$(apt install build-essential -y 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error installing build-essential."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
 while true; do
     read -p "Please select the database you would like to use: [1]Fuseki [2]Blazegraph [E]xit: " choice
     case "$choice" in
