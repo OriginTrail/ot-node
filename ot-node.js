@@ -85,6 +85,7 @@ class OTNode {
             }
 
             const autoUpdateConfig = {
+                logger: this.logger,
                 branch: this.config.autoUpdate.branch,
                 tempLocation: this.config.autoUpdate.backupDirectory,
                 executeOnComplete: `touch ${updateFilePath}`,
