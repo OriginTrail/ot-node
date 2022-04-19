@@ -83,8 +83,6 @@ class SparqlqueryService {
                             }
                        }`;
         let graph = await this.execute(query);
-        //TODO: Mapping from graph result. This will fail, because the result of the query has to be mapped differently
-
         graph = graph.map((x) => x.get('g')
             .value
             .replace(`${constants.DID_PREFIX}:`, ''));

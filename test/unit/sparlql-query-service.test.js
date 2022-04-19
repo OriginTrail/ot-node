@@ -256,7 +256,6 @@ describe('Sparql module', () => {
     })
         .timeout(600000);
 
-    //TODO: This is intended to fail, because the mapping of the result inside findAssertions has to be reworked
     it('Check find Assertions functionality', async () => {
         // This can also be mocked if necessary
 
