@@ -511,6 +511,16 @@ class DataService {
                 isA: 'EPCISDocument',
             };
             break;
+        case this.constants.ERC721:
+        case this.constants.OTTELEMETRY:
+            context = {
+                '@context': 'https://www.schema.org/',
+            };
+            frame = {
+                '@context': 'https://www.schema.org/',
+                '@type': type,
+            };
+            break;
         default:
             context = {
                 '@context': ['https://www.schema.org/'],
