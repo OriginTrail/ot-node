@@ -13,7 +13,8 @@
      "password": "",
      "implementation": "Blazegraph",
      "url": "http://localhost:9999/blazegraph",
-     "sparqlEndpoint": "http://localhost:9999/blazegraph/namespace/kb/sparql"
+     "sparqlEndpoint": "http://localhost:7200/repositories/n0",
+     "sparqlEndpointUpdate": "http://localhost:7200/repositories/n0/statements"
    },
   "logLevel": "trace",
   "rpcPort": 8900,

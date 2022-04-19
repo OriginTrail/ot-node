@@ -24,7 +24,7 @@ class SparqlqueryService {
             baseIRI: 'http://schema.org/',
             destination: {
                 type: 'sparql',
-                value: `${this.config.sparqlEndpoint}`,
+                value: `${this.config.sparqlEndpointUpdate}`,
             },
             log: this.logger,
         };

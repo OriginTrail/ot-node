@@ -39,6 +39,8 @@ describe('Sparql module', () => {
         let config = configFile.graphDatabase;
         assert.isNotNull(config.sparqlEndpoint);
         assert.isNotEmpty(config.sparqlEndpoint);
+        assert.isNotNull(config.sparqlEndpointUpdate);
+        assert.isNotEmpty(config.sparqlEndpointUpdate);
         sparqlService = new Sparql(config);
         await sparqlService.initialize(logger);
     });
