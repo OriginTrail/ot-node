@@ -13,8 +13,9 @@ const {
 
 const Sparql = require('../../external/sparqlquery-service');
 const Logger = require('../../modules/logger/logger');
+const fs = require('fs');
 
-const config = { sparqlEndpoint: 'http://localhost:9999/blazegraph/namespace/kb/sparql' };
+
 
 let sparqlService = null;
 let logger = null;
@@ -25,7 +26,8 @@ describe('Sparql module', () => {
         logger = new Logger('trace', false);
     });
     before('Init Sparql Module', async () => {
-        assert.hasAllKeys(config, ['sparqlEndpoint']);
+        const configFile = JSON.parse(fs.readFileSync('.origintrail_noderc.tests'));
+        let config = configFile.graphDatabase;
         assert.isNotNull(config.sparqlEndpoint);
         assert.isNotEmpty(config.sparqlEndpoint);
         sparqlService = new Sparql(config);
