@@ -141,6 +141,8 @@ class DataService {
                 nquads = nquads.toString();
                 nquads = nquads.split('\n');
                 nquads = nquads.filter((x) => x !== '');
+                // canonize nquads before roothash validation
+                nquads = await this.workerPool.exec('toNQuads', [nquads.join('\n'), 'application/n-quads']);
             } else {
                 nquads = null;
             }
@@ -152,8 +154,6 @@ class DataService {
             if (metadataOnly) {
                 nquads = nquads.filter((x) => x.startsWith(`<${constants.DID_PREFIX}:${id}>`));
             }
-            // canonize nquads before roothash validation
-            nquads = await this.workerPool.exec('toNQuads', [nquads.join('\n'), 'application/n-quads']);
             return nquads;
         } catch (e) {
             this.handleUnavailableTripleStoreError(e);
