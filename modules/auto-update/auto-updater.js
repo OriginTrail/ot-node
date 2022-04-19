@@ -49,7 +49,7 @@ function readAppVersion() {
             let body = '';
             res.on('data', data => {body += data});
             res.on('end', () => {
-                if (res.statusCode === '200') return resolve(body);
+                if (res.statusCode === 200) return resolve(body);
                 logger.info(`AutoUpdater - Bad Response ${res.statusCode}`);
                 reject(res.statusCode);
             });
