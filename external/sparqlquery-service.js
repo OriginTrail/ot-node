@@ -1,3 +1,4 @@
+
 const constants = require('../modules/constants');
 const Engine = require('@comunica/query-sparql').QueryEngine;
 
@@ -83,7 +84,10 @@ class SparqlqueryService {
                        }`;
         let graph = await this.execute(query);
         //TODO: Mapping from graph result. This will fail, because the result of the query has to be mapped differently
-        graph = graph.results.bindings.map((x) => x.g.value.replace(`${constants.DID_PREFIX}:`, ''));
+
+        graph = graph.map((x) => x.get('g')
+            .value
+            .replace(`${constants.DID_PREFIX}:`, ''));
         if (graph.length && graph[0] === 'http://www.bigdata.com/rdf#nullGraph') {
             return [];
         }
