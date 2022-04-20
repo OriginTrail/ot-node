@@ -1,9 +1,9 @@
 const { execSync } = require('child_process');
 const DeepExtend = require('deep-extend');
-const AutoGitUpdate = require('auto-git-update');
 const rc = require('rc');
 const fs = require('fs');
 const queue = require('fastq');
+const AutoUpdater = require('./modules/auto-update/auto-updater-module-interface');
 const DependencyInjection = require('./modules/service/dependency-injection');
 const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
@@ -77,7 +77,6 @@ class OTNode {
     async initializeAutoUpdate() {
         try {
             updateFilePath = `./${this.config.appDataPath}/UPDATED`;
-            // check if UPDATE file exists if yes set flag updated true
             if (fs.existsSync(updateFilePath)) {
                 this.config.otNodeUpdated = true;
             }
@@ -86,19 +85,16 @@ class OTNode {
             }
 
             const autoUpdateConfig = {
-                repository: 'https://github.com/OriginTrail/ot-node',
+                logger: this.logger,
                 branch: this.config.autoUpdate.branch,
                 tempLocation: this.config.autoUpdate.backupDirectory,
                 executeOnComplete: `touch ${updateFilePath}`,
-                exitOnComplete: true,
             };
 
             execSync(`mkdir -p ${this.config.autoUpdate.backupDirectory}`);
 
-            this.updater = new AutoGitUpdate(autoUpdateConfig);
-            this.updater.setLogConfig({
-                logGeneral: true,
-            });
+            this.updater = new AutoUpdater(autoUpdateConfig);
+            await this.updater.initialize();
             DependencyInjection.registerValue(this.container, 'updater', this.updater);
 
             this.logger.info('Auto update mechanism initialized');
@@ -128,13 +124,14 @@ class OTNode {
             this.logger.info('Operational database module: sequelize implementation');
             // eslint-disable-next-line global-require
             const db = require('./models');
-            // todo change if statement to if (this.config.otNodeUpdated);
-            if (process.env.NODE_ENV !== 'test') {
+            
+            if(this.config.otNodeUpdated) {
                 execSync('npx sequelize --config=./config/sequelizeConfig.js db:migrate');
-                // todo remove UPDATE file for next release
-                // execSync('rm ${updateFilePath}');
-                // this.config.otNodeUpdated = false;
+                const fileService = this.container.resolve('fileService');
+                await  fileService.removeFile(updateFilePath);
+                this.config.otNodeUpdated = false;
             }
+            
             await db.sequelize.sync();
         } catch (e) {
             this.logger.error({

@@ -32,7 +32,7 @@ class OtnodeUpdateCommand extends Command {
                     this.logger.info(`New major update available. Please run update to version ${remoteVersion} manually.`);
                     return Command.repeat();
                 }
-                await this.updater.autoUpdate();
+                await this.updater.update();
             }
         } catch (e) {
             await this.handleError(e);
