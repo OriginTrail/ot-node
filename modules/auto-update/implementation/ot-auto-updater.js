@@ -11,7 +11,7 @@ const CLONE_SUBDIRECTORY = '/auto-update/repo/';
 const BACKUP_SUBDIRECTORY = '/auto-update/backup/';
 const REPOSITORY_URL = 'https://github.com/OriginTrail/ot-node';
 
-module.exports = class OTAutoUpdater {
+class OTAutoUpdater {
     /** 
      * @param config - Configuration for AutoUpdater
      * @param {String} config.branch - The branch to update from. Defaults to master.
@@ -84,7 +84,6 @@ module.exports = class OTAutoUpdater {
             process.exit(1);
         }catch(e) {
             this.logger.error(`AutoUpdater - Error updating application. Error message: ${e.message}`);
-            return false;
         }
     }
 
@@ -150,7 +149,7 @@ module.exports = class OTAutoUpdater {
             const {version} = remotePackage;
             return version;
         } catch(e) {
-            this.logger.error(`This repository requires a token or does not exist. Error message: ${e.message}`);
+            throw new Error(`This repository requires a token or does not exist. Error message: ${e.message}`);
         }
     }
 
@@ -185,7 +184,6 @@ module.exports = class OTAutoUpdater {
         this.logger.info(`AutoUpdater - Backing up app to ${destination}`);
         await fs.ensureDir(destination);
         await fs.copy(appRootPath.path, destination, {dereference: true});
-        return true;
     }
 
     async downloadUpdate() {
@@ -195,7 +193,6 @@ module.exports = class OTAutoUpdater {
         await fs.ensureDir(destination);
         await fs.emptyDir(destination);
         await this.promiseClone(REPOSITORY_URL, destination, this.config.branch);
-        return true;
     }
 
     /**
@@ -225,3 +222,5 @@ module.exports = class OTAutoUpdater {
         });
     }
 }
+
+module.exports = OTAutoUpdater;

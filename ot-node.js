@@ -94,6 +94,7 @@ class OTNode {
             execSync(`mkdir -p ${this.config.autoUpdate.backupDirectory}`);
 
             this.updater = new AutoUpdater(autoUpdateConfig);
+            await this.updater.initialize();
             DependencyInjection.registerValue(this.container, 'updater', this.updater);
 
             this.logger.info('Auto update mechanism initialized');

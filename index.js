@@ -39,14 +39,13 @@ config = rc(pjson.name, defaultConfig);
             process.exit(1);
         }
 
-        const backupCode = `${config.autoUpdate.backupDirectory}/auto-update/backup`;
-        if (fs.ensureDir(backupCode)) {
+        const backupCodeDirectory = path.join(config.autoUpdate.backupDirectory, 'auto-update', 'backup');
+        if (fs.ensureDir(backupCodeDirectory)) {
             console.log('Starting back old version of OT-Node.');
 
-            const source = path.join(config.autoUpdate.backupDirectory, 'auto-update', 'backup');
             const destination = appRootPath.path;
             await fs.ensureDir(destination);
-            await fs.copy(source, destination);
+            await fs.copy(backupCodeDirectory, destination);
 
             await new Promise((resolve, reject) => {
                 const command = `cd ${destination} && npm install --omit=dev`;
