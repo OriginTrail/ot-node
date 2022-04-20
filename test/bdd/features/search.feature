@@ -16,7 +16,9 @@ Feature: Searching for assets on the DKG
         And If I resolve the assertion id
         Then I will get the handler id for the dataset
         And If I resolve result with the handler id
-        Then I will get the dataset containing the intial keyword:
+        Then the result of assertion search cannot be 0
+        And the search result should be valid
+        And I will get the dataset containing the intial keyword:
             | keyword |
         And I will see the number of nodes that responded
         And I will see the number of assets that retrieved
@@ -37,12 +39,5 @@ Feature: Searching for assets on the DKG
         Given I search for an assertion with a keyword that does not match any asset on the DKG
         When I retrieve assertion result with the given handler id
         Then I will get an empty itemListElement
-
-    @ana
-    Scenario: Searching the assertion by keyword
-        When I search DKG by keyword
-            | keyword |
-        Then the result of assertion search cannot be 0
-        And the search result should be valid
 
 
