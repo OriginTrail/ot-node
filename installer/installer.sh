@@ -1,8 +1,5 @@
 #!/bin/bash
 
-OS_VERSION=$(lsb_release -sr)
-GRAPHDB_FILE=$(ls /root/graphdb*.zip)
-GRAPHDB_DIR=$(echo $GRAPHDB_FILE | sed 's|-dist.zip||')
 OTNODE_DIR="/root/ot-node"
 N1=$'\n'
 GREEN='\033[0;32m'
@@ -66,60 +63,80 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
+echo -n "Installing build-essential: "
+
+OUTPUT=$(apt install build-essential -y 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error installing build-essential."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
 while true; do
-    read -p "Please select the database you would like to use: [1]GraphDB [2]Blazegraph [E]xit: " choice
+    read -p "Please select the database you would like to use: [1]Fuseki [2]Blazegraph [E]xit: " choice
     case "$choice" in
-        [1gG]* ) echo -e "GraphDB selected. Proceeding with installation."; DATABASE=graphdb; break;;
+        [1gG]* ) echo -e "Fuseki selected. Proceeding with installation."; DATABASE=fuseki; break;;
         [2bB]* ) echo -e "Blazegraph selected. Proceeding with installation."; DATABASE=blazegraph; break;;
         [Ee]* ) echo "Installer stopped by user"; exit;;
         * ) echo "Please make a valid choice and try again.";;
     esac
 done
 
-if [[ $DATABASE = "graphdb" ]]; then
+if [[ $DATABASE = "fuseki" ]]; then
     
-    echo -n "Checking that the GraphDB file is present in /root: "
+    echo -n "Downloading Apache Jena Fuseki: " 
 
-    if [[ ! -f $GRAPHDB_FILE ]]; then
+    OUTPUT=$(wget https://dlcdn.apache.org/jena/binaries/apache-jena-fuseki-4.4.0.zip 2>&1)
+
+    if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
-        echo "The graphdb file needs to be downloaded to /root. Please create an account at https://www.ontotext.com/products/graphdb/graphdb-free/ and click the standalone version link in the email."
+        echo "There was an error downloading Fuseki."
+        echo $OUTPUT
         exit 1
     else
         echo -e "${GREEN}SUCCESS${NC}"
     fi
 
-    echo -n "Unzipping GraphDB: "
-OUTPUT=$(unzip -o $GRAPHDB_FILE >/dev/null 2>&1)
-OUTPUT=$(unzip -o $GRAPHDB_FILE 2>&1)
-
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error unzipping GraphDB."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
-echo -n "Rename GraphDB directory: "
-OUTPUT=$(mv $GRAPHDB_DIR graphdb-free 2>&1)
-
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error unzipping GraphDB."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
-    echo -n "Copying graphdb service file: "
-
-    OUTPUT=$(cp $OTNODE_DIR/installer/data/graphdb.service /lib/systemd/system/ 2>&1)
+    echo -n "Unzipping Fuseki .zip file: "
+    OUTPUT=$(unzip apache-jena-fuseki-4.4.0.zip 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
-        echo "There was an error copying the graphdb service file."
+        echo "There was an error unzipping Fuseki."
+        echo $OUTPUT
+        exit 1
+    else
+        echo -e "${GREEN}SUCCESS${NC}"
+    fi
+
+    echo -n "Setting up fuseki folder in /root/fuseki: "
+
+    OUTPUT=$(rm /root/apache-jena-fuseki-4.4.0.zip &&
+            mkdir /root/fuseki &&
+            mkdir /root/fuseki/tdb &&
+            cp /root/apache-jena-fuseki-4.4.0/fuseki-server.jar /root/fuseki/ &&
+            cp -r /root/apache-jena-fuseki-4.4.0/webapp/ /root/fuseki/ 2>&1)
+    
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}FAILED${NC}"
+        echo "There was an setting up the fuseki folder in /root/fuseki."
+        echo $OUTPUT
+        exit 1
+    else
+        echo -e "${GREEN}SUCCESS${NC}"
+    fi
+
+    echo -n "Copying fuseki service file: "
+
+    OUTPUT=$(cp $OTNODE_DIR/installer/data/fuseki.service /lib/systemd/system/ 2>&1)
+
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}FAILED${NC}"
+        echo "There was an error copying the fuseki service file."
         echo $OUTPUT
         exit 1
     else
@@ -128,44 +145,45 @@ fi
 
     systemctl daemon-reload
 
-    echo -n "Enable GraphDB service on boot: "
+    echo -n "Enable Fuseki service on boot: "
 
-    OUTPUT=$(systemctl enable graphdb 2>&1)
+    OUTPUT=$(systemctl enable fuseki 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
-        echo "There was an error enabling the GraphDB service."
+        echo "There was an error enabling Fuseki."
         echo $OUTPUT
         exit 1
     else
         echo -e "${GREEN}SUCCESS${NC}"
     fi
 
-    echo -n "Starting GraphDB: "
+    echo -n "Starting Fuseki: "
 
-    OUTPUT=$(systemctl start graphdb 2>&1)
+    OUTPUT=$(systemctl start fuseki 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
-        echo "There was an error starting GraphDB."
+        echo "There was an error starting Fuseki."
         echo $OUTPUT
         exit 1
     else
         echo -e "${GREEN}SUCCESS${NC}"
     fi
 
-    echo -n "Confirming GraphDB has started: "
+    echo -n "Confirming Fuseki has started: "
 
-    IS_RUNNING=$(systemctl show -p ActiveState --value graphdb)
+    IS_RUNNING=$(systemctl show -p ActiveState --value fuseki)
 
     if [[ $IS_RUNNING == "active" ]]; then
         echo -e "${GREEN}SUCCESS${NC}"
     else
         echo -e "${RED}FAILED${NC}"
-        echo "There was an error starting GraphDB."
+        echo "There was an error starting Fuseki."
         echo $OUTPUT
         exit 1
     fi
+
 fi
 
 if [[ $DATABASE = "blazegraph" ]]; then
@@ -290,7 +308,7 @@ fi
 
 echo -n "Installing npm: "
 
- OUTPUT=$(npm install -g npm@latest 2>&1)
+ OUTPUT=$(npm install -g npm 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing npm."
@@ -445,6 +463,11 @@ mv $OTNODE_DIR/origintrail_noderc_temp $OTNODE_DIR/.origintrail_noderc
 
 if [[ $DATABASE = "blazegraph" ]]; then
     jq '.graphDatabase |= {"implementation": "Blazegraph", "url": "http://localhost:9999/blazegraph"} + .' $OTNODE_DIR/.origintrail_noderc >> $OTNODE_DIR/origintrail_noderc_temp
+    mv $OTNODE_DIR/origintrail_noderc_temp $OTNODE_DIR/.origintrail_noderc
+fi
+
+if [[ $DATABASE = "fuseki" ]]; then
+    jq '.graphDatabase |= {"name": "node0", "implementation": "Fuseki", "url": "http://localhost:3030"} + .' $OTNODE_DIR/.origintrail_noderc >> $OTNODE_DIR/origintrail_noderc_temp
     mv $OTNODE_DIR/origintrail_noderc_temp $OTNODE_DIR/.origintrail_noderc
 fi
 
