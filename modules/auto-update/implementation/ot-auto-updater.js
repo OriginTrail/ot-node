@@ -30,18 +30,6 @@ module.exports = class OTAutoUpdater {
     }
 
     /**
-     * Checks local version against the remote version and updates if different. 
-     */
-    async autoUpdate() {
-        const versionCheck = await this.compareVersions();
-        if (versionCheck.upToDate) {
-            return true
-        };
-        const update = await this.forceUpdate();
-        return update;
-    }
-
-    /**
      * @typedef VersionResults
      * @param {Boolean} UpToDate - If the local version is the same as the remote version.
      * @param {String} currentVersion - The version of the local application.
@@ -84,7 +72,7 @@ module.exports = class OTAutoUpdater {
      * If configured, a completion command will be executed and the process for the app will be stopped. 
      * @returns {Boolean} The result of the update.
      */
-    async forceUpdate() {
+    async update() {
         try {
             this.logger.info(`AutoUpdater - Updating ot-node from ${REPOSITORY_URL}`);
             await this.downloadUpdate();
@@ -112,7 +100,6 @@ module.exports = class OTAutoUpdater {
         this.logger.info(`AutoUpdater - Destination: ${destination}`);
         await fs.ensureDir(destination);
         await fs.copy(source, destination);
-        return true;
     }
 
     /**

@@ -1,6 +1,6 @@
 const OTAutoUpdater = require('./implementation/ot-auto-updater');
 
-module.exports = class AutoUpdater {
+class AutoUpdaterModuleInterface {
     constructor(config) {
         this.config = config;
     }
@@ -10,15 +10,13 @@ module.exports = class AutoUpdater {
         return this.implementation.initialize(this.config.logger);
     }
 
-    async autoUpdate() {
-        return this.implementation.autoUpdate();
-    }
-
     async compareVersions() {
         return this.implementation.compareVersions();
     }
 
-    async forceUpdate() {
+    async update() {
         return this.implementation.forceUpdate();
     }
 };
+
+module.exports = AutoUpdaterModuleInterface;

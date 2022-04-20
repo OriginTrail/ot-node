@@ -126,7 +126,8 @@ class OTNode {
             
             if(this.config.otNodeUpdated) {
                 execSync('npx sequelize --config=./config/sequelizeConfig.js db:migrate');
-                execSync(`rm ${updateFilePath}`);
+                const fileService = this.container.resolve('fileService');
+                await  fileService.removeFile(updateFilePath);
                 this.config.otNodeUpdated = false;
             }
             
