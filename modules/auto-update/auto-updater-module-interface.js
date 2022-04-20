@@ -3,12 +3,11 @@ const OTAutoUpdater = require('./implementation/ot-auto-updater');
 class AutoUpdaterModuleInterface {
     constructor(config) {
         this.config = config;
-        this.logger = config.logger;
     }
 
     initialize() {
         this.implementation = new OTAutoUpdater(this.config);
-        return this.implementation.initialize(this.logger);
+        return this.implementation.initialize();
     }
 
     async compareVersions() {

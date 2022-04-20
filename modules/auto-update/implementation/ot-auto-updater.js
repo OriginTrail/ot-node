@@ -20,13 +20,13 @@ class OTAutoUpdater {
      */
     constructor(config) {
         this.config = config;
+        this.logger = config.logger;
     }
 
-    initialize(logger) {
+    initialize() {
         if (!this.config) throw new Error('You must pass a config object to AutoUpdater.');
         if (!this.config.branch) this.config.branch = 'master';
         if (!this.config.tempLocation) throw new Error('You must define a temp location for cloning the repository');
-        this.logger = logger;
     }
 
     /**
@@ -70,7 +70,6 @@ class OTAutoUpdater {
      * Clones the git repository and installs the update over the local application.
      * A backup of the application is created before the update is installed.
      * If configured, a completion command will be executed and the process for the app will be stopped. 
-     * @returns {Boolean} The result of the update.
      */
     async update() {
         try {
