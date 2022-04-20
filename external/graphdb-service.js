@@ -127,16 +127,7 @@ class GraphdbService {
                             ?s ?p ?o
                           }
                         }`;
-        let nquads = await this.construct(query);
-
-        if (nquads.length) {
-            nquads = nquads.toString();
-            nquads = nquads.replace(/_:genid(.){37}/gm, '_:$1');
-            nquads = nquads.split('\n');
-            nquads = nquads.filter((x) => x !== '');
-        } else {
-            nquads = null;
-        }
+        const nquads = await this.construct(query);
         return nquads;
     }
 
