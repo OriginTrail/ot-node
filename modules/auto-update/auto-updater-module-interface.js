@@ -15,7 +15,7 @@ class AutoUpdaterModuleInterface {
     }
 
     async update() {
-        return this.implementation.forceUpdate();
+        return this.implementation.update();
     }
 };
 
