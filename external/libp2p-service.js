@@ -8,7 +8,6 @@ const TCP = require('libp2p-tcp');
 const pipe = require('it-pipe');
 const {sha256} = require('multiformats/hashes/sha2');
 const PeerId = require("peer-id");
-const fs = require('fs');
 const { BufferList } = require('bl')
 const { InMemoryRateLimiter } = require("rolling-rate-limiter");
 const constants = require('../modules/constants');
