@@ -41,7 +41,7 @@ class OTAutoUpdater {
     async compareVersions() {
         try {
             this.logger.info('AutoUpdater - Comparing versions...');
-            const currentVersion = this.readAppVersion();
+            const currentVersion = this.readAppVersion(appRootPath.path);
             const remoteVersion = await this.readRemoteVersion();
             this.logger.info(`AutoUpdater - Current version: ${currentVersion}`);
             this.logger.info(`AutoUpdater - Remote Version: ${remoteVersion}`);
@@ -74,10 +74,15 @@ class OTAutoUpdater {
     async update() {
         try {
             this.logger.info(`AutoUpdater - Updating ot-node from ${REPOSITORY_URL}`);
+            const currentDirectory = path.join(appRootPath.path, '..', await this.readAppVersion(appRootPath.path));
             await this.downloadUpdate();
             await this.backup();
-            await this.installUpdate();
-            await this.installDependencies();
+            const updateDirectory = await this.installUpdate();
+            await this.installDependencies(updateDirectory);
+            await fs.rename(appRootPath.path, 'tmp');
+            await fs.ensureSymlink(updateDirectory, appRootPath.path);
+            await fs.rm(appRootPath.path, { force: true, recursive: true });
+            await fs.rm(currentDirectory, { force: true, recursive: true });
             this.logger.info('AutoUpdater - Finished installing updated version.');
             if (this.config.executeOnComplete) await this.promiseBlindExecute(this.config.executeOnComplete);
             process.exit(1);
@@ -91,20 +96,30 @@ class OTAutoUpdater {
      * The update is installed from  the configured tempLocation.
      */
     async installUpdate() {
-        const source = path.join(this.config.tempLocation, CLONE_SUBDIRECTORY);
-        const destination = appRootPath.path;
+        let source = path.join(this.config.tempLocation, CLONE_SUBDIRECTORY);
+        const newVersion = await this.readAppVersion(source);
+        const destination = path.join(appRootPath.path, '..', newVersion);
         this.logger.info('AutoUpdater - Installing update...');
         this.logger.info(`AutoUpdater - Source: ${source}`);
         this.logger.info(`AutoUpdater - Destination: ${destination}`);
+        // copy new files
         await fs.ensureDir(destination);
         await fs.copy(source, destination);
+        // copy .origintrail_noderc file
+        source = path.join(appRootPath.path, '.origintrail_noderc');
+        await fs.copy(source, destination);
+        // copy .env file
+        source = path.join(appRootPath.path, '.env');
+        await fs.copy(source, destination);
+
+        return destination;
     }
 
     /**
      * Reads the applications version from the package.json file.
      */
-    readAppVersion() {
-        const file = path.join(appRootPath.path, 'package.json');
+    readAppVersion(appPath) {
+        const file = path.join(appPath, 'package.json');
         this.logger.info(`AutoUpdater - Reading app version from ${file}`);
         const appPackage = fs.readFileSync(file);
         return JSON.parse(appPackage).version;
@@ -197,9 +212,8 @@ class OTAutoUpdater {
     /**
     * Runs npm install to update/install the application dependencies.
     */
-    installDependencies() {
+    installDependencies(destination) {
         return new Promise((resolve, reject) => {
-            const destination = appRootPath.path;
             this.logger.info(`AutoUpdater - Installing application dependencies in ${destination}`);
             
             const command = `cd ${destination} && npm install --omit=dev`;
