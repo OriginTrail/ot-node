@@ -43,7 +43,9 @@ class FileService {
 
     createFolder(folderName) {}
 
-    readFileOnPath(filePath) {}
+    readFileOnPath(filePath) {
+        return this._readFile(filePath, false);
+    }
 
     /**
      * Loads JSON data from file
@@ -51,10 +53,10 @@ class FileService {
      * @private
      */
     loadJsonFromFile(filePath) {
-        return this.readFile(filePath, true);
+        return this._readFile(filePath, true);
     }
 
-    readFile(filePath, convertToJSON = false) {
+    _readFile(filePath, convertToJSON = false) {
         return new Promise((resolve, reject) => {
             exists(filePath, (exist) => {
                 if (exist) {
@@ -82,8 +84,8 @@ class FileService {
 
     removeFile(filePath) {
         return new Promise((resolve, reject) => {
-            exists(filePath, (exists) => {
-                if (exists) {
+            exists(filePath, (exist) => {
+                if (exist) {
                     fs.unlink(filePath, (err) => {
                         if (err) {
                             reject(err);
