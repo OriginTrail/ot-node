@@ -75,8 +75,11 @@ exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
  */
 exports.PERMANENT_COMMANDS = [
-    'otnodeUpdateCommand', 'sendTelemetryCommand', 'cleanerCommand',
-    'handlerIdsCleanerCommand', 'keepAliveCommand',
+    'otnodeUpdateCommand',
+    'sendTelemetryCommand',
+    'cleanerCommand',
+    'handlerIdsCleanerCommand',
+    'keepAliveCommand',
 ];
 
 /**
@@ -228,6 +231,7 @@ exports.SERVICE_API_ROUTES = {
  */
 exports.ERROR_TYPE = {
     INSERT_ASSERTION_ERROR: 'InsertAssertionError',
+    PREPARE_ASSERTION_ERROR: 'PrepareAssertionError',
     SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
     SEND_ASSERTION_ERROR: 'SendAssertionError',
     SEND_ASSERTION_ERROR_BUSY: 'SendAssertionErrorBusy',
@@ -261,4 +265,21 @@ exports.ERROR_TYPE = {
     COMMAND_EXECUTOR_INITIALIZATION_ERROR: 'CommandExecutorInitializationError',
     RPC_INITIALIZATION_ERROR: 'RpcInitializationError',
     KEEP_ALIVE_ERROR: 'KeepAliveError',
+};
+/**
+ * @constant {object} HANDLER_ID_STATUS -
+ *  Possible statuses for handler id
+ */
+exports.HANDLER_ID_STATUS = {
+    PENDING: 'PENDING',
+    FAILED: 'FAILED',
+};
+/**
+ * @constant {object} PUBLISH_METHOD -
+ *  Possible methods for publish
+ */
+exports.PUBLISH_METHOD = {
+    PUBLISH: 'PUBLISH',
+    PROVISION: 'PROVISION',
+    UPDATE: 'UPDATE',
 };
