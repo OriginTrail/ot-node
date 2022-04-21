@@ -9,6 +9,7 @@ class PrepareAssertionForPublish extends Command {
         this.dataService = ctx.dataService;
         this.fileService = ctx.fileService;
         this.validationService = ctx.validationService;
+        this.workerPool = ctx.workerPool;
     }
 
     /**
@@ -29,7 +30,7 @@ class PrepareAssertionForPublish extends Command {
 
         let { documentPath } = command.data;
 
-        const rawAssertion = await this.fileService.loadJsonFromFile(documentPath);
+        const rawAssertion = await this.fileService.readFile(documentPath);
 
         const { assertion, nquads } = await this.dataService.canonize(rawAssertion, fileExtension);
         this.logger.emit({

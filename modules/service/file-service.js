@@ -41,13 +41,9 @@ class FileService {
         });
     }
 
-    createFolder(folderName) {
+    createFolder(folderName) {}
 
-    }
-
-    readFileOnPath(filePath) {
-
-    }
+    readFileOnPath(filePath) {}
 
     /**
      * Loads JSON data from file
@@ -55,16 +51,23 @@ class FileService {
      * @private
      */
     loadJsonFromFile(filePath) {
+        return this.readFile(filePath, true);
+    }
+
+    readFile(filePath, convertToJSON = false) {
         return new Promise((resolve, reject) => {
-            exists(filePath, (exists) => {
-                if (exists) {
+            exists(filePath, (exist) => {
+                if (exist) {
                     fs.readFile(filePath, (err, data) => {
                         if (err) {
                             reject(err);
                         } else {
                             try {
-                                const fileJson = JSON.parse(data);
-                                resolve(fileJson);
+                                if (convertToJSON) {
+                                    const fileJson = JSON.parse(data);
+                                    resolve(fileJson);
+                                }
+                                resolve(data);
                             } catch (error) {
                                 reject(error);
                             }

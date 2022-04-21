@@ -3,8 +3,8 @@ const Models = require('../../../models');
 const { HANDLER_ID_STATUS } = require('../../../modules/constants');
 
 class BaseController {
-    async generateHandlerId() {
-        await Models.handler_ids.create({
+    generateHandlerId() {
+        return Models.handler_ids.create({
             status: HANDLER_ID_STATUS.PENDING,
         });
     }
