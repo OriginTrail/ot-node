@@ -1,0 +1,17 @@
+#/lib/systemd/system/fuseki.service
+
+[Unit]
+Description=Fuseki - OriginTrail V6 Stage 1 Beta Node
+Documentation=https://github.com/OriginTrail/ot-node
+After=network.target
+
+[Service]
+Environment=JVM_ARGS=-Xmx4G
+Type=simple
+User=root
+WorkingDirectory=/root/fuseki
+ExecStart=/usr/bin/java -jar /root/fuseki/fuseki-server.jar --update --set tdb:unionDefaultGraph=true --loc /root/fuseki/tdb /node0
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

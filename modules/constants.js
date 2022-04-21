@@ -163,6 +163,7 @@ exports.STORE_MIN_SUCCESS_RATE = 0.8;
 exports.TRIPLE_STORE_IMPLEMENTATION = {
     BLAZEGRAPH: 'Blazegraph',
     GRAPHDB: 'GraphDB',
+    FUSEKI: 'Fuseki',
 };
 
 /**

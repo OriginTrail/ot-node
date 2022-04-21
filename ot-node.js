@@ -1,9 +1,9 @@
 const { execSync } = require('child_process');
 const DeepExtend = require('deep-extend');
-const AutoGitUpdate = require('auto-git-update');
 const rc = require('rc');
 const fs = require('fs');
 const queue = require('fastq');
+const AutoUpdater = require('./modules/auto-update/auto-updater-module-interface');
 const DependencyInjection = require('./modules/service/dependency-injection');
 const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
@@ -56,12 +56,10 @@ class OTNode {
             // set default user configuration filename
             this.config.configFilename = '.origintrail_noderc';
         }
-        if (
-            !this.config.blockchain[0].hubContractAddress &&
-            this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId
-        ) {
-            this.config.blockchain[0].hubContractAddress =
-                configjson[process.env.NODE_ENV].blockchain[0].hubContractAddress;
+        if (!this.config.blockchain[0].hubContractAddress
+            && this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId) {
+            this.config.blockchain[0].hubContractAddress = configjson[process.env.NODE_ENV]
+                .blockchain[0].hubContractAddress;
         }
     }
 
@@ -79,7 +77,6 @@ class OTNode {
     async initializeAutoUpdate() {
         try {
             updateFilePath = `./${this.config.appDataPath}/UPDATED`;
-            // check if UPDATE file exists if yes set flag updated true
             if (fs.existsSync(updateFilePath)) {
                 this.config.otNodeUpdated = true;
             }
@@ -88,19 +85,16 @@ class OTNode {
             }
 
             const autoUpdateConfig = {
-                repository: 'https://github.com/OriginTrail/ot-node',
+                logger: this.logger,
                 branch: this.config.autoUpdate.branch,
                 tempLocation: this.config.autoUpdate.backupDirectory,
                 executeOnComplete: `touch ${updateFilePath}`,
-                exitOnComplete: true,
             };
 
             execSync(`mkdir -p ${this.config.autoUpdate.backupDirectory}`);
 
-            this.updater = new AutoGitUpdate(autoUpdateConfig);
-            this.updater.setLogConfig({
-                logGeneral: true,
-            });
+            this.updater = new AutoUpdater(autoUpdateConfig);
+            await this.updater.initialize();
             DependencyInjection.registerValue(this.container, 'updater', this.updater);
 
             this.logger.info('Auto update mechanism initialized');
@@ -109,7 +103,6 @@ class OTNode {
                 msg: `Auto update initialization failed. Error message: ${e.message}`,
                 Event_name: constants.ERROR_TYPE.UPDATE_INITIALIZATION_ERROR,
             });
-            throw e;
         }
     }
 
@@ -123,7 +116,6 @@ class OTNode {
                 msg: `Data module initialization failed. Error message: ${e.message}`,
                 Event_name: constants.ERROR_TYPE.DATA_MODULE_INITIALIZATION_ERROR,
             });
-            throw e;
         }
     }
 
@@ -132,18 +124,20 @@ class OTNode {
             this.logger.info('Operational database module: sequelize implementation');
             // eslint-disable-next-line global-require
             const db = require('./models');
-            if (this.config.otNodeUpdated) {
+            
+            if(this.config.otNodeUpdated) {
                 execSync('npx sequelize --config=./config/sequelizeConfig.js db:migrate');
-                execSync(`rm ${updateFilePath}`);
+                const fileService = this.container.resolve('fileService');
+                await  fileService.removeFile(updateFilePath);
                 this.config.otNodeUpdated = false;
             }
+            
             await db.sequelize.sync();
         } catch (e) {
             this.logger.error({
                 msg: `Operational database module initialization failed. Error message: ${e.message}`,
                 Event_name: constants.ERROR_TYPE.OPERATIONALDB_MODULE_INITIALIZATION_ERROR,
             });
-            throw e;
         }
     }
 
@@ -153,10 +147,8 @@ class OTNode {
             const result = await networkService.initialize();
 
             this.config.network.peerId = result.peerId;
-            if (
-                !this.config.network.privateKey &&
-                this.config.network.privateKey !== result.privateKey
-            ) {
+            if (!this.config.network.privateKey
+                && (this.config.network.privateKey !== result.privateKey)) {
                 this.config.network.privateKey = result.privateKey;
                 if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
                     this.savePrivateKeyInUserConfigurationFile(result.privateKey);
@@ -171,7 +163,6 @@ class OTNode {
                 msg: `Network module initialization failed. Error message: ${e.message}`,
                 Event_name: constants.ERROR_TYPE.NETWORK_INITIALIZATION_ERROR,
             });
-            throw e;
         }
     }
 
@@ -186,7 +177,6 @@ class OTNode {
                 msg: `Validation module initialization failed. Error message: ${e.message}`,
                 Event_name: constants.ERROR_TYPE.VALIDATION_INITIALIZATION_ERROR,
             });
-            throw e;
         }
     }
 
@@ -201,7 +191,6 @@ class OTNode {
                 msg: `Blockchain module initialization failed. Error message: ${e.message}`,
                 Event_name: constants.ERROR_TYPE.BLOCKCHAIN_INITIALIZATION_ERROR,
             });
-            throw e;
         }
     }
 
@@ -216,7 +205,6 @@ class OTNode {
                 msg: `Command executor initialization failed. Error message: ${e.message}`,
                 Event_name: constants.ERROR_TYPE.COMMAND_EXECUTOR_INITIALIZATION_ERROR,
             });
-            throw e;
         }
     }
 
@@ -229,7 +217,6 @@ class OTNode {
                 msg: `RPC service initialization failed. Error message: ${e.message}`,
                 Event_name: constants.ERROR_TYPE.RPC_INITIALIZATION_ERROR,
             });
-            throw e;
         }
     }
 
@@ -237,15 +224,10 @@ class OTNode {
         try {
             const telemetryHubModuleManager = this.container.resolve('telemetryHubModuleManager');
             if (telemetryHubModuleManager.initialize(this.config.telemetryHub, this.logger)) {
-                this.logger.info(
-                    `Telemetry hub module initialized successfully, using ${telemetryHubModuleManager.config.telemetryHub.packages} package(s)`,
-                );
+                this.logger.info(`Telemetry hub module initialized successfully, using ${telemetryHubModuleManager.config.telemetryHub.packages} package(s)`);
             }
         } catch (e) {
-            this.logger.error(
-                `Telemetry hub module initialization failed. Error message: ${e.message}`,
-            );
-            throw e;
+            this.logger.error(`Telemetry hub module initialization failed. Error message: ${e.message}`);
         }
     }
 
@@ -256,7 +238,6 @@ class OTNode {
             this.logger.info('Watchdog service initialized');
         } catch (e) {
             this.logger.warn(`Watchdog service initialization failed. Error message: ${e.message}`);
-            throw e;
         }
     }
 
