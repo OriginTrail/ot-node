@@ -246,12 +246,12 @@ class OTAutoUpdater {
             const command = `cd ${destination} && npm install --omit=dev`;
             const child = exec(command);
 
-            child.stdout.on('end', resolve);
             child.stdout.on('data', (data) =>
                 this.logger.info(
                     `AutoUpdater - npm install --omit=dev: ${data.replace(/\r?\n|\r/g, '')}`,
                 ),
             );
+            let resultData;
             child.stderr.on('data', (data) => {
                 if (data.toLowerCase().includes('error')) {
                     // npm passes warnings as errors, only reject if "error" is included
@@ -261,8 +261,16 @@ class OTAutoUpdater {
                     );
                     reject();
                 } else {
+                    resultData += data;
+                }
+            });
+            child.stdout.on('end', () => {
+                resultData = resultData.split('\n');
+                resultData = resultData.filter((x) => x !== '');
+                for(const data of resultData) {
                     this.logger.warn(`AutoUpdater - ${data}`);
                 }
+                resolve();
             });
         });
     }
