@@ -95,12 +95,16 @@ class OTAutoUpdater {
             await fs.ensureSymlink(updateDirectory, currentDirectory);
 
             this.logger.info('AutoUpdater - Finished installing updated version.');
+            
             // delete old versions
             const executeOnComplete = [
                 this.promiseBlindExecute(`rm -rf ${tmpDirectory}`),
-                this.promiseBlindExecute(`rm -rf ${appRootPath.path}`),
             ];
-
+            if(appRootPath.path !== currentDirectory) {
+                executeOnComplete.push(this.promiseBlindExecute(`rm -rf ${appRootPath.path}`))
+            }
+            
+            // execute on complete if defined
             if (this.config.executeOnComplete) {
                 executeOnComplete.push(this.promiseBlindExecute(this.config.executeOnComplete));
             }
