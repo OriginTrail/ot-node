@@ -12,7 +12,7 @@ const BACKUP_SUBDIRECTORY = '/auto-update/backup/';
 const REPOSITORY_URL = 'https://github.com/OriginTrail/ot-node';
 
 class OTAutoUpdater {
-    /** 
+    /**
      * @param config - Configuration for AutoUpdater
      * @param {String} config.branch - The branch to update from. Defaults to master.
      * @param {String} config.tempLocation - The local dir to save temporary information for Auto Git Update.
@@ -26,15 +26,16 @@ class OTAutoUpdater {
     initialize() {
         if (!this.config) throw new Error('You must pass a config object to AutoUpdater.');
         if (!this.config.branch) this.config.branch = 'master';
-        if (!this.config.tempLocation) throw new Error('You must define a temp location for cloning the repository');
+        if (!this.config.tempLocation)
+            throw new Error('You must define a temp location for cloning the repository');
     }
 
     /**
      * @typedef VersionResults
      * @param {Boolean} UpToDate - If the local version is the same as the remote version.
      * @param {String} currentVersion - The version of the local application.
-     * @param {String} remoteVersion - The version of the application in the git repository. 
-     * 
+     * @param {String} remoteVersion - The version of the application in the git repository.
+     *
      * Checks the local version of the application against the remote repository.
      * @returns {VersionResults} - An object with the results of the version comparison.
      */
@@ -47,47 +48,63 @@ class OTAutoUpdater {
             this.logger.info(`AutoUpdater - Remote Version: ${remoteVersion}`);
             if (currentVersion === remoteVersion) {
                 return {
-                    upToDate: true, 
-                    currentVersion
+                    upToDate: true,
+                    currentVersion,
                 };
-            };
-            return {
-                upToDate: false, 
-                currentVersion, 
-                remoteVersion
-            };
-        }catch(e) {
-            this.logger.error(`AutoUpdater - Error comparing local and remote versions. Error message: ${e.message}`);
-            return {
-                upToDate: false, 
-                currentVersion: 'Error', 
-                remoteVersion: 'Error'
             }
+            return {
+                upToDate: false,
+                currentVersion,
+                remoteVersion,
+            };
+        } catch (e) {
+            this.logger.error(
+                `AutoUpdater - Error comparing local and remote versions. Error message: ${e.message}`,
+            );
+            return {
+                upToDate: false,
+                currentVersion: 'Error',
+                remoteVersion: 'Error',
+            };
         }
     }
 
     /**
      * Clones the git repository and installs the update over the local application.
      * A backup of the application is created before the update is installed.
-     * If configured, a completion command will be executed and the process for the app will be stopped. 
+     * If configured, a completion command will be executed and the process for the app will be stopped.
      */
     async update() {
         try {
             this.logger.info(`AutoUpdater - Updating ot-node from ${REPOSITORY_URL}`);
-            const currentDirectory = path.join(appRootPath.path, '..', await this.readAppVersion(appRootPath.path));
+            const currentDirectory = path.join(
+                appRootPath.path,
+                '..',
+                await this.readAppVersion(appRootPath.path),
+            );
             await this.downloadUpdate();
             await this.backup();
             const updateDirectory = await this.installUpdate();
             await this.installDependencies(updateDirectory);
-            await fs.rename(appRootPath.path, 'tmp');
+
+            // rename current working directory to issues when creating new link
+            const tmpDirectory = path.join(appRootPath.path, '..', 'tmp');
+            await fs.rename(appRootPath.path, tmpDirectory);
+
+            // link to update directory
             await fs.ensureSymlink(updateDirectory, appRootPath.path);
-            await fs.rm(appRootPath.path, { force: true, recursive: true });
+
+            // remove old files
+            await fs.rm(tmpDirectory, { force: true, recursive: true });
             await fs.rm(currentDirectory, { force: true, recursive: true });
             this.logger.info('AutoUpdater - Finished installing updated version.');
-            if (this.config.executeOnComplete) await this.promiseBlindExecute(this.config.executeOnComplete);
+            if (this.config.executeOnComplete)
+                await this.promiseBlindExecute(this.config.executeOnComplete);
             process.exit(1);
-        }catch(e) {
-            this.logger.error(`AutoUpdater - Error updating application. Error message: ${e.message}`);
+        } catch (e) {
+            this.logger.error(
+                `AutoUpdater - Error updating application. Error message: ${e.message}`,
+            );
         }
     }
 
@@ -107,10 +124,10 @@ class OTAutoUpdater {
         await fs.copy(source, destination);
         // copy .origintrail_noderc file
         source = path.join(appRootPath.path, '.origintrail_noderc');
-        await fs.copy(source, destination);
+        await fs.copy(source, path.join(destination, '.origintrail_noderc'));
         // copy .env file
         source = path.join(appRootPath.path, '.env');
-        await fs.copy(source, destination);
+        await fs.copy(source, path.join(destination, '.env'));
 
         return destination;
     }
@@ -128,13 +145,15 @@ class OTAutoUpdater {
     /**
      * A promise wrapper for sending a get https requests.
      * @param {String} url - The Https address to request.
-     * @param {String} options - The request options. 
+     * @param {String} options - The request options.
      */
     promiseHttpsRequest(url, options) {
         return new Promise((resolve, reject) => {
-            const req = https.request(url, options, res => {
+            const req = https.request(url, options, (res) => {
                 let body = '';
-                res.on('data', data => {body += data});
+                res.on('data', (data) => {
+                    body += data;
+                });
                 res.on('end', () => {
                     if (res.statusCode === 200) return resolve(body);
                     this.logger.info(`AutoUpdater - Bad Response ${res.statusCode}`);
@@ -145,25 +164,27 @@ class OTAutoUpdater {
             this.logger.info(`AutoUpdater - Options: ${JSON.stringify(options)}`);
             req.on('error', reject);
             req.end();
-        }); 
+        });
     }
 
     /**
      * Reads the applications version from the git repository.
      */
     async readRemoteVersion() {
-        const options = {}
-        let url =  `${REPOSITORY_URL}/${this.config.branch}/package.json`;
+        const options = {};
+        let url = `${REPOSITORY_URL}/${this.config.branch}/package.json`;
         if (url.includes('github')) url = url.replace('github.com', 'raw.githubusercontent.com');
         this.logger.info(`AutoUpdater - Reading remote version from ${url}`);
-        
+
         try {
             const body = await this.promiseHttpsRequest(url, options);
             const remotePackage = JSON.parse(body);
-            const {version} = remotePackage;
+            const { version } = remotePackage;
             return version;
-        } catch(e) {
-            throw new Error(`This repository requires a token or does not exist. Error message: ${e.message}`);
+        } catch (e) {
+            throw new Error(
+                `This repository requires a token or does not exist. Error message: ${e.message}`,
+            );
         }
     }
 
@@ -171,7 +192,7 @@ class OTAutoUpdater {
      * A promise wrapper for the simple-git clone function
      * @param {String} repo - The url of the repository to clone.
      * @param {String} destination - The local path to clone into.
-     * @param {String} branch - The repo branch to clone. 
+     * @param {String} branch - The repo branch to clone.
      */
     promiseClone(repo, destination, branch) {
         return new Promise((resolve, reject) => {
@@ -184,7 +205,7 @@ class OTAutoUpdater {
 
     /**
      * A promise wrapper for the child-process spawn function. Does not listen for results.
-     * @param {String} command - The command to execute. 
+     * @param {String} command - The command to execute.
      */
     promiseBlindExecute(command) {
         return new Promise((resolve) => {
@@ -197,7 +218,7 @@ class OTAutoUpdater {
         const destination = path.join(this.config.tempLocation, BACKUP_SUBDIRECTORY);
         this.logger.info(`AutoUpdater - Backing up app to ${destination}`);
         await fs.ensureDir(destination);
-        await fs.copy(appRootPath.path, destination, {dereference: true});
+        await fs.copy(appRootPath.path, destination, { dereference: true });
     }
 
     async downloadUpdate() {
@@ -210,23 +231,28 @@ class OTAutoUpdater {
     }
 
     /**
-    * Runs npm install to update/install the application dependencies.
-    */
+     * Runs npm install to update/install the application dependencies.
+     */
     installDependencies(destination) {
         return new Promise((resolve, reject) => {
             this.logger.info(`AutoUpdater - Installing application dependencies in ${destination}`);
-            
+
             const command = `cd ${destination} && npm install --omit=dev`;
             const child = exec(command);
 
-            
             child.stdout.on('end', resolve);
-            child.stdout.on('data', data => this.logger.info(`AutoUpdater - npm install --omit=dev: ${data.replace(/\r?\n|\r/g, '')}`));
-            child.stderr.on('data', data => {
+            child.stdout.on('data', (data) =>
+                this.logger.info(
+                    `AutoUpdater - npm install --omit=dev: ${data.replace(/\r?\n|\r/g, '')}`,
+                ),
+            );
+            child.stderr.on('data', (data) => {
                 if (data.toLowerCase().includes('error')) {
                     // npm passes warnings as errors, only reject if "error" is included
                     data = data.replace(/\r?\n|\r/g, '');
-                    this.logger.error(`AutoUpdater - Error installing dependencies. Error message: ${data}`);
+                    this.logger.error(
+                        `AutoUpdater - Error installing dependencies. Error message: ${data}`,
+                    );
                     reject();
                 } else {
                     this.logger.warn(`AutoUpdater - ${data}`);
