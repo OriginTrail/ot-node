@@ -80,7 +80,7 @@ class OTAutoUpdater {
             const currentDirectory = path.join(
                 appRootPath.path,
                 '..',
-                await this.readAppVersion(appRootPath.path),
+                'ot-node',
             );
             await this.downloadUpdate();
             await this.backup();
@@ -89,17 +89,23 @@ class OTAutoUpdater {
 
             // rename current working directory to issues when creating new link
             const tmpDirectory = path.join(appRootPath.path, '..', 'tmp');
-            await fs.rename(appRootPath.path, tmpDirectory);
+            await fs.rename(currentDirectory, tmpDirectory);
 
             // link to update directory
-            await fs.ensureSymlink(updateDirectory, 'ot-node');
+            await fs.ensureSymlink(updateDirectory, currentDirectory);
 
-            // remove old files
-            await fs.rm(tmpDirectory, { force: true, recursive: true });
-            await fs.rm(currentDirectory, { force: true, recursive: true });
             this.logger.info('AutoUpdater - Finished installing updated version.');
-            if (this.config.executeOnComplete)
-                await this.promiseBlindExecute(this.config.executeOnComplete);
+            // delete old versions
+            const executeOnComplete = [
+                this.promiseBlindExecute(`rm -rf ${tmpDirectory}`),
+                this.promiseBlindExecute(`rm -rf ${appRootPath.path}`),
+            ];
+
+            if (this.config.executeOnComplete) {
+                executeOnComplete.push(this.promiseBlindExecute(this.config.executeOnComplete));
+            }
+
+            await Promise.all(executeOnComplete);
             process.exit(1);
         } catch (e) {
             this.logger.error(
