@@ -92,7 +92,7 @@ class OTAutoUpdater {
             await fs.rename(appRootPath.path, tmpDirectory);
 
             // link to update directory
-            await fs.ensureSymlink(updateDirectory, appRootPath.path);
+            await fs.ensureSymlink(updateDirectory, 'ot-node');
 
             // remove old files
             await fs.rm(tmpDirectory, { force: true, recursive: true });
