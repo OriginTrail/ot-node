@@ -87,7 +87,7 @@ class OTAutoUpdater {
             const updateDirectory = await this.installUpdate();
             await this.installDependencies(updateDirectory);
 
-            // rename current working directory to issues when creating new link
+            // rename current working directory to avoid issues when creating new link
             const tmpDirectory = path.join(appRootPath.path, '..', 'tmp');
             await fs.rename(currentDirectory, tmpDirectory);
 
@@ -119,8 +119,8 @@ class OTAutoUpdater {
     }
 
     /**
-     * Copy the files to the app directory, and install new modules
-     * The update is installed from  the configured tempLocation.
+     * Copy the files to the new app directory
+     * The update is installed from the configured tempLocation.
      */
     async installUpdate() {
         let source = path.join(this.config.tempLocation, CLONE_SUBDIRECTORY);
