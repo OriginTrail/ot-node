@@ -119,14 +119,20 @@ class GraphdbService {
         });
     }
 
-    async resolve(uri) {
+    async resolve(uri, localQuery, metadataOnly) {
+        const graphName = `<${constants.DID_PREFIX}:${uri}>`
+        const publicVisibility = localQuery ? '' : `${graphName} schema:hasVisibility "public" .`
+        const matchMetadata = metadataOnly ? `${graphName} ?p ?o` : '';
+        
         const query = `PREFIX schema: <http://schema.org/>
-                        CONSTRUCT { ?s ?p ?o }
-                        WHERE {
-                          GRAPH <${constants.DID_PREFIX}:${uri}> {
-                            ?s ?p ?o
-                          }
-                        }`;
+                    CONSTRUCT { ?s ?p ?o }
+                    WHERE {
+                        GRAPH ${graphName} {
+                        ?s ?p ?o .
+                        ${publicVisibility}
+                        ${matchMetadata}
+                        }
+                    }`;
         const nquads = await this.construct(query);
         return nquads;
     }

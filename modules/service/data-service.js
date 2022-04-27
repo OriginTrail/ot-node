@@ -136,7 +136,7 @@ class DataService {
 
     async resolve(id, localQuery = false, metadataOnly = false) {
         try {
-            let nquads = await this.tripleStoreQueue.push({ operation: 'resolve', id });
+            let nquads = await this.tripleStoreQueue.push({ operation: 'resolve', id, localQuery, metadataOnly});
             if (nquads.length) {
                 nquads = nquads.toString();
                 nquads = nquads.split('\n');
@@ -146,14 +146,7 @@ class DataService {
             } else {
                 nquads = null;
             }
-
-            // TODO: add function for this conditional expr for increased readability
-            if (!localQuery && nquads && nquads.find((x) => x.includes(`<${constants.DID_PREFIX}:${id}> <http://schema.org/hasVisibility> "private" .`))) {
-                return null;
-            }
-            if (metadataOnly) {
-                nquads = nquads.filter((x) => x.startsWith(`<${constants.DID_PREFIX}:${id}>`));
-            }
+            
             return nquads;
         } catch (e) {
             this.handleUnavailableTripleStoreError(e);
@@ -681,7 +674,7 @@ class DataService {
             result = await this.implementation.insert(args.data, args.assertionId);
             break;
         case 'resolve':
-            result = await this.implementation.resolve(args.id);
+            result = await this.implementation.resolve(args.id, args.localQuery, args.metadataOnly);
             break;
         case 'assertionsByAsset':
             result = await this.implementation.assertionsByAsset(args.id);
