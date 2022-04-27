@@ -159,9 +159,9 @@ class DataService {
             const assertions = await this.tripleStoreQueue.push({ operation: 'assertionsByAsset', id });
 
             return assertions.map((x) => ({
-                id: x.assertionId.value.slice(8),
-                issuer: x.issuer.value,
-                timestamp: x.timestamp.value,
+                id: x.assertionId.slice(8),
+                issuer: x.issuer,
+                timestamp: x.timestamp,
             }));
         } catch (e) {
             this.handleUnavailableTripleStoreError(e);
