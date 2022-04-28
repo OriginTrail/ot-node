@@ -569,14 +569,11 @@ class DataService {
             hasVisibility: assertion.metadata.visibility,
             hasDataHash: assertion.metadata.dataHash,
             hasKeywords: assertion.metadata.keywords,
+            hasUAI : {"@id": assertion.metadata.UAI},
         };
 
         if (assertion.metadata.UALs) {
             metadata.hasUALs = assertion.metadata.UALs;
-        }
-
-        if (assertion.metadata.UAI) {
-            metadata.hasUAI = assertion.metadata.UAI;
         }
 
         const result = await this.workerPool.exec('toNQuads', [metadata]);
@@ -682,7 +679,7 @@ class DataService {
                         result.metadata.UALs.push(JSON.parse(quad._object.id));
                         break;
                     case 'http://schema.org/hasUAI':
-                        result.metadata.UAI = JSON.parse(quad._object.id);
+                        result.metadata.UAI = quad._object.id;
                         break;
                     case 'http://schema.org/hasIssuer':
                         result.metadata.issuer = JSON.parse(quad._object.id);

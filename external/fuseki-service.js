@@ -110,10 +110,9 @@ class FusekiService {
             GRAPH ${graphName}
             {
                 ?s ?p ?o .
-                ${graphName} schema:hasUAI ?uai .
+                ${graphName} schema:hasUAI ?s .
                 ?s schema:image | schema:url | schema:description | schema:name ?o .
             }
-            FILTER(str(?s) = ?uai)
         }` : ''
         
         const query = `PREFIX schema: <http://schema.org/>
