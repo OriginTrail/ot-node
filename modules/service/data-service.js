@@ -100,7 +100,8 @@ class DataService {
                 },
                 data: await this.workerPool.exec('JSONParse', [fileContent.toString()]),
             };
-            const nquads = await this.workerPool.exec('toNQuads', [assertion.data]);
+            assertion.data['@id'] = `did:uai:${uuidv1()}`;
+            const nquads = await this.workerPool.exec('toNQuads', [assertion.data, '']);
             if (nquads && nquads.length === 0) {
                 throw new Error('File format is corrupted, no n-quads extracted.');
             }
@@ -116,6 +117,7 @@ class DataService {
                 type = 'default';
             }
             assertion.metadata.type = type;
+            assertion.metadata.UAI = assertion.data['@id'];
             assertion.data = await this.fromNQuads(nquads, type);
 
             return { assertion, nquads };
@@ -167,7 +169,7 @@ class DataService {
         }
     }
 
-    async createAssertion(rawNQuads) {
+    async createAssertion(rawNQuads, previewDataOnly) {
         const metadata = [];
         const data = [];
         const nquads = [];
@@ -182,6 +184,9 @@ class DataService {
             }
         });
         const jsonld = await this.extractMetadata(metadata);
+        if(previewDataOnly) {
+            jsonld.previewData = await this.extractPreviewData(data, jsonld.metadata.UAI);
+        }
         jsonld.data = data;
         return { jsonld, nquads };
     }
@@ -297,14 +302,16 @@ class DataService {
                     continue;
                 }
 
-                const nquads = await this.resolve(assertion.assertionId, localQuery, true);
+                const metadataOnly = true
+                const nquads = await this.resolve(assertion.assertionId, localQuery, metadataOnly);
+                
                 if (!nquads) {
                     continue;
                 }
 
                 if (localQuery) {
-                    assertion = await this.createAssertion(nquads);
-
+                    assertion = await this.createAssertion(nquads, metadataOnly);
+                    
                     let object = result.find(
                         (x) => x.type === assertion.jsonld.metadata.type
                             && x.id === assertion.jsonld.metadata.UALs[0],
@@ -316,6 +323,8 @@ class DataService {
                             timestamp: assertion.jsonld.metadata.timestamp,
                             issuers: [],
                             assertions: [],
+                            previewData: assertion.jsonld.previewData,
+                            blockchain: assertion.jsonld.blockchain,
                             nodes: [this.networkService.getPeerId()],
                         };
                         result.push(object);
@@ -363,7 +372,9 @@ class DataService {
             for (let assertion of assertions) {
                 const assertionId = assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
 
-                const nquads = await this.resolve(assertion.assertionId, localQuery, true);
+                const metadataOnly = true;
+                const nquads = await this.resolve(assertion.assertionId, localQuery, metadataOnly);
+                
                 if (!nquads) {
                     continue;
                 }
@@ -564,6 +575,10 @@ class DataService {
             metadata.hasUALs = assertion.metadata.UALs;
         }
 
+        if (assertion.metadata.UAI) {
+            metadata.hasUAI = assertion.metadata.UAI;
+        }
+
         const result = await this.workerPool.exec('toNQuads', [metadata]);
         return result;
     }
@@ -577,6 +592,56 @@ class DataService {
         }]);
         nquads = nquads.concat(blockchainMetadata);
         return nquads;
+    }
+
+    async extractPreviewData(rdf, uai) {
+        return new Promise(async (accept, reject) => {
+            const parser = new N3.Parser({ format: 'N-Triples', baseIRI: 'http://schema.org/' });
+            const result = {};
+
+            const quads = [];
+            await parser.parse(
+                rdf.join('\n'),
+                (error, quad, prefixes) => {
+                    if (error) {
+                        reject(error);
+                    }
+                    if (quad) {
+                        quads.push(quad);
+                    }
+                },
+            );
+
+            for (const quad of quads) {
+                try {
+                    if(quad._subject.id === uai) {
+                        switch (quad._predicate.id) {
+                            case 'http://schema.org/image':
+                                result.image = quad._object.id;
+                                break;
+                            case 'http://schema.org/url':
+                                result.url = quad._object.id;
+                                break;
+                            case 'http://schema.org/description':
+                                result.description = quad._object.id;
+                                break;
+                            case 'http://schema.org/name':
+                                result.name = quad._object.id;
+                                break;
+                            default:
+                                break;
+                            }
+                    }
+                } catch (e) {
+                    this.logger.error({
+                        msg: `Error in extracting preview data: ${e}. ${e.stack}`,
+                        Event_name: constants.ERROR_TYPE.EXTRACT_PREVIEWDATA_ERROR,
+                    });
+                }
+            }
+
+            accept(result);
+        });
     }
 
     async extractMetadata(rdf) {
@@ -615,6 +680,9 @@ class DataService {
                         break;
                     case 'http://schema.org/hasUALs':
                         result.metadata.UALs.push(JSON.parse(quad._object.id));
+                        break;
+                    case 'http://schema.org/hasUAI':
+                        result.metadata.UAI = JSON.parse(quad._object.id);
                         break;
                     case 'http://schema.org/hasIssuer':
                         result.metadata.issuer = JSON.parse(quad._object.id);

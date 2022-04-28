@@ -834,18 +834,37 @@ class RpcController {
                             handlerData.data = [];
                         }
 
-                        response = handlerData.data.map((x) => ({
-                            '@type': 'EntitySearchResult',
-                            result: {
-                                '@id': x.id,
-                                '@type': x.type.toUpperCase(),
-                                timestamp: x.timestamp,
-                            },
-                            issuers: x.issuers,
-                            assertions: x.assertions,
-                            nodes: x.nodes,
-                            resultScore: 0,
-                        }));
+                        response = handlerData.data.map((x) => {
+                            const data = {
+                                '@type': 'EntitySearchResult',
+                                result: {
+                                    '@id': x.id,
+                                    '@type': x.type.toUpperCase(),
+                                    timestamp: x.timestamp,
+                                },
+                                issuers: x.issuers,
+                                assertions: x.assertions,
+                                blockchain: x.blockchain,
+                                nodes: x.nodes,
+                                resultScore: 0,
+                            }
+                            if(x.previewData) {
+                                if(x.previewData.image) {
+                                    data.result.image = x.previewData.image
+                                }
+                                if(x.previewData.description) {
+                                    data.result.description = x.previewData.description
+                                }
+                                if(x.previewData.url) {
+                                    data.result.url = x.previewData.url
+                                }
+                                if(x.previewData.name) {
+                                    data.result.name = x.previewData.name
+                                }
+                            }
+                            return data
+                        }
+                        );
 
                         res.send({
                             '@context': {

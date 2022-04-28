@@ -105,15 +105,29 @@ class BlazegraphService {
         const graphName = `<${constants.DID_PREFIX}:${uri}>`
         const publicVisibility = localQuery ? '' : `${graphName} schema:hasVisibility "public" .`
         const matchMetadata = metadataOnly ? `${graphName} ?p ?o` : '';
+        const previewData = metadataOnly ? `UNION 
+        {
+            GRAPH ${graphName}
+            {
+                ?s ?p ?o .
+                ${graphName} schema:hasUAI ?uai .
+                ?s schema:image | schema:url | schema:description | schema:name ?o .
+            }
+            FILTER(str(?s) = ?uai)
+        }` : ''
         
         const query = `PREFIX schema: <http://schema.org/>
                     CONSTRUCT { ?s ?p ?o }
                     WHERE {
-                        GRAPH ${graphName} {
-                        ?s ?p ?o .
-                        ${publicVisibility}
-                        ${matchMetadata}
+                        {
+                            GRAPH ${graphName} 
+                            {
+                                ?s ?p ?o .
+                                ${publicVisibility}
+                                ${matchMetadata}
+                            }
                         }
+                        ${previewData}
                     }`;
         const nquads = await this.construct(query);
         return nquads;

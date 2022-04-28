@@ -194,7 +194,8 @@ class QueryService {
             }
 
             const rawNquads = assertion.nquads ? assertion.nquads : assertion.rdf;
-            const { jsonld } = await this.dataService.createAssertion(rawNquads);
+            const metadataOnly = true
+            const { jsonld } = await this.dataService.createAssertion(rawNquads, metadataOnly);
             let object = handlerData.find(
                 (x) => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UALs[0],
             );
@@ -205,7 +206,9 @@ class QueryService {
                     timestamp: jsonld.metadata.timestamp,
                     issuers: [],
                     assertions: [],
+                    previewData: jsonld.previewData,
                     nodes: [assertion.node],
+                    blockchain: jsonld.blockchain.name
                 };
                 handlerData.push(object);
             }
