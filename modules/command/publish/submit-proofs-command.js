@@ -76,28 +76,23 @@ class SubmitProofsCommand extends Command {
         const { assertion, method } = args;
         let result;
         switch (method) {
-        case 'publish':
+            case constants.SERVICE_API_ROUTES.PUBLISH:
             result = await this.blockchainService.createAssertionRecord(
                 assertion.id,
-                assertion.rootHash,
                 assertion.metadata.issuer,
             );
             break;
-        case 'provision':
-            result = await this.blockchainService.registerAsset(
-                assertion.metadata.UALs[0],
-                assertion.metadata.type,
-                assertion.metadata.UALs[0],
+        case constants.SERVICE_API_ROUTES.PROVISION:
+            result = await this.blockchainService.createAsset(
+                assertion.metadata.UAL.split('/').pop(),
                 assertion.id,
-                assertion.rootHash,
                 1,
             );
             break;
-        case 'update':
+        case constants.SERVICE_API_ROUTES.UPDATE:
             result = await this.blockchainService.updateAsset(
-                assertion.metadata.UALs[0],
-                assertion.id,
-                assertion.rootHash,
+                assertion.metadata.UAL.split('/').pop(),
+                assertion.id
             );
             break;
         default:

@@ -91,7 +91,7 @@ class DataService {
         }
     }
 
-    async canonize(fileContent, fileExtension) {
+    async canonize(fileContent, fileExtension, method) {
         switch (fileExtension) {
         case '.json':
             const assertion = {
@@ -100,7 +100,17 @@ class DataService {
                 },
                 data: await this.workerPool.exec('JSONParse', [fileContent.toString()]),
             };
-            assertion.data['@id'] = `did:uai:${uuidv1()}`;
+            if (method !== constants.SERVICE_API_ROUTES.PUBLISH || method !== constants.SERVICE_API_ROUTES.UPDATE) {
+                if (assertion.data['@id']) {
+                    assertion.metadata.UAL = `dkg://did.${this.config.blockchain[0].networkId}.${this.config.blockchain[0].hubContractAddress}/${assertion.data['@id']}`;
+                } else {
+                    assertion.metadata.UAL = `dkg://did.${this.config.blockchain[0].networkId}.${this.config.blockchain[0].hubContractAddress}/${Math.random() * 10000}`;
+                }
+                assertion.data['@id'] = assertion.metadata.UAL;
+            }else {
+                delete assertion.data['@id'];
+            }
+
             const nquads = await this.workerPool.exec('toNQuads', [assertion.data, '']);
             if (nquads && nquads.length === 0) {
                 throw new Error('File format is corrupted, no n-quads extracted.');
@@ -117,9 +127,9 @@ class DataService {
                 type = 'default';
             }
             assertion.metadata.type = type;
-            assertion.metadata.UAI = assertion.data['@id'];
             assertion.data = await this.fromNQuads(nquads, type);
-
+            assertion.data['@id'] = assertion.data.id;
+            delete assertion.data.id;
             return { assertion, nquads };
         default:
             throw new Error(`File extension ${fileExtension} is not supported.`);
@@ -148,7 +158,7 @@ class DataService {
             } else {
                 nquads = null;
             }
-            
+
             return nquads;
         } catch (e) {
             this.handleUnavailableTripleStoreError(e);
@@ -185,7 +195,7 @@ class DataService {
         });
         const jsonld = await this.extractMetadata(metadata);
         if(previewDataOnly) {
-            jsonld.previewData = await this.extractPreviewData(data, jsonld.metadata.UAI);
+            jsonld.previewData = await this.extractPreviewData(data, jsonld.metadata.UAL);
         }
         jsonld.data = data;
         return { jsonld, nquads };
@@ -292,8 +302,8 @@ class DataService {
             for (let assertion of assertions) {
                 assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
                 const { assertionId } = assertion;
-                const { value: assetId } = assertion.assetId;
-
+                let { value: assetId } = assertion.assetId;
+                assetId = assetId.split('/').pop();
                 const {
                     assertionId: assertionIdBlockchain,
                 } = await this.blockchainService.getAssetProofs(assetId);
@@ -304,21 +314,21 @@ class DataService {
 
                 const metadataOnly = true
                 const nquads = await this.resolve(assertion.assertionId, localQuery, metadataOnly);
-                
+
                 if (!nquads) {
                     continue;
                 }
 
                 if (localQuery) {
                     assertion = await this.createAssertion(nquads, metadataOnly);
-                    
+
                     let object = result.find(
                         (x) => x.type === assertion.jsonld.metadata.type
-                            && x.id === assertion.jsonld.metadata.UALs[0],
+                            && x.id === assertion.jsonld.metadata.UAL,
                     );
                     if (!object) {
                         object = {
-                            id: assertion.jsonld.metadata.UALs[0],
+                            id: assertion.jsonld.metadata.UAL,
                             type: assertion.jsonld.metadata.type,
                             timestamp: assertion.jsonld.metadata.timestamp,
                             issuers: [],
@@ -374,7 +384,7 @@ class DataService {
 
                 const metadataOnly = true;
                 const nquads = await this.resolve(assertion.assertionId, localQuery, metadataOnly);
-                
+
                 if (!nquads) {
                     continue;
                 }
@@ -569,11 +579,11 @@ class DataService {
             hasVisibility: assertion.metadata.visibility,
             hasDataHash: assertion.metadata.dataHash,
             hasKeywords: assertion.metadata.keywords,
-            hasUAI : {"@id": assertion.metadata.UAI},
+            hasUAL : {"@id": assertion.metadata.UAL},
         };
 
-        if (assertion.metadata.UALs) {
-            metadata.hasUALs = assertion.metadata.UALs;
+        if (assertion.metadata.UAL) {
+            metadata.hasUAL = assertion.metadata.UAL;
         }
 
         const result = await this.workerPool.exec('toNQuads', [metadata]);
@@ -675,11 +685,8 @@ class DataService {
                     case 'http://schema.org/hasTimestamp':
                         result.metadata.timestamp = JSON.parse(quad._object.id);
                         break;
-                    case 'http://schema.org/hasUALs':
-                        result.metadata.UALs.push(JSON.parse(quad._object.id));
-                        break;
-                    case 'http://schema.org/hasUAI':
-                        result.metadata.UAI = quad._object.id;
+                    case 'http://schema.org/hasUAL':
+                        result.metadata.UAL = quad._object.id;
                         break;
                     case 'http://schema.org/hasIssuer':
                         result.metadata.issuer = JSON.parse(quad._object.id);

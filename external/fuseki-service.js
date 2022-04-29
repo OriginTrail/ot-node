@@ -110,7 +110,7 @@ class FusekiService {
             GRAPH ${graphName}
             {
                 ?s ?p ?o .
-                ${graphName} schema:hasUAI ?s .
+                ${graphName} schema:hasUAL ?s .
                 ?s schema:image | schema:url | schema:description | schema:name ?o .
             }
         }` : ''
@@ -136,7 +136,7 @@ class FusekiService {
         const query = `PREFIX schema: <http://schema.org/>
             SELECT ?assertionId ?issuer ?timestamp
             WHERE {
-                 ?assertionId schema:hasUALs "${uri}" ;
+                 ?assertionId schema:hasUAL "${uri}" ;
                      schema:hasTimestamp ?timestamp ;
                      schema:hasIssuer ?issuer .
             }
@@ -180,7 +180,7 @@ class FusekiService {
                             WHERE {
                                 ?assertionId schema:hasTimestamp ?latestTimestamp ;
                             ${!localQuery ? 'schema:hasVisibility "public" ;' : ''}
-                                                     schema:hasUALs ?assetId .
+                                                     schema:hasUAL ?assetId .
                                     {
                                         SELECT ?assetId (MAX(?timestamp) AS ?latestTimestamp)
                                         WHERE {
@@ -188,7 +188,7 @@ class FusekiService {
                                                          schema:hasIssuer ?issuer ;
                                                          schema:hasType ?type ;
                                                          schema:hasTimestamp ?timestamp ;
-                                                         schema:hasUALs ?assetId .
+                                                         schema:hasUAL ?assetId .
                                 ${options.prefix ? `FILTER contains(lcase(?keyword),'${query}')` : `FILTER (lcase(?keyword) = '${query}')`}
                                 ${options.issuers ? `FILTER (?issuer IN (${JSON.stringify(options.issuers).slice(1, -1)}))` : ''}
                                 ${options.types ? `FILTER (?type IN (${JSON.stringify(options.types).slice(1, -1)}))` : ''}

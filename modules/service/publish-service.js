@@ -19,7 +19,7 @@ class PublishService {
         fileExtension,
         keywords,
         visibility,
-        ual,
+        method,
         handlerId,
         operationId,
         isTelemetry = false,
@@ -34,7 +34,7 @@ class PublishService {
             let {
                 assertion,
                 nquads,
-            } = await this.dataService.canonize(fileContent, fileExtension);
+            } = await this.dataService.canonize(fileContent, fileExtension, method);
             this.logger.emit({
                 msg: 'Finished measuring execution of data canonization',
                 Event_name: 'publish_canonization_end',
@@ -51,19 +51,6 @@ class PublishService {
             assertion.metadata.visibility = visibility;
             assertion.metadata.keywords = keywords;
             assertion.metadata.keywords.sort();
-            let method = 'publish';
-            if (ual === null) {
-                method = 'provision';
-                ual = this.validationService.calculateHash(
-                    assertion.metadata.timestamp
-                    + assertion.metadata.type
-                    + assertion.metadata.issuer,
-                );
-                assertion.metadata.UALs = [ual];
-            } else if (ual !== undefined) {
-                method = 'update';
-                assertion.metadata.UALs = [ual];
-            }
 
             assertion.metadata.dataHash = this.validationService.calculateHash(assertion.data);
             assertion.metadataHash = this.validationService.calculateHash(assertion.metadata);
@@ -75,8 +62,8 @@ class PublishService {
             nquads = await this.dataService.appendMetadata(nquads, assertion);
             assertion.rootHash = this.validationService.calculateRootHash(nquads);
 
-            if (ual !== undefined) {
-                this.logger.info(`UAL: ${ual}`);
+            if (assertion.data['@id']) {
+                this.logger.info(`UAL: ${assertion.data['@id']}`);
             }
             this.logger.info(`Assertion ID: ${assertion.id}`);
             this.logger.info(`Assertion metadataHash: ${assertion.metadataHash}`);

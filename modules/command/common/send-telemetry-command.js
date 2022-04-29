@@ -39,7 +39,7 @@ class SendTelemetryCommand extends Command {
                             Operation_name: 'publish_prep_args',
                             Id_operation: operationId,
                         });
-                        this.publishService.publish(fileContent, '.json', keywords, 'public', undefined, insertedObject.dataValues.handler_id, operationId, true);
+                        this.publishService.publish(fileContent, '.json', keywords, 'public', constants.SERVICE_API_ROUTES.PUBLISH, insertedObject.dataValues.handler_id, operationId, true);
                     });
                 }
             })

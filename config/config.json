@@ -9,8 +9,8 @@
     "blockchain": [
       {
         "blockchainTitle": "Polygon",
-        "networkId": "polygon::mainnet",
-        "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
+        "networkId": "polygon:testnet",
+        "hubContractAddress": "0xA99754D3634B8Be489F50F69F728c3d1fEB1fcce",
         "rpcEndpoints": [
           "https://rpc-mumbai.maticvigil.com/"
         ]

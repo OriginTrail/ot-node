@@ -191,21 +191,15 @@ class RpcController {
         this.logger.info(`Service API module enabled, server running on port ${this.config.rpcPort}`);
 
         this.app.post(constants.SERVICE_API_ROUTES.PUBLISH, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            await this.publish(req, res, next, { isAsset: false });
+            await this.publish(req, res, next, { method: constants.SERVICE_API_ROUTES.PUBLISH });
         });
 
         this.app.post(constants.SERVICE_API_ROUTES.PROVISION, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            await this.publish(req, res, next, { isAsset: true, ual: null });
+            await this.publish(req, res, next, { method: constants.SERVICE_API_ROUTES.PROVISION });
         });
 
         this.app.post(constants.SERVICE_API_ROUTES.UPDATE, this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
-            if (!req.body.ual) {
-                return next({
-                    code: 400,
-                    message: 'UAL must be a string.',
-                });
-            }
-            await this.publish(req, res, next, { isAsset: true, ual: req.body.ual });
+            await this.publish(req, res, next, { method: constants.SERVICE_API_ROUTES.UPDATE });
         });
 
         this.app.get(
@@ -262,6 +256,7 @@ class RpcController {
 
                     for (let id of ids) {
                         let isAsset = false;
+                        id = id.split('/').pop();
                         const { assertionId } = await this.blockchainService.getAssetProofs(id);
                         if (assertionId) {
                             isAsset = true;
@@ -297,7 +292,7 @@ class RpcController {
                                 Id_operation: operationId,
                             });
 
-                            const assertion = await this.dataService.createAssertion(nquads);
+                            const assertion = await this.dataService.createAssertion(nquads, true);
 
                             this.logger.emit({
                                 msg: 'Finished measuring execution of create assertion from nquads',
@@ -317,17 +312,23 @@ class RpcController {
                                     ),
                                 ),
                             );
+
+                            if (assertion.jsonld.metadata.UAL) {
+                                assertion.jsonld.data['@id'] = assertion.jsonld.metadata.UAL;
+                                delete assertion.jsonld.data.id;
+                            }
                             response.push(isAsset ? {
                                 type: 'asset',
-                                id: assertion.jsonld.metadata.UALs[0],
+                                id: assertion.jsonld.metadata.UAL,
                                 result: {
                                     assertions: await this.dataService.assertionsByAsset(
-                                        assertion.jsonld.metadata.UALs[0],
+                                        assertion.jsonld.metadata.UAL,
                                     ),
                                     metadata: {
                                         type: assertion.jsonld.metadata.type,
                                         issuer: assertion.jsonld.metadata.issuer,
                                         latestState: assertion.jsonld.metadata.timestamp,
+                                        ...assertion.jsonld.previewData
                                     },
                                     data: assertion.jsonld.data,
                                 },
@@ -1063,7 +1064,6 @@ class RpcController {
             fileExtension = '.json';
         }
         const visibility = req.body.visibility ? req.body.visibility.toLowerCase() : 'public';
-        const ual = options.isAsset ? options.ual : undefined;
 
         let promise;
         if (req.body.keywords) {
@@ -1089,7 +1089,7 @@ class RpcController {
                     fileExtension,
                     keywords,
                     visibility,
-                    ual,
+                    options.method,
                     handlerId,
                     operationId,
                 );

@@ -1,0 +1,4247 @@
+{
+  "contractName": "AssertionRegistry",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "assertionId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "assertionIssuer",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "numberOfEpochs",
+          "type": "uint256"
+        }
+      ],
+      "name": "AssertionCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "TRAC_TOKEN_ADDRESS",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "assertionId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "issuer",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "numberOfEpochs",
+          "type": "uint256"
+        }
+      ],
+      "name": "createAssertionRecord",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "assertionId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getAssertionIssuer",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "issuer",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "assertionId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getAssertionNumberOfEpochs",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "numberOfEpochs",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "assertionId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getAssertionCreationTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "numberOfEpochs",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "assertionID",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "epoch",
+          "type": "uint256"
+        }
+      ],
+      "name": "getAssertionTask",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "task",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    }
+  ],
+  "metadata": "{\"compiler\":{\"version\":\"0.7.6+commit.7338295f\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"assertionId\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"assertionIssuer\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"numberOfEpochs\",\"type\":\"uint256\"}],\"name\":\"AssertionCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"TRAC_TOKEN_ADDRESS\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"assertionId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"issuer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"numberOfEpochs\",\"type\":\"uint256\"}],\"name\":\"createAssertionRecord\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"assertionId\",\"type\":\"bytes32\"}],\"name\":\"getAssertionCreationTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"numberOfEpochs\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"assertionId\",\"type\":\"bytes32\"}],\"name\":\"getAssertionIssuer\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"issuer\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"assertionId\",\"type\":\"bytes32\"}],\"name\":\"getAssertionNumberOfEpochs\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"numberOfEpochs\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"assertionID\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"epoch\",\"type\":\"uint256\"}],\"name\":\"getAssertionTask\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"task\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"owner()\":{\"details\":\"Returns the address of the current owner.\"},\"renounceOwnership()\":{\"details\":\"Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.\"},\"transferOwnership(address)\":{\"details\":\"Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.\"}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/AssertionRegistry.sol\":\"AssertionRegistry\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"openzeppelin-solidity/contracts/access/Ownable.sol\":{\"keccak256\":\"0x15e2d5bd4c28a88548074c54d220e8086f638a71ed07e6b3ba5a70066fcf458d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://90faf5851c02f9bd42c5bfb54d4f0421a2612f50ab80b2c4fa24fa3792071cc2\",\"dweb:/ipfs/QmRGM4F2PcGVF85aTfaA9YBhCHHDqrMhRjyp6fGeBTtirb\"]},\"openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0xcc78a17dd88fa5a2edc60c8489e2f405c0913b377216a5b26b35656b2d0dab52\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://526dc85e1f9b9b45830e202568d267d93dde7a4fcccf4ad7798dadcd92304d3c\",\"dweb:/ipfs/QmaoXMB972J3cSDLtBq3xBo4jLwqD2uzXTwujtSPqkYVhR\"]},\"openzeppelin-solidity/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x5f02220344881ce43204ae4a6281145a67bc52c2bb1290a791857df3d19d78f5\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://24427744bd3e6cb73c17010119af12a318289c0253a4d9acb8576c9fb3797b08\",\"dweb:/ipfs/QmTLDqpKRBuxGxRAmjgXt9AkXyACW3MtKzi7PYjm5iMfGC\"]},\"openzeppelin-solidity/contracts/utils/Context.sol\":{\"keccak256\":\"0x8d3cb350f04ff49cfb10aef08d87f19dcbaecc8027b0bed12f3275cd12f38cf0\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ded47ec7c96750f9bd04bbbc84f659992d4ba901cb7b532a52cd468272cf378f\",\"dweb:/ipfs/QmfBrGtQP7rZEqEg6Wz6jh2N2Kukpj1z5v3CGWmAqrzm96\"]},\"project:/contracts/AssertionRegistry.sol\":{\"keccak256\":\"0xbdc2254dd1e47c416aa0133a04adb4c3fa8aac349fb7afe737cff1a5fabbcb94\",\"urls\":[\"bzz-raw://c897ede18402a0c3e08c8319ee329b60c5efc9fe9ff6ca1e5e51dda6c1a45a3b\",\"dweb:/ipfs/QmVtXtNk1PmfDBMWM6ytynsSVyduMbYTcFBZed1y4iMKXC\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b5060006100216100c460201b60201c565b9050806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055508073ffffffffffffffffffffffffffffffffffffffff16600073ffffffffffffffffffffffffffffffffffffffff167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e060405160405180910390a3506100cc565b600033905090565b6109cb806100db6000396000f3fe608060405234801561001057600080fd5b50600436106100935760003560e01c80638f9cd32b116100665780638f9cd32b1461017a5780639e50e72c146101ae578063a7943efc146101f0578063b3138cb814610232578063f2fde38b1461028a57610093565b80630828e9f31461009857806308c4933b146100f0578063715018a61461013c5780638da5cb5b14610146575b600080fd5b6100c4600480360360208110156100ae57600080fd5b81019080803590602001909291905050506102ce565b604051808273ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6101266004803603604081101561010657600080fd5b81019080803590602001909291908035906020019092919050505061030e565b6040518082815260200191505060405180910390f35b610144610319565b005b61014e610486565b604051808273ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6101826104af565b604051808273ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6101da600480360360208110156101c457600080fd5b81019080803590602001909291905050506104d5565b6040518082815260200191505060405180910390f35b61021c6004803603602081101561020657600080fd5b81019080803590602001909291905050506104f5565b6040518082815260200191505060405180910390f35b6102886004803603606081101561024857600080fd5b8101908080359060200190929190803573ffffffffffffffffffffffffffffffffffffffff16906020019092919080359060200190929190505050610515565b005b6102cc600480360360208110156102a057600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610753565b005b60006003600083815260200190815260200160002060020160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff169050919050565b600043905092915050565b610321610945565b73ffffffffffffffffffffffffffffffffffffffff1661033f610486565b73ffffffffffffffffffffffffffffffffffffffff16146103c8576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260208152602001807f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e657281525060200191505060405180910390fd5b600073ffffffffffffffffffffffffffffffffffffffff1660008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e060405160405180910390a360008060006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550565b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff16905090565b600260009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600060036000838152602001908152602001600020600001549050919050565b600060036000838152602001908152602001600020600101549050919050565b6000801b83141561058e576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252601f8152602001807f617373657274696f6e494420686173682063616e6e6f74206265207a65726f0081525060200191505060405180910390fd5b60008114156105e8576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260228152602001806109746022913960400191505060405180910390fd5b6000600360008581526020019081526020016000206001015414610674576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260198152602001807f417373657274696f6e20616c726561647920657869737473210000000000000081525060200191505060405180910390fd5b426003600085815260200190815260200160002060010181905550816003600085815260200190815260200160002060020160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055508060036000858152602001908152602001600020600001819055508173ffffffffffffffffffffffffffffffffffffffff16837f15a8c334a100ee764c8aa7e728c35c591343fe7a34edeb0e8688e9cc3cc501ea836040518082815260200191505060405180910390a3505050565b61075b610945565b73ffffffffffffffffffffffffffffffffffffffff16610779610486565b73ffffffffffffffffffffffffffffffffffffffff1614610802576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260208152602001807f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e657281525060200191505060405180910390fd5b600073ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff161415610888576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602681526020018061094e6026913960400191505060405180910390fd5b8073ffffffffffffffffffffffffffffffffffffffff1660008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e060405160405180910390a3806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555050565b60003390509056fe4f776e61626c653a206e6577206f776e657220697320746865207a65726f20616464726573736e756d6265724f6645706f63687320686173682063616e6e6f74206265207a65726fa2646970667358221220dda614211b5ff30f874e825c2f00deb50bcc1778d0066fbadc0f250f71b192d264736f6c63430007060033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100935760003560e01c80638f9cd32b116100665780638f9cd32b1461017a5780639e50e72c146101ae578063a7943efc146101f0578063b3138cb814610232578063f2fde38b1461028a57610093565b80630828e9f31461009857806308c4933b146100f0578063715018a61461013c5780638da5cb5b14610146575b600080fd5b6100c4600480360360208110156100ae57600080fd5b81019080803590602001909291905050506102ce565b604051808273ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6101266004803603604081101561010657600080fd5b81019080803590602001909291908035906020019092919050505061030e565b6040518082815260200191505060405180910390f35b610144610319565b005b61014e610486565b604051808273ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6101826104af565b604051808273ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6101da600480360360208110156101c457600080fd5b81019080803590602001909291905050506104d5565b6040518082815260200191505060405180910390f35b61021c6004803603602081101561020657600080fd5b81019080803590602001909291905050506104f5565b6040518082815260200191505060405180910390f35b6102886004803603606081101561024857600080fd5b8101908080359060200190929190803573ffffffffffffffffffffffffffffffffffffffff16906020019092919080359060200190929190505050610515565b005b6102cc600480360360208110156102a057600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610753565b005b60006003600083815260200190815260200160002060020160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff169050919050565b600043905092915050565b610321610945565b73ffffffffffffffffffffffffffffffffffffffff1661033f610486565b73ffffffffffffffffffffffffffffffffffffffff16146103c8576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260208152602001807f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e657281525060200191505060405180910390fd5b600073ffffffffffffffffffffffffffffffffffffffff1660008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e060405160405180910390a360008060006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550565b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff16905090565b600260009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600060036000838152602001908152602001600020600001549050919050565b600060036000838152602001908152602001600020600101549050919050565b6000801b83141561058e576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252601f8152602001807f617373657274696f6e494420686173682063616e6e6f74206265207a65726f0081525060200191505060405180910390fd5b60008114156105e8576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260228152602001806109746022913960400191505060405180910390fd5b6000600360008581526020019081526020016000206001015414610674576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260198152602001807f417373657274696f6e20616c726561647920657869737473210000000000000081525060200191505060405180910390fd5b426003600085815260200190815260200160002060010181905550816003600085815260200190815260200160002060020160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055508060036000858152602001908152602001600020600001819055508173ffffffffffffffffffffffffffffffffffffffff16837f15a8c334a100ee764c8aa7e728c35c591343fe7a34edeb0e8688e9cc3cc501ea836040518082815260200191505060405180910390a3505050565b61075b610945565b73ffffffffffffffffffffffffffffffffffffffff16610779610486565b73ffffffffffffffffffffffffffffffffffffffff1614610802576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260208152602001807f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e657281525060200191505060405180910390fd5b600073ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff161415610888576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602681526020018061094e6026913960400191505060405180910390fd5b8073ffffffffffffffffffffffffffffffffffffffff1660008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e060405160405180910390a3806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555050565b60003390509056fe4f776e61626c653a206e6577206f776e657220697320746865207a65726f20616464726573736e756d6265724f6645706f63687320686173682063616e6e6f74206265207a65726fa2646970667358221220dda614211b5ff30f874e825c2f00deb50bcc1778d0066fbadc0f250f71b192d264736f6c63430007060033",
+  "immutableReferences": {},
+  "generatedSources": [],
+  "deployedGeneratedSources": [],
+  "sourceMap": "221:2588:16:-:0;;;930:26;;;;;;;;;;884:17:1;904:12;:10;;;:12;;:::i;:::-;884:32;;935:9;926:6;;:18;;;;;;;;;;;;;;;;;;992:9;959:43;;988:1;959:43;;;;;;;;;;;;850:159;221:2588:16;;598:104:12;651:15;685:10;678:17;;598:104;:::o;221:2588:16:-;;;;;;;",
+  "deployedSourceMap": "221:2588:16:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2215:136;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;2683:123;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;1717:145:1;;;:::i;:::-;;1085:85;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;307:33:16;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;2353:160;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;2515:166;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;973:577;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;2011:240:1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;2215:136:16;2285:14;2311:16;:29;2328:11;2311:29;;;;;;;;;;;:36;;;;;;;;;;;;2304:43;;2215:136;;;:::o;2683:123::-;2766:12;2790;2783:19;;2683:123;;;;:::o;1717:145:1:-;1308:12;:10;:12::i;:::-;1297:23;;:7;:5;:7::i;:::-;:23;;;1289:68;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1823:1:::1;1786:40;;1807:6;::::0;::::1;;;;;;;;1786:40;;;;;;;;;;;;1853:1;1836:6:::0;::::1;:19;;;;;;;;;;;;;;;;;;1717:145::o:0;1085:85::-;1131:7;1157:6;;;;;;;;;;;1150:13;;1085:85;:::o;307:33:16:-;;;;;;;;;;;;;:::o;2353:160::-;2431:22;2465:16;:29;2482:11;2465:29;;;;;;;;;;;:44;;;2458:51;;2353:160;;;:::o;2515:166::-;2596:22;2630:16;:29;2647:11;2630:29;;;;;;;;;;;:47;;;2623:54;;2515:166;;;:::o;973:577::-;1099:1;1084:16;;:11;:16;;1076:60;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1166:1;1148:14;:19;;1140:66;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1268:1;1218:16;:29;1235:11;1218:29;;;;;;;;;;;:47;;;:51;1210:89;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1354:15;1304:16;:29;1321:11;1304:29;;;;;;;;;;;:47;;:65;;;;1412:6;1373:16;:29;1390:11;1373:29;;;;;;;;;;;:36;;;:45;;;;;;;;;;;;;;;;;;1469:14;1422:16;:29;1439:11;1422:29;;;;;;;;;;;:44;;:61;;;;1523:6;1493:53;;1510:11;1493:53;1531:14;1493:53;;;;;;;;;;;;;;;;;;973:577;;;:::o;2011:240:1:-;1308:12;:10;:12::i;:::-;1297:23;;:7;:5;:7::i;:::-;:23;;;1289:68;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2119:1:::1;2099:22;;:8;:22;;;;2091:73;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2208:8;2179:38;;2200:6;::::0;::::1;;;;;;;;2179:38;;;;;;;;;;;;2236:8;2227:6;::::0;:17:::1;;;;;;;;;;;;;;;;;;2011:240:::0;:::o;598:104:12:-;651:15;685:10;678:17;;598:104;:::o",
+  "source": "pragma solidity >=0.6.0 <0.8.0;\n\nimport \"openzeppelin-solidity/contracts/token/ERC20/IERC20.sol\";\nimport \"openzeppelin-solidity/contracts/math/SafeMath.sol\";\nimport \"openzeppelin-solidity/contracts/access/Ownable.sol\";\n\n\ncontract AssertionRegistry is Ownable {\n\tusing SafeMath for uint256;\n\tIERC20 token;\n\n\taddress public TRAC_TOKEN_ADDRESS;\n\n\tstruct AssertionRecord{\n\t\tuint256 numberOfEpochs;\n\t\tuint256 creationTimestamp;\n\t\taddress issuer;\n\t\tbytes32 data; // for extensibility\n\t\t// TODO: include Token management\n\t}\n\n\tmapping(bytes32 => AssertionRecord) internal assertionRecords;\n\n\t// events\n\tevent AssertionCreated(bytes32 indexed assertionId, address indexed assertionIssuer, uint256 numberOfEpochs);\n//\tevent TokensCollected(bytes32 indexed assertionId, address indexed prover, uint256 indexed epoch, uint256 amount);\n//\tevent VerificationFailed(bytes32 indexed assertionId, address indexed prover, uint256 indexed epoch);\n\n\tconstructor() public {\n\n\t}\n\n\t/* Sender */\n\tfunction createAssertionRecord(bytes32 assertionId, address issuer, uint256 numberOfEpochs) public {\n\t\trequire(assertionId != 0, \"assertionID hash cannot be zero\");\n\t\trequire(numberOfEpochs != 0, \"numberOfEpochs hash cannot be zero\");\n\t\trequire(assertionRecords[assertionId].creationTimestamp== 0, \"Assertion already exists!\");\n\n\t\tassertionRecords[assertionId].creationTimestamp = block.timestamp;\n\t\tassertionRecords[assertionId].issuer = issuer;\n\t\tassertionRecords[assertionId].numberOfEpochs = numberOfEpochs;\n\n\t\temit AssertionCreated(assertionId, issuer, numberOfEpochs);\n\t}\n\n\n\t/* Receiver */\n//\tfunction submitHoldingProof(bytes32 assertionID, bytes32 epochAssertionProof, uint256 epochNumber)\n//\tpublic {\n//\t\trequire(assertionID != 0, \"assertionID hash cannot be zero\");\n//\t\trequire(epochAssertionProof != 0, \"epochAssertionProof hash cannot be zero\");\n//\n//\t\tif (verifyAssertionProof(assertionID, epochAssertionProof)){\n//\t\t\temit TokensCollected(assertionID,msg.sender,epochNumber, 123);\n//\t\t\t} else {\n//\t\t\t\temit VerificationFailed(assertionID,msg.sender,epochNumber);\n//\t\t\t}\n//\n//\t}\n//\n//\tfunction verifyAssertionProof(bytes32 assertionID, bytes32 epochAssertionProof)\n//\t\tpublic returns(bool proofValid){\n//\t\treturn true;\n//\n//\t}\n\n\n\n\tfunction getAssertionIssuer(bytes32 assertionId)\n\tpublic view returns(address issuer){\n\t\treturn assertionRecords[assertionId].issuer;\n\t}\n\tfunction getAssertionNumberOfEpochs(bytes32 assertionId)\n\tpublic view returns(uint256 numberOfEpochs){\n\t\treturn assertionRecords[assertionId].numberOfEpochs;\n\t}\n\tfunction getAssertionCreationTimestamp(bytes32 assertionId)\n\tpublic view returns(uint256 numberOfEpochs){\n\t\treturn assertionRecords[assertionId].creationTimestamp;\n\t}\n\tfunction getAssertionTask(bytes32 assertionID, uint256 epoch)\n\tpublic view returns(uint256 task){\n\t\treturn block.number;\n\t}\n\n}",
+  "sourcePath": "/Users/miloskotlar/dkg-onchain-module-v6/contracts/AssertionRegistry.sol",
+  "ast": {
+    "absolutePath": "project:/contracts/AssertionRegistry.sol",
+    "exportedSymbols": {
+      "AssertionRegistry": [
+        3642
+      ],
+      "Context": [
+        2349
+      ],
+      "IERC20": [
+        894
+      ],
+      "Ownable": [
+        392
+      ],
+      "SafeMath": [
+        816
+      ]
+    },
+    "id": 3643,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 3490,
+        "literals": [
+          "solidity",
+          ">=",
+          "0.6",
+          ".0",
+          "<",
+          "0.8",
+          ".0"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:31:16"
+      },
+      {
+        "absolutePath": "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol",
+        "file": "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol",
+        "id": 3491,
+        "nodeType": "ImportDirective",
+        "scope": 3643,
+        "sourceUnit": 895,
+        "src": "33:64:16",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "openzeppelin-solidity/contracts/math/SafeMath.sol",
+        "file": "openzeppelin-solidity/contracts/math/SafeMath.sol",
+        "id": 3492,
+        "nodeType": "ImportDirective",
+        "scope": 3643,
+        "sourceUnit": 817,
+        "src": "98:59:16",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "openzeppelin-solidity/contracts/access/Ownable.sol",
+        "file": "openzeppelin-solidity/contracts/access/Ownable.sol",
+        "id": 3493,
+        "nodeType": "ImportDirective",
+        "scope": 3643,
+        "sourceUnit": 393,
+        "src": "158:60:16",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 3494,
+              "name": "Ownable",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 392,
+              "src": "251:7:16",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_Ownable_$392",
+                "typeString": "contract Ownable"
+              }
+            },
+            "id": 3495,
+            "nodeType": "InheritanceSpecifier",
+            "src": "251:7:16"
+          }
+        ],
+        "contractDependencies": [
+          392,
+          2349
+        ],
+        "contractKind": "contract",
+        "fullyImplemented": true,
+        "id": 3642,
+        "linearizedBaseContracts": [
+          3642,
+          392,
+          2349
+        ],
+        "name": "AssertionRegistry",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "id": 3498,
+            "libraryName": {
+              "id": 3496,
+              "name": "SafeMath",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 816,
+              "src": "268:8:16",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_SafeMath_$816",
+                "typeString": "library SafeMath"
+              }
+            },
+            "nodeType": "UsingForDirective",
+            "src": "262:27:16",
+            "typeName": {
+              "id": 3497,
+              "name": "uint256",
+              "nodeType": "ElementaryTypeName",
+              "src": "281:7:16",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          },
+          {
+            "constant": false,
+            "id": 3500,
+            "mutability": "mutable",
+            "name": "token",
+            "nodeType": "VariableDeclaration",
+            "scope": 3642,
+            "src": "291:12:16",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_contract$_IERC20_$894",
+              "typeString": "contract IERC20"
+            },
+            "typeName": {
+              "id": 3499,
+              "name": "IERC20",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 894,
+              "src": "291:6:16",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_IERC20_$894",
+                "typeString": "contract IERC20"
+              }
+            },
+            "visibility": "internal"
+          },
+          {
+            "constant": false,
+            "functionSelector": "8f9cd32b",
+            "id": 3502,
+            "mutability": "mutable",
+            "name": "TRAC_TOKEN_ADDRESS",
+            "nodeType": "VariableDeclaration",
+            "scope": 3642,
+            "src": "307:33:16",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_address",
+              "typeString": "address"
+            },
+            "typeName": {
+              "id": 3501,
+              "name": "address",
+              "nodeType": "ElementaryTypeName",
+              "src": "307:7:16",
+              "stateMutability": "nonpayable",
+              "typeDescriptions": {
+                "typeIdentifier": "t_address",
+                "typeString": "address"
+              }
+            },
+            "visibility": "public"
+          },
+          {
+            "canonicalName": "AssertionRegistry.AssertionRecord",
+            "id": 3511,
+            "members": [
+              {
+                "constant": false,
+                "id": 3504,
+                "mutability": "mutable",
+                "name": "numberOfEpochs",
+                "nodeType": "VariableDeclaration",
+                "scope": 3511,
+                "src": "370:22:16",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 3503,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "370:7:16",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 3506,
+                "mutability": "mutable",
+                "name": "creationTimestamp",
+                "nodeType": "VariableDeclaration",
+                "scope": 3511,
+                "src": "396:25:16",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 3505,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "396:7:16",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 3508,
+                "mutability": "mutable",
+                "name": "issuer",
+                "nodeType": "VariableDeclaration",
+                "scope": 3511,
+                "src": "425:14:16",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                },
+                "typeName": {
+                  "id": 3507,
+                  "name": "address",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "425:7:16",
+                  "stateMutability": "nonpayable",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 3510,
+                "mutability": "mutable",
+                "name": "data",
+                "nodeType": "VariableDeclaration",
+                "scope": 3511,
+                "src": "443:12:16",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_bytes32",
+                  "typeString": "bytes32"
+                },
+                "typeName": {
+                  "id": 3509,
+                  "name": "bytes32",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "443:7:16",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "AssertionRecord",
+            "nodeType": "StructDefinition",
+            "scope": 3642,
+            "src": "344:172:16",
+            "visibility": "public"
+          },
+          {
+            "constant": false,
+            "id": 3515,
+            "mutability": "mutable",
+            "name": "assertionRecords",
+            "nodeType": "VariableDeclaration",
+            "scope": 3642,
+            "src": "519:61:16",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_AssertionRecord_$3511_storage_$",
+              "typeString": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord)"
+            },
+            "typeName": {
+              "id": 3514,
+              "keyType": {
+                "id": 3512,
+                "name": "bytes32",
+                "nodeType": "ElementaryTypeName",
+                "src": "527:7:16",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_bytes32",
+                  "typeString": "bytes32"
+                }
+              },
+              "nodeType": "Mapping",
+              "src": "519:35:16",
+              "typeDescriptions": {
+                "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_AssertionRecord_$3511_storage_$",
+                "typeString": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord)"
+              },
+              "valueType": {
+                "id": 3513,
+                "name": "AssertionRecord",
+                "nodeType": "UserDefinedTypeName",
+                "referencedDeclaration": 3511,
+                "src": "538:15:16",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_struct$_AssertionRecord_$3511_storage_ptr",
+                  "typeString": "struct AssertionRegistry.AssertionRecord"
+                }
+              }
+            },
+            "visibility": "internal"
+          },
+          {
+            "anonymous": false,
+            "id": 3523,
+            "name": "AssertionCreated",
+            "nodeType": "EventDefinition",
+            "parameters": {
+              "id": 3522,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 3517,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "assertionId",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 3523,
+                  "src": "618:27:16",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 3516,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "618:7:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 3519,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "assertionIssuer",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 3523,
+                  "src": "647:31:16",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 3518,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "647:7:16",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 3521,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "numberOfEpochs",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 3523,
+                  "src": "680:22:16",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 3520,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "680:7:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "617:86:16"
+            },
+            "src": "595:109:16"
+          },
+          {
+            "body": {
+              "id": 3526,
+              "nodeType": "Block",
+              "src": "951:5:16",
+              "statements": []
+            },
+            "id": 3527,
+            "implemented": true,
+            "kind": "constructor",
+            "modifiers": [],
+            "name": "",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 3524,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "941:2:16"
+            },
+            "returnParameters": {
+              "id": 3525,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "951:0:16"
+            },
+            "scope": 3642,
+            "src": "930:26:16",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 3588,
+              "nodeType": "Block",
+              "src": "1072:478:16",
+              "statements": [
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "commonType": {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        },
+                        "id": 3539,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "leftExpression": {
+                          "id": 3537,
+                          "name": "assertionId",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 3529,
+                          "src": "1084:11:16",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_bytes32",
+                            "typeString": "bytes32"
+                          }
+                        },
+                        "nodeType": "BinaryOperation",
+                        "operator": "!=",
+                        "rightExpression": {
+                          "hexValue": "30",
+                          "id": 3538,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "number",
+                          "lValueRequested": false,
+                          "nodeType": "Literal",
+                          "src": "1099:1:16",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          },
+                          "value": "0"
+                        },
+                        "src": "1084:16:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        }
+                      },
+                      {
+                        "hexValue": "617373657274696f6e494420686173682063616e6e6f74206265207a65726f",
+                        "id": 3540,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "string",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "1102:33:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_stringliteral_649a3d58a096eb864e1646a68edf6e493c6de795be271ef6a8cd2b478518591c",
+                          "typeString": "literal_string \"assertionID hash cannot be zero\""
+                        },
+                        "value": "assertionID hash cannot be zero"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        },
+                        {
+                          "typeIdentifier": "t_stringliteral_649a3d58a096eb864e1646a68edf6e493c6de795be271ef6a8cd2b478518591c",
+                          "typeString": "literal_string \"assertionID hash cannot be zero\""
+                        }
+                      ],
+                      "id": 3536,
+                      "name": "require",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [
+                        4294967278,
+                        4294967278
+                      ],
+                      "referencedDeclaration": 4294967278,
+                      "src": "1076:7:16",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
+                        "typeString": "function (bool,string memory) pure"
+                      }
+                    },
+                    "id": 3541,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1076:60:16",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 3542,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1076:60:16"
+                },
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "commonType": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        },
+                        "id": 3546,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "leftExpression": {
+                          "id": 3544,
+                          "name": "numberOfEpochs",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 3533,
+                          "src": "1148:14:16",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "nodeType": "BinaryOperation",
+                        "operator": "!=",
+                        "rightExpression": {
+                          "hexValue": "30",
+                          "id": 3545,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "number",
+                          "lValueRequested": false,
+                          "nodeType": "Literal",
+                          "src": "1166:1:16",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          },
+                          "value": "0"
+                        },
+                        "src": "1148:19:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        }
+                      },
+                      {
+                        "hexValue": "6e756d6265724f6645706f63687320686173682063616e6e6f74206265207a65726f",
+                        "id": 3547,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "string",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "1169:36:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_stringliteral_fa4af5b2a5d3b443608ae031fd9009eab2ce4cb844577b417eed67d3d60328f1",
+                          "typeString": "literal_string \"numberOfEpochs hash cannot be zero\""
+                        },
+                        "value": "numberOfEpochs hash cannot be zero"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        },
+                        {
+                          "typeIdentifier": "t_stringliteral_fa4af5b2a5d3b443608ae031fd9009eab2ce4cb844577b417eed67d3d60328f1",
+                          "typeString": "literal_string \"numberOfEpochs hash cannot be zero\""
+                        }
+                      ],
+                      "id": 3543,
+                      "name": "require",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [
+                        4294967278,
+                        4294967278
+                      ],
+                      "referencedDeclaration": 4294967278,
+                      "src": "1140:7:16",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
+                        "typeString": "function (bool,string memory) pure"
+                      }
+                    },
+                    "id": 3548,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1140:66:16",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 3549,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1140:66:16"
+                },
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "commonType": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        },
+                        "id": 3556,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "leftExpression": {
+                          "expression": {
+                            "baseExpression": {
+                              "id": 3551,
+                              "name": "assertionRecords",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 3515,
+                              "src": "1218:16:16",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_AssertionRecord_$3511_storage_$",
+                                "typeString": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord storage ref)"
+                              }
+                            },
+                            "id": 3553,
+                            "indexExpression": {
+                              "id": 3552,
+                              "name": "assertionId",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 3529,
+                              "src": "1235:11:16",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_bytes32",
+                                "typeString": "bytes32"
+                              }
+                            },
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "nodeType": "IndexAccess",
+                            "src": "1218:29:16",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_AssertionRecord_$3511_storage",
+                              "typeString": "struct AssertionRegistry.AssertionRecord storage ref"
+                            }
+                          },
+                          "id": 3554,
+                          "isConstant": false,
+                          "isLValue": true,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "memberName": "creationTimestamp",
+                          "nodeType": "MemberAccess",
+                          "referencedDeclaration": 3506,
+                          "src": "1218:47:16",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "nodeType": "BinaryOperation",
+                        "operator": "==",
+                        "rightExpression": {
+                          "hexValue": "30",
+                          "id": 3555,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "number",
+                          "lValueRequested": false,
+                          "nodeType": "Literal",
+                          "src": "1268:1:16",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          },
+                          "value": "0"
+                        },
+                        "src": "1218:51:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        }
+                      },
+                      {
+                        "hexValue": "417373657274696f6e20616c72656164792065786973747321",
+                        "id": 3557,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "string",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "1271:27:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_stringliteral_533fbfe4d9ec6c5b4aac3ac2c85a5993318086c6dfacddd0ec06ea4b669082d1",
+                          "typeString": "literal_string \"Assertion already exists!\""
+                        },
+                        "value": "Assertion already exists!"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        },
+                        {
+                          "typeIdentifier": "t_stringliteral_533fbfe4d9ec6c5b4aac3ac2c85a5993318086c6dfacddd0ec06ea4b669082d1",
+                          "typeString": "literal_string \"Assertion already exists!\""
+                        }
+                      ],
+                      "id": 3550,
+                      "name": "require",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [
+                        4294967278,
+                        4294967278
+                      ],
+                      "referencedDeclaration": 4294967278,
+                      "src": "1210:7:16",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
+                        "typeString": "function (bool,string memory) pure"
+                      }
+                    },
+                    "id": 3558,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1210:89:16",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 3559,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1210:89:16"
+                },
+                {
+                  "expression": {
+                    "id": 3566,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "expression": {
+                        "baseExpression": {
+                          "id": 3560,
+                          "name": "assertionRecords",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 3515,
+                          "src": "1304:16:16",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_AssertionRecord_$3511_storage_$",
+                            "typeString": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord storage ref)"
+                          }
+                        },
+                        "id": 3562,
+                        "indexExpression": {
+                          "id": 3561,
+                          "name": "assertionId",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 3529,
+                          "src": "1321:11:16",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_bytes32",
+                            "typeString": "bytes32"
+                          }
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "1304:29:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_AssertionRecord_$3511_storage",
+                          "typeString": "struct AssertionRegistry.AssertionRecord storage ref"
+                        }
+                      },
+                      "id": 3563,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "memberName": "creationTimestamp",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 3506,
+                      "src": "1304:47:16",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "expression": {
+                        "id": 3564,
+                        "name": "block",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 4294967292,
+                        "src": "1354:5:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_magic_block",
+                          "typeString": "block"
+                        }
+                      },
+                      "id": 3565,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "timestamp",
+                      "nodeType": "MemberAccess",
+                      "src": "1354:15:16",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "1304:65:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "id": 3567,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1304:65:16"
+                },
+                {
+                  "expression": {
+                    "id": 3573,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "expression": {
+                        "baseExpression": {
+                          "id": 3568,
+                          "name": "assertionRecords",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 3515,
+                          "src": "1373:16:16",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_AssertionRecord_$3511_storage_$",
+                            "typeString": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord storage ref)"
+                          }
+                        },
+                        "id": 3570,
+                        "indexExpression": {
+                          "id": 3569,
+                          "name": "assertionId",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 3529,
+                          "src": "1390:11:16",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_bytes32",
+                            "typeString": "bytes32"
+                          }
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "1373:29:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_AssertionRecord_$3511_storage",
+                          "typeString": "struct AssertionRegistry.AssertionRecord storage ref"
+                        }
+                      },
+                      "id": 3571,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "memberName": "issuer",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 3508,
+                      "src": "1373:36:16",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "id": 3572,
+                      "name": "issuer",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 3531,
+                      "src": "1412:6:16",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "src": "1373:45:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "id": 3574,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1373:45:16"
+                },
+                {
+                  "expression": {
+                    "id": 3580,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "expression": {
+                        "baseExpression": {
+                          "id": 3575,
+                          "name": "assertionRecords",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 3515,
+                          "src": "1422:16:16",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_AssertionRecord_$3511_storage_$",
+                            "typeString": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord storage ref)"
+                          }
+                        },
+                        "id": 3577,
+                        "indexExpression": {
+                          "id": 3576,
+                          "name": "assertionId",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 3529,
+                          "src": "1439:11:16",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_bytes32",
+                            "typeString": "bytes32"
+                          }
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "1422:29:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_AssertionRecord_$3511_storage",
+                          "typeString": "struct AssertionRegistry.AssertionRecord storage ref"
+                        }
+                      },
+                      "id": 3578,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "memberName": "numberOfEpochs",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 3504,
+                      "src": "1422:44:16",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "id": 3579,
+                      "name": "numberOfEpochs",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 3533,
+                      "src": "1469:14:16",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "1422:61:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "id": 3581,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1422:61:16"
+                },
+                {
+                  "eventCall": {
+                    "arguments": [
+                      {
+                        "id": 3583,
+                        "name": "assertionId",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 3529,
+                        "src": "1510:11:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        }
+                      },
+                      {
+                        "id": 3584,
+                        "name": "issuer",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 3531,
+                        "src": "1523:6:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "id": 3585,
+                        "name": "numberOfEpochs",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 3533,
+                        "src": "1531:14:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        },
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "id": 3582,
+                      "name": "AssertionCreated",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 3523,
+                      "src": "1493:16:16",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_event_nonpayable$_t_bytes32_$_t_address_$_t_uint256_$returns$__$",
+                        "typeString": "function (bytes32,address,uint256)"
+                      }
+                    },
+                    "id": 3586,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1493:53:16",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 3587,
+                  "nodeType": "EmitStatement",
+                  "src": "1488:58:16"
+                }
+              ]
+            },
+            "functionSelector": "b3138cb8",
+            "id": 3589,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "createAssertionRecord",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 3534,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 3529,
+                  "mutability": "mutable",
+                  "name": "assertionId",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 3589,
+                  "src": "1004:19:16",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 3528,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1004:7:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 3531,
+                  "mutability": "mutable",
+                  "name": "issuer",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 3589,
+                  "src": "1025:14:16",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 3530,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1025:7:16",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 3533,
+                  "mutability": "mutable",
+                  "name": "numberOfEpochs",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 3589,
+                  "src": "1041:22:16",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 3532,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1041:7:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1003:61:16"
+            },
+            "returnParameters": {
+              "id": 3535,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1072:0:16"
+            },
+            "scope": 3642,
+            "src": "973:577:16",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 3601,
+              "nodeType": "Block",
+              "src": "2300:51:16",
+              "statements": [
+                {
+                  "expression": {
+                    "expression": {
+                      "baseExpression": {
+                        "id": 3596,
+                        "name": "assertionRecords",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 3515,
+                        "src": "2311:16:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_AssertionRecord_$3511_storage_$",
+                          "typeString": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord storage ref)"
+                        }
+                      },
+                      "id": 3598,
+                      "indexExpression": {
+                        "id": 3597,
+                        "name": "assertionId",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 3591,
+                        "src": "2328:11:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "nodeType": "IndexAccess",
+                      "src": "2311:29:16",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_AssertionRecord_$3511_storage",
+                        "typeString": "struct AssertionRegistry.AssertionRecord storage ref"
+                      }
+                    },
+                    "id": 3599,
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "memberName": "issuer",
+                    "nodeType": "MemberAccess",
+                    "referencedDeclaration": 3508,
+                    "src": "2311:36:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "functionReturnParameters": 3595,
+                  "id": 3600,
+                  "nodeType": "Return",
+                  "src": "2304:43:16"
+                }
+              ]
+            },
+            "functionSelector": "0828e9f3",
+            "id": 3602,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getAssertionIssuer",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 3592,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 3591,
+                  "mutability": "mutable",
+                  "name": "assertionId",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 3602,
+                  "src": "2243:19:16",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 3590,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2243:7:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2242:21:16"
+            },
+            "returnParameters": {
+              "id": 3595,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 3594,
+                  "mutability": "mutable",
+                  "name": "issuer",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 3602,
+                  "src": "2285:14:16",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 3593,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2285:7:16",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2284:16:16"
+            },
+            "scope": 3642,
+            "src": "2215:136:16",
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 3614,
+              "nodeType": "Block",
+              "src": "2454:59:16",
+              "statements": [
+                {
+                  "expression": {
+                    "expression": {
+                      "baseExpression": {
+                        "id": 3609,
+                        "name": "assertionRecords",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 3515,
+                        "src": "2465:16:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_AssertionRecord_$3511_storage_$",
+                          "typeString": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord storage ref)"
+                        }
+                      },
+                      "id": 3611,
+                      "indexExpression": {
+                        "id": 3610,
+                        "name": "assertionId",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 3604,
+                        "src": "2482:11:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "nodeType": "IndexAccess",
+                      "src": "2465:29:16",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_AssertionRecord_$3511_storage",
+                        "typeString": "struct AssertionRegistry.AssertionRecord storage ref"
+                      }
+                    },
+                    "id": 3612,
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "memberName": "numberOfEpochs",
+                    "nodeType": "MemberAccess",
+                    "referencedDeclaration": 3504,
+                    "src": "2465:44:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "functionReturnParameters": 3608,
+                  "id": 3613,
+                  "nodeType": "Return",
+                  "src": "2458:51:16"
+                }
+              ]
+            },
+            "functionSelector": "9e50e72c",
+            "id": 3615,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getAssertionNumberOfEpochs",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 3605,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 3604,
+                  "mutability": "mutable",
+                  "name": "assertionId",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 3615,
+                  "src": "2389:19:16",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 3603,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2389:7:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2388:21:16"
+            },
+            "returnParameters": {
+              "id": 3608,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 3607,
+                  "mutability": "mutable",
+                  "name": "numberOfEpochs",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 3615,
+                  "src": "2431:22:16",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 3606,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2431:7:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2430:24:16"
+            },
+            "scope": 3642,
+            "src": "2353:160:16",
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 3627,
+              "nodeType": "Block",
+              "src": "2619:62:16",
+              "statements": [
+                {
+                  "expression": {
+                    "expression": {
+                      "baseExpression": {
+                        "id": 3622,
+                        "name": "assertionRecords",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 3515,
+                        "src": "2630:16:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_AssertionRecord_$3511_storage_$",
+                          "typeString": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord storage ref)"
+                        }
+                      },
+                      "id": 3624,
+                      "indexExpression": {
+                        "id": 3623,
+                        "name": "assertionId",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 3617,
+                        "src": "2647:11:16",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "nodeType": "IndexAccess",
+                      "src": "2630:29:16",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_AssertionRecord_$3511_storage",
+                        "typeString": "struct AssertionRegistry.AssertionRecord storage ref"
+                      }
+                    },
+                    "id": 3625,
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "memberName": "creationTimestamp",
+                    "nodeType": "MemberAccess",
+                    "referencedDeclaration": 3506,
+                    "src": "2630:47:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "functionReturnParameters": 3621,
+                  "id": 3626,
+                  "nodeType": "Return",
+                  "src": "2623:54:16"
+                }
+              ]
+            },
+            "functionSelector": "a7943efc",
+            "id": 3628,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getAssertionCreationTimestamp",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 3618,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 3617,
+                  "mutability": "mutable",
+                  "name": "assertionId",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 3628,
+                  "src": "2554:19:16",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 3616,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2554:7:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2553:21:16"
+            },
+            "returnParameters": {
+              "id": 3621,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 3620,
+                  "mutability": "mutable",
+                  "name": "numberOfEpochs",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 3628,
+                  "src": "2596:22:16",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 3619,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2596:7:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2595:24:16"
+            },
+            "scope": 3642,
+            "src": "2515:166:16",
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 3640,
+              "nodeType": "Block",
+              "src": "2779:27:16",
+              "statements": [
+                {
+                  "expression": {
+                    "expression": {
+                      "id": 3637,
+                      "name": "block",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 4294967292,
+                      "src": "2790:5:16",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_magic_block",
+                        "typeString": "block"
+                      }
+                    },
+                    "id": 3638,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "memberName": "number",
+                    "nodeType": "MemberAccess",
+                    "src": "2790:12:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "functionReturnParameters": 3636,
+                  "id": 3639,
+                  "nodeType": "Return",
+                  "src": "2783:19:16"
+                }
+              ]
+            },
+            "functionSelector": "08c4933b",
+            "id": 3641,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getAssertionTask",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 3633,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 3630,
+                  "mutability": "mutable",
+                  "name": "assertionID",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 3641,
+                  "src": "2709:19:16",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 3629,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2709:7:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 3632,
+                  "mutability": "mutable",
+                  "name": "epoch",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 3641,
+                  "src": "2730:13:16",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 3631,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2730:7:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2708:36:16"
+            },
+            "returnParameters": {
+              "id": 3636,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 3635,
+                  "mutability": "mutable",
+                  "name": "task",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 3641,
+                  "src": "2766:12:16",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 3634,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2766:7:16",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2765:14:16"
+            },
+            "scope": 3642,
+            "src": "2683:123:16",
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "public"
+          }
+        ],
+        "scope": 3643,
+        "src": "221:2588:16"
+      }
+    ],
+    "src": "0:2809:16"
+  },
+  "legacyAST": {
+    "attributes": {
+      "absolutePath": "project:/contracts/AssertionRegistry.sol",
+      "exportedSymbols": {
+        "AssertionRegistry": [
+          3642
+        ],
+        "Context": [
+          2349
+        ],
+        "IERC20": [
+          894
+        ],
+        "Ownable": [
+          392
+        ],
+        "SafeMath": [
+          816
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            ">=",
+            "0.6",
+            ".0",
+            "<",
+            "0.8",
+            ".0"
+          ]
+        },
+        "id": 3490,
+        "name": "PragmaDirective",
+        "src": "0:31:16"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 895,
+          "absolutePath": "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol",
+          "file": "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol",
+          "scope": 3643,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 3491,
+        "name": "ImportDirective",
+        "src": "33:64:16"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 817,
+          "absolutePath": "openzeppelin-solidity/contracts/math/SafeMath.sol",
+          "file": "openzeppelin-solidity/contracts/math/SafeMath.sol",
+          "scope": 3643,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 3492,
+        "name": "ImportDirective",
+        "src": "98:59:16"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 393,
+          "absolutePath": "openzeppelin-solidity/contracts/access/Ownable.sol",
+          "file": "openzeppelin-solidity/contracts/access/Ownable.sol",
+          "scope": 3643,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 3493,
+        "name": "ImportDirective",
+        "src": "158:60:16"
+      },
+      {
+        "attributes": {
+          "abstract": false,
+          "contractDependencies": [
+            392,
+            2349
+          ],
+          "contractKind": "contract",
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            3642,
+            392,
+            2349
+          ],
+          "name": "AssertionRegistry",
+          "scope": 3643
+        },
+        "children": [
+          {
+            "attributes": {},
+            "children": [
+              {
+                "attributes": {
+                  "name": "Ownable",
+                  "referencedDeclaration": 392,
+                  "type": "contract Ownable"
+                },
+                "id": 3494,
+                "name": "UserDefinedTypeName",
+                "src": "251:7:16"
+              }
+            ],
+            "id": 3495,
+            "name": "InheritanceSpecifier",
+            "src": "251:7:16"
+          },
+          {
+            "children": [
+              {
+                "attributes": {
+                  "name": "SafeMath",
+                  "referencedDeclaration": 816,
+                  "type": "library SafeMath"
+                },
+                "id": 3496,
+                "name": "UserDefinedTypeName",
+                "src": "268:8:16"
+              },
+              {
+                "attributes": {
+                  "name": "uint256",
+                  "type": "uint256"
+                },
+                "id": 3497,
+                "name": "ElementaryTypeName",
+                "src": "281:7:16"
+              }
+            ],
+            "id": 3498,
+            "name": "UsingForDirective",
+            "src": "262:27:16"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "mutability": "mutable",
+              "name": "token",
+              "scope": 3642,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "contract IERC20",
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "IERC20",
+                  "referencedDeclaration": 894,
+                  "type": "contract IERC20"
+                },
+                "id": 3499,
+                "name": "UserDefinedTypeName",
+                "src": "291:6:16"
+              }
+            ],
+            "id": 3500,
+            "name": "VariableDeclaration",
+            "src": "291:12:16"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "functionSelector": "8f9cd32b",
+              "mutability": "mutable",
+              "name": "TRAC_TOKEN_ADDRESS",
+              "scope": 3642,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "address",
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "address",
+                  "stateMutability": "nonpayable",
+                  "type": "address"
+                },
+                "id": 3501,
+                "name": "ElementaryTypeName",
+                "src": "307:7:16"
+              }
+            ],
+            "id": 3502,
+            "name": "VariableDeclaration",
+            "src": "307:33:16"
+          },
+          {
+            "attributes": {
+              "canonicalName": "AssertionRegistry.AssertionRecord",
+              "name": "AssertionRecord",
+              "scope": 3642,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "constant": false,
+                  "mutability": "mutable",
+                  "name": "numberOfEpochs",
+                  "scope": 3511,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "uint256",
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "uint256",
+                      "type": "uint256"
+                    },
+                    "id": 3503,
+                    "name": "ElementaryTypeName",
+                    "src": "370:7:16"
+                  }
+                ],
+                "id": 3504,
+                "name": "VariableDeclaration",
+                "src": "370:22:16"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "mutability": "mutable",
+                  "name": "creationTimestamp",
+                  "scope": 3511,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "uint256",
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "uint256",
+                      "type": "uint256"
+                    },
+                    "id": 3505,
+                    "name": "ElementaryTypeName",
+                    "src": "396:7:16"
+                  }
+                ],
+                "id": 3506,
+                "name": "VariableDeclaration",
+                "src": "396:25:16"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "mutability": "mutable",
+                  "name": "issuer",
+                  "scope": 3511,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "address",
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "address",
+                      "stateMutability": "nonpayable",
+                      "type": "address"
+                    },
+                    "id": 3507,
+                    "name": "ElementaryTypeName",
+                    "src": "425:7:16"
+                  }
+                ],
+                "id": 3508,
+                "name": "VariableDeclaration",
+                "src": "425:14:16"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "mutability": "mutable",
+                  "name": "data",
+                  "scope": 3511,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "bytes32",
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "bytes32",
+                      "type": "bytes32"
+                    },
+                    "id": 3509,
+                    "name": "ElementaryTypeName",
+                    "src": "443:7:16"
+                  }
+                ],
+                "id": 3510,
+                "name": "VariableDeclaration",
+                "src": "443:12:16"
+              }
+            ],
+            "id": 3511,
+            "name": "StructDefinition",
+            "src": "344:172:16"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "mutability": "mutable",
+              "name": "assertionRecords",
+              "scope": 3642,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord)",
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "type": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord)"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "bytes32",
+                      "type": "bytes32"
+                    },
+                    "id": 3512,
+                    "name": "ElementaryTypeName",
+                    "src": "527:7:16"
+                  },
+                  {
+                    "attributes": {
+                      "name": "AssertionRecord",
+                      "referencedDeclaration": 3511,
+                      "type": "struct AssertionRegistry.AssertionRecord"
+                    },
+                    "id": 3513,
+                    "name": "UserDefinedTypeName",
+                    "src": "538:15:16"
+                  }
+                ],
+                "id": 3514,
+                "name": "Mapping",
+                "src": "519:35:16"
+              }
+            ],
+            "id": 3515,
+            "name": "VariableDeclaration",
+            "src": "519:61:16"
+          },
+          {
+            "attributes": {
+              "anonymous": false,
+              "name": "AssertionCreated"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "indexed": true,
+                      "mutability": "mutable",
+                      "name": "assertionId",
+                      "scope": 3523,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bytes32",
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bytes32",
+                          "type": "bytes32"
+                        },
+                        "id": 3516,
+                        "name": "ElementaryTypeName",
+                        "src": "618:7:16"
+                      }
+                    ],
+                    "id": 3517,
+                    "name": "VariableDeclaration",
+                    "src": "618:27:16"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "indexed": true,
+                      "mutability": "mutable",
+                      "name": "assertionIssuer",
+                      "scope": 3523,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 3518,
+                        "name": "ElementaryTypeName",
+                        "src": "647:7:16"
+                      }
+                    ],
+                    "id": 3519,
+                    "name": "VariableDeclaration",
+                    "src": "647:31:16"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "indexed": false,
+                      "mutability": "mutable",
+                      "name": "numberOfEpochs",
+                      "scope": 3523,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 3520,
+                        "name": "ElementaryTypeName",
+                        "src": "680:7:16"
+                      }
+                    ],
+                    "id": 3521,
+                    "name": "VariableDeclaration",
+                    "src": "680:22:16"
+                  }
+                ],
+                "id": 3522,
+                "name": "ParameterList",
+                "src": "617:86:16"
+              }
+            ],
+            "id": 3523,
+            "name": "EventDefinition",
+            "src": "595:109:16"
+          },
+          {
+            "attributes": {
+              "implemented": true,
+              "isConstructor": true,
+              "kind": "constructor",
+              "modifiers": [
+                null
+              ],
+              "name": "",
+              "scope": 3642,
+              "stateMutability": "nonpayable",
+              "virtual": false,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 3524,
+                "name": "ParameterList",
+                "src": "941:2:16"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 3525,
+                "name": "ParameterList",
+                "src": "951:0:16"
+              },
+              {
+                "attributes": {
+                  "statements": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 3526,
+                "name": "Block",
+                "src": "951:5:16"
+              }
+            ],
+            "id": 3527,
+            "name": "FunctionDefinition",
+            "src": "930:26:16"
+          },
+          {
+            "attributes": {
+              "functionSelector": "b3138cb8",
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "createAssertionRecord",
+              "scope": 3642,
+              "stateMutability": "nonpayable",
+              "virtual": false,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "mutability": "mutable",
+                      "name": "assertionId",
+                      "scope": 3589,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bytes32",
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bytes32",
+                          "type": "bytes32"
+                        },
+                        "id": 3528,
+                        "name": "ElementaryTypeName",
+                        "src": "1004:7:16"
+                      }
+                    ],
+                    "id": 3529,
+                    "name": "VariableDeclaration",
+                    "src": "1004:19:16"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "mutability": "mutable",
+                      "name": "issuer",
+                      "scope": 3589,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 3530,
+                        "name": "ElementaryTypeName",
+                        "src": "1025:7:16"
+                      }
+                    ],
+                    "id": 3531,
+                    "name": "VariableDeclaration",
+                    "src": "1025:14:16"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "mutability": "mutable",
+                      "name": "numberOfEpochs",
+                      "scope": 3589,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 3532,
+                        "name": "ElementaryTypeName",
+                        "src": "1041:7:16"
+                      }
+                    ],
+                    "id": 3533,
+                    "name": "VariableDeclaration",
+                    "src": "1041:22:16"
+                  }
+                ],
+                "id": 3534,
+                "name": "ParameterList",
+                "src": "1003:61:16"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 3535,
+                "name": "ParameterList",
+                "src": "1072:0:16"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "tryCall": false,
+                          "type": "tuple()",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_bool",
+                                  "typeString": "bool"
+                                },
+                                {
+                                  "typeIdentifier": "t_stringliteral_649a3d58a096eb864e1646a68edf6e493c6de795be271ef6a8cd2b478518591c",
+                                  "typeString": "literal_string \"assertionID hash cannot be zero\""
+                                }
+                              ],
+                              "overloadedDeclarations": [
+                                4294967278,
+                                4294967278
+                              ],
+                              "referencedDeclaration": 4294967278,
+                              "type": "function (bool,string memory) pure",
+                              "value": "require"
+                            },
+                            "id": 3536,
+                            "name": "Identifier",
+                            "src": "1076:7:16"
+                          },
+                          {
+                            "attributes": {
+                              "commonType": {
+                                "typeIdentifier": "t_bytes32",
+                                "typeString": "bytes32"
+                              },
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "operator": "!=",
+                              "type": "bool"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 3529,
+                                  "type": "bytes32",
+                                  "value": "assertionId"
+                                },
+                                "id": 3537,
+                                "name": "Identifier",
+                                "src": "1084:11:16"
+                              },
+                              {
+                                "attributes": {
+                                  "hexvalue": "30",
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": true,
+                                  "lValueRequested": false,
+                                  "token": "number",
+                                  "type": "int_const 0",
+                                  "value": "0"
+                                },
+                                "id": 3538,
+                                "name": "Literal",
+                                "src": "1099:1:16"
+                              }
+                            ],
+                            "id": 3539,
+                            "name": "BinaryOperation",
+                            "src": "1084:16:16"
+                          },
+                          {
+                            "attributes": {
+                              "hexvalue": "617373657274696f6e494420686173682063616e6e6f74206265207a65726f",
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "lValueRequested": false,
+                              "token": "string",
+                              "type": "literal_string \"assertionID hash cannot be zero\"",
+                              "value": "assertionID hash cannot be zero"
+                            },
+                            "id": 3540,
+                            "name": "Literal",
+                            "src": "1102:33:16"
+                          }
+                        ],
+                        "id": 3541,
+                        "name": "FunctionCall",
+                        "src": "1076:60:16"
+                      }
+                    ],
+                    "id": 3542,
+                    "name": "ExpressionStatement",
+                    "src": "1076:60:16"
+                  },
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "tryCall": false,
+                          "type": "tuple()",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_bool",
+                                  "typeString": "bool"
+                                },
+                                {
+                                  "typeIdentifier": "t_stringliteral_fa4af5b2a5d3b443608ae031fd9009eab2ce4cb844577b417eed67d3d60328f1",
+                                  "typeString": "literal_string \"numberOfEpochs hash cannot be zero\""
+                                }
+                              ],
+                              "overloadedDeclarations": [
+                                4294967278,
+                                4294967278
+                              ],
+                              "referencedDeclaration": 4294967278,
+                              "type": "function (bool,string memory) pure",
+                              "value": "require"
+                            },
+                            "id": 3543,
+                            "name": "Identifier",
+                            "src": "1140:7:16"
+                          },
+                          {
+                            "attributes": {
+                              "commonType": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              },
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "operator": "!=",
+                              "type": "bool"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 3533,
+                                  "type": "uint256",
+                                  "value": "numberOfEpochs"
+                                },
+                                "id": 3544,
+                                "name": "Identifier",
+                                "src": "1148:14:16"
+                              },
+                              {
+                                "attributes": {
+                                  "hexvalue": "30",
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": true,
+                                  "lValueRequested": false,
+                                  "token": "number",
+                                  "type": "int_const 0",
+                                  "value": "0"
+                                },
+                                "id": 3545,
+                                "name": "Literal",
+                                "src": "1166:1:16"
+                              }
+                            ],
+                            "id": 3546,
+                            "name": "BinaryOperation",
+                            "src": "1148:19:16"
+                          },
+                          {
+                            "attributes": {
+                              "hexvalue": "6e756d6265724f6645706f63687320686173682063616e6e6f74206265207a65726f",
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "lValueRequested": false,
+                              "token": "string",
+                              "type": "literal_string \"numberOfEpochs hash cannot be zero\"",
+                              "value": "numberOfEpochs hash cannot be zero"
+                            },
+                            "id": 3547,
+                            "name": "Literal",
+                            "src": "1169:36:16"
+                          }
+                        ],
+                        "id": 3548,
+                        "name": "FunctionCall",
+                        "src": "1140:66:16"
+                      }
+                    ],
+                    "id": 3549,
+                    "name": "ExpressionStatement",
+                    "src": "1140:66:16"
+                  },
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "tryCall": false,
+                          "type": "tuple()",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_bool",
+                                  "typeString": "bool"
+                                },
+                                {
+                                  "typeIdentifier": "t_stringliteral_533fbfe4d9ec6c5b4aac3ac2c85a5993318086c6dfacddd0ec06ea4b669082d1",
+                                  "typeString": "literal_string \"Assertion already exists!\""
+                                }
+                              ],
+                              "overloadedDeclarations": [
+                                4294967278,
+                                4294967278
+                              ],
+                              "referencedDeclaration": 4294967278,
+                              "type": "function (bool,string memory) pure",
+                              "value": "require"
+                            },
+                            "id": 3550,
+                            "name": "Identifier",
+                            "src": "1210:7:16"
+                          },
+                          {
+                            "attributes": {
+                              "commonType": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              },
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "operator": "==",
+                              "type": "bool"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "isConstant": false,
+                                  "isLValue": true,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "member_name": "creationTimestamp",
+                                  "referencedDeclaration": 3506,
+                                  "type": "uint256"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "isConstant": false,
+                                      "isLValue": true,
+                                      "isPure": false,
+                                      "lValueRequested": false,
+                                      "type": "struct AssertionRegistry.AssertionRecord storage ref"
+                                    },
+                                    "children": [
+                                      {
+                                        "attributes": {
+                                          "overloadedDeclarations": [
+                                            null
+                                          ],
+                                          "referencedDeclaration": 3515,
+                                          "type": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord storage ref)",
+                                          "value": "assertionRecords"
+                                        },
+                                        "id": 3551,
+                                        "name": "Identifier",
+                                        "src": "1218:16:16"
+                                      },
+                                      {
+                                        "attributes": {
+                                          "overloadedDeclarations": [
+                                            null
+                                          ],
+                                          "referencedDeclaration": 3529,
+                                          "type": "bytes32",
+                                          "value": "assertionId"
+                                        },
+                                        "id": 3552,
+                                        "name": "Identifier",
+                                        "src": "1235:11:16"
+                                      }
+                                    ],
+                                    "id": 3553,
+                                    "name": "IndexAccess",
+                                    "src": "1218:29:16"
+                                  }
+                                ],
+                                "id": 3554,
+                                "name": "MemberAccess",
+                                "src": "1218:47:16"
+                              },
+                              {
+                                "attributes": {
+                                  "hexvalue": "30",
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": true,
+                                  "lValueRequested": false,
+                                  "token": "number",
+                                  "type": "int_const 0",
+                                  "value": "0"
+                                },
+                                "id": 3555,
+                                "name": "Literal",
+                                "src": "1268:1:16"
+                              }
+                            ],
+                            "id": 3556,
+                            "name": "BinaryOperation",
+                            "src": "1218:51:16"
+                          },
+                          {
+                            "attributes": {
+                              "hexvalue": "417373657274696f6e20616c72656164792065786973747321",
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "lValueRequested": false,
+                              "token": "string",
+                              "type": "literal_string \"Assertion already exists!\"",
+                              "value": "Assertion already exists!"
+                            },
+                            "id": 3557,
+                            "name": "Literal",
+                            "src": "1271:27:16"
+                          }
+                        ],
+                        "id": 3558,
+                        "name": "FunctionCall",
+                        "src": "1210:89:16"
+                      }
+                    ],
+                    "id": 3559,
+                    "name": "ExpressionStatement",
+                    "src": "1210:89:16"
+                  },
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "=",
+                          "type": "uint256"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": true,
+                              "member_name": "creationTimestamp",
+                              "referencedDeclaration": 3506,
+                              "type": "uint256"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "isConstant": false,
+                                  "isLValue": true,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "type": "struct AssertionRegistry.AssertionRecord storage ref"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "overloadedDeclarations": [
+                                        null
+                                      ],
+                                      "referencedDeclaration": 3515,
+                                      "type": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord storage ref)",
+                                      "value": "assertionRecords"
+                                    },
+                                    "id": 3560,
+                                    "name": "Identifier",
+                                    "src": "1304:16:16"
+                                  },
+                                  {
+                                    "attributes": {
+                                      "overloadedDeclarations": [
+                                        null
+                                      ],
+                                      "referencedDeclaration": 3529,
+                                      "type": "bytes32",
+                                      "value": "assertionId"
+                                    },
+                                    "id": 3561,
+                                    "name": "Identifier",
+                                    "src": "1321:11:16"
+                                  }
+                                ],
+                                "id": 3562,
+                                "name": "IndexAccess",
+                                "src": "1304:29:16"
+                              }
+                            ],
+                            "id": 3563,
+                            "name": "MemberAccess",
+                            "src": "1304:47:16"
+                          },
+                          {
+                            "attributes": {
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "timestamp",
+                              "type": "uint256"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 4294967292,
+                                  "type": "block",
+                                  "value": "block"
+                                },
+                                "id": 3564,
+                                "name": "Identifier",
+                                "src": "1354:5:16"
+                              }
+                            ],
+                            "id": 3565,
+                            "name": "MemberAccess",
+                            "src": "1354:15:16"
+                          }
+                        ],
+                        "id": 3566,
+                        "name": "Assignment",
+                        "src": "1304:65:16"
+                      }
+                    ],
+                    "id": 3567,
+                    "name": "ExpressionStatement",
+                    "src": "1304:65:16"
+                  },
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "=",
+                          "type": "address"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": true,
+                              "member_name": "issuer",
+                              "referencedDeclaration": 3508,
+                              "type": "address"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "isConstant": false,
+                                  "isLValue": true,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "type": "struct AssertionRegistry.AssertionRecord storage ref"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "overloadedDeclarations": [
+                                        null
+                                      ],
+                                      "referencedDeclaration": 3515,
+                                      "type": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord storage ref)",
+                                      "value": "assertionRecords"
+                                    },
+                                    "id": 3568,
+                                    "name": "Identifier",
+                                    "src": "1373:16:16"
+                                  },
+                                  {
+                                    "attributes": {
+                                      "overloadedDeclarations": [
+                                        null
+                                      ],
+                                      "referencedDeclaration": 3529,
+                                      "type": "bytes32",
+                                      "value": "assertionId"
+                                    },
+                                    "id": 3569,
+                                    "name": "Identifier",
+                                    "src": "1390:11:16"
+                                  }
+                                ],
+                                "id": 3570,
+                                "name": "IndexAccess",
+                                "src": "1373:29:16"
+                              }
+                            ],
+                            "id": 3571,
+                            "name": "MemberAccess",
+                            "src": "1373:36:16"
+                          },
+                          {
+                            "attributes": {
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 3531,
+                              "type": "address",
+                              "value": "issuer"
+                            },
+                            "id": 3572,
+                            "name": "Identifier",
+                            "src": "1412:6:16"
+                          }
+                        ],
+                        "id": 3573,
+                        "name": "Assignment",
+                        "src": "1373:45:16"
+                      }
+                    ],
+                    "id": 3574,
+                    "name": "ExpressionStatement",
+                    "src": "1373:45:16"
+                  },
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "=",
+                          "type": "uint256"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": true,
+                              "member_name": "numberOfEpochs",
+                              "referencedDeclaration": 3504,
+                              "type": "uint256"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "isConstant": false,
+                                  "isLValue": true,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "type": "struct AssertionRegistry.AssertionRecord storage ref"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "overloadedDeclarations": [
+                                        null
+                                      ],
+                                      "referencedDeclaration": 3515,
+                                      "type": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord storage ref)",
+                                      "value": "assertionRecords"
+                                    },
+                                    "id": 3575,
+                                    "name": "Identifier",
+                                    "src": "1422:16:16"
+                                  },
+                                  {
+                                    "attributes": {
+                                      "overloadedDeclarations": [
+                                        null
+                                      ],
+                                      "referencedDeclaration": 3529,
+                                      "type": "bytes32",
+                                      "value": "assertionId"
+                                    },
+                                    "id": 3576,
+                                    "name": "Identifier",
+                                    "src": "1439:11:16"
+                                  }
+                                ],
+                                "id": 3577,
+                                "name": "IndexAccess",
+                                "src": "1422:29:16"
+                              }
+                            ],
+                            "id": 3578,
+                            "name": "MemberAccess",
+                            "src": "1422:44:16"
+                          },
+                          {
+                            "attributes": {
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 3533,
+                              "type": "uint256",
+                              "value": "numberOfEpochs"
+                            },
+                            "id": 3579,
+                            "name": "Identifier",
+                            "src": "1469:14:16"
+                          }
+                        ],
+                        "id": 3580,
+                        "name": "Assignment",
+                        "src": "1422:61:16"
+                      }
+                    ],
+                    "id": 3581,
+                    "name": "ExpressionStatement",
+                    "src": "1422:61:16"
+                  },
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "tryCall": false,
+                          "type": "tuple()",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_bytes32",
+                                  "typeString": "bytes32"
+                                },
+                                {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                },
+                                {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              ],
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 3523,
+                              "type": "function (bytes32,address,uint256)",
+                              "value": "AssertionCreated"
+                            },
+                            "id": 3582,
+                            "name": "Identifier",
+                            "src": "1493:16:16"
+                          },
+                          {
+                            "attributes": {
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 3529,
+                              "type": "bytes32",
+                              "value": "assertionId"
+                            },
+                            "id": 3583,
+                            "name": "Identifier",
+                            "src": "1510:11:16"
+                          },
+                          {
+                            "attributes": {
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 3531,
+                              "type": "address",
+                              "value": "issuer"
+                            },
+                            "id": 3584,
+                            "name": "Identifier",
+                            "src": "1523:6:16"
+                          },
+                          {
+                            "attributes": {
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 3533,
+                              "type": "uint256",
+                              "value": "numberOfEpochs"
+                            },
+                            "id": 3585,
+                            "name": "Identifier",
+                            "src": "1531:14:16"
+                          }
+                        ],
+                        "id": 3586,
+                        "name": "FunctionCall",
+                        "src": "1493:53:16"
+                      }
+                    ],
+                    "id": 3587,
+                    "name": "EmitStatement",
+                    "src": "1488:58:16"
+                  }
+                ],
+                "id": 3588,
+                "name": "Block",
+                "src": "1072:478:16"
+              }
+            ],
+            "id": 3589,
+            "name": "FunctionDefinition",
+            "src": "973:577:16"
+          },
+          {
+            "attributes": {
+              "functionSelector": "0828e9f3",
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "getAssertionIssuer",
+              "scope": 3642,
+              "stateMutability": "view",
+              "virtual": false,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "mutability": "mutable",
+                      "name": "assertionId",
+                      "scope": 3602,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bytes32",
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bytes32",
+                          "type": "bytes32"
+                        },
+                        "id": 3590,
+                        "name": "ElementaryTypeName",
+                        "src": "2243:7:16"
+                      }
+                    ],
+                    "id": 3591,
+                    "name": "VariableDeclaration",
+                    "src": "2243:19:16"
+                  }
+                ],
+                "id": 3592,
+                "name": "ParameterList",
+                "src": "2242:21:16"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "mutability": "mutable",
+                      "name": "issuer",
+                      "scope": 3602,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 3593,
+                        "name": "ElementaryTypeName",
+                        "src": "2285:7:16"
+                      }
+                    ],
+                    "id": 3594,
+                    "name": "VariableDeclaration",
+                    "src": "2285:14:16"
+                  }
+                ],
+                "id": 3595,
+                "name": "ParameterList",
+                "src": "2284:16:16"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 3595
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "isConstant": false,
+                          "isLValue": true,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "member_name": "issuer",
+                          "referencedDeclaration": 3508,
+                          "type": "address"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "type": "struct AssertionRegistry.AssertionRecord storage ref"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 3515,
+                                  "type": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord storage ref)",
+                                  "value": "assertionRecords"
+                                },
+                                "id": 3596,
+                                "name": "Identifier",
+                                "src": "2311:16:16"
+                              },
+                              {
+                                "attributes": {
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 3591,
+                                  "type": "bytes32",
+                                  "value": "assertionId"
+                                },
+                                "id": 3597,
+                                "name": "Identifier",
+                                "src": "2328:11:16"
+                              }
+                            ],
+                            "id": 3598,
+                            "name": "IndexAccess",
+                            "src": "2311:29:16"
+                          }
+                        ],
+                        "id": 3599,
+                        "name": "MemberAccess",
+                        "src": "2311:36:16"
+                      }
+                    ],
+                    "id": 3600,
+                    "name": "Return",
+                    "src": "2304:43:16"
+                  }
+                ],
+                "id": 3601,
+                "name": "Block",
+                "src": "2300:51:16"
+              }
+            ],
+            "id": 3602,
+            "name": "FunctionDefinition",
+            "src": "2215:136:16"
+          },
+          {
+            "attributes": {
+              "functionSelector": "9e50e72c",
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "getAssertionNumberOfEpochs",
+              "scope": 3642,
+              "stateMutability": "view",
+              "virtual": false,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "mutability": "mutable",
+                      "name": "assertionId",
+                      "scope": 3615,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bytes32",
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bytes32",
+                          "type": "bytes32"
+                        },
+                        "id": 3603,
+                        "name": "ElementaryTypeName",
+                        "src": "2389:7:16"
+                      }
+                    ],
+                    "id": 3604,
+                    "name": "VariableDeclaration",
+                    "src": "2389:19:16"
+                  }
+                ],
+                "id": 3605,
+                "name": "ParameterList",
+                "src": "2388:21:16"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "mutability": "mutable",
+                      "name": "numberOfEpochs",
+                      "scope": 3615,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 3606,
+                        "name": "ElementaryTypeName",
+                        "src": "2431:7:16"
+                      }
+                    ],
+                    "id": 3607,
+                    "name": "VariableDeclaration",
+                    "src": "2431:22:16"
+                  }
+                ],
+                "id": 3608,
+                "name": "ParameterList",
+                "src": "2430:24:16"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 3608
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "isConstant": false,
+                          "isLValue": true,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "member_name": "numberOfEpochs",
+                          "referencedDeclaration": 3504,
+                          "type": "uint256"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "type": "struct AssertionRegistry.AssertionRecord storage ref"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 3515,
+                                  "type": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord storage ref)",
+                                  "value": "assertionRecords"
+                                },
+                                "id": 3609,
+                                "name": "Identifier",
+                                "src": "2465:16:16"
+                              },
+                              {
+                                "attributes": {
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 3604,
+                                  "type": "bytes32",
+                                  "value": "assertionId"
+                                },
+                                "id": 3610,
+                                "name": "Identifier",
+                                "src": "2482:11:16"
+                              }
+                            ],
+                            "id": 3611,
+                            "name": "IndexAccess",
+                            "src": "2465:29:16"
+                          }
+                        ],
+                        "id": 3612,
+                        "name": "MemberAccess",
+                        "src": "2465:44:16"
+                      }
+                    ],
+                    "id": 3613,
+                    "name": "Return",
+                    "src": "2458:51:16"
+                  }
+                ],
+                "id": 3614,
+                "name": "Block",
+                "src": "2454:59:16"
+              }
+            ],
+            "id": 3615,
+            "name": "FunctionDefinition",
+            "src": "2353:160:16"
+          },
+          {
+            "attributes": {
+              "functionSelector": "a7943efc",
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "getAssertionCreationTimestamp",
+              "scope": 3642,
+              "stateMutability": "view",
+              "virtual": false,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "mutability": "mutable",
+                      "name": "assertionId",
+                      "scope": 3628,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bytes32",
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bytes32",
+                          "type": "bytes32"
+                        },
+                        "id": 3616,
+                        "name": "ElementaryTypeName",
+                        "src": "2554:7:16"
+                      }
+                    ],
+                    "id": 3617,
+                    "name": "VariableDeclaration",
+                    "src": "2554:19:16"
+                  }
+                ],
+                "id": 3618,
+                "name": "ParameterList",
+                "src": "2553:21:16"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "mutability": "mutable",
+                      "name": "numberOfEpochs",
+                      "scope": 3628,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 3619,
+                        "name": "ElementaryTypeName",
+                        "src": "2596:7:16"
+                      }
+                    ],
+                    "id": 3620,
+                    "name": "VariableDeclaration",
+                    "src": "2596:22:16"
+                  }
+                ],
+                "id": 3621,
+                "name": "ParameterList",
+                "src": "2595:24:16"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 3621
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "isConstant": false,
+                          "isLValue": true,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "member_name": "creationTimestamp",
+                          "referencedDeclaration": 3506,
+                          "type": "uint256"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "type": "struct AssertionRegistry.AssertionRecord storage ref"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 3515,
+                                  "type": "mapping(bytes32 => struct AssertionRegistry.AssertionRecord storage ref)",
+                                  "value": "assertionRecords"
+                                },
+                                "id": 3622,
+                                "name": "Identifier",
+                                "src": "2630:16:16"
+                              },
+                              {
+                                "attributes": {
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 3617,
+                                  "type": "bytes32",
+                                  "value": "assertionId"
+                                },
+                                "id": 3623,
+                                "name": "Identifier",
+                                "src": "2647:11:16"
+                              }
+                            ],
+                            "id": 3624,
+                            "name": "IndexAccess",
+                            "src": "2630:29:16"
+                          }
+                        ],
+                        "id": 3625,
+                        "name": "MemberAccess",
+                        "src": "2630:47:16"
+                      }
+                    ],
+                    "id": 3626,
+                    "name": "Return",
+                    "src": "2623:54:16"
+                  }
+                ],
+                "id": 3627,
+                "name": "Block",
+                "src": "2619:62:16"
+              }
+            ],
+            "id": 3628,
+            "name": "FunctionDefinition",
+            "src": "2515:166:16"
+          },
+          {
+            "attributes": {
+              "functionSelector": "08c4933b",
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "getAssertionTask",
+              "scope": 3642,
+              "stateMutability": "view",
+              "virtual": false,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "mutability": "mutable",
+                      "name": "assertionID",
+                      "scope": 3641,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bytes32",
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bytes32",
+                          "type": "bytes32"
+                        },
+                        "id": 3629,
+                        "name": "ElementaryTypeName",
+                        "src": "2709:7:16"
+                      }
+                    ],
+                    "id": 3630,
+                    "name": "VariableDeclaration",
+                    "src": "2709:19:16"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "mutability": "mutable",
+                      "name": "epoch",
+                      "scope": 3641,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 3631,
+                        "name": "ElementaryTypeName",
+                        "src": "2730:7:16"
+                      }
+                    ],
+                    "id": 3632,
+                    "name": "VariableDeclaration",
+                    "src": "2730:13:16"
+                  }
+                ],
+                "id": 3633,
+                "name": "ParameterList",
+                "src": "2708:36:16"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "mutability": "mutable",
+                      "name": "task",
+                      "scope": 3641,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 3634,
+                        "name": "ElementaryTypeName",
+                        "src": "2766:7:16"
+                      }
+                    ],
+                    "id": 3635,
+                    "name": "VariableDeclaration",
+                    "src": "2766:12:16"
+                  }
+                ],
+                "id": 3636,
+                "name": "ParameterList",
+                "src": "2765:14:16"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 3636
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "member_name": "number",
+                          "type": "uint256"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 4294967292,
+                              "type": "block",
+                              "value": "block"
+                            },
+                            "id": 3637,
+                            "name": "Identifier",
+                            "src": "2790:5:16"
+                          }
+                        ],
+                        "id": 3638,
+                        "name": "MemberAccess",
+                        "src": "2790:12:16"
+                      }
+                    ],
+                    "id": 3639,
+                    "name": "Return",
+                    "src": "2783:19:16"
+                  }
+                ],
+                "id": 3640,
+                "name": "Block",
+                "src": "2779:27:16"
+              }
+            ],
+            "id": 3641,
+            "name": "FunctionDefinition",
+            "src": "2683:123:16"
+          }
+        ],
+        "id": 3642,
+        "name": "ContractDefinition",
+        "src": "221:2588:16"
+      }
+    ],
+    "id": 3643,
+    "name": "SourceUnit",
+    "src": "0:2809:16"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.7.6+commit.7338295f.Emscripten.clang"
+  },
+  "networks": {
+    "5777": {
+      "events": {
+        "0x15a8c334a100ee764c8aa7e728c35c591343fe7a34edeb0e8688e9cc3cc501ea": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "bytes32",
+              "name": "assertionId",
+              "type": "bytes32"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "assertionIssuer",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "numberOfEpochs",
+              "type": "uint256"
+            }
+          ],
+          "name": "AssertionCreated",
+          "type": "event"
+        },
+        "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousOwner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "name": "OwnershipTransferred",
+          "type": "event"
+        }
+      },
+      "links": {},
+      "address": "0xF21dD87cFC5cF5D073398833AFe5EFC543b78a00",
+      "transactionHash": "0x7270346a582b2e5aabb49fea6a4172c38f2f1496d22e11fed5f6fe84d0fcead7"
+    }
+  },
+  "schemaVersion": "3.4.3",
+  "updatedAt": "2022-04-28T15:58:17.599Z",
+  "networkType": "ethereum",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {
+      "owner()": {
+        "details": "Returns the address of the current owner."
+      },
+      "renounceOwnership()": {
+        "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+      },
+      "transferOwnership(address)": {
+        "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  }
+}

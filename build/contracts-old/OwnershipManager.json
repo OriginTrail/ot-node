@@ -60,8 +60,8 @@
   "immutableReferences": {},
   "generatedSources": [],
   "deployedGeneratedSources": [],
-  "sourceMap": "220:41:9:-:0;;;;;;;;;;;;;884:17:0;904:12;:10;;;:12;;:::i;:::-;884:32;;935:9;926:6;;:18;;;;;;;;;;;;;;;;;;992:9;959:43;;988:1;959:43;;;;;;;;;;;;850:159;220:41:9;;598:104:6;651:15;685:10;678:17;;598:104;:::o;220:41:9:-;;;;;;;",
-  "deployedSourceMap": "220:41:9:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1717:145:0;;;:::i;:::-;;1085:85;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;2011:240;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;1717:145;1308:12;:10;:12::i;:::-;1297:23;;:7;:5;:7::i;:::-;:23;;;1289:68;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1823:1:::1;1786:40;;1807:6;::::0;::::1;;;;;;;;1786:40;;;;;;;;;;;;1853:1;1836:6:::0;::::1;:19;;;;;;;;;;;;;;;;;;1717:145::o:0;1085:85::-;1131:7;1157:6;;;;;;;;;;;1150:13;;1085:85;:::o;2011:240::-;1308:12;:10;:12::i;:::-;1297:23;;:7;:5;:7::i;:::-;:23;;;1289:68;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2119:1:::1;2099:22;;:8;:22;;;;2091:73;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2208:8;2179:38;;2200:6;::::0;::::1;;;;;;;;2179:38;;;;;;;;;;;;2236:8;2227:6;::::0;:17:::1;;;;;;;;;;;;;;;;;;2011:240:::0;:::o;598:104:6:-;651:15;685:10;678:17;;598:104;:::o",
+  "sourceMap": "220:41:8:-:0;;;;;;;;;;;;;884:17:0;904:12;:10;;;:12;;:::i;:::-;884:32;;935:9;926:6;;:18;;;;;;;;;;;;;;;;;;992:9;959:43;;988:1;959:43;;;;;;;;;;;;850:159;220:41:8;;598:104:6;651:15;685:10;678:17;;598:104;:::o;220:41:8:-;;;;;;;",
+  "deployedSourceMap": "220:41:8:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1717:145:0;;;:::i;:::-;;1085:85;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;2011:240;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;1717:145;1308:12;:10;:12::i;:::-;1297:23;;:7;:5;:7::i;:::-;:23;;;1289:68;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1823:1:::1;1786:40;;1807:6;::::0;::::1;;;;;;;;1786:40;;;;;;;;;;;;1853:1;1836:6:::0;::::1;:19;;;;;;;;;;;;;;;;;;1717:145::o:0;1085:85::-;1131:7;1157:6;;;;;;;;;;;1150:13;;1085:85;:::o;2011:240::-;1308:12;:10;:12::i;:::-;1297:23;;:7;:5;:7::i;:::-;:23;;;1289:68;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2119:1:::1;2099:22;;:8;:22;;;;2091:73;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2208:8;2179:38;;2200:6;::::0;::::1;;;;;;;;2179:38;;;;;;;;;;;;2236:8;2227:6;::::0;:17:::1;;;;;;;;;;;;;;;;;;2011:240:::0;:::o;598:104:6:-;651:15;685:10;678:17;;598:104;:::o",
   "source": "pragma solidity >=0.6.0 <0.8.0;\n\nimport \"openzeppelin-solidity/contracts/token/ERC20/IERC20.sol\";\nimport \"openzeppelin-solidity/contracts/math/SafeMath.sol\";\nimport \"openzeppelin-solidity/contracts/access/Ownable.sol\";\n\ncontract OwnershipManager is Ownable {\n\n}",
   "sourcePath": "/Users/miloskotlar/dkg-onchain-module-v6/contracts/OwnershipManager.sol",
   "ast": {
@@ -77,17 +77,17 @@
         109
       ],
       "OwnershipManager": [
-        1179
+        1147
       ],
       "SafeMath": [
         476
       ]
     },
-    "id": 1180,
+    "id": 1148,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 1173,
+        "id": 1141,
         "literals": [
           "solidity",
           ">=",
@@ -98,38 +98,38 @@
           ".0"
         ],
         "nodeType": "PragmaDirective",
-        "src": "0:31:9"
+        "src": "0:31:8"
       },
       {
         "absolutePath": "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol",
         "file": "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol",
-        "id": 1174,
+        "id": 1142,
         "nodeType": "ImportDirective",
-        "scope": 1180,
+        "scope": 1148,
         "sourceUnit": 677,
-        "src": "33:64:9",
+        "src": "33:64:8",
         "symbolAliases": [],
         "unitAlias": ""
       },
       {
         "absolutePath": "openzeppelin-solidity/contracts/math/SafeMath.sol",
         "file": "openzeppelin-solidity/contracts/math/SafeMath.sol",
-        "id": 1175,
+        "id": 1143,
         "nodeType": "ImportDirective",
-        "scope": 1180,
+        "scope": 1148,
         "sourceUnit": 477,
-        "src": "98:59:9",
+        "src": "98:59:8",
         "symbolAliases": [],
         "unitAlias": ""
       },
       {
         "absolutePath": "openzeppelin-solidity/contracts/access/Ownable.sol",
         "file": "openzeppelin-solidity/contracts/access/Ownable.sol",
-        "id": 1176,
+        "id": 1144,
         "nodeType": "ImportDirective",
-        "scope": 1180,
+        "scope": 1148,
         "sourceUnit": 110,
-        "src": "158:60:9",
+        "src": "158:60:8",
         "symbolAliases": [],
         "unitAlias": ""
       },
@@ -138,19 +138,19 @@
         "baseContracts": [
           {
             "baseName": {
-              "id": 1177,
+              "id": 1145,
               "name": "Ownable",
               "nodeType": "UserDefinedTypeName",
               "referencedDeclaration": 109,
-              "src": "249:7:9",
+              "src": "249:7:8",
               "typeDescriptions": {
                 "typeIdentifier": "t_contract$_Ownable_$109",
                 "typeString": "contract Ownable"
               }
             },
-            "id": 1178,
+            "id": 1146,
             "nodeType": "InheritanceSpecifier",
-            "src": "249:7:9"
+            "src": "249:7:8"
           }
         ],
         "contractDependencies": [
@@ -159,20 +159,20 @@
         ],
         "contractKind": "contract",
         "fullyImplemented": true,
-        "id": 1179,
+        "id": 1147,
         "linearizedBaseContracts": [
-          1179,
+          1147,
           109,
           815
         ],
         "name": "OwnershipManager",
         "nodeType": "ContractDefinition",
         "nodes": [],
-        "scope": 1180,
-        "src": "220:41:9"
+        "scope": 1148,
+        "src": "220:41:8"
       }
     ],
-    "src": "0:261:9"
+    "src": "0:261:8"
   },
   "legacyAST": {
     "attributes": {
@@ -188,7 +188,7 @@
           109
         ],
         "OwnershipManager": [
-          1179
+          1147
         ],
         "SafeMath": [
           476
@@ -208,54 +208,54 @@
             ".0"
           ]
         },
-        "id": 1173,
+        "id": 1141,
         "name": "PragmaDirective",
-        "src": "0:31:9"
+        "src": "0:31:8"
       },
       {
         "attributes": {
           "SourceUnit": 677,
           "absolutePath": "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol",
           "file": "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol",
-          "scope": 1180,
+          "scope": 1148,
           "symbolAliases": [
             null
           ],
           "unitAlias": ""
         },
-        "id": 1174,
+        "id": 1142,
         "name": "ImportDirective",
-        "src": "33:64:9"
+        "src": "33:64:8"
       },
       {
         "attributes": {
           "SourceUnit": 477,
           "absolutePath": "openzeppelin-solidity/contracts/math/SafeMath.sol",
           "file": "openzeppelin-solidity/contracts/math/SafeMath.sol",
-          "scope": 1180,
+          "scope": 1148,
           "symbolAliases": [
             null
           ],
           "unitAlias": ""
         },
-        "id": 1175,
+        "id": 1143,
         "name": "ImportDirective",
-        "src": "98:59:9"
+        "src": "98:59:8"
       },
       {
         "attributes": {
           "SourceUnit": 110,
           "absolutePath": "openzeppelin-solidity/contracts/access/Ownable.sol",
           "file": "openzeppelin-solidity/contracts/access/Ownable.sol",
-          "scope": 1180,
+          "scope": 1148,
           "symbolAliases": [
             null
           ],
           "unitAlias": ""
         },
-        "id": 1176,
+        "id": 1144,
         "name": "ImportDirective",
-        "src": "158:60:9"
+        "src": "158:60:8"
       },
       {
         "attributes": {
@@ -267,7 +267,7 @@
           "contractKind": "contract",
           "fullyImplemented": true,
           "linearizedBaseContracts": [
-            1179,
+            1147,
             109,
             815
           ],
@@ -275,7 +275,7 @@
           "nodes": [
             null
           ],
-          "scope": 1180
+          "scope": 1148
         },
         "children": [
           {
@@ -287,24 +287,24 @@
                   "referencedDeclaration": 109,
                   "type": "contract Ownable"
                 },
-                "id": 1177,
+                "id": 1145,
                 "name": "UserDefinedTypeName",
-                "src": "249:7:9"
+                "src": "249:7:8"
               }
             ],
-            "id": 1178,
+            "id": 1146,
             "name": "InheritanceSpecifier",
-            "src": "249:7:9"
+            "src": "249:7:8"
           }
         ],
-        "id": 1179,
+        "id": 1147,
         "name": "ContractDefinition",
-        "src": "220:41:9"
+        "src": "220:41:8"
       }
     ],
-    "id": 1180,
+    "id": 1148,
     "name": "SourceUnit",
-    "src": "0:261:9"
+    "src": "0:261:8"
   },
   "compiler": {
     "name": "solc",
@@ -312,7 +312,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.3",
-  "updatedAt": "2022-03-23T08:26:55.545Z",
+  "updatedAt": "2022-02-10T14:48:30.729Z",
   "devdoc": {
     "kind": "dev",
     "methods": {

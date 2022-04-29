@@ -1,8 +1,9 @@
 const Web3 = require('web3');
 const BigNumber = require('big-number');
 const axios = require('axios');
-const DKGContract = require('../build/contracts/DKGcontract.json').abi;
+const AssertionRegistry = require('../build/contracts/AssertionRegistry.json').abi;
 const UAIRegistry = require('../build/contracts/UAIRegistry.json').abi;
+const ERC721Registry = require('../build/contracts/ERC721Registry.json').abi;
 const constants = require('../modules/constants');
 
 class Web3BlockchainService {
@@ -37,22 +38,24 @@ class Web3BlockchainService {
         return undefined;
     }
 
-    async createAssertionRecord(stateCommitHash, rootHash, issuer) {
+    async createAssertionRecord(stateCommitHash, issuer) {
         const contractAddress = await this.getAssertionRegistryAddress();
-        const contractInstance = new this.web3.eth.Contract(DKGContract, contractAddress);
+        const contractInstance = new this.web3.eth.Contract(AssertionRegistry, contractAddress);
 
         let calculatedGas = await this.getGasStationPrice();
         calculatedGas = Math.round(calculatedGas);
 
-        const encodedABI = contractInstance.methods.createAssertionRecord(`0x${stateCommitHash}`, `0x${rootHash}`, issuer,
-            new BigNumber(1),
-            new BigNumber(1)).encodeABI();
+        const encodedABI = contractInstance.methods.createAssertionRecord(
+            `0x${stateCommitHash}`,
+            issuer,
+            1).encodeABI();
+
         const tx = {
             from: this.config.publicKey,
             to: contractInstance.options.address,
             data: encodedABI,
             gasPrice: '20000000000',
-            gas: '500000',
+            gas: '3000000',
         };
 
         const createdTransaction = await this.web3.eth.accounts.signTransaction(
@@ -63,20 +66,24 @@ class Web3BlockchainService {
         return { transactionHash: result.transactionHash, blockchain: this.config.networkId };
     }
 
-    async registerAsset(uai, type, alsoKnownAs, stateCommitHash, rootHash, tokenAmount) {
+    async registerAsset(UAI, stateCommitHash, tokenAmount) {
         const contractAddress = this.config.hubContractAddress;
         const contractInstance = new this.web3.eth.Contract(UAIRegistry, contractAddress);
 
         let calculatedGas = await this.getGasStationPrice();
         calculatedGas = Math.round(calculatedGas);
 
-        const encodedABI = contractInstance.methods.registerAsset(`0x${uai}`, 0, `0x${uai}`, `0x${stateCommitHash}`, `0x${rootHash}`, 1).encodeABI();
+        const encodedABI = contractInstance.methods.createAsset(
+            parseInt(UAI),
+            `0x${stateCommitHash}`,
+            1).encodeABI();
+
         const tx = {
             from: this.config.publicKey,
             to: contractInstance.options.address,
             data: encodedABI,
             gasPrice: '20000000000',
-            gas: '900000',
+            gas: '3000000',
         };
 
         const createdTransaction = await this.web3.eth.accounts.signTransaction(
@@ -87,14 +94,17 @@ class Web3BlockchainService {
         return { transactionHash: result.transactionHash, blockchain: this.config.networkId };
     }
 
-    async updateAsset(UAI, newStateCommitHash, rootHash) {
+    async updateAsset(UAI, newStateCommitHash) {
         const contractAddress = this.config.hubContractAddress;
         const contractInstance = new this.web3.eth.Contract(UAIRegistry, contractAddress);
 
         let calculatedGas = await this.getGasStationPrice();
         calculatedGas = Math.round(calculatedGas);
 
-        const encodedABI = contractInstance.methods.updateAssetState(`0x${UAI}`, `0x${newStateCommitHash}`, `0x${rootHash}`).encodeABI();
+        const encodedABI = contractInstance.methods.updateAsset(
+            new BigNumber(UAI),
+            `0x${newStateCommitHash}`
+        ).encodeABI();
         const tx = {
             from: this.config.publicKey,
             to: contractInstance.options.address,
@@ -120,12 +130,15 @@ class Web3BlockchainService {
         return { issuer, rootHash };
     }
 
-    async getAssetProofs(ual) {
-        const contractAddress = this.config.hubContractAddress;
-        const contractInstance = new this.web3.eth.Contract(UAIRegistry, contractAddress);
+    async getAssetProofs(UAI) {
+        let contractAddress = await this.getERC721RegistryAddress();
+        let contractInstance = new this.web3.eth.Contract(ERC721Registry, contractAddress);
 
-        const issuer = await contractInstance.methods.getAssetController(`0x${ual}`).call();
-        let assertionId = await contractInstance.methods.getAssetStateCommitHash(`0x${ual}`).call();
+        const issuer = await contractInstance.methods.ownerOf(UAI).call();
+
+        contractAddress = this.config.hubContractAddress;
+        contractInstance = new this.web3.eth.Contract(UAIRegistry, contractAddress);
+        let assertionId = await contractInstance.methods.getAssetStateCommitHash(UAI).call();
         if (assertionId === '0x0000000000000000000000000000000000000000000000000000000000000000') {
             assertionId = undefined;
         } else {
@@ -138,7 +151,15 @@ class Web3BlockchainService {
         const contractAddress = this.config.hubContractAddress;
         const contractInstance = new this.web3.eth.Contract(UAIRegistry, contractAddress);
 
-        const address = await contractInstance.methods.getAssertionRegistry().call();
+        const address = await contractInstance.methods.getAssertionRegistryAddress().call();
+        return address;
+    }
+
+    async getERC721RegistryAddress() {
+        const contractAddress = this.config.hubContractAddress;
+        const contractInstance = new this.web3.eth.Contract(UAIRegistry, contractAddress);
+
+        const address = await contractInstance.methods.getERC721Address().call();
         return address;
     }
 
