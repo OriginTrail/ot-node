@@ -163,6 +163,8 @@ class PublishService {
             if (status) {
                 await this.dataService.insert(data.nquads.join('\n'), `${constants.DID_PREFIX}:${data.id}`);
                 this.logger.info(`Assertion ${data.id} has been successfully inserted`);
+            } else {
+                this.logger.info(`Assertion ${data.id} has not been inserted, failed at verification.`);
             }
 
             this.logger.emit({

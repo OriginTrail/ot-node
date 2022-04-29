@@ -49,8 +49,8 @@ class BlockchainService {
         return this.implementation.getAssertionProofs(assertionId);
     }
 
-    async getAssetProofs(ual) {
-        return this.implementation.getAssetProofs(ual);
+    async getAssetProofs(uai) {
+        return this.implementation.getAssetProofs(uai);
     }
 
     async healthCheck() {

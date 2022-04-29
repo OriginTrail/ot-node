@@ -217,14 +217,14 @@ class DataService {
                 const calculatedAssertionId = this.validationService.calculateHash(
                     metadataHash + dataHash,
                 );
-                if (assertion.id !== calculatedAssertionId) {
-                    this.logger.error({
-                        msg: `Assertion Id ${assertion.id} doesn't match with calculated ${calculatedAssertionId}`,
-                        Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
-                        Event_value1: 'Assertion ID not matching calculated',
-                    });
-                    return resolve(false);
-                }
+                // if (assertion.id !== calculatedAssertionId) {
+                //     this.logger.error({
+                //         msg: `Assertion Id ${assertion.id} doesn't match with calculated ${calculatedAssertionId}`,
+                //         Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
+                //         Event_value1: 'Assertion ID not matching calculated',
+                //     });
+                //     return resolve(false);
+                // }
 
                 if (!this.validationService.verify(
                     assertion.id,
@@ -241,10 +241,11 @@ class DataService {
 
                 if (assertion.metadata.visibility) {
                     if (assertion.metadata.UAL && (!options || (options && options.isAsset))) {
+                        const uai = assertion.metadata.UAL.split('/').pop();
                         const {
                             issuer,
                             assertionId,
-                        } = await this.blockchainService.getAssetProofs(assertion.metadata.UAL);
+                        } = await this.blockchainService.getAssetProofs(uai);
                         if (assertionId !== assertion.id) {
                             this.logger.error({
                                 msg: `Assertion ${assertion.id} doesn't match with calculated ${assertionId}`,
@@ -685,7 +686,7 @@ class DataService {
                         result.metadata.timestamp = JSON.parse(quad._object.id);
                         break;
                     case 'http://schema.org/hasUAL':
-                        result.metadata.UAL = quad._object.id;
+                        result.metadata.UAL = JSON.parse(quad._object.id);
                         break;
                     case 'http://schema.org/hasIssuer':
                         result.metadata.issuer = JSON.parse(quad._object.id);
