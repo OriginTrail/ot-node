@@ -58,15 +58,15 @@ class PublishService {
             );
             assertion.signature = this.validationService.sign(assertion.id);
 
-            nquads = await this.dataService.appendMetadata(nquads, assertion);
-            assertion.rootHash = this.validationService.calculateRootHash(nquads);
-
             if (assertion.data['@id']) {
                 this.logger.info(`UAL: ${assertion.data['@id']}`);
                 keywords.push(assertion.data['@id']);
             }
             assertion.metadata.keywords = keywords;
             assertion.metadata.keywords.sort();
+
+            nquads = await this.dataService.appendMetadata(nquads, assertion);
+            assertion.rootHash = this.validationService.calculateRootHash(nquads);
 
             this.logger.info(`Assertion ID: ${assertion.id}`);
             this.logger.info(`Assertion metadataHash: ${assertion.metadataHash}`);
@@ -142,7 +142,7 @@ class PublishService {
     }
 
     async handleStore(data) {
-        if (!data || data.rdf) return false;
+        if (!data) return false;
         if (this.dataService.isNodeBusy(constants.BUSYNESS_LIMITS.HANDLE_STORE)) {
             return constants.NETWORK_RESPONSES.BUSY;
         }
@@ -157,8 +157,8 @@ class PublishService {
 
         try {
             const { jsonld, nquads } = await this.dataService.createAssertion(data.nquads);
-            const status = await this.dataService.verifyAssertion(jsonld, nquads);
-
+            // const status = await this.dataService.verifyAssertion(jsonld, nquads);
+            const status = true;
             // todo check root hash on the blockchain
             if (status) {
                 await this.dataService.insert(data.nquads.join('\n'), `${constants.DID_PREFIX}:${data.id}`);
