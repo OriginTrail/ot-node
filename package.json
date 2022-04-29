@@ -1,6 +1,6 @@
 {
   "name": "origintrail_node",
-  "version": "6.0.0-beta.1.35",
+  "version": "6.0.0-beta.1.36",
   "description": "OTNode v6 Beta 1",
   "main": "index.js",
   "scripts": {
@@ -43,8 +43,6 @@
     "eslint-config-prettier": "^8.5.0",
     "ethereumjs-wallet": "^1.0.2",
     "form-data": "^4.0.0",
-    "ganache": "^7.0.4",
-    "husky": "^6.0.0",
     "lint-staged": "^12.3.7",
     "mocha": "^9.2.2",
     "nodemon": "^2.0.15",
