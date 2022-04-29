@@ -74,7 +74,7 @@ class Web3BlockchainService {
         calculatedGas = Math.round(calculatedGas);
 
         const encodedABI = contractInstance.methods.createAsset(
-            parseInt(UAI),
+            new BigNumber(UAI),
             `0x${stateCommitHash}`,
             1).encodeABI();
 

@@ -102,9 +102,9 @@ class DataService {
             };
             if (method !== constants.SERVICE_API_ROUTES.PUBLISH || method !== constants.SERVICE_API_ROUTES.UPDATE) {
                 if (assertion.data['@id']) {
-                    assertion.metadata.UAL = `dkg://did.${this.config.blockchain[0].networkId}.${this.config.blockchain[0].hubContractAddress}/${assertion.data['@id']}`;
+                    assertion.metadata.UAL = `dkg://did.${this.config.blockchain[0].networkId.split(':').join('.')}.${this.config.blockchain[0].hubContractAddress}/${assertion.data['@id']}`;
                 } else {
-                    assertion.metadata.UAL = `dkg://did.${this.config.blockchain[0].networkId}.${this.config.blockchain[0].hubContractAddress}/${Math.random() * 10000}`;
+                    assertion.metadata.UAL = `dkg://did.${this.config.blockchain[0].networkId.split(':').join('.')}.${this.config.blockchain[0].hubContractAddress}/${Math.random() * 10000}`;
                 }
                 assertion.data['@id'] = assertion.metadata.UAL;
             }else {
@@ -537,10 +537,13 @@ class DataService {
             break;
         default:
             context = {
-                '@context': ['https://www.schema.org/'],
+                '@context': 'https://www.schema.org/',
             };
 
-            frame = {};
+            frame = {
+                '@context': 'https://www.schema.org/',
+                '@type': type
+            };
         }
         const json = await this.workerPool.exec('fromNQuads', [nquads, context, frame]);
 
@@ -686,7 +689,7 @@ class DataService {
                         result.metadata.timestamp = JSON.parse(quad._object.id);
                         break;
                     case 'http://schema.org/hasUAL':
-                        result.metadata.UAL = quad._object.id;
+                        result.metadata.UAL = JSON.parse(quad._object.id);
                         break;
                     case 'http://schema.org/hasIssuer':
                         result.metadata.issuer = JSON.parse(quad._object.id);
