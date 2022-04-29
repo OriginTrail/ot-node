@@ -114,7 +114,7 @@ class FusekiService {
                 ?s schema:image | schema:url | schema:description | schema:name ?o .
             }
         }` : ''
-        
+
         const query = `PREFIX schema: <http://schema.org/>
                     CONSTRUCT { ?s ?p ?o }
                     WHERE {
@@ -136,7 +136,7 @@ class FusekiService {
         const query = `PREFIX schema: <http://schema.org/>
             SELECT ?assertionId ?issuer ?timestamp
             WHERE {
-                 ?assertionId schema:hasUAL "${uri}" ;
+                 ?assertionId schema:hasUAL <${uri}> ;
                      schema:hasTimestamp ?timestamp ;
                      schema:hasIssuer ?issuer .
             }

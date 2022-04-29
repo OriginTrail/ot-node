@@ -119,8 +119,8 @@ class GraphdbService {
         });
     }
 
-   
-        
+
+
     async resolve(uri, localQuery, metadataOnly) {
         const graphName = `<${constants.DID_PREFIX}:${uri}>`
         const publicVisibility = localQuery ? '' : `${graphName} schema:hasVisibility "public" .`
@@ -134,7 +134,7 @@ class GraphdbService {
                 ?s schema:image | schema:url | schema:description | schema:name ?o .
             }
         }` : ''
-        
+
         const query = `PREFIX schema: <http://schema.org/>
                     CONSTRUCT { ?s ?p ?o }
                     WHERE {
@@ -156,7 +156,7 @@ class GraphdbService {
         const query = `PREFIX schema: <http://schema.org/>
             SELECT ?assertionId ?issuer ?timestamp
             WHERE {
-                 ?assertionId schema:hasUAL "${uri}" ;
+                 ?assertionId schema:hasUAL <${uri}>  ;
                      schema:hasTimestamp ?timestamp ;
                      schema:hasIssuer ?issuer .
             }
