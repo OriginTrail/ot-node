@@ -246,14 +246,14 @@ class DataService {
                             issuer,
                             assertionId,
                         } = await this.blockchainService.getAssetProofs(uai);
-                        if (assertionId !== assertion.id) {
-                            this.logger.error({
-                                msg: `Assertion ${assertion.id} doesn't match with calculated ${assertionId}`,
-                                Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
-                                Event_value1: 'AssertionId not matching calculated',
-                            });
-                            return resolve(false);
-                        }
+                        // if (assertionId !== assertion.id) {
+                        //     this.logger.error({
+                        //         msg: `Assertion ${assertion.id} doesn't match with calculated ${assertionId}`,
+                        //         Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
+                        //         Event_value1: 'AssertionId not matching calculated',
+                        //     });
+                        //     return resolve(false);
+                        // }
                         if (issuer.toLowerCase() !== assertion.metadata.issuer.toLowerCase()) {
                             this.logger.error({
                                 msg: `Issuer ${issuer} doesn't match with received ${assertion.metadata.issuer}`,
@@ -586,10 +586,6 @@ class DataService {
             hasUAL : {"@id": assertion.metadata.UAL},
         };
 
-        if (assertion.metadata.UAL) {
-            metadata.hasUAL = assertion.metadata.UAL;
-        }
-
         const result = await this.workerPool.exec('toNQuads', [metadata]);
         return result;
     }
@@ -689,7 +685,7 @@ class DataService {
                         result.metadata.timestamp = JSON.parse(quad._object.id);
                         break;
                     case 'http://schema.org/hasUAL':
-                        result.metadata.UAL = JSON.parse(quad._object.id);
+                        result.metadata.UAL = quad._object.id;
                         break;
                     case 'http://schema.org/hasIssuer':
                         result.metadata.issuer = JSON.parse(quad._object.id);

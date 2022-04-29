@@ -255,12 +255,16 @@ class RpcController {
                     const response = [];
 
                     for (let id of ids) {
+
                         let isAsset = false;
-                        id = id.split('/').pop();
-                        const { assertionId } = await this.blockchainService.getAssetProofs(id);
-                        if (assertionId) {
-                            isAsset = true;
-                            id = assertionId;
+                        if(id.startsWith('dkg://')) {
+                            id = id.split('/').pop();
+
+                            const {assertionId} = await this.blockchainService.getAssetProofs(id);
+                            if (assertionId) {
+                                isAsset = true;
+                                id = assertionId;
+                            }
                         }
                         this.logger.emit({
                             msg: id,
