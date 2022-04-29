@@ -49,8 +49,7 @@ class PublishService {
             });
             assertion.metadata.issuer = this.validationService.getIssuer();
             assertion.metadata.visibility = visibility;
-            assertion.metadata.keywords = keywords;
-            assertion.metadata.keywords.sort();
+
 
             assertion.metadata.dataHash = this.validationService.calculateHash(assertion.data);
             assertion.metadataHash = this.validationService.calculateHash(assertion.metadata);
@@ -64,7 +63,11 @@ class PublishService {
 
             if (assertion.data['@id']) {
                 this.logger.info(`UAL: ${assertion.data['@id']}`);
+                keywords.push(assertion.data['@id']);
             }
+            assertion.metadata.keywords = keywords;
+            assertion.metadata.keywords.sort();
+
             this.logger.info(`Assertion ID: ${assertion.id}`);
             this.logger.info(`Assertion metadataHash: ${assertion.metadataHash}`);
             this.logger.info(`Assertion dataHash: ${assertion.metadata.dataHash}`);
