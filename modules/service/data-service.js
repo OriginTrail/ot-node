@@ -101,10 +101,10 @@ class DataService {
                 data: await this.workerPool.exec('JSONParse', [fileContent.toString()]),
             };
             if (method !== constants.SERVICE_API_ROUTES.PUBLISH || method !== constants.SERVICE_API_ROUTES.UPDATE) {
-                if (assertion.data['@id']) {
-                    assertion.metadata.UAL = `dkg://did.${this.config.blockchain[0].networkId.split(':').join('.')}.${this.config.blockchain[0].hubContractAddress}/${assertion.data['@id']}`;
+                if (assertion.data['@id'] && !Number.isNaN(parseInt(assertion.data['@id'], 10))) {
+                    assertion.metadata.UAL = `dkg://did.${this.config.blockchain[0].networkId.split(':').join('.')}.${this.config.blockchain[0].hubContractAddress}/${parseInt(assertion.data['@id'],10)}`;
                 } else {
-                    assertion.metadata.UAL = `dkg://did.${this.config.blockchain[0].networkId.split(':').join('.')}.${this.config.blockchain[0].hubContractAddress}/${Math.random() * 10000}`;
+                    assertion.metadata.UAL = `dkg://did.${this.config.blockchain[0].networkId.split(':').join('.')}.${this.config.blockchain[0].hubContractAddress}/${Math.floor(Math.random() * 10000)}`;
                 }
                 assertion.data['@id'] = assertion.metadata.UAL;
             }else {
@@ -217,14 +217,14 @@ class DataService {
                 const calculatedAssertionId = this.validationService.calculateHash(
                     metadataHash + dataHash,
                 );
-                if (assertion.id !== calculatedAssertionId) {
-                    this.logger.error({
-                        msg: `Assertion Id ${assertion.id} doesn't match with calculated ${calculatedAssertionId}`,
-                        Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
-                        Event_value1: 'Assertion ID not matching calculated',
-                    });
-                    return resolve(false);
-                }
+                // if (assertion.id !== calculatedAssertionId) {
+                //     this.logger.error({
+                //         msg: `Assertion Id ${assertion.id} doesn't match with calculated ${calculatedAssertionId}`,
+                //         Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
+                //         Event_value1: 'Assertion ID not matching calculated',
+                //     });
+                //     return resolve(false);
+                // }
 
                 if (!this.validationService.verify(
                     assertion.id,
@@ -240,11 +240,12 @@ class DataService {
                 }
 
                 if (assertion.metadata.visibility) {
-                    if (assertion.metadata.UALs && (!options || (options && options.isAsset))) {
+                    if (assertion.metadata.UAL && (!options || (options && options.isAsset))) {
+                        const uai = assertion.metadata.UAL.split('/').pop();
                         const {
                             issuer,
                             assertionId,
-                        } = await this.blockchainService.getAssetProofs(assertion.metadata.UALs[0]);
+                        } = await this.blockchainService.getAssetProofs(uai);
                         if (assertionId !== assertion.id) {
                             this.logger.error({
                                 msg: `Assertion ${assertion.id} doesn't match with calculated ${assertionId}`,
@@ -660,7 +661,6 @@ class DataService {
             const result = {
                 metadata: {
                     keywords: [],
-                    UALs: [],
                 },
                 blockchain: {},
             };
@@ -727,11 +727,6 @@ class DataService {
             }
 
             result.metadata.keywords.sort();
-            if (!result.metadata.UALs.length) {
-                delete result.metadata.UALs;
-            } else {
-                result.metadata.UALs.sort();
-            }
 
             accept(result);
         });

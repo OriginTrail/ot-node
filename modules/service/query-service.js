@@ -197,12 +197,12 @@ class QueryService {
             const metadataOnly = true
             const { jsonld } = await this.dataService.createAssertion(rawNquads, metadataOnly);
             let object = handlerData.find(
-                (x) => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UALs[0],
+                (x) => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UAL,
             );
             if (!object) {
                 object = {
                     type: jsonld.metadata.type,
-                    id: jsonld.metadata.UALs[0],
+                    id: jsonld.metadata.UAL,
                     timestamp: jsonld.metadata.timestamp,
                     issuers: [],
                     assertions: [],

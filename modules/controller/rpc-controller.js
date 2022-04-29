@@ -366,7 +366,7 @@ class RpcController {
                                         );
                                         response.push(isAsset ? {
                                             type: 'asset',
-                                            id: assertion.jsonld.metadata.UALs[0],
+                                            id: assertion.jsonld.metadata.UAL,
                                             result: {
                                                 metadata: {
                                                     type: assertion.jsonld.metadata.type,
