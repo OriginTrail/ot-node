@@ -102,9 +102,9 @@ class DataService {
             };
             if (method !== constants.SERVICE_API_ROUTES.PUBLISH || method !== constants.SERVICE_API_ROUTES.UPDATE) {
                 if (assertion.data['@id'] && !Number.isNaN(parseInt(assertion.data['@id'], 10))) {
-                    assertion.metadata.UAL = `dkg://did.${this.config.blockchain[0].networkId}.${this.config.blockchain[0].hubContractAddress}/${parseInt(assertion.data['@id'],10)}`;
+                    assertion.metadata.UAL = `dkg://did.${this.config.blockchain[0].networkId.split(':').join('.')}.${this.config.blockchain[0].hubContractAddress}/${parseInt(assertion.data['@id'],10)}`;
                 } else {
-                    assertion.metadata.UAL = `dkg://did.${this.config.blockchain[0].networkId}.${this.config.blockchain[0].hubContractAddress}/${Math.floor(Math.random() * 10000)}`;
+                    assertion.metadata.UAL = `dkg://did.${this.config.blockchain[0].networkId.split(':').join('.')}.${this.config.blockchain[0].hubContractAddress}/${Math.floor(Math.random() * 10000)}`;
                 }
                 assertion.data['@id'] = assertion.metadata.UAL;
             }else {
@@ -538,10 +538,13 @@ class DataService {
             break;
         default:
             context = {
-                '@context': ['https://www.schema.org/'],
+                '@context': 'https://www.schema.org/',
             };
 
-            frame = {};
+            frame = {
+                '@context': 'https://www.schema.org/',
+                '@type': type
+            };
         }
         const json = await this.workerPool.exec('fromNQuads', [nquads, context, frame]);
 
