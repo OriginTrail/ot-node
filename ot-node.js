@@ -1,14 +1,16 @@
 const { execSync } = require('child_process');
 const DeepExtend = require('deep-extend');
-const AutoGitUpdate = require('auto-git-update');
 const rc = require('rc');
 const fs = require('fs');
 const queue = require('fastq');
+const AutoUpdater = require('./modules/auto-update/auto-updater-module-interface');
 const DependencyInjection = require('./modules/service/dependency-injection');
 const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
+
+let updateFilePath;
 
 class OTNode {
     constructor(config) {
@@ -74,24 +76,25 @@ class OTNode {
 
     async initializeAutoUpdate() {
         try {
+            updateFilePath = `./${this.config.appDataPath}/UPDATED`;
+            if (fs.existsSync(updateFilePath)) {
+                this.config.otNodeUpdated = true;
+            }
             if (!this.config.autoUpdate.enabled) {
                 return;
             }
 
             const autoUpdateConfig = {
-                repository: 'https://github.com/OriginTrail/ot-node',
+                logger: this.logger,
                 branch: this.config.autoUpdate.branch,
                 tempLocation: this.config.autoUpdate.backupDirectory,
-                executeOnComplete: 'npx sequelize --config=./config/sequelizeConfig.js db:migrate',
-                exitOnComplete: true,
+                executeOnComplete: `touch ${updateFilePath}`,
             };
 
             execSync(`mkdir -p ${this.config.autoUpdate.backupDirectory}`);
 
-            this.updater = new AutoGitUpdate(autoUpdateConfig);
-            this.updater.setLogConfig({
-                logGeneral: false,
-            });
+            this.updater = new AutoUpdater(autoUpdateConfig);
+            await this.updater.initialize();
             DependencyInjection.registerValue(this.container, 'updater', this.updater);
 
             this.logger.info('Auto update mechanism initialized');
@@ -121,6 +124,14 @@ class OTNode {
             this.logger.info('Operational database module: sequelize implementation');
             // eslint-disable-next-line global-require
             const db = require('./models');
+            
+            if(this.config.otNodeUpdated) {
+                execSync('npx sequelize --config=./config/sequelizeConfig.js db:migrate');
+                const fileService = this.container.resolve('fileService');
+                await  fileService.removeFile(updateFilePath);
+                this.config.otNodeUpdated = false;
+            }
+            
             await db.sequelize.sync();
         } catch (e) {
             this.logger.error({

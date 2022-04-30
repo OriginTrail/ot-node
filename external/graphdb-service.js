@@ -122,6 +122,7 @@ class GraphdbService {
     }
 
     async resolve(uri) {
+<<<<<<< HEAD
         const query = this.sparqlQueryBuilder.findNQuadsByGraphUri(uri);
         let nquads = await this.construct(query);
 
@@ -133,6 +134,16 @@ class GraphdbService {
         } else {
             nquads = null;
         }
+=======
+        const query = `PREFIX schema: <http://schema.org/>
+                        CONSTRUCT { ?s ?p ?o }
+                        WHERE {
+                          GRAPH <${constants.DID_PREFIX}:${uri}> {
+                            ?s ?p ?o
+                          }
+                        }`;
+        const nquads = await this.construct(query);
+>>>>>>> v6/develop
         return nquads;
     }
 
@@ -156,8 +167,34 @@ class GraphdbService {
         return result;
     }
 
+<<<<<<< HEAD
     async findAssetsByKeyword(keyword, options, localQuery) {
         const sparqlQuery = this.sparqlQueryBuilder.findAssetsByKeyword(keyword, options, localQuery);
+=======
+    async findAssetsByKeyword(query, options, localQuery) {
+        const sparqlQuery = `PREFIX schema: <http://schema.org/>
+                            SELECT ?assertionId ?assetId
+                            WHERE {
+                                ?assertionId schema:hasTimestamp ?latestTimestamp ;
+                            ${!localQuery ? 'schema:hasVisibility "public" ;' : ''}
+                                                     schema:hasUALs ?assetId .
+                                    {
+                                        SELECT ?assetId (MAX(?timestamp) AS ?latestTimestamp)
+                                        WHERE {
+                                            ?assertionId schema:hasKeywords ?keyword ;
+                                                         schema:hasIssuer ?issuer ;
+                                                         schema:hasType ?type ;
+                                                         schema:hasTimestamp ?timestamp ;
+                                                         schema:hasUALs ?assetId .
+                                ${options.prefix ? `FILTER contains(lcase(?keyword),'${query}')` : `FILTER (lcase(?keyword) = '${query}')`}
+                                ${options.issuers ? `FILTER (?issuer IN (${JSON.stringify(options.issuers).slice(1, -1)}))` : ''}
+                                ${options.types ? `FILTER (?type IN (${JSON.stringify(options.types).slice(1, -1)}))` : ''}
+                                        }
+                                        GROUP BY ?assetId
+                                        ${options.limit ? `LIMIT ${options.limit}` : ''}
+                                    }
+                            }`;
+>>>>>>> v6/develop
         let result = await this.execute(sparqlQuery);
         result = JSON.parse(result).results.bindings;
         return result;

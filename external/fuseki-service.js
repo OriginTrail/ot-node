@@ -1,21 +1,19 @@
 const axios = require('axios');
 const qs = require('qs');
 const constants = require('../modules/constants');
-const SparqlQueryBuilder = require('./sparql/sparql-query-builder');
 
-class BlazegraphService {
+class FusekiService {
     constructor(config) {
         this.config = config;
     }
 
     async initialize(logger) {
-        this.sparqlQueryBuilder = new SparqlQueryBuilder();
         this.logger = logger;
         this.config.axios = {
             method: 'post',
-            url: `${this.config.url}/sparql`,
+            url: `${this.config.url}/${this.config.repositoryName}`,
         };
-        this.logger.info('Blazegraph module initialized successfully');
+        this.logger.info('Fuseki module initialized successfully');
     }
 
     async insert(triples, rootHash) {
@@ -23,18 +21,18 @@ class BlazegraphService {
         const exists = await this.ask(askQuery);
         if (!exists) {
             this.config.axios = {
-                method: 'post',
-                url: `${this.config.url}/sparql?context-uri=${rootHash}`,
+                method: 'put',
+                url: `${this.config.url}/${this.config.repositoryName}/data?graph=${rootHash}`,
                 headers: {
-                    'Content-Type': 'text/x-nquads',
+                    'Content-Type': 'application/n-quads',
                 },
                 data: triples,
             };
 
-            await axios(this.config.axios).then((response) => true)
+            await axios(this.config.axios).then(() => true)
                 .catch((error) => {
                     this.logger.error({
-                        msg: `Failed to write into Blazegraph: ${error} - ${error.stack}`,
+                        msg: `Failed to write into Fuseki: ${error} - ${error.stack}`,
                         Event_name: constants.ERROR_TYPE.TRIPLE_STORE_INSERT_ERROR,
                     });
                     return false;
@@ -50,7 +48,7 @@ class BlazegraphService {
             });
             this.config.axios = {
                 method: 'post',
-                url: `${this.config.url}/sparql`,
+                url: `${this.config.url}/${this.config.repositoryName}/sparql`,
                 headers: {
                     Accept: 'application/sparql-results+json',
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -70,9 +68,9 @@ class BlazegraphService {
             });
             this.config.axios = {
                 method: 'post',
-                url: `${this.config.url}/sparql`,
+                url: `${this.config.url}/${this.config.repositoryName}/sparql`,
                 headers: {
-                    Accept: 'text/x-nquads',
+                    Accept: 'application/n-quads',
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 data,
@@ -90,7 +88,7 @@ class BlazegraphService {
             });
             this.config.axios = {
                 method: 'post',
-                url: `${this.config.url}/sparql`,
+                url: `${this.config.url}/${this.config.repositoryName}/sparql`,
                 headers: {
                     Accept: 'application/json',
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -104,51 +102,6 @@ class BlazegraphService {
     }
 
     async resolve(uri) {
-<<<<<<< HEAD
-        const query = this.sparqlQueryBuilder.findNQuadsByGraphUri(uri);
-        let nquads = await this.construct(query);
-
-        if (nquads.length) {
-            nquads = nquads.toString();
-            nquads = nquads.split('\n');
-            nquads = nquads.filter((x) => x !== '');
-            nquads = await this.transformBlankNodes(nquads);
-        } else {
-            nquads = null;
-        }
-        return nquads;
-    }
-
-    async transformBlankNodes(nquads) {
-        // Find minimum blank node value to assign it to _:c14n0
-        let minimumBlankNodeValue = -1;
-        for (const nquad of nquads) {
-            if (nquad.includes('_:t')) {
-                const blankNodes = nquad.split(' ').filter((s) => s.includes('_:t'));
-                for (const bn of blankNodes) {
-                    const bnValue = Number(bn.substring(3));
-                    if (minimumBlankNodeValue === -1 || minimumBlankNodeValue > bnValue) {
-                        minimumBlankNodeValue = bnValue;
-                    }
-                }
-            }
-        }
-
-        // Transform blank nodes, example: _:t145 -> _:c14n3
-        let bnName;
-        for (const nquadIndex in nquads) {
-            const nquad = nquads[nquadIndex];
-            if (nquad.includes('_:t')) {
-                const blankNodes = nquad.split(' ').filter((s) => s.includes('_:t'));
-                for (const bn of blankNodes) {
-                    const bnValue = Number(bn.substring(3));
-                    bnName = `_:c14n${bnValue - minimumBlankNodeValue}`;
-                    nquads[nquadIndex] = nquads[nquadIndex].replace(bn, bnName);
-                }
-            }
-        }
-
-=======
         const query = `PREFIX schema: <http://schema.org/>
                         CONSTRUCT { ?s ?p ?o }
                         WHERE {
@@ -157,20 +110,31 @@ class BlazegraphService {
                           }
                         }`;
         const nquads = await this.construct(query);
->>>>>>> v6/develop
         return nquads;
     }
 
     async assertionsByAsset(uri) {
-        const query = this.sparqlQueryBuilder.findAssertionsByUAL(uri);
+        const query = `PREFIX schema: <http://schema.org/>
+            SELECT ?assertionId ?issuer ?timestamp
+            WHERE {
+                 ?assertionId schema:hasUALs "${uri}" ;
+                     schema:hasTimestamp ?timestamp ;
+                     schema:hasIssuer ?issuer .
+            }
+            ORDER BY DESC(?timestamp)`;
         const result = await this.execute(query);
 
         return result.results.bindings;
     }
 
     async findAssertions(nquads) {
-        const sparqlQuery = this.sparqlQueryBuilder.findGraphByNQuads(nquads);
-        let graph = await this.execute(sparqlQuery);
+        const query = `SELECT ?g
+                       WHERE {
+                            GRAPH ?g {
+                            ${nquads}
+                            }
+                       }`;
+        let graph = await this.execute(query);
         graph = graph.results.bindings.map((x) => x.g.value.replace(`${constants.DID_PREFIX}:`, ''));
         if (graph.length && graph[0] === 'http://www.bigdata.com/rdf#nullGraph') {
             return [];
@@ -178,16 +142,19 @@ class BlazegraphService {
         return graph;
     }
 
-    async findAssertionsByKeyword(keyword, options, localQuery) {
-        const sparqlQuery = this.sparqlQueryBuilder.findAssertionIdsByKeyword(keyword, options, localQuery);
+    async findAssertionsByKeyword(query, options, localQuery) {
+        const sparqlQuery = `PREFIX schema: <http://schema.org/>
+                            SELECT distinct ?assertionId
+                            WHERE {
+                                ?assertionId schema:hasKeywords ?keyword .
+                                ${!localQuery ? ' ?assertionId schema:hasVisibility "public" .' : ''}
+                                ${options.prefix ? `FILTER contains(lcase(?keyword),'${query}')` : `FILTER (lcase(?keyword) = '${query}')`}
+                            }
+                        ${options.limit ? `LIMIT ${options.limit}` : ''}`;
         const result = await this.execute(sparqlQuery);
         return result.results.bindings;
     }
 
-<<<<<<< HEAD
-    async findAssetsByKeyword(keyword, options, localQuery) {
-        const sparqlQuery = this.sparqlQueryBuilder.findAssetsByKeyword(keyword, options, localQuery);
-=======
     async findAssetsByKeyword(query, options, localQuery) {
         const sparqlQuery = `PREFIX schema: <http://schema.org/>
                             SELECT ?assertionId ?assetId
@@ -211,14 +178,13 @@ class BlazegraphService {
                                         ${options.limit ? `LIMIT ${options.limit}` : ''}
                                     }
                             }`;
->>>>>>> v6/develop
         const result = await this.execute(sparqlQuery);
         return result.results.bindings;
     }
 
     async healthCheck() {
         try {
-            const response = await axios.get(`${this.config.url}/status`, {});
+            const response = await axios.get(`${this.config.url}/$/ping`, {});
             if (response.data !== null) {
                 return true;
             }
@@ -229,8 +195,8 @@ class BlazegraphService {
     }
 
     getName() {
-        return 'Blazegraph';
+        return 'Fuseki';
     }
 }
 
-module.exports = BlazegraphService;
+module.exports = FusekiService;
