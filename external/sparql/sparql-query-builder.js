@@ -20,24 +20,6 @@ class SparqlQueryBuilder {
                 }`;
     }
 
-    findNQuadsByUAL(ual) {
-        return `PREFIX schema: <http://schema.org/>
-                CONSTRUCT { ?s ?p ?o }
-                WHERE {
-                    GRAPH ?g { ?s ?p ?o }
-                    {
-                        SELECT ?ng
-                        WHERE {
-                            ?ng schema:hasUALs "${ual}" ;
-                                schema:hasTimestamp ?timestamp .
-                        }
-                        ORDER BY DESC(?timestamp)
-                        LIMIT 1
-                    }
-                    FILTER (?g = ?ng) .
-                }`;
-    }
-
     findAssertionIdsByKeyword(keyword, options, localQuery) {
         return `PREFIX schema: <http://schema.org/>
                 SELECT distinct ?assertionId
