@@ -64,7 +64,7 @@ class FusekiService {
     }
 
     async construct(query) {
-        return new Promise(async (accept, reject) => {
+        return new Promise((accept, reject) => {
             const data = qs.stringify({
                 query,
             });
@@ -84,7 +84,7 @@ class FusekiService {
     }
 
     async ask(query) {
-        return new Promise(async (accept, reject) => {
+        return new Promise((accept, reject) => {
             const data = qs.stringify({
                 query,
             });
