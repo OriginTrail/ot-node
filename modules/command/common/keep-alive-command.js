@@ -29,7 +29,7 @@ class KeepAliveCommand extends Command {
 
         const signalingMessage = {
             nodeVersion: pjson.version,
-            autoUpdate: { enabled: this.config.autoUpdate.enabled },
+            autoUpdate: { enabled: this.config.modules.autoUpdate.enabled },
             telemetry: {
                 enabled: this.config.telemetryHub.enabled,
             },

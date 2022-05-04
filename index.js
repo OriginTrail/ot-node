@@ -2,8 +2,9 @@ require('dotenv').config();
 const fs = require('fs-extra');
 const path = require('path');
 const appRootPath = require('app-root-path');
-const { exec, execSync } = require('child_process');
+const { execSync } = require('child_process');
 const rc = require('rc');
+const semver = require('semver');
 const OTNode = require('./ot-node');
 const pjson = require('./package.json');
 
@@ -34,44 +35,29 @@ config = rc(pjson.name, defaultConfig);
         await node.start();
     } catch (e) {
         console.error(`Error occurred while starting new version, error message: ${e}. ${e.stack}`);
-        if (!config.autoUpdate.enabled) {
+        if (!config.modules.autoUpdate.enabled) {
             console.log('Auto update is disabled. Shutting down the node...');
             process.exit(1);
         }
 
-        const backupCodeDirectory = path.join(config.autoUpdate.backupDirectory, 'auto-update', 'backup');
-        if (fs.ensureDir(backupCodeDirectory)) {
-            console.log('Starting back old version of OT-Node.');
+        const rootPath = path.join(appRootPath.path, '..');
+        const oldVersionsDirs = (await fs.promises.readdir(rootPath, { withFileTypes: true }))
+            .filter((dirent) => dirent.isDirectory())
+            .map((dirent) => dirent.name)
+            .filter((name) => semver.valid(name) && !appRootPath.path.includes(name));
 
-            const destination = appRootPath.path;
-            await fs.ensureDir(destination);
-            await fs.copy(backupCodeDirectory, destination);
-
-            await new Promise((resolve, reject) => {
-                const command = `cd ${destination} && npm install --omit=dev`;
-                const child = exec(command);
-
-                // Wait for results
-                child.stdout.on('end', resolve);
-                child.stdout.on('data', (data) => console.log(`AutoUpdater - npm install --omit=dev: ${data.replace(/\r?\n|\r/g, '')}`));
-                child.stderr.on('data', (data) => {
-                    if (data.toLowerCase().includes('error')) {
-                        // npm passes warnings as errors, only reject if "error" is included
-                        data = data.replace(/\r?\n|\r/g, '');
-                        console.error('AutoUpdater - Error installing dependencies');
-                        console.error(`AutoUpdater - ${data}`);
-                        reject();
-                    } else {
-                        console.log(`AutoUpdater - ${data}`);
-                    }
-                });
-            });
-            execSync(`cd ${destination} && npx sequelize --config=./config/sequelizeConfig.js db:migrate`, { stdio: 'inherit' });
-            process.exit(1);
-        } else {
-            console.error(`Failed to start OT-Node, no backup code available. Error message: ${e.message}`);
+        if (oldVersionsDirs.length === 0) {
+            console.error(
+                `Failed to start OT-Node, no backup code available. Error message: ${e.message}`,
+            );
             process.exit(1);
         }
+
+        const oldVersion = oldVersionsDirs.sort(semver.compare).pop();
+        const oldversionPath = path.join(rootPath, oldVersion);
+        execSync(`ln -sfn ${oldversionPath} ${rootPath}/ot-node`);
+        await fs.promises.rm(appRootPath.path, { force: true, recursive: true });
+        process.exit(1);
     }
 })();
 

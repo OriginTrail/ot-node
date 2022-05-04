@@ -7,7 +7,7 @@ class OtnodeUpdateCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        if (this.config.autoUpdate.enabled) {
+        if (this.config.modules.autoUpdate.enabled) {
             this.updater = ctx.updater;
         }
     }
@@ -17,7 +17,7 @@ class OtnodeUpdateCommand extends Command {
      * @param command
      */
     async execute(command) {
-        if (!this.config.autoUpdate.enabled) {
+        if (!this.config.modules.autoUpdate.enabled) {
             return Command.empty();
         }
         try {

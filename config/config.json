@@ -1,11 +1,14 @@
 {
   "development": {
-    "appDataPath": "data",
-    "autoUpdate": {
-      "enabled": false,
-      "branch": "v6/develop",
-      "backupDirectory": "../backup"
+    "modules": {
+      "autoUpdate": {
+        "enabled": true,
+        "config": {
+          "branch": "v6/develop"
+        }
+      }
     },
+    "appDataPath": "data",
     "blockchain": [
       {
         "blockchainTitle": "Polygon",
@@ -46,12 +49,15 @@
     }
   },
   "test": {
-    "appDataPath": "data",
-    "autoUpdate": {
-      "enabled": false,
-      "branch": "v6/develop",
-      "backupDirectory": "../backup"
+    "modules": {
+      "autoUpdate": {
+        "enabled": true,
+        "config": {
+          "branch": "v6/develop"
+        }
+      }
     },
+    "appDataPath": "data",
     "blockchain": [
       {
         "blockchainTitle": "ganache",
@@ -92,12 +98,15 @@
     }
   },
   "testnet": {
-    "appDataPath": "data",
-    "autoUpdate": {
-      "enabled": true,
-      "branch": "v6/release/testnet",
-      "backupDirectory": "../backup"
+    "modules": {
+      "autoUpdate": {
+        "enabled": true,
+        "config": {
+          "branch": "v6/release/testnet"
+        }
+      }
     },
+    "appDataPath": "data",
     "blockchain": [
       {
         "blockchainTitle": "Polygon",
@@ -142,12 +151,15 @@
     }
   },
   "mainnet": {
-    "appDataPath": "data",
-    "autoUpdate": {
-      "enabled": true,
-      "branch": "v6/release/mainnet",
-      "backupDirectory": "../backup"
+    "modules": {
+      "autoUpdate": {
+        "enabled": true,
+        "config": {
+          "branch": "v6/release/mainnet"
+        }
+      }
     },
+    "appDataPath": "data",
     "blockchain": [],
     "graphDatabase": {
       "implementation": "GraphDB",

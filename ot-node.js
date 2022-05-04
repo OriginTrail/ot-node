@@ -93,20 +93,14 @@ class OTNode {
             if (fs.existsSync(updateFilePath)) {
                 this.config.otNodeUpdated = true;
             }
-            if (!this.config.autoUpdate.enabled) {
+            if (!this.config.modules.autoUpdate.enabled) {
                 return;
             }
 
-            const autoUpdateConfig = {
+            this.updater = new AutoUpdater({
                 logger: this.logger,
-                branch: this.config.autoUpdate.branch,
-                tempLocation: this.config.autoUpdate.backupDirectory,
-                executeOnComplete: `touch ${updateFilePath}`,
-            };
-
-            execSync(`mkdir -p ${this.config.autoUpdate.backupDirectory}`);
-
-            this.updater = new AutoUpdater(autoUpdateConfig);
+                branch: this.config.modules.autoUpdate.branch,
+            });
             await this.updater.initialize();
             DependencyInjection.registerValue(this.container, 'updater', this.updater);
 

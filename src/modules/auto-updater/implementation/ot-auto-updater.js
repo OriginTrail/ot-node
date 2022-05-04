@@ -1,22 +1,17 @@
-
 const path = require('path');
 const fs = require('fs-extra');
-const {spawn, exec} = require('child_process');
+const { exec, execSync } = require('child_process');
 const https = require('https');
 const appRootPath = require('app-root-path');
 const git = require('simple-git');
+const semver = require('semver');
 
-// Subdirectories to use within the configured tempLocation from above. 
-const CLONE_SUBDIRECTORY = '/auto-update/repo/';
-const BACKUP_SUBDIRECTORY = '/auto-update/backup/';
 const REPOSITORY_URL = 'https://github.com/OriginTrail/ot-node';
 
 class OTAutoUpdater {
     /**
      * @param config - Configuration for AutoUpdater
      * @param {String} config.branch - The branch to update from. Defaults to master.
-     * @param {String} config.tempLocation - The local dir to save temporary information for Auto Git Update.
-     * @param {String} config.executeOnComplete - A command to execute after an update completes. Good for restarting the app.
      */
     constructor(config) {
         this.config = config;
@@ -26,8 +21,6 @@ class OTAutoUpdater {
     initialize() {
         if (!this.config) throw new Error('You must pass a config object to AutoUpdater.');
         if (!this.config.branch) this.config.branch = 'master';
-        if (!this.config.tempLocation)
-            throw new Error('You must define a temp location for cloning the repository');
     }
 
     /**
@@ -41,11 +34,11 @@ class OTAutoUpdater {
      */
     async compareVersions() {
         try {
-            this.logger.info('AutoUpdater - Comparing versions...');
+            this.logger.debug('AutoUpdater - Comparing versions...');
             const currentVersion = this.readAppVersion(appRootPath.path);
             const remoteVersion = await this.readRemoteVersion();
-            this.logger.info(`AutoUpdater - Current version: ${currentVersion}`);
-            this.logger.info(`AutoUpdater - Remote Version: ${remoteVersion}`);
+            this.logger.debug(`AutoUpdater - Current version: ${currentVersion}`);
+            this.logger.debug(`AutoUpdater - Remote Version: ${remoteVersion}`);
             if (currentVersion === remoteVersion) {
                 return {
                     upToDate: true,
@@ -76,40 +69,23 @@ class OTAutoUpdater {
      */
     async update() {
         try {
-            this.logger.info(`AutoUpdater - Updating ot-node from ${REPOSITORY_URL}`);
-            const currentDirectory = path.join(
-                appRootPath.path,
-                '..',
-                'ot-node',
-            );
-            await this.downloadUpdate();
-            await this.backup();
-            const updateDirectory = await this.installUpdate();
+            this.logger.debug(`AutoUpdater - Updating ot-node from ${REPOSITORY_URL}`);
+            const rootPath = path.join(appRootPath.path, '..');
+            const currentDirectory = path.join(rootPath, 'ot-node');
+            const currentVersion = this.readAppVersion(appRootPath.path);
+            const newVersion = await this.readRemoteVersion();
+            const updateDirectory = path.join(rootPath, newVersion);
+            await this.downloadUpdate(updateDirectory);
+            await this.copyConfigFiles(updateDirectory);
             await this.installDependencies(updateDirectory);
 
-            // rename current working directory to avoid issues when creating new link
-            const tmpDirectory = path.join(appRootPath.path, '..', 'tmp');
-            await fs.rename(currentDirectory, tmpDirectory);
+            execSync(`ln -sfn ${updateDirectory} ${currentDirectory}`);
 
-            // link to update directory
-            await fs.ensureSymlink(updateDirectory, currentDirectory);
+            this.logger.debug('AutoUpdater - Finished installing updated version.');
 
-            this.logger.info('AutoUpdater - Finished installing updated version.');
-            
-            // delete old versions
-            const executeOnComplete = [
-                this.promiseBlindExecute(`rm -rf ${tmpDirectory}`),
-            ];
-            if(appRootPath.path !== currentDirectory) {
-                executeOnComplete.push(this.promiseBlindExecute(`rm -rf ${appRootPath.path}`))
-            }
-            
-            // execute on complete if defined
-            if (this.config.executeOnComplete) {
-                executeOnComplete.push(this.promiseBlindExecute(this.config.executeOnComplete));
-            }
-
-            await Promise.all(executeOnComplete);
+            await this.removeOldVersions(currentVersion, newVersion);
+            const updatedFilePath = path.join(rootPath, 'UPDATED');
+            await fs.promises.writeFile(updatedFilePath, '');
             process.exit(1);
         } catch (e) {
             this.logger.error(
@@ -118,22 +94,36 @@ class OTAutoUpdater {
         }
     }
 
+    async removeOldVersions(currentVersion, newVersion) {
+        try {
+            const rootPath = path.join(appRootPath.path, '..');
+
+            const oldVersionsDirs = (await fs.promises.readdir(rootPath, { withFileTypes: true }))
+                .filter((dirent) => dirent.isDirectory())
+                .map((dirent) => dirent.name)
+                .filter(
+                    (name) => semver.valid(name) && name !== newVersion && name !== currentVersion,
+                );
+            const deletePromises = oldVersionsDirs
+                .map((dirName) => path.join(rootPath, dirName))
+                .map((fullPath) => fs.promises.rm(fullPath, { recursive: true, force: true }));
+
+            await Promise.all(deletePromises);
+        } catch (e) {
+            throw Error('AutoUpdater - There was an error removing old versions');
+        }
+    }
+
     /**
-     * Copy the files to the new app directory
-     * The update is installed from the configured tempLocation.
+     * Copies user config files to destination directory
      */
-    async installUpdate() {
-        let source = path.join(this.config.tempLocation, CLONE_SUBDIRECTORY);
-        const newVersion = await this.readAppVersion(source);
-        const destination = path.join(appRootPath.path, '..', newVersion);
-        this.logger.info('AutoUpdater - Installing update...');
-        this.logger.info(`AutoUpdater - Source: ${source}`);
-        this.logger.info(`AutoUpdater - Destination: ${destination}`);
-        // copy new files
+    async copyConfigFiles(destination) {
+        this.logger.debug('AutoUpdater - Copying config files...');
+        this.logger.debug(`AutoUpdater - Destination: ${destination}`);
+
         await fs.ensureDir(destination);
-        await fs.copy(source, destination);
         // copy .origintrail_noderc file
-        source = path.join(appRootPath.path, '.origintrail_noderc');
+        let source = path.join(appRootPath.path, '.origintrail_noderc');
         await fs.copy(source, path.join(destination, '.origintrail_noderc'));
         // copy .env file
         source = path.join(appRootPath.path, '.env');
@@ -147,7 +137,7 @@ class OTAutoUpdater {
      */
     readAppVersion(appPath) {
         const file = path.join(appPath, 'package.json');
-        this.logger.info(`AutoUpdater - Reading app version from ${file}`);
+        this.logger.debug(`AutoUpdater - Reading app version from ${file}`);
         const appPackage = fs.readFileSync(file);
         return JSON.parse(appPackage).version;
     }
@@ -166,12 +156,12 @@ class OTAutoUpdater {
                 });
                 res.on('end', () => {
                     if (res.statusCode === 200) return resolve(body);
-                    this.logger.info(`AutoUpdater - Bad Response ${res.statusCode}`);
+                    this.logger.warn(`AutoUpdater - Bad Response ${res.statusCode}`);
                     reject(res.statusCode);
                 });
             });
-            this.logger.info(`AutoUpdater - Sending request to ${url}`);
-            this.logger.info(`AutoUpdater - Options: ${JSON.stringify(options)}`);
+            this.logger.debug(`AutoUpdater - Sending request to ${url}`);
+            this.logger.debug(`AutoUpdater - Options: ${JSON.stringify(options)}`);
             req.on('error', reject);
             req.end();
         });
@@ -184,7 +174,7 @@ class OTAutoUpdater {
         const options = {};
         let url = `${REPOSITORY_URL}/${this.config.branch}/package.json`;
         if (url.includes('github')) url = url.replace('github.com', 'raw.githubusercontent.com');
-        this.logger.info(`AutoUpdater - Reading remote version from ${url}`);
+        this.logger.debug(`AutoUpdater - Reading remote version from ${url}`);
 
         try {
             const body = await this.promiseHttpsRequest(url, options);
@@ -213,28 +203,10 @@ class OTAutoUpdater {
         });
     }
 
-    /**
-     * A promise wrapper for the child-process spawn function. Does not listen for results.
-     * @param {String} command - The command to execute.
-     */
-    promiseBlindExecute(command) {
-        return new Promise((resolve) => {
-            spawn(command, [], { shell: true, detached: true });
-            setTimeout(resolve, 1000);
-        });
-    }
-
-    async backup() {
-        const destination = path.join(this.config.tempLocation, BACKUP_SUBDIRECTORY);
-        this.logger.info(`AutoUpdater - Backing up app to ${destination}`);
-        await fs.ensureDir(destination);
-        await fs.copy(appRootPath.path, destination, { dereference: true });
-    }
-
     async downloadUpdate() {
-        const destination = path.join(this.config.tempLocation, CLONE_SUBDIRECTORY);
-        this.logger.info(`AutoUpdater - Cloning ${REPOSITORY_URL}`);
-        this.logger.info(`AutoUpdater - Destination: ${destination}`);
+        const destination = path.join(appRootPath, '..');
+        this.logger.debug(`AutoUpdater - Cloning ${REPOSITORY_URL}`);
+        this.logger.debug(`AutoUpdater - Destination: ${destination}`);
         await fs.ensureDir(destination);
         await fs.emptyDir(destination);
         await this.promiseClone(REPOSITORY_URL, destination, this.config.branch);
@@ -245,13 +217,15 @@ class OTAutoUpdater {
      */
     installDependencies(destination) {
         return new Promise((resolve, reject) => {
-            this.logger.info(`AutoUpdater - Installing application dependencies in ${destination}`);
+            this.logger.debug(
+                `AutoUpdater - Installing application dependencies in ${destination}`,
+            );
 
             const command = `cd ${destination} && npm install --omit=dev`;
             const child = exec(command);
 
             child.stdout.on('data', (data) =>
-                this.logger.info(
+                this.logger.debug(
                     `AutoUpdater - npm install --omit=dev: ${data.replace(/\r?\n|\r/g, '')}`,
                 ),
             );
@@ -271,7 +245,7 @@ class OTAutoUpdater {
             child.stdout.on('end', () => {
                 resultData = resultData.split('\n');
                 resultData = resultData.filter((x) => x !== '');
-                for(const data of resultData) {
+                for (const data of resultData) {
                     this.logger.warn(`AutoUpdater - ${data}`);
                 }
                 resolve();
