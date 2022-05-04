@@ -9,6 +9,7 @@ const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
+const M1FolderStructureInitialMigration = require('./modules/migration/m1-folder-structure-initial-migration');
 
 let updateFilePath;
 
@@ -19,6 +20,8 @@ class OTNode {
     }
 
     async start() {
+        await this.runFolderStructureInitialMigration();
+
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
         this.logger.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
@@ -44,6 +47,14 @@ class OTNode {
         // await this.initializeWatchdog();
     }
 
+    async runFolderStructureInitialMigration() {
+        const m1FolderStructureInitialMigration = new M1FolderStructureInitialMigration(
+            this.logger,
+            this.config,
+        );
+        return m1FolderStructureInitialMigration.run();
+    }
+
     initializeConfiguration(userConfig) {
         const defaultConfig = JSON.parse(JSON.stringify(configjson[process.env.NODE_ENV]));
 
@@ -56,10 +67,12 @@ class OTNode {
             // set default user configuration filename
             this.config.configFilename = '.origintrail_noderc';
         }
-        if (!this.config.blockchain[0].hubContractAddress
-            && this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId) {
-            this.config.blockchain[0].hubContractAddress = configjson[process.env.NODE_ENV]
-                .blockchain[0].hubContractAddress;
+        if (
+            !this.config.blockchain[0].hubContractAddress &&
+            this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId
+        ) {
+            this.config.blockchain[0].hubContractAddress =
+                configjson[process.env.NODE_ENV].blockchain[0].hubContractAddress;
         }
     }
 
@@ -124,14 +137,14 @@ class OTNode {
             this.logger.info('Operational database module: sequelize implementation');
             // eslint-disable-next-line global-require
             const db = require('./models');
-            
-            if(this.config.otNodeUpdated) {
+
+            if (this.config.otNodeUpdated) {
                 execSync('npx sequelize --config=./config/sequelizeConfig.js db:migrate');
                 const fileService = this.container.resolve('fileService');
-                await  fileService.removeFile(updateFilePath);
+                await fileService.removeFile(updateFilePath);
                 this.config.otNodeUpdated = false;
             }
-            
+
             await db.sequelize.sync();
         } catch (e) {
             this.logger.error({
@@ -147,8 +160,10 @@ class OTNode {
             const result = await networkService.initialize();
 
             this.config.network.peerId = result.peerId;
-            if (!this.config.network.privateKey
-                && (this.config.network.privateKey !== result.privateKey)) {
+            if (
+                !this.config.network.privateKey &&
+                this.config.network.privateKey !== result.privateKey
+            ) {
                 this.config.network.privateKey = result.privateKey;
                 if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
                     this.savePrivateKeyInUserConfigurationFile(result.privateKey);
@@ -224,10 +239,14 @@ class OTNode {
         try {
             const telemetryHubModuleManager = this.container.resolve('telemetryHubModuleManager');
             if (telemetryHubModuleManager.initialize(this.config.telemetryHub, this.logger)) {
-                this.logger.info(`Telemetry hub module initialized successfully, using ${telemetryHubModuleManager.config.telemetryHub.packages} package(s)`);
+                this.logger.info(
+                    `Telemetry hub module initialized successfully, using ${telemetryHubModuleManager.config.telemetryHub.packages} package(s)`,
+                );
             }
         } catch (e) {
-            this.logger.error(`Telemetry hub module initialization failed. Error message: ${e.message}`);
+            this.logger.error(
+                `Telemetry hub module initialization failed. Error message: ${e.message}`,
+            );
         }
     }
 
