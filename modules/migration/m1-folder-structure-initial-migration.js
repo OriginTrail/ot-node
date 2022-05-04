@@ -15,7 +15,6 @@ class M1FolderStructureInitialMigration extends BaseMigration {
         if (await this.migrationAlreadyExecuted()) {
             return;
         }
-        this.logger.info('Starting M1 Folder structure initial migration.');
         if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
             const currentAppRootPath = appRootPath.path;
             const folderStat = await fs.lstat(currentAppRootPath);
@@ -24,7 +23,6 @@ class M1FolderStructureInitialMigration extends BaseMigration {
                     'Symbolic link already created for ot-node, migration will be skipped.',
                 );
                 await this.finalizeMigration();
-                this.logger.info('M1 Folder structure migration completed successfully.');
                 return;
             }
             const newAppRootPath = path.join(currentAppRootPath, '..', pjson.version);
@@ -32,7 +30,6 @@ class M1FolderStructureInitialMigration extends BaseMigration {
             await fs.rename(currentAppRootPath, newAppRootPath);
             await fs.ensureSymlink(newAppRootPath, currentAppRootPath);
             await this.finalizeMigration();
-            this.logger.info('M1 Folder structure migration completed successfully.');
         } else {
             this.logger.info(
                 'Folder structure initial migration not executed for env: ',

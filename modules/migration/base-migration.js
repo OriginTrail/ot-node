@@ -32,7 +32,12 @@ class BaseMigration {
             MIGRATION_FOLDER_NAME,
             this.migrationName,
         );
-        return fs.exists(migrationFilePath);
+        if (await fs.exists(migrationFilePath)) {
+            return true;
+        }
+        this.logger.info(`Starting ${this.migrationName} migration.`);
+        this.startedTimestamp = Date.now();
+        return false;
     }
 
     async finalizeMigration() {
@@ -45,6 +50,11 @@ class BaseMigration {
         await fs.ensureDir(migrationFolderPath);
         const migrationFilePath = path.join(migrationFolderPath, this.migrationName);
         await fs.writeFile(migrationFilePath, 'MIGRATED');
+        this.logger.info(
+            `${this.migrationName} migration completed. Lasted: ${
+                this.startedTimestamp - Date.now()
+            } millisecond(s).`,
+        );
     }
 }
 
