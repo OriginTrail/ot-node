@@ -8,7 +8,7 @@ const constants = require('../modules/constants');
 class Web3BlockchainService {
     constructor(config) {
         this.config = config;
-        this.gasStationLink = 'https://gasstation-mumbai.matic.today/';
+        this.gasStationLink = 'https://gasstation-mumbai.matic.today/v2';
     }
 
     initialize(logger) {
@@ -30,15 +30,15 @@ class Web3BlockchainService {
             this.logger.warn(err);
             return undefined;
         });
-        if (response) {
-            return response.data.standard * 1e9;
+        try {
+            return Math.round(response.data.standard.maxFee * 1e9);
+        } catch(e) {
+            return undefined;
         }
-        return undefined;
     }
 
     async executeContractMethod(contractInstance, method, args) {
-        let gasPrice = await this.getGasStationPrice();
-        gasPrice = Math.round(gasPrice);
+        const gasPrice = await this.getGasStationPrice();
 
         const gasLimit = await contractInstance.methods[method](...args).estimateGas({
             from: this.config.publicKey,
@@ -49,8 +49,8 @@ class Web3BlockchainService {
             from: this.config.publicKey,
             to: contractInstance.options.address,
             data: encodedABI,
-            gasPrice,
-            gas: gasLimit,
+            gasPrice: gasPrice || this.web3.utils.toWei('20', 'Gwei'),
+            gas: gasLimit || this.web3.utils.toWei('900', 'Kwei'),
         };
 
         const createdTransaction = await this.web3.eth.accounts.signTransaction(
@@ -58,7 +58,7 @@ class Web3BlockchainService {
             this.config.privateKey,
         );
         const result = await this.web3.eth.sendSignedTransaction(createdTransaction.rawTransaction);
-        return result
+        return result;
     }
 
     async createAssertionRecord(stateCommitHash, rootHash, issuer) {
@@ -80,7 +80,12 @@ class Web3BlockchainService {
         const contractInstance = new this.web3.eth.Contract(UAIRegistry, contractAddress);
 
         const result = await this.executeContractMethod(contractInstance, 'registerAsset', [
-            `0x${uai}`, 0, `0x${uai}`, `0x${stateCommitHash}`, `0x${rootHash}`, 1
+            `0x${uai}`,
+            0,
+            `0x${uai}`,
+            `0x${stateCommitHash}`,
+            `0x${rootHash}`,
+            1,
         ]);
         return { transactionHash: result.transactionHash, blockchain: this.config.networkId };
     }
@@ -90,7 +95,9 @@ class Web3BlockchainService {
         const contractInstance = new this.web3.eth.Contract(UAIRegistry, contractAddress);
 
         const result = await this.executeContractMethod(contractInstance, 'updateAssetState', [
-            `0x${UAI}`, `0x${newStateCommitHash}`, `0x${rootHash}`
+            `0x${UAI}`,
+            `0x${newStateCommitHash}`,
+            `0x${rootHash}`,
         ]);
         return { transactionHash: result.transactionHash, blockchain: this.config.networkId };
     }
