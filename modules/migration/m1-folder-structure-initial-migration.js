@@ -16,7 +16,7 @@ class M1FolderStructureInitialMigration extends BaseMigration {
             return;
         }
         this.logger.info('Starting M1 Folder structure initial migration.');
-        if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'mainnet') {
+        if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
             const currentAppRootPath = appRootPath.path;
             const folderStat = await fs.lstat(currentAppRootPath);
             if (folderStat.isSymbolicLink()) {
