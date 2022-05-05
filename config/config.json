@@ -51,7 +51,7 @@
         "modules": {
             "autoUpdater": {
                 "enabled": true,
-                "packages": ["./implementation/ot-auto-updater"],
+                "packages": ["./auto-updater/implementation/ot-auto-updater"],
                 "config": {
                     "branch": "v6/develop"
                 }
@@ -99,9 +99,9 @@
         "modules": {
             "autoUpdater": {
                 "enabled": true,
-                "packages": ["./implementation/ot-auto-updater"],
+                "packages": ["./auto-updater/implementation/ot-auto-updater"],
                 "config": {
-                    "branch": "v6/release/testnet"
+                    "branch": "v6/develop"
                 }
             },
             "httpClient": {
@@ -153,9 +153,9 @@
         "modules": {
             "autoUpdater": {
                 "enabled": true,
-                "packages": ["./implementation/ot-auto-updater"],
+                "packages": ["./auto-updater/implementation/ot-auto-updater"],
                 "config": {
-                    "branch": "v6/release/mainnet"
+                    "branch": "v6/develop"
                 }
             },
             "httpClient": {
