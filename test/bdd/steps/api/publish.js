@@ -30,7 +30,7 @@ Given('I wait for last publish to finalize', { timeout: 120000 }, async function
     const publishData = this.state.lastPublishData;
     let loopForPublishResult = true;
     let retryCount = 0;
-    const maxRetryCount = 2;
+    const maxRetryCount = 5;
     while (loopForPublishResult) {
         this.logger.log(`Getting publish result for handler id: ${publishData.handlerId} on node: ${publishData.nodeId}`);
         // eslint-disable-next-line no-await-in-loop
