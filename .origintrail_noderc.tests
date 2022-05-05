@@ -1,4 +1,27 @@
 {
-"network": {
-}
+  "blockchain":[
+    {
+      "blockchainTitle": "Polygon",
+      "networkId": "polygon::testnet",
+      "rpcEndpoints": ["https://rpc-mumbai.maticvigil.com/"],
+      "publicKey": "...",
+      "privateKey": "..."
+    }
+  ],
+   "graphDatabase": {
+     "username": "admin",
+     "password": "",
+     "implementation": "Blazegraph",
+     "url": "http://localhost:9999/blazegraph",
+     "sparqlEndpoint": "http://localhost:9999/blazegraph/namespace/kb/sparql",
+     "sparqlEndpointUpdate": "http://localhost:9999/blazegraph/namespace/kb/sparql"
+   },
+  "logLevel": "trace",
+  "rpcPort": 8900,
+  "network": {
+  },
+  "ipWhitelist": [
+  "::1",
+    "127.0.0.1"
+  ]
 }
