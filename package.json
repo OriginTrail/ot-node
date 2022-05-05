@@ -107,7 +107,7 @@
     "semver": "^7.3.5",
     "sequelize": "^6.9.0",
     "sequelize-cli": "^6.3.0",
-    "simple-git": "^3.6.0",
+    "simple-git": "^3.5.0",
     "sleep-async": "^1.0.5",
     "split": "^1.0.1",
     "streaming-iterables": "^6.0.0",
