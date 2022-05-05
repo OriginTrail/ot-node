@@ -1,4 +1,26 @@
 {
-"network": {
-}
+  "blockchain":[
+    {
+      "blockchainTitle": "Polygon",
+      "networkId": "polygon::testnet",
+      "rpcEndpoints": ["https://rpc-mumbai.maticvigil.com/"],
+      "publicKey": "...",
+      "privateKey": "..."
+    }
+  ],
+   "graphDatabase": {
+     "name": "node0",
+     "username": "admin",
+     "password": "",
+     "implementation": "GraphDB",
+     "url": "http://localhost:7200/"
+   },
+  "logLevel": "trace",
+  "rpcPort": 8900,
+  "network": {
+  },
+  "ipWhitelist": [
+  "::1",
+    "127.0.0.1"
+  ]
 }

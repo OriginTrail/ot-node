@@ -33,28 +33,22 @@ class DataService {
     }
 
     async initialize() {
-        if (
-            this.config.graphDatabase.implementation
-            === constants.TRIPLE_STORE_IMPLEMENTATION.BLAZEGRAPH
-        ) {
-            this.implementation = new Blazegraph({
-                url: this.config.graphDatabase.url,
-            });
-        } else if(
-            this.config.graphDatabase.implementation
-            === constants.TRIPLE_STORE_IMPLEMENTATION.GRAPHDB
-        ) {
-            this.implementation = new GraphDB({
-                repositoryName: this.config.graphDatabase.name,
-                username: this.config.graphDatabase.username,
-                password: this.config.graphDatabase.password,
-                url: this.config.graphDatabase.url,
-            });
-        } else {
-            this.implementation = new Fuseki({
-                repositoryName: this.config.graphDatabase.name,
-                url: this.config.graphDatabase.url,
-            });
+        const config = {
+            name: this.config.graphDatabase.name,
+            url: this.config.graphDatabase.url,
+        };
+        switch (this.config.graphDatabase.implementation) {
+            case constants.TRIPLE_STORE_IMPLEMENTATION.BLAZEGRAPH:
+                this.implementation = new Blazegraph(config);
+                break;
+            case constants.TRIPLE_STORE_IMPLEMENTATION.GRAPHDB:
+                this.implementation = new GraphDB(config);
+                break;
+            case constants.TRIPLE_STORE_IMPLEMENTATION.FUSEKI:
+                this.implementation = new Fuseki(config);
+                break;
+            default:
+                throw Error('Unknown graph database implementation')
         }
 
         let ready = await this.healthCheck();
@@ -165,9 +159,9 @@ class DataService {
             const assertions = await this.tripleStoreQueue.push({ operation: 'assertionsByAsset', id });
 
             return assertions.map((x) => ({
-                id: x.assertionId.value.slice(8),
-                issuer: x.issuer.value,
-                timestamp: x.timestamp.value,
+                id: x.assertionId.slice(8),
+                issuer: x.issuer,
+                timestamp: x.timestamp,
             }));
         } catch (e) {
             this.handleUnavailableTripleStoreError(e);
@@ -292,9 +286,9 @@ class DataService {
             if (!assertions) return null;
             const result = [];
             for (let assertion of assertions) {
-                assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
+                assertion.assertionId = assertion.assertionId.replace(`${constants.DID_PREFIX}:`, '');
                 const { assertionId } = assertion;
-                const { value: assetId } = assertion.assetId;
+                const assetId = JSON.parse(assertion.assetId)
 
                 const {
                     assertionId: assertionIdBlockchain,
@@ -368,8 +362,7 @@ class DataService {
 
             const result = [];
             for (let assertion of assertions) {
-                const assertionId = assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
-
+                const assertionId = assertion.assertionId = assertion.assertionId.replace(`${constants.DID_PREFIX}:`, '');
                 const nquads = await this.resolve(assertion.assertionId, localQuery, true);
                 if (!nquads) {
                     continue;
