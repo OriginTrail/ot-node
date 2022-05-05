@@ -12,20 +12,6 @@ class QueryService {
     }
 
     async resolve(id, load, isAssetRequested, node, operationId) {
-        const resolvePromise = new Promise(async (resolve, reject) => {
-            const timer = setTimeout(() => {
-                resolve(null);
-            }, constants.RESOLVE_MAX_TIME_MILLIS);
-
-            const result = await this.networkService.sendMessage(
-                constants.NETWORK_PROTOCOLS.RESOLVE,
-                id,
-                node,
-            );
-            clearTimeout(timer);
-            resolve(result);
-        });
-
         this.logger.emit({
             msg: 'Started measuring execution of resolve fetch from nodes',
             Event_name: 'resolve_fetch_from_nodes_start',
@@ -33,7 +19,12 @@ class QueryService {
             Id_operation: operationId,
         });
 
-        const result = await resolvePromise;
+        const result = await this.networkService.sendMessage(
+            constants.NETWORK_PROTOCOLS.RESOLVE,
+            id,
+            node,
+            { timeout: constants.RESOLVE_MAX_TIME_MILLIS },
+        );
 
         this.logger.emit({
             msg: 'Finished measuring execution of resolve fetch from nodes',
