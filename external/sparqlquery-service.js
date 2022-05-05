@@ -1,6 +1,5 @@
-
-const constants = require('../modules/constants');
 const Engine = require('@comunica/query-sparql').QueryEngine;
+const constants = require('../modules/constants');
 
 class SparqlqueryService {
     constructor(config) {
@@ -17,16 +16,23 @@ class SparqlqueryService {
             TYPES: 'types',
             ISSUERS: 'issuers',
         };
-        this.context = {
-            sources: [{
+        const sources = [
+            {
                 type: 'sparql',
                 value: `${this.config.sparqlEndpoint}`,
-            }],
-            baseIRI: 'http://schema.org/',
+            },
+        ];
+
+        this.insertContext = {
+            sources,
             destination: {
                 type: 'sparql',
                 value: `${this.config.sparqlEndpointUpdate}`,
             },
+            log: this.logger,
+        };
+        this.queryContext = {
+            sources,
             log: this.logger,
         };
     }
@@ -38,11 +44,10 @@ class SparqlqueryService {
                                   PREFIX schema: <http://schema.org/> 
                                   INSERT DATA
                                   { GRAPH <${rootHash}> 
-                                  { ${triples}  
-                                  } 
+                                    { ${triples} } 
                                   }`;
         if (!exists) {
-            await this.queryEngine.queryVoid(insertion, this.context);
+            await this.queryEngine.queryVoid(insertion, this.insertContext);
             return true;
         }
     }
@@ -53,12 +58,21 @@ class SparqlqueryService {
     }
 
     async ask(query) {
-        const result = await this.queryEngine.queryBoolean(query, this.context);
+        const result = await this.queryEngine.queryBoolean(query, this.queryContext);
         return result;
     }
 
     async resolve(uri) {
-        this.logger.info('to be implemented by subclass');
+        const escapedUri = this.cleanEscapeCharacter(uri);
+        const query = `PREFIX schema: <http://schema.org/>
+                        CONSTRUCT { ?s ?p ?o }
+                        WHERE {
+                          GRAPH <${constants.DID_PREFIX}:${escapedUri}> {
+                            ?s ?p ?o
+                          }
+                        }`;
+        const nquads = await this.construct(query);
+        return nquads;
     }
 
     async assertionsByAsset(uri) {
@@ -83,9 +97,7 @@ class SparqlqueryService {
                             }
                        }`;
         let graph = await this.execute(query);
-        graph = graph.map((x) => x.get('g')
-            .value
-            .replace(`${constants.DID_PREFIX}:`, ''));
+        graph = graph.map((x) => x.g.replace(`${constants.DID_PREFIX}:`, ''));
         if (graph.length && graph[0] === 'http://www.bigdata.com/rdf#nullGraph') {
             return [];
         }
@@ -93,19 +105,23 @@ class SparqlqueryService {
     }
 
     async findAssertionsByKeyword(query, options, localQuery) {
-        if (options.prefix && !(typeof options.prefix === 'boolean')) {
+        if (options.prefix && !this.isBoolean(options.prefix)) {
             this.logger.error(`Failed FindassertionsByKeyword: ${options.prefix} is not a boolean`);
             throw new Error('Prefix is not an boolean');
         }
-        if (localQuery && !(typeof localQuery === 'boolean')) {
+        if (localQuery && !this.isBoolean(localQuery)) {
             this.logger.error(`Failed FindassertionsByKeyword: ${localQuery} is not a boolean`);
             throw new Error('Localquery is not an boolean');
         }
         let limitQuery = '';
         limitQuery = this.createLimitQuery(options);
 
-        const publicVisibilityQuery = !localQuery ? ' ?assertionId schema:hasVisibility "public" .' : '';
-        const filterQuery = options.prefix ? this.createFilterParameter(query, this.filtertype.KEYWORDPREFIX) : this.createFilterParameter(query, this.filtertype.KEYWORD);
+        const publicVisibilityQuery = !localQuery
+            ? ' ?assertionId schema:hasVisibility "public" .'
+            : '';
+        const filterQuery = options.prefix
+            ? this.createFilterParameter(query, this.filtertype.KEYWORDPREFIX)
+            : this.createFilterParameter(query, this.filtertype.KEYWORD);
 
         const sparqlQuery = `PREFIX schema: <http://schema.org/>
                             SELECT distinct ?assertionId
@@ -121,21 +137,27 @@ class SparqlqueryService {
     }
 
     async findAssetsByKeyword(query, options, localQuery) {
-        if (options.prefix && !(typeof options.prefix === 'boolean')) {
+        if (options.prefix && !this.isBoolean(options.prefix)) {
             this.logger.error(`Failed FindAssetsByKeyword: ${options.prefix} is not a boolean`);
             //      throw new Error('Prefix is not an boolean');
         }
-        if (localQuery && !(typeof localQuery === 'boolean')) {
+        if (localQuery && !this.isBoolean(localQuery)) {
             this.logger.error(`Failed FindAssetsByKeyword: ${localQuery} is not a boolean`);
             throw new Error('Localquery is not an boolean');
         }
-        query = this.cleanEscapeCharacter(query);
+        const escapedQuery = this.cleanEscapeCharacter(query);
         const limitQuery = this.createLimitQuery(options);
 
-        const publicVisibilityQuery = !localQuery ? 'schema:hasVisibility "public" :' : '';
-        const filterQuery = options.prefix ? this.createFilterParameter(query, this.filtertype.KEYWORDPREFIX) : this.createFilterParameter(query, this.filtertype.KEYWORD);
-        const issuerFilter = options.issuers ? this.createFilterParameter(options.issuers, this.filtertype.ISSUERS) : '';
-        const typesFilter = options.types ? this.createFilterParameter(options.types, this.filtertype.TYPES) : '';
+        const publicVisibilityQuery = !localQuery ? 'schema:hasVisibility "public" ;' : '';
+        const filterQuery = options.prefix
+            ? this.createFilterParameter(escapedQuery, this.filtertype.KEYWORDPREFIX)
+            : this.createFilterParameter(escapedQuery, this.filtertype.KEYWORD);
+        const issuerFilter = options.issuers
+            ? this.createFilterParameter(options.issuers, this.filtertype.ISSUERS)
+            : '';
+        const typesFilter = options.types
+            ? this.createFilterParameter(options.types, this.filtertype.TYPES)
+            : '';
 
         const sparqlQuery = `PREFIX schema: <http://schema.org/>
                             SELECT ?assertionId ?assetId
@@ -150,10 +172,10 @@ class SparqlqueryService {
                                                          schema:hasIssuer ?issuer ;
                                                          schema:hasType ?type ;
                                                          schema:hasTimestamp ?timestamp ;
-                                                         schema:hasUALs ?assetId .
-                                ${filterQuery}
-                                ${issuerFilter}
-                                ${typesFilter}
+                                                         schema:hasUALs ?assetId
+                                            ${filterQuery}
+                                            ${issuerFilter}
+                                            ${typesFilter}
                                         }
                                         GROUP BY ?assetId
                                         ${limitQuery}
@@ -168,13 +190,27 @@ class SparqlqueryService {
     }
 
     async executeQuery(query) {
-        const test = await this.queryEngine.queryQuads(query, this.context);
-        return test.toArray();
+        const result = await this.queryEngine.query(query, this.queryContext);
+        const { data } = await this.queryEngine.resultToString(
+            result,
+            'application/n-quads',
+            this.queryContext,
+        );
+        let nquads = '';
+        for await (const nquad of data) {
+            nquads += nquad;
+        }
+        return nquads;
     }
 
     async execute(query) {
-        const test = await this.queryEngine.queryBindings(query, this.context);
-        return test.toArray();
+        const result = await this.queryEngine.query(query, this.queryContext);
+        const { data } = await this.queryEngine.resultToString(result);
+        let response = '';
+        for await (const chunk of data) {
+            response += chunk;
+        }
+        return JSON.parse(response);
     }
 
     cleanEscapeCharacter(query) {
@@ -182,21 +218,19 @@ class SparqlqueryService {
     }
 
     createFilterParameter(queryParameter, type) {
-        queryParameter = this.cleanEscapeCharacter(queryParameter);
+        const queryParam = this.cleanEscapeCharacter(queryParameter);
 
         switch (type) {
-        case this.filtertype.KEYWORD:
-            return `FILTER (lcase(?keyword) = '${queryParameter}')`;
-        case this.filtertype.KEYWORDPREFIX:
-            return `FILTER contains(lcase(?keyword),'${queryParameter}')`;
-        case this.filtertype.ISSUERS:
-            return `FILTER (?issuer IN (${JSON.stringify(queryParameter)
-                .slice(1, -1)}))`;
-        case this.filtertype.TYPES:
-            return `FILTER (?type IN (${JSON.stringify(queryParameter)
-                .slice(1, -1)}))`;
-        default:
-            return '';
+            case this.filtertype.KEYWORD:
+                return `FILTER (lcase(?keyword) = '${queryParam}')`;
+            case this.filtertype.KEYWORDPREFIX:
+                return `FILTER contains(lcase(?keyword),'${queryParam}')`;
+            case this.filtertype.ISSUERS:
+                return `FILTER (?issuer IN (${JSON.stringify(queryParam).slice(1, -1)}))`;
+            case this.filtertype.TYPES:
+                return `FILTER (?type IN (${JSON.stringify(queryParam).slice(1, -1)}))`;
+            default:
+                return '';
         }
     }
 
@@ -213,6 +247,10 @@ class SparqlqueryService {
             throw new Error('Limit is not a number');
         }
         return `LIMIT ${queryLimit}`;
+    }
+
+    isBoolean(param) {
+        return typeof param === 'boolean' || ['true', 'false'].includes(param);
     }
 }
 

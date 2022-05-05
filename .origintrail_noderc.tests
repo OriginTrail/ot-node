@@ -9,12 +9,11 @@
     }
   ],
    "graphDatabase": {
+     "name": "node0",
      "username": "admin",
      "password": "",
-     "implementation": "Blazegraph",
-     "url": "http://localhost:9999/blazegraph",
-     "sparqlEndpoint": "http://localhost:9999/blazegraph/namespace/kb/sparql",
-     "sparqlEndpointUpdate": "http://localhost:9999/blazegraph/namespace/kb/sparql"
+     "implementation": "GraphDB",
+     "url": "http://localhost:7200/"
    },
   "logLevel": "trace",
   "rpcPort": 8900,

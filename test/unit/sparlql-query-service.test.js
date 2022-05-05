@@ -1,3 +1,6 @@
+const Blazegraph = require('../../external/blazegraph-service')
+const GraphDB = require('../../external/graphdb-service');
+const Fuseki = require('../../external/fuseki-service');
 const {
     describe,
     it,
@@ -14,6 +17,7 @@ const {
 const Sparql = require('../../external/sparqlquery-service');
 const Logger = require('../../modules/logger/logger');
 const fs = require('fs');
+const GraphdbService = require('../../external/graphdb-service');
 
 let sparqlService = null;
 let logger = null;
@@ -36,12 +40,24 @@ describe('Sparql module', () => {
     });
     before('Init Sparql Module', async () => {
         const configFile = JSON.parse(fs.readFileSync('.origintrail_noderc.tests'));
-        let config = configFile.graphDatabase;
-        assert.isNotNull(config.sparqlEndpoint);
-        assert.isNotEmpty(config.sparqlEndpoint);
-        assert.isNotNull(config.sparqlEndpointUpdate);
-        assert.isNotEmpty(config.sparqlEndpointUpdate);
-        sparqlService = new Sparql(config);
+        const config = configFile.graphDatabase;
+        assert.isNotNull(config.url);
+        assert.isNotEmpty(config.url);
+        assert.isNotNull(config.name);
+        assert.isNotEmpty(config.name);
+        switch (config.implementation) {
+            case 'Blazegraph':
+                sparqlService = new Blazegraph(config);
+                break;
+            case 'GraphDB':
+                sparqlService = new GraphDB(config);
+                break;
+            case 'Fuseki':
+                sparqlService = new Fuseki(config);
+                break;
+            default:
+                throw Error('Unknown graph database implementation')
+        }
         await sparqlService.initialize(logger);
     });
     it('Check for cleanup', async () => {
