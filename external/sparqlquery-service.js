@@ -29,11 +29,9 @@ class SparqlqueryService {
                 type: 'sparql',
                 value: `${this.config.sparqlEndpointUpdate}`,
             },
-            log: this.logger,
         };
         this.queryContext = {
             sources,
-            log: this.logger,
         };
     }
 
