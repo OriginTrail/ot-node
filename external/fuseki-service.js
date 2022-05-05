@@ -2,7 +2,7 @@ const axios = require('axios');
 const qs = require('qs');
 const constants = require('../modules/constants');
 
-class BlazegraphService {
+class FusekiService {
     constructor(config) {
         this.config = config;
     }
@@ -11,9 +11,9 @@ class BlazegraphService {
         this.logger = logger;
         this.config.axios = {
             method: 'post',
-            url: `${this.config.url}/sparql`,
+            url: `${this.config.url}/${this.config.repositoryName}`,
         };
-        this.logger.info('Blazegraph module initialized successfully');
+        this.logger.info('Fuseki module initialized successfully');
     }
 
     async insert(triples, rootHash) {
@@ -21,18 +21,18 @@ class BlazegraphService {
         const exists = await this.ask(askQuery);
         if (!exists) {
             this.config.axios = {
-                method: 'post',
-                url: `${this.config.url}/sparql?context-uri=${rootHash}`,
+                method: 'put',
+                url: `${this.config.url}/${this.config.repositoryName}/data?graph=${rootHash}`,
                 headers: {
-                    'Content-Type': 'text/x-nquads',
+                    'Content-Type': 'application/n-quads',
                 },
                 data: triples,
             };
 
-            await axios(this.config.axios).then((response) => true)
+            await axios(this.config.axios).then(() => true)
                 .catch((error) => {
                     this.logger.error({
-                        msg: `Failed to write into Blazegraph: ${error} - ${error.stack}`,
+                        msg: `Failed to write into Fuseki: ${error} - ${error.stack}`,
                         Event_name: constants.ERROR_TYPE.TRIPLE_STORE_INSERT_ERROR,
                     });
                     return false;
@@ -48,7 +48,7 @@ class BlazegraphService {
             });
             this.config.axios = {
                 method: 'post',
-                url: `${this.config.url}/sparql`,
+                url: `${this.config.url}/${this.config.repositoryName}/sparql`,
                 headers: {
                     Accept: 'application/sparql-results+json',
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -68,9 +68,9 @@ class BlazegraphService {
             });
             this.config.axios = {
                 method: 'post',
-                url: `${this.config.url}/sparql`,
+                url: `${this.config.url}/${this.config.repositoryName}/sparql`,
                 headers: {
-                    Accept: 'text/x-nquads',
+                    Accept: 'application/n-quads',
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 data,
@@ -88,7 +88,7 @@ class BlazegraphService {
             });
             this.config.axios = {
                 method: 'post',
-                url: `${this.config.url}/sparql`,
+                url: `${this.config.url}/${this.config.repositoryName}/sparql`,
                 headers: {
                     Accept: 'application/json',
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -184,7 +184,7 @@ class BlazegraphService {
 
     async healthCheck() {
         try {
-            const response = await axios.get(`${this.config.url}/status`, {});
+            const response = await axios.get(`${this.config.url}/$/ping`, {});
             if (response.data !== null) {
                 return true;
             }
@@ -195,8 +195,8 @@ class BlazegraphService {
     }
 
     getName() {
-        return 'Blazegraph';
+        return 'Fuseki';
     }
 }
 
-module.exports = BlazegraphService;
+module.exports = FusekiService;

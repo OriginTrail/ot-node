@@ -39,31 +39,30 @@ config = rc(pjson.name, defaultConfig);
             process.exit(1);
         }
 
-        const backupCode = `${config.autoUpdate.backupDirectory}/AutoGitUpdate/backup`;
-        if (fs.ensureDir(backupCode)) {
+        const backupCodeDirectory = path.join(config.autoUpdate.backupDirectory, 'auto-update', 'backup');
+        if (fs.ensureDir(backupCodeDirectory)) {
             console.log('Starting back old version of OT-Node.');
 
-            const source = path.join(config.autoUpdate.backupDirectory, 'AutoGitUpdate', 'backup');
             const destination = appRootPath.path;
             await fs.ensureDir(destination);
-            await fs.copy(source, destination);
+            await fs.copy(backupCodeDirectory, destination);
 
             await new Promise((resolve, reject) => {
-                const command = `cd ${destination} && npm install`;
+                const command = `cd ${destination} && npm install --omit=dev`;
                 const child = exec(command);
 
                 // Wait for results
                 child.stdout.on('end', resolve);
-                child.stdout.on('data', (data) => console.log(`Auto Git Update - npm install: ${data.replace(/\r?\n|\r/g, '')}`));
+                child.stdout.on('data', (data) => console.log(`AutoUpdater - npm install --omit=dev: ${data.replace(/\r?\n|\r/g, '')}`));
                 child.stderr.on('data', (data) => {
                     if (data.toLowerCase().includes('error')) {
                         // npm passes warnings as errors, only reject if "error" is included
                         data = data.replace(/\r?\n|\r/g, '');
-                        console.error('Auto Git Update - Error installing dependencies');
-                        console.error(`Auto Git Update - ${data}`);
+                        console.error('AutoUpdater - Error installing dependencies');
+                        console.error(`AutoUpdater - ${data}`);
                         reject();
                     } else {
-                        console.log(`Auto Git Update - ${data}`);
+                        console.log(`AutoUpdater - ${data}`);
                     }
                 });
             });

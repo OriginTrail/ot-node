@@ -4,6 +4,7 @@ const toobusy = require('toobusy-js');
 const constants = require('../constants');
 const GraphDB = require('../../external/graphdb-service');
 const Blazegraph = require('../../external/blazegraph-service');
+const Fuseki = require('../../external/fuseki-service');
 
 class DataService {
     constructor(ctx) {
@@ -39,11 +40,19 @@ class DataService {
             this.implementation = new Blazegraph({
                 url: this.config.graphDatabase.url,
             });
-        } else {
+        } else if(
+            this.config.graphDatabase.implementation
+            === constants.TRIPLE_STORE_IMPLEMENTATION.GRAPHDB
+        ) {
             this.implementation = new GraphDB({
                 repositoryName: this.config.graphDatabase.name,
                 username: this.config.graphDatabase.username,
                 password: this.config.graphDatabase.password,
+                url: this.config.graphDatabase.url,
+            });
+        } else {
+            this.implementation = new Fuseki({
+                repositoryName: this.config.graphDatabase.name,
                 url: this.config.graphDatabase.url,
             });
         }
@@ -128,6 +137,15 @@ class DataService {
     async resolve(id, localQuery = false, metadataOnly = false) {
         try {
             let nquads = await this.tripleStoreQueue.push({ operation: 'resolve', id });
+            if (nquads.length) {
+                nquads = nquads.toString();
+                nquads = nquads.split('\n');
+                nquads = nquads.filter((x) => x !== '');
+                // canonize nquads before roothash validation
+                nquads = await this.workerPool.exec('toNQuads', [nquads.join('\n'), 'application/n-quads']);
+            } else {
+                nquads = null;
+            }
 
             // TODO: add function for this conditional expr for increased readability
             if (!localQuery && nquads && nquads.find((x) => x.includes(`<${constants.DID_PREFIX}:${id}> <http://schema.org/hasVisibility> "private" .`))) {
