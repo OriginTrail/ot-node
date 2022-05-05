@@ -1,22 +1,35 @@
-const OTAutoUpdater = require('./implementation/ot-auto-updater');
+const BaseModuleInterface = require('../base-module-interface');
 
-class AutoUpdaterModuleInterface {
-    constructor(config) {
-        this.config = config;
+class AutoUpdaterModuleInterface extends BaseModuleInterface {
+    getName() {
+        return 'autoUpdater';
     }
 
-    initialize() {
-        this.implementation = new OTAutoUpdater(this.config);
-        return this.implementation.initialize();
-    }
-
+    /**
+     * @typedef VersionResults
+     * @param {Boolean} UpToDate - If the local version is the same as the remote version.
+     * @param {String} currentVersion - The version of the local application.
+     * @param {String} remoteVersion - The version of the application in the git repository.
+     *
+     * Checks the local version of the application against the remote repository.
+     * @returns Promise{VersionResults} - An object with the results of the version comparison.
+     */
     async compareVersions() {
-        return this.implementation.compareVersions();
+        if (this.initialized) {
+            return this.handlers[0].module.compareVersions();
+        }
     }
 
+    /**
+     * Clones the git repository and installs the update over the local application.
+     * A backup of the application is created before the update is installed.
+     * If configured, a completion command will be executed and the process for the app will be stopped.
+     */
     async update() {
-        return this.implementation.update();
+        if (this.initialized) {
+            return this.handlers[0].module.update();
+        }
     }
-};
+}
 
 module.exports = AutoUpdaterModuleInterface;

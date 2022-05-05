@@ -1,6 +1,6 @@
 const { v1: uuidv1 } = require('uuid');
 const PeerId = require('peer-id');
-var axios = require('axios');
+const axios = require('axios');
 const fs = require('fs');
 const Command = require('../command');
 const pjson = require('../../../package.json');
@@ -24,12 +24,15 @@ class KeepAliveCommand extends Command {
 
         const Id_operation = uuidv1();
         this.logger.emit({
-            msg: message, Event_name: 'keep_alive', Operation_name: 'KeepAlive', Id_operation,
+            msg: message,
+            Event_name: 'keep_alive',
+            Operation_name: 'KeepAlive',
+            Id_operation,
         });
 
         const signalingMessage = {
             nodeVersion: pjson.version,
-            autoUpdate: { enabled: this.config.modules.autoUpdate.enabled },
+            autoUpdate: { enabled: this.config.modules.autoUpdater.enabled },
             telemetry: {
                 enabled: this.config.telemetryHub.enabled,
             },
@@ -38,21 +41,19 @@ class KeepAliveCommand extends Command {
             signalingMessage.issuerWallet = this.config.blockchain[0].publicKey;
             signalingMessage.kademliaNodeId = this.config.network.peerId._idB58String;
             signalingMessage.nodeVersion = pjson.version;
-            signalingMessage.telemetry.latestAssertions = (await Models.assertions.findAll({
-                limit: 5,
-                order: [
-                    ['created_at', 'DESC'],
-                ],
-                attributes: ['hash', 'topics', 'created_at', 'triple_store', 'status'],
-            })).map((x) => (
-                {
-                    assertionId: x.dataValues.hash,
-                    keyword: x.dataValues.topics,
-                    publishTimestamp: x.dataValues.created_at,
-                    tripleStore: x.dataValues.triple_store,
-                    status: x.dataValues.status,
-                }
-            ));
+            signalingMessage.telemetry.latestAssertions = (
+                await Models.assertions.findAll({
+                    limit: 5,
+                    order: [['created_at', 'DESC']],
+                    attributes: ['hash', 'topics', 'created_at', 'triple_store', 'status'],
+                })
+            ).map((x) => ({
+                assertionId: x.dataValues.hash,
+                keyword: x.dataValues.topics,
+                publishTimestamp: x.dataValues.created_at,
+                tripleStore: x.dataValues.triple_store,
+                status: x.dataValues.status,
+            }));
         } catch (e) {
             this.logger.error({
                 msg: `An error has occurred with signaling data error: ${e}, stack: ${e.stack}`,

@@ -10,8 +10,10 @@ const pjson = require('./package.json');
 
 const configjson = require('./config/config.json');
 
-process.env.NODE_ENV = process.env.NODE_ENV && ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0
-    ? process.env.NODE_ENV : 'development';
+process.env.NODE_ENV =
+    process.env.NODE_ENV && ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0
+        ? process.env.NODE_ENV
+        : 'development';
 
 let config = JSON.parse(fs.readFileSync('./.origintrail_noderc', 'utf8'));
 const defaultConfig = JSON.parse(JSON.stringify(configjson[process.env.NODE_ENV]));
@@ -34,11 +36,8 @@ config = rc(pjson.name, defaultConfig);
         const node = new OTNode(userConfig);
         await node.start();
     } catch (e) {
-        console.error(`Error occurred while starting new version, error message: ${e}. ${e.stack}`);
-        if (!config.modules.autoUpdate.enabled) {
-            console.log('Auto update is disabled. Shutting down the node...');
-            process.exit(1);
-        }
+        console.error(`Error occurred while start ot-node, error message: ${e}. ${e.stack}`);
+        console.error(`Trying to recover from older version`);
 
         const rootPath = path.join(appRootPath.path, '..');
         const oldVersionsDirs = (await fs.promises.readdir(rootPath, { withFileTypes: true }))

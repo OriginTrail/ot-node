@@ -9,29 +9,13 @@ const semver = require('semver');
 const REPOSITORY_URL = 'https://github.com/OriginTrail/ot-node';
 
 class OTAutoUpdater {
-    /**
-     * @param config - Configuration for AutoUpdater
-     * @param {String} config.branch - The branch to update from. Defaults to master.
-     */
-    constructor(config) {
+    initialize(config, logger) {
         this.config = config;
-        this.logger = config.logger;
-    }
-
-    initialize() {
+        this.logger = logger;
         if (!this.config) throw new Error('You must pass a config object to AutoUpdater.');
         if (!this.config.branch) this.config.branch = 'master';
     }
 
-    /**
-     * @typedef VersionResults
-     * @param {Boolean} UpToDate - If the local version is the same as the remote version.
-     * @param {String} currentVersion - The version of the local application.
-     * @param {String} remoteVersion - The version of the application in the git repository.
-     *
-     * Checks the local version of the application against the remote repository.
-     * @returns {VersionResults} - An object with the results of the version comparison.
-     */
     async compareVersions() {
         try {
             this.logger.debug('AutoUpdater - Comparing versions...');
@@ -62,11 +46,6 @@ class OTAutoUpdater {
         }
     }
 
-    /**
-     * Clones the git repository and installs the update over the local application.
-     * A backup of the application is created before the update is installed.
-     * If configured, a completion command will be executed and the process for the app will be stopped.
-     */
     async update() {
         try {
             this.logger.debug(`AutoUpdater - Updating ot-node from ${REPOSITORY_URL}`);
@@ -84,13 +63,12 @@ class OTAutoUpdater {
             this.logger.debug('AutoUpdater - Finished installing updated version.');
 
             await this.removeOldVersions(currentVersion, newVersion);
-            const updatedFilePath = path.join(rootPath, 'UPDATED');
-            await fs.promises.writeFile(updatedFilePath, '');
-            process.exit(1);
+            return true;
         } catch (e) {
             this.logger.error(
                 `AutoUpdater - Error updating application. Error message: ${e.message}`,
             );
+            return false;
         }
     }
 
@@ -128,8 +106,6 @@ class OTAutoUpdater {
         // copy .env file
         source = path.join(appRootPath.path, '.env');
         await fs.copy(source, path.join(destination, '.env'));
-
-        return destination;
     }
 
     /**

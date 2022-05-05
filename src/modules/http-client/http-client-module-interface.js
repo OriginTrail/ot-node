@@ -1,22 +1,26 @@
-const ExpressHttpClient = require('./implementation/express-http-client');
+const BaseModuleInterface = require('../base-module-interface');
 
-class HttpClientModuleInterface {
-    initialize(config) {
-        // if config.module.express
-        this.instance = new ExpressHttpClient();
-        this.instance.initialize();
+class HttpClientModuleInterface extends BaseModuleInterface {
+    getName() {
+        return 'httpClient';
     }
 
     get(route, ...callback) {
-        return this.instance.get(route, callback);
+        if (this.initialized) {
+            return this.handlers[0].module.get(route, ...callback);
+        }
     }
 
     post(route, ...callback) {
-        return this.instance.post(route, callback);
+        if (this.initialized) {
+            return this.handlers[0].module.post(route, ...callback);
+        }
     }
 
     sendResponse(res, status, returnObject) {
-        return this.instance.sendResponse(res, status, returnObject);
+        if (this.initialized) {
+            return this.handlers[0].module.sendResponse(res, status, returnObject);
+        }
     }
 }
 

@@ -3,7 +3,6 @@ const DeepExtend = require('deep-extend');
 const rc = require('rc');
 const fs = require('fs');
 const queue = require('fastq');
-const AutoUpdater = require('./src/modules/auto-updater/auto-updater-module-interface');
 const DependencyInjection = require('./modules/service/dependency-injection');
 const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
@@ -35,7 +34,7 @@ class OTNode {
         this.logger.info(`Node is running in ${process.env.NODE_ENV} environment`);
 
         this.initializeDependencyContainer();
-        await this.initializeAutoUpdate();
+        await this.initializeModules();
         await this.initializeDataModule();
         await this.initializeOperationalDbModule();
         await this.initializeValidationModule();
@@ -74,6 +73,11 @@ class OTNode {
             this.config.blockchain[0].hubContractAddress =
                 configjson[process.env.NODE_ENV].blockchain[0].hubContractAddress;
         }
+
+        updateFilePath = `./${this.config.appDataPath}/UPDATED`;
+        if (fs.existsSync(updateFilePath)) {
+            this.config.otNodeUpdated = true;
+        }
     }
 
     initializeDependencyContainer() {
@@ -87,29 +91,23 @@ class OTNode {
         this.logger.info('Dependency injection module is initialized');
     }
 
-    async initializeAutoUpdate() {
+    async initializeModules() {
+        const initializationPromises = [];
+        for (const moduleName in this.config.modules) {
+            const moduleInterfaceName = `${moduleName}ModuleInterface`;
+
+            const autoUpdaterModuleInterface = this.container.resolve(moduleInterfaceName);
+            initializationPromises.push(autoUpdaterModuleInterface.initialize());
+        }
         try {
-            updateFilePath = `./${this.config.appDataPath}/UPDATED`;
-            if (fs.existsSync(updateFilePath)) {
-                this.config.otNodeUpdated = true;
-            }
-            if (!this.config.modules.autoUpdate.enabled) {
-                return;
-            }
-
-            this.updater = new AutoUpdater({
-                logger: this.logger,
-                branch: this.config.modules.autoUpdate.branch,
-            });
-            await this.updater.initialize();
-            DependencyInjection.registerValue(this.container, 'updater', this.updater);
-
-            this.logger.info('Auto update mechanism initialized');
+            await Promise.all(initializationPromises);
+            this.logger.info(`All modules initialized!`);
         } catch (e) {
             this.logger.error({
-                msg: `Auto update initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.UPDATE_INITIALIZATION_ERROR,
+                msg: `Module initialization failed. Error message: ${e.message}`,
+                Event_name: constants.ERROR_TYPE.MODULE_INITIALIZATION_ERROR,
             });
+            process.exit(1);
         }
     }
 

@@ -6,7 +6,7 @@ class HttpApiRouter {
     constructor(ctx) {
         this.config = ctx.config;
         this.fileSystemModule = ctx.fileSystemModule;
-        this.httpClientModule = ctx.httpClientModule;
+        this.httpClientModuleInterface = ctx.httpClientModuleInterface;
 
         this.resolveController = ctx.resolveController;
         this.publishController = ctx.publishController;
@@ -23,44 +23,44 @@ class HttpApiRouter {
 
     async initializeListeners() {
         // POST REQUESTS
-        this.httpClientModule.post(HTTP_API_ROUTES.PUBLISH, (req, res) => {
+        this.httpClientModuleInterface.post(HTTP_API_ROUTES.PUBLISH, (req, res) => {
             this.publishController.handleHttpApiPublishRequest(req, res);
         });
 
-        this.httpClientModule.post(HTTP_API_ROUTES.PROVISION, (req, res) => {
+        this.httpClientModuleInterface.post(HTTP_API_ROUTES.PROVISION, (req, res) => {
             this.publishController.handleHttpApiProvisionRequest(req, res);
         });
 
-        this.httpClientModule.post(HTTP_API_ROUTES.UPDATE, (req, res) => {
+        this.httpClientModuleInterface.post(HTTP_API_ROUTES.UPDATE, (req, res) => {
             this.publishController.handleHttpApiUpdateRequest(req, res);
         });
 
-        this.httpClientModule.post(HTTP_API_ROUTES.QUERY, (req, res) => {
+        this.httpClientModuleInterface.post(HTTP_API_ROUTES.QUERY, (req, res) => {
             this.searchController.handleHttpApiQueryRequest(req, res);
         });
 
-        this.httpClientModule.post(HTTP_API_ROUTES.PROOFS, (req, res) => {
+        this.httpClientModuleInterface.post(HTTP_API_ROUTES.PROOFS, (req, res) => {
             this.searchController.handleHttpApiProofsRequest(req, res);
         });
 
         // GET REQUESTS
-        this.httpClientModule.get(HTTP_API_ROUTES.RESOLVE, (req, res) => {
+        this.httpClientModuleInterface.get(HTTP_API_ROUTES.RESOLVE, (req, res) => {
             this.resolveController.handleHttpApiResolveRequest(req, res);
         });
 
-        this.httpClientModule.get(HTTP_API_ROUTES.SEARCH_ASSERTIONS, (req, res) => {
+        this.httpClientModuleInterface.get(HTTP_API_ROUTES.SEARCH_ASSERTIONS, (req, res) => {
             this.searchController.handleHttpApiSearchAssertionsRequest(req, res);
         });
 
-        this.httpClientModule.get(HTTP_API_ROUTES.SEARCH_ENTITIES, (req, res) => {
+        this.httpClientModuleInterface.get(HTTP_API_ROUTES.SEARCH_ENTITIES, (req, res) => {
             this.searchController.handleHttpApiSearchEntitiesRequest(req, res);
         });
 
-        this.httpClientModule.get(HTTP_API_ROUTES.OPERATION_RESULT, (req, res) => {
+        this.httpClientModuleInterface.get(HTTP_API_ROUTES.OPERATION_RESULT, (req, res) => {
             this.resultController.handleHttpApiOperationResultRequest(req, res);
         });
 
-        this.httpClientModule.get(HTTP_API_ROUTES.INFO, (req, res) => {
+        this.httpClientModuleInterface.get(HTTP_API_ROUTES.INFO, (req, res) => {
             this.infoController.handleHttpApiInfoRequest(req, res);
         });
     }

@@ -1,4 +1,6 @@
 const semver = require('semver');
+const fs = require('fs-extra');
+const path = require('path');
 const Command = require('../command');
 const constants = require('../../constants');
 
@@ -7,8 +9,8 @@ class OtnodeUpdateCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        if (this.config.modules.autoUpdate.enabled) {
-            this.updater = ctx.updater;
+        if (this.config.modules.autoUpdater.enabled) {
+            this.autoUpdaterModuleInterface = ctx.autoUpdaterModuleInterface;
         }
     }
 
@@ -16,23 +18,28 @@ class OtnodeUpdateCommand extends Command {
      * Performs code update by fetching new code from github repo
      * @param command
      */
-    async execute(command) {
-        if (!this.config.modules.autoUpdate.enabled) {
+    async execute() {
+        if (!this.config.modules.autoUpdater.enabled) {
             return Command.empty();
         }
         try {
             this.logger.info('Checking for new updates...');
-            const {
-                upToDate,
-                currentVersion,
-                remoteVersion,
-            } = await this.updater.compareVersions();
+            const { upToDate, currentVersion, remoteVersion } =
+                await this.updater.compareVersions();
             if (!upToDate) {
                 if (semver.major(currentVersion) < semver.major(remoteVersion)) {
-                    this.logger.info(`New major update available. Please run update to version ${remoteVersion} manually.`);
+                    this.logger.info(
+                        `New major update available. Please run update to version ${remoteVersion} manually.`,
+                    );
                     return Command.repeat();
                 }
-                await this.updater.update();
+                const success = await this.updater.update();
+
+                if (success) {
+                    const updateFilePath = `./${this.config.appDataPath}/UPDATED`;
+                    await fs.promises.writeFile(updateFilePath, 'UPDATED');
+                    process.exit(1);
+                }
             }
         } catch (e) {
             await this.handleError(e);
