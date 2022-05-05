@@ -97,7 +97,7 @@ class SparqlqueryService {
                             }
                        }`;
         let graph = await this.execute(query);
-        graph = graph.map((x) => x.get('g').value.replace(`${constants.DID_PREFIX}:`, ''));
+        graph = graph.map((x) => x.g.replace(`${constants.DID_PREFIX}:`, ''));
         if (graph.length && graph[0] === 'http://www.bigdata.com/rdf#nullGraph') {
             return [];
         }
