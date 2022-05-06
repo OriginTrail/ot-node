@@ -41,6 +41,8 @@ class OtnodeUpdateCommand extends Command {
                     process.exit(1);
                 }
                 this.logger.info('Unable to update ot-node to new version.');
+            } else {
+                this.logger.info('Your node is running on the latest version!');
             }
         } catch (e) {
             await this.handleError(e);
