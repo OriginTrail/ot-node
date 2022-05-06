@@ -281,6 +281,7 @@ class Libp2pService {
             timeoutController.clear();
         }
 
+        // request timed out and stream was aborted
         if(response.toString() === '') {
             return null;
         }
