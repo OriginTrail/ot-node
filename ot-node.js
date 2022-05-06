@@ -94,10 +94,10 @@ class OTNode {
     async initializeModules() {
         const initializationPromises = [];
         for (const moduleName in this.config.modules) {
-            const moduleInterfaceName = `${moduleName}ModuleInterface`;
+            const moduleManagerName = `${moduleName}ModuleManager`;
 
-            const autoUpdaterModuleInterface = this.container.resolve(moduleInterfaceName);
-            initializationPromises.push(autoUpdaterModuleInterface.initialize());
+            const moduleManager = this.container.resolve(moduleManagerName);
+            initializationPromises.push(moduleManager.initialize());
         }
         try {
             await Promise.all(initializationPromises);

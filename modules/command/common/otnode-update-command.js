@@ -1,6 +1,5 @@
 const semver = require('semver');
 const fs = require('fs-extra');
-const path = require('path');
 const Command = require('../command');
 const constants = require('../../constants');
 
@@ -9,9 +8,7 @@ class OtnodeUpdateCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        if (this.config.modules.autoUpdater.enabled) {
-            this.autoUpdaterModuleInterface = ctx.autoUpdaterModuleInterface;
-        }
+        this.autoUpdaterModuleManager = ctx.autoUpdaterModuleManager;
     }
 
     /**
@@ -25,7 +22,7 @@ class OtnodeUpdateCommand extends Command {
         try {
             this.logger.info('Checking for new updates...');
             const { upToDate, currentVersion, remoteVersion } =
-                await this.updater.compareVersions();
+                await this.autoUpdaterModuleManager.compareVersions();
             if (!upToDate) {
                 if (semver.major(currentVersion) < semver.major(remoteVersion)) {
                     this.logger.info(
@@ -33,13 +30,14 @@ class OtnodeUpdateCommand extends Command {
                     );
                     return Command.repeat();
                 }
-                const success = await this.updater.update();
+                const success = await this.autoUpdaterModuleManager.update();
 
                 if (success) {
                     const updateFilePath = `./${this.config.appDataPath}/UPDATED`;
                     await fs.promises.writeFile(updateFilePath, 'UPDATED');
                     process.exit(1);
                 }
+                this.logger.info('Unable to update ot-node to new version.');
             }
         } catch (e) {
             await this.handleError(e);

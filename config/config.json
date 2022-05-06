@@ -3,15 +3,23 @@
         "modules": {
             "autoUpdater": {
                 "enabled": true,
-                "packages": ["./auto-updater/implementation/ot-auto-updater"],
-                "config": {
-                    "branch": "v6/develop"
+                "implementation": {
+                    "ot-auto-updater": {
+                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "config": {
+                            "branch": "v6/develop"
+                        }
+                    }
                 }
             },
             "httpClient": {
                 "enabled": true,
-                "packages": ["./http-client/implementation/express-http-client"],
-                "config": {}
+                "implementation": {
+                    "express-http-client": {
+                        "package": "./http-client/implementation/express-http-client",
+                        "config": {}
+                    }
+                }
             }
         },
         "appDataPath": "data",
@@ -51,15 +59,23 @@
         "modules": {
             "autoUpdater": {
                 "enabled": true,
-                "packages": ["./auto-updater/implementation/ot-auto-updater"],
-                "config": {
-                    "branch": "v6/develop"
+                "implementation": {
+                    "ot-auto-updater": {
+                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "config": {
+                            "branch": "v6/develop"
+                        }
+                    }
                 }
             },
             "httpClient": {
                 "enabled": true,
-                "packages": ["./http-client/implementation/express-http-client"],
-                "config": {}
+                "implementation": {
+                    "express-http-client": {
+                        "package": "./http-client/implementation/express-http-client",
+                        "config": {}
+                    }
+                }
             }
         },
         "appDataPath": "data",
@@ -99,16 +115,22 @@
         "modules": {
             "autoUpdater": {
                 "enabled": true,
-                "packages": ["./auto-updater/implementation/ot-auto-updater"],
-                "config": {
-                    "branch": "v6/develop"
+                "implementation": {
+                    "ot-auto-updater": {
+                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "config": {
+                            "branch": "v6/release/testnet"
+                        }
+                    }
                 }
             },
             "httpClient": {
                 "enabled": true,
-                "packages": ["./http-client/implementation/express-http-client"],
-                "config": {
-                    "branch": "v6/develop"
+                "implementation": {
+                    "express-http-client": {
+                        "package": "./http-client/implementation/express-http-client",
+                        "config": {}
+                    }
                 }
             }
         },
@@ -153,15 +175,23 @@
         "modules": {
             "autoUpdater": {
                 "enabled": true,
-                "packages": ["./auto-updater/implementation/ot-auto-updater"],
-                "config": {
-                    "branch": "v6/develop"
+                "implementation": {
+                    "ot-auto-updater": {
+                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "config": {
+                            "branch": "v6/release/mainnet"
+                        }
+                    }
                 }
             },
             "httpClient": {
                 "enabled": true,
-                "packages": ["./http-client/implementation/express-http-client"],
-                "config": {}
+                "implementation": {
+                    "express-http-client": {
+                        "package": "./http-client/implementation/express-http-client",
+                        "config": {}
+                    }
+                }
             }
         },
         "appDataPath": "data",

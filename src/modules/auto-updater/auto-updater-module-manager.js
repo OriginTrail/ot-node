@@ -1,6 +1,6 @@
-const BaseModuleInterface = require('../base-module-interface');
+const BaseModuleManager = require('../base-module-manager');
 
-class AutoUpdaterModuleInterface extends BaseModuleInterface {
+class AutoUpdaterModuleManager extends BaseModuleManager {
     getName() {
         return 'autoUpdater';
     }
@@ -16,7 +16,7 @@ class AutoUpdaterModuleInterface extends BaseModuleInterface {
      */
     async compareVersions() {
         if (this.initialized) {
-            return this.handlers[0].module.compareVersions();
+            return this.getImplementation().module.compareVersions();
         }
     }
 
@@ -27,9 +27,9 @@ class AutoUpdaterModuleInterface extends BaseModuleInterface {
      */
     async update() {
         if (this.initialized) {
-            return this.handlers[0].module.update();
+            return this.getImplementation().module.update();
         }
     }
 }
 
-module.exports = AutoUpdaterModuleInterface;
+module.exports = AutoUpdaterModuleManager;
