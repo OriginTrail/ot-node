@@ -9,8 +9,7 @@ const constants = require('./modules/constants');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
 const M1FolderStructureInitialMigration = require('./modules/migration/m1-folder-structure-initial-migration');
-
-let updateFilePath;
+const FileService = require('./modules/service/file-service');
 
 class OTNode {
     constructor(config) {
@@ -74,9 +73,14 @@ class OTNode {
                 configjson[process.env.NODE_ENV].blockchain[0].hubContractAddress;
         }
 
-        updateFilePath = `./${this.config.appDataPath}/UPDATED`;
+        const fileService = new FileService({ config: this.config });
+
+        const updateFilePath = fileService.getUpdateFilePath();
         if (fs.existsSync(updateFilePath)) {
             this.config.otNodeUpdated = true;
+            fileService.removeFile(updateFilePath).catch((error) => {
+                this.logger.warn(`Unable to remove update file. Error: ${error}`);
+            });
         }
     }
 
@@ -132,9 +136,6 @@ class OTNode {
 
             if (this.config.otNodeUpdated) {
                 execSync('npx sequelize --config=./config/sequelizeConfig.js db:migrate');
-                const fileService = this.container.resolve('fileService');
-                await fileService.removeFile(updateFilePath);
-                this.config.otNodeUpdated = false;
             }
 
             await db.sequelize.sync();

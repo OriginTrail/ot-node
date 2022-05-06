@@ -16,24 +16,30 @@ class M1FolderStructureInitialMigration extends BaseMigration {
             return;
         }
         if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
-            const currentAppRootPath = appRootPath.path;
-            const folderStat = await fs.lstat(currentAppRootPath);
-            if (folderStat.isSymbolicLink()) {
-                this.logger.info(
-                    'Symbolic link already created for ot-node, migration will be skipped.',
-                );
-                await this.finalizeMigration();
-                return;
-            }
-            const newAppRootPath = path.join(currentAppRootPath, '..', pjson.version);
+            const currentVersion = pjson.version;
+            const temporaryAppRootPath = path.join(appRootPath.path, '..', 'ot-node-tmp');
+            const newAppDirectoryPath = path.join(temporaryAppRootPath, currentVersion);
+            await fs.ensureDir(newAppDirectoryPath);
 
-            await fs.rename(currentAppRootPath, newAppRootPath);
-            await fs.ensureSymlink(newAppRootPath, currentAppRootPath);
-            await this.finalizeMigration();
+            const currentAppRootPath = appRootPath.path;
+
+            await fs.copy(currentAppRootPath, newAppDirectoryPath);
+
+            const indexSymlinkPath = path.join(temporaryAppRootPath, 'index.js');
+            const indexPath = path.join(newAppDirectoryPath, 'index.js');
+
+            await fs.ensureSymlink(indexPath, indexSymlinkPath);
+
+            await fs.remove(currentAppRootPath);
+
+            await fs.rename(temporaryAppRootPath, currentAppRootPath);
+
+            await this.finalizeMigration(path.join(currentAppRootPath, 'data', 'migrations'));
+            this.logger.info('Folder structure migration completed, node will now restart!');
+            process.exit(1);
         } else {
             this.logger.info(
-                'Folder structure initial migration not executed for env: ',
-                process.env.NODE_ENV,
+                `Folder structure initial migration skipped for env: ${process.env.NODE_ENV}`,
             );
         }
     }

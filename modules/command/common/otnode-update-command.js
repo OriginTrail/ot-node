@@ -1,5 +1,6 @@
 const semver = require('semver');
 const fs = require('fs-extra');
+const path = require('path');
 const Command = require('../command');
 const constants = require('../../constants');
 
@@ -9,6 +10,7 @@ class OtnodeUpdateCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.autoUpdaterModuleManager = ctx.autoUpdaterModuleManager;
+        this.fileService = ctx.fileService;
     }
 
     /**
@@ -33,7 +35,7 @@ class OtnodeUpdateCommand extends Command {
                 const success = await this.autoUpdaterModuleManager.update();
 
                 if (success) {
-                    const updateFilePath = `./${this.config.appDataPath}/UPDATED`;
+                    const updateFilePath = this.fileService.getUpdateFilePath();
                     await fs.promises.writeFile(updateFilePath, 'UPDATED');
                     process.exit(1);
                 }

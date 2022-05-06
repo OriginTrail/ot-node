@@ -33,7 +33,7 @@ class BaseModuleManager {
                 // eslint-disable-next-line global-require,import/no-dynamic-require
                 const ModuleClass = require(implementationConfig.package);
                 const module = new ModuleClass();
-                module.initialize(implementationConfig, this.logger);
+                module.initialize(implementationConfig.config, this.logger);
                 this.logger.info(
                     `${this.getName()} module initialized with implementation: ${implementationName}`,
                 );

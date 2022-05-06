@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs-extra');
-const { exec, execSync } = require('child_process');
+const { exec, spawn } = require('child_process');
 const https = require('https');
 const appRootPath = require('app-root-path');
 const git = require('simple-git');
@@ -49,17 +49,19 @@ class OTAutoUpdater {
     async update() {
         try {
             this.logger.debug(`AutoUpdater - Updating ot-node from ${REPOSITORY_URL}`);
-            const rootPath = path.join(appRootPath.path, '..');
-            const currentDirectory = path.join(rootPath, 'ot-node');
-            const currentVersion = this.readAppVersion(appRootPath.path);
+            const currentDirectory = appRootPath.path;
+            const rootPath = path.join(currentDirectory, '..');
+
+            const currentVersion = this.readAppVersion(currentDirectory);
             const newVersion = await this.readRemoteVersion();
             const updateDirectory = path.join(rootPath, newVersion);
             await this.downloadUpdate(updateDirectory);
-            await this.copyConfigFiles(updateDirectory);
+            await this.copyConfigFiles(currentDirectory, updateDirectory);
             await this.installDependencies(updateDirectory);
 
-            execSync(`ln -sfn ${updateDirectory} ${currentDirectory}`);
-
+            const indexPath = path.join(updateDirectory, 'index.js');
+            const indexSymlinkPath = path.join(rootPath, 'index.js');
+            await fs.ensureSymlink(indexPath, indexSymlinkPath);
             this.logger.debug('AutoUpdater - Finished installing updated version.');
 
             await this.removeOldVersions(currentVersion, newVersion);
@@ -95,17 +97,18 @@ class OTAutoUpdater {
     /**
      * Copies user config files to destination directory
      */
-    async copyConfigFiles(destination) {
+    async copyConfigFiles(source, destination) {
         this.logger.debug('AutoUpdater - Copying config files...');
         this.logger.debug(`AutoUpdater - Destination: ${destination}`);
 
         await fs.ensureDir(destination);
-        // copy .origintrail_noderc file
-        let source = path.join(appRootPath.path, '.origintrail_noderc');
-        await fs.copy(source, path.join(destination, '.origintrail_noderc'));
-        // copy .env file
-        source = path.join(appRootPath.path, '.env');
-        await fs.copy(source, path.join(destination, '.env'));
+        const configurationPath = path.join(source, '.origintrail_noderc');
+        const newConfigurationPath = path.join(destination, '.origintrail_noderc');
+        await fs.copy(configurationPath, newConfigurationPath);
+
+        const envFilePath = path.join(source, '.env');
+        const newEnvFilePath = path.join(destination, '.env');
+        await fs.copy(envFilePath, newEnvFilePath);
     }
 
     /**
@@ -137,7 +140,6 @@ class OTAutoUpdater {
                 });
             });
             this.logger.debug(`AutoUpdater - Sending request to ${url}`);
-            this.logger.debug(`AutoUpdater - Options: ${JSON.stringify(options)}`);
             req.on('error', reject);
             req.end();
         });
@@ -179,8 +181,7 @@ class OTAutoUpdater {
         });
     }
 
-    async downloadUpdate() {
-        const destination = path.join(appRootPath, '..');
+    async downloadUpdate(destination) {
         this.logger.debug(`AutoUpdater - Cloning ${REPOSITORY_URL}`);
         this.logger.debug(`AutoUpdater - Destination: ${destination}`);
         await fs.ensureDir(destination);
@@ -209,11 +210,11 @@ class OTAutoUpdater {
             child.stderr.on('data', (data) => {
                 if (data.toLowerCase().includes('error')) {
                     // npm passes warnings as errors, only reject if "error" is included
-                    data = data.replace(/\r?\n|\r/g, '');
+                    const errorData = data.replace(/\r?\n|\r/g, '');
                     this.logger.error(
-                        `AutoUpdater - Error installing dependencies. Error message: ${data}`,
+                        `AutoUpdater - Error installing dependencies. Error message: ${errorData}`,
                     );
-                    reject();
+                    reject(errorData);
                 } else {
                     resultData += data;
                 }

@@ -1,6 +1,7 @@
 const appRootPath = require('app-root-path');
 const path = require('path');
 const fs = require('fs-extra');
+const FileService = require('../service/file-service');
 
 const MIGRATION_FOLDER_NAME = 'migrations';
 
@@ -22,14 +23,12 @@ class BaseMigration {
         this.migrationName = migrationName;
         this.logger = logger;
         this.config = config;
+        this.fileService = new FileService({ config: this.config });
     }
 
     async migrationAlreadyExecuted() {
         const migrationFilePath = path.join(
-            appRootPath.path,
-            '..',
-            this.config.appDataPath,
-            MIGRATION_FOLDER_NAME,
+            this.fileService.getMigrationFolderPath(),
             this.migrationName,
         );
         if (await fs.exists(migrationFilePath)) {
@@ -40,13 +39,10 @@ class BaseMigration {
         return false;
     }
 
-    async finalizeMigration() {
-        const migrationFolderPath = path.join(
-            appRootPath.path,
-            '..',
-            this.config.appDataPath,
-            MIGRATION_FOLDER_NAME,
-        );
+    async finalizeMigration(migrationPath = null) {
+        const migrationFolderPath =
+            migrationPath ||
+            path.join(appRootPath.path, '..', this.config.appDataPath, MIGRATION_FOLDER_NAME);
         await fs.ensureDir(migrationFolderPath);
         const migrationFilePath = path.join(migrationFolderPath, this.migrationName);
         await fs.writeFile(migrationFilePath, 'MIGRATED');
