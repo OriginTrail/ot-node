@@ -48,7 +48,7 @@ class BaseMigration {
         await fs.writeFile(migrationFilePath, 'MIGRATED');
         this.logger.info(
             `${this.migrationName} migration completed. Lasted: ${
-                this.startedTimestamp - Date.now()
+                Date.now() - this.startedTimestamp
             } millisecond(s).`,
         );
     }

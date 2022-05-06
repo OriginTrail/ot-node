@@ -37,6 +37,7 @@ class OtnodeUpdateCommand extends Command {
                 if (success) {
                     const updateFilePath = this.fileService.getUpdateFilePath();
                     await fs.promises.writeFile(updateFilePath, 'UPDATED');
+                    this.logger.info('Node will now restart!');
                     process.exit(1);
                 }
                 this.logger.info('Unable to update ot-node to new version.');

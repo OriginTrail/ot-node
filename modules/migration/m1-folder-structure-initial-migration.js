@@ -12,10 +12,11 @@ class M1FolderStructureInitialMigration extends BaseMigration {
     }
 
     async run() {
-        if (await this.migrationAlreadyExecuted()) {
-            return;
-        }
         if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
+            if (await this.migrationAlreadyExecuted()) {
+                return;
+            }
+
             const currentVersion = pjson.version;
             const temporaryAppRootPath = path.join(appRootPath.path, '..', 'ot-node-tmp');
             const newAppDirectoryPath = path.join(temporaryAppRootPath, currentVersion);
@@ -28,6 +29,9 @@ class M1FolderStructureInitialMigration extends BaseMigration {
             const indexSymlinkPath = path.join(temporaryAppRootPath, 'index.js');
             const indexPath = path.join(newAppDirectoryPath, 'index.js');
 
+            if (fs.pathExists(indexSymlinkPath)) {
+                await fs.remove(indexSymlinkPath);
+            }
             await fs.ensureSymlink(indexPath, indexSymlinkPath);
 
             await fs.remove(currentAppRootPath);

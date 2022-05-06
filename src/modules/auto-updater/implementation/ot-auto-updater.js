@@ -61,7 +61,11 @@ class OTAutoUpdater {
 
             const indexPath = path.join(updateDirectory, 'index.js');
             const indexSymlinkPath = path.join(rootPath, 'index.js');
+            if (fs.pathExists(indexSymlinkPath)) {
+                await fs.remove(indexSymlinkPath);
+            }
             await fs.ensureSymlink(indexPath, indexSymlinkPath);
+
             this.logger.debug('AutoUpdater - Finished installing updated version.');
 
             await this.removeOldVersions(currentVersion, newVersion);
@@ -198,15 +202,13 @@ class OTAutoUpdater {
                 `AutoUpdater - Installing application dependencies in ${destination}`,
             );
 
-            const command = `cd ${destination} && npm install --omit=dev`;
+            const command = `cd ${destination} && npm install --omit=dev --ignore-scripts`;
             const child = exec(command);
 
-            child.stdout.on('data', (data) =>
-                this.logger.debug(
-                    `AutoUpdater - npm install --omit=dev: ${data.replace(/\r?\n|\r/g, '')}`,
-                ),
-            );
-            let resultData;
+            child.stdout.on('data', (data) => {
+                this.logger.trace(`AutoUpdater - npm install - ${data.replace(/\r?\n|\r/g, '')}`);
+            });
+
             child.stderr.on('data', (data) => {
                 if (data.toLowerCase().includes('error')) {
                     // npm passes warnings as errors, only reject if "error" is included
@@ -215,16 +217,10 @@ class OTAutoUpdater {
                         `AutoUpdater - Error installing dependencies. Error message: ${errorData}`,
                     );
                     reject(errorData);
-                } else {
-                    resultData += data;
                 }
             });
             child.stdout.on('end', () => {
-                resultData = resultData.split('\n');
-                resultData = resultData.filter((x) => x !== '');
-                for (const data of resultData) {
-                    this.logger.warn(`AutoUpdater - ${data}`);
-                }
+                this.logger.debug(`AutoUpdater - Dependencies installed successfully`);
                 resolve();
             });
         });
