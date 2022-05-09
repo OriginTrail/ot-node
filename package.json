@@ -111,6 +111,7 @@
     "streaming-iterables": "^6.0.0",
     "toobusy-js": "^0.5.1",
     "underscore": "^1.13.1",
+    "unzipper": "^0.10.11",
     "uuid": "^8.3.2",
     "validator": "^13.7.0",
     "watchdog": "^0.8.17",

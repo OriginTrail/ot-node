@@ -1,18 +1,20 @@
 const path = require('path');
 const fs = require('fs-extra');
-const { exec, spawn } = require('child_process');
+const { exec } = require('child_process');
 const https = require('https');
 const appRootPath = require('app-root-path');
-const git = require('simple-git');
 const semver = require('semver');
+const axios = require('axios');
+const unzipper = require('unzipper');
 
 const REPOSITORY_URL = 'https://github.com/OriginTrail/ot-node';
+const ARCHIVE_REPOSITORY_URL = 'github.com/OriginTrail/ot-node/archive/';
 
 class OTAutoUpdater {
     initialize(config, logger) {
         this.config = config;
         this.logger = logger;
-        if (!this.config) throw new Error('You must pass a config object to AutoUpdater.');
+        if (!this.config) throw Error('You must pass a config object to AutoUpdater.');
         if (!this.config.branch) this.config.branch = 'master';
     }
 
@@ -55,7 +57,11 @@ class OTAutoUpdater {
             const currentVersion = this.readAppVersion(currentDirectory);
             const newVersion = await this.readRemoteVersion();
             const updateDirectory = path.join(rootPath, newVersion);
-            await this.downloadUpdate(updateDirectory);
+            const zipArchiveDestination = `${updateDirectory}.zip`;
+            const tmpExtractionPath = path.join(rootPath, 'TmpExtractionPath');
+            await this.downloadUpdate(zipArchiveDestination);
+            await this.unzipFile(tmpExtractionPath, zipArchiveDestination);
+            await this.moveAndCleanExtractedData(tmpExtractionPath, updateDirectory);
             await this.copyConfigFiles(currentDirectory, updateDirectory);
             await this.installDependencies(updateDirectory);
 
@@ -71,9 +77,7 @@ class OTAutoUpdater {
             await this.removeOldVersions(currentVersion, newVersion);
             return true;
         } catch (e) {
-            this.logger.error(
-                `AutoUpdater - Error updating application. Error message: ${e.message}`,
-            );
+            this.logger.error(`AutoUpdater - Error updating application. Error message: ${e}`);
             return false;
         }
     }
@@ -164,33 +168,69 @@ class OTAutoUpdater {
             const { version } = remotePackage;
             return version;
         } catch (e) {
-            throw new Error(
+            throw Error(
                 `This repository requires a token or does not exist. Error message: ${e.message}`,
             );
         }
     }
 
-    /**
-     * A promise wrapper for the simple-git clone function
-     * @param {String} repo - The url of the repository to clone.
-     * @param {String} destination - The local path to clone into.
-     * @param {String} branch - The repo branch to clone.
-     */
-    promiseClone(repo, destination, branch) {
+    downloadUpdate(destination) {
         return new Promise((resolve, reject) => {
-            git().clone(repo, destination, [`--branch=${branch}`], (result) => {
-                if (result != null) reject(`Unable to clone repo \n ${repo} \n ${result}`);
+            const url = `https://${path.join(ARCHIVE_REPOSITORY_URL, this.config.branch)}.zip`;
+            this.logger.debug(`AutoUpdater - Downloading ot-node .zip file from url: ${url}`);
+            axios({ method: 'get', url, responseType: 'stream' })
+                .then((response) => {
+                    const fileStream = fs.createWriteStream(destination);
+                    response.data.pipe(fileStream);
+                    fileStream.on('finish', () => {
+                        fileStream.close(); // close() is async, call cb after close completes.
+                        resolve();
+                    });
+                    fileStream.on('error', (err) => {
+                        // Handle errors
+                        fs.unlinkSync(destination);
+                        reject(err);
+                    });
+                })
+                .catch((error) => {
+                    reject(
+                        Error(
+                            `AutoUpdater - Unable to download new version of ot-node. Error: ${error.message}`,
+                        ),
+                    );
+                });
+        });
+    }
+
+    unzipFile(destination, source) {
+        this.logger.debug(`AutoUpdater - Unzipping ot-node new version archive`);
+        return new Promise((resolve, reject) => {
+            const fileReadStream = fs
+                .createReadStream(source)
+                .pipe(unzipper.Extract({ path: destination }));
+            fileReadStream.on('close', () => {
+                this.logger.debug(`AutoUpdater - Unzip completed`);
+                fs.removeSync(source);
                 resolve();
+            });
+            fileReadStream.on('error', (err) => {
+                reject(err);
             });
         });
     }
 
-    async downloadUpdate(destination) {
-        this.logger.debug(`AutoUpdater - Cloning ${REPOSITORY_URL}`);
-        this.logger.debug(`AutoUpdater - Destination: ${destination}`);
-        await fs.ensureDir(destination);
-        await fs.emptyDir(destination);
-        await this.promiseClone(REPOSITORY_URL, destination, this.config.branch);
+    async moveAndCleanExtractedData(extractedDataPath, destinationPath) {
+        this.logger.debug(`AutoUpdater - Cleaning update destination directory`);
+        const destinationDirFiles = await fs.readdir(extractedDataPath);
+        if (destinationDirFiles.length !== 1) {
+            await fs.remove(extractedDataPath);
+            throw Error('Extracted archive for new ot-node version is not valid');
+        }
+        const sourcePath = path.join(extractedDataPath, destinationDirFiles[0]);
+
+        await fs.move(sourcePath, destinationPath);
+
+        await fs.remove(extractedDataPath);
     }
 
     /**
