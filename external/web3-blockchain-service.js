@@ -15,6 +15,7 @@ class Web3BlockchainService {
         this.logger = logger;
         this.rpcNumber = 0;
         await this.initializeWeb3();
+        await this.initializeContracts();
     }
 
     async initializeWeb3() {
@@ -38,6 +39,9 @@ class Web3BlockchainService {
                 this.rpcNumber = (this.rpcNumber + 1) % this.config.rpcEndpoints.length;
             }
         }
+    }
+
+    async initializeContracts() {
         this.UAIRegistryContract = new this.web3.eth.Contract(
             UAIRegistryAbi,
             this.config.hubContractAddress,
@@ -212,6 +216,7 @@ class Web3BlockchainService {
             }`,
         );
         await this.initializeWeb3();
+        await this.initializeContracts();
     }
 
     getName() {
