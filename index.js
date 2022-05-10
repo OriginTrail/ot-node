@@ -3,22 +3,13 @@ const path = require('path');
 const appRootPath = require('app-root-path');
 require('dotenv').config({path: `${appRootPath.path}/.env`});
 const { execSync } = require('child_process');
-const rc = require('rc');
 const semver = require('semver');
 const OTNode = require('./ot-node');
-const pjson = require('./package.json');
-
-const configjson = require('./config/config.json');
 
 process.env.NODE_ENV =
     process.env.NODE_ENV && ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0
         ? process.env.NODE_ENV
         : 'development';
-
-let config = JSON.parse(fs.readFileSync(path.join(appRootPath.path, '.origintrail_noderc'), 'utf8'));
-const defaultConfig = JSON.parse(JSON.stringify(configjson[process.env.NODE_ENV]));
-
-config = rc(pjson.name, defaultConfig);
 
 (async () => {
     let userConfig = null;
