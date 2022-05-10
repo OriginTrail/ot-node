@@ -15,7 +15,7 @@ process.env.NODE_ENV =
         ? process.env.NODE_ENV
         : 'development';
 
-let config = JSON.parse(fs.readFileSync('./.origintrail_noderc', 'utf8'));
+let config = JSON.parse(fs.readFileSync(path.join(appRootPath.path, '.origintrail_noderc'), 'utf8'));
 const defaultConfig = JSON.parse(JSON.stringify(configjson[process.env.NODE_ENV]));
 
 config = rc(pjson.name, defaultConfig);
