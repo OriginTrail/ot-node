@@ -315,6 +315,8 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
+rm -rf setup_16.x
+
 echo -n "Updating the Ubuntu repo: "
 
 OUTPUT=$(apt update 2>&1)
@@ -417,7 +419,7 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-# Change directory to ot-node
+# Change directory to ot-node/current
 cd $OTNODE_DIR
 
 echo -n "Executing npm install: "
