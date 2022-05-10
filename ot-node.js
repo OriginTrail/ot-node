@@ -1,5 +1,7 @@
 const { execSync } = require('child_process');
 const DeepExtend = require('deep-extend');
+const path = require('path');
+const appRootPath = require('app-root-path');
 const rc = require('rc');
 const fs = require('fs');
 const queue = require('fastq');
@@ -59,7 +61,7 @@ class OTNode {
         if (userConfig) {
             this.config = DeepExtend(defaultConfig, userConfig);
         } else {
-            this.config = rc(pjson.name, defaultConfig);
+            this.config = rc(path.join(appRootPath.path, pjson.version), defaultConfig);
         }
         if (!this.config.configFilename) {
             // set default user configuration filename
