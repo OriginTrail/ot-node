@@ -1,7 +1,7 @@
-require('dotenv').config();
 const fs = require('fs-extra');
 const path = require('path');
 const appRootPath = require('app-root-path');
+require('dotenv').config({path: `${appRootPath.path}/.env`});
 const { execSync } = require('child_process');
 const rc = require('rc');
 const semver = require('semver');
