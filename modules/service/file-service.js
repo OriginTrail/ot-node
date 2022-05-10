@@ -2,6 +2,8 @@ const path = require('path');
 const { exists, mkdir } = require('fs');
 const fs = require('fs');
 
+const MIGRATION_FOLDER_NAME = 'migrations';
+
 class FileService {
     constructor(ctx) {
         this.config = ctx.config;
@@ -109,6 +111,10 @@ class FileService {
 
     getUpdateFilePath() {
         return path.join(this.getDataFolderPath(), 'UPDATED');
+    }
+
+    getMigrationFolderPath() {
+        return path.join(this.getDataFolderPath(), MIGRATION_FOLDER_NAME);
     }
 
     getHandlerIdCachePath() {
