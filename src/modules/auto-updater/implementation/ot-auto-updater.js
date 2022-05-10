@@ -66,7 +66,7 @@ class OTAutoUpdater {
             await this.installDependencies(updateDirectory);
 
             const currentSymlinkFolder = path.join(rootPath, 'current');
-            if (fs.pathExists(currentSymlinkFolder)) {
+            if (await fs.pathExists(currentSymlinkFolder)) {
                 await fs.remove(currentSymlinkFolder);
             }
             await fs.ensureSymlink(updateDirectory, currentSymlinkFolder);

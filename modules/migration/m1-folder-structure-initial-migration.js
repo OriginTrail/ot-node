@@ -17,7 +17,11 @@ class M1FolderStructureInitialMigration extends BaseMigration {
                 return;
             }
 
-            // todo add check if current symlink exists
+            const currentSymlink = path.join(appRootPath.path, '..', 'current');
+            if (await fs.pathExists(currentSymlink)) {
+                await this.finalizeMigration();
+                return;
+            }
 
             const currentVersion = pjson.version;
             const temporaryAppRootPath = path.join(appRootPath.path, '..', 'ot-node-tmp');
@@ -33,7 +37,7 @@ class M1FolderStructureInitialMigration extends BaseMigration {
             await fs.rename(temporaryAppRootPath, currentAppRootPath);
 
             const currentSymlinkFolder = path.join(currentAppRootPath, 'current');
-            if (fs.pathExists(currentSymlinkFolder)) {
+            if (await fs.pathExists(currentSymlinkFolder)) {
                 await fs.remove(currentSymlinkFolder);
             }
             await fs.ensureSymlink(newAppDirectoryPath, currentSymlinkFolder, 'folder');
