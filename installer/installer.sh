@@ -1,5 +1,7 @@
 #!/bin/bash
 
+ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive"
+BRANCH="v6/release/testnet"
 OTNODE_DIR="/root/ot-node"
 N1=$'\n'
 GREEN='\033[0;32m'
@@ -10,10 +12,6 @@ FILE=/root/.bashrc
 clear
 
 cd /root
-
-#Download new version .zip file
-#Unpack to init folder
-#Create current symlink
 
 echo -n "Updating .bashrc file with OriginTrail node aliases: "
 if [ -f "$FILE" ]; then
@@ -79,6 +77,37 @@ if [[ $? -ne 0 ]]; then
 else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
+
+mkdir $OTNODE_DIR
+cd $OTNODE_DIR
+
+echo -n "Downloading ot-node: "
+
+OUTPUT=$(wget https://$ARCHIVE_REPOSITORY_URL/$BRANCH.zip 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error downloading ot-node."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+OUTPUT=$(unzip *.zip 2>&1)
+rm *.zip
+#Download new version .zip file
+#Unpack to init folder
+
+OTNODE_VERSION=$(jq -r '.version' ot-node*/package.json)
+
+mv ot-node* $OTNODE_VERSION
+
+ln -sfn $OTNODE_VERSION current
+
+OTNODE_DIR=$OTNODE_DIR/current
+
+cd /root
 
 while true; do
     read -p "Please select the database you would like to use: [1]Fuseki [2]Blazegraph [E]xit: " choice
@@ -339,27 +368,17 @@ echo -n "Creating a local operational database: "
 mysql -u root -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;"
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
-    echo "There was an error creating the database (Step 1 of 3)."
+    echo "There was an error creating the database (Step 1 of 2)."
     echo $OUTPUT
     exit 1
 fi
 
-mysql -u root -e "update mysql.user set plugin = 'mysql_native_password' where User='root';"
+mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';"
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
-    echo "There was an error updating mysql.user set plugin (Step 2 of 3)."
+    echo "There was an error updating mysql.user set plugin (Step 2 of 2)."
     echo $OUTPUT
     exit 1
-fi
-
-mysql -u root -e "flush privileges;"
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error flushing privileges (Step 3 of 3)."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
 fi
 
 echo -n "Commenting out max_binlog_size: "
@@ -399,7 +418,7 @@ else
 fi
 
 # Change directory to ot-node
-cd ot-node
+cd $OTNODE_DIR
 
 echo -n "Executing npm install: "
 
