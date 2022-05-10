@@ -2,7 +2,7 @@
     "development": {
         "modules": {
             "autoUpdater": {
-                "enabled": true,
+                "enabled": false,
                 "implementation": {
                     "ot-auto-updater": {
                         "package": "./auto-updater/implementation/ot-auto-updater",
@@ -58,7 +58,7 @@
     "test": {
         "modules": {
             "autoUpdater": {
-                "enabled": true,
+                "enabled": false,
                 "implementation": {
                     "ot-auto-updater": {
                         "package": "./auto-updater/implementation/ot-auto-updater",

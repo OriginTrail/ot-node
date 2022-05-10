@@ -11,6 +11,8 @@ class PublishController extends BaseController {
         this.workerPool = ctx.workerPool;
         this.publishService = ctx.publishService;
         this.logger = ctx.logger;
+        this.fileService = ctx.fileService;
+        this.commandExecutor = ctx.commandExecutor;
     }
 
     async handleHttpApiPublishRequest(req, res) {
@@ -71,7 +73,7 @@ class PublishController extends BaseController {
         let fileContent;
         const fileExtension = '.json';
         if (req.files) {
-            fileContent = req.files.file.data;
+            fileContent = req.files.file.data.toString();
         } else {
             fileContent = req.body.data;
         }
@@ -101,7 +103,7 @@ class PublishController extends BaseController {
         const documentPath = await this.fileService.writeContentsToFile(
             handlerIdCachePath,
             handlerId,
-            await this.workerPool.exec('JSONStringify', fileContent),
+            await this.workerPool.exec('JSONStringify', [fileContent]),
         );
         const commandData = {
             fileExtension,

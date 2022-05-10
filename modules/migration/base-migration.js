@@ -3,8 +3,6 @@ const path = require('path');
 const fs = require('fs-extra');
 const FileService = require('../service/file-service');
 
-const MIGRATION_FOLDER_NAME = 'migrations';
-
 class BaseMigration {
     constructor(migrationName, logger, config) {
         if (!migrationName || migrationName === '') {
@@ -40,9 +38,7 @@ class BaseMigration {
     }
 
     async finalizeMigration(migrationPath = null) {
-        const migrationFolderPath =
-            migrationPath ||
-            path.join(appRootPath.path, '..', this.config.appDataPath, MIGRATION_FOLDER_NAME);
+        const migrationFolderPath = migrationPath || this.fileService.getMigrationFolderPath();
         await fs.ensureDir(migrationFolderPath);
         const migrationFilePath = path.join(migrationFolderPath, this.migrationName);
         await fs.writeFile(migrationFilePath, 'MIGRATED');
