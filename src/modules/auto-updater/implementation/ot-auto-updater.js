@@ -65,12 +65,11 @@ class OTAutoUpdater {
             await this.copyConfigFiles(currentDirectory, updateDirectory);
             await this.installDependencies(updateDirectory);
 
-            const indexPath = path.join(updateDirectory, 'index.js');
-            const indexSymlinkPath = path.join(rootPath, 'index.js');
-            if (fs.pathExists(indexSymlinkPath)) {
-                await fs.remove(indexSymlinkPath);
+            const currentSymlinkFolder = path.join(rootPath, 'current');
+            if (fs.pathExists(currentSymlinkFolder)) {
+                await fs.remove(currentSymlinkFolder);
             }
-            await fs.ensureSymlink(indexPath, indexSymlinkPath);
+            await fs.ensureSymlink(updateDirectory, currentSymlinkFolder);
 
             this.logger.debug('AutoUpdater - Finished installing updated version.');
 

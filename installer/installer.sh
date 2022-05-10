@@ -11,6 +11,10 @@ clear
 
 cd /root
 
+#Download new version .zip file
+#Unpack to init folder
+#Create current symlink
+
 echo -n "Updating .bashrc file with OriginTrail node aliases: "
 if [ -f "$FILE" ]; then
     echo "alias otnode-restart='systemctl restart otnode.service'" >> ~/.bashrc
@@ -87,8 +91,8 @@ while true; do
 done
 
 if [[ $DATABASE = "fuseki" ]]; then
-    
-    echo -n "Downloading Apache Jena Fuseki: " 
+
+    echo -n "Downloading Apache Jena Fuseki: "
 
     OUTPUT=$(wget https://dlcdn.apache.org/jena/binaries/apache-jena-fuseki-4.4.0.zip 2>&1)
 
@@ -120,7 +124,7 @@ if [[ $DATABASE = "fuseki" ]]; then
             mkdir /root/fuseki/tdb &&
             cp /root/apache-jena-fuseki-4.4.0/fuseki-server.jar /root/fuseki/ &&
             cp -r /root/apache-jena-fuseki-4.4.0/webapp/ /root/fuseki/ 2>&1)
-    
+
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
         echo "There was an setting up the fuseki folder in /root/fuseki."
@@ -187,8 +191,8 @@ if [[ $DATABASE = "fuseki" ]]; then
 fi
 
 if [[ $DATABASE = "blazegraph" ]]; then
-    
-    echo -n "Downloading Blazegraph: " 
+
+    echo -n "Downloading Blazegraph: "
 
     OUTPUT=$(wget https://github.com/blazegraph/database/releases/latest/download/blazegraph.jar 2>&1)
 

@@ -9,7 +9,7 @@ After=network.target graphdb.service blazegraph.service
 Type=simple
 User=root
 WorkingDirectory=/root/ot-node
-ExecStart=/usr/bin/node /root/ot-node/index.js
+ExecStart=/usr/bin/node /root/ot-node/current/index.js
 Restart=on-failure
 
 [Install]

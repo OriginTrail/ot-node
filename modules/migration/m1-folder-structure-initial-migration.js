@@ -17,6 +17,8 @@ class M1FolderStructureInitialMigration extends BaseMigration {
                 return;
             }
 
+            // todo add check if current symlink exists
+
             const currentVersion = pjson.version;
             const temporaryAppRootPath = path.join(appRootPath.path, '..', 'ot-node-tmp');
             const newAppDirectoryPath = path.join(temporaryAppRootPath, currentVersion);
@@ -26,17 +28,15 @@ class M1FolderStructureInitialMigration extends BaseMigration {
 
             await fs.copy(currentAppRootPath, newAppDirectoryPath);
 
-            const indexSymlinkPath = path.join(temporaryAppRootPath, 'index.js');
-            const indexPath = path.join(newAppDirectoryPath, 'index.js');
-
-            if (fs.pathExists(indexSymlinkPath)) {
-                await fs.remove(indexSymlinkPath);
-            }
-            await fs.ensureSymlink(indexPath, indexSymlinkPath);
-
             await fs.remove(currentAppRootPath);
 
             await fs.rename(temporaryAppRootPath, currentAppRootPath);
+
+            const currentSymlinkFolder = path.join(currentAppRootPath, 'current');
+            if (fs.pathExists(currentSymlinkFolder)) {
+                await fs.remove(currentSymlinkFolder);
+            }
+            await fs.ensureSymlink(newAppDirectoryPath, currentSymlinkFolder, 'folder');
 
             await this.finalizeMigration(path.join(currentAppRootPath, 'data', 'migrations'));
             this.logger.info('Folder structure migration completed, node will now restart!');
