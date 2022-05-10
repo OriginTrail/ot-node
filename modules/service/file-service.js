@@ -100,6 +100,17 @@ class FileService {
         });
     }
 
+    getDataFolderPath() {
+        if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
+            return path.join(this.config.appDataPath, '..', this.config.appDataPath);
+        }
+        return path.join(this.config.appDataPath, this.config.appDataPath);
+    }
+
+    getUpdateFilePath() {
+        return path.join(this.getDataFolderPath(), 'UPDATED');
+    }
+
     getHandlerIdCachePath() {
         return path.join(this.config.appDataPath, 'handler_id_cache');
     }
