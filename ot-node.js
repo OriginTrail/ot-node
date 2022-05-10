@@ -61,7 +61,7 @@ class OTNode {
         if (userConfig) {
             this.config = DeepExtend(defaultConfig, userConfig);
         } else {
-            this.config = rc(path.join(appRootPath.path, pjson.version), defaultConfig);
+            this.config = rc(pjson.name, defaultConfig);
         }
         if (!this.config.configFilename) {
             // set default user configuration filename
