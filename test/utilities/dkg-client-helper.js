@@ -1,8 +1,8 @@
-const DkgClient = require('dkg-client');
+const DKG = require('dkg.js');
 
 class DkgClientHelper {
     constructor(config) {
-        this.client = new DkgClient(config);
+        this.client = new DKG(config);
     }
 
     async info() {
@@ -20,7 +20,7 @@ class DkgClientHelper {
 
     async publish(data, keywords) {
         return this.client._publishRequest({
-            data,
+            content: data,
             keywords,
             method: 'publish',
             visibility: 'public',
@@ -38,25 +38,22 @@ class DkgClientHelper {
     }
 
     async resolve(ids) {
-        return this.client
-            ._resolveRequest({
-                ids,
-            });
+        return this.client._resolveRequest({
+            ids,
+        });
     }
 
     async search(resultType, query) {
-        return this.client
-            ._searchRequest({
-                resultType,
-                query,
-            });
+        return this.client._searchRequest({
+            resultType,
+            query,
+        });
     }
 
     async query(query) {
-        return this.client
-            ._queryRequest({
-                query,
-            });
+        return this.client._queryRequest({
+            query,
+        });
     }
 
     async getResult(handler_id, operation) {
@@ -64,7 +61,8 @@ class DkgClientHelper {
             ._getResult({
                 handler_id,
                 operation,
-            }).catch((error) => {
+            })
+            .catch((error) => {
                 console.log(`error getting result. ${error}`);
             });
     }
