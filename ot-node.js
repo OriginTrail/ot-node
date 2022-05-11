@@ -1,7 +1,5 @@
 const { execSync } = require('child_process');
 const DeepExtend = require('deep-extend');
-const path = require('path');
-const appRootPath = require('app-root-path');
 const rc = require('rc');
 const fs = require('fs');
 const queue = require('fastq');
@@ -137,7 +135,7 @@ class OTNode {
             const db = require('./models');
 
             if (this.config.otNodeUpdated) {
-                execSync(`npx sequelize --config=${appRootPath.path}/config/sequelizeConfig.js db:migrate`);
+                execSync(`npx --config=./config/sequelizeConfig.js db:migrate`);
             }
 
             await db.sequelize.sync();
