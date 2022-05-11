@@ -14,6 +14,8 @@ class DependencyInjection {
                 'modules/manager/**/*.js',
                 'modules/worker/worker-pool.js',
                 'src/controller/**/*.js',
+                'src/modules/base-module-manager.js',
+                'src/modules/**/*module-manager.js',
             ],
             {
                 formatName: 'camelCase',

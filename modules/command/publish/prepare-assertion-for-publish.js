@@ -8,6 +8,7 @@ class PrepareAssertionForPublish extends Command {
         this.logger = ctx.logger;
         this.dataService = ctx.dataService;
         this.fileService = ctx.fileService;
+        this.workerPool = ctx.workerPool;
         this.validationService = ctx.validationService;
         this.workerPool = ctx.workerPool;
     }

@@ -3,14 +3,15 @@ const DeepExtend = require('deep-extend');
 const rc = require('rc');
 const fs = require('fs');
 const queue = require('fastq');
-const AutoUpdater = require('./modules/auto-update/auto-updater-module-interface');
+const appRootPath = require('app-root-path');
+const path = require('path');
 const DependencyInjection = require('./modules/service/dependency-injection');
 const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
-
-let updateFilePath;
+const M1FolderStructureInitialMigration = require('./modules/migration/m1-folder-structure-initial-migration');
+const FileService = require('./modules/service/file-service');
 
 class OTNode {
     constructor(config) {
@@ -19,6 +20,8 @@ class OTNode {
     }
 
     async start() {
+        await this.runFolderStructureInitialMigration();
+
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
         this.logger.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
@@ -32,7 +35,7 @@ class OTNode {
         this.logger.info(`Node is running in ${process.env.NODE_ENV} environment`);
 
         this.initializeDependencyContainer();
-        await this.initializeAutoUpdate();
+        await this.initializeModules();
         await this.initializeDataModule();
         await this.initializeOperationalDbModule();
         await this.initializeValidationModule();
@@ -42,6 +45,14 @@ class OTNode {
         await this.initializeTelemetryHubModule();
         await this.initializeRpcModule();
         // await this.initializeWatchdog();
+    }
+
+    async runFolderStructureInitialMigration() {
+        const m1FolderStructureInitialMigration = new M1FolderStructureInitialMigration(
+            this.logger,
+            this.config,
+        );
+        return m1FolderStructureInitialMigration.run();
     }
 
     initializeConfiguration(userConfig) {
@@ -56,10 +67,22 @@ class OTNode {
             // set default user configuration filename
             this.config.configFilename = '.origintrail_noderc';
         }
-        if (!this.config.blockchain[0].hubContractAddress
-            && this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId) {
-            this.config.blockchain[0].hubContractAddress = configjson[process.env.NODE_ENV]
-                .blockchain[0].hubContractAddress;
+        if (
+            !this.config.blockchain[0].hubContractAddress &&
+            this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId
+        ) {
+            this.config.blockchain[0].hubContractAddress =
+                configjson[process.env.NODE_ENV].blockchain[0].hubContractAddress;
+        }
+
+        const fileService = new FileService({ config: this.config });
+
+        const updateFilePath = fileService.getUpdateFilePath();
+        if (fs.existsSync(updateFilePath)) {
+            this.config.otNodeUpdated = true;
+            fileService.removeFile(updateFilePath).catch((error) => {
+                this.logger.warn(`Unable to remove update file. Error: ${error}`);
+            });
         }
     }
 
@@ -74,35 +97,23 @@ class OTNode {
         this.logger.info('Dependency injection module is initialized');
     }
 
-    async initializeAutoUpdate() {
+    async initializeModules() {
+        const initializationPromises = [];
+        for (const moduleName in this.config.modules) {
+            const moduleManagerName = `${moduleName}ModuleManager`;
+
+            const moduleManager = this.container.resolve(moduleManagerName);
+            initializationPromises.push(moduleManager.initialize());
+        }
         try {
-            updateFilePath = `./${this.config.appDataPath}/UPDATED`;
-            if (fs.existsSync(updateFilePath)) {
-                this.config.otNodeUpdated = true;
-            }
-            if (!this.config.autoUpdate.enabled) {
-                return;
-            }
-
-            const autoUpdateConfig = {
-                logger: this.logger,
-                branch: this.config.autoUpdate.branch,
-                tempLocation: this.config.autoUpdate.backupDirectory,
-                executeOnComplete: `touch ${updateFilePath}`,
-            };
-
-            execSync(`mkdir -p ${this.config.autoUpdate.backupDirectory}`);
-
-            this.updater = new AutoUpdater(autoUpdateConfig);
-            await this.updater.initialize();
-            DependencyInjection.registerValue(this.container, 'updater', this.updater);
-
-            this.logger.info('Auto update mechanism initialized');
+            await Promise.all(initializationPromises);
+            this.logger.info(`All modules initialized!`);
         } catch (e) {
             this.logger.error({
-                msg: `Auto update initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.UPDATE_INITIALIZATION_ERROR,
+                msg: `Module initialization failed. Error message: ${e.message}`,
+                Event_name: constants.ERROR_TYPE.MODULE_INITIALIZATION_ERROR,
             });
+            process.exit(1);
         }
     }
 
@@ -124,14 +135,11 @@ class OTNode {
             this.logger.info('Operational database module: sequelize implementation');
             // eslint-disable-next-line global-require
             const db = require('./models');
-            
-            if(this.config.otNodeUpdated) {
-                execSync('npx sequelize --config=./config/sequelizeConfig.js db:migrate');
-                const fileService = this.container.resolve('fileService');
-                await  fileService.removeFile(updateFilePath);
-                this.config.otNodeUpdated = false;
+
+            if (this.config.otNodeUpdated) {
+                execSync(`npx sequelize --config=./config/sequelizeConfig.js db:migrate`);
             }
-            
+
             await db.sequelize.sync();
         } catch (e) {
             this.logger.error({
@@ -147,8 +155,10 @@ class OTNode {
             const result = await networkService.initialize();
 
             this.config.network.peerId = result.peerId;
-            if (!this.config.network.privateKey
-                && (this.config.network.privateKey !== result.privateKey)) {
+            if (
+                !this.config.network.privateKey &&
+                this.config.network.privateKey !== result.privateKey
+            ) {
                 this.config.network.privateKey = result.privateKey;
                 if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
                     this.savePrivateKeyInUserConfigurationFile(result.privateKey);
@@ -224,10 +234,14 @@ class OTNode {
         try {
             const telemetryHubModuleManager = this.container.resolve('telemetryHubModuleManager');
             if (telemetryHubModuleManager.initialize(this.config.telemetryHub, this.logger)) {
-                this.logger.info(`Telemetry hub module initialized successfully, using ${telemetryHubModuleManager.config.telemetryHub.packages} package(s)`);
+                this.logger.info(
+                    `Telemetry hub module initialized successfully, using ${telemetryHubModuleManager.config.telemetryHub.packages} package(s)`,
+                );
             }
         } catch (e) {
-            this.logger.error(`Telemetry hub module initialization failed. Error message: ${e.message}`);
+            this.logger.error(
+                `Telemetry hub module initialization failed. Error message: ${e.message}`,
+            );
         }
     }
 
@@ -242,9 +256,10 @@ class OTNode {
     }
 
     savePrivateKeyInUserConfigurationFile(privateKey) {
-        const configFile = JSON.parse(fs.readFileSync(this.config.configFilename));
+        const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
+        const configFile = JSON.parse(fs.readFileSync(configurationFilePath));
         configFile.network.privateKey = privateKey;
-        fs.writeFileSync(this.config.configFilename, JSON.stringify(configFile, null, 2));
+        fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
     }
 
     stop() {

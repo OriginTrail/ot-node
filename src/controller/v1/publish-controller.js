@@ -10,9 +10,9 @@ class PublishController extends BaseController {
         super();
         this.workerPool = ctx.workerPool;
         this.publishService = ctx.publishService;
+        this.logger = ctx.logger;
         this.fileService = ctx.fileService;
         this.commandExecutor = ctx.commandExecutor;
-        this.logger = ctx.logger;
     }
 
     async handleHttpApiPublishRequest(req, res) {
@@ -103,7 +103,7 @@ class PublishController extends BaseController {
         const documentPath = await this.fileService.writeContentsToFile(
             handlerIdCachePath,
             handlerId,
-            fileContent,
+            await this.workerPool.exec('JSONStringify', [fileContent]),
         );
         const commandData = {
             fileExtension,

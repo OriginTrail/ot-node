@@ -1078,7 +1078,7 @@ class RpcController {
 
                 res.status(200).send({
                     version,
-                    auto_update: this.config.autoUpdate.enabled,
+                    auto_update: this.config.modules.autoUpdater.enabled,
                     telemetry: this.config.telemetryHub.enabled,
                 });
             } catch (e) {

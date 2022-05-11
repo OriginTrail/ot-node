@@ -1,6 +1,9 @@
 const path = require('path');
 const { exists, mkdir } = require('fs');
 const fs = require('fs');
+const appRootPath = require('app-root-path');
+
+const MIGRATION_FOLDER_NAME = 'migrations';
 
 class FileService {
     constructor(ctx) {
@@ -100,8 +103,23 @@ class FileService {
         });
     }
 
+    getDataFolderPath() {
+        if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
+            return path.join(appRootPath.path, '..', this.config.appDataPath);
+        }
+        return path.join(appRootPath.path, this.config.appDataPath);
+    }
+
+    getUpdateFilePath() {
+        return path.join(this.getDataFolderPath(), 'UPDATED');
+    }
+
+    getMigrationFolderPath() {
+        return path.join(this.getDataFolderPath(), MIGRATION_FOLDER_NAME);
+    }
+
     getHandlerIdCachePath() {
-        return path.join(this.config.appDataPath, 'handler_id_cache');
+        return path.join(this.getDataFolderPath(), 'handler_id_cache');
     }
 
     getHandlerIdDocumentPath(handlerId) {

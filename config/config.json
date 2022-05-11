@@ -1,181 +1,223 @@
 {
-  "development": {
-    "appDataPath": "data",
-    "autoUpdate": {
-      "enabled": false,
-      "branch": "v6/develop",
-      "backupDirectory": "../backup"
+    "development": {
+        "modules": {
+            "autoUpdater": {
+                "enabled": false,
+                "implementation": {
+                    "ot-auto-updater": {
+                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "config": {
+                            "branch": "v6/develop"
+                        }
+                    }
+                }
+            },
+            "httpClient": {
+                "enabled": true,
+                "implementation": {
+                    "express-http-client": {
+                        "package": "./http-client/implementation/express-http-client",
+                        "config": {}
+                    }
+                }
+            }
+        },
+        "appDataPath": "data",
+        "blockchain": [
+            {
+                "blockchainTitle": "Polygon",
+                "networkId": "polygon::mainnet",
+                "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
+                "rpcEndpoints": ["https://rpc-mumbai.maticvigil.com/"]
+            }
+        ],
+        "graphDatabase": {
+            "implementation": "GraphDB",
+            "url": "http://localhost:7200",
+            "name": "node0",
+            "username": "admin",
+            "password": ""
+        },
+        "logLevel": "trace",
+        "replicationFactor": 5,
+        "rpcPort": 8900,
+        "network": {
+            "port": 9000,
+            "bootstrap": []
+        },
+        "ipWhitelist": ["::1", "127.0.0.1"],
+        "telemetryHub": {
+            "enabled": false,
+            "packages": ["ot-telemetry-collector"],
+            "url": ""
+        },
+        "operationalDatabase": {
+            "databaseName": "operationaldb"
+        }
     },
-    "blockchain": [
-      {
-        "blockchainTitle": "Polygon",
-        "networkId": "polygon::mainnet",
-        "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
-        "rpcEndpoints": [
-          "https://rpc-mumbai.maticvigil.com/"
-        ]
-      }
-    ],
-    "graphDatabase": {
-      "implementation": "GraphDB",
-      "url": "http://localhost:7200",
-      "name": "node0",
-      "username": "admin",
-      "password": ""
+    "test": {
+        "modules": {
+            "autoUpdater": {
+                "enabled": false,
+                "implementation": {
+                    "ot-auto-updater": {
+                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "config": {
+                            "branch": "v6/develop"
+                        }
+                    }
+                }
+            },
+            "httpClient": {
+                "enabled": true,
+                "implementation": {
+                    "express-http-client": {
+                        "package": "./http-client/implementation/express-http-client",
+                        "config": {}
+                    }
+                }
+            }
+        },
+        "appDataPath": "data",
+        "blockchain": [
+            {
+                "blockchainTitle": "ganache",
+                "networkId": "ganache::testnet",
+                "hubContractAddress": "",
+                "rpcEndpoints": ["http://localhost:7545"]
+            }
+        ],
+        "graphDatabase": {
+            "implementation": "GraphDB",
+            "url": "http://localhost:7200",
+            "name": "node0",
+            "username": "admin",
+            "password": ""
+        },
+        "logLevel": "trace",
+        "replicationFactor": 5,
+        "rpcPort": 8900,
+        "network": {
+            "port": 9000,
+            "bootstrap": []
+        },
+        "ipWhitelist": ["::1", "127.0.0.1"],
+        "telemetryHub": {
+            "enabled": false,
+            "packages": ["ot-telemetry-collector"],
+            "url": ""
+        },
+        "operationalDatabase": {
+            "databaseName": "operationaldb"
+        }
     },
-    "logLevel": "trace",
-    "replicationFactor": 5,
-    "rpcPort": 8900,
-    "network": {
-      "port": 9000,
-      "bootstrap": []
+    "testnet": {
+        "modules": {
+            "autoUpdater": {
+                "enabled": true,
+                "implementation": {
+                    "ot-auto-updater": {
+                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "config": {
+                            "branch": "v6/release/testnet"
+                        }
+                    }
+                }
+            },
+            "httpClient": {
+                "enabled": true,
+                "implementation": {
+                    "express-http-client": {
+                        "package": "./http-client/implementation/express-http-client",
+                        "config": {}
+                    }
+                }
+            }
+        },
+        "appDataPath": "data",
+        "blockchain": [
+            {
+                "blockchainTitle": "Polygon",
+                "networkId": "polygon::testnet",
+                "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
+                "rpcEndpoints": ["https://rpc-mumbai.maticvigil.com/"]
+            }
+        ],
+        "graphDatabase": {
+            "implementation": "GraphDB",
+            "url": "http://localhost:7200",
+            "name": "node0",
+            "username": "admin",
+            "password": ""
+        },
+        "logLevel": "trace",
+        "replicationFactor": 5,
+        "rpcPort": 8900,
+        "network": {
+            "port": 9000,
+            "bootstrap": [
+                "/ip4/165.232.122.94/tcp/9000/p2p/QmQ2zigjQikYnyYUSXZydNXrDRhBut2mubwJBaLXobMt3A",
+                "/ip4/46.101.111.223/tcp/9000/p2p/QmdTKEP4DDSwYzX2CHEsBfpEAKAVyE4mPq9ouh4ehZZbg5",
+                "/ip4/46.101.153.21/tcp/9000/p2p/QmXzmTqVT3TPUtTz4dBDN5NWSABqnX9rKXCG9WCLXMfEaM"
+            ]
+        },
+        "ipWhitelist": ["::1", "127.0.0.1"],
+        "telemetryHub": {
+            "enabled": true,
+            "packages": ["ot-telemetry-collector"],
+            "url": "https://polaris.delta.origin-trail.network/metrics/"
+        },
+        "operationalDatabase": {
+            "databaseName": "operationaldb"
+        }
     },
-    "ipWhitelist": [
-      "::1",
-      "127.0.0.1"
-    ],
-    "telemetryHub": {
-      "enabled": false,
-      "packages": [
-        "ot-telemetry-collector"
-      ],
-      "url": ""
-    },
-    "operationalDatabase": {
-      "databaseName": "operationaldb"
+    "mainnet": {
+        "modules": {
+            "autoUpdater": {
+                "enabled": true,
+                "implementation": {
+                    "ot-auto-updater": {
+                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "config": {
+                            "branch": "v6/release/mainnet"
+                        }
+                    }
+                }
+            },
+            "httpClient": {
+                "enabled": true,
+                "implementation": {
+                    "express-http-client": {
+                        "package": "./http-client/implementation/express-http-client",
+                        "config": {}
+                    }
+                }
+            }
+        },
+        "appDataPath": "data",
+        "blockchain": [],
+        "graphDatabase": {
+            "implementation": "GraphDB",
+            "url": "http://localhost:7200",
+            "name": "node0",
+            "username": "admin",
+            "password": ""
+        },
+        "logLevel": "trace",
+        "replicationFactor": 5,
+        "rpcPort": 8900,
+        "network": {
+            "port": 9000,
+            "bootstrap": []
+        },
+        "ipWhitelist": ["::1", "127.0.0.1"],
+        "telemetryHub": {
+            "enabled": false,
+            "packages": ["ot-telemetry-collector"],
+            "url": ""
+        },
+        "operationalDatabase": {
+            "databaseName": "operationaldb"
+        }
     }
-  },
-  "test": {
-    "appDataPath": "data",
-    "autoUpdate": {
-      "enabled": false,
-      "branch": "v6/develop",
-      "backupDirectory": "../backup"
-    },
-    "blockchain": [
-      {
-        "blockchainTitle": "ganache",
-        "networkId": "ganache::testnet",
-        "hubContractAddress": "",
-        "rpcEndpoints": [
-          "http://localhost:7545"
-        ]
-      }
-    ],
-    "graphDatabase": {
-      "implementation": "GraphDB",
-      "url": "http://localhost:7200",
-      "name": "node0",
-      "username": "admin",
-      "password": ""
-    },
-    "logLevel": "trace",
-    "replicationFactor": 5,
-    "rpcPort": 8900,
-    "network": {
-      "port": 9000,
-      "bootstrap": []
-    },
-    "ipWhitelist": [
-      "::1",
-      "127.0.0.1"
-    ],
-    "telemetryHub": {
-      "enabled": false,
-      "packages": [
-        "ot-telemetry-collector"
-      ],
-      "url": ""
-    },
-    "operationalDatabase": {
-      "databaseName": "operationaldb"
-    }
-  },
-  "testnet": {
-    "appDataPath": "data",
-    "autoUpdate": {
-      "enabled": true,
-      "branch": "v6/release/testnet",
-      "backupDirectory": "../backup"
-    },
-    "blockchain": [
-      {
-        "blockchainTitle": "Polygon",
-        "networkId": "polygon::testnet",
-        "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
-        "rpcEndpoints": [
-          "https://rpc-mumbai.maticvigil.com/"
-        ]
-      }
-    ],
-    "graphDatabase": {
-      "implementation": "GraphDB",
-      "url": "http://localhost:7200",
-      "name": "node0",
-      "username": "admin",
-      "password": ""
-    },
-    "logLevel": "trace",
-    "replicationFactor": 5,
-    "rpcPort": 8900,
-    "network": {
-      "port": 9000,
-      "bootstrap": [
-        "/ip4/165.232.122.94/tcp/9000/p2p/QmQ2zigjQikYnyYUSXZydNXrDRhBut2mubwJBaLXobMt3A",
-        "/ip4/46.101.111.223/tcp/9000/p2p/QmdTKEP4DDSwYzX2CHEsBfpEAKAVyE4mPq9ouh4ehZZbg5",
-        "/ip4/46.101.153.21/tcp/9000/p2p/QmXzmTqVT3TPUtTz4dBDN5NWSABqnX9rKXCG9WCLXMfEaM"
-      ]
-    },
-    "ipWhitelist": [
-      "::1",
-      "127.0.0.1"
-    ],
-    "telemetryHub": {
-      "enabled": true,
-      "packages": [
-        "ot-telemetry-collector"
-      ],
-      "url": "https://polaris.delta.origin-trail.network/metrics/"
-    },
-    "operationalDatabase": {
-      "databaseName": "operationaldb"
-    }
-  },
-  "mainnet": {
-    "appDataPath": "data",
-    "autoUpdate": {
-      "enabled": true,
-      "branch": "v6/release/mainnet",
-      "backupDirectory": "../backup"
-    },
-    "blockchain": [],
-    "graphDatabase": {
-      "implementation": "GraphDB",
-      "url": "http://localhost:7200",
-      "name": "node0",
-      "username": "admin",
-      "password": ""
-    },
-    "logLevel": "trace",
-    "replicationFactor": 5,
-    "rpcPort": 8900,
-    "network": {
-      "port": 9000,
-      "bootstrap": []
-    },
-    "ipWhitelist": [
-      "::1",
-      "127.0.0.1"
-    ],
-    "telemetryHub": {
-      "enabled": false,
-      "packages": [
-        "ot-telemetry-collector"
-      ],
-      "url": ""
-    },
-    "operationalDatabase": {
-      "databaseName": "operationaldb"
-    }
-  }
 }

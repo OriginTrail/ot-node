@@ -257,6 +257,7 @@ exports.ERROR_TYPE = {
     BLOCKCHAIN_CHECK_ERROR: 'BlockchainCheckError',
     COMMAND_EXECUTOR_ERROR: 'CommandExecutorError',
     FAILED_COMMAND_ERROR: 'FailedCommandError',
+    MODULE_INITIALIZATION_ERROR: 'ModuleInitializationError',
     UPDATE_INITIALIZATION_ERROR: 'UpdateInitializationError',
     DATA_MODULE_INITIALIZATION_ERROR: 'DataModuleInitializationError',
     OPERATIONALDB_MODULE_INITIALIZATION_ERROR: 'OperationalDbModuleInitializationError',

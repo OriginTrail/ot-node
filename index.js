@@ -2,20 +2,14 @@ require('dotenv').config();
 const fs = require('fs-extra');
 const path = require('path');
 const appRootPath = require('app-root-path');
-const { exec, execSync } = require('child_process');
-const rc = require('rc');
+const { execSync } = require('child_process');
+const semver = require('semver');
 const OTNode = require('./ot-node');
-const pjson = require('./package.json');
 
-const configjson = require('./config/config.json');
-
-process.env.NODE_ENV = process.env.NODE_ENV && ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0
-    ? process.env.NODE_ENV : 'development';
-
-let config = JSON.parse(fs.readFileSync('./.origintrail_noderc', 'utf8'));
-const defaultConfig = JSON.parse(JSON.stringify(configjson[process.env.NODE_ENV]));
-
-config = rc(pjson.name, defaultConfig);
+process.env.NODE_ENV =
+    process.env.NODE_ENV && ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0
+        ? process.env.NODE_ENV
+        : 'development';
 
 (async () => {
     let userConfig = null;
@@ -33,45 +27,27 @@ config = rc(pjson.name, defaultConfig);
         const node = new OTNode(userConfig);
         await node.start();
     } catch (e) {
-        console.error(`Error occurred while starting new version, error message: ${e}. ${e.stack}`);
-        if (!config.autoUpdate.enabled) {
-            console.log('Auto update is disabled. Shutting down the node...');
+        console.error(`Error occurred while start ot-node, error message: ${e}. ${e.stack}`);
+        console.error(`Trying to recover from older version`);
+
+        const rootPath = path.join(appRootPath.path, '..');
+        const oldVersionsDirs = (await fs.promises.readdir(rootPath, { withFileTypes: true }))
+            .filter((dirent) => dirent.isDirectory())
+            .map((dirent) => dirent.name)
+            .filter((name) => semver.valid(name) && !appRootPath.path.includes(name));
+
+        if (oldVersionsDirs.length === 0) {
+            console.error(
+                `Failed to start OT-Node, no backup code available. Error message: ${e.message}`,
+            );
             process.exit(1);
         }
 
-        const backupCodeDirectory = path.join(config.autoUpdate.backupDirectory, 'auto-update', 'backup');
-        if (fs.ensureDir(backupCodeDirectory)) {
-            console.log('Starting back old version of OT-Node.');
-
-            const destination = appRootPath.path;
-            await fs.ensureDir(destination);
-            await fs.copy(backupCodeDirectory, destination);
-
-            await new Promise((resolve, reject) => {
-                const command = `cd ${destination} && npm install --omit=dev`;
-                const child = exec(command);
-
-                // Wait for results
-                child.stdout.on('end', resolve);
-                child.stdout.on('data', (data) => console.log(`AutoUpdater - npm install --omit=dev: ${data.replace(/\r?\n|\r/g, '')}`));
-                child.stderr.on('data', (data) => {
-                    if (data.toLowerCase().includes('error')) {
-                        // npm passes warnings as errors, only reject if "error" is included
-                        data = data.replace(/\r?\n|\r/g, '');
-                        console.error('AutoUpdater - Error installing dependencies');
-                        console.error(`AutoUpdater - ${data}`);
-                        reject();
-                    } else {
-                        console.log(`AutoUpdater - ${data}`);
-                    }
-                });
-            });
-            execSync(`cd ${destination} && npx sequelize --config=./config/sequelizeConfig.js db:migrate`, { stdio: 'inherit' });
-            process.exit(1);
-        } else {
-            console.error(`Failed to start OT-Node, no backup code available. Error message: ${e.message}`);
-            process.exit(1);
-        }
+        const oldVersion = oldVersionsDirs.sort(semver.compare).pop();
+        const oldversionPath = path.join(rootPath, oldVersion);
+        execSync(`ln -sfn ${oldversionPath} ${rootPath}/current`);
+        await fs.promises.rm(appRootPath.path, { force: true, recursive: true });
+        process.exit(1);
     }
 })();
 
