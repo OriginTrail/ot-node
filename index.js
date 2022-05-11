@@ -45,7 +45,7 @@ process.env.NODE_ENV =
 
         const oldVersion = oldVersionsDirs.sort(semver.compare).pop();
         const oldversionPath = path.join(rootPath, oldVersion);
-        execSync(`ln -sfn ${oldversionPath} ${rootPath}/ot-node`);
+        execSync(`ln -sfn ${oldversionPath} ${rootPath}/current`);
         await fs.promises.rm(appRootPath.path, { force: true, recursive: true });
         process.exit(1);
     }
