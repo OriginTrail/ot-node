@@ -109,9 +109,6 @@ class OTAutoUpdater {
         this.logger.debug(`AutoUpdater - Destination: ${destination}`);
 
         await fs.ensureDir(destination);
-        const configurationPath = path.join(source, '.origintrail_noderc');
-        const newConfigurationPath = path.join(destination, '.origintrail_noderc');
-        await fs.copy(configurationPath, newConfigurationPath);
 
         const envFilePath = path.join(source, '.env');
         const newEnvFilePath = path.join(destination, '.env');
