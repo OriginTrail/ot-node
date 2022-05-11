@@ -137,7 +137,7 @@ class OTNode {
             const db = require('./models');
 
             if (this.config.otNodeUpdated) {
-                execSync('npx sequelize --config=./config/sequelizeConfig.js db:migrate');
+                execSync(`npx sequelize --config=${appRootPath.path}/config/sequelizeConfig.js db:migrate`);
             }
 
             await db.sequelize.sync();
