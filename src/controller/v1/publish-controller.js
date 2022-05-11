@@ -106,6 +106,7 @@ class PublishController extends BaseController {
             await this.workerPool.exec('JSONStringify', [fileContent]),
         );
         const commandData = {
+            fileContent,
             fileExtension,
             keywords,
             visibility,
