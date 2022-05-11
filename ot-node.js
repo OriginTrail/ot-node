@@ -3,6 +3,8 @@ const DeepExtend = require('deep-extend');
 const rc = require('rc');
 const fs = require('fs');
 const queue = require('fastq');
+const appRootPath = require('app-root-path');
+const path = require('path');
 const DependencyInjection = require('./modules/service/dependency-injection');
 const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
@@ -254,9 +256,10 @@ class OTNode {
     }
 
     savePrivateKeyInUserConfigurationFile(privateKey) {
-        const configFile = JSON.parse(fs.readFileSync(this.config.configFilename));
+        const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
+        const configFile = JSON.parse(fs.readFileSync(configurationFilePath));
         configFile.network.privateKey = privateKey;
-        fs.writeFileSync(this.config.configFilename, JSON.stringify(configFile, null, 2));
+        fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
     }
 
     stop() {
