@@ -241,11 +241,11 @@ class OTAutoUpdater {
                 `AutoUpdater - Installing application dependencies in ${destination}`,
             );
 
-            const command = `cd ${destination} && npm install --omit=dev --ignore-scripts`;
+            const command = `cd ${destination} && npm ci --omit=dev --ignore-scripts`;
             const child = exec(command);
 
             child.stdout.on('data', (data) => {
-                this.logger.trace(`AutoUpdater - npm install - ${data.replace(/\r?\n|\r/g, '')}`);
+                this.logger.trace(`AutoUpdater - npm ci - ${data.replace(/\r?\n|\r/g, '')}`);
             });
 
             child.stderr.on('data', (data) => {
