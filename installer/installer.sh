@@ -1,7 +1,7 @@
 #!/bin/bash
 
-ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive"
-BRANCH="v6/release/testnet"
+ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive/refs/heads"
+BRANCH="v6/refactor/auto-update-module"
 OTNODE_DIR="/root/ot-node"
 N1=$'\n'
 GREEN='\033[0;32m'
