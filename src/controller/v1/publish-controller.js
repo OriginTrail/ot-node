@@ -155,7 +155,7 @@ class PublishController extends BaseController {
             };
         }
 
-        if (validateFileSize && req.files.file.size > MAX_FILE_SIZE) {
+        if (validateFileSize && req.files && req.files.file.size > MAX_FILE_SIZE) {
             return {
                 isValid: false,
                 code: 400,
