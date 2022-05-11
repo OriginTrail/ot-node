@@ -2,7 +2,7 @@
 
 ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive/refs/heads"
 BRANCH="v6/refactor/auto-update-module"
-OTNODE_DIR="/root/ot-node"
+OTNODE_DIR="/root/ot-node/"
 N1=$'\n'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -422,9 +422,9 @@ fi
 # Change directory to ot-node/current
 cd $OTNODE_DIR
 
-echo -n "Executing npm install: "
+echo -n "Executing npm ci --omit=dev --ignore-scripts: "
 
-OUTPUT=$(npm install 2>&1)
+OUTPUT=$(npm ci --omit=dev --ignore-scripts 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error executing npm install."
@@ -478,22 +478,24 @@ echo "Node wallet: $NODE_WALLET"
 read -p "Enter the private key: " NODE_PRIVATE_KEY
 echo "Node private key: $NODE_PRIVATE_KEY"
 
-cp $OTNODE_DIR/.origintrail_noderc_example $OTNODE_DIR/.origintrail_noderc
+CONFIG_DIR=$OTNODE_DIR/../
 
-jq --arg newval "$NODE_WALLET" '.blockchain[].publicKey |= $newval' $OTNODE_DIR/.origintrail_noderc >> $OTNODE_DIR/origintrail_noderc_temp
-mv $OTNODE_DIR/origintrail_noderc_temp $OTNODE_DIR/.origintrail_noderc
+cp $OTNODE_DIR/.origintrail_noderc_example $CONFIG_DIR/.origintrail_noderc
 
-jq --arg newval "$NODE_PRIVATE_KEY" '.blockchain[].privateKey |= $newval' $OTNODE_DIR/.origintrail_noderc >> $OTNODE_DIR/origintrail_noderc_temp
-mv $OTNODE_DIR/origintrail_noderc_temp $OTNODE_DIR/.origintrail_noderc
+jq --arg newval "$NODE_WALLET" '.blockchain[].publicKey |= $newval' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
+mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
+
+jq --arg newval "$NODE_PRIVATE_KEY" '.blockchain[].privateKey |= $newval' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
+mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
 
 if [[ $DATABASE = "blazegraph" ]]; then
-    jq '.graphDatabase |= {"implementation": "Blazegraph", "url": "http://localhost:9999/blazegraph"} + .' $OTNODE_DIR/.origintrail_noderc >> $OTNODE_DIR/origintrail_noderc_temp
-    mv $OTNODE_DIR/origintrail_noderc_temp $OTNODE_DIR/.origintrail_noderc
+    jq '.graphDatabase |= {"implementation": "Blazegraph", "url": "http://localhost:9999/blazegraph"} + .' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
+    mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
 fi
 
 if [[ $DATABASE = "fuseki" ]]; then
-    jq '.graphDatabase |= {"name": "node0", "implementation": "Fuseki", "url": "http://localhost:3030"} + .' $OTNODE_DIR/.origintrail_noderc >> $OTNODE_DIR/origintrail_noderc_temp
-    mv $OTNODE_DIR/origintrail_noderc_temp $OTNODE_DIR/.origintrail_noderc
+    jq '.graphDatabase |= {"name": "node0", "implementation": "Fuseki", "url": "http://localhost:3030"} + .' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
+    mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
 fi
 
 echo -n "Running DB migrations: "

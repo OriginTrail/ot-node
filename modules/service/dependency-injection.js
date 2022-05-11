@@ -1,6 +1,4 @@
 const awilix = require('awilix');
-const path = require('path');
-const appRootPath = require('app-root-path');
 
 class DependencyInjection {
     static initialize() {
@@ -10,14 +8,14 @@ class DependencyInjection {
 
         container.loadModules(
             [
-                path.join(appRootPath.path, 'modules/controller/**/*.js'),
-                path.join(appRootPath.path, 'modules/service/**/*.js'),
-                path.join(appRootPath.path, 'modules/command/**/*.js'),
-                path.join(appRootPath.path, 'modules/manager/**/*.js'),
-                path.join(appRootPath.path, 'modules/worker/worker-pool.js'),
-                path.join(appRootPath.path, 'src/controller/**/*.js'),
-                path.join(appRootPath.path, 'src/modules/base-module-manager.js'),
-                path.join(appRootPath.path, 'src/modules/**/*module-manager.js'),
+                'modules/controller/**/*.js',
+                'modules/service/**/*.js',
+                'modules/command/**/*.js',
+                'modules/manager/**/*.js',
+                'modules/worker/worker-pool.js',
+                'src/controller/**/*.js',
+                'src/modules/base-module-manager.js',
+                'src/modules/**/*module-manager.js',
             ],
             {
                 formatName: 'camelCase',
