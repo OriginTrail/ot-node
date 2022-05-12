@@ -1,8 +1,11 @@
 const fs = require('fs-extra');
 const appRootPath = require('app-root-path');
 const path = require('path');
+const { exec } = require('child_process');
 const pjson = require('../../package.json');
 const BaseMigration = require('./base-migration');
+
+const CONFIGURATION_NAME = '.origintrail_noderc';
 
 class M1FolderStructureInitialMigration extends BaseMigration {
     constructor(logger, config) {
@@ -42,6 +45,22 @@ class M1FolderStructureInitialMigration extends BaseMigration {
             }
             await fs.ensureSymlink(newAppDirectoryPath, currentSymlinkFolder, 'folder');
 
+            const oldConfigurationPath = path.join(newAppDirectoryPath, CONFIGURATION_NAME);
+            const newConfigurationPath = path.join(currentAppRootPath, CONFIGURATION_NAME);
+            await fs.move(oldConfigurationPath, newConfigurationPath);
+
+            const otnodeServicePath = path.join(
+                newAppDirectoryPath,
+                'installer',
+                'data',
+                'otnode.service',
+            );
+            try {
+                await this.updateOtNodeService(otnodeServicePath);
+            } catch (error) {
+                this.logger.warn('Unable to apply new ot-node service file please do it manually!');
+            }
+
             await this.finalizeMigration(path.join(currentAppRootPath, 'data', 'migrations'));
             this.logger.info('Folder structure migration completed, node will now restart!');
             process.exit(1);
@@ -50,6 +69,23 @@ class M1FolderStructureInitialMigration extends BaseMigration {
                 `Folder structure initial migration skipped for env: ${process.env.NODE_ENV}`,
             );
         }
+    }
+
+    async updateOtNodeService(otnodeServicePath) {
+        return new Promise((resolve, reject) => {
+            const command = `cp ${otnodeServicePath} /lib/systemd/system/ && systemctl daemon-reload`;
+            this.logger.trace(
+                `Copy and apply new otnode service file. Running the command: ${command}`,
+            );
+            const child = exec(command);
+
+            child.stderr.on('data', (data) => {
+                reject(data);
+            });
+            child.stdout.on('end', () => {
+                resolve();
+            });
+        });
     }
 }
 
