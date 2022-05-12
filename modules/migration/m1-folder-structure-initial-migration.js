@@ -35,6 +35,21 @@ class M1FolderStructureInitialMigration extends BaseMigration {
 
             await fs.copy(currentAppRootPath, newTemporaryAppDirectoryPath);
 
+            const otnodeServicePath = path.join(
+                currentAppRootPath,
+                'installer',
+                'data',
+                'otnode.service',
+            );
+
+            try {
+                await this.updateOtNodeService(otnodeServicePath);
+            } catch (error) {
+                this.logger.warn(
+                    `Unable to apply new ot-node service file please do it manually! Error: ${error}`,
+                );
+            }
+
             await fs.remove(currentAppRootPath);
 
             await fs.rename(temporaryAppRootPath, currentAppRootPath);
@@ -53,20 +68,6 @@ class M1FolderStructureInitialMigration extends BaseMigration {
 
             await this.finalizeMigration(path.join(currentAppRootPath, 'data', 'migrations'));
 
-            const otnodeServicePath = path.join(
-                newAppDirectoryPath,
-                'installer',
-                'data',
-                'otnode.service',
-            );
-
-            try {
-                await this.updateOtNodeService(otnodeServicePath);
-            } catch (error) {
-                this.logger.warn(
-                    `Unable to apply new ot-node service file please do it manually! Error: ${error}`,
-                );
-            }
             this.logger.info('Folder structure migration completed, node will now restart!');
             process.exit(1);
         } else {
