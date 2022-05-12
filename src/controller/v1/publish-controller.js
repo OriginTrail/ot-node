@@ -75,8 +75,9 @@ class PublishController extends BaseController {
         if (req.files) {
             fileContent = req.files.file.data.toString();
         } else {
-            fileContent = req.body.data.toString();
+            fileContent = req.body.data;
         }
+
         const { ual } = req.body;
 
         const { visibility } = req.body;

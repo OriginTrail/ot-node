@@ -11,7 +11,7 @@ class DkgClientHelper {
 
     async provision(data, keywords) {
         return this.client._publishRequest({
-            data,
+            content: data,
             keywords,
             method: 'provision',
             visibility: 'public',
@@ -63,7 +63,7 @@ class DkgClientHelper {
                 operation,
             })
             .catch((error) => {
-                console.log(`error getting result. ${error}`);
+                console.log(`Error getting result. ${error}`);
             });
     }
 }

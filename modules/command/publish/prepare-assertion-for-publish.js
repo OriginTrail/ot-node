@@ -31,8 +31,17 @@ class PrepareAssertionForPublish extends Command {
 
         let { documentPath } = command.data;
         const rawAssertion = await this.fileService.readFileOnPath(documentPath);
+        let assertion;
+        let nquads;
+        try {
+            const result = await this.dataService.canonize(rawAssertion, fileExtension);
+            assertion = result.assertion;
+            nquads = result.nquads;
+        } catch (error) {
+            this.handleError(handlerId, error, ERROR_TYPE.PREPARE_ASSERTION_ERROR, true);
+            return Command.empty();
+        }
 
-        const { assertion, nquads } = await this.dataService.canonize(rawAssertion, fileExtension);
         this.logger.emit({
             msg: 'Finished measuring execution of data canonization',
             Event_name: 'publish_canonization_end',
