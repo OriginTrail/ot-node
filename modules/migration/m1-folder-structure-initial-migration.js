@@ -81,8 +81,8 @@ class M1FolderStructureInitialMigration extends BaseMigration {
             );
             const child = exec(command);
 
-            child.stderr.on('data', (data) => {
-                resolve();
+            child.stderr.on('data', () => {
+                reject(data);
             });
             child.stdout.on('end', () => {
                 resolve();
