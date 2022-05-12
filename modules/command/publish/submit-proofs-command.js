@@ -76,14 +76,14 @@ class SubmitProofsCommand extends Command {
         const { assertion, method } = args;
         let result;
         switch (method) {
-        case 'publish':
+        case constants.PUBLISH_METHOD.PUBLISH:
             result = await this.blockchainService.createAssertionRecord(
                 assertion.id,
                 assertion.rootHash,
                 assertion.metadata.issuer,
             );
             break;
-        case 'provision':
+        case constants.PUBLISH_METHOD.PROVISION:
             result = await this.blockchainService.registerAsset(
                 assertion.metadata.UALs[0],
                 assertion.metadata.type,
@@ -93,7 +93,7 @@ class SubmitProofsCommand extends Command {
                 1,
             );
             break;
-        case 'update':
+        case constants.PUBLISH_METHOD.UPDATE:
             result = await this.blockchainService.updateAsset(
                 assertion.metadata.UALs[0],
                 assertion.id,

@@ -1,17 +1,39 @@
 {
     "development": {
-        "appDataPath": "data",
-        "autoUpdate": {
-            "enabled": false,
-            "branch": "v6/develop",
-            "backupDirectory": "../backup"
+        "modules": {
+            "autoUpdater": {
+                "enabled": false,
+                "implementation": {
+                    "ot-auto-updater": {
+                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "config": {
+                            "branch": "v6/develop"
+                        }
+                    }
+                }
+            },
+            "httpClient": {
+                "enabled": true,
+                "implementation": {
+                    "express-http-client": {
+                        "package": "./http-client/implementation/express-http-client",
+                        "config": {}
+                    }
+                }
+            }
         },
+        "appDataPath": "data",
         "blockchain": [
             {
                 "blockchainTitle": "Polygon",
                 "networkId": "polygon::mainnet",
                 "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
-                "rpcEndpoints": ["https://rpc-mumbai.maticvigil.com/"]
+                "rpcEndpoints": [
+                    "https://rpc-mumbai.maticvigil.com/",
+                    "https://matic-mumbai.chainstacklabs.com",
+                    "https://rpc-mumbai.matic.today",
+                    "https://matic-testnet-archive-rpc.bwarelabs.com"
+                ]
             }
         ],
         "graphDatabase": {
@@ -39,12 +61,29 @@
         }
     },
     "test": {
-        "appDataPath": "data",
-        "autoUpdate": {
-            "enabled": false,
-            "branch": "v6/develop",
-            "backupDirectory": "../backup"
+        "modules": {
+            "autoUpdater": {
+                "enabled": false,
+                "implementation": {
+                    "ot-auto-updater": {
+                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "config": {
+                            "branch": "v6/develop"
+                        }
+                    }
+                }
+            },
+            "httpClient": {
+                "enabled": true,
+                "implementation": {
+                    "express-http-client": {
+                        "package": "./http-client/implementation/express-http-client",
+                        "config": {}
+                    }
+                }
+            }
         },
+        "appDataPath": "data",
         "blockchain": [
             {
                 "blockchainTitle": "ganache",
@@ -78,18 +117,40 @@
         }
     },
     "testnet": {
-        "appDataPath": "data",
-        "autoUpdate": {
-            "enabled": true,
-            "branch": "v6/release/testnet",
-            "backupDirectory": "../backup"
+        "modules": {
+            "autoUpdater": {
+                "enabled": true,
+                "implementation": {
+                    "ot-auto-updater": {
+                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "config": {
+                            "branch": "v6/release/testnet"
+                        }
+                    }
+                }
+            },
+            "httpClient": {
+                "enabled": true,
+                "implementation": {
+                    "express-http-client": {
+                        "package": "./http-client/implementation/express-http-client",
+                        "config": {}
+                    }
+                }
+            }
         },
+        "appDataPath": "data",
         "blockchain": [
             {
                 "blockchainTitle": "Polygon",
                 "networkId": "polygon::testnet",
                 "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
-                "rpcEndpoints": ["https://rpc-mumbai.maticvigil.com/"]
+                "rpcEndpoints": [
+                    "https://rpc-mumbai.maticvigil.com/",
+                    "https://matic-mumbai.chainstacklabs.com",
+                    "https://rpc-mumbai.matic.today",
+                    "https://matic-testnet-archive-rpc.bwarelabs.com"
+                ]
             }
         ],
         "graphDatabase": {
@@ -121,12 +182,29 @@
         }
     },
     "mainnet": {
-        "appDataPath": "data",
-        "autoUpdate": {
-            "enabled": true,
-            "branch": "v6/release/mainnet",
-            "backupDirectory": "../backup"
+        "modules": {
+            "autoUpdater": {
+                "enabled": true,
+                "implementation": {
+                    "ot-auto-updater": {
+                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "config": {
+                            "branch": "v6/release/mainnet"
+                        }
+                    }
+                }
+            },
+            "httpClient": {
+                "enabled": true,
+                "implementation": {
+                    "express-http-client": {
+                        "package": "./http-client/implementation/express-http-client",
+                        "config": {}
+                    }
+                }
+            }
         },
+        "appDataPath": "data",
         "blockchain": [],
         "graphDatabase": {
             "implementation": "GraphDB",

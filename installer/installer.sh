@@ -1,6 +1,8 @@
 #!/bin/bash
 
-OTNODE_DIR="/root/ot-node"
+ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive/"
+BRANCH="v6/release/testnet"
+OTNODE_DIR="/root/ot-node/"
 N1=$'\n'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -76,6 +78,37 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
+mkdir $OTNODE_DIR
+cd $OTNODE_DIR
+
+echo -n "Downloading ot-node: "
+
+OUTPUT=$(wget https://$ARCHIVE_REPOSITORY_URL/$BRANCH.zip 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error downloading ot-node."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+OUTPUT=$(unzip *.zip 2>&1)
+rm *.zip
+#Download new version .zip file
+#Unpack to init folder
+
+OTNODE_VERSION=$(jq -r '.version' ot-node*/package.json)
+
+mv ot-node* $OTNODE_VERSION
+
+ln -sfn $OTNODE_VERSION current
+
+OTNODE_DIR=$OTNODE_DIR/current
+
+cd /root
+
 while true; do
     read -p "Please select the database you would like to use: [1]Fuseki [2]Blazegraph [E]xit: " choice
     case "$choice" in
@@ -87,8 +120,8 @@ while true; do
 done
 
 if [[ $DATABASE = "fuseki" ]]; then
-    
-    echo -n "Downloading Apache Jena Fuseki: " 
+
+    echo -n "Downloading Apache Jena Fuseki: "
 
     OUTPUT=$(wget https://dlcdn.apache.org/jena/binaries/apache-jena-fuseki-4.4.0.zip 2>&1)
 
@@ -120,7 +153,7 @@ if [[ $DATABASE = "fuseki" ]]; then
             mkdir /root/fuseki/tdb &&
             cp /root/apache-jena-fuseki-4.4.0/fuseki-server.jar /root/fuseki/ &&
             cp -r /root/apache-jena-fuseki-4.4.0/webapp/ /root/fuseki/ 2>&1)
-    
+
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
         echo "There was an setting up the fuseki folder in /root/fuseki."
@@ -187,8 +220,8 @@ if [[ $DATABASE = "fuseki" ]]; then
 fi
 
 if [[ $DATABASE = "blazegraph" ]]; then
-    
-    echo -n "Downloading Blazegraph: " 
+
+    echo -n "Downloading Blazegraph: "
 
     OUTPUT=$(wget https://github.com/blazegraph/database/releases/latest/download/blazegraph.jar 2>&1)
 
@@ -282,6 +315,8 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
+rm -rf setup_16.x
+
 echo -n "Updating the Ubuntu repo: "
 
 OUTPUT=$(apt update 2>&1)
@@ -335,27 +370,17 @@ echo -n "Creating a local operational database: "
 mysql -u root -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;"
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
-    echo "There was an error creating the database (Step 1 of 3)."
+    echo "There was an error creating the database (Step 1 of 2)."
     echo $OUTPUT
     exit 1
 fi
 
-mysql -u root -e "update mysql.user set plugin = 'mysql_native_password' where User='root';"
+mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';"
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
-    echo "There was an error updating mysql.user set plugin (Step 2 of 3)."
+    echo "There was an error updating mysql.user set plugin (Step 2 of 2)."
     echo $OUTPUT
     exit 1
-fi
-
-mysql -u root -e "flush privileges;"
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error flushing privileges (Step 3 of 3)."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
 fi
 
 echo -n "Commenting out max_binlog_size: "
@@ -394,12 +419,24 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-# Change directory to ot-node
-cd ot-node
+echo -n "remove unattended upgrades: "
 
-echo -n "Executing npm install: "
+OUTPUT=$(apt remove unattended-upgrades -y 2>&1)
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error removing unattended upgrades."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
 
-OUTPUT=$(npm install 2>&1)
+# Change directory to ot-node/current
+cd $OTNODE_DIR
+
+echo -n "Executing npm ci --omit=dev --ignore-scripts: "
+
+OUTPUT=$(npm ci --omit=dev --ignore-scripts 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error executing npm install."
@@ -453,22 +490,24 @@ echo "Node wallet: $NODE_WALLET"
 read -p "Enter the private key: " NODE_PRIVATE_KEY
 echo "Node private key: $NODE_PRIVATE_KEY"
 
-cp $OTNODE_DIR/.origintrail_noderc_example $OTNODE_DIR/.origintrail_noderc
+CONFIG_DIR=$OTNODE_DIR/../
 
-jq --arg newval "$NODE_WALLET" '.blockchain[].publicKey |= $newval' $OTNODE_DIR/.origintrail_noderc >> $OTNODE_DIR/origintrail_noderc_temp
-mv $OTNODE_DIR/origintrail_noderc_temp $OTNODE_DIR/.origintrail_noderc
+cp $OTNODE_DIR/.origintrail_noderc_example $CONFIG_DIR/.origintrail_noderc
 
-jq --arg newval "$NODE_PRIVATE_KEY" '.blockchain[].privateKey |= $newval' $OTNODE_DIR/.origintrail_noderc >> $OTNODE_DIR/origintrail_noderc_temp
-mv $OTNODE_DIR/origintrail_noderc_temp $OTNODE_DIR/.origintrail_noderc
+jq --arg newval "$NODE_WALLET" '.blockchain[].publicKey |= $newval' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
+mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
+
+jq --arg newval "$NODE_PRIVATE_KEY" '.blockchain[].privateKey |= $newval' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
+mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
 
 if [[ $DATABASE = "blazegraph" ]]; then
-    jq '.graphDatabase |= {"implementation": "Blazegraph", "url": "http://localhost:9999/blazegraph"} + .' $OTNODE_DIR/.origintrail_noderc >> $OTNODE_DIR/origintrail_noderc_temp
-    mv $OTNODE_DIR/origintrail_noderc_temp $OTNODE_DIR/.origintrail_noderc
+    jq '.graphDatabase |= {"implementation": "Blazegraph", "url": "http://localhost:9999/blazegraph"} + .' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
+    mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
 fi
 
 if [[ $DATABASE = "fuseki" ]]; then
-    jq '.graphDatabase |= {"name": "node0", "implementation": "Fuseki", "url": "http://localhost:3030"} + .' $OTNODE_DIR/.origintrail_noderc >> $OTNODE_DIR/origintrail_noderc_temp
-    mv $OTNODE_DIR/origintrail_noderc_temp $OTNODE_DIR/.origintrail_noderc
+    jq '.graphDatabase |= {"name": "node0", "implementation": "Fuseki", "url": "http://localhost:3030"} + .' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
+    mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
 fi
 
 echo -n "Running DB migrations: "

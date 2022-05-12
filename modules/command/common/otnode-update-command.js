@@ -1,4 +1,5 @@
 const semver = require('semver');
+const fs = require('fs-extra');
 const Command = require('../command');
 const constants = require('../../constants');
 
@@ -7,32 +8,40 @@ class OtnodeUpdateCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        if (this.config.autoUpdate.enabled) {
-            this.updater = ctx.updater;
-        }
+        this.autoUpdaterModuleManager = ctx.autoUpdaterModuleManager;
+        this.fileService = ctx.fileService;
     }
 
     /**
      * Performs code update by fetching new code from github repo
      * @param command
      */
-    async execute(command) {
-        if (!this.config.autoUpdate.enabled) {
+    async execute() {
+        if (!this.config.modules.autoUpdater.enabled) {
             return Command.empty();
         }
         try {
             this.logger.info('Checking for new updates...');
-            const {
-                upToDate,
-                currentVersion,
-                remoteVersion,
-            } = await this.updater.compareVersions();
+            const { upToDate, currentVersion, remoteVersion } =
+                await this.autoUpdaterModuleManager.compareVersions();
             if (!upToDate) {
                 if (semver.major(currentVersion) < semver.major(remoteVersion)) {
-                    this.logger.info(`New major update available. Please run update to version ${remoteVersion} manually.`);
+                    this.logger.info(
+                        `New major update available. Please run update to version ${remoteVersion} manually.`,
+                    );
                     return Command.repeat();
                 }
-                await this.updater.update();
+                const success = await this.autoUpdaterModuleManager.update();
+
+                if (success) {
+                    const updateFilePath = this.fileService.getUpdateFilePath();
+                    await fs.promises.writeFile(updateFilePath, 'UPDATED');
+                    this.logger.info('Node will now restart!');
+                    process.exit(1);
+                }
+                this.logger.info('Unable to update ot-node to new version.');
+            } else {
+                this.logger.info('Your node is running on the latest version!');
             }
         } catch (e) {
             await this.handleError(e);
