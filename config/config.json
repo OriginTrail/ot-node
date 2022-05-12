@@ -1,11 +1,28 @@
 {
     "development": {
-        "appDataPath": "data",
-        "autoUpdate": {
-            "enabled": false,
-            "branch": "v6/develop",
-            "backupDirectory": "../backup"
+        "modules": {
+            "autoUpdater": {
+                "enabled": false,
+                "implementation": {
+                    "ot-auto-updater": {
+                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "config": {
+                            "branch": "v6/develop"
+                        }
+                    }
+                }
+            },
+            "httpClient": {
+                "enabled": true,
+                "implementation": {
+                    "express-http-client": {
+                        "package": "./http-client/implementation/express-http-client",
+                        "config": {}
+                    }
+                }
+            }
         },
+        "appDataPath": "data",
         "blockchain": [
             {
                 "blockchainTitle": "Polygon",
@@ -44,12 +61,29 @@
         }
     },
     "test": {
-        "appDataPath": "data",
-        "autoUpdate": {
-            "enabled": false,
-            "branch": "v6/develop",
-            "backupDirectory": "../backup"
+        "modules": {
+            "autoUpdater": {
+                "enabled": false,
+                "implementation": {
+                    "ot-auto-updater": {
+                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "config": {
+                            "branch": "v6/develop"
+                        }
+                    }
+                }
+            },
+            "httpClient": {
+                "enabled": true,
+                "implementation": {
+                    "express-http-client": {
+                        "package": "./http-client/implementation/express-http-client",
+                        "config": {}
+                    }
+                }
+            }
         },
+        "appDataPath": "data",
         "blockchain": [
             {
                 "blockchainTitle": "ganache",
@@ -83,12 +117,29 @@
         }
     },
     "testnet": {
-        "appDataPath": "data",
-        "autoUpdate": {
-            "enabled": true,
-            "branch": "v6/release/testnet",
-            "backupDirectory": "../backup"
+        "modules": {
+            "autoUpdater": {
+                "enabled": true,
+                "implementation": {
+                    "ot-auto-updater": {
+                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "config": {
+                            "branch": "v6/release/testnet"
+                        }
+                    }
+                }
+            },
+            "httpClient": {
+                "enabled": true,
+                "implementation": {
+                    "express-http-client": {
+                        "package": "./http-client/implementation/express-http-client",
+                        "config": {}
+                    }
+                }
+            }
         },
+        "appDataPath": "data",
         "blockchain": [
             {
                 "blockchainTitle": "Polygon",
@@ -131,12 +182,29 @@
         }
     },
     "mainnet": {
-        "appDataPath": "data",
-        "autoUpdate": {
-            "enabled": true,
-            "branch": "v6/release/mainnet",
-            "backupDirectory": "../backup"
+        "modules": {
+            "autoUpdater": {
+                "enabled": true,
+                "implementation": {
+                    "ot-auto-updater": {
+                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "config": {
+                            "branch": "v6/release/mainnet"
+                        }
+                    }
+                }
+            },
+            "httpClient": {
+                "enabled": true,
+                "implementation": {
+                    "express-http-client": {
+                        "package": "./http-client/implementation/express-http-client",
+                        "config": {}
+                    }
+                }
+            }
         },
+        "appDataPath": "data",
         "blockchain": [],
         "graphDatabase": {
             "implementation": "GraphDB",
