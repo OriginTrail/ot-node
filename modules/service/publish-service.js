@@ -51,9 +51,9 @@ class PublishService {
             assertion.metadata.visibility = visibility;
             assertion.metadata.keywords = keywords;
             assertion.metadata.keywords.sort();
-            let method = 'publish';
+            let method = constants.PUBLISH_METHOD.PUBLISH;
             if (ual === null) {
-                method = 'provision';
+                method = constants.PUBLISH_METHOD.PROVISION;
                 ual = this.validationService.calculateHash(
                     assertion.metadata.timestamp
                     + assertion.metadata.type
@@ -61,7 +61,7 @@ class PublishService {
                 );
                 assertion.metadata.UALs = [ual];
             } else if (ual !== undefined) {
-                method = 'update';
+                method = constants.PUBLISH_METHOD.UPDATE;
                 assertion.metadata.UALs = [ual];
             }
 
