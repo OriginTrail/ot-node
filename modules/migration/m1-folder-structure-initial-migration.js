@@ -63,7 +63,9 @@ class M1FolderStructureInitialMigration extends BaseMigration {
             try {
                 await this.updateOtNodeService(otnodeServicePath);
             } catch (error) {
-                this.logger.warn('Unable to apply new ot-node service file please do it manually!');
+                this.logger.warn(
+                    `Unable to apply new ot-node service file please do it manually! Error: ${error}`,
+                );
             }
             this.logger.info('Folder structure migration completed, node will now restart!');
             process.exit(1);
@@ -76,7 +78,7 @@ class M1FolderStructureInitialMigration extends BaseMigration {
 
     async updateOtNodeService(otnodeServicePath) {
         return new Promise((resolve, reject) => {
-            const command = `cp ${otnodeServicePath} /lib/systemd/system/ && systemctl daemon-reload`;
+            const command = `systemctl disable otnode && rm /lib/systemd/system/otnode.service && cp ${otnodeServicePath} /lib/systemd/system/ && systemctl enable otnode && systemctl daemon-reload`;
             this.logger.trace(
                 `Copy and apply new otnode service file. Running the command: ${command}`,
             );
