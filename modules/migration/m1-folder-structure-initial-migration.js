@@ -28,16 +28,18 @@ class M1FolderStructureInitialMigration extends BaseMigration {
 
             const currentVersion = pjson.version;
             const temporaryAppRootPath = path.join(appRootPath.path, '..', 'ot-node-tmp');
-            const newAppDirectoryPath = path.join(temporaryAppRootPath, currentVersion);
-            await fs.ensureDir(newAppDirectoryPath);
+            const newTemporaryAppDirectoryPath = path.join(temporaryAppRootPath, currentVersion);
+            await fs.ensureDir(newTemporaryAppDirectoryPath);
 
             const currentAppRootPath = appRootPath.path;
 
-            await fs.copy(currentAppRootPath, newAppDirectoryPath);
+            await fs.copy(currentAppRootPath, newTemporaryAppDirectoryPath);
 
             await fs.remove(currentAppRootPath);
 
             await fs.rename(temporaryAppRootPath, currentAppRootPath);
+
+            const newAppDirectoryPath = path.join(currentAppRootPath, currentVersion);
 
             const currentSymlinkFolder = path.join(currentAppRootPath, 'current');
             if (await fs.pathExists(currentSymlinkFolder)) {
