@@ -1,3 +1,5 @@
+const constants = require('../../modules/constants');
+
 class BaseModuleManager {
     constructor(ctx) {
         this.config = ctx.config;
@@ -45,7 +47,10 @@ class BaseModuleManager {
             this.initialized = true;
             return true;
         } catch (e) {
-            this.logger.error(e);
+            this.logger.error({
+                msg: e.message,
+                Event_name: constants.ERROR_TYPE.MODULE_INITIALIZATION_ERROR,
+            });
             return false;
         }
     }
