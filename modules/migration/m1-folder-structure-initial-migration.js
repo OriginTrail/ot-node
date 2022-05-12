@@ -79,7 +79,7 @@ class M1FolderStructureInitialMigration extends BaseMigration {
 
     async updateOtNodeService(otnodeServicePath) {
         return new Promise((resolve, reject) => {
-            const command = `systemctl disable otnode && rm /lib/systemd/system/otnode.service && cp ${otnodeServicePath} /lib/systemd/system/ && systemctl enable otnode && systemctl daemon-reload`;
+            const command = `systemctl disable otnode && cp ${otnodeServicePath} /lib/systemd/system/ && systemctl enable otnode && systemctl daemon-reload`;
             this.logger.trace(
                 `Copy and apply new otnode service file. Running the command: ${command}`,
             );
