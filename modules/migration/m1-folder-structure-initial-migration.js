@@ -45,7 +45,7 @@ class M1FolderStructureInitialMigration extends BaseMigration {
             if (await fs.pathExists(currentSymlinkFolder)) {
                 await fs.remove(currentSymlinkFolder);
             }
-            await fs.ensureSymlink(newAppDirectoryPath, currentSymlinkFolder, 'folder');
+            await fs.ensureSymlink(newAppDirectoryPath, currentSymlinkFolder);
 
             const oldConfigurationPath = path.join(newAppDirectoryPath, CONFIGURATION_NAME);
             const newConfigurationPath = path.join(currentAppRootPath, CONFIGURATION_NAME);
