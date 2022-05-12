@@ -31,6 +31,12 @@ class OtnodeUpdateCommand extends Command {
                     );
                     return Command.repeat();
                 }
+                if (semver.lt(semver.valid(remoteVersion), semver.valid(currentVersion))) {
+                    this.logger.info(
+                        'Remote version less than current version, update will be skipped',
+                    );
+                    return Command.repeat();
+                }
                 const success = await this.autoUpdaterModuleManager.update();
 
                 if (success) {
