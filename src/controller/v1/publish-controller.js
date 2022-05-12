@@ -75,7 +75,7 @@ class PublishController extends BaseController {
         if (req.files) {
             fileContent = req.files.file.data.toString();
         } else {
-            fileContent = req.body.data;
+            fileContent = req.body.data.toString();
         }
         const { ual } = req.body;
 
@@ -103,10 +103,9 @@ class PublishController extends BaseController {
         const documentPath = await this.fileService.writeContentsToFile(
             handlerIdCachePath,
             handlerId,
-            await this.workerPool.exec('JSONStringify', [fileContent]),
+            fileContent,
         );
         const commandData = {
-            fileContent,
             fileExtension,
             keywords,
             visibility,

@@ -72,7 +72,7 @@ class FileService {
                                     const fileJson = JSON.parse(data);
                                     resolve(fileJson);
                                 }
-                                resolve(data);
+                                resolve(data.toString());
                             } catch (error) {
                                 reject(error);
                             }
