@@ -419,6 +419,18 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
+echo -n "remove unattended upgrades: "
+
+OUTPUT=$(apt remove unattended-upgrades -y 2>&1)
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error removing unattended upgrades."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
 # Change directory to ot-node/current
 cd $OTNODE_DIR
 
