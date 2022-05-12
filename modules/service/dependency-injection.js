@@ -6,13 +6,25 @@ class DependencyInjection {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        container.loadModules(['modules/controller/**/*.js', 'modules/service/**/*.js', 'modules/command/**/*.js', 'modules/manager/**/*.js', 'modules/worker/worker-pool.js'], {
-            formatName: 'camelCase',
-            resolverOptions: {
-                lifetime: awilix.Lifetime.SINGLETON,
-                register: awilix.asClass,
+        container.loadModules(
+            [
+                'modules/controller/**/*.js',
+                'modules/service/**/*.js',
+                'modules/command/**/*.js',
+                'modules/manager/**/*.js',
+                'modules/worker/worker-pool.js',
+                'src/controller/**/*.js',
+                'src/modules/base-module-manager.js',
+                'src/modules/**/*module-manager.js',
+            ],
+            {
+                formatName: 'camelCase',
+                resolverOptions: {
+                    lifetime: awilix.Lifetime.SINGLETON,
+                    register: awilix.asClass,
+                },
             },
-        });
+        );
 
         return container;
     }
