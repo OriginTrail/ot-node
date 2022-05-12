@@ -53,7 +53,7 @@ class M1FolderStructureInitialMigration extends BaseMigration {
 
             await this.finalizeMigration(path.join(currentAppRootPath, 'data', 'migrations'));
             const otnodeServicePath = path.join(
-                currentAppRootPath,
+                newAppDirectoryPath,
                 'installer',
                 'data',
                 'otnode.service',
