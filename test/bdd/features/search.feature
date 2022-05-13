@@ -13,7 +13,7 @@ Feature: Searching for assets on the DKG
       | keyword 1 | keyword 2 |
     And I wait searching request to be finalized
     Then The result of assertion search cannot be 0
-    And The searching result should contain all valid data
+    And The search result should contain all valid data
     And I get the metadata which contains the keywords:
       | keyword 1 | keyword 2 |
     And The number of nodes that responded cannot be 0

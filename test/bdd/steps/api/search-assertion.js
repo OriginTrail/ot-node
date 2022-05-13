@@ -46,7 +46,7 @@ Then('The result of assertion search cannot be 0', { timeout: 120000 }, async fu
         expect(searchResult.itemListElement).to.be.a('array');
     }
 })
-Then('The searching result should contain all valid data', { timeout: 120000 }, async function (){
+Then('The search result should contain all valid data', { timeout: 120000 }, async function (){
     searchData = searchResult.itemListElement[0];
 
     expect(searchData).haveOwnProperty('result');
