@@ -371,20 +371,13 @@ fi
 
 echo -n "Dropping old operational database: "
 
-mysql -u root -e "DROP DATABASE operationaldb"
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error dropping the database (Step 1 of 3)."
-    echo $OUTPUT
-    exit 1
-fi
 
 echo -n "Creating a local operational database: "
 
 mysql -u root -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;"
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
-    echo "There was an error creating the database (Step 2 of 3)."
+    echo "There was an error creating the database (Step 1 of 2)."
     echo $OUTPUT
     exit 1
 fi
@@ -392,7 +385,7 @@ fi
 mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';"
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
-    echo "There was an error updating mysql.user set plugin (Step 3 of 3)."
+    echo "There was an error updating mysql.user set plugin (Step 2 of 2)."
     echo $OUTPUT
     exit 1
 fi
