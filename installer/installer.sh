@@ -101,6 +101,8 @@ rm *.zip
 
 OTNODE_VERSION=$(jq -r '.version' ot-node*/package.json)
 
+mkdir $OTNODE_VERSION
+
 mv ot-node* $OTNODE_VERSION
 
 ln -sfn $OTNODE_VERSION current
