@@ -374,9 +374,10 @@ echo -n "Dropping old operational database: "
 mysql -u root -e "DROP DATABASE operationaldb"
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
-    echo "There was an error creating the database (Step 1 of 3)."
+    echo "There was an error dropping the database (Step 1 of 3)."
     echo $OUTPUT
     exit 1
+fi
 
 echo -n "Creating a local operational database: "
 
