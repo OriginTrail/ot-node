@@ -1,8 +1,8 @@
 #!/bin/bash
 
-ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive/"
+ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive"
 BRANCH="v6/release/testnet"
-OTNODE_DIR="/root/ot-node/"
+OTNODE_DIR="/root/ot-node"
 N1=$'\n'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -331,7 +331,7 @@ fi
 
 echo -n "Installing node.js: "
 
- OUTPUT=$(apt-get install node.js -y 2>&1)
+ OUTPUT=$(apt-get install nodejs -y 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing node.js."
