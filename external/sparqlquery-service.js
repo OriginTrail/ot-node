@@ -209,11 +209,26 @@ class SparqlqueryService {
             data.on('data', (binding) => {
                 const result = {};
                 for (const [key, value] of binding) {
-                    result[key.value] = value.value;
+                    if (
+                        value.datatype &&
+                        value.datatype.value === 'http://www.w3.org/2001/XMLSchema#integer'
+                    ) {
+                        result[key.value] = parseInt(value.value);
+                    } else if (
+                        value.datatype &&
+                        value.datatype.value === 'http://www.w3.org/2001/XMLSchema#decimal'
+                    ) {
+                        result[key.value] = parseFloat(value.value);
+                    } else {
+                        result[key.value] = value.value;
+                    }
                 }
                 results.push(result);
             });
-            data.on('end', () => resolve(results));
+            data.on('end', () => {
+                console.log(results);
+                resolve(results);
+            });
         });
     }
 
