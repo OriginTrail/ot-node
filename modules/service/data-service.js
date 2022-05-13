@@ -287,9 +287,7 @@ class DataService {
             const result = [];
             for (let assertion of assertions) {
                 assertion.assertionId = assertion.assertionId.replace(`${constants.DID_PREFIX}:`, '');
-                const { assertionId } = assertion;
-                const assetId = JSON.parse(assertion.assetId)
-
+                const { assertionId, assetId } = assertion;
                 const {
                     assertionId: assertionIdBlockchain,
                 } = await this.blockchainService.getAssetProofs(assetId);
@@ -298,7 +296,7 @@ class DataService {
                     continue;
                 }
 
-                const nquads = await this.resolve(assertion.assertionId, localQuery, true);
+                const nquads = await this.resolve(assertionId, localQuery, true);
                 if (!nquads) {
                     continue;
                 }

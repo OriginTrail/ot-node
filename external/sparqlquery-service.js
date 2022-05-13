@@ -202,13 +202,19 @@ class SparqlqueryService {
     }
 
     async execute(query) {
-        const result = await this.queryEngine.query(query, this.queryContext);
-        const { data } = await this.queryEngine.resultToString(result);
-        let response = '';
-        for await (const chunk of data) {
-            response += chunk;
-        }
-        return JSON.parse(response);
+        const data = await this.queryEngine.queryBindings(query, this.queryContext);
+        const results = [];
+
+        return new Promise((resolve, reject) => {
+            data.on('data', (binding) => {
+                const result = {};
+                for (const [key, value] of binding) {
+                    result[key.value] = value.value;
+                }
+                results.push(result);
+            });
+            data.on('end', () => resolve(results));
+        });
     }
 
     cleanEscapeCharacter(query) {
