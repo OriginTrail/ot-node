@@ -97,7 +97,7 @@ rm *.zip
 #Download new version .zip file
 #Unpack to init folder
 
-OTNODE_VERSION=$(jq -r '.version' ot-node*/package.json)
+OTNODE_VERSION=$(jq -r '.version' $BRANCH_DIR/package.json)
 
 mkdir $OTNODE_DIR
 cd $OTNODE_DIR
