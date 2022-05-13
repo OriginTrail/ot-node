@@ -17,7 +17,7 @@ exports.MAX_FILE_SIZE = 2621440;
  */
 exports.SERVICE_API_RATE_LIMIT = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    MAX_NUMBER: 10,
+    MAX_NUMBER: 100000,
 };
 
 /**
@@ -27,7 +27,7 @@ exports.SERVICE_API_RATE_LIMIT = {
 exports.SERVICE_API_SLOW_DOWN = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
     DELAY_AFTER_SECONDS: 5,
-    DELAY_MILLS: 3 * 1000,
+    DELAY_MILLS: 0 * 1000,
 };
 
 /**
