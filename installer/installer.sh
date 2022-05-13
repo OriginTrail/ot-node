@@ -104,6 +104,7 @@ cd $OTNODE_DIR
 mkdir $OTNODE_VERSION
 
 mv /root/ot-node-6-release-testnet/* $OTNODE_DIR/$OTNODE_VERSION
+mv /root/ot-node-6-release-testnet/.* $OTNODE_DIR/$OTNODE_VERSION
 
 ln -sfn $OTNODE_VERSION current
 
