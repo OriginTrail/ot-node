@@ -4,6 +4,7 @@ ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive"
 BRANCH="v6/release/testnet"
 BRANCH_DIR="/root/ot-node-6-release-testnet"
 OTNODE_DIR="/root/ot-node"
+FUSEKI_VER="4.5.0"
 N1=$'\n'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -103,8 +104,8 @@ mkdir $OTNODE_DIR
 
 mkdir $OTNODE_DIR/$OTNODE_VERSION
 
-mv $BRANCH_DIR/* $OTNODE_DIR/$OTNODE_VERSION/
-mv $BRANCH_DIR/.* $OTNODE_DIR/$OTNODE_VERSION/
+OUTPUT=$(mv $BRANCH_DIR/* $OTNODE_DIR/$OTNODE_VERSION/ 2>&1)
+OUTPUT=$(mv $BRANCH_DIR/.* $OTNODE_DIR/$OTNODE_VERSION/ 2>&1)
 
 rm -r $BRANCH_DIR
 
@@ -126,7 +127,7 @@ if [[ $DATABASE = "fuseki" ]]; then
 
     echo -n "Downloading Apache Jena Fuseki: "
 
-    OUTPUT=$(wget https://dlcdn.apache.org/jena/binaries/apache-jena-fuseki-4.4.0.zip 2>&1)
+    OUTPUT=$(wget https://dlcdn.apache.org/jena/binaries/apache-jena-fuseki-$FUSEKI_VER.zip 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
@@ -138,7 +139,7 @@ if [[ $DATABASE = "fuseki" ]]; then
     fi
 
     echo -n "Unzipping Fuseki .zip file: "
-    OUTPUT=$(unzip apache-jena-fuseki-4.4.0.zip 2>&1)
+    OUTPUT=$(unzip apache-jena-fuseki-$FUSEKI_VER.zip 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
@@ -151,11 +152,11 @@ if [[ $DATABASE = "fuseki" ]]; then
 
     echo -n "Setting up fuseki folder in /root/fuseki: "
 
-    OUTPUT=$(rm /root/apache-jena-fuseki-4.4.0.zip &&
+    OUTPUT=$(rm /root/apache-jena-fuseki-$FUSEKI_VER.zip &&
             mkdir /root/fuseki &&
             mkdir /root/fuseki/tdb &&
-            cp /root/apache-jena-fuseki-4.4.0/fuseki-server.jar /root/fuseki/ &&
-            cp -r /root/apache-jena-fuseki-4.4.0/webapp/ /root/fuseki/ 2>&1)
+            cp /root/apache-jena-fuseki-$FUSEKI_VER/fuseki-server.jar /root/fuseki/ &&
+            cp -r /root/apache-jena-fuseki-$FUSEKI_VER/webapp/ /root/fuseki/ 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
