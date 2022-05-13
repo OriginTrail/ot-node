@@ -369,9 +369,6 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo -n "Dropping old operational database: "
-
-
 echo -n "Creating a local operational database: "
 
 mysql -u root -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;"
