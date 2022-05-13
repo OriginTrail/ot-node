@@ -2,6 +2,7 @@
 
 ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive"
 BRANCH="v6/release/testnet"
+BRANCH_DIR="/root/ot-node-6-release-testnet"
 OTNODE_DIR="/root/ot-node"
 N1=$'\n'
 GREEN='\033[0;32m'
@@ -103,8 +104,8 @@ cd $OTNODE_DIR
 
 mkdir $OTNODE_VERSION
 
-mv /root/ot-node-6-release-testnet/* $OTNODE_DIR/$OTNODE_VERSION
-mv /root/ot-node-6-release-testnet/.* $OTNODE_DIR/$OTNODE_VERSION
+mv $BRANCH_DIR/* $OTNODE_DIR/$OTNODE_VERSION
+mv $BRANCH_DIR/.* $OTNODE_DIR/$OTNODE_VERSION
 
 ln -sfn $OTNODE_VERSION current
 
