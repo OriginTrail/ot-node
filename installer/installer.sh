@@ -100,20 +100,17 @@ rm *.zip
 OTNODE_VERSION=$(jq -r '.version' $BRANCH_DIR/package.json)
 
 mkdir $OTNODE_DIR
-cd $OTNODE_DIR
 
-mkdir $OTNODE_VERSION
+mkdir $OTNODE_DIR/$OTNODE_VERSION
 
 mv $BRANCH_DIR/* $OTNODE_DIR/$OTNODE_VERSION
 mv $BRANCH_DIR/.* $OTNODE_DIR/$OTNODE_VERSION
 
 rm -r $BRANCH_DIR
 
-ln -sfn $OTNODE_VERSION current
+ln -sfn $OTNODE_DIR/$OTNODE_VERSION $OTNODE_DIR/current
 
 OTNODE_DIR=$OTNODE_DIR/current
-
-cd /root
 
 while true; do
     read -p "Please select the database you would like to use: [1]Fuseki [2]Blazegraph [E]xit: " choice
