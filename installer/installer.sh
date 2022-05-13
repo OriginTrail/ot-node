@@ -78,9 +78,6 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-mkdir $OTNODE_DIR
-cd $OTNODE_DIR
-
 echo -n "Downloading ot-node: "
 
 OUTPUT=$(wget https://$ARCHIVE_REPOSITORY_URL/$BRANCH.zip 2>&1)
@@ -101,9 +98,12 @@ rm *.zip
 
 OTNODE_VERSION=$(jq -r '.version' ot-node*/package.json)
 
+mkdir $OTNODE_DIR
+cd $OTNODE_DIR
+
 mkdir $OTNODE_VERSION
 
-mv $OTNODE_DIR/$BRANCH/* $OTNODE_VERSION
+mv /root/ot-node-6-release-testnet/* $OTNODE_DIR/$OTNODE_VERSION
 
 ln -sfn $OTNODE_VERSION current
 
