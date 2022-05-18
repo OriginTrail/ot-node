@@ -20,6 +20,19 @@
                         "config": {}
                     }
                 }
+            },
+            "repository": {
+                "enabled": true,
+                "implementation": {
+                    "sequelize-repository": {
+                        "package": "./repository/implementation/sequelize-repository",
+                        "config": {
+                            "databaseName": "operationaldb",
+                            "user": "ot-node",
+                            "password": "password"
+                        }
+                    }
+                }
             }
         },
         "appDataPath": "data",
