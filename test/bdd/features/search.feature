@@ -3,7 +3,7 @@ Feature: Searching for assets on the DKG
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  Scenario: Publish and search assertion on the network with keywords
+  Scenario: Search assertion on the network with keywords
     Given I setup 4 nodes
     When I call search request on node 1 with result type assertions for the keywords:
       | keyword 1 | keyword 2 |
