@@ -11,7 +11,7 @@ jobs:
   test-unit:
     #todo think about locking the version - version should be the same as the one in official documentation
     runs-on: ubuntu-latest
-#    services:
+    services:
 #      mysql:
 #        image: mysql:5.7
 #        env:
@@ -22,10 +22,10 @@ jobs:
 #        ports:
 #          - 3306:3306
 #        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-#      graphdb:
-#        image: khaller/graphdb-free:latest
-#        ports:
-#          - 7200:7200
+      graphdb:
+        image: khaller/graphdb-free:latest
+        ports:
+          - 7200:7200
     strategy:
       matrix:
         node-version: [16.x]

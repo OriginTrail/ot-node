@@ -1,6 +1,9 @@
 const path = require('path');
 const { exists, mkdir } = require('fs');
 const fs = require('fs');
+const appRootPath = require('app-root-path');
+
+const MIGRATION_FOLDER_NAME = 'migrations';
 
 class FileService {
     constructor(ctx) {
@@ -41,12 +44,10 @@ class FileService {
         });
     }
 
-    createFolder(folderName) {
-
-    }
+    createFolder(folderName) {}
 
     readFileOnPath(filePath) {
-
+        return this._readFile(filePath, false);
     }
 
     /**
@@ -55,16 +56,23 @@ class FileService {
      * @private
      */
     loadJsonFromFile(filePath) {
+        return this._readFile(filePath, true);
+    }
+
+    _readFile(filePath, convertToJSON = false) {
         return new Promise((resolve, reject) => {
-            exists(filePath, (exists) => {
-                if (exists) {
+            exists(filePath, (exist) => {
+                if (exist) {
                     fs.readFile(filePath, (err, data) => {
                         if (err) {
                             reject(err);
                         } else {
                             try {
-                                const fileJson = JSON.parse(data);
-                                resolve(fileJson);
+                                if (convertToJSON) {
+                                    const fileJson = JSON.parse(data);
+                                    resolve(fileJson);
+                                }
+                                resolve(data.toString());
                             } catch (error) {
                                 reject(error);
                             }
@@ -79,8 +87,8 @@ class FileService {
 
     removeFile(filePath) {
         return new Promise((resolve, reject) => {
-            exists(filePath, (exists) => {
-                if (exists) {
+            exists(filePath, (exist) => {
+                if (exist) {
                     fs.unlink(filePath, (err) => {
                         if (err) {
                             reject(err);
@@ -95,8 +103,23 @@ class FileService {
         });
     }
 
+    getDataFolderPath() {
+        if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
+            return path.join(appRootPath.path, '..', this.config.appDataPath);
+        }
+        return path.join(appRootPath.path, this.config.appDataPath);
+    }
+
+    getUpdateFilePath() {
+        return path.join(this.getDataFolderPath(), 'UPDATED');
+    }
+
+    getMigrationFolderPath() {
+        return path.join(this.getDataFolderPath(), MIGRATION_FOLDER_NAME);
+    }
+
     getHandlerIdCachePath() {
-        return path.join(this.config.appDataPath, 'handler_id_cache');
+        return path.join(this.getDataFolderPath(), 'handler_id_cache');
     }
 
     getHandlerIdDocumentPath(handlerId) {
