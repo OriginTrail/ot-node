@@ -25,6 +25,13 @@ const state = {
         assertion: {},
         result: {},
     },
+    lastSearchData: {
+        nodeId: 1,
+        handlerId: '',
+        keywords: ['', ''],
+        assertion: {},
+        result: {},
+    },
     lastResolveData: {
         nodeId: 1,
         handlerId: '',

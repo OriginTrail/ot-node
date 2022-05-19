@@ -109,7 +109,6 @@
     "sequelize-cli": "^6.3.0",
     "simple-git": "^3.6.0",
     "sleep-async": "^1.0.5",
-    "sparqljs": "^3.5.1",
     "split": "^1.0.1",
     "streaming-iterables": "^6.0.0",
     "toobusy-js": "^0.5.1",
