@@ -5,8 +5,10 @@ class RepositoryModuleManager extends BaseModuleManager {
         return 'repository';
     }
 
-    migrate() {
-        this.getImplementation().module.migrate();
+    async createHandlerIdRecord(handlerData) {
+        if (this.initialized) {
+            return this.getImplementation().module.createHandlerIdRecord(handlerData);
+        }
     }
 }
 

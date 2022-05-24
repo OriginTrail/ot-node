@@ -22,14 +22,18 @@
                 }
             },
             "repository": {
-                "enabled": true,
+                "enabled": false,
                 "implementation": {
                     "sequelize-repository": {
-                        "package": "./repository/implementation/sequelize-repository",
+                        "package": "./repository/implementation/sequelize/sequelize-repository",
                         "config": {
-                            "databaseName": "operationaldb",
-                            "user": "ot-node",
-                            "password": "password"
+                            "database": "operationaldb",
+                            "user": "root",
+                            "password": "password",
+                            "port": "3306",
+                            "host": "localhost",
+                            "dialect": "mysql",
+                            "logging": false
                         }
                     }
                 }
@@ -94,6 +98,23 @@
                         "config": {}
                     }
                 }
+            },
+            "repository": {
+                "enabled": false,
+                "implementation": {
+                    "sequelize-repository": {
+                        "package": "./repository/implementation/sequelize/sequelize-repository",
+                        "config": {
+                            "database": "operationaldb",
+                            "user": "root",
+                            "password": "password",
+                            "port": "3306",
+                            "host": "localhost",
+                            "dialect": "mysql",
+                            "logging": false
+                        }
+                    }
+                }
             }
         },
         "appDataPath": "data",
@@ -148,6 +169,23 @@
                     "express-http-client": {
                         "package": "./http-client/implementation/express-http-client",
                         "config": {}
+                    }
+                }
+            },
+            "repository": {
+                "enabled": false,
+                "implementation": {
+                    "sequelize-repository": {
+                        "package": "./repository/implementation/sequelize/sequelize-repository",
+                        "config": {
+                            "database": "operationaldb",
+                            "user": "root",
+                            "password": "password",
+                            "port": "3306",
+                            "host": "localhost",
+                            "dialect": "mysql",
+                            "logging": false
+                        }
                     }
                 }
             }
@@ -213,6 +251,23 @@
                     "express-http-client": {
                         "package": "./http-client/implementation/express-http-client",
                         "config": {}
+                    }
+                }
+            },
+            "repository": {
+                "enabled": false,
+                "implementation": {
+                    "sequelize-repository": {
+                        "package": "./repository/implementation/sequelize/sequelize-repository",
+                        "config": {
+                            "database": "operationaldb",
+                            "user": "root",
+                            "password": "password",
+                            "port": "3306",
+                            "host": "localhost",
+                            "dialect": "mysql",
+                            "logging": false
+                        }
                     }
                 }
             }
