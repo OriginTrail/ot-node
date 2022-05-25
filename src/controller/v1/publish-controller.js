@@ -121,6 +121,7 @@ class PublishController extends BaseController {
             'prepareAssertionForPublish',
             'submitProofsCommand',
             'insertAssertionCommand',
+            'findNodesCommand',
             'sendAssertionCommand',
         ];
 
