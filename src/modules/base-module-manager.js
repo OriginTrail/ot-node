@@ -6,7 +6,7 @@ class BaseModuleManager {
         this.logger = ctx.logger;
     }
 
-    initialize() {
+    async initialize() {
         try {
             const moduleConfig = this.config.modules[this.getName()];
             if (!moduleConfig || !moduleConfig.enabled) {
@@ -35,7 +35,8 @@ class BaseModuleManager {
                 // eslint-disable-next-line global-require,import/no-dynamic-require
                 const ModuleClass = require(implementationConfig.package);
                 const module = new ModuleClass();
-                module.initialize(implementationConfig.config, this.logger);
+                // eslint-disable-next-line no-await-in-loop
+                await module.initialize(implementationConfig.config, this.logger);
                 this.logger.info(
                     `${this.getName()} module initialized with implementation: ${implementationName}`,
                 );
