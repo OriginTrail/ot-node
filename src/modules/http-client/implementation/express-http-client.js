@@ -1,7 +1,7 @@
 const express = require('express');
 
 class ExpressHttpClient {
-    initialize() {
+    async initialize() {
         this.app = express();
     }
 

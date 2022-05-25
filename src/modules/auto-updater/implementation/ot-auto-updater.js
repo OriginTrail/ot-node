@@ -11,7 +11,7 @@ const REPOSITORY_URL = 'https://github.com/OriginTrail/ot-node';
 const ARCHIVE_REPOSITORY_URL = 'github.com/OriginTrail/ot-node/archive/';
 
 class OTAutoUpdater {
-    initialize(config, logger) {
+    async initialize(config, logger) {
         this.config = config;
         this.logger = logger;
         if (!this.config) throw Error('You must pass a config object to AutoUpdater.');
