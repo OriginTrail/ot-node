@@ -7,7 +7,6 @@
                 "https://rpc-mumbai.maticvigil.com/",
                 "https://matic-mumbai.chainstacklabs.com",
                 "https://rpc-mumbai.matic.today",
-                "https://matic-testnet-archive-rpc.bwarelabs.com"
             ],
             "publicKey": "...",
             "privateKey": "..."
