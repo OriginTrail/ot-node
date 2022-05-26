@@ -18,6 +18,12 @@ class BaseModuleManager {
 
             this.handlers = {};
             for (const implementationName in moduleConfig.implementation) {
+                if (
+                    moduleConfig.defaultImplementation &&
+                    implementationName !== moduleConfig.defaultImplementation
+                ) {
+                    continue;
+                }
                 const implementationConfig = moduleConfig.implementation[implementationName];
 
                 if (!implementationConfig) {
