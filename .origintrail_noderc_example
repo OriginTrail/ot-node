@@ -6,7 +6,7 @@
             "rpcEndpoints": [
                 "https://rpc-mumbai.maticvigil.com/",
                 "https://matic-mumbai.chainstacklabs.com",
-                "https://rpc-mumbai.matic.today",
+                "https://rpc-mumbai.matic.today"
             ],
             "publicKey": "...",
             "privateKey": "..."
