@@ -1,8 +1,10 @@
 #!/bin/bash
 
-ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive/"
+ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive"
 BRANCH="v6/release/testnet"
-OTNODE_DIR="/root/ot-node/"
+BRANCH_DIR="/root/ot-node-6-release-testnet"
+OTNODE_DIR="/root/ot-node"
+FUSEKI_VER="apache-jena-fuseki-4.5.0"
 N1=$'\n'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -78,9 +80,6 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-mkdir $OTNODE_DIR
-cd $OTNODE_DIR
-
 echo -n "Downloading ot-node: "
 
 OUTPUT=$(wget https://$ARCHIVE_REPOSITORY_URL/$BRANCH.zip 2>&1)
@@ -99,15 +98,20 @@ rm *.zip
 #Download new version .zip file
 #Unpack to init folder
 
-OTNODE_VERSION=$(jq -r '.version' ot-node*/package.json)
+OTNODE_VERSION=$(jq -r '.version' $BRANCH_DIR/package.json)
 
-mv ot-node* $OTNODE_VERSION
+mkdir $OTNODE_DIR
 
-ln -sfn $OTNODE_VERSION current
+mkdir $OTNODE_DIR/$OTNODE_VERSION
+
+OUTPUT=$(mv $BRANCH_DIR/* $OTNODE_DIR/$OTNODE_VERSION/ 2>&1)
+OUTPUT=$(mv $BRANCH_DIR/.* $OTNODE_DIR/$OTNODE_VERSION/ 2>&1)
+
+rm -r $BRANCH_DIR
+
+ln -sfn $OTNODE_DIR/$OTNODE_VERSION $OTNODE_DIR/current
 
 OTNODE_DIR=$OTNODE_DIR/current
-
-cd /root
 
 while true; do
     read -p "Please select the database you would like to use: [1]Fuseki [2]Blazegraph [E]xit: " choice
@@ -123,7 +127,7 @@ if [[ $DATABASE = "fuseki" ]]; then
 
     echo -n "Downloading Apache Jena Fuseki: "
 
-    OUTPUT=$(wget https://dlcdn.apache.org/jena/binaries/apache-jena-fuseki-4.4.0.zip 2>&1)
+    OUTPUT=$(wget https://dlcdn.apache.org/jena/binaries/$FUSEKI_VER.zip 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
@@ -135,7 +139,7 @@ if [[ $DATABASE = "fuseki" ]]; then
     fi
 
     echo -n "Unzipping Fuseki .zip file: "
-    OUTPUT=$(unzip apache-jena-fuseki-4.4.0.zip 2>&1)
+    OUTPUT=$(unzip $FUSEKI_VER.zip 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
@@ -148,11 +152,12 @@ if [[ $DATABASE = "fuseki" ]]; then
 
     echo -n "Setting up fuseki folder in /root/fuseki: "
 
-    OUTPUT=$(rm /root/apache-jena-fuseki-4.4.0.zip &&
+    OUTPUT=$(rm /root/$FUSEKI_VER.zip &&
             mkdir /root/fuseki &&
             mkdir /root/fuseki/tdb &&
-            cp /root/apache-jena-fuseki-4.4.0/fuseki-server.jar /root/fuseki/ &&
-            cp -r /root/apache-jena-fuseki-4.4.0/webapp/ /root/fuseki/ 2>&1)
+            cp /root/$FUSEKI_VER/fuseki-server.jar /root/fuseki/ &&
+            cp -r /root/$FUSEKI_VER/webapp/ /root/fuseki/ &&
+            rm -r /root/$FUSEKI_VER 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
@@ -331,7 +336,7 @@ fi
 
 echo -n "Installing node.js: "
 
- OUTPUT=$(apt-get install node.js -y 2>&1)
+ OUTPUT=$(apt-get install nodejs -y 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing node.js."
