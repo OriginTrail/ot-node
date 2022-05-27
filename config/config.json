@@ -70,6 +70,15 @@
                         }
                     }
                 }
+            },
+            "validation": {
+                "enabled": true,
+                "implementation": {
+                    "merkle-validation": {
+                        "package": "./validation/implementation/merkle-validation",
+                        "config": {}
+                    }
+                }
             }
         },
         "appDataPath": "data",
