@@ -1,4 +1,5 @@
 const Libp2p = require('libp2p');
+const { v1: uuidv1 } = require('uuid');
 const { Record } = require('libp2p-record');
 const KadDHT = require('libp2p-kad-dht');
 const Bootstrap = require('libp2p-bootstrap');
@@ -6,6 +7,10 @@ const { NOISE } = require('libp2p-noise');
 const MPLEX = require('libp2p-mplex');
 const TCP = require('libp2p-tcp');
 const pipe = require('it-pipe');
+const lp = require('it-length-prefixed');
+const { fromString: uint8ArrayFromString } = require('uint8arrays/from-string');
+const { toString: uint8ArrayToString } = require('uint8arrays/to-string');
+const map = require('it-map');
 const { sha256 } = require('multiformats/hashes/sha2');
 const PeerId = require('peer-id');
 const { InMemoryRateLimiter } = require('rolling-rate-limiter');
@@ -49,14 +54,15 @@ class Libp2pService {
     async initialize(config, logger) {
         this.config = config;
         this.logger = logger;
+        console.log(this)
 
-        if (this.config.bootstrapMultiAddress.length > 0) {
+        if (this.config.bootstrap.length > 0) {
             initializationObject.modules.peerDiscovery = [Bootstrap];
             initializationObject.config.peerDiscovery = {
                 autoDial: true,
                 [Bootstrap.tag]: {
                     enabled: true,
-                    list: this.config.bootstrapMultiAddress,
+                    list: this.config.bootstrap,
                 },
             };
         }
@@ -79,7 +85,6 @@ class Libp2pService {
         }
 
         initializationObject.peerId = this.config.peerId;
-        this.workerPool = this.config.workerPool;
         this._initializeRateLimiters();
         this.node = await Libp2p.create(initializationObject);
         this._initializeNodeListeners();
@@ -176,25 +181,14 @@ class Libp2pService {
         this.node.handle(protocol, async (handlerProps) => {
             const { stream } = handlerProps;
             const remotePeerId = handlerProps.connection.remotePeer._idB58String;
-            if (await this.limitRequest(remotePeerId)) {
-                // TODO: remove session
-                await this._sendMessageToStream(stream, constants.NETWORK_RESPONSES.BLOCKED);
-                return;
-            }
-
             this.logger.info(
                 `Receiving message from ${remotePeerId} to ${this.config.id}: event=${protocol};`,
             );
-            const data = await this._readMessageFromStream(stream, this.isRequestValid);
+            const message = await this._readMessageFromStream(stream, this.isRequestValid);
 
-            if (data) {
-                const response = await handler(data);
-                this.updateReceiverSession(response.header);
-                await this._sendMessageToStream(stream, response);
-
-                this.logger.info(
-                    `Sending response from ${this.config.id} to ${remotePeerId}: event=${protocol};`,
-                );
+            if (message) {
+                sessions.receiver[message.header.sessionId].stream = stream;
+                await handler(message, remotePeerId);
             }
         });
     }
@@ -204,11 +198,25 @@ class Libp2pService {
             `Sending message from ${this.config.id} to ${remotePeerId._idB58String}: event=${protocol};`,
         );
         const { stream } = await this.node.dialProtocol(remotePeerId, protocol);
+        if(!message.header.sessionId) {
+            message.header.sessionId = uuidv1();
+        }
         await this._sendMessageToStream(stream, message);
         this.updateSenderSession(message.header);
         const response = await this._readMessageFromStream(stream, this.isResponseValid);
 
         return response;
+    }
+
+    async sendMessageResponse(protocol, remotePeerId, response, options) {
+        this.logger.info(
+            `Sending response from ${this.config.id} to ${remotePeerId}: event=${protocol};`,
+        );
+        updateReceiverSession(response.header);
+        await this._sendMessageToStream(
+            sessions.receiver[response.header.sessionId].stream,
+            response,
+        );
     }
 
     updateSenderSession(header) {
@@ -241,10 +249,6 @@ class Libp2pService {
     }
 
     async _sendMessageToStream(stream, message) {
-        if (!message.header || !message.data) {
-            throw Error('Header or data missing in message object.');
-        }
-
         const stringifiedHeader = JSON.stringify(message.header);
         const stringifiedData = JSON.stringify(message.data);
 
@@ -259,9 +263,8 @@ class Libp2pService {
         await pipe(
             chunks,
             // turn strings into buffers
-            (source) => map(source, (buf) => uint8ArrayFromString(buf)),
+            (source) => map(source, (string) => Buffer.from(string)),
             // Encode with length prefix (so receiving side knows how much data is coming)
-            lp.encode(),
             // Write to the stream (the sink)
             stream.sink,
         );
@@ -272,16 +275,15 @@ class Libp2pService {
             // Read from the stream (the source)
             stream.source,
             // Decode length-prefixed data
-            lp.decode(),
             // Turn buffers into strings
-            (source) => map(source, (buf) => uint8ArrayToString(buf)),
+            (source) => map(source, (buf) => buf.toString()),
             // Sink function
             async function (source) {
                 let message = {};
                 let stringifiedData = '';
                 // we expect first buffer to be header
                 const stringifiedHeader = (await source.next()).value;
-                message.header = await this.workerPool.exec('JSONParse', [stringifiedHeader]);
+                message.header = JSON.parse(stringifiedHeader);
 
                 if (!isMessageValid(message.header)) {
                     stream.close();
@@ -291,7 +293,7 @@ class Libp2pService {
                 for await (const chunk of source) {
                     stringifiedData += chunk;
                 }
-                message.data = await this.workerPool.exec('JSONParse', [stringifiedData]);
+                message.data = JSON.parse(stringifiedData);
 
                 return message;
             },
@@ -300,7 +302,7 @@ class Libp2pService {
 
     isRequestValid(header) {
         // header well formed
-        if (!isRequestHeaderValid(header)) return false;
+        if (!this.isRequestHeaderValid(header)) return false;
 
         // get existing expected messageType or PROTOCOL_INIT if session doesn't exist yet
         const expectedMessageType = sessions.receiver[header.sessionId]
@@ -320,7 +322,7 @@ class Libp2pService {
 
     isResponseValid(header) {
         // header well formed
-        if (!isResponseHeaderValid(header)) return false;
+        if (!this.isResponseHeaderValid(header)) return false;
 
         const expectedResponses = sessions.sender[header.sessionId].expectedResponses;
 

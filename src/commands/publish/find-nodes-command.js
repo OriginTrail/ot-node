@@ -6,7 +6,7 @@ class FindNodesCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.networkService = ctx.networkService;
+        this.networkModuleManager = ctx.networkModuleManager;
         this.fileService = ctx.fileService;
     }
 
@@ -25,7 +25,7 @@ class FindNodesCommand extends Command {
             this.logger.info(
                 `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${keyword}`,
             );
-            return this.networkService
+            return this.networkModuleManager
                 .findNodes(
                     keyword,
                     constants.NETWORK_PROTOCOLS.STORE,

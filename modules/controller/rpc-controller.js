@@ -4,7 +4,6 @@ const ipfilter = require('express-ipfilter').IpFilter;
 const fs = require('fs');
 const https = require('https');
 const { IpDeniedError } = require('express-ipfilter');
-const path = require('path');
 const { v1: uuidv1 } = require('uuid');
 const sortedStringify = require('json-stable-stringify');
 const validator = require('validator');
@@ -13,14 +12,13 @@ const slowDown = require('express-slow-down');
 const Models = require('../../models/index');
 const constants = require('../constants');
 const pjson = require('../../package.json');
-const Utilities = require('../utilities');
 
 class RpcController {
     constructor(ctx) {
         this.config = ctx.config;
         this.publishService = ctx.publishService;
         this.queryService = ctx.queryService;
-        this.networkService = ctx.networkService;
+        this.networkModuleManager = ctx.networkModuleManager;
         this.validationService = ctx.validationService;
         this.blockchainService = ctx.blockchainService;
         this.dataService = ctx.dataService;
@@ -157,15 +155,15 @@ class RpcController {
     initializeNetworkApi() {
         this.logger.info(`Network API module enabled on port ${this.config.network.port}`);
 
-        this.networkService.handleMessage(constants.NETWORK_PROTOCOLS.STORE, (result) =>
-            this.publishService.handleStore(result),
+        this.networkModuleManager.handleMessage(constants.NETWORK_PROTOCOLS.STORE, (message, stream, remotePeerId) =>
+            this.publishController.handleNetworkStoreRequest(message, stream, remotePeerId)
         );
 
-        this.networkService.handleMessage(constants.NETWORK_PROTOCOLS.RESOLVE, (result) =>
+        this.networkModuleManager.handleMessage(constants.NETWORK_PROTOCOLS.RESOLVE, (result) =>
             this.queryService.handleResolve(result),
         );
 
-        this.networkService.handleMessage(
+        this.networkModuleManager.handleMessage(
             constants.NETWORK_PROTOCOLS.SEARCH,
             (result) => this.queryService.handleSearch(result),
             {
@@ -174,11 +172,11 @@ class RpcController {
             },
         );
 
-        this.networkService.handleMessage(constants.NETWORK_PROTOCOLS.SEARCH_RESULT, (result) =>
+        this.networkModuleManager.handleMessage(constants.NETWORK_PROTOCOLS.SEARCH_RESULT, (result) =>
             this.queryService.handleSearchResult(result),
         );
 
-        this.networkService.handleMessage(
+        this.networkModuleManager.handleMessage(
             constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS,
             (result) => this.queryService.handleSearchAssertions(result),
             {
@@ -187,7 +185,7 @@ class RpcController {
             },
         );
 
-        this.networkService.handleMessage(
+        this.networkModuleManager.handleMessage(
             constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS_RESULT,
             (result) => this.queryService.handleSearchAssertionsResult(result),
         );
@@ -370,7 +368,7 @@ class RpcController {
                             this.logger.info(
                                 `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${id}`,
                             );
-                            const nodes = await this.networkService.findNodes(
+                            const nodes = await this.networkModuleManager.findNodes(
                                 id,
                                 constants.NETWORK_PROTOCOLS.RESOLVE,
                                 this.config.replicationFactor,
@@ -555,7 +553,7 @@ class RpcController {
                     this.logger.info(
                         `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`,
                     );
-                    let nodes = await this.networkService.findNodes(
+                    let nodes = await this.networkModuleManager.findNodes(
                         query,
                         constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS,
                         this.config.replicationFactor,
@@ -667,7 +665,7 @@ class RpcController {
                         this.logger.info(
                             `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`,
                         );
-                        nodes = await this.networkService.findNodes(
+                        nodes = await this.networkModuleManager.findNodes(
                             query,
                             constants.NETWORK_PROTOCOLS.SEARCH,
                             this.config.replicationFactor,

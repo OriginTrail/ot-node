@@ -4,7 +4,7 @@ const constants = require('../constants');
 
 class PublishService {
     constructor(ctx) {
-        this.networkService = ctx.networkService;
+        this.networkModuleManager = ctx.networkModuleManager;
         this.validationService = ctx.validationService;
         this.blockchainService = ctx.blockchainService;
         this.dataService = ctx.dataService;
@@ -128,9 +128,9 @@ class PublishService {
     }
 
     async store(assertion, node) {
-        // await this.networkService.store(node, topic, {});
+        // await this.networkModuleManager.store(node, topic, {});
         let retries = 0;
-        let response = await this.networkService.sendMessage(
+        let response = await this.networkModuleManager.sendMessage(
             constants.NETWORK_PROTOCOLS.STORE,
             assertion,
             node,
@@ -141,7 +141,7 @@ class PublishService {
         ) {
             retries += 1;
             await sleep.sleep(constants.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS);
-            response = await this.networkService.sendMessage(
+            response = await this.networkModuleManager.sendMessage(
                 constants.NETWORK_PROTOCOLS.STORE,
                 assertion,
                 node,

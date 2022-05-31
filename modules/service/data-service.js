@@ -12,7 +12,7 @@ class DataService {
         this.logger = ctx.logger;
         this.constants = ctx.constants;
         this.validationService = ctx.validationService;
-        this.networkService = ctx.networkService;
+        this.networkModuleManager = ctx.networkModuleManager;
         this.nodeService = ctx.nodeService;
         this.workerPool = ctx.workerPool;
         this.blockchainService = ctx.blockchainService;
@@ -317,7 +317,7 @@ class DataService {
                             timestamp: assertion.jsonld.metadata.timestamp,
                             issuers: [],
                             assertions: [],
-                            nodes: [this.networkService.getPeerId()],
+                            nodes: [this.networkModuleManager.getPeerId()],
                         };
                         result.push(object);
                     }
@@ -339,7 +339,7 @@ class DataService {
                     if (!object) {
                         object = {
                             assertionId,
-                            node: this.networkService.getPeerId(),
+                            node: this.networkModuleManager.getPeerId(),
                             nquads,
                         };
                         result.push(object);
@@ -376,7 +376,7 @@ class DataService {
                             id: assertion.jsonld.id,
                             metadata: assertion.jsonld.metadata,
                             signature: assertion.jsonld.signature,
-                            nodes: [this.networkService.getPeerId()],
+                            nodes: [this.networkModuleManager.getPeerId()],
                         };
                         result.push(object);
                     }
@@ -385,7 +385,7 @@ class DataService {
                     if (!object) {
                         object = {
                             assertionId,
-                            node: this.networkService.getPeerId(),
+                            node: this.networkModuleManager.getPeerId(),
                             nquads,
                         };
                         result.push(object);

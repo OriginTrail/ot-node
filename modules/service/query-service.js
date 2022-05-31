@@ -4,7 +4,7 @@ const constants = require('../constants');
 class QueryService {
     constructor(ctx) {
         this.logger = ctx.logger;
-        this.networkService = ctx.networkService;
+        this.networkModuleManager = ctx.networkModuleManager;
         this.validationService = ctx.validationService;
         this.dataService = ctx.dataService;
         this.fileService = ctx.fileService;
@@ -17,7 +17,7 @@ class QueryService {
                 resolve(null);
             }, constants.RESOLVE_MAX_TIME_MILLIS);
 
-            const result = await this.networkService.sendMessage(
+            const result = await this.networkModuleManager.sendMessage(
                 constants.NETWORK_PROTOCOLS.RESOLVE,
                 id,
                 node,
@@ -123,7 +123,7 @@ class QueryService {
     }
 
     async search(data, node) {
-        const result = await this.networkService.sendMessage(
+        const result = await this.networkModuleManager.sendMessage(
             constants.NETWORK_PROTOCOLS.SEARCH,
             data,
             node,
@@ -243,7 +243,7 @@ class QueryService {
     }
 
     async searchAssertions(data, node) {
-        const result = await this.networkService.sendMessage(
+        const result = await this.networkModuleManager.sendMessage(
             constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS,
             data,
             node,

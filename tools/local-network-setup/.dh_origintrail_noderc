@@ -19,11 +19,21 @@
     },
     "logLevel": "trace",
     "rpcPort": 8901,
-    "network": {
-        "port": 9001,
-        "bootstrap": [
-            "/ip4/0.0.0.0/tcp/9000/p2p/QmWyf3dtqJnhuCpzEDTNmNFYc5tjxTrXhGcUUmGHdg2gtj"
-        ]
+    "modules": {
+        "network": {
+            "enabled": true,
+            "implementation": {
+                "libp2p-service": {
+                    "package": "./network/implementation/libp2p-service",
+                    "config": {
+                        "port": 9001,
+                        "bootstrap": [
+                            "/ip4/0.0.0.0/tcp/9000/p2p/QmWyf3dtqJnhuCpzEDTNmNFYc5tjxTrXhGcUUmGHdg2gtj"
+                        ]
+                    }
+                }
+            }
+        }
     },
     "ipWhitelist": [
         "::1",

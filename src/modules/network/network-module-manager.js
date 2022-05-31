@@ -1,9 +1,10 @@
-const uuidv1 = require('uuid');
+const { v1: uuidv1 } = require('uuid');
+const rank = require('./implementation/kad-identity-ranking')
 const BaseModuleManager = require('../base-module-manager');
 
 class NetworkModuleManager extends BaseModuleManager {
     getName() {
-        return 'networkModule';
+        return 'network';
     }
 
     /**
@@ -41,7 +42,7 @@ class NetworkModuleManager extends BaseModuleManager {
                 Operation_name: 'find_nodes',
                 Id_operation,
             });
-            const rankedNodes = await this.rankingService.rank(nodes, key, limit, ['kad-identity']);
+            const rankedNodes = await rank(nodes, key, limit);
             this.logger.emit({
                 msg: 'Finished measuring execution of rank nodes',
                 Event_name: 'rank_nodes_end',
@@ -79,7 +80,24 @@ class NetworkModuleManager extends BaseModuleManager {
 
     async sendMessage(protocol, remotePeerId, message, options) {
         if (this.initialized) {
-            return this.getImplementation().module.sendMessage(protocol, remotePeerId, message, options);
+            return this.getImplementation().module.sendMessage(
+                protocol,
+                remotePeerId,
+                message,
+                options,
+            );
+        }
+    }
+
+    async sendMessageResponse(protocol, remotePeerId, stream, response, options) {
+        if (this.initialized) {
+            return this.getImplementation().module.sendMessageResponse(
+                protocol,
+                remotePeerId,
+                stream,
+                response,
+                options,
+            );
         }
     }
 

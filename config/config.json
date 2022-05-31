@@ -21,6 +21,18 @@
                     }
                 }
             },
+            "network": {
+                "enabled": true,
+                "implementation": {
+                    "libp2p-service": {
+                        "package": "./network/implementation/libp2p-service",
+                        "config": {
+                            "port": 9000,
+                            "bootstrap": []
+                        }
+                    }
+                }
+            },
             "repository": {
                 "enabled": false,
                 "implementation": {

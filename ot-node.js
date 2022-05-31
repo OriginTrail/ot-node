@@ -40,7 +40,6 @@ class OTNode {
         await this.initializeOperationalDbModule();
         await this.initializeValidationModule();
         await this.initializeBlockchainModule();
-        await this.initializeNetworkModule();
         await this.initializeCommandExecutor();
         await this.initializeTelemetryHubModule();
         await this.initializeRpcModule();

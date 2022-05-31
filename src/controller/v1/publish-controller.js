@@ -122,7 +122,8 @@ class PublishController extends BaseController {
             'submitProofsCommand',
             'insertAssertionCommand',
             'findNodesCommand',
-            'sendAssertionCommand',
+            'storeInitCommand',
+            'storeRequestCommand',
         ];
 
         await this.commandExecutor.add({
@@ -214,6 +215,30 @@ class PublishController extends BaseController {
         return {
             isValid: true,
         };
+    }
+
+    async handleNetworkStoreRequest(message, stream, remotePeerId) {
+        const operationId = await this.generateHandlerId();
+        let commandName;
+        const commandData = { message, remotePeerId, stream, operationId}
+        switch(message.header.messageType) {
+            case 'PROTOCOL_INIT': 
+                commandName = 'handleStoreInitCommand'
+                break;
+            case 'PROTOCOL_REQUEST':
+                commandName = 'handleStoreRequestCommand'
+                break;
+            default:
+                throw Error("unknown messageType")
+        }
+
+        await this.commandExecutor.add({
+            name: commandName,
+            sequence: [],
+            delay: 0,
+            data: commandData,
+            transactional: false,
+        });
     }
 }
 

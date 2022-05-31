@@ -7,7 +7,7 @@ class SendAssertionCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.networkService = ctx.networkService;
+        this.networkModuleManager = ctx.networkModuleManager;
         this.publishService = ctx.publishService;
         this.fileService = ctx.fileService;
     }
