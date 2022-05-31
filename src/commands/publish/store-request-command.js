@@ -17,7 +17,7 @@ class SendAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { documentPath, handlerId, nodes } = command.data;
+        const { documentPath, handlerId, nodes, sessionIds } = command.data;
 
         let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
@@ -25,16 +25,17 @@ class SendAssertionCommand extends Command {
             nquads = nquads.filter((x) => x.startsWith(`<${constants.DID_PREFIX}:`));
         }
 
-        const message = {
+        const messages = sessionIds.map((sessionId) => ({
             header: {
+                sessionId,
                 messageType: 'PROTOCOL_REQUEST',
             },
             data: { id: assertion.id, nquads },
-        };
+        }));
 
-        const sendMessagePromises = nodes.map((node) =>
+        const sendMessagePromises = nodes.map((node, index) =>
             this.networkModuleManager
-                .sendMessage(constants.NETWORK_PROTOCOLS.STORE, node, message)
+                .sendMessage(constants.NETWORK_PROTOCOLS.STORE, node, messages[index])
                 .catch((e) => {
                     this.handleError(
                         handlerId,
@@ -53,7 +54,9 @@ class SendAssertionCommand extends Command {
             }
         }
 
-        const maxFailedResponses = Math.round((1 - constants.STORE_MIN_SUCCESS_RATE) * nodes.length);
+        const maxFailedResponses = Math.round(
+            (1 - constants.STORE_MIN_SUCCESS_RATE) * nodes.length,
+        );
         const status = failedResponses <= maxFailedResponses ? 'COMPLETED' : 'FAILED';
         await Models.handler_ids.update(
             {
@@ -105,7 +108,7 @@ class SendAssertionCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'sendAssertionCommand',
+            name: 'storeRequestCommand',
             delay: 0,
             transactional: false,
         };

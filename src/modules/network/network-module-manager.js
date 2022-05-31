@@ -89,12 +89,11 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    async sendMessageResponse(protocol, remotePeerId, stream, response, options) {
+    async sendMessageResponse(protocol, remotePeerId, response, options) {
         if (this.initialized) {
             return this.getImplementation().module.sendMessageResponse(
                 protocol,
                 remotePeerId,
-                stream,
                 response,
                 options,
             );

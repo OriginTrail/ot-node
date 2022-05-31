@@ -1,7 +1,7 @@
 const Command = require('../command');
-const constants = require('../../constants/constants');
+const constants = require('../../constants');
 
-class HandleStoreInitCommand extends Command {
+class HandleStoreRequestCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -14,25 +14,25 @@ class HandleStoreInitCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { message, remotePeerId, operationId} = command.data;
+        const { message, remotePeerId, operationId } = command.data;
 
         const response = {
             header: {
                 sessionId: message.header.sessionId,
-                messageType: 'INIT_ACK'
+                messageType: 'REQUEST_ACK',
             },
-            data: {
+            data: {},
+        };
 
-            }
-        }
-
-        await this.networkModuleManager.sendMessageResponse(constants.NETWORK_PROTOCOLS.STORE, remotePeerId, response).catch((e) => {
-            this.handleError(
-                operationId,
-                e,
-                `Error while sending store init response to node ${remotePeerId._idB58String}. Error message: ${e.message}. ${e.stack}`,
-            );
-        });
+        await this.networkModuleManager
+            .sendMessageResponse(constants.NETWORK_PROTOCOLS.STORE, remotePeerId, response)
+            .catch((e) => {
+                this.handleError(
+                    operationId,
+                    e,
+                    `Error while sending store request response to node ${remotePeerId._idB58String}. Error message: ${e.message}. ${e.stack}`,
+                );
+            });
 
         return this.continueSequence(command.data, command.sequence);
     }
@@ -50,20 +50,20 @@ class HandleStoreInitCommand extends Command {
         this.logger.error({
             msg,
             Operation_name: 'Error',
-            Event_name: constants.ERROR_TYPE.HANDLE_STORE_INIT_ERROR,
+            Event_name: constants.ERROR_TYPE.HANDLE_STORE_REQUEST_ERROR,
             Event_value1: error.message,
             Id_operation: handlerId,
         });
     }
 
     /**
-     * Builds default handleStoreInitCommand
+     * Builds default handleStoreRequestCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'handleStoreInitCommand',
+            name: 'handleStoreRequestCommand',
             delay: 0,
             transactional: false,
         };
@@ -72,4 +72,4 @@ class HandleStoreInitCommand extends Command {
     }
 }
 
-module.exports = HandleStoreInitCommand;
+module.exports = HandleStoreRequestCommand;

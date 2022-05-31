@@ -1,3 +1,4 @@
+const { v4: uuidv4 } = require('uuid');
 const Command = require('../command');
 const constants = require('../../constants/constants');
 
@@ -16,29 +17,32 @@ class StoreInitCommand extends Command {
     async execute(command) {
         const { nodes, handlerId } = command.data;
 
-        const message = {
+        const messages = nodes.map(() => ({
             header: {
+                sessionId: uuidv4(),
                 messageType: 'PROTOCOL_INIT',
             },
             data: {},
-        };
+        }));
 
-        const sendMessagePromises = nodes.map((node) =>
-            this.networkModuleManager.sendMessage(constants.NETWORK_PROTOCOLS.STORE, node, message).catch((e) => {
-                this.handleError(
-                    handlerId,
-                    e,
-                    `Error while sending store init message to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`,
-                );
-            })
+        const sendMessagePromises = nodes.map((node, index) =>
+            this.networkModuleManager
+                .sendMessage(constants.NETWORK_PROTOCOLS.STORE, node, messages[index])
+                .catch((e) => {
+                    this.handleError(
+                        handlerId,
+                        e,
+                        `Error while sending store init message to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`,
+                    );
+                }),
         );
 
         const responses = await Promise.all(sendMessagePromises);
 
         const commandData = command.data;
 
-        const sessionIds = []
-        for(const response of responses) {
+        const sessionIds = [];
+        for (const response of responses) {
             sessionIds.push(response.header.sessionId);
         }
         commandData.sessionIds = sessionIds;

@@ -217,10 +217,10 @@ class PublishController extends BaseController {
         };
     }
 
-    async handleNetworkStoreRequest(message, stream, remotePeerId) {
+    async handleNetworkStoreRequest(message, remotePeerId) {
         const operationId = await this.generateHandlerId();
         let commandName;
-        const commandData = { message, remotePeerId, stream, operationId}
+        const commandData = { message, remotePeerId, operationId}
         switch(message.header.messageType) {
             case 'PROTOCOL_INIT': 
                 commandName = 'handleStoreInitCommand'

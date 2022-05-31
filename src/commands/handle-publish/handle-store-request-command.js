@@ -14,18 +14,18 @@ class HandleStoreRequestCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { message, remotePeerId, stream, operationId } = command.data;
+        const { message, remotePeerId, operationId } = command.data;
 
         const response = {
             header: {
                 sessionId: message.header.sessionId,
-                messageType: 'PROTOCOL_REQUEST_ACK',
+                messageType: 'REQUEST_ACK',
             },
             data: {},
         };
 
         await this.networkModuleManager
-            .sendMessageResponse(constants.NETWORK_PROTOCOLS.STORE, remotePeerId, stream, response)
+            .sendMessageResponse(constants.NETWORK_PROTOCOLS.STORE, remotePeerId, response)
             .catch((e) => {
                 this.handleError(
                     operationId,

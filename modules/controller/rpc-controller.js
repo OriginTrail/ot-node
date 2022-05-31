@@ -155,8 +155,8 @@ class RpcController {
     initializeNetworkApi() {
         this.logger.info(`Network API module enabled on port ${this.config.network.port}`);
 
-        this.networkModuleManager.handleMessage(constants.NETWORK_PROTOCOLS.STORE, (message, stream, remotePeerId) =>
-            this.publishController.handleNetworkStoreRequest(message, stream, remotePeerId)
+        this.networkModuleManager.handleMessage(constants.NETWORK_PROTOCOLS.STORE, (message, remotePeerId) =>
+            this.publishController.handleNetworkStoreRequest(message, remotePeerId)
         );
 
         this.networkModuleManager.handleMessage(constants.NETWORK_PROTOCOLS.RESOLVE, (result) =>
