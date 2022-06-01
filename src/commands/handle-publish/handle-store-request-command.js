@@ -7,6 +7,7 @@ class HandleStoreRequestCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.networkModuleManager = ctx.networkModuleManager;
+        this.dataService = ctx.dataService;
     }
 
     /**
@@ -16,10 +17,26 @@ class HandleStoreRequestCommand extends Command {
     async execute(command) {
         const { message, remotePeerId, operationId } = command.data;
 
+        let status = false;
+        try {
+            const { jsonld, nquads } = await this.dataService.createAssertion(message.data.nquads);
+            status = await this.dataService.verifyAssertion(jsonld, nquads);
+
+            if (status) {
+                await this.dataService.insert(
+                    message.data.nquads.join('\n'),
+                    `${constants.DID_PREFIX}:${message.data.id}`,
+                );
+                this.logger.info(`Assertion ${message.data.id} has been successfully inserted`);
+            }
+        } catch (e) {
+            status = false;
+        }
+
         const response = {
             header: {
                 sessionId: message.header.sessionId,
-                messageType: 'REQUEST_ACK',
+                messageType: status ? 'REQUEST_ACK' : 'REQUEST_NACK',
             },
             data: {},
         };

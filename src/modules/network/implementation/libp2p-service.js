@@ -179,12 +179,12 @@ class Libp2pService {
         this.node.handle(protocol, async (handlerProps) => {
             const { stream } = handlerProps;
             const remotePeerId = handlerProps.connection.remotePeer._idB58String;
-            this.logger.info(
-                `Receiving message from ${remotePeerId} to ${this.config.id}: event=${protocol};`,
-            );
             const message = await this._readMessageFromStream(stream, this.isRequestValid);
 
             if (message) {
+                this.logger.info(
+                    `Receiving message from ${remotePeerId} to ${this.config.id}: event=${protocol}, messageType=${message.header.messageType};`,
+                );
                 this.updateSessionStream(message, stream);
                 await handler(message, remotePeerId);
             }
@@ -199,20 +199,23 @@ class Libp2pService {
 
     async sendMessage(protocol, remotePeerId, message, options) {
         this.logger.info(
-            `Sending message from ${this.config.id} to ${remotePeerId._idB58String}: event=${protocol};`,
+            `Sending message from ${this.config.id} to ${remotePeerId._idB58String}: event=${protocol}, messageType=${message.header.messageType};`,
         );
         const { stream } = await this.node.dialProtocol(remotePeerId, protocol);
 
         await this._sendMessageToStream(stream, message);
         this.updateSenderSession(message.header);
         const response = await this._readMessageFromStream(stream, this.isResponseValid);
+        this.logger.info(
+            `Receiving response from ${remotePeerId._idB58String} : event=${protocol}, messageType=${response.header.messageType};`,
+        );
 
         return response;
     }
 
     async sendMessageResponse(protocol, remotePeerId, response, options) {
         this.logger.info(
-            `Sending response from ${this.config.id} to ${remotePeerId}: event=${protocol};`,
+            `Sending response from ${this.config.id} to ${remotePeerId}: event=${protocol}, messageType=${response.header.messageType};`,
         );
         await this._sendMessageToStream(
             sessions.receiver[response.header.sessionId].stream,
@@ -236,7 +239,9 @@ class Libp2pService {
         if (header.messageType.endsWith('_ACK')) {
             // protocol operation completed
             if (session.expectedMessageTypes.length <= 1) {
-                session = undefined;
+                console.log("deleting")
+                delete sessions.receiver[header.sessionId];
+                console.log(JSON.stringify(sessions, null, 2))
             } else {
                 // operation not completed, update expected message types
                 session.expectedMessageTypes = session.expectedMessageTypes.slice(1);
@@ -330,6 +335,14 @@ class Libp2pService {
         const expectedResponses = sessions.sender[header.sessionId].expectedResponses;
 
         return expectedResponses.includes(header.messageType);
+    }
+
+    removeSession(sessionId) {
+        if(sessions.sender[sessionId]) {
+            delete sessions.sender[sessionId]
+        } else if(sessions.receiver[sessionId]){
+            delete sessions.receiver[sessionId]
+        }
     }
 
     healthCheck() {

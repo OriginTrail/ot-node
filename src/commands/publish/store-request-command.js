@@ -49,7 +49,7 @@ class SendAssertionCommand extends Command {
 
         let failedResponses = 0;
         for (const response of responses) {
-            if (response.header.messageType !== 'PROTOCOL_REQUEST_ACK') {
+            if (response.header.messageType !== 'REQUEST_ACK') {
                 failedResponses += 1;
             }
         }
@@ -58,6 +58,7 @@ class SendAssertionCommand extends Command {
             (1 - constants.STORE_MIN_SUCCESS_RATE) * nodes.length,
         );
         const status = failedResponses <= maxFailedResponses ? 'COMPLETED' : 'FAILED';
+        
         await Models.handler_ids.update(
             {
                 status,
@@ -77,6 +78,10 @@ class SendAssertionCommand extends Command {
                 triple_store: this.config.graphDatabase.implementation,
                 status,
             });
+        }
+
+        for(const sessionId of sessionIds) {
+            this.networkModuleManager.removeSession(sessionId);
         }
 
         return this.continueSequence(command.data, command.sequence);
