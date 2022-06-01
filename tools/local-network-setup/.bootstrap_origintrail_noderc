@@ -8,8 +8,8 @@
         "https://matic-mumbai.chainstacklabs.com",
         "https://matic-testnet-archive-rpc.bwarelabs.com"
       ],
-      "publicKey": "0xd08eCEFb11C5e767fA196E2010B736155272537e",
-      "privateKey": "8db5ecd44052100b03c8d5fd0221390ea0145868a58971a70e456c90697135ee"
+      "publicKey": "...",
+      "privateKey": "..."
     }
   ],
   "graphDatabase": {
