@@ -66,6 +66,11 @@ exports.DID_PREFIX = 'did:dkg';
 exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
 
 /**
+ * @constant {number} REMOVE_SESSION_COMMAND_DELAY - Remove session comand delay
+ */
+exports.REMOVE_SESSION_COMMAND_DELAY = 2 * 60 * 1000;
+
+/**
  * @constant {number} HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS -
  * Export command cleanup interval time 24h
  */
@@ -234,13 +239,9 @@ exports.ERROR_TYPE = {
     INSERT_ASSERTION_ERROR: 'InsertAssertionError',
     PREPARE_ASSERTION_ERROR: 'PrepareAssertionError',
     SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
+    FIND_NODES_ERROR: 'FindNodesError',
     SEND_ASSERTION_ERROR: 'SendAssertionError',
     SEND_ASSERTION_ERROR_BUSY: 'SendAssertionErrorBusy',
-    STORE_INIT_ERROR: 'StoreInitError',
-    STORE_REQUEST_ERROR: 'StoreRequestError',
-    HANDLE_STORE_INIT_ERROR: 'HandleStoreInitError',
-    HANDLE_STORE_REQUEST_ERROR: 'HandleStoreRequestError',
-    FIND_NODES_ERROR: 'FindNodesError',
     SENDING_TELEMETRY_DATA_ERROR: 'SendingDataTelemetryError',
     CHECKING_UPDATE_ERROR: 'CheckingUpdateError',
     API_ERROR_400: 'ApiError400',
@@ -253,7 +254,11 @@ exports.ERROR_TYPE = {
     PROOFS_ROUTE_ERROR: 'ProofsRouteError',
     RESULTS_ROUTE_ERROR: 'ResultsRouteError',
     NODE_INFO_ROUTE_ERROR: 'NodeInfoRouteError',
+    STORE_INIT_ERROR: 'StoreInitError',
+    STORE_REQUEST_ERROR: 'StoreRequestError',
     HANDLE_STORE_ERROR: 'HandleStoreError',
+    HANDLE_STORE_INIT_ERROR: 'HandleStoreInitError',
+    HANDLE_STORE_REQUEST_ERROR: 'HandleStoreRequestError',
     EXTRACT_METADATA_ERROR: 'ExtractMetadataError',
     TRIPLE_STORE_UNAVAILABLE_ERROR: 'TripleStoreUnavailableError',
     TRIPLE_STORE_INSERT_ERROR: 'TripleStoreInsertError',

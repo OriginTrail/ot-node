@@ -6,6 +6,7 @@ class HandleStoreInitCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
+        this.commandExecutor = ctx.commandExecutor;
         this.networkModuleManager = ctx.networkModuleManager;
     }
 
@@ -15,6 +16,13 @@ class HandleStoreInitCommand extends Command {
      */
     async execute(command) {
         const { message, remotePeerId, operationId} = command.data;
+
+        await this.commandExecutor.add({
+                name: 'removeSessionCommand',
+                sequence: [],
+                data: { sessionId: message.header.sessionId },
+                transactional: false,
+            }, constants.REMOVE_SESSION_COMMAND_DELAY)
 
         const response = {
             header: {

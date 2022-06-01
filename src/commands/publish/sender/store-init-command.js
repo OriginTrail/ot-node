@@ -63,7 +63,7 @@ class StoreInitCommand extends Command {
         this.logger.error({
             msg,
             Operation_name: 'Error',
-            Event_name: constants.ERROR_TYPE.STORE_INIT_COMMAND,
+            Event_name: constants.ERROR_TYPE.STORE_INIT_ERROR,
             Event_value1: error.message,
             Id_operation: handlerId,
         });

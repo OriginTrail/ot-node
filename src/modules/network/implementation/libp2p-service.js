@@ -179,7 +179,11 @@ class Libp2pService {
         this.node.handle(protocol, async (handlerProps) => {
             const { stream } = handlerProps;
             const remotePeerId = handlerProps.connection.remotePeer._idB58String;
-            const message = await this._readMessageFromStream(stream, this.isRequestValid);
+            const message = await this._readMessageFromStream(
+                stream,
+                this.isRequestValid,
+                remotePeerId,
+            );
 
             if (message) {
                 this.logger.info(
@@ -205,7 +209,11 @@ class Libp2pService {
 
         await this._sendMessageToStream(stream, message);
         this.updateSenderSession(message.header);
-        const response = await this._readMessageFromStream(stream, this.isResponseValid);
+        const response = await this._readMessageFromStream(
+            stream,
+            this.isResponseValid,
+            remotePeerId._idB58String,
+        );
         this.logger.info(
             `Receiving response from ${remotePeerId._idB58String} : event=${protocol}, messageType=${response.header.messageType};`,
         );
@@ -285,7 +293,7 @@ class Libp2pService {
         );
     }
 
-    async readMessageSink (source, isMessageValid, remotePeerId) {
+    async readMessageSink(source, isMessageValid, remotePeerId) {
         let message = {};
         let stringifiedData = '';
         // we expect first buffer to be header
@@ -356,7 +364,8 @@ class Libp2pService {
     }
 
     async limitRequest(header, remotePeerId) {
-        if (sessions.receiver[header.sessionId]) return false;
+        if (sessions.sender[header.sessionId] || sessions.receiver[header.sessionId]) return false;
+        
         if (this.blackList[remotePeerId]) {
             const remainingMinutes = Math.floor(
                 constants.NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES -

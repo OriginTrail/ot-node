@@ -8,6 +8,7 @@ class StoreInitCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.networkModuleManager = ctx.networkModuleManager;
+        this.commandExecutor = ctx.commandExecutor;
     }
 
     /**
@@ -24,6 +25,17 @@ class StoreInitCommand extends Command {
             },
             data: {},
         }));
+
+        const removeSessionPromises = messages.map((message) =>
+            this.commandExecutor.add({
+                name: 'removeSessionCommand',
+                sequence: [],
+                data: { sessionId: message.header.sessionId },
+                transactional: false,
+            }, constants.REMOVE_SESSION_COMMAND_DELAY),
+        );
+
+        await Promise.all(removeSessionPromises);
 
         const sendMessagePromises = nodes.map((node, index) =>
             this.networkModuleManager
@@ -63,14 +75,14 @@ class StoreInitCommand extends Command {
         this.logger.error({
             msg,
             Operation_name: 'Error',
-            Event_name: constants.ERROR_TYPE.STORE_INIT_COMMAND,
+            Event_name: constants.ERROR_TYPE.STORE_INIT_ERROR,
             Event_value1: error.message,
             Id_operation: handlerId,
         });
     }
 
     /**
-     * Builds default sendAssertionCommand
+     * Builds default storeInitCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

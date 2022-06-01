@@ -100,7 +100,7 @@ class SendAssertionCommand extends Command {
         this.logger.error({
             msg,
             Operation_name: 'Error',
-            Event_name: constants.ERROR_TYPE.STORE_REQUEST,
+            Event_name: constants.ERROR_TYPE.STORE_REQUEST_ERROR,
             Event_value1: error.message,
             Id_operation: handlerId,
         });

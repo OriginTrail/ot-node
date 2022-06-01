@@ -69,7 +69,7 @@ class FindNodesCommand extends Command {
         this.logger.error({
             msg,
             Operation_name: 'Error',
-            Event_name: constants.ERROR_TYPE.SEND_ASSERTION_ERROR,
+            Event_name: constants.ERROR_TYPE.FIND_NODES_ERROR,
             Event_value1: error.message,
             Id_operation: handlerId,
         });
