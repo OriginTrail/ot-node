@@ -272,7 +272,7 @@ class Libp2pService {
         );
     }
 
-    async _readMessageFromStream(stream, isMessageValid) {
+    async _readMessageFromStream(stream, isMessageValid, remotePeerId) {
         return pipe(
             // Read from the stream (the source)
             stream.source,
@@ -281,26 +281,31 @@ class Libp2pService {
             // Turn buffers into strings
             (source) => map(source, (buf) => buf.toString()),
             // Sink function
-            async function (source) {
-                let message = {};
-                let stringifiedData = '';
-                // we expect first buffer to be header
-                const stringifiedHeader = (await source.next()).value;
-                message.header = JSON.parse(stringifiedHeader);
-
-                if (!isMessageValid(message.header)) {
-                    stream.close();
-                    return;
-                }
-
-                for await (const chunk of source) {
-                    stringifiedData += chunk;
-                }
-                message.data = JSON.parse(stringifiedData);
-
-                return message;
-            },
+            (source) => this.readMessageSink(source, isMessageValid, remotePeerId),
         );
+    }
+
+    async readMessageSink (source, isMessageValid, remotePeerId) {
+        let message = {};
+        let stringifiedData = '';
+        // we expect first buffer to be header
+        const stringifiedHeader = (await source.next()).value;
+        message.header = JSON.parse(stringifiedHeader);
+
+        if (
+            !isMessageValid(message.header) ||
+            (await this.limitRequest(message.header, remotePeerId))
+        ) {
+            stream.close();
+            return;
+        }
+
+        for await (const chunk of source) {
+            stringifiedData += chunk;
+        }
+        message.data = JSON.parse(stringifiedData);
+
+        return message;
     }
 
     isRequestValid(header) {
@@ -336,10 +341,10 @@ class Libp2pService {
     }
 
     removeSession(sessionId) {
-        if(sessions.sender[sessionId]) {
-            delete sessions.sender[sessionId]
-        } else if(sessions.receiver[sessionId]){
-            delete sessions.receiver[sessionId]
+        if (sessions.sender[sessionId]) {
+            delete sessions.sender[sessionId];
+        } else if (sessions.receiver[sessionId]) {
+            delete sessions.receiver[sessionId];
         }
     }
 
@@ -350,7 +355,8 @@ class Libp2pService {
         return false;
     }
 
-    async limitRequest(remotePeerId) {
+    async limitRequest(header, remotePeerId) {
+        if (sessions.receiver[header.sessionId]) return false;
         if (this.blackList[remotePeerId]) {
             const remainingMinutes = Math.floor(
                 constants.NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES -
