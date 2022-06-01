@@ -239,9 +239,7 @@ class Libp2pService {
         if (header.messageType.endsWith('_ACK')) {
             // protocol operation completed
             if (session.expectedMessageTypes.length <= 1) {
-                console.log("deleting")
                 delete sessions.receiver[header.sessionId];
-                console.log(JSON.stringify(sessions, null, 2))
             } else {
                 // operation not completed, update expected message types
                 session.expectedMessageTypes = session.expectedMessageTypes.slice(1);
