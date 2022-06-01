@@ -1,6 +1,6 @@
-const Command = require('../command');
-const Models = require('../../../models');
-const { ERROR_TYPE, PUBLISH_METHOD } = require('../../constants');
+const Command = require('../../command');
+const Models = require('../../../../models');
+const { ERROR_TYPE, PUBLISH_METHOD } = require('../../../constants');
 
 class PrepareAssertionForPublish extends Command {
     constructor(ctx) {

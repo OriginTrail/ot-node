@@ -1,5 +1,5 @@
-const Command = require('../command');
-const constants = require('../../constants/constants');
+const Command = require('../../command');
+const constants = require('../../../constants/constants');
 
 class InsertAssertionCommand extends Command {
     constructor(ctx) {

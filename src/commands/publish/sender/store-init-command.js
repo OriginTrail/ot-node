@@ -1,6 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
-const Command = require('../command');
-const constants = require('../../constants');
+const Command = require('../../command');
+const constants = require('../../../constants/constants');
 
 class StoreInitCommand extends Command {
     constructor(ctx) {

@@ -1,5 +1,5 @@
-const Command = require('../command');
-const constants = require('../../constants/constants');
+const Command = require('../../command');
+const constants = require('../../../constants');
 
 class FindNodesCommand extends Command {
     constructor(ctx) {
@@ -45,7 +45,7 @@ class FindNodesCommand extends Command {
         let nodes = new Set();
         for (const foundNodes of results) {
             for (const node of foundNodes) {
-                nodes.push(node);
+                nodes.add(node);
             }
         }
         nodes = [...nodes];

@@ -1,6 +1,6 @@
-const Command = require('../command');
-const Models = require('../../../models/index');
-const constants = require('../../constants');
+const Command = require('../../command');
+const Models = require('../../../../models/index');
+const constants = require('../../../constants');
 
 class SendAssertionCommand extends Command {
     constructor(ctx) {

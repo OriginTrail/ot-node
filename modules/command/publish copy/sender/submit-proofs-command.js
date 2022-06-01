@@ -1,6 +1,6 @@
 const sortedStringify = require('json-stable-stringify');
-const Command = require('../command');
-const constants = require('../../constants');
+const Command = require('../../command');
+const constants = require('../../../constants');
 
 class SubmitProofsCommand extends Command {
     constructor(ctx) {

@@ -1,5 +1,5 @@
-const Command = require('../command');
-const {ERROR_TYPE, NETWORK_PROTOCOLS} = require('../../constants');
+const Command = require('../../command');
+const constants = require('../../../constants/constants');
 
 class FindNodesCommand extends Command {
     constructor(ctx) {
@@ -28,7 +28,7 @@ class FindNodesCommand extends Command {
             return this.networkModuleManager
                 .findNodes(
                     keyword,
-                    NETWORK_PROTOCOLS.STORE,
+                    constants.NETWORK_PROTOCOLS.STORE,
                     this.config.replicationFactor,
                 )
                 .then((foundNodes) => {
@@ -45,7 +45,7 @@ class FindNodesCommand extends Command {
         let nodes = new Set();
         for (const foundNodes of results) {
             for (const node of foundNodes) {
-                nodes.add(node);
+                nodes.push(node);
             }
         }
         nodes = [...nodes];
@@ -69,7 +69,7 @@ class FindNodesCommand extends Command {
         this.logger.error({
             msg,
             Operation_name: 'Error',
-            Event_name: ERROR_TYPE.FIND_NODES_ERROR,
+            Event_name: constants.ERROR_TYPE.SEND_ASSERTION_ERROR,
             Event_value1: error.message,
             Id_operation: handlerId,
         });
