@@ -158,7 +158,7 @@ class Libp2pService {
     }
 
     getPeerId() {
-        return this.node.peerId._idB58String;
+        return this.node.peerId;
     }
 
     store(peer, key, object) {

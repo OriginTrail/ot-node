@@ -36,6 +36,7 @@ class OTNode {
 
         this.initializeDependencyContainer();
         await this.initializeModules();
+        await this.saveNetworkModulePeerIdAndPrivKey();
         await this.initializeDataModule();
         await this.initializeOperationalDbModule();
         await this.initializeValidationModule();
@@ -148,30 +149,17 @@ class OTNode {
         }
     }
 
-    async initializeNetworkModule() {
-        try {
-            const networkService = this.container.resolve('networkService');
-            const result = await networkService.initialize();
+    async saveNetworkModulePeerIdAndPrivKey() {
+        const networkModuleManager = this.container.resolve('networkModuleManager');
+        const peerId = networkModuleManager.getPeerId();
+        const privateKey = networkModuleManager.getPrivateKey();
 
-            this.config.network.peerId = result.peerId;
-            if (
-                !this.config.network.privateKey &&
-                this.config.network.privateKey !== result.privateKey
-            ) {
-                this.config.network.privateKey = result.privateKey;
-                if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
-                    this.savePrivateKeyInUserConfigurationFile(result.privateKey);
-                }
+        this.config.network.peerId = peerId;
+        if (!this.config.network.privateKey && this.config.network.privateKey !== privateKey) {
+            this.config.network.privateKey = privateKey;
+            if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
+                this.savePrivateKeyInUserConfigurationFile(privateKey);
             }
-
-            const rankingService = this.container.resolve('rankingService');
-            await rankingService.initialize();
-            this.logger.info(`Network module: ${networkService.getName()} implementation`);
-        } catch (e) {
-            this.logger.error({
-                msg: `Network module initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.NETWORK_INITIALIZATION_ERROR,
-            });
         }
     }
 

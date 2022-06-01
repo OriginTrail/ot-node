@@ -317,7 +317,7 @@ class DataService {
                             timestamp: assertion.jsonld.metadata.timestamp,
                             issuers: [],
                             assertions: [],
-                            nodes: [this.networkModuleManager.getPeerId()],
+                            nodes: [this.networkModuleManager.getPeerId()._idB58String],
                         };
                         result.push(object);
                     }
@@ -339,7 +339,7 @@ class DataService {
                     if (!object) {
                         object = {
                             assertionId,
-                            node: this.networkModuleManager.getPeerId(),
+                            node: this.networkModuleManager.getPeerId()._idB58String,
                             nquads,
                         };
                         result.push(object);
@@ -376,7 +376,7 @@ class DataService {
                             id: assertion.jsonld.id,
                             metadata: assertion.jsonld.metadata,
                             signature: assertion.jsonld.signature,
-                            nodes: [this.networkModuleManager.getPeerId()],
+                            nodes: [this.networkModuleManager.getPeerId()._idB58String],
                         };
                         result.push(object);
                     }
@@ -385,7 +385,7 @@ class DataService {
                     if (!object) {
                         object = {
                             assertionId,
-                            node: this.networkModuleManager.getPeerId(),
+                            node: this.networkModuleManager.getPeerId()._idB58String,
                             nquads,
                         };
                         result.push(object);
