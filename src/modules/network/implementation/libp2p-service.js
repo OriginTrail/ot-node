@@ -35,15 +35,6 @@ const initializationObject = {
     },
 };
 
-const messages = {
-    PROTOCOL_INIT: ['INIT_ACK', 'INIT_NACK'],
-    PROTOCOL_REQUEST: ['REQUEST_ACK', 'REQUEST_NACK'],
-};
-const messageTypes = {
-    REQUESTS: ['PROTOCOL_INIT', 'PROTOCOL_REQUEST'],
-    RESPONSES: ['INIT_ACK', 'INIT_NACK', 'REQUEST_ACK', 'REQUEST_NACK'],
-};
-
 let sessions = {
     sender: {},
     receiver: {},
@@ -234,14 +225,14 @@ class Libp2pService {
 
     updateSenderSession(header) {
         sessions.sender[header.sessionId] = {
-            expectedResponses: messages[header.messageType],
+            expectedResponses: constants.NETWORK_MESSAGES[header.messageType],
         };
     }
 
     updateReceiverSession(header) {
         let session = sessions.receiver[header.sessionId];
         if (!session.expectedMessageTypes) {
-            session.expectedMessageTypes = messageTypes.REQUESTS;
+            session.expectedMessageTypes = constants.NETWORK_MESSAGE_TYPES.REQUESTS;
         }
         // subroutine completed
         if (header.messageType.endsWith('_ACK')) {
@@ -321,14 +312,14 @@ class Libp2pService {
         if (
             !header.sessionId ||
             !header.messageType ||
-            !messageTypes.REQUESTS.includes(header.messageType)
+            !constants.NETWORK_MESSAGE_TYPES.REQUESTS.includes(header.messageType)
         )
             return false;
 
         // get existing expected messageType or PROTOCOL_INIT if session doesn't exist yet
         const expectedMessageType = sessions.receiver[header.sessionId]
             ? sessions.receiver[header.sessionId].expectedMessageTypes[0]
-            : Object.keys(messages)[0];
+            : Object.keys(constants.NETWORK_MESSAGES)[0];
 
         return expectedMessageType === header.messageType;
     }
@@ -339,7 +330,7 @@ class Libp2pService {
             !header.sessionId ||
             !header.messageType ||
             !sessions.sender[header.sessionId] ||
-            !messageTypes.RESPONSES.includes(header.messageType)
+            !constants.NETWORK_MESSAGE_TYPES.RESPONSES.includes(header.messageType)
         )
             return false;
 

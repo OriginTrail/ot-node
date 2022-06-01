@@ -172,6 +172,24 @@ exports.TRIPLE_STORE_IMPLEMENTATION = {
 };
 
 /**
+ * @constant {number} NETWORK_MESSAGES -
+ * Type of network messages
+ */
+exports.NETWORK_MESSAGES = {
+    PROTOCOL_INIT: ['INIT_ACK', 'INIT_NACK'],
+    PROTOCOL_REQUEST: ['REQUEST_ACK', 'REQUEST_NACK'],
+};
+
+/**
+ * @constant {number} NETWORK_MESSAGE_TYPES -
+ * Network message types
+ */
+exports.NETWORK_MESSAGE_TYPES = {
+    REQUESTS: ['PROTOCOL_INIT', 'PROTOCOL_REQUEST'],
+    RESPONSES: ['INIT_ACK', 'INIT_NACK', 'REQUEST_ACK', 'REQUEST_NACK'],
+};
+
+/**
  * @constant {number} NETWORK_HANDLER_TIMEOUT -
  * Timeout for all handler methods for network requests
  */
