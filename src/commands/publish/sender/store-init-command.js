@@ -1,5 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
+const sleep = require('sleep-async')().Promise;
 const Command = require('../../command');
+const Models = require('../../../../models/index');
 const constants = require('../../../constants/constants');
 
 class StoreInitCommand extends Command {
@@ -8,6 +10,8 @@ class StoreInitCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.networkModuleManager = ctx.networkModuleManager;
+        this.fileService = ctx.fileService;
+        this.commandExecutor = ctx.commandExecutor;
     }
 
     /**
@@ -15,36 +19,116 @@ class StoreInitCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { nodes, handlerId } = command.data;
+        const { nodes, handlerId, documentPath } = command.data;
+
+        const { assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
         const messages = nodes.map(() => ({
             header: {
                 sessionId: uuidv4(),
-                messageType: 'PROTOCOL_INIT',
+                messageType: constants.NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT,
             },
-            data: {},
+            data: {
+                assertionId: assertion.id,
+            },
         }));
 
-        const sendMessagePromises = nodes.map((node, index) =>
-            this.networkModuleManager
-                .sendMessage(constants.NETWORK_PROTOCOLS.STORE, node, messages[index])
-                .catch((e) => {
-                    this.handleError(
-                        handlerId,
-                        e,
-                        `Error while sending store init message to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`,
-                    );
-                }),
+        const removeSessionPromises = messages.map((message) =>
+            this.commandExecutor.add(
+                {
+                    name: 'removeSessionCommand',
+                    sequence: [],
+                    data: { sessionId: message.header.sessionId },
+                    transactional: false,
+                },
+                constants.REMOVE_SESSION_COMMAND_DELAY,
+            ),
         );
 
-        const responses = await Promise.all(sendMessagePromises);
+        await Promise.all(removeSessionPromises);
+
+        let failedResponses = 0;
+        let busyResponses = 0;
+        const availableNodes = [];
+        const sessionIds = [];
+        const sendMessagePromises = nodes.map(async (node, index) => {
+            try {
+                let tries = 0;
+                let response;
+                do {
+                    if (tries !== 0)
+                        await sleep.sleep(constants.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS);
+
+                    response = await this.networkModuleManager.sendMessage(
+                        constants.NETWORK_PROTOCOLS.STORE,
+                        node,
+                        messages[index],
+                    );
+                    tries += 1;
+                } while (
+                    response &&
+                    response.header.messageType ===
+                        constants.NETWORK_MESSAGE_TYPES.RESPONSES.BUSY &&
+                    tries < constants.STORE_MAX_TRIES
+                );
+                if (
+                    !response ||
+                    response.header.messageType === constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK
+                )
+                    failedResponses += 1;
+                else if (
+                    response.header.messageType === constants.NETWORK_MESSAGE_TYPES.RESPONSES.BUSY
+                )
+                    busyResponses += 1;
+                else {
+                    availableNodes.push(node);
+                    sessionIds.push(response.header.sessionId);
+                }
+            } catch (e) {
+                failedResponses += 1;
+                this.handleError(
+                    handlerId,
+                    e,
+                    `Error while sending store init message to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`,
+                );
+            }
+        });
+
+        await Promise.allSettled(sendMessagePromises);
+
+        const maxFailedResponses = Math.round(
+            (1 - constants.STORE_MIN_SUCCESS_RATE) * nodes.length,
+        );
+        const status =
+            failedResponses + busyResponses <= maxFailedResponses ? 'COMPLETED' : 'FAILED';
+
+        if (status === 'FAILED') {
+            await Models.handler_ids.update(
+                {
+                    status,
+                },
+                {
+                    where: {
+                        handler_id: handlerId,
+                    },
+                },
+            );
+
+            if (command.data.isTelemetry) {
+                await Models.assertions.create({
+                    hash: assertion.id,
+                    topics: JSON.stringify(assertion.metadata.keywords[0]),
+                    created_at: assertion.metadata.timestamp,
+                    triple_store: this.config.graphDatabase.implementation,
+                    status,
+                });
+            }
+
+            return Command.empty();
+        }
 
         const commandData = command.data;
-
-        const sessionIds = [];
-        for (const response of responses) {
-            sessionIds.push(response.header.sessionId);
-        }
+        commandData.nodes = availableNodes;
         commandData.sessionIds = sessionIds;
 
         return this.continueSequence(commandData, command.sequence);
@@ -70,7 +154,7 @@ class StoreInitCommand extends Command {
     }
 
     /**
-     * Builds default sendAssertionCommand
+     * Builds default storeInitCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

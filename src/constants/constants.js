@@ -136,7 +136,7 @@ exports.RESOLVE_MAX_TIME_MILLIS = 15 * 1000;
  * @constant {number} STORE_MAX_RETRIES
  * - Maximum number of retries
  */
-exports.STORE_MAX_RETRIES = 3;
+exports.STORE_MAX_TRIES = 3;
 
 /**
  * @constant {number} STORE_BUSY_REPEAT_INTERVAL_IN_MILLS
@@ -172,52 +172,32 @@ exports.TRIPLE_STORE_IMPLEMENTATION = {
 };
 
 /**
- * @constant {number} NETWORK_MESSAGES -
- * Type of network messages
- */
-exports.NETWORK_MESSAGES = {
-    PROTOCOL_INIT: ['INIT_ACK', 'INIT_NACK'],
-    PROTOCOL_REQUEST: ['REQUEST_ACK', 'REQUEST_NACK'],
-};
-
-/**
  * @constant {number} NETWORK_MESSAGE_TYPES -
  * Network message types
  */
 exports.NETWORK_MESSAGE_TYPES = {
-    REQUESTS: ['PROTOCOL_INIT', 'PROTOCOL_REQUEST'],
-    RESPONSES: ['INIT_ACK', 'INIT_NACK', 'REQUEST_ACK', 'REQUEST_NACK'],
+    REQUESTS: {
+        PROTOCOL_INIT: 'PROTOCOL_INIT',
+        PROTOCOL_REQUEST: 'PROTOCOL_REQUEST',
+    },
+    RESPONSES: {
+        ACK: 'ACK',
+        NACK: 'NACK',
+        BUSY: 'BUSY',
+    },
 };
+
+/**
+ * @constant {number} MAX_OPEN_SESSIONS -
+ * Max number of open sessions
+ */
+exports.MAX_OPEN_SESSIONS = 10;
 
 /**
  * @constant {number} NETWORK_HANDLER_TIMEOUT -
  * Timeout for all handler methods for network requests
  */
 exports.NETWORK_HANDLER_TIMEOUT = 120e3;
-
-/**
- * @constant {object} NETWORK_RESPONSES -
- *  Types of known network responses
- */
-exports.NETWORK_RESPONSES = {
-    TRUE: true,
-    FALSE: false,
-    ACK: 'ack',
-    BUSY: 'busy',
-    BLOCKED: 'blocked',
-    ERROR: 'error',
-};
-
-/**
- * @constant {object} STRINGIFIED_NETWORK_RESPONSES -
- *  Stringified types of known network responses
- */
-exports.STRINGIFIED_NETWORK_RESPONSES = {
-    ack: '"ack"',
-    busy: '"busy"',
-    blocked: '"blocked"',
-    error: '"error"',
-};
 
 /**
  * @constant {object} NETWORK_PROTOCOLS -

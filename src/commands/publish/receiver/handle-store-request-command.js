@@ -36,7 +36,9 @@ class HandleStoreRequestCommand extends Command {
         const response = {
             header: {
                 sessionId: message.header.sessionId,
-                messageType: status ? 'REQUEST_ACK' : 'REQUEST_NACK',
+                messageType: status
+                    ? constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK
+                    : constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
             },
             data: {},
         };

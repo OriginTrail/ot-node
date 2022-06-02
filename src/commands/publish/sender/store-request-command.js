@@ -19,16 +19,12 @@ class SendAssertionCommand extends Command {
     async execute(command) {
         const { documentPath, handlerId, nodes, sessionIds } = command.data;
 
-        let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
-
-        if (assertion.metadata.visibility === 'private') {
-            nquads = nquads.filter((x) => x.startsWith(`<${constants.DID_PREFIX}:`));
-        }
+        const { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
         const messages = sessionIds.map((sessionId) => ({
             header: {
                 sessionId,
-                messageType: 'PROTOCOL_REQUEST',
+                messageType: constants.NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST,
             },
             data: { id: assertion.id, nquads },
         }));
@@ -49,7 +45,7 @@ class SendAssertionCommand extends Command {
 
         let failedResponses = 0;
         for (const response of responses) {
-            if (response.header.messageType !== 'REQUEST_ACK') {
+            if (response.header.messageType !== constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK) {
                 failedResponses += 1;
             }
         }
@@ -58,7 +54,7 @@ class SendAssertionCommand extends Command {
             (1 - constants.STORE_MIN_SUCCESS_RATE) * nodes.length,
         );
         const status = failedResponses <= maxFailedResponses ? 'COMPLETED' : 'FAILED';
-        
+
         await Models.handler_ids.update(
             {
                 status,
@@ -80,7 +76,7 @@ class SendAssertionCommand extends Command {
             });
         }
 
-        for(const sessionId of sessionIds) {
+        for (const sessionId of sessionIds) {
             this.networkModuleManager.removeSession(sessionId);
         }
 
@@ -107,7 +103,7 @@ class SendAssertionCommand extends Command {
     }
 
     /**
-     * Builds default sendAssertionCommand
+     * Builds default storeRequestCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
