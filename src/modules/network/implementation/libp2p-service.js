@@ -33,11 +33,6 @@ const initializationObject = {
     },
 };
 
-let sessions = {
-    sender: {},
-    receiver: {},
-};
-
 class Libp2pService {
     async initialize(config, logger) {
         this.config = config;
@@ -73,6 +68,10 @@ class Libp2pService {
 
         initializationObject.peerId = this.config.peerId;
         this._initializeRateLimiters();
+        this.sessions = {
+            sender: {},
+            receiver: {},
+        };
         this.node = await Libp2p.create(initializationObject);
         this._initializeNodeListeners();
         await this.node.start();
@@ -199,9 +198,9 @@ class Libp2pService {
     }
 
     updateSessionStream(message, stream) {
-        const session = sessions.receiver[message.header.sessionId];
+        const session = this.sessions.receiver[message.header.sessionId];
 
-        sessions.receiver[message.header.sessionId] = session ? { ...session, stream } : { stream };
+        this.sessions.receiver[message.header.sessionId] = session ? { ...session, stream } : { stream };
     }
 
     async sendMessage(protocol, remotePeerId, message, options) {
@@ -213,7 +212,7 @@ class Libp2pService {
         await this._sendMessageToStream(stream, message);
         const { message: response } = await this._readMessageFromStream(
             stream,
-            this.isResponseValid,
+            this.isResponseValid.bind(this),
             remotePeerId._idB58String,
         );
         this.logger.debug(
@@ -227,7 +226,7 @@ class Libp2pService {
         protocol,
         remotePeerId,
         response,
-        stream = sessions.receiver[response.header.sessionId].stream,
+        stream = this.sessions.receiver[response.header.sessionId].stream,
     ) {
         this.logger.debug(
             `Sending response from ${this.config.id} to ${remotePeerId}: event=${protocol}, messageType=${response.header.messageType};`,
@@ -241,13 +240,13 @@ class Libp2pService {
         if (header.messageType === constants.NETWORK_MESSAGE_TYPES.RESPONSES.BUSY) return;
         // if NACK we don't expect other requests, so delete session
         if (header.messageType === constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK) {
-            if (header.sessionId) delete sessions.receiver[header.sessionId];
+            if (header.sessionId) delete this.sessions.receiver[header.sessionId];
             return;
         }
 
         // if session is new, initialise array of expected message types
-        if (!sessions.receiver[header.sessionId].expectedMessageTypes) {
-            sessions.receiver[header.sessionId].expectedMessageTypes = Object.keys(
+        if (!this.sessions.receiver[header.sessionId].expectedMessageTypes) {
+            this.sessions.receiver[header.sessionId].expectedMessageTypes = Object.keys(
                 constants.NETWORK_MESSAGE_TYPES.REQUESTS,
             );
         }
@@ -255,12 +254,12 @@ class Libp2pService {
         // subroutine completed
         if (header.messageType === constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK) {
             // protocol operation completed, delete session
-            if (sessions.receiver[header.sessionId].expectedMessageTypes.length <= 1) {
-                delete sessions.receiver[header.sessionId];
+            if (this.sessions.receiver[header.sessionId].expectedMessageTypes.length <= 1) {
+                delete this.sessions.receiver[header.sessionId];
             } else {
                 // operation not completed, update array of expected message types
-                sessions.receiver[header.sessionId].expectedMessageTypes =
-                    sessions.receiver[header.sessionId].expectedMessageTypes.slice(1);
+                this.sessions.receiver[header.sessionId].expectedMessageTypes =
+                    this.sessions.receiver[header.sessionId].expectedMessageTypes.slice(1);
             }
         }
     }
@@ -343,8 +342,8 @@ class Libp2pService {
             return false;
 
         // get existing expected messageType or PROTOCOL_INIT if session doesn't exist yet
-        const expectedMessageType = sessions.receiver[header.sessionId]
-            ? sessions.receiver[header.sessionId].expectedMessageTypes[0]
+        const expectedMessageType = this.sessions.receiver[header.sessionId]
+            ? this.sessions.receiver[header.sessionId].expectedMessageTypes[0]
             : Object.keys(constants.NETWORK_MESSAGE_TYPES.REQUESTS)[0];
 
         if (expectedMessageType !== header.messageType) return false;
@@ -356,16 +355,16 @@ class Libp2pService {
         return (
             header.sessionId &&
             header.messageType &&
-            sessions.sender[header.sessionId] &&
+            this.sessions.sender[header.sessionId] &&
             Object.keys(constants.NETWORK_MESSAGE_TYPES.RESPONSES).includes(header.messageType)
         );
     }
 
     removeSession(sessionId) {
-        if (sessions.sender[sessionId]) {
-            delete sessions.sender[sessionId];
-        } else if (sessions.receiver[sessionId]) {
-            delete sessions.receiver[sessionId];
+        if (this.sessions.sender[sessionId]) {
+            delete this.sessions.sender[sessionId];
+        } else if (this.sessions.receiver[sessionId]) {
+            delete this.sessions.receiver[sessionId];
         }
     }
 
@@ -377,7 +376,7 @@ class Libp2pService {
     }
 
     async limitRequest(header, remotePeerId) {
-        if (header.sessionId && sessions.receiver[header.sessionId]) return false;
+        if (header.sessionId && this.sessions.receiver[header.sessionId]) return false;
 
         if (this.blackList[remotePeerId]) {
             const remainingMinutes = Math.floor(
@@ -415,7 +414,7 @@ class Libp2pService {
     }
 
     isBusy() {
-        return Object.keys(sessions.receiver).length > constants.MAX_OPEN_SESSIONS;
+        return Object.keys(this.sessions.receiver).length > constants.MAX_OPEN_SESSIONS;
     }
 
     getPrivateKey() {
