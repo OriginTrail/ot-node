@@ -6,7 +6,7 @@ class PublishService {
     constructor(ctx) {
         this.networkModuleManager = ctx.networkModuleManager;
         this.validationService = ctx.validationService;
-        this.blockchainService = ctx.blockchainService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.dataService = ctx.dataService;
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;

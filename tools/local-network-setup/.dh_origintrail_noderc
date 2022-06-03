@@ -1,18 +1,4 @@
 {
-    "blockchain": [
-        {
-            "blockchainTitle": "Polygon",
-            "networkId": "polygon::testnet",
-            "rpcEndpoints": [
-                "https://rpc-mumbai.maticvigil.com/",
-                "https://matic-mumbai.chainstacklabs.com",
-                "https://rpc-mumbai.matic.today",
-                "https://matic-testnet-archive-rpc.bwarelabs.com"
-            ],
-            "publicKey": "...",
-            "privateKey": "..."
-        }
-    ],
     "graphDatabase": {
         "username": "admin",
         "password": ""
@@ -30,6 +16,27 @@
                         "bootstrap": [
                             "/ip4/0.0.0.0/tcp/9000/p2p/QmWyf3dtqJnhuCpzEDTNmNFYc5tjxTrXhGcUUmGHdg2gtj"
                         ]
+                    }
+                }
+            }
+        },
+        "blockchain": {
+            "enabled": true,
+            "implementation": {
+                "web3-service": {
+                    "package": "./blockchain/implementation/web3-service",
+                    "config": {
+                        "blockchainTitle": "Polygon",
+                        "networkId": "polygon::mainnet",
+                        "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
+                        "rpcEndpoints": [
+                            "https://rpc-mumbai.maticvigil.com/",
+                            "https://matic-mumbai.chainstacklabs.com",
+                            "https://rpc-mumbai.matic.today",
+                            "https://matic-testnet-archive-rpc.bwarelabs.com"
+                        ],
+                        "publicKey": "...",
+                        "privateKey": "..."
                     }
                 }
             }

@@ -1,4 +1,4 @@
-const BN = require('bn');
+const BN = require('bn.js');
 const _ = require('underscore');
 
 class BytesUtilities {

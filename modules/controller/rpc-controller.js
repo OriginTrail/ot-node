@@ -20,7 +20,7 @@ class RpcController {
         this.queryService = ctx.queryService;
         this.networkModuleManager = ctx.networkModuleManager;
         this.validationService = ctx.validationService;
-        this.blockchainService = ctx.blockchainService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.dataService = ctx.dataService;
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
@@ -286,7 +286,7 @@ class RpcController {
 
                     for (let id of ids) {
                         let isAsset = false;
-                        const { assertionId } = await this.blockchainService.getAssetProofs(id);
+                        const { assertionId } = await this.blockchainModuleManager.getAssetProofs(id);
                         if (assertionId) {
                             isAsset = true;
                             id = assertionId;

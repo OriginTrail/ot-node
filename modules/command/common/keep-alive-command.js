@@ -1,7 +1,5 @@
 const { v1: uuidv1 } = require('uuid');
-const PeerId = require('peer-id');
 const axios = require('axios');
-const fs = require('fs');
 const Command = require('../command');
 const pjson = require('../../../package.json');
 const Models = require('../../../models/index');
@@ -38,7 +36,7 @@ class KeepAliveCommand extends Command {
             },
         };
         try {
-            signalingMessage.issuerWallet = this.config.blockchain[0].publicKey;
+            signalingMessage.issuerWallet = this.config.modules.blockchain.implementation['web3-service'].config.publicKey;
             signalingMessage.kademliaNodeId = this.config.network.peerId._idB58String;
             signalingMessage.nodeVersion = pjson.version;
             signalingMessage.telemetry.latestAssertions = (

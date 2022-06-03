@@ -6,7 +6,7 @@ class SubmitProofsCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
-        this.blockchainService = ctx.blockchainService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.dataService = ctx.dataService;
         this.fileService = ctx.fileService;
         this.workerPool = ctx.workerPool;
@@ -77,14 +77,14 @@ class SubmitProofsCommand extends Command {
         let result;
         switch (method) {
         case constants.PUBLISH_METHOD.PUBLISH:
-            result = await this.blockchainService.createAssertionRecord(
+            result = await this.blockchainModuleManager.createAssertionRecord(
                 assertion.id,
                 assertion.rootHash,
                 assertion.metadata.issuer,
             );
             break;
         case constants.PUBLISH_METHOD.PROVISION:
-            result = await this.blockchainService.registerAsset(
+            result = await this.blockchainModuleManager.registerAsset(
                 assertion.metadata.UALs[0],
                 assertion.metadata.type,
                 assertion.metadata.UALs[0],
@@ -94,7 +94,7 @@ class SubmitProofsCommand extends Command {
             );
             break;
         case constants.PUBLISH_METHOD.UPDATE:
-            result = await this.blockchainService.updateAsset(
+            result = await this.blockchainModuleManager.updateAsset(
                 assertion.metadata.UALs[0],
                 assertion.id,
                 assertion.rootHash,

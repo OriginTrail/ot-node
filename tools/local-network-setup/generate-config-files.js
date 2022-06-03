@@ -18,10 +18,14 @@ if (!process.env.PRIVATE_KEY || !process.env.PUBLIC_KEY) {
     process.exit(1);
 }
 
-template.blockchain[0].publicKey = process.env.PUBLIC_KEY;
-template.blockchain[0].privateKey = process.env.PRIVATE_KEY;
-bootstrapTemplate.blockchain[0].publicKey = process.env.PUBLIC_KEY;
-bootstrapTemplate.blockchain[0].privateKey = process.env.PRIVATE_KEY;
+template.modules.blockchain.implementation['web3-service'].config.publicKey =
+    process.env.PUBLIC_KEY;
+template.modules.blockchain.implementation['web3-service'].config.privateKey =
+    process.env.PRIVATE_KEY;
+bootstrapTemplate.modules.blockchain.implementation['web3-service'].config.publicKey =
+    process.env.PUBLIC_KEY;
+bootstrapTemplate.modules.blockchain.implementation['web3-service'].config.privateKey =
+    process.env.PRIVATE_KEY;
 
 fs.writeFileSync(bootstrapTemplatePath, JSON.stringify(bootstrapTemplate, null, 2));
 

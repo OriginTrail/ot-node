@@ -15,7 +15,7 @@ class DataService {
         this.networkModuleManager = ctx.networkModuleManager;
         this.nodeService = ctx.nodeService;
         this.workerPool = ctx.workerPool;
-        this.blockchainService = ctx.blockchainService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreQueue = ctx.tripleStoreQueue.promise(
             this,
             this.handleTripleStoreRequest,
@@ -230,7 +230,7 @@ class DataService {
                         const {
                             issuer,
                             assertionId,
-                        } = await this.blockchainService.getAssetProofs(assertion.metadata.UALs[0]);
+                        } = await this.blockchainModuleManager.getAssetProofs(assertion.metadata.UALs[0]);
                         if (assertionId !== assertion.id) {
                             this.logger.error({
                                 msg: `Assertion ${assertion.id} doesn't match with calculated ${assertionId}`,
@@ -251,7 +251,7 @@ class DataService {
                         const calculateRootHash = this.validationService.calculateRootHash(
                             [...new Set(rdf)],
                         );
-                        const { rootHash, issuer } = await this.blockchainService
+                        const { rootHash, issuer } = await this.blockchainModuleManager
                             .getAssertionProofs(assertion.id);
                         if (rootHash !== `0x${calculateRootHash}`) {
                             this.logger.error({
@@ -292,7 +292,7 @@ class DataService {
 
                 const {
                     assertionId: assertionIdBlockchain,
-                } = await this.blockchainService.getAssetProofs(assetId);
+                } = await this.blockchainModuleManager.getAssetProofs(assetId);
 
                 if (assertionIdBlockchain !== assertionId) {
                     continue;

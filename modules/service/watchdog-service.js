@@ -4,7 +4,7 @@ class WatchdogService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.blockchainService = ctx.blockchainService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.dataService = ctx.dataService;
         this.networkModuleManager = ctx.networkModuleManager;
         this.services = ['blockchain', 'network', 'data'];

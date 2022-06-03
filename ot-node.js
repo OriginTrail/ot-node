@@ -40,7 +40,6 @@ class OTNode {
         await this.initializeDataModule();
         await this.initializeOperationalDbModule();
         await this.initializeValidationModule();
-        await this.initializeBlockchainModule();
         await this.initializeCommandExecutor();
         await this.initializeTelemetryHubModule();
         await this.initializeRpcModule();
@@ -67,12 +66,16 @@ class OTNode {
             // set default user configuration filename
             this.config.configFilename = '.origintrail_noderc';
         }
+        const blockchainModuleConfig = this.config.modules.blockchain.implementation['web3-service'].config;
         if (
-            !this.config.blockchain[0].hubContractAddress &&
-            this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId
+            !blockchainModuleConfig.hubContractAddress &&
+            blockchainModuleConfig.networkId ===
+                defaultConfig.modules.blockchain.implementation['web3-service'].config.networkId
         ) {
-            this.config.blockchain[0].hubContractAddress =
-                configjson[process.env.NODE_ENV].blockchain[0].hubContractAddress;
+            blockchainModuleConfig.hubContractAddress =
+                configjson[process.env.NODE_ENV].modules.blockchain.implementation[
+                    'web3-service'
+                ].config.hubContractAddress;
         }
 
         const fileService = new FileService({ config: this.config });
@@ -173,20 +176,6 @@ class OTNode {
             this.logger.error({
                 msg: `Validation module initialization failed. Error message: ${e.message}`,
                 Event_name: constants.ERROR_TYPE.VALIDATION_INITIALIZATION_ERROR,
-            });
-        }
-    }
-
-    async initializeBlockchainModule() {
-        try {
-            const blockchainService = this.container.resolve('blockchainService');
-
-            await blockchainService.initialize();
-            this.logger.info(`Blockchain module: ${blockchainService.getName()} implementation`);
-        } catch (e) {
-            this.logger.error({
-                msg: `Blockchain module initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.BLOCKCHAIN_INITIALIZATION_ERROR,
             });
         }
     }
