@@ -21,24 +21,19 @@ class FindNodesCommand extends Command {
 
         const keywords = assertion.metadata.keywords.concat(assertion.id);
 
-        const findNodesPromises = keywords.map((keyword) => {
+        const findNodesPromises = keywords.map(async (keyword) => {
             this.logger.info(
                 `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${keyword}`,
             );
-            return this.networkModuleManager
-                .findNodes(
-                    keyword,
-                    constants.NETWORK_PROTOCOLS.STORE,
-                    this.config.replicationFactor,
-                )
-                .then((foundNodes) => {
-                    if (foundNodes.length < this.config.replicationFactor) {
-                        this.logger.warn(
-                            `Found only ${foundNodes.length} node(s) for keyword ${keyword}`,
-                        );
-                    }
-                    return foundNodes;
-                });
+            const foundNodes = await this.networkModuleManager.findNodes(
+                keyword,
+                constants.NETWORK_PROTOCOLS.STORE,
+                this.config.replicationFactor,
+            );
+            if (foundNodes.length < this.config.replicationFactor) {
+                this.logger.warn(`Found only ${foundNodes.length} node(s) for keyword ${keyword}`);
+            }
+            return foundNodes;
         });
         const results = await Promise.all(findNodesPromises);
 
