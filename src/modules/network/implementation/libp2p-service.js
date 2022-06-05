@@ -12,6 +12,7 @@ const { sha256 } = require('multiformats/hashes/sha2');
 const PeerId = require('peer-id');
 const { InMemoryRateLimiter } = require('rolling-rate-limiter');
 const constants = require('../../../../modules/constants');
+const toobusy = require('toobusy-js');
 
 const initializationObject = {
     addresses: {
@@ -200,7 +201,9 @@ class Libp2pService {
     updateSessionStream(message, stream) {
         const session = this.sessions.receiver[message.header.sessionId];
 
-        this.sessions.receiver[message.header.sessionId] = session ? { ...session, stream } : { stream };
+        this.sessions.receiver[message.header.sessionId] = session
+            ? { ...session, stream }
+            : { stream };
     }
 
     async sendMessage(protocol, remotePeerId, message, options) {
@@ -210,7 +213,10 @@ class Libp2pService {
         const { stream } = await this.node.dialProtocol(remotePeerId, protocol);
 
         await this._sendMessageToStream(stream, message);
-        const { message: response } = await this._readMessageFromStream(
+        if (!this.sessions.sender[message.header.sessionId]) {
+            this.sessions.sender[message.header.sessionId] = {};
+        }
+        const { message: response, valid } = await this._readMessageFromStream(
             stream,
             this.isResponseValid.bind(this),
             remotePeerId._idB58String,
@@ -219,7 +225,7 @@ class Libp2pService {
             `Receiving response from ${remotePeerId._idB58String} : event=${protocol}, messageType=${response.header.messageType};`,
         );
 
-        return response;
+        return valid ? response : null;
     }
 
     async sendMessageResponse(
@@ -255,7 +261,7 @@ class Libp2pService {
         if (header.messageType === constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK) {
             // protocol operation completed, delete session
             if (this.sessions.receiver[header.sessionId].expectedMessageTypes.length <= 1) {
-                delete this.sessions.receiver[header.sessionId];
+                this.removeSession(header.sessionId);
             } else {
                 // operation not completed, update array of expected message types
                 this.sessions.receiver[header.sessionId].expectedMessageTypes =
@@ -414,7 +420,9 @@ class Libp2pService {
     }
 
     isBusy() {
-        return Object.keys(this.sessions.receiver).length > constants.MAX_OPEN_SESSIONS;
+        return (
+            toobusy() || Object.keys(this.sessions.receiver).length > constants.MAX_OPEN_SESSIONS
+        );
     }
 
     getPrivateKey() {
