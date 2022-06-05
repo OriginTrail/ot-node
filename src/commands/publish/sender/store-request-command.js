@@ -29,31 +29,32 @@ class SendAssertionCommand extends Command {
             data: { id: assertion.id, nquads },
         }));
 
-        const sendMessagePromises = nodes.map((node, index) =>
-            this.networkModuleManager
-                .sendMessage(constants.NETWORK_PROTOCOLS.STORE, node, messages[index])
-                .catch((e) => {
-                    this.handleError(
-                        handlerId,
-                        e,
-                        `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`,
-                    );
-                }),
-        );
-
-        const responses = await Promise.all(sendMessagePromises);
-
         let failedResponses = 0;
-        for (const response of responses) {
-            if (response.header.messageType !== constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK) {
+        const sendMessagePromises = nodes.map(async (node, index) => {
+            try {
+                const response = await this.networkModuleManager.sendMessage(
+                    constants.NETWORK_PROTOCOLS.STORE,
+                    node,
+                    messages[index],
+                );
+                if (
+                    !response ||
+                    response.header.messageType !== constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK
+                )
+                    failedResponses += 1;
+            } catch (e) {
                 failedResponses += 1;
+                this.handleError(
+                    handlerId,
+                    e,
+                    `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`,
+                );
             }
-        }
+        });
 
-        const maxFailedResponses = Math.round(
-            (1 - constants.STORE_MIN_SUCCESS_RATE) * nodes.length,
-        );
-        const status = failedResponses <= maxFailedResponses ? 'COMPLETED' : 'FAILED';
+        await Promise.all(sendMessagePromises);
+
+        const status = failedResponses === 0 ? 'COMPLETED' : 'FAILED';
 
         await Models.handler_ids.update(
             {

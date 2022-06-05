@@ -54,10 +54,7 @@ class SendAssertionCommand extends Command {
 
         await Promise.all(sendMessagePromises);
 
-        const maxFailedResponses = Math.round(
-            (1 - constants.STORE_MIN_SUCCESS_RATE) * nodes.length,
-        );
-        const status = failedResponses <= maxFailedResponses ? 'COMPLETED' : 'FAILED';
+        const status = failedResponses === 0 ? 'COMPLETED' : 'FAILED';
 
         await Models.handler_ids.update(
             {
