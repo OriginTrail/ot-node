@@ -1,12 +1,29 @@
 const Engine = require('@comunica/query-sparql').QueryEngine;
+const {setTimeout} = require('timers/promises')
 const constants = require('./triple-store-constants');
 
 class OtTripleStore {
     async initialize(config, logger) {
         this.config = config;
         this.logger = logger;
-        this.sparqlEndpoint = `${this.config.url}/${this.config.repository}/sparql`;
-        this.sparqlEndpointUpdate = `${this.config.url}/repositories/${this.config.repository}/statements`;
+        this.initializeSparqlEndpoints(this.config.url, this.config.repository);
+
+        let ready = await this.healthCheck();
+        let retries = 0;
+        while (!ready && retries < constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
+            retries += 1;
+            this.logger.warn(`Cannot connect to Triple store (${this.getName()}), retry number: ${retries}/${constants.TRIPLE_STORE_CONNECT_MAX_RETRIES}. Retrying in ${constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`);
+            await setTimeout(constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000);
+            ready = await this.healthCheck();
+        }
+        if (retries === constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
+            this.logger.error({
+                msg: `Triple Store (${this.getName()}) not available, max retries reached.`,
+                Event_name: constants.ERROR_TYPE.TRIPLE_STORE_UNAVAILABLE_ERROR,
+            });
+            process.exit(1);
+        }
+
         this.queryEngine = new Engine();
         this.filtertype = {
             KEYWORD: 'keyword',
@@ -31,6 +48,11 @@ class OtTripleStore {
         this.queryContext = {
             sources,
         };
+    }
+
+    initializeSparqlEndpoints(url, repository) {
+        // overridden by subclasses
+        return true;
     }
 
     async insert(triples, rootHash) {
@@ -247,6 +269,15 @@ class OtTripleStore {
 
     isBoolean(param) {
         return typeof param === 'boolean' || ['true', 'false'].includes(param);
+    }
+
+    async reinitialize(){
+        const ready = await this.healthCheck();
+        if (!ready) {
+            this.logger.warn(`Cannot connect to Triple store (${this.getName()}), check if your triple store is running.`);
+        } else {
+            this.implementation.initialize(this.logger);
+        }
     }
 }
 

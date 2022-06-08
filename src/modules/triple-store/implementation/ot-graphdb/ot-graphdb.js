@@ -31,6 +31,11 @@ class OtGraphdb extends OtTripleStore {
         }
     }
 
+    initializeSparqlEndpoints(url, repository) {
+        this.sparqlEndpoint = `${url}/repositories/${repository}`;
+        this.sparqlEndpointUpdate = `${url}/repositories/${repository}/statements`;
+    }
+
     async healthCheck() {
         try {
             const response = await axios.get(

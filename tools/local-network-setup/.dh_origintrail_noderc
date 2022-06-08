@@ -6,6 +6,10 @@
     "logLevel": "trace",
     "rpcPort": 8901,
     "modules": {
+        "tripleStore": {
+            "enabled": true,
+            "defaultImplementation": "ot-graphdb"
+        },
         "network": {
             "enabled": true,
             "implementation": {

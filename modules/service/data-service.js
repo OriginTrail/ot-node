@@ -2,9 +2,6 @@ const { v1: uuidv1 } = require('uuid');
 const N3 = require('n3');
 const toobusy = require('toobusy-js');
 const constants = require('../constants');
-const GraphDB = require('../../external/graphdb-service');
-const Blazegraph = require('../../external/blazegraph-service');
-const Fuseki = require('../../external/fuseki-service');
 
 class DataService {
     constructor(ctx) {
@@ -16,6 +13,7 @@ class DataService {
         this.nodeService = ctx.nodeService;
         this.workerPool = ctx.workerPool;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.tripleStoreQueue = ctx.tripleStoreQueue.promise(
             this,
             this.handleTripleStoreRequest,
@@ -29,60 +27,13 @@ class DataService {
     }
 
     getName() {
-        return this.implementation.getName();
+        return this.tripleStoreModuleManager.getName();
     }
 
-    async initialize() {
-        const config = {
-            name: this.config.graphDatabase.name,
-            url: this.config.graphDatabase.url,
-        };
-        switch (this.config.graphDatabase.implementation) {
-            case constants.TRIPLE_STORE_IMPLEMENTATION.BLAZEGRAPH:
-                this.implementation = new Blazegraph(config);
-                break;
-            case constants.TRIPLE_STORE_IMPLEMENTATION.GRAPHDB:
-                this.implementation = new GraphDB(config);
-                break;
-            case constants.TRIPLE_STORE_IMPLEMENTATION.FUSEKI:
-                this.implementation = new Fuseki(config);
-                break;
-            default:
-                throw Error('Unknown graph database implementation')
-        }
-
-        let ready = await this.healthCheck();
-        let retries = 0;
-        while (!ready && retries < constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
-            retries += 1;
-            this.logger.warn(`Cannot connect to Triple store (${this.getName()}), retry number: ${retries}/${constants.TRIPLE_STORE_CONNECT_MAX_RETRIES}. Retrying in ${constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds again.`);
-            await new Promise(
-                (resolve) => setTimeout(
-                    resolve,
-                    constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000,
-                ),
-            );
-            ready = await this.healthCheck();
-        }
-        if (retries === constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
-            this.logger.error({
-                msg: `Triple Store (${this.getName()}) not available, max retries reached.`,
-                Event_name: constants.ERROR_TYPE.TRIPLE_STORE_UNAVAILABLE_ERROR,
-            });
-            this.nodeService.stop(1);
-        }
-
-        return this.implementation.initialize(this.logger);
-    }
+    async initialize() {}
 
     async reinitalize() {
-        // TODO: Discussion: add retries - or not
-        const ready = await this.healthCheck();
-        if (!ready) {
-            this.logger.warn(`Cannot connect to Triple store (${this.getName()}), check if your triple store is running.`);
-        } else {
-            this.implementation.initialize(this.logger);
-        }
+        this.tripleStoreModuleManager.reinitalize();
     }
 
     async canonize(fileContent, fileExtension) {
@@ -453,7 +404,7 @@ class DataService {
 
                 break;
             // case 'ASK':
-            //     result = this.implementation.ask(query);
+            //     result = this.tripleStoreModuleManager.ask(query);
             //     break;
             default:
                 throw Error('Query type not supported');
@@ -534,11 +485,7 @@ class DataService {
     }
 
     healthCheck() {
-        return this.implementation.healthCheck();
-    }
-
-    restartService() {
-        return this.implementation.restartService();
+        return this.tripleStoreModuleManager.healthCheck();
     }
 
     async appendMetadata(nquads, assertion) {
@@ -671,36 +618,36 @@ class DataService {
 
         switch (operation) {
         case 'insert':
-            result = await this.implementation.insert(args.data, args.assertionId);
+            result = await this.tripleStoreModuleManager.insert(args.data, args.assertionId);
             break;
         case 'resolve':
-            result = await this.implementation.resolve(args.id);
+            result = await this.tripleStoreModuleManager.resolve(args.id);
             break;
         case 'assertionsByAsset':
-            result = await this.implementation.assertionsByAsset(args.id);
+            result = await this.tripleStoreModuleManager.assertionsByAsset(args.id);
             break;
         case 'findAssetsByKeyword':
-            result = await this.implementation.findAssetsByKeyword(
+            result = await this.tripleStoreModuleManager.findAssetsByKeyword(
                 args.query,
                 args.options,
                 args.localQuery,
             );
             break;
         case 'findAssertionsByKeyword':
-            result = await this.implementation.findAssertionsByKeyword(
+            result = await this.tripleStoreModuleManager.findAssertionsByKeyword(
                 args.query,
                 args.options,
                 args.localQuery,
             );
             break;
         case 'construct':
-            result = await this.implementation.construct(args.query);
+            result = await this.tripleStoreModuleManager.construct(args.query);
             break;
         case 'findAssertions':
-            result = await this.implementation.findAssertions(args.nquad);
+            result = await this.tripleStoreModuleManager.findAssertions(args.nquad);
             break;
         case 'select':
-            result = await this.implementation.execute(args.query);
+            result = await this.tripleStoreModuleManager.execute(args.query);
             break;
         default:
             throw new Error('Unknown operation for triple store');

@@ -57,7 +57,7 @@
                     "ot-blazegraph": {
                         "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph",
                         "config": {
-                            "url": "http://localhost:7200",
+                            "url": "http://localhost:9999/blazegraph",
                             "repository": "node0",
                             "username": "admin",
                             "password": ""
@@ -66,7 +66,7 @@
                     "ot-fuseki": {
                         "package": "./triple-store/implementation/ot-fuseki/ot-fuseki",
                         "config": {
-                            "url": "http://localhost:7200",
+                            "url": "http://localhost:3030",
                             "repository": "node0",
                             "username": "admin",
                             "password": ""
