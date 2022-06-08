@@ -19,7 +19,7 @@ class RpcController {
         this.publishService = ctx.publishService;
         this.queryService = ctx.queryService;
         this.networkModuleManager = ctx.networkModuleManager;
-        this.validationService = ctx.validationService;
+        this.validationModuleManager = ctx.validationModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.dataService = ctx.dataService;
         this.logger = ctx.logger;
@@ -856,7 +856,7 @@ class RpcController {
                         const rawNquads = await this.dataService.resolve(assertionId);
                         if (rawNquads) {
                             const { nquads } = await this.dataService.createAssertion(rawNquads);
-                            const proofs = await this.validationService.getProofs(
+                            const proofs = await this.validationModuleManager.getProofs(
                                 nquads,
                                 reqNquads,
                             );

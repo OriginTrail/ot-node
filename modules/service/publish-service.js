@@ -5,7 +5,7 @@ const constants = require('../constants');
 class PublishService {
     constructor(ctx) {
         this.networkModuleManager = ctx.networkModuleManager;
-        this.validationService = ctx.validationService;
+        this.validationModuleManager = ctx.validationModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.dataService = ctx.dataService;
         this.logger = ctx.logger;
@@ -47,14 +47,14 @@ class PublishService {
                 Operation_name: 'publish_generate_metadata',
                 Id_operation: operationId,
             });
-            assertion.metadata.issuer = this.validationService.getIssuer();
+            assertion.metadata.issuer = this.blockchainModuleManager.getPublicKey();
             assertion.metadata.visibility = visibility;
             assertion.metadata.keywords = keywords;
             assertion.metadata.keywords.sort();
             let method = constants.PUBLISH_METHOD.PUBLISH;
             if (ual === null) {
                 method = constants.PUBLISH_METHOD.PROVISION;
-                ual = this.validationService.calculateHash(
+                ual = this.validationModuleManager.calculateHash(
                     assertion.metadata.timestamp
                     + assertion.metadata.type
                     + assertion.metadata.issuer,
@@ -65,15 +65,15 @@ class PublishService {
                 assertion.metadata.UALs = [ual];
             }
 
-            assertion.metadata.dataHash = this.validationService.calculateHash(assertion.data);
-            assertion.metadataHash = this.validationService.calculateHash(assertion.metadata);
-            assertion.id = this.validationService.calculateHash(
+            assertion.metadata.dataHash = this.validationModuleManager.calculateHash(assertion.data);
+            assertion.metadataHash = this.validationModuleManager.calculateHash(assertion.metadata);
+            assertion.id = this.validationModuleManager.calculateHash(
                 assertion.metadataHash + assertion.metadata.dataHash,
             );
-            assertion.signature = this.validationService.sign(assertion.id);
+            assertion.signature = this.validationModuleManager.sign(assertion.id, this.blockchainModuleManager.getPrivateKey());
 
             nquads = await this.dataService.appendMetadata(nquads, assertion);
-            assertion.rootHash = this.validationService.calculateRootHash(nquads);
+            assertion.rootHash = this.validationModuleManager.calculateRootHash(nquads);
 
             if (ual !== undefined) {
                 this.logger.info(`UAL: ${ual}`);

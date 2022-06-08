@@ -10,7 +10,8 @@ class KeepAliveCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.validationService = ctx.validationService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.validationModuleManager = ctx.validationModuleManager;
     }
 
     /**
@@ -60,8 +61,8 @@ class KeepAliveCommand extends Command {
         }
 
         const proof = {};
-        proof.hash = this.validationService.calculateHash(signalingMessage);
-        proof.signature = this.validationService.sign(proof.hash);
+        proof.hash = this.validationModuleManager.calculateHash(signalingMessage);
+        proof.signature = this.validationModuleManager.sign(proof.hash, this.blockchainModuleManager.getPrivateKey());
 
         signalingMessage.proof = proof;
 

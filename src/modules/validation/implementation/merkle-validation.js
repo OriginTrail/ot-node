@@ -2,6 +2,7 @@ const SHA256 = require('crypto-js/sha256');
 const MerkleTools = require('merkle-tools');
 const sha3 = require('js-sha3');
 const elliptic = require('elliptic');
+const sortedStringify = require('json-stable-stringify');
 // eslint-disable-next-line new-cap
 const secp256k1 = new elliptic.ec('secp256k1');
 const BytesUtilities = require('../bytes-utilities');
@@ -47,12 +48,18 @@ class MerkleValidation {
         this.logger = logger;
     }
 
-    calculateHash(string) {
-        const hash = SHA256(string);
+    calculateHash(assertion) {
+        let stringifiedAssertion = assertion;
+        if (typeof assertion !== 'string' && !(assertion instanceof String)) {
+            stringifiedAssertion = sortedStringify(assertion);
+        }
+        const hash = SHA256(stringifiedAssertion);
+
         return hash.toString();
     }
 
     calculateRootHash(assertion) {
+        assertion.sort();
         const tree = new MerkleTools({
             hashType: 'sha256',
         });
@@ -72,6 +79,20 @@ class MerkleValidation {
         }
         tree.makeTree();
         return tree;
+    }
+
+    async getProofs(rdf, nquads) {
+        rdf.sort();
+        const tree = this.getMerkleTree(rdf);
+        const result = [];
+        for (let triple of nquads) {
+            triple = triple.replace(/_:genid(.){37}/gm, '_:$1');
+            const index = rdf.indexOf(triple);
+            const proof = tree.getProof(index);
+            result.push({ triple, tripleHash: this.calculateHash(triple), proof });
+        }
+
+        return result;
     }
 
     validateProof(triples, proofs, rootHash) {

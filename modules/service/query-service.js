@@ -5,7 +5,7 @@ class QueryService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.networkModuleManager = ctx.networkModuleManager;
-        this.validationService = ctx.validationService;
+        this.validationModuleManager = ctx.validationModuleManager;
         this.dataService = ctx.dataService;
         this.fileService = ctx.fileService;
         this.workerPool = ctx.workerPool;

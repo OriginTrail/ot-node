@@ -39,7 +39,6 @@ class OTNode {
         await this.saveNetworkModulePeerIdAndPrivKey();
         await this.initializeDataModule();
         await this.initializeOperationalDbModule();
-        await this.initializeValidationModule();
         await this.initializeCommandExecutor();
         await this.initializeTelemetryHubModule();
         await this.initializeRpcModule();
@@ -163,20 +162,6 @@ class OTNode {
             if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
                 this.savePrivateKeyInUserConfigurationFile(privateKey);
             }
-        }
-    }
-
-    async initializeValidationModule() {
-        try {
-            const validationService = this.container.resolve('validationService');
-
-            await validationService.initialize();
-            this.logger.info(`Validation module: ${validationService.getName()} implementation`);
-        } catch (e) {
-            this.logger.error({
-                msg: `Validation module initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.VALIDATION_INITIALIZATION_ERROR,
-            });
         }
     }
 

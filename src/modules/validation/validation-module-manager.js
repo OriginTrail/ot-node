@@ -70,6 +70,12 @@ class ValidationModuleManager extends BaseModuleManager {
             return this.getImplementation().module.hashContent(content);
         }
     }
+
+    async getProofs(rdf, nquads) {
+        if (this.initialized) {
+            return this.getImplementation().module.getProofs(rdf, nquads);
+        }
+    }
 }
 
 module.exports = ValidationModuleManager;

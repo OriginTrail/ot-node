@@ -8,7 +8,7 @@ class DataService {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.constants = ctx.constants;
-        this.validationService = ctx.validationService;
+        this.validationModuleManager = ctx.validationModuleManager;
         this.networkModuleManager = ctx.networkModuleManager;
         this.nodeService = ctx.nodeService;
         this.workerPool = ctx.workerPool;
@@ -144,14 +144,14 @@ class DataService {
                 // let dataHash;
                 // if (assertion.metadata.visibility) {
                 //   const framedData = await this.fromRDF(assertion.data, assertion.metadata.type);
-                //     dataHash = this.validationService.calculateHash(framedData);
+                //     dataHash = this.validationModuleManager.calculateHash(framedData);
                 // } else {
                 //     dataHash = assertion.metadata.dataHash;
                 // }
                 const { dataHash } = assertion.metadata;
 
-                const metadataHash = this.validationService.calculateHash(assertion.metadata);
-                const calculatedAssertionId = this.validationService.calculateHash(
+                const metadataHash = this.validationModuleManager.calculateHash(assertion.metadata);
+                const calculatedAssertionId = this.validationModuleManager.calculateHash(
                     metadataHash + dataHash,
                 );
                 if (assertion.id !== calculatedAssertionId) {
@@ -163,7 +163,7 @@ class DataService {
                     return resolve(false);
                 }
 
-                if (!this.validationService.verify(
+                if (!this.validationModuleManager.verify(
                     assertion.id,
                     assertion.signature,
                     assertion.metadata.issuer,
@@ -199,7 +199,7 @@ class DataService {
                             return resolve(false);
                         }
                     } else {
-                        const calculateRootHash = this.validationService.calculateRootHash(
+                        const calculateRootHash = this.validationModuleManager.calculateRootHash(
                             [...new Set(rdf)],
                         );
                         const { rootHash, issuer } = await this.blockchainModuleManager
