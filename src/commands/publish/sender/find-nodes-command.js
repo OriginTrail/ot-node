@@ -1,3 +1,4 @@
+const { v1: uuidv1 } = require('uuid');
 const Command = require('../../command');
 const constants = require('../../../constants/constants');
 
@@ -25,21 +26,62 @@ class FindNodesCommand extends Command {
             this.logger.info(
                 `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${keyword}`,
             );
+            const Id_operation = uuidv1();
+            this.logger.emit({
+                msg: 'Started measuring execution of find nodes',
+                Event_name: 'find_nodes_start',
+                Operation_name: 'find_nodes',
+                Id_operation,
+            });
+            this.logger.emit({
+                msg: 'Started measuring execution of kad find nodes',
+                Event_name: 'kad_find_nodes_start',
+                Operation_name: 'find_nodes',
+                Id_operation,
+            });
             const foundNodes = await this.networkModuleManager.findNodes(
                 keyword,
                 constants.NETWORK_PROTOCOLS.STORE,
-                this.config.replicationFactor,
             );
             if (foundNodes.length < this.config.replicationFactor) {
                 this.logger.warn(`Found only ${foundNodes.length} node(s) for keyword ${keyword}`);
             }
-            return foundNodes;
+            this.logger.emit({
+                msg: 'Finished measuring execution of kad find nodes ',
+                Event_name: 'kad_find_nodes_end',
+                Operation_name: 'find_nodes',
+                Id_operation,
+            });
+            this.logger.emit({
+                msg: 'Started measuring execution of rank nodes',
+                Event_name: 'rank_nodes_start',
+                Operation_name: 'find_nodes',
+                Id_operation,
+            });
+            const closestNodes = await this.networkModuleManager.rankNodes(
+                foundNodes,
+                keyword,
+                this.config.replicationFactor,
+            );
+            this.logger.emit({
+                msg: 'Finished measuring execution of rank nodes',
+                Event_name: 'rank_nodes_end',
+                Operation_name: 'find_nodes',
+                Id_operation,
+            });
+            this.logger.emit({
+                msg: 'Finished measuring execution of find nodes',
+                Event_name: 'find_nodes_end',
+                Operation_name: 'find_nodes',
+                Id_operation,
+            });
+            return closestNodes;
         });
         const results = await Promise.all(findNodesPromises);
 
         let nodes = new Set();
-        for (const foundNodes of results) {
-            for (const node of foundNodes) {
+        for (const closestNodes of results) {
+            for (const node of closestNodes) {
                 nodes.add(node);
             }
         }

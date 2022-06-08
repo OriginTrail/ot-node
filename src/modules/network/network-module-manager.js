@@ -1,5 +1,4 @@
-const { v1: uuidv1 } = require('uuid');
-const rank = require('./implementation/kad-identity-ranking')
+const rank = require('./implementation/kad-identity-ranking');
 const BaseModuleManager = require('../base-module-manager');
 
 class NetworkModuleManager extends BaseModuleManager {
@@ -7,55 +6,15 @@ class NetworkModuleManager extends BaseModuleManager {
         return 'network';
     }
 
-    /**
-     * Retrieve the closest peers to the given key.
-     *
-     * @param {String} key
-     * @param {Number} limit
-     * @returns Promise{Iterable<PeerId>}
-     */
-    async findNodes(key, protocol, limit) {
+    async findNodes(key, protocol) {
         if (this.initialized) {
-            const Id_operation = uuidv1();
-            this.logger.emit({
-                msg: 'Started measuring execution of find nodes',
-                Event_name: 'find_nodes_start',
-                Operation_name: 'find_nodes',
-                Id_operation,
-            });
-            this.logger.emit({
-                msg: 'Started measuring execution of kad find nodes',
-                Event_name: 'kad_find_nodes_start',
-                Operation_name: 'find_nodes',
-                Id_operation,
-            });
-            const nodes = await this.getImplementation().module.findNodes(key, protocol);
-            this.logger.emit({
-                msg: 'Finished measuring execution of kad find nodes ',
-                Event_name: 'kad_find_nodes_end',
-                Operation_name: 'find_nodes',
-                Id_operation,
-            });
-            this.logger.emit({
-                msg: 'Started measuring execution of rank nodes',
-                Event_name: 'rank_nodes_start',
-                Operation_name: 'find_nodes',
-                Id_operation,
-            });
-            const rankedNodes = await rank(nodes, key, limit);
-            this.logger.emit({
-                msg: 'Finished measuring execution of rank nodes',
-                Event_name: 'rank_nodes_end',
-                Operation_name: 'find_nodes',
-                Id_operation,
-            });
-            this.logger.emit({
-                msg: 'Finished measuring execution of find nodes',
-                Event_name: 'find_nodes_end',
-                Operation_name: 'find_nodes',
-                Id_operation,
-            });
-            return rankedNodes;
+            return this.getImplementation().module.findNodes(key, protocol);
+        }
+    }
+
+    async rankNodes(nodes, key, limit) {
+        if (this.initialized) {
+            return rank(nodes, key, limit);
         }
     }
 

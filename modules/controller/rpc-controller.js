@@ -155,8 +155,10 @@ class RpcController {
     initializeNetworkApi() {
         this.logger.info(`Network API module enabled on port ${this.config.network.port}`);
 
-        this.networkModuleManager.handleMessage(constants.NETWORK_PROTOCOLS.STORE, (message, remotePeerId) =>
-            this.publishController.handleNetworkStoreRequest(message, remotePeerId)
+        this.networkModuleManager.handleMessage(
+            constants.NETWORK_PROTOCOLS.STORE,
+            (message, remotePeerId) =>
+                this.publishController.handleNetworkStoreRequest(message, remotePeerId),
         );
 
         this.networkModuleManager.handleMessage(constants.NETWORK_PROTOCOLS.RESOLVE, (result) =>
@@ -172,8 +174,9 @@ class RpcController {
             },
         );
 
-        this.networkModuleManager.handleMessage(constants.NETWORK_PROTOCOLS.SEARCH_RESULT, (result) =>
-            this.queryService.handleSearchResult(result),
+        this.networkModuleManager.handleMessage(
+            constants.NETWORK_PROTOCOLS.SEARCH_RESULT,
+            (result) => this.queryService.handleSearchResult(result),
         );
 
         this.networkModuleManager.handleMessage(
@@ -286,7 +289,9 @@ class RpcController {
 
                     for (let id of ids) {
                         let isAsset = false;
-                        const { assertionId } = await this.blockchainModuleManager.getAssetProofs(id);
+                        const { assertionId } = await this.blockchainModuleManager.getAssetProofs(
+                            id,
+                        );
                         if (assertionId) {
                             isAsset = true;
                             id = assertionId;
@@ -368,11 +373,52 @@ class RpcController {
                             this.logger.info(
                                 `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${id}`,
                             );
-                            const nodes = await this.networkModuleManager.findNodes(
+                            const Id_operation = uuidv1();
+                            this.logger.emit({
+                                msg: 'Started measuring execution of find nodes',
+                                Event_name: 'find_nodes_start',
+                                Operation_name: 'find_nodes',
+                                Id_operation,
+                            });
+                            this.logger.emit({
+                                msg: 'Started measuring execution of kad find nodes',
+                                Event_name: 'kad_find_nodes_start',
+                                Operation_name: 'find_nodes',
+                                Id_operation,
+                            });
+                            const foundNodes = await this.networkModuleManager.findNodes(
                                 id,
                                 constants.NETWORK_PROTOCOLS.RESOLVE,
+                            );
+                            this.logger.emit({
+                                msg: 'Finished measuring execution of kad find nodes ',
+                                Event_name: 'kad_find_nodes_end',
+                                Operation_name: 'find_nodes',
+                                Id_operation,
+                            });
+                            this.logger.emit({
+                                msg: 'Started measuring execution of rank nodes',
+                                Event_name: 'rank_nodes_start',
+                                Operation_name: 'find_nodes',
+                                Id_operation,
+                            });
+                            const nodes = await this.networkModuleManager.rankNodes(
+                                foundNodes,
+                                id,
                                 this.config.replicationFactor,
                             );
+                            this.logger.emit({
+                                msg: 'Finished measuring execution of rank nodes',
+                                Event_name: 'rank_nodes_end',
+                                Operation_name: 'find_nodes',
+                                Id_operation,
+                            });
+                            this.logger.emit({
+                                msg: 'Finished measuring execution of find nodes',
+                                Event_name: 'find_nodes_end',
+                                Operation_name: 'find_nodes',
+                                Id_operation,
+                            });
                             if (nodes.length < this.config.replicationFactor) {
                                 this.logger.warn(
                                     `Found only ${nodes.length} node(s) for keyword ${id}`,
@@ -553,11 +599,52 @@ class RpcController {
                     this.logger.info(
                         `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`,
                     );
-                    let nodes = await this.networkModuleManager.findNodes(
+                    const Id_operation = uuidv1();
+                    this.logger.emit({
+                        msg: 'Started measuring execution of find nodes',
+                        Event_name: 'find_nodes_start',
+                        Operation_name: 'find_nodes',
+                        Id_operation,
+                    });
+                    this.logger.emit({
+                        msg: 'Started measuring execution of kad find nodes',
+                        Event_name: 'kad_find_nodes_start',
+                        Operation_name: 'find_nodes',
+                        Id_operation,
+                    });
+                    const foundNodes = await this.networkModuleManager.findNodes(
                         query,
                         constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS,
+                    );
+                    this.logger.emit({
+                        msg: 'Finished measuring execution of kad find nodes ',
+                        Event_name: 'kad_find_nodes_end',
+                        Operation_name: 'find_nodes',
+                        Id_operation,
+                    });
+                    this.logger.emit({
+                        msg: 'Started measuring execution of rank nodes',
+                        Event_name: 'rank_nodes_start',
+                        Operation_name: 'find_nodes',
+                        Id_operation,
+                    });
+                    let nodes = await this.networkModuleManager.rankNodes(
+                        foundNodes,
+                        query,
                         this.config.replicationFactor,
                     );
+                    this.logger.emit({
+                        msg: 'Finished measuring execution of rank nodes',
+                        Event_name: 'rank_nodes_end',
+                        Operation_name: 'find_nodes',
+                        Id_operation,
+                    });
+                    this.logger.emit({
+                        msg: 'Finished measuring execution of find nodes',
+                        Event_name: 'find_nodes_end',
+                        Operation_name: 'find_nodes',
+                        Id_operation,
+                    });
                     if (nodes.length < this.config.replicationFactor) {
                         this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${query}`);
                     }
@@ -665,11 +752,53 @@ class RpcController {
                         this.logger.info(
                             `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`,
                         );
-                        nodes = await this.networkModuleManager.findNodes(
+
+                        const Id_operation = uuidv1();
+                        this.logger.emit({
+                            msg: 'Started measuring execution of find nodes',
+                            Event_name: 'find_nodes_start',
+                            Operation_name: 'find_nodes',
+                            Id_operation,
+                        });
+                        this.logger.emit({
+                            msg: 'Started measuring execution of kad find nodes',
+                            Event_name: 'kad_find_nodes_start',
+                            Operation_name: 'find_nodes',
+                            Id_operation,
+                        });
+                        const foundNodes = await this.networkModuleManager.findNodes(
                             query,
                             constants.NETWORK_PROTOCOLS.SEARCH,
+                        );
+                        this.logger.emit({
+                            msg: 'Finished measuring execution of kad find nodes ',
+                            Event_name: 'kad_find_nodes_end',
+                            Operation_name: 'find_nodes',
+                            Id_operation,
+                        });
+                        this.logger.emit({
+                            msg: 'Started measuring execution of rank nodes',
+                            Event_name: 'rank_nodes_start',
+                            Operation_name: 'find_nodes',
+                            Id_operation,
+                        });
+                        nodes = await this.networkModuleManager.rankNodes(
+                            foundNodes,
+                            query,
                             this.config.replicationFactor,
                         );
+                        this.logger.emit({
+                            msg: 'Finished measuring execution of rank nodes',
+                            Event_name: 'rank_nodes_end',
+                            Operation_name: 'find_nodes',
+                            Id_operation,
+                        });
+                        this.logger.emit({
+                            msg: 'Finished measuring execution of find nodes',
+                            Event_name: 'find_nodes_end',
+                            Operation_name: 'find_nodes',
+                            Id_operation,
+                        });
                         if (nodes.length < this.config.replicationFactor) {
                             this.logger.warn(
                                 `Found only ${nodes.length} node(s) for keyword ${query}`,
