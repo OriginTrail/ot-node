@@ -11,15 +11,27 @@ class HttpClientModuleManager extends BaseModuleManager {
         }
     }
 
-    post(route, ...callback) {
+    post(route, requestSchema, ...callback) {
         if (this.initialized) {
-            return this.getImplementation().module.post(route, ...callback);
+            return this.getImplementation().module.post(route, requestSchema, ...callback);
         }
     }
 
     sendResponse(res, status, returnObject) {
         if (this.initialized) {
             return this.getImplementation().module.sendResponse(res, status, returnObject);
+        }
+    }
+
+    async listen() {
+        if (this.initialized) {
+            return this.getImplementation().module.listen();
+        }
+    }
+
+    async initializeMiddleware() {
+        if (this.initialized) {
+            return this.getImplementation().module.initializeMiddleware();
         }
     }
 }

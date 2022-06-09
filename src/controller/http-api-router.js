@@ -1,11 +1,8 @@
-const { HTTP_API_ROUTES } = require('../constants/constants');
-
-// const supportedVersion = 'v1';
+const publishRequest = require('./v1/request-schema/publish-request');
 
 class HttpApiRouter {
     constructor(ctx) {
         this.config = ctx.config;
-        this.fileSystemModule = ctx.fileSystemModule;
         this.httpClientModuleManager = ctx.httpClientModuleManager;
 
         this.resolveController = ctx.resolveController;
@@ -16,61 +13,58 @@ class HttpApiRouter {
     }
 
     async initialize() {
-        await this.initializeMiddleware();
-        await this.initializeSsl();
         await this.initializeListeners();
+        await this.initializeMiddleware();
+        await this.httpClientModuleManager.listen();
     }
 
     async initializeListeners() {
         // POST REQUESTS
-        this.httpClientModuleManager.post(HTTP_API_ROUTES.PUBLISH, (req, res) => {
+        this.httpClientModuleManager.post('/publish', publishRequest, (req, res) => {
             this.publishController.handleHttpApiPublishRequest(req, res);
         });
 
-        this.httpClientModuleManager.post(HTTP_API_ROUTES.PROVISION, (req, res) => {
+        this.httpClientModuleManager.post('/provision', (req, res) => {
             this.publishController.handleHttpApiProvisionRequest(req, res);
         });
 
-        this.httpClientModuleManager.post(HTTP_API_ROUTES.UPDATE, (req, res) => {
+        this.httpClientModuleManager.post('/update', (req, res) => {
             this.publishController.handleHttpApiUpdateRequest(req, res);
         });
-
-        this.httpClientModuleManager.post(HTTP_API_ROUTES.QUERY, (req, res) => {
-            this.searchController.handleHttpApiQueryRequest(req, res);
-        });
-
-        this.httpClientModuleManager.post(HTTP_API_ROUTES.PROOFS, (req, res) => {
-            this.searchController.handleHttpApiProofsRequest(req, res);
-        });
-
-        // GET REQUESTS
-        this.httpClientModuleManager.get(HTTP_API_ROUTES.RESOLVE, (req, res) => {
-            this.resolveController.handleHttpApiResolveRequest(req, res);
-        });
-
-        this.httpClientModuleManager.get(HTTP_API_ROUTES.SEARCH_ASSERTIONS, (req, res) => {
-            this.searchController.handleHttpApiSearchAssertionsRequest(req, res);
-        });
-
-        this.httpClientModuleManager.get(HTTP_API_ROUTES.SEARCH_ENTITIES, (req, res) => {
-            this.searchController.handleHttpApiSearchEntitiesRequest(req, res);
-        });
-
-        this.httpClientModuleManager.get(HTTP_API_ROUTES.OPERATION_RESULT, (req, res) => {
+        //
+        // this.httpClientModuleManager.post(HTTP_API_ROUTES.QUERY, (req, res) => {
+        //     this.searchController.handleHttpApiQueryRequest(req, res);
+        // });
+        //
+        // this.httpClientModuleManager.post(HTTP_API_ROUTES.PROOFS, (req, res) => {
+        //     this.searchController.handleHttpApiProofsRequest(req, res);
+        // });
+        //
+        // // GET REQUESTS
+        // this.httpClientModuleManager.get(HTTP_API_ROUTES.RESOLVE, (req, res) => {
+        //     this.resolveController.handleHttpApiResolveRequest(req, res);
+        // });
+        //
+        // this.httpClientModuleManager.get(HTTP_API_ROUTES.SEARCH_ASSERTIONS, (req, res) => {
+        //     this.searchController.handleHttpApiSearchAssertionsRequest(req, res);
+        // });
+        //
+        // this.httpClientModuleManager.get(HTTP_API_ROUTES.SEARCH_ENTITIES, (req, res) => {
+        //     this.searchController.handleHttpApiSearchEntitiesRequest(req, res);
+        // });
+        //
+        this.httpClientModuleManager.get('/:operation/result/:handler_id', (req, res) => {
             this.resultController.handleHttpApiOperationResultRequest(req, res);
         });
 
-        this.httpClientModuleManager.get(HTTP_API_ROUTES.INFO, (req, res) => {
+        this.httpClientModuleManager.get('/info', (req, res) => {
             this.infoController.handleHttpApiInfoRequest(req, res);
         });
     }
 
     async initializeMiddleware() {
-        this.middleware = {};
-    }
-
-    async initializeSsl() {
-        return false;
+        await this.httpClientModuleManager.initializeMiddleware();
+        // this.middleware = {};
     }
 }
 

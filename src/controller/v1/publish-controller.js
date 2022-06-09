@@ -7,7 +7,7 @@ const PublishAllowedVisibilityParams = ['public', 'private'];
 
 class PublishController extends BaseController {
     constructor(ctx) {
-        super();
+        super(ctx);
         this.workerPool = ctx.workerPool;
         this.publishService = ctx.publishService;
         this.logger = ctx.logger;
@@ -42,18 +42,18 @@ class PublishController extends BaseController {
             Id_operation: operationId,
         });
 
-        const validity = this.isRequestValid(req, true, true, true, true, false);
+        // const validity = this.isRequestValid(req, true, true, true, true, false);
 
-        if (!validity.isValid) {
-            return this.returnResponse(res, validity.code, { message: validity.message });
-        }
+        // if (!validity.isValid) {
+        //     return this.returnResponse(res, validity.code, { message: validity.message });
+        // }
 
         const handlerObject = await this.generateHandlerId();
 
         const handlerId = handlerObject.handler_id;
 
         this.returnResponse(res, 202, {
-            handler_id: handlerId,
+            handlerId,
         });
 
         this.logger.emit({
@@ -220,16 +220,16 @@ class PublishController extends BaseController {
     async handleNetworkStoreRequest(message, remotePeerId) {
         const operationId = await this.generateHandlerId();
         let commandName;
-        const commandData = { message, remotePeerId, operationId}
-        switch(message.header.messageType) {
-            case 'PROTOCOL_INIT': 
-                commandName = 'handleStoreInitCommand'
+        const commandData = { message, remotePeerId, operationId };
+        switch (message.header.messageType) {
+            case 'PROTOCOL_INIT':
+                commandName = 'handleStoreInitCommand';
                 break;
             case 'PROTOCOL_REQUEST':
-                commandName = 'handleStoreRequestCommand'
+                commandName = 'handleStoreRequestCommand';
                 break;
             default:
-                throw Error("unknown messageType")
+                throw Error('unknown messageType');
         }
 
         await this.commandExecutor.add({

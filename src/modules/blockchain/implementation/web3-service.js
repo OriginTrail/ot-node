@@ -1,5 +1,5 @@
 const Web3 = require('web3');
-const BigNumber = require('big-number');
+const BigNumber = require('bn.js');
 const axios = require('axios');
 const DKGContractAbi = require('../../../../build/contracts/DKGcontract.json').abi;
 const UAIRegistryAbi = require('../../../../build/contracts/UAIRegistry.json').abi;

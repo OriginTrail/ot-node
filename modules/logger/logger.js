@@ -13,21 +13,29 @@ class Logger {
             let chosenTargets = [];
             if (telemetryHubEnabled) {
                 chosenTargets = [
-                    { target: './pino-pretty-transport', options: { colorize: true }, level: 'trace' },
+                    {
+                        target: './pino-pretty-transport',
+                        options: { colorize: true },
+                        level: 'trace',
+                    },
                     { target: 'pino/file', level: 'trace', options: { destination: logFilename } },
                 ];
             } else {
                 chosenTargets = [
-                    { target: './pino-pretty-transport', options: { colorize: true }, level: 'trace' },
+                    {
+                        target: './pino-pretty-transport',
+                        options: { colorize: true },
+                        level: 'trace',
+                    },
                 ];
             }
-
             this.pinoLogger = pino({
                 transport: {
                     targets: chosenTargets,
                 },
                 customLevels: {
                     emit: 15,
+                    api: 7,
                 },
                 level: logLevel,
             });
@@ -73,6 +81,10 @@ class Logger {
 
     trace(obj) {
         this.pinoLogger.trace(obj);
+    }
+
+    api(obj) {
+        this.pinoLogger.api(obj);
     }
 
     closeLogger(closingMessage) {

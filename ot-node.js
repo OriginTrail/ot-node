@@ -1,4 +1,3 @@
-const { execSync } = require('child_process');
 const DeepExtend = require('deep-extend');
 const rc = require('rc');
 const fs = require('fs');
@@ -37,12 +36,16 @@ class OTNode {
         this.initializeDependencyContainer();
         await this.initializeModules();
         await this.saveNetworkModulePeerIdAndPrivKey();
-        await this.initializeDataModule();
-        await this.initializeOperationalDbModule();
+
+        // await this.initializeDataModule();
+        // await this.initializeOperationalDbModule();
+        // await this.initializeValidationModule();
+        await this.initializeControllers();
         await this.initializeCommandExecutor();
         await this.initializeTelemetryHubModule();
-        await this.initializeRpcModule();
+        // await this.initializeRpcModule();
         // await this.initializeWatchdog();
+        this.logger.info('Node is up and running!');
     }
 
     async runFolderStructureInitialMigration() {
@@ -64,17 +67,6 @@ class OTNode {
         if (!this.config.configFilename) {
             // set default user configuration filename
             this.config.configFilename = '.origintrail_noderc';
-        }
-        const blockchainModuleConfig = this.config.modules.blockchain.implementation['web3-service'].config;
-        if (
-            !blockchainModuleConfig.hubContractAddress &&
-            blockchainModuleConfig.networkId ===
-                defaultConfig.modules.blockchain.implementation['web3-service'].config.networkId
-        ) {
-            blockchainModuleConfig.hubContractAddress =
-                configjson[process.env.NODE_ENV].modules.blockchain.implementation[
-                    'web3-service'
-                ].config.hubContractAddress;
         }
 
         const fileService = new FileService({ config: this.config });
@@ -119,37 +111,61 @@ class OTNode {
         }
     }
 
-    async initializeDataModule() {
+    async initializeControllers() {
         try {
-            const dataService = this.container.resolve('dataService');
-            await dataService.initialize();
-            this.logger.info(`Data module: ${dataService.getName()} implementation`);
+            this.logger.info('Initializing http api router');
+            const httpApiRouter = this.container.resolve('httpApiRouter');
+            await httpApiRouter.initialize();
         } catch (e) {
             this.logger.error({
-                msg: `Data module initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.DATA_MODULE_INITIALIZATION_ERROR,
+                msg: `Http api router initialization failed. Error message: ${e.message}`,
+                Event_name: constants.ERROR_TYPE.RPC_INITIALIZATION_ERROR,
+            });
+        }
+
+        try {
+            this.logger.info('Initializing rpc router');
+            const rpcRouter = this.container.resolve('rpcRouter');
+            await rpcRouter.initialize();
+        } catch (e) {
+            this.logger.error({
+                msg: `RPC router initialization failed. Error message: ${e.message}`,
+                Event_name: constants.ERROR_TYPE.RPC_INITIALIZATION_ERROR,
             });
         }
     }
 
-    async initializeOperationalDbModule() {
-        try {
-            this.logger.info('Operational database module: sequelize implementation');
-            // eslint-disable-next-line global-require
-            const db = require('./models');
+    // async initializeDataModule() {
+    //     try {
+    //         const dataService = this.container.resolve('dataService');
+    //         await dataService.initialize();
+    //         this.logger.info(`Data module: ${dataService.getName()} implementation`);
+    //     } catch (e) {
+    //         this.logger.error({
+    //             msg: `Data module initialization failed. Error message: ${e.message}`,
+    //             Event_name: constants.ERROR_TYPE.DATA_MODULE_INITIALIZATION_ERROR,
+    //         });
+    //     }
+    // }
 
-            if (this.config.otNodeUpdated) {
-                execSync(`npx sequelize --config=./config/sequelizeConfig.js db:migrate`);
-            }
-
-            await db.sequelize.sync();
-        } catch (e) {
-            this.logger.error({
-                msg: `Operational database module initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.OPERATIONALDB_MODULE_INITIALIZATION_ERROR,
-            });
-        }
-    }
+    // async initializeOperationalDbModule() {
+    //     try {
+    //         this.logger.info('Operational database module: sequelize implementation');
+    //         // eslint-disable-next-line global-require
+    //         const db = require('./models');
+    //
+    //         if (this.config.otNodeUpdated) {
+    //             execSync(`npx sequelize --config=./config/sequelizeConfig.js db:migrate`);
+    //         }
+    //
+    //         await db.sequelize.sync();
+    //     } catch (e) {
+    //         this.logger.error({
+    //             msg: `Operational database module initialization failed. Error message: ${e.message}`,
+    //             Event_name: constants.ERROR_TYPE.OPERATIONALDB_MODULE_INITIALIZATION_ERROR,
+    //         });
+    //     }
+    // }
 
     async saveNetworkModulePeerIdAndPrivKey() {
         const networkModuleManager = this.container.resolve('networkModuleManager');
@@ -165,6 +181,20 @@ class OTNode {
         }
     }
 
+    // async initializeValidationModule() {
+    //     try {
+    //         const validationService = this.container.resolve('validationService');
+    //
+    //         await validationService.initialize();
+    //         this.logger.info(`Validation module: ${validationService.getName()} implementation`);
+    //     } catch (e) {
+    //         this.logger.error({
+    //             msg: `Validation module initialization failed. Error message: ${e.message}`,
+    //             Event_name: constants.ERROR_TYPE.VALIDATION_INITIALIZATION_ERROR,
+    //         });
+    //     }
+    // }
+
     async initializeCommandExecutor() {
         try {
             const commandExecutor = this.container.resolve('commandExecutor');
@@ -175,18 +205,6 @@ class OTNode {
             this.logger.error({
                 msg: `Command executor initialization failed. Error message: ${e.message}`,
                 Event_name: constants.ERROR_TYPE.COMMAND_EXECUTOR_INITIALIZATION_ERROR,
-            });
-        }
-    }
-
-    async initializeRpcModule() {
-        try {
-            const rpcController = this.container.resolve('rpcController');
-            await rpcController.initialize();
-        } catch (e) {
-            this.logger.error({
-                msg: `RPC service initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.RPC_INITIALIZATION_ERROR,
             });
         }
     }

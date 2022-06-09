@@ -3,6 +3,7 @@ const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const Sequelize = require('sequelize');
+const { HANDLER_ID_STATUS } = require('../../../../../modules/constants');
 
 class SequelizeRepository {
     async initialize(config, logger) {
@@ -86,7 +87,16 @@ class SequelizeRepository {
     }
 
     async createHandlerIdRecord(handlerData) {
-        await this.models.handler_ids.create(handlerData);
+        const handler = await this.models.handler_ids.create(handlerData);
+        return handler;
+    }
+
+    async updateHandlerIdRecord(data, handlerId) {
+        await this.models.handler_ids.update(data, {
+            where: {
+                handler_id: handlerId,
+            },
+        });
     }
 }
 
