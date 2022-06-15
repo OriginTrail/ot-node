@@ -29,7 +29,7 @@ class InsertAssertionCommand extends Command {
             `${ual} data ${dataRootId}`
         ].concat(metadata).concat(data);
 
-        this.logger.debug(`Inserting assertion with ual:${ual} in database.`);
+        this.logger.info(`Inserting assertion with ual:${ual} in database.`);
         await this.tripleStoreModuleManager.insert(assertion, ual);
 
         this.logger.info(`Assertion ${ual} has been successfully inserted!`);

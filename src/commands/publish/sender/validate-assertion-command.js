@@ -20,6 +20,7 @@ class ValidateAssertionCommand extends Command {
             handlerId,
             issuer,
         } = command.data;
+        this.logger.info(`Validating assertion with ual: ${ual}`);
         await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.PUBLISH_VALIDATING_ASSERTION);
 
         const {data, metadata} = await this.handlerIdService.getCachedHandlerIdData(handlerId);
