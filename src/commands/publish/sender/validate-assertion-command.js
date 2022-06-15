@@ -1,5 +1,5 @@
 const Command = require('../../command');
-const { ERROR_TYPE, PUBLISH_METHOD } = require('../../../constants/constants');
+const { ERROR_TYPE, HANDLER_ID_STATUS } = require('../../../constants/constants');
 
 class ValidateAssertionCommand extends Command {
     constructor(ctx) {
@@ -20,6 +20,7 @@ class ValidateAssertionCommand extends Command {
             handlerId,
             issuer,
         } = command.data;
+        await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.PUBLISH_VALIDATING_ASSERTION);
 
         const {data, metadata} = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 

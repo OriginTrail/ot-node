@@ -15,18 +15,25 @@ class HandlerIdService {
     }
 
     async updateFailedHandlerId(handlerId, errorMessage) {
-        if (handlerId !== null) {
-            const handlerIdCachePath = this.fileService.getHandlerIdDocumentPath(handlerId);
+        const handlerIdCachePath = this.fileService.getHandlerIdDocumentPath(handlerId);
 
-            await this.fileService.removeFile(handlerIdCachePath);
-            await this.repositoryModuleManager.updateHandlerIdRecord(
-                {
-                    status: HANDLER_ID_STATUS.FAILED,
-                    data: JSON.stringify({ errorMessage }),
-                },
-                handlerId,
-            );
-        }
+        await this.fileService.removeFile(handlerIdCachePath);
+        await this.repositoryModuleManager.updateHandlerIdRecord(
+            {
+                status: HANDLER_ID_STATUS.FAILED,
+                data: JSON.stringify({errorMessage}),
+            },
+            handlerId,
+        );
+    }
+
+    async updateHandlerIdStatus(handlerId, status) {
+        await this.repositoryModuleManager.updateHandlerIdRecord(
+            {
+                status,
+            },
+            handlerId,
+        );
     }
 
     async cacheHandlerIdData(handlerId, data) {

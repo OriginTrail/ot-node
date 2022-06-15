@@ -1,5 +1,6 @@
 const Command = require('../../command');
 const constants = require('../../../constants/constants');
+const {HANDLER_ID_STATUS} = require("../../../constants/constants");
 
 class InsertAssertionCommand extends Command {
     constructor(ctx) {
@@ -16,6 +17,8 @@ class InsertAssertionCommand extends Command {
      */
     async execute(command) {
         const {handlerId, operationId, ual, dataRootId} = command.data;
+
+        await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.PUBLISH_INSERTING_ASSERTION);
 
         const {data, metadata} = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
