@@ -1,5 +1,9 @@
 const constants = require('../../modules/constants');
 
+const requiredModules = [
+    'repository'
+];
+
 class BaseModuleManager {
     constructor(ctx) {
         this.config = ctx.config;
@@ -10,9 +14,11 @@ class BaseModuleManager {
         try {
             const moduleConfig = this.config.modules[this.getName()];
             if (!moduleConfig || !moduleConfig.enabled) {
-                this.logger.warn(
-                    `${this.getName()} module not defined or enabled in configuration`,
-                );
+                const message = `${this.getName()} module not defined or enabled in configuration`;
+                if (requiredModules.includes(this.getName())){
+                    throw new Error(`${message} but it's required!`);
+                }
+                this.logger.warn(message);
                 return false;
             }
 
@@ -53,9 +59,12 @@ class BaseModuleManager {
             }
             this.initialized = true;
             return true;
-        } catch (e) {
+        } catch (error) {
+            if (requiredModules.includes(this.getName())){
+                throw new Error(`Module is required but got error during initialization - ${error.message}`);
+            }
             this.logger.error({
-                msg: e.message,
+                msg: error.message,
                 Event_name: constants.ERROR_TYPE.MODULE_INITIALIZATION_ERROR,
             });
             return false;

@@ -3,7 +3,6 @@ const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const Sequelize = require('sequelize');
-const { HANDLER_ID_STATUS } = require('../../../../../modules/constants');
 
 class SequelizeRepository {
     async initialize(config, logger) {
@@ -13,6 +12,7 @@ class SequelizeRepository {
         this.setEnvParameters();
         await this.createDatabaseIfNotExists();
         await this.runMigrations();
+
         this.models = await this.loadModels();
     }
 
@@ -26,13 +26,13 @@ class SequelizeRepository {
     }
 
     async createDatabaseIfNotExists() {
-        const connection = mysql.createConnection({
+        const connection = await mysql.createConnection({
             host: this.config.host,
             port: this.config.port,
             user: this.config.user,
             password: this.config.password,
         });
-        connection.query(`CREATE DATABASE IF NOT EXISTS \`${this.config.database}\`;`);
+        await connection.promise().query(`CREATE DATABASE IF NOT EXISTS \`${this.config.database}\`;`);
     }
 
     async runMigrations() {
