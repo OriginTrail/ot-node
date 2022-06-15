@@ -25,8 +25,8 @@ class InsertAssertionCommand extends Command {
         const metadataId = this.getMetadataId(metadata);
 
         const assertion = [
-            `${ual} metadata ${metadataId}`,
-            `${ual} data ${dataRootId}`
+            `<${ual}> <http://schema.org/metadata> "${metadataId}" .`,
+            `<${ual}> <http://schema.org/data> "${dataRootId}" .`
         ].concat(metadata).concat(data);
 
         this.logger.info(`Inserting assertion with ual:${ual} in database.`);

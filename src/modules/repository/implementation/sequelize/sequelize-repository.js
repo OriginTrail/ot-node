@@ -38,8 +38,9 @@ class SequelizeRepository {
     async runMigrations() {
         return new Promise((resolve, reject) => {
             const configurationPath = path.join(__dirname, 'config', 'sequelizeConfig.js');
+            const migrationFolderPath = path.join(__dirname, 'migrations');
             const migrate = exec(
-                `npx sequelize --config=${configurationPath} db:migrate`,
+                `npx sequelize --config=${configurationPath} --migrations-path=${migrationFolderPath} db:migrate`,
                 { env: process.env },
                 (err) => (err ? reject(err) : resolve()),
             );

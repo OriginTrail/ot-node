@@ -43,7 +43,7 @@ module.exports = {
                 allowNull: false,
             },
             message: {
-                type: Sequelize.STRING,
+                type: Sequelize.TEXT('long'),
                 allowNull: true,
             },
             parent_id: {
