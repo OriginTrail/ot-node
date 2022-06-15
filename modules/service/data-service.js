@@ -527,86 +527,54 @@ class DataService {
     }
 
     async extractMetadata(rdf) {
-        return new Promise(async (accept, reject) => {
-            const parser = new N3.Parser({ format: 'N-Triples', baseIRI: 'http://schema.org/' });
-            const result = {
-                metadata: {
-                    keywords: [],
-                    UALs: [],
-                },
-                blockchain: {},
-            };
+        const parser = new N3.Parser({format: 'N-Triples', baseIRI: 'http://schema.org/'});
+        const result = {
+            keywords: []
+        };
 
-            const quads = [];
-            await parser.parse(
-                rdf.join('\n'),
-                (error, quad, prefixes) => {
-                    if (error) {
-                        reject(error);
-                    }
-                    if (quad) {
-                        quads.push(quad);
-                    }
-                },
-            );
+        const quads = [];
+        await parser.parse(
+            rdf.join('\n'),
+            (error, quad) => {
+                if (error) {
+                    throw error;
+                }
+                if (quad) {
+                    quads.push(quad);
+                }
+            },
+        );
 
-            for (const quad of quads) {
-                try {
-                    switch (quad._predicate.id) {
-                    case 'http://schema.org/hasType':
-                        result.metadata.type = JSON.parse(quad._object.id);
-                        result.id = quad._subject.id.replace(`${constants.DID_PREFIX}:`, '');
+        for (const quad of quads) {
+            try {
+                switch (quad._predicate.id) {
+                    case 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type':
+                        result.type = JSON.parse(quad._object.id);
                         break;
-                    case 'http://schema.org/hasTimestamp':
-                        result.metadata.timestamp = JSON.parse(quad._object.id);
+                    case 'http://schema.org/visibility':
+                        result.visibility = JSON.parse(quad._object.id);
                         break;
-                    case 'http://schema.org/hasUALs':
-                        result.metadata.UALs.push(JSON.parse(quad._object.id));
+                    case 'http://schema.org/keywords':
+                        result.keywords.push(JSON.parse(quad._object.id));
                         break;
-                    case 'http://schema.org/hasIssuer':
-                        result.metadata.issuer = JSON.parse(quad._object.id);
+                    case 'http://schema.org/issuer':
+                        result.issuer = JSON.parse(quad._object.id);
                         break;
-                    case 'http://schema.org/hasVisibility':
-                        result.metadata.visibility = JSON.parse(quad._object.id);
-                        break;
-                    case 'http://schema.org/hasDataHash':
-                        result.metadata.dataHash = JSON.parse(quad._object.id);
-                        break;
-                    case 'http://schema.org/hasKeywords':
-                        result.metadata.keywords.push(JSON.parse(quad._object.id));
-                        break;
-                    case 'http://schema.org/hasSignature':
-                        result.signature = JSON.parse(quad._object.id);
-                        break;
-                    case 'http://schema.org/hasRootHash':
-                        result.rootHash = JSON.parse(quad._object.id);
-                        break;
-                    case 'http://schema.org/hasBlockchain':
-                        result.blockchain.name = JSON.parse(quad._object.id);
-                        break;
-                    case 'http://schema.org/hasTransactionHash':
-                        result.blockchain.transactionHash = JSON.parse(quad._object.id);
+                    case 'http://schema.org/dataRootId':
+                        result.dataRootId = JSON.parse(quad._object.id);
                         break;
                     default:
                         break;
-                    }
-                } catch (e) {
-                    this.logger.error({
-                        msg: `Error in extracting metadata: ${e}. ${e.stack}`,
-                        Event_name: constants.ERROR_TYPE.EXTRACT_METADATA_ERROR,
-                    });
                 }
+            } catch (e) {
+                this.logger.error({
+                    msg: `Error in extracting metadata: ${e}. ${e.stack}`,
+                    Event_name: constants.ERROR_TYPE.EXTRACT_METADATA_ERROR,
+                });
+                throw e;
             }
-
-            result.metadata.keywords.sort();
-            if (!result.metadata.UALs.length) {
-                delete result.metadata.UALs;
-            } else {
-                result.metadata.UALs.sort();
-            }
-
-            accept(result);
-        });
+        }
+        return result;
     }
 
     async handleTripleStoreRequest(args) {

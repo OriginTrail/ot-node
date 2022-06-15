@@ -55,13 +55,13 @@ class OtTripleStore {
         return true;
     }
 
-    async insert(triples, rootHash) {
-        const askQuery = `ASK WHERE { GRAPH <${rootHash}> { ?s ?p ?o } }`;
+    async insert(triples, assertionId) {
+        const askQuery = `ASK WHERE { GRAPH <${assertionId}> { ?s ?p ?o } }`;
         const exists = await this.ask(askQuery);
         const insertion = `
                                   PREFIX schema: <http://schema.org/> 
                                   INSERT DATA
-                                  { GRAPH <${rootHash}> 
+                                  { GRAPH <${assertionId}> 
                                     { ${triples} } 
                                   }`;
         if (!exists) {

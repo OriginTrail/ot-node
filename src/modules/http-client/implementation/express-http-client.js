@@ -19,6 +19,8 @@ class ExpressHttpClient {
             }),
         );
 
+        this.app.use(express.json());
+
         this.app.use((req, res, next) => {
             this.logger.api(`${req.method}: ${req.url} request received`);
             return next();

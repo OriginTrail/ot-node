@@ -13,6 +13,8 @@ class PublishController extends BaseController {
         this.logger = ctx.logger;
         this.fileService = ctx.fileService;
         this.commandExecutor = ctx.commandExecutor;
+        this.dataService = ctx.dataService;
+        this.handlerIdService = ctx.handlerIdService;
     }
 
     async handleHttpApiPublishRequest(req, res) {
@@ -29,26 +31,8 @@ class PublishController extends BaseController {
 
     async handleHttpApiPublishMethod(req, res, method) {
         const operationId = this.generateOperationId();
-        this.logger.emit({
-            msg: 'Started measuring execution of publish command',
-            Event_name: 'publish_start',
-            Operation_name: 'publish',
-            Id_operation: operationId,
-        });
-        this.logger.emit({
-            msg: 'Started measuring execution of check arguments for publishing',
-            Event_name: 'publish_init_start',
-            Operation_name: 'publish_init',
-            Id_operation: operationId,
-        });
 
-        // const validity = this.isRequestValid(req, true, true, true, true, false);
-
-        // if (!validity.isValid) {
-        //     return this.returnResponse(res, validity.code, { message: validity.message });
-        // }
-
-        const handlerObject = await this.generateHandlerId();
+        const handlerObject = await this.handlerIdService.generateHandlerId();
 
         const handlerId = handlerObject.handler_id;
 
@@ -56,70 +40,36 @@ class PublishController extends BaseController {
             handlerId,
         });
 
-        this.logger.emit({
-            msg: 'Finished measuring execution of check arguments for publishing',
-            Event_name: 'publish_init_end',
-            Operation_name: 'publish_init',
-            Id_operation: operationId,
-        });
+        const {metadata, data, ual} = req.body;
 
-        this.logger.emit({
-            msg: 'Started measuring execution of preparing arguments for publishing',
-            Event_name: 'publish_prep_args_start',
-            Operation_name: 'publish_prep_args',
-            Id_operation: operationId,
-        });
+        await this.handlerIdService.cacheHandlerIdData(handlerId, JSON.stringify({data, metadata}));
 
-        let fileContent;
-        const fileExtension = '.json';
-        if (req.files) {
-            fileContent = req.files.file.data.toString();
-        } else {
-            fileContent = req.body.data;
-        }
+        const metadataObject = await this.dataService.extractMetadata(metadata);
 
-        const { ual } = req.body;
+        const validityMessage = this.validateMetadata(metadataObject);
 
-        const { visibility } = req.body;
+        if (!validityMessage) {
+            this.logger.error(validityMessage);
+            await this.handlerIdService.updateFailedHandlerId(handlerId, validityMessage);
+            return;
+        };
 
-        let keywords = [];
-        if (req.body.keywords) {
-            keywords = await this.workerPool.exec('JSONParse', [req.body.keywords.toLowerCase()]);
-        }
-        if (keywords.length > 10) {
-            keywords = keywords.slice(0, 10);
-            this.logger.warn(
-                'Too many keywords provided, limit is 10. Publishing only to the first 10 keywords.',
-            );
-        }
-        this.logger.emit({
-            msg: 'Finished measuring execution of preparing arguments for publishing',
-            Event_name: 'publish_prep_args_end',
-            Operation_name: 'publish_prep_args',
-            Id_operation: operationId,
-        });
+        const {keywords, dataRootId, issuer, visibility, type} = metadataObject;
 
-        const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
-
-        const documentPath = await this.fileService.writeContentsToFile(
-            handlerIdCachePath,
-            handlerId,
-            fileContent,
-        );
         const commandData = {
-            fileExtension,
-            keywords,
-            visibility,
             method,
             ual,
             handlerId,
             operationId,
-            documentPath,
+            keywords,
+            dataRootId,
+            issuer,
+            visibility,
+            type,
         };
 
         const commandSequence = [
-            'prepareAssertionForPublish',
-            'submitProofsCommand',
+            'validateAssertionCommand',
             'insertAssertionCommand',
             'findNodesCommand',
             'storeInitCommand',
@@ -135,86 +85,23 @@ class PublishController extends BaseController {
         });
     }
 
-    isRequestValid(
-        req,
-        validateFiles = true,
-        validateFileSize = true,
-        validateKeywords = true,
-        validateVisibility = true,
-        validateUal = true,
-    ) {
-        if (
-            validateFiles &&
-            (!req.files ||
-                !req.files.file ||
-                path.extname(req.files.file.name).toLowerCase() !== '.json') &&
-            !req.body.data
-        ) {
-            return {
-                isValid: false,
-                code: 400,
-                message:
-                    'No data provided. It is required to have assertion file or data in body, they must be in JSON-LD format.',
-            };
+    validateMetadata(metadata) {
+        if (!metadata.keywords || metadata.keywords.length === 0) {
+            return 'Keywords are missing in assertion metadata';
         }
-
-        if (validateFileSize && req.files && req.files.file.size > MAX_FILE_SIZE) {
-            return {
-                isValid: false,
-                code: 400,
-                message: `File size limit is ${MAX_FILE_SIZE / (1024 * 1024)}MB.`,
-            };
+        if (!metadata.dataRootId) {
+            return 'Data root id is missing in assertion metadata';
         }
-
-        if (
-            validateFileSize &&
-            req.body &&
-            req.body.data &&
-            Buffer.byteLength(req.body.data, 'utf-8') > MAX_FILE_SIZE
-        ) {
-            return {
-                isValid: false,
-                code: 400,
-                message: `File size limit is ${MAX_FILE_SIZE / (1024 * 1024)}MB.`,
-            };
+        if (!metadata.issuer) {
+            return 'Issuer is missing in assertion metadata';
         }
-
-        if (
-            validateKeywords &&
-            req.body.keywords &&
-            !Utilities.isArrayOfStrings(req.body.keywords)
-        ) {
-            return {
-                isValid: false,
-                code: 400,
-                message:
-                    'Keywords must be a non-empty array of strings, all strings must have double quotes.',
-            };
+        if (!metadata.visibility) {
+            return 'Visibility is missing in assertion metadata';
         }
-
-        if (
-            validateVisibility &&
-            req.body.visibility &&
-            !PublishAllowedVisibilityParams.includes(req.body.visibility)
-        ) {
-            return {
-                isValid: false,
-                code: 400,
-                message: 'Visibility must be a string, value can be public or private.',
-            };
+        if (!metadata.type) {
+            return 'Type is missing in assertion metadata';
         }
-
-        if (validateUal && req.body.ual) {
-            return {
-                isValid: false,
-                code: 400,
-                message: 'Ual parameter missing in request.',
-            };
-        }
-
-        return {
-            isValid: true,
-        };
+        return null;
     }
 
     async handleNetworkStoreRequest(message, remotePeerId) {

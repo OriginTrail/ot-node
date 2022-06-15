@@ -236,6 +236,7 @@ exports.SERVICE_API_ROUTES = {
 exports.ERROR_TYPE = {
     INSERT_ASSERTION_ERROR: 'InsertAssertionError',
     PREPARE_ASSERTION_ERROR: 'PrepareAssertionError',
+    VALIDATE_ASSERTION_ERROR: 'ValidateAssertionError',
     SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
     FIND_NODES_ERROR: 'FindNodesError',
     SEND_ASSERTION_ERROR: 'SendAssertionError',

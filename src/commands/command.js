@@ -1,11 +1,12 @@
-const Models = require('../../models/index');
-
 /**
  * Describes one command handler
  */
 class Command {
     constructor(ctx) {
+        this.logger = ctx.logger;
         this.commandResolver = ctx.commandResolver;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.handlerIdService = ctx.handlerIdService;
     }
 
     /**
@@ -61,7 +62,7 @@ class Command {
             return Command.empty();
         }
         const [name] = sequence;
-        sequence = sequence.slice(1);
+        const newSequence = sequence.slice(1);
 
         const handler = this.commandResolver.resolve(name);
         const command = handler.default();
@@ -69,7 +70,7 @@ class Command {
         const commandData = command.data ? command.data : {};
         Object.assign(command, {
             data: Object.assign(commandData, data),
-            sequence,
+            newSequence,
         });
         if (opts) {
             Object.assign(command, opts);
@@ -108,25 +109,15 @@ class Command {
      * @param markFailed - Update operation status to failed
      * @returns {*}
      */
-    async handleError(handlerId, error, errorName, markFailed) {
+    async handleError(handlerId, errorMessage, errorName, markFailed) {
         this.logger.error({
-            msg: `Command error (${errorName}): ${error.message}`,
+            msg: `Command error (${errorName}): ${errorMessage}`,
             Event_name: errorName,
-            Event_value1: error.message,
+            Event_value1: errorMessage,
             Id_operation: handlerId,
         });
         if (markFailed) {
-            await Models.handler_ids.update(
-                {
-                    data: JSON.stringify({ message: error.message }),
-                    status: 'FAILED',
-                },
-                {
-                    where: {
-                        handler_id: handlerId,
-                    },
-                },
-            );
+            await this.handlerIdService.updateFailedHandlerId(handlerId, errorMessage);
         }
     }
 

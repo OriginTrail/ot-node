@@ -5,9 +5,9 @@ class TripleStoreModuleManager extends BaseModuleManager {
         return 'tripleStore';
     }
 
-    async insert(triples, rootHash) {
+    async insert(triples, assertionId) {
         if (this.initialized) {
-            return this.getImplementation().module.insert(triples, rootHash);
+            return this.getImplementation().module.insert(triples, assertionId);
         }
     }
 

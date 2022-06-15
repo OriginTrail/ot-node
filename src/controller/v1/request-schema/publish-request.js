@@ -1,19 +1,20 @@
 module.exports = {
     type: 'object',
-    required: ['keywords', 'visibility'],
+    required: ['metadata', 'data', 'ual'],
     properties: {
-        keywords: {
-            type: 'string',
-            minLength: 1,
-        },
-        visibility: {
-            type: 'string',
-            enum: ['public', 'private'],
-            minLength: 1,
+        metadata: {
+            type: 'array',
+            items: {
+                type: 'string',
+            },
+            minItems: 5,
         },
         data: {
-            type: 'string',
-            minLength: 1,
+            type: 'array',
+            items: {
+                type: 'string',
+            },
+            minItems: 1,
         },
         ual: {
             type: 'string',

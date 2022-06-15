@@ -5,8 +5,9 @@ class InsertAssertionCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
-        this.dataService = ctx.dataService;
+        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.fileService = ctx.fileService;
+        this.handlerIdService = ctx.handlerIdService;
     }
 
     /**
@@ -14,31 +15,26 @@ class InsertAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { documentPath, handlerId, operationId } = command.data;
+        const {handlerId, operationId, ual, dataRootId} = command.data;
 
-        this.logger.emit({
-            msg: 'Started measuring execution of storing publishing data into local triple store',
-            Event_name: 'publish_local_store_start',
-            Operation_name: 'publish_local_store',
-            Id_operation: operationId,
-        });
-        const { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
+        const {data, metadata} = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
-        try {
-            await this.dataService.insert(nquads.join('\n'), `${constants.DID_PREFIX}:${assertion.id}`);
-            this.logger.info(`Assertion ${assertion.id} has been successfully inserted`);
-            this.logger.emit({
-                msg: 'Finished measuring execution of storing publishing data into local triple store',
-                Event_name: 'publish_local_store_end',
-                Operation_name: 'publish_local_store',
-                Id_operation: operationId,
-            });
-        } catch (e) {
-            await this.handleError(handlerId, e, constants.ERROR_TYPE.INSERT_ASSERTION_ERROR, true);
-            return Command.empty();
-        }
+        const metadataId = this.getMetadataId(metadata);
+
+        const assertion = [
+            `${ual} metadata ${metadataId}`,
+            `${ual} data ${dataRootId}`
+        ].concat(metadata).concat(data);
+
+        await this.tripleStoreModuleManager.insert(assertion, ual);
+
+        this.logger.info(`Assertion ${ual} has been successfully inserted`);
 
         return this.continueSequence(command.data, command.sequence);
+    }
+
+    getMetadataId(metadata) {
+        return metadata[0].split(' ')[0];
     }
 
     /**
