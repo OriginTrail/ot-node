@@ -37,14 +37,10 @@ class OTNode {
         await this.initializeModules();
         await this.saveNetworkModulePeerIdAndPrivKey();
 
-        // await this.initializeDataModule();
-        // await this.initializeOperationalDbModule();
-        // await this.initializeValidationModule();
         await this.initializeControllers();
         await this.initializeCommandExecutor();
         await this.initializeTelemetryHubModule();
-        // await this.initializeRpcModule();
-        // await this.initializeWatchdog();
+
         this.logger.info('Node is up and running!');
     }
 
@@ -135,38 +131,6 @@ class OTNode {
         }
     }
 
-    // async initializeDataModule() {
-    //     try {
-    //         const dataService = this.container.resolve('dataService');
-    //         await dataService.initialize();
-    //         this.logger.info(`Data module: ${dataService.getName()} implementation`);
-    //     } catch (e) {
-    //         this.logger.error({
-    //             msg: `Data module initialization failed. Error message: ${e.message}`,
-    //             Event_name: constants.ERROR_TYPE.DATA_MODULE_INITIALIZATION_ERROR,
-    //         });
-    //     }
-    // }
-
-    // async initializeOperationalDbModule() {
-    //     try {
-    //         this.logger.info('Operational database module: sequelize implementation');
-    //         // eslint-disable-next-line global-require
-    //         const db = require('./models');
-    //
-    //         if (this.config.otNodeUpdated) {
-    //             execSync(`npx sequelize --config=./config/sequelizeConfig.js db:migrate`);
-    //         }
-    //
-    //         await db.sequelize.sync();
-    //     } catch (e) {
-    //         this.logger.error({
-    //             msg: `Operational database module initialization failed. Error message: ${e.message}`,
-    //             Event_name: constants.ERROR_TYPE.OPERATIONALDB_MODULE_INITIALIZATION_ERROR,
-    //         });
-    //     }
-    // }
-
     async saveNetworkModulePeerIdAndPrivKey() {
         const networkModuleManager = this.container.resolve('networkModuleManager');
         const peerId = networkModuleManager.getPeerId();
@@ -180,20 +144,6 @@ class OTNode {
             }
         }
     }
-
-    // async initializeValidationModule() {
-    //     try {
-    //         const validationService = this.container.resolve('validationService');
-    //
-    //         await validationService.initialize();
-    //         this.logger.info(`Validation module: ${validationService.getName()} implementation`);
-    //     } catch (e) {
-    //         this.logger.error({
-    //             msg: `Validation module initialization failed. Error message: ${e.message}`,
-    //             Event_name: constants.ERROR_TYPE.VALIDATION_INITIALIZATION_ERROR,
-    //         });
-    //     }
-    // }
 
     async initializeCommandExecutor() {
         try {

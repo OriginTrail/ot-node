@@ -175,10 +175,6 @@ class CommandExecutor {
                 result.children.forEach(async (e) => this.add(e, e.delay, false));
             }
         } catch (e) {
-            this.logger.error({
-                msg: `Failed to process command ${command.name} and ID ${command.id}. ${e}.\n${e.stack}`,
-                Event_name: constants.ERROR_TYPE.COMMAND_FAILED_ERROR,
-            });
             try {
                 const result = await this._handleError(command, handler, e);
                 if (result && result.commands) {
