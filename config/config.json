@@ -46,7 +46,7 @@
                         "config": {
                             "database": "operationaldb",
                             "user": "root",
-                            "password": "password",
+                            "password": "",
                             "port": "3306",
                             "host": "localhost",
                             "dialect": "mysql",
@@ -127,7 +127,6 @@
         },
         "logLevel": "trace",
         "replicationFactor": 5,
-        "rpcPort": 8900,
         "network": {
             "port": 9000,
             "bootstrap": []
@@ -206,7 +205,6 @@
         },
         "logLevel": "trace",
         "replicationFactor": 5,
-        "rpcPort": 8900,
         "network": {
             "port": 9000,
             "bootstrap": []
@@ -290,7 +288,6 @@
         },
         "logLevel": "trace",
         "replicationFactor": 5,
-        "rpcPort": 8900,
         "network": {
             "port": 9000,
             "bootstrap": [
@@ -369,7 +366,6 @@
         },
         "logLevel": "trace",
         "replicationFactor": 5,
-        "rpcPort": 8900,
         "network": {
             "port": 9000,
             "bootstrap": []

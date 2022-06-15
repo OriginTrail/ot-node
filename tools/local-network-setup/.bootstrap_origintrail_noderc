@@ -6,6 +6,15 @@
   "logLevel": "trace",
   "rpcPort": 8900,
   "modules": {
+    "httpClient": {
+      "enabled": true,
+      "implementation": {
+        "express-http-client": {
+          "package": "./http-client/implementation/express-http-client",
+          "config": {}
+        }
+      }
+    },
     "tripleStore": {
       "enabled": true,
       "defaultImplementation": "ot-graphdb"
@@ -28,7 +37,7 @@
           "package": "./blockchain/implementation/web3-service",
           "config": {
             "blockchainTitle": "Polygon",
-            "networkId": "polygon::mainnet",
+            "networkId": "polygon::testnet",
             "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
             "rpcEndpoints": [
               "https://rpc-mumbai.maticvigil.com/",
@@ -36,8 +45,8 @@
               "https://rpc-mumbai.matic.today",
               "https://matic-testnet-archive-rpc.bwarelabs.com"
             ],
-            "publicKey": "0xd08eCEFb11C5e767fA196E2010B736155272537e",
-            "privateKey": "8db5ecd44052100b03c8d5fd0221390ea0145868a58971a70e456c90697135ee"
+            "publicKey": "...",
+            "privateKey": "..."
           }
         }
       }

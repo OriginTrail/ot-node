@@ -47,7 +47,7 @@ for (let i = 0; i < numberOfNodes; i += 1) {
 
     const parsedTemplate = JSON.parse(JSON.stringify(template));
 
-    parsedTemplate.rpcPort = 8900 + i;
+    parsedTemplate.modules.httpClient.implementation['express-http-client'].config.port = 8900 + i;
     parsedTemplate.modules.network.implementation['libp2p-service'].config.port = 9000 + i;
     parsedTemplate.graphDatabase.name = `node${i}`;
 
