@@ -1,5 +1,5 @@
 const { v1: uuidv1 } = require('uuid');
-const sleep = require('sleep-async')().Promise;
+const {setTimeout} = require('timers/promises');
 const constants = require('../constants');
 
 class PublishService {
@@ -140,7 +140,7 @@ class PublishService {
             && retries < constants.STORE_MAX_RETRIES
         ) {
             retries += 1;
-            await sleep.sleep(constants.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS);
+            await setTimeout(constants.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS);
             response = await this.networkModuleManager.sendMessage(
                 constants.NETWORK_PROTOCOLS.STORE,
                 assertion,

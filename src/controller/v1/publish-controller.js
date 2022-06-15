@@ -1,10 +1,6 @@
-const path = require('path');
-const { MAX_FILE_SIZE, PUBLISH_METHOD } = require('../../../modules/constants');
-const Utilities = require('../../../modules/utilities');
+const { PUBLISH_METHOD } = require('../../../modules/constants');
 const BaseController = require('./base-controller');
 const constants = require("../../../modules/constants");
-
-const PublishAllowedVisibilityParams = ['public', 'private'];
 
 class PublishController extends BaseController {
     constructor(ctx) {

@@ -1,5 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
-const sleep = require('sleep-async')().Promise;
+const {setTimeout} = require('timers/promises');
 const Command = require('../../command');
 const Models = require('../../../../models/index');
 const constants = require('../../../constants/constants');
@@ -57,7 +57,7 @@ class StoreInitCommand extends Command {
                 let response;
                 do {
                     if (tries !== 0)
-                        await sleep.sleep(constants.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS);
+                        await setTimeout(constants.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS);
 
                     response = await this.networkModuleManager.sendMessage(
                         constants.NETWORK_PROTOCOLS.STORE,

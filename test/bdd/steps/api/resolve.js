@@ -1,6 +1,6 @@
 const { When, Then, Given } = require('@cucumber/cucumber');
 const { expect, assert } = require('chai');
-const sleep = require('sleep-async')().Promise;
+const {setTimeout} = require('timers/promises');
 const sortedStringify = require('json-stable-stringify');
 
 When(/^I call resolve on node (\d+) for last published assertion/, { timeout: 120000 }, async function (node) {
@@ -43,7 +43,7 @@ Given('I wait for last resolve to finalize', { timeout: 120000 }, async function
         } else {
             retryCount += 1;
             // eslint-disable-next-line no-await-in-loop
-            await sleep.sleep(5000);
+            await setTimeout(5000);
         }
     }
 });

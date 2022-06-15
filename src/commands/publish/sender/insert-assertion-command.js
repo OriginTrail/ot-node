@@ -24,13 +24,13 @@ class InsertAssertionCommand extends Command {
 
         const metadataId = this.getMetadataId(metadata);
 
-        const assertion = [
+        const nquads = [
             `<${ual}> <http://schema.org/metadata> "${metadataId}" .`,
             `<${ual}> <http://schema.org/data> "${dataRootId}" .`
         ].concat(metadata).concat(data);
 
         this.logger.info(`Inserting assertion with ual:${ual} in database.`);
-        await this.tripleStoreModuleManager.insert(assertion, ual);
+        await this.tripleStoreModuleManager.insert(nquads.join("\n"), ual);
 
         this.logger.info(`Assertion ${ual} has been successfully inserted!`);
 

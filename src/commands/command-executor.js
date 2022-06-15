@@ -1,5 +1,5 @@
 const async = require('async');
-const sleep = require('sleep-async')().Promise;
+const {setTimeout} = require('timers/promises');
 const { forEach } = require('p-iteration');
 
 const Models = require('../../models');
@@ -47,7 +47,7 @@ class CommandExecutor {
                         that.logger.trace('Command executor has not been started yet. Hibernating...');
                     }
 
-                    await sleep.sleep(1000);
+                    await setTimeout(1000);
                 }
                 await this._execute(command);
             } catch (e) {
