@@ -10,24 +10,13 @@ class Logger {
     initialize(logLevel, telemetryHubEnabled) {
         try {
             const logFilename = path.join(path.resolve(__dirname, '../../'), 'logs/active.log');
-            let chosenTargets = [];
+            const chosenTargets = [{
+                target: './pino-pretty-transport',
+                options: {colorize: true},
+                level: this.logLevel,
+            }];
             if (telemetryHubEnabled) {
-                chosenTargets = [
-                    {
-                        target: './pino-pretty-transport',
-                        options: { colorize: true },
-                        level: 'trace',
-                    },
-                    { target: 'pino/file', level: 'trace', options: { destination: logFilename } },
-                ];
-            } else {
-                chosenTargets = [
-                    {
-                        target: './pino-pretty-transport',
-                        options: { colorize: true },
-                        level: 'trace',
-                    },
-                ];
+                chosenTargets.push({target: 'pino/file', level: this.logLevel, options: {destination: logFilename}});
             }
             this.pinoLogger = pino({
                 transport: {
@@ -35,7 +24,7 @@ class Logger {
                 },
                 customLevels: {
                     emit: 15,
-                    api: 7,
+                    api: 25,
                 },
                 level: logLevel,
             });

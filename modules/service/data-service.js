@@ -527,6 +527,7 @@ class DataService {
     }
 
     async extractMetadata(rdf) {
+        this.logger.debug('Extracting metadata from rdf');
         const parser = new N3.Parser({format: 'N-Triples', baseIRI: 'http://schema.org/'});
         const result = {
             keywords: []

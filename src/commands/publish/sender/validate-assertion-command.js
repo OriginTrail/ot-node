@@ -30,15 +30,20 @@ class ValidateAssertionCommand extends Command {
         const calculatedRootHash = this.validationModuleManager.calculateRootHash(assertion);
 
         if (blockchainData.rootHash !== calculatedRootHash) {
+            this.logger.debug(`Invalid root hash. Received value from blockchin: ${blockchainData.rootHash}, calculated: ${calculatedRootHash}`);
             await this.handleError(handlerId, 'Invalid assertion metadata, root hash mismatch!', ERROR_TYPE.VALIDATE_ASSERTION_ERROR, true);
             return Command.empty();
         }
+        this.logger.debug('Root hash matches');
 
         if (blockchainData.issuer !== issuer) {
+            this.logger.debug(`Invalid issuer. Received value from blockchin: ${blockchainData.issuer}, from metadata: ${issuer}`);
             await this.handleError(handlerId, 'Invalid assertion metadata, issuer mismatch!', ERROR_TYPE.VALIDATE_ASSERTION_ERROR, true);
             return Command.empty();
         }
+        this.logger.debug('Issuer is valid');
 
+        this.logger.info(`Assertion with id: ${calculatedRootHash} passed all checks!`);
         return this.continueSequence(
             command.data,
             command.sequence,

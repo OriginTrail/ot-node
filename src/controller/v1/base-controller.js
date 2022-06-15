@@ -4,6 +4,7 @@ class BaseController {
     constructor(ctx) {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.fileService = ctx.fileService;
+        this.logger = ctx.logger;
     }
 
     returnResponse(res, status, data) {
@@ -11,7 +12,9 @@ class BaseController {
     }
 
     generateOperationId() {
-        return uuidv1();
+        const operationId = uuidv1();
+        this.logger.debug(`Generated operation id for request ${operationId}`);
+        return operationId;
     }
 }
 

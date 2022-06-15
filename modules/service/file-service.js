@@ -8,6 +8,7 @@ const MIGRATION_FOLDER_NAME = 'migrations';
 class FileService {
     constructor(ctx) {
         this.config = ctx.config;
+        this.logger = ctx.logger;
     }
 
     getFileExtension(fileName) {
@@ -22,6 +23,7 @@ class FileService {
      * @returns {Promise}
      */
     writeContentsToFile(directory, filename, data) {
+        this.logger.debug(`Saving file with name: ${filename} in directory: ${directory}`);
         return new Promise((resolve, reject) => {
             mkdir(directory, { recursive: true }, (err) => {
                 if (err) {
@@ -60,6 +62,7 @@ class FileService {
     }
 
     _readFile(filePath, convertToJSON = false) {
+        this.logger.debug(`Reading file on path: ${filePath}, converting to json: ${convertToJSON}`);
         return new Promise((resolve, reject) => {
             exists(filePath, (exist) => {
                 if (exist) {
@@ -86,6 +89,7 @@ class FileService {
     }
 
     removeFile(filePath) {
+        this.logger.debug(`Removing file on path: ${filePath}`);
         return new Promise((resolve, reject) => {
             exists(filePath, (exist) => {
                 if (exist) {

@@ -33,9 +33,7 @@ class PublishController extends BaseController {
     async handleHttpApiPublishMethod(req, res, method) {
         const operationId = this.generateOperationId();
 
-        const handlerObject = await this.handlerIdService.generateHandlerId();
-
-        const handlerId = handlerObject.handler_id;
+        const handlerId = await this.handlerIdService.generateHandlerId();
 
         this.returnResponse(res, 202, {
             handlerId,
@@ -59,7 +57,7 @@ class PublishController extends BaseController {
         };
 
         const {keywords, dataRootId, issuer, visibility, type} = metadataObject;
-
+        this.logger.info(`Received assertion with ual: ${ual}`);
         const commandData = {
             method,
             ual,
@@ -90,6 +88,7 @@ class PublishController extends BaseController {
     }
 
     validateMetadata(metadata) {
+        this.logger.debug('Validating received metadata');
         if (!metadata.keywords || metadata.keywords.length === 0) {
             return 'Keywords are missing in assertion metadata';
         }
@@ -105,6 +104,7 @@ class PublishController extends BaseController {
         if (!metadata.type) {
             return 'Type is missing in assertion metadata';
         }
+        this.logger.debug('Received metadata is valid');
         return null;
     }
 

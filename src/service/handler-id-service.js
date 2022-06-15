@@ -8,16 +8,18 @@ class HandlerIdService {
     }
 
     async generateHandlerId() {
-        const handlerId = await this.repositoryModuleManager.createHandlerIdRecord({
+        const handlerIdObject = await this.repositoryModuleManager.createHandlerIdRecord({
             status: HANDLER_ID_STATUS.PENDING,
         });
-        return handlerId;
+        this.logger.debug(`Generated handler id for request ${handlerIdObject.handler_id}`);
+        return handlerIdObject.handler_id;
     }
 
     async updateFailedHandlerId(handlerId, errorMessage) {
         const handlerIdCachePath = this.fileService.getHandlerIdDocumentPath(handlerId);
 
         await this.fileService.removeFile(handlerIdCachePath);
+        this.logger.debug(`Marking handler id ${handlerId} as failed`);
         await this.repositoryModuleManager.updateHandlerIdRecord(
             {
                 status: HANDLER_ID_STATUS.FAILED,
@@ -37,6 +39,7 @@ class HandlerIdService {
     }
 
     async cacheHandlerIdData(handlerId, data) {
+        this.logger.debug(`Saving data for handler id: ${handlerId} in file`);
         const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
 
         await this.fileService.writeContentsToFile(
@@ -47,6 +50,7 @@ class HandlerIdService {
     }
 
     async getCachedHandlerIdData(handlerId) {
+        this.logger.debug(`Reading handler id: ${handlerId} cached data from file`);
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId)
         const data = await this.fileService.readFileOnPath(documentPath);
         return JSON.parse(data);
