@@ -2,6 +2,7 @@ const path = require('path');
 const { MAX_FILE_SIZE, PUBLISH_METHOD } = require('../../../modules/constants');
 const Utilities = require('../../../modules/utilities');
 const BaseController = require('./base-controller');
+const constants = require("../../../modules/constants");
 
 const PublishAllowedVisibilityParams = ['public', 'private'];
 
@@ -48,8 +49,11 @@ class PublishController extends BaseController {
 
         const validityMessage = this.validateMetadata(metadataObject);
 
-        if (!validityMessage) {
-            this.logger.error(validityMessage);
+        if (validityMessage) {
+            this.logger.error({
+                msg: validityMessage,
+                Event_name: constants.ERROR_TYPE.PUBLISH_ROUTE_ERROR,
+            });
             await this.handlerIdService.updateFailedHandlerId(handlerId, validityMessage);
             return;
         };
@@ -69,7 +73,7 @@ class PublishController extends BaseController {
         };
 
         const commandSequence = [
-            'validateAssertionCommand',
+            // 'validateAssertionCommand',
             'insertAssertionCommand',
             'findNodesCommand',
             'storeInitCommand',

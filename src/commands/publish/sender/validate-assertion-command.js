@@ -21,7 +21,7 @@ class ValidateAssertionCommand extends Command {
             issuer,
         } = command.data;
 
-        const {data, metadata} = await this.fileService.getCachedHandlerIdData(handlerId);
+        const {data, metadata} = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
         const assertion = data.concat(metadata);
         const blockchainData = this.blockchainModuleManager.getAssetProofs(ual);

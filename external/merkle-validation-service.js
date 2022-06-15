@@ -63,9 +63,10 @@ class MerkleValidationService {
         const tree = new MerkleTools({
             hashType: 'sha256',
         });
-        for (const leaf of assertion) {
-            tree.addLeaf(leaf, true);
-        }
+        assertion.forEach((leaf, index)=>{
+            const leafHash = this.calculateHash(leaf);
+            tree.addLeaf(leafHash + index, true);
+        });
         tree.makeTree();
         return tree.getMerkleRoot().toString('hex');
     }

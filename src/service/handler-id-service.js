@@ -42,7 +42,7 @@ class HandlerIdService {
     async getCachedHandlerIdData(handlerId) {
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId)
         const data = await this.fileService.readFileOnPath(documentPath);
-        return data;
+        return JSON.parse(data);
     }
 }
 
