@@ -10,7 +10,6 @@ class DependencyInjection {
             [
                 'modules/controller/**/*.js',
                 'modules/service/**/*.js',
-                'modules/command/**/*.js',
                 'modules/manager/**/*.js',
                 'modules/worker/worker-pool.js',
                 'src/controller/**/*.js',

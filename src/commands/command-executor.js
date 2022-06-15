@@ -33,10 +33,11 @@ class CommandExecutor {
         this.ctx = ctx;
         this.logger = ctx.logger;
         this.commandResolver = ctx.commandResolver;
+        this.config = ctx.config;
         this.started = false;
 
         this.parallelism = QUEUE_PARALLELISM;
-        this.verboseLoggingEnabled = ctx.config.commandExecutorVerboseLoggingEnabled;
+        this.verboseLoggingEnabled = this.config.commandExecutorVerboseLoggingEnabled;
 
         const that = this;
         this.queue = async.queue(async (command, callback) => {
@@ -175,10 +176,10 @@ class CommandExecutor {
                 result.children.forEach(async (e) => this.add(e, e.delay, false));
             }
         } catch (e) {
-            this.logger.error({
-                msg: `Failed to process command ${command.name} and ID ${command.id}. ${e}.\n${e.stack}`,
-                Event_name: constants.ERROR_TYPE.COMMAND_FAILED_ERROR,
-            });
+            if (this.verboseLoggingEnabled) {
+                this.logger.trace(`Failed to process command ${command.name} and ID ${command.id}. ${e}.\n${e.stack}`);
+            }
+
             try {
                 const result = await this._handleError(command, handler, e);
                 if (result && result.commands) {
