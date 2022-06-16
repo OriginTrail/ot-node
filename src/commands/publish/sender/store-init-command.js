@@ -1,8 +1,16 @@
 const { v4: uuidv4 } = require('uuid');
-const {setTimeout} = require('timers/promises');
+const { setTimeout } = require('timers/promises');
 const Command = require('../../command');
 const Models = require('../../../../models/index');
-const constants = require('../../../constants/constants');
+const {
+    REMOVE_SESSION_COMMAND_DELAY,
+    NETWORK_MESSAGE_TYPES,
+    NETWORK_PROTOCOLS,
+    STORE_MAX_TRIES,
+    STORE_BUSY_REPEAT_INTERVAL_IN_MILLS,
+    STORE_MIN_SUCCESS_RATE,
+    ERROR_TYPE,
+} = require('../../../constants/constants');
 
 class StoreInitCommand extends Command {
     constructor(ctx) {
@@ -11,6 +19,7 @@ class StoreInitCommand extends Command {
         this.config = ctx.config;
         this.networkModuleManager = ctx.networkModuleManager;
         this.fileService = ctx.fileService;
+        this.handlerIdService = ctx.handlerIdService;
         this.commandExecutor = ctx.commandExecutor;
     }
 
@@ -26,7 +35,7 @@ class StoreInitCommand extends Command {
         const messages = nodes.map(() => ({
             header: {
                 sessionId: uuidv4(),
-                messageType: constants.NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT,
+                messageType: NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT,
             },
             data: {
                 assertionId: assertion.id,
@@ -41,14 +50,13 @@ class StoreInitCommand extends Command {
                     data: { sessionId: message.header.sessionId },
                     transactional: false,
                 },
-                constants.REMOVE_SESSION_COMMAND_DELAY,
+                REMOVE_SESSION_COMMAND_DELAY,
             ),
         );
 
         await Promise.all(removeSessionPromises);
 
         let failedResponses = 0;
-        let busyResponses = 0;
         const availableNodes = [];
         const sessionIds = [];
         const sendMessagePromises = nodes.map(async (node, index) => {
@@ -57,30 +65,27 @@ class StoreInitCommand extends Command {
                 let response;
                 do {
                     if (tries !== 0)
-                        await setTimeout(constants.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS);
+                        await setTimeout(STORE_BUSY_REPEAT_INTERVAL_IN_MILLS);
 
                     response = await this.networkModuleManager.sendMessage(
-                        constants.NETWORK_PROTOCOLS.STORE,
+                        NETWORK_PROTOCOLS.STORE,
                         node,
                         messages[index],
                     );
                     tries += 1;
                 } while (
                     response &&
-                    response.header.messageType ===
-                        constants.NETWORK_MESSAGE_TYPES.RESPONSES.BUSY &&
-                    tries < constants.STORE_MAX_TRIES
+                    response.header.messageType === NETWORK_MESSAGE_TYPES.RESPONSES.BUSY &&
+                    tries < STORE_MAX_TRIES
                 );
                 if (
                     !response ||
-                    response.header.messageType === constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK
-                )
+                    response.header.messageType === NETWORK_MESSAGE_TYPES.RESPONSES.NACK ||
+                    response.header.messageType === NETWORK_MESSAGE_TYPES.RESPONSES.BUSY
+                ) {
                     failedResponses += 1;
-                else if (
-                    response.header.messageType === constants.NETWORK_MESSAGE_TYPES.RESPONSES.BUSY
-                )
-                    busyResponses += 1;
-                else {
+                    this.networkModuleManager.removeSession(response.header.sessionId);
+                } else {
                     availableNodes.push(node);
                     sessionIds.push(response.header.sessionId);
                 }
@@ -96,22 +101,13 @@ class StoreInitCommand extends Command {
 
         await Promise.allSettled(sendMessagePromises);
 
-        const maxFailedResponses = Math.round(
-            (1 - constants.STORE_MIN_SUCCESS_RATE) * nodes.length,
-        );
-        const status =
-            failedResponses + busyResponses <= maxFailedResponses ? 'COMPLETED' : 'FAILED';
+        const maxFailedResponses = Math.round((1 - STORE_MIN_SUCCESS_RATE) * nodes.length);
+        const status = failedResponses <= maxFailedResponses ? 'COMPLETED' : 'FAILED';
 
         if (status === 'FAILED') {
-            await Models.handler_ids.update(
-                {
-                    status,
-                },
-                {
-                    where: {
-                        handler_id: handlerId,
-                    },
-                },
+            await this.handlerIdService.updateFailedHandlerId(
+                handlerId,
+                'Unable to publish data, not enough nodes available to store the data!',
             );
 
             if (command.data.isTelemetry) {
@@ -147,7 +143,7 @@ class StoreInitCommand extends Command {
         this.logger.error({
             msg,
             Operation_name: 'Error',
-            Event_name: constants.ERROR_TYPE.STORE_INIT_ERROR,
+            Event_name: ERROR_TYPE.STORE_INIT_ERROR,
             Event_value1: error.message,
             Id_operation: handlerId,
         });

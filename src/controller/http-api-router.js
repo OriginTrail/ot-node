@@ -1,4 +1,5 @@
 const publishRequest = require('./v1/request-schema/publish-request');
+const resolveRequest = require('./v1/request-schema/resolve-request');
 
 class HttpApiRouter {
     constructor(ctx) {
@@ -40,10 +41,9 @@ class HttpApiRouter {
         //     this.searchController.handleHttpApiProofsRequest(req, res);
         // });
         //
-        // // GET REQUESTS
-        // this.httpClientModuleManager.get(HTTP_API_ROUTES.RESOLVE, (req, res) => {
-        //     this.resolveController.handleHttpApiResolveRequest(req, res);
-        // });
+        this.httpClientModuleManager.post('/resolve', resolveRequest, (req, res) => {
+            this.resolveController.handleHttpApiResolveRequest(req, res);
+        });
         //
         // this.httpClientModuleManager.get(HTTP_API_ROUTES.SEARCH_ASSERTIONS, (req, res) => {
         //     this.searchController.handleHttpApiSearchAssertionsRequest(req, res);

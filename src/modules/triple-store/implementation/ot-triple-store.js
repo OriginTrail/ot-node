@@ -1,5 +1,5 @@
 const Engine = require('@comunica/query-sparql').QueryEngine;
-const {setTimeout} = require('timers/promises')
+const { setTimeout } = require('timers/promises');
 const constants = require('./triple-store-constants');
 
 class OtTripleStore {
@@ -12,7 +12,11 @@ class OtTripleStore {
         let retries = 0;
         while (!ready && retries < constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
             retries += 1;
-            this.logger.warn(`Cannot connect to Triple store (${this.getName()}), retry number: ${retries}/${constants.TRIPLE_STORE_CONNECT_MAX_RETRIES}. Retrying in ${constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`);
+            this.logger.warn(
+                `Cannot connect to Triple store (${this.getName()}), retry number: ${retries}/${
+                    constants.TRIPLE_STORE_CONNECT_MAX_RETRIES
+                }. Retrying in ${constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`,
+            );
             await setTimeout(constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000);
             ready = await this.healthCheck();
         }
@@ -81,14 +85,22 @@ class OtTripleStore {
     }
 
     async resolve(uri) {
+        const includePrivateData = false;
         const escapedUri = this.cleanEscapeCharacter(uri);
+        const graphName = `<${escapedUri}>`;
+        const publicVisibility = includePrivateData ? '' : `${graphName} schema:hasVisibility "public" .`;
+
         const query = `PREFIX schema: <http://schema.org/>
-                        CONSTRUCT { ?s ?p ?o }
-                        WHERE {
-                          GRAPH <${constants.DID_PREFIX}:${escapedUri}> {
-                            ?s ?p ?o
-                          }
-                        }`;
+                    CONSTRUCT { ?s ?p ?o }
+                    WHERE {
+                        {
+                            GRAPH ${graphName} 
+                            {
+                                ?s ?p ?o .
+                                ${publicVisibility}
+                            }
+                        }
+                    }`;
         const nquads = await this.construct(query);
         return nquads;
     }
@@ -271,10 +283,12 @@ class OtTripleStore {
         return typeof param === 'boolean' || ['true', 'false'].includes(param);
     }
 
-    async reinitialize(){
+    async reinitialize() {
         const ready = await this.healthCheck();
         if (!ready) {
-            this.logger.warn(`Cannot connect to Triple store (${this.getName()}), check if your triple store is running.`);
+            this.logger.warn(
+                `Cannot connect to Triple store (${this.getName()}), check if your triple store is running.`,
+            );
         } else {
             this.implementation.initialize(this.logger);
         }

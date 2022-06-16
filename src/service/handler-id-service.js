@@ -1,5 +1,5 @@
-const validator = require("validator");
-const {HANDLER_ID_STATUS} = require("../../modules/constants");
+const validator = require('validator');
+const { HANDLER_ID_STATUS } = require('../../modules/constants');
 
 class HandlerIdService {
     constructor(ctx) {
@@ -34,7 +34,7 @@ class HandlerIdService {
         await this.repositoryModuleManager.updateHandlerIdRecord(
             {
                 status: HANDLER_ID_STATUS.FAILED,
-                data: JSON.stringify({errorMessage}),
+                data: JSON.stringify({ errorMessage }),
             },
             handlerId,
         );
@@ -69,7 +69,7 @@ class HandlerIdService {
         }
 
         this.logger.debug(`Reading handler id: ${handlerId} cached data from file`);
-        const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId)
+        const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
         const data = await this.fileService.readFileOnPath(documentPath);
         return JSON.parse(data);
     }

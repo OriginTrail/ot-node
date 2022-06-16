@@ -35,13 +35,16 @@ class PublishController extends BaseController {
             handlerId,
         });
 
-        const {metadata, data, ual} = req.body;
+        const { metadata, data, ual } = req.body;
         try {
             const metadataNquads = await this.dataService.metadataObjectToNquads(metadata);
 
-            await this.handlerIdService.cacheHandlerIdData(handlerId, {data, metadata: metadataNquads});
+            await this.handlerIdService.cacheHandlerIdData(handlerId, {
+                data,
+                metadata: metadataNquads,
+            });
 
-            const {keywords, dataRootId, issuer, visibility, type} = metadata;
+            const { keywords, dataRootId, issuer, visibility, type } = metadata;
             this.logger.info(`Received assertion with ual: ${ual}`);
             const commandData = {
                 method,
@@ -78,9 +81,11 @@ class PublishController extends BaseController {
                 Event_value1: error.message,
                 Id_operation: operationId,
             });
-            await this.handlerIdService.updateFailedHandlerId(handlerId, 'Unable to publish data, Failed to process input data!');
+            await this.handlerIdService.updateFailedHandlerId(
+                handlerId,
+                'Unable to publish data, Failed to process input data!',
+            );
         }
-
     }
 
     async handleNetworkStoreRequest(message, remotePeerId) {

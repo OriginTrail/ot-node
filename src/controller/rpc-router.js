@@ -19,9 +19,11 @@ class RpcRouter {
                 this.publishController.handleNetworkStoreRequest(message, remotePeerId),
         );
 
-        // this.networkModuleManager.handleMessage(constants.NETWORK_PROTOCOLS.RESOLVE, (result) =>
-        //     this.queryService.handleResolve(result),
-        // );
+        this.networkModuleManager.handleMessage(
+            constants.NETWORK_PROTOCOLS.RESOLVE,
+            (message, remotePeerId) =>
+                this.resolveController.handleNetworkResolveRequest(message, remotePeerId),
+        );
         //
         // this.networkModuleManager.handleMessage(
         //     constants.NETWORK_PROTOCOLS.SEARCH,

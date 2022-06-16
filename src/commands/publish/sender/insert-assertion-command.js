@@ -1,5 +1,5 @@
 const Command = require('../../command');
-const {HANDLER_ID_STATUS, ERROR_TYPE} = require("../../../constants/constants");
+const { HANDLER_ID_STATUS, ERROR_TYPE } = require('../../../constants/constants');
 
 class InsertAssertionCommand extends Command {
     constructor(ctx) {
@@ -15,21 +15,26 @@ class InsertAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const {handlerId, operationId, ual, dataRootId} = command.data;
+        const { handlerId, operationId, ual, dataRootId } = command.data;
 
-        await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.PUBLISH_INSERTING_ASSERTION);
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.PUBLISH_INSERTING_ASSERTION,
+        );
 
-        const {data, metadata} = await this.handlerIdService.getCachedHandlerIdData(handlerId);
+        const { data, metadata } = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
         const metadataId = this.getMetadataId(metadata);
 
         const nquads = [
             `<${ual}> <http://schema.org/metadata> "${metadataId}" .`,
-            `<${ual}> <http://schema.org/data> "${dataRootId}" .`
-        ].concat(metadata).concat(data);
+            `<${ual}> <http://schema.org/data> "${dataRootId}" .`,
+        ]
+            .concat(metadata)
+            .concat(data);
 
         this.logger.info(`Inserting assertion with ual:${ual} in database.`);
-        await this.tripleStoreModuleManager.insert(nquads.join("\n"), ual);
+        await this.tripleStoreModuleManager.insert(nquads.join('\n'), ual);
 
         this.logger.info(`Assertion ${ual} has been successfully inserted!`);
 
