@@ -1,6 +1,11 @@
 const Command = require('../../command');
 const Models = require('../../../../models/index');
-const constants = require('../../../constants/constants');
+const {
+    NETWORK_MESSAGE_TYPES,
+    NETWORK_PROTOCOLS,
+    ERROR_TYPE,
+    HANDLER_ID_STATUS,
+} = require('../../../constants/constants');
 
 class StoreRequestCommand extends Command {
     constructor(ctx) {
@@ -24,7 +29,7 @@ class StoreRequestCommand extends Command {
         const messages = sessionIds.map((sessionId) => ({
             header: {
                 sessionId,
-                messageType: constants.NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST,
+                messageType: NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST,
             },
             data: { id: assertion.id, nquads },
         }));
@@ -33,13 +38,13 @@ class StoreRequestCommand extends Command {
         const sendMessagePromises = nodes.map(async (node, index) => {
             try {
                 const response = await this.networkModuleManager.sendMessage(
-                    constants.NETWORK_PROTOCOLS.STORE,
+                    NETWORK_PROTOCOLS.STORE,
                     node,
                     messages[index],
                 );
                 if (
                     !response ||
-                    response.header.messageType !== constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK
+                    response.header.messageType !== NETWORK_MESSAGE_TYPES.RESPONSES.ACK
                 )
                     failedResponses += 1;
             } catch (e) {
@@ -52,19 +57,14 @@ class StoreRequestCommand extends Command {
             }
         });
 
-        await Promise.all(sendMessagePromises);
+        await Promise.allSettled(sendMessagePromises);
 
-        const status = failedResponses === 0 ? 'COMPLETED' : 'FAILED';
+        const status =
+            failedResponses === 0 ? HANDLER_ID_STATUS.COMPLETED : HANDLER_ID_STATUS.FAILED;
 
-        await Models.handler_ids.update(
-            {
-                status,
-            },
-            {
-                where: {
-                    handler_id: handlerId,
-                },
-            },
+        await this.handlerIdService.updateFailedHandlerId(
+            handlerId,
+            'Publish failed, not enough nodes stored the data!',
         );
 
         if (command.data.isTelemetry) {
@@ -97,7 +97,7 @@ class StoreRequestCommand extends Command {
         this.logger.error({
             msg,
             Operation_name: 'Error',
-            Event_name: constants.ERROR_TYPE.STORE_REQUEST_ERROR,
+            Event_name: ERROR_TYPE.STORE_REQUEST_ERROR,
             Event_value1: error.message,
             Id_operation: handlerId,
         });

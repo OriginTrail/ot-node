@@ -73,20 +73,18 @@ class ResolveInitCommand extends Command {
                 this.handleError(
                     handlerId,
                     e,
-                    `Error while sending store init message to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`,
+                    `Error while sending resolve init message to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`,
                 );
             }
         });
 
         await Promise.allSettled(sendMessagePromises)
-
-        const maxFailedResponses = nodes.length;
-        const status = failedResponses <= maxFailedResponses ? 'COMPLETED' : 'FAILED';
+        const status = failedResponses === nodes.length ? 'FAILED' : 'COMPLETED';
 
         if (status === 'FAILED') {
             await this.handlerIdService.updateFailedHandlerId(
                 handlerId,
-                'Unable to resolve assertion, no node available!',
+                'Resolve failed, no node available!',
             );
 
             return Command.empty();

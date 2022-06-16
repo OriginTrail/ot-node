@@ -107,7 +107,7 @@ class StoreInitCommand extends Command {
         if (status === 'FAILED') {
             await this.handlerIdService.updateFailedHandlerId(
                 handlerId,
-                'Unable to publish data, not enough nodes available to store the data!',
+                'Publish failed, not enough nodes available to store the data!',
             );
 
             if (command.data.isTelemetry) {
@@ -118,6 +118,10 @@ class StoreInitCommand extends Command {
                     triple_store: this.config.graphDatabase.implementation,
                     status,
                 });
+            }
+
+            for(const sessionId of sessionIds) {
+                this.networkModuleManager.removeSession(sessionId.header.sessionId);
             }
 
             return Command.empty();
