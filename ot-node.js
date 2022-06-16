@@ -10,7 +10,7 @@ const constants = require('./modules/constants');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
 const M1FolderStructureInitialMigration = require('./modules/migration/m1-folder-structure-initial-migration');
-const FileService = require('./modules/service/file-service');
+const FileService = require('./src/service/file-service');
 
 class OTNode {
     constructor(config) {

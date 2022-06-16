@@ -1,7 +1,6 @@
-const appRootPath = require('app-root-path');
 const path = require('path');
 const fs = require('fs-extra');
-const FileService = require('../service/file-service');
+const FileService = require('../../src/service/file-service');
 
 class BaseMigration {
     constructor(migrationName, logger, config) {
