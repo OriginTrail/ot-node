@@ -16,6 +16,12 @@ class RepositoryModuleManager extends BaseModuleManager {
             return this.getImplementation().module.updateHandlerIdRecord(data, condition);
         }
     }
+
+    async getHandlerIdRecord(handlerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getHandlerIdRecord(handlerId);
+        }
+    }
 }
 
 module.exports = RepositoryModuleManager;

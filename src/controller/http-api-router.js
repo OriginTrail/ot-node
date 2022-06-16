@@ -53,7 +53,7 @@ class HttpApiRouter {
         //     this.searchController.handleHttpApiSearchEntitiesRequest(req, res);
         // });
         //
-        this.httpClientModuleManager.get('/:operation/result/:handler_id', (req, res) => {
+        this.httpClientModuleManager.get('/:operation/result/:handlerId', (req, res) => {
             this.resultController.handleHttpApiOperationResultRequest(req, res);
         });
 

@@ -1,3 +1,4 @@
+const validator = require("validator");
 const {HANDLER_ID_STATUS} = require("../../modules/constants");
 
 class HandlerIdService {
@@ -15,6 +16,15 @@ class HandlerIdService {
         });
         this.logger.debug(`Generated handler id for request ${handlerIdObject.handler_id}`);
         return handlerIdObject.handler_id;
+    }
+
+    async getHandlerIdRecord(handlerId) {
+        const handlerIdRecord = await this.repositoryModuleManager.getHandlerIdRecord(handlerId);
+        return handlerIdRecord;
+    }
+
+    handlerIdInRightFormat(handlerId) {
+        return validator.isUUID(handlerId);
     }
 
     async updateFailedHandlerId(handlerId, errorMessage) {

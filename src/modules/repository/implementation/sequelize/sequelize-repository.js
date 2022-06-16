@@ -88,8 +88,17 @@ class SequelizeRepository {
     }
 
     async createHandlerIdRecord(handlerData) {
-        const handler = await this.models.handler_ids.create(handlerData);
-        return handler;
+        const handlerRecord = await this.models.handler_ids.create(handlerData);
+        return handlerRecord;
+    }
+
+    async getHandlerIdRecord(handlerId) {
+        const handlerRecord = await this.models.handler_ids.findOne({
+            where: {
+                handler_id: handlerId,
+            }
+        });
+        return handlerRecord;
     }
 
     async updateHandlerIdRecord(data, handlerId) {
