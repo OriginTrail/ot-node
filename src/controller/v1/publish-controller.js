@@ -39,20 +39,7 @@ class PublishController extends BaseController {
 
         await this.handlerIdService.cacheHandlerIdData(handlerId, {data, metadata});
 
-        const metadataObject = await this.dataService.extractMetadata(metadata);
-
-        const validityMessage = this.validateMetadata(metadataObject);
-
-        if (validityMessage) {
-            this.logger.error({
-                msg: validityMessage,
-                Event_name: constants.ERROR_TYPE.PUBLISH_ROUTE_ERROR,
-            });
-            await this.handlerIdService.updateFailedHandlerId(handlerId, validityMessage);
-            return;
-        };
-
-        const {keywords, dataRootId, issuer, visibility, type} = metadataObject;
+        const {keywords, dataRootId, issuer, visibility, type} = metadata;
         this.logger.info(`Received assertion with ual: ${ual}`);
         const commandData = {
             method,
@@ -67,7 +54,7 @@ class PublishController extends BaseController {
         };
 
         const commandSequence = [
-            // 'validateAssertionCommand',
+            'validateAssertionCommand',
             'insertAssertionCommand',
             'findNodesCommand',
             'storeInitCommand',
@@ -81,27 +68,6 @@ class PublishController extends BaseController {
             data: commandData,
             transactional: false,
         });
-    }
-
-    validateMetadata(metadata) {
-        this.logger.debug('Validating received metadata');
-        if (!metadata.keywords || metadata.keywords.length === 0) {
-            return 'Keywords are missing in assertion metadata';
-        }
-        if (!metadata.dataRootId) {
-            return 'Data root id is missing in assertion metadata';
-        }
-        if (!metadata.issuer) {
-            return 'Issuer is missing in assertion metadata';
-        }
-        if (!metadata.visibility) {
-            return 'Visibility is missing in assertion metadata';
-        }
-        if (!metadata.type) {
-            return 'Type is missing in assertion metadata';
-        }
-        this.logger.debug('Received metadata is valid');
-        return null;
     }
 
     async handleNetworkStoreRequest(message, remotePeerId) {

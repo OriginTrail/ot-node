@@ -3,11 +3,34 @@ module.exports = {
     required: ['metadata', 'data', 'ual'],
     properties: {
         metadata: {
-            type: 'array',
-            items: {
-                type: 'string',
-            },
-            minItems: 5,
+            type: 'object',
+            required: ['type', 'issuer', 'visibility', 'keywords', 'dataRootId'],
+            properties: {
+                type: {
+                    type: 'string',
+                    minLength: 1,
+                },
+                issuer: {
+                    type: 'string',
+                    minLength: 1,
+                },
+                visibility: {
+                    type: 'string',
+                    enum: ['public', 'private'],
+                },
+                keywords: {
+                    type: 'array',
+                    items: {
+                        type: 'string',
+                    },
+                    minItems: 1,
+                    maxItems: 10,
+                },
+                dataRootId: {
+                    type: 'string',
+                    minLength: 1,
+                },
+            }
         },
         data: {
             type: 'array',

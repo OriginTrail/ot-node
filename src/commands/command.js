@@ -1,3 +1,5 @@
+const {ERROR_TYPE} = require("../constants/constants");
+
 /**
  * Describes one command handler
  */
@@ -24,6 +26,9 @@ class Command {
      * @param err
      */
     async recover(command, err) {
+        const { handlerId, errorType } = command.data;
+        await this.handleError(handlerId, err.message, errorType, true);
+
         return Command.empty();
     }
 

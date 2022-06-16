@@ -1,6 +1,5 @@
 const Command = require('../../command');
-const constants = require('../../../constants/constants');
-const {HANDLER_ID_STATUS} = require("../../../constants/constants");
+const {HANDLER_ID_STATUS, ERROR_TYPE} = require("../../../constants/constants");
 
 class InsertAssertionCommand extends Command {
     constructor(ctx) {
@@ -42,20 +41,6 @@ class InsertAssertionCommand extends Command {
     }
 
     /**
-     * Recover system from failure
-     * @param command
-     * @param err
-     */
-    async recover(command, err) {
-        const {
-            handlerId,
-        } = command.data;
-        await this.handleError(handlerId, err, constants.ERROR_TYPE.INSERT_ASSERTION_ERROR, true);
-
-        return Command.empty();
-    }
-
-    /**
      * Builds default insertAssertionCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
@@ -65,6 +50,7 @@ class InsertAssertionCommand extends Command {
             name: 'insertAssertionCommand',
             delay: 0,
             transactional: false,
+            errorType: ERROR_TYPE.INSERT_ASSERTION_ERROR,
         };
         Object.assign(command, map);
         return command;

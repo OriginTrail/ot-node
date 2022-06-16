@@ -52,18 +52,6 @@ class ValidateAssertionCommand extends Command {
     }
 
     /**
-     * Recover system from failure
-     * @param command
-     * @param err
-     */
-    async recover(command, err) {
-        const { handlerId } = command.data;
-        await this.handleError(handlerId, err.message, ERROR_TYPE.VALIDATE_ASSERTION_ERROR, true);
-
-        return Command.empty();
-    }
-
-    /**
      * Builds default prepareAssertionForPublish
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
@@ -73,6 +61,7 @@ class ValidateAssertionCommand extends Command {
             name: 'validateAssertionCommand',
             delay: 0,
             transactional: false,
+            errorType: ERROR_TYPE.VALIDATE_ASSERTION_ERROR,
         };
         Object.assign(command, map);
         return command;
