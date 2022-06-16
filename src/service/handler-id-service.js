@@ -5,6 +5,8 @@ class HandlerIdService {
         this.logger = ctx.logger;
         this.fileService = ctx.fileService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+
+        this.memoryCachedHandlersData = {};
     }
 
     async generateHandlerId() {
@@ -16,10 +18,9 @@ class HandlerIdService {
     }
 
     async updateFailedHandlerId(handlerId, errorMessage) {
-        const handlerIdCachePath = this.fileService.getHandlerIdDocumentPath(handlerId);
-
-        await this.fileService.removeFile(handlerIdCachePath);
         this.logger.debug(`Marking handler id ${handlerId} as failed`);
+        await this.removeHandlerIdCache(handlerId);
+
         await this.repositoryModuleManager.updateHandlerIdRecord(
             {
                 status: HANDLER_ID_STATUS.FAILED,
@@ -39,21 +40,40 @@ class HandlerIdService {
     }
 
     async cacheHandlerIdData(handlerId, data) {
-        this.logger.debug(`Saving data for handler id: ${handlerId} in file`);
+        this.logger.debug(`Caching data for handler id: ${handlerId} in file`);
         const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
 
         await this.fileService.writeContentsToFile(
             handlerIdCachePath,
             handlerId,
-            data,
+            JSON.stringify(data),
         );
+
+        this.memoryCachedHandlersData[handlerId] = data;
     }
 
     async getCachedHandlerIdData(handlerId) {
+        if (this.memoryCachedHandlersData[handlerId]) {
+            this.logger.debug(`Reading handler id: ${handlerId} cached data from memory`);
+            return this.memoryCachedHandlersData[handlerId];
+        }
+
         this.logger.debug(`Reading handler id: ${handlerId} cached data from file`);
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId)
         const data = await this.fileService.readFileOnPath(documentPath);
         return JSON.parse(data);
+    }
+
+    async removeHandlerIdCache(handlerId) {
+        this.logger.debug(`Removing handler id: ${handlerId} cached data`);
+        const handlerIdCachePath = this.fileService.getHandlerIdDocumentPath(handlerId);
+        await this.fileService.removeFile(handlerIdCachePath);
+        this.removeHandlerIdMemoryCache(handlerId);
+    }
+
+    removeHandlerIdMemoryCache(handlerId) {
+        this.logger.debug(`Removing handler id: ${handlerId} cached data from memory`);
+        delete this.memoryCachedHandlersData[handlerId];
     }
 }
 

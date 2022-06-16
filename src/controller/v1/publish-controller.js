@@ -37,7 +37,7 @@ class PublishController extends BaseController {
 
         const {metadata, data, ual} = req.body;
 
-        await this.handlerIdService.cacheHandlerIdData(handlerId, JSON.stringify({data, metadata}));
+        await this.handlerIdService.cacheHandlerIdData(handlerId, {data, metadata});
 
         const metadataObject = await this.dataService.extractMetadata(metadata);
 
