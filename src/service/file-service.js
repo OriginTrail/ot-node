@@ -1,6 +1,6 @@
 const path = require('path');
-const { exists, mkdir } = require('fs');
-const fs = require('fs');
+const { mkdir, writeFile, readFile, unlink } = require('fs/promises');
+const { exists } = require('fs');
 const appRootPath = require('app-root-path');
 
 const MIGRATION_FOLDER_NAME = 'migrations';
@@ -22,28 +22,12 @@ class FileService {
      * @param data
      * @returns {Promise}
      */
-    writeContentsToFile(directory, filename, data) {
+    async writeContentsToFile(directory, filename, data) {
         this.logger.debug(`Saving file with name: ${filename} in directory: ${directory}`);
-        return new Promise((resolve, reject) => {
-            mkdir(directory, { recursive: true }, (err) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    const fullpath = path.join(directory, filename);
-                    try {
-                        fs.writeFile(fullpath, data, (err) => {
-                            if (err) {
-                                reject(err);
-                            } else {
-                                resolve(fullpath);
-                            }
-                        });
-                    } catch (e) {
-                        reject(e);
-                    }
-                }
-            });
-        });
+        await mkdir(directory, { recursive: true });
+        const fullpath = path.join(directory, filename);
+        await writeFile(fullpath, data);
+        return fullpath;
     }
 
     createFolder(folderName) {}
@@ -61,50 +45,27 @@ class FileService {
         return this._readFile(filePath, true);
     }
 
-    _readFile(filePath, convertToJSON = false) {
-        this.logger.debug(`Reading file on path: ${filePath}, converting to json: ${convertToJSON}`);
-        return new Promise((resolve, reject) => {
-            exists(filePath, (exist) => {
-                if (exist) {
-                    fs.readFile(filePath, (err, data) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            try {
-                                if (convertToJSON) {
-                                    const fileJson = JSON.parse(data);
-                                    resolve(fileJson);
-                                }
-                                resolve(data.toString());
-                            } catch (error) {
-                                reject(error);
-                            }
-                        }
-                    });
-                } else {
-                    reject(new Error(`File doesn't exist on file path: ${filePath}`));
-                }
-            });
-        });
+    async _readFile(filePath, convertToJSON = false) {
+        this.logger.debug(
+            `Reading file on path: ${filePath}, converting to json: ${convertToJSON}`,
+        );
+        if (exists(filePath)) {
+            const data = await readFile(filePath);
+            return convertToJSON ? JSON.parse(data) : data.toString();
+        }
+        throw Error(`File doesn't exist on file path: ${filePath}`);
     }
 
-    removeFile(filePath) {
+    async removeFile(filePath) {
         this.logger.debug(`Removing file on path: ${filePath}`);
-        return new Promise((resolve, reject) => {
-            exists(filePath, (exist) => {
-                if (exist) {
-                    fs.unlink(filePath, (err) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(true);
-                        }
-                    });
-                } else {
-                    resolve(false);
-                }
-            });
-        });
+        let successful = false;
+        if (exists(filePath)) {
+            try {
+                await unlink(filePath);
+                successful = true;
+            } catch (e) {}
+        }
+        return successful;
     }
 
     getDataFolderPath() {

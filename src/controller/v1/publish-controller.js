@@ -1,6 +1,6 @@
 const { PUBLISH_METHOD } = require('../../../modules/constants');
 const BaseController = require('./base-controller');
-const constants = require("../../../modules/constants");
+const { NETWORK_MESSAGE_TYPES } = require('../../../modules/constants');
 
 class PublishController extends BaseController {
     constructor(ctx) {
@@ -35,11 +35,11 @@ class PublishController extends BaseController {
             handlerId,
         });
 
-        const {metadata, data, ual} = req.body;
+        const { metadata, data, ual } = req.body;
 
-        await this.handlerIdService.cacheHandlerIdData(handlerId, {data, metadata});
+        await this.handlerIdService.cacheHandlerIdData(handlerId, { data, metadata });
 
-        const {keywords, dataRootId, issuer, visibility, type} = metadata;
+        const { keywords, dataRootId, issuer, visibility, type } = metadata;
         this.logger.info(`Received assertion with ual: ${ual}`);
         const commandData = {
             method,
@@ -75,10 +75,10 @@ class PublishController extends BaseController {
         let commandName;
         const commandData = { message, remotePeerId, operationId };
         switch (message.header.messageType) {
-            case 'PROTOCOL_INIT':
+            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
                 commandName = 'handleStoreInitCommand';
                 break;
-            case 'PROTOCOL_REQUEST':
+            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
                 commandName = 'handleStoreRequestCommand';
                 break;
             default:
