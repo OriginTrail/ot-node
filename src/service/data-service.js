@@ -1,5 +1,9 @@
 const jsonld = require("jsonld");
 
+const ALGORITHM = 'URDNA2015';
+const FORMAT = 'application/n-quads';
+const CONTEXT = 'https://schema.org/';
+
 class DataService {
     constructor(ctx) {
         this.config = ctx.config;
@@ -8,8 +12,8 @@ class DataService {
 
     async toNQuads(content) {
         const canonized = await jsonld.canonize(content, {
-            algorithm: "URDNA2015",
-            format: "application/n-quads",
+            algorithm: ALGORITHM,
+            format: FORMAT,
         });
 
         return canonized.split("\n").filter((x) => x !== "");
@@ -17,7 +21,7 @@ class DataService {
 
     async compact(content) {
         const result = await jsonld.compact(content, {
-            "@context": "https://schema.org/",
+            '@context': CONTEXT,
         });
 
         return result;
@@ -28,6 +32,17 @@ class DataService {
         if (nquads && nquads.length === 0) {
             throw new Error("File format is corrupted, no n-quads extracted.");
         }
+
+        return nquads;
+    }
+
+    async metadataObjectToNquads(metadata) {
+        const metadataCopy = JSON.parse(JSON.stringify(metadata));
+        if (!metadataCopy['@context']) {
+            metadataCopy['@context'] = CONTEXT;
+        }
+
+        const nquads = await this.canonize(metadataCopy);
 
         return nquads;
     }

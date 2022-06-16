@@ -1,6 +1,5 @@
-const { PUBLISH_METHOD } = require('../../../modules/constants');
+const { PUBLISH_METHOD, ERROR_TYPE } = require('../../../modules/constants');
 const BaseController = require('./base-controller');
-const constants = require("../../../modules/constants");
 
 class PublishController extends BaseController {
     constructor(ctx) {
@@ -36,38 +35,50 @@ class PublishController extends BaseController {
         });
 
         const {metadata, data, ual} = req.body;
+        try {
+            const metadataNquads = await this.dataService.metadataObjectToNquads(metadata);
 
-        await this.handlerIdService.cacheHandlerIdData(handlerId, {data, metadata});
+            await this.handlerIdService.cacheHandlerIdData(handlerId, {data, metadata: metadataNquads});
 
-        const {keywords, dataRootId, issuer, visibility, type} = metadata;
-        this.logger.info(`Received assertion with ual: ${ual}`);
-        const commandData = {
-            method,
-            ual,
-            handlerId,
-            operationId,
-            keywords,
-            dataRootId,
-            issuer,
-            visibility,
-            type,
-        };
+            const {keywords, dataRootId, issuer, visibility, type} = metadata;
+            this.logger.info(`Received assertion with ual: ${ual}`);
+            const commandData = {
+                method,
+                ual,
+                handlerId,
+                operationId,
+                keywords,
+                dataRootId,
+                issuer,
+                visibility,
+                type,
+            };
 
-        const commandSequence = [
-            'validateAssertionCommand',
-            'insertAssertionCommand',
-            'findNodesCommand',
-            'storeInitCommand',
-            'storeRequestCommand',
-        ];
+            const commandSequence = [
+                'validateAssertionCommand',
+                'insertAssertionCommand',
+                'findNodesCommand',
+                'storeInitCommand',
+                'storeRequestCommand',
+            ];
 
-        await this.commandExecutor.add({
-            name: commandSequence[0],
-            sequence: commandSequence.slice(1),
-            delay: 0,
-            data: commandData,
-            transactional: false,
-        });
+            await this.commandExecutor.add({
+                name: commandSequence[0],
+                sequence: commandSequence.slice(1),
+                delay: 0,
+                data: commandData,
+                transactional: false,
+            });
+        } catch (error) {
+            this.logger.error({
+                msg: `Error while initializing publish data: ${error.message}. ${error.stack}`,
+                Event_name: ERROR_TYPE.PUBLISH_ROUTE_ERROR,
+                Event_value1: error.message,
+                Id_operation: operationId,
+            });
+            await this.handlerIdService.updateFailedHandlerId(handlerId, 'Unable to publish data, Failed to process input data!');
+        }
+
     }
 
     async handleNetworkStoreRequest(message, remotePeerId) {
