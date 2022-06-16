@@ -2,7 +2,7 @@ const Command = require('../../command');
 const Models = require('../../../../models/index');
 const constants = require('../../../constants/constants');
 
-class SendAssertionCommand extends Command {
+class StoreRequestCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -119,4 +119,4 @@ class SendAssertionCommand extends Command {
     }
 }
 
-module.exports = SendAssertionCommand;
+module.exports = StoreRequestCommand;

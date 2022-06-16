@@ -1,6 +1,6 @@
 const { v1: uuidv1 } = require('uuid');
-const Command = require('../../command');
-const constants = require('../../../constants/constants');
+const Command = require('../command');
+const { ERROR_TYPE, NETWORK_PROTOCOLS } = require('../../constants/constants');
 
 class FindNodesCommand extends Command {
     constructor(ctx) {
@@ -9,6 +9,7 @@ class FindNodesCommand extends Command {
         this.config = ctx.config;
         this.networkModuleManager = ctx.networkModuleManager;
         this.fileService = ctx.fileService;
+        this.handlerIdService = ctx.handlerIdService;
     }
 
     /**
@@ -16,9 +17,9 @@ class FindNodesCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { documentPath } = command.data;
+        const { handlerId } = command.data;
 
-        const { assertion } = await this.fileService.loadJsonFromFile(documentPath);
+        const assertion = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
         const keywords = assertion.metadata.keywords.concat(assertion.id);
 
@@ -41,7 +42,7 @@ class FindNodesCommand extends Command {
             });
             const foundNodes = await this.networkModuleManager.findNodes(
                 keyword,
-                constants.NETWORK_PROTOCOLS.STORE,
+                NETWORK_PROTOCOLS.STORE,
             );
             if (foundNodes.length < this.config.replicationFactor) {
                 this.logger.warn(`Found only ${foundNodes.length} node(s) for keyword ${keyword}`);
@@ -93,20 +94,11 @@ class FindNodesCommand extends Command {
         return this.continueSequence(commandData, command.sequence);
     }
 
-    /**
-     * Recover system from failure
-     * @param command
-     * @param err
-     */
-    async recover(command, err) {
-        return Command.empty();
-    }
-
     handleError(handlerId, error, msg) {
         this.logger.error({
             msg,
             Operation_name: 'Error',
-            Event_name: constants.ERROR_TYPE.FIND_NODES_ERROR,
+            Event_name: ERROR_TYPE.FIND_NODES_ERROR,
             Event_value1: error.message,
             Id_operation: handlerId,
         });
@@ -122,6 +114,7 @@ class FindNodesCommand extends Command {
             name: 'findNodesCommand',
             delay: 0,
             transactional: false,
+            errorType: ERROR_TYPE.FIND_NODES_ERROR,
         };
         Object.assign(command, map);
         return command;
