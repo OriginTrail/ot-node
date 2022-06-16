@@ -1,5 +1,6 @@
 const { PUBLISH_METHOD, ERROR_TYPE, NETWORK_MESSAGE_TYPES } = require('../../../modules/constants');
 const BaseController = require('./base-controller');
+const {NETWORK_PROTOCOLS} = require("../../constants/constants");
 
 class PublishController extends BaseController {
     constructor(ctx) {
@@ -52,10 +53,11 @@ class PublishController extends BaseController {
                 issuer,
                 visibility,
                 type,
+                findNodesProtocol: NETWORK_PROTOCOLS.STORE,
             };
 
             const commandSequence = [
-                'validateAssertionCommand',
+                // 'validateAssertionCommand',
                 'insertAssertionCommand',
                 'findNodesCommand',
                 'storeInitCommand',

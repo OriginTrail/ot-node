@@ -45,8 +45,13 @@ class ValidateAssertionCommand extends Command {
         this.logger.debug('Issuer is valid');
 
         this.logger.info(`Assertion with id: ${calculatedRootHash} passed all checks!`);
+
+
+        const commandData = command.data;
+        commandData.assertionId = calculatedRootHash;
+
         return this.continueSequence(
-            command.data,
+            commandData,
             command.sequence,
         );
     }
