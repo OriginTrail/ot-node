@@ -1,15 +1,7 @@
-const { v4: uuidv4 } = require('uuid');
-const { setTimeout } = require('timers/promises');
 const Command = require('../../command');
-const Models = require('../../../../models/index');
 const {
-    REMOVE_SESSION_COMMAND_DELAY,
     NETWORK_MESSAGE_TYPES,
     NETWORK_PROTOCOLS,
-    STORE_MAX_TRIES,
-    STORE_BUSY_REPEAT_INTERVAL_IN_MILLS,
-    STORE_MIN_SUCCESS_RATE,
-    ERROR_TYPE,
 } = require('../../../constants/constants');
 
 class StoreInitCommand extends Command {
@@ -23,134 +15,41 @@ class StoreInitCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
     }
 
-    /**
-     * Executes command and produces one or more events
-     * @param command
-     */
     async execute(command) {
-        const { nodes, handlerId, documentPath } = command.data;
+        const { handlerId, node, assertionId } = command.data;
 
-        const { assertion } = await this.fileService.loadJsonFromFile(documentPath);
-
-        const messages = nodes.map(() => ({
-            header: {
-                sessionId: uuidv4(),
-                messageType: NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT,
-            },
-            data: {
-                assertionId: assertion.id,
-            },
-        }));
-
-        const removeSessionPromises = messages.map((message) =>
-            this.commandExecutor.add(
-                {
-                    name: 'removeSessionCommand',
-                    sequence: [],
-                    data: { sessionId: message.header.sessionId },
-                    transactional: false,
-                },
-                REMOVE_SESSION_COMMAND_DELAY,
-            ),
+        const response = await this.networkModuleManager.sendMessage(
+            NETWORK_PROTOCOLS.STORE,
+            node,
+            NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT,
+            handlerId,
+            {assertionId}
         );
 
-        await Promise.all(removeSessionPromises);
-
-        let failedResponses = 0;
-        const availableNodes = [];
-        const sessionIds = [];
-        const sendMessagePromises = nodes.map(async (node, index) => {
-            try {
-                let tries = 0;
-                let response;
-                do {
-                    if (tries !== 0)
-                        await setTimeout(STORE_BUSY_REPEAT_INTERVAL_IN_MILLS);
-
-                    response = await this.networkModuleManager.sendMessage(
-                        NETWORK_PROTOCOLS.STORE,
-                        node,
-                        messages[index],
-                    );
-                    tries += 1;
-                } while (
-                    response &&
-                    response.header.messageType === NETWORK_MESSAGE_TYPES.RESPONSES.BUSY &&
-                    tries < STORE_MAX_TRIES
-                );
-                if (
-                    !response ||
-                    response.header.messageType === NETWORK_MESSAGE_TYPES.RESPONSES.NACK ||
-                    response.header.messageType === NETWORK_MESSAGE_TYPES.RESPONSES.BUSY
-                ) {
-                    failedResponses += 1;
-                    this.networkModuleManager.removeSession(response.header.sessionId);
-                } else {
-                    availableNodes.push(node);
-                    sessionIds.push(response.header.sessionId);
-                }
-            } catch (e) {
-                failedResponses += 1;
-                this.handleError(
-                    handlerId,
-                    e,
-                    `Error while sending store init message to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`,
-                );
-            }
-        });
-
-        await Promise.allSettled(sendMessagePromises);
-
-        const maxFailedResponses = Math.round((1 - STORE_MIN_SUCCESS_RATE) * nodes.length);
-        const status = failedResponses <= maxFailedResponses ? 'COMPLETED' : 'FAILED';
-
-        if (status === 'FAILED') {
-            await this.handlerIdService.updateFailedHandlerId(
-                handlerId,
-                'Publish failed, not enough nodes available to store the data!',
-            );
-
-            if (command.data.isTelemetry) {
-                await Models.assertions.create({
-                    hash: assertion.id,
-                    topics: JSON.stringify(assertion.metadata.keywords[0]),
-                    created_at: assertion.metadata.timestamp,
-                    triple_store: this.config.graphDatabase.implementation,
-                    status,
-                });
-            }
-
-            for(const sessionId of sessionIds) {
-                this.networkModuleManager.removeSession(sessionId.header.sessionId);
-            }
-
-            return Command.empty();
+        switch (response.header.messageType) {
+            case NETWORK_MESSAGE_TYPES.RESPONSES.BUSY:
+                return command.retry();
+            case NETWORK_MESSAGE_TYPES.RESPONSES.NACK:
+                return this.handleNack(command);
+            case NETWORK_MESSAGE_TYPES.RESPONSES.ACK:
+                return command.continueSequence(command.data, command.sequence);
+            default:
+                return this.handleError(command);
         }
-
-        const commandData = command.data;
-        commandData.nodes = availableNodes;
-        commandData.sessionIds = sessionIds;
-
-        return this.continueSequence(commandData, command.sequence);
     }
 
-    /**
-     * Recover system from failure
-     * @param command
-     * @param err
-     */
     async recover(command, err) {
-        return Command.empty();
+        await this.markResponseAsFailed(command, err.message);
+        return command.empty();
     }
 
-    handleError(handlerId, error, msg) {
-        this.logger.error({
-            msg,
-            Operation_name: 'Error',
-            Event_name: ERROR_TYPE.STORE_INIT_ERROR,
-            Event_value1: error.message,
-            Id_operation: handlerId,
-        });
+    async handleNack(command) {
+        await this.markResponseAsFailed(command, 'Received NACK response from node during init');
+        return command.empty();
+    };
+
+    async markResponseAsFailed(command, errorMessage) {
+        // log and enter data in database and invalidate session
     }
 
     /**
@@ -162,6 +61,8 @@ class StoreInitCommand extends Command {
         const command = {
             name: 'storeInitCommand',
             delay: 0,
+            period: 5000,
+            retries: 3,
             transactional: false,
         };
         Object.assign(command, map);

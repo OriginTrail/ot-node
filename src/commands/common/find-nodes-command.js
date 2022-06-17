@@ -17,33 +17,18 @@ class FindNodesCommand extends Command {
     async execute(command) {
         const { handlerId, assertionId, ual, findNodesProtocol } = command.data;
 
-        this.logger.debug(`Searching for closest ${this.config.replicationFactor} node(s) for assertionId ${assertionId} and ual: ${ual}`);
+        this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for assertionId ${assertionId} and ual: ${ual}`);
 
         await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.SEARCHING_FOR_NODES);
 
-        const findNodesParameters = [assertionId, ual];
+        const keys = [assertionId, ual];
 
-        const findNodesPromises = findNodesParameters.map(async (param) => {
-            this.logger.debug(
-                `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${param}`,
-            );
+        const findNodesPromises = [];
 
-            const foundNodes = await this.networkModuleManager.findNodes(
-                param,
-                findNodesProtocol,
-            );
-            if (foundNodes.length < this.config.replicationFactor) {
-                this.logger.warn(`Found only ${foundNodes.length} node(s) for keyword ${param}`);
-            }
+        keys.forEach((key)=>{
+            findNodesPromises.push(this.findRankedNodes(key, findNodesProtocol));
+        })
 
-            const closestNodes = await this.networkModuleManager.rankNodes(
-                foundNodes,
-                param,
-                this.config.replicationFactor,
-            );
-
-            return closestNodes;
-        });
         const results = await Promise.all(findNodesPromises);
 
         let nodes = new Set();
@@ -58,6 +43,26 @@ class FindNodesCommand extends Command {
         commandData.nodes = nodes;
 
         return this.continueSequence(commandData, command.sequence);
+    }
+
+    async findRankedNodes(key, protocol) {
+        this.logger.debug(
+            `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${key}`,
+        );
+
+        const foundNodes = await this.networkModuleManager.findNodes(
+            key,
+            protocol,
+        );
+
+        const closestNodes = await this.networkModuleManager.rankNodes(
+            foundNodes,
+            key,
+        );
+        this.logger.debug(
+            `Found ${closestNodes.length} node(s) for keyword ${key}`,
+        );
+        return closestNodes;
     }
 
     /**

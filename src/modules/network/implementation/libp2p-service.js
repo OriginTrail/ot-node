@@ -13,6 +13,7 @@ const PeerId = require('peer-id');
 const { InMemoryRateLimiter } = require('rolling-rate-limiter');
 const constants = require('../../../../modules/constants');
 const toobusy = require('toobusy-js');
+const {v4: uuidv4} = require("uuid");
 
 const initializationObject = {
     addresses: {
@@ -138,6 +139,29 @@ class Libp2pService {
         return [...result];
     }
 
+    async rankNodes(nodes, key) {
+
+        const encodedKey = new TextEncoder().encode(key);
+        const keyHash = await sha256.digest(encodedKey);
+        const id = keyHash.digest;
+
+        nodes.sort((first_node, second_node) => this.distance(id, first_node._id) - this.distance(id, second_node._id));
+
+        return nodes;
+    }
+
+    distance(firstId, secondId) {
+        let distance = 0;
+        let i = 0;
+        const min = Math.min(firstId.length, secondId.length);
+        const max = Math.max(firstId.length, secondId.length);
+        for (; i < min; i += 1) {
+            distance = distance * 256 + (firstId[i] ^ secondId[i]);
+        }
+        for (; i < max; i += 1) distance = distance * 256 + 255;
+        return distance;
+    }
+
     getPeers() {
         return this.node.connectionManager.connections;
     }
@@ -212,6 +236,9 @@ class Libp2pService {
         );
         const { stream } = await this.node.dialProtocol(remotePeerId, protocol);
 
+        if (!message.header.sessionId) {
+            message.header.sessionId = uuidv4();
+        }
         await this._sendMessageToStream(stream, message);
         if (!this.sessions.sender[message.header.sessionId]) {
             this.sessions.sender[message.header.sessionId] = {};

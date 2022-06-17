@@ -63,8 +63,7 @@ class PublishController extends BaseController {
                 // 'validateAssertionCommand',
                 'insertAssertionCommand',
                 'findNodesCommand',
-                'storeInitCommand',
-                'storeRequestCommand',
+                'storeCommand',
             ];
 
             await this.commandExecutor.add({

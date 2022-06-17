@@ -15,7 +15,7 @@ class InsertAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { handlerId, operationId, ual, dataRootId } = command.data;
+        const { handlerId, ual, dataRootId } = command.data;
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
