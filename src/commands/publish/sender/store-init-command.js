@@ -1,55 +1,22 @@
-const Command = require('../../command');
+const ProtocolInitCommand = require('../../common/protocol-init-command');
 const {
-    NETWORK_MESSAGE_TYPES,
     NETWORK_PROTOCOLS,
+    ERROR_TYPE,
 } = require('../../../constants/constants');
 
-class StoreInitCommand extends Command {
+class StoreInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
         super(ctx);
-        this.logger = ctx.logger;
-        this.config = ctx.config;
-        this.networkModuleManager = ctx.networkModuleManager;
-        this.fileService = ctx.fileService;
-        this.handlerIdService = ctx.handlerIdService;
-        this.commandExecutor = ctx.commandExecutor;
+
+        this.commandName = 'storeInitCommand'
+        this.errorType = ERROR_TYPE.STORE_INIT_ERROR;
+        this.networkProtocol = NETWORK_PROTOCOLS.STORE;
     }
 
-    async execute(command) {
-        const { handlerId, node, assertionId } = command.data;
+    async prepareMessage(command) {
+        const { assertionId } = command.data;
 
-        const response = await this.networkModuleManager.sendMessage(
-            NETWORK_PROTOCOLS.STORE,
-            node,
-            NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT,
-            handlerId,
-            {assertionId}
-        );
-
-        switch (response.header.messageType) {
-            case NETWORK_MESSAGE_TYPES.RESPONSES.BUSY:
-                return command.retry();
-            case NETWORK_MESSAGE_TYPES.RESPONSES.NACK:
-                return this.handleNack(command);
-            case NETWORK_MESSAGE_TYPES.RESPONSES.ACK:
-                return command.continueSequence(command.data, command.sequence);
-            default:
-                return this.handleError(command);
-        }
-    }
-
-    async recover(command, err) {
-        await this.markResponseAsFailed(command, err.message);
-        return command.empty();
-    }
-
-    async handleNack(command) {
-        await this.markResponseAsFailed(command, 'Received NACK response from node during init');
-        return command.empty();
-    };
-
-    async markResponseAsFailed(command, errorMessage) {
-        // log and enter data in database and invalidate session
+        return { assertionId };
     }
 
     /**

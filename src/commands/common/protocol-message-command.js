@@ -1,0 +1,84 @@
+const Command = require('../command');
+const { NETWORK_MESSAGE_TYPES } = require('../../constants/constants');
+
+class ProtocolMessageCommand extends Command {
+    constructor(ctx) {
+        super(ctx);
+        this.config = ctx.config;
+        this.networkModuleManager = ctx.networkModuleManager;
+    }
+
+    async execute(command) {
+        // overridden by protocol-init-command, protocol-request-command
+    }
+
+    async executeProtocolMessageCommand(command, messageType) {
+        const message = await this.prepareMessageData(command);
+
+        return this.sendProtocolMessage(command, message, messageType);
+    }
+
+    async prepareMessage(command) {
+        // overridden by store-init-command, resolve-init-command, search-init-command,
+        //               store-request-command, resolve-request-command, search-request-command
+    }
+
+    async sendProtocolMessage(command, message, messageType) {
+        const { node, handlerId } = command.data;
+
+        const response = await this.networkModuleManager
+            .sendMessage(
+                this.networkProtocol,
+                node,
+                messageType,
+                handlerId,
+                message,
+            )
+            .catch((e) => this.handleError(handlerId, e.message));
+
+        switch (response.header.messageType) {
+            case NETWORK_MESSAGE_TYPES.RESPONSES.BUSY:
+                return this.handleBusy(command);
+            case NETWORK_MESSAGE_TYPES.RESPONSES.NACK:
+                return this.handleNack(command);
+            case NETWORK_MESSAGE_TYPES.RESPONSES.ACK:
+                return this.handleAck(command);
+            default:
+                return this.handleError(
+                    handlerId,
+                    `Received unknown message type from node during ${this.commandName}`,
+                );
+        }
+    }
+
+    async handleAck(command) {
+        return command.continueSequence(command.data, command.sequence);
+    }
+
+    async handleBusy(command) {
+        return command.retry();
+    }
+
+    async handleNack(command) {
+        await this.markResponseAsFailed(
+            command,
+            `Received NACK response from node during ${this.commandName}`,
+        );
+        return command.empty();
+    }
+
+    async recover(command, err) {
+        await this.markResponseAsFailed(command, err.message);
+        return command.empty();
+    }
+
+    async markResponseAsFailed(command, errorMessage) {
+        // log and enter data in database and invalidate session
+    }
+
+    async handleError(handlerId, errorMessage) {
+        super.handleError(handlerId, errorMessage, this.errorType, true);
+    }
+}
+
+module.exports = ProtocolMessageCommand;

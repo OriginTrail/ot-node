@@ -84,11 +84,18 @@ class OtTripleStore {
         return result;
     }
 
-    async resolve(uri) {
+    async assertionExists(assertionId) {
+        const query = `ASK WHERE { GRAPH <${assertionId}> { ?s ?p ?o } }`;
+        return await this.ask(query);
+    }
+
+    async resolve(assertionId) {
         const includePrivateData = false;
-        const escapedUri = this.cleanEscapeCharacter(uri);
-        const graphName = `<${escapedUri}>`;
-        const publicVisibility = includePrivateData ? '' : `${graphName} schema:hasVisibility "public" .`;
+        const escapedAssertionId = this.cleanEscapeCharacter(assertionId);
+        const graphName = `<${escapedAssertionId}>`;
+        const publicVisibility = includePrivateData
+            ? ''
+            : `${graphName} schema:hasVisibility "public" .`;
 
         const query = `PREFIX schema: <http://schema.org/>
                     CONSTRUCT { ?s ?p ?o }

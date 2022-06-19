@@ -1,5 +1,5 @@
 const Command = require('../command');
-const { ERROR_TYPE, HANDLER_ID_STATUS} = require('../../constants/constants');
+const { ERROR_TYPE, HANDLER_ID_STATUS } = require('../../constants/constants');
 
 class FindNodesCommand extends Command {
     constructor(ctx) {
@@ -15,19 +15,24 @@ class FindNodesCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { handlerId, assertionId, ual, findNodesProtocol } = command.data;
+        const { handlerId, assertionId, ual, networkProtocol } = command.data;
 
-        this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for assertionId ${assertionId} and ual: ${ual}`);
+        this.logger.info(
+            `Searching for closest ${this.config.replicationFactor} node(s) for assertionId ${assertionId} and ual: ${ual}`,
+        );
 
-        await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.SEARCHING_FOR_NODES);
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.SEARCHING_FOR_NODES,
+        );
 
         const keys = [assertionId, ual];
 
         const findNodesPromises = [];
 
-        keys.forEach((key)=>{
-            findNodesPromises.push(this.findRankedNodes(key, findNodesProtocol));
-        })
+        keys.forEach((key) => {
+            findNodesPromises.push(this.findRankedNodes(key, networkProtocol));
+        });
 
         const results = await Promise.all(findNodesPromises);
 
@@ -50,18 +55,10 @@ class FindNodesCommand extends Command {
             `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${key}`,
         );
 
-        const foundNodes = await this.networkModuleManager.findNodes(
-            key,
-            protocol,
-        );
+        const foundNodes = await this.networkModuleManager.findNodes(key, protocol);
 
-        const closestNodes = await this.networkModuleManager.rankNodes(
-            foundNodes,
-            key,
-        );
-        this.logger.debug(
-            `Found ${closestNodes.length} node(s) for keyword ${key}`,
-        );
+        const closestNodes = await this.networkModuleManager.rankNodes(foundNodes, key);
+        this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${key}`);
         return closestNodes;
     }
 

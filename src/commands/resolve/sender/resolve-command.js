@@ -1,6 +1,6 @@
 const Command = require('../../command');
 
-class StoreCommand extends Command {
+class ResolveCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -14,7 +14,7 @@ class StoreCommand extends Command {
     async execute(command) {
         const { nodes, handlerId, assertionId } = command.data;
 
-        const commandSequence = ['storeInitCommand', 'storeRequestCommand'];
+        const commandSequence = ['resolveInitCommand', 'resolveRequestCommand'];
         const addCommandPromise = [];
         nodes.forEach((node) => {
             addCommandPromise.push(
@@ -28,19 +28,19 @@ class StoreCommand extends Command {
             );
         });
 
-        await Promise.all(addCommandPromise);
+        await Promise.any(addCommandPromise);
 
         // todo schedule timeout command
     }
 
     /**
-     * Builds default storeInitCommand
+     * Builds default resolveCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'storeCommand',
+            name: 'resolveCommand',
             delay: 0,
             transactional: false,
         };
@@ -49,4 +49,4 @@ class StoreCommand extends Command {
     }
 }
 
-module.exports = StoreCommand;
+module.exports = ResolveCommand;
