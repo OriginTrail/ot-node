@@ -25,13 +25,13 @@ class HttpApiRouter {
             this.publishController.handleHttpApiPublishRequest(req, res);
         });
 
-        this.httpClientModuleManager.post('/provision', (req, res) => {
-            this.publishController.handleHttpApiProvisionRequest(req, res);
-        });
-
-        this.httpClientModuleManager.post('/update', (req, res) => {
-            this.publishController.handleHttpApiUpdateRequest(req, res);
-        });
+        // this.httpClientModuleManager.post('/provision', (req, res) => {
+        //     this.publishController.handleHttpApiProvisionRequest(req, res);
+        // });
+        //
+        // this.httpClientModuleManager.post('/update', (req, res) => {
+        //     this.publishController.handleHttpApiUpdateRequest(req, res);
+        // });
         //
         // this.httpClientModuleManager.post(HTTP_API_ROUTES.QUERY, (req, res) => {
         //     this.searchController.handleHttpApiQueryRequest(req, res);

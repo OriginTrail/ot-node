@@ -1,5 +1,5 @@
-const Command = require('../../command');
-const { ERROR_TYPE, HANDLER_ID_STATUS } = require('../../../constants/constants');
+const Command = require('../command');
+const { ERROR_TYPE, HANDLER_ID_STATUS } = require('../../constants/constants');
 
 class ValidateAssertionCommand extends Command {
     constructor(ctx) {

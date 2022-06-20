@@ -33,7 +33,7 @@ class SequelizeRepository {
             password: this.config.password,
         });
         // todo remove drop!!!
-        await connection.promise().query(`DROP DATABASE \`${this.config.database}\`;`);
+        //await connection.promise().query(`DROP DATABASE \`${this.config.database}\`;`);
         await connection.promise().query(`CREATE DATABASE IF NOT EXISTS \`${this.config.database}\`;`);
     }
 

@@ -1,6 +1,5 @@
 const Command = require('../command');
-const { NETWORK_MESSAGE_TYPES, PUBLISH_REQUEST_STATUS} = require('../../constants/constants');
-const constants = require("../../constants/constants");
+const { NETWORK_MESSAGE_TYPES} = require('../../constants/constants');
 
 class ProtocolMessageCommand extends Command {
     constructor(ctx) {

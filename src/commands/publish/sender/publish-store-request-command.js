@@ -13,6 +13,8 @@ class PublishStoreRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
+        // send {metadata, data}
+
 
     }
 

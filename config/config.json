@@ -46,7 +46,7 @@
                         "config": {
                             "database": "operationaldb",
                             "user": "root",
-                            "password": "",
+                            "password": "password",
                             "port": "3306",
                             "host": "localhost",
                             "dialect": "mysql",
@@ -126,7 +126,7 @@
             "username": "admin",
             "password": ""
         },
-        "logLevel": "trace",
+        "logLevel": "info",
         "replicationFactor": 5,
         "network": {
             "port": 9000,
