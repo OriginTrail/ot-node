@@ -8,6 +8,7 @@ class FindNodesCommand extends Command {
         this.config = ctx.config;
         this.networkModuleManager = ctx.networkModuleManager;
         this.handlerIdService = ctx.handlerIdService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
     /**

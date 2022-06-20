@@ -1,5 +1,5 @@
 const ProtocolMessageCommand = require('./protocol-message-command');
-const { NETWORK_MESSAGE_TYPES } = require('../../constants/constants');
+const { NETWORK_MESSAGE_TYPES} = require('../../constants/constants');
 
 class ProtocolRequestCommand extends ProtocolMessageCommand {
     async execute(command) {

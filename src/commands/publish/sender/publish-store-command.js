@@ -1,6 +1,6 @@
 const Command = require('../../command');
 
-class StoreCommand extends Command {
+class PublishStoreCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -12,9 +12,17 @@ class StoreCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { nodes, handlerId, assertionId } = command.data;
+        const { nodes, handlerId, assertionId, publishId } = command.data;
 
-        const commandSequence = ['storeInitCommand', 'storeRequestCommand'];
+        await this.repositoryModuleManager.updatePublishRecord(
+            {
+                nodes_found: nodes.length,
+                assertion_id: assertionId,
+            },
+            publishId
+        )
+
+        const commandSequence = ['publishStoreInitCommand', 'publishStoreRequestCommand'];
         const addCommandPromise = [];
         nodes.forEach((node) => {
             addCommandPromise.push(
@@ -22,7 +30,7 @@ class StoreCommand extends Command {
                     name: commandSequence[0],
                     sequence: commandSequence.slice(1),
                     delay: 0,
-                    data: { handlerId, node, assertionId },
+                    data: { handlerId, node, assertionId, publishId, numberOfFoundNodes: nodes },
                     transactional: false,
                 }),
             );
@@ -40,7 +48,7 @@ class StoreCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'storeCommand',
+            name: 'publishStoreCommand',
             delay: 0,
             transactional: false,
         };
@@ -49,4 +57,4 @@ class StoreCommand extends Command {
     }
 }
 
-module.exports = StoreCommand;
+module.exports = PublishStoreCommand;

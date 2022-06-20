@@ -32,6 +32,8 @@ class SequelizeRepository {
             user: this.config.user,
             password: this.config.password,
         });
+        // todo remove drop!!!
+        await connection.promise().query(`DROP DATABASE \`${this.config.database}\`;`);
         await connection.promise().query(`CREATE DATABASE IF NOT EXISTS \`${this.config.database}\`;`);
     }
 
@@ -87,6 +89,7 @@ class SequelizeRepository {
         return models;
     }
 
+    // HANDLER_ID
     async createHandlerIdRecord(handlerData) {
         const handlerRecord = await this.models.handler_ids.create(handlerData);
         return handlerRecord;
@@ -107,6 +110,45 @@ class SequelizeRepository {
                 handler_id: handlerId,
             },
         });
+    }
+
+    // PUBLISH
+    async createPublishRecord(status) {
+        return this.models.publish.create({status});
+    }
+
+    async updatePublishRecord(data, publishId) {
+        await this.models.publish.update(data, {
+            where: {
+                id: publishId,
+            },
+        });
+    }
+
+    async getNumberOfNodesFoundForPublish(publishId){
+        return this.models.publish.findOne({
+            attributes: ['nodes_found'],
+            where: {
+                id: publishId,
+            }
+        })
+    }
+
+    // PUBLISH RESPONSE
+    async updatePublishResponseRecord(status, publishId, message) {
+        await this.models.publish_response.create({
+            status,
+            message,
+            publish_id: publishId,
+        })
+    }
+
+    async getNumberOfPublishResponses(publishId) {
+        return this.models.publish_response.count({
+            where: {
+                publish_id: publishId,
+            }
+        })
     }
 }
 

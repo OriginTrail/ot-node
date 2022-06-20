@@ -303,6 +303,25 @@ exports.HANDLER_ID_STATUS = {
         RESOLVING_ASSET: 'RESOLVING_ASSET',
     },
 };
+
+/**
+ * @constant {object} PUBLISH_STATUS -
+ *  Possible statuses for publish procedure
+ */
+exports.PUBLISH_STATUS = {
+    IN_PROGRESS: 'IN_PROGRESS',
+    FAILED: 'FAILED',
+    COMPLETED: 'COMPLETED',
+};
+
+/**
+ * @constant {object} PUBLISH_STATUS -
+ *  Possible statuses for publish procedure
+ */
+exports.PUBLISH_REQUEST_STATUS = {
+    FAILED: 'FAILED',
+    COMPLETED: 'COMPLETED',
+};
 /**
  * @constant {object} PUBLISH_METHOD -
  *  Possible methods for publish

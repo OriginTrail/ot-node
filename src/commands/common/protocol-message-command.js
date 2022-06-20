@@ -1,5 +1,6 @@
 const Command = require('../command');
-const { NETWORK_MESSAGE_TYPES } = require('../../constants/constants');
+const { NETWORK_MESSAGE_TYPES, PUBLISH_REQUEST_STATUS} = require('../../constants/constants');
+const constants = require("../../constants/constants");
 
 class ProtocolMessageCommand extends Command {
     constructor(ctx) {
@@ -8,16 +9,13 @@ class ProtocolMessageCommand extends Command {
         this.networkModuleManager = ctx.networkModuleManager;
     }
 
-    async execute(command) {
-        // overridden by protocol-init-command, protocol-request-command
-    }
-
     async executeProtocolMessageCommand(command, messageType) {
-        const message = await this.prepareMessageData(command);
+        const message = await this.prepareMessage(command);
 
         return this.sendProtocolMessage(command, message, messageType);
     }
 
+    // eslint-disable-next-line no-unused-vars
     async prepareMessage(command) {
         // overridden by store-init-command, resolve-init-command, search-init-command,
         //               store-request-command, resolve-request-command, search-request-command
@@ -44,10 +42,11 @@ class ProtocolMessageCommand extends Command {
             case NETWORK_MESSAGE_TYPES.RESPONSES.ACK:
                 return this.handleAck(command);
             default:
-                return this.handleError(
-                    handlerId,
+                await this.markResponseAsFailed(
+                    command,
                     `Received unknown message type from node during ${this.commandName}`,
                 );
+                return command.empty();
         }
     }
 
@@ -72,12 +71,9 @@ class ProtocolMessageCommand extends Command {
         return command.empty();
     }
 
+    // eslint-disable-next-line no-unused-vars
     async markResponseAsFailed(command, errorMessage) {
         // log and enter data in database and invalidate session
-    }
-
-    async handleError(handlerId, errorMessage) {
-        super.handleError(handlerId, errorMessage, this.errorType, true);
     }
 }
 

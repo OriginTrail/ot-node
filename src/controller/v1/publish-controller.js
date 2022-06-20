@@ -4,6 +4,7 @@ const {
     PUBLISH_METHOD,
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
+    PUBLISH_STATUS,
 } = require('../../constants/constants');
 
 class PublishController extends BaseController {
@@ -16,6 +17,7 @@ class PublishController extends BaseController {
         this.commandExecutor = ctx.commandExecutor;
         this.dataService = ctx.dataService;
         this.handlerIdService = ctx.handlerIdService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
     async handleHttpApiPublishRequest(req, res) {
@@ -50,6 +52,9 @@ class PublishController extends BaseController {
 
             const { keywords, dataRootId, issuer, visibility, type } = metadata;
             this.logger.info(`Received assertion with ual: ${ual}`);
+
+            const publishRecord = await this.repositoryModuleManager.createPublishRecord(PUBLISH_STATUS.IN_PROGRESS);
+
             const commandData = {
                 method,
                 ual,
@@ -60,6 +65,7 @@ class PublishController extends BaseController {
                 issuer,
                 visibility,
                 type,
+                publishId: publishRecord.id,
                 networkProtocol: NETWORK_PROTOCOLS.STORE,
             };
 
