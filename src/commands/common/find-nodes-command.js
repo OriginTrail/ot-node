@@ -17,11 +17,9 @@ class FindNodesCommand extends Command {
      */
     async execute(command) {
         const { handlerId, assertionId, ual, networkProtocol } = command.data;
-
         this.logger.info(
             `Searching for closest ${this.config.replicationFactor} node(s) for assertionId ${assertionId} and ual: ${ual}`,
         );
-
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
             HANDLER_ID_STATUS.SEARCHING_FOR_NODES,

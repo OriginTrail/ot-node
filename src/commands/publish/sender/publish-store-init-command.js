@@ -12,6 +12,9 @@ class PublishStoreInitCommand extends ProtocolInitCommand {
 
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.publishService = ctx.publishService;
+
+        this.errorType = ERROR_TYPE.STORE_INIT_ERROR;
+        this.networkProtocol = NETWORK_PROTOCOLS.STORE;
     }
 
     async prepareMessage(command) {
@@ -36,8 +39,6 @@ class PublishStoreInitCommand extends ProtocolInitCommand {
             period: 5000,
             retries: 3,
             transactional: false,
-            errorType: ERROR_TYPE.STORE_INIT_ERROR,
-            networkProtocol: NETWORK_PROTOCOLS.STORE,
         };
         Object.assign(command, map);
         return command;

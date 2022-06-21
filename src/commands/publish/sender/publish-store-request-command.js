@@ -10,6 +10,9 @@ class PublishStoreRequestCommand extends ProtocolRequestCommand {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.publishService = ctx.publishService;
+
+        this.errorType = ERROR_TYPE.STORE_REQUEST_ERROR;
+        this.networkProtocol = NETWORK_PROTOCOLS.STORE;
     }
 
     async prepareMessage(command) {
@@ -37,8 +40,6 @@ class PublishStoreRequestCommand extends ProtocolRequestCommand {
             name: 'publishStoreRequestCommand',
             delay: 0,
             transactional: false,
-            errorType: ERROR_TYPE.STORE_REQUEST_ERROR,
-            networkProtocol: NETWORK_PROTOCOLS.STORE,
         };
         Object.assign(command, map);
         return command;
