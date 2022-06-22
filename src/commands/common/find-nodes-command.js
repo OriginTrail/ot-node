@@ -72,6 +72,7 @@ class FindNodesCommand extends Command {
                 keys.push(commandData[property]);
             }
         }
+        return keys;
     }
 
     /**
