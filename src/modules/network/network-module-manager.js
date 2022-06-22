@@ -49,13 +49,14 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    async sendMessageResponse(protocol, remotePeerId, response, options) {
+    async sendMessageResponse(protocol, remotePeerId, messageType, handlerId, message) {
         if (this.initialized) {
             return this.getImplementation().module.sendMessageResponse(
                 protocol,
                 remotePeerId,
-                response,
-                options,
+                messageType,
+                handlerId,
+                message,
             );
         }
     }

@@ -31,7 +31,6 @@ class ProtocolMessageCommand extends Command {
                 handlerId,
                 message,
             );
-
         switch (response.header.messageType) {
             case NETWORK_MESSAGE_TYPES.RESPONSES.BUSY:
                 return this.handleBusy(command);
@@ -49,7 +48,7 @@ class ProtocolMessageCommand extends Command {
     }
 
     async handleAck(command) {
-        return command.continueSequence(command.data, command.sequence);
+        return this.continueSequence(command.data, command.sequence);
     }
 
     async handleBusy() {

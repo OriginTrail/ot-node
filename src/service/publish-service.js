@@ -34,8 +34,7 @@ class PublishService {
                     sequence: [],
                     data: {  },
                     transactional: false,
-                },
-                constants.REMOVE_SESSION_COMMAND_DELAY,
+                }
             );
         }
     }

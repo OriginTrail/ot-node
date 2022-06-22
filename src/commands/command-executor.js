@@ -287,6 +287,7 @@ class CommandExecutor {
                     status: STATUS.failed,
                     message: err.message,
                 });
+                this.logger.warn(`Error in command: ${command.name}, error: ${err.message}`);
                 return await handler.recover(command, err);
             } catch (e) {
                 this.logger.warn(`Failed to recover command ${command.name} and ID ${command.id}`);

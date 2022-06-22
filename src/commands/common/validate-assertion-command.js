@@ -18,14 +18,14 @@ class ValidateAssertionCommand extends Command {
         const {
             ual,
             handlerId,
-            issuer,
+            metadata,
         } = command.data;
         this.logger.info(`Validating assertion with ual: ${ual}`);
         await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.PUBLISH_VALIDATING_ASSERTION);
 
-        const {data, metadata} = await this.handlerIdService.getCachedHandlerIdData(handlerId);
+        const handlerIdData = await this.handlerIdService.getCachedHandlerIdData(handlerId)
 
-        const assertion = data.concat(metadata);
+        const assertion = handlerIdData.data.concat(handlerIdData.metadata);
         // const blockchainData = this.blockchainModuleManager.getAssetProofs(ual);
 
         const calculatedRootHash = this.validationModuleManager.calculateRootHash(assertion);

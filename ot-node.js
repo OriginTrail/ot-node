@@ -39,7 +39,7 @@ class OTNode {
 
         await this.initializeControllers();
         await this.initializeCommandExecutor();
-        await this.initializeTelemetryHubModule();
+        // await this.initializeTelemetryHubModule();
 
         this.logger.info('Node is up and running!');
     }

@@ -12,7 +12,8 @@ class PublishFinaliseCommand extends Command {
      * @param command
      */
     async execute(command) {
-        return command.empty();
+        this.logger.info('EXECUTING FINALIZE COMMAND');
+        return Command.empty();
     }
 
     /**
