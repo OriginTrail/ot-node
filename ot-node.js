@@ -187,8 +187,17 @@ class OTNode {
     savePrivateKeyInUserConfigurationFile(privateKey) {
         const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
         const configFile = JSON.parse(fs.readFileSync(configurationFilePath));
-        configFile.network.privateKey = privateKey;
-        fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
+        if (configFile.modules.network &&
+            configFile.modules.network.implementation &&
+            configFile.modules.network.implementation['libp2p-service'] &&
+            configFile.modules.network.implementation['libp2p-service'].config  &&
+            !configFile.modules.network.implementation['libp2p-service'].config.privateKey) {
+            configFile.modules.network.implementation['libp2p-service'].config.privateKey = privateKey;
+
+            fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
+
+        }
+
     }
 
     stop() {

@@ -511,7 +511,7 @@ class Libp2pService {
     }
 
     getPrivateKey() {
-        return this.node.peerId.privKey;
+        return this.config.privateKey;
     }
 
     getName() {
