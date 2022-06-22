@@ -16,18 +16,18 @@ class FindNodesCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { handlerId, assertionId, ual, networkProtocol } = command.data;
-
-        this.logger.info(
-            `Searching for closest ${this.config.replicationFactor} node(s) for assertionId ${assertionId} and ual: ${ual}`,
-        );
+        const { handlerId, networkProtocol } = command.data;
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
             HANDLER_ID_STATUS.SEARCHING_FOR_NODES,
         );
 
-        const keys = [assertionId, ual];
+        const keys = this.extractKeys(command.data);
+
+        this.logger.info(
+            `Searching for closest ${this.config.replicationFactor} node(s) for keywords: ${keys.toString()}`,
+        );
 
         const findNodesPromises = [];
 
@@ -61,6 +61,16 @@ class FindNodesCommand extends Command {
         const closestNodes = await this.networkModuleManager.rankNodes(foundNodes, key);
         this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${key}`);
         return closestNodes;
+    }
+
+    extractKeys(commandData) {
+        const acceptableKeywords = ['id', 'query', 'ual', 'assertionId'];
+        const keys = [];
+        for(const property in commandData) {
+            if(acceptableKeywords.includes(property)){
+                keys.push(commandData[property]);
+            }
+        }
     }
 
     /**
