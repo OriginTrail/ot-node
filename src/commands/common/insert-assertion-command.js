@@ -19,7 +19,7 @@ class InsertAssertionCommand extends Command {
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.PUBLISH_INSERTING_ASSERTION,
+            HANDLER_ID_STATUS.PUBLISH.INSERTING_ASSERTION,
         );
 
         const { data, metadata } = await this.handlerIdService.getCachedHandlerIdData(handlerId);
@@ -37,7 +37,6 @@ class InsertAssertionCommand extends Command {
         await this.tripleStoreModuleManager.insert(nquads.join('\n'), ual);
 
         this.logger.info(`Assertion ${ual} has been successfully inserted!`);
-
         return this.continueSequence(command.data, command.sequence);
     }
 

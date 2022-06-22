@@ -15,9 +15,22 @@
         }
       }
     },
+    "repository": {
+      "enabled": true,
+      "implementation": {
+        "sequelize-repository": {
+          "config": {}
+        }
+      }
+    },
     "tripleStore": {
       "enabled": true,
-      "defaultImplementation": "ot-graphdb"
+      "defaultImplementation": "ot-graphdb",
+      "implementation": {
+        "ot-graphdb": {
+          "config": {}
+        }
+      }
     },
     "network": {
       "enabled": true,
@@ -45,8 +58,8 @@
               "https://rpc-mumbai.matic.today",
               "https://matic-testnet-archive-rpc.bwarelabs.com"
             ],
-            "publicKey": "...",
-            "privateKey": "..."
+            "publicKey": "0x01b90635522BD2AD7f0b6AC1cb4c2e5C9BA829b2",
+            "privateKey": "f688384fc61e1ca86783658d984bd98157d273155a6da71c6724d98974667b9a"
           }
         }
       }

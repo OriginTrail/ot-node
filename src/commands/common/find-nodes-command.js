@@ -16,6 +16,7 @@ class FindNodesCommand extends Command {
      * @param command
      */
     async execute(command) {
+
         const { handlerId, networkProtocol } = command.data;
 
         await this.handlerIdService.updateHandlerIdStatus(

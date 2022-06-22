@@ -1,6 +1,6 @@
 const path = require('path');
 const { mkdir, writeFile, readFile, unlink } = require('fs/promises');
-const { exists } = require('fs');
+const fs = require('fs');
 const appRootPath = require('app-root-path');
 
 const MIGRATION_FOLDER_NAME = 'migrations';
@@ -49,7 +49,7 @@ class FileService {
         this.logger.debug(
             `Reading file on path: ${filePath}, converting to json: ${convertToJSON}`,
         );
-        if (exists(filePath)) {
+        if (fs.existsSync(filePath)) {
             const data = await readFile(filePath);
             return convertToJSON ? JSON.parse(data) : data.toString();
         }
@@ -59,7 +59,7 @@ class FileService {
     async removeFile(filePath) {
         this.logger.debug(`Removing file on path: ${filePath}`);
         let successful = false;
-        if (exists(filePath)) {
+        if (fs.existsSync(filePath)) {
             try {
                 await unlink(filePath);
                 successful = true;

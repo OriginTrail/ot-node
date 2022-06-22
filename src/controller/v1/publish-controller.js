@@ -70,7 +70,7 @@ class PublishController extends BaseController {
             };
 
             const commandSequence = [
-                // 'validateAssertionCommand',
+                'validateAssertionCommand',
                 'insertAssertionCommand',
                 'findNodesCommand',
                 'publishStoreCommand',
@@ -98,9 +98,10 @@ class PublishController extends BaseController {
     }
 
     async handleNetworkStoreRequest(message, remotePeerId) {
-        const operationId = await this.generateHandlerId();
+        const {handlerId} = message.header;
+        const {assertionId} = message.message;
         let commandName;
-        const commandData = { message, remotePeerId, operationId };
+        const commandData = { assertionId, remotePeerId, handlerId };
         switch (message.header.messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
                 commandName = 'handleStoreInitCommand';
