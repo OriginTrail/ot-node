@@ -1,10 +1,9 @@
 const Command = require('../../command');
-const { ERROR_TYPE } = require('../../../constants/constants');
+const { ERROR_TYPE, NETWORK_MESSAGE_TYPES, NETWORK_PROTOCOLS} = require('../../../constants/constants');
 
 class HandleResolveInitCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.logger = ctx.logger;
         this.config = ctx.config;
         this.commandExecutor = ctx.commandExecutor;
         this.networkModuleManager = ctx.networkModuleManager;
@@ -15,18 +14,19 @@ class HandleResolveInitCommand extends Command {
      * @param command
      */
     async execute(command) {
+        const { remotePeerId, handlerId } = command.data;
+
+        const messageType = NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
+        const messageData = {};
+        await this.networkModuleManager.sendMessageResponse(
+            NETWORK_PROTOCOLS.RESOLVE,
+            remotePeerId,
+            messageType,
+            handlerId,
+            messageData
+        );
 
         return this.continueSequence(command.data, command.sequence);
-    }
-
-    handleError(handlerId, error, msg) {
-        this.logger.error({
-            msg,
-            Operation_name: 'Error',
-            Event_name: ERROR_TYPE.HANDLE_RESOLVE_INIT_ERROR,
-            Event_value1: error.message,
-            Id_operation: handlerId,
-        });
     }
 
     /**
@@ -36,7 +36,7 @@ class HandleResolveInitCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'handleStoreInitCommand',
+            name: 'handleResolveInitCommand',
             delay: 0,
             transactional: false,
             errorType: ERROR_TYPE.HANDLE_RESOLVE_INIT_ERROR,

@@ -1,5 +1,3 @@
-const {ERROR_TYPE} = require("../constants/constants");
-
 /**
  * Describes one command handler
  */
@@ -7,7 +5,6 @@ class Command {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.commandResolver = ctx.commandResolver;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.handlerIdService = ctx.handlerIdService;
     }
 

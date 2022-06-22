@@ -4,9 +4,7 @@ const { ERROR_TYPE } = require('../../../constants/constants');
 class LocalResolveCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.logger = ctx.logger;
         this.config = ctx.config;
-        this.networkModuleManager = ctx.networkModuleManager;
         this.handlerIdService = ctx.handlerIdService;
     }
 
@@ -30,20 +28,10 @@ class LocalResolveCommand extends Command {
                 return Command.empty();
             }
         } catch (e) {
-            await this.handlerIdService.updateFailedHandlerId(handlerId, e.message);
+            await this.handleError(handlerId, e.message, ERROR_TYPE.LOCAL_RESOLVE_ERROR, true);
         }
 
         return this.continueSequence(command.data, command.sequence);
-    }
-
-    handleError(handlerId, error, msg) {
-        this.logger.error({
-            msg,
-            Operation_name: 'Error',
-            Event_name: ERROR_TYPE.LOCAL_RESOLVE_ERROR,
-            Event_value1: error.message,
-            Id_operation: handlerId,
-        });
     }
 
     /**

@@ -28,7 +28,6 @@ class ResolveInitCommand extends ProtocolInitCommand {
         const command = {
             name: 'resolveInitCommand',
             delay: 0,
-            period: 5000,
             retries: 0,
             transactional: false,
         };

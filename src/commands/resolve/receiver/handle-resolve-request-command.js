@@ -1,12 +1,16 @@
 const Command = require('../../command');
-const { ERROR_TYPE } = require('../../../constants/constants');
+const {
+    ERROR_TYPE,
+    NETWORK_MESSAGE_TYPES,
+    NETWORK_PROTOCOLS,
+} = require('../../../constants/constants');
 
 class HandleResolveRequestCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.logger = ctx.logger;
         this.config = ctx.config;
         this.networkModuleManager = ctx.networkModuleManager;
+        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
     }
 
     /**
@@ -14,17 +18,39 @@ class HandleResolveRequestCommand extends Command {
      * @param command
      */
     async execute(command) {
-        return this.continueSequence(command.data, command.sequence);
-    }
+        const { assertionId, remotePeerId, handlerId } = command.data;
 
-    handleError(handlerId, error, msg) {
-        this.logger.error({
-            msg,
-            Operation_name: 'Error',
-            Event_name: ERROR_TYPE.HANDLE_RESOLVE_REQUEST_ERROR,
-            Event_value1: error.message,
-            Id_operation: handlerId,
-        });
+        const nquads = await this.tripleStoreModuleManager
+            .resolve(assertionId)
+            .catch((e) =>
+                this.handleError(
+                    handlerId,
+                    e.message,
+                    ERROR_TYPE.HANDLE_RESOLVE_REQUEST_ERROR,
+                    true,
+                ),
+            );
+
+        let messageType;
+        let messageData;
+        if (nquads && nquads.length > 0) {
+            this.logger.info(`Number of n-quads retrieved from the database is ${nquads.length}`);
+            messageType = NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
+            messageData = { nquads };
+        } else {
+            messageType = NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
+            messageData = {};
+        }
+
+        await this.networkModuleManager.sendMessageResponse(
+            NETWORK_PROTOCOLS.RESOLVE,
+            remotePeerId,
+            messageType,
+            handlerId,
+            messageData,
+        );
+
+        return this.continueSequence(command.data, command.sequence);
     }
 
     /**
@@ -34,7 +60,7 @@ class HandleResolveRequestCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'handleStoreRequestCommand',
+            name: 'handleResolveRequestCommand',
             delay: 0,
             transactional: false,
             errorType: ERROR_TYPE.HANDLE_RESOLVE_REQUEST_ERROR,
