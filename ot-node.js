@@ -133,11 +133,10 @@ class OTNode {
 
     async saveNetworkModulePeerIdAndPrivKey() {
         const networkModuleManager = this.container.resolve('networkModuleManager');
-        const peerId = networkModuleManager.getPeerId();
         const privateKey = networkModuleManager.getPrivateKey();
 
         if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
-            this.savePrivateKeyAndPeerIdInUserConfigurationFile(privateKey, peerId);
+            this.savePrivateKeyAndPeerIdInUserConfigurationFile(privateKey);
         }
     }
 
@@ -180,7 +179,7 @@ class OTNode {
         }
     }
 
-    savePrivateKeyAndPeerIdInUserConfigurationFile(privateKey, peerId) {
+    savePrivateKeyAndPeerIdInUserConfigurationFile(privateKey) {
 
         const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
         const configFile = JSON.parse(fs.readFileSync(configurationFilePath));
@@ -188,14 +187,11 @@ class OTNode {
             configFile.modules.network.implementation &&
             configFile.modules.network.implementation['libp2p-service'] &&
             configFile.modules.network.implementation['libp2p-service'].config) {
-                if (configFile.modules.network.implementation['libp2p-service'].config.privateKey) {
-                    return;
+                if (!configFile.modules.network.implementation['libp2p-service'].config.privateKey) {
+                    configFile.modules.network.implementation['libp2p-service'].config.privateKey = privateKey;
+                    fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
                 }
         }
-        this.config.modules.network.implementation['libp2p-service'].config.privateKey = privateKey;
-        configFile.modules.network = this.config.modules.network;
-        fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
-
     }
 
     stop() {
