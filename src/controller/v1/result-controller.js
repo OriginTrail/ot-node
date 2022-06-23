@@ -1,7 +1,7 @@
 const {HANDLER_ID_STATUS, ERROR_TYPE} = require('../../constants/constants');
 const BaseController = require('./base-controller');
 
-const availableOperations = ['publish'];
+const availableOperations = ['publish', 'resolve', 'assertions:search', 'entities:search'];
 
 class ResultController extends BaseController {
 
@@ -41,6 +41,18 @@ class ResultController extends BaseController {
                 if (handlerRecord.status === HANDLER_ID_STATUS.FAILED) {
                     response.data = JSON.parse(handlerRecord.data);
                 }
+
+
+                switch(operation) {
+                    case 'assertions:search':
+                    case 'entities:search':
+                    case 'resolve':
+                        response.data = await this.handlerIdService.getCachedHandlerIdData(handlerId);
+                        break;
+                    default:
+                        break;
+                }
+
                 return this.returnResponse(res, 200, response);
 
             }
