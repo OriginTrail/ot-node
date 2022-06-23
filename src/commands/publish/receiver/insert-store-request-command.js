@@ -1,5 +1,5 @@
 const Command = require('../../command');
-const { HANDLER_ID_STATUS, ERROR_TYPE } = require('../../../constants/constants');
+const { ERROR_TYPE } = require('../../../constants/constants');
 
 class InsertStoreRequestCommand extends Command {
     constructor(ctx) {
