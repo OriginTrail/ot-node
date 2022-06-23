@@ -27,7 +27,7 @@ class ResolveRequestCommand extends ProtocolRequestCommand {
     }
 
     async markResponseAsFailed(command, errorMessage) {
-        await this.resolveService.processPublishResponse(command, errorMessage);
+        await this.resolveService.processResolveResponse(command, errorMessage);
     }
 
     /**

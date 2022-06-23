@@ -313,6 +313,7 @@ class Libp2pService {
         this.logger.debug(
             `Sending response from ${this.config.id} to ${remotePeerId}: event=${protocol}, messageType=${messageType};`,
         );
+        console.log(JSON.stringify(this.sessions, null, 2))
         const stream = this.getSessionStream(handlerId, remotePeerId);
 
         if (!stream) {
