@@ -1,5 +1,6 @@
 const Command = require('../../command');
 const constants = require('../../../constants/constants');
+const { NETWORK_PROTOCOLS } = require('../../../constants/constants');
 
 class HandleStoreInitCommand extends Command {
     constructor(ctx) {
@@ -15,7 +16,7 @@ class HandleStoreInitCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { assertionId, remotePeerId, handlerId } = command.data;
+        const { remotePeerId, handlerId } = command.data;
 
         // todo add message validation assertionId
 
@@ -26,29 +27,27 @@ class HandleStoreInitCommand extends Command {
             remotePeerId,
             messageType,
             handlerId,
-            messageData
+            messageData,
         );
 
-        return this.continueSequence(command.data, command.sequence);
-    }
-
-    /**
-     * Recover system from failure
-     * @param command
-     * @param err
-     */
-    async recover(command, err) {
         return Command.empty();
     }
 
-    handleError(handlerId, error, msg) {
+    async handleError(handlerId, errorMessage, errorName, markFailed, commandData) {
         this.logger.error({
-            msg,
-            Operation_name: 'Error',
-            Event_name: constants.ERROR_TYPE.HANDLE_STORE_INIT_ERROR,
-            Event_value1: error.message,
-            Id_operation: handlerId,
+            msg: errorMessage,
         });
+
+        const messageType = constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
+        const messageData = {};
+        await this.networkModuleManager.sendMessageResponse(
+            NETWORK_PROTOCOLS.STORE,
+            commandData.remotePeerId,
+            messageType,
+            handlerId,
+            messageData,
+        );
+        return Command.empty();
     }
 
     /**

@@ -24,7 +24,7 @@ class Command {
      */
     async recover(command, err) {
         const { handlerId, errorType } = command.data;
-        await this.handleError(handlerId, err.message, errorType, true);
+        await this.handleError(handlerId, err.message, errorType, true, command.data);
 
         return Command.empty();
     }
@@ -111,7 +111,7 @@ class Command {
      * @param markFailed - Update operation status to failed
      * @returns {*}
      */
-    async handleError(handlerId, errorMessage, errorName, markFailed) {
+    async handleError(handlerId, errorMessage, errorName, markFailed, commandData) {
         this.logger.error({
             msg: `Command error (${errorName}): ${errorMessage}`,
             Event_name: errorName,
@@ -129,8 +129,7 @@ class Command {
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
-        return {
-        };
+        return {};
     }
 
     /**

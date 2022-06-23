@@ -17,11 +17,6 @@ class InsertStoreRequestCommand extends Command {
     async execute(command) {
         const { handlerId, ual, dataRootId } = command.data;
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.INSERTING_ASSERTION,
-        );
-
         const { data, metadata } = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
         const metadataId = this.getMetadataId(metadata);
