@@ -1,7 +1,7 @@
-const Command = require('../command');
-const { ERROR_TYPE, HANDLER_ID_STATUS } = require('../../constants/constants');
+const Command = require('../../command');
+const { ERROR_TYPE, HANDLER_ID_STATUS } = require('../../../constants/constants');
 
-class ValidateAssertionCommand extends Command {
+class ValidateStoreInitCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -19,7 +19,7 @@ class ValidateAssertionCommand extends Command {
         this.logger.info(`Validating assertion with ual: ${ual}`);
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_VALIDATING_ASSERTION,
+            HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION,
         );
 
         const handlerIdData = await this.handlerIdService.getCachedHandlerIdData(handlerId);
@@ -57,7 +57,7 @@ class ValidateAssertionCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'validateAssertionCommand',
+            name: 'ValidateStoreInitCommand',
             delay: 0,
             transactional: false,
             errorType: ERROR_TYPE.VALIDATE_ASSERTION_ERROR,
@@ -67,4 +67,4 @@ class ValidateAssertionCommand extends Command {
     }
 }
 
-module.exports = ValidateAssertionCommand;
+module.exports = ValidateStoreInitCommand;

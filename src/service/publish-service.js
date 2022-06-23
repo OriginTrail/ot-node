@@ -1,6 +1,3 @@
-const {PUBLISH_REQUEST_STATUS} = require("../constants/constants");
-const constants = require("../constants/constants");
-
 class PublishService {
     constructor(ctx) {
         this.logger = ctx.logger;
@@ -10,32 +7,23 @@ class PublishService {
     }
 
     async processPublishResponse(command, status, errorMessage = null) {
-        if (errorMessage) {
-            await this.repositoryModuleManager.createPublishResponseRecord(
-                PUBLISH_REQUEST_STATUS.FAILED,
-                command.data.publishId,
-                errorMessage
-            );
-        } else {
-            await this.repositoryModuleManager.createPublishResponseRecord(
-                PUBLISH_REQUEST_STATUS.COMPLETED,
-                command.data.publishId,
-            );
+        await this.repositoryModuleManager.createPublishResponseRecord(
+            status,
+            command.data.publishId,
+            errorMessage,
+        );
 
-        }
-
-        const numberOfResponses = await this.repositoryModuleManager.getNumberOfPublishResponses(command.data.publishId);
+        const numberOfResponses = await this.repositoryModuleManager.getNumberOfPublishResponses(
+            command.data.publishId,
+        );
 
         if (command.data.numberOfFoundNodes === numberOfResponses) {
-
-            await this.commandExecutor.add(
-                {
-                    name: 'publishFinaliseCommand',
-                    sequence: [],
-                    data: {  },
-                    transactional: false,
-                }
-            );
+            await this.commandExecutor.add({
+                name: 'publishFinaliseCommand',
+                sequence: [],
+                data: {},
+                transactional: false,
+            });
         }
     }
     //

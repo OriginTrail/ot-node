@@ -15,9 +15,9 @@ class HandleStoreRequestCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { remotePeerId, handlerId, assertionId, metadata } = command.data;
+        const { remotePeerId, handlerId, assertionId, metadata, ual } = command.data;
 
-        const {data} = await this.handlerIdService.getCachedHandlerIdData(handlerId);
+        const { data } = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
         const messageType = constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
         const messageData = {};
@@ -26,7 +26,7 @@ class HandleStoreRequestCommand extends Command {
             remotePeerId,
             messageType,
             handlerId,
-            messageData
+            messageData,
         );
         return Command.empty();
         // let status = false;
