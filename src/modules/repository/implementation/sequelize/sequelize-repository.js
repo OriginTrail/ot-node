@@ -34,7 +34,9 @@ class SequelizeRepository {
         });
         // todo remove drop!!!
         await connection.promise().query(`DROP DATABASE IF EXISTS \`${this.config.database}\`;`);
-        await connection.promise().query(`CREATE DATABASE IF NOT EXISTS \`${this.config.database}\`;`);
+        await connection
+            .promise()
+            .query(`CREATE DATABASE IF NOT EXISTS \`${this.config.database}\`;`);
     }
 
     async runMigrations() {
@@ -100,7 +102,7 @@ class SequelizeRepository {
         const handlerRecord = await this.models.handler_ids.findOne({
             where: {
                 handler_id: handlerId,
-            }
+            },
         });
         return handlerRecord;
     }
@@ -113,43 +115,30 @@ class SequelizeRepository {
         });
     }
 
-    // PUBLISH
-    async createPublishRecord(status) {
-        return this.models.publish.create({status});
+    // PUBLISH RESPONSE
+    async createPublishResponseRecord(status, handlerId, message) {
+        await this.models.publish_response.create({
+            status,
+            message,
+            handler_id: handlerId,
+        });
     }
 
-    async updatePublishRecord(data, publishId) {
-        await this.models.publish.update(data, {
+    async getNumberOfPublishResponses(handlerId) {
+        return this.models.publish_response.count({
             where: {
-                id: publishId,
+                handler_id: handlerId,
             },
         });
     }
 
-    async getNumberOfNodesFoundForPublish(publishId){
-        return this.models.publish.findOne({
-            attributes: ['nodes_found'],
+    async getPublishResponsesStatuses(handlerId) {
+        return this.models.publish_response.findAll({
+            attributes: ['status'],
             where: {
-                id: publishId,
-            }
-        })
-    }
-
-    // PUBLISH RESPONSE
-    async createPublishResponseRecord(status, publishId, message) {
-        await this.models.publish_response.create({
-            status,
-            message,
-            publish_id: publishId,
-        })
-    }
-
-    async getNumberOfPublishResponses(publishId) {
-        return this.models.publish_response.count({
-            where: {
-                publish_id: publishId,
-            }
-        })
+                handler_id: handlerId,
+            },
+        });
     }
 }
 

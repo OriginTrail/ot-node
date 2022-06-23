@@ -1,5 +1,6 @@
 const Command = require('../../command');
 const constants = require('../../../constants/constants');
+const { NETWORK_PROTOCOLS } = require('../../../constants/constants');
 
 class HandleStoreRequestCommand extends Command {
     constructor(ctx) {
@@ -31,23 +32,21 @@ class HandleStoreRequestCommand extends Command {
         return Command.empty();
     }
 
-    /**
-     * Recover system from failure
-     * @param command
-     * @param err
-     */
-    async recover(command, err) {
-        return Command.empty();
-    }
-
-    handleError(handlerId, error, msg) {
+    async handleError(handlerId, errorMessage, errorName, markFailed, commandData) {
         this.logger.error({
-            msg,
-            Operation_name: 'Error',
-            Event_name: constants.ERROR_TYPE.HANDLE_STORE_REQUEST_ERROR,
-            Event_value1: error.message,
-            Id_operation: handlerId,
+            msg: errorMessage,
         });
+
+        const messageType = constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
+        const messageData = {};
+        await this.networkModuleManager.sendMessageResponse(
+            NETWORK_PROTOCOLS.STORE,
+            commandData.remotePeerId,
+            messageType,
+            handlerId,
+            messageData,
+        );
+        return Command.empty();
     }
 
     /**
