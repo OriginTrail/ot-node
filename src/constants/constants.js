@@ -80,7 +80,7 @@ exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
  */
 exports.PERMANENT_COMMANDS = [
-    // 'otnodeUpdateCommand',
+    'otnodeUpdateCommand',
     // 'sendTelemetryCommand',
     // 'cleanerCommand',
     // 'handlerIdsCleanerCommand',
