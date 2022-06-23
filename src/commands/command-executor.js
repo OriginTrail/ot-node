@@ -1,8 +1,7 @@
 const async = require('async');
-const {setTimeout} = require('timers/promises');
+const { setTimeout } = require('timers/promises');
 const { forEach } = require('p-iteration');
 
-const Models = require('../../models');
 const Command = require('./command');
 const constants = require('../constants/constants');
 
@@ -36,6 +35,8 @@ class CommandExecutor {
         this.config = ctx.config;
         this.started = false;
 
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
+
         this.parallelism = QUEUE_PARALLELISM;
         this.verboseLoggingEnabled = this.config.commandExecutorVerboseLoggingEnabled;
 
@@ -44,7 +45,9 @@ class CommandExecutor {
             try {
                 while (!that.started) {
                     if (that.verboseLoggingEnabled) {
-                        that.logger.trace('Command executor has not been started yet. Hibernating...');
+                        that.logger.trace(
+                            'Command executor has not been started yet. Hibernating...',
+                        );
                     }
 
                     await setTimeout(1000);
@@ -67,9 +70,8 @@ class CommandExecutor {
      * @returns {Promise<void>}
      */
     async init() {
-        await forEach(
-            constants.PERMANENT_COMMANDS,
-            async (command) => this._startDefaultCommand(command),
+        await forEach(constants.PERMANENT_COMMANDS, async (command) =>
+            this._startDefaultCommand(command),
         );
         if (this.verboseLoggingEnabled) {
             this.logger.trace('Command executor has been initialized...');
@@ -91,9 +93,10 @@ class CommandExecutor {
      * Executes commands
      * @param command Command
      */
-    async _execute(command) {
+    async _execute(executeCommand) {
+        const command = executeCommand;
         const now = new Date().getTime() / 1000;
-        await CommandExecutor._update(command, {
+        await this._update(command, {
             started_at: now,
         });
 
@@ -104,7 +107,7 @@ class CommandExecutor {
         const handler = this.commandResolver.resolve(command.name);
         if (command.deadline_at && now > command.deadline_at) {
             this.logger.warn(`Command ${command.name} and ID ${command.id} is too late...`);
-            await CommandExecutor._update(command, {
+            await this._update(command, {
                 status: STATUS.expired,
             });
             try {
@@ -113,15 +116,19 @@ class CommandExecutor {
                     result.commands.forEach((c) => this.add(c, c.delay, true));
                 }
             } catch (e) {
-                this.logger.warn(`Failed to handle expired callback for command ${command.name} and ID ${command.id}`);
+                this.logger.warn(
+                    `Failed to handle expired callback for command ${command.name} and ID ${command.id}`,
+                );
             }
             return;
         }
 
-        const waitMs = (command.ready_at + command.delay) - now;
+        const waitMs = command.ready_at + command.delay - now;
         if (waitMs > 0) {
             if (this.verboseLoggingEnabled) {
-                this.logger.trace(`Command ${command.name} with ID ${command.id} should be delayed`);
+                this.logger.trace(
+                    `Command ${command.name} with ID ${command.id} should be delayed`,
+                );
             }
             await this.add(command, Math.min(waitMs, constants.MAX_COMMAND_DELAY_IN_MILLS), false);
             return;
@@ -129,21 +136,30 @@ class CommandExecutor {
 
         try {
             const result = await this._process(async (transaction) => {
-                await CommandExecutor._update(command, {
-                    status: STATUS.started,
-                }, transaction);
+                await this._update(
+                    command,
+                    {
+                        status: STATUS.started,
+                    },
+                    transaction,
+                );
 
                 command.data = handler.unpack(command.data);
                 let result = await handler.execute(command, transaction);
                 if (result.repeat) {
-                    await CommandExecutor._update(command, {
-                        status: STATUS.repeating,
-                    }, transaction);
+                    await this._update(
+                        command,
+                        {
+                            status: STATUS.repeating,
+                        },
+                        transaction,
+                    );
 
                     command.data = handler.pack(command.data);
 
                     const period = command.period
-                        ? command.period : constants.DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS;
+                        ? command.period
+                        : constants.DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS;
                     await this.add(command, period, false);
                     return Command.repeat();
                 }
@@ -156,14 +172,19 @@ class CommandExecutor {
                 }
 
                 const children = result.commands.map((c) => {
-                    c.parent_id = command.id;
-                    return c;
+                    const newCommand = c;
+                    newCommand.parent_id = command.id;
+                    return newCommand;
                 });
 
                 await Promise.all(children.map((e) => this._insert(e, transaction)));
-                await CommandExecutor._update(command, {
-                    status: STATUS.completed,
-                }, transaction);
+                await this._update(
+                    command,
+                    {
+                        status: STATUS.completed,
+                    },
+                    transaction,
+                );
                 return {
                     children,
                 };
@@ -177,7 +198,9 @@ class CommandExecutor {
             }
         } catch (e) {
             if (this.verboseLoggingEnabled) {
-                this.logger.trace(`Failed to process command ${command.name} and ID ${command.id}. ${e}.\n${e.stack}`);
+                this.logger.trace(
+                    `Failed to process command ${command.name} and ID ${command.id}. ${e}.\n${e.stack}`,
+                );
             }
 
             try {
@@ -185,8 +208,10 @@ class CommandExecutor {
                 if (result && result.commands) {
                     result.commands.forEach((c) => this.add(c, c.delay, true));
                 }
-            } catch (e) {
-                this.logger.warn(`Failed to handle error callback for command ${command.name} and ID ${command.id}`);
+            } catch (error) {
+                this.logger.warn(
+                    `Failed to handle error callback for command ${command.name} and ID ${command.id}, error: ${error.message}`,
+                );
             }
         }
     }
@@ -200,7 +225,7 @@ class CommandExecutor {
      */
     async _process(execFn, transactional) {
         if (transactional) {
-            return Models.sequelize.transaction(async (t) => execFn(t));
+            return this.repositoryModuleManager.transaction(execFn);
         }
         return execFn(null);
     }
@@ -212,7 +237,7 @@ class CommandExecutor {
      * @private
      */
     async _startDefaultCommand(name) {
-        await CommandExecutor._delete(name);
+        await this._delete(name);
         const handler = this.commandResolver.resolve(name);
         await this.add(handler.default(), constants.DEFAULT_COMMAND_DELAY_IN_MILLS, true);
         if (this.verboseLoggingEnabled) {
@@ -226,7 +251,9 @@ class CommandExecutor {
      * @param delay
      * @param insert
      */
-    async add(command, delay = 0, insert = true) {
+    async add(addCommand, addDelay = 0, insert = true) {
+        let command = addCommand;
+        let delay = addDelay;
         const now = new Date().getTime() / 1000;
 
         if (delay != null && delay > constants.MAX_COMMAND_DELAY_IN_MILLS) {
@@ -241,7 +268,7 @@ class CommandExecutor {
             command = await this._insert(command);
         }
         if (delay) {
-            setTimeout((command) => this.queue.push(command), delay, command);
+            setTimeout((timeoutCommand) => this.queue.push(timeoutCommand), delay, command);
         } else {
             this.queue.push(command);
         }
@@ -254,7 +281,8 @@ class CommandExecutor {
      * @return {Promise<void>}
      * @private
      */
-    async _handleRetry(command, handler) {
+    async _handleRetry(retryCommand, handler) {
+        const command = retryCommand;
         if (command.retries > 0) {
             command.data = handler.pack(command.data);
             await CommandExecutor._update(command, {
@@ -277,13 +305,13 @@ class CommandExecutor {
      */
     async _handleError(command, handler, err) {
         if (command.retries > 0) {
-            await CommandExecutor._update(command, {
+            await this._update(command, {
                 retries: command.retries - 1,
             });
             await this.add(command, command.delay ? command.delay : 0, false);
         } else {
             try {
-                await CommandExecutor._update(command, {
+                await this._update(command, {
                     status: STATUS.failed,
                     message: err.message,
                 });
@@ -302,7 +330,8 @@ class CommandExecutor {
      * @return {Promise<void>}
      * @private
      */
-    async _insert(command, transaction) {
+    async _insert(insertCommand, transaction = null) {
+        const command = insertCommand;
         if (!command.name) {
             [command.name] = command.sequence;
             command.sequence = command.sequence.slice(1);
@@ -321,12 +350,11 @@ class CommandExecutor {
             command.data = commandInstance.pack(command.data);
         }
         command.status = STATUS.pending;
-        const opts = {
-        };
+        const opts = {};
         if (transaction != null) {
             opts.transaction = transaction;
         }
-        const model = await Models.commands.create(command, opts);
+        const model = await this.repositoryModuleManager.createCommand(command, opts);
         command.id = model.dataValues.id;
         return command;
     }
@@ -337,12 +365,8 @@ class CommandExecutor {
      * @returns {Promise<void>}
      * @private
      */
-    static async _delete(name) {
-        await Models.commands.destroy({
-            where: {
-                name: { [Models.Sequelize.Op.eq]: name },
-            },
-        });
+    async _delete(name) {
+        await this.repositoryModuleManager.destroyCommand(name);
     }
 
     /**
@@ -353,7 +377,7 @@ class CommandExecutor {
      * @return {Promise<void>}
      * @private
      */
-    static async _update(command, update, transaction) {
+    async _update(command, update, transaction = null) {
         Object.assign(command, update);
         const opts = {
             returning: true,
@@ -364,10 +388,7 @@ class CommandExecutor {
         if (transaction) {
             opts.transaction = transaction;
         }
-        await Models.commands.update(
-            update,
-            opts,
-        );
+        await this.repositoryModuleManager.updateCommand(update, opts);
     }
 
     /**
@@ -379,28 +400,19 @@ class CommandExecutor {
         await new Promise((resolve) => setTimeout(resolve, 1 * 60 * 1000));
 
         this.logger.info('Replay pending/started commands from the database...');
-        const pendingCommands = (await Models.commands.findAll({
-            where: {
-                status: {
-                    [Models.Sequelize.Op.in]: [
-                        STATUS.pending,
-                        STATUS.started,
-                        STATUS.repeating],
-                },
-                name: { [Models.Sequelize.Op.notIn]: ['cleanerCommand', 'autoupdaterCommand'] },
-            },
-        })).filter((command) => !constants.PERMANENT_COMMANDS.includes(command.name));
+        const pendingCommands = (
+            await this.repositoryModuleManager(
+                [STATUS.pending, STATUS.started, STATUS.repeating],
+                ['cleanerCommand', 'autoupdaterCommand'],
+            )
+        ).filter((command) => !constants.PERMANENT_COMMANDS.includes(command.name));
 
         // TODO consider JOIN instead
         const commands = pendingCommands.filter(async (pc) => {
             if (!pc.parent_id) {
                 return true;
             }
-            const parent = await Models.commands.findOne({
-                where: {
-                    id: pc.parent_id,
-                },
-            });
+            const parent = await this.repositoryModuleManager.getCommandWithId(pc.parent_id);
             return !parent || parent.status === 'COMPLETED';
         });
 

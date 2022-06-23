@@ -5,6 +5,46 @@ class RepositoryModuleManager extends BaseModuleManager {
         return 'repository';
     }
 
+    transaction(execFn) {
+        if (this.initialized) {
+            return this.getImplementation().module.transaction(execFn);
+        }
+    }
+
+    // COMMANDS
+    async updateCommand(update, opts) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateCommand(update, opts);
+        }
+    }
+
+    async destroyCommand(name) {
+        if (this.initialized) {
+            return this.getImplementation().module.destroyCommand(name);
+        }
+    }
+
+    async createCommand(command, opts) {
+        if (this.initialized) {
+            return this.getImplementation().module.createCommand(command, opts);
+        }
+    }
+
+    async getCommandsWithStatus(statusArray, excludeNameArray = []) {
+        if (this.initialized) {
+            return this.getImplementation().module.getCommandsWithStatus(
+                statusArray,
+                excludeNameArray,
+            );
+        }
+    }
+
+    async getCommandWithId(id) {
+        if (this.initialized) {
+            return this.getImplementation().module.getCommandWithId(id);
+        }
+    }
+
     // HANDLER ID TABLE
     async createHandlerIdRecord(handlerData) {
         if (this.initialized) {

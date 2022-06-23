@@ -92,6 +92,46 @@ class SequelizeRepository {
         return models;
     }
 
+    transaction(execFn) {
+        return this.models.sequelize.transaction(async (t) => execFn(t));
+    }
+
+    // COMMAND
+    async updateCommand(update, opts) {
+        await this.models.commands.update(update, opts);
+    }
+
+    async destroyCommand(name) {
+        await this.models.commands.destroy({
+            where: {
+                name: { [Sequelize.Op.eq]: name },
+            },
+        });
+    }
+
+    async createCommand(command, opts) {
+        return this.models.commands.create(command, opts);
+    }
+
+    async getCommandsWithStatus(statusArray, excludeNameArray) {
+        return this.models.commands.findAll({
+            where: {
+                status: {
+                    [Sequelize.Op.in]: statusArray,
+                },
+                name: { [Sequelize.Op.notIn]: excludeNameArray },
+            },
+        });
+    }
+
+    async getCommandWithId(id) {
+        return this.models.commands.findOne({
+            where: {
+                id,
+            },
+        });
+    }
+
     // HANDLER_ID
     async createHandlerIdRecord(handlerData) {
         const handlerRecord = await this.models.handler_ids.create(handlerData);
