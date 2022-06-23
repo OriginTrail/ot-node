@@ -194,6 +194,39 @@
                         }
                     }
                 }
+            },
+            "tripleStore": {
+                "enabled": true,
+                "defaultImplementation": "ot-graphdb",
+                "implementation": {
+                    "ot-blazegraph": {
+                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph",
+                        "config": {
+                            "url": "http://localhost:9999/blazegraph",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    },
+                    "ot-fuseki": {
+                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki",
+                        "config": {
+                            "url": "http://localhost:3030",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    },
+                    "ot-graphdb": {
+                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb",
+                        "config": {
+                            "url": "http://localhost:7200",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    }
+                }
             }
         },
         "commandExecutorVerboseLoggingEnabled": false,
@@ -283,6 +316,39 @@
                         }
                     }
                 }
+            },
+            "tripleStore": {
+                "enabled": true,
+                "defaultImplementation": "ot-graphdb",
+                "implementation": {
+                    "ot-blazegraph": {
+                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph",
+                        "config": {
+                            "url": "http://localhost:9999/blazegraph",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    },
+                    "ot-fuseki": {
+                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki",
+                        "config": {
+                            "url": "http://localhost:3030",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    },
+                    "ot-graphdb": {
+                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb",
+                        "config": {
+                            "url": "http://localhost:7200",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    }
+                }
             }
         },
         "commandExecutorVerboseLoggingEnabled": false,
@@ -364,6 +430,39 @@
                     "web3-service": {
                         "package": "./blockchain/implementation/web3-service",
                         "config": {}
+                    }
+                }
+            },
+            "tripleStore": {
+                "enabled": true,
+                "defaultImplementation": "ot-graphdb",
+                "implementation": {
+                    "ot-blazegraph": {
+                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph",
+                        "config": {
+                            "url": "http://localhost:9999/blazegraph",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    },
+                    "ot-fuseki": {
+                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki",
+                        "config": {
+                            "url": "http://localhost:3030",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    },
+                    "ot-graphdb": {
+                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb",
+                        "config": {
+                            "url": "http://localhost:7200",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
                     }
                 }
             }
