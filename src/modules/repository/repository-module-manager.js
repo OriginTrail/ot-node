@@ -31,6 +31,13 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    // resolve table
+    async createResolveRecord(status) {
+        if (this.initialized) {
+            return this.getImplementation().module.createResolveRecord(status);
+        }
+    }
+
     async updatePublishRecord(data, publishId) {
         if (this.initialized) {
             return this.getImplementation().module.updatePublishRecord(data, publishId);
@@ -46,7 +53,21 @@ class RepositoryModuleManager extends BaseModuleManager {
     // PUBLISH REQUEST TABLE
     async createPublishResponseRecord(status, publishId, message = null) {
         if (this.initialized) {
-            return this.getImplementation().module.createPublishResponseRecord(status, publishId, message);
+            return this.getImplementation().module.createPublishRequestRecord(
+                status,
+                publishId,
+                message,
+            );
+        }
+    }
+
+    async createResolveResponseRecord(status, resolveId, message = null) {
+        if (this.initialized) {
+            return this.getImplementation().module.createResolveRequestRecord(
+                status,
+                resolveId,
+                message,
+            );
         }
     }
 
@@ -59,6 +80,12 @@ class RepositoryModuleManager extends BaseModuleManager {
     async getNumberOfPublishResponses(publishId) {
         if (this.initialized) {
             return this.getImplementation().module.getNumberOfPublishResponses(publishId);
+        }
+    }
+
+    async getNumberOfResolveResponses(resolveId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getNumberOfResolveResponses(resolveId);
         }
     }
 }

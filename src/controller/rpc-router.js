@@ -6,6 +6,7 @@ class RpcRouter {
         this.logger = ctx.logger;
 
         this.publishController = ctx.publishController;
+        this.resolveController = ctx.resolveController;
     }
 
     async initialize() {

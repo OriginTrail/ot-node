@@ -12,7 +12,7 @@ class ResolveCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { nodes, handlerId, assertionId } = command.data;
+        const { nodes, handlerId, assertionId, resolveId } = command.data;
 
         const commandSequence = ['resolveInitCommand', 'resolveRequestCommand'];
         const addCommandPromise = [];
@@ -22,7 +22,7 @@ class ResolveCommand extends Command {
                     name: commandSequence[0],
                     sequence: commandSequence.slice(1),
                     delay: 0,
-                    data: { handlerId, node, assertionId },
+                    data: { handlerId, node, assertionId, resolveId},
                     transactional: false,
                 }),
             );
@@ -31,6 +31,8 @@ class ResolveCommand extends Command {
         await Promise.any(addCommandPromise);
 
         // todo schedule timeout command
+
+        return Command.empty();
     }
 
     /**

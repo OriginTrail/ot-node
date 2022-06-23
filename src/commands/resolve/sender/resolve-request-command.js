@@ -1,4 +1,5 @@
 const ProtocolRequestCommand = require('../../common/protocol-request-command');
+const Command = require('../../command')
 const {
     ERROR_TYPE,
     NETWORK_PROTOCOLS,
@@ -7,6 +8,7 @@ const {
 class ResolveRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
+        this.resolveService = ctx.resolveService;
 
         this.commandName = 'resolveRequestCommand'
         this.errorType = ERROR_TYPE.RESOLVE_REQUEST_ERROR;
@@ -17,6 +19,15 @@ class ResolveRequestCommand extends ProtocolRequestCommand {
         const { assertionId } = command.data;
 
         return { assertionId };
+    }
+
+    async handleAck(command) {
+        await this.resolveService.processResolveResponse(command);
+        return Command.empty();
+    }
+
+    async markResponseAsFailed(command, errorMessage) {
+        await this.resolveService.processPublishResponse(command, errorMessage);
     }
 
     /**

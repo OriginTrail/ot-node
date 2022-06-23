@@ -1,11 +1,18 @@
 const {
     HANDLER_ID_STATUS,
     NETWORK_MESSAGE_TYPES,
-    NETWORK_PROTOCOLS
+    NETWORK_PROTOCOLS,
+    RESOLVE_STATUS,
 } = require('../../constants/constants');
 const BaseController = require('./base-controller');
 
 class ResolveController extends BaseController {
+    constructor(ctx) {
+        super(ctx);
+        this.commandExecutor = ctx.commandExecutor;
+        this.handlerIdService = ctx.handlerIdService;
+    }
+
     async handleHttpApiResolveRequest(req, res) {
         const operationId = this.generateOperationId();
 
@@ -24,11 +31,16 @@ class ResolveController extends BaseController {
 
         this.logger.info(`Resolve for ${id} with handler id ${handlerId} initiated.`);
 
+        const resolveRecord = await this.repositoryModuleManager.createResolveRecord(
+            RESOLVE_STATUS.IN_PROGRESS,
+        );
+
         const commandData = {
             handlerId,
             operationId,
             id,
             networkProtocol: NETWORK_PROTOCOLS.RESOLVE,
+            resolveId: resolveRecord.id,
         };
 
         const commandSequence = [
@@ -45,12 +57,10 @@ class ResolveController extends BaseController {
             data: commandData,
             transactional: false,
         });
-
-        
     }
 
     async handleNetworkResolveRequest(message, remotePeerId) {
-        const operationId = await this.generateHandlerId();
+        const operationId = this.generateOperationId();
         let commandName;
         const commandData = { message, remotePeerId, operationId };
         switch (message.header.messageType) {

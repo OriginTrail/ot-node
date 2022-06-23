@@ -6,6 +6,7 @@ class LocalResolveCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.handlerIdService = ctx.handlerIdService;
+        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
     }
 
     /**

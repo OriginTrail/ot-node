@@ -92,7 +92,7 @@ class OtTripleStore {
     async resolve(assertionId) {
         const includePrivateData = false;
         const escapedAssertionId = this.cleanEscapeCharacter(assertionId);
-        const graphName = `<${escapedAssertionId}>`;
+        const graphName = `<${constants.DID_PREFIX}:${escapedAssertionId}>`;
         const publicVisibility = includePrivateData
             ? ''
             : `${graphName} schema:hasVisibility "public" .`;

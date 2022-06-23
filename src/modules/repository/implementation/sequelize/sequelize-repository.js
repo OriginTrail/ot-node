@@ -118,6 +118,11 @@ class SequelizeRepository {
         return this.models.publish.create({status});
     }
 
+    // RESOLVE
+    async createResolveRecord(status) {
+        return this.models.resolve.create({status});
+    }
+
     async updatePublishRecord(data, publishId) {
         await this.models.publish.update(data, {
             where: {
@@ -144,10 +149,27 @@ class SequelizeRepository {
         })
     }
 
+    // RESOLVE RESPONSE
+    async createResolveResponseRecord(status, resolveId, message) {
+        await this.models.resolve_response.create({
+            status,
+            message,
+            resolveId,
+        })
+    }
+
     async getNumberOfPublishResponses(publishId) {
         return this.models.publish_response.count({
             where: {
                 publish_id: publishId,
+            }
+        })
+    }
+
+    async getNumberOfResolveResponses(resolveId) {
+        return this.models.resolve_response.count({
+            where: {
+                resolveId,
             }
         })
     }

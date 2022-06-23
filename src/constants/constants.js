@@ -315,6 +315,16 @@ exports.PUBLISH_STATUS = {
 };
 
 /**
+ * @constant {object} RESOLVE_STATUS -
+ *  Possible statuses for RESOLVE procedure
+ */
+ exports.RESOLVE_STATUS = {
+    IN_PROGRESS: 'IN_PROGRESS',
+    FAILED: 'FAILED',
+    COMPLETED: 'COMPLETED',
+};
+
+/**
  * @constant {object} PUBLISH_STATUS -
  *  Possible statuses for publish procedure
  */
