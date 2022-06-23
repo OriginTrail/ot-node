@@ -1,5 +1,6 @@
 const Command = require('../../command');
-const { ERROR_TYPE } = require('../../../constants/constants');
+const { ERROR_TYPE, NETWORK_PROTOCOLS } = require('../../../constants/constants');
+const constants = require('../../../constants/constants');
 
 class InsertStoreRequestCommand extends Command {
     constructor(ctx) {
@@ -37,6 +38,23 @@ class InsertStoreRequestCommand extends Command {
 
     getMetadataId(metadata) {
         return metadata[0].split(' ')[0];
+    }
+
+    async handleError(handlerId, errorMessage, errorName, markFailed, commandData) {
+        this.logger.error({
+            msg: errorMessage,
+        });
+
+        const messageType = constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
+        const messageData = {};
+        await this.networkModuleManager.sendMessageResponse(
+            NETWORK_PROTOCOLS.STORE,
+            commandData.remotePeerId,
+            messageType,
+            handlerId,
+            messageData,
+        );
+        return Command.empty();
     }
 
     /**
