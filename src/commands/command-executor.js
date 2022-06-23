@@ -1,5 +1,5 @@
 const async = require('async');
-const { setTimeout } = require('timers/promises');
+const { setTimeout: sleep } = require('timers/promises');
 const { forEach } = require('p-iteration');
 
 const Command = require('./command');
@@ -50,7 +50,7 @@ class CommandExecutor {
                         );
                     }
 
-                    await setTimeout(1000);
+                    await sleep(1000);
                 }
                 await this._execute(command);
             } catch (e) {
@@ -268,7 +268,13 @@ class CommandExecutor {
             command = await this._insert(command);
         }
         if (delay) {
-            setTimeout((timeoutCommand) => this.queue.push(timeoutCommand), delay, command);
+            setTimeout(
+                (timeoutCommand) => {
+                    this.queue.push(timeoutCommand);
+                },
+                delay,
+                command,
+            );
         } else {
             this.queue.push(command);
         }
@@ -397,11 +403,11 @@ class CommandExecutor {
      */
     async replay() {
         // Wait for 1 minute for node to establish connections
-        await new Promise((resolve) => setTimeout(resolve, 1 * 60 * 1000));
+        // await new Promise((resolve) => setTimeout(resolve, 1 * 60 * 1000));
 
         this.logger.info('Replay pending/started commands from the database...');
         const pendingCommands = (
-            await this.repositoryModuleManager(
+            await this.repositoryModuleManager.getCommandsWithStatus(
                 [STATUS.pending, STATUS.started, STATUS.repeating],
                 ['cleanerCommand', 'autoupdaterCommand'],
             )
