@@ -239,7 +239,12 @@
                 "implementation": {
                     "express-http-client": {
                         "package": "./http-client/implementation/express-http-client",
-                        "config": {}
+                        "config": {
+                            "useSsl": true,
+                            "port": 8900,
+                            "sslKeyPath": "/root/certs/privkey.pem",
+                            "sslCertificatePath": "/root/certs/fullchain.pem"
+                        }
                     }
                 }
             },
@@ -327,7 +332,12 @@
                 "implementation": {
                     "express-http-client": {
                         "package": "./http-client/implementation/express-http-client",
-                        "config": {}
+                        "config": {
+                            "useSsl": true,
+                            "port": 8900,
+                            "sslKeyPath": "/root/certs/privkey.pem",
+                            "sslCertificatePath": "/root/certs/fullchain.pem"
+                        }
                     }
                 }
             },

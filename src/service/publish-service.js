@@ -21,7 +21,7 @@ class PublishService {
             await this.commandExecutor.add({
                 name: 'publishFinaliseCommand',
                 sequence: [],
-                data: {},
+                data: command.data,
                 transactional: false,
             });
         }

@@ -15,10 +15,9 @@ class PublishFinaliseCommand extends Command {
     async execute(command) {
         this.logger.info('Finalizing publish command');
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION,
-        );
+        const { handlerId } = command.data;
+
+        await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.COMPLETED);
 
         return Command.empty();
     }
