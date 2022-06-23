@@ -4,11 +4,11 @@ module.exports = {
             id: {
                 type: Sequelize.INTEGER,
                 primaryKey: true,
-                autoIncrement: true
+                autoIncrement: true,
             },
-            publish_id: {
-                type: Sequelize.INTEGER,
-                references: { model: 'publish', key: 'id' }
+            handler_id: {
+                type: Sequelize.UUID,
+                allowNull: false,
             },
             status: {
                 allowNull: false,

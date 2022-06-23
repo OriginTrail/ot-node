@@ -8,6 +8,7 @@ class HandleStoreRequestCommand extends Command {
         this.config = ctx.config;
         this.networkModuleManager = ctx.networkModuleManager;
         this.dataService = ctx.dataService;
+        this.publishService = ctx.publishService;
     }
 
     /**
@@ -31,23 +32,15 @@ class HandleStoreRequestCommand extends Command {
         return Command.empty();
     }
 
-    /**
-     * Recover system from failure
-     * @param command
-     * @param err
-     */
-    async recover(command, err) {
+    async handleError(handlerId, errorMessage, errorName, markFailed, commandData) {
+        await this.publishService.handleReceiverCommandError(
+            handlerId,
+            errorMessage,
+            errorName,
+            markFailed,
+            commandData,
+        );
         return Command.empty();
-    }
-
-    handleError(handlerId, error, msg) {
-        this.logger.error({
-            msg,
-            Operation_name: 'Error',
-            Event_name: constants.ERROR_TYPE.HANDLE_STORE_REQUEST_ERROR,
-            Event_value1: error.message,
-            Id_operation: handlerId,
-        });
     }
 
     /**
