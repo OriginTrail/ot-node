@@ -46,12 +46,15 @@ class RepositoryModuleManager extends BaseModuleManager {
 
     async getNumberOfNodesFoundForPublish(publishId) {
         if (this.initialized) {
-            return this.getImplementation().module.getNumberOfNodesFoundForPublish(publishId);
+            return this.getImplementation().module.createPublishResponseRecord(
+                status,
+                handlerId,
+                message,
+            );
         }
     }
 
-    // PUBLISH REQUEST TABLE
-    async createPublishResponseRecord(status, publishId, message = null) {
+    async updatePublishResponseRecord(data, condition) {
         if (this.initialized) {
             return this.getImplementation().module.createPublishRequestRecord(
                 status,
@@ -71,15 +74,15 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async updatePublishResponseRecord(data, condition) {
+    async getNumberOfPublishResponses(handlerId) {
         if (this.initialized) {
-            return this.getImplementation().module.updatePublishResponseRecord(data, condition);
+            return this.getImplementation().module.getNumberOfPublishResponses(handlerId);
         }
     }
 
-    async getNumberOfPublishResponses(publishId) {
+    async getPublishResponsesStatuses(handlerId) {
         if (this.initialized) {
-            return this.getImplementation().module.getNumberOfPublishResponses(publishId);
+            return this.getImplementation().module.getPublishResponsesStatuses(handlerId);
         }
     }
 

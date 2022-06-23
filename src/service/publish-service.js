@@ -9,15 +9,15 @@ class PublishService {
     async processPublishResponse(command, status, errorMessage = null) {
         await this.repositoryModuleManager.createPublishResponseRecord(
             status,
-            command.data.publishId,
+            command.data.handlerId,
             errorMessage,
         );
 
         const numberOfResponses = await this.repositoryModuleManager.getNumberOfPublishResponses(
-            command.data.publishId,
+            command.data.handlerId,
         );
 
-        if (command.data.numberOfFoundNodes === numberOfResponses) {
+        if (command.data.numberOfFoundNodes === numberOfResponses + 1) {
             await this.commandExecutor.add({
                 name: 'publishFinaliseCommand',
                 sequence: [],

@@ -13,7 +13,7 @@ class PublishStoreCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { nodes, handlerId, assertionId, publishId, metadata, ual } = command.data;
+        const { nodes, handlerId, assertionId, metadata, ual } = command.data;
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
@@ -32,7 +32,6 @@ class PublishStoreCommand extends Command {
                         handlerId,
                         node,
                         assertionId,
-                        publishId,
                         numberOfFoundNodes: nodes.length,
                         metadata,
                         ual,

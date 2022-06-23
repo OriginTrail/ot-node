@@ -52,17 +52,12 @@ class PublishController extends BaseController {
 
             this.logger.info(`Received assertion with ual: ${ual}`);
 
-            const publishRecord = await this.repositoryModuleManager.createPublishRecord(
-                PUBLISH_STATUS.IN_PROGRESS,
-            );
-
             const commandData = {
                 method,
                 ual,
                 handlerId,
                 operationId,
                 metadata,
-                publishId: publishRecord.id,
                 networkProtocol: NETWORK_PROTOCOLS.STORE,
             };
 
