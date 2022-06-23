@@ -1,4 +1,5 @@
 const Command = require('../../command');
+const { HANDLER_ID_STATUS } = require('../../../constants/constants');
 
 class PublishFinaliseCommand extends Command {
     constructor(ctx) {
@@ -12,7 +13,12 @@ class PublishFinaliseCommand extends Command {
      * @param command
      */
     async execute(command) {
-        this.logger.info('EXECUTING FINALIZE COMMAND');
+        this.logger.info('Finalizing publish command');
+
+        const { handlerId } = command.data;
+
+        await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.COMPLETED);
+
         return Command.empty();
     }
 

@@ -109,6 +109,7 @@ class PublishController extends BaseController {
                 commandData.metadata = message.data.metadata;
                 await this.handlerIdService.cacheHandlerIdData(handlerId, {
                     data: message.data.data,
+                    metadata: await this.dataService.metadataObjectToNquads(message.data.metadata),
                 });
 
                 commandSequence.push('validateStoreRequestCommand');

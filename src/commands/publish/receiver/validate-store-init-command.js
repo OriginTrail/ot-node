@@ -1,5 +1,10 @@
 const Command = require('../../command');
-const { ERROR_TYPE, HANDLER_ID_STATUS } = require('../../../constants/constants');
+const {
+    ERROR_TYPE,
+    HANDLER_ID_STATUS,
+    NETWORK_PROTOCOLS,
+} = require('../../../constants/constants');
+const constants = require('../../../constants/constants');
 
 class ValidateStoreInitCommand extends Command {
     constructor(ctx) {
@@ -8,6 +13,7 @@ class ValidateStoreInitCommand extends Command {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.validationModuleManager = ctx.validationModuleManager;
         this.handlerIdService = ctx.handlerIdService;
+        this.networkModuleManager = ctx.networkModuleManager;
     }
 
     /**
@@ -48,6 +54,23 @@ class ValidateStoreInitCommand extends Command {
         const commandData = command.data;
         commandData.assertionId = calculatedRootHash;
         return this.continueSequence(commandData, command.sequence);
+    }
+
+    async handleError(handlerId, errorMessage, errorName, markFailed, commandData) {
+        this.logger.error({
+            msg: errorMessage,
+        });
+
+        const messageType = constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
+        const messageData = {};
+        await this.networkModuleManager.sendMessageResponse(
+            NETWORK_PROTOCOLS.STORE,
+            commandData.remotePeerId,
+            messageType,
+            handlerId,
+            messageData,
+        );
+        return Command.empty();
     }
 
     /**
