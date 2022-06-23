@@ -18,7 +18,9 @@ class SequelizeRepository {
 
     setEnvParameters() {
         process.env.SEQUELIZE_REPOSITORY_USER = this.config.user;
-        process.env.SEQUELIZE_REPOSITORY_PASSWORD = this.config.password;
+        process.env.SEQUELIZE_REPOSITORY_PASSWORD = process.env.REPOSITORY_PASSWORD
+            ? process.env.REPOSITORY_PASSWORD
+            : this.config.password;
         process.env.SEQUELIZE_REPOSITORY_DATABASE = this.config.database;
         process.env.SEQUELIZE_REPOSITORY_HOST = this.config.host;
         process.env.SEQUELIZE_REPOSITORY_PORT = this.config.port;
@@ -27,10 +29,10 @@ class SequelizeRepository {
 
     async createDatabaseIfNotExists() {
         const connection = await mysql.createConnection({
-            host: this.config.host,
-            port: this.config.port,
-            user: this.config.user,
-            password: this.config.password,
+            host: process.env.SEQUELIZE_REPOSITORY_HOST,
+            port: process.env.SEQUELIZE_REPOSITORY_PORT,
+            user: process.env.SEQUELIZE_REPOSITORY_USER,
+            password: process.env.SEQUELIZE_REPOSITORY_PASSWORD,
         });
         // todo remove drop!!!
         await connection.promise().query(`DROP DATABASE IF EXISTS \`${this.config.database}\`;`);
@@ -64,9 +66,9 @@ class SequelizeRepository {
             freezeTableName: true,
         };
         const sequelize = new Sequelize(
-            this.config.database,
-            this.config.user,
-            this.config.password,
+            process.env.SEQUELIZE_REPOSITORY_DATABASE,
+            process.env.SEQUELIZE_REPOSITORY_USER,
+            process.env.SEQUELIZE_REPOSITORY_PASSWORD,
             this.config,
         );
         const models = {};
@@ -90,6 +92,46 @@ class SequelizeRepository {
         models.Sequelize = Sequelize;
 
         return models;
+    }
+
+    transaction(execFn) {
+        return this.models.sequelize.transaction(async (t) => execFn(t));
+    }
+
+    // COMMAND
+    async updateCommand(update, opts) {
+        await this.models.commands.update(update, opts);
+    }
+
+    async destroyCommand(name) {
+        await this.models.commands.destroy({
+            where: {
+                name: { [Sequelize.Op.eq]: name },
+            },
+        });
+    }
+
+    async createCommand(command, opts) {
+        return this.models.commands.create(command, opts);
+    }
+
+    async getCommandsWithStatus(statusArray, excludeNameArray) {
+        return this.models.commands.findAll({
+            where: {
+                status: {
+                    [Sequelize.Op.in]: statusArray,
+                },
+                name: { [Sequelize.Op.notIn]: excludeNameArray },
+            },
+        });
+    }
+
+    async getCommandWithId(id) {
+        return this.models.commands.findOne({
+            where: {
+                id,
+            },
+        });
     }
 
     // HANDLER_ID

@@ -44,6 +44,7 @@ class PublishStoreCommand extends Command {
         await Promise.all(addCommandPromise);
 
         // todo schedule timeout command
+
         return Command.empty();
     }
 
