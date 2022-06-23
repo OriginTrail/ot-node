@@ -1,5 +1,5 @@
 const Command = require('../../command');
-const { ERROR_TYPE } = require('../../../constants/constants');
+const { ERROR_TYPE, HANDLER_ID_STATUS } = require('../../../constants/constants');
 
 class LocalResolveCommand extends Command {
     constructor(ctx) {
@@ -7,6 +7,7 @@ class LocalResolveCommand extends Command {
         this.config = ctx.config;
         this.handlerIdService = ctx.handlerIdService;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+        this.dataService = ctx.dataService;
     }
 
     /**
@@ -15,17 +16,22 @@ class LocalResolveCommand extends Command {
      */
     async execute(command) {
         const { handlerId, assertionId } = command.data;
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.RESOLVE.RESOLVING_ASSERTION,
+        );
 
         try {
             let nquads = await this.tripleStoreModuleManager.resolve(assertionId, true);
             if (nquads.length) {
-                nquads = nquads
-                    .toString()
-                    .split('\n')
-                    .filter((x) => x !== '');
+                nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
 
                 await this.handlerIdService.cacheHandlerIdData(handlerId, nquads);
-                
+                await this.handlerIdService.updateHandlerIdStatus(
+                    handlerId,
+                    HANDLER_ID_STATUS.COMPLETED,
+                );
+
                 return Command.empty();
             }
         } catch (e) {

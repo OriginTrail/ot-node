@@ -156,7 +156,7 @@ class SequelizeRepository {
         await this.models.resolve_response.create({
             status,
             message,
-            resolveId,
+            resolve_id: resolveId,
         })
     }
 
@@ -180,7 +180,7 @@ class SequelizeRepository {
     async getNumberOfResolveResponses(resolveId) {
         return this.models.resolve_response.count({
             where: {
-                resolveId,
+                resolve_id: resolveId,
             }
         })
     }

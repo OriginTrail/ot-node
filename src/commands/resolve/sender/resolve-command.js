@@ -1,5 +1,7 @@
 const Command = require('../../command');
 
+const { HANDLER_ID_STATUS } = require('../../../constants/constants');
+
 class ResolveCommand extends Command {
     constructor(ctx) {
         super(ctx);
@@ -14,6 +16,11 @@ class ResolveCommand extends Command {
     async execute(command) {
         const { nodes, handlerId, assertionId, resolveId } = command.data;
 
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.RESOLVE.RESOLVING_ASSERTION,
+        );
+
         const commandSequence = ['resolveInitCommand', 'resolveRequestCommand'];
         const addCommandPromise = [];
         nodes.forEach((node) => {
@@ -22,7 +29,7 @@ class ResolveCommand extends Command {
                     name: commandSequence[0],
                     sequence: commandSequence.slice(1),
                     delay: 0,
-                    data: { handlerId, node, assertionId, resolveId},
+                    data: { handlerId, node, assertionId, resolveId },
                     transactional: false,
                 }),
             );

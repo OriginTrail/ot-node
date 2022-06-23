@@ -54,8 +54,8 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     ].config.database = `operationaldb${i}`;
     parsedTemplate.modules.tripleStore.implementation[
         'ot-graphdb'
-    ].config.repository = `repostiory${i}`;
-    parsedTemplate.graphDatabase.name = `node${i}`;
+    ].config.repository = `repository${i}`;
+    
     if (process.env.LOG_LEVEL) {
         parsedTemplate.logLevel = process.env.LOG_LEVEL;
     }

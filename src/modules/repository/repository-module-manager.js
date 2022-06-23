@@ -66,7 +66,7 @@ class RepositoryModuleManager extends BaseModuleManager {
 
     async createResolveResponseRecord(status, resolveId, message = null) {
         if (this.initialized) {
-            return this.getImplementation().module.createResolveRequestRecord(
+            return this.getImplementation().module.createResolveResponseRecord(
                 status,
                 resolveId,
                 message,

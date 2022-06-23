@@ -1,7 +1,7 @@
 const {HANDLER_ID_STATUS, ERROR_TYPE} = require('../../constants/constants');
 const BaseController = require('./base-controller');
 
-const availableOperations = ['publish'];
+const availableOperations = ['publish', 'resolve'];
 
 class ResultController extends BaseController {
 
