@@ -70,10 +70,16 @@ class Libp2pService {
 
         initializationObject.peerId = this.config.peerId;
         this._initializeRateLimiters();
-        this.sessions = {
-            sender: {},
-            receiver: {},
-        };
+        /**
+         * sessions = {
+         *     [peerId]: {
+         *         [handlerId]: {
+         *             stream
+         *         }
+         *     }
+         * }
+         */
+        this.sessions = {};
         this.node = await Libp2p.create(initializationObject);
         this._initializeNodeListeners();
         await this.node.start();
@@ -112,11 +118,11 @@ class Libp2pService {
     }
 
     _onPeerDiscovery(peer) {
-        this.logger.debug(`Node ${this.node.peerId._idB58String} discovered ${peer._idB58String}`);
+        this.logger.trace(`Node ${this.node.peerId._idB58String} discovered ${peer._idB58String}`);
     }
 
     _onPeerConnect(connection) {
-        this.logger.debug(
+        this.logger.trace(
             `Node ${
                 this.node.peerId._idB58String
             } connected to ${connection.remotePeer.toB58String()}`,
@@ -134,7 +140,7 @@ class Libp2pService {
                 result.add(node);
             }
         }
-        this.logger.debug(`Found ${result.size} nodes`);
+        this.logger.trace(`Found ${result.size} nodes`);
 
         return [...result];
     }
@@ -195,60 +201,102 @@ class Libp2pService {
             );
 
             if (!valid) {
-                const response = {
-                    header: {
-                        sessionId: message.header.sessionId,
-                        messageType: constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                    },
-                    data: {},
-                };
-                await this.sendMessageResponse(protocol, remotePeerId, response, stream);
+                await this.sendMessageResponse(
+                    protocol,
+                    remotePeerId,
+                    constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                    message.header.handlerId
+                );
             } else if (busy) {
-                const response = {
-                    header: {
-                        sessionId: message.header.sessionId,
-                        messageType: constants.NETWORK_MESSAGE_TYPES.RESPONSES.BUSY,
-                    },
-                    data: {},
-                };
-                await this.sendMessageResponse(protocol, remotePeerId, response, stream);
+                await this.sendMessageResponse(
+                    protocol,
+                    remotePeerId,
+                    constants.NETWORK_MESSAGE_TYPES.RESPONSES.BUSY,
+                    message.header.handlerId
+                );
             } else {
                 this.logger.debug(
                     `Receiving message from ${remotePeerId} to ${this.config.id}: event=${protocol}, messageType=${message.header.messageType};`,
                 );
-                this.updateSessionStream(message, stream);
+                this.updateSessionStream(message.header.handlerId, remotePeerId, stream);
                 await handler(message, remotePeerId);
             }
         });
     }
 
-    updateSessionStream(message, stream) {
-        const session = this.sessions.receiver[message.header.sessionId];
-
-        this.sessions.receiver[message.header.sessionId] = session
-            ? { ...session, stream }
-            : { stream };
+    updateSessionStream(handlerId, remotePeerId, stream) {
+        if (!this.sessions[remotePeerId]) {
+            this.logger.trace(`Storing new session stream for remotePeerId: ${remotePeerId}`);
+            this.sessions[remotePeerId] = {
+                [handlerId]: {
+                    stream
+                }
+            }
+        } else {
+            this.logger.trace(`Storing new session stream for remotePeerId: ${remotePeerId} with handler id: ${handlerId}`);
+            this.sessions[remotePeerId][handlerId] = {
+                stream
+            }
+        }
     }
 
-    async sendMessage(protocol, remotePeerId, message, options) {
-        this.logger.debug(
-            `Sending message from ${this.config.id} to ${remotePeerId._idB58String}: event=${protocol}, messageType=${message.header.messageType};`,
-        );
-        const { stream } = await this.node.dialProtocol(remotePeerId, protocol);
+    getSessionStream(handlerId, remotePeerId) {
+        if (this.sessions[remotePeerId] && this.sessions[remotePeerId][handlerId]) {
+            this.logger.trace(`Session found remotePeerId: ${remotePeerId} and handler id: ${handlerId}`);
+            return this.sessions[remotePeerId][handlerId].stream;
+        }
+        return null;
+    }
 
-        if (!message.header.sessionId) {
-            message.header.sessionId = uuidv4();
+    createStreamMessage(message, handlerId, messageType) {
+        return {
+            header: {
+                handlerId,
+                messageType
+            },
+            data: message,
         }
-        await this._sendMessageToStream(stream, message);
-        if (!this.sessions.sender[message.header.sessionId]) {
-            this.sessions.sender[message.header.sessionId] = {};
-        }
+    }
+
+    async sendMessage(protocol, remotePeerId, messageType, handlerId, message) {
+        this.logger.trace(
+            `Sending message from ${this.config.id} to ${remotePeerId._idB58String}: event=${protocol}, messageType=${messageType}, handlerId: ${handlerId};`,
+        );
+
+
+        // const sessionStream = this.getSessionStream(handlerId, remotePeerId._idB58String);
+        // if (!sessionStream) {
+            this.logger.trace(`Dialing remotePeerId: ${remotePeerId._idB58String} for protocol: ${protocol}`);
+            const stream = (await this.node.dialProtocol(remotePeerId, protocol)).stream;
+        // } else {
+        //     stream = sessionStream;
+        // }
+
+        this.updateSessionStream(handlerId, remotePeerId._idB58String, stream);
+
+        const streamMessage = this.createStreamMessage(message, handlerId, messageType);
+
+        await this._sendMessageToStream(stream, streamMessage);
+        // if (!this.sessions[remotePeerId._idB58String]) {
+        //     this.sessions[remotePeerId._idB58String] = {
+        //         [handlerId]: {
+        //             stream
+        //         }
+        //     }
+        // } else {
+        //     this.sessions[remotePeerId._idB58String][handlerId] = {
+        //             stream
+        //     }
+        // }
+        // if (!this.sessions.sender[message.header.sessionId]) {
+        //     this.sessions.sender[message.header.sessionId] = {};
+        // }
         const { message: response, valid } = await this._readMessageFromStream(
             stream,
             this.isResponseValid.bind(this),
             remotePeerId._idB58String,
         );
-        this.logger.debug(
+        this.logger.trace(
             `Receiving response from ${remotePeerId._idB58String} : event=${protocol}, messageType=${response.header.messageType};`,
         );
 
@@ -258,44 +306,52 @@ class Libp2pService {
     async sendMessageResponse(
         protocol,
         remotePeerId,
-        response,
-        stream = this.sessions.receiver[response.header.sessionId].stream,
+        messageType,
+        handlerId,
+        message,
     ) {
         this.logger.debug(
-            `Sending response from ${this.config.id} to ${remotePeerId}: event=${protocol}, messageType=${response.header.messageType};`,
+            `Sending response from ${this.config.id} to ${remotePeerId}: event=${protocol}, messageType=${messageType};`,
         );
-        this.updateReceiverSession(response.header);
+        const stream = this.getSessionStream(handlerId, remotePeerId);
+
+        if (!stream) {
+            throw Error(`Unable to find opened stream for remotePeerId: ${remotePeerId}`);
+        }
+
+        const response = this.createStreamMessage(message, handlerId, messageType);
+
         await this._sendMessageToStream(stream, response);
     }
 
-    updateReceiverSession(header) {
-        // if BUSY we expect same request, so don't update session
-        if (header.messageType === constants.NETWORK_MESSAGE_TYPES.RESPONSES.BUSY) return;
-        // if NACK we don't expect other requests, so delete session
-        if (header.messageType === constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK) {
-            if (header.sessionId) delete this.sessions.receiver[header.sessionId];
-            return;
-        }
-
-        // if session is new, initialise array of expected message types
-        if (!this.sessions.receiver[header.sessionId].expectedMessageTypes) {
-            this.sessions.receiver[header.sessionId].expectedMessageTypes = Object.keys(
-                constants.NETWORK_MESSAGE_TYPES.REQUESTS,
-            );
-        }
-
-        // subroutine completed
-        if (header.messageType === constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK) {
-            // protocol operation completed, delete session
-            if (this.sessions.receiver[header.sessionId].expectedMessageTypes.length <= 1) {
-                this.removeSession(header.sessionId);
-            } else {
-                // operation not completed, update array of expected message types
-                this.sessions.receiver[header.sessionId].expectedMessageTypes =
-                    this.sessions.receiver[header.sessionId].expectedMessageTypes.slice(1);
-            }
-        }
-    }
+    // updateReceiverSession(header) {
+    //     // if BUSY we expect same request, so don't update session
+    //     if (header.messageType === constants.NETWORK_MESSAGE_TYPES.RESPONSES.BUSY) return;
+    //     // if NACK we don't expect other requests, so delete session
+    //     if (header.messageType === constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK) {
+    //         if (header.sessionId) delete this.sessions.receiver[header.sessionId];
+    //         return;
+    //     }
+    //
+    //     // if session is new, initialise array of expected message types
+    //     if (!this.sessions.receiver[header.sessionId].expectedMessageTypes) {
+    //         this.sessions.receiver[header.sessionId].expectedMessageTypes = Object.keys(
+    //             constants.NETWORK_MESSAGE_TYPES.REQUESTS,
+    //         );
+    //     }
+    //
+    //     // subroutine completed
+    //     if (header.messageType === constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK) {
+    //         // protocol operation completed, delete session
+    //         if (this.sessions.receiver[header.sessionId].expectedMessageTypes.length <= 1) {
+    //             this.removeSession(header.sessionId);
+    //         } else {
+    //             // operation not completed, update array of expected message types
+    //             this.sessions.receiver[header.sessionId].expectedMessageTypes =
+    //                 this.sessions.receiver[header.sessionId].expectedMessageTypes.slice(1);
+    //         }
+    //     }
+    // }
 
     async _sendMessageToStream(stream, message) {
         const stringifiedHeader = JSON.stringify(message.header);
@@ -368,29 +424,31 @@ class Libp2pService {
 
         // header well formed
         if (
-            !header.sessionId ||
+            !header.handlerId ||
             !header.messageType ||
             !Object.keys(constants.NETWORK_MESSAGE_TYPES.REQUESTS).includes(header.messageType)
         )
             return false;
-
-        // get existing expected messageType or PROTOCOL_INIT if session doesn't exist yet
-        const expectedMessageType = this.sessions.receiver[header.sessionId]
-            ? this.sessions.receiver[header.sessionId].expectedMessageTypes[0]
-            : Object.keys(constants.NETWORK_MESSAGE_TYPES.REQUESTS)[0];
-
-        if (expectedMessageType !== header.messageType) return false;
-
-        return true;
+        if (header.messageType === constants.NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT) {
+            return true;
+        } else {
+            return this.sessionExists(remotePeerId, header.handlerId);
+        }
     }
 
-    async isResponseValid(header) {
-        return (
-            header.sessionId &&
-            header.messageType &&
-            this.sessions.sender[header.sessionId] &&
-            Object.keys(constants.NETWORK_MESSAGE_TYPES.RESPONSES).includes(header.messageType)
-        );
+    sessionExists(remotePeerId, handlerId) {
+        return true;
+        // return this.sessions[remotePeerId._idB58String] && this.sessions[remotePeerId._idB58String][handlerId];
+    }
+
+    async isResponseValid(header, remotePeerId) {
+        return true;
+        // return (
+        //     header.handlerId &&
+        //     header.messageType &&
+        //     this.sessions[remotePeerId][header.handlerId] &&
+        //     Object.keys(constants.NETWORK_MESSAGE_TYPES.RESPONSES).includes(header.messageType)
+        // );
     }
 
     removeSession(sessionId) {
@@ -409,7 +467,7 @@ class Libp2pService {
     }
 
     async limitRequest(header, remotePeerId) {
-        if (header.sessionId && this.sessions.receiver[header.sessionId]) return false;
+        // if (header.sessionId && this.sessions.receiver[header.sessionId]) return false;
 
         if (this.blackList[remotePeerId]) {
             const remainingMinutes = Math.floor(
@@ -448,12 +506,12 @@ class Libp2pService {
 
     isBusy() {
         return (
-            toobusy() || Object.keys(this.sessions.receiver).length > constants.MAX_OPEN_SESSIONS
+            toobusy() || Object.keys(this.sessions).length > constants.MAX_OPEN_SESSIONS
         );
     }
 
     getPrivateKey() {
-        return this.node.peerId.privKey;
+        return this.config.privateKey;
     }
 
     getName() {

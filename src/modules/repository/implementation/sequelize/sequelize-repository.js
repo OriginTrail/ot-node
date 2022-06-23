@@ -33,7 +33,7 @@ class SequelizeRepository {
             password: this.config.password,
         });
         // todo remove drop!!!
-        //await connection.promise().query(`DROP DATABASE \`${this.config.database}\`;`);
+        await connection.promise().query(`DROP DATABASE IF EXISTS \`${this.config.database}\`;`);
         await connection.promise().query(`CREATE DATABASE IF NOT EXISTS \`${this.config.database}\`;`);
     }
 
@@ -59,6 +59,7 @@ class SequelizeRepository {
         // disable automatic timestamps
         this.config.define = {
             timestamps: false,
+            freezeTableName: true,
         };
         const sequelize = new Sequelize(
             this.config.database,
@@ -135,7 +136,7 @@ class SequelizeRepository {
     }
 
     // PUBLISH RESPONSE
-    async updatePublishResponseRecord(status, publishId, message) {
+    async createPublishResponseRecord(status, publishId, message) {
         await this.models.publish_response.create({
             status,
             message,

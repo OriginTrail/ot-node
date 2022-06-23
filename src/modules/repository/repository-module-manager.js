@@ -44,9 +44,9 @@ class RepositoryModuleManager extends BaseModuleManager {
     }
 
     // PUBLISH REQUEST TABLE
-    async createPublishRequestRecord(status, publishId, message = null) {
+    async createPublishResponseRecord(status, publishId, message = null) {
         if (this.initialized) {
-            return this.getImplementation().module.createPublishRequestRecord(status, publishId, message);
+            return this.getImplementation().module.createPublishResponseRecord(status, publishId, message);
         }
     }
 

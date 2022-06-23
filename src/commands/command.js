@@ -72,7 +72,7 @@ class Command {
         const commandData = command.data ? command.data : {};
         Object.assign(command, {
             data: Object.assign(commandData, data),
-            newSequence,
+            sequence: newSequence,
         });
         if (opts) {
             Object.assign(command, opts);

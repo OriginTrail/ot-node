@@ -50,7 +50,6 @@ class PublishController extends BaseController {
                 metadata: metadataNquads,
             });
 
-            const { keywords, dataRootId, issuer, visibility, type } = metadata;
             this.logger.info(`Received assertion with ual: ${ual}`);
 
             const publishRecord = await this.repositoryModuleManager.createPublishRecord(PUBLISH_STATUS.IN_PROGRESS);
@@ -60,17 +59,13 @@ class PublishController extends BaseController {
                 ual,
                 handlerId,
                 operationId,
-                keywords,
-                dataRootId,
-                issuer,
-                visibility,
-                type,
+                metadata,
                 publishId: publishRecord.id,
                 networkProtocol: NETWORK_PROTOCOLS.STORE,
             };
 
             const commandSequence = [
-                // 'validateAssertionCommand',
+                'validateAssertionCommand',
                 'insertAssertionCommand',
                 'findNodesCommand',
                 'publishStoreCommand',
@@ -98,14 +93,19 @@ class PublishController extends BaseController {
     }
 
     async handleNetworkStoreRequest(message, remotePeerId) {
-        const operationId = await this.generateHandlerId();
+        const {handlerId} = message.header;
+        const { assertionId } = message.data;
         let commandName;
-        const commandData = { message, remotePeerId, operationId };
+        const commandData = { remotePeerId, handlerId, assertionId };
         switch (message.header.messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
                 commandName = 'handleStoreInitCommand';
                 break;
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
+                commandData.metadata = message.data.metadata;
+                await this.handlerIdService.cacheHandlerIdData(handlerId, {
+                    data: message.data.data,
+                });
                 commandName = 'handleStoreRequestCommand';
                 break;
             default:

@@ -15,35 +15,19 @@ class HandleStoreInitCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { message, remotePeerId, operationId } = command.data;
+        const { assertionId, remotePeerId, handlerId } = command.data;
 
-        await this.commandExecutor.add(
-            {
-                name: 'removeSessionCommand',
-                sequence: [],
-                data: { sessionId: message.header.sessionId },
-                transactional: false,
-            },
-            constants.REMOVE_SESSION_COMMAND_DELAY,
+        // todo add message validation assertionId
+
+        const messageType = constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
+        const messageData = {};
+        await this.networkModuleManager.sendMessageResponse(
+            constants.NETWORK_PROTOCOLS.STORE,
+            remotePeerId,
+            messageType,
+            handlerId,
+            messageData
         );
-
-        const response = {
-            header: {
-                sessionId: message.header.sessionId,
-                messageType: constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
-            },
-            data: {},
-        };
-
-        await this.networkModuleManager
-            .sendMessageResponse(constants.NETWORK_PROTOCOLS.STORE, remotePeerId, response)
-            .catch((e) => {
-                this.handleError(
-                    operationId,
-                    e,
-                    `Error while sending store init response to node ${remotePeerId._idB58String}. Error message: ${e.message}. ${e.stack}`,
-                );
-            });
 
         return this.continueSequence(command.data, command.sequence);
     }

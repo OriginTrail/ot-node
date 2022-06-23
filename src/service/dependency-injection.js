@@ -8,7 +8,6 @@ class DependencyInjection {
 
         container.loadModules(
             [
-                'modules/controller/**/*.js',
                 'modules/service/**/*.js',
                 'modules/manager/**/*.js',
                 'modules/worker/worker-pool.js',

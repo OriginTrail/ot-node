@@ -30,9 +30,7 @@ class ProtocolMessageCommand extends Command {
                 messageType,
                 handlerId,
                 message,
-            )
-            .catch((e) => this.handleError(handlerId, e.message));
-
+            );
         switch (response.header.messageType) {
             case NETWORK_MESSAGE_TYPES.RESPONSES.BUSY:
                 return this.handleBusy(command);
@@ -50,11 +48,11 @@ class ProtocolMessageCommand extends Command {
     }
 
     async handleAck(command) {
-        return command.continueSequence(command.data, command.sequence);
+        return this.continueSequence(command.data, command.sequence);
     }
 
-    async handleBusy(command) {
-        return command.retry();
+    async handleBusy() {
+        return Command.retry();
     }
 
     async handleNack(command) {
@@ -62,12 +60,12 @@ class ProtocolMessageCommand extends Command {
             command,
             `Received NACK response from node during ${this.commandName}`,
         );
-        return command.empty();
+        return Command.empty();
     }
 
     async recover(command, err) {
         await this.markResponseAsFailed(command, err.message);
-        return command.empty();
+        return Command.empty();
     }
 
     // eslint-disable-next-line no-unused-vars

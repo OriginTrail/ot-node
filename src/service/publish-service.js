@@ -11,13 +11,13 @@ class PublishService {
 
     async processPublishResponse(command, status, errorMessage = null) {
         if (errorMessage) {
-            await this.repositoryModuleManager.createPublishRequestRecord(
+            await this.repositoryModuleManager.createPublishResponseRecord(
                 PUBLISH_REQUEST_STATUS.FAILED,
                 command.data.publishId,
                 errorMessage
             );
         } else {
-            await this.repositoryModuleManager.createPublishRequestRecord(
+            await this.repositoryModuleManager.createPublishResponseRecord(
                 PUBLISH_REQUEST_STATUS.COMPLETED,
                 command.data.publishId,
             );
@@ -34,8 +34,7 @@ class PublishService {
                     sequence: [],
                     data: {  },
                     transactional: false,
-                },
-                constants.REMOVE_SESSION_COMMAND_DELAY,
+                }
             );
         }
     }

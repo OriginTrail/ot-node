@@ -15,45 +15,57 @@ class HandleStoreRequestCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { message, remotePeerId, operationId } = command.data;
+        const { remotePeerId, handlerId, assertionId, metadata } = command.data;
 
-        let status = false;
-        try {
-            const { jsonld, nquads } = await this.dataService.createAssertion(message.data.nquads);
-            status = await this.dataService.verifyAssertion(jsonld, nquads);
+        const {data} = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
-            if (status) {
-                await this.dataService.insert(
-                    message.data.nquads.join('\n'),
-                    `${constants.DID_PREFIX}:${message.data.id}`,
-                );
-                this.logger.info(`Assertion ${message.data.id} has been successfully inserted`);
-            }
-        } catch (e) {
-            status = false;
-        }
-
-        const response = {
-            header: {
-                sessionId: message.header.sessionId,
-                messageType: status
-                    ? constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK
-                    : constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-            },
-            data: {},
-        };
-
-        await this.networkModuleManager
-            .sendMessageResponse(constants.NETWORK_PROTOCOLS.STORE, remotePeerId, response)
-            .catch((e) => {
-                this.handleError(
-                    operationId,
-                    e,
-                    `Error while sending store request response to node ${remotePeerId._idB58String}. Error message: ${e.message}. ${e.stack}`,
-                );
-            });
-
-        return this.continueSequence(command.data, command.sequence);
+        const messageType = constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
+        const messageData = {};
+        await this.networkModuleManager.sendMessageResponse(
+            constants.NETWORK_PROTOCOLS.STORE,
+            remotePeerId,
+            messageType,
+            handlerId,
+            messageData
+        );
+        return Command.empty();
+        // let status = false;
+        // try {
+        //     const { jsonld, nquads } = await this.dataService.createAssertion(message.data.nquads);
+        //     status = await this.dataService.verifyAssertion(jsonld, nquads);
+        //
+        //     if (status) {
+        //         await this.dataService.insert(
+        //             message.data.nquads.join('\n'),
+        //             `${constants.DID_PREFIX}:${message.data.id}`,
+        //         );
+        //         this.logger.info(`Assertion ${message.data.id} has been successfully inserted`);
+        //     }
+        // } catch (e) {
+        //     status = false;
+        // }
+        //
+        // const response = {
+        //     header: {
+        //         sessionId: message.header.sessionId,
+        //         messageType: status
+        //             ? constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK
+        //             : constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+        //     },
+        //     data: {},
+        // };
+        //
+        // await this.networkModuleManager
+        //     .sendMessageResponse(constants.NETWORK_PROTOCOLS.STORE, remotePeerId, response)
+        //     .catch((e) => {
+        //         this.handleError(
+        //             operationId,
+        //             e,
+        //             `Error while sending store request response to node ${remotePeerId._idB58String}. Error message: ${e.message}. ${e.stack}`,
+        //         );
+        //     });
+        //
+        // return this.continueSequence(command.data, command.sequence);
     }
 
     /**

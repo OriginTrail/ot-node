@@ -17,8 +17,23 @@
         },
         "tripleStore": {
             "enabled": true,
-            "defaultImplementation": "ot-graphdb"
+            "defaultImplementation": "ot-graphdb",
+                  "implementation": {
+                    "ot-graphdb": {
+                        "config": {
+
+                        }
+                    }
+                  }
         },
+        "repository": {
+                  "enabled": true,
+                  "implementation": {
+                    "sequelize-repository": {
+                      "config": {}
+                    }
+                  }
+                },
         "network": {
             "enabled": true,
             "implementation": {

@@ -1,4 +1,5 @@
 const Command = require('../../command');
+const {HANDLER_ID_STATUS} = require("../../../constants/constants");
 
 class PublishStoreCommand extends Command {
     constructor(ctx) {
@@ -12,15 +13,12 @@ class PublishStoreCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { nodes, handlerId, assertionId, publishId } = command.data;
+        const {nodes, handlerId, assertionId, publishId, metadata} = command.data;
 
-        await this.repositoryModuleManager.updatePublishRecord(
-            {
-                nodes_found: nodes.length,
-                assertion_id: assertionId,
-            },
-            publishId
-        )
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.PUBLISH.PUBLISHING_ASSERTION,
+        );
 
         const commandSequence = ['publishStoreInitCommand', 'publishStoreRequestCommand'];
         const addCommandPromise = [];
@@ -30,7 +28,7 @@ class PublishStoreCommand extends Command {
                     name: commandSequence[0],
                     sequence: commandSequence.slice(1),
                     delay: 0,
-                    data: { handlerId, node, assertionId, publishId, numberOfFoundNodes: nodes },
+                    data: { handlerId, node, assertionId, publishId, numberOfFoundNodes: nodes.length, metadata },
                     transactional: false,
                 }),
             );
@@ -39,6 +37,7 @@ class PublishStoreCommand extends Command {
         await Promise.all(addCommandPromise);
 
         // todo schedule timeout command
+        return Command.empty();
     }
 
     /**
