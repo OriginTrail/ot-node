@@ -1,6 +1,5 @@
 const Command = require('../../command');
-const { ERROR_TYPE, NETWORK_PROTOCOLS } = require('../../../constants/constants');
-const constants = require('../../../constants/constants');
+const { ERROR_TYPE } = require('../../../constants/constants');
 
 class InsertStoreRequestCommand extends Command {
     constructor(ctx) {
@@ -9,6 +8,8 @@ class InsertStoreRequestCommand extends Command {
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.fileService = ctx.fileService;
         this.handlerIdService = ctx.handlerIdService;
+
+        this.publishService = ctx.publishService;
     }
 
     /**
@@ -41,18 +42,12 @@ class InsertStoreRequestCommand extends Command {
     }
 
     async handleError(handlerId, errorMessage, errorName, markFailed, commandData) {
-        this.logger.error({
-            msg: errorMessage,
-        });
-
-        const messageType = constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
-        const messageData = {};
-        await this.networkModuleManager.sendMessageResponse(
-            NETWORK_PROTOCOLS.STORE,
-            commandData.remotePeerId,
-            messageType,
+        await this.publishService.handleReceiverCommandError(
             handlerId,
-            messageData,
+            errorMessage,
+            errorName,
+            markFailed,
+            commandData,
         );
         return Command.empty();
     }

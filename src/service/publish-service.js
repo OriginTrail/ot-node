@@ -1,9 +1,14 @@
+const constants = require('../constants/constants');
+const { NETWORK_PROTOCOLS } = require('../constants/constants');
+const Command = require('../commands/command');
+
 class PublishService {
     constructor(ctx) {
         this.logger = ctx.logger;
 
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.commandExecutor = ctx.commandExecutor;
+        this.networkModuleManager = ctx.networkModuleManager;
     }
 
     async processPublishResponse(command, status, errorMessage = null) {
@@ -25,6 +30,22 @@ class PublishService {
                 transactional: false,
             });
         }
+    }
+
+    async handleReceiverCommandError(handlerId, errorMessage, errorName, markFailed, commandData) {
+        this.logger.error({
+            msg: errorMessage,
+        });
+
+        const messageType = constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
+        const messageData = {};
+        await this.networkModuleManager.sendMessageResponse(
+            NETWORK_PROTOCOLS.STORE,
+            commandData.remotePeerId,
+            messageType,
+            handlerId,
+            messageData,
+        );
     }
     //
     // async publish(
