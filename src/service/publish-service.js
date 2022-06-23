@@ -1,6 +1,9 @@
 const constants = require('../constants/constants');
-const { NETWORK_PROTOCOLS } = require('../constants/constants');
-const Command = require('../commands/command');
+const {
+    NETWORK_PROTOCOLS,
+    HANDLER_ID_STATUS,
+    PUBLISH_REQUEST_STATUS,
+} = require('../constants/constants');
 
 class PublishService {
     constructor(ctx) {
@@ -9,26 +12,49 @@ class PublishService {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.commandExecutor = ctx.commandExecutor;
         this.networkModuleManager = ctx.networkModuleManager;
+        this.handlerIdService = ctx.handlerIdService;
     }
 
     async processPublishResponse(command, status, errorMessage = null) {
+        const { handlerId } = command.data;
+
         await this.repositoryModuleManager.createPublishResponseRecord(
             status,
-            command.data.handlerId,
+            handlerId,
             errorMessage,
         );
 
         const numberOfResponses = await this.repositoryModuleManager.getNumberOfPublishResponses(
-            command.data.handlerId,
+            handlerId,
         );
 
         if (command.data.numberOfFoundNodes === numberOfResponses + 1) {
-            await this.commandExecutor.add({
-                name: 'publishFinaliseCommand',
-                sequence: [],
-                data: command.data,
-                transactional: false,
+            this.logger.info(`Finalizing publish for handlerId: ${handlerId}`);
+
+            await this.handlerIdService.updateHandlerIdStatus(
+                handlerId,
+                HANDLER_ID_STATUS.COMPLETED,
+            );
+
+            const responseStatuses = await this.repositoryModuleManager.getPublishResponsesStatuses(
+                handlerId,
+            );
+            let failedNumber = 0;
+            let completedNumber = 0;
+
+            responseStatuses.forEach((responseStatus) => {
+                if (responseStatus === PUBLISH_REQUEST_STATUS.FAILED) {
+                    failedNumber += 1;
+                } else {
+                    completedNumber += 1;
+                }
             });
+
+            this.logger.info(
+                `Total number of responses: ${
+                    failedNumber + completedNumber
+                }, failed: ${failedNumber}, completed: ${completedNumber}`,
+            );
         }
     }
 
