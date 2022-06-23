@@ -1,13 +1,19 @@
-const Command = require('../command');
-const { ERROR_TYPE, HANDLER_ID_STATUS } = require('../../constants/constants');
+const Command = require('../../command');
+const {
+    ERROR_TYPE,
+    HANDLER_ID_STATUS,
+    NETWORK_PROTOCOLS,
+} = require('../../../constants/constants');
+const constants = require('../../../constants/constants');
 
-class ValidateAssertionCommand extends Command {
+class ValidateStoreInitCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.validationModuleManager = ctx.validationModuleManager;
         this.handlerIdService = ctx.handlerIdService;
+        this.networkModuleManager = ctx.networkModuleManager;
     }
 
     /**
@@ -19,7 +25,7 @@ class ValidateAssertionCommand extends Command {
         this.logger.info(`Validating assertion with ual: ${ual}`);
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_VALIDATING_ASSERTION,
+            HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION,
         );
 
         const handlerIdData = await this.handlerIdService.getCachedHandlerIdData(handlerId);
@@ -50,6 +56,23 @@ class ValidateAssertionCommand extends Command {
         return this.continueSequence(commandData, command.sequence);
     }
 
+    async handleError(handlerId, errorMessage, errorName, markFailed, commandData) {
+        this.logger.error({
+            msg: errorMessage,
+        });
+
+        const messageType = constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
+        const messageData = {};
+        await this.networkModuleManager.sendMessageResponse(
+            NETWORK_PROTOCOLS.STORE,
+            commandData.remotePeerId,
+            messageType,
+            handlerId,
+            messageData,
+        );
+        return Command.empty();
+    }
+
     /**
      * Builds default prepareAssertionForPublish
      * @param map
@@ -57,7 +80,7 @@ class ValidateAssertionCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'validateAssertionCommand',
+            name: 'ValidateStoreInitCommand',
             delay: 0,
             transactional: false,
             errorType: ERROR_TYPE.VALIDATE_ASSERTION_ERROR,
@@ -67,4 +90,4 @@ class ValidateAssertionCommand extends Command {
     }
 }
 
-module.exports = ValidateAssertionCommand;
+module.exports = ValidateStoreInitCommand;

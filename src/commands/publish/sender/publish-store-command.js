@@ -1,5 +1,5 @@
 const Command = require('../../command');
-const {HANDLER_ID_STATUS} = require("../../../constants/constants");
+const { HANDLER_ID_STATUS } = require('../../../constants/constants');
 
 class PublishStoreCommand extends Command {
     constructor(ctx) {
@@ -13,7 +13,7 @@ class PublishStoreCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const {nodes, handlerId, assertionId, publishId, metadata} = command.data;
+        const { nodes, handlerId, assertionId, publishId, metadata, ual } = command.data;
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
@@ -28,7 +28,15 @@ class PublishStoreCommand extends Command {
                     name: commandSequence[0],
                     sequence: commandSequence.slice(1),
                     delay: 0,
-                    data: { handlerId, node, assertionId, publishId, numberOfFoundNodes: nodes.length, metadata },
+                    data: {
+                        handlerId,
+                        node,
+                        assertionId,
+                        publishId,
+                        numberOfFoundNodes: nodes.length,
+                        metadata,
+                        ual,
+                    },
                     transactional: false,
                 }),
             );

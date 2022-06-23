@@ -1,7 +1,7 @@
-const Command = require('../command');
-const { HANDLER_ID_STATUS, ERROR_TYPE } = require('../../constants/constants');
+const Command = require('../../command');
+const { HANDLER_ID_STATUS, ERROR_TYPE } = require('../../../constants/constants');
 
-class InsertAssertionCommand extends Command {
+class InsertStoreRequestCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -15,23 +15,18 @@ class InsertAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { handlerId, ual, metadata } = command.data;
+        const { handlerId, ual, dataRootId } = command.data;
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.INSERTING_ASSERTION,
-        );
+        const { data, metadata } = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
-        const handlerIdData = await this.handlerIdService.getCachedHandlerIdData(handlerId);
-
-        const metadataId = this.getMetadataId(handlerIdData.metadata);
+        const metadataId = this.getMetadataId(metadata);
 
         const nquads = [
             `<${ual}> <http://schema.org/metadata> "${metadataId}" .`,
-            `<${ual}> <http://schema.org/data> "${metadata.dataRootId}" .`,
+            `<${ual}> <http://schema.org/data> "${dataRootId}" .`,
         ]
-            .concat(handlerIdData.metadata)
-            .concat(handlerIdData.data);
+            .concat(metadata)
+            .concat(data);
 
         this.logger.info(`Inserting assertion with ual:${ual} in database.`);
         await this.tripleStoreModuleManager.insert(nquads.join('\n'), ual);
@@ -51,7 +46,7 @@ class InsertAssertionCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'insertAssertionCommand',
+            name: 'insertStoreRequestCommand',
             delay: 0,
             transactional: false,
             errorType: ERROR_TYPE.INSERT_ASSERTION_ERROR,
@@ -61,4 +56,4 @@ class InsertAssertionCommand extends Command {
     }
 }
 
-module.exports = InsertAssertionCommand;
+module.exports = InsertStoreRequestCommand;

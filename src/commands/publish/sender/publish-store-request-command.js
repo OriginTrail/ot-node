@@ -2,7 +2,8 @@ const ProtocolRequestCommand = require('../../common/protocol-request-command');
 const Command = require('../../command');
 const {
     NETWORK_PROTOCOLS,
-    ERROR_TYPE, PUBLISH_REQUEST_STATUS
+    ERROR_TYPE,
+    PUBLISH_REQUEST_STATUS,
 } = require('../../../constants/constants');
 
 class PublishStoreRequestCommand extends ProtocolRequestCommand {
@@ -18,14 +19,15 @@ class PublishStoreRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const {handlerId, assertionId, metadata} = command.data;
-        const {data} = await this.handlerIdService.getCachedHandlerIdData(handlerId);
+        const { handlerId, assertionId, metadata, ual } = command.data;
+        const { data } = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
         return {
             metadata,
             data,
-            assertionId
-        }
+            assertionId,
+            ual,
+        };
     }
 
     async handleAck(command) {
@@ -34,7 +36,11 @@ class PublishStoreRequestCommand extends ProtocolRequestCommand {
     }
 
     async markResponseAsFailed(command, errorMessage) {
-        await this.publishService.processPublishResponse(command, PUBLISH_REQUEST_STATUS.FAILED, errorMessage);
+        await this.publishService.processPublishResponse(
+            command,
+            PUBLISH_REQUEST_STATUS.FAILED,
+            errorMessage,
+        );
     }
 
     /**

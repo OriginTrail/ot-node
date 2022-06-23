@@ -52,7 +52,9 @@ class PublishController extends BaseController {
 
             this.logger.info(`Received assertion with ual: ${ual}`);
 
-            const publishRecord = await this.repositoryModuleManager.createPublishRecord(PUBLISH_STATUS.IN_PROGRESS);
+            const publishRecord = await this.repositoryModuleManager.createPublishRecord(
+                PUBLISH_STATUS.IN_PROGRESS,
+            );
 
             const commandData = {
                 method,
@@ -93,28 +95,35 @@ class PublishController extends BaseController {
     }
 
     async handleNetworkStoreRequest(message, remotePeerId) {
-        const {handlerId} = message.header;
-        const { assertionId } = message.data;
-        let commandName;
-        const commandData = { remotePeerId, handlerId, assertionId };
+        const { handlerId } = message.header;
+        const { assertionId, ual } = message.data;
+        const commandSequence = [];
+        const commandData = { remotePeerId, handlerId, assertionId, ual };
         switch (message.header.messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
-                commandName = 'handleStoreInitCommand';
+                commandSequence.push('validateStoreInitCommand');
+                commandSequence.push('handleStoreInitCommand');
+
                 break;
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
                 commandData.metadata = message.data.metadata;
                 await this.handlerIdService.cacheHandlerIdData(handlerId, {
                     data: message.data.data,
+                    metadata: await this.dataService.metadataObjectToNquads(message.data.metadata),
                 });
-                commandName = 'handleStoreRequestCommand';
+
+                commandSequence.push('validateStoreRequestCommand');
+                commandSequence.push('insertStoreRequestCommand');
+                commandSequence.push('handleStoreRequestCommand');
+
                 break;
             default:
                 throw Error('unknown messageType');
         }
 
         await this.commandExecutor.add({
-            name: commandName,
-            sequence: [],
+            name: commandSequence[0],
+            sequence: commandSequence.slice(1),
             delay: 0,
             data: commandData,
             transactional: false,
