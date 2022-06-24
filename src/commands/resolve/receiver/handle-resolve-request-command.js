@@ -28,7 +28,6 @@ class HandleResolveRequestCommand extends Command {
                     handlerId,
                     e.message,
                     ERROR_TYPE.HANDLE_RESOLVE_REQUEST_ERROR,
-                    true,
                 ),
             );
         nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');

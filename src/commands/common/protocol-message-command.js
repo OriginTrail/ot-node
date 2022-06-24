@@ -33,11 +33,11 @@ class ProtocolMessageCommand extends Command {
             );
         switch (response.header.messageType) {
             case NETWORK_MESSAGE_TYPES.RESPONSES.BUSY:
-                return this.handleBusy(command);
+                return this.handleBusy(command, response.data);
             case NETWORK_MESSAGE_TYPES.RESPONSES.NACK:
-                return this.handleNack(command);
+                return this.handleNack(command, response.data);
             case NETWORK_MESSAGE_TYPES.RESPONSES.ACK:
-                return this.handleAck(command);
+                return this.handleAck(command, response.data);
             default:
                 await this.markResponseAsFailed(
                     command,
@@ -47,15 +47,15 @@ class ProtocolMessageCommand extends Command {
         }
     }
 
-    async handleAck(command) {
+    async handleAck(command, responseData) {
         return this.continueSequence(command.data, command.sequence);
     }
 
-    async handleBusy() {
+    async handleBusy(command, responseData) {
         return Command.retry();
     }
 
-    async handleNack(command) {
+    async handleNack(command, responseData) {
         await this.markResponseAsFailed(
             command,
             `Received NACK response from node during ${this.commandName}`,

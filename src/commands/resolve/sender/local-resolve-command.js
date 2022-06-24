@@ -1,5 +1,5 @@
 const Command = require('../../command');
-const { ERROR_TYPE, HANDLER_ID_STATUS } = require('../../../constants/constants');
+const { HANDLER_ID_STATUS } = require('../../../constants/constants');
 
 class LocalResolveCommand extends Command {
     constructor(ctx) {
@@ -7,6 +7,7 @@ class LocalResolveCommand extends Command {
         this.config = ctx.config;
         this.handlerIdService = ctx.handlerIdService;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+        this.commandExecutor = ctx.commandExecutor;
         this.dataService = ctx.dataService;
     }
 
@@ -18,12 +19,14 @@ class LocalResolveCommand extends Command {
         const { handlerId, assertionId } = command.data;
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.RESOLVE.RESOLVING_ASSERTION,
+            HANDLER_ID_STATUS.RESOLVE.LOCAL_RESOLVE_ASSERTION,
         );
 
-        try {
-            let nquads = await this.tripleStoreModuleManager.resolve(assertionId, true);
-            if (nquads.length) {
+        let nquads = await this.tripleStoreModuleManager.resolve(assertionId, true).catch(() => {
+            // continue sequence, try to resolve from network
+        });
+        if (nquads && nquads.length) {
+            try {
                 nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
 
                 await this.handlerIdService.cacheHandlerIdData(handlerId, nquads);
@@ -33,9 +36,10 @@ class LocalResolveCommand extends Command {
                 );
 
                 return Command.empty();
+            } catch (e) {
+                await this.handlerIdService.updateFailedHandlerId(handlerId, e.message);
+                return Command.empty();
             }
-        } catch (e) {
-            await this.handleError(handlerId, e.message, ERROR_TYPE.LOCAL_RESOLVE_ERROR, true);
         }
 
         return this.continueSequence(command.data, command.sequence);

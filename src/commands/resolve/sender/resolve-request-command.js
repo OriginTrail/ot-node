@@ -21,13 +21,13 @@ class ResolveRequestCommand extends ProtocolRequestCommand {
         return { assertionId };
     }
 
-    async handleAck(command) {
-        await this.resolveService.processResolveResponse(command);
+    async handleAck(command, responseData) {
+        await this.resolveService.processResolveResponse(command, responseData);
         return Command.empty();
     }
 
     async markResponseAsFailed(command, errorMessage) {
-        await this.resolveService.processResolveResponse(command, errorMessage);
+        await this.resolveService.processResolveResponse(command, null, errorMessage);
     }
 
     /**

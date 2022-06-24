@@ -1,12 +1,14 @@
 const Command = require('../../command');
 
-const { HANDLER_ID_STATUS } = require('../../../constants/constants');
+const { HANDLER_ID_STATUS, RESOLVE_STATUS } = require('../../../constants/constants');
 
 class ResolveCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
+        this.handlerIdService = ctx.handlerIdService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
     /**
@@ -14,11 +16,11 @@ class ResolveCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { nodes, handlerId, assertionId, resolveId } = command.data;
+        const { nodes, handlerId, assertionId } = command.data;
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.RESOLVE.RESOLVING_ASSERTION,
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_ASSERTION,
         );
 
         const commandSequence = ['resolveInitCommand', 'resolveRequestCommand'];
@@ -29,13 +31,13 @@ class ResolveCommand extends Command {
                     name: commandSequence[0],
                     sequence: commandSequence.slice(1),
                     delay: 0,
-                    data: { handlerId, node, assertionId, resolveId },
+                    data: { handlerId, node, assertionId},
                     transactional: false,
                 }),
             );
         });
 
-        await Promise.any(addCommandPromise);
+        await Promise.all(addCommandPromise);
 
         // todo schedule timeout command
 

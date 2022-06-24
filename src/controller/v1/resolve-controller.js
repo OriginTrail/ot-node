@@ -1,8 +1,6 @@
 const {
-    HANDLER_ID_STATUS,
     NETWORK_MESSAGE_TYPES,
     NETWORK_PROTOCOLS,
-    RESOLVE_STATUS,
 } = require('../../constants/constants');
 const BaseController = require('./base-controller');
 
@@ -14,16 +12,9 @@ class ResolveController extends BaseController {
     }
 
     async handleHttpApiResolveRequest(req, res) {
-        const operationId = this.generateOperationId();
-
         const { id } = req.body;
 
         const handlerId = await this.handlerIdService.generateHandlerId();
-
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.RESOLVE.VALIDATING_ID,
-        );
 
         this.returnResponse(res, 202, {
             handlerId,
@@ -31,20 +22,14 @@ class ResolveController extends BaseController {
 
         this.logger.info(`Resolve for ${id} with handler id ${handlerId} initiated.`);
 
-        const resolveRecord = await this.repositoryModuleManager.createResolveRecord(
-            RESOLVE_STATUS.IN_PROGRESS,
-        );
-
         const commandData = {
             handlerId,
-            operationId,
             id,
             networkProtocol: NETWORK_PROTOCOLS.RESOLVE,
-            resolveId: resolveRecord.id,
         };
 
         const commandSequence = [
-            'getAssertionCommand',
+            'getLatestAssertionIdCommand',
             'localResolveCommand',
             'findNodesCommand',
             'resolveCommand',
