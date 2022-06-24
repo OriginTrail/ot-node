@@ -6,6 +6,8 @@ class RpcRouter {
         this.logger = ctx.logger;
 
         this.publishController = ctx.publishController;
+        this.resolveController = ctx.resolveController;
+        this.searchController = ctx.searchController;
     }
 
     async initialize() {
@@ -23,6 +25,18 @@ class RpcRouter {
             constants.NETWORK_PROTOCOLS.RESOLVE,
             (message, remotePeerId) =>
                 this.resolveController.handleNetworkResolveRequest(message, remotePeerId),
+        );
+
+        this.networkModuleManager.handleMessage(
+            constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS,
+            (message, remotePeerId) =>
+                this.searchController.handleNetworkSearchAssertionsRequest(message, remotePeerId),
+        );
+
+        this.networkModuleManager.handleMessage(
+            constants.NETWORK_PROTOCOLS.SEARCH,
+            (message, remotePeerId) =>
+                this.searchController.handleNetworkSearchEntitiesRequest(message, remotePeerId),
         );
         //
         // this.networkModuleManager.handleMessage(

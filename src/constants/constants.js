@@ -81,6 +81,7 @@ exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
  */
 exports.PERMANENT_COMMANDS = [
     'otnodeUpdateCommand',
+    'testCommand',
     // 'sendTelemetryCommand',
     // 'cleanerCommand',
     // 'handlerIdsCleanerCommand',
@@ -100,7 +101,7 @@ exports.DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 /**
  * @constant {number} DEFAULT_COMMAND_DELAY_IN_MILLS - Delay for default commands
  */
-exports.DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
+exports.DEFAULT_COMMAND_DELAY_IN_MILLS = 0; // 60 seconds
 
 /**
  * @constant {number} TRIPLE_STORE_CONNECT_MAX_RETRIES
@@ -248,7 +249,17 @@ exports.ERROR_TYPE = {
     PUBLISH_ROUTE_ERROR: 'PublishRouteError',
     RESOLVE_ROUTE_ERROR: 'ResolveRouteError',
     SEARCH_ASSERTIONS_ROUTE_ERROR: 'SearchAssertionsRouteError',
+    SEARCH_ASSERTIONS_INIT_ERROR: 'SearchAssertionsInitError',
+    SEARCH_ASSERTIONS_REQUEST_ERROR: 'SearchAssertionsRequestError',
+    LOCAL_SEARCH_ASSERTIONS_ERROR: 'LocalSearchAssertionsError',
+    HANDLE_SEARCH_ASSERTIONS_INIT_ERROR: 'handleSearchAssertionsInitError',
+    HANDLE_SEARCH_ASSERTIONS_REQUEST_ERROR: 'handleSearchAssertionsRequestError',
     SEARCH_ENTITIES_ROUTE_ERROR: 'SearchEntitiesRouteError',
+    SEARCH_ENTITIES_INIT_ERROR: 'SearchEntitiesInitError',
+    SEARCH_ENTITIES_REQUEST_ERROR: 'SearchEntitiesRequestError',
+    LOCAL_SEARCH_ENTITIES_ERROR: 'LocalSearchEntitiesError',
+    HANDLE_SEARCH_ENTITIES_INIT_ERROR: 'handleSearchEntitiesInitError',
+    HANDLE_SEARCH_ENTITIES_REQUEST_ERROR: 'handleSearchEntitiesRequestError',
     QUERY_ROUTE_ERROR: 'QueryRouteError',
     PROOFS_ROUTE_ERROR: 'ProofsRouteError',
     RESULTS_ROUTE_ERROR: 'ResultsRouteError',
@@ -302,6 +313,16 @@ exports.HANDLER_ID_STATUS = {
         RESOLVING_ASSERTION: 'RESOLVING_ASSERTION',
         RESOLVING_ASSET: 'RESOLVING_ASSET',
     },
+    SEARCH_ASSERTIONS: {
+        VALIDATING_QUERY: 'VALIDATING_QUERY',
+        SEARCHING_ASSERTIONS: 'SEARCHING_ASSERTIONS',
+        FAILED: 'FAILED',
+        COMPLETED: 'COMPLETED',
+    },
+    SEARCH_ENTITIES: {
+        VALIDATING_QUERY: 'VALIDATING_QUERY',
+        SEARCHING_ENTITIES: 'SEARCHING_ENTITIES',
+    }
 };
 
 /**

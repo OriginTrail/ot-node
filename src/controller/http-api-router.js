@@ -1,5 +1,7 @@
 const publishRequest = require('./v1/request-schema/publish-request');
 const resolveRequest = require('./v1/request-schema/resolve-request');
+const searchAssertionsRequest = require('./v1/request-schema/search-assertions-request');
+const searchEntitiesRequest = require('./v1/request-schema/search-entities-request');
 
 class HttpApiRouter {
     constructor(ctx) {
@@ -44,15 +46,16 @@ class HttpApiRouter {
         this.httpClientModuleManager.post('/resolve', resolveRequest, (req, res) => {
             this.resolveController.handleHttpApiResolveRequest(req, res);
         });
-        //
-        // this.httpClientModuleManager.get(HTTP_API_ROUTES.SEARCH_ASSERTIONS, (req, res) => {
-        //     this.searchController.handleHttpApiSearchAssertionsRequest(req, res);
-        // });
-        //
-        // this.httpClientModuleManager.get(HTTP_API_ROUTES.SEARCH_ENTITIES, (req, res) => {
-        //     this.searchController.handleHttpApiSearchEntitiesRequest(req, res);
-        // });
-        //
+
+        // TODO: Get params validation needs to be implemented
+        this.httpClientModuleManager.get('/assertions:search', (req, res) => {
+            this.searchController.handleHttpApiSearchAssertionsRequest(req, res);
+        });
+
+        this.httpClientModuleManager.get('/entities:search', (req, res) => {
+            this.searchController.handleHttpApiSearchEntitiesRequest(req, res);
+        });
+
         this.httpClientModuleManager.get('/:operation/result/:handlerId', (req, res) => {
             this.resultController.handleHttpApiOperationResultRequest(req, res);
         });
