@@ -1,6 +1,6 @@
 {
     "name": "origintrail_node",
-    "version": "6.0.0-beta.1.39",
+    "version": "6.0.0-beta.1.42",
     "description": "OTNode v6 Beta 1",
     "main": "index.js",
     "scripts": {
@@ -64,6 +64,7 @@
         "big-number": "^2.0.0",
         "bl": "^5.0.0",
         "bn.js": "^5.2.1",
+        "cors": "^2.8.5",
         "crypto-js": "^4.1.1",
         "deep-extend": "^0.6.0",
         "dotenv": "^10.0.0",

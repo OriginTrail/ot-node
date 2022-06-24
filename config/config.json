@@ -118,6 +118,7 @@
             }
         },
         "commandExecutorVerboseLoggingEnabled": false,
+        "signalingServerUrl": "not_defined",
         "appDataPath": "data",
         "graphDatabase": {
             "implementation": "GraphDB",
@@ -231,6 +232,7 @@
         },
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
+        "signalingServerUrl": "not_defined",
         "graphDatabase": {
             "implementation": "GraphDB",
             "url": "http://localhost:7200",
@@ -352,6 +354,7 @@
             }
         },
         "commandExecutorVerboseLoggingEnabled": false,
+        "signalingServerUrl": "https://devnet-signaling.origin-trail.network",
         "appDataPath": "data",
         "graphDatabase": {
             "implementation": "GraphDB",

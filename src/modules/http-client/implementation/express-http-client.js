@@ -3,6 +3,7 @@ const https = require('https');
 const fs = require('fs-extra');
 const fileUpload = require('express-fileupload');
 const { Validator } = require('express-json-validator-middleware');
+const cors = require('cors');
 const RequestValidationErrorMiddleware = require('./request-validation-error-middleware');
 
 const { validate } = new Validator();
@@ -18,6 +19,8 @@ class ExpressHttpClient {
                 createParentPath: true,
             }),
         );
+
+        this.app.use(cors());
 
         this.app.use(express.json());
 
