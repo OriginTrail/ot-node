@@ -19,7 +19,7 @@ class PublishService {
     }
 
     async processPublishResponse(command, status, errorMessage = null) {
-        const { handlerId } = command.data;
+        const { handlerId, ual } = command.data;
 
         const self = this;
         let numberOfResponses = 0;
@@ -38,13 +38,15 @@ class PublishService {
         if (command.data.numberOfFoundNodes === numberOfResponses) {
             this.logger.info(`Finalizing publish for handlerId: ${handlerId}`);
 
+            await this.handlerIdService.cacheHandlerIdData(handlerId, { ual });
+
             await this.handlerIdService.updateHandlerIdStatus(
                 handlerId,
-                HANDLER_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_END
+                HANDLER_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_END,
             );
             await this.handlerIdService.updateHandlerIdStatus(
                 handlerId,
-                HANDLER_ID_STATUS.PUBLISH.PUBLISH_END
+                HANDLER_ID_STATUS.PUBLISH.PUBLISH_END,
             );
             await this.handlerIdService.updateHandlerIdStatus(
                 handlerId,
