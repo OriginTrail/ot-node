@@ -1,7 +1,7 @@
 const axios = require('axios');
-const { v1: uuidv1 } = require('uuid');
 const Command = require('../command');
 const constants = require('../../constants/constants');
+const pjson = require('../../../package.json');
 
 class SendTelemetryCommand extends Command {
     constructor(ctx) {
@@ -24,6 +24,9 @@ class SendTelemetryCommand extends Command {
 
             if (events && events.length > 0) {
                 const signalingMessage = {
+                    nodeData: {
+                        version: pjson.version,
+                    },
                     events,
                 };
                 const config = {
