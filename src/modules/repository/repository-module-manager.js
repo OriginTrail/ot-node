@@ -111,7 +111,7 @@ class RepositoryModuleManager extends BaseModuleManager {
     }
 
     // EVENT
-    async createEventRecord(handlerId, name, timestamp, value1, value2, value3) {
+    async createEventRecord(handlerId, name, timestamp, value1=null, value2=null, value3=null) {
         if (this.initialized) {
             return this.getImplementation().module.createEventRecord(
                 handlerId,
