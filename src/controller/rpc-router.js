@@ -33,11 +33,11 @@ class RpcRouter {
                 this.searchController.handleNetworkSearchAssertionsRequest(message, remotePeerId),
         );
 
-        this.networkModuleManager.handleMessage(
-            constants.NETWORK_PROTOCOLS.SEARCH,
-            (message, remotePeerId) =>
-                this.searchController.handleNetworkSearchEntitiesRequest(message, remotePeerId),
-        );
+        // this.networkModuleManager.handleMessage(
+        //    constants.NETWORK_PROTOCOLS.SEARCH,
+        //    (message, remotePeerId) =>
+        //        this.searchController.handleNetworkSearchEntitiesRequest(message, remotePeerId),
+        // );
         //
         // this.networkModuleManager.handleMessage(
         //     constants.NETWORK_PROTOCOLS.SEARCH,

@@ -1,5 +1,5 @@
 const Command = require('../../command');
-const { HANDLER_ID_STATUS, ERROR_TYPE } = require('../../../constants/constants');
+const { ERROR_TYPE } = require('../../../constants/constants');
 
 class InsertStoreRequestCommand extends Command {
     constructor(ctx) {
@@ -8,6 +8,8 @@ class InsertStoreRequestCommand extends Command {
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.fileService = ctx.fileService;
         this.handlerIdService = ctx.handlerIdService;
+
+        this.publishService = ctx.publishService;
     }
 
     /**
@@ -37,6 +39,17 @@ class InsertStoreRequestCommand extends Command {
 
     getMetadataId(metadata) {
         return metadata[0].split(' ')[0];
+    }
+
+    async handleError(handlerId, errorMessage, errorName, markFailed, commandData) {
+        await this.publishService.handleReceiverCommandError(
+            handlerId,
+            errorMessage,
+            errorName,
+            markFailed,
+            commandData,
+        );
+        return Command.empty();
     }
 
     /**

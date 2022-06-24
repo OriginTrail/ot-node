@@ -7,6 +7,7 @@ const {
 class ResolveInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
         super(ctx);
+        this.resolveService = ctx.resolveService;
 
         this.commandName = 'resolveInitCommand'
         this.errorType = ERROR_TYPE.RESOLVE_INIT_ERROR;
@@ -17,6 +18,10 @@ class ResolveInitCommand extends ProtocolInitCommand {
         const { assertionId } = command.data;
 
         return { assertionId };
+    }
+
+    async markResponseAsFailed(command, errorMessage) {
+        await this.resolveService.processResolveResponse(command, errorMessage);
     }
 
     /**

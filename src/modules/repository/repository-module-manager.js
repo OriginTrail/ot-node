@@ -5,6 +5,46 @@ class RepositoryModuleManager extends BaseModuleManager {
         return 'repository';
     }
 
+    transaction(execFn) {
+        if (this.initialized) {
+            return this.getImplementation().module.transaction(execFn);
+        }
+    }
+
+    // COMMANDS
+    async updateCommand(update, opts) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateCommand(update, opts);
+        }
+    }
+
+    async destroyCommand(name) {
+        if (this.initialized) {
+            return this.getImplementation().module.destroyCommand(name);
+        }
+    }
+
+    async createCommand(command, opts) {
+        if (this.initialized) {
+            return this.getImplementation().module.createCommand(command, opts);
+        }
+    }
+
+    async getCommandsWithStatus(statusArray, excludeNameArray = []) {
+        if (this.initialized) {
+            return this.getImplementation().module.getCommandsWithStatus(
+                statusArray,
+                excludeNameArray,
+            );
+        }
+    }
+
+    async getCommandWithId(id) {
+        if (this.initialized) {
+            return this.getImplementation().module.getCommandWithId(id);
+        }
+    }
+
     // HANDLER ID TABLE
     async createHandlerIdRecord(handlerData) {
         if (this.initialized) {
@@ -31,6 +71,13 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    // resolve table
+    async createResolveRecord(status) {
+        if (this.initialized) {
+            return this.getImplementation().module.createResolveRecord(status);
+        }
+    }
+
     async updatePublishRecord(data, publishId) {
         if (this.initialized) {
             return this.getImplementation().module.updatePublishRecord(data, publishId);
@@ -39,26 +86,49 @@ class RepositoryModuleManager extends BaseModuleManager {
 
     async getNumberOfNodesFoundForPublish(publishId) {
         if (this.initialized) {
-            return this.getImplementation().module.getNumberOfNodesFoundForPublish(publishId);
-        }
-    }
-
-    // PUBLISH REQUEST TABLE
-    async createPublishResponseRecord(status, publishId, message = null) {
-        if (this.initialized) {
-            return this.getImplementation().module.createPublishResponseRecord(status, publishId, message);
+            return this.getImplementation().module.createPublishResponseRecord(
+                status,
+                handlerId,
+                message,
+            );
         }
     }
 
     async updatePublishResponseRecord(data, condition) {
         if (this.initialized) {
-            return this.getImplementation().module.updatePublishResponseRecord(data, condition);
+            return this.getImplementation().module.createPublishRequestRecord(
+                status,
+                publishId,
+                message,
+            );
         }
     }
 
-    async getNumberOfPublishResponses(publishId) {
+    async createResolveResponseRecord(status, resolveId, message = null) {
         if (this.initialized) {
-            return this.getImplementation().module.getNumberOfPublishResponses(publishId);
+            return this.getImplementation().module.createResolveResponseRecord(
+                status,
+                resolveId,
+                message,
+            );
+        }
+    }
+
+    async getNumberOfPublishResponses(handlerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getNumberOfPublishResponses(handlerId);
+        }
+    }
+
+    async getPublishResponsesStatuses(handlerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getPublishResponsesStatuses(handlerId);
+        }
+    }
+
+    async getNumberOfResolveResponses(resolveId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getNumberOfResolveResponses(resolveId);
         }
     }
 }

@@ -13,7 +13,7 @@ const PeerId = require('peer-id');
 const { InMemoryRateLimiter } = require('rolling-rate-limiter');
 const constants = require('../../../../modules/constants');
 const toobusy = require('toobusy-js');
-const {v4: uuidv4} = require("uuid");
+const { v4: uuidv4 } = require('uuid');
 
 const initializationObject = {
     addresses: {
@@ -146,12 +146,14 @@ class Libp2pService {
     }
 
     async rankNodes(nodes, key) {
-
         const encodedKey = new TextEncoder().encode(key);
         const keyHash = await sha256.digest(encodedKey);
         const id = keyHash.digest;
 
-        nodes.sort((first_node, second_node) => this.distance(id, first_node._id) - this.distance(id, second_node._id));
+        nodes.sort(
+            (first_node, second_node) =>
+                this.distance(id, first_node._id) - this.distance(id, second_node._id),
+        );
 
         return nodes;
     }
@@ -205,14 +207,14 @@ class Libp2pService {
                     protocol,
                     remotePeerId,
                     constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                    message.header.handlerId
+                    message.header.handlerId,
                 );
             } else if (busy) {
                 await this.sendMessageResponse(
                     protocol,
                     remotePeerId,
                     constants.NETWORK_MESSAGE_TYPES.RESPONSES.BUSY,
-                    message.header.handlerId
+                    message.header.handlerId,
                 );
             } else {
                 this.logger.debug(
@@ -229,20 +231,24 @@ class Libp2pService {
             this.logger.trace(`Storing new session stream for remotePeerId: ${remotePeerId}`);
             this.sessions[remotePeerId] = {
                 [handlerId]: {
-                    stream
-                }
-            }
+                    stream,
+                },
+            };
         } else {
-            this.logger.trace(`Storing new session stream for remotePeerId: ${remotePeerId} with handler id: ${handlerId}`);
+            this.logger.trace(
+                `Storing new session stream for remotePeerId: ${remotePeerId} with handler id: ${handlerId}`,
+            );
             this.sessions[remotePeerId][handlerId] = {
-                stream
-            }
+                stream,
+            };
         }
     }
 
     getSessionStream(handlerId, remotePeerId) {
         if (this.sessions[remotePeerId] && this.sessions[remotePeerId][handlerId]) {
-            this.logger.trace(`Session found remotePeerId: ${remotePeerId} and handler id: ${handlerId}`);
+            this.logger.trace(
+                `Session found remotePeerId: ${remotePeerId} and handler id: ${handlerId}`,
+            );
             return this.sessions[remotePeerId][handlerId].stream;
         }
         return null;
@@ -252,22 +258,23 @@ class Libp2pService {
         return {
             header: {
                 handlerId,
-                messageType
+                messageType,
             },
             data: message,
-        }
+        };
     }
 
     async sendMessage(protocol, remotePeerId, messageType, handlerId, message) {
         this.logger.trace(
-            `Sending message from ${this.config.id} to ${remotePeerId._idB58String}: event=${protocol}, messageType=${messageType}, handlerId: ${handlerId};`,
+            `Sending message to ${remotePeerId._idB58String}: event=${protocol}, messageType=${messageType}, handlerId: ${handlerId};`,
         );
-
 
         // const sessionStream = this.getSessionStream(handlerId, remotePeerId._idB58String);
         // if (!sessionStream) {
-            this.logger.trace(`Dialing remotePeerId: ${remotePeerId._idB58String} for protocol: ${protocol}`);
-            const stream = (await this.node.dialProtocol(remotePeerId, protocol)).stream;
+        this.logger.trace(
+            `Dialing remotePeerId: ${remotePeerId._idB58String} for protocol: ${protocol}`,
+        );
+        const stream = (await this.node.dialProtocol(remotePeerId, protocol)).stream;
         // } else {
         //     stream = sessionStream;
         // }
@@ -303,13 +310,7 @@ class Libp2pService {
         return valid ? response : null;
     }
 
-    async sendMessageResponse(
-        protocol,
-        remotePeerId,
-        messageType,
-        handlerId,
-        message,
-    ) {
+    async sendMessageResponse(protocol, remotePeerId, messageType, handlerId, message) {
         this.logger.debug(
             `Sending response from ${this.config.id} to ${remotePeerId}: event=${protocol}, messageType=${messageType};`,
         );
@@ -505,9 +506,7 @@ class Libp2pService {
     }
 
     isBusy() {
-        return (
-            toobusy() || Object.keys(this.sessions).length > constants.MAX_OPEN_SESSIONS
-        );
+        return toobusy() || Object.keys(this.sessions).length > constants.MAX_OPEN_SESSIONS;
     }
 
     getPrivateKey() {

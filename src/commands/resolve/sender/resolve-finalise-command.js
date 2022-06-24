@@ -1,6 +1,6 @@
 const Command = require('../../command');
 
-class PublishFinaliseCommand extends Command {
+class ResolveFinaliseCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -17,13 +17,13 @@ class PublishFinaliseCommand extends Command {
     }
 
     /**
-     * Builds default storeInitCommand
+     * Builds default resolveFinalizeCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'publishFinalizeCommand',
+            name: 'resolveFinalizeCommand',
             delay: 0,
             transactional: false,
         };
@@ -32,4 +32,4 @@ class PublishFinaliseCommand extends Command {
     }
 }
 
-module.exports = PublishFinaliseCommand;
+module.exports = ResolveFinaliseCommand;

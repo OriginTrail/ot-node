@@ -49,9 +49,13 @@ for (let i = 0; i < numberOfNodes; i += 1) {
 
     parsedTemplate.modules.httpClient.implementation['express-http-client'].config.port = 8900 + i;
     parsedTemplate.modules.network.implementation['libp2p-service'].config.port = 9000 + i;
-    parsedTemplate.modules.repository.implementation['sequelize-repository'].config.database = `operationaldb${i}`;
-    parsedTemplate.modules.tripleStore.implementation['ot-graphdb'].config.repository = `operationaldb${i}`;
-    parsedTemplate.graphDatabase.name = `node${i}`;
+    parsedTemplate.modules.repository.implementation[
+        'sequelize-repository'
+    ].config.database = `operationaldb${i}`;
+    parsedTemplate.modules.tripleStore.implementation[
+        'ot-graphdb'
+    ].config.repository = `repository${i}`;
+    
     if (process.env.LOG_LEVEL) {
         parsedTemplate.logLevel = process.env.LOG_LEVEL;
     }

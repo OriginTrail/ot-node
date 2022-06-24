@@ -1,30 +1,77 @@
+const constants = require('../constants/constants');
+const {
+    NETWORK_PROTOCOLS,
+    HANDLER_ID_STATUS,
+    PUBLISH_REQUEST_STATUS,
+} = require('../constants/constants');
+
 class PublishService {
     constructor(ctx) {
         this.logger = ctx.logger;
 
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.commandExecutor = ctx.commandExecutor;
+        this.networkModuleManager = ctx.networkModuleManager;
+        this.handlerIdService = ctx.handlerIdService;
     }
 
     async processPublishResponse(command, status, errorMessage = null) {
+        const { handlerId } = command.data;
+
         await this.repositoryModuleManager.createPublishResponseRecord(
             status,
-            command.data.publishId,
+            handlerId,
             errorMessage,
         );
 
         const numberOfResponses = await this.repositoryModuleManager.getNumberOfPublishResponses(
-            command.data.publishId,
+            handlerId,
         );
 
-        if (command.data.numberOfFoundNodes === numberOfResponses) {
-            await this.commandExecutor.add({
-                name: 'publishFinaliseCommand',
-                sequence: [],
-                data: {},
-                transactional: false,
+        if (command.data.numberOfFoundNodes === numberOfResponses + 1) {
+            this.logger.info(`Finalizing publish for handlerId: ${handlerId}`);
+
+            await this.handlerIdService.updateHandlerIdStatus(
+                handlerId,
+                HANDLER_ID_STATUS.COMPLETED,
+            );
+
+            const responseStatuses = await this.repositoryModuleManager.getPublishResponsesStatuses(
+                handlerId,
+            );
+            let failedNumber = 0;
+            let completedNumber = 0;
+
+            responseStatuses.forEach((responseStatus) => {
+                if (responseStatus === PUBLISH_REQUEST_STATUS.FAILED) {
+                    failedNumber += 1;
+                } else {
+                    completedNumber += 1;
+                }
             });
+
+            this.logger.info(
+                `Total number of responses: ${
+                    failedNumber + completedNumber
+                }, failed: ${failedNumber}, completed: ${completedNumber}`,
+            );
         }
+    }
+
+    async handleReceiverCommandError(handlerId, errorMessage, errorName, markFailed, commandData) {
+        this.logger.error({
+            msg: errorMessage,
+        });
+
+        const messageType = constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
+        const messageData = {};
+        await this.networkModuleManager.sendMessageResponse(
+            NETWORK_PROTOCOLS.STORE,
+            commandData.remotePeerId,
+            messageType,
+            handlerId,
+            messageData,
+        );
     }
     //
     // async publish(

@@ -1,22 +1,22 @@
 module.exports = (sequelize, DataTypes) => {
-    const publish_response = sequelize.define(
-        'publish_response',
+    const resolve = sequelize.define(
+        'resolve',
         {
             id: {
                 type: DataTypes.INTEGER,
                 primaryKey: true,
                 autoIncrement: true,
             },
-            handler_id: DataTypes.UUID,
             status: DataTypes.STRING,
-            message: DataTypes.TEXT,
+            assertion_id: DataTypes.STRING,
+            nodes_found: DataTypes.INTEGER,
             created_at: DataTypes.DATE,
             updated_at: DataTypes.DATE,
         },
         {},
     );
-    publish_response.associate = (models) => {
-        // associations can be defined here
+    resolve.associate = (models) => {
+        resolve.hasMany(models.resolve_response, { foreignKey: 'resolve_id' });
     };
-    return publish_response;
+    return resolve;
 };

@@ -1,18 +1,22 @@
 module.exports = {
     up: async (queryInterface, Sequelize) => {
-        await queryInterface.createTable('publish', {
+        await queryInterface.createTable('resolve_response', {
             id: {
                 type: Sequelize.INTEGER,
                 primaryKey: true,
                 autoIncrement: true
             },
+            resolve_id: {
+                type: Sequelize.INTEGER,
+                references: { model: 'resolve', key: 'id' }
+            },
             status: {
                 allowNull: false,
                 type: Sequelize.STRING,
             },
-            nodes_found: {
+            message: {
                 allowNull: true,
-                type: Sequelize.INTEGER,
+                type: Sequelize.TEXT,
             },
             created_at: {
                 allowNull: false,
@@ -27,6 +31,6 @@ module.exports = {
         });
     },
     down: async (queryInterface) => {
-        await queryInterface.dropTable('publish');
+        await queryInterface.dropTable('resolve_response');
     },
 };

@@ -311,7 +311,6 @@ exports.HANDLER_ID_STATUS = {
     RESOLVE: {
         VALIDATING_ID: 'VALIDATING_ID',
         RESOLVING_ASSERTION: 'RESOLVING_ASSERTION',
-        RESOLVING_ASSET: 'RESOLVING_ASSET',
     },
     SEARCH_ASSERTIONS: {
         VALIDATING_QUERY: 'VALIDATING_QUERY',
@@ -336,6 +335,16 @@ exports.PUBLISH_STATUS = {
 };
 
 /**
+ * @constant {object} RESOLVE_STATUS -
+ *  Possible statuses for RESOLVE procedure
+ */
+ exports.RESOLVE_STATUS = {
+    IN_PROGRESS: 'IN_PROGRESS',
+    FAILED: 'FAILED',
+    COMPLETED: 'COMPLETED',
+};
+
+/**
  * @constant {object} PUBLISH_STATUS -
  *  Possible statuses for publish procedure
  */
@@ -343,6 +352,16 @@ exports.PUBLISH_REQUEST_STATUS = {
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
 };
+
+/**
+ * @constant {object} RESOLVE_REQUEST_STATUS -
+ *  Possible statuses for resolve request
+ */
+ exports.RESOLVE_REQUEST_STATUS = {
+    FAILED: 'FAILED',
+    COMPLETED: 'COMPLETED',
+};
+
 /**
  * @constant {object} PUBLISH_METHOD -
  *  Possible methods for publish

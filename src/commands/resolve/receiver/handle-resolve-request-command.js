@@ -11,6 +11,7 @@ class HandleResolveRequestCommand extends Command {
         this.config = ctx.config;
         this.networkModuleManager = ctx.networkModuleManager;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+        this.dataService = ctx.dataService;
     }
 
     /**
@@ -20,7 +21,7 @@ class HandleResolveRequestCommand extends Command {
     async execute(command) {
         const { assertionId, remotePeerId, handlerId } = command.data;
 
-        const nquads = await this.tripleStoreModuleManager
+        let nquads = await this.tripleStoreModuleManager
             .resolve(assertionId)
             .catch((e) =>
                 this.handleError(
@@ -30,6 +31,7 @@ class HandleResolveRequestCommand extends Command {
                     true,
                 ),
             );
+        nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
 
         let messageType;
         let messageData;
