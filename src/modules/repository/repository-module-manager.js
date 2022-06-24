@@ -109,6 +109,32 @@ class RepositoryModuleManager extends BaseModuleManager {
             return this.getImplementation().module.getNumberOfResolveResponses(resolveId);
         }
     }
+
+    // EVENT
+    async createEventRecord(handlerId, name, timestamp, value1, value2, value3) {
+        if (this.initialized) {
+            return this.getImplementation().module.createEventRecord(
+                handlerId,
+                name,
+                timestamp,
+                value1,
+                value2,
+                value3,
+            );
+        }
+    }
+
+    async getAllEvents() {
+        if (this.initialized) {
+            return this.getImplementation().module.getAllEvents();
+        }
+    }
+
+    async destroyEvents(ids) {
+        if (this.initialized) {
+            return this.getImplementation().module.destroyEvents(ids);
+        }
+    }
 }
 
 module.exports = RepositoryModuleManager;

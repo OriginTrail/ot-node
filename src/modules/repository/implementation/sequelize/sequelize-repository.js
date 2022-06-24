@@ -226,6 +226,32 @@ class SequelizeRepository {
             },
         });
     }
+
+    // EVENT
+    async createEventRecord(handlerId, name, timestamp, value1, value2, value3) {
+        return this.models.event.create({
+            handler_id: handlerId,
+            name,
+            timestamp,
+            value1,
+            value2,
+            value3,
+        });
+    }
+
+    async getAllEvents() {
+        return this.models.event.findAll();
+    }
+
+    async destroyEvents(ids) {
+        await this.models.event.destroy({
+            where: {
+                id: {
+                    [Sequelize.Op.in]: ids,
+                },
+            },
+        });
+    }
 }
 
 module.exports = SequelizeRepository;
