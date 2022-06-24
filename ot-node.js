@@ -35,13 +35,14 @@ class OTNode {
         this.logger.info(`Node is running in ${process.env.NODE_ENV} environment`);
 
         this.initializeDependencyContainer();
+        this.initializeEventEmitter();
+
         await this.initializeModules();
         await this.saveNetworkModulePeerIdAndPrivKey();
-        this.initializeEventEmitter();
 
         await this.initializeControllers();
         await this.initializeCommandExecutor();
-        // await this.initializeTelemetryHubModule();
+        await this.initializeTelemetryInjectionService();
 
         this.logger.info('Node is up and running!');
     }
@@ -163,14 +164,13 @@ class OTNode {
         }
     }
 
-    async initializeTelemetryHubModule() {
+    async initializeTelemetryInjectionService() {
         try {
-            const telemetryHubModuleManager = this.container.resolve('telemetryHubModuleManager');
-            if (telemetryHubModuleManager.initialize(this.config.telemetryHub, this.logger)) {
-                this.logger.info(
-                    `Telemetry hub module initialized successfully, using ${telemetryHubModuleManager.config.telemetryHub.packages} package(s)`,
-                );
-            }
+            const telemetryHubModuleManager = this.container.resolve('telemetryInjectionService');
+            telemetryHubModuleManager.initialize();
+            this.logger.info(
+                'Telemetry Injection Service initialized successfully',
+            );
         } catch (e) {
             this.logger.error(
                 `Telemetry hub module initialization failed. Error message: ${e.message}`,
