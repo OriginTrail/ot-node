@@ -58,6 +58,7 @@
     "dependencies": {
         "@comunica/query-sparql": "^2.2.1",
         "app-root-path": "^3.0.0",
+        "async-mutex": "^0.3.2",
         "awilix": "^5.0.1",
         "axios": "^0.24.0",
         "big-number": "^2.0.0",

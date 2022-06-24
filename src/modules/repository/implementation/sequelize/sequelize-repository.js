@@ -159,12 +159,12 @@ class SequelizeRepository {
 
     // PUBLISH
     async createPublishRecord(status) {
-        return this.models.publish.create({status});
+        return this.models.publish.create({ status });
     }
 
     // RESOLVE
     async createResolveRecord(status) {
-        return this.models.resolve.create({status});
+        return this.models.resolve.create({ status });
     }
 
     async updatePublishRecord(data, publishId) {
@@ -175,13 +175,13 @@ class SequelizeRepository {
         });
     }
 
-    async getNumberOfNodesFoundForPublish(publishId){
+    async getNumberOfNodesFoundForPublish(publishId) {
         return this.models.publish.findOne({
             attributes: ['nodes_found'],
             where: {
                 id: publishId,
-            }
-        })
+            },
+        });
     }
 
     // PUBLISH RESPONSE
@@ -193,16 +193,7 @@ class SequelizeRepository {
         });
     }
 
-    // RESOLVE RESPONSE
-    async createResolveResponseRecord(status, resolveId, message) {
-        await this.models.resolve_response.create({
-            status,
-            message,
-            resolve_id: resolveId,
-        })
-    }
-
-    async getNumberOfPublishResponses(publishId) {
+    async getNumberOfPublishResponses(handlerId) {
         return this.models.publish_response.count({
             where: {
                 handler_id: handlerId,
@@ -219,12 +210,21 @@ class SequelizeRepository {
         });
     }
 
+    // RESOLVE RESPONSE
+    async createResolveResponseRecord(status, resolveId, message) {
+        await this.models.resolve_response.create({
+            status,
+            message,
+            resolve_id: resolveId,
+        });
+    }
+
     async getNumberOfResolveResponses(resolveId) {
         return this.models.resolve_response.count({
             where: {
                 resolve_id: resolveId,
-            }
-        })
+            },
+        });
     }
 }
 

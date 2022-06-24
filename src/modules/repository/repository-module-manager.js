@@ -64,52 +64,13 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    // publish TABLE
-    async createPublishRecord(status) {
-        if (this.initialized) {
-            return this.getImplementation().module.createPublishRecord(status);
-        }
-    }
-
-    // resolve table
-    async createResolveRecord(status) {
-        if (this.initialized) {
-            return this.getImplementation().module.createResolveRecord(status);
-        }
-    }
-
-    async updatePublishRecord(data, publishId) {
-        if (this.initialized) {
-            return this.getImplementation().module.updatePublishRecord(data, publishId);
-        }
-    }
-
-    async getNumberOfNodesFoundForPublish(publishId) {
+    // publish response TABLE
+    async createPublishResponseRecord(status, handlerId, errorMessage) {
         if (this.initialized) {
             return this.getImplementation().module.createPublishResponseRecord(
                 status,
                 handlerId,
-                message,
-            );
-        }
-    }
-
-    async updatePublishResponseRecord(data, condition) {
-        if (this.initialized) {
-            return this.getImplementation().module.createPublishRequestRecord(
-                status,
-                publishId,
-                message,
-            );
-        }
-    }
-
-    async createResolveResponseRecord(status, resolveId, message = null) {
-        if (this.initialized) {
-            return this.getImplementation().module.createResolveResponseRecord(
-                status,
-                resolveId,
-                message,
+                errorMessage,
             );
         }
     }
@@ -123,6 +84,23 @@ class RepositoryModuleManager extends BaseModuleManager {
     async getPublishResponsesStatuses(handlerId) {
         if (this.initialized) {
             return this.getImplementation().module.getPublishResponsesStatuses(handlerId);
+        }
+    }
+
+    // resolve table
+    async createResolveRecord(status) {
+        if (this.initialized) {
+            return this.getImplementation().module.createResolveRecord(status);
+        }
+    }
+
+    async createResolveResponseRecord(status, resolveId, message = null) {
+        if (this.initialized) {
+            return this.getImplementation().module.createResolveResponseRecord(
+                status,
+                resolveId,
+                message,
+            );
         }
     }
 

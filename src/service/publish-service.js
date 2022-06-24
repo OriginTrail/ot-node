@@ -1,3 +1,6 @@
+const { Mutex } = require('async-mutex');
+
+const mutex = new Mutex();
 const constants = require('../constants/constants');
 const {
     NETWORK_PROTOCOLS,
@@ -18,17 +21,21 @@ class PublishService {
     async processPublishResponse(command, status, errorMessage = null) {
         const { handlerId } = command.data;
 
-        await this.repositoryModuleManager.createPublishResponseRecord(
-            status,
-            handlerId,
-            errorMessage,
-        );
+        const self = this;
+        let numberOfResponses = 0;
+        await mutex.runExclusive(async () => {
+            await self.repositoryModuleManager.createPublishResponseRecord(
+                status,
+                handlerId,
+                errorMessage,
+            );
 
-        const numberOfResponses = await this.repositoryModuleManager.getNumberOfPublishResponses(
-            handlerId,
-        );
+            numberOfResponses = await self.repositoryModuleManager.getNumberOfPublishResponses(
+                handlerId,
+            );
+        });
 
-        if (command.data.numberOfFoundNodes === numberOfResponses + 1) {
+        if (command.data.numberOfFoundNodes === numberOfResponses) {
             this.logger.info(`Finalizing publish for handlerId: ${handlerId}`);
 
             await this.handlerIdService.updateHandlerIdStatus(
