@@ -1,6 +1,6 @@
 const {
     NETWORK_MESSAGE_TYPES,
-    NETWORK_PROTOCOLS,
+    NETWORK_PROTOCOLS, HANDLER_ID_STATUS,
 } = require('../../constants/constants');
 const BaseController = require('./base-controller');
 
@@ -15,6 +15,10 @@ class ResolveController extends BaseController {
         const { id } = req.body;
 
         const handlerId = await this.handlerIdService.generateHandlerId();
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_START
+        );
 
         this.returnResponse(res, 202, {
             handlerId,

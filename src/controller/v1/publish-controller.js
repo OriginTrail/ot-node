@@ -38,13 +38,31 @@ class PublishController extends BaseController {
 
         const handlerId = await this.handlerIdService.generateHandlerId();
 
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.PUBLISH.PUBLISH_START
+        );
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.PUBLISH.PUBLISH_INIT_START
+        );
+
         this.returnResponse(res, 202, {
             handlerId,
         });
 
         const { metadata, data, ual } = req.body;
         try {
+
+            await this.handlerIdService.updateHandlerIdStatus(
+                handlerId,
+                HANDLER_ID_STATUS.PUBLISH.PUBLISH_GENERATE_METADATA_START
+            );
             const metadataNquads = await this.dataService.metadataObjectToNquads(metadata);
+            await this.handlerIdService.updateHandlerIdStatus(
+                handlerId,
+                HANDLER_ID_STATUS.PUBLISH.PUBLISH_GENERATE_METADATA_STOP
+            );
 
             await this.handlerIdService.cacheHandlerIdData(handlerId, {
                 data,
@@ -76,6 +94,11 @@ class PublishController extends BaseController {
                 data: commandData,
                 transactional: false,
             });
+
+            await this.handlerIdService.updateHandlerIdStatus(
+                handlerId,
+                HANDLER_ID_STATUS.PUBLISH.PUBLISH_INIT_END
+            );
         } catch (error) {
             this.logger.error({
                 msg: `Error while initializing publish data: ${error.message}. ${error.stack}`,

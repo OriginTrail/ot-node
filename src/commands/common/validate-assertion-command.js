@@ -19,6 +19,10 @@ class ValidateAssertionCommand extends Command {
         this.logger.info(`Validating assertion with ual: ${ual}`);
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
+            HANDLER_ID_STATUS.PUBLISH.PUBLISH_BLOCKCHAIN_START
+        );
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
             HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION,
         );
 
@@ -47,6 +51,10 @@ class ValidateAssertionCommand extends Command {
 
         const commandData = command.data;
         commandData.assertionId = calculatedRootHash;
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.PUBLISH.PUBLISH_BLOCKCHAIN_END
+        );
         return this.continueSequence(commandData, command.sequence);
     }
 
