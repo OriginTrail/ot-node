@@ -61,8 +61,9 @@ class SearchController extends BaseController {
                 Event_name: ERROR_TYPE.SEARCH_ASSERTIONS_ROUTE_ERROR,
                 Event_value1: error.message,
             });
-            await this.handlerIdService.updateFailedHandlerId(
+            await this.handlerIdService.updateHandlerIdStatus(
                 handlerId,
+                HANDLER_ID_STATUS.FAILED,
                 'Unable to search for assertions, Failed to process input data!',
             );
         }
@@ -120,8 +121,9 @@ class SearchController extends BaseController {
                 Event_name: ERROR_TYPE.SEARCH_ENTITIES_ROUTE_ERROR,
                 Event_value1: error.message,
             });
-            await this.handlerIdService.updateFailedHandlerId(
+            await this.handlerIdService.updateHandlerIdStatus(
                 handlerId,
+                HANDLER_ID_STATUS.FAILED,
                 'Unable to search for entities, Failed to process input data!',
             );
         }

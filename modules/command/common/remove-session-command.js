@@ -1,5 +1,5 @@
 const Command = require('../command');
-const constants = require('../../constants');
+const constants = require('../../../src/constants/constants');
 
 class StoreInitCommand extends Command {
     constructor(ctx) {

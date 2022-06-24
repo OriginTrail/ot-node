@@ -10,7 +10,7 @@ const {sha256} = require('multiformats/hashes/sha2');
 const PeerId = require("peer-id");
 const { BufferList } = require('bl')
 const { InMemoryRateLimiter } = require("rolling-rate-limiter");
-const constants = require('../modules/constants');
+const constants = require('../src/constants/constants');
 
 const initializationObject = {
     addresses: {

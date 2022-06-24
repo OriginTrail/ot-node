@@ -1,3 +1,5 @@
+const {HANDLER_ID_STATUS} = require("../../src/constants/constants");
+
 /**
  * Describes one command handler
  */
@@ -119,7 +121,7 @@ class Command {
             Id_operation: handlerId,
         });
         if (markFailed) {
-            await this.handlerIdService.updateFailedHandlerId(handlerId, errorMessage);
+            await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.FAILED, errorMessage);
         }
     }
 

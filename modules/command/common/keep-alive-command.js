@@ -3,7 +3,7 @@ const axios = require('axios');
 const Command = require('../command');
 const pjson = require('../../../package.json');
 const Models = require('../../../models/index');
-const constants = require('../../constants');
+const constants = require('../../../src/constants/constants');
 
 class KeepAliveCommand extends Command {
     constructor(ctx) {

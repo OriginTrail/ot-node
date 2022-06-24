@@ -1,6 +1,6 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
-const constants = require('../../constants');
+const constants = require('../../../src/constants/constants');
 
 /**
  * Removes handler id entries in database and cached files

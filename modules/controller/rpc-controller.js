@@ -9,7 +9,7 @@ const validator = require('validator');
 const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down');
 const Models = require('../../models/index');
-const constants = require('../constants');
+const constants = require('../../src/constants/constants');
 const pjson = require('../../package.json');
 
 class RpcController {

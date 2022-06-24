@@ -3,7 +3,7 @@ const BigNumber = require('bn.js');
 const axios = require('axios');
 const DKGContractAbi = require('../build/contracts/DKGcontract.json').abi;
 const UAIRegistryAbi = require('../build/contracts/UAIRegistry.json').abi;
-const constants = require('../modules/constants');
+const constants = require('../src/constants/constants');
 
 class Web3BlockchainService {
     constructor(config) {

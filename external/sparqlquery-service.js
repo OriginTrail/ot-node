@@ -1,5 +1,5 @@
 const Engine = require('@comunica/query-sparql').QueryEngine;
-const constants = require('../modules/constants');
+const constants = require('../src/constants/constants');
 
 class SparqlqueryService {
     constructor(config) {

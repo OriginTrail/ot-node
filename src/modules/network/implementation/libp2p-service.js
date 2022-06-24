@@ -11,7 +11,7 @@ const map = require('it-map');
 const { sha256 } = require('multiformats/hashes/sha2');
 const PeerId = require('peer-id');
 const { InMemoryRateLimiter } = require('rolling-rate-limiter');
-const constants = require('../../../../modules/constants');
+const constants = require('../../../../src/constants/constants');
 const toobusy = require('toobusy-js');
 const { v4: uuidv4 } = require('uuid');
 

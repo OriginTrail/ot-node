@@ -1,6 +1,6 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
-const constants = require('../../constants');
+const constants = require('../../../src/constants/constants');
 
 /**
  * Removes commands that have status: completed, failed, expired

@@ -1,5 +1,5 @@
 const Command = require('../command');
-const constants = require('../../constants');
+const constants = require('../../../src/constants/constants');
 const Models = require('../../../models/index');
 const {v1: uuidv1} = require("uuid");
 

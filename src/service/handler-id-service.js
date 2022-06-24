@@ -1,5 +1,5 @@
 const validator = require('validator');
-const { HANDLER_ID_STATUS } = require('../../modules/constants');
+const { HANDLER_ID_STATUS } = require('../constants/constants');
 
 class HandlerIdService {
     constructor(ctx) {
@@ -27,24 +27,18 @@ class HandlerIdService {
         return validator.isUUID(handlerId);
     }
 
-    async updateFailedHandlerId(handlerId, errorMessage) {
-        this.logger.debug(`Marking handler id ${handlerId} as failed`);
-        await this.removeHandlerIdCache(handlerId);
+    async updateHandlerIdStatus(handlerId, status, errorMessage = null) {
+        const respond = {
+            status
+        }
 
+        if(errorMessage !== null) {
+            this.logger.debug(`Marking handler id ${handlerId} as failed`);
+            respond.data = JSON.stringify({ errorMessage });
+            await this.removeHandlerIdCache(handlerId);
+        }
         await this.repositoryModuleManager.updateHandlerIdRecord(
-            {
-                status: HANDLER_ID_STATUS.FAILED,
-                data: JSON.stringify({ errorMessage }),
-            },
-            handlerId,
-        );
-    }
-
-    async updateHandlerIdStatus(handlerId, status) {
-        await this.repositoryModuleManager.updateHandlerIdRecord(
-            {
-                status,
-            },
+            respond,
             handlerId,
         );
     }

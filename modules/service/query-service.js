@@ -1,5 +1,5 @@
 const { v1: uuidv1 } = require('uuid');
-const constants = require('../constants');
+const constants = require('../../src/constants/constants');
 
 class QueryService {
     constructor(ctx) {

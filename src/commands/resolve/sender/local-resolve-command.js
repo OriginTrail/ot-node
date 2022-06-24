@@ -37,7 +37,7 @@ class LocalResolveCommand extends Command {
 
                 return Command.empty();
             } catch (e) {
-                await this.handlerIdService.updateFailedHandlerId(handlerId, e.message);
+                await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.FAILED, e.message);
                 return Command.empty();
             }
         }

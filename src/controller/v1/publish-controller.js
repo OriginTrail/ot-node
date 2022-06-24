@@ -6,6 +6,7 @@ const {
     NETWORK_MESSAGE_TYPES,
     PUBLISH_STATUS,
 } = require('../../constants/constants');
+const {HANDLER_ID_STATUS} = require('../../constants/constants');
 
 class PublishController extends BaseController {
     constructor(ctx) {
@@ -82,8 +83,9 @@ class PublishController extends BaseController {
                 Event_value1: error.message,
                 Id_operation: operationId,
             });
-            await this.handlerIdService.updateFailedHandlerId(
+            await this.handlerIdService.updateHandlerIdStatus(
                 handlerId,
+                HANDLER_ID_STATUS.FAILED,
                 'Unable to publish data, Failed to process input data!',
             );
         }

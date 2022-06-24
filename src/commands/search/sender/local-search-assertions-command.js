@@ -38,7 +38,7 @@ class LocalSearchAssertionsCommand extends Command {
             await this.handlerIdService.cacheHandlerIdData(handlerId, data);
 
         } catch (e) {
-            await this.handlerIdService.updateFailedHandlerId(handlerId, e.message);
+            await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.FAILED, e.message);
         }
 
         return this.continueSequence(command.data, command.sequence);
