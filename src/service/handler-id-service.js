@@ -6,6 +6,7 @@ class HandlerIdService {
         this.logger = ctx.logger;
         this.fileService = ctx.fileService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.eventEmitter = ctx.eventEmitter;
 
         this.memoryCachedHandlersData = {};
     }
@@ -31,12 +32,23 @@ class HandlerIdService {
         const respond = {
             status
         }
+        const timestamp = Date.now();
+        const eventName = 'operation_status_changed';
+        const eventData = {
+            lastEvent: status,
+            handlerId,
+            timestamp
+        }
 
         if(errorMessage !== null) {
             this.logger.debug(`Marking handler id ${handlerId} as failed`);
             respond.data = JSON.stringify({ errorMessage });
             await this.removeHandlerIdCache(handlerId);
+            eventData.errorMessage = errorMessage;
         }
+
+        this.eventEmitter.emit(eventName, eventData);
+
         await this.repositoryModuleManager.updateHandlerIdRecord(
             respond,
             handlerId,
