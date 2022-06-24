@@ -1,7 +1,5 @@
 const publishRequest = require('./v1/request-schema/publish-request');
 const resolveRequest = require('./v1/request-schema/resolve-request');
-const searchAssertionsRequest = require('./v1/request-schema/search-assertions-request');
-const searchEntitiesRequest = require('./v1/request-schema/search-entities-request');
 
 class HttpApiRouter {
     constructor(ctx) {

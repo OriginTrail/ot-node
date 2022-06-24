@@ -81,7 +81,7 @@ exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
  */
 exports.PERMANENT_COMMANDS = [
     'otnodeUpdateCommand',
-    'testCommand',
+    // 'testCommand',
     // 'sendTelemetryCommand',
     // 'cleanerCommand',
     // 'handlerIdsCleanerCommand',
@@ -101,7 +101,7 @@ exports.DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 /**
  * @constant {number} DEFAULT_COMMAND_DELAY_IN_MILLS - Delay for default commands
  */
-exports.DEFAULT_COMMAND_DELAY_IN_MILLS = 0; // 60 seconds
+exports.DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
 
 /**
  * @constant {number} TRIPLE_STORE_CONNECT_MAX_RETRIES
