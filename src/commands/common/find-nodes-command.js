@@ -23,6 +23,10 @@ class FindNodesCommand extends Command {
             handlerId,
             HANDLER_ID_STATUS.SEARCHING_FOR_NODES,
         );
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.FIND_NODES_START,
+        );
 
         const keys = this.extractKeys(command.data);
 
@@ -49,6 +53,10 @@ class FindNodesCommand extends Command {
         const commandData = command.data;
         commandData.nodes = nodes;
 
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.FIND_NODES_END,
+        );
         return this.continueSequence(commandData, command.sequence);
     }
 

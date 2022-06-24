@@ -71,7 +71,9 @@ class SendTelemetryCommand extends Command {
         const command = {
             name: 'sendTelemetryCommand',
             delay: 0,
-            period: 15 * 60 * 1000,
+            data: {
+            },
+            period: 5 * 1000,
             transactional: false,
         };
         Object.assign(command, map);
