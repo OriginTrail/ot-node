@@ -17,6 +17,10 @@ class SearchController extends BaseController {
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
+            HANDLER_ID_STATUS.SEARCH_ASSERTIONS.SEARCH_START,
+        );
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
             HANDLER_ID_STATUS.SEARCH_ASSERTIONS.VALIDATING_QUERY,
         );
 

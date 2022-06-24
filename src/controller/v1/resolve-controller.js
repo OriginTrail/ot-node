@@ -19,6 +19,10 @@ class ResolveController extends BaseController {
             handlerId,
             HANDLER_ID_STATUS.RESOLVE.RESOLVE_START
         );
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_INIT_START
+        );
 
         this.returnResponse(res, 202, {
             handlerId,
@@ -46,6 +50,11 @@ class ResolveController extends BaseController {
             data: commandData,
             transactional: false,
         });
+
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_INIT_END
+        );
     }
 
     async handleNetworkResolveRequest(message, remotePeerId) {
