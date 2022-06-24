@@ -65,7 +65,7 @@ class FindNodesCommand extends Command {
     }
 
     extractKeys(commandData) {
-        const acceptableKeywords = ['id', 'query', 'ual', 'assertionId'];
+        const acceptableKeywords = ['query', 'ual', 'assertionId'];
         const keys = [];
         for(const property in commandData) {
             if(acceptableKeywords.includes(property)){

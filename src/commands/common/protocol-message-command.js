@@ -52,7 +52,7 @@ class ProtocolMessageCommand extends Command {
     }
 
     async handleBusy(command, responseData) {
-        return command.retry();
+        return Command.retry();
     }
 
     async handleNack(command, responseData) {

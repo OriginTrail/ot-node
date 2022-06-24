@@ -1,7 +1,7 @@
 const Command = require('../../command');
-const { ERROR_TYPE } = require('../../../constants/constants');
+const { ERROR_TYPE, HANDLER_ID_STATUS } = require('../../../constants/constants');
 
-class LocalResolveCommand extends Command {
+class GetLatestAssertionIdCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -15,6 +15,12 @@ class LocalResolveCommand extends Command {
      */
     async execute(command) {
         let { id } = command.data;
+        const { handlerId } = command.data;
+
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.RESOLVE.GETTING_LATEST_ASSERTION_ID,
+        );
 
         if (id.startsWith('dkg://')) {
             const { assertionId } = await this.blockchainModuleManager.getAssetProofs(
@@ -42,13 +48,13 @@ class LocalResolveCommand extends Command {
     }
 
     /**
-     * Builds default getAssertionCommand
+     * Builds default getLatestAssertionIdCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'getAssertionCommand',
+            name: 'getLatestAssertionIdCommand',
             delay: 0,
             transactional: false,
         };
@@ -57,4 +63,4 @@ class LocalResolveCommand extends Command {
     }
 }
 
-module.exports = LocalResolveCommand;
+module.exports = GetLatestAssertionIdCommand;
