@@ -17,6 +17,7 @@ class TelemetryInjectionService {
                 eventData.handlerId,
                 eventData.lastEvent,
                 eventData.timestamp,
+                eventData.value1
             );
         });
 
