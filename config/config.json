@@ -107,7 +107,6 @@
                             "networkId": "polygon::mainnet",
                             "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
                             "rpcEndpoints": [
-                                "https://rpc-mumbai.maticvigil.com/",
                                 "https://matic-mumbai.chainstacklabs.com",
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
@@ -269,6 +268,18 @@
                     }
                 }
             },
+            "network": {
+                "enabled": true,
+                "implementation": {
+                    "libp2p-service": {
+                        "package": "./network/implementation/libp2p-service",
+                        "config": {
+                            "port": 9000,
+                            "bootstrap": []
+                        }
+                    }
+                }
+            },
             "httpClient": {
                 "enabled": true,
                 "implementation": {
@@ -316,6 +327,15 @@
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
                             ]
                         }
+                    }
+                }
+            },
+            "validation": {
+                "enabled": true,
+                "implementation": {
+                    "merkle-validation": {
+                        "package": "./validation/implementation/merkle-validation",
+                        "config": {}
                     }
                 }
             },
