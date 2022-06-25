@@ -9,6 +9,8 @@ class SendTelemetryCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.telemetryInjectionService = ctx.telemetryInjectionService;
+        this.networkModuleManager = ctx.networkModuleManager;
+
     }
 
     /**
@@ -21,23 +23,23 @@ class SendTelemetryCommand extends Command {
         }
         try {
             const events = await this.telemetryInjectionService.getUnpublishedEvents();
-
             if (events && events.length > 0) {
                 const signalingMessage = {
                     nodeData: {
                         version: pjson.version,
+                        identity: 'veryMuchRandom',
+                        hostname: 'someTestnetNode'
                     },
                     events,
                 };
                 const config = {
                     method: 'post',
-                    url: this.config.signalingServerUrl,
+                    url:'http://devnet-signaling.origin-trail.network:3000/signal',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     data: JSON.stringify(signalingMessage),
                 };
-
                 await axios(config);
 
                 await this.telemetryInjectionService.removePublishedEvents(events);
