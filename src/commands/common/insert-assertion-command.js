@@ -15,7 +15,7 @@ class InsertAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { handlerId, ual, metadata } = command.data;
+        const { handlerId, ual, metadata, assertionId } = command.data;
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
@@ -31,16 +31,16 @@ class InsertAssertionCommand extends Command {
         const metadataId = this.getMetadataId(handlerIdData.metadata);
 
         const nquads = [
-            `<${ual}> <http://schema.org/metadata> "${metadataId}" .`,
+            `<${ual}> <http://schema.org/metadata> _:c14n0 .`,
             `<${ual}> <http://schema.org/data> "${metadata.dataRootId}" .`,
         ]
             .concat(handlerIdData.metadata)
             .concat(handlerIdData.data);
 
         this.logger.info(`Inserting assertion with ual:${ual} in database.`);
-        await this.tripleStoreModuleManager.insert(nquads.join('\n'), ual);
+        await this.tripleStoreModuleManager.insert(nquads.join('\n'), assertionId);
 
-        this.logger.info(`Assertion ${ual} has been successfully inserted!`);
+        this.logger.info(`Assertion ${assertionId} has been successfully inserted!`);
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
             HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END
