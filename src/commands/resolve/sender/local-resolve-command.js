@@ -19,7 +19,7 @@ class LocalResolveCommand extends Command {
         const { handlerId, assertionId } = command.data;
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.RESOLVE.LOCAL_RESOLVE_ASSERTION,
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_START
         );
 
         let nquads = await this.tripleStoreModuleManager.resolve(assertionId, true).catch(() => {
@@ -41,6 +41,10 @@ class LocalResolveCommand extends Command {
                 return Command.empty();
             }
         }
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_END
+        );
 
         return this.continueSequence(command.data, command.sequence);
     }

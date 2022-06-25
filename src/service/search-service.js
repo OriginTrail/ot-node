@@ -15,6 +15,10 @@ class SearchService {
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
+            HANDLER_ID_STATUS.SEARCH_ASSERTIONS.SEARCH_END,
+        );
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
             HANDLER_ID_STATUS.SEARCH_ASSERTIONS.COMPLETED,
         );
 

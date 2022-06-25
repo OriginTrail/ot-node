@@ -44,7 +44,7 @@ class HandlerIdService {
             this.logger.debug(`Marking handler id ${handlerId} as failed`);
             respond.data = JSON.stringify({ errorMessage });
             await this.removeHandlerIdCache(handlerId);
-            eventData.errorMessage = errorMessage;
+            eventData.value1 = errorMessage;
         }
 
         this.eventEmitter.emit(eventName, eventData);

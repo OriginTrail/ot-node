@@ -51,6 +51,14 @@ class ResolveService {
                     handlerId,
                     HANDLER_ID_STATUS.COMPLETED,
                 );
+                await this.handlerIdService.updateHandlerIdStatus(
+                    handlerId,
+                    HANDLER_ID_STATUS.RESOLVE.RESOLVE_FETCH_FROM_NODES_END,
+                );
+                await this.handlerIdService.updateHandlerIdStatus(
+                    handlerId,
+                    HANDLER_ID_STATUS.RESOLVE.RE,
+                );
             }
         }
     }

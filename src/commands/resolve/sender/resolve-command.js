@@ -22,6 +22,10 @@ class ResolveCommand extends Command {
             handlerId,
             HANDLER_ID_STATUS.RESOLVE.RESOLVE_ASSERTION,
         );
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_FETCH_FROM_NODES_START,
+        );
 
         const commandSequence = ['resolveInitCommand', 'resolveRequestCommand'];
         const addCommandPromise = [];
