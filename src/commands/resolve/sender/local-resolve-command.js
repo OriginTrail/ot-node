@@ -22,12 +22,21 @@ class LocalResolveCommand extends Command {
             HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_START
         );
 
-        let nquads = await this.tripleStoreModuleManager.resolve(assertionId, true).catch(() => {
+        
+        const metadataNquads = await this.tripleStoreModuleManager.resolve(`${assertionId}#metadata`, true).catch(() => {
             // continue sequence, try to resolve from network
         });
-        if (nquads && nquads.length) {
+        const dataNquads = await this.tripleStoreModuleManager.resolve(`${assertionId}#data`, true).catch(() => {
+            // continue sequence, try to resolve from network
+        });
+        if (metadataNquads && metadataNquads.length && dataNquads && dataNquads.length) {
+            const nquads = {
+                metadataNquads,
+                dataNquads
+            }
             try {
-                nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
+                nquads.metadataNquads = await this.dataService.toNQuads(nquads.metadataNquads , 'application/n-quads');
+                nquads.dataNquads = await this.dataService.toNQuads(nquads.dataNquads , 'application/n-quads');
 
                 await this.handlerIdService.cacheHandlerIdData(handlerId, nquads);
                 await this.handlerIdService.updateHandlerIdStatus(

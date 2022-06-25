@@ -15,11 +15,11 @@ class InsertAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { handlerId, ual, metadata, assertionId } = command.data;
+        const { handlerId, ual, assertionId } = command.data;
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START
+            HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
@@ -28,22 +28,37 @@ class InsertAssertionCommand extends Command {
 
         const handlerIdData = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
-        const metadataId = this.getMetadataId(handlerIdData.metadata);
+        const assertionGraphName = `${ual}/${assertionId}`;
+        const dataGraphName = `${ual}/${assertionId}#data`;
+        const metadatadataGraphName = `${ual}/${assertionId}#metadata`;
 
-        const nquads = [
-            `<${ual}> <http://schema.org/metadata> _:c14n0 .`,
-            `<${ual}> <http://schema.org/data> "${metadata.dataRootId}" .`,
-        ]
-            .concat(handlerIdData.metadata)
-            .concat(handlerIdData.data);
+        const assertionNquads = [
+            `<${assertionGraphName}> <http://schema.org/metadata> <${metadatadataGraphName}> .`,
+            `<${assertionGraphName}> <http://schema.org/data> <${dataGraphName}> .`,
+        ];
+
+        const insertPromises = [];
+
+        insertPromises.push(
+            this.tripleStoreModuleManager.insert(
+                handlerIdData.metadata.join('\n'),
+                metadatadataGraphName,
+            ),
+        );
+        insertPromises.push(
+            this.tripleStoreModuleManager.insert(handlerIdData.data.join('\n'), dataGraphName),
+        );
+        insertPromises.push(
+            this.tripleStoreModuleManager.insert(assertionNquads.join('\n'), assertionGraphName),
+        );
 
         this.logger.info(`Inserting assertion with ual:${ual} in database.`);
-        await this.tripleStoreModuleManager.insert(nquads.join('\n'), assertionId);
+        await Promise.all(insertPromises);
 
         this.logger.info(`Assertion ${assertionId} has been successfully inserted!`);
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END
+            HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
         );
         return this.continueSequence(command.data, command.sequence);
     }

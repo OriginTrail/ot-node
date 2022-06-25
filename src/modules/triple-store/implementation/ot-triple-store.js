@@ -59,14 +59,14 @@ class OtTripleStore {
         return true;
     }
 
-    async insert(triples, assertionId) {
-        const askQuery = `ASK WHERE { GRAPH <${constants.DID_PREFIX}:${assertionId}> { ?s ?p ?o } }`;
+    async insert(triples, graphName) {
+        const askQuery = `ASK WHERE { GRAPH <${graphName}> { ?s ?p ?o } }`;
         const exists = await this.ask(askQuery);
         if (!exists) {
             const insertion = `
                                   PREFIX schema: <http://schema.org/> 
                                   INSERT DATA
-                                  { GRAPH <${constants.DID_PREFIX}:${assertionId}> 
+                                  { GRAPH <${graphName}> 
                                     { ${triples} } 
                                   }`;
             await this.queryEngine.queryVoid(insertion, this.insertContext);
@@ -89,23 +89,16 @@ class OtTripleStore {
         return await this.ask(query);
     }
 
-    async resolve(assertionId, ual) {
-        const includePrivateData = false;
-        const escapedAssertionId = this.cleanEscapeCharacter(assertionId);
-        const graphName = `<${constants.DID_PREFIX}:${escapedAssertionId}>`;
-        const publicVisibility = includePrivateData
-            ? ''
-            : `${ual} schema:metadata ?metadataId
-                ?metadataId schema:visibility "public" .`;
+    async resolve(graphName) {
+        const escapedGraphName = this.cleanEscapeCharacter(graphName);
 
         const query = `PREFIX schema: <http://schema.org/>
                     CONSTRUCT { ?s ?p ?o }
                     WHERE {
                         {
-                            GRAPH ${graphName} 
+                            GRAPH <${escapedGraphName}>
                             {
                                 ?s ?p ?o .
-                                ${publicVisibility}
                             }
                         }
                     }`;
