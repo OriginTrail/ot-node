@@ -17,21 +17,38 @@ class InsertStoreRequestCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { handlerId, ual, dataRootId } = command.data;
+        const { handlerId, ual, assertionId } = command.data;
 
         const { data, metadata } = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
-        const metadataId = this.getMetadataId(metadata);
+        const assertionGraphName = `${ual}/${assertionId}`;
+        const dataGraphName = `${ual}/${assertionId}#data`;
+        const metadatadataGraphName = `${ual}/${assertionId}#metadata`;
 
-        const nquads = [
-            `<${ual}> <http://schema.org/metadata> "${metadataId}" .`,
-            `<${ual}> <http://schema.org/data> "${dataRootId}" .`,
-        ]
-            .concat(metadata)
-            .concat(data);
+        const assertionNquads = [
+            `<${assertionGraphName}> <http://schema.org/metadata> <${metadatadataGraphName}> .`,
+            `<${assertionGraphName}> <http://schema.org/data> <${dataGraphName}> .`,
+        ];
 
         this.logger.info(`Inserting assertion with ual:${ual} in database.`);
-        await this.tripleStoreModuleManager.insert(nquads.join('\n'), ual);
+
+        const insertPromises = [];
+
+        insertPromises.push(
+            this.tripleStoreModuleManager.insert(
+                metadata.join('\n'),
+                metadatadataGraphName,
+            ),
+        );
+        insertPromises.push(
+            this.tripleStoreModuleManager.insert(data.join('\n'), dataGraphName),
+        );
+        insertPromises.push(
+            this.tripleStoreModuleManager.insert(assertionNquads.join('\n'), assertionGraphName),
+        );
+
+        this.logger.info(`Inserting assertion with ual:${ual} in database.`);
+        await Promise.all(insertPromises);
 
         this.logger.info(`Assertion ${ual} has been successfully inserted!`);
         return this.continueSequence(command.data, command.sequence);

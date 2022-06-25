@@ -22,12 +22,17 @@ class GetLatestAssertionIdCommand extends Command {
             HANDLER_ID_STATUS.RESOLVE.GETTING_LATEST_ASSERTION_ID,
         );
 
-        if (id.startsWith('dkg://')) {
-            const { assertionId } = await this.blockchainModuleManager.getAssetProofs(
-                id.split('/').pop(),
-            );
-            if (assertionId) {
-                id = assertionId;
+        // dkg://did.otp.0x174714134abcd13431413413/987654321/f55da6d1b2e2969c1775073ec00951d52728f83cdc67fea13e5ea636ef45cab0
+        if (id.startsWith('dkg://')) { 
+            const splitted = id.split('/')
+            const assertionId = splitted.pop();
+            if(assertionId.toLowerCase() === 'latest') {
+                const result = await this.blockchainModuleManager.getAssetProofs(
+                    splitted[splitted.length - 1]
+                );
+                if (result) {
+                    id = result.assertionId;
+                }
             }
         }
 
