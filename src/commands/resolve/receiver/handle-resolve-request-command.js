@@ -21,20 +21,32 @@ class HandleResolveRequestCommand extends Command {
     async execute(command) {
         const { assertionId, remotePeerId, handlerId } = command.data;
 
-        let nquads = await this.tripleStoreModuleManager
-            .resolve(assertionId)
+        const metadataNquads = await this.tripleStoreModuleManager
+            .resolve(`${assertionId}#metadata`, true)
             .catch((e) =>
-                this.handleError(
-                    handlerId,
-                    e.message,
-                    ERROR_TYPE.HANDLE_RESOLVE_REQUEST_ERROR,
-                ),
+                this.handleError(handlerId, e.message, ERROR_TYPE.HANDLE_RESOLVE_REQUEST_ERROR),
             );
-        nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
+        const dataNquads = await this.tripleStoreModuleManager
+            .resolve(`${assertionId}#data`, true)
+            .catch((e) =>
+                this.handleError(handlerId, e.message, ERROR_TYPE.HANDLE_RESOLVE_REQUEST_ERROR),
+            );
 
         let messageType;
         let messageData;
-        if (nquads && nquads.length > 0) {
+        if (metadataNquads && metadataNquads.length && dataNquads && dataNquads.length) {
+            const nquads = {
+                metadataNquads,
+                dataNquads,
+            };
+            nquads.metadataNquads = await this.dataService.toNQuads(
+                nquads.metadataNquads,
+                'application/n-quads',
+            );
+            nquads.dataNquads = await this.dataService.toNQuads(
+                nquads.dataNquads,
+                'application/n-quads',
+            );
             this.logger.info(`Number of n-quads retrieved from the database is ${nquads.length}`);
             messageType = NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
             messageData = { nquads };
