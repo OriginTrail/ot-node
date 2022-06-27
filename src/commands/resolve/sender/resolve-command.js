@@ -20,10 +20,6 @@ class ResolveCommand extends Command {
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.RESOLVE.RESOLVE_ASSERTION,
-        );
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
             HANDLER_ID_STATUS.RESOLVE.RESOLVE_FETCH_FROM_NODES_START,
         );
 
@@ -35,7 +31,7 @@ class ResolveCommand extends Command {
                     name: commandSequence[0],
                     sequence: commandSequence.slice(1),
                     delay: 0,
-                    data: { handlerId, node, assertionId},
+                    data: { handlerId, node, assertionId },
                     transactional: false,
                 }),
             );
