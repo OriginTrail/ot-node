@@ -39,9 +39,10 @@ class SendTelemetryCommand extends Command {
                     },
                     data: JSON.stringify(signalingMessage),
                 };
-                await axios(config);
-
-                await this.telemetryInjectionService.removePublishedEvents(events);
+                const response = await axios(config);
+                if (response.status === 200) {
+                    await this.telemetryInjectionService.removePublishedEvents(events);
+                }
             }
         } catch (e) {
             await this.handleError(e);
