@@ -17,11 +17,7 @@ class PublishStoreCommand extends Command {
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_START
-        );
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISHING_ASSERTION,
+            HANDLER_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_START,
         );
 
         const commandSequence = ['publishStoreInitCommand', 'publishStoreRequestCommand'];

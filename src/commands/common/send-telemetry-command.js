@@ -10,7 +10,6 @@ class SendTelemetryCommand extends Command {
         this.config = ctx.config;
         this.telemetryInjectionService = ctx.telemetryInjectionService;
         this.networkModuleManager = ctx.networkModuleManager;
-
     }
 
     /**
@@ -28,13 +27,13 @@ class SendTelemetryCommand extends Command {
                     nodeData: {
                         version: pjson.version,
                         identity: 'veryMuchRandom',
-                        hostname: 'someTestnetNode'
+                        hostname: 'someTestnetNode',
                     },
                     events,
                 };
                 const config = {
                     method: 'post',
-                    url:'http://devnet-signaling.origin-trail.network:3000/signal',
+                    url: this.config.signalingServerUrl,
                     headers: {
                         'Content-Type': 'application/json',
                     },
@@ -73,8 +72,7 @@ class SendTelemetryCommand extends Command {
         const command = {
             name: 'sendTelemetryCommand',
             delay: 0,
-            data: {
-            },
+            data: {},
             period: 5 * 1000,
             transactional: false,
         };

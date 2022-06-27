@@ -20,10 +20,10 @@ class ValidateStoreInitCommand extends Command {
     async execute(command) {
         const { ual, handlerId, metadata } = command.data;
         this.logger.info(`Validating assertion with ual: ${ual}`);
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION,
-        );
+        // await this.handlerIdService.updateHandlerIdStatus(
+        //     handlerId,
+        //     HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION,
+        // );
 
         const handlerIdData = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 

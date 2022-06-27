@@ -1,6 +1,7 @@
 const {
     NETWORK_MESSAGE_TYPES,
-    NETWORK_PROTOCOLS, HANDLER_ID_STATUS,
+    NETWORK_PROTOCOLS,
+    HANDLER_ID_STATUS,
 } = require('../../constants/constants');
 const BaseController = require('./base-controller');
 
@@ -14,14 +15,13 @@ class ResolveController extends BaseController {
     async handleHttpApiResolveRequest(req, res) {
         const { id } = req.body;
 
-        const handlerId = await this.handlerIdService.generateHandlerId();
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.RESOLVE.RESOLVE_START
+        const handlerId = await this.handlerIdService.generateHandlerId(
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_START,
         );
+
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.RESOLVE.RESOLVE_INIT_START
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_INIT_START,
         );
 
         this.returnResponse(res, 202, {
@@ -53,7 +53,7 @@ class ResolveController extends BaseController {
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.RESOLVE.RESOLVE_INIT_END
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_INIT_END,
         );
     }
 

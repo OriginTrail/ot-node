@@ -374,7 +374,7 @@
             }
         },
         "commandExecutorVerboseLoggingEnabled": false,
-        "signalingServerUrl": "https://devnet-signaling.origin-trail.network",
+        "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "appDataPath": "data",
         "graphDatabase": {
             "implementation": "GraphDB",
@@ -490,6 +490,7 @@
                 }
             }
         },
+        "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "blockchain": [],

@@ -21,10 +21,6 @@ class InsertAssertionCommand extends Command {
             handlerId,
             HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.INSERTING_ASSERTION,
-        );
 
         const handlerIdData = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 

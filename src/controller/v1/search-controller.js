@@ -1,5 +1,10 @@
 const BaseController = require('./base-controller');
-const {HANDLER_ID_STATUS, NETWORK_PROTOCOLS, ERROR_TYPE, NETWORK_MESSAGE_TYPES} = require('../../constants/constants');
+const {
+    HANDLER_ID_STATUS,
+    NETWORK_PROTOCOLS,
+    ERROR_TYPE,
+    NETWORK_MESSAGE_TYPES,
+} = require('../../constants/constants');
 
 class SearchController extends BaseController {
     constructor(ctx) {
@@ -10,15 +15,13 @@ class SearchController extends BaseController {
         this.handlerIdService = ctx.handlerIdService;
     }
 
-    async handleHttpApiSearchAssertionsRequest (req, res) {
+    async handleHttpApiSearchAssertionsRequest(req, res) {
         const { query } = req.query;
 
-        const handlerId = await this.handlerIdService.generateHandlerId();
-
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
+        const handlerId = await this.handlerIdService.generateHandlerId(
             HANDLER_ID_STATUS.SEARCH_ASSERTIONS.SEARCH_START,
         );
+
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
             HANDLER_ID_STATUS.SEARCH_ASSERTIONS.VALIDATING_QUERY,
@@ -31,12 +34,11 @@ class SearchController extends BaseController {
         this.logger.info(`Search assertions for ${query} with handler id ${handlerId} initiated.`);
 
         try {
-
             // TODO: updated with query params from get req
             const options = {
                 prefix: true,
                 limit: 40,
-            }
+            };
 
             const commandData = {
                 handlerId,
@@ -58,7 +60,6 @@ class SearchController extends BaseController {
                 data: commandData,
                 transactional: false,
             });
-
         } catch (error) {
             this.logger.error({
                 msg: `Error while initializing search for assertions: ${error.message}. ${error.stack}`,
@@ -71,16 +72,12 @@ class SearchController extends BaseController {
                 'Unable to search for assertions, Failed to process input data!',
             );
         }
-
     }
 
-    async handleHttpApiSearchEntitiesRequest (req, res) {
+    async handleHttpApiSearchEntitiesRequest(req, res) {
         const { query } = req.query;
 
-        const handlerId = await this.handlerIdService.generateHandlerId();
-
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
+        const handlerId = await this.handlerIdService.generateHandlerId(
             HANDLER_ID_STATUS.SEARCH_ENTITIES.VALIDATING_QUERY,
         );
 
@@ -91,12 +88,11 @@ class SearchController extends BaseController {
         this.logger.info(`Search entities for ${query} with handler id ${handlerId} initiated.`);
 
         try {
-
             // TODO: updated with query params
             const options = {
                 prefix: true,
                 limit: 40,
-            }
+            };
 
             const commandData = {
                 handlerId,
@@ -118,7 +114,6 @@ class SearchController extends BaseController {
                 data: commandData,
                 transactional: false,
             });
-
         } catch (error) {
             this.logger.error({
                 msg: `Error while initializing search for entities: ${error.message}. ${error.stack}`,
@@ -133,13 +128,9 @@ class SearchController extends BaseController {
         }
     }
 
-    handleHttpApiQueryRequest (req, res) {
+    handleHttpApiQueryRequest(req, res) {}
 
-    }
-
-    handleHttpApiProofsRequest (req, res) {
-
-    }
+    handleHttpApiProofsRequest(req, res) {}
 
     async handleNetworkSearchAssertionsRequest(message, remotePeerId) {
         let commandName;
@@ -188,7 +179,6 @@ class SearchController extends BaseController {
             transactional: false,
         });
     }
-
 }
 
 module.exports = SearchController;

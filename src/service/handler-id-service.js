@@ -11,12 +11,14 @@ class HandlerIdService {
         this.memoryCachedHandlersData = {};
     }
 
-    async generateHandlerId() {
+    async generateHandlerId(status) {
         const handlerIdObject = await this.repositoryModuleManager.createHandlerIdRecord({
-            status: HANDLER_ID_STATUS.PENDING,
+            status,
         });
-        this.logger.debug(`Generated handler id for request ${handlerIdObject.handler_id}`);
-        return handlerIdObject.handler_id;
+        const handlerId = handlerIdObject.handler_id;
+        this.emitChangeEvent(status, handlerId);
+        this.logger.debug(`Generated handler id for request ${handlerId}`);
+        return handlerId;
     }
 
     async getHandlerIdRecord(handlerId) {
@@ -30,29 +32,32 @@ class HandlerIdService {
 
     async updateHandlerIdStatus(handlerId, status, errorMessage = null) {
         const respond = {
-            status
-        }
-        const timestamp = Date.now();
-        const eventName = 'operation_status_changed';
-        const eventData = {
-            lastEvent: status,
-            handlerId,
-            timestamp
-        }
+            status,
+        };
 
-        if(errorMessage !== null) {
+        if (errorMessage !== null) {
             this.logger.debug(`Marking handler id ${handlerId} as failed`);
             respond.data = JSON.stringify({ errorMessage });
             await this.removeHandlerIdCache(handlerId);
-            eventData.value1 = errorMessage;
         }
 
-        this.eventEmitter.emit(eventName, eventData);
+        this.emitChangeEvent(status, handlerId, errorMessage);
 
-        await this.repositoryModuleManager.updateHandlerIdRecord(
-            respond,
+        await this.repositoryModuleManager.updateHandlerIdRecord(respond, handlerId);
+    }
+
+    emitChangeEvent(status, handlerId, errorMessage = null) {
+        const timestamp = Date.now();
+        const eventName = 'operation_status_changed';
+
+        const eventData = {
+            lastEvent: status,
             handlerId,
-        );
+            timestamp,
+            value1: errorMessage,
+        };
+
+        this.eventEmitter.emit(eventName, eventData);
     }
 
     async cacheHandlerIdData(handlerId, data) {

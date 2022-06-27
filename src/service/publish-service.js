@@ -48,10 +48,6 @@ class PublishService {
                 handlerId,
                 HANDLER_ID_STATUS.PUBLISH.PUBLISH_END,
             );
-            await this.handlerIdService.updateHandlerIdStatus(
-                handlerId,
-                HANDLER_ID_STATUS.COMPLETED,
-            );
 
             const responseStatuses = await this.repositoryModuleManager.getPublishResponsesStatuses(
                 handlerId,

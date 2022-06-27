@@ -6,7 +6,7 @@ const {
     NETWORK_MESSAGE_TYPES,
     PUBLISH_STATUS,
 } = require('../../constants/constants');
-const {HANDLER_ID_STATUS} = require('../../constants/constants');
+const { HANDLER_ID_STATUS } = require('../../constants/constants');
 
 class PublishController extends BaseController {
     constructor(ctx) {
@@ -36,15 +36,13 @@ class PublishController extends BaseController {
     async handleHttpApiPublishMethod(req, res, method) {
         const operationId = this.generateOperationId();
 
-        const handlerId = await this.handlerIdService.generateHandlerId();
+        const handlerId = await this.handlerIdService.generateHandlerId(
+            HANDLER_ID_STATUS.PUBLISH.PUBLISH_START,
+        );
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_START
-        );
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_INIT_START
+            HANDLER_ID_STATUS.PUBLISH.PUBLISH_INIT_START,
         );
 
         this.returnResponse(res, 202, {
@@ -53,15 +51,14 @@ class PublishController extends BaseController {
 
         const { metadata, data, ual } = req.body;
         try {
-
             await this.handlerIdService.updateHandlerIdStatus(
                 handlerId,
-                HANDLER_ID_STATUS.PUBLISH.PUBLISH_GENERATE_METADATA_START
+                HANDLER_ID_STATUS.PUBLISH.PUBLISH_GENERATE_METADATA_START,
             );
             const metadataNquads = await this.dataService.metadataObjectToNquads(metadata);
             await this.handlerIdService.updateHandlerIdStatus(
                 handlerId,
-                HANDLER_ID_STATUS.PUBLISH.PUBLISH_GENERATE_METADATA_STOP
+                HANDLER_ID_STATUS.PUBLISH.PUBLISH_GENERATE_METADATA_END,
             );
 
             await this.handlerIdService.cacheHandlerIdData(handlerId, {
@@ -97,7 +94,7 @@ class PublishController extends BaseController {
 
             await this.handlerIdService.updateHandlerIdStatus(
                 handlerId,
-                HANDLER_ID_STATUS.PUBLISH.PUBLISH_INIT_END
+                HANDLER_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
             );
         } catch (error) {
             this.logger.error({
