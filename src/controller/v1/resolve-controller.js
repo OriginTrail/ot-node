@@ -38,7 +38,7 @@ class ResolveController extends BaseController {
 
         const commandSequence = [
             'getLatestAssertionIdCommand',
-            // 'localResolveCommand',
+            'localResolveCommand',
             'findNodesCommand',
             'resolveCommand',
         ];
