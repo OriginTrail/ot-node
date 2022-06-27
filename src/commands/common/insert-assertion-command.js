@@ -33,22 +33,18 @@ class InsertAssertionCommand extends Command {
             `<${assertionGraphName}> <http://schema.org/data> <${dataGraphName}> .`,
         ];
 
-        const insertPromises = [];
+        this.logger.info(`Inserting assertion with ual:${ual} in database.`);
 
-        insertPromises.push(
+        const insertPromises = [
             this.tripleStoreModuleManager.insert(
                 handlerIdData.metadata.join('\n'),
                 metadatadataGraphName,
             ),
-        );
-        insertPromises.push(
             this.tripleStoreModuleManager.insert(handlerIdData.data.join('\n'), dataGraphName),
-        );
-        insertPromises.push(
             this.tripleStoreModuleManager.insert(assertionNquads.join('\n'), assertionGraphName),
-        );
+        ];
 
-        this.logger.info(`Inserting assertion with ual:${ual} in database.`);
+
         await Promise.all(insertPromises);
 
         this.logger.info(`Assertion ${assertionId} has been successfully inserted!`);

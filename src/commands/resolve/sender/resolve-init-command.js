@@ -2,6 +2,7 @@ const ProtocolInitCommand = require('../../common/protocol-init-command');
 const {
     ERROR_TYPE,
     NETWORK_PROTOCOLS,
+    RESOLVE_REQUEST_STATUS,
 } = require('../../../constants/constants');
 
 class ResolveInitCommand extends ProtocolInitCommand {
@@ -9,7 +10,7 @@ class ResolveInitCommand extends ProtocolInitCommand {
         super(ctx);
         this.resolveService = ctx.resolveService;
 
-        this.commandName = 'resolveInitCommand'
+        this.commandName = 'resolveInitCommand';
         this.errorType = ERROR_TYPE.RESOLVE_INIT_ERROR;
         this.networkProtocol = NETWORK_PROTOCOLS.RESOLVE;
     }
@@ -21,7 +22,12 @@ class ResolveInitCommand extends ProtocolInitCommand {
     }
 
     async markResponseAsFailed(command, errorMessage) {
-        await this.resolveService.processResolveResponse(command, null, errorMessage);
+        await this.resolveService.processResolveResponse(
+            command,
+            RESOLVE_REQUEST_STATUS.FAILED,
+            null,
+            errorMessage,
+        );
     }
 
     /**

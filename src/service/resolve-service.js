@@ -1,4 +1,7 @@
+const { Mutex } = require('async-mutex');
 const { RESOLVE_REQUEST_STATUS, HANDLER_ID_STATUS } = require('../constants/constants');
+
+const mutex = new Mutex();
 
 class ResolveService {
     constructor(ctx) {
@@ -8,12 +11,23 @@ class ResolveService {
         this.commandExecutor = ctx.commandExecutor;
     }
 
-    async processResolveResponse(command, responseData, errorMessage = null) {
+    async processResolveResponse(command, status, responseData, errorMessage = null) {
         const { handlerId, numberOfFoundNodes } = command.data;
 
-        const responseStatuses = await this.repositoryModuleManager.getPublishResponsesStatuses(
-            handlerId,
-        );
+        const self = this;
+        let responseStatuses = 0;
+        await mutex.runExclusive(async () => {
+            await self.repositoryModuleManager.createResolveResponseRecord(
+                status,
+                handlerId,
+                errorMessage,
+            );
+
+            responseStatuses = await self.repositoryModuleManager.getResolveResponsesStatuses(
+                handlerId,
+            );
+        });
+
         let failedNumber = 0;
         let completedNumber = 0;
 
@@ -25,41 +39,23 @@ class ResolveService {
             }
         });
 
-        if (errorMessage) {
-            await this.repositoryModuleManager.createResolveResponseRecord(
-                RESOLVE_REQUEST_STATUS.FAILED,
-                command.data.resolveId,
-                errorMessage,
+        if (numberOfFoundNodes === failedNumber) {
+            await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.FAILED);
+        } else if (completedNumber === 1) {
+            await this.handlerIdService.cacheHandlerIdData(handlerId, responseData.nquads);
+
+            await this.handlerIdService.updateHandlerIdStatus(
+                handlerId,
+                HANDLER_ID_STATUS.RESOLVE.RESOLVE_FETCH_FROM_NODES_END,
             );
-
-            if (numberOfFoundNodes === failedNumber + 1) {
-                await this.handlerIdService.updateHandlerIdStatus(
-                    handlerId,
-                    HANDLER_ID_STATUS.FAILED,
-                );
-            }
-        } else {
-            await this.repositoryModuleManager.createResolveResponseRecord(
-                RESOLVE_REQUEST_STATUS.COMPLETED,
-                command.data.resolveId,
+            await this.handlerIdService.updateHandlerIdStatus(
+                handlerId,
+                HANDLER_ID_STATUS.RESOLVE.RESOLVE_END,
             );
-
-            if (completedNumber === 0) {
-                await this.handlerIdService.cacheHandlerIdData(handlerId, responseData.nquads);
-
-                await this.handlerIdService.updateHandlerIdStatus(
-                    handlerId,
-                    HANDLER_ID_STATUS.COMPLETED,
-                );
-                await this.handlerIdService.updateHandlerIdStatus(
-                    handlerId,
-                    HANDLER_ID_STATUS.RESOLVE.RESOLVE_FETCH_FROM_NODES_END,
-                );
-                await this.handlerIdService.updateHandlerIdStatus(
-                    handlerId,
-                    HANDLER_ID_STATUS.RESOLVE.RE,
-                );
-            }
+            await this.handlerIdService.updateHandlerIdStatus(
+                handlerId,
+                HANDLER_ID_STATUS.COMPLETED,
+            );
         }
     }
 }

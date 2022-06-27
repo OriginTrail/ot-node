@@ -19,40 +19,66 @@ class LocalResolveCommand extends Command {
         const { handlerId, assertionId } = command.data;
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_START
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_START,
         );
 
-        const metadataNquads = await this.tripleStoreModuleManager.resolve(`${assertionId}#metadata`, true).catch(() => {
-            // continue sequence, try to resolve from network
-        });
-        const dataNquads = await this.tripleStoreModuleManager.resolve(`${assertionId}#data`, true).catch(() => {
-            // continue sequence, try to resolve from network
-        });
-        
-        if (metadataNquads && metadataNquads.length && dataNquads && dataNquads.length) {
-            const nquads = {
-                metadataNquads,
-                dataNquads
-            }
-            try {
-                nquads.metadataNquads = await this.dataService.toNQuads(nquads.metadataNquads , 'application/n-quads');
-                nquads.dataNquads = await this.dataService.toNQuads(nquads.dataNquads , 'application/n-quads');
+        const nquads = {
+            metadata: [],
+            data: [],
+        };
+        const resolvePromises = [
+            this.tripleStoreModuleManager
+                .resolve(`${assertionId}#metadata`, true)
+                .then((resolved) => {
+                    nquads.metadata = resolved;
+                }),
+            this.tripleStoreModuleManager.resolve(`${assertionId}#data`, true).then((resolved) => {
+                nquads.data = resolved;
+            }),
+        ];
 
-                await this.handlerIdService.cacheHandlerIdData(handlerId, nquads);
-                await this.handlerIdService.updateHandlerIdStatus(
-                    handlerId,
-                    HANDLER_ID_STATUS.COMPLETED,
-                );
+        await Promise.allSettled(resolvePromises);
+
+        if (nquads.metadata && nquads.metadata.length && nquads.data && nquads.data.length) {
+            try {
+                const normalizeNquadsPromises = [
+                    this.dataService
+                        .toNQuads(nquads.metadata, 'application/n-quads')
+                        .then((normalized) => {
+                            nquads.metadata = normalized;
+                        }),
+                    this.dataService
+                        .toNQuads(nquads.data, 'application/n-quads')
+                        .then((normalized) => {
+                            nquads.data = normalized;
+                        }),
+                ];
+
+                await Promise.all(normalizeNquadsPromises);
+
+                const updateHandlerIdDataPromises = [
+                    this.handlerIdService.cacheHandlerIdData(handlerId, nquads),
+                    this.handlerIdService.updateHandlerIdStatus(
+                        handlerId,
+                        HANDLER_ID_STATUS.COMPLETED,
+                    ),
+                ];
+
+                await Promise.all(updateHandlerIdDataPromises);
 
                 return Command.empty();
             } catch (e) {
-                await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.FAILED, e.message);
+                await this.handlerIdService.updateHandlerIdStatus(
+                    handlerId,
+                    HANDLER_ID_STATUS.FAILED,
+                    e.message,
+                );
                 return Command.empty();
             }
         }
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_END
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_END,
         );
 
         return this.continueSequence(command.data, command.sequence);

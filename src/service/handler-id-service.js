@@ -31,19 +31,19 @@ class HandlerIdService {
     }
 
     async updateHandlerIdStatus(handlerId, status, errorMessage = null) {
-        const respond = {
+        const response = {
             status,
         };
 
         if (errorMessage !== null) {
             this.logger.debug(`Marking handler id ${handlerId} as failed`);
-            respond.data = JSON.stringify({ errorMessage });
+            response.data = JSON.stringify({ errorMessage });
             await this.removeHandlerIdCache(handlerId);
         }
 
         this.emitChangeEvent(status, handlerId, errorMessage);
 
-        await this.repositoryModuleManager.updateHandlerIdRecord(respond, handlerId);
+        await this.repositoryModuleManager.updateHandlerIdRecord(response, handlerId);
     }
 
     emitChangeEvent(status, handlerId, errorMessage = null) {

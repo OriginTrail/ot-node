@@ -8,7 +8,6 @@ module.exports = {
             },
             resolve_id: {
                 type: Sequelize.INTEGER,
-                references: { model: 'resolve', key: 'id' }
             },
             status: {
                 allowNull: false,

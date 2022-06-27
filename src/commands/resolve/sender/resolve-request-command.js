@@ -3,6 +3,7 @@ const Command = require('../../command')
 const {
     ERROR_TYPE,
     NETWORK_PROTOCOLS,
+    RESOLVE_REQUEST_STATUS,
 } = require('../../../constants/constants');
 
 class ResolveRequestCommand extends ProtocolRequestCommand {
@@ -22,12 +23,12 @@ class ResolveRequestCommand extends ProtocolRequestCommand {
     }
 
     async handleAck(command, responseData) {
-        await this.resolveService.processResolveResponse(command, responseData);
+        await this.resolveService.processResolveResponse(command, RESOLVE_REQUEST_STATUS.COMPLETED, responseData);
         return Command.empty();
     }
 
     async markResponseAsFailed(command, errorMessage) {
-        await this.resolveService.processResolveResponse(command, null, errorMessage);
+        await this.resolveService.processResolveResponse(command, RESOLVE_REQUEST_STATUS.FAILED, null, errorMessage);
     }
 
     /**

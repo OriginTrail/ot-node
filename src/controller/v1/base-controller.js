@@ -8,6 +8,7 @@ class BaseController {
     }
 
     returnResponse(res, status, data) {
+        console.log(JSON.stringify(data, null, 2))
         res.status(status).send(data);
     }
 

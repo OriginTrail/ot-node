@@ -87,26 +87,19 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    // resolve table
-    async createResolveRecord(status) {
+    async getResolveResponsesStatuses(handlerId) {
         if (this.initialized) {
-            return this.getImplementation().module.createResolveRecord(status);
+            return this.getImplementation().module.getResolveResponsesStatuses(handlerId);
         }
     }
 
-    async createResolveResponseRecord(status, resolveId, message = null) {
+    async createResolveResponseRecord(status, handlerId, errorMessage) {
         if (this.initialized) {
             return this.getImplementation().module.createResolveResponseRecord(
                 status,
-                resolveId,
-                message,
+                handlerId,
+                errorMessage,
             );
-        }
-    }
-
-    async getNumberOfResolveResponses(resolveId) {
-        if (this.initialized) {
-            return this.getImplementation().module.getNumberOfResolveResponses(resolveId);
         }
     }
 

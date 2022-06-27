@@ -1,12 +1,12 @@
 const { Mutex } = require('async-mutex');
-
-const mutex = new Mutex();
 const constants = require('../constants/constants');
 const {
     NETWORK_PROTOCOLS,
     HANDLER_ID_STATUS,
     PUBLISH_REQUEST_STATUS,
 } = require('../constants/constants');
+
+const mutex = new Mutex();
 
 class PublishService {
     constructor(ctx) {
@@ -19,7 +19,7 @@ class PublishService {
     }
 
     async processPublishResponse(command, status, errorMessage = null) {
-        const { handlerId, ual, assertionId } = command.data;
+        const { handlerId, ual, assertionId, numberOfFoundNodes } = command.data;
 
         const self = this;
         let numberOfResponses = 0;
@@ -35,7 +35,7 @@ class PublishService {
             );
         });
 
-        if (command.data.numberOfFoundNodes === numberOfResponses) {
+        if (numberOfFoundNodes === numberOfResponses) {
             this.logger.info(`Finalizing publish for handlerId: ${handlerId}`);
 
             await this.handlerIdService.cacheHandlerIdData(handlerId, { ual, assertionId });
@@ -68,6 +68,18 @@ class PublishService {
                     failedNumber + completedNumber
                 }, failed: ${failedNumber}, completed: ${completedNumber}`,
             );
+            
+            if(completedNumber === numberOfFoundNodes) {
+                await this.handlerIdService.updateHandlerIdStatus(
+                    handlerId,
+                    HANDLER_ID_STATUS.COMPLETED,
+                );
+            } else {
+                await this.handlerIdService.updateHandlerIdStatus(
+                    handlerId,
+                    HANDLER_ID_STATUS.FAILED,
+                );
+            }
         }
     }
 

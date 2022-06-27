@@ -21,32 +21,40 @@ class HandleResolveRequestCommand extends Command {
     async execute(command) {
         const { assertionId, remotePeerId, handlerId } = command.data;
 
-        const metadataNquads = await this.tripleStoreModuleManager
-            .resolve(`${assertionId}#metadata`, true)
-            .catch((e) =>
-                this.handleError(handlerId, e.message, ERROR_TYPE.HANDLE_RESOLVE_REQUEST_ERROR),
-            );
-        const dataNquads = await this.tripleStoreModuleManager
-            .resolve(`${assertionId}#data`, true)
-            .catch((e) =>
-                this.handleError(handlerId, e.message, ERROR_TYPE.HANDLE_RESOLVE_REQUEST_ERROR),
-            );
+        const nquads = {
+            metadata: [],
+            data: [],
+        };
+        const resolvePromises = [
+            this.tripleStoreModuleManager
+                .resolve(`${assertionId}#metadata`, true)
+                .then((resolved) => {
+                    nquads.metadata = resolved;
+                }),
+            this.tripleStoreModuleManager.resolve(`${assertionId}#data`, true).then((resolved) => {
+                nquads.data = resolved;
+            }),
+        ];
+
+        await Promise.all(resolvePromises).catch((e) =>
+            this.handleError(handlerId, e.message, ERROR_TYPE.HANDLE_RESOLVE_REQUEST_ERROR),
+        );
 
         let messageType;
         let messageData;
-        if (metadataNquads && metadataNquads.length && dataNquads && dataNquads.length) {
-            const nquads = {
-                metadataNquads,
-                dataNquads,
-            };
-            nquads.metadataNquads = await this.dataService.toNQuads(
-                nquads.metadataNquads,
-                'application/n-quads',
-            );
-            nquads.dataNquads = await this.dataService.toNQuads(
-                nquads.dataNquads,
-                'application/n-quads',
-            );
+        if (nquads.metadata && nquads.metadata.length && nquads.data && nquads.data.length) {
+            const normalizeNquadsPromises = [
+                this.dataService
+                    .toNQuads(nquads.metadata, 'application/n-quads')
+                    .then((normalized) => {
+                        nquads.metadata = normalized;
+                    }),
+                this.dataService.toNQuads(nquads.data, 'application/n-quads').then((normalized) => {
+                    nquads.data = normalized;
+                }),
+            ];
+
+            await Promise.all(normalizeNquadsPromises);
             this.logger.info(`Number of n-quads retrieved from the database is ${nquads.length}`);
             messageType = NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
             messageData = { nquads };
@@ -54,7 +62,7 @@ class HandleResolveRequestCommand extends Command {
             messageType = NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
             messageData = {};
         }
-
+        
         await this.networkModuleManager.sendMessageResponse(
             NETWORK_PROTOCOLS.RESOLVE,
             remotePeerId,
