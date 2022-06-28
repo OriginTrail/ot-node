@@ -16,6 +16,8 @@ class HandleResolveInitCommand extends Command {
     async execute(command) {
         const { remotePeerId, handlerId } = command.data;
 
+        // TODO: validate assertionId / ual
+
         const messageType = NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
         const messageData = {};
         await this.networkModuleManager.sendMessageResponse(

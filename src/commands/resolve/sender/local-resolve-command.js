@@ -60,7 +60,11 @@ class LocalResolveCommand extends Command {
                     this.handlerIdService.cacheHandlerIdData(handlerId, nquads),
                     this.handlerIdService.updateHandlerIdStatus(
                         handlerId,
-                        HANDLER_ID_STATUS.COMPLETED,
+                        HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_END,
+                    ),
+                    this.handlerIdService.updateHandlerIdStatus(
+                        handlerId,
+                        HANDLER_ID_STATUS.RESOLVE.RESOLVE_END,
                     ),
                 ];
 

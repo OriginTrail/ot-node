@@ -21,6 +21,8 @@ class HandleResolveRequestCommand extends Command {
     async execute(command) {
         const { assertionId, remotePeerId, handlerId } = command.data;
 
+        // TODO: validate assertionId / ual
+
         const nquads = {
             metadata: [],
             data: [],
