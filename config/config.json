@@ -117,7 +117,7 @@
             }
         },
         "commandExecutorVerboseLoggingEnabled": false,
-        "signalingServerUrl": "not_defined",
+        "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "appDataPath": "data",
         "graphDatabase": {
             "implementation": "GraphDB",
