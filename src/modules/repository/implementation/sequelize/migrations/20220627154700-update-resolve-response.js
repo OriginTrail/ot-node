@@ -10,6 +10,6 @@ module.exports = {
         await queryInterface.changeColumn('resolve_response', 'handler_id', {
             type: Sequelize.INTEGER
         });
-        await queryInterface.renameColumn('resolve_response', 'resolve_id', 'handler_id');
+        await queryInterface.renameColumn('resolve_response', 'handler_id', 'resolve_id');
     },
 };

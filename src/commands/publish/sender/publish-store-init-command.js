@@ -13,6 +13,7 @@ class PublishStoreInitCommand extends ProtocolInitCommand {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.publishService = ctx.publishService;
 
+        this.commandName = 'publishStoreInitCommand';
         this.errorType = ERROR_TYPE.STORE_INIT_ERROR;
         this.networkProtocol = NETWORK_PROTOCOLS.STORE;
     }

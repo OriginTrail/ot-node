@@ -21,7 +21,7 @@ class ValidateStoreRequestCommand extends Command {
         this.logger.info(`Validating assertion with ual: ${ual}`);
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION,
+            HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_START,
         );
 
         const handlerIdData = await this.handlerIdService.getCachedHandlerIdData(handlerId);
@@ -49,6 +49,12 @@ class ValidateStoreRequestCommand extends Command {
 
         const commandData = command.data;
         commandData.assertionId = calculatedRootHash;
+
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_END,
+        );
+
         return this.continueSequence(commandData, command.sequence);
     }
 

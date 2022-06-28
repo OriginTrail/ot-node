@@ -1,5 +1,5 @@
 const Command = require('../../command');
-const { ERROR_TYPE } = require('../../../constants/constants');
+const { ERROR_TYPE, HANDLER_ID_STATUS } = require('../../../constants/constants');
 
 class InsertStoreRequestCommand extends Command {
     constructor(ctx) {
@@ -18,6 +18,11 @@ class InsertStoreRequestCommand extends Command {
      */
     async execute(command) {
         const { handlerId, ual, assertionId } = command.data;
+
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
+        );
 
         const { data, metadata } = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
@@ -39,6 +44,11 @@ class InsertStoreRequestCommand extends Command {
         ];
 
         await Promise.all(insertPromises);
+
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
+        );
 
         this.logger.info(`Assertion ${ual} has been successfully inserted!`);
         return this.continueSequence(command.data, command.sequence);

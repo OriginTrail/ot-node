@@ -18,11 +18,6 @@ class FindNodesCommand extends Command {
     async execute(command) {
         const { handlerId, networkProtocol } = command.data;
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.FIND_NODES_START,
-        );
-
         const keys = this.extractKeys(command.data);
 
         this.logger.info(
@@ -34,7 +29,7 @@ class FindNodesCommand extends Command {
         const findNodesPromises = [];
 
         keys.forEach((key) => {
-            findNodesPromises.push(this.findRankedNodes(key, networkProtocol));
+            findNodesPromises.push(this.findRankedNodes(key, networkProtocol, handlerId));
         });
 
         const results = await Promise.all(findNodesPromises);
@@ -50,22 +45,29 @@ class FindNodesCommand extends Command {
         const commandData = command.data;
         commandData.nodes = nodes;
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.FIND_NODES_END,
-        );
         return this.continueSequence(commandData, command.sequence);
     }
 
-    async findRankedNodes(key, protocol) {
+    async findRankedNodes(key, protocol, handlerId) {
         this.logger.debug(
             `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${key}`,
+        );
+
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.FIND_NODES_START,
         );
 
         const foundNodes = await this.networkModuleManager.findNodes(key, protocol);
 
         const closestNodes = await this.networkModuleManager.rankNodes(foundNodes, key);
         this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${key}`);
+
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.FIND_NODES_END,
+        );
+
         return closestNodes;
     }
 

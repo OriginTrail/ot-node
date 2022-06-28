@@ -14,6 +14,7 @@ class PublishStoreRequestCommand extends ProtocolRequestCommand {
         this.publishService = ctx.publishService;
         this.handlerIdService = ctx.handlerIdService;
 
+        this.commandName = 'publishStoreRequestCommand';
         this.errorType = ERROR_TYPE.STORE_REQUEST_ERROR;
         this.networkProtocol = NETWORK_PROTOCOLS.STORE;
     }
