@@ -1,5 +1,5 @@
 const Command = require('../command');
-const { NETWORK_MESSAGE_TYPES} = require('../../constants/constants');
+const { NETWORK_MESSAGE_TYPES } = require('../../constants/constants');
 
 class ProtocolMessageCommand extends Command {
     constructor(ctx) {
@@ -23,14 +23,13 @@ class ProtocolMessageCommand extends Command {
     async sendProtocolMessage(command, message, messageType) {
         const { node, handlerId } = command.data;
 
-        const response = await this.networkModuleManager
-            .sendMessage(
-                this.networkProtocol,
-                node,
-                messageType,
-                handlerId,
-                message,
-            );
+        const response = await this.networkModuleManager.sendMessage(
+            this.networkProtocol,
+            node,
+            messageType,
+            handlerId,
+            message,
+        );
         switch (response.header.messageType) {
             case NETWORK_MESSAGE_TYPES.RESPONSES.BUSY:
                 return this.handleBusy(command, response.data);

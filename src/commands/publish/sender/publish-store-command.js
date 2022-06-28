@@ -36,6 +36,8 @@ class PublishStoreCommand extends Command {
                         metadata,
                         ual,
                     },
+                    period: 5000,
+                    retries: 3,
                     transactional: false,
                 }),
             );

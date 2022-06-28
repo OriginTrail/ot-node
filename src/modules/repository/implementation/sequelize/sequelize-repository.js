@@ -18,7 +18,9 @@ class SequelizeRepository {
 
     setEnvParameters() {
         process.env.SEQUELIZE_REPOSITORY_USER = this.config.user;
-        process.env.SEQUELIZE_REPOSITORY_PASSWORD = process.env.REPOSITORY_PASSWORD
+        const useEnvPassword =
+            process.env.REPOSITORY_PASSWORD && process.env.REPOSITORY_PASSWORD !== '';
+        process.env.SEQUELIZE_REPOSITORY_PASSWORD = useEnvPassword
             ? process.env.REPOSITORY_PASSWORD
             : this.config.password;
         process.env.SEQUELIZE_REPOSITORY_DATABASE = this.config.database;
@@ -209,7 +211,6 @@ class SequelizeRepository {
             },
         });
     }
-
 
     // EVENT
     async createEventRecord(handlerId, name, timestamp, value1, value2, value3) {

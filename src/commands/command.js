@@ -1,4 +1,4 @@
-const {HANDLER_ID_STATUS} = require("../../src/constants/constants");
+const { HANDLER_ID_STATUS } = require('../constants/constants');
 
 /**
  * Describes one command handler
@@ -35,7 +35,7 @@ class Command {
      * Execute strategy when event is too late
      * @param command
      */
-    async expired(command) {
+    async expired() {
         return Command.empty();
     }
 
@@ -105,6 +105,10 @@ class Command {
         return command;
     }
 
+    async retryFinished(command) {
+        this.logger.trace(`Retry count for command: ${command.name} reached!`);
+    }
+
     /**
      * Error handler for command
      * @param handlerId  - Operation handler id
@@ -121,7 +125,11 @@ class Command {
             Id_operation: handlerId,
         });
         if (markFailed) {
-            await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.FAILED, errorMessage);
+            await this.handlerIdService.updateHandlerIdStatus(
+                handlerId,
+                HANDLER_ID_STATUS.FAILED,
+                errorMessage,
+            );
         }
     }
 
@@ -130,7 +138,7 @@ class Command {
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
-    default(map) {
+    default() {
         return {};
     }
 

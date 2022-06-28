@@ -43,6 +43,13 @@ class PublishStoreRequestCommand extends ProtocolRequestCommand {
         );
     }
 
+    async retryFinished(command) {
+        await this.markResponseAsFailed(
+            command,
+            'Max number of retries for protocol store request message reached',
+        );
+    }
+
     /**
      * Builds default storeRequestCommand
      * @param map

@@ -6,7 +6,6 @@ const {
 } = require('../../../constants/constants');
 
 class PublishStoreInitCommand extends ProtocolInitCommand {
-
     constructor(ctx) {
         super(ctx);
 
@@ -24,7 +23,18 @@ class PublishStoreInitCommand extends ProtocolInitCommand {
     }
 
     async markResponseAsFailed(command, errorMessage) {
-        await this.publishService.processPublishResponse(command, PUBLISH_REQUEST_STATUS.FAILED, errorMessage);
+        await this.publishService.processPublishResponse(
+            command,
+            PUBLISH_REQUEST_STATUS.FAILED,
+            errorMessage,
+        );
+    }
+
+    async retryFinished(command) {
+        await this.markResponseAsFailed(
+            command,
+            'Max number of retries for protocol store init message reached',
+        );
     }
 
     /**
