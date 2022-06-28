@@ -1,5 +1,5 @@
 const Command = require('../../command');
-const { ERROR_TYPE, HANDLER_ID_STATUS } = require('../../../constants/constants');
+const { ERROR_TYPE } = require('../../../constants/constants');
 
 class GetLatestAssertionIdCommand extends Command {
     constructor(ctx) {

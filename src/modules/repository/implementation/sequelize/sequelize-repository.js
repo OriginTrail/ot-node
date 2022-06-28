@@ -157,24 +157,6 @@ class SequelizeRepository {
         });
     }
 
-    // PUBLISH
-    async createPublishRecord(status) {
-        return this.models.publish.create({ status });
-    }
-
-    // RESOLVE
-    async createResolveRecord(status) {
-        return this.models.resolve.create({ status });
-    }
-
-    async updatePublishRecord(data, publishId) {
-        await this.models.publish.update(data, {
-            where: {
-                id: publishId,
-            },
-        });
-    }
-
     async getNumberOfNodesFoundForPublish(publishId) {
         return this.models.publish.findOne({
             attributes: ['nodes_found'],
@@ -211,21 +193,23 @@ class SequelizeRepository {
     }
 
     // RESOLVE RESPONSE
-    async createResolveResponseRecord(status, resolveId, message) {
+    async createResolveResponseRecord(status, handlerId, errorMessage) {
         await this.models.resolve_response.create({
             status,
-            message,
-            resolve_id: resolveId,
+            errorMessage,
+            handler_id: handlerId,
         });
     }
 
-    async getNumberOfResolveResponses(resolveId) {
-        return this.models.resolve_response.count({
+    async getResolveResponsesStatuses(handlerId) {
+        return this.models.resolve_response.findAll({
+            attributes: ['status'],
             where: {
-                resolve_id: resolveId,
+                handler_id: handlerId,
             },
         });
     }
+
 
     // EVENT
     async createEventRecord(handlerId, name, timestamp, value1, value2, value3) {

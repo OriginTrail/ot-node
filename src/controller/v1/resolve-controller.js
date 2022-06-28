@@ -13,8 +13,6 @@ class ResolveController extends BaseController {
     }
 
     async handleHttpApiResolveRequest(req, res) {
-        const { id } = req.body;
-
         const handlerId = await this.handlerIdService.generateHandlerId(
             HANDLER_ID_STATUS.RESOLVE.RESOLVE_START,
         );
@@ -27,6 +25,8 @@ class ResolveController extends BaseController {
         this.returnResponse(res, 202, {
             handlerId,
         });
+        
+        const { id } = req.body;
 
         this.logger.info(`Resolve for ${id} with handler id ${handlerId} initiated.`);
 

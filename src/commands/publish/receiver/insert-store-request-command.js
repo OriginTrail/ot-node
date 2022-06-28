@@ -32,22 +32,12 @@ class InsertStoreRequestCommand extends Command {
 
         this.logger.info(`Inserting assertion with ual:${ual} in database.`);
 
-        const insertPromises = [];
-
-        insertPromises.push(
-            this.tripleStoreModuleManager.insert(
-                metadata.join('\n'),
-                metadatadataGraphName,
-            ),
-        );
-        insertPromises.push(
+        const insertPromises = [
+            this.tripleStoreModuleManager.insert(metadata.join('\n'), metadatadataGraphName),
             this.tripleStoreModuleManager.insert(data.join('\n'), dataGraphName),
-        );
-        insertPromises.push(
             this.tripleStoreModuleManager.insert(assertionNquads.join('\n'), assertionGraphName),
-        );
+        ];
 
-        this.logger.info(`Inserting assertion with ual:${ual} in database.`);
         await Promise.all(insertPromises);
 
         this.logger.info(`Assertion ${ual} has been successfully inserted!`);

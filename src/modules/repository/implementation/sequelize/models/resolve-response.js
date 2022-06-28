@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
             primaryKey: true,
             autoIncrement: true
         },
-        resolve_id: DataTypes.UUID,
+        handler_id: DataTypes.UUID,
         status: DataTypes.STRING,
         message: DataTypes.TEXT,
         created_at: DataTypes.DATE,
