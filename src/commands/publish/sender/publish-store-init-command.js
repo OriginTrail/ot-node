@@ -19,9 +19,9 @@ class PublishStoreInitCommand extends ProtocolInitCommand {
     }
 
     async prepareMessage(command) {
-        const { assertionId } = command.data;
+        const { assertionId, ual } = command.data;
 
-        return { assertionId };
+        return { assertionId, ual };
     }
 
     async markResponseAsFailed(command, errorMessage) {
