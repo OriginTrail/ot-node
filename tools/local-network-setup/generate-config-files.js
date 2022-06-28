@@ -55,6 +55,7 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     parsedTemplate.modules.tripleStore.implementation[
         'ot-graphdb'
     ].config.repository = `repository${i}`;
+    parsedTemplate.appDataPath = `data${i}`
     
     if (process.env.LOG_LEVEL) {
         parsedTemplate.logLevel = process.env.LOG_LEVEL;
