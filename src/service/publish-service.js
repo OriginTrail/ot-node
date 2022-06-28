@@ -69,12 +69,7 @@ class PublishService {
                 }, failed: ${failedNumber}, completed: ${completedNumber}`,
             );
             
-            if(completedNumber === numberOfFoundNodes) {
-                await this.handlerIdService.updateHandlerIdStatus(
-                    handlerId,
-                    HANDLER_ID_STATUS.COMPLETED,
-                );
-            } else {
+            if(completedNumber !== numberOfFoundNodes) {
                 await this.handlerIdService.updateHandlerIdStatus(
                     handlerId,
                     HANDLER_ID_STATUS.FAILED,

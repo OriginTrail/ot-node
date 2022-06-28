@@ -52,10 +52,6 @@ class ResolveService {
                 handlerId,
                 HANDLER_ID_STATUS.RESOLVE.RESOLVE_END,
             );
-            await this.handlerIdService.updateHandlerIdStatus(
-                handlerId,
-                HANDLER_ID_STATUS.COMPLETED,
-            );
         }
     }
 }
