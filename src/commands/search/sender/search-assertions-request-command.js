@@ -13,6 +13,8 @@ class searchAssertionsRequestCommand extends ProtocolRequestCommand {
         this.config = ctx.config;
         this.handlerIdService = ctx.handlerIdService;
         this.searchService = ctx.searchService;
+
+        this.commandName = 'searchAssertionsRequestCommand'
         this.errorType = ERROR_TYPE.SEARCH_ASSERTIONS_REQUEST_ERROR;
         this.networkProtocol = NETWORK_PROTOCOLS.SEARCH_ASSERTIONS;
     }
