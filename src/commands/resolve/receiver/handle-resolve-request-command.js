@@ -35,11 +35,11 @@ class HandleResolveRequestCommand extends Command {
         };
         const resolvePromises = [
             this.tripleStoreModuleManager
-                .resolve(`${assertionId}#metadata`, true)
+                .resolve(`${assertionId}/metadata`, true)
                 .then((resolved) => {
                     nquads.metadata = resolved;
                 }),
-            this.tripleStoreModuleManager.resolve(`${assertionId}#data`, true).then((resolved) => {
+            this.tripleStoreModuleManager.resolve(`${assertionId}/data`, true).then((resolved) => {
                 nquads.data = resolved;
             }),
         ];

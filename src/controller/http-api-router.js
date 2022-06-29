@@ -25,9 +25,9 @@ class HttpApiRouter {
             this.publishController.handleHttpApiPublishRequest(req, res);
         });
 
-        // this.httpClientModuleManager.post('/provision', (req, res) => {
-        //     this.publishController.handleHttpApiProvisionRequest(req, res);
-        // });
+        this.httpClientModuleManager.post('/provision', (req, res) => {
+            this.publishController.handleHttpApiProvisionRequest(req, res);
+        });
         //
         // this.httpClientModuleManager.post('/update', (req, res) => {
         //     this.publishController.handleHttpApiUpdateRequest(req, res);

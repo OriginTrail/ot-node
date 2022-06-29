@@ -24,11 +24,12 @@ class InsertStoreRequestCommand extends Command {
             HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
 
+        // did:blockchainName:contractAddress/UAI
         const { data, metadata } = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
         const assertionGraphName = `${ual}/${assertionId}`;
-        const dataGraphName = `${ual}/${assertionId}#data`;
-        const metadatadataGraphName = `${ual}/${assertionId}#metadata`;
+        const dataGraphName = `${ual}/${assertionId}/data`;
+        const metadatadataGraphName = `${ual}/${assertionId}/metadata`;
 
         const assertionNquads = [
             `<${assertionGraphName}> <http://schema.org/metadata> <${metadatadataGraphName}> .`,

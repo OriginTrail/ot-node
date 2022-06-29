@@ -78,9 +78,9 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getAssetProofs(ual) {
+    async getAssetProofs(blockchain, contract, tokenId) {
         if (this.initialized) {
-            return this.getImplementation().module.getAssetProofs(ual);
+            return this.getImplementation().module.getAssetProofs(blockchain, contract, tokenId);
         }
     }
 

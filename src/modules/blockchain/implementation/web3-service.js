@@ -238,16 +238,16 @@ class Web3Service {
         return {issuer, rootHash};
     }
 
-    async getAssetProofs(ual) {
+    async getAssetProofs(blockchain, contract, tokenId) {
         const issuer = await this.callContractFunction(
             this.UAIRegistryContract,
-            'getAssetController',
-            [`0x${ual}`],
+            'getAssetOwner',
+            [tokenId],
         );
         let assertionId = await this.callContractFunction(
             this.UAIRegistryContract,
             'getAssetStateCommitHash',
-            [`0x${ual}`],
+            [tokenId],
         );
         if (assertionId === '0x0000000000000000000000000000000000000000000000000000000000000000') {
             assertionId = undefined;
