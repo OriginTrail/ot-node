@@ -62,8 +62,8 @@ class HandleResolveRequestCommand extends Command {
             ];
 
             await Promise.all(normalizeNquadsPromises);
-            this.logger.info(`Number of metadata n-quads retrieved from the database is ${nquads.metadata.length}`);
-            this.logger.info(`Number of data n-quads retrieved from the database is ${nquads.data.length}`);
+            this.logger.debug(`Number of metadata n-quads retrieved from the database is ${nquads.metadata.length}`);
+            this.logger.debug(`Number of data n-quads retrieved from the database is ${nquads.data.length}`);
             messageType = NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
         } else {
             messageType = NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
