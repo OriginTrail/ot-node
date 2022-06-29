@@ -22,7 +22,7 @@
                             "port": 8900,
                             "sslKeyPath": "/root/certs/privkey.pem",
                             "sslCertificatePath": "/root/certs/fullchain.pem",
-                            "rateLimiterConfig": {
+                            "rateLimiter": {
                                 "timeWindowSeconds": 60,
                                 "maxRequests": 10
                             }
@@ -294,7 +294,7 @@
                             "port": 8900,
                             "sslKeyPath": "/root/certs/privkey.pem",
                             "sslCertificatePath": "/root/certs/fullchain.pem",
-                            "rateLimiterConfig": {
+                            "rateLimiter": {
                                 "timeWindowSeconds": 60,
                                 "maxRequests": 10
                             }
@@ -434,7 +434,7 @@
                             "port": 8900,
                             "sslKeyPath": "/root/certs/privkey.pem",
                             "sslCertificatePath": "/root/certs/fullchain.pem",
-                            "rateLimiterConfig": {
+                            "rateLimiter": {
                                 "timeWindowSeconds": 60,
                                 "maxRequests": 10
                             }
