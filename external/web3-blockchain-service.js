@@ -44,14 +44,22 @@ class Web3BlockchainService {
     }
 
     async initializeContracts() {
-        this.UAIRegistryContract = new this.web3.eth.Contract(
-            UAIRegistryAbi,
+        this.HubContract = new this.web3.eth.Contract(
+            Hub,
             this.config.hubContractAddress,
         );
-        const DKGContractAddress = await this.UAIRegistryContract.methods
-            .getAssertionRegistry()
-            .call();
-        this.DKGContract = new this.web3.eth.Contract(DKGContractAbi, DKGContractAddress);
+
+        const UAIRegistryAddress = await this.callContractFunction(this.HubContract, 'getContractAddress', ['UAIRegistry']);
+        this.UAIRegistryContract = new this.web3.eth.Contract(
+            UAIRegistry,
+            UAIRegistryAddress,
+        );
+
+        const ProfileAddress = await this.callContractFunction(this.HubContract, 'getContractAddress', ['Profile']);
+        this.ProfileContract = new this.web3.eth.Contract(
+            Profile,
+            ProfileAddress,
+        );
         this.logger.debug(
             `Connected to blockchain rpc : ${this.config.rpcEndpoints[this.rpcNumber]}.`,
         );
