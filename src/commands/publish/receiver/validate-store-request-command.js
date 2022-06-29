@@ -1,5 +1,5 @@
 const Command = require('../../command');
-const { HANDLER_ID_STATUS } = require('../../../constants/constants');
+const { HANDLER_ID_STATUS, ERROR_TYPE } = require('../../../constants/constants');
 
 class ValidateStoreRequestCommand extends Command {
     constructor(ctx) {
@@ -10,6 +10,7 @@ class ValidateStoreRequestCommand extends Command {
         this.handlerIdService = ctx.handlerIdService;
         this.networkModuleManager = ctx.networkModuleManager;
         this.publishService = ctx.publishService;
+        this.ualService = ctx.ualService;
     }
 
     /**
@@ -17,7 +18,7 @@ class ValidateStoreRequestCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { ual, handlerId, metadata } = command.data;
+        const { ual, handlerId } = command.data;
         this.logger.info(`Validating assertion with ual: ${ual}`);
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
@@ -27,28 +28,23 @@ class ValidateStoreRequestCommand extends Command {
         const handlerIdData = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
         const assertion = handlerIdData.data.concat(handlerIdData.metadata);
-        // const blockchainData = this.blockchainModuleManager.getAssetProofs(ual);
 
-        const calculatedRootHash = this.validationModuleManager.calculateRootHash(assertion);
+        const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
+        const { issuer, assertionId } = await this.blockchainModuleManager.getAssetProofs(blockchain, contract, tokenId);
 
-        // if (blockchainData.rootHash !== calculatedRootHash) {
-        //     this.logger.debug(`Invalid root hash. Received value from blockchin: ${blockchainData.rootHash}, calculated: ${calculatedRootHash}`);
-        //     await this.handleError(handlerId, 'Invalid assertion metadata, root hash mismatch!', ERROR_TYPE.VALIDATE_ASSERTION_ERROR, true);
-        //     return Command.empty();
-        // }
-        // this.logger.debug('Root hash matches');
-        //
-        // if (blockchainData.issuer !== issuer) {
-        //     this.logger.debug(`Invalid issuer. Received value from blockchin: ${blockchainData.issuer}, from metadata: ${issuer}`);
-        //     await this.handleError(handlerId, 'Invalid assertion metadata, issuer mismatch!', ERROR_TYPE.VALIDATE_ASSERTION_ERROR, true);
-        //     return Command.empty();
-        // }
-        // this.logger.debug('Issuer is valid');
+        const calculatedAssertionId = this.validationModuleManager.calculateRootHash(assertion);
 
-        this.logger.info(`Assertion with id: ${calculatedRootHash} passed all checks!`);
+        if (assertionId !== calculatedAssertionId) {
+            this.logger.debug(`Invalid root hash. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`);
+            await this.handleError(handlerId, 'Invalid assertion metadata, root hash mismatch!', ERROR_TYPE.VALIDATE_ASSERTION_ERROR, true);
+            return Command.empty();
+        }
+        this.logger.debug('Root hash matches');
+
+        this.logger.info(`Assertion with id: ${assertionId} passed all checks!`);
 
         const commandData = command.data;
-        commandData.assertionId = calculatedRootHash;
+        commandData.assertionId = assertionId;
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,

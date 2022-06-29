@@ -38,6 +38,7 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
+        await this.createProfile();
         await this.saveNetworkModulePeerIdAndPrivKey();
 
         await this.initializeControllers();
@@ -141,6 +142,22 @@ class OTNode {
         }
     }
 
+    async createProfile() {
+        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        if (!blockchainModuleManager.identityExists()) {
+            const networkModuleManager = this.container.resolve('networkModuleManager');
+            const peerId = networkModuleManager.getPeerId();
+            await blockchainModuleManager.deployIdentity();
+            await blockchainModuleManager.createProfile(peerId);
+
+            if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
+                this.saveIdentityInUserConfigurationFile(blockchainModuleManager.getIdentity());
+            }
+        }
+
+        this.logger.info(`Blockchain identity is ${blockchainModuleManager.getIdentity()}`);
+    }
+
     async saveNetworkModulePeerIdAndPrivKey() {
         const networkModuleManager = this.container.resolve('networkModuleManager');
         const privateKey = networkModuleManager.getPrivateKey();
@@ -200,6 +217,23 @@ class OTNode {
             if (!configFile.modules.network.implementation['libp2p-service'].config.privateKey) {
                 configFile.modules.network.implementation['libp2p-service'].config.privateKey =
                     privateKey;
+                fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
+            }
+        }
+    }
+
+    saveIdentityInUserConfigurationFile(identity) {
+        const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
+        const configFile = JSON.parse(fs.readFileSync(configurationFilePath));
+        if (
+            configFile.modules.blockchain &&
+            configFile.modules.blockchain.implementation &&
+            configFile.modules.blockchain.implementation['web3-service'] &&
+            configFile.modules.blockchain.implementation['web3-service'].config
+        ) {
+            if (!configFile.modules.blockchain.implementation['web3-service'].config.identity) {
+                configFile.modules.blockchain.implementation['web3-service'].config.identity =
+                    identity;
                 fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
             }
         }

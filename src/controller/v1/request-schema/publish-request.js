@@ -4,8 +4,11 @@ module.exports = {
     properties: {
         metadata: {
             type: 'object',
-            required: ['type', 'issuer', 'visibility', 'keywords', 'dataRootId'],
+            required: ['@context', 'type', 'issuer', 'visibility', 'keywords'],
             properties: {
+                '@context': {
+                    type: 'string',
+                },
                 type: {
                     type: 'string',
                     minLength: 1,
@@ -26,11 +29,7 @@ module.exports = {
                     minItems: 1,
                     maxItems: 10,
                 },
-                dataRootId: {
-                    type: 'string',
-                    minLength: 1,
-                },
-            }
+            },
         },
         data: {
             type: 'array',

@@ -25,8 +25,8 @@ class InsertAssertionCommand extends Command {
         const handlerIdData = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
         const assertionGraphName = `${ual}/${assertionId}`;
-        const dataGraphName = `${ual}/${assertionId}#data`;
-        const metadatadataGraphName = `${ual}/${assertionId}#metadata`;
+        const dataGraphName = `${ual}/${assertionId}/data`;
+        const metadatadataGraphName = `${ual}/${assertionId}/metadata`;
 
         const assertionNquads = [
             `<${assertionGraphName}> <http://schema.org/metadata> <${metadatadataGraphName}> .`,

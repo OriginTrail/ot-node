@@ -1,8 +1,10 @@
 const Web3 = require('web3');
 const BigNumber = require('bn.js');
 const axios = require('axios');
-const DKGContractAbi = require('../build/contracts/DKGcontract.json').abi;
-const UAIRegistryAbi = require('../build/contracts/UAIRegistry.json').abi;
+const Hub = require('../build/contracts/Hub.json');
+const UAIRegistry = require('../build/contracts/UAIRegistry.json');
+const Identity = require('../build/contracts/Identity.json');
+const Profile = require('../build/contracts/Profile.json');
 const constants = require('../src/constants/constants');
 
 class Web3BlockchainService {
@@ -42,14 +44,22 @@ class Web3BlockchainService {
     }
 
     async initializeContracts() {
-        this.UAIRegistryContract = new this.web3.eth.Contract(
-            UAIRegistryAbi,
+        this.HubContract = new this.web3.eth.Contract(
+            Hub,
             this.config.hubContractAddress,
         );
-        const DKGContractAddress = await this.UAIRegistryContract.methods
-            .getAssertionRegistry()
-            .call();
-        this.DKGContract = new this.web3.eth.Contract(DKGContractAbi, DKGContractAddress);
+
+        const UAIRegistryAddress = await this.callContractFunction(this.HubContract, 'getContractAddress', ['UAIRegistry']);
+        this.UAIRegistryContract = new this.web3.eth.Contract(
+            UAIRegistry,
+            UAIRegistryAddress,
+        );
+
+        const ProfileAddress = await this.callContractFunction(this.HubContract, 'getContractAddress', ['Profile']);
+        this.ProfileContract = new this.web3.eth.Contract(
+            Profile,
+            ProfileAddress,
+        );
         this.logger.debug(
             `Connected to blockchain rpc : ${this.config.rpcEndpoints[this.rpcNumber]}.`,
         );

@@ -6,6 +6,9 @@ const sortedStringify = require('json-stable-stringify');
 // eslint-disable-next-line new-cap
 const secp256k1 = new elliptic.ec('secp256k1');
 const BytesUtilities = require('../bytes-utilities');
+const keccak256 = require('keccak256')
+const web3 = require('web3')
+const {MerkleTree} = require('merkletreejs')
 
 const _slicedToArray = (function () {
     function sliceIterator(arr, i) {
@@ -58,17 +61,24 @@ class MerkleValidation {
         return hash.toString();
     }
 
-    calculateRootHash(assertion) {
-        assertion.sort();
-        const tree = new MerkleTools({
-            hashType: 'sha256',
-        });
-        assertion.forEach((leaf, index)=>{
-            const leafHash = this.calculateHash(leaf);
-            tree.addLeaf(leafHash + index, true);
-        });
-        tree.makeTree();
-        return tree.getMerkleRoot().toString('hex');
+    calculateRootHash(nquadsArray) {
+        nquadsArray.sort();
+        const leaves = nquadsArray.map((element, index) => keccak256(web3.utils.encodePacked(
+            keccak256(element),
+            index
+        )))
+        const tree = new MerkleTree(leaves, keccak256, {sortPairs: true})
+        return tree.getRoot().toString('hex')
+    }
+
+    async sign(message, privateKey) {
+        const result = await web3.eth.accounts.sign(message, privateKey);
+        return result.signature;
+    }
+
+    async verify(message, signature, publicKey) {
+        const result = await web3.eth.accounts.recover(message, signature);
+        return publicKey === result;
     }
 
     getMerkleTree(rdf) {
@@ -107,148 +117,6 @@ class MerkleValidation {
             }
         }
         return `0x${rootHash}`;
-    }
-
-    sign(content, privateKey) {
-        const signature = secp256k1
-            .keyFromPrivate(Buffer.from(BytesUtilities.normalizeHex(privateKey).slice(2), 'hex'))
-            .sign(Buffer.from(content, 'hex'), { canonical: true });
-
-        const result = this.encodeSignature([
-            BytesUtilities.fromString(BytesUtilities.fromNumber(27 + signature.recoveryParam)),
-            BytesUtilities.pad(32, BytesUtilities.fromNat(`0x${signature.r.toString(16)}`)),
-            BytesUtilities.pad(32, BytesUtilities.fromNat(`0x${signature.s.toString(16)}`)),
-        ]);
-
-        return result.signature;
-    }
-
-    verify(hash, signature, publicKey) {
-        try {
-            let vrs;
-            if (
-                Object.keys(signature).includes('r') &&
-                Object.keys(signature).includes('s') &&
-                Object.keys(signature).includes('v')
-            ) {
-                vrs = {
-                    v: BytesUtilities.toNumber(signature.v),
-                    r: signature.r.slice(2),
-                    s: signature.s.slice(2),
-                };
-            } else {
-                const decoded = this.decodeSignature(signature);
-
-                vrs = {
-                    v: BytesUtilities.toNumber(decoded[0]),
-                    r: decoded[1].slice(2),
-                    s: decoded[2].slice(2),
-                };
-            }
-
-            const pubKeyRecovered = secp256k1.recoverPubKey(
-                Buffer.from(hash, 'hex'),
-                vrs,
-                vrs.v < 2 ? vrs.v : 1 - (vrs.v % 2),
-            );
-
-            if (secp256k1.verify(hash, vrs, pubKeyRecovered)) {
-                const publicKeyRecovered = `0x${pubKeyRecovered.encode('hex', false).slice(2)}`;
-                const publicHash = sha3.keccak256(Buffer.from(publicKeyRecovered.slice(2), 'hex'));
-                const wallet = this.toChecksum(`0x${publicHash.slice(-40)}`);
-
-                return (
-                    BytesUtilities.normalizeHex(wallet).toLowerCase() ===
-                    BytesUtilities.normalizeHex(publicKey).toLowerCase()
-                );
-            }
-            return false;
-        } catch (e) {
-            return false;
-        }
-    }
-
-    recover(content, signature) {
-        try {
-            let vrs;
-            if (
-                Object.keys(signature).includes('r') &&
-                Object.keys(signature).includes('s') &&
-                Object.keys(signature).includes('v')
-            ) {
-                vrs = {
-                    v: BytesUtilities.toNumber(signature.v),
-                    r: signature.r.slice(2),
-                    s: signature.s.slice(2),
-                };
-            } else {
-                const decoded = this.decodeSignature(signature);
-
-                vrs = {
-                    v: BytesUtilities.toNumber(decoded[0]),
-                    r: decoded[1].slice(2),
-                    s: decoded[2].slice(2),
-                };
-            }
-
-            const hash = this.hashContent(content);
-            const pubKeyRecovered = secp256k1.recoverPubKey(
-                Buffer.from(hash.slice(2), 'hex'),
-                vrs,
-                vrs.v < 2 ? vrs.v : 1 - (vrs.v % 2),
-            );
-
-            const publicKeyRecovered = `0x${pubKeyRecovered.encode('hex', false).slice(2)}`;
-            const publicHash = sha3.keccak256(Buffer.from(publicKeyRecovered.slice(2), 'hex'));
-            return this.toChecksum(`0x${publicHash.slice(-40)}`);
-        } catch (e) {
-            return undefined;
-        }
-    }
-
-    encodeSignature(signature) {
-        const _ref2 = _slicedToArray(signature);
-        const v = _ref2[0];
-        const r = BytesUtilities.pad(32, _ref2[1]);
-        const s = BytesUtilities.pad(32, _ref2[2]);
-
-        return {
-            signature: BytesUtilities.flatten([r, s, v]),
-            r,
-            s,
-            v,
-        };
-    }
-
-    decodeSignature(signature) {
-        return [
-            BytesUtilities.slice(64, BytesUtilities.length(signature), signature),
-            BytesUtilities.slice(0, 32, signature),
-            BytesUtilities.slice(32, 64, signature),
-        ];
-    }
-
-    toChecksum(address) {
-        const addressHash = sha3.keccak256(address.slice(2));
-        let checksumAddress = '0x';
-        for (let i = 0; i < 40; i += 1) {
-            checksumAddress +=
-                parseInt(addressHash[i + 2], 16) > 7
-                    ? address[i + 2].toUpperCase()
-                    : address[i + 2];
-        }
-        return checksumAddress;
-    }
-
-    hashContent(content) {
-        const message = BytesUtilities.isHexStrict(content)
-            ? BytesUtilities.hexToBytes(content)
-            : content;
-        const messageBuffer = Buffer.from(message);
-        const preamble = `\x19Ethereum Signed Message:\n${message.length}`;
-        const preambleBuffer = Buffer.from(preamble);
-        const ethMessage = Buffer.concat([preambleBuffer, messageBuffer]);
-        return `0x${sha3.keccak256(ethMessage)}`;
     }
 }
 
