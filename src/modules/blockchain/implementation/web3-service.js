@@ -47,21 +47,21 @@ class Web3Service {
     }
 
     async initializeContracts() {
-        this.HubContract = new this.web3.eth.Contract(
+        this.hubContract = new this.web3.eth.Contract(
             Hub.abi,
             this.config.hubContractAddress,
         );
 
-        const UAIRegistryAddress = await this.callContractFunction(this.HubContract, 'getContractAddress', ['UAIRegistry']);
+        const UAIRegistryAddress = await this.callContractFunction(this.hubContract, 'getContractAddress', ['UAIRegistry']);
         this.UAIRegistryContract = new this.web3.eth.Contract(
             UAIRegistry.abi,
             UAIRegistryAddress,
         );
 
-        const ProfileAddress = await this.callContractFunction(this.HubContract, 'getContractAddress', ['Profile']);
-        this.ProfileContract = new this.web3.eth.Contract(
+        const profileAddress = await this.callContractFunction(this.hubContract, 'getContractAddress', ['Profile']);
+        this.profileContract = new this.web3.eth.Contract(
             Profile.abi,
-            ProfileAddress,
+            profileAddress,
         );
         this.logger.debug(
             `Connected to blockchain rpc : ${this.config.rpcEndpoints[this.rpcNumber]}.`,
@@ -77,12 +77,13 @@ class Web3Service {
     }
 
     async deployIdentity() {
-        const transactionReceipt = await this.deployContract(this.Identity, [this.getPublicKey(), this.getManagementKey()]);
+        const transactionReceipt = await this.deployContract(Identity, [this.getPublicKey(), this.getManagementKey()]);
+        this.config.identity = transactionReceipt.contractAddress;
     }
 
     async createProfile(peerId) {
-        const nodeId = Buffer.from(await sha256.digest(peerId.toBytes()).digest).toString('hex');
-        await this.executeContractFunction(this.Profile, 'createProfile', [this.getManagementKey(),
+        const nodeId = Buffer.from((await sha256.digest(peerId.toBytes())).digest).toString('hex');
+        await this.executeContractFunction(this.profileContract, 'createProfile', [this.getManagementKey(),
             `0x${nodeId}`,
             0,
             this.getIdentity()]);
@@ -153,6 +154,47 @@ class Web3Service {
                 );
             } catch (error) {
                 await this.handleError(error, functionName);
+            }
+        }
+
+        return result;
+    }
+
+    async deployContract(contract, args) {
+        let result;
+        while (!result) {
+            try {
+                const contractInstance = new this.web3.eth.Contract(contract.abi);
+                const gasPrice = await this.getGasStationPrice();
+
+                const gasLimit = await contractInstance.deploy({
+                    data: contract.bytecode,
+                    arguments: args,
+                }).estimateGas({
+                    from: this.config.publicKey,
+                });
+
+                const encodedABI = contractInstance.deploy({
+                    data: contract.bytecode,
+                    arguments: args,
+                }).encodeABI();
+
+                const tx = {
+                    from: this.config.publicKey,
+                    data: encodedABI,
+                    gasPrice: gasPrice || this.web3.utils.toWei('20', 'Gwei'),
+                    gas: gasLimit || this.web3.utils.toWei('900', 'Kwei'),
+                };
+
+                const createdTransaction = await this.web3.eth.accounts.signTransaction(
+                    tx,
+                    this.config.privateKey,
+                );
+                result = await this.web3.eth.sendSignedTransaction(
+                    createdTransaction.rawTransaction,
+                );
+            } catch (error) {
+                await this.handleError(error, 'deploy');
             }
         }
 

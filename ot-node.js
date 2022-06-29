@@ -147,11 +147,11 @@ class OTNode {
         if (!blockchainModuleManager.identityExists()) {
             const networkModuleManager = this.container.resolve('networkModuleManager');
             const peerId = networkModuleManager.getPeerId();
-            const identity = await blockchainModuleManager.deployIdentity();
-            await blockchainModuleManager.createProfile(identity, peerId);
+            await blockchainModuleManager.deployIdentity();
+            await blockchainModuleManager.createProfile(peerId);
 
             if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
-                this.saveIdentityInUserConfigurationFile(identity);
+                this.saveIdentityInUserConfigurationFile(blockchainModuleManager.getIdentity());
             }
         }
     }
@@ -215,6 +215,23 @@ class OTNode {
             if (!configFile.modules.network.implementation['libp2p-service'].config.privateKey) {
                 configFile.modules.network.implementation['libp2p-service'].config.privateKey =
                     privateKey;
+                fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
+            }
+        }
+    }
+
+    saveIdentityInUserConfigurationFile(identity) {
+        const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
+        const configFile = JSON.parse(fs.readFileSync(configurationFilePath));
+        if (
+            configFile.modules.blockchain &&
+            configFile.modules.blockchain.implementation &&
+            configFile.modules.blockchain.implementation['web3-service'] &&
+            configFile.modules.blockchain.implementation['web3-service'].config
+        ) {
+            if (!configFile.modules.blockchain.implementation['web3-service'].config.identity) {
+                configFile.modules.blockchain.implementation['web3-service'].config.identity =
+                    identity;
                 fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
             }
         }
