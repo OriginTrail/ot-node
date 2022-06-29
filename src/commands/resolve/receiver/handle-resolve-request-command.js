@@ -49,7 +49,6 @@ class HandleResolveRequestCommand extends Command {
         );
 
         let messageType;
-        let messageData;
         if (nquads.metadata && nquads.metadata.length && nquads.data && nquads.data.length) {
             const normalizeNquadsPromises = [
                 this.dataService
@@ -63,25 +62,24 @@ class HandleResolveRequestCommand extends Command {
             ];
 
             await Promise.all(normalizeNquadsPromises);
-            this.logger.info(`Number of n-quads retrieved from the database is ${nquads.length}`);
+            this.logger.debug(`Number of metadata n-quads retrieved from the database is ${nquads.metadata.length}`);
+            this.logger.debug(`Number of data n-quads retrieved from the database is ${nquads.data.length}`);
             messageType = NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
-            messageData = { nquads };
         } else {
             messageType = NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
-            messageData = {};
         }
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
             HANDLER_ID_STATUS.RESOLVE.RESOLVE_REMOTE_END,
         );
-        
+
         await this.networkModuleManager.sendMessageResponse(
             NETWORK_PROTOCOLS.RESOLVE,
             remotePeerId,
             messageType,
             handlerId,
-            messageData,
+            { nquads },
         );
 
         return this.continueSequence(command.data, command.sequence);
