@@ -10,6 +10,7 @@ class ValidateStoreRequestCommand extends Command {
         this.handlerIdService = ctx.handlerIdService;
         this.networkModuleManager = ctx.networkModuleManager;
         this.publishService = ctx.publishService;
+        this.ualService = ctx.ualService;
     }
 
     /**
