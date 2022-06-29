@@ -114,7 +114,9 @@
                                 "https://matic-mumbai.chainstacklabs.com",
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
-                            ]
+                            ],
+                            "managementKey": "0x01b90635522BD2AD7f0b6AC1cb4c2e5C9BA829b2",
+                            "identity": "0x01b90635522BD2AD7f0b6AC1cb4c2e5C9BA829b2"
                         }
                     }
                 }
@@ -337,7 +339,9 @@
                                 "https://matic-mumbai.chainstacklabs.com",
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
-                            ]
+                            ],
+                            "managementKey": "0x01b90635522BD2AD7f0b6AC1cb4c2e5C9BA829b2",
+                            "identity": "0x01b90635522BD2AD7f0b6AC1cb4c2e5C9BA829b2"
                         }
                     }
                 }
