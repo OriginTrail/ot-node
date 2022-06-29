@@ -154,6 +154,8 @@ class OTNode {
                 this.saveIdentityInUserConfigurationFile(blockchainModuleManager.getIdentity());
             }
         }
+
+        this.logger.info(`Blockchain identity is ${blockchainModuleManager.getIdentity()}`);
     }
 
     async saveNetworkModulePeerIdAndPrivKey() {
