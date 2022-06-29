@@ -1,5 +1,4 @@
 const validator = require('validator');
-const { HANDLER_ID_STATUS } = require('../constants/constants');
 
 class HandlerIdService {
     constructor(ctx) {
@@ -81,8 +80,11 @@ class HandlerIdService {
 
         this.logger.debug(`Reading handler id: ${handlerId} cached data from file`);
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
-        const data = await this.fileService.readFileOnPath(documentPath);
-        return JSON.parse(data);
+        let data;
+        if (await this.fileService.fileExists(documentPath)) {
+            data = await this.fileService.loadJsonFromFile(documentPath);
+        }
+        return data;
     }
 
     async removeHandlerIdCache(handlerId) {
