@@ -117,7 +117,7 @@ class Command {
      * @param markFailed - Update operation status to failed
      * @returns {*}
      */
-    async handleError(handlerId, errorMessage, errorName, markFailed, commandData) {
+    async handleError(handlerId, errorMessage, errorName, markFailed) {
         this.logger.error({
             msg: `Command error (${errorName}): ${errorMessage}`,
             Event_name: errorName,

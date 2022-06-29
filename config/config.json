@@ -117,6 +117,8 @@
             }
         },
         "commandExecutorVerboseLoggingEnabled": false,
+        "minimumReplicationFactor": 5,
+        "publishFindNodesCount": 20,
         "signalingServerUrl": "not_defined",
         "appDataPath": "data",
         "graphDatabase": {
@@ -230,6 +232,8 @@
             }
         },
         "commandExecutorVerboseLoggingEnabled": false,
+        "minimumReplicationFactor": 5,
+        "publishFindNodesCount": 20,
         "appDataPath": "data",
         "signalingServerUrl": "not_defined",
         "graphDatabase": {
@@ -374,6 +378,8 @@
             }
         },
         "commandExecutorVerboseLoggingEnabled": false,
+        "minimumReplicationFactor": 5,
+        "publishFindNodesCount": 20,
         "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "appDataPath": "data",
         "graphDatabase": {
@@ -490,6 +496,8 @@
                 }
             }
         },
+        "minimumReplicationFactor": 5,
+        "publishFindNodesCount": 20,
         "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",

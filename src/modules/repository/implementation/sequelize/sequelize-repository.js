@@ -37,7 +37,7 @@ class SequelizeRepository {
             password: process.env.SEQUELIZE_REPOSITORY_PASSWORD,
         });
         // todo remove drop!!!
-        // await connection.promise().query(`DROP DATABASE IF EXISTS \`${this.config.database}\`;`);
+        await connection.promise().query(`DROP DATABASE IF EXISTS \`${this.config.database}\`;`);
         await connection
             .promise()
             .query(`CREATE DATABASE IF NOT EXISTS \`${this.config.database}\`;`);
@@ -168,6 +168,34 @@ class SequelizeRepository {
         });
     }
 
+    // PUBLISH
+    async createPublishRecord(handlerId, status) {
+        return this.models.publish.create({
+            handler_id: handlerId,
+            status,
+        });
+    }
+
+    async getPublishStatus(handlerId) {
+        return this.models.publish.findOne({
+            attributes: ['status'],
+            where: {
+                handler_id: handlerId,
+            },
+        });
+    }
+
+    async updatePublishStatus(handlerId, status) {
+        await this.models.publish.update(
+            { status },
+            {
+                where: {
+                    handler_id: handlerId,
+                },
+            },
+        );
+    }
+
     // PUBLISH RESPONSE
     async createPublishResponseRecord(status, handlerId, message) {
         await this.models.publish_response.create({
@@ -188,6 +216,19 @@ class SequelizeRepository {
     async getPublishResponsesStatuses(handlerId) {
         return this.models.publish_response.findAll({
             attributes: ['status'],
+            where: {
+                handler_id: handlerId,
+            },
+        });
+    }
+
+    async countPublishResponseStatuses(handlerId) {
+        return this.models.publish_response.findAll({
+            attributes: [
+                'status',
+                [Sequelize.fn('COUNT', Sequelize.col('status')), 'count_status'],
+            ],
+            group: 'status',
             where: {
                 handler_id: handlerId,
             },

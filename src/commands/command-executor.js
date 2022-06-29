@@ -53,6 +53,7 @@ class CommandExecutor {
                     // eslint-disable-next-line no-await-in-loop
                     await sleep(1000);
                 }
+                await this._execute(command);
             } catch (e) {
                 this.logger.error({
                     msg: `Something went really wrong! OT-node shutting down... ${e}`,

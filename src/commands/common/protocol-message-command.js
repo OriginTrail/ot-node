@@ -9,9 +9,17 @@ class ProtocolMessageCommand extends Command {
     }
 
     async executeProtocolMessageCommand(command, messageType) {
+        if (!(await this.shouldSendMessage(command))) {
+            return Command.empty();
+        }
         const message = await this.prepareMessage(command);
 
         return this.sendProtocolMessage(command, message, messageType);
+    }
+
+    // eslint-disable-next-line no-empty-function,no-unused-vars
+    async shouldSendMessage(command) {
+        return true;
     }
 
     // eslint-disable-next-line no-unused-vars

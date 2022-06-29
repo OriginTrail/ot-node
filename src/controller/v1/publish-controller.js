@@ -51,6 +51,11 @@ class PublishController extends BaseController {
 
         const { metadata, data, ual } = req.body;
         try {
+            await this.repositoryModuleManager.createPublishRecord(
+                handlerId,
+                PUBLISH_STATUS.IN_PROGRESS,
+            );
+
             await this.handlerIdService.updateHandlerIdStatus(
                 handlerId,
                 HANDLER_ID_STATUS.PUBLISH.PUBLISH_GENERATE_METADATA_START,

@@ -3,6 +3,7 @@ const {
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     PUBLISH_REQUEST_STATUS,
+    PUBLISH_STATUS,
 } = require('../../../constants/constants');
 
 class PublishStoreInitCommand extends ProtocolInitCommand {
@@ -14,6 +15,20 @@ class PublishStoreInitCommand extends ProtocolInitCommand {
 
         this.errorType = ERROR_TYPE.STORE_INIT_ERROR;
         this.networkProtocol = NETWORK_PROTOCOLS.STORE;
+    }
+
+    async shouldSendMessage(command) {
+        const { handlerId } = command.data;
+
+        const publish = await this.repositoryModuleManager.getPublishStatus(handlerId);
+
+        if (publish.status === PUBLISH_STATUS.IN_PROGRESS) {
+            return true;
+        }
+        this.logger.trace(
+            `Publish init command skipped for publish with handlerId: ${handlerId} with status ${publish.status}`,
+        );
+        return false;
     }
 
     async prepareMessage(command) {
