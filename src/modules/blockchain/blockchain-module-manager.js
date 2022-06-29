@@ -35,6 +35,12 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
+    getIdentity () {
+        if (this.initialized) {
+            return this.getImplementation().module.getIdentity();
+        }
+    }
+
     async createProfile (peerId) {
         if (this.initialized) {
             return this.getImplementation().module.createProfile(peerId);
