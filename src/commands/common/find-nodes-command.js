@@ -41,10 +41,28 @@ class FindNodesCommand extends Command {
             }
         }
         nodes = [...nodes];
+        this.logger.debug(`Found ${nodes.length} of unique node(s).`);
+        if (nodes.length < this.config.minimumReplicationFactor) {
+            this.handleError(
+                handlerId,
+                `Unable to find enough node for publish. Minimum replication factor: ${this.config.minimumReplicationFactor}`,
+                ERROR_TYPE.FIND_NODES_ERROR,
+                true,
+            );
+            return Command.empty();
+        }
 
         const commandData = command.data;
-        commandData.nodes = nodes;
-
+        commandData.nodes = nodes.slice(0, this.config.minimumReplicationFactor);
+        commandData.numberOfFoundNodes = nodes.length;
+        if (this.config.minimumReplicationFactor < nodes.length) {
+            commandData.leftoverNodes = nodes.slice(this.config.minimumReplicationFactor);
+        } else {
+            commandData.leftoverNodes = [];
+        }
+        this.logger.debug(
+            `Trying to replicate to first batch of ${commandData.nodes.length} nodes, leftover for retry: ${commandData.leftoverNodes.length}`,
+        );
         return this.continueSequence(commandData, command.sequence);
     }
 

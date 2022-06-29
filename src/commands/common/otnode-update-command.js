@@ -58,7 +58,7 @@ class OtnodeUpdateCommand extends Command {
     async recover(command, err) {
         await this.handleError(err);
 
-        return Command.retry();
+        return Command.repeat();
     }
 
     async handleError(error) {

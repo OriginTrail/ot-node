@@ -15,7 +15,7 @@ class ResolveService {
         const { handlerId, numberOfFoundNodes } = command.data;
 
         const self = this;
-        let responseStatuses = 0;
+        let responses = [];
         await mutex.runExclusive(async () => {
             await self.repositoryModuleManager.createResolveResponseRecord(
                 status,
@@ -23,7 +23,7 @@ class ResolveService {
                 errorMessage,
             );
 
-            responseStatuses = await self.repositoryModuleManager.getResolveResponsesStatuses(
+            responses = await self.repositoryModuleManager.getResolveResponsesStatuses(
                 handlerId,
             );
         });
@@ -31,8 +31,8 @@ class ResolveService {
         let failedNumber = 0;
         let completedNumber = 0;
 
-        responseStatuses.forEach((responseStatus) => {
-            if (responseStatus === RESOLVE_REQUEST_STATUS.FAILED) {
+        responses.forEach((response) => {
+            if (response.status === RESOLVE_REQUEST_STATUS.FAILED) {
                 failedNumber += 1;
             } else {
                 completedNumber += 1;
@@ -41,7 +41,7 @@ class ResolveService {
 
         if (numberOfFoundNodes === failedNumber) {
             await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.FAILED);
-        } else if (completedNumber === 1) {
+        } else if (completedNumber === 1 && status !== RESOLVE_REQUEST_STATUS.FAILED) {
             await this.handlerIdService.cacheHandlerIdData(handlerId, responseData.nquads);
 
             await this.handlerIdService.updateHandlerIdStatus(
