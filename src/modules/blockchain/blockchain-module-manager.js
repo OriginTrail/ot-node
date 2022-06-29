@@ -17,6 +17,30 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
+    getManagementKey () {
+        if (this.initialized) {
+            return this.getImplementation().module.getManagementKey();
+        }
+    }
+
+    async deployIdentity () {
+        if (this.initialized) {
+            return this.getImplementation().module.deployIdentity();
+        }
+    }
+
+    identityExists () {
+        if (this.initialized) {
+            return this.getImplementation().module.identityExists();
+        }
+    }
+
+    async createProfile (peerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.createProfile(peerId);
+        }
+    }
+
     async createAssertionRecord(stateCommitHash, rootHash, issuer) {
         if (this.initialized) {
             return this.getImplementation().module.createAssertionRecord(stateCommitHash, rootHash, issuer);

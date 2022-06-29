@@ -1,6 +1,7 @@
 const Web3 = require('web3');
 const BigNumber = require('bn.js');
 const axios = require('axios');
+const {sha256} = require('multiformats/hashes/sha2');
 const Hub = require('../../../../build/contracts/Hub.json');
 const UAIRegistry = require('../../../../build/contracts/UAIRegistry.json');
 const Identity = require('../../../../build/contracts/Identity.json');
@@ -67,12 +68,36 @@ class Web3Service {
         );
     }
 
+    identityExists() {
+        return this.config.identity != null;
+    }
+
+    getIdentity() {
+        return this.config.identity;
+    }
+
+    async deployIdentity() {
+        const transactionReceipt = await this.deployContract(this.Identity, [this.getPublicKey(), this.getManagementKey()]);
+    }
+
+    async createProfile(peerId) {
+        const nodeId = Buffer.from(await sha256.digest(peerId.toBytes()).digest).toString('hex');
+        await this.executeContractFunction(this.Profile, 'createProfile', [this.getManagementKey(),
+            `0x${nodeId}`,
+            0,
+            this.getIdentity()]);
+    }
+
     getPrivateKey() {
         return this.config.privateKey;
     }
 
     getPublicKey() {
         return this.config.publicKey;
+    }
+
+    getManagementKey() {
+        return this.config.managementKey;
     }
 
     async getGasStationPrice() {
@@ -140,7 +165,7 @@ class Web3Service {
             'createAssertionRecord',
             [`0x${stateCommitHash}`, `0x${rootHash}`, issuer, new BigNumber(1), new BigNumber(1)],
         );
-        return { transactionHash: result.transactionHash, blockchain: this.config.networkId };
+        return {transactionHash: result.transactionHash, blockchain: this.config.networkId};
     }
 
     async registerAsset(uai, type, alsoKnownAs, stateCommitHash, rootHash, tokenAmount) {
@@ -149,7 +174,7 @@ class Web3Service {
             'registerAsset',
             [`0x${uai}`, 0, `0x${uai}`, `0x${stateCommitHash}`, `0x${rootHash}`, 1],
         );
-        return { transactionHash: result.transactionHash, blockchain: this.config.networkId };
+        return {transactionHash: result.transactionHash, blockchain: this.config.networkId};
     }
 
     async updateAsset(UAI, newStateCommitHash, rootHash) {
@@ -158,7 +183,7 @@ class Web3Service {
             'updateAssetState',
             [`0x${UAI}`, `0x${newStateCommitHash}`, `0x${rootHash}`],
         );
-        return { transactionHash: result.transactionHash, blockchain: this.config.networkId };
+        return {transactionHash: result.transactionHash, blockchain: this.config.networkId};
     }
 
     async getAssertionProofs(assertionId) {
@@ -168,7 +193,7 @@ class Web3Service {
         const rootHash = await this.callContractFunction(this.DKGContract, 'getAssertionRootHash', [
             `0x${assertionId}`,
         ]);
-        return { issuer, rootHash };
+        return {issuer, rootHash};
     }
 
     async getAssetProofs(ual) {
@@ -187,7 +212,7 @@ class Web3Service {
         } else {
             assertionId = assertionId.slice(2);
         }
-        return { issuer, assertionId };
+        return {issuer, assertionId};
     }
 
     async healthCheck() {

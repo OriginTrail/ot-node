@@ -38,6 +38,7 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
+        await this.createProfile();
         await this.saveNetworkModulePeerIdAndPrivKey();
 
         await this.initializeControllers();
@@ -138,6 +139,20 @@ class OTNode {
                 msg: `RPC router initialization failed. Error message: ${e.message}`,
                 Event_name: constants.ERROR_TYPE.RPC_INITIALIZATION_ERROR,
             });
+        }
+    }
+
+    async createProfile() {
+        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        if (!blockchainModuleManager.identityExists()) {
+            const networkModuleManager = this.container.resolve('networkModuleManager');
+            const peerId = networkModuleManager.getPeerId();
+            const identity = await blockchainModuleManager.deployIdentity();
+            await blockchainModuleManager.createProfile(identity, peerId);
+
+            if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
+                this.saveIdentityInUserConfigurationFile(identity);
+            }
         }
     }
 
