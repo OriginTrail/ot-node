@@ -119,7 +119,7 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "minimumReplicationFactor": 5,
         "publishFindNodesCount": 20,
-        "signalingServerUrl": "not_defined",
+        "signalingServerUrl": null,
         "appDataPath": "data",
         "graphDatabase": {
             "implementation": "GraphDB",
@@ -235,7 +235,7 @@
         "minimumReplicationFactor": 5,
         "publishFindNodesCount": 20,
         "appDataPath": "data",
-        "signalingServerUrl": "not_defined",
+        "signalingServerUrl": null,
         "graphDatabase": {
             "implementation": "GraphDB",
             "url": "http://localhost:7200",
