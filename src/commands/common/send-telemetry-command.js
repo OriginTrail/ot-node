@@ -26,8 +26,8 @@ class SendTelemetryCommand extends Command {
                 const signalingMessage = {
                     nodeData: {
                         version: pjson.version,
-                        identity: 'veryMuchRandom',
-                        hostname: 'someTestnetNode',
+                        identity: this.networkModuleManager.getPeerId()._idB58String,
+                        hostname: this.config.hostname,
                     },
                     events,
                 };
@@ -74,7 +74,7 @@ class SendTelemetryCommand extends Command {
             name: 'sendTelemetryCommand',
             delay: 0,
             data: {},
-            period: 5 * 1000,
+            period: 15 * 60 * 1000,
             transactional: false,
         };
         Object.assign(command, map);

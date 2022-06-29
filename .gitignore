@@ -108,4 +108,4 @@ dist
 
 .DS_Store
 
-data
+data*

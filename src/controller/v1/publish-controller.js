@@ -50,6 +50,10 @@ class PublishController extends BaseController {
         });
 
         const { metadata, data, ual } = req.body;
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
+        );
         try {
             await this.repositoryModuleManager.createPublishRecord(
                 handlerId,
@@ -84,7 +88,7 @@ class PublishController extends BaseController {
 
             const commandSequence = [
                 'validateAssertionCommand',
-                'insertAssertionCommand',
+                // 'insertAssertionCommand',
                 'findNodesCommand',
                 'publishStoreCommand',
             ];
@@ -96,11 +100,6 @@ class PublishController extends BaseController {
                 data: commandData,
                 transactional: false,
             });
-
-            await this.handlerIdService.updateHandlerIdStatus(
-                handlerId,
-                HANDLER_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
-            );
         } catch (error) {
             this.logger.error({
                 msg: `Error while initializing publish data: ${error.message}. ${error.stack}`,

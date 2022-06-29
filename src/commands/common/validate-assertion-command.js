@@ -15,11 +15,11 @@ class ValidateAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { ual, handlerId, metadata } = command.data;
+        const { ual, handlerId } = command.data;
         this.logger.info(`Validating assertion with ual: ${ual}`);
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_BLOCKCHAIN_START,
+            HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_START,
         );
 
         const handlerIdData = await this.handlerIdService.getCachedHandlerIdData(handlerId);
@@ -49,7 +49,7 @@ class ValidateAssertionCommand extends Command {
         commandData.assertionId = calculatedRootHash;
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_BLOCKCHAIN_END,
+            HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_END,
         );
         return this.continueSequence(commandData, command.sequence);
     }

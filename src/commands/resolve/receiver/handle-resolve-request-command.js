@@ -3,6 +3,7 @@ const {
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
     NETWORK_PROTOCOLS,
+    HANDLER_ID_STATUS,
 } = require('../../../constants/constants');
 
 class HandleResolveRequestCommand extends Command {
@@ -20,6 +21,13 @@ class HandleResolveRequestCommand extends Command {
      */
     async execute(command) {
         const { assertionId, remotePeerId, handlerId } = command.data;
+
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_REMOTE_START,
+        );
+
+        // TODO: validate assertionId / ual
 
         const nquads = {
             metadata: [],
@@ -62,6 +70,11 @@ class HandleResolveRequestCommand extends Command {
             messageType = NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
             messageData = {};
         }
+
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_REMOTE_END,
+        );
         
         await this.networkModuleManager.sendMessageResponse(
             NETWORK_PROTOCOLS.RESOLVE,

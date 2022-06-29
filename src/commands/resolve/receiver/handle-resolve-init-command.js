@@ -1,5 +1,10 @@
 const Command = require('../../command');
-const { ERROR_TYPE, NETWORK_MESSAGE_TYPES, NETWORK_PROTOCOLS} = require('../../../constants/constants');
+const {
+    ERROR_TYPE,
+    NETWORK_MESSAGE_TYPES,
+    NETWORK_PROTOCOLS,
+    HANDLER_ID_STATUS,
+} = require('../../../constants/constants');
 
 class HandleResolveInitCommand extends Command {
     constructor(ctx) {
@@ -16,6 +21,18 @@ class HandleResolveInitCommand extends Command {
     async execute(command) {
         const { remotePeerId, handlerId } = command.data;
 
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.RESOLVE.ASSERTION_EXISTS_LOCAL_START,
+        );
+        
+        // TODO: validate assertionId / ual
+
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.RESOLVE.ASSERTION_EXISTS_LOCAL_END,
+        );
+
         const messageType = NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
         const messageData = {};
         await this.networkModuleManager.sendMessageResponse(
@@ -23,7 +40,7 @@ class HandleResolveInitCommand extends Command {
             remotePeerId,
             messageType,
             handlerId,
-            messageData
+            messageData,
         );
 
         return this.continueSequence(command.data, command.sequence);

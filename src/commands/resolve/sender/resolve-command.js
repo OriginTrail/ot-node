@@ -1,6 +1,6 @@
 const Command = require('../../command');
 
-const { HANDLER_ID_STATUS, RESOLVE_STATUS } = require('../../../constants/constants');
+const { HANDLER_ID_STATUS } = require('../../../constants/constants');
 
 class ResolveCommand extends Command {
     constructor(ctx) {

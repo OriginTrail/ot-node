@@ -56,15 +56,15 @@ class LocalResolveCommand extends Command {
 
                 await Promise.all(normalizeNquadsPromises);
 
-                const updateHandlerIdDataPromises = [
-                    this.handlerIdService.cacheHandlerIdData(handlerId, nquads),
-                    this.handlerIdService.updateHandlerIdStatus(
-                        handlerId,
-                        HANDLER_ID_STATUS.COMPLETED,
-                    ),
-                ];
-
-                await Promise.all(updateHandlerIdDataPromises);
+                await this.handlerIdService.cacheHandlerIdData(handlerId, nquads);
+                await this.handlerIdService.updateHandlerIdStatus(
+                    handlerId,
+                    HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_END,
+                );
+                await this.handlerIdService.updateHandlerIdStatus(
+                    handlerId,
+                    HANDLER_ID_STATUS.RESOLVE.RESOLVE_END,
+                );
 
                 return Command.empty();
             } catch (e) {
