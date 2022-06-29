@@ -41,7 +41,7 @@ class ResultController extends BaseController {
                     case 'assertions:search':
                     case 'entities:search':
                     case 'resolve':
-                        if (handlerRecord.status === HANDLER_ID_STATUS.PUBLISH.RESOLVE_END) {
+                        if (handlerRecord.status === HANDLER_ID_STATUS.RESOLVE.RESOLVE_END) {
                             response.data = await this.handlerIdService.getCachedHandlerIdData(
                                 handlerId,
                             );

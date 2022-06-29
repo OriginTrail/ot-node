@@ -108,15 +108,15 @@
                         "package": "./blockchain/implementation/web3-service",
                         "config": {
                             "blockchainTitle": "Polygon",
-                            "networkId": "polygon::mainnet",
+                            "networkId": "polygon::testnet",
                             "hubContractAddress": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A8",
                             "rpcEndpoints": [
                                 "https://matic-mumbai.chainstacklabs.com",
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
                             ],
-                            "managementKey": "0x01b90635522BD2AD7f0b6AC1cb4c2e5C9BA829b2",
-                            "identity": "0x01b90635522BD2AD7f0b6AC1cb4c2e5C9BA829b2"
+                            "identity": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A3",
+                            "managementKey": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A3"
                         }
                     }
                 }
@@ -340,8 +340,8 @@
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
                             ],
-                            "managementKey": "0x01b90635522BD2AD7f0b6AC1cb4c2e5C9BA829b2",
-                            "identity": "0x01b90635522BD2AD7f0b6AC1cb4c2e5C9BA829b2"
+                            "identity": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A3",
+                            "managementKey": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A3"
                         }
                     }
                 }
