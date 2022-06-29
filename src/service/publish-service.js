@@ -37,7 +37,7 @@ class PublishService {
         });
 
         responses.forEach((response) => {
-            if (response === PUBLISH_REQUEST_STATUS.FAILED) {
+            if (response.status === PUBLISH_REQUEST_STATUS.FAILED) {
                 failedNumber += 1;
             } else {
                 completedNumber += 1;
