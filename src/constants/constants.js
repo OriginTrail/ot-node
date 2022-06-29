@@ -12,15 +12,6 @@ exports.DID = 'DID';
 exports.MAX_FILE_SIZE = 2621440;
 
 /**
- * @constant {object} SERVICE_API_RATE_LIMIT
- * - Express rate limit configuration constants
- */
-exports.SERVICE_API_RATE_LIMIT = {
-    TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    MAX_NUMBER: 10,
-};
-
-/**
  * @constant {object} SERVICE_API_SLOW_DOWN
  * - Express slow down configuration constants
  */
@@ -36,7 +27,7 @@ exports.SERVICE_API_SLOW_DOWN = {
  */
 exports.NETWORK_API_RATE_LIMIT = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    MAX_NUMBER: this.SERVICE_API_RATE_LIMIT.MAX_NUMBER,
+    MAX_NUMBER: 10,
 };
 
 /**

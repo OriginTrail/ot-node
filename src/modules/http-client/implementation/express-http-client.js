@@ -59,7 +59,7 @@ class ExpressHttpClient {
 
     selectMiddlewares(options) {
         const middlewares = [];
-        if (options.rateLimit) middlewares.push(rateLimiterMiddleware());
+        if (options.rateLimit) middlewares.push(rateLimiterMiddleware(this.config.rateLimiterConfig));
         if (options.requestSchema)
             middlewares.push(requestValidationMiddleware(options.requestSchema));
 

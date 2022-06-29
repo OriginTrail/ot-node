@@ -21,7 +21,11 @@
                             "useSsl": false,
                             "port": 8900,
                             "sslKeyPath": "/root/certs/privkey.pem",
-                            "sslCertificatePath": "/root/certs/fullchain.pem"
+                            "sslCertificatePath": "/root/certs/fullchain.pem",
+                            "rateLimiterConfig": {
+                                "timeWindowSeconds": 60,
+                                "maxRequests": 10
+                            }
                         }
                     }
                 }
@@ -289,7 +293,11 @@
                             "useSsl": true,
                             "port": 8900,
                             "sslKeyPath": "/root/certs/privkey.pem",
-                            "sslCertificatePath": "/root/certs/fullchain.pem"
+                            "sslCertificatePath": "/root/certs/fullchain.pem",
+                            "rateLimiterConfig": {
+                                "timeWindowSeconds": 60,
+                                "maxRequests": 10
+                            }
                         }
                     }
                 }
@@ -425,7 +433,11 @@
                             "useSsl": true,
                             "port": 8900,
                             "sslKeyPath": "/root/certs/privkey.pem",
-                            "sslCertificatePath": "/root/certs/fullchain.pem"
+                            "sslCertificatePath": "/root/certs/fullchain.pem",
+                            "rateLimiterConfig": {
+                                "timeWindowSeconds": 60,
+                                "maxRequests": 10
+                            }
                         }
                     }
                 }
