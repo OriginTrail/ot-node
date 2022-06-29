@@ -1,8 +1,10 @@
 const Web3 = require('web3');
 const BigNumber = require('bn.js');
 const axios = require('axios');
-const DKGContractAbi = require('../build/contracts/DKGcontract.json').abi;
-const UAIRegistryAbi = require('../build/contracts/UAIRegistry.json').abi;
+const Hub = require('../build/contracts/Hub.json');
+const UAIRegistry = require('../build/contracts/UAIRegistry.json');
+const Identity = require('../build/contracts/Identity.json');
+const Profile = require('../build/contracts/Profile.json');
 const constants = require('../src/constants/constants');
 
 class Web3BlockchainService {
