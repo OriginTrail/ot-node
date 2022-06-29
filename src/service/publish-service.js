@@ -20,7 +20,14 @@ class PublishService {
     }
 
     async processPublishResponse(command, responseStatus, errorMessage = null) {
-        const { handlerId, ual, assertionId, numberOfFoundNodes, leftoverNodes } = command.data;
+        const {
+            handlerId,
+            ual,
+            assertionId,
+            numberOfFoundNodes,
+            leftoverNodes,
+            numberOfNodesInBatch,
+        } = command.data;
 
         const self = this;
         let responses = 0;
@@ -43,6 +50,11 @@ class PublishService {
                 completedNumber += 1;
             }
         });
+
+        this.logger.debug(
+            `Processing publish response. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${responses.length}`,
+        );
+
         if (this.config.minimumReplicationFactor <= completedNumber) {
             await this.markPublishAsCompleted(handlerId, ual, assertionId);
             this.logger.info(
@@ -50,7 +62,10 @@ class PublishService {
                     failedNumber + completedNumber
                 }, failed: ${failedNumber}, completed: ${completedNumber}`,
             );
-        } else if (numberOfFoundNodes === responses.length) {
+        } else if (
+            numberOfFoundNodes === responses.length ||
+            numberOfNodesInBatch === responses.length
+        ) {
             if (leftoverNodes.length === 0) {
                 await this.markPublishAsFailed(handlerId);
                 this.logger.info(
@@ -105,7 +120,11 @@ class PublishService {
             `Not replicated to enough nodes marking publish as failed for handlerId: ${handlerId}`,
         );
 
-        await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.FAILED);
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.FAILED,
+            'Not replicated to enough nodes!',
+        );
     }
 
     async schedulePublishForLeftoverNodes(command, leftoverNodes) {

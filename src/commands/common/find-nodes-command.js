@@ -54,7 +54,7 @@ class FindNodesCommand extends Command {
 
         const commandData = command.data;
         commandData.nodes = nodes.slice(0, this.config.minimumReplicationFactor);
-
+        commandData.numberOfFoundNodes = nodes.length;
         if (this.config.minimumReplicationFactor < nodes.length) {
             commandData.leftoverNodes = nodes.slice(this.config.minimumReplicationFactor);
         } else {

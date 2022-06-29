@@ -42,9 +42,11 @@ class ResultController extends BaseController {
                     case 'entities:search':
                     case 'resolve':
                     case 'publish':
-                        response.data = await this.handlerIdService.getCachedHandlerIdData(
-                            handlerId,
-                        );
+                        if (handlerRecord.status === HANDLER_ID_STATUS.PUBLISH.PUBLISH_END) {
+                            response.data = await this.handlerIdService.getCachedHandlerIdData(
+                                handlerId,
+                            );
+                        }
                         break;
                     default:
                         break;
