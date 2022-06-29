@@ -31,7 +31,7 @@ class ResolveCommand extends Command {
                     name: commandSequence[0],
                     sequence: commandSequence.slice(1),
                     delay: 0,
-                    data: { handlerId, node, assertionId },
+                    data: { handlerId, node, assertionId, numberOfFoundNodes: nodes.length },
                     transactional: false,
                 }),
             );
