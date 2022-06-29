@@ -13,7 +13,7 @@ class PublishStoreCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { nodes, handlerId, assertionId, metadata, ual } = command.data;
+        const { nodes, handlerId, assertionId, metadata, ual, leftoverNodes } = command.data;
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
@@ -33,17 +33,18 @@ class PublishStoreCommand extends Command {
                         node,
                         assertionId,
                         numberOfFoundNodes: nodes.length,
+                        leftoverNodes,
                         metadata,
                         ual,
                     },
+                    period: 5000,
+                    retries: 3,
                     transactional: false,
                 }),
             );
         });
 
         await Promise.all(addCommandPromise);
-
-        // todo schedule timeout command
 
         return Command.empty();
     }

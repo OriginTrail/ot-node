@@ -64,6 +64,25 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    // publish table
+    async createPublishRecord(handlerId, status) {
+        if (this.initialized) {
+            return this.getImplementation().module.createPublishRecord(handlerId, status);
+        }
+    }
+
+    async getPublishStatus(handlerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getPublishStatus(handlerId);
+        }
+    }
+
+    async updatePublishStatus(handlerId, status) {
+        if (this.initialized) {
+            return this.getImplementation().module.updatePublishStatus(handlerId, status);
+        }
+    }
+
     // publish response TABLE
     async createPublishResponseRecord(status, handlerId, errorMessage) {
         if (this.initialized) {
@@ -87,6 +106,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async countPublishResponseStatuses(handlerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.countPublishResponseStatuses(handlerId);
+        }
+    }
+
     async getResolveResponsesStatuses(handlerId) {
         if (this.initialized) {
             return this.getImplementation().module.getResolveResponsesStatuses(handlerId);
@@ -104,7 +129,14 @@ class RepositoryModuleManager extends BaseModuleManager {
     }
 
     // EVENT
-    async createEventRecord(handlerId, name, timestamp, value1=null, value2=null, value3=null) {
+    async createEventRecord(
+        handlerId,
+        name,
+        timestamp,
+        value1 = null,
+        value2 = null,
+        value3 = null,
+    ) {
         if (this.initialized) {
             return this.getImplementation().module.createEventRecord(
                 handlerId,

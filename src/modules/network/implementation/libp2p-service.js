@@ -140,7 +140,6 @@ class Libp2pService {
                 result.add(node);
             }
         }
-        this.logger.trace(`Found ${result.size} nodes`);
 
         return [...result];
     }
