@@ -12,6 +12,8 @@ class HandleResolveInitCommand extends Command {
         this.config = ctx.config;
         this.commandExecutor = ctx.commandExecutor;
         this.networkModuleManager = ctx.networkModuleManager;
+
+        this.resolveService = ctx.resolveService;
     }
 
     /**
@@ -25,7 +27,7 @@ class HandleResolveInitCommand extends Command {
             handlerId,
             HANDLER_ID_STATUS.RESOLVE.ASSERTION_EXISTS_LOCAL_START,
         );
-        
+
         // TODO: validate assertionId / ual
 
         await this.handlerIdService.updateHandlerIdStatus(
@@ -44,6 +46,17 @@ class HandleResolveInitCommand extends Command {
         );
 
         return this.continueSequence(command.data, command.sequence);
+    }
+
+    async handleError(handlerId, errorMessage, errorName, markFailed, commandData) {
+        await this.resolveService.handleReceiverCommandError(
+            handlerId,
+            errorMessage,
+            errorName,
+            markFailed,
+            commandData,
+        );
+        return Command.empty();
     }
 
     /**

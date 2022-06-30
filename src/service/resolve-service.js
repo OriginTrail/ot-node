@@ -3,7 +3,9 @@ const {
     RESOLVE_REQUEST_STATUS,
     HANDLER_ID_STATUS,
     RESOLVE_STATUS,
+    NETWORK_PROTOCOLS,
 } = require('../constants/constants');
+const constants = require('../constants/constants');
 
 const mutex = new Mutex();
 
@@ -13,6 +15,8 @@ class ResolveService {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.handlerIdService = ctx.handlerIdService;
         this.commandExecutor = ctx.commandExecutor;
+
+        this.networkModuleManager = ctx.networkModuleManager;
     }
 
     async processResolveResponse(command, responseStatus, responseData, errorMessage = null) {
@@ -85,6 +89,22 @@ class ResolveService {
             data: commandData,
             transactional: false,
         });
+    }
+
+    async handleReceiverCommandError(handlerId, errorMessage, errorName, markFailed, commandData) {
+        this.logger.error({
+            msg: errorMessage,
+        });
+
+        const messageType = constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
+        const messageData = {};
+        await this.networkModuleManager.sendMessageResponse(
+            NETWORK_PROTOCOLS.RESOLVE,
+            commandData.remotePeerId,
+            messageType,
+            handlerId,
+            messageData,
+        );
     }
 
     async markPublishAsFailed(handlerId) {

@@ -13,6 +13,8 @@ class HandleResolveRequestCommand extends Command {
         this.networkModuleManager = ctx.networkModuleManager;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.dataService = ctx.dataService;
+
+        this.resolveService = ctx.resolveService;
     }
 
     /**
@@ -62,8 +64,12 @@ class HandleResolveRequestCommand extends Command {
             ];
 
             await Promise.all(normalizeNquadsPromises);
-            this.logger.debug(`Number of metadata n-quads retrieved from the database is ${nquads.metadata.length}`);
-            this.logger.debug(`Number of data n-quads retrieved from the database is ${nquads.data.length}`);
+            this.logger.debug(
+                `Number of metadata n-quads retrieved from the database is ${nquads.metadata.length}`,
+            );
+            this.logger.debug(
+                `Number of data n-quads retrieved from the database is ${nquads.data.length}`,
+            );
             messageType = NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
         } else {
             messageType = NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
@@ -83,6 +89,17 @@ class HandleResolveRequestCommand extends Command {
         );
 
         return this.continueSequence(command.data, command.sequence);
+    }
+
+    async handleError(handlerId, errorMessage, errorName, markFailed, commandData) {
+        await this.resolveService.handleReceiverCommandError(
+            handlerId,
+            errorMessage,
+            errorName,
+            markFailed,
+            commandData,
+        );
+        return Command.empty();
     }
 
     /**
