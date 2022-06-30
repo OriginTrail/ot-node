@@ -11,6 +11,8 @@ class ResolveInitCommand extends ProtocolInitCommand {
         super(ctx);
         this.resolveService = ctx.resolveService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+
+        this.commandName = 'resolveInitCommand';
         this.errorType = ERROR_TYPE.RESOLVE_INIT_ERROR;
         this.networkProtocol = NETWORK_PROTOCOLS.RESOLVE;
     }
@@ -30,9 +32,9 @@ class ResolveInitCommand extends ProtocolInitCommand {
     }
 
     async prepareMessage(command) {
-        const { assertionId } = command.data;
+        const { ual, assertionId } = command.data;
 
-        return { assertionId };
+        return { ual, assertionId };
     }
 
     async markResponseAsFailed(command, errorMessage) {

@@ -22,7 +22,7 @@ class HandleResolveRequestCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { assertionId, remotePeerId, handlerId } = command.data;
+        const { ual, assertionId, remotePeerId, handlerId } = command.data;
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
@@ -37,13 +37,15 @@ class HandleResolveRequestCommand extends Command {
         };
         const resolvePromises = [
             this.tripleStoreModuleManager
-                .resolve(`${assertionId}/metadata`, true)
+                .resolve(`${ual}/${assertionId}/metadata`, true)
                 .then((resolved) => {
                     nquads.metadata = resolved;
                 }),
-            this.tripleStoreModuleManager.resolve(`${assertionId}/data`, true).then((resolved) => {
-                nquads.data = resolved;
-            }),
+            this.tripleStoreModuleManager
+                .resolve(`${ual}/${assertionId}/data`, true)
+                .then((resolved) => {
+                    nquads.data = resolved;
+                }),
         ];
 
         await Promise.all(resolvePromises).catch((e) =>

@@ -19,50 +19,38 @@ class GetLatestAssertionIdCommand extends Command {
     async execute(command) {
         const { id, handlerId } = command.data;
 
-        // options:
+        // UAL options :
         // did:otp:0x174714134abcd13431413413/987654321/41eaa20f35f709d9c22281f46d895b2f7a83c54587e4339456e0d9f4e5bd9b8f
         // did:otp:0x174714134abcd13431413413/987654321/latest
-        // 41eaa20f35f709d9c22281f46d895b2f7a83c54587e4339456e0d9f4e5bd9b8f
         const commandData = command.data;
-        if (this.ualService.isUAL(id)) {
-            const {
-                blockchain,
-                contract,
-                tokenId,
-                assertionId: ualAssertionId,
-            } = this.ualService.resolveUAL(id);
+        const {
+            blockchain,
+            contract,
+            tokenId,
+            assertionId: ualAssertionId,
+        } = this.ualService.resolveUAL(id);
 
-            if (ualAssertionId && ualAssertionId !== 'latest') {
-                commandData.assertionId = ualAssertionId;
-                commandData.ual = id;
-            } else {
-                this.logger.debug(
-                    `Searching for assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
-                );
-                const { assertionId: blockchainAssertionId } =
-                    await this.blockchainModuleManager.getAssetProofs(
-                        blockchain,
-                        contract,
-                        tokenId,
-                    );
-                if (!blockchainAssertionId) {
-                    this.handleError(
-                        handlerId,
-                        `Unable to find assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
-                        this.errorType,
-                        true,
-                    );
-                    return Command.empty();
-                }
-                commandData.assertionId = blockchainAssertionId;
-                commandData.ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-            }
+        commandData.ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+        if (ualAssertionId && ualAssertionId !== 'latest') {
+            commandData.assertionId = ualAssertionId;
         } else {
-            commandData.assertionId = id;
+            this.logger.debug(
+                `Searching for assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
+            );
+            const { assertionId: blockchainAssertionId } =
+                await this.blockchainModuleManager.getAssetProofs(blockchain, contract, tokenId);
+            if (!blockchainAssertionId) {
+                this.handleError(
+                    handlerId,
+                    `Unable to find assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
+                    this.errorType,
+                    true,
+                );
+                return Command.empty();
+            }
+            commandData.assertionId = blockchainAssertionId;
         }
-        this.logger.debug(`Resolving data with assertion id: ${commandData.assertionId}`);
-
-        commandData.assertionId = id;
 
         return this.continueSequence(commandData, command.sequence);
     }

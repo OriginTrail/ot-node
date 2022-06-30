@@ -12,6 +12,8 @@ class ResolveRequestCommand extends ProtocolRequestCommand {
         super(ctx);
         this.resolveService = ctx.resolveService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+
+        this.commandName = 'resolveRequestCommand';
         this.errorType = ERROR_TYPE.RESOLVE_REQUEST_ERROR;
         this.networkProtocol = NETWORK_PROTOCOLS.RESOLVE;
     }
@@ -31,9 +33,9 @@ class ResolveRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { assertionId } = command.data;
+        const { ual, assertionId } = command.data;
 
-        return { assertionId };
+        return { ual, assertionId };
     }
 
     async handleAck(command, responseData) {

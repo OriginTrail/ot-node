@@ -18,10 +18,13 @@ class LocalResolveCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { handlerId, assertionId } = command.data;
+        const { handlerId, assertionId, ual } = command.data;
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
             HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_START,
+        );
+        this.logger.debug(
+            `Resolving data with assertion id: ${assertionId} for handlerId: ${handlerId}`,
         );
         this.logger.debug(
             `Searching for assertion with id: ${assertionId} for handlerId: ${handlerId}`,
@@ -32,13 +35,15 @@ class LocalResolveCommand extends Command {
         };
         const resolvePromises = [
             this.tripleStoreModuleManager
-                .resolve(`${assertionId}/metadata`, true)
+                .resolve(`${ual}/${assertionId}/metadata`, true)
                 .then((resolved) => {
                     nquads.metadata = resolved;
                 }),
-            this.tripleStoreModuleManager.resolve(`${assertionId}/data`, true).then((resolved) => {
-                nquads.data = resolved;
-            }),
+            this.tripleStoreModuleManager
+                .resolve(`${ual}/${assertionId}/data`, true)
+                .then((resolved) => {
+                    nquads.data = resolved;
+                }),
         ];
 
         await Promise.allSettled(resolvePromises);

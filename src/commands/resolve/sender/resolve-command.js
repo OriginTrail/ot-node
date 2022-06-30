@@ -18,7 +18,8 @@ class ResolveCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { nodes, handlerId, assertionId, numberOfFoundNodes, leftoverNodes } = command.data;
+        const { nodes, handlerId, ual, assertionId, numberOfFoundNodes, leftoverNodes } =
+            command.data;
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
@@ -36,6 +37,7 @@ class ResolveCommand extends Command {
                     data: {
                         handlerId,
                         node,
+                        ual,
                         assertionId,
                         numberOfFoundNodes,
                         leftoverNodes,
