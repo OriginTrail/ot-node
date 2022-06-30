@@ -1,5 +1,5 @@
 const Command = require('../../command');
-const { HANDLER_ID_STATUS } = require('../../../constants/constants');
+const { HANDLER_ID_STATUS, ERROR_TYPE } = require('../../../constants/constants');
 
 class LocalResolveCommand extends Command {
     constructor(ctx) {
@@ -9,6 +9,8 @@ class LocalResolveCommand extends Command {
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.commandExecutor = ctx.commandExecutor;
         this.dataService = ctx.dataService;
+
+        this.errorType = ERROR_TYPE.LOCAL_RESOLVE_ERROR;
     }
 
     /**
@@ -21,7 +23,9 @@ class LocalResolveCommand extends Command {
             handlerId,
             HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_START,
         );
-
+        this.logger.debug(
+            `Searching for assertion with id: ${assertionId} for handlerId: ${handlerId}`,
+        );
         const nquads = {
             metadata: [],
             data: [],
@@ -40,47 +44,41 @@ class LocalResolveCommand extends Command {
         await Promise.allSettled(resolvePromises);
 
         if (nquads.metadata && nquads.metadata.length && nquads.data && nquads.data.length) {
-            try {
-                const normalizeNquadsPromises = [
-                    this.dataService
-                        .toNQuads(nquads.metadata, 'application/n-quads')
-                        .then((normalized) => {
-                            nquads.metadata = normalized;
-                        }),
-                    this.dataService
-                        .toNQuads(nquads.data, 'application/n-quads')
-                        .then((normalized) => {
-                            nquads.data = normalized;
-                        }),
-                ];
+            this.logger.debug(
+                `Assertion with id: ${assertionId} for handlerId: ${handlerId} found in local database`,
+            );
+            const normalizeNquadsPromises = [
+                this.dataService
+                    .toNQuads(nquads.metadata, 'application/n-quads')
+                    .then((normalized) => {
+                        nquads.metadata = normalized;
+                    }),
+                this.dataService.toNQuads(nquads.data, 'application/n-quads').then((normalized) => {
+                    nquads.data = normalized;
+                }),
+            ];
 
-                await Promise.all(normalizeNquadsPromises);
+            await Promise.all(normalizeNquadsPromises);
 
-                await this.handlerIdService.cacheHandlerIdData(handlerId, nquads);
-                await this.handlerIdService.updateHandlerIdStatus(
-                    handlerId,
-                    HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_END,
-                );
-                await this.handlerIdService.updateHandlerIdStatus(
-                    handlerId,
-                    HANDLER_ID_STATUS.RESOLVE.RESOLVE_END,
-                );
+            await this.handlerIdService.cacheHandlerIdData(handlerId, nquads);
+            await this.handlerIdService.updateHandlerIdStatus(
+                handlerId,
+                HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_END,
+            );
+            await this.handlerIdService.updateHandlerIdStatus(
+                handlerId,
+                HANDLER_ID_STATUS.RESOLVE.RESOLVE_END,
+            );
 
-                return Command.empty();
-            } catch (e) {
-                await this.handlerIdService.updateHandlerIdStatus(
-                    handlerId,
-                    HANDLER_ID_STATUS.FAILED,
-                    e.message,
-                );
-                return Command.empty();
-            }
+            return Command.empty();
         }
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
             HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_END,
         );
-
+        this.logger.debug(
+            `Assertion with id: ${assertionId} for handlerId: ${handlerId} not found in local database, initiating network resolve protocol!`,
+        );
         return this.continueSequence(command.data, command.sequence);
     }
 

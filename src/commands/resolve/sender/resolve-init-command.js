@@ -3,6 +3,7 @@ const {
     ERROR_TYPE,
     NETWORK_PROTOCOLS,
     RESOLVE_REQUEST_STATUS,
+    RESOLVE_STATUS,
 } = require('../../../constants/constants');
 
 class ResolveInitCommand extends ProtocolInitCommand {
@@ -10,9 +11,22 @@ class ResolveInitCommand extends ProtocolInitCommand {
         super(ctx);
         this.resolveService = ctx.resolveService;
 
-        this.commandName = 'resolveInitCommand';
         this.errorType = ERROR_TYPE.RESOLVE_INIT_ERROR;
         this.networkProtocol = NETWORK_PROTOCOLS.RESOLVE;
+    }
+
+    async shouldSendMessage(command) {
+        const { handlerId } = command.data;
+
+        const resolve = await this.repositoryModuleManager.getResolveStatus(handlerId);
+
+        if (resolve.status === RESOLVE_STATUS.IN_PROGRESS) {
+            return true;
+        }
+        this.logger.trace(
+            `Resolve init command skipped for publish with handlerId: ${handlerId} with status ${resolve.status}`,
+        );
+        return false;
     }
 
     async prepareMessage(command) {
@@ -27,6 +41,13 @@ class ResolveInitCommand extends ProtocolInitCommand {
             RESOLVE_REQUEST_STATUS.FAILED,
             null,
             errorMessage,
+        );
+    }
+
+    async retryFinished(command) {
+        await this.markResponseAsFailed(
+            command,
+            'Max number of retries for protocol resolve init message reached',
         );
     }
 

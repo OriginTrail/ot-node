@@ -52,15 +52,15 @@
           "config": {
             "blockchainTitle": "Polygon",
             "networkId": "polygon::testnet",
-            "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
+            "hubContractAddress": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A8",
             "rpcEndpoints": [
               "https://rpc-mumbai.maticvigil.com/",
               "https://matic-mumbai.chainstacklabs.com",
               "https://rpc-mumbai.matic.today",
               "https://matic-testnet-archive-rpc.bwarelabs.com"
             ],
-            "publicKey": "0xd08eCEFb11C5e767fA196E2010B736155272537e",
-            "privateKey": "8db5ecd44052100b03c8d5fd0221390ea0145868a58971a70e456c90697135ee"
+            "publicKey": "0x01b90635522BD2AD7f0b6AC1cb4c2e5C9BA829b2",
+            "privateKey": "f688384fc61e1ca86783658d984bd98157d273155a6da71c6724d98974667b9a"
           }
         }
       }

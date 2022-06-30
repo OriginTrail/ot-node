@@ -1,6 +1,6 @@
 const Command = require('../../command');
 
-const { HANDLER_ID_STATUS } = require('../../../constants/constants');
+const { HANDLER_ID_STATUS, ERROR_TYPE } = require('../../../constants/constants');
 
 class ResolveCommand extends Command {
     constructor(ctx) {
@@ -9,6 +9,8 @@ class ResolveCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.handlerIdService = ctx.handlerIdService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+
+        this.errorType = ERROR_TYPE.RESOLVE_START_ERROR;
     }
 
     /**
@@ -16,7 +18,7 @@ class ResolveCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { nodes, handlerId, assertionId } = command.data;
+        const { nodes, handlerId, assertionId, numberOfFoundNodes, leftoverNodes } = command.data;
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
@@ -31,7 +33,16 @@ class ResolveCommand extends Command {
                     name: commandSequence[0],
                     sequence: commandSequence.slice(1),
                     delay: 0,
-                    data: { handlerId, node, assertionId, numberOfFoundNodes: nodes.length },
+                    data: {
+                        handlerId,
+                        node,
+                        assertionId,
+                        numberOfFoundNodes,
+                        leftoverNodes,
+                        numberOfNodesInBatch: nodes.length,
+                    },
+                    period: 5000,
+                    retries: 3,
                     transactional: false,
                 }),
             );

@@ -9,6 +9,8 @@ class ValidateAssertionCommand extends Command {
         this.validationModuleManager = ctx.validationModuleManager;
         this.ualService = ctx.ualService;
         this.handlerIdService = ctx.handlerIdService;
+
+        this.errorType = ERROR_TYPE.VALIDATE_ASSERTION_ERROR;
     }
 
     /**
@@ -28,13 +30,24 @@ class ValidateAssertionCommand extends Command {
         const assertion = handlerIdData.data.concat(handlerIdData.metadata);
 
         const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
-        const { issuer, assertionId } = await this.blockchainModuleManager.getAssetProofs(blockchain, contract, tokenId);
+        const { issuer, assertionId } = await this.blockchainModuleManager.getAssetProofs(
+            blockchain,
+            contract,
+            tokenId,
+        );
 
         const calculatedAssertionId = this.validationModuleManager.calculateRootHash(assertion);
 
         if (assertionId !== calculatedAssertionId) {
-            this.logger.debug(`Invalid root hash. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`);
-            await this.handleError(handlerId, 'Invalid assertion metadata, root hash mismatch!', ERROR_TYPE.VALIDATE_ASSERTION_ERROR, true);
+            this.logger.debug(
+                `Invalid root hash. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`,
+            );
+            await this.handleError(
+                handlerId,
+                'Invalid assertion metadata, root hash mismatch!',
+                ERROR_TYPE.VALIDATE_ASSERTION_ERROR,
+                true,
+            );
             return Command.empty();
         }
         this.logger.debug('Root hash matches');
@@ -69,7 +82,6 @@ class ValidateAssertionCommand extends Command {
             name: 'validateAssertionCommand',
             delay: 0,
             transactional: false,
-            errorType: ERROR_TYPE.VALIDATE_ASSERTION_ERROR,
         };
         Object.assign(command, map);
         return command;

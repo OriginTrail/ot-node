@@ -2,6 +2,7 @@ const {
     NETWORK_MESSAGE_TYPES,
     NETWORK_PROTOCOLS,
     HANDLER_ID_STATUS,
+    RESOLVE_STATUS,
 } = require('../../constants/constants');
 const BaseController = require('./base-controller');
 
@@ -25,7 +26,12 @@ class ResolveController extends BaseController {
         this.returnResponse(res, 202, {
             handlerId,
         });
-        
+
+        await this.repositoryModuleManager.createResolveRecord(
+            handlerId,
+            RESOLVE_STATUS.IN_PROGRESS,
+        );
+
         const { id } = req.body;
 
         this.logger.info(`Resolve for ${id} with handler id ${handlerId} initiated.`);

@@ -168,6 +168,34 @@ class SequelizeRepository {
         });
     }
 
+    // RESOLVE
+    async createResolveRecord(handlerId, status) {
+        return this.models.resolve.create({
+            handler_id: handlerId,
+            status,
+        });
+    }
+
+    async getResolveStatus(handlerId) {
+        return this.models.resolve.findOne({
+            attributes: ['status'],
+            where: {
+                handler_id: handlerId,
+            },
+        });
+    }
+
+    async updateResolveStatus(handlerId, status) {
+        await this.models.resolve.update(
+            { status },
+            {
+                where: {
+                    handler_id: handlerId,
+                },
+            },
+        );
+    }
+
     // PUBLISH
     async createPublishRecord(handlerId, status) {
         return this.models.publish.create({
