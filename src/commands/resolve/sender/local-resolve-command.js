@@ -23,60 +23,66 @@ class LocalResolveCommand extends Command {
             handlerId,
             HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_START,
         );
-        this.logger.debug(
-            `Resolving data with assertion id: ${assertionId} for handlerId: ${handlerId}`,
-        );
-        this.logger.debug(
-            `Searching for assertion with id: ${assertionId} for handlerId: ${handlerId}`,
-        );
-        const nquads = {
-            metadata: [],
-            data: [],
-        };
-        const resolvePromises = [
-            this.tripleStoreModuleManager
-                .resolve(`${ual}/${assertionId}/metadata`, true)
-                .then((resolved) => {
-                    nquads.metadata = resolved;
-                }),
-            this.tripleStoreModuleManager
-                .resolve(`${ual}/${assertionId}/data`, true)
-                .then((resolved) => {
-                    nquads.data = resolved;
-                }),
-        ];
 
-        await Promise.allSettled(resolvePromises);
+        const graphName = `${ual}/${assertionId}/`;
+        const assertionExists = await this.tripleStoreModuleManager.assertionExists(graphName);
 
-        if (nquads.metadata && nquads.metadata.length && nquads.data && nquads.data.length) {
+        if (assertionExists) {
             this.logger.debug(
-                `Assertion with id: ${assertionId} for handlerId: ${handlerId} found in local database`,
+                `Resolving data with assertion id: ${assertionId} for handlerId: ${handlerId}`,
             );
-            const normalizeNquadsPromises = [
-                this.dataService
-                    .toNQuads(nquads.metadata, 'application/n-quads')
-                    .then((normalized) => {
-                        nquads.metadata = normalized;
+            const nquads = {
+                metadata: [],
+                data: [],
+            };
+            const resolvePromises = [
+                this.tripleStoreModuleManager
+                    .resolve(`${graphName}/metadata`, true)
+                    .then((resolved) => {
+                        nquads.metadata = resolved;
                     }),
-                this.dataService.toNQuads(nquads.data, 'application/n-quads').then((normalized) => {
-                    nquads.data = normalized;
-                }),
+                this.tripleStoreModuleManager
+                    .resolve(`${graphName}/data`, true)
+                    .then((resolved) => {
+                        nquads.data = resolved;
+                    }),
             ];
 
-            await Promise.all(normalizeNquadsPromises);
+            await Promise.allSettled(resolvePromises);
 
-            await this.handlerIdService.cacheHandlerIdData(handlerId, nquads);
-            await this.handlerIdService.updateHandlerIdStatus(
-                handlerId,
-                HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_END,
-            );
-            await this.handlerIdService.updateHandlerIdStatus(
-                handlerId,
-                HANDLER_ID_STATUS.RESOLVE.RESOLVE_END,
-            );
+            if (nquads.metadata && nquads.metadata.length && nquads.data && nquads.data.length) {
+                this.logger.debug(
+                    `Assertion with id: ${assertionId} for handlerId: ${handlerId} found in local database`,
+                );
+                const normalizeNquadsPromises = [
+                    this.dataService
+                        .toNQuads(nquads.metadata, 'application/n-quads')
+                        .then((normalized) => {
+                            nquads.metadata = normalized;
+                        }),
+                    this.dataService
+                        .toNQuads(nquads.data, 'application/n-quads')
+                        .then((normalized) => {
+                            nquads.data = normalized;
+                        }),
+                ];
 
-            return Command.empty();
+                await Promise.all(normalizeNquadsPromises);
+
+                await this.handlerIdService.cacheHandlerIdData(handlerId, nquads);
+                await this.handlerIdService.updateHandlerIdStatus(
+                    handlerId,
+                    HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_END,
+                );
+                await this.handlerIdService.updateHandlerIdStatus(
+                    handlerId,
+                    HANDLER_ID_STATUS.RESOLVE.RESOLVE_END,
+                );
+
+                return Command.empty();
+            }
         }
+
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
             HANDLER_ID_STATUS.RESOLVE.RESOLVE_LOCAL_END,
@@ -84,6 +90,7 @@ class LocalResolveCommand extends Command {
         this.logger.debug(
             `Assertion with id: ${assertionId} for handlerId: ${handlerId} not found in local database, initiating network resolve protocol!`,
         );
+
         return this.continueSequence(command.data, command.sequence);
     }
 
