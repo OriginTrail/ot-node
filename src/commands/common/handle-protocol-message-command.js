@@ -29,7 +29,7 @@ class HandleProtocolMessageCommand extends Command {
             messageData,
         );
 
-        return this.continueSequence(command.data, command.sequence);
+        return Command.empty();
     }
 
     async prepareMessage(commandData) {
