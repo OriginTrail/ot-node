@@ -1,33 +1,22 @@
-const Command = require('../../command');
 const {
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
-    NETWORK_PROTOCOLS,
     HANDLER_ID_STATUS,
 } = require('../../../constants/constants');
+const HandleResolveCommand = require('./handle-resolve-command');
 
-class HandleResolveInitCommand extends Command {
+class HandleResolveInitCommand extends HandleResolveCommand {
     constructor(ctx) {
         super(ctx);
-        this.config = ctx.config;
-        this.commandExecutor = ctx.commandExecutor;
         this.networkModuleManager = ctx.networkModuleManager;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
-        this.resolveService = ctx.resolveService;
+
+        this.handlerIdStatusStart = HANDLER_ID_STATUS.RESOLVE.ASSERTION_EXISTS_LOCAL_START;
+        this.handlerIdStatusEnd = HANDLER_ID_STATUS.RESOLVE.ASSERTION_EXISTS_LOCAL_END;
     }
 
-    /**
-     * Executes command and produces one or more events
-     * @param command
-     */
-    async execute(command) {
-        const { ual, assertionId, remotePeerId, handlerId } = command.data;
-
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.RESOLVE.ASSERTION_EXISTS_LOCAL_START,
-        );
-
+    async prepareMessage(commandData) {
+        const { ual, assertionId } = commandData;
         const assertionExists = await this.tripleStoreModuleManager.assertionExists(
             `${ual}/${assertionId}`,
         );
@@ -35,31 +24,7 @@ class HandleResolveInitCommand extends Command {
             ? NETWORK_MESSAGE_TYPES.RESPONSES.ACK
             : NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.RESOLVE.ASSERTION_EXISTS_LOCAL_END,
-        );
-
-        await this.networkModuleManager.sendMessageResponse(
-            NETWORK_PROTOCOLS.RESOLVE,
-            remotePeerId,
-            messageType,
-            handlerId,
-            {},
-        );
-
-        return this.continueSequence(command.data, command.sequence);
-    }
-
-    async handleError(handlerId, errorMessage, errorName, markFailed, commandData) {
-        await this.resolveService.handleReceiverCommandError(
-            handlerId,
-            errorMessage,
-            errorName,
-            markFailed,
-            commandData,
-        );
-        return Command.empty();
+        return { messageType, messageData: {} };
     }
 
     /**

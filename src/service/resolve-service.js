@@ -107,7 +107,7 @@ class ResolveService {
         );
     }
 
-    async markPublishAsFailed(handlerId) {
+    async markResolveAsFailed(handlerId) {
         this.logger.info(`Resolve for handlerId: ${handlerId} failed.`);
         await this.repositoryModuleManager.updateResolveStatus(handlerId, RESOLVE_STATUS.FAILED);
 
@@ -133,6 +133,51 @@ class ResolveService {
             handlerId,
             HANDLER_ID_STATUS.RESOLVE.RESOLVE_END,
         );
+    }
+
+    async localResolve(ual, assertionId, handlerId) {
+        const graphName = `${ual}/${assertionId}`;
+        const nquads = {
+            metadata: '',
+            data: '',
+        };
+        const assertionExists = await this.tripleStoreModuleManager.assertionExists(graphName);
+        if (!assertionExists) return nquads;
+
+        this.logger.debug(`Resolving assertion: ${graphName} for handlerId: ${handlerId}`);
+
+        const resolveAndNormalize = async (uri) => {
+            const resolved = await this.tripleStoreModuleManager.resolve(uri);
+            return this.dataService.toNQuads(resolved, 'application/n-quads');
+        };
+
+        const resolvePromises = [
+            resolveAndNormalize(`${graphName}/metadata`).then((result) => {
+                nquads.metadata = result;
+            }),
+            resolveAndNormalize(`${graphName}/data`).then((result) => {
+                nquads.data = result;
+            }),
+        ];
+        await Promise.allSettled(resolvePromises);
+
+        if (nquads.metadata.length && nquads.data.length) {
+            this.logger.debug(
+                `Assertion: ${graphName} for handlerId: ${handlerId} found in local database.`,
+            );
+            this.logger.debug(
+                `Number of metadata n-quads retrieved from the database is ${nquads.metadata.length}`,
+            );
+            this.logger.debug(
+                `Number of data n-quads retrieved from the database is ${nquads.data.length}`,
+            );
+        } else {
+            this.logger.debug(
+                `Assertion: ${graphName} for handlerId: ${handlerId} not found in local database.`,
+            );
+        }
+
+        return nquads;
     }
 }
 

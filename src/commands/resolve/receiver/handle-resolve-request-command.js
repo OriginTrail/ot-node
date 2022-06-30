@@ -1,107 +1,35 @@
-const Command = require('../../command');
 const {
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
-    NETWORK_PROTOCOLS,
     HANDLER_ID_STATUS,
 } = require('../../../constants/constants');
+const HandleResolveCommand = require('./handle-resolve-command');
 
-class HandleResolveRequestCommand extends Command {
+class HandleResolveRequestCommand extends HandleResolveCommand {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
-        this.networkModuleManager = ctx.networkModuleManager;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.dataService = ctx.dataService;
 
-        this.resolveService = ctx.resolveService;
+        this.handlerIdStatusStart = HANDLER_ID_STATUS.RESOLVE.RESOLVE_REMOTE_START;
+        this.handlerIdStatusEnd = HANDLER_ID_STATUS.RESOLVE.RESOLVE_REMOTE_END;
     }
 
-    /**
-     * Executes command and produces one or more events
-     * @param command
-     */
-    async execute(command) {
-        const { ual, assertionId, remotePeerId, handlerId } = command.data;
-
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.RESOLVE.RESOLVE_REMOTE_START,
-        );
+    async prepareMessage(commandData) {
+        const { ual, assertionId, handlerId } = commandData;
 
         // TODO: validate assertionId / ual
 
-        const nquads = {
-            metadata: [],
-            data: [],
-        };
-        const resolvePromises = [
-            this.tripleStoreModuleManager
-                .resolve(`${ual}/${assertionId}/metadata`, true)
-                .then((resolved) => {
-                    nquads.metadata = resolved;
-                }),
-            this.tripleStoreModuleManager
-                .resolve(`${ual}/${assertionId}/data`, true)
-                .then((resolved) => {
-                    nquads.data = resolved;
-                }),
-        ];
+        const graphName = `${ual}/${assertionId}`;
+        const nquads = await this.resolveService.localResolve(graphName, handlerId);
 
-        await Promise.all(resolvePromises).catch((e) =>
-            this.handleError(handlerId, e.message, ERROR_TYPE.HANDLE_RESOLVE_REQUEST_ERROR),
-        );
+        const messageType =
+            nquads.metadata.length && nquads.data.length
+                ? NETWORK_MESSAGE_TYPES.RESPONSES.ACK
+                : NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
 
-        let messageType;
-        if (nquads.metadata && nquads.metadata.length && nquads.data && nquads.data.length) {
-            const normalizeNquadsPromises = [
-                this.dataService
-                    .toNQuads(nquads.metadata, 'application/n-quads')
-                    .then((normalized) => {
-                        nquads.metadata = normalized;
-                    }),
-                this.dataService.toNQuads(nquads.data, 'application/n-quads').then((normalized) => {
-                    nquads.data = normalized;
-                }),
-            ];
-
-            await Promise.all(normalizeNquadsPromises);
-            this.logger.debug(
-                `Number of metadata n-quads retrieved from the database is ${nquads.metadata.length}`,
-            );
-            this.logger.debug(
-                `Number of data n-quads retrieved from the database is ${nquads.data.length}`,
-            );
-            messageType = NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
-        } else {
-            messageType = NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
-        }
-
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.RESOLVE.RESOLVE_REMOTE_END,
-        );
-
-        await this.networkModuleManager.sendMessageResponse(
-            NETWORK_PROTOCOLS.RESOLVE,
-            remotePeerId,
-            messageType,
-            handlerId,
-            { nquads },
-        );
-
-        return this.continueSequence(command.data, command.sequence);
-    }
-
-    async handleError(handlerId, errorMessage, errorName, markFailed, commandData) {
-        await this.resolveService.handleReceiverCommandError(
-            handlerId,
-            errorMessage,
-            errorName,
-            markFailed,
-            commandData,
-        );
-        return Command.empty();
+        return { messageType, messageData: { nquads } };
     }
 
     /**
