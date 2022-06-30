@@ -12,7 +12,7 @@ class HandleResolveInitCommand extends Command {
         this.config = ctx.config;
         this.commandExecutor = ctx.commandExecutor;
         this.networkModuleManager = ctx.networkModuleManager;
-
+        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.resolveService = ctx.resolveService;
     }
 
@@ -21,28 +21,31 @@ class HandleResolveInitCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { remotePeerId, handlerId } = command.data;
+        const { ual, assertionId, remotePeerId, handlerId } = command.data;
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
             HANDLER_ID_STATUS.RESOLVE.ASSERTION_EXISTS_LOCAL_START,
         );
 
-        // TODO: validate assertionId / ual
+        const assertionExists = await this.tripleStoreModuleManager.assertionExists(
+            `${ual}/${assertionId}`,
+        );
+        const messageType = assertionExists
+            ? NETWORK_MESSAGE_TYPES.RESPONSES.ACK
+            : NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
             HANDLER_ID_STATUS.RESOLVE.ASSERTION_EXISTS_LOCAL_END,
         );
 
-        const messageType = NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
-        const messageData = {};
         await this.networkModuleManager.sendMessageResponse(
             NETWORK_PROTOCOLS.RESOLVE,
             remotePeerId,
             messageType,
             handlerId,
-            messageData,
+            {},
         );
 
         return this.continueSequence(command.data, command.sequence);
