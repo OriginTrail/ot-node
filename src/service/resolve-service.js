@@ -108,9 +108,14 @@ class ResolveService {
     }
 
     async markPublishAsFailed(handlerId) {
+        this.logger.info(`Resolve for handlerId: ${handlerId} failed.`);
         await this.repositoryModuleManager.updateResolveStatus(handlerId, RESOLVE_STATUS.FAILED);
 
-        await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.FAILED);
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.FAILED,
+            'Unable to find assertion on the network!',
+        );
     }
 
     async markResolveAsCompleted(handlerId, responseData) {

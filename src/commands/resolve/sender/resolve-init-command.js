@@ -10,7 +10,7 @@ class ResolveInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
         super(ctx);
         this.resolveService = ctx.resolveService;
-
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.errorType = ERROR_TYPE.RESOLVE_INIT_ERROR;
         this.networkProtocol = NETWORK_PROTOCOLS.RESOLVE;
     }
