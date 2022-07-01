@@ -34,6 +34,7 @@ class FindNodesCommand extends Command {
 
         const results = await Promise.all(findNodesPromises);
 
+        // todo final nodes set is unordered we should handle it somehow
         let nodes = new Set();
         for (const closestNodes of results) {
             for (const node of closestNodes) {
