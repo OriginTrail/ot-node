@@ -30,10 +30,7 @@ class ResolveService extends OperationService {
             command.data,
         );
 
-        console.log({ responses, failedNumber, completedNumber });
-
         if (completedNumber === 1) {
-            console.log(JSON.stringify(responseData, null, 2));
             await this.markOperationAsCompleted(
                 handlerId,
                 responseData.nquads,
