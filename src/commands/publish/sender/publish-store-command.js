@@ -1,11 +1,13 @@
 const Command = require('../../command');
-const { HANDLER_ID_STATUS } = require('../../../constants/constants');
+const { HANDLER_ID_STATUS, ERROR_TYPE } = require('../../../constants/constants');
 
 class PublishStoreCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
+
+        this.errorType = ERROR_TYPE.PUBLISH_START_ERROR;
     }
 
     /**

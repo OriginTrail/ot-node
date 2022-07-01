@@ -22,7 +22,7 @@ class ValidateStoreRequestCommand extends Command {
         this.logger.info(`Validating assertion with ual: ${ual}`);
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_START,
+            HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_START,
         );
 
         const handlerIdData = await this.handlerIdService.getCachedHandlerIdData(handlerId);
@@ -30,13 +30,24 @@ class ValidateStoreRequestCommand extends Command {
         const assertion = handlerIdData.data.concat(handlerIdData.metadata);
 
         const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
-        const { issuer, assertionId } = await this.blockchainModuleManager.getAssetProofs(blockchain, contract, tokenId);
+        const { issuer, assertionId } = await this.blockchainModuleManager.getAssetProofs(
+            blockchain,
+            contract,
+            tokenId,
+        );
 
         const calculatedAssertionId = this.validationModuleManager.calculateRootHash(assertion);
 
         if (assertionId !== calculatedAssertionId) {
-            this.logger.debug(`Invalid root hash. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`);
-            await this.handleError(handlerId, 'Invalid assertion metadata, root hash mismatch!', ERROR_TYPE.VALIDATE_ASSERTION_ERROR, true);
+            this.logger.debug(
+                `Invalid root hash. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`,
+            );
+            await this.handleError(
+                handlerId,
+                'Invalid assertion metadata, root hash mismatch!',
+                ERROR_TYPE.VALIDATE_ASSERTION_ERROR,
+                true,
+            );
             return Command.empty();
         }
         this.logger.debug('Root hash matches');
@@ -48,7 +59,7 @@ class ValidateStoreRequestCommand extends Command {
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_END,
+            HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_END,
         );
 
         return this.continueSequence(commandData, command.sequence);

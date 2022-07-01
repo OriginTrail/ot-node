@@ -37,7 +37,7 @@ class SequelizeRepository {
             password: process.env.SEQUELIZE_REPOSITORY_PASSWORD,
         });
         // todo remove drop!!!
-        await connection.promise().query(`DROP DATABASE IF EXISTS \`${this.config.database}\`;`);
+        // await connection.promise().query(`DROP DATABASE IF EXISTS \`${this.config.database}\`;`);
         await connection
             .promise()
             .query(`CREATE DATABASE IF NOT EXISTS \`${this.config.database}\`;`);
@@ -166,6 +166,34 @@ class SequelizeRepository {
                 id: publishId,
             },
         });
+    }
+
+    // RESOLVE
+    async createResolveRecord(handlerId, status) {
+        return this.models.resolve.create({
+            handler_id: handlerId,
+            status,
+        });
+    }
+
+    async getResolveStatus(handlerId) {
+        return this.models.resolve.findOne({
+            attributes: ['status'],
+            where: {
+                handler_id: handlerId,
+            },
+        });
+    }
+
+    async updateResolveStatus(handlerId, status) {
+        await this.models.resolve.update(
+            { status },
+            {
+                where: {
+                    handler_id: handlerId,
+                },
+            },
+        );
     }
 
     // PUBLISH

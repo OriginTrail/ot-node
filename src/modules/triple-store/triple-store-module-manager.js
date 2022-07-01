@@ -11,6 +11,12 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
+    async assertionExists(uri) {
+        if (this.initialized) {
+            return this.getImplementation().module.assertionExists(uri);
+        }
+    }
+
     async resolve(uri) {
         if (this.initialized) {
             return this.getImplementation().module.resolve(uri);

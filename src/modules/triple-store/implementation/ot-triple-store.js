@@ -84,8 +84,10 @@ class OtTripleStore {
         return result;
     }
 
-    async assertionExists(assertionId) {
-        const query = `ASK WHERE { GRAPH <${constants.DID_PREFIX}:${assertionId}> { ?s ?p ?o } }`;
+    async assertionExists(graphName) {
+        const escapedGraphName = this.cleanEscapeCharacter(graphName);
+        const query = `ASK WHERE { GRAPH <${escapedGraphName}> { ?s ?p ?o } }`;
+
         return await this.ask(query);
     }
 

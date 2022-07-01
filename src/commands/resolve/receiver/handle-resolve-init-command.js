@@ -1,49 +1,34 @@
-const Command = require('../../command');
 const {
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
-    NETWORK_PROTOCOLS,
     HANDLER_ID_STATUS,
 } = require('../../../constants/constants');
+const HandleResolveCommand = require('./handle-resolve-command');
 
-class HandleResolveInitCommand extends Command {
+class HandleResolveInitCommand extends HandleResolveCommand {
     constructor(ctx) {
         super(ctx);
-        this.config = ctx.config;
-        this.commandExecutor = ctx.commandExecutor;
         this.networkModuleManager = ctx.networkModuleManager;
+        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+
+        this.handlerIdStatusStart = HANDLER_ID_STATUS.RESOLVE.ASSERTION_EXISTS_LOCAL_START;
+        this.handlerIdStatusEnd = HANDLER_ID_STATUS.RESOLVE.ASSERTION_EXISTS_LOCAL_END;
     }
 
-    /**
-     * Executes command and produces one or more events
-     * @param command
-     */
-    async execute(command) {
-        const { remotePeerId, handlerId } = command.data;
+    async prepareMessage(commandData) {
+        const { ual, assertionId, handlerId } = commandData;
+        await this.handlerIdService.updateHandlerIdStatus(handlerId, this.handlerIdStatusStart);
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.RESOLVE.ASSERTION_EXISTS_LOCAL_START,
+        const assertionExists = await this.tripleStoreModuleManager.assertionExists(
+            `${ual}/${assertionId}`,
         );
-        
-        // TODO: validate assertionId / ual
+        const messageType = assertionExists
+            ? NETWORK_MESSAGE_TYPES.RESPONSES.ACK
+            : NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.RESOLVE.ASSERTION_EXISTS_LOCAL_END,
-        );
+        await this.handlerIdService.updateHandlerIdStatus(handlerId, this.handlerIdStatusEnd);
 
-        const messageType = NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
-        const messageData = {};
-        await this.networkModuleManager.sendMessageResponse(
-            NETWORK_PROTOCOLS.RESOLVE,
-            remotePeerId,
-            messageType,
-            handlerId,
-            messageData,
-        );
-
-        return this.continueSequence(command.data, command.sequence);
+        return { messageType, messageData: {} };
     }
 
     /**

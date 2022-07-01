@@ -1,58 +1,121 @@
-const { Mutex } = require('async-mutex');
-const { RESOLVE_REQUEST_STATUS, HANDLER_ID_STATUS } = require('../constants/constants');
+const OperationService = require('./operation-service');
+const {
+    RESOLVE_REQUEST_STATUS,
+    HANDLER_ID_STATUS,
+    RESOLVE_STATUS,
+} = require('../constants/constants');
 
-const mutex = new Mutex();
-
-class ResolveService {
+class ResolveService extends OperationService {
     constructor(ctx) {
-        this.logger = ctx.logger;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.handlerIdService = ctx.handlerIdService;
-        this.commandExecutor = ctx.commandExecutor;
+        super(ctx);
+
+        this.dataService = ctx.dataService;
+        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+
+        this.operationName = 'resolve';
+        this.operationRequestStatus = RESOLVE_REQUEST_STATUS;
+        this.operationStatus = RESOLVE_STATUS;
+        this.completedStatuses = [
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_FETCH_FROM_NODES_END,
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_END,
+        ];
     }
 
-    async processResolveResponse(command, status, responseData, errorMessage = null) {
-        const { handlerId, numberOfFoundNodes } = command.data;
+    async processResolveResponse(command, responseStatus, responseData, errorMessage = null) {
+        const { handlerId, numberOfFoundNodes, numberOfNodesInBatch, leftoverNodes } = command.data;
 
-        const self = this;
-        let responses = [];
-        await mutex.runExclusive(async () => {
-            await self.repositoryModuleManager.createResolveResponseRecord(
-                status,
+        const { responses, failedNumber, completedNumber } = await this.getResponsesStatuses(
+            responseStatus,
+            errorMessage,
+            command.data,
+        );
+
+        if (completedNumber === 1) {
+            await this.markOperationAsCompleted(
                 handlerId,
-                errorMessage,
+                responseData.nquads,
+                this.completedStatuses,
             );
-
-            responses = await self.repositoryModuleManager.getResolveResponsesStatuses(
-                handlerId,
-            );
-        });
-
-        let failedNumber = 0;
-        let completedNumber = 0;
-
-        responses.forEach((response) => {
-            if (response.status === RESOLVE_REQUEST_STATUS.FAILED) {
-                failedNumber += 1;
+            this.logResponsesSummary(completedNumber, failedNumber);
+        } else if (
+            failedNumber === responses.length &&
+            (numberOfFoundNodes === responses.length || numberOfNodesInBatch === responses.length)
+        ) {
+            if (leftoverNodes.length === 0) {
+                await this.markOperationAsFailed(
+                    handlerId,
+                    'Unable to find assertion on the network!',
+                );
+                this.logResponsesSummary(completedNumber, failedNumber);
             } else {
-                completedNumber += 1;
+                await this.scheduleOperationForLeftoverNodes(
+                    command,
+                    leftoverNodes,
+                    'resolveCommand',
+                );
             }
-        });
+        }
+    }
 
-        if (numberOfFoundNodes === failedNumber) {
-            await this.handlerIdService.updateHandlerIdStatus(handlerId, HANDLER_ID_STATUS.FAILED);
-        } else if (completedNumber === 1 && status !== RESOLVE_REQUEST_STATUS.FAILED) {
-            await this.handlerIdService.cacheHandlerIdData(handlerId, responseData.nquads);
+    async createRepositoryResponseRecord(responseStatus, handlerId, errorMessage) {
+        return this.repositoryModuleManager.createResolveResponseRecord(
+            responseStatus,
+            handlerId,
+            errorMessage,
+        );
+    }
 
-            await this.handlerIdService.updateHandlerIdStatus(
-                handlerId,
-                HANDLER_ID_STATUS.RESOLVE.RESOLVE_FETCH_FROM_NODES_END,
+    async getRepositoryResponsesStatuses(handlerId) {
+        return this.repositoryModuleManager.getResolveResponsesStatuses(handlerId);
+    }
+
+    async updateRepositoryOperationStatus(handlerId, status) {
+        await this.repositoryModuleManager.updateResolveStatus(handlerId, status);
+    }
+
+    async localResolve(ual, assertionId, handlerId) {
+        const graphName = `${ual}/${assertionId}`;
+        const nquads = {
+            metadata: '',
+            data: '',
+        };
+        const assertionExists = await this.tripleStoreModuleManager.assertionExists(graphName);
+        if (!assertionExists) return nquads;
+
+        this.logger.debug(`Resolving assertion: ${graphName} for handlerId: ${handlerId}`);
+
+        const resolveAndNormalize = async (uri) => {
+            const resolved = await this.tripleStoreModuleManager.resolve(uri);
+            return this.dataService.toNQuads(resolved, 'application/n-quads');
+        };
+
+        const resolvePromises = [
+            resolveAndNormalize(`${graphName}/metadata`).then((result) => {
+                nquads.metadata = result;
+            }),
+            resolveAndNormalize(`${graphName}/data`).then((result) => {
+                nquads.data = result;
+            }),
+        ];
+        await Promise.allSettled(resolvePromises);
+
+        if (nquads.metadata.length && nquads.data.length) {
+            this.logger.debug(
+                `Assertion: ${graphName} for handlerId: ${handlerId} found in local database.`,
             );
-            await this.handlerIdService.updateHandlerIdStatus(
-                handlerId,
-                HANDLER_ID_STATUS.RESOLVE.RESOLVE_END,
+            this.logger.debug(
+                `Number of metadata n-quads retrieved from the database is ${nquads.metadata.length}`,
+            );
+            this.logger.debug(
+                `Number of data n-quads retrieved from the database is ${nquads.data.length}`,
+            );
+        } else {
+            this.logger.debug(
+                `Assertion: ${graphName} for handlerId: ${handlerId} not found in local database.`,
             );
         }
+
+        return nquads;
     }
 }
 

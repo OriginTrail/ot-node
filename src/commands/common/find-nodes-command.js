@@ -1,5 +1,5 @@
 const Command = require('../command');
-const { ERROR_TYPE, HANDLER_ID_STATUS } = require('../../constants/constants');
+const { ERROR_TYPE, HANDLER_ID_STATUS, NETWORK_PROTOCOLS } = require('../../constants/constants');
 
 class FindNodesCommand extends Command {
     constructor(ctx) {
@@ -42,10 +42,13 @@ class FindNodesCommand extends Command {
         }
         nodes = [...nodes];
         this.logger.debug(`Found ${nodes.length} of unique node(s).`);
-        if (nodes.length < this.config.minimumReplicationFactor) {
+        if (
+            networkProtocol === NETWORK_PROTOCOLS.PUBLISH &&
+            nodes.length < this.config.minimumReplicationFactor
+        ) {
             this.handleError(
                 handlerId,
-                `Unable to find enough node for publish. Minimum replication factor: ${this.config.minimumReplicationFactor}`,
+                `Unable to find enough node for ${networkProtocol}. Minimum replication factor: ${this.config.minimumReplicationFactor}`,
                 ERROR_TYPE.FIND_NODES_ERROR,
                 true,
             );
@@ -61,7 +64,7 @@ class FindNodesCommand extends Command {
             commandData.leftoverNodes = [];
         }
         this.logger.debug(
-            `Trying to replicate to first batch of ${commandData.nodes.length} nodes, leftover for retry: ${commandData.leftoverNodes.length}`,
+            `Trying to ${networkProtocol} to first batch of ${commandData.nodes.length} nodes, leftover for retry: ${commandData.leftoverNodes.length}`,
         );
         return this.continueSequence(commandData, command.sequence);
     }
