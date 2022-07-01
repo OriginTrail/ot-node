@@ -17,10 +17,12 @@ class SequelizeRepository {
     }
 
     setEnvParameters() {
+        const repositoryPassword = process.env.REPOSITORY_PASSWORD;
         process.env.SEQUELIZE_REPOSITORY_USER = this.config.user;
-        process.env.SEQUELIZE_REPOSITORY_PASSWORD = process.env.REPOSITORY_PASSWORD
-            ? process.env.REPOSITORY_PASSWORD
-            : this.config.password;
+        process.env.SEQUELIZE_REPOSITORY_PASSWORD =
+            repositoryPassword || repositoryPassword === ''
+                ? repositoryPassword
+                : this.config.password;
         process.env.SEQUELIZE_REPOSITORY_DATABASE = this.config.database;
         process.env.SEQUELIZE_REPOSITORY_HOST = this.config.host;
         process.env.SEQUELIZE_REPOSITORY_PORT = this.config.port;
@@ -180,6 +182,23 @@ class SequelizeRepository {
             where: {
                 handler_id: handlerId,
             },
+        });
+    }
+
+    async getUser(username) {
+        return this.models.User.findOne({
+            attributes: ['id'],
+            where: {
+                name: username,
+            },
+        });
+    }
+
+    async saveToken(userId, tokenName, expiresAt) {
+        return this.models.Token.create({
+            userId,
+            expiresAt,
+            name: tokenName,
         });
     }
 }

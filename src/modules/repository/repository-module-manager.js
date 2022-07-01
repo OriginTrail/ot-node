@@ -92,6 +92,18 @@ class RepositoryModuleManager extends BaseModuleManager {
             return this.getImplementation().module.getPublishResponsesStatuses(handlerId);
         }
     }
+
+    getUser(username) {
+        if (this.initialized) {
+            return this.getImplementation().module.getUser(username);
+        }
+    }
+
+    saveToken(userId, tokenName, expiresAt) {
+        if (this.initialized) {
+            return this.getImplementation().module.saveToken(userId, tokenName, expiresAt);
+        }
+    }
 }
 
 module.exports = RepositoryModuleManager;
