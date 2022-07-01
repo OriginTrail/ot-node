@@ -7,6 +7,7 @@ class LocalResolveCommand extends Command {
         this.config = ctx.config;
         this.handlerIdService = ctx.handlerIdService;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+        this.resolveService = ctx.resolveService;
 
         this.errorType = ERROR_TYPE.LOCAL_RESOLVE_ERROR;
     }

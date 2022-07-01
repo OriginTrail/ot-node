@@ -1,11 +1,12 @@
 const Command = require('../command');
 
+const { NETWORK_MESSAGE_TYPES } = require('../../constants/constants');
+
 class HandleProtocolMessageCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
         this.networkModuleManager = ctx.networkModuleManager;
-        this.handlerIdService = ctx.handlerIdService;
     }
 
     /**
@@ -15,11 +16,7 @@ class HandleProtocolMessageCommand extends Command {
     async execute(command) {
         const { remotePeerId, handlerId } = command.data;
 
-        await this.handlerIdService.updateHandlerIdStatus(handlerId, this.handlerIdStatusStart);
-
         const { messageType, messageData } = await this.prepareMessage(command.data);
-
-        await this.handlerIdService.updateHandlerIdStatus(handlerId, this.handlerIdStatusEnd);
 
         await this.networkModuleManager.sendMessageResponse(
             this.networkProtocol,
@@ -37,14 +34,18 @@ class HandleProtocolMessageCommand extends Command {
     }
 
     async handleError(handlerId, errorMessage, errorName, markFailed, commandData) {
-        /* await this.resolveService.handleReceiverCommandError(
+        this.logger.error({
+            msg: errorMessage,
+        });
+
+        await this.networkModuleManager.sendMessageResponse(
+            this.networkProtocol,
+            commandData.remotePeerId,
+            NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
             handlerId,
-            errorMessage,
-            errorName,
-            markFailed,
-            commandData,
+            {},
         );
-        return Command.empty(); */
+        return Command.empty();
     }
 }
 

@@ -8,9 +8,7 @@ const HandleResolveCommand = require('./handle-resolve-command');
 class HandleResolveRequestCommand extends HandleResolveCommand {
     constructor(ctx) {
         super(ctx);
-        this.config = ctx.config;
-        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
-        this.dataService = ctx.dataService;
+        this.resolveService = ctx.resolveService;
 
         this.handlerIdStatusStart = HANDLER_ID_STATUS.RESOLVE.RESOLVE_REMOTE_START;
         this.handlerIdStatusEnd = HANDLER_ID_STATUS.RESOLVE.RESOLVE_REMOTE_END;
@@ -18,16 +16,17 @@ class HandleResolveRequestCommand extends HandleResolveCommand {
 
     async prepareMessage(commandData) {
         const { ual, assertionId, handlerId } = commandData;
+        await this.handlerIdService.updateHandlerIdStatus(handlerId, this.handlerIdStatusStart);
 
         // TODO: validate assertionId / ual
 
-        const graphName = `${ual}/${assertionId}`;
-        const nquads = await this.resolveService.localResolve(graphName, handlerId);
+        const nquads = await this.resolveService.localResolve(ual, assertionId, handlerId);
 
         const messageType =
             nquads.metadata.length && nquads.data.length
                 ? NETWORK_MESSAGE_TYPES.RESPONSES.ACK
                 : NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
+        await this.handlerIdService.updateHandlerIdStatus(handlerId, this.handlerIdStatusEnd);
 
         return { messageType, messageData: { nquads } };
     }

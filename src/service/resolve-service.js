@@ -1,138 +1,79 @@
-const { Mutex } = require('async-mutex');
+const OperationService = require('./operation-service');
 const {
     RESOLVE_REQUEST_STATUS,
     HANDLER_ID_STATUS,
     RESOLVE_STATUS,
-    NETWORK_PROTOCOLS,
 } = require('../constants/constants');
-const constants = require('../constants/constants');
 
-const mutex = new Mutex();
-
-class ResolveService {
+class ResolveService extends OperationService {
     constructor(ctx) {
-        this.logger = ctx.logger;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.handlerIdService = ctx.handlerIdService;
-        this.commandExecutor = ctx.commandExecutor;
+        super(ctx);
 
-        this.networkModuleManager = ctx.networkModuleManager;
+        this.dataService = ctx.dataService;
+        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+
+        this.operationName = 'resolve';
+        this.operationRequestStatus = RESOLVE_REQUEST_STATUS;
+        this.operationStatus = RESOLVE_STATUS;
+        this.completedStatuses = [
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_FETCH_FROM_NODES_END,
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_END,
+        ];
     }
 
     async processResolveResponse(command, responseStatus, responseData, errorMessage = null) {
         const { handlerId, numberOfFoundNodes, numberOfNodesInBatch, leftoverNodes } = command.data;
 
-        const self = this;
-        let responses = 0;
-        let failedNumber = 0;
-        let completedNumber = 0;
-        await mutex.runExclusive(async () => {
-            await self.repositoryModuleManager.createResolveResponseRecord(
-                responseStatus,
-                handlerId,
-                errorMessage,
-            );
-
-            responses = await self.repositoryModuleManager.getResolveResponsesStatuses(handlerId);
-        });
-
-        responses.forEach((response) => {
-            if (response.status === RESOLVE_REQUEST_STATUS.FAILED) {
-                failedNumber += 1;
-            } else {
-                completedNumber += 1;
-            }
-        });
-
-        this.logger.debug(
-            `Processing resolve response. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${responses.length}`,
+        const { responses, failedNumber, completedNumber } = await this.getResponsesStatuses(
+            responseStatus,
+            errorMessage,
+            command.data,
         );
+
+        console.log({ responses, failedNumber, completedNumber });
 
         if (completedNumber === 1) {
-            await this.markResolveAsCompleted(handlerId, responseData);
-            this.logger.info(
-                `Total number of responses: ${
-                    failedNumber + completedNumber
-                }, failed: ${failedNumber}, completed: ${completedNumber}`,
+            console.log(JSON.stringify(responseData, null, 2));
+            await this.markOperationAsCompleted(
+                handlerId,
+                responseData.nquads,
+                this.completedStatuses,
             );
+            this.logResponsesSummary(completedNumber, failedNumber);
         } else if (
-            numberOfFoundNodes === responses.length ||
-            numberOfNodesInBatch === responses.length
+            failedNumber === responses.length &&
+            (numberOfFoundNodes === responses.length || numberOfNodesInBatch === responses.length)
         ) {
             if (leftoverNodes.length === 0) {
-                await this.markPublishAsFailed(handlerId);
-                this.logger.info(
-                    `Total number of responses: ${
-                        failedNumber + completedNumber
-                    }, failed: ${failedNumber}, completed: ${completedNumber}`,
+                await this.markOperationAsFailed(
+                    handlerId,
+                    'Unable to find assertion on the network!',
                 );
+                this.logResponsesSummary(completedNumber, failedNumber);
             } else {
-                await this.scheduleResolveForLeftoverNodes(command, leftoverNodes);
+                await this.scheduleOperationForLeftoverNodes(
+                    command,
+                    leftoverNodes,
+                    'resolveCommand',
+                );
             }
         }
     }
 
-    async scheduleResolveForLeftoverNodes(command, leftoverNodes) {
-        const commandData = command.data;
-        commandData.nodes = leftoverNodes.slice(0, this.config.minimumReplicationFactor);
-        if (this.config.minimumReplicationFactor < leftoverNodes.length) {
-            commandData.leftoverNodes = leftoverNodes.slice(this.config.minimumReplicationFactor);
-        } else {
-            commandData.leftoverNodes = [];
-        }
-        this.logger.debug(
-            `Trying to resolve to next batch of ${commandData.nodes.length} nodes, leftover for retry: ${commandData.leftoverNodes.length}`,
-        );
-        await this.commandExecutor.add({
-            name: 'resolveCommand',
-            delay: 0,
-            data: commandData,
-            transactional: false,
-        });
-    }
-
-    async handleReceiverCommandError(handlerId, errorMessage, errorName, markFailed, commandData) {
-        this.logger.error({
-            msg: errorMessage,
-        });
-
-        const messageType = constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
-        const messageData = {};
-        await this.networkModuleManager.sendMessageResponse(
-            NETWORK_PROTOCOLS.RESOLVE,
-            commandData.remotePeerId,
-            messageType,
+    async createRepositoryResponseRecord(responseStatus, handlerId, errorMessage) {
+        return this.repositoryModuleManager.createResolveResponseRecord(
+            responseStatus,
             handlerId,
-            messageData,
+            errorMessage,
         );
     }
 
-    async markResolveAsFailed(handlerId) {
-        this.logger.info(`Resolve for handlerId: ${handlerId} failed.`);
-        await this.repositoryModuleManager.updateResolveStatus(handlerId, RESOLVE_STATUS.FAILED);
-
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.FAILED,
-            'Unable to find assertion on the network!',
-        );
+    async getRepositoryResponsesStatuses(handlerId) {
+        return this.repositoryModuleManager.getResolveResponsesStatuses(handlerId);
     }
 
-    async markResolveAsCompleted(handlerId, responseData) {
-        this.logger.info(`Finalizing resolve for handlerId: ${handlerId}`);
-
-        await this.repositoryModuleManager.updateResolveStatus(handlerId, RESOLVE_STATUS.COMPLETED);
-
-        await this.handlerIdService.cacheHandlerIdData(handlerId, responseData.nquads);
-
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.RESOLVE.RESOLVE_FETCH_FROM_NODES_END,
-        );
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.RESOLVE.RESOLVE_END,
-        );
+    async updateRepositoryOperationStatus(handlerId, status) {
+        await this.repositoryModuleManager.updateResolveStatus(handlerId, status);
     }
 
     async localResolve(ual, assertionId, handlerId) {

@@ -16,13 +16,17 @@ class HandleResolveInitCommand extends HandleResolveCommand {
     }
 
     async prepareMessage(commandData) {
-        const { ual, assertionId } = commandData;
+        const { ual, assertionId, handlerId } = commandData;
+        await this.handlerIdService.updateHandlerIdStatus(handlerId, this.handlerIdStatusStart);
+
         const assertionExists = await this.tripleStoreModuleManager.assertionExists(
             `${ual}/${assertionId}`,
         );
         const messageType = assertionExists
             ? NETWORK_MESSAGE_TYPES.RESPONSES.ACK
             : NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
+
+        await this.handlerIdService.updateHandlerIdStatus(handlerId, this.handlerIdStatusEnd);
 
         return { messageType, messageData: {} };
     }
