@@ -18,22 +18,20 @@
         "tripleStore": {
             "enabled": true,
             "defaultImplementation": "ot-graphdb",
-                  "implementation": {
-                    "ot-graphdb": {
-                        "config": {
-
-                        }
-                    }
-                  }
+            "implementation": {
+                "ot-graphdb": {
+                    "config": {}
+                }
+            }
         },
         "repository": {
-                  "enabled": true,
-                  "implementation": {
-                    "sequelize-repository": {
-                      "config": {}
-                    }
-                  }
-                },
+            "enabled": true,
+            "implementation": {
+                "sequelize-repository": {
+                    "config": {}
+                }
+            }
+        },
         "network": {
             "enabled": true,
             "implementation": {
@@ -56,7 +54,6 @@
                     "config": {
                         "blockchainTitle": "Polygon",
                         "networkId": "polygon::testnet",
-                        "hubContractAddress": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A8",
                         "rpcEndpoints": [
                             "https://rpc-mumbai.maticvigil.com/",
                             "https://matic-mumbai.chainstacklabs.com",

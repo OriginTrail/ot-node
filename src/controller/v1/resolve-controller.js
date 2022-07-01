@@ -32,7 +32,7 @@ class ResolveController extends BaseController {
             RESOLVE_STATUS.IN_PROGRESS,
         );
 
-        const { id } = req.body;
+        const { id } = req.query;
 
         this.logger.info(`Resolve for ${id} with handler id ${handlerId} initiated.`);
 
