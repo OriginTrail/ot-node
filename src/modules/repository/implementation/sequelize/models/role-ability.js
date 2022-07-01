@@ -1,19 +1,19 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-    class Permission extends Model {
+    class RoleAbility extends Model {
         /**
          * Helper method for defining associations.
          * This method is not a part of Sequelize lifecycle.
          * The `models/index` file will call this method automatically.
          */
         static associate(models) {
-            Permission.hasOne(models.Ability, { as: 'ability' });
-            Permission.hasOne(models.Role, { as: 'role' });
+            RoleAbility.hasOne(models.Ability, { as: 'ability' });
+            RoleAbility.hasOne(models.Role, { as: 'role' });
         }
     }
 
-    Permission.init(
+    RoleAbility.init(
         {
             createdAt: {
                 type: DataTypes.DATE,
@@ -26,9 +26,9 @@ module.exports = (sequelize, DataTypes) => {
         },
         {
             sequelize,
-            modelName: 'Permission',
+            modelName: 'RoleAbility',
             underscored: true,
         },
     );
-    return Permission;
+    return RoleAbility;
 };

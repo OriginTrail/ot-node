@@ -45,12 +45,12 @@ module.exports = {
                 },
             );
 
-            const permissions = abilities.map((e) => ({
+            const roleAbilities = abilities.map((e) => ({
                 ability_id: e.id,
                 role_id: role.id,
             }));
 
-            await queryInterface.bulkInsert('permission', permissions, { transaction });
+            await queryInterface.bulkInsert('role_ability', roleAbilities, { transaction });
 
             await queryInterface.bulkInsert(
                 'user',
@@ -71,7 +71,7 @@ module.exports = {
     },
 
     down: async (queryInterface) => {
-        queryInterface.sequelize.query('TRUNCATE TABLE permission;');
+        queryInterface.sequelize.query('TRUNCATE TABLE role_ability;');
         queryInterface.sequelize.query('TRUNCATE TABLE role;');
         queryInterface.sequelize.query('TRUNCATE TABLE ability;');
     },

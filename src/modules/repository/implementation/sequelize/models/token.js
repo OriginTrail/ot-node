@@ -18,6 +18,13 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.INTEGER,
                 field: 'user_id',
             },
+            name: {
+                type: DataTypes.STRING,
+            },
+            expiresAt: {
+                type: DataTypes.DATE,
+                field: 'expires_at',
+            },
             createdAt: {
                 type: DataTypes.DATE,
                 field: 'created_at',
