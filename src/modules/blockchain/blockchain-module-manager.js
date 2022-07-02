@@ -47,6 +47,42 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
+    async getEpochs (UAI) {
+        if (this.initialized) {
+            return this.getImplementation().module.getEpochs(UAI);
+        }
+    }
+
+    async getBlockNumber () {
+        if (this.initialized) {
+            return this.getImplementation().module.getBlockNumber();
+        }
+    }
+
+    getBlockTime () {
+        if (this.initialized) {
+            return this.getImplementation().module.getBlockTime();
+        }
+    }
+
+    async getChallenge (UAI, epoch) {
+        if (this.initialized) {
+            return this.getImplementation().module.getChallenge(UAI, epoch);
+        }
+    }
+
+    async answerChallenge (UAI, epoch, proof, leaf, price) {
+        if (this.initialized) {
+            return this.getImplementation().module.answerChallenge(UAI, epoch, proof, leaf, price);
+        }
+    }
+
+    async getReward (UAI, epoch) {
+        if (this.initialized) {
+            return this.getImplementation().module.getReward(UAI, epoch);
+        }
+    }
+
     async createAssertionRecord(stateCommitHash, rootHash, issuer) {
         if (this.initialized) {
             return this.getImplementation().module.createAssertionRecord(stateCommitHash, rootHash, issuer);

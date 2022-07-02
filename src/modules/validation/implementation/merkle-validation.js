@@ -71,6 +71,26 @@ class MerkleValidation {
         return tree.getRoot().toString('hex')
     }
 
+    getRootHashProof(nquadsArray, challenge) {
+        nquadsArray.sort();
+
+        console.log(nquadsArray)
+        const leaves = nquadsArray.map((element, index) => keccak256(web3.utils.encodePacked(
+            keccak256(element),
+            index
+        )))
+        const tree = new MerkleTree(leaves, keccak256, {sortPairs: true})
+
+        const proof = tree.getProof(leaves[parseInt(challenge, 10)]);
+        const stateCommitHash = tree.getRoot().toString('hex')
+
+        // eslint-disable-next-line no-console
+        console.log(tree.verify(proof, leaves[parseInt(challenge, 10)], stateCommitHash))
+
+
+        return {leaf: leaves[parseInt(challenge, 10)], proof: proof.map(x => x.data)};
+    }
+
     async sign(message, privateKey) {
         const result = await web3.eth.accounts.sign(message, privateKey);
         return result.signature;

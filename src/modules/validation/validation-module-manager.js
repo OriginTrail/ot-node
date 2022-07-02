@@ -17,6 +17,12 @@ class ValidationModuleManager extends BaseModuleManager {
         }
     }
 
+    getRootHashProof(assertion, index) {
+        if (this.initialized) {
+            return this.getImplementation().module.getRootHashProof(assertion, index);
+        }
+    }
+
     getMerkleTree(rdf) {
         if (this.initialized) {
             return this.getImplementation().module.getMerkleTree(rdf);

@@ -2,6 +2,7 @@ const Web3 = require('web3');
 const BigNumber = require('bn.js');
 const axios = require('axios');
 const {sha256} = require('multiformats/hashes/sha2');
+const sha3 = require("js-sha3");
 const Hub = require('../../../../build/contracts/Hub.json');
 const UAIRegistry = require('../../../../build/contracts/UAIRegistry.json');
 const Identity = require('../../../../build/contracts/Identity.json');
@@ -63,6 +64,14 @@ class Web3Service {
             Profile.abi,
             profileAddress,
         );
+
+        if (this.identityExists()) {
+            this.identityContract = new this.web3.eth.Contract(
+                Identity.abi,
+                this.getIdentity(),
+            );
+        }
+
         this.logger.debug(
             `Connected to blockchain rpc : ${this.config.rpcEndpoints[this.rpcNumber]}.`,
         );
@@ -76,9 +85,34 @@ class Web3Service {
         return this.config.identity;
     }
 
+    getBlockNumber() {
+        return this.web3.eth.getBlockNumber();
+    }
+
+    getBlockTime() {
+        return this.config.blockTime;
+    }
+
     async deployIdentity() {
-        const transactionReceipt = await this.deployContract(Identity, [this.getPublicKey(), this.getManagementKey()]);
-        this.config.identity = transactionReceipt.contractAddress;
+        const parameters = this.web3.eth.abi.encodeParameters(
+            ['address', 'address'],
+            [this.getPublicKey(), this.getManagementKey()],
+        ).slice(2);
+
+        const createTransaction = await this.web3.eth.accounts.signTransaction({
+            from: this.getPublicKey(),
+            data: `${Identity.bytecode}${parameters}`,
+            value: '0x00',
+            gasPrice: this.web3.utils.toWei('100', 'Gwei'),
+            gas: this.web3.utils.toWei('9000', 'Kwei'),
+        }, this.getPrivateKey());
+
+        const createReceipt =
+            await this.web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
+        this.config.identity = createReceipt.contractAddress;
+        return createReceipt.contractAddress;
+        // const transactionReceipt = await this.deployContract(Identity, [this.getPublicKey(), this.getManagementKey()]);
+        // this.config.identity = transactionReceipt.contractAddress;
     }
 
     async createProfile(peerId) {
@@ -87,6 +121,26 @@ class Web3Service {
             `0x${nodeId}`,
             0,
             this.getIdentity()]);
+    }
+
+    getEpochs (UAI) {
+        return this.callContractFunction(this.UAIRegistryContract, 'getEpochs', [UAI]);
+    }
+
+    async getChallenge (UAI, epoch) {
+        let res = await this.callContractFunction(this.identityContract, 'getKey', [`0x${sha3.keccak256(this.web3.utils.encodePacked(this.getPublicKey()))}`]);
+        res = await this.callContractFunction(this.identityContract, 'getKey', [this.getManagementKey()]);
+
+        const test = await this.callContractFunction(this.UAIRegistryContract, 'getAssetStateCommitHash', [UAI]);
+        return this.callContractFunction(this.UAIRegistryContract, 'getChallenge', [UAI, epoch, this.getIdentity()]);
+    }
+
+    async answerChallenge (UAI, epoch, proof, leaf, price) {
+        return this.executeContractFunction(this.UAIRegistryContract, 'answerChallenge', [UAI, epoch, proof, leaf, price, this.getIdentity()]);
+    }
+
+    async getReward (UAI, epoch) {
+        return this.executeContractFunction(this.UAIRegistryContract, 'getReward', [UAI, epoch, this.getIdentity()]);
     }
 
     getPrivateKey() {
@@ -141,7 +195,7 @@ class Web3Service {
                     from: this.config.publicKey,
                     to: contractInstance.options.address,
                     data: encodedABI,
-                    gasPrice: gasPrice || this.web3.utils.toWei('20', 'Gwei'),
+                    gasPrice: this.web3.utils.toWei('100', 'Gwei'),
                     gas: gasLimit || this.web3.utils.toWei('900', 'Kwei'),
                 };
 
