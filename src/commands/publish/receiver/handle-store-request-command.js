@@ -7,8 +7,11 @@ class HandleStoreRequestCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.networkModuleManager = ctx.networkModuleManager;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.dataService = ctx.dataService;
         this.publishService = ctx.publishService;
+        this.commandExecutor = ctx.commandExecutor;
+        this.ualService = ctx.ualService;
     }
 
     /**
@@ -17,8 +20,6 @@ class HandleStoreRequestCommand extends Command {
      */
     async execute(command) {
         const { remotePeerId, handlerId, assertionId, metadata, ual } = command.data;
-
-        const { data } = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
         const messageType = constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
         const messageData = {};
@@ -29,6 +30,36 @@ class HandleStoreRequestCommand extends Command {
             handlerId,
             messageData,
         );
+
+        // await this.handlerIdService.updateHandlerIdStatus(
+        //     handlerId,
+        //     HANDLER_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_START,
+        // );
+
+        const {tokenId} = this.ualService.resolveUAL(ual);
+        const epochs = await this.blockchainModuleManager.getEpochs(tokenId);
+        const blockNumber = await this.blockchainModuleManager.getBlockNumber();
+        const blockTime = await this.blockchainModuleManager.getBlockTime();
+        const addCommandPromise = [];
+        epochs.forEach((epoch) => {
+            const commandSequence = ['answerChallengeCommand'];
+            addCommandPromise.push(
+                this.commandExecutor.add({
+                    name: commandSequence[0],
+                    sequence: commandSequence.slice(1),
+                    delay: Math.abs((parseInt(epoch, 10)-parseInt(blockNumber, 10))*parseInt(blockTime, 10)),
+                    data: {
+                        handlerId,
+                        epoch,
+                        tokenId
+                    },
+                    transactional: false,
+                }),
+            );
+        });
+
+        await Promise.all(addCommandPromise);
+
         return Command.empty();
     }
 
