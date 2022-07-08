@@ -29,7 +29,7 @@ class ProtocolMessageCommand extends Command {
             return true;
         }
         this.logger.trace(
-            `${this.config.name} skipped for handlerId: ${handlerId} with status ${operation.status}`,
+            `${command.name} skipped for handlerId: ${handlerId} with status ${operation.status}`,
         );
 
         return false;
@@ -62,7 +62,7 @@ class ProtocolMessageCommand extends Command {
             default:
                 await this.markResponseAsFailed(
                     command,
-                    `Received unknown message type from node during ${this.config.name}`,
+                    `Received unknown message type from node during ${command.name}`,
                 );
                 return command.empty();
         }
@@ -79,7 +79,7 @@ class ProtocolMessageCommand extends Command {
     async handleNack(command, responseData) {
         await this.markResponseAsFailed(
             command,
-            `Received NACK response from node during ${this.config.name}`,
+            `Received NACK response from node during ${command.name}`,
         );
         return Command.empty();
     }
@@ -101,7 +101,7 @@ class ProtocolMessageCommand extends Command {
     async retryFinished(command) {
         await this.markResponseAsFailed(
             command,
-            `Max number of retries for protocol message ${this.config.name} reached`,
+            `Max number of retries for protocol message ${command.name} reached`,
         );
     }
 }
