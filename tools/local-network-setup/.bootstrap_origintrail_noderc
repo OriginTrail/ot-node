@@ -1,101 +1,101 @@
 {
-  "graphDatabase": {
-    "username": "admin",
-    "password": ""
-  },
-  "logLevel": "trace",
-  "rpcPort": 8900,
-  "modules": {
-    "httpClient": {
-      "enabled": true,
-      "implementation": {
-        "express-http-client": {
-          "package": "./http-client/implementation/express-http-client",
-          "config": {}
-        }
-      }
+    "graphDatabase": {
+        "username": "admin",
+        "password": ""
     },
-    "repository": {
-      "enabled": true,
-      "implementation": {
-        "sequelize-repository": {
-          "config": {}
+    "logLevel": "trace",
+    "rpcPort": 8900,
+    "modules": {
+        "httpClient": {
+            "enabled": true,
+            "implementation": {
+                "express-http-client": {
+                    "package": "./http-client/implementation/express-http-client",
+                    "config": {}
+                }
+            }
+        },
+        "repository": {
+            "enabled": true,
+            "implementation": {
+                "sequelize-repository": {
+                    "config": {}
+                }
+            }
+        },
+        "tripleStore": {
+            "enabled": true,
+            "defaultImplementation": "ot-graphdb",
+            "implementation": {
+                "ot-graphdb": {
+                    "config": {}
+                }
+            }
+        },
+        "network": {
+            "enabled": true,
+            "implementation": {
+                "libp2p-service": {
+                    "package": "./network/implementation/libp2p-service",
+                    "config": {
+                        "port": 9000,
+                        "privateKey": "CAAS4QQwggJdAgEAAoGBALOYSCZsmINMpFdH8ydA9CL46fB08F3ELfb9qiIq+z4RhsFwi7lByysRnYT/NLm8jZ4RvlsSqOn2ZORJwBywYD5MCvU1TbEWGKxl5LriW85ZGepUwiTZJgZdDmoLIawkpSdmUOc1Fbnflhmj/XzAxlnl30yaa/YvKgnWtZI1/IwfAgMBAAECgYEAiZq2PWqbeI6ypIVmUr87z8f0Rt7yhIWZylMVllRkaGw5WeGHzQwSRQ+cJ5j6pw1HXMOvnEwxzAGT0C6J2fFx60C6R90TPos9W0zSU+XXLHA7AtazjlSnp6vHD+RxcoUhm1RUPeKU6OuUNcQVJu1ZOx6cAcP/I8cqL38JUOOS7XECQQDex9WUKtDnpHEHU/fl7SvCt0y2FbGgGdhq6k8nrWtBladP5SoRUFuQhCY8a20fszyiAIfxQrtpQw1iFPBpzoq1AkEAzl/s3XPGi5vFSNGLsLqbVKbvoW9RUaGN8o4rU9oZmPFL31Jo9FLA744YRer6dYE7jJMel7h9VVWsqa9oLGS8AwJALYwfv45Nbb6yGTRyr4Cg/MtrFKM00K3YEGvdSRhsoFkPfwc0ZZvPTKmoA5xXEC8eC2UeZhYlqOy7lL0BNjCzLQJBAMpvcgtwa8u6SvU5B0ueYIvTDLBQX3YxgOny5zFjeUR7PS+cyPMQ0cyql8jNzEzDLcSg85tkDx1L4wi31Pnm/j0CQFH/6MYn3r9benPm2bYSe9aoJp7y6ht2DmXmoveNbjlEbb8f7jAvYoTklJxmJCcrdbNx/iCj2BuAinPPgEmUzfQ="
+                    }
+                }
+            }
+        },
+        "blockchain": {
+            "enabled": true,
+            "implementation": {
+                "web3-service": {
+                    "package": "./blockchain/implementation/web3-service",
+                    "config": {
+                        "blockchainTitle": "Polygon",
+                        "networkId": "polygon::testnet",
+                        "rpcEndpoints": [
+                            "https://rpc-mumbai.maticvigil.com/",
+                            "https://matic-mumbai.chainstacklabs.com",
+                            "https://rpc-mumbai.matic.today",
+                            "https://matic-testnet-archive-rpc.bwarelabs.com"
+                        ],
+                        "publicKey": "0xd08eCEFb11C5e767fA196E2010B736155272537e",
+                        "privateKey": "8db5ecd44052100b03c8d5fd0221390ea0145868a58971a70e456c90697135ee"
+                    }
+                }
+            }
         }
-      }
-    },
-    "tripleStore": {
-      "enabled": true,
-      "defaultImplementation": "ot-graphdb",
-      "implementation": {
-        "ot-graphdb": {
-          "config": {}
-        }
-      }
     },
     "network": {
-      "enabled": true,
-      "implementation": {
-        "libp2p-service": {
-          "package": "./network/implementation/libp2p-service",
-          "config": {
-            "port": 9000,
-            "privateKey": "CAAS4QQwggJdAgEAAoGBALOYSCZsmINMpFdH8ydA9CL46fB08F3ELfb9qiIq+z4RhsFwi7lByysRnYT/NLm8jZ4RvlsSqOn2ZORJwBywYD5MCvU1TbEWGKxl5LriW85ZGepUwiTZJgZdDmoLIawkpSdmUOc1Fbnflhmj/XzAxlnl30yaa/YvKgnWtZI1/IwfAgMBAAECgYEAiZq2PWqbeI6ypIVmUr87z8f0Rt7yhIWZylMVllRkaGw5WeGHzQwSRQ+cJ5j6pw1HXMOvnEwxzAGT0C6J2fFx60C6R90TPos9W0zSU+XXLHA7AtazjlSnp6vHD+RxcoUhm1RUPeKU6OuUNcQVJu1ZOx6cAcP/I8cqL38JUOOS7XECQQDex9WUKtDnpHEHU/fl7SvCt0y2FbGgGdhq6k8nrWtBladP5SoRUFuQhCY8a20fszyiAIfxQrtpQw1iFPBpzoq1AkEAzl/s3XPGi5vFSNGLsLqbVKbvoW9RUaGN8o4rU9oZmPFL31Jo9FLA744YRer6dYE7jJMel7h9VVWsqa9oLGS8AwJALYwfv45Nbb6yGTRyr4Cg/MtrFKM00K3YEGvdSRhsoFkPfwc0ZZvPTKmoA5xXEC8eC2UeZhYlqOy7lL0BNjCzLQJBAMpvcgtwa8u6SvU5B0ueYIvTDLBQX3YxgOny5zFjeUR7PS+cyPMQ0cyql8jNzEzDLcSg85tkDx1L4wi31Pnm/j0CQFH/6MYn3r9benPm2bYSe9aoJp7y6ht2DmXmoveNbjlEbb8f7jAvYoTklJxmJCcrdbNx/iCj2BuAinPPgEmUzfQ="
-          }
+        "enabled": true,
+        "implementation": {
+            "libp2p-service": {
+                "package": "./network/implementation/libp2p-service",
+                "config": {
+                    "port": 9000,
+                    "privateKey": "CAAS4QQwggJdAgEAAoGBALOYSCZsmINMpFdH8ydA9CL46fB08F3ELfb9qiIq+z4RhsFwi7lByysRnYT/NLm8jZ4RvlsSqOn2ZORJwBywYD5MCvU1TbEWGKxl5LriW85ZGepUwiTZJgZdDmoLIawkpSdmUOc1Fbnflhmj/XzAxlnl30yaa/YvKgnWtZI1/IwfAgMBAAECgYEAiZq2PWqbeI6ypIVmUr87z8f0Rt7yhIWZylMVllRkaGw5WeGHzQwSRQ+cJ5j6pw1HXMOvnEwxzAGT0C6J2fFx60C6R90TPos9W0zSU+XXLHA7AtazjlSnp6vHD+RxcoUhm1RUPeKU6OuUNcQVJu1ZOx6cAcP/I8cqL38JUOOS7XECQQDex9WUKtDnpHEHU/fl7SvCt0y2FbGgGdhq6k8nrWtBladP5SoRUFuQhCY8a20fszyiAIfxQrtpQw1iFPBpzoq1AkEAzl/s3XPGi5vFSNGLsLqbVKbvoW9RUaGN8o4rU9oZmPFL31Jo9FLA744YRer6dYE7jJMel7h9VVWsqa9oLGS8AwJALYwfv45Nbb6yGTRyr4Cg/MtrFKM00K3YEGvdSRhsoFkPfwc0ZZvPTKmoA5xXEC8eC2UeZhYlqOy7lL0BNjCzLQJBAMpvcgtwa8u6SvU5B0ueYIvTDLBQX3YxgOny5zFjeUR7PS+cyPMQ0cyql8jNzEzDLcSg85tkDx1L4wi31Pnm/j0CQFH/6MYn3r9benPm2bYSe9aoJp7y6ht2DmXmoveNbjlEbb8f7jAvYoTklJxmJCcrdbNx/iCj2BuAinPPgEmUzfQ="
+                }
+            }
         }
-      }
     },
     "blockchain": {
-      "enabled": true,
-      "implementation": {
-        "web3-service": {
-          "package": "./blockchain/implementation/web3-service",
-          "config": {
-            "blockchainTitle": "Polygon",
-            "networkId": "polygon::testnet",
-            "rpcEndpoints": [
-              "https://rpc-mumbai.maticvigil.com/",
-              "https://matic-mumbai.chainstacklabs.com",
-              "https://rpc-mumbai.matic.today",
-              "https://matic-testnet-archive-rpc.bwarelabs.com"
-            ],
-            "publicKey": "0xd08eCEFb11C5e767fA196E2010B736155272537e",
-            "privateKey": "8db5ecd44052100b03c8d5fd0221390ea0145868a58971a70e456c90697135ee"
-          }
+        "enabled": true,
+        "implementation": {
+            "web3-service": {
+                "package": "./blockchain/implementation/web3-service",
+                "config": {
+                    "blockchainTitle": "Polygon",
+                    "networkId": "polygon::testnet",
+                    "rpcEndpoints": [
+                        "wss://polygon-mumbai.g.alchemy.com/v2/q8PTkz1zFteWTuMLD3gQrPwPZjutgIKy"
+                    ],
+                    "publicKey": "0x01b90635522BD2AD7f0b6AC1cb4c2e5C9BA829b2",
+                    "privateKey": "f688384fc61e1ca86783658d984bd98157d273155a6da71c6724d98974667b9a"
+                }
+            }
         }
-      }
-    }
-  },
-  "network": {
-    "enabled": true,
-    "implementation": {
-      "libp2p-service": {
-        "package": "./network/implementation/libp2p-service",
-        "config": {
-          "port": 9000,
-          "privateKey": "CAAS4QQwggJdAgEAAoGBALOYSCZsmINMpFdH8ydA9CL46fB08F3ELfb9qiIq+z4RhsFwi7lByysRnYT/NLm8jZ4RvlsSqOn2ZORJwBywYD5MCvU1TbEWGKxl5LriW85ZGepUwiTZJgZdDmoLIawkpSdmUOc1Fbnflhmj/XzAxlnl30yaa/YvKgnWtZI1/IwfAgMBAAECgYEAiZq2PWqbeI6ypIVmUr87z8f0Rt7yhIWZylMVllRkaGw5WeGHzQwSRQ+cJ5j6pw1HXMOvnEwxzAGT0C6J2fFx60C6R90TPos9W0zSU+XXLHA7AtazjlSnp6vHD+RxcoUhm1RUPeKU6OuUNcQVJu1ZOx6cAcP/I8cqL38JUOOS7XECQQDex9WUKtDnpHEHU/fl7SvCt0y2FbGgGdhq6k8nrWtBladP5SoRUFuQhCY8a20fszyiAIfxQrtpQw1iFPBpzoq1AkEAzl/s3XPGi5vFSNGLsLqbVKbvoW9RUaGN8o4rU9oZmPFL31Jo9FLA744YRer6dYE7jJMel7h9VVWsqa9oLGS8AwJALYwfv45Nbb6yGTRyr4Cg/MtrFKM00K3YEGvdSRhsoFkPfwc0ZZvPTKmoA5xXEC8eC2UeZhYlqOy7lL0BNjCzLQJBAMpvcgtwa8u6SvU5B0ueYIvTDLBQX3YxgOny5zFjeUR7PS+cyPMQ0cyql8jNzEzDLcSg85tkDx1L4wi31Pnm/j0CQFH/6MYn3r9benPm2bYSe9aoJp7y6ht2DmXmoveNbjlEbb8f7jAvYoTklJxmJCcrdbNx/iCj2BuAinPPgEmUzfQ="
-        }
-      }
-    }
-  },
-  "blockchain": {
-    "enabled": true,
-    "implementation": {
-      "web3-service": {
-        "package": "./blockchain/implementation/web3-service",
-        "config": {
-          "blockchainTitle": "Polygon",
-          "networkId": "polygon::testnet",
-          "rpcEndpoints": [
-            "wss://polygon-mumbai.g.alchemy.com/v2/q8PTkz1zFteWTuMLD3gQrPwPZjutgIKy"
-          ],
-          "publicKey": "0x01b90635522BD2AD7f0b6AC1cb4c2e5C9BA829b2",
-          "privateKey": "f688384fc61e1ca86783658d984bd98157d273155a6da71c6724d98974667b9a"
-        }
-      }
-    }
-  },
-  "ipWhitelist": [
-    "::1",
-    "127.0.0.1"
-  ]
+    },
+    "ipWhitelist": [
+        "::1",
+        "127.0.0.1"
+    ]
 }
