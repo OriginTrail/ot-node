@@ -11,9 +11,9 @@ const map = require('it-map');
 const { sha256 } = require('multiformats/hashes/sha2');
 const PeerId = require('peer-id');
 const { InMemoryRateLimiter } = require('rolling-rate-limiter');
-const constants = require('../../../../src/constants/constants');
 const toobusy = require('toobusy-js');
-const { v4: uuidv4 } = require('uuid');
+const { xor: uint8ArrayXor, compare: uint8ArrayCompare } = require('uint8arrays');
+const constants = require('../../../constants/constants');
 
 const initializationObject = {
     addresses: {
@@ -148,27 +148,26 @@ class Libp2pService {
 
     async rankNodes(nodes, key) {
         const encodedKey = new TextEncoder().encode(key);
-        const keyHash = await sha256.digest(encodedKey);
-        const id = keyHash.digest;
+        const keyMultiHash = await sha256.digest(encodedKey);
+        const keyHash = keyMultiHash.digest;
 
-        nodes.sort(
-            (first_node, second_node) =>
-                this.distance(id, first_node._id) - this.distance(id, second_node._id),
-        );
+        const calculateNodeDistance = async (node) => {
+            const nodeBuffer = node.toBytes();
+            const nodeMultiHash = await sha256.digest(nodeBuffer);
+            const nodeHash = nodeMultiHash.digest;
+            const distance = uint8ArrayXor(keyHash, nodeHash);
 
-        return nodes;
-    }
+            return {
+                node,
+                distance,
+            };
+        };
 
-    distance(firstId, secondId) {
-        let distance = 0;
-        let i = 0;
-        const min = Math.min(firstId.length, secondId.length);
-        const max = Math.max(firstId.length, secondId.length);
-        for (; i < min; i += 1) {
-            distance = distance * 256 + (firstId[i] ^ secondId[i]);
-        }
-        for (; i < max; i += 1) distance = distance * 256 + 255;
-        return distance;
+        const nodeDistances = await Promise.all(nodes.map((node) => calculateNodeDistance(node)));
+
+        nodeDistances.sort((a, b) => uint8ArrayCompare(a.distance, b.distance));
+
+        return nodeDistances.map((nodeDistance) => nodeDistance.node);
     }
 
     getPeers() {
