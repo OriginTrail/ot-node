@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
                 autoIncrement: true,
             },
             handler_id: DataTypes.UUID,
+            keyword: DataTypes.STRING,
             status: DataTypes.STRING,
             message: DataTypes.TEXT,
             created_at: DataTypes.DATE,

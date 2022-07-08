@@ -65,85 +65,67 @@ class RepositoryModuleManager extends BaseModuleManager {
     }
 
     // publish table
-    async createPublishRecord(handlerId, status) {
+    async createOperationRecord(operation, handlerId, status) {
         if (this.initialized) {
-            return this.getImplementation().module.createPublishRecord(handlerId, status);
-        }
-    }
-
-    async getPublishStatus(handlerId) {
-        if (this.initialized) {
-            return this.getImplementation().module.getPublishStatus(handlerId);
-        }
-    }
-
-    async updatePublishStatus(handlerId, status) {
-        if (this.initialized) {
-            return this.getImplementation().module.updatePublishStatus(handlerId, status);
-        }
-    }
-
-    // publish response TABLE
-    async createPublishResponseRecord(status, handlerId, errorMessage) {
-        if (this.initialized) {
-            return this.getImplementation().module.createPublishResponseRecord(
-                status,
+            return this.getImplementation().module.createOperationRecord(
+                operation,
                 handlerId,
+                status,
+            );
+        }
+    }
+
+    async getOperationStatus(operation, handlerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getOperationStatus(operation, handlerId);
+        }
+    }
+
+    async updateOperationStatus(operation, handlerId, status) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateOperationStatus(
+                operation,
+                handlerId,
+                status,
+            );
+        }
+    }
+
+    async createOperationResponseRecord(status, operation, handlerId, keyword, errorMessage) {
+        if (this.initialized) {
+            return this.getImplementation().module.createOperationResponseRecord(
+                status,
+                operation,
+                handlerId,
+                keyword,
                 errorMessage,
             );
         }
     }
 
-    async getNumberOfPublishResponses(handlerId) {
+    async getNumberOfOperationResponses(operation, handlerId) {
         if (this.initialized) {
-            return this.getImplementation().module.getNumberOfPublishResponses(handlerId);
-        }
-    }
-
-    async getPublishResponsesStatuses(handlerId) {
-        if (this.initialized) {
-            return this.getImplementation().module.getPublishResponsesStatuses(handlerId);
-        }
-    }
-
-    async countPublishResponseStatuses(handlerId) {
-        if (this.initialized) {
-            return this.getImplementation().module.countPublishResponseStatuses(handlerId);
-        }
-    }
-
-    // resolve
-    async createResolveRecord(handlerId, status) {
-        if (this.initialized) {
-            return this.getImplementation().module.createResolveRecord(handlerId, status);
-        }
-    }
-
-    async getResolveStatus(handlerId) {
-        if (this.initialized) {
-            return this.getImplementation().module.getResolveStatus(handlerId);
-        }
-    }
-
-    async updateResolveStatus(handlerId, status) {
-        if (this.initialized) {
-            return this.getImplementation().module.updateResolveStatus(handlerId, status);
-        }
-    }
-
-    // resolve response
-    async getResolveResponsesStatuses(handlerId) {
-        if (this.initialized) {
-            return this.getImplementation().module.getResolveResponsesStatuses(handlerId);
-        }
-    }
-
-    async createResolveResponseRecord(status, handlerId, errorMessage) {
-        if (this.initialized) {
-            return this.getImplementation().module.createResolveResponseRecord(
-                status,
+            return this.getImplementation().module.getNumberOfOperationResponses(
+                operation,
                 handlerId,
-                errorMessage,
+            );
+        }
+    }
+
+    async getOperationResponsesStatuses(operation, handlerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getOperationResponsesStatuses(
+                operation,
+                handlerId,
+            );
+        }
+    }
+
+    async countOperationResponseStatuses(operation, handlerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.countOperationResponseStatuses(
+                operation,
+                handlerId,
             );
         }
     }

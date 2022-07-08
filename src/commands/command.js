@@ -5,6 +5,7 @@ const { HANDLER_ID_STATUS } = require('../constants/constants');
  */
 class Command {
     constructor(ctx) {
+        this.config = ctx.config;
         this.logger = ctx.logger;
         this.commandResolver = ctx.commandResolver;
         this.handlerIdService = ctx.handlerIdService;

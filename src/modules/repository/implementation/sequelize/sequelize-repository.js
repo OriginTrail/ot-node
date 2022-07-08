@@ -168,16 +168,15 @@ class SequelizeRepository {
         });
     }
 
-    // RESOLVE
-    async createResolveRecord(handlerId, status) {
-        return this.models.resolve.create({
+    async createOperationRecord(operation, handlerId, status) {
+        return this.models[operation].create({
             handler_id: handlerId,
             status,
         });
     }
 
-    async getResolveStatus(handlerId) {
-        return this.models.resolve.findOne({
+    async getOperationStatus(operation, handlerId) {
+        return this.models[operation].findOne({
             attributes: ['status'],
             where: {
                 handler_id: handlerId,
@@ -185,8 +184,8 @@ class SequelizeRepository {
         });
     }
 
-    async updateResolveStatus(handlerId, status) {
-        await this.models.resolve.update(
+    async updateOperationStatus(operation, handlerId, status) {
+        await this.models[operation].update(
             { status },
             {
                 where: {
@@ -196,85 +195,39 @@ class SequelizeRepository {
         );
     }
 
-    // PUBLISH
-    async createPublishRecord(handlerId, status) {
-        return this.models.publish.create({
-            handler_id: handlerId,
-            status,
-        });
-    }
-
-    async getPublishStatus(handlerId) {
-        return this.models.publish.findOne({
-            attributes: ['status'],
-            where: {
-                handler_id: handlerId,
-            },
-        });
-    }
-
-    async updatePublishStatus(handlerId, status) {
-        await this.models.publish.update(
-            { status },
-            {
-                where: {
-                    handler_id: handlerId,
-                },
-            },
-        );
-    }
-
-    // PUBLISH RESPONSE
-    async createPublishResponseRecord(status, handlerId, message) {
-        await this.models.publish_response.create({
+    async createOperationResponseRecord(status, operation, handlerId, keyword, message) {
+        await this.models[`${operation}_response`].create({
             status,
             message,
             handler_id: handlerId,
+            keyword,
         });
     }
 
-    async getNumberOfPublishResponses(handlerId) {
-        return this.models.publish_response.count({
+    async getNumberOfOperationResponses(operation, handlerId) {
+        return this.models[`${operation}_response`].count({
             where: {
                 handler_id: handlerId,
             },
         });
     }
 
-    async getPublishResponsesStatuses(handlerId) {
-        return this.models.publish_response.findAll({
-            attributes: ['status'],
+    async getOperationResponsesStatuses(operation, handlerId) {
+        return this.models[`${operation}_response`].findAll({
+            attributes: ['status', 'keyword'],
             where: {
                 handler_id: handlerId,
             },
         });
     }
 
-    async countPublishResponseStatuses(handlerId) {
-        return this.models.publish_response.findAll({
+    async countOperationResponseStatuses(operation, handlerId) {
+        return this.models[`${operation}_response`].findAll({
             attributes: [
                 'status',
                 [Sequelize.fn('COUNT', Sequelize.col('status')), 'count_status'],
             ],
             group: 'status',
-            where: {
-                handler_id: handlerId,
-            },
-        });
-    }
-
-    // RESOLVE RESPONSE
-    async createResolveResponseRecord(status, handlerId, errorMessage) {
-        await this.models.resolve_response.create({
-            status,
-            errorMessage,
-            handler_id: handlerId,
-        });
-    }
-
-    async getResolveResponsesStatuses(handlerId) {
-        return this.models.resolve_response.findAll({
-            attributes: ['status'],
             where: {
                 handler_id: handlerId,
             },

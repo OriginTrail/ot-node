@@ -3,6 +3,7 @@ const {
     RESOLVE_REQUEST_STATUS,
     HANDLER_ID_STATUS,
     RESOLVE_STATUS,
+    NETWORK_PROTOCOLS,
 } = require('../constants/constants');
 
 class ResolveService extends OperationService {
@@ -13,6 +14,7 @@ class ResolveService extends OperationService {
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
 
         this.operationName = 'resolve';
+        this.networkProtocol = NETWORK_PROTOCOLS.RESOLVE;
         this.operationRequestStatus = RESOLVE_REQUEST_STATUS;
         this.operationStatus = RESOLVE_STATUS;
         this.completedStatuses = [
@@ -21,13 +23,21 @@ class ResolveService extends OperationService {
         ];
     }
 
-    async processResolveResponse(command, responseStatus, responseData, errorMessage = null) {
-        const { handlerId, numberOfFoundNodes, numberOfNodesInBatch, leftoverNodes } = command.data;
+    async processResponse(command, responseStatus, responseData, errorMessage = null) {
+        const { handlerId, numberOfFoundNodes, numberOfNodesInBatch, leftoverNodes, keyword } =
+            command.data;
 
-        const { responses, failedNumber, completedNumber } = await this.getResponsesStatuses(
+        const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
             errorMessage,
-            command.data,
+            handlerId,
+            keyword,
+        );
+
+        const { completedNumber, failedNumber } = keywordsStatuses[keyword];
+        const numberOfResponses = completedNumber + failedNumber;
+        this.logger.debug(
+            `Processing ${this.networkProtocol} response for handlerId: ${handlerId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}`,
         );
 
         if (completedNumber === 1) {
@@ -38,8 +48,8 @@ class ResolveService extends OperationService {
             );
             this.logResponsesSummary(completedNumber, failedNumber);
         } else if (
-            failedNumber === responses.length &&
-            (numberOfFoundNodes === responses.length || numberOfNodesInBatch === responses.length)
+            failedNumber === numberOfResponses &&
+            (numberOfFoundNodes === numberOfResponses || numberOfNodesInBatch === numberOfResponses)
         ) {
             if (leftoverNodes.length === 0) {
                 await this.markOperationAsFailed(
@@ -55,22 +65,6 @@ class ResolveService extends OperationService {
                 );
             }
         }
-    }
-
-    async createRepositoryResponseRecord(responseStatus, handlerId, errorMessage) {
-        return this.repositoryModuleManager.createResolveResponseRecord(
-            responseStatus,
-            handlerId,
-            errorMessage,
-        );
-    }
-
-    async getRepositoryResponsesStatuses(handlerId) {
-        return this.repositoryModuleManager.getResolveResponsesStatuses(handlerId);
-    }
-
-    async updateRepositoryOperationStatus(handlerId, status) {
-        await this.repositoryModuleManager.updateResolveStatus(handlerId, status);
     }
 
     async localResolve(ual, assertionId, handlerId) {
@@ -99,19 +93,17 @@ class ResolveService extends OperationService {
         ];
         await Promise.allSettled(resolvePromises);
 
-        if (nquads.metadata.length && nquads.data.length) {
+        const found = nquads.metadata.length && nquads.data.length;
+
+        this.logger.debug(
+            `Assertion: ${graphName} for handlerId: ${handlerId} ${
+                found ? '' : 'not'
+            } found in local database.`,
+        );
+
+        if (found) {
             this.logger.debug(
-                `Assertion: ${graphName} for handlerId: ${handlerId} found in local database.`,
-            );
-            this.logger.debug(
-                `Number of metadata n-quads retrieved from the database is ${nquads.metadata.length}`,
-            );
-            this.logger.debug(
-                `Number of data n-quads retrieved from the database is ${nquads.data.length}`,
-            );
-        } else {
-            this.logger.debug(
-                `Assertion: ${graphName} for handlerId: ${handlerId} not found in local database.`,
+                `Number of n-quads retrieved from the database is: metadata: ${nquads.metadata.length}, data: ${nquads.data.length}`,
             );
         }
 

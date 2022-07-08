@@ -1,11 +1,5 @@
 const BaseController = require('./base-controller');
-const {
-    NETWORK_PROTOCOLS,
-    PUBLISH_METHOD,
-    ERROR_TYPE,
-    NETWORK_MESSAGE_TYPES,
-    PUBLISH_STATUS,
-} = require('../../constants/constants');
+const { PUBLISH_METHOD, ERROR_TYPE, NETWORK_MESSAGE_TYPES } = require('../../constants/constants');
 const { HANDLER_ID_STATUS } = require('../../constants/constants');
 
 class PublishController extends BaseController {
@@ -34,8 +28,6 @@ class PublishController extends BaseController {
     }
 
     async handleHttpApiPublishMethod(req, res, method) {
-        const operationId = this.generateOperationId();
-
         const handlerId = await this.handlerIdService.generateHandlerId(
             HANDLER_ID_STATUS.PUBLISH.PUBLISH_START,
         );
@@ -55,9 +47,10 @@ class PublishController extends BaseController {
             HANDLER_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
         );
         try {
-            await this.repositoryModuleManager.createPublishRecord(
+            await this.repositoryModuleManager.createOperationRecord(
+                this.publishService.getOperationName(),
                 handlerId,
-                PUBLISH_STATUS.IN_PROGRESS,
+                this.publishService.getOperationStatus().IN_PROGRESS,
             );
 
             await this.handlerIdService.updateHandlerIdStatus(
@@ -81,16 +74,13 @@ class PublishController extends BaseController {
                 method,
                 ual,
                 handlerId,
-                operationId,
                 metadata,
-                networkProtocol: NETWORK_PROTOCOLS.STORE,
             };
 
             const commandSequence = [
                 'validateAssertionCommand',
                 // 'insertAssertionCommand',
-                'findNodesCommand',
-                'publishStoreCommand',
+                'publishNetworkCommand',
             ];
 
             await this.commandExecutor.add({
@@ -105,7 +95,7 @@ class PublishController extends BaseController {
                 msg: `Error while initializing publish data: ${error.message}. ${error.stack}`,
                 Event_name: ERROR_TYPE.PUBLISH_ROUTE_ERROR,
                 Event_value1: error.message,
-                Id_operation: operationId,
+                Id_operation: handlerId,
             });
             await this.handlerIdService.updateHandlerIdStatus(
                 handlerId,
@@ -116,11 +106,11 @@ class PublishController extends BaseController {
     }
 
     async handleNetworkStoreRequest(message, remotePeerId) {
-        const { handlerId } = message.header;
+        const { handlerId, keyword, messageType } = message.header;
         const { assertionId, ual } = message.data;
         const commandSequence = [];
-        const commandData = { remotePeerId, handlerId, assertionId, ual };
-        switch (message.header.messageType) {
+        const commandData = { remotePeerId, handlerId, keyword, assertionId, ual };
+        switch (messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
                 commandSequence.push('validateStoreInitCommand');
                 commandSequence.push('handleStoreInitCommand');

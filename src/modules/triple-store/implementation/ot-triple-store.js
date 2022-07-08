@@ -60,8 +60,7 @@ class OtTripleStore {
     }
 
     async insert(triples, graphName) {
-        const askQuery = `ASK WHERE { GRAPH <${graphName}> { ?s ?p ?o } }`;
-        const exists = await this.ask(askQuery);
+        const exists = await this.assertionExists(graphName);
         if (!exists) {
             const insertion = `
                                   PREFIX schema: <http://schema.org/> 
@@ -88,7 +87,7 @@ class OtTripleStore {
         const escapedGraphName = this.cleanEscapeCharacter(graphName);
         const query = `ASK WHERE { GRAPH <${escapedGraphName}> { ?s ?p ?o } }`;
 
-        return await this.ask(query);
+        return this.ask(query);
     }
 
     async resolve(graphName) {
