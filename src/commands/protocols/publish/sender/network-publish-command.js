@@ -1,6 +1,6 @@
-const ProtocolNetworkCommand = require('../../common/protocol-network-command');
+const NetworkProtocolCommand = require('../../common/network-protocol-command');
 
-class PublishNetworkCommand extends ProtocolNetworkCommand {
+class NetworkPublishCommand extends NetworkProtocolCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
@@ -21,13 +21,13 @@ class PublishNetworkCommand extends ProtocolNetworkCommand {
     }
 
     /**
-     * Builds default publishNetworkCommand
+     * Builds default networkPublishCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'publishNetworkCommand',
+            name: 'networkPublishCommand',
             delay: 0,
             transactional: false,
         };
@@ -36,4 +36,4 @@ class PublishNetworkCommand extends ProtocolNetworkCommand {
     }
 }
 
-module.exports = PublishNetworkCommand;
+module.exports = NetworkPublishCommand;

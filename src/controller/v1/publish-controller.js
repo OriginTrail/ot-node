@@ -80,7 +80,7 @@ class PublishController extends BaseController {
             const commandSequence = [
                 'validateAssertionCommand',
                 // 'insertAssertionCommand',
-                'publishNetworkCommand',
+                'networkPublishCommand',
             ];
 
             await this.commandExecutor.add({

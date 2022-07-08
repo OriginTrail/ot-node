@@ -1,6 +1,6 @@
-const ProtocolNetworkCommand = require('../../common/protocol-network-command');
+const NetworkProtocolCommand = require('../../common/network-protocol-command');
 
-class ResolveNetworkCommand extends ProtocolNetworkCommand {
+class NetworkResolveCommand extends NetworkProtocolCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.resolveService;
@@ -20,13 +20,13 @@ class ResolveNetworkCommand extends ProtocolNetworkCommand {
     }
 
     /**
-     * Builds default resolveNetworkCommand
+     * Builds default networkResolveCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'resolveNetworkCommand',
+            name: 'networkResolveCommand',
             delay: 0,
             transactional: false,
         };
@@ -35,4 +35,4 @@ class ResolveNetworkCommand extends ProtocolNetworkCommand {
     }
 }
 
-module.exports = ResolveNetworkCommand;
+module.exports = NetworkResolveCommand;

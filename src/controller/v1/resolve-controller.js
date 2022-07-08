@@ -41,7 +41,7 @@ class ResolveController extends BaseController {
         const commandSequence = [
             'getLatestAssertionIdCommand',
             'localResolveCommand',
-            'resolveNetworkCommand',
+            'networkResolveCommand',
         ];
 
         await this.commandExecutor.add({

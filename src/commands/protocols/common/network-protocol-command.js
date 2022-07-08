@@ -1,6 +1,6 @@
 const Command = require('../../command');
 
-class ProtocolNetworkCommand extends Command {
+class NetworkProtocolCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -66,4 +66,4 @@ class ProtocolNetworkCommand extends Command {
     }
 }
 
-module.exports = ProtocolNetworkCommand;
+module.exports = NetworkProtocolCommand;
