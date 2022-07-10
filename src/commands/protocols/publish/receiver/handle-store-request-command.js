@@ -47,7 +47,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
         );
 
-        return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK, messageData: {} };
+        return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
     }
 
     /**
