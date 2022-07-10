@@ -21,41 +21,15 @@ class InsertAssertionCommand extends Command {
             handlerId,
             HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
-
-        const handlerIdData = await this.handlerIdService.getCachedHandlerIdData(handlerId);
-
-        const assertionGraphName = `${ual}/${assertionId}`;
-        const dataGraphName = `${ual}/${assertionId}/data`;
-        const metadatadataGraphName = `${ual}/${assertionId}/metadata`;
-
-        const assertionNquads = [
-            `<${assertionGraphName}> <http://schema.org/metadata> <${metadatadataGraphName}> .`,
-            `<${assertionGraphName}> <http://schema.org/data> <${dataGraphName}> .`,
-        ];
-
-        this.logger.info(`Inserting assertion with ual:${ual} in database.`);
-
-        const insertPromises = [
-            this.tripleStoreModuleManager.insert(
-                handlerIdData.metadata.join('\n'),
-                metadatadataGraphName,
-            ),
-            this.tripleStoreModuleManager.insert(handlerIdData.data.join('\n'), dataGraphName),
-            this.tripleStoreModuleManager.insert(assertionNquads.join('\n'), assertionGraphName),
-        ];
-
-        await Promise.all(insertPromises);
-
-        this.logger.info(`Assertion ${assertionId} has been successfully inserted!`);
+        await this.operationService
+            .localStore(ual, assertionId, handlerId)
+            .catch((e) => this.handleError(handlerId, e.message, ERROR_TYPE.LOCAL_STORE_ERROR));
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
             HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
         );
-        return this.continueSequence(command.data, command.sequence);
-    }
 
-    getMetadataId(metadata) {
-        return metadata[0].split(' ')[0];
+        return this.continueSequence(command.data, command.sequence);
     }
 
     /**

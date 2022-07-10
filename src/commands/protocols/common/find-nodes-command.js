@@ -42,17 +42,20 @@ class FindNodesCommand extends Command {
             this.handleError(
                 handlerId,
                 `Unable to find enough nodes for ${networkProtocol}. Minimum replication factor: ${this.config.minimumReplicationFactor}`,
-                ERROR_TYPE.FIND_NODES_ERROR,
+                this.errorType,
                 true,
             );
             return Command.empty();
         }
 
-        const commandData = command.data;
-        commandData.leftoverNodes = closestNodes;
-        commandData.numberOfFoundNodes = closestNodes.length;
-
-        return this.continueSequence(commandData, command.sequence);
+        return this.continueSequence(
+            {
+                ...command.data,
+                leftoverNodes: closestNodes,
+                numberOfFoundNodes: closestNodes.length,
+            },
+            command.sequence,
+        );
     }
 
     /**

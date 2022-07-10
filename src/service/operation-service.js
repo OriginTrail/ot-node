@@ -92,11 +92,11 @@ class OperationService {
         );
     }
 
-    async scheduleOperationForLeftoverNodes(command, networkProtocolCommandName) {
+    async scheduleOperationForLeftoverNodes(commandData, leftoverNodes) {
         await this.commandExecutor.add({
-            name: networkProtocolCommandName,
+            name: `${this.operationName}ScheduleMessagesCommand`,
             delay: 0,
-            data: command.data,
+            data: { ...commandData, leftoverNodes },
             transactional: false,
         });
     }

@@ -123,8 +123,6 @@ class PublishController extends BaseController {
                     metadata: await this.dataService.metadataObjectToNquads(message.data.metadata),
                 });
 
-                commandSequence.push('validateStoreRequestCommand');
-                commandSequence.push('insertStoreRequestCommand');
                 commandSequence.push('handleStoreRequestCommand');
 
                 break;

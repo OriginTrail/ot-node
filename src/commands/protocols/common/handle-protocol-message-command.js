@@ -7,6 +7,7 @@ class HandleProtocolMessageCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.networkModuleManager = ctx.networkModuleManager;
+        this.handlerIdService = ctx.handlerIdService;
     }
 
     /**
@@ -34,10 +35,8 @@ class HandleProtocolMessageCommand extends Command {
         // overridden by subclasses
     }
 
-    async handleError(handlerId, keyword, errorMessage, errorName, markFailed, commandData) {
-        this.logger.error({
-            msg: errorMessage,
-        });
+    async handleError(handlerId, keyword, errorMessage, errorName, commandData) {
+        super.handleError(handlerId, errorMessage, errorName, true);
 
         await this.networkModuleManager.sendMessageResponse(
             this.operationService.getNetworkProtocol(),

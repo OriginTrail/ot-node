@@ -9,6 +9,10 @@ const {
 class PublishService extends OperationService {
     constructor(ctx) {
         super(ctx);
+        this.ualService = ctx.ualService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+        this.validationModuleManager = ctx.validationModuleManager;
 
         this.operationName = 'publish';
         this.networkProtocol = NETWORK_PROTOCOLS.STORE;
@@ -68,13 +72,68 @@ class PublishService extends OperationService {
                 await this.markOperationAsFailed(handlerId, 'Not replicated to enough nodes!');
                 this.logResponsesSummary(completedNumber, failedNumber);
             } else {
-                await this.scheduleOperationForLeftoverNodes(
-                    command,
-                    leftoverNodes,
-                    'publishScheduleMessagesCommand',
-                );
+                await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
             }
         }
+    }
+
+    async validateAssertion(ual, handlerId) {
+        this.logger.info(`Validating assertion with ual: ${ual}`);
+
+        const handlerIdData = await this.handlerIdService.getCachedHandlerIdData(handlerId);
+
+        const assertion = handlerIdData.data.concat(handlerIdData.metadata);
+
+        const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
+        const { issuer, assertionId } = await this.blockchainModuleManager.getAssetProofs(
+            blockchain,
+            contract,
+            tokenId,
+        );
+
+        const calculatedAssertionId = this.validationModuleManager.calculateRootHash(assertion);
+
+        if (assertionId !== calculatedAssertionId) {
+            throw Error(
+                `Invalid root hash. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`,
+            );
+        }
+        this.logger.debug('Root hash matches');
+
+        // const verify = await this.blockchainService.verify(assertionId, signature, walletInformation.publicKey);
+        //
+        // if (issuer !== issuer) {
+        //     throw Error(`Invalid issuer. Received value from blockchin: ${issuer}, from metadata: ${issuer}`);
+        // }
+        this.logger.debug('Issuer is valid');
+
+        this.logger.info(`Assertion with id: ${assertionId} passed all checks!`);
+
+        return assertionId;
+    }
+
+    async localStore(ual, assertionId, handlerId) {
+        const { metadata, data } = await this.handlerIdService.getCachedHandlerIdData(handlerId);
+        const assertionGraphName = `${ual}/${assertionId}`;
+        const dataGraphName = `${ual}/${assertionId}/data`;
+        const metadatadataGraphName = `${ual}/${assertionId}/metadata`;
+
+        const assertionNquads = [
+            `<${assertionGraphName}> <http://schema.org/metadata> <${metadatadataGraphName}> .`,
+            `<${assertionGraphName}> <http://schema.org/data> <${dataGraphName}> .`,
+        ];
+
+        this.logger.info(`Inserting assertion with ual:${ual} in database.`);
+
+        const insertPromises = [
+            this.tripleStoreModuleManager.insert(metadata.join('\n'), metadatadataGraphName),
+            this.tripleStoreModuleManager.insert(data.join('\n'), dataGraphName),
+            this.tripleStoreModuleManager.insert(assertionNquads.join('\n'), assertionGraphName),
+        ];
+
+        await Promise.all(insertPromises);
+
+        this.logger.info(`Assertion ${ual} has been successfully inserted!`);
     }
 }
 

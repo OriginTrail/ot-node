@@ -263,6 +263,7 @@ exports.ERROR_TYPE = {
     RESOLVE_INIT_ERROR: 'ResolveInitError',
     RESOLVE_REQUEST_ERROR: 'ResolveRequestError',
     LOCAL_RESOLVE_ERROR: 'LocalResolveError',
+    LOCAL_STORE_ERROR: 'LocalStoreError',
     HANDLE_STORE_ERROR: 'HandleStoreError',
     HANDLE_STORE_INIT_ERROR: 'HandleStoreInitError',
     HANDLE_STORE_REQUEST_ERROR: 'HandleStoreRequestError',

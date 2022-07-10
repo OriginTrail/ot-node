@@ -47,10 +47,7 @@ class ResolveService extends OperationService {
                 this.completedStatuses,
             );
             this.logResponsesSummary(completedNumber, failedNumber);
-        } else if (
-            failedNumber === numberOfResponses &&
-            (numberOfFoundNodes === numberOfResponses || numberOfNodesInBatch === numberOfResponses)
-        ) {
+        } else if (numberOfFoundNodes === failedNumber || numberOfNodesInBatch === failedNumber) {
             if (leftoverNodes.length === 0) {
                 await this.markOperationAsFailed(
                     handlerId,
@@ -58,11 +55,7 @@ class ResolveService extends OperationService {
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);
             } else {
-                await this.scheduleOperationForLeftoverNodes(
-                    command,
-                    leftoverNodes,
-                    'resolveCommand',
-                );
+                await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
             }
         }
     }
