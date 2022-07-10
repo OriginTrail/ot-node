@@ -59,10 +59,10 @@ class ResolveController extends BaseController {
     }
 
     async handleNetworkResolveRequest(message, remotePeerId) {
-        const { handlerId, keyword, messageType } = message.header;
+        const { handlerId, keywordUuid, messageType } = message.header;
         const { ual, assertionId } = message.data;
         let commandName;
-        const commandData = { ual, assertionId, remotePeerId, handlerId, keyword };
+        const commandData = { ual, assertionId, remotePeerId, handlerId, keywordUuid };
         switch (messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
                 commandName = 'handleResolveInitCommand';

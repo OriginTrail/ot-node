@@ -12,7 +12,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { ual, handlerId, keyword } = commandData;
+        const { ual, handlerId, keywordUuid } = commandData;
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
@@ -23,7 +23,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             .catch((e) =>
                 this.handleError(
                     handlerId,
-                    keyword,
+                    keywordUuid,
                     e.message,
                     ERROR_TYPE.VALIDATE_ASSERTION_ERROR,
                 ),
@@ -40,7 +40,12 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         await this.operationService
             .localStore(ual, assertionId, handlerId)
             .catch((e) =>
-                this.handleError(handlerId, keyword, e.message, ERROR_TYPE.INSERT_ASSERTION_ERROR),
+                this.handleError(
+                    handlerId,
+                    keywordUuid,
+                    e.message,
+                    ERROR_TYPE.INSERT_ASSERTION_ERROR,
+                ),
             );
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,

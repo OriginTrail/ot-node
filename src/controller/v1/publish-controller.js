@@ -106,10 +106,10 @@ class PublishController extends BaseController {
     }
 
     async handleNetworkStoreRequest(message, remotePeerId) {
-        const { handlerId, keyword, messageType } = message.header;
+        const { handlerId, keywordUuid, messageType } = message.header;
         const { assertionId, ual } = message.data;
         const commandSequence = [];
-        const commandData = { remotePeerId, handlerId, keyword, assertionId, ual };
+        const commandData = { remotePeerId, handlerId, keywordUuid, assertionId, ual };
         switch (messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
                 commandSequence.push('validateStoreInitCommand');
