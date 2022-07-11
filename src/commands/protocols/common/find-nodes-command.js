@@ -25,8 +25,7 @@ class FindNodesCommand extends Command {
             HANDLER_ID_STATUS.FIND_NODES_START,
         );
 
-        const foundNodes = await this.networkModuleManager.findNodes(keyword, networkProtocol);
-        const closestNodes = await this.networkModuleManager.rankNodes(foundNodes, keyword);
+        const closestNodes = await this.networkModuleManager.findNodes(keyword, networkProtocol);
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,

@@ -134,41 +134,15 @@ class Libp2pService {
 
     async findNodes(key, protocol) {
         const encodedKey = new TextEncoder().encode(key);
-        // Creates a DHT ID by hashing a given Uint8Array
-        const id = (await sha256.digest(encodedKey)).digest;
-        const nodes = this.node._dht.peerRouting.getClosestPeers(id);
-        const result = new Set();
+        const nodes = this.node._dht.peerRouting.getClosestPeers(encodedKey);
+        const result = [];
         for await (const node of nodes) {
             if (this.node.peerStore.peers.get(node._idB58String).protocols.includes(protocol)) {
-                result.add(node);
+                result.push(node);
             }
         }
 
-        return [...result];
-    }
-
-    async rankNodes(nodes, key) {
-        const encodedKey = new TextEncoder().encode(key);
-        const keyMultiHash = await sha256.digest(encodedKey);
-        const keyHash = keyMultiHash.digest;
-
-        const calculateNodeDistance = async (node) => {
-            const nodeBuffer = node.toBytes();
-            const nodeMultiHash = await sha256.digest(nodeBuffer);
-            const nodeHash = nodeMultiHash.digest;
-            const distance = uint8ArrayXor(keyHash, nodeHash);
-
-            return {
-                node,
-                distance,
-            };
-        };
-
-        const nodeDistances = await Promise.all(nodes.map((node) => calculateNodeDistance(node)));
-
-        nodeDistances.sort((a, b) => uint8ArrayCompare(a.distance, b.distance));
-
-        return nodeDistances.map((nodeDistance) => nodeDistance.node);
+        return result;
     }
 
     getPeers() {

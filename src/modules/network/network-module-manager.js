@@ -11,12 +11,6 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    async rankNodes(nodes, key, limit) {
-        if (this.initialized) {
-            return this.getImplementation().module.rankNodes(nodes, key, limit);
-        }
-    }
-
     getPeers() {
         if (this.initialized) {
             return this.getImplementation().module.getPeers();
