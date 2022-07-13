@@ -3,7 +3,12 @@ const uuid = require('uuid').v4;
 const { expect } = require('chai');
 
 const { describe, it } = require('mocha');
-const jwt = require('jsonwebtoken');
+
+const getPayload = (token) => {
+    const b64Payload = token.split('.')[1];
+
+    return JSON.parse(Buffer.from(b64Payload, 'base64').toString());
+};
 
 const jwtUtil = require('../../../../src/service/util/jwt-util');
 
@@ -25,7 +30,7 @@ describe('Auth JWT generation', async () => {
         const token = jwtUtil.generateJWT(tokenId);
 
         expect(token).not.be.null;
-        expect(jwt.decode(token).jti).to.be.equal(tokenId);
+        expect(getPayload(token).jti).to.be.equal(tokenId);
     });
 
     it('generates null if invalid tokenId is provided', () => {
@@ -39,12 +44,12 @@ describe('Auth JWT generation', async () => {
 
     it('generates payload without expiration date if expiresIn argument is not provided', () => {
         const token = jwtUtil.generateJWT(uuid());
-        expect(jwt.decode(token).exp).to.be.undefined;
+        expect(getPayload(token).exp).to.be.undefined;
     });
 
     it('generates payload with expiration date if expiresIn argument is  provided', () => {
         const token = jwtUtil.generateJWT(uuid(), '2d');
-        expect(jwt.decode(token).exp).to.be.ok;
+        expect(getPayload(token).exp).to.be.ok;
     });
 });
 
