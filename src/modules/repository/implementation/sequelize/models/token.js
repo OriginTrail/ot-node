@@ -8,11 +8,12 @@ module.exports = (sequelize, DataTypes) => {
          * The `models/index` file will call this method automatically.
          */
         static associate(models) {
-            Token.hasOne(models.User, { as: 'role' });
+            Token.hasOne(models.User, { as: 'user' });
         }
     }
     Token.init(
         {
+            id: { type: DataTypes.STRING, primaryKey: true },
             revoked: DataTypes.BOOLEAN,
             userId: {
                 type: DataTypes.INTEGER,
