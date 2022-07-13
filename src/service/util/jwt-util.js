@@ -52,6 +52,11 @@ class JwtUtil {
         return jwt.decode(token);
     }
 
+    /**
+     * Decodes token
+     * @param token
+     * @returns {{payload: any, signature: *, header: *}|*}
+     */
     decode(token) {
         return jwt.decode(token, { complete: true });
     }
