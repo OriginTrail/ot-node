@@ -10,7 +10,7 @@ class JwtUtil {
      * Generates new JWT token
      * @param uuid uuid from token table
      * @param expiresIn optional parameter. accepts values for ms package (https://www.npmjs.com/package/ms)
-     * @returns {string}
+     * @returns {string|null}
      */
     generateJWT(uuid, expiresIn) {
         if (!validate(uuid)) {
