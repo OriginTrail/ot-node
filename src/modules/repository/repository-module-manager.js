@@ -104,6 +104,12 @@ class RepositoryModuleManager extends BaseModuleManager {
             return this.getImplementation().module.saveToken(userId, tokenName, expiresAt);
         }
     }
+
+    isTokenRevoked(tokenId) {
+        if (this.initialized) {
+            return this.getImplementation().module.isTokenRevoked(tokenId);
+        }
+    }
 }
 
 module.exports = RepositoryModuleManager;

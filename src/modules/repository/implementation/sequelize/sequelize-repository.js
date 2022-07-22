@@ -201,6 +201,12 @@ class SequelizeRepository {
             name: tokenName,
         });
     }
+
+    async isTokenRevoked(tokenId) {
+        const token = await this.models.Token.findOne(tokenId);
+
+        return token.revoked;
+    }
 }
 
 module.exports = SequelizeRepository;
