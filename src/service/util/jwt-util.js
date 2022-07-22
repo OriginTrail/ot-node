@@ -12,7 +12,7 @@ class JwtUtil {
      * @param expiresIn optional parameter. accepts values for ms package (https://www.npmjs.com/package/ms)
      * @returns {string|null}
      */
-    generateJWT(uuid, expiresIn) {
+    generateJWT(uuid, expiresIn = null) {
         if (!validate(uuid)) {
             return null;
         }
