@@ -451,29 +451,39 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo -n "Opening firewall ports 22,8900,9000: "
 
-OUTPUT=$(ufw allow 22/tcp && ufw allow 8900 && ufw allow 9000 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error opening the firewall ports."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
+echo  "Fireawll tcp ports 8900(rpc) and 9000(libp2p) needs to be open on wan. You can choose to let the installer do this for you , or skip it and do this yourself:"
+read -r -p "Open ports 8900 and 9000 using ufw or skip this? [Y/n] " yn
+case $yn in
+    [Nn])
+        echo -n "Not opening any ports, you will need to do this yourself"
+	      ;;
 
-echo -n "Enabling the firewall: "
+    *)
+        echo -n "Opening firewall ports 8900,9000: "
+        OUTPUT=$(ufw allow 8900 && ufw allow 9000 2>&1)
+        if [[ $? -ne 0 ]]; then
+            echo -e "${RED}FAILED${NC}"
+            echo "There was an error opening the firewall ports."
+            echo $OUTPUT
+            exit 1
+        else
+            echo -e "${GREEN}SUCCESS${NC}"
+        fi
 
-OUTPUT=$(yes | ufw enable 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error enabling the firewall."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
+        echo -n "Enabling the firewall: "
+
+        OUTPUT=$(yes | ufw enable 2>&1)
+        if [[ $? -ne 0 ]]; then
+            echo -e "${RED}FAILED${NC}"
+            echo "There was an error enabling the firewall."
+            echo $OUTPUT
+            exit 1
+        else
+            echo -e "${GREEN}SUCCESS${NC}"
+        fi
+        ;;
+esac
 
 echo -n "Adding NODE_ENV=testnet to .env: "
 
