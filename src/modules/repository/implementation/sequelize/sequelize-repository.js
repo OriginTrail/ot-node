@@ -38,7 +38,7 @@ class SequelizeRepository {
             password: process.env.SEQUELIZE_REPOSITORY_PASSWORD,
         });
         // todo remove drop!!!
-        await connection.promise().query(`DROP DATABASE IF EXISTS \`${this.config.database}\`;`);
+        // await connection.promise().query(`DROP DATABASE IF EXISTS \`${this.config.database}\`;`);
         await connection
             .promise()
             .query(`CREATE DATABASE IF NOT EXISTS \`${this.config.database}\`;`);
@@ -211,16 +211,17 @@ class SequelizeRepository {
     }
 
     async getTokenAbilities(tokenId) {
-        return this.models.Token.findAll({
-            where: {
-                id: tokenId,
-            },
-            include: [
-                { model: this.models.User },
-                { model: this.models.Role },
-                { model: this.models.Ability, attributes: ['name'] },
-            ],
-        });
+        const abilities = await this.models.sequelize.query(
+            `SELECT a.name FROM token t
+INNER JOIN user u ON t.user_id = u.id
+INNER JOIN role r ON u.role_id = u.id
+INNER JOIN role_ability ra on r.id = ra.role_id
+INNER JOIN ability a on ra.ability_id = a.id
+WHERE t.id=$tokenId;`,
+            { bind: { tokenId }, type: Sequelize.QueryTypes.SELECT },
+        );
+
+        return abilities.map((e) => e.name);
     }
 }
 
