@@ -93,21 +93,27 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    getUser(username) {
+    async getUser(username) {
         if (this.initialized) {
             return this.getImplementation().module.getUser(username);
         }
     }
 
-    saveToken(userId, tokenName, expiresAt) {
+    async saveToken(userId, tokenName, expiresAt) {
         if (this.initialized) {
             return this.getImplementation().module.saveToken(userId, tokenName, expiresAt);
         }
     }
 
-    isTokenRevoked(tokenId) {
+    async isTokenRevoked(tokenId) {
         if (this.initialized) {
             return this.getImplementation().module.isTokenRevoked(tokenId);
+        }
+    }
+
+    async getTokenAbilities(tokenId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getTokenAbilities(tokenId);
         }
     }
 }

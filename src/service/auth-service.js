@@ -3,7 +3,7 @@ const jwtUtil = require('./util/jwt-util');
 
 module.exports = class AuthService {
     constructor(ctx) {
-        this._config = ctx.config.modules.authentication;
+        this._authConfig = ctx.config.modules.authentication;
         this._repository = ctx.repositoryModuleManager;
     }
 
@@ -25,6 +25,23 @@ module.exports = class AuthService {
     }
 
     /**
+     * Checks whether user whose token is provided has abilities for system operation
+     * @param token
+     * @param systemOperation
+     * @returns {Promise<boolean|*>}
+     */
+    async isAuthorized(token, systemOperation) {
+        if (!this._authConfig.tokenBasedAuthEnabled) {
+            return true;
+        }
+
+        const tokenId = jwtUtil.getPayload(token).jti;
+        const abilities = await this._repository.getTokenAbilities(tokenId);
+
+        return abilities.includes(systemOperation);
+    }
+
+    /**
      * Validates token
      * If ot-node is configured not to do a token based auth, it will return true
      * @param token
@@ -32,7 +49,7 @@ module.exports = class AuthService {
      * @private
      */
     _isTokenValid(token) {
-        if (!this._config.tokenBasedAuthEnabled) {
+        if (!this._authConfig.tokenBasedAuthEnabled) {
             return true;
         }
 
@@ -42,16 +59,16 @@ module.exports = class AuthService {
     /**
      * Checks whether provided ip is whitelisted in config
      * Returns false if ip based auth is disabled
-     * @param ip
+     * @param reqIp
      * @returns {boolean}
      * @private
      */
     _isIpWhitelisted(reqIp) {
-        if (!this._config.ipBasedAuthEnabled) {
+        if (!this._authConfig.ipBasedAuthEnabled) {
             return true;
         }
 
-        for (const whitelistedIp of this._config.ipWhitelist) {
+        for (const whitelistedIp of this._authConfig.ipWhitelist) {
             let isEqual = false;
 
             try {
@@ -76,7 +93,7 @@ module.exports = class AuthService {
      * @private
      */
     _isTokenRevoked(token) {
-        if (!this._config.tokenBasedAuthEnabled) {
+        if (!this._authConfig.tokenBasedAuthEnabled) {
             return false;
         }
 

@@ -159,6 +159,7 @@ const configObj = {
     modules: {
         authentication: {
             ipWhitelist: whitelistedIps,
+            publicActions: ['ASSERT'],
         },
     },
 };
@@ -172,9 +173,10 @@ const getConfig = (ipAuthEnabled, tokenAuthEnabled) => {
     return configClone;
 };
 
-const getRepository = (isTokenRevoked) =>
+const getRepository = (isTokenRevoked, tokenAbilitiesValid) =>
     sinon.createStubInstance(RepositoryModuleManager, {
         isTokenRevoked,
+        getTokenAbilities: tokenAbilitiesValid ? ['QUERY', 'PUBLISH', 'SEARCH'] : [],
     });
 
 const getIps = (isValid) => {
@@ -196,7 +198,7 @@ const getTokens = (isValid, isExpired) => {
     return invalidTokens;
 };
 
-describe('isAuthenticated()', async () => {
+describe('authenticate()', async () => {
     afterEach(() => {
         sinon.restore();
     });
@@ -228,4 +230,53 @@ describe('isAuthenticated()', async () => {
             }
         });
     }
+});
+
+describe('isAuthorized()', async () => {
+    afterEach(() => {
+        sinon.restore();
+    });
+
+    it('returns true if tokenBasedAuthentication is disabled', async () => {
+        const config = getConfig(false, false);
+        const authService = new AuthService({ config });
+
+        const isAuthorized = await authService.isAuthorized(null, null);
+        expect(isAuthorized).to.be.equal(true);
+    });
+
+    it('returns true if user has ability to perform an action', async () => {
+        const config = getConfig(false, true);
+        const repositoryModuleManager = getRepository(false, true);
+        const jwt = jwtUtil.generateJWT(uuid());
+        const authService = new AuthService({ config, repositoryModuleManager });
+
+        const isAuthorized = await authService.isAuthorized(jwt, 'QUERY');
+        expect(isAuthorized).to.be.equal(true);
+    });
+
+    it("returns false if user doesn't have ability to perform an action", async () => {
+        const config = getConfig(false, true);
+        const jwt = jwtUtil.generateJWT(uuid());
+
+        const authService = new AuthService({
+            config,
+            repositoryModuleManager: getRepository(false, true),
+        });
+        const isAuthorized = await authService.isAuthorized(jwt, 'OPERATION');
+        expect(isAuthorized).to.be.equal(false);
+    });
+
+    it('returns false if user roles are not found', async () => {
+        const config = getConfig(false, true);
+        const jwt = jwtUtil.generateJWT(uuid());
+
+        const authService = new AuthService({
+            config,
+            repositoryModuleManager: getRepository(false, false),
+        });
+
+        const isAuthorized = await authService.isAuthorized(jwt, 'PUBLISH');
+        expect(isAuthorized).to.be.equal(false);
+    });
 });
