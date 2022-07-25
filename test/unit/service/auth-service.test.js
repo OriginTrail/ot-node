@@ -159,7 +159,7 @@ const configObj = {
     modules: {
         authentication: {
             ipWhitelist: whitelistedIps,
-            publicActions: ['ASSERT'],
+            publicActions: ['QUERY'],
         },
     },
 };
@@ -278,5 +278,36 @@ describe('isAuthorized()', async () => {
 
         const isAuthorized = await authService.isAuthorized(jwt, 'PUBLISH');
         expect(isAuthorized).to.be.equal(false);
+    });
+});
+
+describe('isActionPublic()', async () => {
+    afterEach(() => {
+        sinon.restore();
+    });
+
+    it('returns true if route is public', async () => {
+        const config = getConfig(false, false);
+        const authService = new AuthService({ config });
+
+        const isPublic = authService.isActionPublic('QUERY');
+        expect(isPublic).to.be.equal(true);
+    });
+
+    it('returns false if route is not public', async () => {
+        const config = getConfig(false, false, true);
+        const authService = new AuthService({ config });
+
+        const isPublic = authService.isActionPublic('PUBLISH');
+        expect(isPublic).to.be.equal(false);
+    });
+
+    it('returns false if public routes are not defined', async () => {
+        const config = getConfig(false, false, true);
+        config.modules.authentication.publicActions = undefined;
+        const authService = new AuthService({ config });
+
+        const isPublic = authService.isActionPublic('PUBLISH');
+        expect(isPublic).to.be.equal(false);
     });
 });

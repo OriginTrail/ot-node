@@ -42,6 +42,19 @@ module.exports = class AuthService {
     }
 
     /**
+     * Determines whether action is listed in config.auth.publicActions
+     * @param actionName
+     * @returns {boolean}
+     */
+    isActionPublic(actionName) {
+        if (!Array.isArray(this._authConfig.publicActions)) {
+            return false;
+        }
+
+        return this._authConfig.publicActions.includes(actionName);
+    }
+
+    /**
      * Validates token
      * If ot-node is configured not to do a token based auth, it will return true
      * @param token
