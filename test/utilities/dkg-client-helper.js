@@ -37,8 +37,8 @@ class DkgClientHelper {
         });
     }
 
-    async resolve(ids) {
-        return this.client._resolveRequest({
+    async get(ids) {
+        return this.client._getRequest({
             ids,
         });
     }

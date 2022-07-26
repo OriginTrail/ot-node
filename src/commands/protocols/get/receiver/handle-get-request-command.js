@@ -5,22 +5,22 @@ const {
     HANDLER_ID_STATUS,
 } = require('../../../../constants/constants');
 
-class HandleResolveRequestCommand extends HandleProtocolMessageCommand {
+class HandleGetRequestCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.resolveService;
+        this.operationService = ctx.getService;
     }
 
     async prepareMessage(commandData) {
         const { ual, assertionId, handlerId } = commandData;
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.RESOLVE.RESOLVE_REMOTE_START,
+            HANDLER_ID_STATUS.GET.GET_REMOTE_START,
         );
 
         // TODO: validate assertionId / ual
 
-        const nquads = await this.operationService.localResolve(ual, assertionId, handlerId);
+        const nquads = await this.operationService.localGet(ual, assertionId, handlerId);
 
         const messageType =
             nquads.metadata.length && nquads.data.length
@@ -28,27 +28,27 @@ class HandleResolveRequestCommand extends HandleProtocolMessageCommand {
                 : NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.RESOLVE.RESOLVE_REMOTE_END,
+            HANDLER_ID_STATUS.GET.GET_REMOTE_END,
         );
 
         return { messageType, messageData: { nquads } };
     }
 
     /**
-     * Builds default handleResolveRequestCommand
+     * Builds default handleGetRequestCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'handleResolveRequestCommand',
+            name: 'handleGetRequestCommand',
             delay: 0,
             transactional: false,
-            errorType: ERROR_TYPE.HANDLE_RESOLVE_REQUEST_ERROR,
+            errorType: ERROR_TYPE.HANDLE_GET_REQUEST_ERROR,
         };
         Object.assign(command, map);
         return command;
     }
 }
 
-module.exports = HandleResolveRequestCommand;
+module.exports = HandleGetRequestCommand;

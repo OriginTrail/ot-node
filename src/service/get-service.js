@@ -1,25 +1,25 @@
 const OperationService = require('./operation-service');
 const {
-    RESOLVE_REQUEST_STATUS,
+    GET_REQUEST_STATUS,
     HANDLER_ID_STATUS,
-    RESOLVE_STATUS,
+    GET_STATUS,
     NETWORK_PROTOCOLS,
 } = require('../constants/constants');
 
-class ResolveService extends OperationService {
+class GetService extends OperationService {
     constructor(ctx) {
         super(ctx);
 
         this.dataService = ctx.dataService;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
 
-        this.operationName = 'resolve';
-        this.networkProtocol = NETWORK_PROTOCOLS.RESOLVE;
-        this.operationRequestStatus = RESOLVE_REQUEST_STATUS;
-        this.operationStatus = RESOLVE_STATUS;
+        this.operationName = 'get';
+        this.networkProtocol = NETWORK_PROTOCOLS.GET;
+        this.operationRequestStatus = GET_REQUEST_STATUS;
+        this.operationStatus = GET_STATUS;
         this.completedStatuses = [
-            HANDLER_ID_STATUS.RESOLVE.RESOLVE_FETCH_FROM_NODES_END,
-            HANDLER_ID_STATUS.RESOLVE.RESOLVE_END,
+            HANDLER_ID_STATUS.GET.GET_FETCH_FROM_NODES_END,
+            HANDLER_ID_STATUS.GET.GET_END,
         ];
     }
 
@@ -60,7 +60,7 @@ class ResolveService extends OperationService {
         }
     }
 
-    async localResolve(ual, assertionId, handlerId) {
+    async localGet(ual, assertionId, handlerId) {
         const graphName = `${ual}/${assertionId}`;
         const nquads = {
             metadata: '',
@@ -69,22 +69,22 @@ class ResolveService extends OperationService {
         const assertionExists = await this.tripleStoreModuleManager.assertionExists(graphName);
         if (!assertionExists) return nquads;
 
-        this.logger.debug(`Resolving assertion: ${graphName} for handlerId: ${handlerId}`);
+        this.logger.debug(`Getting assertion: ${graphName} for handlerId: ${handlerId}`);
 
-        const resolveAndNormalize = async (uri) => {
-            const resolved = await this.tripleStoreModuleManager.resolve(uri);
-            return this.dataService.toNQuads(resolved, 'application/n-quads');
+        const getAndNormalize = async (uri) => {
+            const getd = await this.tripleStoreModuleManager.get(uri);
+            return this.dataService.toNQuads(getd, 'application/n-quads');
         };
 
-        const resolvePromises = [
-            resolveAndNormalize(`${graphName}/metadata`).then((result) => {
+        const getPromises = [
+            getAndNormalize(`${graphName}/metadata`).then((result) => {
                 nquads.metadata = result;
             }),
-            resolveAndNormalize(`${graphName}/data`).then((result) => {
+            getAndNormalize(`${graphName}/data`).then((result) => {
                 nquads.data = result;
             }),
         ];
-        await Promise.allSettled(resolvePromises);
+        await Promise.allSettled(getPromises);
 
         const found = nquads.metadata.length && nquads.data.length;
 
@@ -104,4 +104,4 @@ class ResolveService extends OperationService {
     }
 }
 
-module.exports = ResolveService;
+module.exports = GetService;

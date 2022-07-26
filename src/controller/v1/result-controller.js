@@ -1,7 +1,7 @@
 const { HANDLER_ID_STATUS, ERROR_TYPE } = require('../../constants/constants');
 const BaseController = require('./base-controller');
 
-const availableOperations = ['publish', 'resolve', 'assertions:search', 'entities:search'];
+const availableOperations = ['publish', 'get', 'assertions:search', 'entities:search'];
 
 class ResultController extends BaseController {
     constructor(ctx) {
@@ -40,8 +40,8 @@ class ResultController extends BaseController {
                 switch (operation) {
                     case 'assertions:search':
                     case 'entities:search':
-                    case 'resolve':
-                        if (handlerRecord.status === HANDLER_ID_STATUS.RESOLVE.RESOLVE_END) {
+                    case 'get':
+                        if (handlerRecord.status === HANDLER_ID_STATUS.GET.GET_END) {
                             response.data = await this.handlerIdService.getCachedHandlerIdData(
                                 handlerId,
                             );

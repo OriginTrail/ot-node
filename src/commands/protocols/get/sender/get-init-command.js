@@ -1,10 +1,11 @@
-const ProtocolRequestCommand = require('../../common/protocol-request-command');
+const ProtocolInitCommand = require('../../common/protocol-init-command');
 const { ERROR_TYPE } = require('../../../../constants/constants');
 
-class ResolveRequestCommand extends ProtocolRequestCommand {
+class GetInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.resolveService;
+        this.operationService = ctx.getService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
     async prepareMessage(command) {
@@ -14,21 +15,21 @@ class ResolveRequestCommand extends ProtocolRequestCommand {
     }
 
     /**
-     * Builds default resolveRequest
+     * Builds default getInitCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'resolveRequestCommand',
+            name: 'getInitCommand',
             delay: 0,
             retries: 0,
             transactional: false,
-            errorType: ERROR_TYPE.RESOLVE_REQUEST_ERROR,
+            errorType: ERROR_TYPE.GET_INIT_ERROR,
         };
         Object.assign(command, map);
         return command;
     }
 }
 
-module.exports = ResolveRequestCommand;
+module.exports = GetInitCommand;

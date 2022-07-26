@@ -1,22 +1,22 @@
 const { NETWORK_MESSAGE_TYPES, HANDLER_ID_STATUS } = require('../../constants/constants');
 const BaseController = require('./base-controller');
 
-class ResolveController extends BaseController {
+class GetController extends BaseController {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.handlerIdService = ctx.handlerIdService;
-        this.resolveService = ctx.resolveService;
+        this.getService = ctx.getService;
     }
 
-    async handleHttpApiResolveRequest(req, res) {
+    async handleHttpApiGetRequest(req, res) {
         const handlerId = await this.handlerIdService.generateHandlerId(
-            HANDLER_ID_STATUS.RESOLVE.RESOLVE_START,
+            HANDLER_ID_STATUS.GET.GET_START,
         );
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.RESOLVE.RESOLVE_INIT_START,
+            HANDLER_ID_STATUS.GET.GET_INIT_START,
         );
 
         this.returnResponse(res, 202, {
@@ -24,14 +24,14 @@ class ResolveController extends BaseController {
         });
 
         await this.repositoryModuleManager.createOperationRecord(
-            this.resolveService.getOperationName(),
+            this.getService.getOperationName(),
             handlerId,
-            this.resolveService.getOperationStatus().IN_PROGRESS,
+            this.getService.getOperationStatus().IN_PROGRESS,
         );
 
         const { id } = req.query;
 
-        this.logger.info(`Resolve for ${id} with handler id ${handlerId} initiated.`);
+        this.logger.info(`Get for ${id} with handler id ${handlerId} initiated.`);
 
         const commandData = {
             handlerId,
@@ -40,8 +40,8 @@ class ResolveController extends BaseController {
 
         const commandSequence = [
             'getLatestAssertionIdCommand',
-            'localResolveCommand',
-            'networkResolveCommand',
+            'localGetCommand',
+            'networkGetCommand',
         ];
 
         await this.commandExecutor.add({
@@ -54,21 +54,21 @@ class ResolveController extends BaseController {
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.RESOLVE.RESOLVE_INIT_END,
+            HANDLER_ID_STATUS.GET.GET_INIT_END,
         );
     }
 
-    async handleNetworkResolveRequest(message, remotePeerId) {
+    async handleNetworkGetRequest(message, remotePeerId) {
         const { handlerId, keywordUuid, messageType } = message.header;
         const { ual, assertionId } = message.data;
         let commandName;
         const commandData = { ual, assertionId, remotePeerId, handlerId, keywordUuid };
         switch (messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
-                commandName = 'handleResolveInitCommand';
+                commandName = 'handleGetInitCommand';
                 break;
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
-                commandName = 'handleResolveRequestCommand';
+                commandName = 'handleGetRequestCommand';
                 break;
             default:
                 throw Error('unknown messageType');
@@ -84,4 +84,4 @@ class ResolveController extends BaseController {
     }
 }
 
-module.exports = ResolveController;
+module.exports = GetController;

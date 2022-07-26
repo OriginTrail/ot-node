@@ -53,6 +53,7 @@
             "blockchainTitle": "Polygon",
             "networkId": "polygon::testnet",
             "rpcEndpoints": [
+              "wss://polygon-mumbai.g.alchemy.com/v2/q8PTkz1zFteWTuMLD3gQrPwPZjutgIKy",
               "https://rpc-mumbai.maticvigil.com/",
               "https://matic-mumbai.chainstacklabs.com",
               "https://rpc-mumbai.matic.today",

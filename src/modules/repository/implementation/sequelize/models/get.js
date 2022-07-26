@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
-    const resolve_response = sequelize.define(
-        'resolve_response',
+    const get = sequelize.define(
+        'get',
         {
             id: {
                 type: DataTypes.INTEGER,
@@ -8,16 +8,14 @@ module.exports = (sequelize, DataTypes) => {
                 autoIncrement: true,
             },
             handler_id: DataTypes.UUID,
-            keyword: DataTypes.STRING,
             status: DataTypes.STRING,
-            message: DataTypes.TEXT,
             created_at: DataTypes.DATE,
             updated_at: DataTypes.DATE,
         },
         {},
     );
-    resolve_response.associate = (models) => {
+    get.associate = (models) => {
         // associations can be defined here
     };
-    return resolve_response;
+    return get;
 };

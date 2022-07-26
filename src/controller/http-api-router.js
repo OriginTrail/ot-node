@@ -1,12 +1,12 @@
 const publishRequestSchema = require('./v1/request-schema/publish-request');
-const resolveRequestSchema = require('./v1/request-schema/resolve-request');
+const getRequestSchema = require('./v1/request-schema/get-request');
 
 class HttpApiRouter {
     constructor(ctx) {
         this.config = ctx.config;
         this.httpClientModuleManager = ctx.httpClientModuleManager;
 
-        this.resolveController = ctx.resolveController;
+        this.getController = ctx.getController;
         this.publishController = ctx.publishController;
         this.searchController = ctx.searchController;
         this.resultController = ctx.resultController;
@@ -45,9 +45,9 @@ class HttpApiRouter {
         // });
         //
         this.httpClientModuleManager.get(
-            '/resolve',
+            '/get',
             (req, res) => {
-                this.resolveController.handleHttpApiResolveRequest(req, res);
+                this.getController.handleHttpApiGetRequest(req, res);
             },
             { rateLimit: true },
         );

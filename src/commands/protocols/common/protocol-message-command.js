@@ -37,8 +37,8 @@ class ProtocolMessageCommand extends Command {
 
     // eslint-disable-next-line no-unused-vars
     async prepareMessage(command) {
-        // overridden by store-init-command, resolve-init-command, search-init-command,
-        //               store-request-command, resolve-request-command, search-request-command
+        // overridden by store-init-command, get-init-command, search-init-command,
+        //               store-request-command, get-request-command, search-request-command
     }
 
     async sendProtocolMessage(command, message, messageType) {

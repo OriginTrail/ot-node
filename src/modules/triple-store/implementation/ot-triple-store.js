@@ -90,7 +90,7 @@ class OtTripleStore {
         return this.ask(query);
     }
 
-    async resolve(graphName) {
+    async get(graphName) {
         const escapedGraphName = this.cleanEscapeCharacter(graphName);
 
         const query = `PREFIX schema: <http://schema.org/>

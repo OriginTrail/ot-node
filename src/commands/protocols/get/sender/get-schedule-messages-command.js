@@ -1,12 +1,12 @@
 const ProtocolScheduleMessagesCommand = require('../../common/protocol-schedule-messages-command');
 const { HANDLER_ID_STATUS, ERROR_TYPE } = require('../../../../constants/constants');
 
-class ResolveScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
+class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.resolveService;
+        this.operationService = ctx.getService;
 
-        this.startEvent = HANDLER_ID_STATUS.RESOLVE.RESOLVE_FETCH_FROM_NODES_START;
+        this.startEvent = HANDLER_ID_STATUS.GET.GET_FETCH_FROM_NODES_START;
     }
 
     getNextCommandData(command) {
@@ -18,20 +18,20 @@ class ResolveScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     }
 
     /**
-     * Builds default resolveScheduleMessagesCommand
+     * Builds default getScheduleMessagesCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'resolveScheduleMessagesCommand',
+            name: 'getScheduleMessagesCommand',
             delay: 0,
             transactional: false,
-            errorType: ERROR_TYPE.RESOLVE_START_ERROR,
+            errorType: ERROR_TYPE.GET_START_ERROR,
         };
         Object.assign(command, map);
         return command;
     }
 }
 
-module.exports = ResolveScheduleMessagesCommand;
+module.exports = GetScheduleMessagesCommand;
