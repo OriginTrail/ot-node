@@ -8,6 +8,8 @@ class GetLatestAssertionIdCommand extends Command {
         this.config = ctx.config;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.ualService = ctx.ualService;
+
+        this.errorType = ERROR_TYPE.GET.GET_ASSERTION_ID_ERROR;
     }
 
     /**
@@ -63,7 +65,6 @@ class GetLatestAssertionIdCommand extends Command {
             name: 'getLatestAssertionIdCommand',
             delay: 0,
             transactional: false,
-            errorType: ERROR_TYPE.GET_ASSERTION_COMMAND,
         };
         Object.assign(command, map);
         return command;

@@ -9,8 +9,6 @@ class FindNodesCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.networkModuleManager = ctx.networkModuleManager;
-
-        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_FIND_NODES_ERROR;
     }
 
     /**
@@ -18,8 +16,8 @@ class FindNodesCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { keyword, handlerId, networkProtocol } = command.data;
-
+        const { keyword, handlerId, networkProtocol, errorType } = command.data;
+        this.errorType = errorType;
         this.logger.debug(`Searching for closest node(s) for keyword ${keyword}`);
 
         await this.handlerIdService.updateHandlerIdStatus(

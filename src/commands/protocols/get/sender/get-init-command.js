@@ -6,6 +6,8 @@ class GetInitCommand extends ProtocolInitCommand {
         super(ctx);
         this.operationService = ctx.getService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+
+        this.errorType = ERROR_TYPE.GET.GET_INIT_ERROR;
     }
 
     async prepareMessage(command) {
@@ -25,7 +27,6 @@ class GetInitCommand extends ProtocolInitCommand {
             delay: 0,
             retries: 0,
             transactional: false,
-            errorType: ERROR_TYPE.GET_INIT_ERROR,
         };
         Object.assign(command, map);
         return command;

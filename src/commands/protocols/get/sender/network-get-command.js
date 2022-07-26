@@ -1,9 +1,12 @@
 const NetworkProtocolCommand = require('../../common/network-protocol-command');
+const { ERROR_TYPE } = require('../../../../constants/constants');
 
 class NetworkGetCommand extends NetworkProtocolCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.getService;
+
+        this.errorType = ERROR_TYPE.GET.GET_NETWORK_ERROR;
     }
 
     getKeywords(command) {

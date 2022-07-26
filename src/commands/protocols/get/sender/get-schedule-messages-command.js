@@ -6,6 +6,7 @@ class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         super(ctx);
         this.operationService = ctx.getService;
 
+        this.errorType = ERROR_TYPE.GET.GET_START_ERROR;
         this.startEvent = HANDLER_ID_STATUS.GET.GET_FETCH_FROM_NODES_START;
     }
 
@@ -27,7 +28,6 @@ class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
             name: 'getScheduleMessagesCommand',
             delay: 0,
             transactional: false,
-            errorType: ERROR_TYPE.GET_START_ERROR,
         };
         Object.assign(command, map);
         return command;

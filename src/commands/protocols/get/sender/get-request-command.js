@@ -5,6 +5,8 @@ class GetRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.getService;
+
+        this.errorType = ERROR_TYPE.GET.GET_REQUEST_ERROR;
     }
 
     async prepareMessage(command) {
@@ -24,7 +26,6 @@ class GetRequestCommand extends ProtocolRequestCommand {
             delay: 0,
             retries: 0,
             transactional: false,
-            errorType: ERROR_TYPE.GET_REQUEST_ERROR,
         };
         Object.assign(command, map);
         return command;

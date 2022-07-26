@@ -8,6 +8,8 @@ class LocalGetCommand extends Command {
         this.handlerIdService = ctx.handlerIdService;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.getService = ctx.getService;
+
+        this.errorType = ERROR_TYPE.GET.GET_LOCAL_ERROR;
     }
 
     /**
@@ -55,7 +57,6 @@ class LocalGetCommand extends Command {
             name: 'localGetCommand',
             delay: 0,
             transactional: false,
-            errorType: ERROR_TYPE.LOCAL_GET_ERROR,
         };
         Object.assign(command, map);
         return command;
