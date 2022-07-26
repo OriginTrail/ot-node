@@ -9,6 +9,9 @@ const BytesUtilities = require('../bytes-utilities');
 const keccak256 = require('keccak256')
 const web3 = require('web3')
 const {MerkleTree} = require('merkletreejs')
+const {
+    calculateRoot
+} = require('assertion-tools');
 
 const _slicedToArray = (function () {
     function sliceIterator(arr, i) {
@@ -51,30 +54,13 @@ class MerkleValidation {
         this.logger = logger;
     }
 
-    calculateHash(assertion) {
-        let stringifiedAssertion = assertion;
-        if (typeof assertion !== 'string' && !(assertion instanceof String)) {
-            stringifiedAssertion = sortedStringify(assertion);
-        }
-        const hash = SHA256(stringifiedAssertion);
-
-        return hash.toString();
+    calculateRoot(assertion) {
+        return calculateRoot(assertion);
     }
 
-    calculateRootHash(nquadsArray) {
-        nquadsArray.sort();
-        const leaves = nquadsArray.map((element, index) => keccak256(web3.utils.encodePacked(
-            keccak256(element),
-            index
-        )))
-        const tree = new MerkleTree(leaves, keccak256, {sortPairs: true})
-        return tree.getRoot().toString('hex')
-    }
-
-    getRootHashProof(nquadsArray, challenge) {
+    getMerkleProof(nquadsArray, challenge) {
         nquadsArray.sort();
 
-        console.log(nquadsArray)
         const leaves = nquadsArray.map((element, index) => keccak256(web3.utils.encodePacked(
             keccak256(element),
             index
@@ -82,61 +68,8 @@ class MerkleValidation {
         const tree = new MerkleTree(leaves, keccak256, {sortPairs: true})
 
         const proof = tree.getProof(leaves[parseInt(challenge, 10)]);
-        const stateCommitHash = tree.getRoot().toString('hex')
-
-        // eslint-disable-next-line no-console
-        console.log(tree.verify(proof, leaves[parseInt(challenge, 10)], stateCommitHash))
-
 
         return {leaf: leaves[parseInt(challenge, 10)], proof: proof.map(x => x.data)};
-    }
-
-    async sign(message, privateKey) {
-        const result = await web3.eth.accounts.sign(message, privateKey);
-        return result.signature;
-    }
-
-    async verify(message, signature, publicKey) {
-        const result = await web3.eth.accounts.recover(message, signature);
-        return publicKey === result;
-    }
-
-    getMerkleTree(rdf) {
-        const tree = new MerkleTools({
-            hashType: 'sha256',
-        });
-        rdf.forEach((leaf, index)=>{
-            const leafHash = this.calculateHash(leaf);
-            tree.addLeaf(leafHash + index, true);
-        });
-        tree.makeTree();
-        return tree;
-    }
-
-    async getProofs(rdf, nquads) {
-        rdf.sort();
-        const tree = this.getMerkleTree(rdf);
-        const result = [];
-        for (let triple of nquads) {
-            triple = triple.replace(/_:genid(.){37}/gm, '_:$1');
-            const index = rdf.indexOf(triple);
-            const proof = tree.getProof(index);
-            result.push({ triple, tripleHash: this.calculateHash(triple), proof });
-        }
-
-        return result;
-    }
-
-    validateProof(triples, proofs, rootHash) {
-        const tree = new MerkleTools();
-        for (let i = 0; i < triples.length; i += 1) {
-            const leaf = SHA256(triples[i]).toString();
-            const verified = tree.validateProof(proofs[i], leaf, rootHash);
-            if (!verified) {
-                throw new Error(`Invalid proofs for triple: ${triples[i]}`);
-            }
-        }
-        return `0x${rootHash}`;
     }
 }
 

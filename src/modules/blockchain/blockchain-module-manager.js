@@ -77,46 +77,15 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getReward (UAI, epoch) {
+    async getReward(UAI, epoch) {
         if (this.initialized) {
             return this.getImplementation().module.getReward(UAI, epoch);
         }
     }
 
-    async createAssertionRecord(stateCommitHash, rootHash, issuer) {
+    async getLatestCommitHash(blockchain, contract, tokenId) {
         if (this.initialized) {
-            return this.getImplementation().module.createAssertionRecord(stateCommitHash, rootHash, issuer);
-        }
-    }
-
-    async registerAsset(uai, type, alsoKnownAs, stateCommitHash, rootHash, tokenAmount) {
-        if (this.initialized) {
-            return this.getImplementation().module.registerAsset(
-                uai,
-                type,
-                alsoKnownAs,
-                stateCommitHash,
-                rootHash,
-                tokenAmount,
-            );
-        }
-    }
-
-    async updateAsset(UAI, newStateCommitHash, rootHash) {
-        if (this.initialized) {
-            return this.getImplementation().module.updateAsset(UAI, newStateCommitHash, rootHash);
-        }
-    }
-
-    async getAssertionProofs(assertionId) {
-        if (this.initialized) {
-            return this.getImplementation().module.getAssertionProofs(assertionId);
-        }
-    }
-
-    async getAssetProofs(blockchain, contract, tokenId) {
-        if (this.initialized) {
-            return this.getImplementation().module.getAssetProofs(blockchain, contract, tokenId);
+            return this.getImplementation().module.getLatestCommitHash(blockchain, contract, tokenId);
         }
     }
 

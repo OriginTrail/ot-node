@@ -38,7 +38,7 @@ class AnswerChallengeCommand extends Command {
             const challenge = await this.blockchainModuleManager.getChallenge(tokenId, epoch);
 
             const nquadsArray = data.concat(metadata)
-            const {proof, leaf} = this.validationModuleManager.getRootHashProof(nquadsArray, challenge);
+            const {proof, leaf} = this.validationModuleManager.getMerkleProof(nquadsArray, challenge);
             await this.blockchainModuleManager.answerChallenge(tokenId, epoch, proof, leaf, 0);
             if (epoch > 0) {
                 await this.blockchainModuleManager.getReward(tokenId, epoch);

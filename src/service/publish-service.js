@@ -88,29 +88,21 @@ class PublishService extends OperationService {
         const assertion = operationIdData.data.concat(operationIdData.metadata);
 
         const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
-        const { issuer, assertionId } = await this.blockchainModuleManager.getAssetProofs(
+        const assertionId = await this.blockchainModuleManager.getLatestCommitHash(
             blockchain,
             contract,
             tokenId,
         );
 
-        const calculatedAssertionId = this.validationModuleManager.calculateRootHash(assertion);
+        const calculatedAssertionId = this.validationModuleManager.calculateRoot(assertion);
 
         if (assertionId !== calculatedAssertionId) {
             throw Error(
                 `Invalid root hash. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`,
             );
         }
-        this.logger.debug('Root hash matches');
 
-        // const verify = await this.blockchainService.verify(assertionId, signature, walletInformation.publicKey);
-        //
-        // if (issuer !== issuer) {
-        //     throw Error(`Invalid issuer. Received value from blockchin: ${issuer}, from metadata: ${issuer}`);
-        // }
-        this.logger.debug('Issuer is valid');
-
-        this.logger.info(`Assertion with id: ${assertionId} passed all checks!`);
+        this.logger.info(`Assertion integrity validated!`);
 
         return assertionId;
     }

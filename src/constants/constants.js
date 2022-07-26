@@ -11,6 +11,13 @@ exports.DID = 'DID';
  */
 exports.MAX_FILE_SIZE = 2621440;
 
+
+/**
+ * @constant {number} INIT_STAKE_AMOUNT
+ * - Initial stake amount for profile creation
+ */
+exports.INIT_STAKE_AMOUNT = 3000;
+
 /**
  * @constant {object} SERVICE_API_SLOW_DOWN
  * - Express slow down configuration constants
