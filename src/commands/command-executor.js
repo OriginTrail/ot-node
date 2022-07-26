@@ -50,6 +50,7 @@ class CommandExecutor {
                         );
                     }
 
+                    // eslint-disable-next-line no-await-in-loop
                     await sleep(1000);
                 }
                 await this._execute(command);
@@ -135,7 +136,7 @@ class CommandExecutor {
         }
 
         try {
-            const result = await this._process(async (transaction) => {
+            const processResult = await this._process(async (transaction) => {
                 await this._update(
                     command,
                     {
@@ -190,11 +191,15 @@ class CommandExecutor {
                 };
             }, command.transactional);
 
-            if (!result.repeat && !result.retry) {
+            if (!processResult.repeat && !processResult.retry) {
                 if (this.verboseLoggingEnabled) {
                     this.logger.trace(`Command ${command.name} and ID ${command.id} processed.`);
                 }
-                result.children.forEach(async (e) => this.add(e, e.delay, false));
+                const addPromises = [];
+                processResult.children.forEach((e) =>
+                    addPromises.push(this.add(e, e.delay, false)),
+                );
+                await Promise.all(addPromises);
             }
         } catch (e) {
             if (this.verboseLoggingEnabled) {
@@ -284,20 +289,22 @@ class CommandExecutor {
      * Handles command retry
      * @param command
      * @param handler
-     * @return {Promise<void>}
      * @private
      */
     async _handleRetry(retryCommand, handler) {
         const command = retryCommand;
-        if (command.retries > 0) {
+        if (command.retries > 1) {
             command.data = handler.pack(command.data);
-            await CommandExecutor._update(command, {
+            await this._update(command, {
                 status: STATUS.pending,
                 retries: command.retries - 1,
             });
-            await this.add(command, command.delay ? command.delay : 0, false);
+            const period = command.period ? command.period : 0;
+            const delay = command.delay ? command.delay : 0;
+            await this.add(command, period + delay, false);
             return Command.retry();
         }
+        await handler.retryFinished(command);
         return Command.empty();
     }
 

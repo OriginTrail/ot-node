@@ -1,5 +1,5 @@
 const Command = require('../command');
-const { ERROR_TYPE, HANDLER_ID_STATUS } = require('../../constants/constants');
+const { ERROR_TYPE, HANDLER_ID_STATUS, NETWORK_PROTOCOLS } = require('../../constants/constants');
 
 class FindNodesCommand extends Command {
     constructor(ctx) {
@@ -16,28 +16,25 @@ class FindNodesCommand extends Command {
      * @param command
      */
     async execute(command) {
-
         const { handlerId, networkProtocol } = command.data;
-
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.SEARCHING_FOR_NODES,
-        );
 
         const keys = this.extractKeys(command.data);
 
         this.logger.info(
-            `Searching for closest ${this.config.replicationFactor} node(s) for keywords: ${keys.toString()}`,
+            `Searching for closest ${
+                this.config.replicationFactor
+            } node(s) for keywords: ${keys.toString()}`,
         );
 
         const findNodesPromises = [];
 
         keys.forEach((key) => {
-            findNodesPromises.push(this.findRankedNodes(key, networkProtocol));
+            findNodesPromises.push(this.findRankedNodes(key, networkProtocol, handlerId));
         });
 
         const results = await Promise.all(findNodesPromises);
 
+        // todo final nodes set is unordered we should handle it somehow
         let nodes = new Set();
         for (const closestNodes of results) {
             for (const node of closestNodes) {
@@ -45,30 +42,62 @@ class FindNodesCommand extends Command {
             }
         }
         nodes = [...nodes];
+        this.logger.debug(`Found ${nodes.length} of unique node(s).`);
+        if (
+            networkProtocol === NETWORK_PROTOCOLS.PUBLISH &&
+            nodes.length < this.config.minimumReplicationFactor
+        ) {
+            this.handleError(
+                handlerId,
+                `Unable to find enough node for ${networkProtocol}. Minimum replication factor: ${this.config.minimumReplicationFactor}`,
+                ERROR_TYPE.FIND_NODES_ERROR,
+                true,
+            );
+            return Command.empty();
+        }
 
         const commandData = command.data;
-        commandData.nodes = nodes;
-
+        commandData.nodes = nodes.slice(0, this.config.minimumReplicationFactor);
+        commandData.numberOfFoundNodes = nodes.length;
+        if (this.config.minimumReplicationFactor < nodes.length) {
+            commandData.leftoverNodes = nodes.slice(this.config.minimumReplicationFactor);
+        } else {
+            commandData.leftoverNodes = [];
+        }
+        this.logger.debug(
+            `Trying to ${networkProtocol} to first batch of ${commandData.nodes.length} nodes, leftover for retry: ${commandData.leftoverNodes.length}`,
+        );
         return this.continueSequence(commandData, command.sequence);
     }
 
-    async findRankedNodes(key, protocol) {
+    async findRankedNodes(key, protocol, handlerId) {
         this.logger.debug(
             `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${key}`,
+        );
+
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.FIND_NODES_START,
         );
 
         const foundNodes = await this.networkModuleManager.findNodes(key, protocol);
 
         const closestNodes = await this.networkModuleManager.rankNodes(foundNodes, key);
         this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${key}`);
+
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.FIND_NODES_END,
+        );
+
         return closestNodes;
     }
 
     extractKeys(commandData) {
-        const acceptableKeywords = ['id', 'query', 'ual', 'assertionId'];
+        const acceptableKeywords = ['query', 'ual', 'assertionId'];
         const keys = [];
-        for(const property in commandData) {
-            if(acceptableKeywords.includes(property)){
+        for (const property in commandData) {
+            if (acceptableKeywords.includes(property)) {
                 keys.push(commandData[property]);
             }
         }

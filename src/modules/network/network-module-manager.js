@@ -1,4 +1,3 @@
-const rank = require('./implementation/kad-identity-ranking');
 const BaseModuleManager = require('../base-module-manager');
 
 class NetworkModuleManager extends BaseModuleManager {

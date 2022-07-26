@@ -17,12 +17,12 @@ class SequelizeRepository {
     }
 
     setEnvParameters() {
-        const repositoryPassword = process.env.REPOSITORY_PASSWORD;
         process.env.SEQUELIZE_REPOSITORY_USER = this.config.user;
-        process.env.SEQUELIZE_REPOSITORY_PASSWORD =
-            repositoryPassword || repositoryPassword === ''
-                ? repositoryPassword
-                : this.config.password;
+        const useEnvPassword =
+            process.env.REPOSITORY_PASSWORD && process.env.REPOSITORY_PASSWORD !== '';
+        process.env.SEQUELIZE_REPOSITORY_PASSWORD = useEnvPassword
+            ? process.env.REPOSITORY_PASSWORD
+            : this.config.password;
         process.env.SEQUELIZE_REPOSITORY_DATABASE = this.config.database;
         process.env.SEQUELIZE_REPOSITORY_HOST = this.config.host;
         process.env.SEQUELIZE_REPOSITORY_PORT = this.config.port;
@@ -159,6 +159,71 @@ class SequelizeRepository {
         });
     }
 
+    async getNumberOfNodesFoundForPublish(publishId) {
+        return this.models.publish.findOne({
+            attributes: ['nodes_found'],
+            where: {
+                id: publishId,
+            },
+        });
+    }
+
+    // RESOLVE
+    async createResolveRecord(handlerId, status) {
+        return this.models.resolve.create({
+            handler_id: handlerId,
+            status,
+        });
+    }
+
+    async getResolveStatus(handlerId) {
+        return this.models.resolve.findOne({
+            attributes: ['status'],
+            where: {
+                handler_id: handlerId,
+            },
+        });
+    }
+
+    async updateResolveStatus(handlerId, status) {
+        await this.models.resolve.update(
+            { status },
+            {
+                where: {
+                    handler_id: handlerId,
+                },
+            },
+        );
+    }
+
+    // PUBLISH
+    async createPublishRecord(handlerId, status) {
+        return this.models.publish.create({
+            handler_id: handlerId,
+            status,
+        });
+    }
+
+    async getPublishStatus(handlerId) {
+        return this.models.publish.findOne({
+            attributes: ['status'],
+            where: {
+                handler_id: handlerId,
+            },
+        });
+    }
+
+    async updatePublishStatus(handlerId, status) {
+        await this.models.publish.update(
+            { status },
+            {
+                where: {
+                    handler_id: handlerId,
+                },
+            },
+        );
+    }
+
     // PUBLISH RESPONSE
     async createPublishResponseRecord(status, handlerId, message) {
         await this.models.publish_response.create({
@@ -184,6 +249,64 @@ class SequelizeRepository {
             },
         });
     }
+
+    async countPublishResponseStatuses(handlerId) {
+        return this.models.publish_response.findAll({
+            attributes: [
+                'status',
+                [Sequelize.fn('COUNT', Sequelize.col('status')), 'count_status'],
+            ],
+            group: 'status',
+            where: {
+                handler_id: handlerId,
+            },
+        });
+    }
+
+    // RESOLVE RESPONSE
+    async createResolveResponseRecord(status, handlerId, errorMessage) {
+        await this.models.resolve_response.create({
+            status,
+            errorMessage,
+            handler_id: handlerId,
+        });
+    }
+
+    async getResolveResponsesStatuses(handlerId) {
+        return this.models.resolve_response.findAll({
+            attributes: ['status'],
+            where: {
+                handler_id: handlerId,
+            },
+        });
+    }
+
+    // EVENT
+    async createEventRecord(handlerId, name, timestamp, value1, value2, value3) {
+        return this.models.event.create({
+            handler_id: handlerId,
+            name,
+            timestamp,
+            value1,
+            value2,
+            value3,
+        });
+    }
+
+    async getAllEvents() {
+        return this.models.event.findAll();
+    }
+
+    async destroyEvents(ids) {
+        await this.models.event.destroy({
+            where: {
+                id: {
+                    [Sequelize.Op.in]: ids,
+                },
+            },
+        });
+    }
+
 
     async getUser(username) {
         return this.models.User.findOne({

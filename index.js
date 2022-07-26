@@ -29,24 +29,25 @@ process.env.NODE_ENV =
     } catch (e) {
         console.error(`Error occurred while start ot-node, error message: ${e}. ${e.stack}`);
         console.error(`Trying to recover from older version`);
+        if (process.env.NODE_ENV !== 'development') {
+            const rootPath = path.join(appRootPath.path, '..');
+            const oldVersionsDirs = (await fs.promises.readdir(rootPath, { withFileTypes: true }))
+                .filter((dirent) => dirent.isDirectory())
+                .map((dirent) => dirent.name)
+                .filter((name) => semver.valid(name) && !appRootPath.path.includes(name));
 
-        const rootPath = path.join(appRootPath.path, '..');
-        const oldVersionsDirs = (await fs.promises.readdir(rootPath, { withFileTypes: true }))
-            .filter((dirent) => dirent.isDirectory())
-            .map((dirent) => dirent.name)
-            .filter((name) => semver.valid(name) && !appRootPath.path.includes(name));
+            if (oldVersionsDirs.length === 0) {
+                console.error(
+                    `Failed to start OT-Node, no backup code available. Error message: ${e.message}`,
+                );
+                process.exit(1);
+            }
 
-        if (oldVersionsDirs.length === 0) {
-            console.error(
-                `Failed to start OT-Node, no backup code available. Error message: ${e.message}`,
-            );
-            process.exit(1);
+            const oldVersion = oldVersionsDirs.sort(semver.compare).pop();
+            const oldversionPath = path.join(rootPath, oldVersion);
+            execSync(`ln -sfn ${oldversionPath} ${rootPath}/current`);
+            await fs.promises.rm(appRootPath.path, { force: true, recursive: true });
         }
-
-        const oldVersion = oldVersionsDirs.sort(semver.compare).pop();
-        const oldversionPath = path.join(rootPath, oldVersion);
-        execSync(`ln -sfn ${oldversionPath} ${rootPath}/current`);
-        await fs.promises.rm(appRootPath.path, { force: true, recursive: true });
         process.exit(1);
     }
 })();

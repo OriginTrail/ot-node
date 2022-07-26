@@ -2,12 +2,11 @@ const express = require('express');
 const https = require('https');
 const fs = require('fs-extra');
 const fileUpload = require('express-fileupload');
-const { Validator } = require('express-json-validator-middleware');
-const RequestValidationErrorMiddleware = require('./request-validation-error-middleware');
+const cors = require('cors');
+const requestValidationMiddleware = require('./request-validation-middleware');
+const rateLimiterMiddleware = require('./rate-limiter-middleware');
 const authenticationMiddleware = require('./middleware/authentication-middleware');
 const authorizationMiddleware = require('./middleware/authorization-middleware');
-
-const { validate } = new Validator();
 
 class ExpressHttpClient {
     async initialize(config, logger) {
@@ -16,12 +15,12 @@ class ExpressHttpClient {
         this.app = express();
     }
 
-    async get(route, ...callback) {
-        this.app.get(route, callback);
+    async get(route, callback, options) {
+        this.app.get(route, ...this.selectMiddlewares(options), callback);
     }
 
-    async post(route, requestSchema, ...callback) {
-        this.app.post(route, validate({ body: requestSchema }), callback);
+    async post(route, callback, options) {
+        this.app.post(route, ...this.selectMiddlewares(options), callback);
     }
 
     sendResponse(res, status, returnObject) {
@@ -45,6 +44,15 @@ class ExpressHttpClient {
         this.logger.info(`Node listening on port: ${this.config.port}`);
     }
 
+    selectMiddlewares(options) {
+        const middlewares = [];
+        if (options.rateLimit) middlewares.push(rateLimiterMiddleware(this.config.rateLimiter));
+        if (options.requestSchema)
+            middlewares.push(requestValidationMiddleware(options.requestSchema));
+
+        return middlewares;
+    }
+
     async initializeBeforeMiddlewares(authService) {
         this.app.use(authenticationMiddleware(authService));
         this.app.use(authorizationMiddleware(authService));
@@ -62,8 +70,8 @@ class ExpressHttpClient {
             }),
         );
 
+        this.app.use(cors());
         this.app.use(express.json());
-
         this.app.use((req, res, next) => {
             this.logger.api(`${req.method}: ${req.url} request received`);
             return next();

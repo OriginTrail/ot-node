@@ -64,20 +64,33 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    // PUBLISH REQUEST TABLE
-    async createPublishResponseRecord(status, handlerId, message = null) {
+    // publish table
+    async createPublishRecord(handlerId, status) {
+        if (this.initialized) {
+            return this.getImplementation().module.createPublishRecord(handlerId, status);
+        }
+    }
+
+    async getPublishStatus(handlerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getPublishStatus(handlerId);
+        }
+    }
+
+    async updatePublishStatus(handlerId, status) {
+        if (this.initialized) {
+            return this.getImplementation().module.updatePublishStatus(handlerId, status);
+        }
+    }
+
+    // publish response TABLE
+    async createPublishResponseRecord(status, handlerId, errorMessage) {
         if (this.initialized) {
             return this.getImplementation().module.createPublishResponseRecord(
                 status,
                 handlerId,
-                message,
+                errorMessage,
             );
-        }
-    }
-
-    async updatePublishResponseRecord(data, condition) {
-        if (this.initialized) {
-            return this.getImplementation().module.updatePublishResponseRecord(data, condition);
         }
     }
 
@@ -90,6 +103,81 @@ class RepositoryModuleManager extends BaseModuleManager {
     async getPublishResponsesStatuses(handlerId) {
         if (this.initialized) {
             return this.getImplementation().module.getPublishResponsesStatuses(handlerId);
+        }
+    }
+
+    async countPublishResponseStatuses(handlerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.countPublishResponseStatuses(handlerId);
+        }
+    }
+
+    // resolve
+    async createResolveRecord(handlerId, status) {
+        if (this.initialized) {
+            return this.getImplementation().module.createResolveRecord(handlerId, status);
+        }
+    }
+
+    async getResolveStatus(handlerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getResolveStatus(handlerId);
+        }
+    }
+
+    async updateResolveStatus(handlerId, status) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateResolveStatus(handlerId, status);
+        }
+    }
+
+    // resolve response
+    async getResolveResponsesStatuses(handlerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getResolveResponsesStatuses(handlerId);
+        }
+    }
+
+    async createResolveResponseRecord(status, handlerId, errorMessage) {
+        if (this.initialized) {
+            return this.getImplementation().module.createResolveResponseRecord(
+                status,
+                handlerId,
+                errorMessage,
+            );
+        }
+    }
+
+    // EVENT
+    async createEventRecord(
+        handlerId,
+        name,
+        timestamp,
+        value1 = null,
+        value2 = null,
+        value3 = null,
+    ) {
+        if (this.initialized) {
+            return this.getImplementation().module.createEventRecord(
+                handlerId,
+                name,
+                timestamp,
+                value1,
+                value2,
+                value3,
+            );
+        }
+    }
+
+    async getAllEvents() {
+        if (this.initialized) {
+            return this.getImplementation().module.getAllEvents();
+        }
+    }
+
+    async destroyEvents(ids) {
+        if (this.initialized) {
+            return this.getImplementation().module.destroyEvents(ids);
         }
     }
 

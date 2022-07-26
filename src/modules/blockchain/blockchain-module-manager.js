@@ -17,6 +17,36 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
+    getManagementKey () {
+        if (this.initialized) {
+            return this.getImplementation().module.getManagementKey();
+        }
+    }
+
+    async deployIdentity () {
+        if (this.initialized) {
+            return this.getImplementation().module.deployIdentity();
+        }
+    }
+
+    identityExists () {
+        if (this.initialized) {
+            return this.getImplementation().module.identityExists();
+        }
+    }
+
+    getIdentity () {
+        if (this.initialized) {
+            return this.getImplementation().module.getIdentity();
+        }
+    }
+
+    async createProfile (peerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.createProfile(peerId);
+        }
+    }
+
     async createAssertionRecord(stateCommitHash, rootHash, issuer) {
         if (this.initialized) {
             return this.getImplementation().module.createAssertionRecord(stateCommitHash, rootHash, issuer);
@@ -48,9 +78,9 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getAssetProofs(ual) {
+    async getAssetProofs(blockchain, contract, tokenId) {
         if (this.initialized) {
-            return this.getImplementation().module.getAssetProofs(ual);
+            return this.getImplementation().module.getAssetProofs(blockchain, contract, tokenId);
         }
     }
 

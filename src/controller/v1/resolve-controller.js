@@ -1,38 +1,49 @@
 const {
-    HANDLER_ID_STATUS,
     NETWORK_MESSAGE_TYPES,
-    NETWORK_PROTOCOLS
+    NETWORK_PROTOCOLS,
+    HANDLER_ID_STATUS,
+    RESOLVE_STATUS,
 } = require('../../constants/constants');
 const BaseController = require('./base-controller');
 
 class ResolveController extends BaseController {
+    constructor(ctx) {
+        super(ctx);
+        this.commandExecutor = ctx.commandExecutor;
+        this.handlerIdService = ctx.handlerIdService;
+    }
+
     async handleHttpApiResolveRequest(req, res) {
-        const operationId = this.generateOperationId();
-
-        const { id } = req.body;
-
-        const handlerId = await this.handlerIdService.generateHandlerId();
+        const handlerId = await this.handlerIdService.generateHandlerId(
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_START,
+        );
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.RESOLVE.VALIDATING_ID,
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_INIT_START,
         );
 
         this.returnResponse(res, 202, {
             handlerId,
         });
 
+        await this.repositoryModuleManager.createResolveRecord(
+            handlerId,
+            RESOLVE_STATUS.IN_PROGRESS,
+        );
+
+        const { id } = req.query;
+
         this.logger.info(`Resolve for ${id} with handler id ${handlerId} initiated.`);
 
         const commandData = {
             handlerId,
-            operationId,
             id,
             networkProtocol: NETWORK_PROTOCOLS.RESOLVE,
         };
 
         const commandSequence = [
-            'getAssertionCommand',
+            'getLatestAssertionIdCommand',
             'localResolveCommand',
             'findNodesCommand',
             'resolveCommand',
@@ -46,13 +57,17 @@ class ResolveController extends BaseController {
             transactional: false,
         });
 
-        
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.RESOLVE.RESOLVE_INIT_END,
+        );
     }
 
     async handleNetworkResolveRequest(message, remotePeerId) {
-        const operationId = await this.generateHandlerId();
+        const { handlerId } = message.header;
+        const { ual, assertionId } = message.data;
         let commandName;
-        const commandData = { message, remotePeerId, operationId };
+        const commandData = { ual, assertionId, remotePeerId, handlerId };
         switch (message.header.messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
                 commandName = 'handleResolveInitCommand';

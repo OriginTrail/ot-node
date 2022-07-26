@@ -4,9 +4,10 @@ const fs = require('fs');
 const queue = require('fastq');
 const appRootPath = require('app-root-path');
 const path = require('path');
+const EventEmitter = require('events');
 const DependencyInjection = require('./src/service/dependency-injection');
 const Logger = require('./modules/logger/logger');
-const constants = require('./modules/constants');
+const constants = require('./src/constants/constants');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
 const M1FolderStructureInitialMigration = require('./modules/migration/m1-folder-structure-initial-migration');
@@ -34,12 +35,15 @@ class OTNode {
         this.logger.info(`Node is running in ${process.env.NODE_ENV} environment`);
 
         this.initializeDependencyContainer();
+        this.initializeEventEmitter();
+
         await this.initializeModules();
+        await this.createProfile();
         await this.saveNetworkModulePeerIdAndPrivKey();
 
         await this.initializeControllers();
         await this.initializeCommandExecutor();
-        // await this.initializeTelemetryHubModule();
+        await this.initializeTelemetryInjectionService();
 
         this.logger.info('Node is up and running!');
     }
@@ -107,6 +111,13 @@ class OTNode {
         }
     }
 
+    initializeEventEmitter() {
+        const eventEmitter = new EventEmitter();
+        DependencyInjection.registerValue(this.container, 'eventEmitter', eventEmitter);
+
+        this.logger.info('Event emitter initialized');
+    }
+
     async initializeControllers() {
         try {
             this.logger.info('Initializing http api router');
@@ -129,6 +140,22 @@ class OTNode {
                 Event_name: constants.ERROR_TYPE.RPC_INITIALIZATION_ERROR,
             });
         }
+    }
+
+    async createProfile() {
+        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        if (!blockchainModuleManager.identityExists()) {
+            const networkModuleManager = this.container.resolve('networkModuleManager');
+            const peerId = networkModuleManager.getPeerId();
+            await blockchainModuleManager.deployIdentity();
+            await blockchainModuleManager.createProfile(peerId);
+
+            if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
+                this.saveIdentityInUserConfigurationFile(blockchainModuleManager.getIdentity());
+            }
+        }
+
+        this.logger.info(`Blockchain identity is ${blockchainModuleManager.getIdentity()}`);
     }
 
     async saveNetworkModulePeerIdAndPrivKey() {
@@ -154,14 +181,13 @@ class OTNode {
         }
     }
 
-    async initializeTelemetryHubModule() {
+    async initializeTelemetryInjectionService() {
         try {
-            const telemetryHubModuleManager = this.container.resolve('telemetryHubModuleManager');
-            if (telemetryHubModuleManager.initialize(this.config.telemetryHub, this.logger)) {
-                this.logger.info(
-                    `Telemetry hub module initialized successfully, using ${telemetryHubModuleManager.config.telemetryHub.packages} package(s)`,
-                );
-            }
+            const telemetryHubModuleManager = this.container.resolve('telemetryInjectionService');
+            telemetryHubModuleManager.initialize();
+            this.logger.info(
+                'Telemetry Injection Service initialized successfully',
+            );
         } catch (e) {
             this.logger.error(
                 `Telemetry hub module initialization failed. Error message: ${e.message}`,
@@ -180,17 +206,36 @@ class OTNode {
     }
 
     savePrivateKeyAndPeerIdInUserConfigurationFile(privateKey) {
-
         const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
         const configFile = JSON.parse(fs.readFileSync(configurationFilePath));
-        if (configFile.modules.network &&
+        if (
+            configFile.modules.network &&
             configFile.modules.network.implementation &&
             configFile.modules.network.implementation['libp2p-service'] &&
-            configFile.modules.network.implementation['libp2p-service'].config) {
-                if (!configFile.modules.network.implementation['libp2p-service'].config.privateKey) {
-                    configFile.modules.network.implementation['libp2p-service'].config.privateKey = privateKey;
-                    fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
-                }
+            configFile.modules.network.implementation['libp2p-service'].config
+        ) {
+            if (!configFile.modules.network.implementation['libp2p-service'].config.privateKey) {
+                configFile.modules.network.implementation['libp2p-service'].config.privateKey =
+                    privateKey;
+                fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
+            }
+        }
+    }
+
+    saveIdentityInUserConfigurationFile(identity) {
+        const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
+        const configFile = JSON.parse(fs.readFileSync(configurationFilePath));
+        if (
+            configFile.modules.blockchain &&
+            configFile.modules.blockchain.implementation &&
+            configFile.modules.blockchain.implementation['web3-service'] &&
+            configFile.modules.blockchain.implementation['web3-service'].config
+        ) {
+            if (!configFile.modules.blockchain.implementation['web3-service'].config.identity) {
+                configFile.modules.blockchain.implementation['web3-service'].config.identity =
+                    identity;
+                fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
+            }
         }
     }
 

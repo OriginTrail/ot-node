@@ -10,11 +10,17 @@ class DataService {
         this.logger = ctx.logger;
     }
 
-    async toNQuads(content) {
-        const canonized = await jsonld.canonize(content, {
+    async toNQuads(content, inputFormat) {
+        const options = {
             algorithm: ALGORITHM,
             format: FORMAT,
-        });
+        }
+        
+        if(inputFormat) {
+            options.inputFormat = inputFormat;
+        }
+
+        const canonized = await jsonld.canonize(content, options);
 
         return canonized.split("\n").filter((x) => x !== "");
     }

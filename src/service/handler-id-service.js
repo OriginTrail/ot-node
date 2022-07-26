@@ -1,21 +1,23 @@
 const validator = require('validator');
-const { HANDLER_ID_STATUS } = require('../../modules/constants');
 
 class HandlerIdService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.fileService = ctx.fileService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.eventEmitter = ctx.eventEmitter;
 
         this.memoryCachedHandlersData = {};
     }
 
-    async generateHandlerId() {
+    async generateHandlerId(status) {
         const handlerIdObject = await this.repositoryModuleManager.createHandlerIdRecord({
-            status: HANDLER_ID_STATUS.PENDING,
+            status,
         });
-        this.logger.debug(`Generated handler id for request ${handlerIdObject.handler_id}`);
-        return handlerIdObject.handler_id;
+        const handlerId = handlerIdObject.handler_id;
+        this.emitChangeEvent(status, handlerId);
+        this.logger.debug(`Generated handler id for request ${handlerId}`);
+        return handlerId;
     }
 
     async getHandlerIdRecord(handlerId) {
@@ -27,26 +29,34 @@ class HandlerIdService {
         return validator.isUUID(handlerId);
     }
 
-    async updateFailedHandlerId(handlerId, errorMessage) {
-        this.logger.debug(`Marking handler id ${handlerId} as failed`);
-        await this.removeHandlerIdCache(handlerId);
+    async updateHandlerIdStatus(handlerId, status, errorMessage = null) {
+        const response = {
+            status,
+        };
 
-        await this.repositoryModuleManager.updateHandlerIdRecord(
-            {
-                status: HANDLER_ID_STATUS.FAILED,
-                data: JSON.stringify({ errorMessage }),
-            },
-            handlerId,
-        );
+        if (errorMessage !== null) {
+            this.logger.debug(`Marking handler id ${handlerId} as failed`);
+            response.data = JSON.stringify({ errorMessage });
+            await this.removeHandlerIdCache(handlerId);
+        }
+
+        this.emitChangeEvent(status, handlerId, errorMessage);
+
+        await this.repositoryModuleManager.updateHandlerIdRecord(response, handlerId);
     }
 
-    async updateHandlerIdStatus(handlerId, status) {
-        await this.repositoryModuleManager.updateHandlerIdRecord(
-            {
-                status,
-            },
+    emitChangeEvent(status, handlerId, errorMessage = null) {
+        const timestamp = Date.now();
+        const eventName = 'operation_status_changed';
+
+        const eventData = {
+            lastEvent: status,
             handlerId,
-        );
+            timestamp,
+            value1: errorMessage,
+        };
+
+        this.eventEmitter.emit(eventName, eventData);
     }
 
     async cacheHandlerIdData(handlerId, data) {
@@ -70,8 +80,11 @@ class HandlerIdService {
 
         this.logger.debug(`Reading handler id: ${handlerId} cached data from file`);
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
-        const data = await this.fileService.readFileOnPath(documentPath);
-        return JSON.parse(data);
+        let data;
+        if (await this.fileService.fileExists(documentPath)) {
+            data = await this.fileService.loadJsonFromFile(documentPath);
+        }
+        return data;
     }
 
     async removeHandlerIdCache(handlerId) {

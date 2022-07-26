@@ -1,10 +1,9 @@
-const {HANDLER_ID_STATUS, ERROR_TYPE} = require('../../constants/constants');
+const { HANDLER_ID_STATUS, ERROR_TYPE } = require('../../constants/constants');
 const BaseController = require('./base-controller');
 
-const availableOperations = ['publish'];
+const availableOperations = ['publish', 'resolve', 'assertions:search', 'entities:search'];
 
 class ResultController extends BaseController {
-
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -12,13 +11,10 @@ class ResultController extends BaseController {
     }
 
     async handleHttpApiOperationResultRequest(req, res) {
-        if (
-            !availableOperations.includes(req.params.operation)
-        ) {
+        if (!availableOperations.includes(req.params.operation)) {
             return this.returnResponse(res, 400, {
                 code: 400,
-                message:
-                    `Unsupported operation, available operations are: ${availableOperations}`,
+                message: `Unsupported operation, available operations are: ${availableOperations}`,
             });
         }
 
@@ -31,18 +27,38 @@ class ResultController extends BaseController {
         }
 
         try {
-
             const handlerRecord = await this.handlerIdService.getHandlerIdRecord(handlerId);
 
             if (handlerRecord) {
                 const response = {
                     status: handlerRecord.status,
-                }
+                };
                 if (handlerRecord.status === HANDLER_ID_STATUS.FAILED) {
                     response.data = JSON.parse(handlerRecord.data);
                 }
-                return this.returnResponse(res, 200, response);
 
+                switch (operation) {
+                    case 'assertions:search':
+                    case 'entities:search':
+                    case 'resolve':
+                        if (handlerRecord.status === HANDLER_ID_STATUS.RESOLVE.RESOLVE_END) {
+                            response.data = await this.handlerIdService.getCachedHandlerIdData(
+                                handlerId,
+                            );
+                        }
+                        break;
+                    case 'publish':
+                        if (handlerRecord.status === HANDLER_ID_STATUS.PUBLISH.PUBLISH_END) {
+                            response.data = await this.handlerIdService.getCachedHandlerIdData(
+                                handlerId,
+                            );
+                        }
+                        break;
+                    default:
+                        break;
+                }
+
+                return this.returnResponse(res, 200, response);
             }
             return this.returnResponse(res, 400, {
                 code: 400,

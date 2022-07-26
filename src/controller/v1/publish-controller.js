@@ -6,6 +6,7 @@ const {
     NETWORK_MESSAGE_TYPES,
     PUBLISH_STATUS,
 } = require('../../constants/constants');
+const { HANDLER_ID_STATUS } = require('../../constants/constants');
 
 class PublishController extends BaseController {
     constructor(ctx) {
@@ -35,15 +36,39 @@ class PublishController extends BaseController {
     async handleHttpApiPublishMethod(req, res, method) {
         const operationId = this.generateOperationId();
 
-        const handlerId = await this.handlerIdService.generateHandlerId();
+        const handlerId = await this.handlerIdService.generateHandlerId(
+            HANDLER_ID_STATUS.PUBLISH.PUBLISH_START,
+        );
+
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.PUBLISH.PUBLISH_INIT_START,
+        );
 
         this.returnResponse(res, 202, {
             handlerId,
         });
 
         const { metadata, data, ual } = req.body;
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
+        );
         try {
+            await this.repositoryModuleManager.createPublishRecord(
+                handlerId,
+                PUBLISH_STATUS.IN_PROGRESS,
+            );
+
+            await this.handlerIdService.updateHandlerIdStatus(
+                handlerId,
+                HANDLER_ID_STATUS.PUBLISH.PUBLISH_GENERATE_METADATA_START,
+            );
             const metadataNquads = await this.dataService.metadataObjectToNquads(metadata);
+            await this.handlerIdService.updateHandlerIdStatus(
+                handlerId,
+                HANDLER_ID_STATUS.PUBLISH.PUBLISH_GENERATE_METADATA_END,
+            );
 
             await this.handlerIdService.cacheHandlerIdData(handlerId, {
                 data,
@@ -63,7 +88,7 @@ class PublishController extends BaseController {
 
             const commandSequence = [
                 'validateAssertionCommand',
-                'insertAssertionCommand',
+                // 'insertAssertionCommand',
                 'findNodesCommand',
                 'publishStoreCommand',
             ];
@@ -82,8 +107,9 @@ class PublishController extends BaseController {
                 Event_value1: error.message,
                 Id_operation: operationId,
             });
-            await this.handlerIdService.updateFailedHandlerId(
+            await this.handlerIdService.updateHandlerIdStatus(
                 handlerId,
+                HANDLER_ID_STATUS.FAILED,
                 'Unable to publish data, Failed to process input data!',
             );
         }

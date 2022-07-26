@@ -108,4 +108,5 @@ dist
 
 .DS_Store
 
-data
+data*
+.vscode/launch.json

@@ -15,28 +15,43 @@ class InsertAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { handlerId, ual, metadata } = command.data;
+        const { handlerId, ual, assertionId } = command.data;
 
         await this.handlerIdService.updateHandlerIdStatus(
             handlerId,
-            HANDLER_ID_STATUS.PUBLISH.INSERTING_ASSERTION,
+            HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
 
         const handlerIdData = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 
-        const metadataId = this.getMetadataId(handlerIdData.metadata);
+        const assertionGraphName = `${ual}/${assertionId}`;
+        const dataGraphName = `${ual}/${assertionId}/data`;
+        const metadatadataGraphName = `${ual}/${assertionId}/metadata`;
 
-        const nquads = [
-            `<${ual}> <http://schema.org/metadata> "${metadataId}" .`,
-            `<${ual}> <http://schema.org/data> "${metadata.dataRootId}" .`,
-        ]
-            .concat(handlerIdData.metadata)
-            .concat(handlerIdData.data);
+        const assertionNquads = [
+            `<${assertionGraphName}> <http://schema.org/metadata> <${metadatadataGraphName}> .`,
+            `<${assertionGraphName}> <http://schema.org/data> <${dataGraphName}> .`,
+        ];
 
         this.logger.info(`Inserting assertion with ual:${ual} in database.`);
-        await this.tripleStoreModuleManager.insert(nquads.join('\n'), ual);
 
-        this.logger.info(`Assertion ${ual} has been successfully inserted!`);
+        const insertPromises = [
+            this.tripleStoreModuleManager.insert(
+                handlerIdData.metadata.join('\n'),
+                metadatadataGraphName,
+            ),
+            this.tripleStoreModuleManager.insert(handlerIdData.data.join('\n'), dataGraphName),
+            this.tripleStoreModuleManager.insert(assertionNquads.join('\n'), assertionGraphName),
+        ];
+
+
+        await Promise.all(insertPromises);
+
+        this.logger.info(`Assertion ${assertionId} has been successfully inserted!`);
+        await this.handlerIdService.updateHandlerIdStatus(
+            handlerId,
+            HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
+        );
         return this.continueSequence(command.data, command.sequence);
     }
 

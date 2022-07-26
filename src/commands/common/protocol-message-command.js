@@ -1,5 +1,5 @@
 const Command = require('../command');
-const { NETWORK_MESSAGE_TYPES} = require('../../constants/constants');
+const { NETWORK_MESSAGE_TYPES } = require('../../constants/constants');
 
 class ProtocolMessageCommand extends Command {
     constructor(ctx) {
@@ -9,9 +9,17 @@ class ProtocolMessageCommand extends Command {
     }
 
     async executeProtocolMessageCommand(command, messageType) {
+        if (!(await this.shouldSendMessage(command))) {
+            return Command.empty();
+        }
         const message = await this.prepareMessage(command);
 
         return this.sendProtocolMessage(command, message, messageType);
+    }
+
+    // eslint-disable-next-line no-empty-function,no-unused-vars
+    async shouldSendMessage(command) {
+        return true;
     }
 
     // eslint-disable-next-line no-unused-vars
@@ -23,21 +31,20 @@ class ProtocolMessageCommand extends Command {
     async sendProtocolMessage(command, message, messageType) {
         const { node, handlerId } = command.data;
 
-        const response = await this.networkModuleManager
-            .sendMessage(
-                this.networkProtocol,
-                node,
-                messageType,
-                handlerId,
-                message,
-            );
+        const response = await this.networkModuleManager.sendMessage(
+            this.networkProtocol,
+            node,
+            messageType,
+            handlerId,
+            message,
+        );
         switch (response.header.messageType) {
             case NETWORK_MESSAGE_TYPES.RESPONSES.BUSY:
-                return this.handleBusy(command);
+                return this.handleBusy(command, response.data);
             case NETWORK_MESSAGE_TYPES.RESPONSES.NACK:
-                return this.handleNack(command);
+                return this.handleNack(command, response.data);
             case NETWORK_MESSAGE_TYPES.RESPONSES.ACK:
-                return this.handleAck(command);
+                return this.handleAck(command, response.data);
             default:
                 await this.markResponseAsFailed(
                     command,
@@ -47,15 +54,15 @@ class ProtocolMessageCommand extends Command {
         }
     }
 
-    async handleAck(command) {
+    async handleAck(command, responseData) {
         return this.continueSequence(command.data, command.sequence);
     }
 
-    async handleBusy() {
+    async handleBusy(command, responseData) {
         return Command.retry();
     }
 
-    async handleNack(command) {
+    async handleNack(command, responseData) {
         await this.markResponseAsFailed(
             command,
             `Received NACK response from node during ${this.commandName}`,

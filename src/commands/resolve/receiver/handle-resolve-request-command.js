@@ -1,56 +1,34 @@
-const Command = require('../../command');
 const {
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
-    NETWORK_PROTOCOLS,
+    HANDLER_ID_STATUS,
 } = require('../../../constants/constants');
+const HandleResolveCommand = require('./handle-resolve-command');
 
-class HandleResolveRequestCommand extends Command {
+class HandleResolveRequestCommand extends HandleResolveCommand {
     constructor(ctx) {
         super(ctx);
-        this.config = ctx.config;
-        this.networkModuleManager = ctx.networkModuleManager;
-        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+        this.resolveService = ctx.resolveService;
+
+        this.handlerIdStatusStart = HANDLER_ID_STATUS.RESOLVE.RESOLVE_REMOTE_START;
+        this.handlerIdStatusEnd = HANDLER_ID_STATUS.RESOLVE.RESOLVE_REMOTE_END;
     }
 
-    /**
-     * Executes command and produces one or more events
-     * @param command
-     */
-    async execute(command) {
-        const { assertionId, remotePeerId, handlerId } = command.data;
+    async prepareMessage(commandData) {
+        const { ual, assertionId, handlerId } = commandData;
+        await this.handlerIdService.updateHandlerIdStatus(handlerId, this.handlerIdStatusStart);
 
-        const nquads = await this.tripleStoreModuleManager
-            .resolve(assertionId)
-            .catch((e) =>
-                this.handleError(
-                    handlerId,
-                    e.message,
-                    ERROR_TYPE.HANDLE_RESOLVE_REQUEST_ERROR,
-                    true,
-                ),
-            );
+        // TODO: validate assertionId / ual
 
-        let messageType;
-        let messageData;
-        if (nquads && nquads.length > 0) {
-            this.logger.info(`Number of n-quads retrieved from the database is ${nquads.length}`);
-            messageType = NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
-            messageData = { nquads };
-        } else {
-            messageType = NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
-            messageData = {};
-        }
+        const nquads = await this.resolveService.localResolve(ual, assertionId, handlerId);
 
-        await this.networkModuleManager.sendMessageResponse(
-            NETWORK_PROTOCOLS.RESOLVE,
-            remotePeerId,
-            messageType,
-            handlerId,
-            messageData,
-        );
+        const messageType =
+            nquads.metadata.length && nquads.data.length
+                ? NETWORK_MESSAGE_TYPES.RESPONSES.ACK
+                : NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
+        await this.handlerIdService.updateHandlerIdStatus(handlerId, this.handlerIdStatusEnd);
 
-        return this.continueSequence(command.data, command.sequence);
+        return { messageType, messageData: { nquads } };
     }
 
     /**

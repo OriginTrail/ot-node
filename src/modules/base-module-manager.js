@@ -1,4 +1,4 @@
-const constants = require('../../modules/constants');
+const constants = require('../constants/constants');
 
 const requiredModules = [
     'repository'

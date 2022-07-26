@@ -1,3 +1,5 @@
+const { HANDLER_ID_STATUS } = require('../constants/constants');
+
 /**
  * Describes one command handler
  */
@@ -23,8 +25,8 @@ class Command {
      * @param err
      */
     async recover(command, err) {
-        const { handlerId, errorType } = command.data;
-        await this.handleError(handlerId, err.message, errorType, true, command.data);
+        const { handlerId } = command.data;
+        await this.handleError(handlerId, err.message, this.errorType, true, command.data);
 
         return Command.empty();
     }
@@ -33,7 +35,7 @@ class Command {
      * Execute strategy when event is too late
      * @param command
      */
-    async expired(command) {
+    async expired() {
         return Command.empty();
     }
 
@@ -103,6 +105,10 @@ class Command {
         return command;
     }
 
+    async retryFinished(command) {
+        this.logger.trace(`Retry count for command: ${command.name} reached!`);
+    }
+
     /**
      * Error handler for command
      * @param handlerId  - Operation handler id
@@ -111,7 +117,7 @@ class Command {
      * @param markFailed - Update operation status to failed
      * @returns {*}
      */
-    async handleError(handlerId, errorMessage, errorName, markFailed, commandData) {
+    async handleError(handlerId, errorMessage, errorName, markFailed) {
         this.logger.error({
             msg: `Command error (${errorName}): ${errorMessage}`,
             Event_name: errorName,
@@ -119,7 +125,11 @@ class Command {
             Id_operation: handlerId,
         });
         if (markFailed) {
-            await this.handlerIdService.updateFailedHandlerId(handlerId, errorMessage);
+            await this.handlerIdService.updateHandlerIdStatus(
+                handlerId,
+                HANDLER_ID_STATUS.FAILED,
+                errorMessage,
+            );
         }
     }
 
@@ -128,7 +138,7 @@ class Command {
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
-    default(map) {
+    default() {
         return {};
     }
 

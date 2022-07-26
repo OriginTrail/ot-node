@@ -1,6 +1,5 @@
 const path = require('path');
-const { mkdir, writeFile, readFile, unlink } = require('fs/promises');
-const fs = require('fs');
+const { mkdir, writeFile, readFile, unlink, stat } = require('fs/promises');
 const appRootPath = require('app-root-path');
 
 const MIGRATION_FOLDER_NAME = 'migrations';
@@ -45,26 +44,34 @@ class FileService {
         return this._readFile(filePath, true);
     }
 
+    async fileExists(filePath) {
+        try {
+            await stat(filePath)
+            return true;
+        } catch(e) {
+            return false;
+        }
+    }
+
     async _readFile(filePath, convertToJSON = false) {
         this.logger.debug(
             `Reading file on path: ${filePath}, converting to json: ${convertToJSON}`,
         );
-        if (fs.existsSync(filePath)) {
+        try{
             const data = await readFile(filePath);
             return convertToJSON ? JSON.parse(data) : data.toString();
+        } catch(e) {
+            throw Error(`File doesn't exist on file path: ${filePath}`);
         }
-        throw Error(`File doesn't exist on file path: ${filePath}`);
     }
 
     async removeFile(filePath) {
         this.logger.debug(`Removing file on path: ${filePath}`);
         let successful = false;
-        if (fs.existsSync(filePath)) {
-            try {
-                await unlink(filePath);
-                successful = true;
-            } catch (e) {}
-        }
+        try {
+            await unlink(filePath);
+            successful = true;
+        } catch (e) {}
         return successful;
     }
 

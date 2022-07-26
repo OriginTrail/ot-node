@@ -21,7 +21,11 @@
                             "useSsl": false,
                             "port": 8900,
                             "sslKeyPath": "/root/certs/privkey.pem",
-                            "sslCertificatePath": "/root/certs/fullchain.pem"
+                            "sslCertificatePath": "/root/certs/fullchain.pem",
+                            "rateLimiter": {
+                                "timeWindowSeconds": 60,
+                                "maxRequests": 10
+                            }
                         }
                     }
                 }
@@ -46,7 +50,7 @@
                         "config": {
                             "database": "operationaldb",
                             "user": "root",
-                            "password": "password",
+                            "password": "",
                             "port": "3306",
                             "host": "localhost",
                             "dialect": "mysql",
@@ -104,20 +108,24 @@
                         "package": "./blockchain/implementation/web3-service",
                         "config": {
                             "blockchainTitle": "Polygon",
-                            "networkId": "polygon::mainnet",
-                            "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
+                            "networkId": "polygon::testnet",
+                            "hubContractAddress": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A8",
                             "rpcEndpoints": [
-                                "https://rpc-mumbai.maticvigil.com/",
                                 "https://matic-mumbai.chainstacklabs.com",
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
-                            ]
+                            ],
+                            "identity": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A3",
+                            "managementKey": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A3"
                         }
                     }
                 }
             }
         },
         "commandExecutorVerboseLoggingEnabled": false,
+        "minimumReplicationFactor": 5,
+        "publishFindNodesCount": 20,
+        "signalingServerUrl": null,
         "appDataPath": "data",
         "graphDatabase": {
             "implementation": "GraphDB",
@@ -230,7 +238,10 @@
             }
         },
         "commandExecutorVerboseLoggingEnabled": false,
+        "minimumReplicationFactor": 5,
+        "publishFindNodesCount": 20,
         "appDataPath": "data",
+        "signalingServerUrl": null,
         "graphDatabase": {
             "implementation": "GraphDB",
             "url": "http://localhost:7200",
@@ -267,6 +278,18 @@
                     }
                 }
             },
+            "network": {
+                "enabled": true,
+                "implementation": {
+                    "libp2p-service": {
+                        "package": "./network/implementation/libp2p-service",
+                        "config": {
+                            "port": 9000,
+                            "bootstrap": []
+                        }
+                    }
+                }
+            },
             "httpClient": {
                 "enabled": true,
                 "implementation": {
@@ -276,7 +299,11 @@
                             "useSsl": true,
                             "port": 8900,
                             "sslKeyPath": "/root/certs/privkey.pem",
-                            "sslCertificatePath": "/root/certs/fullchain.pem"
+                            "sslCertificatePath": "/root/certs/fullchain.pem",
+                            "rateLimiter": {
+                                "timeWindowSeconds": 60,
+                                "maxRequests": 10
+                            }
                         }
                     }
                 }
@@ -306,14 +333,25 @@
                         "config": {
                             "blockchainTitle": "Polygon",
                             "networkId": "polygon::mainnet",
-                            "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
+                            "hubContractAddress": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A8",
                             "rpcEndpoints": [
                                 "https://rpc-mumbai.maticvigil.com/",
                                 "https://matic-mumbai.chainstacklabs.com",
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
-                            ]
+                            ],
+                            "identity": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A3",
+                            "managementKey": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A3"
                         }
+                    }
+                }
+            },
+            "validation": {
+                "enabled": true,
+                "implementation": {
+                    "merkle-validation": {
+                        "package": "./validation/implementation/merkle-validation",
+                        "config": {}
                     }
                 }
             },
@@ -352,6 +390,9 @@
             }
         },
         "commandExecutorVerboseLoggingEnabled": false,
+        "minimumReplicationFactor": 5,
+        "publishFindNodesCount": 20,
+        "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "appDataPath": "data",
         "graphDatabase": {
             "implementation": "GraphDB",
@@ -402,7 +443,11 @@
                             "useSsl": true,
                             "port": 8900,
                             "sslKeyPath": "/root/certs/privkey.pem",
-                            "sslCertificatePath": "/root/certs/fullchain.pem"
+                            "sslCertificatePath": "/root/certs/fullchain.pem",
+                            "rateLimiter": {
+                                "timeWindowSeconds": 60,
+                                "maxRequests": 10
+                            }
                         }
                     }
                 }
@@ -467,6 +512,9 @@
                 }
             }
         },
+        "minimumReplicationFactor": 5,
+        "publishFindNodesCount": 20,
+        "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "blockchain": [],

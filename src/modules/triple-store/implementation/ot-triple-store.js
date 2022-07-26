@@ -59,16 +59,16 @@ class OtTripleStore {
         return true;
     }
 
-    async insert(triples, assertionId) {
-        const askQuery = `ASK WHERE { GRAPH <${assertionId}> { ?s ?p ?o } }`;
+    async insert(triples, graphName) {
+        const askQuery = `ASK WHERE { GRAPH <${graphName}> { ?s ?p ?o } }`;
         const exists = await this.ask(askQuery);
-        const insertion = `
+        if (!exists) {
+            const insertion = `
                                   PREFIX schema: <http://schema.org/> 
                                   INSERT DATA
-                                  { GRAPH <${assertionId}> 
+                                  { GRAPH <${graphName}> 
                                     { ${triples} } 
                                   }`;
-        if (!exists) {
             await this.queryEngine.queryVoid(insertion, this.insertContext);
             return true;
         }
@@ -84,27 +84,23 @@ class OtTripleStore {
         return result;
     }
 
-    async assertionExists(assertionId) {
-        const query = `ASK WHERE { GRAPH <${assertionId}> { ?s ?p ?o } }`;
+    async assertionExists(graphName) {
+        const escapedGraphName = this.cleanEscapeCharacter(graphName);
+        const query = `ASK WHERE { GRAPH <${escapedGraphName}> { ?s ?p ?o } }`;
+
         return await this.ask(query);
     }
 
-    async resolve(assertionId) {
-        const includePrivateData = false;
-        const escapedAssertionId = this.cleanEscapeCharacter(assertionId);
-        const graphName = `<${escapedAssertionId}>`;
-        const publicVisibility = includePrivateData
-            ? ''
-            : `${graphName} schema:hasVisibility "public" .`;
+    async resolve(graphName) {
+        const escapedGraphName = this.cleanEscapeCharacter(graphName);
 
         const query = `PREFIX schema: <http://schema.org/>
                     CONSTRUCT { ?s ?p ?o }
                     WHERE {
                         {
-                            GRAPH ${graphName} 
+                            GRAPH <${escapedGraphName}>
                             {
                                 ?s ?p ?o .
-                                ${publicVisibility}
                             }
                         }
                     }`;
