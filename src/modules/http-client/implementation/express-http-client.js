@@ -60,7 +60,7 @@ class ExpressHttpClient {
     }
 
     async initializeAfterMiddlewares() {
-        this.app.use(RequestValidationErrorMiddleware);
+        // placeholder method for after middlewares
     }
 
     _initializeBaseMiddlewares() {
