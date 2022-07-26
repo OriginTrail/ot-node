@@ -522,7 +522,7 @@ class Libp2pService {
                 distinctOperations.add(handlerId);
             }
         }
-        return toobusy() || distinctOperations.size > constants.MAX_OPEN_SESSIONS;
+        return toobusy(); // || distinctOperations.size > constants.MAX_OPEN_SESSIONS;
     }
 
     getPrivateKey() {
