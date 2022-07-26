@@ -156,19 +156,17 @@ const tests = [
 ];
 
 const configObj = {
-    modules: {
-        authentication: {
-            ipWhitelist: whitelistedIps,
-            publicActions: ['QUERY'],
-        },
+    auth: {
+        ipWhitelist: whitelistedIps,
+        publicActions: ['QUERY'],
     },
 };
 
 const getConfig = (ipAuthEnabled, tokenAuthEnabled) => {
     const configClone = JSON.parse(JSON.stringify(configObj));
 
-    configClone.modules.authentication.ipBasedAuthEnabled = ipAuthEnabled;
-    configClone.modules.authentication.tokenBasedAuthEnabled = tokenAuthEnabled;
+    configClone.auth.ipBasedAuthEnabled = ipAuthEnabled;
+    configClone.auth.tokenBasedAuthEnabled = tokenAuthEnabled;
 
     return configClone;
 };
@@ -304,7 +302,7 @@ describe('isActionPublic()', async () => {
 
     it('returns false if public routes are not defined', async () => {
         const config = getConfig(false, false, true);
-        config.modules.authentication.publicActions = undefined;
+        config.auth.publicActions = undefined;
         const authService = new AuthService({ config });
 
         const isPublic = authService.isPublicAction('PUBLISH');

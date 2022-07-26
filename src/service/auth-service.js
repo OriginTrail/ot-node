@@ -3,7 +3,7 @@ const jwtUtil = require('./util/jwt-util');
 
 module.exports = class AuthService {
     constructor(ctx) {
-        this._authConfig = ctx.config.modules.authentication;
+        this._authConfig = ctx.config.auth;
         this._repository = ctx.repositoryModuleManager;
     }
 
