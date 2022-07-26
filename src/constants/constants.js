@@ -4,6 +4,7 @@ exports.OTTELEMETRY = 'ottelemetry';
 exports.MERKLE_TREE = 'Merkle Tree';
 exports.BASIC = 'Basic';
 exports.DID = 'DID';
+exports.SCHEMA_CONTEXT = 'https://schema.org/';
 
 /**
  * @constant {number} MAX_FILE_SIZE

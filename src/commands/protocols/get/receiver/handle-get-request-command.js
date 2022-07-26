@@ -14,7 +14,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { ual, assertionId, operationId } = commandData;
+        const { assertionId, operationId } = commandData;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.GET.GET_REMOTE_START,
@@ -22,12 +22,11 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
 
         // TODO: validate assertionId / ual
 
-        const nquads = await this.operationService.localGet(ual, assertionId, operationId);
+        const nquads = await this.operationService.localGet(assertionId, operationId);
 
-        const messageType =
-            nquads.metadata.length && nquads.data.length
-                ? NETWORK_MESSAGE_TYPES.RESPONSES.ACK
-                : NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
+        const messageType = nquads.length
+            ? NETWORK_MESSAGE_TYPES.RESPONSES.ACK
+            : NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.GET.GET_REMOTE_END,

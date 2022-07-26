@@ -1,5 +1,6 @@
 const Engine = require('@comunica/query-sparql').QueryEngine;
 const { setTimeout } = require('timers/promises');
+const { SCHEMA_CONTEXT } = require('../../../constants/constants');
 const constants = require('./triple-store-constants');
 
 class OtTripleStore {
@@ -62,7 +63,7 @@ class OtTripleStore {
         const exists = await this.assertionExists(graphName);
         if (!exists) {
             const insertion = `
-                                  PREFIX schema: <http://schema.org/> 
+                                  PREFIX schema: <${SCHEMA_CONTEXT}>
                                   INSERT DATA
                                   { GRAPH <${graphName}> 
                                     { ${triples} } 
@@ -92,7 +93,7 @@ class OtTripleStore {
     async get(graphName) {
         const escapedGraphName = this.cleanEscapeCharacter(graphName);
 
-        const query = `PREFIX schema: <http://schema.org/>
+        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
                     CONSTRUCT { ?s ?p ?o }
                     WHERE {
                         {
@@ -107,7 +108,7 @@ class OtTripleStore {
     }
 
     async assertionsByAsset(uri) {
-        const query = `PREFIX schema: <http://schema.org/>
+        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
             SELECT ?assertionId ?issuer ?timestamp
             WHERE {
                  ?assertionId schema:hasUALs "${uri}" ;
@@ -154,7 +155,7 @@ class OtTripleStore {
             ? this.createFilterParameter(query, this.filtertype.KEYWORDPREFIX)
             : this.createFilterParameter(query, this.filtertype.KEYWORD);
 
-        const sparqlQuery = `PREFIX schema: <http://schema.org/>
+        const sparqlQuery = `PREFIX schema: <${SCHEMA_CONTEXT}> 
                             SELECT distinct ?assertionId
                             WHERE {
                                 ?assertionId schema:hasKeywords ?keyword .
@@ -190,7 +191,7 @@ class OtTripleStore {
             ? this.createFilterParameter(options.types, this.filtertype.TYPES)
             : '';
 
-        const sparqlQuery = `PREFIX schema: <http://schema.org/>
+        const sparqlQuery = `PREFIX schema: <${SCHEMA_CONTEXT}> 
                             SELECT ?assertionId ?assetId
                             WHERE {
                                 ?assertionId schema:hasTimestamp ?latestTimestamp ;

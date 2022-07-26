@@ -11,9 +11,9 @@ class GetInitCommand extends ProtocolInitCommand {
     }
 
     async prepareMessage(command) {
-        const { ual, assertionId } = command.data;
+        const { assertionId } = command.data;
 
-        return { ual, assertionId };
+        return { assertionId };
     }
 
     /**

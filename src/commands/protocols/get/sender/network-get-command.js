@@ -15,10 +15,9 @@ class NetworkGetCommand extends NetworkProtocolCommand {
     }
 
     getNextCommandData(command) {
-        const { assertionId, ual } = command.data;
+        const { assertionId } = command.data;
         return {
             assertionId,
-            ual,
         };
     }
 

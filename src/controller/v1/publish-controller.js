@@ -41,7 +41,7 @@ class PublishController extends BaseController {
             operation_id: operationId,
         });
 
-        const { metadata, data, ual } = req.body;
+        const { assertionId, assertion, options } = req.body;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
@@ -53,28 +53,14 @@ class PublishController extends BaseController {
                 this.publishService.getOperationStatus().IN_PROGRESS,
             );
 
-            await this.operationIdService.updateOperationIdStatus(
-                operationId,
-                OPERATION_ID_STATUS.PUBLISH.PUBLISH_GENERATE_METADATA_START,
-            );
-            const metadataNquads = await this.dataService.metadataObjectToNquads(metadata);
-            await this.operationIdService.updateOperationIdStatus(
-                operationId,
-                OPERATION_ID_STATUS.PUBLISH.PUBLISH_GENERATE_METADATA_END,
-            );
+            await this.operationIdService.cacheOperationIdData(operationId, assertion);
 
-            await this.operationIdService.cacheOperationIdData(operationId, {
-                data,
-                metadata: metadataNquads,
-            });
-
-            this.logger.info(`Received assertion with ual: ${ual}`);
+            this.logger.info(`Received assertion with ual: ${options.ual}`);
 
             const commandData = {
                 method,
-                ual,
+                ual: options.ual,
                 operationId,
-                metadata,
             };
 
             const commandSequence = [
@@ -116,10 +102,10 @@ class PublishController extends BaseController {
                 break;
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
                 commandData.metadata = message.data.metadata;
-                await this.operationIdService.cacheOperationIdData(operationId, {
-                    data: message.data.data,
-                    metadata: await this.dataService.metadataObjectToNquads(message.data.metadata),
-                });
+                await this.operationIdService.cacheOperationIdData(
+                    operationId,
+                    message.data.assertion,
+                );
 
                 commandSequence.push('handleStoreRequestCommand');
 
