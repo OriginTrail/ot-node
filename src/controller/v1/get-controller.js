@@ -29,7 +29,7 @@ class GetController extends BaseController {
             this.getService.getOperationStatus().IN_PROGRESS,
         );
 
-        const { id } = req.query;
+        const { id } = req.body;
 
         this.logger.info(`Get for ${id} with handler id ${handlerId} initiated.`);
 

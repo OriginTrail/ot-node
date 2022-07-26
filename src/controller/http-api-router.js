@@ -44,12 +44,12 @@ class HttpApiRouter {
         //     this.searchController.handleHttpApiProofsRequest(req, res);
         // });
         //
-        this.httpClientModuleManager.get(
+        this.httpClientModuleManager.post(
             '/get',
             (req, res) => {
                 this.getController.handleHttpApiGetRequest(req, res);
             },
-            { rateLimit: true },
+            { rateLimit: true, requestSchema: getRequestSchema },
         );
 
         // TODO: Get params validation needs to be implemented
@@ -69,7 +69,7 @@ class HttpApiRouter {
             { rateLimit: true },
         );
 
-        this.httpClientModuleManager.get('/:operation/result/:handlerId', (req, res) => {
+        this.httpClientModuleManager.get('/:operation/:handlerId', (req, res) => {
             this.resultController.handleHttpApiOperationResultRequest(req, res);
         });
 

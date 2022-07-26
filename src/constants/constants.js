@@ -27,7 +27,7 @@ exports.SERVICE_API_SLOW_DOWN = {
  */
 exports.NETWORK_API_RATE_LIMIT = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    MAX_NUMBER: 10,
+    MAX_NUMBER: 20,
 };
 
 /**
@@ -36,7 +36,7 @@ exports.NETWORK_API_RATE_LIMIT = {
  */
 exports.NETWORK_API_SPAM_DETECTION = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    MAX_NUMBER: 20,
+    MAX_NUMBER: 40,
 };
 
 /**

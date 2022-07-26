@@ -8,11 +8,9 @@ const TCP = require('libp2p-tcp');
 const pipe = require('it-pipe');
 const lp = require('it-length-prefixed');
 const map = require('it-map');
-const { sha256 } = require('multiformats/hashes/sha2');
 const PeerId = require('peer-id');
 const { InMemoryRateLimiter } = require('rolling-rate-limiter');
 const toobusy = require('toobusy-js');
-const { xor: uint8ArrayXor, compare: uint8ArrayCompare } = require('uint8arrays');
 const { v5: uuidv5 } = require('uuid');
 const constants = require('../../../constants/constants');
 
@@ -177,6 +175,13 @@ class Libp2pService {
                 remotePeerId,
             );
 
+            this.updateSessionStream(
+                message.header.handlerId,
+                message.header.keywordUuid,
+                remotePeerId,
+                stream,
+            );
+
             if (!valid) {
                 await this.sendMessageResponse(
                     protocol,
@@ -198,12 +203,6 @@ class Libp2pService {
             } else {
                 this.logger.debug(
                     `Receiving message from ${remotePeerId} to ${this.config.id}: event=${protocol}, messageType=${message.header.messageType};`,
-                );
-                this.updateSessionStream(
-                    message.header.handlerId,
-                    message.header.keywordUuid,
-                    remotePeerId,
-                    stream,
                 );
                 await handler(message, remotePeerId);
             }
@@ -368,7 +367,7 @@ class Libp2pService {
         const stringifiedHeader = JSON.stringify(message.header);
         const stringifiedData = JSON.stringify(message.data);
 
-        let chunks = [stringifiedHeader];
+        const chunks = [stringifiedHeader];
         const chunkSize = 1024 * 1024; // 1 MB
 
         // split data into 1 MB chunks
@@ -517,7 +516,13 @@ class Libp2pService {
     }
 
     isBusy() {
-        return toobusy() || Object.keys(this.sessions).length > constants.MAX_OPEN_SESSIONS;
+        const distinctOperations = new Set();
+        for (const peerId in this.sessions) {
+            for (const handlerId in Object.keys(this.sessions[peerId])) {
+                distinctOperations.add(handlerId);
+            }
+        }
+        return toobusy() || distinctOperations.size > constants.MAX_OPEN_SESSIONS;
     }
 
     getPrivateKey() {

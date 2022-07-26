@@ -20,7 +20,7 @@ class HandleProtocolMessageCommand extends Command {
         const { messageType, messageData } = await this.prepareMessage(command.data);
 
         await this.networkModuleManager.sendMessageResponse(
-            this.networkProtocol,
+            this.operationService.getNetworkProtocol(),
             remotePeerId,
             messageType,
             handlerId,

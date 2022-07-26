@@ -29,9 +29,6 @@ class ExpressHttpClient {
     }
 
     async get(route, callback, options) {
-        console.log(route);
-        console.log(callback);
-        console.log(options);
         this.app.get(route, ...this.selectMiddlewares(options), callback);
     }
 
