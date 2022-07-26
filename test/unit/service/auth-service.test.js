@@ -290,7 +290,7 @@ describe('isActionPublic()', async () => {
         const config = getConfig(false, false);
         const authService = new AuthService({ config });
 
-        const isPublic = authService.isActionPublic('QUERY');
+        const isPublic = authService.isPublicAction('QUERY');
         expect(isPublic).to.be.equal(true);
     });
 
@@ -298,7 +298,7 @@ describe('isActionPublic()', async () => {
         const config = getConfig(false, false, true);
         const authService = new AuthService({ config });
 
-        const isPublic = authService.isActionPublic('PUBLISH');
+        const isPublic = authService.isPublicAction('PUBLISH');
         expect(isPublic).to.be.equal(false);
     });
 
@@ -307,7 +307,7 @@ describe('isActionPublic()', async () => {
         config.modules.authentication.publicActions = undefined;
         const authService = new AuthService({ config });
 
-        const isPublic = authService.isActionPublic('PUBLISH');
+        const isPublic = authService.isPublicAction('PUBLISH');
         expect(isPublic).to.be.equal(false);
     });
 });

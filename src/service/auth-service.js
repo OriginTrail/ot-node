@@ -46,7 +46,7 @@ module.exports = class AuthService {
      * @param actionName
      * @returns {boolean}
      */
-    isActionPublic(actionName) {
+    isPublicAction(actionName) {
         if (!Array.isArray(this._authConfig.publicActions)) {
             return false;
         }
