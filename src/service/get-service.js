@@ -46,7 +46,7 @@ class GetService extends OperationService {
         if (completedNumber === 1) {
             await this.markOperationAsCompleted(
                 operationId,
-                responseData.nquads,
+                { assertion: responseData.nquads },
                 this.completedStatuses,
             );
             this.logResponsesSummary(completedNumber, failedNumber);
