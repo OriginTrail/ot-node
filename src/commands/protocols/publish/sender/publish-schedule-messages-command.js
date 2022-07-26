@@ -12,10 +12,9 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     }
 
     getNextCommandData(command) {
-        const { assertionId, metadata, ual } = command.data;
+        const { assertionId, ual } = command.data;
         return {
             assertionId,
-            metadata,
             ual,
         };
     }

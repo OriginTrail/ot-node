@@ -5,6 +5,7 @@ const {
     PUBLISH_STATUS,
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
+    SCHEMA_CONTEXT,
 } = require('../constants/constants');
 
 class PublishService extends OperationService {
@@ -14,6 +15,7 @@ class PublishService extends OperationService {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.validationModuleManager = ctx.validationModuleManager;
+        this.dataService = ctx.dataService;
 
         this.operationName = 'publish';
         this.networkProtocol = NETWORK_PROTOCOLS.STORE;
@@ -60,11 +62,7 @@ class PublishService extends OperationService {
                 }
             }
             if (allCompleted) {
-                await this.markOperationAsCompleted(
-                    operationId,
-                    { ual, assertionId },
-                    this.completedStatuses,
-                );
+                await this.markOperationAsCompleted(operationId, {}, this.completedStatuses);
                 this.logResponsesSummary(completedNumber, failedNumber);
             }
         } else if (
@@ -83,9 +81,7 @@ class PublishService extends OperationService {
     async validateAssertion(ual, operationId) {
         this.logger.info(`Validating assertion with ual: ${ual}`);
 
-        const operationIdData = await this.operationIdService.getCachedOperationIdData(operationId);
-
-        const assertion = operationIdData.data.concat(operationIdData.metadata);
+        const assertion = await this.operationIdService.getCachedOperationIdData(operationId);
 
         const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
         const { issuer, assertionId } = await this.blockchainModuleManager.getAssetProofs(
@@ -116,24 +112,26 @@ class PublishService extends OperationService {
     }
 
     async localStore(ual, assertionId, operationId) {
-        const { metadata, data } = await this.operationIdService.getCachedOperationIdData(
-            operationId,
-        );
-        const assertionGraphName = `${ual}/${assertionId}`;
-        const dataGraphName = `${ual}/${assertionId}/data`;
-        const metadatadataGraphName = `${ual}/${assertionId}/metadata`;
+        const assertion = await this.operationIdService.getCachedOperationIdData(operationId);
+        const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
 
-        const assertionNquads = [
-            `<${assertionGraphName}> <http://schema.org/metadata> <${metadatadataGraphName}> .`,
-            `<${assertionGraphName}> <http://schema.org/data> <${dataGraphName}> .`,
-        ];
+        const assetsGraph = 'assets:graph';
+        const assertionGraphName = `assertion:${assertionId}`;
+        const assetNquads = await this.dataService.toNQuads({
+            '@context': SCHEMA_CONTEXT,
+            '@id': ual,
+            blockchain,
+            contract,
+            tokenId,
+            assertion: assertionId,
+            latestAssertion: assertionId,
+        });
 
         this.logger.info(`Inserting assertion with ual:${ual} in database.`);
 
         const insertPromises = [
-            this.tripleStoreModuleManager.insert(metadata.join('\n'), metadatadataGraphName),
-            this.tripleStoreModuleManager.insert(data.join('\n'), dataGraphName),
-            this.tripleStoreModuleManager.insert(assertionNquads.join('\n'), assertionGraphName),
+            this.tripleStoreModuleManager.insert(assertion.join('\n'), assertionGraphName),
+            this.tripleStoreModuleManager.insert(assetNquads.join('\n'), assetsGraph),
         ];
 
         await Promise.all(insertPromises);

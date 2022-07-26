@@ -15,11 +15,10 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
     }
 
     getNextCommandData(command) {
-        const { assertionId, ual, metadata } = command.data;
+        const { assertionId, ual } = command.data;
         return {
             assertionId,
             ual,
-            metadata,
         };
     }
 

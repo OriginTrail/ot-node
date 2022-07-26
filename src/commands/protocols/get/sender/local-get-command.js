@@ -17,15 +17,15 @@ class LocalGetCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, assertionId, ual } = command.data;
+        const { operationId, assertionId } = command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.GET.GET_LOCAL_START,
         );
 
-        const nquads = await this.getService.localGet(ual, assertionId, operationId);
+        const nquads = await this.getService.localGet(assertionId, operationId);
 
-        if (nquads.metadata.length && nquads.data.length) {
+        if (nquads.length) {
             await this.operationIdService.cacheOperationIdData(operationId, nquads);
             await this.operationIdService.updateOperationIdStatus(
                 operationId,

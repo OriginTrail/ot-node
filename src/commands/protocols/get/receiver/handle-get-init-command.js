@@ -15,14 +15,14 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { ual, assertionId, operationId } = commandData;
+        const { assertionId, operationId } = commandData;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.GET.ASSERTION_EXISTS_LOCAL_START,
         );
 
         const assertionExists = await this.tripleStoreModuleManager.assertionExists(
-            `${ual}/${assertionId}`,
+            `assertion:${assertionId}`,
         );
         const messageType = assertionExists
             ? NETWORK_MESSAGE_TYPES.RESPONSES.ACK

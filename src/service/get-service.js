@@ -63,43 +63,23 @@ class GetService extends OperationService {
         }
     }
 
-    async localGet(ual, assertionId, operationId) {
-        const graphName = `${ual}/${assertionId}`;
-        const nquads = {
-            metadata: '',
-            data: '',
-        };
-        const assertionExists = await this.tripleStoreModuleManager.assertionExists(graphName);
-        if (!assertionExists) return nquads;
+    async localGet(assertionId, operationId) {
+        const assertionGraphName = `assertion:${assertionId}`;
 
-        this.logger.debug(`Getting assertion: ${graphName} for operationId: ${operationId}`);
+        this.logger.debug(`Getting assertion: ${assertionId} for operationId: ${operationId}`);
 
-        const getAndNormalize = async (uri) => {
-            const getd = await this.tripleStoreModuleManager.get(uri);
-            return this.dataService.toNQuads(getd, 'application/n-quads');
-        };
-
-        const getPromises = [
-            getAndNormalize(`${graphName}/metadata`).then((result) => {
-                nquads.metadata = result;
-            }),
-            getAndNormalize(`${graphName}/data`).then((result) => {
-                nquads.data = result;
-            }),
-        ];
-        await Promise.allSettled(getPromises);
-
-        const found = nquads.metadata.length && nquads.data.length;
+        let nquads = await this.tripleStoreModuleManager.get(assertionGraphName);
+        nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
 
         this.logger.debug(
-            `Assertion: ${graphName} for operationId: ${operationId} ${
-                found ? '' : 'not'
+            `Assertion: ${assertionGraphName} for operationId: ${operationId} ${
+                nquads ? '' : 'not'
             } found in local database.`,
         );
 
-        if (found) {
+        if (nquads) {
             this.logger.debug(
-                `Number of n-quads retrieved from the database is: metadata: ${nquads.metadata.length}, data: ${nquads.data.length}`,
+                `Number of n-quads retrieved from the database : ${nquads.length ?? 0}`,
             );
         }
 

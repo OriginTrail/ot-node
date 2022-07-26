@@ -60,9 +60,9 @@ class GetController extends BaseController {
 
     async handleNetworkGetRequest(message, remotePeerId) {
         const { operationId, keywordUuid, messageType } = message.header;
-        const { ual, assertionId } = message.data;
+        const { assertionId } = message.data;
         let commandName;
-        const commandData = { ual, assertionId, remotePeerId, operationId, keywordUuid };
+        const commandData = { assertionId, remotePeerId, operationId, keywordUuid };
         switch (messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
                 commandName = 'handleGetInitCommand';
