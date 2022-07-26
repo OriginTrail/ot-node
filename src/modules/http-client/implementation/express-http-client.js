@@ -3,8 +3,8 @@ const https = require('https');
 const fs = require('fs-extra');
 const fileUpload = require('express-fileupload');
 const cors = require('cors');
-const requestValidationMiddleware = require('./request-validation-middleware');
-const rateLimiterMiddleware = require('./rate-limiter-middleware');
+const requestValidationMiddleware = require('./middleware/request-validation-middleware');
+const rateLimiterMiddleware = require('./middleware/rate-limiter-middleware');
 const authenticationMiddleware = require('./middleware/authentication-middleware');
 const authorizationMiddleware = require('./middleware/authorization-middleware');
 
