@@ -3,7 +3,6 @@ const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const Sequelize = require('sequelize');
-const uuid = require('uuid').v4;
 
 class SequelizeRepository {
     async initialize(config, logger) {
@@ -195,9 +194,9 @@ class SequelizeRepository {
         });
     }
 
-    async saveToken(userId, tokenName, expiresAt) {
+    async saveToken(tokenId, userId, tokenName, expiresAt) {
         return this.models.Token.create({
-            id: uuid(),
+            id: tokenId,
             userId,
             expiresAt,
             name: tokenName,
@@ -205,9 +204,9 @@ class SequelizeRepository {
     }
 
     async isTokenRevoked(tokenId) {
-        const token = await this.models.Token.findOne(tokenId);
+        const token = await this.models.Token.findByPk(tokenId);
 
-        return token.revoked;
+        return token && token.revoked;
     }
 
     async getTokenAbilities(tokenId) {

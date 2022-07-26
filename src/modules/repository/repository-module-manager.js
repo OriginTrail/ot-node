@@ -99,9 +99,9 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async saveToken(userId, tokenName, expiresAt) {
+    async saveToken(tokenId, userId, tokenName, expiresAt) {
         if (this.initialized) {
-            return this.getImplementation().module.saveToken(userId, tokenName, expiresAt);
+            return this.getImplementation().module.saveToken(tokenId, userId, tokenName, expiresAt);
         }
     }
 
