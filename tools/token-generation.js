@@ -1,14 +1,15 @@
 /* eslint no-console: 0 */
-const jwt = require('jsonwebtoken');
 const ms = require('ms');
 const DeepExtend = require('deep-extend');
 const rc = require('rc');
 const fs = require('fs-extra');
+const uuid = require('uuid').v4;
 const Logger = require('../modules/logger/logger');
 const configjson = require('../config/config.json');
 const pjson = require('../package.json');
 const RepositoryModuleManager = require('../src/modules/repository/repository-module-manager');
 require('dotenv').config();
+const jwtUtil = require('../src/service/util/jwt-util');
 
 const getLogger = () => new Logger('silent', false);
 let repository;
@@ -73,8 +74,7 @@ const getUserFromArgs = () => {
     const arg = getArg('--user');
 
     if (!arg) {
-        console.log('\x1b[31m[ERROR]\x1b[0m Missing mandatory user argument');
-        process.exit(1);
+        return 'node-runner';
     }
 
     return arg;
@@ -118,31 +118,7 @@ const getTokenName = () => {
     return arg;
 };
 
-/**
- * Generates JWT
- * @param userId
- * @param expiresIn
- * @returns string JWT
- */
-const generateJWT = (userId, expiresIn) => {
-    const secret = process.env.JWT_SECRET;
-
-    const options = {};
-
-    if (expiresIn) {
-        options.expiresIn = expiresIn;
-    }
-
-    return jwt.sign(
-        {
-            userId,
-        },
-        secret,
-        options,
-    );
-};
-
-const saveTokenData = async (userId, tokenName, expiresIn) => {
+const saveTokenData = async (tokenId, userId, tokenName, expiresIn) => {
     let expiresAt = null;
 
     if (expiresIn) {
@@ -150,7 +126,7 @@ const saveTokenData = async (userId, tokenName, expiresIn) => {
         expiresAt = new Date(time);
     }
 
-    await repository.saveToken(userId, tokenName, expiresAt);
+    await repository.saveToken(tokenId, userId, tokenName, expiresAt);
 };
 
 const printMessage = (token, hasExpiryDate) => {
@@ -185,10 +161,11 @@ const generateToken = async () => {
     await loadRepository();
 
     const userId = await getUserId(username);
+    const tokenId = uuid();
 
-    const token = generateJWT(userId, expiresIn);
+    await saveTokenData(tokenId, userId, tokenName, expiresIn);
 
-    await saveTokenData(userId, tokenName, expiresIn);
+    const token = jwtUtil.generateJWT(tokenId, expiresIn);
 
     printMessage(token, expiresIn);
     process.exit(0);
