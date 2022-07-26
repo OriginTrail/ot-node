@@ -4,16 +4,16 @@ const getToken = (req) => {
     }
 };
 
-module.exports = (authService) => (req, res, next) => {
-    const action = req.url.split('/')[0].toUpperCase();
+module.exports = (authService) => async (req, res, next) => {
+    const action = req.url.split('/')[1].toUpperCase();
 
     if (authService.isPublicAction(action)) {
         next();
     }
 
     const token = getToken(req);
-
-    if (!authService.isAuthorized(token, action)) {
+    const isAuthorized = await authService.isAuthorized(token, action);
+    if (!isAuthorized) {
         return res.status(403).send('Forbidden.');
     }
 

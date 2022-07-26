@@ -1,6 +1,11 @@
 const BaseModuleManager = require('../base-module-manager');
 
 class HttpClientModuleManager extends BaseModuleManager {
+    constructor(ctx) {
+        super(ctx);
+        this.authService = ctx.authService;
+    }
+
     getName() {
         return 'httpClient';
     }
@@ -29,9 +34,15 @@ class HttpClientModuleManager extends BaseModuleManager {
         }
     }
 
-    async initializeMiddleware() {
+    async initializeBeforeMiddlewares() {
         if (this.initialized) {
-            return this.getImplementation().module.initializeMiddleware();
+            return this.getImplementation().module.initializeBeforeMiddlewares(this.authService);
+        }
+    }
+
+    async initializeAfterMiddlewares() {
+        if (this.initialized) {
+            return this.getImplementation().module.initializeAfterMiddlewares(this.authService);
         }
     }
 }

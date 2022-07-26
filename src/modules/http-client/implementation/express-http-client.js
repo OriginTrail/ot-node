@@ -4,6 +4,8 @@ const fs = require('fs-extra');
 const fileUpload = require('express-fileupload');
 const { Validator } = require('express-json-validator-middleware');
 const RequestValidationErrorMiddleware = require('./request-validation-error-middleware');
+const authenticationMiddleware = require('./middleware/authentication-middleware');
+const authorizationMiddleware = require('./middleware/authorization-middleware');
 
 const { validate } = new Validator();
 
@@ -12,19 +14,6 @@ class ExpressHttpClient {
         this.config = config;
         this.logger = logger;
         this.app = express();
-
-        this.app.use(
-            fileUpload({
-                createParentPath: true,
-            }),
-        );
-
-        this.app.use(express.json());
-
-        this.app.use((req, res, next) => {
-            this.logger.api(`${req.method}: ${req.url} request received`);
-            return next();
-        });
     }
 
     async get(route, ...callback) {
@@ -56,8 +45,29 @@ class ExpressHttpClient {
         this.logger.info(`Node listening on port: ${this.config.port}`);
     }
 
-    async initializeMiddleware() {
+    async initializeBeforeMiddlewares(authService) {
+        this.app.use(authenticationMiddleware(authService));
+        this.app.use(authorizationMiddleware(authService));
+        this._initializeBaseMiddlewares();
+    }
+
+    async initializeAfterMiddlewares() {
         this.app.use(RequestValidationErrorMiddleware);
+    }
+
+    _initializeBaseMiddlewares() {
+        this.app.use(
+            fileUpload({
+                createParentPath: true,
+            }),
+        );
+
+        this.app.use(express.json());
+
+        this.app.use((req, res, next) => {
+            this.logger.api(`${req.method}: ${req.url} request received`);
+            return next();
+        });
     }
 }
 

@@ -14,8 +14,9 @@ class HttpApiRouter {
     }
 
     async initialize() {
+        await this.initializeBeforeMiddlewares();
         await this.initializeListeners();
-        await this.initializeMiddleware();
+        await this.initializeAfterMiddlewares();
         await this.httpClientModuleManager.listen();
     }
 
@@ -62,9 +63,12 @@ class HttpApiRouter {
         });
     }
 
-    async initializeMiddleware() {
-        await this.httpClientModuleManager.initializeMiddleware();
-        // this.middleware = {};
+    async initializeBeforeMiddlewares() {
+        await this.httpClientModuleManager.initializeBeforeMiddlewares();
+    }
+
+    async initializeAfterMiddlewares() {
+        await this.httpClientModuleManager.initializeAfterMiddlewares();
     }
 }
 

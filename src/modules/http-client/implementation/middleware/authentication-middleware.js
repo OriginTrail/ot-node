@@ -13,8 +13,8 @@ const parseIp = (req) => {
     return xForwardedFor || socketRemoteAddress;
 };
 
-module.exports = (authService) => (req, res, next) => {
-    const action = req.url.split('/')[0].toUpperCase();
+module.exports = (authService) => async (req, res, next) => {
+    const action = req.url.split('/')[1].toUpperCase();
 
     if (authService.isPublicAction(action)) {
         next();
@@ -24,9 +24,11 @@ module.exports = (authService) => (req, res, next) => {
     const token =
         req.headers.authorization &&
         req.headers.authorization.startsWith('Bearer ') &&
-        req.headers.authorization.split(' ')[0];
+        req.headers.authorization.split(' ')[1];
 
-    if (!authService.authenticate(ip, token)) {
+    const isAuthenticated = await authService.authenticate(ip, token);
+
+    if (!isAuthenticated) {
         return res.status(401).send('Unauthenticated.');
     }
 
