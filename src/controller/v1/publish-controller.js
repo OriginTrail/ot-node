@@ -38,7 +38,7 @@ class PublishController extends BaseController {
         );
 
         this.returnResponse(res, 202, {
-            operationId,
+            operation_id: operationId,
         });
 
         const { metadata, data, ual } = req.body;

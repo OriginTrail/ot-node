@@ -41,14 +41,14 @@ class ResultController extends BaseController {
                     case 'assertions:search':
                     case 'entities:search':
                     case 'get':
-                        if (handlerRecord.status === OPERATION_ID_STATUS.GET.GET_END) {
+                        if (handlerRecord.status === OPERATION_ID_STATUS.COMPLETED) {
                             response.data = await this.operationIdService.getCachedOperationIdData(
                                 operationId,
                             );
                         }
                         break;
                     case 'publish':
-                        if (handlerRecord.status === OPERATION_ID_STATUS.PUBLISH.PUBLISH_END) {
+                        if (handlerRecord.status === OPERATION_ID_STATUS.COMPLETED) {
                             response.data = await this.operationIdService.getCachedOperationIdData(
                                 operationId,
                             );
