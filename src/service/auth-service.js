@@ -21,7 +21,7 @@ module.exports = class AuthService {
             return false;
         }
 
-        return !this._isTokenRevoked(token);
+        return !(await this._isTokenRevoked(token));
     }
 
     /**
