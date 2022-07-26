@@ -307,10 +307,8 @@ class SequelizeRepository {
         });
     }
 
-
     async getUser(username) {
         return this.models.User.findOne({
-            attributes: ['id'],
             where: {
                 name: username,
             },
