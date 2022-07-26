@@ -17,10 +17,11 @@ module.exports = (authService) => async (req, res, next) => {
     const action = req.url.split('/')[1].toUpperCase();
 
     if (authService.isPublicAction(action)) {
-        next();
+        return next();
     }
 
     const ip = parseIp(req);
+
     const token =
         req.headers.authorization &&
         req.headers.authorization.startsWith('Bearer ') &&
