@@ -206,7 +206,7 @@ class OTNode {
     }
 
     savePrivateKeyAndPeerIdInUserConfigurationFile(privateKey) {
-        const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
+        const configurationFilePath = path.join(appRootPath.path, this.config.configFilename);
         const configFile = JSON.parse(fs.readFileSync(configurationFilePath));
         if (
             configFile.modules.network &&
@@ -223,7 +223,7 @@ class OTNode {
     }
 
     saveIdentityInUserConfigurationFile(identity) {
-        const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
+        const configurationFilePath = path.join(appRootPath.path, this.config.configFilename);
         const configFile = JSON.parse(fs.readFileSync(configurationFilePath));
         if (
             configFile.modules.blockchain &&
