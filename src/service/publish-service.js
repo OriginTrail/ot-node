@@ -83,20 +83,24 @@ class PublishService extends OperationService {
 
         const assertion = await this.operationIdService.getCachedOperationIdData(operationId);
 
-        const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
-        const assertionId = await this.blockchainModuleManager.getLatestCommitHash(
-            blockchain,
-            contract,
-            tokenId,
-        );
+        // TODO only for testing purposes; disable before the release
+        const assertionId = this.validationModuleManager.calculateRoot(assertion);
 
-        const calculatedAssertionId = this.validationModuleManager.calculateRoot(assertion);
-
-        if (assertionId !== calculatedAssertionId) {
-            throw Error(
-                `Invalid root hash. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`,
-            );
-        }
+        // TODO only for testing purposes; enable before the release
+        // const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
+        // const assertionId = await this.blockchainModuleManager.getLatestCommitHash(
+        //     blockchain,
+        //     contract,
+        //     tokenId,
+        // );
+        //
+        // const calculatedAssertionId = this.validationModuleManager.calculateRoot(assertion);
+        //
+        // if (assertionId !== calculatedAssertionId) {
+        //     throw Error(
+        //         `Invalid root hash. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`,
+        //     );
+        // }
 
         this.logger.info(`Assertion integrity validated!`);
 
