@@ -140,7 +140,6 @@
             "port": 9000,
             "bootstrap": []
         },
-        "ipWhitelist": ["::1", "127.0.0.1"],
         "telemetryHub": {
             "enabled": false,
             "packages": ["ot-telemetry-collector"],
@@ -148,6 +147,15 @@
         },
         "operationalDatabase": {
             "databaseName": "operationaldb"
+        },
+        "auth": {
+            "ipBasedAuthEnabled": true,
+            "tokenBasedAuthEnabled": false,
+            "ipWhitelist": [
+                "::1",
+                "127.0.0.1"
+            ],
+            "publicActions": []
         }
     },
     "test": {
@@ -255,7 +263,6 @@
             "port": 9000,
             "bootstrap": []
         },
-        "ipWhitelist": ["::1", "127.0.0.1"],
         "telemetryHub": {
             "enabled": false,
             "packages": ["ot-telemetry-collector"],
@@ -263,6 +270,15 @@
         },
         "operationalDatabase": {
             "databaseName": "operationaldb"
+        },
+        "auth": {
+            "ipBasedAuthEnabled": true,
+            "tokenBasedAuthEnabled": false,
+            "ipWhitelist": [
+                "::1",
+                "127.0.0.1"
+            ],
+            "publicActions": []
         }
     },
     "testnet": {
@@ -411,7 +427,6 @@
                 "/ip4/46.101.153.21/tcp/9000/p2p/QmXzmTqVT3TPUtTz4dBDN5NWSABqnX9rKXCG9WCLXMfEaM"
             ]
         },
-        "ipWhitelist": ["::1", "127.0.0.1"],
         "telemetryHub": {
             "enabled": true,
             "packages": ["ot-telemetry-collector"],
@@ -419,6 +434,15 @@
         },
         "operationalDatabase": {
             "databaseName": "operationaldb"
+        },
+        "auth": {
+            "ipBasedAuthEnabled": true,
+            "tokenBasedAuthEnabled": false,
+            "ipWhitelist": [
+                "::1",
+                "127.0.0.1"
+            ],
+            "publicActions": []
         }
     },
     "mainnet": {
@@ -531,7 +555,6 @@
             "port": 9000,
             "bootstrap": []
         },
-        "ipWhitelist": ["::1", "127.0.0.1"],
         "telemetryHub": {
             "enabled": false,
             "packages": ["ot-telemetry-collector"],
@@ -539,6 +562,15 @@
         },
         "operationalDatabase": {
             "databaseName": "operationaldb"
+        },
+        "auth": {
+            "ipBasedAuthEnabled": true,
+            "tokenBasedAuthEnabled": false,
+            "ipWhitelist": [
+                "::1",
+                "127.0.0.1"
+            ],
+            "publicActions": []
         }
     }
 }

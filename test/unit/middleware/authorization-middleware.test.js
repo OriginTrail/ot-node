@@ -76,6 +76,7 @@ describe('authentication middleware test', async () => {
         await middleware(req, { status: spyStatus }, spyNext);
 
         const [statusCode] = spyStatus.args[0];
+
         expect(statusCode).to.be.eq(403);
         expect(spyStatus.calledOnce).to.be.true;
         expect(spySend.calledOnce).to.be.true;
