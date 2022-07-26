@@ -3,6 +3,7 @@ const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const Sequelize = require('sequelize');
+const { HANDLER_ID_STATUS } = require('../../../../constants/constants');
 
 class SequelizeRepository {
     async initialize(config, logger) {
@@ -246,8 +247,37 @@ class SequelizeRepository {
         });
     }
 
-    async getAllEvents() {
-        return this.models.event.findAll();
+    async getUnpublishedEvents() {
+        // events without COMPLETE/FAILED status which are older than 30min
+        // are also considered finished
+        const minutes = 5;
+
+        let handlerIds = await this.models.event.findAll({
+            raw: true,
+            attributes: [Sequelize.fn('DISTINCT', Sequelize.col('handler_id'))],
+            where: {
+                [Sequelize.Op.or]: {
+                    name: {
+                        [Sequelize.Op.in]: [HANDLER_ID_STATUS.COMPLETED, HANDLER_ID_STATUS.FAILED],
+                    },
+                    timestamp: {
+                        [Sequelize.Op.lt]: Sequelize.literal(
+                            `(UNIX_TIMESTAMP()*1000 - 1000*60*${minutes})`,
+                        ),
+                    },
+                },
+            },
+        });
+
+        handlerIds = handlerIds.map((e) => e.handler_id);
+
+        return this.models.event.findAll({
+            where: {
+                handler_id: {
+                    [Sequelize.Op.in]: handlerIds,
+                },
+            },
+        });
     }
 
     async destroyEvents(ids) {
