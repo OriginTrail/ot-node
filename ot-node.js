@@ -103,10 +103,7 @@ class OTNode {
             await Promise.all(initializationPromises);
             this.logger.info(`All modules initialized!`);
         } catch (e) {
-            this.logger.error({
-                msg: `Module initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.MODULE_INITIALIZATION_ERROR,
-            });
+            this.logger.error(`Module initialization failed. Error message: ${e.message}`);
             process.exit(1);
         }
     }
@@ -124,10 +121,7 @@ class OTNode {
             const httpApiRouter = this.container.resolve('httpApiRouter');
             await httpApiRouter.initialize();
         } catch (e) {
-            this.logger.error({
-                msg: `Http api router initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.RPC_INITIALIZATION_ERROR,
-            });
+            this.logger.error(`Http api router initialization failed. Error message: ${e.message}`);
         }
 
         try {
@@ -135,10 +129,7 @@ class OTNode {
             const rpcRouter = this.container.resolve('rpcRouter');
             await rpcRouter.initialize();
         } catch (e) {
-            this.logger.error({
-                msg: `RPC router initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.RPC_INITIALIZATION_ERROR,
-            });
+            this.logger.error(`RPC router initialization failed. Error message: ${e.message}`);
         }
     }
 
@@ -174,10 +165,9 @@ class OTNode {
             commandExecutor.replay();
             await commandExecutor.start();
         } catch (e) {
-            this.logger.error({
-                msg: `Command executor initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.COMMAND_EXECUTOR_INITIALIZATION_ERROR,
-            });
+            this.logger.error(
+                `Command executor initialization failed. Error message: ${e.message}`,
+            );
         }
     }
 
@@ -185,9 +175,7 @@ class OTNode {
         try {
             const telemetryHubModuleManager = this.container.resolve('telemetryInjectionService');
             telemetryHubModuleManager.initialize();
-            this.logger.info(
-                'Telemetry Injection Service initialized successfully',
-            );
+            this.logger.info('Telemetry Injection Service initialized successfully');
         } catch (e) {
             this.logger.error(
                 `Telemetry hub module initialization failed. Error message: ${e.message}`,

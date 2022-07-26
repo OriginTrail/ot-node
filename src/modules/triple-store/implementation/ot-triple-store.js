@@ -21,10 +21,9 @@ class OtTripleStore {
             ready = await this.healthCheck();
         }
         if (retries === constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
-            this.logger.error({
-                msg: `Triple Store (${this.getName()}) not available, max retries reached.`,
-                Event_name: constants.ERROR_TYPE.TRIPLE_STORE_UNAVAILABLE_ERROR,
-            });
+            this.logger.error(
+                `Triple Store (${this.getName()}) not available, max retries reached.`,
+            );
             process.exit(1);
         }
 
@@ -60,8 +59,7 @@ class OtTripleStore {
     }
 
     async insert(triples, graphName) {
-        const askQuery = `ASK WHERE { GRAPH <${graphName}> { ?s ?p ?o } }`;
-        const exists = await this.ask(askQuery);
+        const exists = await this.assertionExists(graphName);
         if (!exists) {
             const insertion = `
                                   PREFIX schema: <http://schema.org/> 
@@ -84,12 +82,14 @@ class OtTripleStore {
         return result;
     }
 
-    async assertionExists(assertionId) {
-        const query = `ASK WHERE { GRAPH <${constants.DID_PREFIX}:${assertionId}> { ?s ?p ?o } }`;
-        return await this.ask(query);
+    async assertionExists(graphName) {
+        const escapedGraphName = this.cleanEscapeCharacter(graphName);
+        const query = `ASK WHERE { GRAPH <${escapedGraphName}> { ?s ?p ?o } }`;
+
+        return this.ask(query);
     }
 
-    async resolve(graphName) {
+    async get(graphName) {
         const escapedGraphName = this.cleanEscapeCharacter(graphName);
 
         const query = `PREFIX schema: <http://schema.org/>

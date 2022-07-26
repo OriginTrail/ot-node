@@ -27,7 +27,7 @@ exports.SERVICE_API_SLOW_DOWN = {
  */
 exports.NETWORK_API_RATE_LIMIT = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    MAX_NUMBER: 10,
+    MAX_NUMBER: 20,
 };
 
 /**
@@ -36,7 +36,7 @@ exports.NETWORK_API_RATE_LIMIT = {
  */
 exports.NETWORK_API_SPAM_DETECTION = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    MAX_NUMBER: 20,
+    MAX_NUMBER: 40,
 };
 
 /**
@@ -62,10 +62,10 @@ exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
 exports.REMOVE_SESSION_COMMAND_DELAY = 2 * 60 * 1000;
 
 /**
- * @constant {number} HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS -
+ * @constant {number} OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS -
  * Export command cleanup interval time 24h
  */
-exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+exports.OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
 /**
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
@@ -75,7 +75,7 @@ exports.PERMANENT_COMMANDS = [
     // 'testCommand',
     'sendTelemetryCommand',
     // 'cleanerCommand',
-    // 'handlerIdsCleanerCommand',
+    // 'operationIdsCleanerCommand',
     // 'keepAliveCommand',
 ];
 
@@ -119,10 +119,10 @@ exports.TRIPLE_STORE_QUEUE_LIMIT = 5000;
 exports.BLOCKCHAIN_QUEUE_LIMIT = 25000;
 
 /**
- * @constant {number} RESOLVE_MAX_TIME_MILLIS
- * - Maximum time for resolve operation
+ * @constant {number} GET_MAX_TIME_MILLIS
+ * - Maximum time for get operation
  */
-exports.RESOLVE_MAX_TIME_MILLIS = 15 * 1000;
+exports.GET_MAX_TIME_MILLIS = 15 * 1000;
 
 /**
  * @constant {number} STORE_MAX_RETRIES
@@ -142,7 +142,7 @@ exports.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS = 4 * 1000;
  */
 exports.BUSYNESS_LIMITS = {
     HANDLE_STORE: 20,
-    HANDLE_RESOLVE: 20,
+    HANDLE_GET: 20,
     HANDLE_SEARCH_ASSERTIONS: 20,
     HANDLE_SEARCH_ENTITIES: 15,
 };
@@ -197,7 +197,7 @@ exports.NETWORK_HANDLER_TIMEOUT = 120e3;
  */
 exports.NETWORK_PROTOCOLS = {
     STORE: '/store/1.0.1',
-    RESOLVE: '/resolve/1.0.1',
+    GET: '/get/1.0.1',
     SEARCH: '/search/1.0.1',
     SEARCH_RESULT: '/search/1.0.1/result',
     SEARCH_ASSERTIONS: '/search/assertions/1.0.1',
@@ -212,12 +212,12 @@ exports.SERVICE_API_ROUTES = {
     PUBLISH: '/publish',
     PROVISION: '/provision',
     UPDATE: '/update',
-    RESOLVE: '/resolve',
+    GET: '/get',
     SEARCH: '/entities::search',
     SEARCH_ASSERTIONS: '/assertions::search',
     QUERY: '/query',
     PROOFS: '/proofs::get',
-    OPERATION_RESULT: '/:operation/result/:handler_id',
+    OPERATION_RESULT: '/:operation/:operation_id',
     INFO: '/info',
 };
 
@@ -226,6 +226,30 @@ exports.SERVICE_API_ROUTES = {
  *  Types of errors supported
  */
 exports.ERROR_TYPE = {
+    PUBLISH: {
+        PUBLISH_START_ERROR: 'PublishStartError',
+        PUBLISH_ROUTE_ERROR: 'PublishRouteError',
+        PUBLISH_VALIDATE_ASSERTION_ERROR: 'PublishValidateAssertionError',
+        PUBLISH_VALIDATE_ASSERTION_REMOTE_ERROR: 'PublishValidateAssertionRemoteError',
+        PUBLISH_LOCAL_STORE_ERROR: 'PublishLocalStoreError',
+        PUBLISH_LOCAL_STORE_REMOTE_ERROR: 'PublishLocalStoreRemoteError',
+        PUBLISH_FIND_NODES_ERROR: 'PublishFindNodesError',
+        PUBLISH_STORE_INIT_ERROR: 'PublishStoreInitError',
+        PUBLISH_STORE_REQUEST_ERROR: 'PublishStoreRequestError',
+        PUBLISH_ERROR: 'PublishError',
+        PUBLISH_REMOTE_ERROR: 'PublishRemoteError',
+    },
+    GET: {
+        GET_ASSERTION_ID_ERROR: 'GetAssertionIdError',
+        GET_LOCAL_ERROR: 'GetLocalError',
+        GET_NETWORK_ERROR: 'GetNetworkError',
+        GET_START_ERROR: 'GetStartError',
+        GET_INIT_ERROR: 'GetInitError',
+        GET_REQUEST_ERROR: 'GetRequestError',
+        GET_INIT_REMOTE_ERROR: 'GetInitRemoteError',
+        GET_REQUEST_REMOTE_ERROR: 'GetRequestRemoteError',
+        GET_ERROR: 'GetError',
+    },
     INSERT_ASSERTION_ERROR: 'InsertAssertionError',
     PREPARE_ASSERTION_ERROR: 'PrepareAssertionError',
     VALIDATE_ASSERTION_ERROR: 'ValidateAssertionError',
@@ -237,8 +261,9 @@ exports.ERROR_TYPE = {
     CHECKING_UPDATE_ERROR: 'CheckingUpdateError',
     API_ERROR_400: 'ApiError400',
     API_ERROR_500: 'ApiError500',
+    PUBLISH_START_ERROR: 'PublishStartError',
     PUBLISH_ROUTE_ERROR: 'PublishRouteError',
-    RESOLVE_ROUTE_ERROR: 'ResolveRouteError',
+    GET_ROUTE_ERROR: 'GetRouteError',
     SEARCH_ASSERTIONS_ROUTE_ERROR: 'SearchAssertionsRouteError',
     SEARCH_ASSERTIONS_INIT_ERROR: 'SearchAssertionsInitError',
     SEARCH_ASSERTIONS_REQUEST_ERROR: 'SearchAssertionsRequestError',
@@ -258,14 +283,16 @@ exports.ERROR_TYPE = {
     STORE_INIT_ERROR: 'StoreInitError',
     STORE_REQUEST_ERROR: 'StoreRequestError',
     GET_ASSERTION_COMMAND: 'GetAssertionCommand',
-    RESOLVE_INIT_ERROR: 'ResolveInitError',
-    RESOLVE_REQUEST_ERROR: 'ResolveRequestError',
-    LOCAL_RESOLVE_ERROR: 'LocalResolveError',
+    GET_START_ERROR: 'GetStartError',
+    GET_INIT_ERROR: 'GetInitError',
+    GET_REQUEST_ERROR: 'GetRequestError',
+    LOCAL_GET_ERROR: 'LocalGetError',
+    LOCAL_STORE_ERROR: 'LocalStoreError',
     HANDLE_STORE_ERROR: 'HandleStoreError',
     HANDLE_STORE_INIT_ERROR: 'HandleStoreInitError',
     HANDLE_STORE_REQUEST_ERROR: 'HandleStoreRequestError',
-    HANDLE_RESOLVE_INIT_ERROR: 'HandleResolveInitError',
-    HANDLE_RESOLVE_REQUEST_ERROR: 'HandleResolveRequestError',
+    HANDLE_GET_INIT_ERROR: 'HandleGetInitError',
+    HANDLE_GET_REQUEST_ERROR: 'HandleGetRequestError',
     EXTRACT_METADATA_ERROR: 'ExtractMetadataError',
     TRIPLE_STORE_UNAVAILABLE_ERROR: 'TripleStoreUnavailableError',
     TRIPLE_STORE_INSERT_ERROR: 'TripleStoreInsertError',
@@ -286,10 +313,10 @@ exports.ERROR_TYPE = {
     KEEP_ALIVE_ERROR: 'KeepAliveError',
 };
 /**
- * @constant {object} HANDLER_ID_STATUS -
- *  Possible statuses for handler id
+ * @constant {object} OPERATION_ID_STATUS -
+ *  Possible statuses for operation id
  */
-exports.HANDLER_ID_STATUS = {
+exports.OPERATION_ID_STATUS = {
     PENDING: 'PENDING',
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
@@ -299,6 +326,8 @@ exports.HANDLER_ID_STATUS = {
     PUBLISH: {
         VALIDATING_ASSERTION_START: 'VALIDATING_ASSERTION_START',
         VALIDATING_ASSERTION_END: 'VALIDATING_ASSERTION_END',
+        VALIDATING_ASSERTION_REMOTE_START: 'VALIDATING_ASSERTION_REMOTE_START',
+        VALIDATING_ASSERTION_REMOTE_END: 'VALIDATING_ASSERTION_REMOTE_END',
         VALIDATING_ASSERTION_STAKE_START: 'VALIDATING_ASSERTION_STAKE_START',
         VALIDATING_ASSERTION_STAKE_END: 'VALIDATING_ASSERTION_STAKE_END',
         INSERTING_ASSERTION: 'INSERTING_ASSERTION',
@@ -320,26 +349,26 @@ exports.HANDLER_ID_STATUS = {
         PUBLISH_REPLICATE_END: 'PUBLISH_REPLICATE_END',
         PUBLISH_END: 'PUBLISH_END',
     },
-    RESOLVE: {
+    GET: {
         ASSERTION_EXISTS_LOCAL_START: 'ASSERTION_EXISTS_LOCAL_START',
         ASSERTION_EXISTS_LOCAL_END: 'ASSERTION_EXISTS_LOCAL_END',
-        RESOLVE_ASSERTION: 'RESOLVE_ASSERTION',
-        RESOLVE_START: 'RESOLVE_START',
-        RESOLVE_INIT_START: 'RESOLVE_INIT_START',
-        RESOLVE_INIT_END: 'RESOLVE_INIT_END',
-        RESOLVE_LOCAL_START: 'RESOLVE_LOCAL_START',
-        RESOLVE_LOCAL_END: 'RESOLVE_LOCAL_END',
-        RESOLVE_REMOTE_START: 'RESOLVE_REMOTE_START',
-        RESOLVE_REMOTE_END: 'RESOLVE_REMOTE_END',
-        RESOLVE_FETCH_FROM_NODES_START: 'RESOLVE_FETCH_FROM_NODES_START',
-        RESOLVE_FETCH_FROM_NODES_END: 'RESOLVE_FETCH_FROM_NODES_START',
-        RESOLVE_CREATE_ASSERTION_START: '',
-        RESOLVE_CREATE_ASSERTION_END: '',
-        RESOLVE_VERIFY_ASSERTION_START: '',
-        RESOLVE_VERIFY_ASSERTION_END: '',
-        RESOLVE_SAVE_ASSERTION_START: '',
-        RESOLVE_SAVE_ASSERTION_END: '',
-        RESOLVE_END: 'RESOLVE_END',
+        GET_ASSERTION: 'GET_ASSERTION',
+        GET_START: 'GET_START',
+        GET_INIT_START: 'GET_INIT_START',
+        GET_INIT_END: 'GET_INIT_END',
+        GET_LOCAL_START: 'GET_LOCAL_START',
+        GET_LOCAL_END: 'GET_LOCAL_END',
+        GET_REMOTE_START: 'GET_REMOTE_START',
+        GET_REMOTE_END: 'GET_REMOTE_END',
+        GET_FETCH_FROM_NODES_START: 'GET_FETCH_FROM_NODES_START',
+        GET_FETCH_FROM_NODES_END: 'GET_FETCH_FROM_NODES_START',
+        GET_CREATE_ASSERTION_START: '',
+        GET_CREATE_ASSERTION_END: '',
+        GET_VERIFY_ASSERTION_START: '',
+        GET_VERIFY_ASSERTION_END: '',
+        GET_SAVE_ASSERTION_START: '',
+        GET_SAVE_ASSERTION_END: '',
+        GET_END: 'GET_END',
     },
     SEARCH_ASSERTIONS: {
         VALIDATING_QUERY: 'VALIDATING_QUERY',
@@ -366,10 +395,10 @@ exports.PUBLISH_STATUS = {
 };
 
 /**
- * @constant {object} RESOLVE_STATUS -
- *  Possible statuses for RESOLVE procedure
+ * @constant {object} GET_STATUS -
+ *  Possible statuses for get procedure
  */
-exports.RESOLVE_STATUS = {
+exports.GET_STATUS = {
     IN_PROGRESS: 'IN_PROGRESS',
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
@@ -385,10 +414,10 @@ exports.PUBLISH_REQUEST_STATUS = {
 };
 
 /**
- * @constant {object} RESOLVE_REQUEST_STATUS -
- *  Possible statuses for resolve request
+ * @constant {object} GET_REQUEST_STATUS -
+ *  Possible statuses for get request
  */
-exports.RESOLVE_REQUEST_STATUS = {
+exports.GET_REQUEST_STATUS = {
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
 };

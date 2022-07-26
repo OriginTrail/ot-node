@@ -45,92 +45,94 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    // HANDLER ID TABLE
-    async createHandlerIdRecord(handlerData) {
+    // OPERATION ID TABLE
+    async createOperationIdRecord(handlerData) {
         if (this.initialized) {
-            return this.getImplementation().module.createHandlerIdRecord(handlerData);
+            return this.getImplementation().module.createOperationIdRecord(handlerData);
         }
     }
 
-    async updateHandlerIdRecord(data, handlerId) {
+    async updateOperationIdRecord(data, operationId) {
         if (this.initialized) {
-            return this.getImplementation().module.updateHandlerIdRecord(data, handlerId);
+            return this.getImplementation().module.updateOperationIdRecord(data, operationId);
         }
     }
 
-    async getHandlerIdRecord(handlerId) {
+    async getOperationIdRecord(operationId) {
         if (this.initialized) {
-            return this.getImplementation().module.getHandlerIdRecord(handlerId);
+            return this.getImplementation().module.getOperationIdRecord(operationId);
         }
     }
 
     // publish table
-    async createPublishRecord(handlerId, status) {
+    async createOperationRecord(operation, operationId, status) {
         if (this.initialized) {
-            return this.getImplementation().module.createPublishRecord(handlerId, status);
-        }
-    }
-
-    async getPublishStatus(handlerId) {
-        if (this.initialized) {
-            return this.getImplementation().module.getPublishStatus(handlerId);
-        }
-    }
-
-    async updatePublishStatus(handlerId, status) {
-        if (this.initialized) {
-            return this.getImplementation().module.updatePublishStatus(handlerId, status);
-        }
-    }
-
-    // publish response TABLE
-    async createPublishResponseRecord(status, handlerId, errorMessage) {
-        if (this.initialized) {
-            return this.getImplementation().module.createPublishResponseRecord(
+            return this.getImplementation().module.createOperationRecord(
+                operation,
+                operationId,
                 status,
-                handlerId,
+            );
+        }
+    }
+
+    async getOperationStatus(operation, operationId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getOperationStatus(operation, operationId);
+        }
+    }
+
+    async updateOperationStatus(operation, operationId, status) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateOperationStatus(
+                operation,
+                operationId,
+                status,
+            );
+        }
+    }
+
+    async createOperationResponseRecord(status, operation, operationId, keyword, errorMessage) {
+        if (this.initialized) {
+            return this.getImplementation().module.createOperationResponseRecord(
+                status,
+                operation,
+                operationId,
+                keyword,
                 errorMessage,
             );
         }
     }
 
-    async getNumberOfPublishResponses(handlerId) {
+    async getNumberOfOperationResponses(operation, operationId) {
         if (this.initialized) {
-            return this.getImplementation().module.getNumberOfPublishResponses(handlerId);
+            return this.getImplementation().module.getNumberOfOperationResponses(
+                operation,
+                operationId,
+            );
         }
     }
 
-    async getPublishResponsesStatuses(handlerId) {
+    async getOperationResponsesStatuses(operation, operationId) {
         if (this.initialized) {
-            return this.getImplementation().module.getPublishResponsesStatuses(handlerId);
+            return this.getImplementation().module.getOperationResponsesStatuses(
+                operation,
+                operationId,
+            );
         }
     }
 
-    async countPublishResponseStatuses(handlerId) {
+    async countOperationResponseStatuses(operation, operationId) {
         if (this.initialized) {
-            return this.getImplementation().module.countPublishResponseStatuses(handlerId);
-        }
-    }
-
-    async getResolveResponsesStatuses(handlerId) {
-        if (this.initialized) {
-            return this.getImplementation().module.getResolveResponsesStatuses(handlerId);
-        }
-    }
-
-    async createResolveResponseRecord(status, handlerId, errorMessage) {
-        if (this.initialized) {
-            return this.getImplementation().module.createResolveResponseRecord(
-                status,
-                handlerId,
-                errorMessage,
+            return this.getImplementation().module.countOperationResponseStatuses(
+                operation,
+                operationId,
             );
         }
     }
 
     // EVENT
     async createEventRecord(
-        handlerId,
+        operationId,
         name,
         timestamp,
         value1 = null,
@@ -139,7 +141,7 @@ class RepositoryModuleManager extends BaseModuleManager {
     ) {
         if (this.initialized) {
             return this.getImplementation().module.createEventRecord(
-                handlerId,
+                operationId,
                 name,
                 timestamp,
                 value1,
@@ -149,9 +151,9 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async getAllEvents() {
+    async getUnpublishedEvents() {
         if (this.initialized) {
-            return this.getImplementation().module.getAllEvents();
+            return this.getImplementation().module.getUnpublishedEvents();
         }
     }
 

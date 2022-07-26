@@ -62,11 +62,7 @@ class OtnodeUpdateCommand extends Command {
     }
 
     async handleError(error) {
-        this.logger.error({
-            msg: `Error in update command: ${error}. ${error.stack}`,
-            Event_name: constants.ERROR_TYPE.CHECKING_UPDATE_ERROR,
-            Event_value1: error.message,
-        });
+        this.logger.error(`Error in update command: ${error}. ${error.stack}`);
     }
 
     /**

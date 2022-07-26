@@ -1,149 +1,144 @@
-const { Mutex } = require('async-mutex');
-const constants = require('../constants/constants');
+const OperationService = require('./operation-service');
 const {
-    NETWORK_PROTOCOLS,
-    HANDLER_ID_STATUS,
+    OPERATION_ID_STATUS,
     PUBLISH_REQUEST_STATUS,
     PUBLISH_STATUS,
+    NETWORK_PROTOCOLS,
+    ERROR_TYPE,
 } = require('../constants/constants');
 
-const mutex = new Mutex();
-
-class PublishService {
+class PublishService extends OperationService {
     constructor(ctx) {
-        this.logger = ctx.logger;
-        this.config = ctx.config;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.commandExecutor = ctx.commandExecutor;
-        this.networkModuleManager = ctx.networkModuleManager;
-        this.handlerIdService = ctx.handlerIdService;
+        super(ctx);
+        this.ualService = ctx.ualService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+        this.validationModuleManager = ctx.validationModuleManager;
+
+        this.operationName = 'publish';
+        this.networkProtocol = NETWORK_PROTOCOLS.STORE;
+        this.operationRequestStatus = PUBLISH_REQUEST_STATUS;
+        this.operationStatus = PUBLISH_STATUS;
+        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_ERROR;
+        this.completedStatuses = [
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_END,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_END,
+            OPERATION_ID_STATUS.COMPLETED,
+        ];
     }
 
-    async processPublishResponse(command, responseStatus, errorMessage = null) {
+    async processResponse(command, responseStatus, responseData, errorMessage = null) {
         const {
-            handlerId,
+            operationId,
             ual,
             assertionId,
             numberOfFoundNodes,
             leftoverNodes,
             numberOfNodesInBatch,
+            keyword,
         } = command.data;
 
-        const self = this;
-        let responses = 0;
-        let failedNumber = 0;
-        let completedNumber = 0;
-        await mutex.runExclusive(async () => {
-            await self.repositoryModuleManager.createPublishResponseRecord(
-                responseStatus,
-                handlerId,
-                errorMessage,
-            );
-
-            responses = await self.repositoryModuleManager.getPublishResponsesStatuses(handlerId);
-        });
-
-        responses.forEach((response) => {
-            if (response.status === PUBLISH_REQUEST_STATUS.FAILED) {
-                failedNumber += 1;
-            } else {
-                completedNumber += 1;
-            }
-        });
-
-        this.logger.debug(
-            `Processing publish response. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${responses.length}`,
+        const keywordsStatuses = await this.getResponsesStatuses(
+            responseStatus,
+            errorMessage,
+            operationId,
+            keyword,
         );
 
-        if (this.config.minimumReplicationFactor <= completedNumber) {
-            await this.markPublishAsCompleted(handlerId, ual, assertionId);
-            this.logger.info(
-                `Total number of responses: ${
-                    failedNumber + completedNumber
-                }, failed: ${failedNumber}, completed: ${completedNumber}`,
-            );
+        const { completedNumber, failedNumber } = keywordsStatuses[keyword];
+        const numberOfResponses = completedNumber + failedNumber;
+        this.logger.debug(
+            `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}`,
+        );
+
+        if (completedNumber >= this.config.minimumReplicationFactor) {
+            let allCompleted = true;
+            for (const key in keywordsStatuses) {
+                if (keywordsStatuses[key].completedNumber < this.config.minimumReplicationFactor) {
+                    allCompleted = false;
+                    break;
+                }
+            }
+            if (allCompleted) {
+                await this.markOperationAsCompleted(
+                    operationId,
+                    { ual, assertionId },
+                    this.completedStatuses,
+                );
+                this.logResponsesSummary(completedNumber, failedNumber);
+            }
         } else if (
-            numberOfFoundNodes === responses.length ||
-            numberOfNodesInBatch === responses.length
+            numberOfFoundNodes === numberOfResponses ||
+            numberOfNodesInBatch === numberOfResponses
         ) {
             if (leftoverNodes.length === 0) {
-                await this.markPublishAsFailed(handlerId);
-                this.logger.info(
-                    `Total number of responses: ${
-                        failedNumber + completedNumber
-                    }, failed: ${failedNumber}, completed: ${completedNumber}`,
-                );
+                await this.markOperationAsFailed(operationId, 'Not replicated to enough nodes!');
+                this.logResponsesSummary(completedNumber, failedNumber);
             } else {
-                await this.schedulePublishForLeftoverNodes(command, leftoverNodes);
+                await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
             }
         }
     }
 
-    async handleReceiverCommandError(handlerId, errorMessage, errorName, markFailed, commandData) {
-        this.logger.error({
-            msg: errorMessage,
-        });
+    async validateAssertion(ual, operationId) {
+        this.logger.info(`Validating assertion with ual: ${ual}`);
 
-        const messageType = constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
-        const messageData = {};
-        await this.networkModuleManager.sendMessageResponse(
-            NETWORK_PROTOCOLS.STORE,
-            commandData.remotePeerId,
-            messageType,
-            handlerId,
-            messageData,
-        );
-    }
+        const operationIdData = await this.operationIdService.getCachedOperationIdData(operationId);
 
-    async markPublishAsCompleted(handlerId, ual, assertionId) {
-        // mark publish as completed
-        this.logger.info(`Finalizing publish for handlerId: ${handlerId}`);
+        const assertion = operationIdData.data.concat(operationIdData.metadata);
 
-        await this.repositoryModuleManager.updatePublishStatus(handlerId, PUBLISH_STATUS.COMPLETED);
-
-        await this.handlerIdService.cacheHandlerIdData(handlerId, { ual, assertionId });
-
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_END,
-        );
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_END,
-        );
-    }
-
-    async markPublishAsFailed(handlerId) {
-        await this.repositoryModuleManager.updatePublishStatus(handlerId, PUBLISH_STATUS.FAILED);
-
-        this.logger.info(
-            `Not replicated to enough nodes marking publish as failed for handlerId: ${handlerId}`,
+        const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
+        const { issuer, assertionId } = await this.blockchainModuleManager.getAssetProofs(
+            blockchain,
+            contract,
+            tokenId,
         );
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.FAILED,
-            'Not replicated to enough nodes!',
-        );
-    }
+        const calculatedAssertionId = this.validationModuleManager.calculateRootHash(assertion);
 
-    async schedulePublishForLeftoverNodes(command, leftoverNodes) {
-        const commandData = command.data;
-        commandData.nodes = leftoverNodes.slice(0, this.config.minimumReplicationFactor);
-        if (this.config.minimumReplicationFactor < leftoverNodes.length) {
-            commandData.leftoverNodes = leftoverNodes.slice(this.config.minimumReplicationFactor);
-        } else {
-            commandData.leftoverNodes = [];
+        if (assertionId !== calculatedAssertionId) {
+            throw Error(
+                `Invalid root hash. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`,
+            );
         }
-        this.logger.debug(
-            `Trying to replicate to next batch of ${commandData.nodes.length} nodes, leftover for retry: ${commandData.leftoverNodes.length}`,
+        this.logger.debug('Root hash matches');
+
+        // const verify = await this.blockchainService.verify(assertionId, signature, walletInformation.publicKey);
+        //
+        // if (issuer !== issuer) {
+        //     throw Error(`Invalid issuer. Received value from blockchin: ${issuer}, from metadata: ${issuer}`);
+        // }
+        this.logger.debug('Issuer is valid');
+
+        this.logger.info(`Assertion with id: ${assertionId} passed all checks!`);
+
+        return assertionId;
+    }
+
+    async localStore(ual, assertionId, operationId) {
+        const { metadata, data } = await this.operationIdService.getCachedOperationIdData(
+            operationId,
         );
-        await this.commandExecutor.add({
-            name: 'publishStoreCommand',
-            delay: 0,
-            data: commandData,
-            transactional: false,
-        });
+        const assertionGraphName = `${ual}/${assertionId}`;
+        const dataGraphName = `${ual}/${assertionId}/data`;
+        const metadatadataGraphName = `${ual}/${assertionId}/metadata`;
+
+        const assertionNquads = [
+            `<${assertionGraphName}> <http://schema.org/metadata> <${metadatadataGraphName}> .`,
+            `<${assertionGraphName}> <http://schema.org/data> <${dataGraphName}> .`,
+        ];
+
+        this.logger.info(`Inserting assertion with ual:${ual} in database.`);
+
+        const insertPromises = [
+            this.tripleStoreModuleManager.insert(metadata.join('\n'), metadatadataGraphName),
+            this.tripleStoreModuleManager.insert(data.join('\n'), dataGraphName),
+            this.tripleStoreModuleManager.insert(assertionNquads.join('\n'), assertionGraphName),
+        ];
+
+        await Promise.all(insertPromises);
+
+        this.logger.info(`Assertion ${ual} has been successfully inserted!`);
     }
 }
 

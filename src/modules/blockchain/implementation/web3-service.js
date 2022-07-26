@@ -48,21 +48,19 @@ class Web3Service {
     }
 
     async initializeContracts() {
-        this.hubContract = new this.web3.eth.Contract(
-            Hub.abi,
-            this.config.hubContractAddress,
-        );
+        this.hubContract = new this.web3.eth.Contract(Hub.abi, this.config.hubContractAddress);
 
-        const UAIRegistryAddress = await this.callContractFunction(this.hubContract, 'getContractAddress', ['UAIRegistry']);
-        this.UAIRegistryContract = new this.web3.eth.Contract(
-            UAIRegistry.abi,
-            UAIRegistryAddress,
+        const UAIRegistryAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['UAIRegistry'],
         );
+        this.UAIRegistryContract = new this.web3.eth.Contract(UAIRegistry.abi, UAIRegistryAddress);
 
-        const profileAddress = await this.callContractFunction(this.hubContract, 'getContractAddress', ['Profile']);
-        this.profileContract = new this.web3.eth.Contract(
-            Profile.abi,
-            profileAddress,
+        const profileAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['Profile'],
         );
 
         if (this.identityExists()) {
@@ -94,33 +92,21 @@ class Web3Service {
     }
 
     async deployIdentity() {
-        const parameters = this.web3.eth.abi.encodeParameters(
-            ['address', 'address'],
-            [this.getPublicKey(), this.getManagementKey()],
-        ).slice(2);
-
-        const createTransaction = await this.web3.eth.accounts.signTransaction({
-            from: this.getPublicKey(),
-            data: `${Identity.bytecode}${parameters}`,
-            value: '0x00',
-            gasPrice: this.web3.utils.toWei('100', 'Gwei'),
-            gas: this.web3.utils.toWei('9000', 'Kwei'),
-        }, this.getPrivateKey());
-
-        const createReceipt =
-            await this.web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
-        this.config.identity = createReceipt.contractAddress;
-        return createReceipt.contractAddress;
-        // const transactionReceipt = await this.deployContract(Identity, [this.getPublicKey(), this.getManagementKey()]);
-        // this.config.identity = transactionReceipt.contractAddress;
+        const transactionReceipt = await this.deployContract(Identity, [
+            this.getPublicKey(),
+            this.getManagementKey(),
+        ]);
+        this.config.identity = transactionReceipt.contractAddress;
     }
 
     async createProfile(peerId) {
         const nodeId = Buffer.from((await sha256.digest(peerId.toBytes())).digest).toString('hex');
-        await this.executeContractFunction(this.profileContract, 'createProfile', [this.getManagementKey(),
+        await this.executeContractFunction(this.profileContract, 'createProfile', [
+            this.getManagementKey(),
             `0x${nodeId}`,
             0,
-            this.getIdentity()]);
+            this.getIdentity(),
+        ]);
     }
 
     getEpochs (UAI) {
@@ -221,17 +207,21 @@ class Web3Service {
                 const contractInstance = new this.web3.eth.Contract(contract.abi);
                 const gasPrice = await this.getGasStationPrice();
 
-                const gasLimit = await contractInstance.deploy({
-                    data: contract.bytecode,
-                    arguments: args,
-                }).estimateGas({
-                    from: this.config.publicKey,
-                });
+                const gasLimit = await contractInstance
+                    .deploy({
+                        data: contract.bytecode,
+                        arguments: args,
+                    })
+                    .estimateGas({
+                        from: this.config.publicKey,
+                    });
 
-                const encodedABI = contractInstance.deploy({
-                    data: contract.bytecode,
-                    arguments: args,
-                }).encodeABI();
+                const encodedABI = contractInstance
+                    .deploy({
+                        data: contract.bytecode,
+                        arguments: args,
+                    })
+                    .encodeABI();
 
                 const tx = {
                     from: this.config.publicKey,
@@ -261,7 +251,7 @@ class Web3Service {
             'createAssertionRecord',
             [`0x${stateCommitHash}`, `0x${rootHash}`, issuer, new BigNumber(1), new BigNumber(1)],
         );
-        return {transactionHash: result.transactionHash, blockchain: this.config.networkId};
+        return { transactionHash: result.transactionHash, blockchain: this.config.networkId };
     }
 
     async registerAsset(uai, type, alsoKnownAs, stateCommitHash, rootHash, tokenAmount) {
@@ -270,7 +260,7 @@ class Web3Service {
             'registerAsset',
             [`0x${uai}`, 0, `0x${uai}`, `0x${stateCommitHash}`, `0x${rootHash}`, 1],
         );
-        return {transactionHash: result.transactionHash, blockchain: this.config.networkId};
+        return { transactionHash: result.transactionHash, blockchain: this.config.networkId };
     }
 
     async updateAsset(UAI, newStateCommitHash, rootHash) {
@@ -279,7 +269,7 @@ class Web3Service {
             'updateAssetState',
             [`0x${UAI}`, `0x${newStateCommitHash}`, `0x${rootHash}`],
         );
-        return {transactionHash: result.transactionHash, blockchain: this.config.networkId};
+        return { transactionHash: result.transactionHash, blockchain: this.config.networkId };
     }
 
     async getAssertionProofs(assertionId) {
@@ -289,15 +279,13 @@ class Web3Service {
         const rootHash = await this.callContractFunction(this.DKGContract, 'getAssertionRootHash', [
             `0x${assertionId}`,
         ]);
-        return {issuer, rootHash};
+        return { issuer, rootHash };
     }
 
     async getAssetProofs(blockchain, contract, tokenId) {
-        const issuer = await this.callContractFunction(
-            this.UAIRegistryContract,
-            'getAssetOwner',
-            [tokenId],
-        );
+        const issuer = await this.callContractFunction(this.UAIRegistryContract, 'getAssetOwner', [
+            tokenId,
+        ]);
         let assertionId = await this.callContractFunction(
             this.UAIRegistryContract,
             'getAssetStateCommitHash',
@@ -308,7 +296,7 @@ class Web3Service {
         } else {
             assertionId = assertionId.slice(2);
         }
-        return {issuer, assertionId};
+        return { issuer, assertionId };
     }
 
     async healthCheck() {
@@ -316,10 +304,7 @@ class Web3Service {
             const gasPrice = await this.web3.eth.getGasPrice();
             if (gasPrice) return true;
         } catch (e) {
-            this.logger.error({
-                msg: `Error on checking blockchain. ${e}`,
-                Event_name: constants.ERROR_TYPE.BLOCKCHAIN_CHECK_ERROR,
-            });
+            this.logger.error(`Error on checking blockchain. ${e}`);
             return false;
         }
         return false;

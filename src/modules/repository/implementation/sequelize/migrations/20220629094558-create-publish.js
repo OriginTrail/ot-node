@@ -27,6 +27,6 @@ module.exports = {
         });
     },
     down: async (queryInterface) => {
-        await queryInterface.dropTable('resolve_response');
+        await queryInterface.dropTable('publish');
     },
 };

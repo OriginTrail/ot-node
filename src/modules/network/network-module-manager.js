@@ -11,12 +11,6 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    async rankNodes(nodes, key, limit) {
-        if (this.initialized) {
-            return this.getImplementation().module.rankNodes(nodes, key, limit);
-        }
-    }
-
     getPeers() {
         if (this.initialized) {
             return this.getImplementation().module.getPeers();
@@ -36,25 +30,27 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    async sendMessage(protocol, remotePeerId, messageType, handlerId, message) {
+    async sendMessage(protocol, remotePeerId, messageType, operationId, keyword, message) {
         if (this.initialized) {
             return this.getImplementation().module.sendMessage(
                 protocol,
                 remotePeerId,
                 messageType,
-                handlerId,
+                operationId,
+                keyword,
                 message,
             );
         }
     }
 
-    async sendMessageResponse(protocol, remotePeerId, messageType, handlerId, message) {
+    async sendMessageResponse(protocol, remotePeerId, messageType, operationId, keyword, message) {
         if (this.initialized) {
             return this.getImplementation().module.sendMessageResponse(
                 protocol,
                 remotePeerId,
                 messageType,
-                handlerId,
+                operationId,
+                keyword,
                 message,
             );
         }
