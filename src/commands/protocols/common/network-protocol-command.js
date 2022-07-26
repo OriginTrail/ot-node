@@ -30,6 +30,7 @@ class NetworkProtocolCommand extends Command {
                     ...this.getNextCommandData(command),
                     keyword,
                     operationId,
+                    errorType: this.errorType,
                     networkProtocol: this.operationService.getNetworkProtocol(),
                 },
                 transactional: false,

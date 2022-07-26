@@ -10,6 +10,8 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
         super(ctx);
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.operationService = ctx.getService;
+
+        this.errorType = ERROR_TYPE.GET.GET_INIT_REMOTE_ERROR;
     }
 
     async prepareMessage(commandData) {
@@ -44,7 +46,6 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
             name: 'handleGetInitCommand',
             delay: 0,
             transactional: false,
-            errorType: ERROR_TYPE.HANDLE_GET_INIT_ERROR,
         };
         Object.assign(command, map);
         return command;

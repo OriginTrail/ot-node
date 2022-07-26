@@ -21,7 +21,7 @@ class TelemetryInjectionService {
     }
 
     async getUnpublishedEvents() {
-        return this.repositoryModuleManager.getAllEvents();
+        return this.repositoryModuleManager.getUnpublishedEvents();
     }
 
     async removePublishedEvents(events) {

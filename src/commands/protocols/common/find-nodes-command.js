@@ -1,16 +1,10 @@
 const Command = require('../../command');
-const {
-    ERROR_TYPE,
-    OPERATION_ID_STATUS,
-    NETWORK_PROTOCOLS,
-} = require('../../../constants/constants');
+const { OPERATION_ID_STATUS, NETWORK_PROTOCOLS } = require('../../../constants/constants');
 
 class FindNodesCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.networkModuleManager = ctx.networkModuleManager;
-
-        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_FIND_NODES_ERROR;
     }
 
     /**
@@ -18,8 +12,9 @@ class FindNodesCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { keyword, operationId, networkProtocol } = command.data;
+        const { keyword, operationId, networkProtocol, errorType } = command.data;
 
+        this.errorType = errorType;
         this.logger.debug(`Searching for closest node(s) for keyword ${keyword}`);
 
         await this.operationIdService.updateOperationIdStatus(

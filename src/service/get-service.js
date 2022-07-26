@@ -4,6 +4,7 @@ const {
     OPERATION_ID_STATUS,
     GET_STATUS,
     NETWORK_PROTOCOLS,
+    ERROR_TYPE,
 } = require('../constants/constants');
 
 class GetService extends OperationService {
@@ -17,9 +18,11 @@ class GetService extends OperationService {
         this.networkProtocol = NETWORK_PROTOCOLS.GET;
         this.operationRequestStatus = GET_REQUEST_STATUS;
         this.operationStatus = GET_STATUS;
+        this.errorType = ERROR_TYPE.GET.GET_ERROR;
         this.completedStatuses = [
             OPERATION_ID_STATUS.GET.GET_FETCH_FROM_NODES_END,
             OPERATION_ID_STATUS.GET.GET_END,
+            OPERATION_ID_STATUS.COMPLETED,
         ];
     }
 

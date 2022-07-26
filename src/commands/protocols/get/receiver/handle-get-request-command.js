@@ -9,6 +9,8 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.getService;
+
+        this.errorType = ERROR_TYPE.GET.GET_REQUEST_REMOTE_ERROR;
     }
 
     async prepareMessage(commandData) {
