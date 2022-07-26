@@ -55,10 +55,7 @@ class CommandExecutor {
                 }
                 await this._execute(command);
             } catch (e) {
-                this.logger.error({
-                    msg: `Something went really wrong! OT-node shutting down... ${e}`,
-                    Event_name: constants.ERROR_TYPE.COMMAND_EXECUTOR_ERROR,
-                });
+                this.logger.error(`Something went really wrong! OT-node shutting down... ${e}`);
                 process.exit(1);
             }
 

@@ -1,10 +1,12 @@
 const HandleProtocolMessageCommand = require('../../common/handle-protocol-message-command');
-const { NETWORK_MESSAGE_TYPES } = require('../../../../constants/constants');
+const { NETWORK_MESSAGE_TYPES, ERROR_TYPE } = require('../../../../constants/constants');
 
 class HandleStoreInitCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
+
+        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_REMOTE_ERROR;
     }
 
     async prepareMessage(commandData) {

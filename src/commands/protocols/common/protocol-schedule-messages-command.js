@@ -1,5 +1,4 @@
 const Command = require('../../command');
-const { ERROR_TYPE } = require('../../../constants/constants');
 
 class ProtocolScheduleMessagesCommand extends Command {
     constructor(ctx) {
@@ -70,7 +69,6 @@ class ProtocolScheduleMessagesCommand extends Command {
             name: 'protocolScheduleMessagesCommand',
             delay: 0,
             transactional: false,
-            errorType: ERROR_TYPE.PUBLISH_START_ERROR,
         };
         Object.assign(command, map);
         return command;

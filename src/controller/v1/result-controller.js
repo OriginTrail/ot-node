@@ -65,12 +65,9 @@ class ResultController extends BaseController {
                 message: `Handler with id: ${handlerId} does not exist.`,
             });
         } catch (e) {
-            this.logger.error({
-                msg: `Error while trying to fetch ${operation} data for handler id ${handlerId}. Error message: ${e.message}. ${e.stack}`,
-                Event_name: ERROR_TYPE.RESULTS_ROUTE_ERROR,
-                Event_value1: e.message,
-                Id_operation: handlerId,
-            });
+            this.logger.error(
+                `Error while trying to fetch ${operation} data for handler id ${handlerId}. Error message: ${e.message}. ${e.stack}`,
+            );
 
             return this.returnResponse(res, 400, {
                 code: 400,

@@ -7,7 +7,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         this.operationService = ctx.publishService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
 
-        this.errorType = ERROR_TYPE.STORE_REQUEST_ERROR;
+        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_REQUEST_ERROR;
     }
 
     async prepareMessage(command) {

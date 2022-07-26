@@ -9,6 +9,8 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
+
+        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR;
     }
 
     async prepareMessage(commandData) {
@@ -25,7 +27,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
                     handlerId,
                     keywordUuid,
                     e.message,
-                    ERROR_TYPE.VALIDATE_ASSERTION_ERROR,
+                    ERROR_TYPE.PUBLISH.PUBLISH_VALIDATE_ASSERTION_REMOTE_ERROR,
                 ),
             );
         await this.handlerIdService.updateHandlerIdStatus(
@@ -44,7 +46,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
                     handlerId,
                     keywordUuid,
                     e.message,
-                    ERROR_TYPE.INSERT_ASSERTION_ERROR,
+                    ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR,
                 ),
             );
         await this.handlerIdService.updateHandlerIdStatus(
@@ -65,7 +67,6 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             name: 'handleStoreRequestCommand',
             delay: 0,
             transactional: false,
-            errorType: ERROR_TYPE.HANDLE_STORE_REQUEST_ERROR,
         };
         Object.assign(command, map);
         return command;

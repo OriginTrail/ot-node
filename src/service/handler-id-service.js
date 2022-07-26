@@ -29,7 +29,7 @@ class HandlerIdService {
         return validator.isUUID(handlerId);
     }
 
-    async updateHandlerIdStatus(handlerId, status, errorMessage = null) {
+    async updateHandlerIdStatus(handlerId, status, errorMessage = null, errorType = null) {
         const response = {
             status,
         };
@@ -40,12 +40,12 @@ class HandlerIdService {
             await this.removeHandlerIdCache(handlerId);
         }
 
-        this.emitChangeEvent(status, handlerId, errorMessage);
+        this.emitChangeEvent(status, handlerId, errorMessage, errorType);
 
         await this.repositoryModuleManager.updateHandlerIdRecord(response, handlerId);
     }
 
-    emitChangeEvent(status, handlerId, errorMessage = null) {
+    emitChangeEvent(status, handlerId, errorMessage = null, errorType = null) {
         const timestamp = Date.now();
         const eventName = 'operation_status_changed';
 
@@ -54,6 +54,7 @@ class HandlerIdService {
             handlerId,
             timestamp,
             value1: errorMessage,
+            value2: errorType,
         };
 
         this.eventEmitter.emit(eventName, eventData);

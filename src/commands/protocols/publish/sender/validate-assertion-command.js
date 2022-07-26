@@ -5,6 +5,8 @@ class ValidateAssertionCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
+
+        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_VALIDATE_ASSERTION_ERROR;
     }
 
     /**
@@ -18,17 +20,18 @@ class ValidateAssertionCommand extends Command {
             handlerId,
             HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_START,
         );
-        const assertionId = await this.operationService
-            .validateAssertion(ual, handlerId)
-            .catch((e) =>
-                this.handleError(handlerId, e.message, ERROR_TYPE.VALIDATE_ASSERTION_ERROR, true),
+        try {
+            const assertionId = await this.operationService.validateAssertion(ual, handlerId);
+            await this.handlerIdService.updateHandlerIdStatus(
+                handlerId,
+                HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_END,
             );
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_END,
-        );
 
-        return this.continueSequence({ ...command.data, assertionId }, command.sequence);
+            return this.continueSequence({ ...command.data, assertionId }, command.sequence);
+        } catch (error) {
+            this.handleError(handlerId, error.message, ERROR_TYPE.VALIDATE_ASSERTION_ERROR, true);
+            return Command.empty();
+        }
     }
 
     /**
@@ -41,7 +44,6 @@ class ValidateAssertionCommand extends Command {
             name: 'validateAssertionCommand',
             delay: 0,
             transactional: false,
-            errorType: ERROR_TYPE.VALIDATE_ASSERTION_ERROR,
         };
         Object.assign(command, map);
         return command;

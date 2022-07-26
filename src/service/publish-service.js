@@ -4,6 +4,7 @@ const {
     PUBLISH_REQUEST_STATUS,
     PUBLISH_STATUS,
     NETWORK_PROTOCOLS,
+    ERROR_TYPE,
 } = require('../constants/constants');
 
 class PublishService extends OperationService {
@@ -18,9 +19,11 @@ class PublishService extends OperationService {
         this.networkProtocol = NETWORK_PROTOCOLS.STORE;
         this.operationRequestStatus = PUBLISH_REQUEST_STATUS;
         this.operationStatus = PUBLISH_STATUS;
+        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_ERROR;
         this.completedStatuses = [
             HANDLER_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_END,
             HANDLER_ID_STATUS.PUBLISH.PUBLISH_END,
+            HANDLER_ID_STATUS.COMPLETED,
         ];
     }
 

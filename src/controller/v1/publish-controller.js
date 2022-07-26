@@ -91,16 +91,14 @@ class PublishController extends BaseController {
                 transactional: false,
             });
         } catch (error) {
-            this.logger.error({
-                msg: `Error while initializing publish data: ${error.message}. ${error.stack}`,
-                Event_name: ERROR_TYPE.PUBLISH_ROUTE_ERROR,
-                Event_value1: error.message,
-                Id_operation: handlerId,
-            });
+            this.logger.error(
+                `Error while initializing publish data: ${error.message}. ${error.stack}`,
+            );
             await this.handlerIdService.updateHandlerIdStatus(
                 handlerId,
                 HANDLER_ID_STATUS.FAILED,
                 'Unable to publish data, Failed to process input data!',
+                ERROR_TYPE.PUBLISH.PUBLISH_ROUTE_ERROR,
             );
         }
     }

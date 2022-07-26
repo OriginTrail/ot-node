@@ -119,17 +119,13 @@ class Command {
      * @returns {*}
      */
     async handleError(handlerId, errorMessage, errorName, markFailed) {
-        this.logger.error({
-            msg: `Command error (${errorName}): ${errorMessage}`,
-            Event_name: errorName,
-            Event_value1: errorMessage,
-            Id_operation: handlerId,
-        });
+        this.logger.error(`Command error (${errorName}): ${errorMessage}`);
         if (markFailed) {
             await this.handlerIdService.updateHandlerIdStatus(
                 handlerId,
                 HANDLER_ID_STATUS.FAILED,
                 errorMessage,
+                errorName,
             );
         }
     }

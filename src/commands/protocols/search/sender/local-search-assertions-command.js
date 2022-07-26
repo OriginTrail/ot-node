@@ -47,13 +47,7 @@ class LocalSearchAssertionsCommand extends Command {
     }
 
     handleError(handlerId, error, msg) {
-        this.logger.error({
-            msg,
-            Operation_name: 'Error',
-            Event_name: ERROR_TYPE.LOCAL_SEARCH_ASSERTIONS_ERROR,
-            Event_value1: error.message,
-            Id_operation: handlerId,
-        });
+        this.logger.error(msg);
     }
 
     /**

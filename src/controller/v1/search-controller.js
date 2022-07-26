@@ -61,11 +61,9 @@ class SearchController extends BaseController {
                 transactional: false,
             });
         } catch (error) {
-            this.logger.error({
-                msg: `Error while initializing search for assertions: ${error.message}. ${error.stack}`,
-                Event_name: ERROR_TYPE.SEARCH_ASSERTIONS_ROUTE_ERROR,
-                Event_value1: error.message,
-            });
+            this.logger.error(
+                `Error while initializing search for assertions: ${error.message}. ${error.stack}`,
+            );
             await this.handlerIdService.updateHandlerIdStatus(
                 handlerId,
                 HANDLER_ID_STATUS.FAILED,
@@ -115,11 +113,9 @@ class SearchController extends BaseController {
                 transactional: false,
             });
         } catch (error) {
-            this.logger.error({
-                msg: `Error while initializing search for entities: ${error.message}. ${error.stack}`,
-                Event_name: ERROR_TYPE.SEARCH_ENTITIES_ROUTE_ERROR,
-                Event_value1: error.message,
-            });
+            this.logger.error(
+                `Error while initializing search for entities: ${error.message}. ${error.stack}`,
+            );
             await this.handlerIdService.updateHandlerIdStatus(
                 handlerId,
                 HANDLER_ID_STATUS.FAILED,

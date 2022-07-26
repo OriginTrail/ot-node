@@ -9,6 +9,8 @@ class FindNodesCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.networkModuleManager = ctx.networkModuleManager;
+
+        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_FIND_NODES_ERROR;
     }
 
     /**
@@ -67,7 +69,6 @@ class FindNodesCommand extends Command {
             name: 'findNodesCommand',
             delay: 0,
             transactional: false,
-            errorType: ERROR_TYPE.FIND_NODES_ERROR,
         };
         Object.assign(command, map);
         return command;

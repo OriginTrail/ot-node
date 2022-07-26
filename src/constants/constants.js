@@ -226,6 +226,19 @@ exports.SERVICE_API_ROUTES = {
  *  Types of errors supported
  */
 exports.ERROR_TYPE = {
+    PUBLISH: {
+        PUBLISH_START_ERROR: 'PublishStartError',
+        PUBLISH_ROUTE_ERROR: 'PublishRouteError',
+        PUBLISH_VALIDATE_ASSERTION_ERROR: 'PublishValidateAssertionError',
+        PUBLISH_VALIDATE_ASSERTION_REMOTE_ERROR: 'PublishValidateAssertionRemoteError',
+        PUBLISH_LOCAL_STORE_ERROR: 'PublishLocalStoreError',
+        PUBLISH_LOCAL_STORE_REMOTE_ERROR: 'PublishLocalStoreRemoteError',
+        PUBLISH_FIND_NODES_ERROR: 'PublishFindNodesError',
+        PUBLISH_STORE_INIT_ERROR: 'PublishStoreInitError',
+        PUBLISH_STORE_REQUEST_ERROR: 'PublishStoreRequestError',
+        PUBLISH_ERROR: 'PublishError',
+        PUBLISH_REMOTE_ERROR: 'PublishRemoteError',
+    },
     INSERT_ASSERTION_ERROR: 'InsertAssertionError',
     PREPARE_ASSERTION_ERROR: 'PrepareAssertionError',
     VALIDATE_ASSERTION_ERROR: 'ValidateAssertionError',

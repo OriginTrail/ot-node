@@ -8,6 +8,8 @@ class InsertAssertionCommand extends Command {
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.fileService = ctx.fileService;
         this.handlerIdService = ctx.handlerIdService;
+
+        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_ERROR;
     }
 
     /**
@@ -21,15 +23,18 @@ class InsertAssertionCommand extends Command {
             handlerId,
             HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
-        await this.operationService
-            .localStore(ual, assertionId, handlerId)
-            .catch((e) => this.handleError(handlerId, e.message, ERROR_TYPE.LOCAL_STORE_ERROR));
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
-        );
+        try {
+            await this.operationService.localStore(ual, assertionId, handlerId);
+            await this.handlerIdService.updateHandlerIdStatus(
+                handlerId,
+                HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
+            );
 
-        return this.continueSequence(command.data, command.sequence);
+            return this.continueSequence(command.data, command.sequence);
+        } catch (error) {
+            this.handleError(handlerId, error.message, this.errorType, true);
+            return Command.empty();
+        }
     }
 
     /**
@@ -42,7 +47,6 @@ class InsertAssertionCommand extends Command {
             name: 'insertAssertionCommand',
             delay: 0,
             transactional: false,
-            errorType: ERROR_TYPE.INSERT_ASSERTION_ERROR,
         };
         Object.assign(command, map);
         return command;

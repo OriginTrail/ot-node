@@ -1,9 +1,12 @@
 const NetworkProtocolCommand = require('../../common/network-protocol-command');
+const { ERROR_TYPE } = require('../../../../constants/constants');
 
 class NetworkPublishCommand extends NetworkProtocolCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
+
+        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR;
     }
 
     getKeywords(command) {

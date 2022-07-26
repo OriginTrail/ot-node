@@ -11,6 +11,7 @@ class ValidateStoreInitCommand extends Command {
         this.networkModuleManager = ctx.networkModuleManager;
 
         this.publishService = ctx.publishService;
+        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_VALIDATE_ASSERTION_REMOTE_ERROR;
     }
 
     /**
@@ -38,7 +39,7 @@ class ValidateStoreInitCommand extends Command {
             return Command.empty();
         }
         this.logger.debug('Root hash matches');
-        
+
         if (blockchainData.issuer !== issuer) {
             this.logger.debug(`Invalid issuer. Received value from blockchin: ${blockchainData.issuer}, from metadata: ${issuer}`);
             await this.handleError(handlerId, 'Invalid assertion metadata, issuer mismatch!', ERROR_TYPE.VALIDATE_ASSERTION_ERROR, true);
@@ -59,17 +60,6 @@ class ValidateStoreInitCommand extends Command {
         return this.continueSequence(command.data, command.sequence);
     }
 
-    async handleError(handlerId, errorMessage, errorName, markFailed, commandData) {
-        await this.publishService.handleReceiverCommandError(
-            handlerId,
-            errorMessage,
-            errorName,
-            markFailed,
-            commandData,
-        );
-        return Command.empty();
-    }
-
     /**
      * Builds default prepareAssertionForPublish
      * @param map
@@ -80,7 +70,6 @@ class ValidateStoreInitCommand extends Command {
             name: 'ValidateStoreInitCommand',
             delay: 0,
             transactional: false,
-            errorType: ERROR_TYPE.VALIDATE_ASSERTION_ERROR,
         };
         Object.assign(command, map);
         return command;

@@ -8,7 +8,7 @@ class PublishInitCommand extends ProtocolInitCommand {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.operationService = ctx.publishService;
 
-        this.errorType = ERROR_TYPE.STORE_INIT_ERROR;
+        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_INIT_ERROR;
     }
 
     async prepareMessage(command) {

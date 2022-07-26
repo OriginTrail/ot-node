@@ -89,6 +89,7 @@ class OperationService {
             handlerId,
             HANDLER_ID_STATUS.FAILED,
             message,
+            this.errorType,
         );
     }
 

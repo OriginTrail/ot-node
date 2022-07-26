@@ -7,6 +7,8 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         this.operationService = ctx.publishService;
 
         this.startEvent = HANDLER_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_START;
+
+        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR;
     }
 
     getNextCommandData(command) {
@@ -28,7 +30,6 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
             name: 'publishScheduleMessagesCommand',
             delay: 0,
             transactional: false,
-            errorType: ERROR_TYPE.PUBLISH_START_ERROR,
         };
         Object.assign(command, map);
         return command;

@@ -47,13 +47,7 @@ class searchAssertionsRequestCommand extends ProtocolRequestCommand {
     }
 
     handleError(handlerId, error, msg) {
-        this.logger.error({
-            msg,
-            Operation_name: 'Error',
-            Event_name: ERROR_TYPE.SEARCH_ASSERTIONS_REQUEST_ERROR,
-            Event_value1: error.message,
-            Id_operation: handlerId,
-        });
+        this.logger.error(msg);
     }
 
     /**

@@ -10,13 +10,19 @@ class Logger {
     initialize(logLevel, telemetryHubEnabled) {
         try {
             const logFilename = path.join(path.resolve(__dirname, '../../'), 'logs/active.log');
-            const chosenTargets = [{
-                target: './pino-pretty-transport',
-                options: {colorize: true},
-                level: this.logLevel,
-            }];
+            const chosenTargets = [
+                {
+                    target: './pino-pretty-transport',
+                    options: { colorize: true },
+                    level: this.logLevel,
+                },
+            ];
             if (telemetryHubEnabled) {
-                chosenTargets.push({target: 'pino/file', level: this.logLevel, options: {destination: logFilename}});
+                chosenTargets.push({
+                    target: 'pino/file',
+                    level: this.logLevel,
+                    options: { destination: logFilename },
+                });
             }
             this.pinoLogger = pino({
                 transport: {
@@ -42,14 +48,7 @@ class Logger {
     }
 
     error(obj) {
-        this.pinoLogger.error(obj.msg);
-        this.pinoLogger.emit({
-            msg: `Found error will be reported to Telemetry: ${obj.Event_name}`,
-            Operation_name: 'Error',
-            Event_name: obj.Event_name,
-            Event_value1: obj.Event_value1 ? obj.Event_value1 : '',
-            Id_operation: obj.Id_operation ? obj.Id_operation : '',
-        });
+        this.pinoLogger.error(obj);
     }
 
     warn(obj) {

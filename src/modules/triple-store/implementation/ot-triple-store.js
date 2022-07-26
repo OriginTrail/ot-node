@@ -21,10 +21,9 @@ class OtTripleStore {
             ready = await this.healthCheck();
         }
         if (retries === constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
-            this.logger.error({
-                msg: `Triple Store (${this.getName()}) not available, max retries reached.`,
-                Event_name: constants.ERROR_TYPE.TRIPLE_STORE_UNAVAILABLE_ERROR,
-            });
+            this.logger.error(
+                `Triple Store (${this.getName()}) not available, max retries reached.`,
+            );
             process.exit(1);
         }
 
