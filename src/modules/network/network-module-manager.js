@@ -30,26 +30,26 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    async sendMessage(protocol, remotePeerId, messageType, handlerId, keyword, message) {
+    async sendMessage(protocol, remotePeerId, messageType, operationId, keyword, message) {
         if (this.initialized) {
             return this.getImplementation().module.sendMessage(
                 protocol,
                 remotePeerId,
                 messageType,
-                handlerId,
+                operationId,
                 keyword,
                 message,
             );
         }
     }
 
-    async sendMessageResponse(protocol, remotePeerId, messageType, handlerId, keyword, message) {
+    async sendMessageResponse(protocol, remotePeerId, messageType, operationId, keyword, message) {
         if (this.initialized) {
             return this.getImplementation().module.sendMessageResponse(
                 protocol,
                 remotePeerId,
                 messageType,
-                handlerId,
+                operationId,
                 keyword,
                 message,
             );

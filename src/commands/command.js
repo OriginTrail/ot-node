@@ -1,4 +1,4 @@
-const { HANDLER_ID_STATUS } = require('../constants/constants');
+const { OPERATION_ID_STATUS } = require('../constants/constants');
 
 /**
  * Describes one command handler
@@ -8,7 +8,7 @@ class Command {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.commandResolver = ctx.commandResolver;
-        this.handlerIdService = ctx.handlerIdService;
+        this.operationIdService = ctx.operationIdService;
     }
 
     /**
@@ -26,8 +26,8 @@ class Command {
      * @param err
      */
     async recover(command, err) {
-        const { handlerId } = command.data;
-        await this.handleError(handlerId, err.message, this.errorType, true, command.data);
+        const { operationId } = command.data;
+        await this.handleError(operationId, err.message, this.errorType, true, command.data);
 
         return Command.empty();
     }
@@ -112,18 +112,18 @@ class Command {
 
     /**
      * Error handler for command
-     * @param handlerId  - Operation handler id
+     * @param operationId  - Operation operation id
      * @param error  - Error object
      * @param errorName - Name of error
      * @param markFailed - Update operation status to failed
      * @returns {*}
      */
-    async handleError(handlerId, errorMessage, errorName, markFailed) {
+    async handleError(operationId, errorMessage, errorName, markFailed) {
         this.logger.error(`Command error (${errorName}): ${errorMessage}`);
         if (markFailed) {
-            await this.handlerIdService.updateHandlerIdStatus(
-                handlerId,
-                HANDLER_ID_STATUS.FAILED,
+            await this.operationIdService.updateOperationIdStatus(
+                operationId,
+                OPERATION_ID_STATUS.FAILED,
                 errorMessage,
                 errorName,
             );

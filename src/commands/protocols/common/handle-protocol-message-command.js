@@ -7,7 +7,7 @@ class HandleProtocolMessageCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.networkModuleManager = ctx.networkModuleManager;
-        this.handlerIdService = ctx.handlerIdService;
+        this.operationIdService = ctx.operationIdService;
     }
 
     /**
@@ -15,7 +15,7 @@ class HandleProtocolMessageCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { remotePeerId, handlerId, keywordUuid } = command.data;
+        const { remotePeerId, operationId, keywordUuid } = command.data;
 
         const { messageType, messageData } = await this.prepareMessage(command.data);
 
@@ -23,7 +23,7 @@ class HandleProtocolMessageCommand extends Command {
             this.operationService.getNetworkProtocol(),
             remotePeerId,
             messageType,
-            handlerId,
+            operationId,
             keywordUuid,
             messageData,
         );
@@ -35,14 +35,14 @@ class HandleProtocolMessageCommand extends Command {
         // overridden by subclasses
     }
 
-    async handleError(handlerId, keywordUuid, errorMessage, errorName, commandData) {
-        super.handleError(handlerId, errorMessage, errorName, true);
+    async handleError(operationId, keywordUuid, errorMessage, errorName, commandData) {
+        super.handleError(operationId, errorMessage, errorName, true);
 
         await this.networkModuleManager.sendMessageResponse(
             this.operationService.getNetworkProtocol(),
             commandData.remotePeerId,
             NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-            handlerId,
+            operationId,
             keywordUuid,
             {},
         );

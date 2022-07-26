@@ -1,7 +1,7 @@
 const HandleProtocolMessageCommand = require('../../common/handle-protocol-message-command');
 const {
     NETWORK_MESSAGE_TYPES,
-    HANDLER_ID_STATUS,
+    OPERATION_ID_STATUS,
     ERROR_TYPE,
 } = require('../../../../constants/constants');
 
@@ -14,44 +14,44 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { ual, handlerId, keywordUuid } = commandData;
+        const { ual, operationId, keywordUuid } = commandData;
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_START,
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_START,
         );
         const assertionId = await this.operationService
-            .validateAssertion(ual, handlerId)
+            .validateAssertion(ual, operationId)
             .catch((e) =>
                 this.handleError(
-                    handlerId,
+                    operationId,
                     keywordUuid,
                     e.message,
                     ERROR_TYPE.PUBLISH.PUBLISH_VALIDATE_ASSERTION_REMOTE_ERROR,
                 ),
             );
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_END,
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_END,
         );
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
         await this.operationService
-            .localStore(ual, assertionId, handlerId)
+            .localStore(ual, assertionId, operationId)
             .catch((e) =>
                 this.handleError(
-                    handlerId,
+                    operationId,
                     keywordUuid,
                     e.message,
                     ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR,
                 ),
             );
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
         );
 
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };

@@ -18,18 +18,18 @@ class ProtocolMessageCommand extends Command {
     }
 
     async shouldSendMessage(command) {
-        const { handlerId } = command.data;
+        const { operationId } = command.data;
 
         const operation = await this.repositoryModuleManager.getOperationStatus(
             this.operationService.getOperationName(),
-            handlerId,
+            operationId,
         );
 
         if (operation.status === this.operationService.getOperationStatus().IN_PROGRESS) {
             return true;
         }
         this.logger.trace(
-            `${command.name} skipped for handlerId: ${handlerId} with status ${operation.status}`,
+            `${command.name} skipped for operationId: ${operationId} with status ${operation.status}`,
         );
 
         return false;
@@ -42,13 +42,13 @@ class ProtocolMessageCommand extends Command {
     }
 
     async sendProtocolMessage(command, message, messageType) {
-        const { node, handlerId, keyword } = command.data;
+        const { node, operationId, keyword } = command.data;
 
         const response = await this.networkModuleManager.sendMessage(
             this.operationService.getNetworkProtocol(),
             node,
             messageType,
-            handlerId,
+            operationId,
             keyword,
             message,
         );

@@ -2,7 +2,7 @@ const HandleProtocolMessageCommand = require('../../common/handle-protocol-messa
 const {
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
-    HANDLER_ID_STATUS,
+    OPERATION_ID_STATUS,
 } = require('../../../../constants/constants');
 
 class HandleGetInitCommand extends HandleProtocolMessageCommand {
@@ -13,10 +13,10 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { ual, assertionId, handlerId } = commandData;
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.GET.ASSERTION_EXISTS_LOCAL_START,
+        const { ual, assertionId, operationId } = commandData;
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.GET.ASSERTION_EXISTS_LOCAL_START,
         );
 
         const assertionExists = await this.tripleStoreModuleManager.assertionExists(
@@ -26,9 +26,9 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
             ? NETWORK_MESSAGE_TYPES.RESPONSES.ACK
             : NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.GET.ASSERTION_EXISTS_LOCAL_END,
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.GET.ASSERTION_EXISTS_LOCAL_END,
         );
 
         return { messageType, messageData: {} };

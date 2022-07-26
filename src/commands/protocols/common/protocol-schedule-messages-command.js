@@ -11,7 +11,7 @@ class ProtocolScheduleMessagesCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { handlerId, keyword, leftoverNodes, numberOfFoundNodes } = command.data;
+        const { operationId, keyword, leftoverNodes, numberOfFoundNodes } = command.data;
 
         const currentBatchNodes = leftoverNodes.slice(0, this.config.minimumReplicationFactor);
         const currentBatchLeftoverNodes =
@@ -19,7 +19,7 @@ class ProtocolScheduleMessagesCommand extends Command {
                 ? leftoverNodes.slice(this.config.minimumReplicationFactor)
                 : [];
 
-        await this.handlerIdService.updateHandlerIdStatus(handlerId, this.startEvent);
+        await this.operationIdService.updateOperationIdStatus(operationId, this.startEvent);
 
         const commandSequence = [
             `${this.operationService.getOperationName()}InitCommand`,
@@ -41,7 +41,7 @@ class ProtocolScheduleMessagesCommand extends Command {
                 delay: 0,
                 data: {
                     ...this.getNextCommandData(command),
-                    handlerId,
+                    operationId,
                     keyword,
                     node,
                     numberOfFoundNodes,

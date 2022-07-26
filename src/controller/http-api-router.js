@@ -69,7 +69,7 @@ class HttpApiRouter {
             { rateLimit: true },
         );
 
-        this.httpClientModuleManager.get('/:operation/:handlerId', (req, res) => {
+        this.httpClientModuleManager.get('/:operation/:operationId', (req, res) => {
             this.resultController.handleHttpApiOperationResultRequest(req, res);
         });
 

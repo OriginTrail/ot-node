@@ -1,5 +1,5 @@
 const Command = require('../../../command');
-const { ERROR_TYPE, HANDLER_ID_STATUS } = require('../../../../constants/constants');
+const { ERROR_TYPE, OPERATION_ID_STATUS } = require('../../../../constants/constants');
 
 class ValidateAssertionCommand extends Command {
     constructor(ctx) {
@@ -14,22 +14,22 @@ class ValidateAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { ual, handlerId } = command.data;
+        const { ual, operationId } = command.data;
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_START,
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_START,
         );
         try {
-            const assertionId = await this.operationService.validateAssertion(ual, handlerId);
-            await this.handlerIdService.updateHandlerIdStatus(
-                handlerId,
-                HANDLER_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_END,
+            const assertionId = await this.operationService.validateAssertion(ual, operationId);
+            await this.operationIdService.updateOperationIdStatus(
+                operationId,
+                OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_END,
             );
 
             return this.continueSequence({ ...command.data, assertionId }, command.sequence);
         } catch (error) {
-            this.handleError(handlerId, error.message, ERROR_TYPE.VALIDATE_ASSERTION_ERROR, true);
+            this.handleError(operationId, error.message, ERROR_TYPE.VALIDATE_ASSERTION_ERROR, true);
             return Command.empty();
         }
     }

@@ -1,12 +1,12 @@
 const ProtocolScheduleMessagesCommand = require('../../common/protocol-schedule-messages-command');
-const { HANDLER_ID_STATUS, ERROR_TYPE } = require('../../../../constants/constants');
+const { OPERATION_ID_STATUS, ERROR_TYPE } = require('../../../../constants/constants');
 
 class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
 
-        this.startEvent = HANDLER_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_START;
+        this.startEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_START;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR;
     }

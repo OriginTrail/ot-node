@@ -1,12 +1,12 @@
 const ProtocolScheduleMessagesCommand = require('../../common/protocol-schedule-messages-command');
-const { HANDLER_ID_STATUS, ERROR_TYPE } = require('../../../../constants/constants');
+const { OPERATION_ID_STATUS, ERROR_TYPE } = require('../../../../constants/constants');
 
 class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.getService;
 
-        this.startEvent = HANDLER_ID_STATUS.GET.GET_FETCH_FROM_NODES_START;
+        this.startEvent = OPERATION_ID_STATUS.GET.GET_FETCH_FROM_NODES_START;
     }
 
     getNextCommandData(command) {

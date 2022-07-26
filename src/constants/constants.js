@@ -62,10 +62,10 @@ exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
 exports.REMOVE_SESSION_COMMAND_DELAY = 2 * 60 * 1000;
 
 /**
- * @constant {number} HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS -
+ * @constant {number} OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS -
  * Export command cleanup interval time 24h
  */
-exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+exports.OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
 /**
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
@@ -75,7 +75,7 @@ exports.PERMANENT_COMMANDS = [
     // 'testCommand',
     'sendTelemetryCommand',
     // 'cleanerCommand',
-    // 'handlerIdsCleanerCommand',
+    // 'operationIdsCleanerCommand',
     // 'keepAliveCommand',
 ];
 
@@ -217,7 +217,7 @@ exports.SERVICE_API_ROUTES = {
     SEARCH_ASSERTIONS: '/assertions::search',
     QUERY: '/query',
     PROOFS: '/proofs::get',
-    OPERATION_RESULT: '/:operation/result/:handler_id',
+    OPERATION_RESULT: '/:operation/:operation_id',
     INFO: '/info',
 };
 
@@ -302,10 +302,10 @@ exports.ERROR_TYPE = {
     KEEP_ALIVE_ERROR: 'KeepAliveError',
 };
 /**
- * @constant {object} HANDLER_ID_STATUS -
- *  Possible statuses for handler id
+ * @constant {object} OPERATION_ID_STATUS -
+ *  Possible statuses for operation id
  */
-exports.HANDLER_ID_STATUS = {
+exports.OPERATION_ID_STATUS = {
     PENDING: 'PENDING',
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',

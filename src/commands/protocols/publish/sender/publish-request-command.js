@@ -11,8 +11,8 @@ class PublishRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { handlerId, assertionId, metadata, ual } = command.data;
-        const { data } = await this.handlerIdService.getCachedHandlerIdData(handlerId);
+        const { operationId, assertionId, metadata, ual } = command.data;
+        const { data } = await this.operationIdService.getCachedOperationIdData(operationId);
 
         return {
             metadata,

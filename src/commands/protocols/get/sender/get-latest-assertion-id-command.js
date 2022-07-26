@@ -15,7 +15,7 @@ class GetLatestAssertionIdCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { id, handlerId } = command.data;
+        const { id, operationId } = command.data;
 
         // UAL options :
         // did:otp:0x174714134abcd13431413413/987654321/41eaa20f35f709d9c22281f46d895b2f7a83c54587e4339456e0d9f4e5bd9b8f
@@ -40,7 +40,7 @@ class GetLatestAssertionIdCommand extends Command {
                 await this.blockchainModuleManager.getAssetProofs(blockchain, contract, tokenId);
             if (!blockchainAssertionId) {
                 this.handleError(
-                    handlerId,
+                    operationId,
                     `Unable to find assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
                     this.errorType,
                     true,

@@ -1,7 +1,7 @@
 const Command = require('../../command');
 const {
     ERROR_TYPE,
-    HANDLER_ID_STATUS,
+    OPERATION_ID_STATUS,
     NETWORK_PROTOCOLS,
 } = require('../../../constants/constants');
 
@@ -18,20 +18,20 @@ class FindNodesCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { keyword, handlerId, networkProtocol } = command.data;
+        const { keyword, operationId, networkProtocol } = command.data;
 
         this.logger.debug(`Searching for closest node(s) for keyword ${keyword}`);
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.FIND_NODES_START,
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.FIND_NODES_START,
         );
 
         const closestNodes = await this.networkModuleManager.findNodes(keyword, networkProtocol);
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.FIND_NODES_END,
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.FIND_NODES_END,
         );
 
         this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${keyword}`);
@@ -41,7 +41,7 @@ class FindNodesCommand extends Command {
             closestNodes.length < this.config.minimumReplicationFactor
         ) {
             this.handleError(
-                handlerId,
+                operationId,
                 `Unable to find enough nodes for ${networkProtocol}. Minimum replication factor: ${this.config.minimumReplicationFactor}`,
                 this.errorType,
                 true,

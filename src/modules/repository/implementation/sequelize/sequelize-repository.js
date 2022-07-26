@@ -136,25 +136,25 @@ class SequelizeRepository {
         });
     }
 
-    // HANDLER_ID
-    async createHandlerIdRecord(handlerData) {
-        const handlerRecord = await this.models.handler_ids.create(handlerData);
+    // OPERATION_ID
+    async createOperationIdRecord(handlerData) {
+        const handlerRecord = await this.models.operation_ids.create(handlerData);
         return handlerRecord;
     }
 
-    async getHandlerIdRecord(handlerId) {
-        const handlerRecord = await this.models.handler_ids.findOne({
+    async getOperationIdRecord(operationId) {
+        const handlerRecord = await this.models.operation_ids.findOne({
             where: {
-                handler_id: handlerId,
+                operation_id: operationId,
             },
         });
         return handlerRecord;
     }
 
-    async updateHandlerIdRecord(data, handlerId) {
-        await this.models.handler_ids.update(data, {
+    async updateOperationIdRecord(data, operationId) {
+        await this.models.operation_ids.update(data, {
             where: {
-                handler_id: handlerId,
+                operation_id: operationId,
             },
         });
     }
@@ -168,60 +168,60 @@ class SequelizeRepository {
         });
     }
 
-    async createOperationRecord(operation, handlerId, status) {
+    async createOperationRecord(operation, operationId, status) {
         return this.models[operation].create({
-            handler_id: handlerId,
+            operation_id: operationId,
             status,
         });
     }
 
-    async getOperationStatus(operation, handlerId) {
+    async getOperationStatus(operation, operationId) {
         return this.models[operation].findOne({
             attributes: ['status'],
             where: {
-                handler_id: handlerId,
+                operation_id: operationId,
             },
         });
     }
 
-    async updateOperationStatus(operation, handlerId, status) {
+    async updateOperationStatus(operation, operationId, status) {
         await this.models[operation].update(
             { status },
             {
                 where: {
-                    handler_id: handlerId,
+                    operation_id: operationId,
                 },
             },
         );
     }
 
-    async createOperationResponseRecord(status, operation, handlerId, keyword, message) {
+    async createOperationResponseRecord(status, operation, operationId, keyword, message) {
         await this.models[`${operation}_response`].create({
             status,
             message,
-            handler_id: handlerId,
+            operation_id: operationId,
             keyword,
         });
     }
 
-    async getNumberOfOperationResponses(operation, handlerId) {
+    async getNumberOfOperationResponses(operation, operationId) {
         return this.models[`${operation}_response`].count({
             where: {
-                handler_id: handlerId,
+                operation_id: operationId,
             },
         });
     }
 
-    async getOperationResponsesStatuses(operation, handlerId) {
+    async getOperationResponsesStatuses(operation, operationId) {
         return this.models[`${operation}_response`].findAll({
             attributes: ['status', 'keyword'],
             where: {
-                handler_id: handlerId,
+                operation_id: operationId,
             },
         });
     }
 
-    async countOperationResponseStatuses(operation, handlerId) {
+    async countOperationResponseStatuses(operation, operationId) {
         return this.models[`${operation}_response`].findAll({
             attributes: [
                 'status',
@@ -229,15 +229,15 @@ class SequelizeRepository {
             ],
             group: 'status',
             where: {
-                handler_id: handlerId,
+                operation_id: operationId,
             },
         });
     }
 
     // EVENT
-    async createEventRecord(handlerId, name, timestamp, value1, value2, value3) {
+    async createEventRecord(operationId, name, timestamp, value1, value2, value3) {
         return this.models.event.create({
-            handler_id: handlerId,
+            operation_id: operationId,
             name,
             timestamp,
             value1,

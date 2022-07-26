@@ -1,6 +1,6 @@
 const BaseController = require('./base-controller');
 const {
-    HANDLER_ID_STATUS,
+    OPERATION_ID_STATUS,
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
@@ -12,26 +12,28 @@ class SearchController extends BaseController {
         this.logger = ctx.logger;
         this.fileService = ctx.fileService;
         this.commandExecutor = ctx.commandExecutor;
-        this.handlerIdService = ctx.handlerIdService;
+        this.operationIdService = ctx.operationIdService;
     }
 
     async handleHttpApiSearchAssertionsRequest(req, res) {
         const { query } = req.query;
 
-        const handlerId = await this.handlerIdService.generateHandlerId(
-            HANDLER_ID_STATUS.SEARCH_ASSERTIONS.SEARCH_START,
+        const operationId = await this.operationIdService.generateOperationId(
+            OPERATION_ID_STATUS.SEARCH_ASSERTIONS.SEARCH_START,
         );
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.SEARCH_ASSERTIONS.VALIDATING_QUERY,
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.SEARCH_ASSERTIONS.VALIDATING_QUERY,
         );
 
         this.returnResponse(res, 202, {
-            handlerId,
+            operationId,
         });
 
-        this.logger.info(`Search assertions for ${query} with handler id ${handlerId} initiated.`);
+        this.logger.info(
+            `Search assertions for ${query} with operation id ${operationId} initiated.`,
+        );
 
         try {
             // TODO: updated with query params from get req
@@ -41,7 +43,7 @@ class SearchController extends BaseController {
             };
 
             const commandData = {
-                handlerId,
+                operationId,
                 query,
                 options,
                 networkProtocol: NETWORK_PROTOCOLS.SEARCH_ASSERTIONS,
@@ -64,9 +66,9 @@ class SearchController extends BaseController {
             this.logger.error(
                 `Error while initializing search for assertions: ${error.message}. ${error.stack}`,
             );
-            await this.handlerIdService.updateHandlerIdStatus(
-                handlerId,
-                HANDLER_ID_STATUS.FAILED,
+            await this.operationIdService.updateOperationIdStatus(
+                operationId,
+                OPERATION_ID_STATUS.FAILED,
                 'Unable to search for assertions, Failed to process input data!',
             );
         }
@@ -75,15 +77,17 @@ class SearchController extends BaseController {
     async handleHttpApiSearchEntitiesRequest(req, res) {
         const { query } = req.query;
 
-        const handlerId = await this.handlerIdService.generateHandlerId(
-            HANDLER_ID_STATUS.SEARCH_ENTITIES.VALIDATING_QUERY,
+        const operationId = await this.operationIdService.generateOperationId(
+            OPERATION_ID_STATUS.SEARCH_ENTITIES.VALIDATING_QUERY,
         );
 
         this.returnResponse(res, 202, {
-            handlerId,
+            operationId,
         });
 
-        this.logger.info(`Search entities for ${query} with handler id ${handlerId} initiated.`);
+        this.logger.info(
+            `Search entities for ${query} with operation id ${operationId} initiated.`,
+        );
 
         try {
             // TODO: updated with query params
@@ -93,7 +97,7 @@ class SearchController extends BaseController {
             };
 
             const commandData = {
-                handlerId,
+                operationId,
                 query,
                 options,
                 networkProtocol: NETWORK_PROTOCOLS.SEARCH,
@@ -116,9 +120,9 @@ class SearchController extends BaseController {
             this.logger.error(
                 `Error while initializing search for entities: ${error.message}. ${error.stack}`,
             );
-            await this.handlerIdService.updateHandlerIdStatus(
-                handlerId,
-                HANDLER_ID_STATUS.FAILED,
+            await this.operationIdService.updateOperationIdStatus(
+                operationId,
+                OPERATION_ID_STATUS.FAILED,
                 'Unable to search for entities, Failed to process input data!',
             );
         }
@@ -130,8 +134,8 @@ class SearchController extends BaseController {
 
     async handleNetworkSearchAssertionsRequest(message, remotePeerId) {
         let commandName;
-        const { handlerId } = message.header;
-        const commandData = { message, remotePeerId, handlerId };
+        const { operationId } = message.header;
+        const commandData = { message, remotePeerId, operationId };
         switch (message.header.messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
                 commandName = 'handleSearchAssertionsInitCommand';
@@ -154,8 +158,8 @@ class SearchController extends BaseController {
 
     async handleNetworkSearchEntitiesRequest(message, remotePeerId) {
         let commandName;
-        const { handlerId } = message.header;
-        const commandData = { message, remotePeerId, handlerId };
+        const { operationId } = message.header;
+        const commandData = { message, remotePeerId, operationId };
         switch (message.header.messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
                 commandName = 'handleSearchEntitiesInitCommand';

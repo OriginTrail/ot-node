@@ -56,10 +56,10 @@ class DkgClientHelper {
         });
     }
 
-    async getResult(handler_id, operation) {
+    async getResult(operation_id, operation) {
         return this.client
             ._getResult({
-                handler_id,
+                operation_id,
                 operation,
             })
             .catch((error) => {

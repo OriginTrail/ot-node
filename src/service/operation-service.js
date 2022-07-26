@@ -1,5 +1,5 @@
 const { Mutex } = require('async-mutex');
-const { HANDLER_ID_STATUS } = require('../constants/constants');
+const { OPERATION_ID_STATUS } = require('../constants/constants');
 
 const mutex = new Mutex();
 
@@ -8,7 +8,7 @@ class OperationService {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.handlerIdService = ctx.handlerIdService;
+        this.operationIdService = ctx.operationIdService;
         this.commandExecutor = ctx.commandExecutor;
     }
 
@@ -28,20 +28,20 @@ class OperationService {
         return this.operationStatus;
     }
 
-    async getResponsesStatuses(responseStatus, errorMessage, handlerId, keyword) {
+    async getResponsesStatuses(responseStatus, errorMessage, operationId, keyword) {
         const self = this;
         let responses = 0;
         await mutex.runExclusive(async () => {
             await self.repositoryModuleManager.createOperationResponseRecord(
                 responseStatus,
                 this.operationName,
-                handlerId,
+                operationId,
                 keyword,
                 errorMessage,
             );
             responses = await self.repositoryModuleManager.getOperationResponsesStatuses(
                 this.operationName,
-                handlerId,
+                operationId,
             );
         });
 
@@ -60,34 +60,34 @@ class OperationService {
         return keywordsStatuses;
     }
 
-    async markOperationAsCompleted(handlerId, responseData, endStatuses) {
-        this.logger.info(`Finalizing ${this.networkProtocol} for handlerId: ${handlerId}`);
+    async markOperationAsCompleted(operationId, responseData, endStatuses) {
+        this.logger.info(`Finalizing ${this.networkProtocol} for operationId: ${operationId}`);
 
         await this.repositoryModuleManager.updateOperationStatus(
             this.operationName,
-            handlerId,
+            operationId,
             this.operationStatus.COMPLETED,
         );
 
-        await this.handlerIdService.cacheHandlerIdData(handlerId, responseData);
+        await this.operationIdService.cacheOperationIdData(operationId, responseData);
 
         for (const status of endStatuses) {
-            await this.handlerIdService.updateHandlerIdStatus(handlerId, status);
+            await this.operationIdService.updateOperationIdStatus(operationId, status);
         }
     }
 
-    async markOperationAsFailed(handlerId, message) {
-        this.logger.info(`${this.networkProtocol} for handlerId: ${handlerId} failed.`);
+    async markOperationAsFailed(operationId, message) {
+        this.logger.info(`${this.networkProtocol} for operationId: ${operationId} failed.`);
 
         await this.repositoryModuleManager.updateOperationStatus(
             this.operationName,
-            handlerId,
+            operationId,
             this.operationStatus.FAILED,
         );
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.FAILED,
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.FAILED,
             message,
             this.errorType,
         );

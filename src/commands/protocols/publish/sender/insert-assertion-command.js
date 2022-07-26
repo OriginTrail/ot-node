@@ -1,5 +1,5 @@
 const Command = require('../../../command');
-const { HANDLER_ID_STATUS, ERROR_TYPE } = require('../../../../constants/constants');
+const { OPERATION_ID_STATUS, ERROR_TYPE } = require('../../../../constants/constants');
 
 class InsertAssertionCommand extends Command {
     constructor(ctx) {
@@ -7,7 +7,7 @@ class InsertAssertionCommand extends Command {
         this.logger = ctx.logger;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.fileService = ctx.fileService;
-        this.handlerIdService = ctx.handlerIdService;
+        this.operationIdService = ctx.operationIdService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_ERROR;
     }
@@ -17,22 +17,22 @@ class InsertAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { handlerId, ual, assertionId } = command.data;
+        const { operationId, ual, assertionId } = command.data;
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
         try {
-            await this.operationService.localStore(ual, assertionId, handlerId);
-            await this.handlerIdService.updateHandlerIdStatus(
-                handlerId,
-                HANDLER_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
+            await this.operationService.localStore(ual, assertionId, operationId);
+            await this.operationIdService.updateOperationIdStatus(
+                operationId,
+                OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
             );
 
             return this.continueSequence(command.data, command.sequence);
         } catch (error) {
-            this.handleError(handlerId, error.message, this.errorType, true);
+            this.handleError(operationId, error.message, this.errorType, true);
             return Command.empty();
         }
     }

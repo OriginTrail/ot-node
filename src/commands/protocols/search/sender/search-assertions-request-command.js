@@ -2,7 +2,7 @@ const ProtocolRequestCommand = require('../../common/protocol-request-command');
 const {
     ERROR_TYPE,
     NETWORK_PROTOCOLS,
-    HANDLER_ID_STATUS,
+    OPERATION_ID_STATUS,
 } = require('../../../../constants/constants');
 const Command = require('../../../command');
 
@@ -11,7 +11,7 @@ class searchAssertionsRequestCommand extends ProtocolRequestCommand {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.handlerIdService = ctx.handlerIdService;
+        this.operationIdService = ctx.operationIdService;
         this.searchService = ctx.searchService;
 
         this.commandName = 'searchAssertionsRequestCommand';
@@ -20,11 +20,11 @@ class searchAssertionsRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { handlerId, query, options } = command.data;
+        const { operationId, query, options } = command.data;
 
         return {
             options,
-            handlerId,
+            operationId,
             query,
         };
     }
@@ -33,7 +33,7 @@ class searchAssertionsRequestCommand extends ProtocolRequestCommand {
         await this.searchService.processSearchResponse(
             command,
             responseData,
-            HANDLER_ID_STATUS.SEARCH_ASSERTIONS.COMPLETED,
+            OPERATION_ID_STATUS.SEARCH_ASSERTIONS.COMPLETED,
         );
         return Command.empty();
     }
@@ -41,12 +41,12 @@ class searchAssertionsRequestCommand extends ProtocolRequestCommand {
     async markResponseAsFailed(command, errorMessage) {
         await this.searchService.processSearchResponse(
             command,
-            HANDLER_ID_STATUS.SEARCH_ASSERTIONS.FAILED,
+            OPERATION_ID_STATUS.SEARCH_ASSERTIONS.FAILED,
             errorMessage,
         );
     }
 
-    handleError(handlerId, error, msg) {
+    handleError(operationId, error, msg) {
         this.logger.error(msg);
     }
 

@@ -16,7 +16,7 @@ class HandleSearchAssertionsInitCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { message, remotePeerId, handlerId } = command.data;
+        const { remotePeerId, operationId } = command.data;
 
         const messageType = constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
         const messageData = {};
@@ -24,14 +24,14 @@ class HandleSearchAssertionsInitCommand extends Command {
             constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS,
             remotePeerId,
             messageType,
-            handlerId,
+            operationId,
             messageData,
         );
 
         return this.continueSequence(command.data, command.sequence);
     }
 
-    handleError(handlerId, error, msg) {
+    handleError(operationId, error, msg) {
         this.logger.error(msg);
     }
 

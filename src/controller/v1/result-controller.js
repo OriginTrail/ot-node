@@ -1,4 +1,4 @@
-const { HANDLER_ID_STATUS, ERROR_TYPE } = require('../../constants/constants');
+const { OPERATION_ID_STATUS, ERROR_TYPE } = require('../../constants/constants');
 const BaseController = require('./base-controller');
 
 const availableOperations = ['publish', 'get', 'assertions:search', 'entities:search'];
@@ -7,7 +7,7 @@ class ResultController extends BaseController {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
-        this.handlerIdService = ctx.handlerIdService;
+        this.operationIdService = ctx.operationIdService;
     }
 
     async handleHttpApiOperationResultRequest(req, res) {
@@ -18,22 +18,22 @@ class ResultController extends BaseController {
             });
         }
 
-        const { handlerId, operation } = req.params;
-        if (!this.handlerIdService.handlerIdInRightFormat(handlerId)) {
+        const { operationId, operation } = req.params;
+        if (!this.operationIdService.operationIdInRightFormat(operationId)) {
             return this.returnResponse(res, 400, {
                 code: 400,
-                message: 'Handler id is in wrong format',
+                message: 'Operation id is in wrong format',
             });
         }
 
         try {
-            const handlerRecord = await this.handlerIdService.getHandlerIdRecord(handlerId);
+            const handlerRecord = await this.operationIdService.getOperationIdRecord(operationId);
 
             if (handlerRecord) {
                 const response = {
                     status: handlerRecord.status,
                 };
-                if (handlerRecord.status === HANDLER_ID_STATUS.FAILED) {
+                if (handlerRecord.status === OPERATION_ID_STATUS.FAILED) {
                     response.data = JSON.parse(handlerRecord.data);
                 }
 
@@ -41,16 +41,16 @@ class ResultController extends BaseController {
                     case 'assertions:search':
                     case 'entities:search':
                     case 'get':
-                        if (handlerRecord.status === HANDLER_ID_STATUS.GET.GET_END) {
-                            response.data = await this.handlerIdService.getCachedHandlerIdData(
-                                handlerId,
+                        if (handlerRecord.status === OPERATION_ID_STATUS.GET.GET_END) {
+                            response.data = await this.operationIdService.getCachedOperationIdData(
+                                operationId,
                             );
                         }
                         break;
                     case 'publish':
-                        if (handlerRecord.status === HANDLER_ID_STATUS.PUBLISH.PUBLISH_END) {
-                            response.data = await this.handlerIdService.getCachedHandlerIdData(
-                                handlerId,
+                        if (handlerRecord.status === OPERATION_ID_STATUS.PUBLISH.PUBLISH_END) {
+                            response.data = await this.operationIdService.getCachedOperationIdData(
+                                operationId,
                             );
                         }
                         break;
@@ -62,11 +62,11 @@ class ResultController extends BaseController {
             }
             return this.returnResponse(res, 400, {
                 code: 400,
-                message: `Handler with id: ${handlerId} does not exist.`,
+                message: `Handler with id: ${operationId} does not exist.`,
             });
         } catch (e) {
             this.logger.error(
-                `Error while trying to fetch ${operation} data for handler id ${handlerId}. Error message: ${e.message}. ${e.stack}`,
+                `Error while trying to fetch ${operation} data for operation id ${operationId}. Error message: ${e.message}. ${e.stack}`,
             );
 
             return this.returnResponse(res, 400, {

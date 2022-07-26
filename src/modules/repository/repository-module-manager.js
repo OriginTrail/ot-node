@@ -45,94 +45,94 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    // HANDLER ID TABLE
-    async createHandlerIdRecord(handlerData) {
+    // OPERATION ID TABLE
+    async createOperationIdRecord(handlerData) {
         if (this.initialized) {
-            return this.getImplementation().module.createHandlerIdRecord(handlerData);
+            return this.getImplementation().module.createOperationIdRecord(handlerData);
         }
     }
 
-    async updateHandlerIdRecord(data, handlerId) {
+    async updateOperationIdRecord(data, operationId) {
         if (this.initialized) {
-            return this.getImplementation().module.updateHandlerIdRecord(data, handlerId);
+            return this.getImplementation().module.updateOperationIdRecord(data, operationId);
         }
     }
 
-    async getHandlerIdRecord(handlerId) {
+    async getOperationIdRecord(operationId) {
         if (this.initialized) {
-            return this.getImplementation().module.getHandlerIdRecord(handlerId);
+            return this.getImplementation().module.getOperationIdRecord(operationId);
         }
     }
 
     // publish table
-    async createOperationRecord(operation, handlerId, status) {
+    async createOperationRecord(operation, operationId, status) {
         if (this.initialized) {
             return this.getImplementation().module.createOperationRecord(
                 operation,
-                handlerId,
+                operationId,
                 status,
             );
         }
     }
 
-    async getOperationStatus(operation, handlerId) {
+    async getOperationStatus(operation, operationId) {
         if (this.initialized) {
-            return this.getImplementation().module.getOperationStatus(operation, handlerId);
+            return this.getImplementation().module.getOperationStatus(operation, operationId);
         }
     }
 
-    async updateOperationStatus(operation, handlerId, status) {
+    async updateOperationStatus(operation, operationId, status) {
         if (this.initialized) {
             return this.getImplementation().module.updateOperationStatus(
                 operation,
-                handlerId,
+                operationId,
                 status,
             );
         }
     }
 
-    async createOperationResponseRecord(status, operation, handlerId, keyword, errorMessage) {
+    async createOperationResponseRecord(status, operation, operationId, keyword, errorMessage) {
         if (this.initialized) {
             return this.getImplementation().module.createOperationResponseRecord(
                 status,
                 operation,
-                handlerId,
+                operationId,
                 keyword,
                 errorMessage,
             );
         }
     }
 
-    async getNumberOfOperationResponses(operation, handlerId) {
+    async getNumberOfOperationResponses(operation, operationId) {
         if (this.initialized) {
             return this.getImplementation().module.getNumberOfOperationResponses(
                 operation,
-                handlerId,
+                operationId,
             );
         }
     }
 
-    async getOperationResponsesStatuses(operation, handlerId) {
+    async getOperationResponsesStatuses(operation, operationId) {
         if (this.initialized) {
             return this.getImplementation().module.getOperationResponsesStatuses(
                 operation,
-                handlerId,
+                operationId,
             );
         }
     }
 
-    async countOperationResponseStatuses(operation, handlerId) {
+    async countOperationResponseStatuses(operation, operationId) {
         if (this.initialized) {
             return this.getImplementation().module.countOperationResponseStatuses(
                 operation,
-                handlerId,
+                operationId,
             );
         }
     }
 
     // EVENT
     async createEventRecord(
-        handlerId,
+        operationId,
         name,
         timestamp,
         value1 = null,
@@ -141,7 +141,7 @@ class RepositoryModuleManager extends BaseModuleManager {
     ) {
         if (this.initialized) {
             return this.getImplementation().module.createEventRecord(
-                handlerId,
+                operationId,
                 name,
                 timestamp,
                 value1,

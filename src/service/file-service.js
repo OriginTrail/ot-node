@@ -46,9 +46,9 @@ class FileService {
 
     async fileExists(filePath) {
         try {
-            await stat(filePath)
+            await stat(filePath);
             return true;
-        } catch(e) {
+        } catch (e) {
             return false;
         }
     }
@@ -57,10 +57,10 @@ class FileService {
         this.logger.debug(
             `Reading file on path: ${filePath}, converting to json: ${convertToJSON}`,
         );
-        try{
+        try {
             const data = await readFile(filePath);
             return convertToJSON ? JSON.parse(data) : data.toString();
-        } catch(e) {
+        } catch (e) {
             throw Error(`File doesn't exist on file path: ${filePath}`);
         }
     }
@@ -90,12 +90,12 @@ class FileService {
         return path.join(this.getDataFolderPath(), MIGRATION_FOLDER_NAME);
     }
 
-    getHandlerIdCachePath() {
-        return path.join(this.getDataFolderPath(), 'handler_id_cache');
+    getOperationIdCachePath() {
+        return path.join(this.getDataFolderPath(), 'operation_id_cache');
     }
 
-    getHandlerIdDocumentPath(handlerId) {
-        return path.join(this.getHandlerIdCachePath(), handlerId);
+    getOperationIdDocumentPath(operationId) {
+        return path.join(this.getOperationIdCachePath(), operationId);
     }
 }
 

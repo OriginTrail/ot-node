@@ -1,40 +1,40 @@
-const { NETWORK_MESSAGE_TYPES, HANDLER_ID_STATUS } = require('../../constants/constants');
+const { NETWORK_MESSAGE_TYPES, OPERATION_ID_STATUS } = require('../../constants/constants');
 const BaseController = require('./base-controller');
 
 class GetController extends BaseController {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
-        this.handlerIdService = ctx.handlerIdService;
+        this.operationIdService = ctx.operationIdService;
         this.getService = ctx.getService;
     }
 
     async handleHttpApiGetRequest(req, res) {
-        const handlerId = await this.handlerIdService.generateHandlerId(
-            HANDLER_ID_STATUS.GET.GET_START,
+        const operationId = await this.operationIdService.generateOperationId(
+            OPERATION_ID_STATUS.GET.GET_START,
         );
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.GET.GET_INIT_START,
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.GET.GET_INIT_START,
         );
 
         this.returnResponse(res, 202, {
-            handlerId,
+            operationId,
         });
 
         await this.repositoryModuleManager.createOperationRecord(
             this.getService.getOperationName(),
-            handlerId,
+            operationId,
             this.getService.getOperationStatus().IN_PROGRESS,
         );
 
         const { id } = req.body;
 
-        this.logger.info(`Get for ${id} with handler id ${handlerId} initiated.`);
+        this.logger.info(`Get for ${id} with operation id ${operationId} initiated.`);
 
         const commandData = {
-            handlerId,
+            operationId,
             id,
         };
 
@@ -52,17 +52,17 @@ class GetController extends BaseController {
             transactional: false,
         });
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.GET.GET_INIT_END,
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.GET.GET_INIT_END,
         );
     }
 
     async handleNetworkGetRequest(message, remotePeerId) {
-        const { handlerId, keywordUuid, messageType } = message.header;
+        const { operationId, keywordUuid, messageType } = message.header;
         const { ual, assertionId } = message.data;
         let commandName;
-        const commandData = { ual, assertionId, remotePeerId, handlerId, keywordUuid };
+        const commandData = { ual, assertionId, remotePeerId, operationId, keywordUuid };
         switch (messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
                 commandName = 'handleGetInitCommand';

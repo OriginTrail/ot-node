@@ -1,7 +1,7 @@
 const OperationService = require('./operation-service');
 const {
     GET_REQUEST_STATUS,
-    HANDLER_ID_STATUS,
+    OPERATION_ID_STATUS,
     GET_STATUS,
     NETWORK_PROTOCOLS,
 } = require('../constants/constants');
@@ -18,31 +18,31 @@ class GetService extends OperationService {
         this.operationRequestStatus = GET_REQUEST_STATUS;
         this.operationStatus = GET_STATUS;
         this.completedStatuses = [
-            HANDLER_ID_STATUS.GET.GET_FETCH_FROM_NODES_END,
-            HANDLER_ID_STATUS.GET.GET_END,
+            OPERATION_ID_STATUS.GET.GET_FETCH_FROM_NODES_END,
+            OPERATION_ID_STATUS.GET.GET_END,
         ];
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
-        const { handlerId, numberOfFoundNodes, numberOfNodesInBatch, leftoverNodes, keyword } =
+        const { operationId, numberOfFoundNodes, numberOfNodesInBatch, leftoverNodes, keyword } =
             command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
             errorMessage,
-            handlerId,
+            operationId,
             keyword,
         );
 
         const { completedNumber, failedNumber } = keywordsStatuses[keyword];
         const numberOfResponses = completedNumber + failedNumber;
         this.logger.debug(
-            `Processing ${this.networkProtocol} response for handlerId: ${handlerId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}`,
+            `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}`,
         );
 
         if (completedNumber === 1) {
             await this.markOperationAsCompleted(
-                handlerId,
+                operationId,
                 responseData.nquads,
                 this.completedStatuses,
             );
@@ -50,7 +50,7 @@ class GetService extends OperationService {
         } else if (numberOfFoundNodes === failedNumber || numberOfNodesInBatch === failedNumber) {
             if (leftoverNodes.length === 0) {
                 await this.markOperationAsFailed(
-                    handlerId,
+                    operationId,
                     'Unable to find assertion on the network!',
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);
@@ -60,7 +60,7 @@ class GetService extends OperationService {
         }
     }
 
-    async localGet(ual, assertionId, handlerId) {
+    async localGet(ual, assertionId, operationId) {
         const graphName = `${ual}/${assertionId}`;
         const nquads = {
             metadata: '',
@@ -69,7 +69,7 @@ class GetService extends OperationService {
         const assertionExists = await this.tripleStoreModuleManager.assertionExists(graphName);
         if (!assertionExists) return nquads;
 
-        this.logger.debug(`Getting assertion: ${graphName} for handlerId: ${handlerId}`);
+        this.logger.debug(`Getting assertion: ${graphName} for operationId: ${operationId}`);
 
         const getAndNormalize = async (uri) => {
             const getd = await this.tripleStoreModuleManager.get(uri);
@@ -89,7 +89,7 @@ class GetService extends OperationService {
         const found = nquads.metadata.length && nquads.data.length;
 
         this.logger.debug(
-            `Assertion: ${graphName} for handlerId: ${handlerId} ${
+            `Assertion: ${graphName} for operationId: ${operationId} ${
                 found ? '' : 'not'
             } found in local database.`,
         );

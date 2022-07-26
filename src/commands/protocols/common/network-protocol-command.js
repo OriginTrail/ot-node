@@ -14,7 +14,7 @@ class NetworkProtocolCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { handlerId } = command.data;
+        const { operationId } = command.data;
         const keywords = this.getKeywords(command);
         const commandSequence = [
             'findNodesCommand',
@@ -29,7 +29,7 @@ class NetworkProtocolCommand extends Command {
                 data: {
                     ...this.getNextCommandData(command),
                     keyword,
-                    handlerId,
+                    operationId,
                     networkProtocol: this.operationService.getNetworkProtocol(),
                 },
                 transactional: false,

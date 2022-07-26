@@ -12,7 +12,7 @@ class SearchAssertionsCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { nodes, handlerId, query, options } = command.data;
+        const { nodes, operationId, query, options } = command.data;
 
         const commandSequence = ['searchAssertionsInitCommand', 'searchAssertionsRequestCommand'];
         const addCommandPromise = [];
@@ -22,7 +22,7 @@ class SearchAssertionsCommand extends Command {
                     name: commandSequence[0],
                     sequence: commandSequence.slice(1),
                     delay: 0,
-                    data: { handlerId, node, query, options },
+                    data: { operationId, node, query, options },
                     transactional: false,
                 }),
             );

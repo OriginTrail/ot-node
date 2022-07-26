@@ -16,7 +16,7 @@ class HandleSearchAssertionsRequestCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { message, remotePeerId, handlerId } = command.data;
+        const { message, remotePeerId, operationId } = command.data;
 
         const localQuery = true;
         const data = await this.tripleStoreModuleManager.findAssertionsByKeyword(
@@ -31,14 +31,14 @@ class HandleSearchAssertionsRequestCommand extends Command {
             constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS,
             remotePeerId,
             messageType,
-            handlerId,
+            operationId,
             messageData,
         );
 
         return Command.empty();
     }
 
-    handleError(handlerId, error, msg) {
+    handleError(operationId, error, msg) {
         this.logger.error(msg);
     }
 

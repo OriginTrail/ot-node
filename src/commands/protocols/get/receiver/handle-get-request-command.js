@@ -2,7 +2,7 @@ const HandleProtocolMessageCommand = require('../../common/handle-protocol-messa
 const {
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
-    HANDLER_ID_STATUS,
+    OPERATION_ID_STATUS,
 } = require('../../../../constants/constants');
 
 class HandleGetRequestCommand extends HandleProtocolMessageCommand {
@@ -12,23 +12,23 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { ual, assertionId, handlerId } = commandData;
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.GET.GET_REMOTE_START,
+        const { ual, assertionId, operationId } = commandData;
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.GET.GET_REMOTE_START,
         );
 
         // TODO: validate assertionId / ual
 
-        const nquads = await this.operationService.localGet(ual, assertionId, handlerId);
+        const nquads = await this.operationService.localGet(ual, assertionId, operationId);
 
         const messageType =
             nquads.metadata.length && nquads.data.length
                 ? NETWORK_MESSAGE_TYPES.RESPONSES.ACK
                 : NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.GET.GET_REMOTE_END,
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.GET.GET_REMOTE_END,
         );
 
         return { messageType, messageData: { nquads } };

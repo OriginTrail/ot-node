@@ -1,5 +1,5 @@
 const Command = require('../../../command');
-const { HANDLER_ID_STATUS, ERROR_TYPE } = require('../../../../constants/constants');
+const { OPERATION_ID_STATUS, ERROR_TYPE } = require('../../../../constants/constants');
 
 class LocalSearchAssertionsCommand extends Command {
     constructor(ctx) {
@@ -8,7 +8,7 @@ class LocalSearchAssertionsCommand extends Command {
         this.config = ctx.config;
         this.networkModuleManager = ctx.networkModuleManager;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
-        this.handlerIdService = ctx.handlerIdService;
+        this.operationIdService = ctx.operationIdService;
     }
 
     /**
@@ -16,11 +16,11 @@ class LocalSearchAssertionsCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { handlerId, query, options } = command.data;
+        const { operationId, query, options } = command.data;
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.SEARCH_ASSERTIONS.SEARCHING_ASSERTIONS,
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.SEARCH_ASSERTIONS.SEARCHING_ASSERTIONS,
         );
 
         try {
@@ -34,11 +34,11 @@ class LocalSearchAssertionsCommand extends Command {
             const data = {};
             data.assertions = response.map((assertion) => assertion.assertionId);
 
-            await this.handlerIdService.cacheHandlerIdData(handlerId, data);
+            await this.operationIdService.cacheOperationIdData(operationId, data);
         } catch (e) {
-            await this.handlerIdService.updateHandlerIdStatus(
-                handlerId,
-                HANDLER_ID_STATUS.FAILED,
+            await this.operationIdService.updateOperationIdStatus(
+                operationId,
+                OPERATION_ID_STATUS.FAILED,
                 e.message,
             );
         }
@@ -46,7 +46,7 @@ class LocalSearchAssertionsCommand extends Command {
         return this.continueSequence(command.data, command.sequence);
     }
 
-    handleError(handlerId, error, msg) {
+    handleError(operationId, error, msg) {
         this.logger.error(msg);
     }
 

@@ -1,10 +1,8 @@
-
 class TelemetryInjectionService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.eventEmitter = ctx.eventEmitter;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-
     }
 
     initialize() {
@@ -14,13 +12,12 @@ class TelemetryInjectionService {
     listenOnEvents() {
         this.eventEmitter.on('operation_status_changed', (eventData) => {
             this.repositoryModuleManager.createEventRecord(
-                eventData.handlerId,
+                eventData.operationId,
                 eventData.lastEvent,
                 eventData.timestamp,
-                eventData.value1
+                eventData.value1,
             );
         });
-
     }
 
     async getUnpublishedEvents() {
