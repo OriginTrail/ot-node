@@ -15,13 +15,9 @@ module.exports = class AuthService {
      */
     async authenticate(ip, token) {
         const isWhitelisted = this._isIpWhitelisted(ip);
-        const isTokenValid = this._isTokenValid(token);
+        const isTokenValid = await this._isTokenValid(token);
 
-        if (!isWhitelisted || !isTokenValid) {
-            return false;
-        }
-
-        return !(await this._isTokenRevoked(token));
+        return isWhitelisted && isTokenValid;
     }
 
     /**
@@ -55,18 +51,24 @@ module.exports = class AuthService {
     }
 
     /**
-     * Validates token
+     * Validates token structed and revoked status
      * If ot-node is configured not to do a token based auth, it will return true
      * @param token
      * @returns {boolean}
      * @private
      */
-    _isTokenValid(token) {
+    async _isTokenValid(token) {
         if (!this._authConfig.tokenBasedAuthEnabled) {
             return true;
         }
 
-        return jwtUtil.validateJWT(token);
+        if (!jwtUtil.validateJWT(token)) {
+            return false;
+        }
+
+        const isRevoked = await this._isTokenRevoked(token);
+
+        return !isRevoked;
     }
 
     /**
