@@ -42,16 +42,16 @@ module.exports = class AuthService {
     }
 
     /**
-     * Determines whether action is listed in config.auth.publicActions
-     * @param actionName
+     * Determines whether operation is listed in config.auth.publicOperations
+     * @param operationName
      * @returns {boolean}
      */
-    isPublicAction(actionName) {
-        if (!Array.isArray(this._authConfig.publicActions)) {
+    isPublicOperation(operationName) {
+        if (!Array.isArray(this._authConfig.publicOperations)) {
             return false;
         }
 
-        return this._authConfig.publicActions.includes(actionName);
+        return this._authConfig.publicOperations.includes(operationName);
     }
 
     /**

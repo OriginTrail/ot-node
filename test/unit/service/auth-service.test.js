@@ -158,7 +158,7 @@ const tests = [
 const configObj = {
     auth: {
         ipWhitelist: whitelistedIps,
-        publicActions: ['QUERY'],
+        publicOperations: ['QUERY'],
     },
 };
 
@@ -279,7 +279,7 @@ describe('isAuthorized()', async () => {
     });
 });
 
-describe('isActionPublic()', async () => {
+describe('isPublicOperation()', async () => {
     afterEach(() => {
         sinon.restore();
     });
@@ -288,7 +288,7 @@ describe('isActionPublic()', async () => {
         const config = getConfig(false, false);
         const authService = new AuthService({ config });
 
-        const isPublic = authService.isPublicAction('QUERY');
+        const isPublic = authService.isPublicOperation('QUERY');
         expect(isPublic).to.be.equal(true);
     });
 
@@ -296,16 +296,16 @@ describe('isActionPublic()', async () => {
         const config = getConfig(false, false, true);
         const authService = new AuthService({ config });
 
-        const isPublic = authService.isPublicAction('PUBLISH');
+        const isPublic = authService.isPublicOperation('PUBLISH');
         expect(isPublic).to.be.equal(false);
     });
 
     it('returns false if public routes are not defined', async () => {
         const config = getConfig(false, false, true);
-        config.auth.publicActions = undefined;
+        config.auth.publicOperations = undefined;
         const authService = new AuthService({ config });
 
-        const isPublic = authService.isPublicAction('PUBLISH');
+        const isPublic = authService.isPublicOperation('PUBLISH');
         expect(isPublic).to.be.equal(false);
     });
 });

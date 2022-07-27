@@ -155,7 +155,7 @@
                 "::1",
                 "127.0.0.1"
             ],
-            "publicActions": []
+            "publicOperations": []
         }
     },
     "test": {
@@ -278,7 +278,7 @@
                 "::1",
                 "127.0.0.1"
             ],
-            "publicActions": []
+            "publicOperations": []
         }
     },
     "testnet": {
@@ -442,7 +442,7 @@
                 "::1",
                 "127.0.0.1"
             ],
-            "publicActions": []
+            "publicOperations": []
         }
     },
     "mainnet": {
@@ -570,7 +570,7 @@
                 "::1",
                 "127.0.0.1"
             ],
-            "publicActions": []
+            "publicOperations": []
         }
     }
 }

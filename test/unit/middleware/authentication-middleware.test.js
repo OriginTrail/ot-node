@@ -11,7 +11,7 @@ describe('authentication middleware test', async () => {
     const getAuthService = (options) =>
         sandbox.createStubInstance(AuthService, {
             authenticate: options.isAuthenticated,
-            isPublicAction: options.isPublicAction,
+            isPublicOperation: options.isPublicOperation,
         });
 
     afterEach(() => {
@@ -21,7 +21,7 @@ describe('authentication middleware test', async () => {
     it('calls next if isPublic evaluated to true', async () => {
         const middleware = authenticationMiddleware(
             getAuthService({
-                isPublicAction: true,
+                isPublicOperation: true,
             }),
         );
 
@@ -41,7 +41,7 @@ describe('authentication middleware test', async () => {
     it('calls next if isAuthenticated is evaluated as true', async () => {
         const middleware = authenticationMiddleware(
             getAuthService({
-                isPublicAction: false,
+                isPublicOperation: false,
                 isAuthenticated: true,
             }),
         );
@@ -62,7 +62,7 @@ describe('authentication middleware test', async () => {
     it('returns 401 if isAuthenticated is evaluated as false', async () => {
         const middleware = authenticationMiddleware(
             getAuthService({
-                isPublicAction: false,
+                isPublicOperation: false,
                 isAuthenticated: false,
             }),
         );

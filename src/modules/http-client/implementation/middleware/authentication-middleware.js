@@ -14,9 +14,9 @@ const parseIp = (req) => {
 };
 
 module.exports = (authService) => async (req, res, next) => {
-    const action = req.url.split('/')[1].toUpperCase();
+    const operation = req.url.split('/')[1].toUpperCase();
 
-    if (authService.isPublicAction(action)) {
+    if (authService.isPublicOperation(operation)) {
         return next();
     }
 
