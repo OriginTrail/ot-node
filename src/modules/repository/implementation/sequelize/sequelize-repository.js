@@ -3,7 +3,7 @@ const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const Sequelize = require('sequelize');
-const { HANDLER_ID_STATUS } = require('../../../../constants/constants');
+const { OPERATION_ID_STATUS } = require('../../../../constants/constants');
 
 class SequelizeRepository {
     async initialize(config, logger) {
@@ -252,13 +252,16 @@ class SequelizeRepository {
         // are also considered finished
         const minutes = 5;
 
-        let handlerIds = await this.models.event.findAll({
+        let operationIds = await this.models.event.findAll({
             raw: true,
-            attributes: [Sequelize.fn('DISTINCT', Sequelize.col('handler_id'))],
+            attributes: [Sequelize.fn('DISTINCT', Sequelize.col('operation_id'))],
             where: {
                 [Sequelize.Op.or]: {
                     name: {
-                        [Sequelize.Op.in]: [HANDLER_ID_STATUS.COMPLETED, HANDLER_ID_STATUS.FAILED],
+                        [Sequelize.Op.in]: [
+                            OPERATION_ID_STATUS.COMPLETED,
+                            OPERATION_ID_STATUS.FAILED,
+                        ],
                     },
                     timestamp: {
                         [Sequelize.Op.lt]: Sequelize.literal(
@@ -269,12 +272,12 @@ class SequelizeRepository {
             },
         });
 
-        handlerIds = handlerIds.map((e) => e.handler_id);
+        operationIds = operationIds.map((e) => e.operation_id);
 
         return this.models.event.findAll({
             where: {
                 handler_id: {
-                    [Sequelize.Op.in]: handlerIds,
+                    [Sequelize.Op.in]: operationIds,
                 },
             },
         });
