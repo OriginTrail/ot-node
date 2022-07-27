@@ -216,7 +216,9 @@ class SparqlqueryService {
                         result[key.value] = parseInt(value.value);
                     } else if (
                         value.datatype &&
-                        value.datatype.value === 'http://www.w3.org/2001/XMLSchema#decimal'
+                        (value.datatype.value === 'http://www.w3.org/2001/XMLSchema#decimal' ||
+                            value.datatype.value === 'http://www.w3.org/2001/XMLSchema#float' ||
+                            value.datatype.value === 'http://www.w3.org/2001/XMLSchema#double')
                     ) {
                         result[key.value] = parseFloat(value.value);
                     } else {
