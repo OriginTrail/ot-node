@@ -51,7 +51,7 @@ module.exports = class AuthService {
     }
 
     /**
-     * Validates token structed and revoked status
+     * Validates token structure and revoked status
      * If ot-node is configured not to do a token based auth, it will return true
      * @param token
      * @returns {boolean}
