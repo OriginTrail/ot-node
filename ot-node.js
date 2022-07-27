@@ -139,9 +139,8 @@ class OTNode {
             const networkModuleManager = this.container.resolve('networkModuleManager');
             const peerId = networkModuleManager.getPeerId();
             await blockchainModuleManager.deployIdentity();
-            await new Promise(resolve => setTimeout(resolve, 10000));
+            await new Promise(resolve => setTimeout(resolve, 15000));
             await blockchainModuleManager.createProfile(peerId);
-
             if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
                 this.saveIdentityInUserConfigurationFile(blockchainModuleManager.getIdentity());
             }

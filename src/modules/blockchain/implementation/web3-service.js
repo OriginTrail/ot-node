@@ -131,6 +131,8 @@ class Web3Service {
             constants.INIT_STAKE_AMOUNT
         ]);
 
+        await new Promise(resolve => setTimeout(resolve, 15000));
+
         const nodeId = await peerId2Hash(peerId);
         await this.executeContractFunction(this.ProfileContract, 'createProfile', [
             this.getManagementKey(),
