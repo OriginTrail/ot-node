@@ -1,7 +1,5 @@
 const Web3 = require('web3');
-const BigNumber = require('bn.js');
 const axios = require('axios');
-const sha3 = require("js-sha3");
 const { peerId2Hash } = require('assertion-tools');
 const Hub = require('../../../../build/contracts/Hub.json');
 const AssetRegistry = require('../../../../build/contracts/AssetRegistry.json');

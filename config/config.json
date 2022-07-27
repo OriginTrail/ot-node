@@ -337,7 +337,8 @@
                                 "https://matic-mumbai.chainstacklabs.com",
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
-                            ]
+                            ],
+                            "managementKey": "0xe1EEB4f09809C6c8664c0b1e3B26211d139076fF"
                         }
                     }
                 }
