@@ -42,7 +42,7 @@ class GetLatestAssertionIdCommand extends Command {
                     `Searching for assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
                 );
                 const { assertionId: blockchainAssertionId } =
-                    await this.blockchainModuleManager.getAssetProofs(
+                    await this.blockchainModuleManager.getLatestCommitHash(
                         blockchain,
                         contract,
                         tokenId,

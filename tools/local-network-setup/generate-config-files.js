@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
-require('dotenv').config('.env');
+const keys = require('./keys.json');
 
 const numberOfNodes = process.argv.length === 3 ? parseInt(process.argv[2], 10) : 4;
 
@@ -13,19 +13,17 @@ const bootstrapTemplate = JSON.parse(fs.readFileSync(bootstrapTemplatePath));
 
 console.log('Preparing keys for blockchain');
 
-if (!process.env.PRIVATE_KEY || !process.env.PUBLIC_KEY) {
-    console.log('Missing blockchain keys in .env file');
+if (!keys) {
+    console.log('Missing blockchain keys');
     process.exit(1);
 }
 
-template.modules.blockchain.implementation['web3-service'].config.publicKey =
-    process.env.PUBLIC_KEY;
-template.modules.blockchain.implementation['web3-service'].config.privateKey =
-    process.env.PRIVATE_KEY;
 bootstrapTemplate.modules.blockchain.implementation['web3-service'].config.publicKey =
-    process.env.PUBLIC_KEY;
+    keys.publicKey[0];
 bootstrapTemplate.modules.blockchain.implementation['web3-service'].config.privateKey =
-    process.env.PRIVATE_KEY;
+    keys.privateKey[0];
+bootstrapTemplate.modules.blockchain.implementation['web3-service'].config.managementKey =
+    keys.managementKey;
 
 fs.writeFileSync(bootstrapTemplatePath, JSON.stringify(bootstrapTemplate, null, 2));
 
@@ -46,6 +44,13 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     execSync(`touch ${configPath}`);
 
     const parsedTemplate = JSON.parse(JSON.stringify(template));
+
+    parsedTemplate.modules.blockchain.implementation['web3-service'].config.publicKey =
+        keys.publicKey[i + 1];
+    parsedTemplate.modules.blockchain.implementation['web3-service'].config.privateKey =
+        keys.privateKey[i + 1];
+    parsedTemplate.modules.blockchain.implementation['web3-service'].config.managementKey =
+        keys.managementKey;
 
     parsedTemplate.modules.httpClient.implementation['express-http-client'].config.port = 8900 + i;
     parsedTemplate.modules.network.implementation['libp2p-service'].config.port = 9000 + i;

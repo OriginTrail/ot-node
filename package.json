@@ -56,6 +56,7 @@
         "solc": "0.7.6"
     },
     "dependencies": {
+        "assertion-tools": "github:OriginTrail/assertion-tools",
         "@comunica/query-sparql": "^2.2.1",
         "app-root-path": "^3.0.0",
         "async-mutex": "^0.3.2",

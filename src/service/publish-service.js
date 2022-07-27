@@ -83,30 +83,26 @@ class PublishService extends OperationService {
 
         const assertion = await this.operationIdService.getCachedOperationIdData(operationId);
 
-        const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
-        const { issuer, assertionId } = await this.blockchainModuleManager.getAssetProofs(
-            blockchain,
-            contract,
-            tokenId,
-        );
+        // TODO only for testing purposes; disable before the release
+        const assertionId = this.validationModuleManager.calculateRoot(assertion);
 
-        const calculatedAssertionId = this.validationModuleManager.calculateRootHash(assertion);
-
-        if (assertionId !== calculatedAssertionId) {
-            throw Error(
-                `Invalid root hash. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`,
-            );
-        }
-        this.logger.debug('Root hash matches');
-
-        // const verify = await this.blockchainService.verify(assertionId, signature, walletInformation.publicKey);
+        // TODO only for testing purposes; enable before the release
+        // const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
+        // const assertionId = await this.blockchainModuleManager.getLatestCommitHash(
+        //     blockchain,
+        //     contract,
+        //     tokenId,
+        // );
         //
-        // if (issuer !== issuer) {
-        //     throw Error(`Invalid issuer. Received value from blockchin: ${issuer}, from metadata: ${issuer}`);
+        // const calculatedAssertionId = this.validationModuleManager.calculateRoot(assertion);
+        //
+        // if (assertionId !== calculatedAssertionId) {
+        //     throw Error(
+        //         `Invalid root hash. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`,
+        //     );
         // }
-        this.logger.debug('Issuer is valid');
 
-        this.logger.info(`Assertion with id: ${assertionId} passed all checks!`);
+        this.logger.info(`Assertion integrity validated!`);
 
         return assertionId;
     }

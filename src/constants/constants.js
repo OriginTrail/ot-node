@@ -12,6 +12,14 @@ exports.SCHEMA_CONTEXT = 'https://schema.org/';
  */
 exports.MAX_FILE_SIZE = 2621440;
 
+
+// TODO retrieve from the blockchain
+/**
+ * @constant {number} INIT_STAKE_AMOUNT
+ * - Initial stake amount for profile creation
+ */
+exports.INIT_STAKE_AMOUNT = 3000;
+
 /**
  * @constant {object} SERVICE_API_SLOW_DOWN
  * - Express slow down configuration constants
