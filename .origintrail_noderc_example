@@ -9,7 +9,7 @@
                     "config": {
                         "blockchainTitle": "Polygon",
                         "networkId": "polygon::testnet",
-                        "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
+                        "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
                         "rpcEndpoints": [
                             "https://rpc-mumbai.maticvigil.com/",
                             "https://matic-mumbai.chainstacklabs.com",

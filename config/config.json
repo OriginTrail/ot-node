@@ -109,7 +109,7 @@
                         "config": {
                             "blockchainTitle": "Polygon",
                             "networkId": "polygon::testnet",
-                            "hubContractAddress": "0x3170A4eb27DE71c2F205924D38Fc8c984dF01BC9",
+                            "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
                             "rpcEndpoints": [
                                 "https://matic-mumbai.chainstacklabs.com",
                                 "https://rpc-mumbai.matic.today",
@@ -331,7 +331,7 @@
                         "config": {
                             "blockchainTitle": "Polygon",
                             "networkId": "polygon::mainnet",
-                            "hubContractAddress": "0x3170A4eb27DE71c2F205924D38Fc8c984dF01BC9",
+                            "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
                             "rpcEndpoints": [
                                 "https://rpc-mumbai.maticvigil.com/",
                                 "https://matic-mumbai.chainstacklabs.com",
