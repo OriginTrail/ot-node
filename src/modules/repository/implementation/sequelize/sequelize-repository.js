@@ -276,7 +276,7 @@ class SequelizeRepository {
 
         return this.models.event.findAll({
             where: {
-                handler_id: {
+                operation_id: {
                     [Sequelize.Op.in]: operationIds,
                 },
             },
