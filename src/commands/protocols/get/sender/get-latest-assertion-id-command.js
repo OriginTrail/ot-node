@@ -41,7 +41,7 @@ class GetLatestAssertionIdCommand extends Command {
                 this.logger.debug(
                     `Searching for assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
                 );
-                const { assertionId: blockchainAssertionId } =
+                const blockchainAssertionId =
                     await this.blockchainModuleManager.getLatestCommitHash(
                         blockchain,
                         contract,
