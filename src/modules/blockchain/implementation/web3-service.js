@@ -50,6 +50,7 @@ class Web3Service {
     }
 
     async initializeContracts() {
+        this.logger.info(`Hub contract address is ${this.config.hubContractAddress}`);
         this.hubContract = new this.web3.eth.Contract(Hub.abi, this.config.hubContractAddress);
 
         const assetRegistryAddress = await this.callContractFunction(

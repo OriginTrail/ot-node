@@ -27,6 +27,7 @@ Quick Start
 NODE_ENV=development
 PUBLIC_KEY=<insert_here>
 PRIVATE_KEY=<insert_here>
+MANAGEMENT_KEY=<insert_here>
 OPERATIONAL_DB_PASSWORD=<insert_password_here>
 ```
 

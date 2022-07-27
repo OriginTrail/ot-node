@@ -195,7 +195,7 @@
                         "config": {
                             "blockchainTitle": "ganache",
                             "networkId": "ganache::testnet",
-                            "hubContractAddress": "",
+                            "hubContractAddress": "0x3170A4eb27DE71c2F205924D38Fc8c984dF01BC9",
                             "rpcEndpoints": ["http://localhost:7545"]
                         }
                     }
