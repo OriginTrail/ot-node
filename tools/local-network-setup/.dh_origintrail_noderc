@@ -52,16 +52,15 @@
                 "web3-service": {
                     "package": "./blockchain/implementation/web3-service",
                     "config": {
-                        "blockchainTitle": "Polygon",
-                        "networkId": "polygon::testnet",
+                        "blockchainTitle": "Ganache",
+                        "networkId": "ganache::development",
+                        "hubContractAddress": "0xF21dD87cFC5cF5D073398833AFe5EFC543b78a00",
                         "rpcEndpoints": [
-                            "https://rpc-mumbai.maticvigil.com/",
-                            "https://matic-mumbai.chainstacklabs.com",
-                            "https://rpc-mumbai.matic.today",
-                            "https://matic-testnet-archive-rpc.bwarelabs.com"
+                          "http://localhost:7545"
                         ],
                         "publicKey": "...",
-                        "privateKey": "..."
+                        "privateKey": "...",
+                        "managementKey": "..."
                     }
                 }
             }

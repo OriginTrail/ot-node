@@ -1,6 +1,6 @@
 const { When, Then, Given } = require('@cucumber/cucumber');
 const { expect, assert } = require('chai');
-const {setTimeout} = require('timers/promises');
+const { setTimeout } = require('timers/promises');
 const assertions = require('./datasets/assertions.json');
 const utilities = require('../../../utilities/utilities');
 
@@ -21,11 +21,11 @@ When(
             .catch((error) => {
                 assert.fail(`Error while trying to publish assertion. ${error}`);
             });
-        const handlerId = result.data.handler_id;
+        const operationId = result.data.operation_id;
 
         this.state.lastPublishData = {
             nodeId: node - 1,
-            handlerId,
+            operationId,
             keywords: parsedKeywords,
             assertion: assertions[assertionName],
         };
@@ -44,11 +44,11 @@ Given('I wait for last publish to finalize', { timeout: 120000 }, async function
     const maxRetryCount = 2;
     while (loopForPublishResult) {
         this.logger.log(
-            `Getting publish result for handler id: ${publishData.handlerId} on node: ${publishData.nodeId}`,
+            `Getting publish result for operation id: ${publishData.operationId} on node: ${publishData.nodeId}`,
         );
         // eslint-disable-next-line no-await-in-loop
         const publishResult = await this.state.nodes[publishData.nodeId].client
-            .getResult(publishData.handlerId, 'publish')
+            .getResult(publishData.operationId, 'publish')
             .catch((error) => {
                 assert.fail(`Error while trying to get publish result assertion. ${error}`);
             });
@@ -87,6 +87,6 @@ Given(
     },
 );
 
-// Then('The returned handler_id is a valid uuid', () => {
-//     assert.equal(uuid.validate(handlerId), true);
+// Then('The returned operation_id is a valid uuid', () => {
+//     assert.equal(uuid.validate(operationId), true);
 // });

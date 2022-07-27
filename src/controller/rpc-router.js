@@ -6,7 +6,7 @@ class RpcRouter {
         this.logger = ctx.logger;
 
         this.publishController = ctx.publishController;
-        this.resolveController = ctx.resolveController;
+        this.getController = ctx.getController;
         this.searchController = ctx.searchController;
     }
 
@@ -22,9 +22,9 @@ class RpcRouter {
         );
 
         this.networkModuleManager.handleMessage(
-            constants.NETWORK_PROTOCOLS.RESOLVE,
+            constants.NETWORK_PROTOCOLS.GET,
             (message, remotePeerId) =>
-                this.resolveController.handleNetworkResolveRequest(message, remotePeerId),
+                this.getController.handleNetworkGetRequest(message, remotePeerId),
         );
 
         this.networkModuleManager.handleMessage(

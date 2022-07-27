@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
                 primaryKey: true,
                 autoIncrement: true,
             },
-            handler_id: DataTypes.UUID,
+            operation_id: DataTypes.UUID,
             name: DataTypes.STRING,
             timestamp: DataTypes.STRING,
             value1: DataTypes.STRING,

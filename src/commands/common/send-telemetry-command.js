@@ -57,11 +57,7 @@ class SendTelemetryCommand extends Command {
     }
 
     async handleError(error) {
-        this.logger.error({
-            msg: `Error in send telemetry command: ${error}. ${error.stack}`,
-            Event_name: constants.ERROR_TYPE.SENDING_TELEMETRY_DATA_ERROR,
-            Event_value1: error.message,
-        });
+        this.logger.error(`Error in send telemetry command: ${error}. ${error.stack}`);
     }
 
     /**

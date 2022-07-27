@@ -1,6 +1,6 @@
 {
     "name": "origintrail_node",
-    "version": "6.0.0-beta.1.50",
+    "version": "6.0.0-beta.1.52",
     "description": "OTNode v6 Beta 1",
     "main": "index.js",
     "scripts": {
@@ -56,6 +56,7 @@
         "solc": "0.7.6"
     },
     "dependencies": {
+        "assertion-tools": "^1.0.3",
         "@comunica/query-sparql": "^2.2.1",
         "app-root-path": "^3.0.0",
         "async-mutex": "^0.3.2",
@@ -86,8 +87,8 @@
         "json-2-csv": "^3.14.4",
         "json-stable-stringify": "^1.0.1",
         "jsonld": "^5.2.0",
-        "keccak256": "^1.0.6",
         "jsonschema": "^1.4.1",
+        "keccak256": "^1.0.6",
         "libp2p": "^0.32.4",
         "libp2p-bootstrap": "^0.13.0",
         "libp2p-kad-dht": "^0.24.2",
