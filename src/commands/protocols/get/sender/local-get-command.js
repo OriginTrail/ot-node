@@ -35,6 +35,10 @@ class LocalGetCommand extends Command {
                 operationId,
                 OPERATION_ID_STATUS.GET.GET_END,
             );
+            await this.operationIdService.updateOperationIdStatus(
+                operationId,
+                OPERATION_ID_STATUS.COMPLETED,
+            );
 
             return Command.empty();
         }

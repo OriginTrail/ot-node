@@ -58,6 +58,7 @@ class MerkleValidation {
         return calculateRoot(assertion);
     }
 
+    // TODO move to assertion-tools
     getMerkleProof(nquadsArray, challenge) {
         nquadsArray.sort();
 

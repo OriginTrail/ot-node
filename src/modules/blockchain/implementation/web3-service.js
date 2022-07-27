@@ -50,6 +50,7 @@ class Web3Service {
     }
 
     async initializeContracts() {
+        // TODO encapsulate in a generic function
         this.logger.info(`Hub contract address is ${this.config.hubContractAddress}`);
         this.hubContract = new this.web3.eth.Contract(Hub.abi, this.config.hubContractAddress);
 
@@ -113,6 +114,7 @@ class Web3Service {
         return this.web3.eth.getBlockNumber();
     }
 
+    // TODO get from blockchain
     getBlockTime() {
         return this.config.blockTime;
     }
@@ -208,7 +210,7 @@ class Web3Service {
                     from: this.config.publicKey,
                     to: contractInstance.options.address,
                     data: encodedABI,
-                    gasPrice: this.web3.utils.toWei('100', 'Gwei'),
+                    gasPrice: gasPrice || this.web3.utils.toWei('20', 'Gwei'),
                     gas: gasLimit || this.web3.utils.toWei('900', 'Kwei'),
                 };
 
