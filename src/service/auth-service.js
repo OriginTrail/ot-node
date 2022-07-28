@@ -5,6 +5,7 @@ module.exports = class AuthService {
     constructor(ctx) {
         this._authConfig = ctx.config.auth;
         this._repository = ctx.repositoryModuleManager;
+        this._logger = ctx.logger;
     }
 
     /**
@@ -17,7 +18,13 @@ module.exports = class AuthService {
         const isWhitelisted = this._isIpWhitelisted(ip);
         const isTokenValid = await this._isTokenValid(token);
 
-        return isWhitelisted && isTokenValid;
+        const isAuthenticated = isWhitelisted && isTokenValid;
+
+        if (!isAuthenticated) {
+            this._logMessage('Received unauthenticated request.');
+        }
+
+        return isAuthenticated;
     }
 
     /**
@@ -34,7 +41,15 @@ module.exports = class AuthService {
         const tokenId = jwtUtil.getPayload(token).jti;
         const abilities = await this._repository.getTokenAbilities(tokenId);
 
-        return abilities.includes(systemOperation);
+        const isAuthorized = abilities.includes(systemOperation);
+
+        const logMessage = isAuthorized
+            ? `Token ${tokenId} is successfully authenticated and authorized.`
+            : `Received unauthorized request.`;
+
+        this._logMessage(logMessage);
+
+        return isAuthorized;
     }
 
     /**
@@ -115,5 +130,16 @@ module.exports = class AuthService {
         const tokenId = jwtUtil.getPayload(token).jti;
 
         return this._repository.isTokenRevoked(tokenId);
+    }
+
+    /**
+     * Logs message if loggingEnabled is set to true
+     * @param message
+     * @private
+     */
+    _logMessage(message) {
+        if (this._authConfig.loggingEnabled) {
+            this._logger.info(`[AUTH] ${message}`);
+        }
     }
 };
