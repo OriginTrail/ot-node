@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
          * The `models/index` file will call this method automatically.
          */
         static associate(models) {
-            Token.hasOne(models.User, { as: 'user' });
+            Token.belongsTo(models.User, { as: 'user' });
         }
     }
     Token.init(
