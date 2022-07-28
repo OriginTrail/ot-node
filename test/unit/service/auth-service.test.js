@@ -228,6 +228,16 @@ describe('authenticate()', async () => {
             }
         });
     }
+
+    it('returns false if token is valid but is not found in the database', async () => {
+        const config = getConfig(false, true);
+        const repositoryModuleManager = getRepository(null, true);
+        const [token] = getTokens(true);
+        const authService = new AuthService({ config, repositoryModuleManager });
+
+        const isAuthenticated = await authService.authenticate('', token);
+        expect(isAuthenticated).to.be.false;
+    });
 });
 
 describe('isAuthorized()', async () => {

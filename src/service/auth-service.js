@@ -83,7 +83,7 @@ module.exports = class AuthService {
 
         const isRevoked = await this._isTokenRevoked(token);
 
-        return !isRevoked;
+        return isRevoked !== null && !isRevoked;
     }
 
     /**
