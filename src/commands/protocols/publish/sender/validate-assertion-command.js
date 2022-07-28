@@ -29,7 +29,7 @@ class ValidateAssertionCommand extends Command {
 
             return this.continueSequence({ ...command.data, assertionId }, command.sequence);
         } catch (error) {
-            this.handleError(operationId, error.message, ERROR_TYPE.VALIDATE_ASSERTION_ERROR, true);
+            this.handleError(operationId, error.message, this.errorType, true);
             return Command.empty();
         }
     }
