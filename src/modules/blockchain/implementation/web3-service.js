@@ -57,7 +57,10 @@ class Web3Service {
             'getContractAddress',
             ['AssetRegistry'],
         );
-        this.AssetRegistryContract = new this.web3.eth.Contract(AssetRegistry.abi, assetRegistryAddress);
+        this.AssetRegistryContract = new this.web3.eth.Contract(
+            AssetRegistry.abi,
+            assetRegistryAddress,
+        );
 
         const tokenAddress = await this.callContractFunction(
             this.hubContract,
@@ -78,13 +81,13 @@ class Web3Service {
             'getContractAddress',
             ['ProfileStorage'],
         );
-        this.ProfileStorageContract = new this.web3.eth.Contract(ProfileStorage.abi, profileStorageAddress);
+        this.ProfileStorageContract = new this.web3.eth.Contract(
+            ProfileStorage.abi,
+            profileStorageAddress,
+        );
 
         if (this.identityExists()) {
-            this.identityContract = new this.web3.eth.Contract(
-                Identity.abi,
-                this.getIdentity(),
-            );
+            this.identityContract = new this.web3.eth.Contract(Identity.abi, this.getIdentity());
         }
 
         this.logger.debug(
@@ -128,10 +131,8 @@ class Web3Service {
     async createProfile(peerId) {
         await this.executeContractFunction(this.TokenContract, 'increaseAllowance', [
             this.ProfileContract.options.address,
-            constants.INIT_STAKE_AMOUNT
+            constants.INIT_STAKE_AMOUNT,
         ]);
-
-        await new Promise(resolve => setTimeout(resolve, 15000));
 
         const nodeId = await peerId2Hash(peerId);
         await this.executeContractFunction(this.ProfileContract, 'createProfile', [
@@ -142,20 +143,35 @@ class Web3Service {
         ]);
     }
 
-    getEpochs (UAI) {
+    getEpochs(UAI) {
         return this.callContractFunction(this.AssetRegistryContract, 'getEpochs', [UAI]);
     }
 
-    async getChallenge (UAI, epoch) {
-        return this.callContractFunction(this.AssetRegistryContract, 'getChallenge', [UAI, epoch, this.getIdentity()]);
+    async getChallenge(UAI, epoch) {
+        return this.callContractFunction(this.AssetRegistryContract, 'getChallenge', [
+            UAI,
+            epoch,
+            this.getIdentity(),
+        ]);
     }
 
-    async answerChallenge (UAI, epoch, proof, leaf, price) {
-        return this.executeContractFunction(this.AssetRegistryContract, 'answerChallenge', [UAI, epoch, proof, leaf, price, this.getIdentity()]);
+    async answerChallenge(UAI, epoch, proof, leaf, price) {
+        return this.executeContractFunction(this.AssetRegistryContract, 'answerChallenge', [
+            UAI,
+            epoch,
+            proof,
+            leaf,
+            price,
+            this.getIdentity(),
+        ]);
     }
 
-    async getReward (UAI, epoch) {
-        return this.executeContractFunction(this.AssetRegistryContract, 'getReward', [UAI, epoch, this.getIdentity()]);
+    async getReward(UAI, epoch) {
+        return this.executeContractFunction(this.AssetRegistryContract, 'getReward', [
+            UAI,
+            epoch,
+            this.getIdentity(),
+        ]);
     }
 
     getPrivateKey() {
@@ -275,9 +291,11 @@ class Web3Service {
     }
 
     async getLatestCommitHash(blockchain, contract, tokenId) {
-        const assertionId = await this.callContractFunction(this.AssetRegistryContract, 'getCommitHash', [
-            tokenId, 0
-        ]);
+        const assertionId = await this.callContractFunction(
+            this.AssetRegistryContract,
+            'getCommitHash',
+            [tokenId, 0],
+        );
 
         return assertionId;
     }
