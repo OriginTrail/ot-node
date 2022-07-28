@@ -40,7 +40,7 @@ class GetService extends OperationService {
         const { completedNumber, failedNumber } = keywordsStatuses[keyword];
         const numberOfResponses = completedNumber + failedNumber;
         this.logger.debug(
-            `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}`,
+            `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
         );
 
         if (completedNumber === 1) {
@@ -50,7 +50,10 @@ class GetService extends OperationService {
                 this.completedStatuses,
             );
             this.logResponsesSummary(completedNumber, failedNumber);
-        } else if (numberOfFoundNodes === failedNumber || numberOfNodesInBatch === failedNumber) {
+        } else if (
+            numberOfFoundNodes === failedNumber ||
+            failedNumber % numberOfNodesInBatch === 0
+        ) {
             if (leftoverNodes.length === 0) {
                 await this.markOperationAsFailed(
                     operationId,

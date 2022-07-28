@@ -17,6 +17,7 @@ class OTNode {
     constructor(config) {
         this.initializeConfiguration(config);
         this.logger = new Logger(this.config.logLevel, this.config.telemetryHub.enabled);
+        this.checkNodeVersion();
     }
 
     async start() {
@@ -46,6 +47,18 @@ class OTNode {
         await this.initializeTelemetryInjectionService();
 
         this.logger.info('Node is up and running!');
+    }
+
+    checkNodeVersion() {
+        const nodeMajorVersion = process.versions.node.split('.')[0];
+        this.logger.warn('======================================================');
+        this.logger.warn(`Using node.js version: ${process.versions.node}`);
+        if (nodeMajorVersion < constants.MIN_NODE_VERSION) {
+            this.logger.warn(
+                `This node was tested with node.js version 16. To make sure that your node is running properly please update your node version!`,
+            );
+        }
+        this.logger.warn('======================================================');
     }
 
     async runFolderStructureInitialMigration() {
@@ -139,7 +152,6 @@ class OTNode {
             const networkModuleManager = this.container.resolve('networkModuleManager');
             const peerId = networkModuleManager.getPeerId();
             await blockchainModuleManager.deployIdentity();
-            await new Promise(resolve => setTimeout(resolve, 15000));
             await blockchainModuleManager.createProfile(peerId);
             if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
                 this.saveIdentityInUserConfigurationFile(blockchainModuleManager.getIdentity());
