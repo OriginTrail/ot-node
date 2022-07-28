@@ -1,46 +1,31 @@
 module.exports = {
     type: 'object',
-    required: ['metadata', 'data', 'ual'],
+    required: ['assertion_id', 'assertion'],
     properties: {
-        metadata: {
-            type: 'object',
-            required: ['@context', 'type', 'issuer', 'visibility', 'keywords'],
-            properties: {
-                '@context': {
-                    type: 'string',
-                },
-                type: {
-                    type: 'string',
-                    minLength: 1,
-                },
-                issuer: {
-                    type: 'string',
-                    minLength: 1,
-                },
-                visibility: {
-                    type: 'string',
-                    enum: ['public', 'private'],
-                },
-                keywords: {
-                    type: 'array',
-                    items: {
-                        type: 'string',
-                    },
-                    minItems: 1,
-                    maxItems: 10,
-                },
-            },
+        assertion_id: {
+            type: 'string',
         },
-        data: {
+        assertion: {
             type: 'array',
             items: {
                 type: 'string',
             },
             minItems: 1,
         },
-        ual: {
-            type: 'string',
-            minLength: 1,
+        options: {
+            type: 'object',
+            ual: {
+                type: 'string',
+                minLength: 1,
+            },
+            keywords: {
+                type: 'array',
+                items: {
+                    type: 'string',
+                },
+                minItems: 1,
+                maxItems: 10,
+            },
         },
     },
 };

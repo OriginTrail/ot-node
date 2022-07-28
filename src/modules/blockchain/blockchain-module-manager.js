@@ -47,40 +47,45 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async createAssertionRecord(stateCommitHash, rootHash, issuer) {
+    async getEpochs (UAI) {
         if (this.initialized) {
-            return this.getImplementation().module.createAssertionRecord(stateCommitHash, rootHash, issuer);
+            return this.getImplementation().module.getEpochs(UAI);
         }
     }
 
-    async registerAsset(uai, type, alsoKnownAs, stateCommitHash, rootHash, tokenAmount) {
+    async getBlockNumber () {
         if (this.initialized) {
-            return this.getImplementation().module.registerAsset(
-                uai,
-                type,
-                alsoKnownAs,
-                stateCommitHash,
-                rootHash,
-                tokenAmount,
-            );
+            return this.getImplementation().module.getBlockNumber();
         }
     }
 
-    async updateAsset(UAI, newStateCommitHash, rootHash) {
+    getBlockTime () {
         if (this.initialized) {
-            return this.getImplementation().module.updateAsset(UAI, newStateCommitHash, rootHash);
+            return this.getImplementation().module.getBlockTime();
         }
     }
 
-    async getAssertionProofs(assertionId) {
+    async getChallenge (UAI, epoch) {
         if (this.initialized) {
-            return this.getImplementation().module.getAssertionProofs(assertionId);
+            return this.getImplementation().module.getChallenge(UAI, epoch);
         }
     }
 
-    async getAssetProofs(blockchain, contract, tokenId) {
+    async answerChallenge (UAI, epoch, proof, leaf, price) {
         if (this.initialized) {
-            return this.getImplementation().module.getAssetProofs(blockchain, contract, tokenId);
+            return this.getImplementation().module.answerChallenge(UAI, epoch, proof, leaf, price);
+        }
+    }
+
+    async getReward(UAI, epoch) {
+        if (this.initialized) {
+            return this.getImplementation().module.getReward(UAI, epoch);
+        }
+    }
+
+    async getLatestCommitHash(blockchain, contract, tokenId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getLatestCommitHash(blockchain, contract, tokenId);
         }
     }
 

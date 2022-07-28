@@ -109,14 +109,12 @@
                         "config": {
                             "blockchainTitle": "Polygon",
                             "networkId": "polygon::testnet",
-                            "hubContractAddress": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A8",
+                            "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
                             "rpcEndpoints": [
                                 "https://matic-mumbai.chainstacklabs.com",
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
-                            ],
-                            "identity": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A3",
-                            "managementKey": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A3"
+                            ]
                         }
                     }
                 }
@@ -205,7 +203,7 @@
                         "config": {
                             "blockchainTitle": "ganache",
                             "networkId": "ganache::testnet",
-                            "hubContractAddress": "",
+                            "hubContractAddress": "0xF21dD87cFC5cF5D073398833AFe5EFC543b78a00",
                             "rpcEndpoints": ["http://localhost:7545"]
                         }
                     }
@@ -349,15 +347,14 @@
                         "config": {
                             "blockchainTitle": "Polygon",
                             "networkId": "polygon::mainnet",
-                            "hubContractAddress": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A8",
+                            "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
                             "rpcEndpoints": [
                                 "https://rpc-mumbai.maticvigil.com/",
                                 "https://matic-mumbai.chainstacklabs.com",
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
                             ],
-                            "identity": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A3",
-                            "managementKey": "0x8b3A3D55C3a51f7c7605D2a6F5B122dA0e5A88A3"
+                            "managementKey": "0xe1EEB4f09809C6c8664c0b1e3B26211d139076fF"
                         }
                     }
                 }

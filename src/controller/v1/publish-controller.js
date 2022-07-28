@@ -1,12 +1,6 @@
 const BaseController = require('./base-controller');
-const {
-    NETWORK_PROTOCOLS,
-    PUBLISH_METHOD,
-    ERROR_TYPE,
-    NETWORK_MESSAGE_TYPES,
-    PUBLISH_STATUS,
-} = require('../../constants/constants');
-const { HANDLER_ID_STATUS } = require('../../constants/constants');
+const { PUBLISH_METHOD, ERROR_TYPE, NETWORK_MESSAGE_TYPES } = require('../../constants/constants');
+const { OPERATION_ID_STATUS } = require('../../constants/constants');
 
 class PublishController extends BaseController {
     constructor(ctx) {
@@ -17,7 +11,7 @@ class PublishController extends BaseController {
         this.fileService = ctx.fileService;
         this.commandExecutor = ctx.commandExecutor;
         this.dataService = ctx.dataService;
-        this.handlerIdService = ctx.handlerIdService;
+        this.operationIdService = ctx.operationIdService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
@@ -34,63 +28,45 @@ class PublishController extends BaseController {
     }
 
     async handleHttpApiPublishMethod(req, res, method) {
-        const operationId = this.generateOperationId();
-
-        const handlerId = await this.handlerIdService.generateHandlerId(
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_START,
+        const operationId = await this.operationIdService.generateOperationId(
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_START,
         );
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_INIT_START,
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_START,
         );
 
         this.returnResponse(res, 202, {
-            handlerId,
+            operation_id: operationId,
         });
 
-        const { metadata, data, ual } = req.body;
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
+        const { assertionId, assertion, options } = req.body;
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
         );
         try {
-            await this.repositoryModuleManager.createPublishRecord(
-                handlerId,
-                PUBLISH_STATUS.IN_PROGRESS,
+            await this.repositoryModuleManager.createOperationRecord(
+                this.publishService.getOperationName(),
+                operationId,
+                this.publishService.getOperationStatus().IN_PROGRESS,
             );
 
-            await this.handlerIdService.updateHandlerIdStatus(
-                handlerId,
-                HANDLER_ID_STATUS.PUBLISH.PUBLISH_GENERATE_METADATA_START,
-            );
-            const metadataNquads = await this.dataService.metadataObjectToNquads(metadata);
-            await this.handlerIdService.updateHandlerIdStatus(
-                handlerId,
-                HANDLER_ID_STATUS.PUBLISH.PUBLISH_GENERATE_METADATA_END,
-            );
+            await this.operationIdService.cacheOperationIdData(operationId, assertion);
 
-            await this.handlerIdService.cacheHandlerIdData(handlerId, {
-                data,
-                metadata: metadataNquads,
-            });
-
-            this.logger.info(`Received assertion with ual: ${ual}`);
+            this.logger.info(`Received assertion with ual: ${options.ual}`);
 
             const commandData = {
                 method,
-                ual,
-                handlerId,
+                ual: options.ual,
                 operationId,
-                metadata,
-                networkProtocol: NETWORK_PROTOCOLS.STORE,
             };
 
             const commandSequence = [
                 'validateAssertionCommand',
                 // 'insertAssertionCommand',
-                'findNodesCommand',
-                'publishStoreCommand',
+                'networkPublishCommand',
             ];
 
             await this.commandExecutor.add({
@@ -101,26 +77,24 @@ class PublishController extends BaseController {
                 transactional: false,
             });
         } catch (error) {
-            this.logger.error({
-                msg: `Error while initializing publish data: ${error.message}. ${error.stack}`,
-                Event_name: ERROR_TYPE.PUBLISH_ROUTE_ERROR,
-                Event_value1: error.message,
-                Id_operation: operationId,
-            });
-            await this.handlerIdService.updateHandlerIdStatus(
-                handlerId,
-                HANDLER_ID_STATUS.FAILED,
+            this.logger.error(
+                `Error while initializing publish data: ${error.message}. ${error.stack}`,
+            );
+            await this.operationIdService.updateOperationIdStatus(
+                operationId,
+                OPERATION_ID_STATUS.FAILED,
                 'Unable to publish data, Failed to process input data!',
+                ERROR_TYPE.PUBLISH.PUBLISH_ROUTE_ERROR,
             );
         }
     }
 
     async handleNetworkStoreRequest(message, remotePeerId) {
-        const { handlerId } = message.header;
+        const { operationId, keywordUuid, messageType } = message.header;
         const { assertionId, ual } = message.data;
         const commandSequence = [];
-        const commandData = { remotePeerId, handlerId, assertionId, ual };
-        switch (message.header.messageType) {
+        const commandData = { remotePeerId, operationId, keywordUuid, assertionId, ual };
+        switch (messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
                 commandSequence.push('validateStoreInitCommand');
                 commandSequence.push('handleStoreInitCommand');
@@ -128,13 +102,11 @@ class PublishController extends BaseController {
                 break;
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
                 commandData.metadata = message.data.metadata;
-                await this.handlerIdService.cacheHandlerIdData(handlerId, {
-                    data: message.data.data,
-                    metadata: await this.dataService.metadataObjectToNquads(message.data.metadata),
-                });
+                await this.operationIdService.cacheOperationIdData(
+                    operationId,
+                    message.data.assertion,
+                );
 
-                commandSequence.push('validateStoreRequestCommand');
-                commandSequence.push('insertStoreRequestCommand');
                 commandSequence.push('handleStoreRequestCommand');
 
                 break;

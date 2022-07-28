@@ -8,12 +8,11 @@ const TCP = require('libp2p-tcp');
 const pipe = require('it-pipe');
 const lp = require('it-length-prefixed');
 const map = require('it-map');
-const { sha256 } = require('multiformats/hashes/sha2');
 const PeerId = require('peer-id');
 const { InMemoryRateLimiter } = require('rolling-rate-limiter');
-const constants = require('../../../../src/constants/constants');
 const toobusy = require('toobusy-js');
-const { v4: uuidv4 } = require('uuid');
+const { v5: uuidv5 } = require('uuid');
+const constants = require('../../../constants/constants');
 
 const initializationObject = {
     addresses: {
@@ -73,8 +72,10 @@ class Libp2pService {
         /**
          * sessions = {
          *     [peerId]: {
-         *         [handlerId]: {
-         *             stream
+         *         [operationId]: {
+         *             [keywordUuid] : {
+         *                  stream
+         *              }
          *         }
          *     }
          * }
@@ -131,42 +132,15 @@ class Libp2pService {
 
     async findNodes(key, protocol) {
         const encodedKey = new TextEncoder().encode(key);
-        // Creates a DHT ID by hashing a given Uint8Array
-        const id = (await sha256.digest(encodedKey)).digest;
-        const nodes = this.node._dht.peerRouting.getClosestPeers(id);
-        const result = new Set();
+        const nodes = this.node._dht.peerRouting.getClosestPeers(encodedKey);
+        const result = [];
         for await (const node of nodes) {
             if (this.node.peerStore.peers.get(node._idB58String).protocols.includes(protocol)) {
-                result.add(node);
+                result.push(node);
             }
         }
 
-        return [...result];
-    }
-
-    async rankNodes(nodes, key) {
-        const encodedKey = new TextEncoder().encode(key);
-        const keyHash = await sha256.digest(encodedKey);
-        const id = keyHash.digest;
-
-        nodes.sort(
-            (first_node, second_node) =>
-                this.distance(id, first_node._id) - this.distance(id, second_node._id),
-        );
-
-        return nodes;
-    }
-
-    distance(firstId, secondId) {
-        let distance = 0;
-        let i = 0;
-        const min = Math.min(firstId.length, secondId.length);
-        const max = Math.max(firstId.length, secondId.length);
-        for (; i < min; i += 1) {
-            distance = distance * 256 + (firstId[i] ^ secondId[i]);
-        }
-        for (; i < max; i += 1) distance = distance * 256 + 255;
-        return distance;
+        return result;
     }
 
     getPeers() {
@@ -201,96 +175,125 @@ class Libp2pService {
                 remotePeerId,
             );
 
+            this.updateSessionStream(
+                message.header.operationId,
+                message.header.keywordUuid,
+                remotePeerId,
+                stream,
+            );
+
             if (!valid) {
                 await this.sendMessageResponse(
                     protocol,
                     remotePeerId,
                     constants.NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                    message.header.handlerId,
+                    message.header.operationId,
+                    message.header.keywordUuid,
+                    {},
                 );
             } else if (busy) {
                 await this.sendMessageResponse(
                     protocol,
                     remotePeerId,
                     constants.NETWORK_MESSAGE_TYPES.RESPONSES.BUSY,
-                    message.header.handlerId,
+                    message.header.operationId,
+                    message.header.keywordUuid,
+                    {},
                 );
             } else {
                 this.logger.debug(
                     `Receiving message from ${remotePeerId} to ${this.config.id}: event=${protocol}, messageType=${message.header.messageType};`,
                 );
-                this.updateSessionStream(message.header.handlerId, remotePeerId, stream);
                 await handler(message, remotePeerId);
             }
         });
     }
 
-    updateSessionStream(handlerId, remotePeerId, stream) {
+    updateSessionStream(operationId, keywordUuid, remotePeerId, stream) {
+        this.logger.trace(
+            `Storing new session stream for remotePeerId: ${remotePeerId} with operation id: ${operationId}, keywordUuid: ${keywordUuid}`,
+        );
         if (!this.sessions[remotePeerId]) {
-            this.logger.trace(`Storing new session stream for remotePeerId: ${remotePeerId}`);
             this.sessions[remotePeerId] = {
-                [handlerId]: {
+                [operationId]: {
+                    [keywordUuid]: {
+                        stream,
+                    },
+                },
+            };
+        } else if (!this.sessions[remotePeerId][operationId]) {
+            this.sessions[remotePeerId][operationId] = {
+                [keywordUuid]: {
                     stream,
                 },
             };
         } else {
-            this.logger.trace(
-                `Storing new session stream for remotePeerId: ${remotePeerId} with handler id: ${handlerId}`,
-            );
-            this.sessions[remotePeerId][handlerId] = {
+            this.sessions[remotePeerId][operationId][keywordUuid] = {
                 stream,
             };
         }
     }
 
-    getSessionStream(handlerId, remotePeerId) {
-        if (this.sessions[remotePeerId] && this.sessions[remotePeerId][handlerId]) {
+    getSessionStream(operationId, keywordUuid, remotePeerId) {
+        if (
+            this.sessions[remotePeerId] &&
+            this.sessions[remotePeerId][operationId] &&
+            this.sessions[remotePeerId][operationId][keywordUuid]
+        ) {
             this.logger.trace(
-                `Session found remotePeerId: ${remotePeerId} and handler id: ${handlerId}`,
+                `Session found remotePeerId: ${remotePeerId}, operation id: ${operationId}, keywordUuid: ${keywordUuid}`,
             );
-            return this.sessions[remotePeerId][handlerId].stream;
+            return this.sessions[remotePeerId][operationId][keywordUuid].stream;
         }
         return null;
     }
 
-    createStreamMessage(message, handlerId, messageType) {
+    createStreamMessage(message, operationId, keywordUuid, messageType) {
         return {
             header: {
-                handlerId,
                 messageType,
+                operationId,
+                keywordUuid,
             },
             data: message,
         };
     }
 
-    async sendMessage(protocol, remotePeerId, messageType, handlerId, message) {
+    async sendMessage(protocol, remotePeerId, messageType, operationId, keyword, message) {
+        const keywordUuid = uuidv5(keyword, uuidv5.URL);
+
         this.logger.trace(
-            `Sending message to ${remotePeerId._idB58String}: event=${protocol}, messageType=${messageType}, handlerId: ${handlerId};`,
+            `Sending message to ${remotePeerId._idB58String}: event=${protocol}, messageType=${messageType}, operationId: ${operationId}, keywordUuid: ${keywordUuid}`,
         );
 
-        // const sessionStream = this.getSessionStream(handlerId, remotePeerId._idB58String);
+        // const sessionStream = this.getSessionStream(operationId, remotePeerId._idB58String);
         // if (!sessionStream) {
         this.logger.trace(
             `Dialing remotePeerId: ${remotePeerId._idB58String} for protocol: ${protocol}`,
         );
-        const stream = (await this.node.dialProtocol(remotePeerId, protocol)).stream;
+        const { stream } = await this.node.dialProtocol(remotePeerId, protocol);
         // } else {
         //     stream = sessionStream;
         // }
 
-        this.updateSessionStream(handlerId, remotePeerId._idB58String, stream);
+        this.updateSessionStream(operationId, keywordUuid, remotePeerId._idB58String, stream);
 
-        const streamMessage = this.createStreamMessage(message, handlerId, messageType);
+        const streamMessage = this.createStreamMessage(
+            message,
+            operationId,
+            keywordUuid,
+            messageType,
+        );
 
         await this._sendMessageToStream(stream, streamMessage);
         // if (!this.sessions[remotePeerId._idB58String]) {
         //     this.sessions[remotePeerId._idB58String] = {
-        //         [handlerId]: {
+        //         [operationId]: {
         //             stream
         //         }
         //     }
         // } else {
-        //     this.sessions[remotePeerId._idB58String][handlerId] = {
+        //     this.sessions[remotePeerId._idB58String][operationId] = {
         //             stream
         //     }
         // }
@@ -309,17 +312,24 @@ class Libp2pService {
         return valid ? response : null;
     }
 
-    async sendMessageResponse(protocol, remotePeerId, messageType, handlerId, message) {
+    async sendMessageResponse(
+        protocol,
+        remotePeerId,
+        messageType,
+        operationId,
+        keywordUuid,
+        message,
+    ) {
         this.logger.debug(
             `Sending response from ${this.config.id} to ${remotePeerId}: event=${protocol}, messageType=${messageType};`,
         );
-        const stream = this.getSessionStream(handlerId, remotePeerId);
+        const stream = this.getSessionStream(operationId, keywordUuid, remotePeerId);
 
         if (!stream) {
             throw Error(`Unable to find opened stream for remotePeerId: ${remotePeerId}`);
         }
 
-        const response = this.createStreamMessage(message, handlerId, messageType);
+        const response = this.createStreamMessage(message, operationId, keywordUuid, messageType);
 
         await this._sendMessageToStream(stream, response);
     }
@@ -357,7 +367,7 @@ class Libp2pService {
         const stringifiedHeader = JSON.stringify(message.header);
         const stringifiedData = JSON.stringify(message.data);
 
-        let chunks = [stringifiedHeader];
+        const chunks = [stringifiedHeader];
         const chunkSize = 1024 * 1024; // 1 MB
 
         // split data into 1 MB chunks
@@ -424,29 +434,30 @@ class Libp2pService {
 
         // header well formed
         if (
-            !header.handlerId ||
+            !header.operationId ||
+            !header.keywordUuid ||
             !header.messageType ||
             !Object.keys(constants.NETWORK_MESSAGE_TYPES.REQUESTS).includes(header.messageType)
         )
             return false;
         if (header.messageType === constants.NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT) {
             return true;
-        } else {
-            return this.sessionExists(remotePeerId, header.handlerId);
         }
+
+        return this.sessionExists(remotePeerId, header.operationId, header.keywordUuid);
     }
 
-    sessionExists(remotePeerId, handlerId) {
+    sessionExists(remotePeerId, operationId, keywordUuid) {
         return true;
-        // return this.sessions[remotePeerId._idB58String] && this.sessions[remotePeerId._idB58String][handlerId];
+        // return this.sessions[remotePeerId._idB58String] && this.sessions[remotePeerId._idB58String][operationId];
     }
 
     async isResponseValid(header, remotePeerId) {
         return true;
         // return (
-        //     header.handlerId &&
+        //     header.operationId &&
         //     header.messageType &&
-        //     this.sessions[remotePeerId][header.handlerId] &&
+        //     this.sessions[remotePeerId][header.operationId] &&
         //     Object.keys(constants.NETWORK_MESSAGE_TYPES.RESPONSES).includes(header.messageType)
         // );
     }
@@ -505,7 +516,13 @@ class Libp2pService {
     }
 
     isBusy() {
-        return toobusy() || Object.keys(this.sessions).length > constants.MAX_OPEN_SESSIONS;
+        const distinctOperations = new Set();
+        for (const peerId in this.sessions) {
+            for (const operationId in Object.keys(this.sessions[peerId])) {
+                distinctOperations.add(operationId);
+            }
+        }
+        return toobusy(); // || distinctOperations.size > constants.MAX_OPEN_SESSIONS;
     }
 
     getPrivateKey() {

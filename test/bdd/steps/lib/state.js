@@ -20,14 +20,14 @@ const state = {
     bootstraps: [],
     lastPublishData: {
         nodeId: 1,
-        handlerId: '',
+        operationId: '',
         keywords: ['', ''],
         assertion: {},
         result: {},
     },
     lastResolveData: {
         nodeId: 1,
-        handlerId: '',
+        operationId: '',
         assertionIds: ['', ''],
         result: {},
     },

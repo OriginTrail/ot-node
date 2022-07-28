@@ -1,5 +1,5 @@
 const { Mutex } = require('async-mutex');
-const { HANDLER_ID_STATUS } = require('../constants/constants');
+const { OPERATION_ID_STATUS } = require('../constants/constants');
 
 const mutex = new Mutex();
 
@@ -8,89 +8,96 @@ class OperationService {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.handlerIdService = ctx.handlerIdService;
+        this.operationIdService = ctx.operationIdService;
         this.commandExecutor = ctx.commandExecutor;
     }
 
-    async getResponsesStatuses(responseStatus, errorMessage, commandData) {
-        const { handlerId, numberOfFoundNodes, numberOfNodesInBatch, leftoverNodes } = commandData;
+    getOperationName() {
+        return this.operationName;
+    }
+
+    getNetworkProtocol() {
+        return this.networkProtocol;
+    }
+
+    getOperationRequestStatus() {
+        return this.operationRequestStatus;
+    }
+
+    getOperationStatus() {
+        return this.operationStatus;
+    }
+
+    async getResponsesStatuses(responseStatus, errorMessage, operationId, keyword) {
         const self = this;
         let responses = 0;
-        let failedNumber = 0;
-        let completedNumber = 0;
         await mutex.runExclusive(async () => {
-            await self.createRepositoryResponseRecord(responseStatus, handlerId, errorMessage);
-            responses = await self.getRepositoryResponsesStatuses(handlerId);
+            await self.repositoryModuleManager.createOperationResponseRecord(
+                responseStatus,
+                this.operationName,
+                operationId,
+                keyword,
+                errorMessage,
+            );
+            responses = await self.repositoryModuleManager.getOperationResponsesStatuses(
+                this.operationName,
+                operationId,
+            );
         });
 
+        const keywordsStatuses = {};
         responses.forEach((response) => {
+            if (!keywordsStatuses[response.keyword])
+                keywordsStatuses[response.keyword] = { failedNumber: 0, completedNumber: 0 };
+
             if (response.status === this.operationRequestStatus.FAILED) {
-                failedNumber += 1;
+                keywordsStatuses[response.keyword].failedNumber += 1;
             } else {
-                completedNumber += 1;
+                keywordsStatuses[response.keyword].completedNumber += 1;
             }
         });
 
-        this.logger.debug(
-            `Processing ${this.operationName} response. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${responses.length}`,
-        );
-
-        return { responses, failedNumber, completedNumber };
+        return keywordsStatuses;
     }
 
-    async createRepositoryResponseRecord(responseStatus, handlerId, errorMessage) {
-        // overridden by subclasses
-    }
+    async markOperationAsCompleted(operationId, responseData, endStatuses) {
+        this.logger.info(`Finalizing ${this.networkProtocol} for operationId: ${operationId}`);
 
-    async getRepositoryResponsesStatuses(handlerId) {
-        // overridden by subclasses
-    }
-
-    async updateRepositoryOperationStatus(handlerId, status) {
-        // overridden by subclasses
-    }
-
-    async markOperationAsCompleted(handlerId, responseData, endStatuses) {
-        this.logger.info(`Finalizing ${this.operationName} for handlerId: ${handlerId}`);
-
-        await this.repositoryModuleManager.updatePublishStatus(
-            handlerId,
+        await this.repositoryModuleManager.updateOperationStatus(
+            this.operationName,
+            operationId,
             this.operationStatus.COMPLETED,
         );
 
-        await this.handlerIdService.cacheHandlerIdData(handlerId, responseData);
+        await this.operationIdService.cacheOperationIdData(operationId, responseData);
 
         for (const status of endStatuses) {
-            await this.handlerIdService.updateHandlerIdStatus(handlerId, status);
+            await this.operationIdService.updateOperationIdStatus(operationId, status);
         }
     }
 
-    async markOperationAsFailed(handlerId, message) {
-        this.logger.info(`${this.operationName} for handlerId: ${handlerId} failed.`);
-        await this.updateRepositoryOperationStatus(handlerId, this.operationStatus.FAILED);
+    async markOperationAsFailed(operationId, message) {
+        this.logger.info(`${this.networkProtocol} for operationId: ${operationId} failed.`);
 
-        await this.handlerIdService.updateHandlerIdStatus(
-            handlerId,
-            HANDLER_ID_STATUS.FAILED,
+        await this.repositoryModuleManager.updateOperationStatus(
+            this.operationName,
+            operationId,
+            this.operationStatus.FAILED,
+        );
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.FAILED,
             message,
+            this.errorType,
         );
     }
 
-    async scheduleOperationForLeftoverNodes(command, leftoverNodes, networkProtocolCommandName) {
-        const commandData = command.data;
-        commandData.nodes = leftoverNodes.slice(0, this.config.minimumReplicationFactor);
-        if (this.config.minimumReplicationFactor < leftoverNodes.length) {
-            commandData.leftoverNodes = leftoverNodes.slice(this.config.minimumReplicationFactor);
-        } else {
-            commandData.leftoverNodes = [];
-        }
-        this.logger.debug(
-            `Trying to ${this.operationName} to next batch of ${commandData.nodes.length} nodes, leftover for retry: ${commandData.leftoverNodes.length}`,
-        );
+    async scheduleOperationForLeftoverNodes(commandData, leftoverNodes) {
         await this.commandExecutor.add({
-            name: networkProtocolCommandName,
+            name: `${this.operationName}ScheduleMessagesCommand`,
             delay: 0,
-            data: commandData,
+            data: { ...commandData, leftoverNodes },
             transactional: false,
         });
     }

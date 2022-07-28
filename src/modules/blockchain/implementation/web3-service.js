@@ -1,11 +1,12 @@
 const Web3 = require('web3');
-const BigNumber = require('bn.js');
 const axios = require('axios');
-const {sha256} = require('multiformats/hashes/sha2');
+const { peerId2Hash } = require('assertion-tools');
 const Hub = require('../../../../build/contracts/Hub.json');
-const UAIRegistry = require('../../../../build/contracts/UAIRegistry.json');
+const AssetRegistry = require('../../../../build/contracts/AssetRegistry.json');
+const ERC20Token = require('../../../../build/contracts/ERC20Token.json');
 const Identity = require('../../../../build/contracts/Identity.json');
 const Profile = require('../../../../build/contracts/Profile.json');
+const ProfileStorage = require('../../../../build/contracts/ProfileStorage.json');
 const constants = require('../../../constants/constants');
 
 class Web3Service {
@@ -47,24 +48,55 @@ class Web3Service {
     }
 
     async initializeContracts() {
-        this.hubContract = new this.web3.eth.Contract(
-            Hub.abi,
-            this.config.hubContractAddress,
-        );
+        // TODO encapsulate in a generic function
+        this.logger.info(`Hub contract address is ${this.config.hubContractAddress}`);
+        this.hubContract = new this.web3.eth.Contract(Hub.abi, this.config.hubContractAddress);
 
-        const UAIRegistryAddress = await this.callContractFunction(this.hubContract, 'getContractAddress', ['UAIRegistry']);
-        this.UAIRegistryContract = new this.web3.eth.Contract(
-            UAIRegistry.abi,
-            UAIRegistryAddress,
+        const assetRegistryAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['AssetRegistry'],
         );
+        this.AssetRegistryContract = new this.web3.eth.Contract(AssetRegistry.abi, assetRegistryAddress);
 
-        const profileAddress = await this.callContractFunction(this.hubContract, 'getContractAddress', ['Profile']);
-        this.profileContract = new this.web3.eth.Contract(
-            Profile.abi,
-            profileAddress,
+        const tokenAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['Token'],
         );
+        this.TokenContract = new this.web3.eth.Contract(ERC20Token.abi, tokenAddress);
+
+        const profileAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['Profile'],
+        );
+        this.ProfileContract = new this.web3.eth.Contract(Profile.abi, profileAddress);
+
+        const profileStorageAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['ProfileStorage'],
+        );
+        this.ProfileStorageContract = new this.web3.eth.Contract(ProfileStorage.abi, profileStorageAddress);
+
+        if (this.identityExists()) {
+            this.identityContract = new this.web3.eth.Contract(
+                Identity.abi,
+                this.getIdentity(),
+            );
+        }
+
         this.logger.debug(
             `Connected to blockchain rpc : ${this.config.rpcEndpoints[this.rpcNumber]}.`,
+        );
+
+        const nativeBalance = await this.web3.eth.getBalance(this.getPublicKey());
+        const tokenBalance = await this.callContractFunction(this.TokenContract, 'balanceOf', [
+            this.getPublicKey(),
+        ]);
+        this.logger.info(
+            `Balance of ${this.getPublicKey()} is ${nativeBalance} ETH and ${tokenBalance} TRAC.`,
         );
     }
 
@@ -76,17 +108,54 @@ class Web3Service {
         return this.config.identity;
     }
 
+    getBlockNumber() {
+        return this.web3.eth.getBlockNumber();
+    }
+
+    // TODO get from blockchain
+    getBlockTime() {
+        return this.config.blockTime;
+    }
+
     async deployIdentity() {
-        const transactionReceipt = await this.deployContract(Identity, [this.getPublicKey(), this.getManagementKey()]);
+        const transactionReceipt = await this.deployContract(Identity, [
+            this.getPublicKey(),
+            this.getManagementKey(),
+        ]);
         this.config.identity = transactionReceipt.contractAddress;
     }
 
     async createProfile(peerId) {
-        const nodeId = Buffer.from((await sha256.digest(peerId.toBytes())).digest).toString('hex');
-        await this.executeContractFunction(this.profileContract, 'createProfile', [this.getManagementKey(),
-            `0x${nodeId}`,
-            0,
-            this.getIdentity()]);
+        await this.executeContractFunction(this.TokenContract, 'increaseAllowance', [
+            this.ProfileContract.options.address,
+            constants.INIT_STAKE_AMOUNT
+        ]);
+
+        await new Promise(resolve => setTimeout(resolve, 15000));
+
+        const nodeId = await peerId2Hash(peerId);
+        await this.executeContractFunction(this.ProfileContract, 'createProfile', [
+            this.getManagementKey(),
+            nodeId,
+            constants.INIT_STAKE_AMOUNT,
+            this.getIdentity(),
+        ]);
+    }
+
+    getEpochs (UAI) {
+        return this.callContractFunction(this.AssetRegistryContract, 'getEpochs', [UAI]);
+    }
+
+    async getChallenge (UAI, epoch) {
+        return this.callContractFunction(this.AssetRegistryContract, 'getChallenge', [UAI, epoch, this.getIdentity()]);
+    }
+
+    async answerChallenge (UAI, epoch, proof, leaf, price) {
+        return this.executeContractFunction(this.AssetRegistryContract, 'answerChallenge', [UAI, epoch, proof, leaf, price, this.getIdentity()]);
+    }
+
+    async getReward (UAI, epoch) {
+        return this.executeContractFunction(this.AssetRegistryContract, 'getReward', [UAI, epoch, this.getIdentity()]);
     }
 
     getPrivateKey() {
@@ -167,17 +236,21 @@ class Web3Service {
                 const contractInstance = new this.web3.eth.Contract(contract.abi);
                 const gasPrice = await this.getGasStationPrice();
 
-                const gasLimit = await contractInstance.deploy({
-                    data: contract.bytecode,
-                    arguments: args,
-                }).estimateGas({
-                    from: this.config.publicKey,
-                });
+                const gasLimit = await contractInstance
+                    .deploy({
+                        data: contract.bytecode,
+                        arguments: args,
+                    })
+                    .estimateGas({
+                        from: this.config.publicKey,
+                    });
 
-                const encodedABI = contractInstance.deploy({
-                    data: contract.bytecode,
-                    arguments: args,
-                }).encodeABI();
+                const encodedABI = contractInstance
+                    .deploy({
+                        data: contract.bytecode,
+                        arguments: args,
+                    })
+                    .encodeABI();
 
                 const tx = {
                     from: this.config.publicKey,
@@ -201,60 +274,12 @@ class Web3Service {
         return result;
     }
 
-    async createAssertionRecord(stateCommitHash, rootHash, issuer) {
-        const result = await this.executeContractFunction(
-            this.DKGContract,
-            'createAssertionRecord',
-            [`0x${stateCommitHash}`, `0x${rootHash}`, issuer, new BigNumber(1), new BigNumber(1)],
-        );
-        return {transactionHash: result.transactionHash, blockchain: this.config.networkId};
-    }
-
-    async registerAsset(uai, type, alsoKnownAs, stateCommitHash, rootHash, tokenAmount) {
-        const result = await this.executeContractFunction(
-            this.UAIRegistryContract,
-            'registerAsset',
-            [`0x${uai}`, 0, `0x${uai}`, `0x${stateCommitHash}`, `0x${rootHash}`, 1],
-        );
-        return {transactionHash: result.transactionHash, blockchain: this.config.networkId};
-    }
-
-    async updateAsset(UAI, newStateCommitHash, rootHash) {
-        const result = await this.executeContractFunction(
-            this.UAIRegistryContract,
-            'updateAssetState',
-            [`0x${UAI}`, `0x${newStateCommitHash}`, `0x${rootHash}`],
-        );
-        return {transactionHash: result.transactionHash, blockchain: this.config.networkId};
-    }
-
-    async getAssertionProofs(assertionId) {
-        const issuer = await this.callContractFunction(this.DKGContract, 'getAssertionIssuer', [
-            `0x${assertionId}`,
+    async getLatestCommitHash(blockchain, contract, tokenId) {
+        const assertionId = await this.callContractFunction(this.AssetRegistryContract, 'getCommitHash', [
+            tokenId, 0
         ]);
-        const rootHash = await this.callContractFunction(this.DKGContract, 'getAssertionRootHash', [
-            `0x${assertionId}`,
-        ]);
-        return {issuer, rootHash};
-    }
 
-    async getAssetProofs(blockchain, contract, tokenId) {
-        const issuer = await this.callContractFunction(
-            this.UAIRegistryContract,
-            'getAssetOwner',
-            [tokenId],
-        );
-        let assertionId = await this.callContractFunction(
-            this.UAIRegistryContract,
-            'getAssetStateCommitHash',
-            [tokenId],
-        );
-        if (assertionId === '0x0000000000000000000000000000000000000000000000000000000000000000') {
-            assertionId = undefined;
-        } else {
-            assertionId = assertionId.slice(2);
-        }
-        return {issuer, assertionId};
+        return assertionId;
     }
 
     async healthCheck() {
@@ -262,10 +287,7 @@ class Web3Service {
             const gasPrice = await this.web3.eth.getGasPrice();
             if (gasPrice) return true;
         } catch (e) {
-            this.logger.error({
-                msg: `Error on checking blockchain. ${e}`,
-                Event_name: constants.ERROR_TYPE.BLOCKCHAIN_CHECK_ERROR,
-            });
+            this.logger.error(`Error on checking blockchain. ${e}`);
             return false;
         }
         return false;
