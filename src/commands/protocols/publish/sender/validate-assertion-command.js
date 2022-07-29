@@ -27,11 +27,31 @@ class ValidateAssertionCommand extends Command {
                 OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_END,
             );
 
-            return this.continueSequence({ ...command.data, assertionId }, command.sequence);
+            const commandSequence = [
+                // 'insertAssertionCommand',
+                'networkPublishCommand',
+            ];
+
+            await this.commandExecutor.add({
+                name: commandSequence[0],
+                sequence: commandSequence.slice(1),
+                delay: 0,
+                data: { ...command.data, assertionId },
+                transactional: false,
+            });
         } catch (error) {
-            this.handleError(operationId, error.message, this.errorType, true);
-            return Command.empty();
+            this.logger.warn(
+                `Unable to validate blockchain data for ual: ${ual}. Received error: ${error.message}, retrying.`,
+            );
+            return Command.retry();
         }
+    }
+
+    async retryFinished(command) {
+        const { ual, operationId } = command.data;
+        const message = `Retry count for command: ${command.name} reached! Unable to validate ual: ${ual}`;
+        this.logger.trace(message);
+        await this.handleError(operationId, message, this.errorType, true);
     }
 
     /**

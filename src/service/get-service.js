@@ -55,9 +55,12 @@ class GetService extends OperationService {
             failedNumber % numberOfNodesInBatch === 0
         ) {
             if (leftoverNodes.length === 0) {
-                await this.markOperationAsFailed(
+                await this.markOperationAsCompleted(
                     operationId,
-                    'Unable to find assertion on the network!',
+                    {
+                        message: 'Unable to find assertion on the network!',
+                    },
+                    this.completedStatuses,
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);
             } else {

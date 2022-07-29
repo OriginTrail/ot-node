@@ -47,6 +47,10 @@ class OperationIdService {
         await this.repositoryModuleManager.updateOperationIdRecord(response, operationId);
     }
 
+    async updateOperationIdData(data, operationId) {
+        await this.repositoryModuleManager.updateOperationIdRecord({ data }, operationId);
+    }
+
     emitChangeEvent(status, operationId, errorMessage = null, errorType = null) {
         const timestamp = Date.now();
         const eventName = 'operation_status_changed';

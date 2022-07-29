@@ -19,45 +19,56 @@ class ValidateStoreInitCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { ual, operationId } = command.data;
+        const { ual, operationId, keywordUuid, assertionId } = command.data;
         this.logger.info(`Validating assertion with ual: ${ual}`);
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_STAKE_START,
-        );
-
-        /* const operationIdData = await this.operationIdService.getCachedOperationIdData(operationId);
-
-        const assertion = operationIdData.data.concat(operationIdData.metadata);
-        // const blockchainData = this.blockchainModuleManager.getAssetProofs(ual);
-
-        const calculatedRootHash = this.validationModuleManager.calculateRootHash(assertion);
-
-        if (blockchainData.rootHash !== calculatedRootHash) {
-            this.logger.debug(`Invalid root hash. Received value from blockchin: ${blockchainData.rootHash}, calculated: ${calculatedRootHash}`);
-            await this.handleError(operationId, 'Invalid assertion metadata, root hash mismatch!', ERROR_TYPE.VALIDATE_ASSERTION_ERROR, true);
-            return Command.empty();
-        }
-        this.logger.debug('Root hash matches');
-
-        if (blockchainData.issuer !== issuer) {
-            this.logger.debug(`Invalid issuer. Received value from blockchin: ${blockchainData.issuer}, from metadata: ${issuer}`);
-            await this.handleError(operationId, 'Invalid assertion metadata, issuer mismatch!', ERROR_TYPE.VALIDATE_ASSERTION_ERROR, true);
-            return Command.empty();
-        }
-        this.logger.debug('Issuer is valid');
-
-        this.logger.info(`Assertion with id: ${calculatedRootHash} passed all checks!`);
-
-        const commandData = command.data;
-        commandData.assertionId = calculatedRootHash; */
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_STAKE_END,
+            OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_START,
+        );
+        try {
+            const calculatedAssertionId = await this.operationService.validateAssertion(
+                ual,
+                operationId,
+            );
+            if (calculatedAssertionId !== assertionId) {
+                await this.handleError(
+                    operationId,
+                    'Assertion id miss match!',
+                    ERROR_TYPE.PUBLISH.PUBLISH_VALIDATE_ASSERTION_REMOTE_ERROR,
+                    true,
+                );
+            } else {
+                await this.operationIdService.updateOperationIdRecord(
+                    {
+                        assertionId,
+                    },
+                    operationId,
+                );
+            }
+        } catch (error) {
+            return Command.retry();
+        }
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_END,
         );
 
-        return this.continueSequence(command.data, command.sequence);
+        await this.commandExecutor.add({
+            name: 'handleStoreInitCommand',
+            sequence: [],
+            delay: 0,
+            data: command.data,
+            transactional: false,
+        });
+    }
+
+    async retryFinished(command) {
+        const { operationId } = command.data;
+        const message = `Retry count for command: ${command.name} reached! Unable to validate data for operation id: ${operationId}`;
+        this.logger.trace(message);
+        await this.handleError(operationId, message, this.errorType, true);
     }
 
     /**
