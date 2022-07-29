@@ -9,16 +9,13 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_REMOTE_ERROR;
     }
 
     async prepareMessage(commandData) {
         const { operationId } = commandData;
-        const operationIdRecord = await this.repositoryModuleManager.getOperationIdRecord(
-            operationId,
-        );
+        const operationIdRecord = await this.operationService.getOperationIdRecord(operationId);
         if (operationIdRecord && operationIdRecord.status !== OPERATION_ID_STATUS.FAILED) {
             return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
         }
