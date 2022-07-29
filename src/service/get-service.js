@@ -51,8 +51,8 @@ class GetService extends OperationService {
             );
             this.logResponsesSummary(completedNumber, failedNumber);
         } else if (
-            numberOfFoundNodes === failedNumber ||
-            failedNumber % numberOfNodesInBatch === 0
+            completedNumber < 1 &&
+            (numberOfFoundNodes === failedNumber || failedNumber % numberOfNodesInBatch === 0)
         ) {
             if (leftoverNodes.length === 0) {
                 await this.markOperationAsCompleted(

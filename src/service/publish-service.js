@@ -53,7 +53,7 @@ class PublishService extends OperationService {
             `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
         );
 
-        if (completedNumber >= this.config.minimumReplicationFactor) {
+        if (completedNumber == this.config.minimumReplicationFactor) {
             let allCompleted = true;
             for (const key in keywordsStatuses) {
                 if (keywordsStatuses[key].completedNumber < this.config.minimumReplicationFactor) {
@@ -66,8 +66,9 @@ class PublishService extends OperationService {
                 this.logResponsesSummary(completedNumber, failedNumber);
             }
         } else if (
-            numberOfFoundNodes === numberOfResponses ||
-            numberOfResponses % numberOfNodesInBatch === 0
+            completedNumber < this.config.minimumReplicationFactor &&
+            (numberOfFoundNodes === numberOfResponses ||
+                numberOfResponses % numberOfNodesInBatch === 0)
         ) {
             if (leftoverNodes.length === 0) {
                 await this.markOperationAsFailed(operationId, 'Not replicated to enough nodes!');
