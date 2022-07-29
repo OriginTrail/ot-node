@@ -20,14 +20,20 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             operationId,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
-        const operationIdRecord = await this.operationIdService.getOperationIdRecord(operationId);
-        if (
-            operationIdRecord &&
-            operationIdRecord.data &&
-            JSON.parse(operationIdRecord.data).assertionId &&
-            JSON.parse(operationIdRecord.data).assertionId === assertionId
-        ) {
+        const operationIdRecord = await this.operationIdService.getCachedOperationIdData(operationId);
+        if (operationIdRecord && operationIdRecord.assertionId === assertionId) {
             try {
+                await this.operationIdService.updateOperationIdStatus(
+                    operationId,
+                    OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_START,
+                );
+                await this.operationService.validateAssertion(assertionId, operationId);
+
+                await this.operationIdService.updateOperationIdStatus(
+                    operationId,
+                    OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_END,
+                );
+
                 await this.operationService.localStore(ual, assertionId, operationId);
                 await this.operationIdService.updateOperationIdStatus(
                     operationId,
@@ -40,16 +46,18 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
                     keywordUuid,
                     error.message,
                     ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR,
+                    commandData
                 );
             }
         } else {
-            const message = 'Unknown assertion id';
+            const message = 'Wrong assertion id';
             this.logger.error(message);
             this.handleError(
                 operationId,
                 keywordUuid,
                 message,
                 ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR,
+                commandData
             );
         }
 

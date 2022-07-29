@@ -79,15 +79,9 @@ class PublishService extends OperationService {
         }
     }
 
-    async validateAssertion(ual, operationId) {
-        this.logger.info(`Validating assertion with ual: ${ual}`);
+    async getAssertion(ual, operationId) {
+        this.logger.info(`Getting assertion for ual: ${ual}`);
 
-        const assertion = await this.operationIdService.getCachedOperationIdData(operationId);
-
-        /* // TODO only for testing purposes; disable before the release
-        const assertionId = this.validationModuleManager.calculateRoot(assertion); */
-
-        // TODO only for testing purposes; enable before the release
         const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
         const assertionId = await this.blockchainModuleManager.getLatestCommitHash(
             blockchain,
@@ -95,6 +89,13 @@ class PublishService extends OperationService {
             tokenId,
         );
 
+        return assertionId;
+    }
+
+    async validateAssertion(assertionId, operationId) {
+        this.logger.info(`Validating assertionId: ${assertionId}`);
+
+        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
         const calculatedAssertionId = this.validationModuleManager.calculateRoot(assertion);
 
         if (assertionId !== calculatedAssertionId) {
@@ -103,13 +104,16 @@ class PublishService extends OperationService {
             );
         }
 
-        this.logger.info(`Assertion integrity validated!`);
 
-        return assertionId;
+        throw Error(
+            `Invalid root hash. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`,
+        );
+
+        this.logger.info(`Assertion integrity validated!`);
     }
 
     async localStore(ual, assertionId, operationId) {
-        const assertion = await this.operationIdService.getCachedOperationIdData(operationId);
+        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
         const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
 
         const assetsGraph = 'assets:graph';

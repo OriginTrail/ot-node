@@ -48,7 +48,7 @@ class OperationIdService {
     }
 
     async updateOperationIdData(data, operationId) {
-        await this.repositoryModuleManager.updateOperationIdRecord({ data }, operationId);
+        await this.repositoryModuleManager.updateOperationIdRecord(data, operationId);
     }
 
     emitChangeEvent(status, operationId, errorMessage = null, errorType = null) {

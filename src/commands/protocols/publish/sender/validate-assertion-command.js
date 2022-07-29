@@ -21,24 +21,14 @@ class ValidateAssertionCommand extends Command {
             OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_START,
         );
         try {
-            const assertionId = await this.operationService.validateAssertion(ual, operationId);
+            const assertionId = await this.operationService.getAssertion(ual, operationId);
+            await this.operationService.validateAssertion(assertionId, operationId);
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_END,
             );
 
-            const commandSequence = [
-                // 'insertAssertionCommand',
-                'networkPublishCommand',
-            ];
-
-            await this.commandExecutor.add({
-                name: commandSequence[0],
-                sequence: commandSequence.slice(1),
-                delay: 0,
-                data: { ...command.data, assertionId },
-                transactional: false,
-            });
+            return this.continueSequence({ ...command.data, assertionId }, command.sequence);
         } catch (error) {
             this.logger.warn(
                 `Unable to validate blockchain data for ual: ${ual}. Received error: ${error.message}, retrying.`,
@@ -63,6 +53,8 @@ class ValidateAssertionCommand extends Command {
         const command = {
             name: 'validateAssertionCommand',
             delay: 0,
+            period: 5000,
+            retries: 3,
             transactional: false,
         };
         Object.assign(command, map);
