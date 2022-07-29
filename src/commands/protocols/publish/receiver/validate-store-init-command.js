@@ -39,10 +39,10 @@ class ValidateStoreInitCommand extends Command {
                     true,
                 );
             } else {
-                await this.operationIdService.updateOperationIdRecord(
-                    {
+                await this.operationIdService.updateOperationIdData(
+                    JSON.stringify({
                         assertionId,
-                    },
+                    }),
                     operationId,
                 );
             }
