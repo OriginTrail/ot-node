@@ -21,6 +21,7 @@ class OTNode {
     }
 
     async start() {
+        await this.removeUpdateFile();
         await this.runFolderStructureInitialMigration();
 
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
@@ -80,16 +81,6 @@ class OTNode {
         if (!this.config.configFilename) {
             // set default user configuration filename
             this.config.configFilename = '.origintrail_noderc';
-        }
-
-        const fileService = new FileService({ config: this.config });
-
-        const updateFilePath = fileService.getUpdateFilePath();
-        if (fs.existsSync(updateFilePath)) {
-            this.config.otNodeUpdated = true;
-            fileService.removeFile(updateFilePath).catch((error) => {
-                this.logger.warn(`Unable to remove update file. Error: ${error}`);
-            });
         }
     }
 
@@ -236,6 +227,17 @@ class OTNode {
                     identity;
                 fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
             }
+        }
+    }
+
+    async removeUpdateFile() {
+        const fileService = new FileService({ config: this.config, logger: this.logger });
+        const updateFilePath = fileService.getUpdateFilePath();
+        if (fs.existsSync(updateFilePath)) {
+            this.config.otNodeUpdated = true;
+            await fileService.removeFile(updateFilePath).catch((error) => {
+                this.logger.warn(`Unable to remove update file. Error: ${error}`);
+            });
         }
     }
 
