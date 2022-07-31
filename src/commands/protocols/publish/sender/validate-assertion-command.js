@@ -39,9 +39,12 @@ class ValidateAssertionCommand extends Command {
 
     async retryFinished(command) {
         const { ual, operationId } = command.data;
-        const message = `Retry count for command: ${command.name} reached! Unable to validate ual: ${ual}`;
-        this.logger.trace(message);
-        await this.handleError(operationId, message, this.errorType, true);
+        await this.handleError(
+            operationId,
+            `Retry count for command: ${command.name} reached! Unable to validate ual: ${ual}`,
+            this.errorType,
+            true,
+        );
     }
 
     /**
@@ -53,8 +56,6 @@ class ValidateAssertionCommand extends Command {
         const command = {
             name: 'validateAssertionCommand',
             delay: 0,
-            period: 5000,
-            retries: 3,
             transactional: false,
         };
         Object.assign(command, map);

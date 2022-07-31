@@ -104,11 +104,6 @@ class PublishService extends OperationService {
             );
         }
 
-
-        throw Error(
-            `Invalid root hash. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`,
-        );
-
         this.logger.info(`Assertion integrity validated!`);
     }
 

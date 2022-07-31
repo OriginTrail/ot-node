@@ -1,10 +1,5 @@
 const HandleProtocolMessageCommand = require('../../common/handle-protocol-message-command');
-const {
-    NETWORK_MESSAGE_TYPES,
-    ERROR_TYPE,
-    OPERATION_ID_STATUS,
-} = require('../../../../constants/constants');
-const Command = require("../../../command");
+const { NETWORK_MESSAGE_TYPES, ERROR_TYPE } = require('../../../../constants/constants');
 
 class HandleStoreInitCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
@@ -15,24 +10,8 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { operationId, ual } = commandData;
-        try {
-            const assertionId = await this.operationService.getAssertion(ual, operationId);
-            await this.operationIdService.cacheOperationIdData(operationId,{ assertionId });
-        }  catch (error) {
-            console.log(error);
-            // TODO implement retry
-        }
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
     }
-
-    // async retryFinished(command) {
-    //     const { operationId } = command.data;
-    //     const message = `Retry count for command: ${command.name} reached! Unable to validate data for operation id: ${operationId}`;
-    //     this.logger.trace(message);
-    //     await this.handleError(operationId, message, this.errorType, true);
-    //     // TODO return NACK
-    // }
 
     /**
      * Builds default handleStoreInitCommand
@@ -40,7 +19,6 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
-        // TODO implement retry
         const command = {
             name: 'handleStoreInitCommand',
             delay: 0,

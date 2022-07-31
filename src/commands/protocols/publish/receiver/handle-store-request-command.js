@@ -20,8 +20,10 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             operationId,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
-        const operationIdRecord = await this.operationIdService.getCachedOperationIdData(operationId);
-        if (operationIdRecord && operationIdRecord.assertionId === assertionId) {
+        const { assertionId: storeInitAssertionId } =
+            await this.operationIdService.getCachedOperationIdData(operationId);
+
+        if (storeInitAssertionId === assertionId) {
             try {
                 await this.operationIdService.updateOperationIdStatus(
                     operationId,
@@ -46,18 +48,18 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
                     keywordUuid,
                     error.message,
                     ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR,
-                    commandData
+                    commandData,
                 );
             }
         } else {
-            const message = 'Wrong assertion id';
+            const message = 'Store request assertion id does not match store init assertion id';
             this.logger.error(message);
             this.handleError(
                 operationId,
                 keywordUuid,
                 message,
                 ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR,
-                commandData
+                commandData,
             );
         }
 

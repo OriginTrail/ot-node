@@ -41,7 +41,7 @@ class PublishController extends BaseController {
             operation_id: operationId,
         });
 
-        const { assertionId, assertion, options } = req.body;
+        const { assertion, options } = req.body;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
@@ -53,7 +53,7 @@ class PublishController extends BaseController {
                 this.publishService.getOperationStatus().IN_PROGRESS,
             );
 
-            await this.operationIdService.cacheOperationIdData(operationId, {assertion});
+            await this.operationIdService.cacheOperationIdData(operationId, { assertion });
 
             this.logger.info(`Received assertion with ual: ${options.ual}`);
 
@@ -63,15 +63,14 @@ class PublishController extends BaseController {
                 operationId,
             };
 
-            const commandSequence = [
-                'validateAssertionCommand',
-                'networkPublishCommand',
-            ];
+            const commandSequence = ['validateAssertionCommand', 'networkPublishCommand'];
 
             await this.commandExecutor.add({
                 name: commandSequence[0],
                 sequence: commandSequence.slice(1),
                 delay: 0,
+                period: 5000,
+                retries: 3,
                 data: commandData,
                 transactional: false,
             });
@@ -91,34 +90,36 @@ class PublishController extends BaseController {
     async handleNetworkStoreRequest(message, remotePeerId) {
         const { operationId, keywordUuid, messageType } = message.header;
         const { assertionId, ual } = message.data;
-        const commandSequence = [];
-        const commandData = { remotePeerId, operationId, keywordUuid, assertionId, ual };
+        const command = {
+            delay: 0,
+            data: { remotePeerId, operationId, keywordUuid, assertionId, ual },
+            transactional: false,
+        };
         switch (messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
-                commandSequence.push('handleStoreInitCommand');
+                command.name = 'validateStoreInitCommand';
+                command.sequence = ['handleStoreInitCommand'];
+                command.period = 5000;
+                command.retries = 3;
+
                 break;
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
-                commandData.metadata = message.data.metadata;
                 const { assertionId } = await this.operationIdService.getCachedOperationIdData(
                     operationId,
                 );
-                await this.operationIdService.cacheOperationIdData(
-                    operationId,
-                    {assertionId, assertion: message.data.assertion},
-                );
-                commandSequence.push('handleStoreRequestCommand');
+                await this.operationIdService.cacheOperationIdData(operationId, {
+                    assertionId,
+                    assertion: message.data.assertion,
+                });
+                command.name = 'handleStoreRequestCommand';
+                command.sequence = [];
+
                 break;
             default:
                 throw Error('unknown messageType');
         }
 
-        await this.commandExecutor.add({
-            name: commandSequence[0],
-            sequence: commandSequence.slice(1),
-            delay: 0,
-            data: commandData,
-            transactional: false,
-        });
+        await this.commandExecutor.add(command);
     }
 }
 
