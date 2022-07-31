@@ -1,3 +1,4 @@
+const { Mutex } = require('async-mutex');
 const OperationService = require('./operation-service');
 const {
     GET_REQUEST_STATUS,
@@ -24,6 +25,7 @@ class GetService extends OperationService {
             OPERATION_ID_STATUS.GET.GET_END,
             OPERATION_ID_STATUS.COMPLETED,
         ];
+        this.operationMutex = new Mutex();
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {

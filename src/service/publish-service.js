@@ -1,3 +1,4 @@
+const { Mutex } = require('async-mutex');
 const OperationService = require('./operation-service');
 const {
     OPERATION_ID_STATUS,
@@ -27,6 +28,7 @@ class PublishService extends OperationService {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_END,
             OPERATION_ID_STATUS.COMPLETED,
         ];
+        this.operationMutex = new Mutex();
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
@@ -125,12 +127,10 @@ class PublishService extends OperationService {
 
         this.logger.info(`Inserting assertion with ual:${ual} in database.`);
 
-        const insertPromises = [
+        await Promise.all([
             this.tripleStoreModuleManager.insert(assertion.join('\n'), assertionGraphName),
             this.tripleStoreModuleManager.insert(assetNquads.join('\n'), assetsGraph),
-        ];
-
-        await Promise.all(insertPromises);
+        ]);
 
         this.logger.info(`Assertion ${ual} has been successfully inserted!`);
     }
