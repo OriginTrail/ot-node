@@ -91,14 +91,14 @@ class PublishController extends BaseController {
         const { operationId, keywordUuid, messageType } = message.header;
         const { assertionId, ual } = message.data;
         const command = {
+            sequence: [],
             delay: 0,
             data: { remotePeerId, operationId, keywordUuid, assertionId, ual },
             transactional: false,
         };
         switch (messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
-                command.name = 'validateStoreInitCommand';
-                command.sequence = ['handleStoreInitCommand'];
+                command.name = 'handleStoreInitCommand';
                 command.period = 5000;
                 command.retries = 3;
 
@@ -112,7 +112,6 @@ class PublishController extends BaseController {
                     assertion: message.data.assertion,
                 });
                 command.name = 'handleStoreRequestCommand';
-                command.sequence = [];
 
                 break;
             default:

@@ -14,7 +14,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { ual, operationId, assertionId, keywordUuid } = commandData;
+        const { ual, operationId, assertionId } = commandData;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -23,47 +23,28 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         const { assertionId: storeInitAssertionId } =
             await this.operationIdService.getCachedOperationIdData(operationId);
 
-        if (storeInitAssertionId === assertionId) {
-            try {
-                await this.operationIdService.updateOperationIdStatus(
-                    operationId,
-                    OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_START,
-                );
-                await this.operationService.validateAssertion(assertionId, operationId);
-
-                await this.operationIdService.updateOperationIdStatus(
-                    operationId,
-                    OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_END,
-                );
-
-                await this.operationService.localStore(ual, assertionId, operationId);
-                await this.operationIdService.updateOperationIdStatus(
-                    operationId,
-                    OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
-                );
-                return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
-            } catch (error) {
-                this.handleError(
-                    operationId,
-                    keywordUuid,
-                    error.message,
-                    ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR,
-                    commandData,
-                );
-            }
-        } else {
-            const message = 'Store request assertion id does not match store init assertion id';
-            this.logger.error(message);
-            this.handleError(
-                operationId,
-                keywordUuid,
-                message,
-                ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR,
-                commandData,
-            );
+        if (storeInitAssertionId !== assertionId) {
+            throw Error('Store request assertion id does not match store init assertion id');
         }
 
-        return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK, messageData: {} };
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_START,
+        );
+        await this.operationService.validateAssertion(assertionId, operationId);
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_END,
+        );
+
+        await this.operationService.localStore(ual, assertionId, operationId);
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
+        );
+
+        return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
 
         //         const {tokenId} = this.ualService.resolveUAL(ual);
         //         const epochs = await this.blockchainModuleManager.getEpochs(tokenId);
