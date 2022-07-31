@@ -50,6 +50,8 @@ class ValidateStoreInitCommand extends Command {
             this.errorType,
             true,
         );
+
+        // TODO send NACK
     }
 
     /**
