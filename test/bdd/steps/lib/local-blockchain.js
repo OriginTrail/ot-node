@@ -156,7 +156,7 @@ class LocalBlockchain {
         // this.logger.log('Deploying uai registry');
         [this.contracts.uaiRegistry.deploymentReceipt, this.contracts.uaiRegistry.instance] = await this._deployContract(
             this.web3, this.contracts.uaiRegistry.artifact, this.contracts.uaiRegistry.data,
-            [tokenContractAddress, this.contracts.dkg.instance._address], accounts[7],
+            [tokenContractAddress/*, this.contracts.dkg.instance._address*/], accounts[7],
         );
         // this.logger.log(`Uai registry contract deployed on address: ${this.contracts.uaiRegistry.instance._address}`);
         this.initialized = true;

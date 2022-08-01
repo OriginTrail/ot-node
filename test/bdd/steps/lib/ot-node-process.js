@@ -6,7 +6,7 @@ process.on('message', async (data) => {
     const config = JSON.parse(data);
     try {
         process.env.OPERATIONAL_DB_NAME = config.operationalDatabase.databaseName;
-        process.env.OPERATIONAL_DB_PASSWORD = 'password';
+        process.env.OPERATIONAL_DB_PASSWORD = '';
         const newNode = new OTNode(config);
         newNode.start().then(async () => {
             let started = false;
