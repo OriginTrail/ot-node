@@ -1,11 +1,11 @@
 const Web3 = require('web3');
 const { peerId2Hash } = require('assertion-tools');
-const Hub = require('build/contracts/Hub.json');
-const AssetRegistry = require('build/contracts/AssetRegistry.json');
-const ERC20Token = require('build/contracts/ERC20Token.json');
-const Identity = require('build/contracts/Identity.json');
-const Profile = require('build/contracts/Profile.json');
-const ProfileStorage = require('build/contracts/ProfileStorage.json');
+const Hub = require('./build/contracts/Hub.json');
+const AssetRegistry = require('./build/contracts/AssetRegistry.json');
+const ERC20Token = require('./build/contracts/ERC20Token.json');
+const Identity = require('./build/contracts/Identity.json');
+const Profile = require('./build/contracts/Profile.json');
+const ProfileStorage = require('./build/contracts/ProfileStorage.json');
 const constants = require('../../../constants/constants');
 
 class Web3Service {
@@ -115,26 +115,31 @@ class Web3Service {
     }
 
     async deployIdentity() {
+        this.logger.trace('Deploying identity');
         const transactionReceipt = await this.deployContract(Identity, [
             this.getPublicKey(),
             this.getManagementKey(),
         ]);
         this.config.identity = transactionReceipt.contractAddress;
+        this.logger.trace('Identity deployed with address: ', transactionReceipt.contractAddress);
     }
 
     async createProfile(peerId) {
+        this.logger.trace(`Increasing allowance for new profile`);
         await this.executeContractFunction(this.TokenContract, 'increaseAllowance', [
             this.ProfileContract.options.address,
             constants.INIT_STAKE_AMOUNT,
         ]);
 
         const nodeId = await peerId2Hash(peerId);
+        this.logger.trace(`Creating new profile`);
         await this.executeContractFunction(this.ProfileContract, 'createProfile', [
             this.getManagementKey(),
             nodeId,
             constants.INIT_STAKE_AMOUNT,
             this.getIdentity(),
         ]);
+        this.logger.trace(`Profile created!`);
     }
 
     getEpochs(UAI) {

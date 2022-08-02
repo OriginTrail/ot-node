@@ -110,7 +110,7 @@
                         "config": {
                             "blockchainTitle": "Parachain",
                             "networkId": "parachain::testnet",
-                            "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
+                            "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
                             "rpcEndpoints": [
                                 "wss://parachain-tempnet-01.origin-trail.network"
                             ],
