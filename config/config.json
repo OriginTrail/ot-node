@@ -110,13 +110,13 @@
                         "config": {
                             "blockchainTitle": "Parachain",
                             "networkId": "parachain::testnet",
+                            "ticker": "OTP",
                             "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
-                            "rpcEndpoints": [
-                                "wss://parachain-tempnet-01.origin-trail.network"
-                            ],
+                            "gasStationLink": "",
+                            "rpcEndpoints": ["wss://parachain-tempnet-01.origin-trail.network"],
                             "publicKey": "0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b",
                             "privateKey": "0x99b3c12287537e38c90a9219d4cb074a89a16e9cdb20bf85728ebd97c343e342",
-                            "managementKey": "0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b"
+                            "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
                         }
                     },
                     "polygon": {
@@ -124,7 +124,9 @@
                         "config": {
                             "blockchainTitle": "Polygon",
                             "networkId": "polygon::testnet",
+                            "ticker": "MATIC",
                             "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
+                            "gasStationLink": "https://gasstation-mumbai.matic.today/v2",
                             "rpcEndpoints": [
                                 "https://matic-mumbai.chainstacklabs.com",
                                 "https://rpc-mumbai.matic.today",

@@ -93,7 +93,9 @@ class Web3Service {
             this.getPublicKey(),
         ]);
         this.logger.info(
-            `Balance of ${this.getPublicKey()} is ${nativeBalance} ETH and ${tokenBalance} TRAC.`,
+            `Balance of ${this.getPublicKey()} is ${nativeBalance} ${
+                this.config.ticker
+            } and ${tokenBalance} TRAC.`,
         );
     }
 
@@ -115,31 +117,27 @@ class Web3Service {
     }
 
     async deployIdentity() {
-        this.logger.trace('Deploying identity');
         const transactionReceipt = await this.deployContract(Identity, [
             this.getPublicKey(),
             this.getManagementKey(),
         ]);
         this.config.identity = transactionReceipt.contractAddress;
-        this.logger.trace('Identity deployed with address: ', transactionReceipt.contractAddress);
     }
 
     async createProfile(peerId) {
-        this.logger.trace(`Increasing allowance for new profile`);
         await this.executeContractFunction(this.TokenContract, 'increaseAllowance', [
             this.ProfileContract.options.address,
             constants.INIT_STAKE_AMOUNT,
         ]);
 
         const nodeId = await peerId2Hash(peerId);
-        this.logger.trace(`Creating new profile`);
+
         await this.executeContractFunction(this.ProfileContract, 'createProfile', [
             this.getManagementKey(),
             nodeId,
             constants.INIT_STAKE_AMOUNT,
             this.getIdentity(),
         ]);
-        this.logger.trace(`Profile created!`);
     }
 
     getEpochs(UAI) {
@@ -186,7 +184,14 @@ class Web3Service {
     }
 
     async getGasPrice() {
-        throw new Error('Get gas price method needs to be implemented in subclass');
+        try {
+            const response = await axios.get(this.config.gasStationLink);
+            const gasPriceRounded = Math.round(response.data.standard.maxFee * 1e9);
+            return gasPriceRounded;
+        } catch (e) {
+            this.logger.warn(err);
+            return undefined;
+        }
     }
 
     async callContractFunction(contractInstance, functionName, args) {
@@ -270,9 +275,8 @@ class Web3Service {
                     tx,
                     this.config.privateKey,
                 );
-                result = await this.web3.eth.sendSignedTransaction(
-                    createdTransaction.rawTransaction,
-                );
+
+                return this.web3.eth.sendSignedTransaction(createdTransaction.rawTransaction);
             } catch (error) {
                 await this.handleError(error, 'deploy');
             }
