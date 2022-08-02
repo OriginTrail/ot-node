@@ -40,7 +40,7 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
-        await this.createProfile();
+        await this.createProfiles();
         await this.saveNetworkModulePeerIdAndPrivKey();
 
         await this.initializeControllers();
@@ -137,19 +137,30 @@ class OTNode {
         }
     }
 
-    async createProfile() {
+    async createProfiles() {
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
-        if (!blockchainModuleManager.identityExists()) {
-            const networkModuleManager = this.container.resolve('networkModuleManager');
-            const peerId = networkModuleManager.getPeerId();
-            await blockchainModuleManager.deployIdentity();
-            await blockchainModuleManager.createProfile(peerId);
-            if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
-                this.saveIdentityInUserConfigurationFile(blockchainModuleManager.getIdentity());
+        const createProfilesPromises = Object.keys(
+            this.config.modules.blockchain.implementation,
+        ).map(async (blockchain) => {
+            if (!blockchainModuleManager.identityExists(blockchain)) {
+                const networkModuleManager = this.container.resolve('networkModuleManager');
+                const peerId = networkModuleManager.getPeerId();
+                await blockchainModuleManager.deployIdentity(blockchain);
+                await blockchainModuleManager.createProfile(blockchain, peerId);
+                if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
+                    this.saveIdentityInUserConfigurationFile(
+                        blockchainModuleManager.getIdentity(blockchain),
+                    );
+                }
             }
-        }
+            this.logger.info(
+                `${blockchain} blockchain identity is ${blockchainModuleManager.getIdentity(
+                    blockchain,
+                )}`,
+            );
+        });
 
-        this.logger.info(`Blockchain identity is ${blockchainModuleManager.getIdentity()}`);
+        await Promise.all(createProfilesPromises);
     }
 
     async saveNetworkModulePeerIdAndPrivKey() {

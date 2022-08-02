@@ -5,99 +5,109 @@ class BlockchainModuleManager extends BaseModuleManager {
         return 'blockchain';
     }
 
-    getPrivateKey() {
+    getPrivateKey(blockchain) {
         if (this.initialized) {
-            return this.getImplementation().module.getPrivateKey();
+            return this.getImplementation(blockchain).module.getPrivateKey();
         }
     }
 
-    getPublicKey() {
+    getPublicKey(blockchain) {
         if (this.initialized) {
-            return this.getImplementation().module.getPublicKey();
+            return this.getImplementation(blockchain).module.getPublicKey();
         }
     }
 
-    getManagementKey () {
+    getManagementKey(blockchain) {
         if (this.initialized) {
-            return this.getImplementation().module.getManagementKey();
+            return this.getImplementation(blockchain).module.getManagementKey();
         }
     }
 
-    async deployIdentity () {
+    async deployIdentity(blockchain) {
         if (this.initialized) {
-            return this.getImplementation().module.deployIdentity();
+            return this.getImplementation(blockchain).module.deployIdentity();
         }
     }
 
-    identityExists () {
+    identityExists(blockchain) {
         if (this.initialized) {
-            return this.getImplementation().module.identityExists();
+            return this.getImplementation(blockchain).module.identityExists();
         }
     }
 
-    getIdentity () {
+    getIdentity(blockchain) {
         if (this.initialized) {
-            return this.getImplementation().module.getIdentity();
+            return this.getImplementation(blockchain).module.getIdentity();
         }
     }
 
-    async createProfile (peerId) {
+    async createProfile(blockchain, peerId) {
         if (this.initialized) {
-            return this.getImplementation().module.createProfile(peerId);
+            return this.getImplementation(blockchain).module.createProfile(peerId);
         }
     }
 
-    async getEpochs (UAI) {
+    async getEpochs(blockchain, UAI) {
         if (this.initialized) {
-            return this.getImplementation().module.getEpochs(UAI);
+            return this.getImplementation(blockchain).module.getEpochs(UAI);
         }
     }
 
-    async getBlockNumber () {
+    async getBlockNumber(blockchain) {
         if (this.initialized) {
-            return this.getImplementation().module.getBlockNumber();
+            return this.getImplementation(blockchain).module.getBlockNumber();
         }
     }
 
-    getBlockTime () {
+    getBlockTime(blockchain) {
         if (this.initialized) {
-            return this.getImplementation().module.getBlockTime();
+            return this.getImplementation(blockchain).module.getBlockTime();
         }
     }
 
-    async getChallenge (UAI, epoch) {
+    async getChallenge(blockchain, UAI, epoch) {
         if (this.initialized) {
-            return this.getImplementation().module.getChallenge(UAI, epoch);
+            return this.getImplementation(blockchain).module.getChallenge(UAI, epoch);
         }
     }
 
-    async answerChallenge (UAI, epoch, proof, leaf, price) {
+    async answerChallenge(blockchain, UAI, epoch, proof, leaf, price) {
         if (this.initialized) {
-            return this.getImplementation().module.answerChallenge(UAI, epoch, proof, leaf, price);
+            return this.getImplementation(blockchain).module.answerChallenge(
+                UAI,
+                epoch,
+                proof,
+                leaf,
+                price,
+            );
         }
     }
 
-    async getReward(UAI, epoch) {
+    async getReward(blockchain, UAI, epoch) {
         if (this.initialized) {
-            return this.getImplementation().module.getReward(UAI, epoch);
+            return this.getImplementation(blockchain).module.getReward(UAI, epoch);
         }
     }
 
     async getLatestCommitHash(blockchain, contract, tokenId) {
         if (this.initialized) {
-            return this.getImplementation().module.getLatestCommitHash(blockchain, contract, tokenId);
+            return this.getImplementation(blockchain).module.getLatestCommitHash(
+                blockchain,
+                contract,
+                tokenId,
+            );
         }
     }
 
-    async healthCheck() {
+    async healthCheck(blockchain) {
         if (this.initialized) {
-            return this.getImplementation().module.healthCheck();
+            return this.getImplementation(blockchain).module.healthCheck();
         }
     }
 
-    async restartService() {
+    async restartService(blockchain) {
         if (this.initialized) {
-            return this.getImplementation().module.restartService();
+            return this.getImplementation(blockchain).module.restartService();
         }
     }
 }

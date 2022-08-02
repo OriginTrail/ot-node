@@ -46,10 +46,10 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
 
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
 
-        //         const {tokenId} = this.ualService.resolveUAL(ual);
-        //         const epochs = await this.blockchainModuleManager.getEpochs(tokenId);
-        //         const blockNumber = await this.blockchainModuleManager.getBlockNumber();
-        //         const blockTime = await this.blockchainModuleManager.getBlockTime();
+        //         const {blockchain, tokenId} = this.ualService.resolveUAL(ual);
+        //         const epochs = await this.blockchainModuleManager.getEpochs(blockchain, tokenId);
+        //         const blockNumber = await this.blockchainModuleManager.getBlockNumber(blockchain);
+        //         const blockTime = await this.blockchainModuleManager.getBlockTime(blockchain);
         //         const addCommandPromise = [];
         //         epochs.forEach((epoch) => {
         //             const commandSequence = ['answerChallengeCommand'];
