@@ -1,24 +1,18 @@
 const Web3 = require('web3');
-const axios = require('axios');
 const { peerId2Hash } = require('assertion-tools');
-const Hub = require('../../../../build/contracts/Hub.json');
-const AssetRegistry = require('../../../../build/contracts/AssetRegistry.json');
-const ERC20Token = require('../../../../build/contracts/ERC20Token.json');
-const Identity = require('../../../../build/contracts/Identity.json');
-const Profile = require('../../../../build/contracts/Profile.json');
-const ProfileStorage = require('../../../../build/contracts/ProfileStorage.json');
+const Hub = require('build/contracts/Hub.json');
+const AssetRegistry = require('build/contracts/AssetRegistry.json');
+const ERC20Token = require('build/contracts/ERC20Token.json');
+const Identity = require('build/contracts/Identity.json');
+const Profile = require('build/contracts/Profile.json');
+const ProfileStorage = require('build/contracts/ProfileStorage.json');
 const constants = require('../../../constants/constants');
 
 class Web3Service {
-    getName() {
-        return 'Web3';
-    }
-
     async initialize(config, logger) {
         this.config = config;
         this.logger = logger;
 
-        this.gasStationLink = 'https://gasstation-mumbai.matic.today/v2';
         this.rpcNumber = 0;
         await this.initializeWeb3();
         await this.initializeContracts();
@@ -186,16 +180,8 @@ class Web3Service {
         return this.config.managementKey;
     }
 
-    async getGasStationPrice() {
-        const response = await axios.get(this.gasStationLink).catch((err) => {
-            this.logger.warn(err);
-            return undefined;
-        });
-        try {
-            return Math.round(response.data.standard.maxFee * 1e9);
-        } catch (e) {
-            return undefined;
-        }
+    async getGasPrice() {
+        throw new Error('Get gas price method needs to be implemented in subclass');
     }
 
     async callContractFunction(contractInstance, functionName, args) {
@@ -215,7 +201,7 @@ class Web3Service {
         let result;
         while (!result) {
             try {
-                const gasPrice = await this.getGasStationPrice();
+                const gasPrice = await this.getGasPrice();
 
                 const gasLimit = await contractInstance.methods[functionName](...args).estimateGas({
                     from: this.config.publicKey,
@@ -250,7 +236,7 @@ class Web3Service {
         while (!result) {
             try {
                 const contractInstance = new this.web3.eth.Contract(contract.abi);
-                const gasPrice = await this.getGasStationPrice();
+                const gasPrice = await this.getGasPrice();
 
                 const gasLimit = await contractInstance
                     .deploy({
