@@ -95,8 +95,8 @@ class Web3Service {
         ]);
         this.logger.info(
             `Balance of ${this.getPublicKey()} is ${nativeBalance} ${
-                this.config.ticker
-            } and ${tokenBalance} TRAC.`,
+                this.baseTokenTicker
+            } and ${tokenBalance} ${this.tracTicker}.`,
         );
     }
 

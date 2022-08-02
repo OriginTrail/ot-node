@@ -113,8 +113,6 @@ class PublishService extends OperationService {
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
         const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
 
-        const assetsGraph = 'assets:graph';
-        const assertionGraphName = `assertion:${assertionId}`;
         const assetNquads = await this.dataService.toNQuads({
             '@context': SCHEMA_CONTEXT,
             '@id': ual,
@@ -127,10 +125,12 @@ class PublishService extends OperationService {
 
         this.logger.info(`Inserting assertion with ual:${ual} in database.`);
 
-        await Promise.all([
-            this.tripleStoreModuleManager.insert(assertion.join('\n'), assertionGraphName),
-            this.tripleStoreModuleManager.insert(assetNquads.join('\n'), assetsGraph),
-        ]);
+        await this.tripleStoreModuleManager.insertAsset(
+            assertion.join('\n'),
+            assertionId,
+            assetNquads.join('\n'),
+            ual,
+        );
 
         this.logger.info(`Assertion ${ual} has been successfully inserted!`);
     }
