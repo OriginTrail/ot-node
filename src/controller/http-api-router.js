@@ -1,5 +1,6 @@
 const publishRequestSchema = require('./v1/request-schema/publish-request');
 const getRequestSchema = require('./v1/request-schema/get-request');
+const queryRequestSchema = require('./v1/request-schema/query-request');
 
 class HttpApiRouter {
     constructor(ctx) {
@@ -28,6 +29,14 @@ class HttpApiRouter {
             { rateLimit: true, requestSchema: publishRequestSchema },
         );
 
+        this.httpClientModuleManager.post(
+            '/query',
+            (req, res) => {
+                this.searchController.handleHttpApiQueryRequest(req, res);
+            },
+            { rateLimit: true, requestSchema: queryRequestSchema },
+        );
+
         // this.httpClientModuleManager.post('/provision', (req, res) => {
         //     this.publishController.handleHttpApiProvisionRequest(req, res);
         // });
@@ -36,9 +45,6 @@ class HttpApiRouter {
         //     this.publishController.handleHttpApiUpdateRequest(req, res);
         // });
         //
-        // this.httpClientModuleManager.post(HTTP_API_ROUTES.QUERY, (req, res) => {
-        //     this.searchController.handleHttpApiQueryRequest(req, res);
-        // });
         //
         // this.httpClientModuleManager.post(HTTP_API_ROUTES.PROOFS, (req, res) => {
         //     this.searchController.handleHttpApiProofsRequest(req, res);

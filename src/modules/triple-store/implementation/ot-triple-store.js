@@ -2,6 +2,7 @@ const Engine = require('@comunica/query-sparql').QueryEngine;
 const { setTimeout } = require('timers/promises');
 const { SCHEMA_CONTEXT } = require('../../../constants/constants');
 const constants = require('./triple-store-constants');
+const { DATA_TYPES } = require('./triple-store-constants');
 
 class OtTripleStore {
     async initialize(config, logger) {
@@ -74,7 +75,12 @@ class OtTripleStore {
     }
 
     async construct(query) {
-        const result = await this.executeQuery(query);
+        const result = await this._executeQuery(query, DATA_TYPES.N_QUADS);
+        return result;
+    }
+
+    async select(query) {
+        const result = await this._executeQuery(query, DATA_TYPES.SPARQL_RESULTS_JSON);
         return result;
     }
 
@@ -221,18 +227,28 @@ class OtTripleStore {
         return true;
     }
 
-    async executeQuery(query) {
-        const result = await this.queryEngine.query(query, this.queryContext);
+    /**
+     * Executes query
+     * @param query
+     * @param mediaType
+     * @returns {Promise<string>}
+     * @private
+     */
+    async _executeQuery(query, mediaType) {
+        const queryResult = await this.queryEngine.query(query, this.queryContext);
         const { data } = await this.queryEngine.resultToString(
-            result,
-            'application/n-quads',
+            queryResult,
+            mediaType,
             this.queryContext,
         );
-        let nquads = '';
-        for await (const nquad of data) {
-            nquads += nquad;
+
+        let result = '';
+
+        for await (const chunk of data) {
+            result += chunk;
         }
-        return nquads;
+
+        return result;
     }
 
     async execute(query) {
