@@ -20,7 +20,7 @@ class BaseMigration {
         this.migrationName = migrationName;
         this.logger = logger;
         this.config = config;
-        this.fileService = new FileService({ config: this.config });
+        this.fileService = new FileService({ config: this.config, logger: this.logger });
     }
 
     async migrationAlreadyExecuted() {

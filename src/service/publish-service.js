@@ -1,3 +1,4 @@
+const { Mutex } = require('async-mutex');
 const OperationService = require('./operation-service');
 const {
     OPERATION_ID_STATUS,
@@ -27,6 +28,7 @@ class PublishService extends OperationService {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_END,
             OPERATION_ID_STATUS.COMPLETED,
         ];
+        this.operationMutex = new Mutex();
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
@@ -53,7 +55,7 @@ class PublishService extends OperationService {
             `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
         );
 
-        if (completedNumber >= this.config.minimumReplicationFactor) {
+        if (completedNumber == this.config.minimumReplicationFactor) {
             let allCompleted = true;
             for (const key in keywordsStatuses) {
                 if (keywordsStatuses[key].completedNumber < this.config.minimumReplicationFactor) {
@@ -66,8 +68,9 @@ class PublishService extends OperationService {
                 this.logResponsesSummary(completedNumber, failedNumber);
             }
         } else if (
-            numberOfFoundNodes === numberOfResponses ||
-            numberOfResponses % numberOfNodesInBatch === 0
+            completedNumber < this.config.minimumReplicationFactor &&
+            (numberOfFoundNodes === numberOfResponses ||
+                numberOfResponses % numberOfNodesInBatch === 0)
         ) {
             if (leftoverNodes.length === 0) {
                 await this.markOperationAsFailed(operationId, 'Not replicated to enough nodes!');
@@ -78,15 +81,9 @@ class PublishService extends OperationService {
         }
     }
 
-    async validateAssertion(ual, operationId) {
-        this.logger.info(`Validating assertion with ual: ${ual}`);
+    async getAssertion(ual, operationId) {
+        this.logger.info(`Getting assertion for ual: ${ual}`);
 
-        const assertion = await this.operationIdService.getCachedOperationIdData(operationId);
-
-        /* // TODO only for testing purposes; disable before the release
-        const assertionId = this.validationModuleManager.calculateRoot(assertion); */
-
-        // TODO only for testing purposes; enable before the release
         const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
         const assertionId = await this.blockchainModuleManager.getLatestCommitHash(
             blockchain,
@@ -94,6 +91,13 @@ class PublishService extends OperationService {
             tokenId,
         );
 
+        return assertionId;
+    }
+
+    async validateAssertion(assertionId, operationId) {
+        this.logger.info(`Validating assertionId: ${assertionId}`);
+
+        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
         const calculatedAssertionId = this.validationModuleManager.calculateRoot(assertion);
 
         if (assertionId !== calculatedAssertionId) {
@@ -103,12 +107,10 @@ class PublishService extends OperationService {
         }
 
         this.logger.info(`Assertion integrity validated!`);
-
-        return assertionId;
     }
 
     async localStore(ual, assertionId, operationId) {
-        const assertion = await this.operationIdService.getCachedOperationIdData(operationId);
+        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
         const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
 
         const assetsGraph = 'assets:graph';
@@ -125,12 +127,10 @@ class PublishService extends OperationService {
 
         this.logger.info(`Inserting assertion with ual:${ual} in database.`);
 
-        const insertPromises = [
+        await Promise.all([
             this.tripleStoreModuleManager.insert(assertion.join('\n'), assertionGraphName),
             this.tripleStoreModuleManager.insert(assetNquads.join('\n'), assetsGraph),
-        ];
-
-        await Promise.all(insertPromises);
+        ]);
 
         this.logger.info(`Assertion ${ual} has been successfully inserted!`);
     }

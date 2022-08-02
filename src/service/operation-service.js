@@ -1,7 +1,4 @@
-const { Mutex } = require('async-mutex');
 const { OPERATION_ID_STATUS } = require('../constants/constants');
-
-const mutex = new Mutex();
 
 class OperationService {
     constructor(ctx) {
@@ -31,7 +28,7 @@ class OperationService {
     async getResponsesStatuses(responseStatus, errorMessage, operationId, keyword) {
         const self = this;
         let responses = 0;
-        await mutex.runExclusive(async () => {
+        await this.operationMutex.runExclusive(async () => {
             await self.repositoryModuleManager.createOperationResponseRecord(
                 responseStatus,
                 this.operationName,

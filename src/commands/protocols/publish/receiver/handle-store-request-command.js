@@ -14,71 +14,61 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { ual, operationId, keywordUuid } = commandData;
-
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_START,
-        );
-        const assertionId = await this.operationService
-            .validateAssertion(ual, operationId)
-            .catch((e) =>
-                this.handleError(
-                    operationId,
-                    keywordUuid,
-                    e.message,
-                    ERROR_TYPE.PUBLISH.PUBLISH_VALIDATE_ASSERTION_REMOTE_ERROR,
-                ),
-            );
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_END,
-        );
+        const { ual, operationId, assertionId } = commandData;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
-        await this.operationService
-            .localStore(ual, assertionId, operationId)
-            .catch((e) =>
-                this.handleError(
-                    operationId,
-                    keywordUuid,
-                    e.message,
-                    ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR,
-                ),
-            );
+        const { assertionId: storeInitAssertionId } =
+            await this.operationIdService.getCachedOperationIdData(operationId);
+
+        if (storeInitAssertionId !== assertionId) {
+            throw Error('Store request assertion id does not match store init assertion id');
+        }
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_START,
+        );
+        await this.operationService.validateAssertion(assertionId, operationId);
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_END,
+        );
+
+        await this.operationService.localStore(ual, assertionId, operationId);
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
         );
 
-//         const {tokenId} = this.ualService.resolveUAL(ual);
-//         const epochs = await this.blockchainModuleManager.getEpochs(tokenId);
-//         const blockNumber = await this.blockchainModuleManager.getBlockNumber();
-//         const blockTime = await this.blockchainModuleManager.getBlockTime();
-//         const addCommandPromise = [];
-//         epochs.forEach((epoch) => {
-//             const commandSequence = ['answerChallengeCommand'];
-//             addCommandPromise.push(
-//                 this.commandExecutor.add({
-//                     name: commandSequence[0],
-//                     sequence: commandSequence.slice(1),
-//                     delay: Math.abs((parseInt(epoch, 10)-parseInt(blockNumber, 10))*parseInt(blockTime, 10)),
-//                     data: {
-//                         handlerId,
-//                         epoch,
-//                         tokenId
-//                     },
-//                     transactional: false,
-//                 }),
-//             );
-//         });
-//
-//         await Promise.all(addCommandPromise);
-
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
+
+        //         const {tokenId} = this.ualService.resolveUAL(ual);
+        //         const epochs = await this.blockchainModuleManager.getEpochs(tokenId);
+        //         const blockNumber = await this.blockchainModuleManager.getBlockNumber();
+        //         const blockTime = await this.blockchainModuleManager.getBlockTime();
+        //         const addCommandPromise = [];
+        //         epochs.forEach((epoch) => {
+        //             const commandSequence = ['answerChallengeCommand'];
+        //             addCommandPromise.push(
+        //                 this.commandExecutor.add({
+        //                     name: commandSequence[0],
+        //                     sequence: commandSequence.slice(1),
+        //                     delay: Math.abs((parseInt(epoch, 10)-parseInt(blockNumber, 10))*parseInt(blockTime, 10)),
+        //                     data: {
+        //                         handlerId,
+        //                         epoch,
+        //                         tokenId
+        //                     },
+        //                     transactional: false,
+        //                 }),
+        //             );
+        //         });
+        //
+        //         await Promise.all(addCommandPromise);
     }
 
     /**
