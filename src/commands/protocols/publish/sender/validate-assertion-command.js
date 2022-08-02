@@ -28,7 +28,10 @@ class ValidateAssertionCommand extends Command {
                 OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_END,
             );
 
-            return this.continueSequence({ ...command.data, assertionId }, command.sequence);
+            return this.continueSequence(
+                { ...command.data, assertionId, retry: undefined, period: undefined },
+                command.sequence,
+            );
         } catch (error) {
             this.logger.warn(
                 `Unable to validate blockchain data for ual: ${ual}. Received error: ${error.message}, retrying.`,
