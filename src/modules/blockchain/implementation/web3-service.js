@@ -285,7 +285,7 @@ class Web3Service {
         return result;
     }
 
-    async getLatestCommitHash(blockchain, contract, tokenId) {
+    async getLatestCommitHash(contract, tokenId) {
         const assertionId = await this.callContractFunction(
             this.AssetRegistryContract,
             'getCommitHash',
