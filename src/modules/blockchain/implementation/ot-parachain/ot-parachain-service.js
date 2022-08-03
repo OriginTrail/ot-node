@@ -7,6 +7,16 @@ class OtParachainService extends Web3Service {
         this.baseTokenTicker = 'OTP';
         this.tracTicker = 'pTRAC';
     }
+
+    async getGasPrice() {
+        if (this.config.gasPriceOracleLink) return super.getGasPrice();
+
+        try {
+            return this.web3.eth.getGasPrice();
+        } catch (error) {
+            return undefined;
+        }
+    }
 }
 
 module.exports = OtParachainService;

@@ -55,7 +55,6 @@
                         "blockchainTitle": "Parachain",
                         "networkId": "parachain::testnet",
                         "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
-                        "gasStationLink": "",
                         "rpcEndpoints": [
                             "wss://parachain-tempnet-01.origin-trail.network"
                         ],
@@ -70,7 +69,7 @@
                         "blockchainTitle": "Polygon",
                         "networkId": "polygon::testnet",
                         "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
-                        "gasStationLink": "https://gasstation-mumbai.matic.today/v2",
+                        "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
                         "rpcEndpoints": [
                             "https://matic-mumbai.chainstacklabs.com",
                             "https://rpc-mumbai.matic.today",
