@@ -1,4 +1,5 @@
 const Web3 = require('web3');
+const web3 = new Web3('wss://parachain-tempnet-01.origin-trail.network');
 const axios = require('axios');
 const { peerId2Hash } = require('assertion-tools');
 const Hub = require('../../../../build/contracts/Hub.json');

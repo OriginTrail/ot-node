@@ -83,7 +83,7 @@ class OTNode {
         }
 
         const fileService = new FileService({ config: this.config });
-
+        console.log(this.config.hubContractAddress)
         const updateFilePath = fileService.getUpdateFilePath();
         if (fs.existsSync(updateFilePath)) {
             this.config.otNodeUpdated = true;
