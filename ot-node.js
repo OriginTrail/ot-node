@@ -139,28 +139,43 @@ class OTNode {
 
     async createProfiles() {
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
-        const createProfilesPromises = Object.keys(
-            this.config.modules.blockchain.implementation,
-        ).map(async (blockchain) => {
-            if (!blockchainModuleManager.identityExists(blockchain)) {
-                const networkModuleManager = this.container.resolve('networkModuleManager');
-                const peerId = networkModuleManager.getPeerId();
-                await blockchainModuleManager.deployIdentity(blockchain);
-                await blockchainModuleManager.createProfile(blockchain, peerId);
-                if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
-                    this.saveIdentityInUserConfigurationFile(
-                        blockchainModuleManager.getIdentity(blockchain),
+        const createProfilesPromises = blockchainModuleManager
+            .getImplementationsNames()
+            .map(async (blockchain) => {
+                try {
+                    if (!blockchainModuleManager.identityExists(blockchain)) {
+                        const networkModuleManager = this.container.resolve('networkModuleManager');
+                        const peerId = networkModuleManager.getPeerId();
+                        await blockchainModuleManager.deployIdentity(blockchain);
+                        await blockchainModuleManager.createProfile(blockchain, peerId);
+                        if (
+                            process.env.NODE_ENV !== 'development' &&
+                            process.env.NODE_ENV !== 'test'
+                        ) {
+                            this.saveIdentityInUserConfigurationFile(
+                                blockchainModuleManager.getIdentity(blockchain),
+                            );
+                        }
+                    }
+                    this.logger.info(
+                        `${blockchain} blockchain identity is ${blockchainModuleManager.getIdentity(
+                            blockchain,
+                        )}`,
                     );
+                } catch (error) {
+                    this.logger.warn(
+                        `Unable to create ${blockchain} blockchain profile. Removing implementation.`,
+                    );
+                    blockchainModuleManager.removeImplementation(blockchain);
                 }
-            }
-            this.logger.info(
-                `${blockchain} blockchain identity is ${blockchainModuleManager.getIdentity(
-                    blockchain,
-                )}`,
-            );
-        });
+            });
 
         await Promise.all(createProfilesPromises);
+
+        if (!blockchainModuleManager.getImplementationsNames().length) {
+            this.logger.info(`Unable to create blockchain profiles. OT-node shutting down...`);
+            process.exit(1);
+        }
     }
 
     async saveNetworkModulePeerIdAndPrivKey() {

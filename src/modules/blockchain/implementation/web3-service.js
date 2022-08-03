@@ -186,7 +186,7 @@ class Web3Service {
 
     async getGasPrice() {
         try {
-            const response = await axios.get(this.config.gasStationLink);
+            const response = await axios.get(this.config.gasPriceOracleLink);
             const gasPriceRounded = Math.round(response.data.standard.maxFee * 1e9);
             return gasPriceRounded;
         } catch (error) {
