@@ -487,31 +487,40 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo "Creating default noderc config${N1}"
-
-read -p "Enter the operational wallet address: " NODE_WALLET
-echo "Node wallet: $NODE_WALLET"
-
-read -p "Enter the private key: " NODE_PRIVATE_KEY
-echo "Node private key: $NODE_PRIVATE_KEY"
-
 CONFIG_DIR=$OTNODE_DIR/../
-
 cp $OTNODE_DIR/.origintrail_noderc_example $CONFIG_DIR/.origintrail_noderc
 
-jq --arg newval "$NODE_WALLET" '.blockchain[].publicKey |= $newval' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
-mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
+blockchains=("otp" "polygon")
 
-jq --arg newval "$NODE_PRIVATE_KEY" '.blockchain[].privateKey |= $newval' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
-mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
+for ((i = 0; i < ${#blockchains[@]}; ++i)); do
+do
+    read -p "Do you want to connect your node to blockchain: ${blockchains[$i]} ? [Y]Yes [N]No [E]Exit" choice
+	case "$choice" in
+        [Yy]* )
+            read -p "Enter the operational wallet address: " NODE_WALLET
+            echo "Node wallet: $NODE_WALLET"
+
+            read -p "Enter the private key: " NODE_PRIVATE_KEY
+            echo "Node private key: $NODE_PRIVATE_KEY"
+
+            jq --arg newval "$NODE_WALLET" '.modules.blockchain.implementation[$i].config.publicKey |= $newval' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
+            mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
+
+            jq --arg newval "$NODE_PRIVATE_KEY" '.modules.blockchain.implementation[$i].config.privateKey |= $newval' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
+            mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
+        [Nn]* ) ;;
+        [Ee]* ) echo "Installer stopped by user"; exit;;
+        * ) echo "Please make a valid choice and try again.";;
+    esac
+done
 
 if [[ $DATABASE = "blazegraph" ]]; then
-    jq '.graphDatabase |= {"implementation": "Blazegraph", "url": "http://localhost:9999/blazegraph"} + .' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
+    jq '.modules.tripleStore.defaultImplementation |= "ot-blazegraph" + .' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
     mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
 fi
 
 if [[ $DATABASE = "fuseki" ]]; then
-    jq '.graphDatabase |= {"name": "node0", "implementation": "Fuseki", "url": "http://localhost:3030"} + .' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
+    jq '.modules.tripleStore.defaultImplementation |= "ot-fuseki" + .' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
     mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
 fi
 
