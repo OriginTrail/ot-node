@@ -2,7 +2,7 @@ const Engine = require('@comunica/query-sparql').QueryEngine;
 const { setTimeout } = require('timers/promises');
 const { SCHEMA_CONTEXT } = require('../../../constants/constants');
 const constants = require('./triple-store-constants');
-const { DATA_TYPES } = require('./triple-store-constants');
+const { MEDIA_TYPES } = require('./triple-store-constants');
 
 class OtTripleStore {
     async initialize(config, logger) {
@@ -75,12 +75,15 @@ class OtTripleStore {
     }
 
     async construct(query) {
-        const result = await this._executeQuery(query, DATA_TYPES.N_QUADS);
+        const result = await this._executeQuery(query, MEDIA_TYPES.N_QUADS);
         return result;
     }
 
     async select(query) {
-        const result = await this._executeQuery(query, DATA_TYPES.SPARQL_RESULTS_JSON);
+        // todo: add media type once bug is fixed
+        // no media type is passed because of comunica bug
+        // https://github.com/comunica/comunica/issues/1034
+        const result = await this._executeQuery(query);
         return result;
     }
 
@@ -122,7 +125,7 @@ class OtTripleStore {
                      schema:hasIssuer ?issuer .
             }
             ORDER BY DESC(?timestamp)`;
-        const result = await this.execute(query);
+        const result = await this.select(query);
 
         return result;
     }
@@ -134,7 +137,7 @@ class OtTripleStore {
                             ${nquads}
                             }
                        }`;
-        let graph = await this.execute(query);
+        let graph = await this.select(query);
         graph = graph.map((x) => x.g.replace(`${constants.DID_PREFIX}:`, ''));
         if (graph.length && graph[0] === 'http://www.bigdata.com/rdf#nullGraph') {
             return [];
@@ -170,7 +173,7 @@ class OtTripleStore {
                             }
                         ${limitQuery}`;
 
-        const result = await this.execute(sparqlQuery);
+        const result = await this.select(sparqlQuery);
         return result;
     }
 
@@ -219,7 +222,7 @@ class OtTripleStore {
                                         ${limitQuery}
                                     }
                             }`;
-        const result = await this.execute(sparqlQuery);
+        const result = await this.select(sparqlQuery);
         return result;
     }
 
@@ -227,37 +230,16 @@ class OtTripleStore {
         return true;
     }
 
-    /**
-     * Executes query
-     * @param query
-     * @param mediaType
-     * @returns {Promise<string>}
-     * @private
-     */
     async _executeQuery(query, mediaType) {
-        const queryResult = await this.queryEngine.query(query, this.queryContext);
-        const { data } = await this.queryEngine.resultToString(
-            queryResult,
-            mediaType,
-            this.queryContext,
-        );
-
-        let result = '';
-
-        for await (const chunk of data) {
-            result += chunk;
-        }
-
-        return result;
-    }
-
-    async execute(query) {
         const result = await this.queryEngine.query(query, this.queryContext);
-        const { data } = await this.queryEngine.resultToString(result);
+        const { data } = await this.queryEngine.resultToString(result, mediaType);
+
         let response = '';
+
         for await (const chunk of data) {
             response += chunk;
         }
+
         return JSON.parse(response);
     }
 

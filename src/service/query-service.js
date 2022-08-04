@@ -26,8 +26,8 @@ class QueryService extends OperationService {
     }
 
     async selectQuery(query) {
-        const result = await this.tripleStoreModuleManager.select(query);
-        return this.dataService.bindingsToJSON(result);
+        const bindings = await this.tripleStoreModuleManager.select(query);
+        return this.dataService.parseBindings(bindings);
     }
 }
 

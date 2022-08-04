@@ -23,11 +23,23 @@ exports.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10; // 10 seconds
 exports.TRIPLE_STORE_QUEUE_LIMIT = 5000;
 
 /**
- * Triple store data types
+ * Triple store media types
  * @type {{APPLICATION_JSON: string, N_QUADS: string, SPARQL_RESULTS_JSON: string, LD_JSON: string}}
  */
-exports.DATA_TYPES = {
+exports.MEDIA_TYPES = {
     LD_JSON: 'application/ld+json',
     N_QUADS: 'application/n-quads',
     SPARQL_RESULTS_JSON: 'application/sparql-results+json',
+};
+
+/**
+ * XML data types
+ * @type {{FLOAT: string, DECIMAL: string, DOUBLE: string, BOOLEAN: string, INTEGER: string}}
+ */
+exports.XML_DATA_TYPES = {
+    DECIMAL: 'http://www.w3.org/2001/XMLSchema#decimal',
+    FLOAT: 'http://www.w3.org/2001/XMLSchema#float',
+    DOUBLE: 'http://www.w3.org/2001/XMLSchema#double',
+    INTEGER: 'http://www.w3.org/2001/XMLSchema#integer',
+    BOOLEAN: 'http://www.w3.org/2001/XMLSchema#boolean',
 };
