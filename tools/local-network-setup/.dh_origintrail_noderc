@@ -49,18 +49,32 @@
         "blockchain": {
             "enabled": true,
             "implementation": {
-                "web3-service": {
-                    "package": "./blockchain/implementation/web3-service",
+                "otp": {
+                    "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
                     "config": {
-                        "blockchainTitle": "Ganache",
-                        "networkId": "ganache::development",
-                        "hubContractAddress": "0xF21dD87cFC5cF5D073398833AFe5EFC543b78a00",
+                        "blockchainTitle": "Parachain",
+                        "networkId": "parachain::testnet",
+                        "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
                         "rpcEndpoints": [
-                          "http://localhost:7545"
+                            "wss://parachain-tempnet-01.origin-trail.network"
                         ],
                         "publicKey": "...",
                         "privateKey": "...",
                         "managementKey": "..."
+                    }
+                },
+                "polygon": {
+                    "package": "./blockchain/implementation/polygon/polygon-service",
+                    "config": {
+                        "blockchainTitle": "Polygon",
+                        "networkId": "polygon::testnet",
+                        "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
+                        "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
+                        "rpcEndpoints": [
+                            "https://matic-mumbai.chainstacklabs.com",
+                            "https://rpc-mumbai.matic.today",
+                            "https://matic-testnet-archive-rpc.bwarelabs.com"
+                        ]
                     }
                 }
             }
