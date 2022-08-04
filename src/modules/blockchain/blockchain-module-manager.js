@@ -5,99 +5,105 @@ class BlockchainModuleManager extends BaseModuleManager {
         return 'blockchain';
     }
 
-    getPrivateKey() {
-        if (this.initialized) {
-            return this.getImplementation().module.getPrivateKey();
+    getPrivateKey(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getPrivateKey();
         }
     }
 
-    getPublicKey() {
-        if (this.initialized) {
-            return this.getImplementation().module.getPublicKey();
+    getPublicKey(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getPublicKey();
         }
     }
 
-    getManagementKey () {
-        if (this.initialized) {
-            return this.getImplementation().module.getManagementKey();
+    getManagementKey(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getManagementKey();
         }
     }
 
-    async deployIdentity () {
-        if (this.initialized) {
-            return this.getImplementation().module.deployIdentity();
+    async deployIdentity(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.deployIdentity();
         }
     }
 
-    identityExists () {
-        if (this.initialized) {
-            return this.getImplementation().module.identityExists();
+    identityExists(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.identityExists();
         }
     }
 
-    getIdentity () {
-        if (this.initialized) {
-            return this.getImplementation().module.getIdentity();
+    getIdentity(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getIdentity();
         }
     }
 
-    async createProfile (peerId) {
-        if (this.initialized) {
-            return this.getImplementation().module.createProfile(peerId);
+    async createProfile(blockchain, peerId) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.createProfile(peerId);
         }
     }
 
-    async getEpochs (UAI) {
-        if (this.initialized) {
-            return this.getImplementation().module.getEpochs(UAI);
+    async getEpochs(blockchain, UAI) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getEpochs(UAI);
         }
     }
 
-    async getBlockNumber () {
-        if (this.initialized) {
-            return this.getImplementation().module.getBlockNumber();
+    async getBlockNumber(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getBlockNumber();
         }
     }
 
-    getBlockTime () {
-        if (this.initialized) {
-            return this.getImplementation().module.getBlockTime();
+    getBlockTime(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getBlockTime();
         }
     }
 
-    async getChallenge (UAI, epoch) {
-        if (this.initialized) {
-            return this.getImplementation().module.getChallenge(UAI, epoch);
+    async getChallenge(blockchain, UAI, epoch) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getChallenge(UAI, epoch);
         }
     }
 
-    async answerChallenge (UAI, epoch, proof, leaf, price) {
-        if (this.initialized) {
-            return this.getImplementation().module.answerChallenge(UAI, epoch, proof, leaf, price);
+    async answerChallenge(blockchain, UAI, epoch, proof, leaf, price) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.answerChallenge(
+                UAI,
+                epoch,
+                proof,
+                leaf,
+                price,
+            );
         }
     }
 
-    async getReward(UAI, epoch) {
-        if (this.initialized) {
-            return this.getImplementation().module.getReward(UAI, epoch);
+    async getReward(blockchain, UAI, epoch) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getReward(UAI, epoch);
         }
     }
 
     async getLatestCommitHash(blockchain, contract, tokenId) {
-        if (this.initialized) {
-            return this.getImplementation().module.getLatestCommitHash(blockchain, contract, tokenId);
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getLatestCommitHash(contract, tokenId);
         }
     }
 
-    async healthCheck() {
-        if (this.initialized) {
-            return this.getImplementation().module.healthCheck();
+    async healthCheck(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.healthCheck();
         }
     }
 
-    async restartService() {
-        if (this.initialized) {
-            return this.getImplementation().module.restartService();
+    async restartService(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.restartService();
         }
     }
 }

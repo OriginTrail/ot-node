@@ -23,6 +23,7 @@
 //         const {
 //             handlerId,
 //             epoch,
+//             blockchain,
 //             tokenId
 //         } = command.data;
 //
@@ -35,13 +36,13 @@
 //         try {
 //             const {data, metadata} = await this.handlerIdService.getCachedHandlerIdData(handlerId);
 //
-//             const challenge = await this.blockchainModuleManager.getChallenge(tokenId, epoch);
+//             const challenge = await this.blockchainModuleManager.getChallenge(blockchain, tokenId, epoch);
 //
 //             const nquadsArray = data.concat(metadata)
 //             const {proof, leaf} = this.validationModuleManager.getMerkleProof(nquadsArray, challenge);
-//             await this.blockchainModuleManager.answerChallenge(tokenId, epoch, proof, leaf, 0);
+//             await this.blockchainModuleManager.answerChallenge(blockchain, tokenId, epoch, proof, leaf, 0);
 //             if (epoch > 0) {
-//                 await this.blockchainModuleManager.getReward(tokenId, epoch);
+//                 await this.blockchainModuleManager.getReward(blockchain, tokenId, epoch);
 //             }
 //         }catch(e) {
 //             console.log(e);
