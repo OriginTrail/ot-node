@@ -154,6 +154,7 @@ class OTNode {
                         ) {
                             this.saveIdentityInUserConfigurationFile(
                                 blockchainModuleManager.getIdentity(blockchain),
+                                blockchain,
                             );
                         }
                     }
@@ -239,18 +240,17 @@ class OTNode {
         }
     }
 
-    saveIdentityInUserConfigurationFile(identity) {
+    saveIdentityInUserConfigurationFile(identity, blockchain) {
         const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
         const configFile = JSON.parse(fs.readFileSync(configurationFilePath));
         if (
             configFile.modules.blockchain &&
             configFile.modules.blockchain.implementation &&
-            configFile.modules.blockchain.implementation['web3-service'] &&
-            configFile.modules.blockchain.implementation['web3-service'].config
+            configFile.modules.blockchain.implementation[blockchain] &&
+            configFile.modules.blockchain.implementation[blockchain].config
         ) {
-            if (!configFile.modules.blockchain.implementation['web3-service'].config.identity) {
-                configFile.modules.blockchain.implementation['web3-service'].config.identity =
-                    identity;
+            if (!configFile.modules.blockchain.implementation[blockchain].config.identity) {
+                configFile.modules.blockchain.implementation[blockchain].config.identity = identity;
                 fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
             }
         }
