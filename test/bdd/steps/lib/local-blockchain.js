@@ -69,21 +69,6 @@ const accountPrivateKeys = [
     '952e45854ca5470a6d0b6cb86346c0e9c4f8f3a5a459657df8c94265183b9253',
 ];
 
-const setContractAddress = async (hubContract, contractName, contractAddress) => {
-    const accounts = await web3.eth.getAccounts();
-    console.log(`Attempting to set ${contractName} contract address into Hub contract`);
-    const data = hubContract.methods.setContractAddress(contractName, contractAddress).encodeABI();
-
-    const createTransaction = await web3.eth.accounts.signTransaction({
-        from: accounts[7],
-        to: hubContract.options.address,
-        data,
-        value: "0x00",
-        gasPrice: "010",
-        gas: "20000000",
-    }, privateKey);
-    const createReceipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
-};
 
 const wallets = accountPrivateKeys.map((privateKey) => ({
     address: `0x${Wallet.fromPrivateKey(Buffer.from(privateKey, 'hex')).getAddress().toString('hex')}`,
@@ -153,7 +138,7 @@ class LocalBlockchain {
 
                 const ERC20Token = await this.deployContract('Token', ['address'], [hubAddress]);
                 await this.setupRole(ERC20Token, accounts[7]);
-                //await this.mint(ERC20Token, accounts[7]);
+                await this.mint(ERC20Token);
 
                 const ProfileStorage = await this.deployContract('ProfileStorage', ['address'], [hubAddress]);
 
@@ -254,6 +239,7 @@ class LocalBlockchain {
               inputValues,
             ).slice(2);
 
+            //Shoudld i use accounts[7] as a from address?
             let createTransaction = await  web3.eth.accounts.signTransaction({
                 from: accounts[7],
                 data: `${bytecode}${parameters}`,
@@ -263,12 +249,13 @@ class LocalBlockchain {
             }, privateKey);
 
             let createReceipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
-            console.log(`${contractName} contract deployed at address ${createReceipt.contractAddress}\n`);
+            console.log(`${contractName} contract deployed at address ${createReceipt.contractAddress}`);
             //console.log(createReceipt);
 
             const contractInstance = new web3.eth.Contract(abi, createReceipt.contractAddress);
             if (contractName !== 'Hub') {
-                await setContractAddress(Hub, contractName, contractInstance.options.address);
+                await this.setContractAddress(Hub, contractName);
+                console.log(`\n\n`);
             }
             return contractInstance;
         }  catch (error) {
@@ -370,11 +357,10 @@ class LocalBlockchain {
     };
     async setupRole (contract, contractAddress){
         console.log(`Setting role for address: ${contractAddress}`);
-        const accounts = await this.web3.eth.getAccounts();
         const data = contract.methods.setupRole(contractAddress).encodeABI();
 
         const createTransaction = await web3.eth.accounts.signTransaction({
-            from: accounts[7],
+            from: contractAddress,
             to: contract.options.address,
             data,
             value: "0x00",
@@ -383,22 +369,23 @@ class LocalBlockchain {
         }, privateKey);
         const createReceipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
     };
-    async mint (tokenContract, address) {
-        const accounts = await this.web3.eth.getAccounts();
-        console.log(`Minting tokens for address: ${address}`);
-        const amountToMint = (new BN(5)).mul((new BN(10)).pow(new BN(30)));
-        const data = tokenContract.methods.mint(address, amountToMint).encodeABI();
+    async setContractAddress (hubContract, contractName) {
+        const accounts = await web3.eth.getAccounts();
 
-        const createTransaction = await web3.eth.accounts.signTransaction({
-            from: accounts[7],
-            to: tokenContract.options.address,
-            data,
-            value: "0x00",
-            gasPrice: "010",
-            gas: "20000000",
-        }, privateKey);
-        const createReceipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
-        console.log(`Tokens minted for address: ${address}`);
+        await hubContract.instance.methods.setContractAddress(contractName, accounts[7])
+          .send({ from: accounts[7], gas: 3000000 })
+          .on('error', console.error);
+    };
+    async mint (tokenContract) {
+        const accounts = await this.web3.eth.getAccounts();
+        const amountToMint = (new BN(5)).mul((new BN(10)).pow(new BN(30)));
+
+        for (const account of accounts) {
+            await tokenContract.instance.methods.mint(account,amountToMint)
+              .send({ from: accounts[7], gas: 3000000 })
+              .on('error', console.error);
+        }
+        console.log(`Tokens minting finished`);
     };
     dkgContractAddress() {
         return this.contracts.dkg.instance._address;
