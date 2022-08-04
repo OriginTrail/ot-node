@@ -127,7 +127,8 @@
                                 "https://matic-mumbai.chainstacklabs.com",
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
-                            ]
+                            ],
+                            "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
                         }
                     }
                 }
@@ -346,9 +347,7 @@
                             "networkId": "parachain::testnet",
                             "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
                             "rpcEndpoints": ["wss://parachain-tempnet-01.origin-trail.network"],
-                            "publicKey": "0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b",
-                            "privateKey": "0x99b3c12287537e38c90a9219d4cb074a89a16e9cdb20bf85728ebd97c343e342",
-                            "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                            "managementKey": "0xe1EEB4f09809C6c8664c0b1e3B26211d139076fF"
                         }
                     },
                     "polygon": {
@@ -362,7 +361,8 @@
                                 "https://matic-mumbai.chainstacklabs.com",
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
-                            ]
+                            ],
+                            "managementKey": "0xe1EEB4f09809C6c8664c0b1e3B26211d139076fF"
                         }
                     }
                 }
