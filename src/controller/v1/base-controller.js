@@ -10,12 +10,6 @@ class BaseController {
     returnResponse(res, status, data) {
         res.status(status).send(data);
     }
-
-    generateOperationId() {
-        const operationId = uuidv1();
-        this.logger.debug(`Generated operation id for request ${operationId}`);
-        return operationId;
-    }
 }
 
 module.exports = BaseController;
