@@ -510,7 +510,7 @@ do
             mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc;;
         [Nn]* ) ;;
         [Ee]* ) echo "Installer stopped by user"; exit;;
-        * ) --i;echo "Please make a valid choice and try again.";;
+        * ) i=i-1;echo "Please make a valid choice and try again.";;
     esac
 done
 
