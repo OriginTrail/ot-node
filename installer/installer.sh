@@ -487,7 +487,7 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-CONFIG_DIR=$OTNODE_DIR/../
+CONFIG_DIR=$OTNODE_DIR/..
 
 tripleStore=""
 if [[ $DATABASE = "blazegraph" ]]; then
