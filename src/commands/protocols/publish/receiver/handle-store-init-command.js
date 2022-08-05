@@ -1,5 +1,9 @@
 const HandleProtocolMessageCommand = require('../../common/handle-protocol-message-command');
-const { NETWORK_MESSAGE_TYPES, ERROR_TYPE } = require('../../../../constants/constants');
+const {
+    NETWORK_MESSAGE_TYPES,
+    ERROR_TYPE,
+    OPERATION_ID_STATUS,
+} = require('../../../../constants/constants');
 
 class HandleStoreInitCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
@@ -10,7 +14,34 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
+        const { operationId, ual } = commandData;
+
+        this.logger.info(`Validating assertion with ual: ${ual}`);
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_START,
+        );
+
+        const assertionId = await this.operationService.getAssertion(ual, operationId);
+
+        await Promise.all([
+            this.operationIdService.cacheOperationIdData(operationId, { assertionId }),
+            this.operationIdService.updateOperationIdStatus(
+                operationId,
+                OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_END,
+            ),
+        ]);
+
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
+    }
+
+    async retryFinished(command) {
+        const { operationId } = command.data;
+        this.handleError(
+            `Retry count for command: ${command.name} reached! Unable to validate data for operation id: ${operationId}`,
+            command,
+        );
     }
 
     /**

@@ -64,7 +64,7 @@ class ProtocolMessageCommand extends Command {
                     command,
                     `Received unknown message type from node during ${command.name}`,
                 );
-                return command.empty();
+                return Command.empty();
         }
     }
 

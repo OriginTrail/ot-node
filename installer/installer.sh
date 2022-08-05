@@ -515,18 +515,6 @@ if [[ $DATABASE = "fuseki" ]]; then
     mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
 fi
 
-echo -n "Running DB migrations: "
-
-OUTPUT=$(npx sequelize --config=./config/sequelizeConfig.js db:migrate 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error running the db migrations."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
 echo -n "Copying otnode service file: "
 
 OUTPUT=$(cp $OTNODE_DIR/installer/data/otnode.service /lib/systemd/system/ 2>&1)

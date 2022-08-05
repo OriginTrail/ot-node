@@ -4,7 +4,7 @@ exports.OTTELEMETRY = 'ottelemetry';
 exports.MERKLE_TREE = 'Merkle Tree';
 exports.BASIC = 'Basic';
 exports.DID = 'DID';
-exports.SCHEMA_CONTEXT = 'https://schema.org/';
+exports.SCHEMA_CONTEXT = 'http://schema.org/';
 
 /**
  * @constant {number} MIN_NODE_VERSION
