@@ -487,7 +487,18 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-CONFIG_DIR=$OTNODE_DIR/..
+echo -n "Adding sql repository password to .env: "
+
+read -p "Enter sql repository password: " password
+OUTPUT=$(echo "REPOSITORY_PASSWORD=$password" > .env)
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error adding the env variable."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
 
 tripleStore=""
 if [[ $DATABASE = "blazegraph" ]]; then
@@ -497,7 +508,9 @@ if [[ $DATABASE = "fuseki" ]]; then
     tripleStore="ot-fuseki"
 fi
 
-jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "ipWhitelist": ["::1", "127.0.0.1"], "modules": {"tripleStore":{"defaultImplementation": $tripleStore}}}' $CONFIG_DIR/.origintrail_noderc
+CONFIG_DIR=$OTNODE_DIR/..
+touch $CONFIG_DIR/.origintrail_noderc
+jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "ipWhitelist": ["::1", "127.0.0.1"], "modules": {"tripleStore":{"defaultImplementation": $tripleStore}}}' > $CONFIG_DIR/.origintrail_noderc
 
 
 blockchains=("otp" "polygon")
@@ -512,7 +525,8 @@ do
             read -p "Enter the private key: " NODE_PRIVATE_KEY
             echo "Node private key: $NODE_PRIVATE_KEY"
 
-            jq --arg blockchain "${blockchains[$i]}" --arg wallet "$NODE_WALLET" --arg privateKey "$NODE_PRIVATE_KEY" '.modules.blockchain.implementation[$blockchain].config |= {"publicKey": $wallet, "privateKey": $privateKey} + .' $CONFIG_DIR/.origintrail_noderc;;
+            jq --arg blockchain "${blockchains[$i]}" --arg wallet "$NODE_WALLET" --arg privateKey "$NODE_PRIVATE_KEY" '.modules.blockchain.implementation[$blockchain].config |= {"publicKey": $wallet, "privateKey": $privateKey} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
+            mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc ;;
         [Nn]* ) ;;
         [Ee]* ) echo "Installer stopped by user"; exit;;
         * ) ((--i));echo "Please make a valid choice and try again.";;
