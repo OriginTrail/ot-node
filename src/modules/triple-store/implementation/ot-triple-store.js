@@ -92,7 +92,7 @@ class OtTripleStore {
         // no media type is passed because of comunica bug
         // https://github.com/comunica/comunica/issues/1034
         const result = await this._executeQuery(query);
-        return result;
+        return JSON.parse(result);
     }
 
     async ask(query) {
@@ -248,7 +248,7 @@ class OtTripleStore {
             response += chunk;
         }
 
-        return JSON.parse(response);
+        return response;
     }
 
     cleanEscapeCharacter(query) {
