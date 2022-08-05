@@ -133,27 +133,12 @@
         "publishFindNodesCount": 20,
         "signalingServerUrl": null,
         "appDataPath": "data",
-        "graphDatabase": {
-            "implementation": "GraphDB",
-            "url": "http://localhost:7200",
-            "name": "node0",
-            "username": "admin",
-            "password": ""
-        },
         "logLevel": "info",
-        "replicationFactor": 5,
-        "network": {
-            "port": 9000,
-            "bootstrap": []
-        },
         "ipWhitelist": ["::1", "127.0.0.1"],
         "telemetryHub": {
             "enabled": false,
             "packages": ["ot-telemetry-collector"],
             "url": ""
-        },
-        "operationalDatabase": {
-            "databaseName": "operationaldb"
         }
     },
     "test": {
@@ -248,27 +233,12 @@
         "publishFindNodesCount": 20,
         "appDataPath": "data",
         "signalingServerUrl": null,
-        "graphDatabase": {
-            "implementation": "GraphDB",
-            "url": "http://localhost:7200",
-            "name": "node0",
-            "username": "admin",
-            "password": ""
-        },
         "logLevel": "trace",
-        "replicationFactor": 5,
-        "network": {
-            "port": 9000,
-            "bootstrap": []
-        },
         "ipWhitelist": ["::1", "127.0.0.1"],
         "telemetryHub": {
             "enabled": false,
             "packages": ["ot-telemetry-collector"],
             "url": ""
-        },
-        "operationalDatabase": {
-            "databaseName": "operationaldb"
         }
     },
     "testnet": {
@@ -291,7 +261,11 @@
                         "package": "./network/implementation/libp2p-service",
                         "config": {
                             "port": 9000,
-                            "bootstrap": []
+                            "bootstrap": [
+                                "/ip4/165.232.122.94/tcp/9000/p2p/QmQ2zigjQikYnyYUSXZydNXrDRhBut2mubwJBaLXobMt3A",
+                                "/ip4/46.101.111.223/tcp/9000/p2p/QmdTKEP4DDSwYzX2CHEsBfpEAKAVyE4mPq9ouh4ehZZbg5",
+                                "/ip4/46.101.153.21/tcp/9000/p2p/QmXzmTqVT3TPUtTz4dBDN5NWSABqnX9rKXCG9WCLXMfEaM"
+                            ]
                         }
                     }
                 }
@@ -368,7 +342,7 @@
             },
             "tripleStore": {
                 "enabled": true,
-                "defaultImplementation": "ot-graphdb",
+                "defaultImplementation": "ot-blazegraph",
                 "implementation": {
                     "ot-blazegraph": {
                         "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph",
@@ -405,31 +379,12 @@
         "publishFindNodesCount": 20,
         "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "appDataPath": "data",
-        "graphDatabase": {
-            "implementation": "GraphDB",
-            "url": "http://localhost:7200",
-            "name": "node0",
-            "username": "admin",
-            "password": ""
-        },
         "logLevel": "trace",
-        "replicationFactor": 5,
-        "network": {
-            "port": 9000,
-            "bootstrap": [
-                "/ip4/165.232.122.94/tcp/9000/p2p/QmQ2zigjQikYnyYUSXZydNXrDRhBut2mubwJBaLXobMt3A",
-                "/ip4/46.101.111.223/tcp/9000/p2p/QmdTKEP4DDSwYzX2CHEsBfpEAKAVyE4mPq9ouh4ehZZbg5",
-                "/ip4/46.101.153.21/tcp/9000/p2p/QmXzmTqVT3TPUtTz4dBDN5NWSABqnX9rKXCG9WCLXMfEaM"
-            ]
-        },
         "ipWhitelist": ["::1", "127.0.0.1"],
         "telemetryHub": {
             "enabled": true,
             "packages": ["ot-telemetry-collector"],
             "url": "https://polaris.delta.origin-trail.network/metrics/"
-        },
-        "operationalDatabase": {
-            "databaseName": "operationaldb"
         }
     },
     "mainnet": {
@@ -480,18 +435,18 @@
                     }
                 }
             },
-            "blockchain": {
+            "validation": {
                 "enabled": true,
                 "implementation": {
-                    "web3-service": {
-                        "package": "./blockchain/implementation/web3-service",
+                    "merkle-validation": {
+                        "package": "./validation/implementation/merkle-validation",
                         "config": {}
                     }
                 }
             },
             "tripleStore": {
                 "enabled": true,
-                "defaultImplementation": "ot-graphdb",
+                "defaultImplementation": "ot-blazegraph",
                 "implementation": {
                     "ot-blazegraph": {
                         "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph",
@@ -521,6 +476,28 @@
                         }
                     }
                 }
+            },
+            "blockchain": {
+                "enabled": true,
+                "implementation": {
+                    "otp": {
+                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
+                        "config": {
+                            "networkId": "otp::mainnet",
+                            "hubContractAddress": "",
+                            "rpcEndpoints": []
+                        }
+                    },
+                    "polygon": {
+                        "package": "./blockchain/implementation/polygon/polygon-service",
+                        "config": {
+                            "networkId": "polygon::mainnet",
+                            "hubContractAddress": "",
+                            "gasPriceOracleLink": "",
+                            "rpcEndpoints": []
+                        }
+                    }
+                }
             }
         },
         "minimumReplicationFactor": 5,
@@ -528,28 +505,12 @@
         "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
-        "blockchain": [],
-        "graphDatabase": {
-            "implementation": "GraphDB",
-            "url": "http://localhost:7200",
-            "name": "node0",
-            "username": "admin",
-            "password": ""
-        },
         "logLevel": "trace",
-        "replicationFactor": 5,
-        "network": {
-            "port": 9000,
-            "bootstrap": []
-        },
         "ipWhitelist": ["::1", "127.0.0.1"],
         "telemetryHub": {
             "enabled": false,
             "packages": ["ot-telemetry-collector"],
             "url": ""
-        },
-        "operationalDatabase": {
-            "databaseName": "operationaldb"
         }
     }
 }
