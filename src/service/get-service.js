@@ -81,14 +81,12 @@ class GetService extends OperationService {
 
         this.logger.debug(
             `Assertion: ${assertionGraphName} for operationId: ${operationId} ${
-                nquads ? '' : 'not'
+                nquads.length ? '' : 'not'
             } found in local database.`,
         );
 
-        if (nquads) {
-            this.logger.debug(
-                `Number of n-quads retrieved from the database : ${nquads.length ?? 0}`,
-            );
+        if (nquads.length) {
+            this.logger.debug(`Number of n-quads retrieved from the database : ${nquads.length}`);
         }
 
         return nquads;
