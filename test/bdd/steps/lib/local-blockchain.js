@@ -169,13 +169,13 @@ class LocalBlockchain {
     }
 
     fetchContracts() {
-        const hubSource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../build/contracts/Hub.json')).toString());
-        const assertionRegistrySource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../build/contracts/AssertionRegistry.json')).toString());
-        const uaiRegistrySource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../build/contracts/UAIRegistry.json')).toString());
-        const assetRegistrySource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../build/contracts/AssetRegistry.json')).toString());
-        const erc20TokenSource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../build/contracts/ERC20Token.json')).toString());
-        const profileStorageSource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../build/contracts/ProfileStorage.json')).toString());
-        const profileSource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../build/contracts/Profile.json')).toString());
+        const hubSource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../src/modules/blockchain/implementation/build/contracts/Hub.json')).toString());
+        const assertionRegistrySource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../src/modules/blockchain/implementation/build/contracts/AssertionRegistry.json')).toString());
+        const uaiRegistrySource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../src/modules/blockchain/implementation/build/contracts/UAIRegistry.json')).toString());
+        const assetRegistrySource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../src/modules/blockchain/implementation/build/contracts/AssetRegistry.json')).toString());
+        const erc20TokenSource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../src/modules/blockchain/implementation/build/contracts/ERC20Token.json')).toString());
+        const profileStorageSource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../src/modules/blockchain/implementation/build/contracts/ProfileStorage.json')).toString());
+        const profileSource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../src/modules/blockchain/implementation/build/contracts/Profile.json')).toString());
 
         this.contracts = {};
 
@@ -372,6 +372,7 @@ class LocalBlockchain {
               .on('error', console.error);
             console.log(`[${i}]Balance of ${this.getWallets()[i].address} address is ${await this.getBalanceInEthers(this.getWallets()[i].address)} ETH`);
         }
+        //console.log(`Balance of ${this.contracts.profile.instance._address} address is ${await this.getBalanceInEthers(this.contracts.profile.instance._address)} ETH`);
         this.initialized = true;
     }
 
