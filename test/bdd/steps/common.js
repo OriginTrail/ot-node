@@ -8,9 +8,10 @@ const otNodeProcessPath = './test/bdd/steps/lib/ot-node-process.js';
 function getBlockchainConfiguration(localBlockchain, privateKey, publicKey,managementKey) {
     return [
         {
+            defaultImplementation: 'ganache',
             implementation:
                 {
-                    "web3-service":
+                    ganache:
                     {
                         config:
                             {
@@ -150,7 +151,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 120000 }, function (nodeCount, 
                     }
                 }
             },
-            /*httpClient: {
+            httpClient: {
                 enabled: true,
                 implementation: {
                     "express-http-client": {
@@ -158,8 +159,6 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 120000 }, function (nodeCount, 
                         config: {
                             useSsl: false,
                             port: 8900,
-                            sslKeyPath: "/root/certs/privkey.pem",
-                            sslCertificatePath: "/root/certs/fullchain.pem",
                             rateLimiter: {
                                 timeWindowSeconds: 60,
                                 maxRequests: 10
@@ -167,7 +166,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 120000 }, function (nodeCount, 
                         }
                     }
                 }
-            }*/
+            }
         },
         graphDatabase: {
             name: nodeName,

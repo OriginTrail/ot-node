@@ -204,14 +204,8 @@
             "blockchain": {
                 "enabled": true,
                 "implementation": {
-                    "web3-service": {
-                        "package": "./blockchain/implementation/web3-service",
-                        "config": {
-                            "blockchainTitle": "ganache",
-                            "networkId": "ganache::testnet",
-                            "hubContractAddress": "0xF21dD87cFC5cF5D073398833AFe5EFC543b78a00",
-                            "rpcEndpoints": ["http://localhost:7545"]
-                        }
+                    "ganache": {
+                        "package": "./blockchain/implementation/polygon/polygon-service"
                     }
                 }
             },
