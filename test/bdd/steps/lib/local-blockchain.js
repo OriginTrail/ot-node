@@ -5,10 +5,8 @@ const BN = require("bn.js");
 const fs = require('fs');
 const path = require('path');
 const Wallet = require('ethereumjs-wallet').default;
-const PATH_TO_CONTRACTS = '../../../../build/contracts';
-const privateKey = '99b3c12287537e38c90a9219d4cb074a89a16e9cdb20bf85728ebd97c343e342';
+const PATH_TO_CONTRACTS = '../../../../src/modules/blockchain/implementation/build/contracts/';
 
-const tokenContractAddress = '0x470561DB00b4A21A35bD285c3e17e542DCa8B52c';
 const accountPrivateKeys = [
     '3cf97be6177acdd12796b387f58f84f177d0fe20d8558004e8db9a41cf90392a',
     '1e60c8e9aa35064cd2eaa4c005bda2b76ef1a858feebb6c8e131c472d16f9740',
@@ -136,46 +134,19 @@ class LocalBlockchain {
                 console.log(`\t Token contract address: \t\t\t\t${this.contracts.erc20Token.instance._address}`);
                 console.log(`\t ProfileStorage contract address: \t\t\t${this.contracts.profileStorage.instance._address}`);
                 console.log(`\t Profile contract address: \t\t\t${this.contracts.profile.instance._address}`);
-                /*Hub = await this.deployContract('Hub', [], []);
-                const hubAddress = Hub.options.address;
-                const AssertionRegistry = await this.deployContract('AssertionRegistry', ['address'], [hubAddress]);
-                const UAIRegistry = await this.deployContract('UAIRegistry', ['address'], [hubAddress]);
-                const AssetRegistry = await this.deployContract('AssetRegistry', ['address'], [hubAddress]);
-                await this.setupRole(UAIRegistry, AssetRegistry.options.address);
-
-                const ERC20Token = await this.deployContract('Token', ['address'], [hubAddress]);
-                await this.setupRole(ERC20Token, this.getWallets()[7].address
-                );
-                await this.mint(ERC20Token);
-
-                const ProfileStorage = await this.deployContract('ProfileStorage', ['address'], [hubAddress]);
-
-                const Profile = await this.deployContract('Profile', ['address'], [hubAddress]);
-
-                console.log('Contracts have been deployed!');
-
-                console.log('\n\n \t Contract adressess on starfleet:');
-                console.log(`\t Hub contract address: \t\t\t\t\t${Hub.options.address}`);
-                console.log(`\t AssertionRegistry contract address: \t\t\t${AssertionRegistry.options.address}`);
-                console.log(`\t UAIRegistry contract address: \t\t\t\t${UAIRegistry.options.address}`);
-                console.log(`\t AssetRegistry contract address: \t\t\t${AssetRegistry.options.address}`);
-
-                console.log(`\t Token contract address: \t\t\t\t${ERC20Token.options.address}`);
-                console.log(`\t ProfileStorage contract address: \t\t\t${ProfileStorage.options.address}`);
-                console.log(`\t Profile contract address: \t\t\t${Profile.options.address}`);*/
                 accept();
             });
         });
     }
 
     fetchContracts() {
-        const hubSource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../src/modules/blockchain/implementation/build/contracts/Hub.json')).toString());
-        const assertionRegistrySource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../src/modules/blockchain/implementation/build/contracts/AssertionRegistry.json')).toString());
-        const uaiRegistrySource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../src/modules/blockchain/implementation/build/contracts/UAIRegistry.json')).toString());
-        const assetRegistrySource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../src/modules/blockchain/implementation/build/contracts/AssetRegistry.json')).toString());
-        const erc20TokenSource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../src/modules/blockchain/implementation/build/contracts/ERC20Token.json')).toString());
-        const profileStorageSource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../src/modules/blockchain/implementation/build/contracts/ProfileStorage.json')).toString());
-        const profileSource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../src/modules/blockchain/implementation/build/contracts/Profile.json')).toString());
+        const hubSource = JSON.parse(fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}Hub.json`)).toString());
+        const assertionRegistrySource = JSON.parse(fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}AssertionRegistry.json`)).toString());
+        const uaiRegistrySource = JSON.parse(fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}UAIRegistry.json`)).toString());
+        const assetRegistrySource = JSON.parse(fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}AssetRegistry.json`)).toString());
+        const erc20TokenSource = JSON.parse(fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}ERC20Token.json`)).toString());
+        const profileStorageSource = JSON.parse(fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}ProfileStorage.json`)).toString());
+        const profileSource = JSON.parse(fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}Profile.json`)).toString());
 
         this.contracts = {};
 
@@ -216,56 +187,6 @@ class LocalBlockchain {
     }
 
     async deployContracts() {
-        /*let Hub = await this._deployContract(
-          this.web3, this.contracts.hub.artifact, this.contracts.hub.data,
-          [tokenContractAddress], this.getWallets()[7].address
-          ,
-        );
-
-        [this.contracts.assertionRegistry.deploymentReceipt, this.contracts.assertionRegistry.instance] = await this._deployContract(
-          this.web3, this.contracts.assertionRegistry.artifact, this.contracts.assertionRegistry.data,
-          [tokenContractAddress], this.getWallets()[7].address
-          ,
-        );
-        // await setContractAddress(Hub, contractName, contractInstance.options.address);
-
-        [this.contracts.erc20.deploymentReceipt, this.contracts.erc20.instance] = await this._deployContract(
-          this.web3, this.contracts.erc20.artifact, this.contracts.erc20.data,
-          [tokenContractAddress], this.getWallets()[7].address
-          ,
-        );
-
-        [this.contracts.profile.deploymentReceipt, this.contracts.profile.instance] = await this._deployContract(
-          this.web3, this.contracts.profile.artifact, this.contracts.profile.data,
-          [tokenContractAddress], this.getWallets()[7].address
-          ,
-        );
-
-        [this.contracts.assetRegistry.deploymentReceipt, this.contracts.assetRegistry.instance] = await this._deployContract(
-          this.web3, this.contracts.assetRegistry.artifact, this.contracts.assetRegistry.data,
-          [tokenContractAddress], this.getWallets()[7].address
-          ,
-        );
-
-        [this.contracts.profileStorage.deploymentReceipt, this.contracts.profileStorage.instance] = await this._deployContract(
-          this.web3, this.contracts.profileStorage.artifact, this.contracts.profileStorage.data,
-          [tokenContractAddress], this.getWallets()[7].address
-          ,
-        );
-        // this.logger.log('Deploying dkg');
-        // [this.contracts.dkg.deploymentReceipt, this.contracts.dkg.instance] = await this._deployContract(
-        //     this.web3, this.contracts.dkg.artifact, this.contracts.dkg.data,
-        //     [tokenContractAddress], this.getWallets()[7].address
-        ,
-        // );
-        // this.logger.log(`Dkg contract deployed on address: ${this.contracts.dkg.instance._address}`);
-        // this.logger.log('Deploying uai registry');
-        [this.contracts.uaiRegistry.deploymentReceipt, this.contracts.uaiRegistry.instance] = await this._deployContract(
-            this.web3, this.contracts.uaiRegistry.artifact, this.contracts.uaiRegistry.data,
-            [tokenContractAddress/!*, this.contracts.dkg.instance._address*!/], this.getWallets()[7].address
-            ,
-        );*/
-        //const accounts = await this.web3.eth.getAccounts();
         this.logger.log('Deploying hubContract');
         [this.contracts.hub.deploymentReceipt, this.contracts.hub.instance] = await this._deployContract(
           this.web3, this.contracts.hub.artifact, this.contracts.hub.data,
@@ -284,8 +205,6 @@ class LocalBlockchain {
           [this.contracts.hub.instance._address], this.getWallets()[7].address
           ,
         );
-        //await this.setContractAddress(this.contracts.hub.artifact, 'uaiRegistryContract', this.contracts.uaiRegistry.instance._address);
-
         await this.contracts.hub.instance.methods.setContractAddress('UAIRegistry', this.contracts.uaiRegistry.instance._address)
           .send({ from: this.getWallets()[7].address
               , gas: 3000000 })
@@ -370,7 +289,7 @@ class LocalBlockchain {
               .send({ from: this.getWallets()[7].address
                   , gas: 3000000 })
               .on('error', console.error);
-            console.log(`[${i}]Balance of ${this.getWallets()[i].address} address is ${await this.getBalanceInEthers(this.getWallets()[i].address)} ETH`);
+            //console.log(`[${i}]Balance of ${this.getWallets()[i].address} address is ${await this.getBalanceInEthers(this.getWallets()[i].address)} ETH`);
         }
         //console.log(`Balance of ${this.contracts.profile.instance._address} address is ${await this.getBalanceInEthers(this.contracts.profile.instance._address)} ETH`);
         this.initialized = true;
@@ -413,56 +332,13 @@ class LocalBlockchain {
         });
     };
     async setupRole (contract,contractAddress ){
-        console.log(`Setting role for address: ${contract._address}`);
+        console.log(`Setting role for address: ${contract.instance._address}`);
         await contract.instance.methods.setupRole(contractAddress)
           .send({ from: this.getWallets()[7].address
               , gas: 3000000 })
           .on('error', console.error);
 
     };
-    // async mint (tokenContract, address){
-    //     console.log(`Minting tokens for address: ${address}`);
-    //     const data = tokenContract.methods.mint(address, amountToMint).encodeABI();
-    //
-    //     const createTransaction = await web3.eth.accounts.signTransaction({
-    //         from: wallet,
-    //         to: tokenContract.options.address,
-    //         data,
-    //         value: "0x00",
-    //         gasPrice: "010",
-    //         gas: "20000000",
-    //     }, privateKey);
-    //     const createReceipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
-    //     console.log(`Tokens minted for address: ${address}`);
-    // };
-    // async setContractAddress (hubContract, contractName) {
-    //     const accounts = await web3.eth.getAccounts();
-    //
-    //     await hubContract.instance.methods.setContractAddress(contractName, this.getWallets()[7].address
-    //     )
-    //       .send({ from: this.getWallets()[7].address
-    //       , gas: 3000000 })
-    //       .on('error', console.error);
-    // };
-/*    async setContractAddress(hubContract, contractName, contractAddress){
-        const accounts = await this.web3.eth.getAccounts();
-        console.log(`Attempting to set ${contractName} contract address into Hub contract`);
-
-        const data = hubContract.methods.setContractAddress(contractName, contractAddress).encodeABI();
-
-        const createTransaction = await this.web3.eth.accounts.signTransaction({
-            from: this.getWallets()[7].address
-            ,
-            to: hubContract.options.address,
-            data,
-            value: "0x00",
-            gasPrice: "010",
-            gas: "20000000",
-        }, privateKey);
-        const createReceipt = await this.web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
-    };*/
-
-
     uaiRegistryContractAddress() {
         return this.contracts.hub.instance._address;
     }
