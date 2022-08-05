@@ -1,8 +1,8 @@
 #!/bin/bash
 
 ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive"
-BRANCH="v6/release/testnet"
-BRANCH_DIR="/root/ot-node-6-release-testnet"
+BRANCH="v6/refactor/update-installer"
+BRANCH_DIR="/root/ot-node-6-refactor-update-installer"
 OTNODE_DIR="/root/ot-node"
 FUSEKI_VER="apache-jena-fuseki-4.5.0"
 N1=$'\n'
