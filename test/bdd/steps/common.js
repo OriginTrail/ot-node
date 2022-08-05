@@ -5,7 +5,7 @@ const fs = require('fs');
 const DkgClientHelper = require('../../utilities/dkg-client-helper');
 
 const otNodeProcessPath = './test/bdd/steps/lib/ot-node-process.js';
-function getBlockchainConfiguration(localBlockchain, privateKey, publicKey) {
+function getBlockchainConfiguration(localBlockchain, privateKey, publicKey,managementKey) {
     return [
         {
             implementation:
@@ -20,6 +20,7 @@ function getBlockchainConfiguration(localBlockchain, privateKey, publicKey) {
                                 hubContractAddress: localBlockchain.uaiRegistryContractAddress(),
                                 publicKey,
                                 privateKey,
+                                managementKey
                             }
                     }
                 }
@@ -97,22 +98,33 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
     }
 });
 
-Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, done) {
+Given(/^(\d+) bootstrap is running$/, { timeout: 120000 }, function (nodeCount, done) {
     expect(this.state.bootstraps).to.have.length(0);
     expect(nodeCount).to.be.equal(1); // Currently not supported more.
     console.log('Initializing bootstrap node');
     const wallets = this.state.localBlockchain.getWallets();
     const nodeName = 'origintrail-test-bootstrap';
     const bootstrapNodeConfiguration = {
-        graphDatabase: {
-            name: nodeName,
-        },
         modules: {
             blockchain: getBlockchainConfiguration(
               this.state.localBlockchain,
               wallets[0].privateKey,
               wallets[0].address,
+              wallets[30].address
             )[0],
+            network: {
+                enabled: true,
+                implementation: {
+                    "libp2p-service": {
+                        package: "./network/implementation/libp2p-service",
+                        config: {
+                            port: 9000,
+                            bootstrap: [],
+                            privateKey: "CAAS4QQwggJdAgEAAoGBALOYSCZsmINMpFdH8ydA9CL46fB08F3ELfb9qiIq+z4RhsFwi7lByysRnYT/NLm8jZ4RvlsSqOn2ZORJwBywYD5MCvU1TbEWGKxl5LriW85ZGepUwiTZJgZdDmoLIawkpSdmUOc1Fbnflhmj/XzAxlnl30yaa/YvKgnWtZI1/IwfAgMBAAECgYEAiZq2PWqbeI6ypIVmUr87z8f0Rt7yhIWZylMVllRkaGw5WeGHzQwSRQ+cJ5j6pw1HXMOvnEwxzAGT0C6J2fFx60C6R90TPos9W0zSU+XXLHA7AtazjlSnp6vHD+RxcoUhm1RUPeKU6OuUNcQVJu1ZOx6cAcP/I8cqL38JUOOS7XECQQDex9WUKtDnpHEHU/fl7SvCt0y2FbGgGdhq6k8nrWtBladP5SoRUFuQhCY8a20fszyiAIfxQrtpQw1iFPBpzoq1AkEAzl/s3XPGi5vFSNGLsLqbVKbvoW9RUaGN8o4rU9oZmPFL31Jo9FLA744YRer6dYE7jJMel7h9VVWsqa9oLGS8AwJALYwfv45Nbb6yGTRyr4Cg/MtrFKM00K3YEGvdSRhsoFkPfwc0ZZvPTKmoA5xXEC8eC2UeZhYlqOy7lL0BNjCzLQJBAMpvcgtwa8u6SvU5B0ueYIvTDLBQX3YxgOny5zFjeUR7PS+cyPMQ0cyql8jNzEzDLcSg85tkDx1L4wi31Pnm/j0CQFH/6MYn3r9benPm2bYSe9aoJp7y6ht2DmXmoveNbjlEbb8f7jAvYoTklJxmJCcrdbNx/iCj2BuAinPPgEmUzfQ="
+                        }
+                    }
+                }
+            },
             repository: {
                 implementation: {
                     "sequelize-repository": {
@@ -138,17 +150,35 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
                     }
                 }
             },
+            /*httpClient: {
+                enabled: true,
+                implementation: {
+                    "express-http-client": {
+                        package: "./http-client/implementation/express-http-client",
+                        config: {
+                            useSsl: false,
+                            port: 8900,
+                            sslKeyPath: "/root/certs/privkey.pem",
+                            sslCertificatePath: "/root/certs/fullchain.pem",
+                            rateLimiter: {
+                                timeWindowSeconds: 60,
+                                maxRequests: 10
+                            }
+                        }
+                    }
+                }
+            }*/
+        },
+        graphDatabase: {
+            name: nodeName,
         },
         operationalDatabase: {
             databaseName: 'operationaldbbootstrap',
         },
         rpcPort: 8900,
-        network: {
-            id: 'Devnet',
-            port: 9000,
-            privateKey:
-                'CAAS4QQwggJdAgEAAoGBALOYSCZsmINMpFdH8ydA9CL46fB08F3ELfb9qiIq+z4RhsFwi7lByysRnYT/NLm8jZ4RvlsSqOn2ZORJwBywYD5MCvU1TbEWGKxl5LriW85ZGepUwiTZJgZdDmoLIawkpSdmUOc1Fbnflhmj/XzAxlnl30yaa/YvKgnWtZI1/IwfAgMBAAECgYEAiZq2PWqbeI6ypIVmUr87z8f0Rt7yhIWZylMVllRkaGw5WeGHzQwSRQ+cJ5j6pw1HXMOvnEwxzAGT0C6J2fFx60C6R90TPos9W0zSU+XXLHA7AtazjlSnp6vHD+RxcoUhm1RUPeKU6OuUNcQVJu1ZOx6cAcP/I8cqL38JUOOS7XECQQDex9WUKtDnpHEHU/fl7SvCt0y2FbGgGdhq6k8nrWtBladP5SoRUFuQhCY8a20fszyiAIfxQrtpQw1iFPBpzoq1AkEAzl/s3XPGi5vFSNGLsLqbVKbvoW9RUaGN8o4rU9oZmPFL31Jo9FLA744YRer6dYE7jJMel7h9VVWsqa9oLGS8AwJALYwfv45Nbb6yGTRyr4Cg/MtrFKM00K3YEGvdSRhsoFkPfwc0ZZvPTKmoA5xXEC8eC2UeZhYlqOy7lL0BNjCzLQJBAMpvcgtwa8u6SvU5B0ueYIvTDLBQX3YxgOny5zFjeUR7PS+cyPMQ0cyql8jNzEzDLcSg85tkDx1L4wi31Pnm/j0CQFH/6MYn3r9benPm2bYSe9aoJp7y6ht2DmXmoveNbjlEbb8f7jAvYoTklJxmJCcrdbNx/iCj2BuAinPPgEmUzfQ=',
-        },
+        publicKey: wallets[0].address,
+        privateKey:wallets[0].privateKey,
+        managementKey: wallets[30]
     };
     const forkedNode = fork(otNodeProcessPath, [], { silent: true });
 

@@ -4,6 +4,7 @@
     "description": "OTNode v6 Beta 1",
     "main": "index.js",
     "scripts": {
+        "bootstrap-node": "node index.js tools/local-network-setup/.bootstrap_origintrail_noderc",
         "start": "node index.js",
         "dev": "nodemon index.js",
         "prepare": "husky install",
