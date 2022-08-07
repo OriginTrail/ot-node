@@ -1,33 +1,17 @@
 const BaseController = require('./base-controller');
-const { PUBLISH_METHOD, ERROR_TYPE, NETWORK_MESSAGE_TYPES } = require('../../constants/constants');
+const { ERROR_TYPE, NETWORK_MESSAGE_TYPES, PUBLISH_TYPES } = require('../../constants/constants');
 const { OPERATION_ID_STATUS } = require('../../constants/constants');
 
 class PublishController extends BaseController {
     constructor(ctx) {
         super(ctx);
-        this.workerPool = ctx.workerPool;
-        this.publishService = ctx.publishService;
-        this.logger = ctx.logger;
-        this.fileService = ctx.fileService;
+        this.operationService = ctx.publishService;
         this.commandExecutor = ctx.commandExecutor;
-        this.dataService = ctx.dataService;
         this.operationIdService = ctx.operationIdService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
     async handleHttpApiPublishRequest(req, res) {
-        return this.handleHttpApiPublishMethod(req, res, PUBLISH_METHOD.PUBLISH);
-    }
-
-    handleHttpApiProvisionRequest(req, res) {
-        return this.handleHttpApiPublishMethod(req, res, PUBLISH_METHOD.PROVISION);
-    }
-
-    handleHttpApiUpdateRequest(req, res) {
-        return this.handleHttpApiPublishMethod(req, res, PUBLISH_METHOD.UPDATE);
-    }
-
-    async handleHttpApiPublishMethod(req, res, method) {
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_START,
         );
@@ -38,28 +22,29 @@ class PublishController extends BaseController {
         );
 
         this.returnResponse(res, 202, {
-            operation_id: operationId,
+            operationId,
         });
 
-        const { assertion, options } = req.body;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
         );
+
+        const { assertion } = req.body;
         try {
-            await this.repositoryModuleManager.createOperationRecord(
-                this.publishService.getOperationName(),
-                operationId,
-                this.publishService.getOperationStatus().IN_PROGRESS,
-            );
+            await Promise.all([
+                this.repositoryModuleManager.createOperationRecord(
+                    this.operationService.getOperationName(),
+                    operationId,
+                    this.operationService.getOperationStatus().IN_PROGRESS,
+                ),
+                this.operationIdService.cacheOperationIdData(operationId, { assertion }),
+            ]);
 
-            await this.operationIdService.cacheOperationIdData(operationId, { assertion });
-
-            this.logger.info(`Received assertion with ual: ${options.ual}`);
+            this.logReceivedAssertionMessage(req.body);
 
             const commandData = {
-                method,
-                ual: options.ual,
+                ...req.body,
                 operationId,
             };
 
@@ -89,16 +74,28 @@ class PublishController extends BaseController {
 
     async handleNetworkStoreRequest(message, remotePeerId) {
         const { operationId, keywordUuid, messageType } = message.header;
-        const { assertionId, ual } = message.data;
+        const { publishType, assertionId, blockchain, contract } = message.data;
+        let commandData = {
+            remotePeerId,
+            operationId,
+            keywordUuid,
+            publishType,
+            assertionId,
+            blockchain,
+            contract,
+        };
+        if (publishType === PUBLISH_TYPES.ASSET || PUBLISH_TYPES.INDEX) {
+            commandData = { ...commandData, tokenId: message.data.tokenId };
+        }
         const command = {
             sequence: [],
             delay: 0,
-            data: { remotePeerId, operationId, keywordUuid, assertionId, ual },
+            data: commandData,
             transactional: false,
         };
         switch (messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
-                command.name = 'handleStoreInitCommand';
+                command.name = 'handlePublishInitCommand';
                 command.period = 5000;
                 command.retries = 3;
 
@@ -111,14 +108,33 @@ class PublishController extends BaseController {
                     assertionId,
                     assertion: message.data.assertion,
                 });
-                command.name = 'handleStoreRequestCommand';
+                command.name = 'handlePublishRequestCommand';
+                command.data.keyword = message.data.keyword;
 
                 break;
             default:
-                throw Error('unknown messageType');
+                throw Error('unknown message type');
         }
 
         await this.commandExecutor.add(command);
+    }
+
+    logReceivedAssertionMessage(requestBody) {
+        const { publishType, assertionId, blockchain, contract } = requestBody;
+        let receivedAssertionMessage = `Received ${publishType} with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}`;
+        switch (publishType) {
+            case PUBLISH_TYPES.ASSERTION:
+                break;
+            case PUBLISH_TYPES.ASSET:
+                receivedAssertionMessage += `, token id: ${requestBody.tokenId}`;
+                break;
+            case PUBLISH_TYPES.INDEX:
+                receivedAssertionMessage += `, token id: ${requestBody.tokenId}, keywords: ${requestBody.keywords}`;
+                break;
+            default:
+                throw Error(`Unknown publish type ${publishType}`);
+        }
+        this.logger.info(receivedAssertionMessage);
     }
 }
 

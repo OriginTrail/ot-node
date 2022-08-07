@@ -5,6 +5,12 @@ class TripleStoreModuleManager extends BaseModuleManager {
         return 'tripleStore';
     }
 
+    async insertAssertion(assertionNquads, assertionId) {
+        if (this.initialized) {
+            return this.getImplementation().module.insertAssertion(assertionNquads, assertionId);
+        }
+    }
+
     async insertAsset(assertion, assertionId, assetInfo, ual) {
         if (this.initialized) {
             return this.getImplementation().module.insertAsset(
@@ -12,6 +18,18 @@ class TripleStoreModuleManager extends BaseModuleManager {
                 assertionId,
                 assetInfo,
                 ual,
+            );
+        }
+    }
+
+    async insertIndex(assertionNquads, assertionId, indexNquads, keyword, assetNquads) {
+        if (this.initialized) {
+            return this.getImplementation().module.insertIndex(
+                assertionNquads,
+                assertionId,
+                indexNquads,
+                keyword,
+                assetNquads,
             );
         }
     }

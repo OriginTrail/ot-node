@@ -107,7 +107,7 @@ class Command {
     }
 
     async retryFinished(command) {
-        this.logger.trace(`Retry count for command: ${command.name} reached!`);
+        this.logger.trace(`Max retry count for command: ${command.name} reached!`);
     }
 
     /**
