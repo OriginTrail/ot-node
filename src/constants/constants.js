@@ -7,6 +7,12 @@ exports.DID = 'DID';
 exports.SCHEMA_CONTEXT = 'http://schema.org/';
 
 /**
+ * @constant {object} PUBLISH_TYPES
+ * - Different types of publish
+ */
+exports.PUBLISH_TYPES = { ASSERTION: 'assertion', ASSET: 'asset', INDEX: 'index' };
+
+/**
  * @constant {number} MIN_NODE_VERSION
  * - Required node.js version to run the ot-node
  */
