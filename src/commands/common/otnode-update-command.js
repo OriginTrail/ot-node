@@ -1,7 +1,6 @@
 const semver = require('semver');
 const fs = require('fs-extra');
 const Command = require('../command');
-const constants = require('../../constants/constants');
 
 class OtnodeUpdateCommand extends Command {
     constructor(ctx) {

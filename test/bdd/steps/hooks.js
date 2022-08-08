@@ -2,13 +2,13 @@ require('dotenv').config();
 const { Before, BeforeAll, After, AfterAll } = require('@cucumber/cucumber');
 const slugify = require('slugify');
 const fs = require('fs');
-const { ServerClientConfig, GraphDBServerClient } = require('ot-graphdb').server;
+const { ServerClientConfig, GraphDBServerClient } = require('graphdb').server;
 
 process.env.NODE_ENV = 'test';
 
 BeforeAll(() => {});
 
-Before(function (testCase, done) {
+Before(function beforeMethod (testCase, done) {
     this.logger = console;
     this.logger.log('Starting scenario: ', testCase.pickle.name, `${testCase.pickle.uri}`);
     // Initialize variables
@@ -24,7 +24,7 @@ Before(function (testCase, done) {
     done();
 });
 
-After(function (testCase, done) {
+After(function afterMethod (testCase, done) {
     this.logger.log(
         'Completed scenario: ',
         testCase.pickle.name,
@@ -81,7 +81,6 @@ After(function (testCase, done) {
 
 AfterAll(async () => {});
 
-process.on('unhandledRejection', (reason, p) => {
-    console.log(`Unhandled Rejection:\n${reason.stack}`);
+process.on('unhandledRejection', () => {
     process.abort();
 });

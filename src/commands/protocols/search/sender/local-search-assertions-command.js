@@ -1,5 +1,5 @@
 const Command = require('../../../command');
-const { OPERATION_ID_STATUS, ERROR_TYPE } = require('../../../../constants/constants');
+const { OPERATION_ID_STATUS } = require('../../../../constants/constants');
 
 class LocalSearchAssertionsCommand extends Command {
     constructor(ctx) {

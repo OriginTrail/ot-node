@@ -19,7 +19,7 @@ function getBlockchainConfiguration(localBlockchain, privateKey, publicKey) {
     ];
 }
 
-Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done) {
+Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function nodeSetup (nodeCount, done) {
     this.logger.log(`I setup ${nodeCount} node${nodeCount !== 1 ? 's' : ''}`);
     const wallets = this.state.localBlockchain.getWallets();
     let nodesStarted = 0;
@@ -59,6 +59,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
         });
         forkedNode.send(JSON.stringify(nodeConfiguration));
 
+        // eslint-disable-next-line no-loop-func
         forkedNode.on('message', (response) => {
             if (response.error) {
                 // todo handle error
@@ -84,10 +85,9 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
     }
 });
 
-Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, done) {
+Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function bootstrapRunning (nodeCount, done) {
     expect(this.state.bootstraps).to.have.length(0);
     expect(nodeCount).to.be.equal(1); // Currently not supported more.
-    console.log('Initializing bootstrap node');
     const wallets = this.state.localBlockchain.getWallets();
     const nodeName = 'origintrail-test-bootstrap';
     const bootstrapNodeConfiguration = {
@@ -141,7 +141,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
     });
 });
 
-Given(/^I setup (\d+) additional node[s]*$/, { timeout: 120000 }, function (nodeCount, done) {
+Given(/^I setup (\d+) additional node[s]*$/, { timeout: 120000 }, function setupAdditionalNode (nodeCount, done) {
     this.logger.log(`I setup ${nodeCount} additional node${nodeCount !== 1 ? 's' : ''}`);
     const wallets = this.state.localBlockchain.getWallets();
     const currentNumberOfNodes = Object.keys(this.state.nodes).length;
@@ -183,6 +183,7 @@ Given(/^I setup (\d+) additional node[s]*$/, { timeout: 120000 }, function (node
         });
         forkedNode.send(JSON.stringify(nodeConfiguration));
 
+        // eslint-disable-next-line no-loop-func
         forkedNode.on('message', (response) => {
             if (response.error) {
                 // todo handle error

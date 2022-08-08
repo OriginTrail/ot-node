@@ -27,5 +27,5 @@ module.exports = {
             defaultValue: Sequelize.literal('NOW()'),
         },
     }),
-    down: (queryInterface, Sequelize) => queryInterface.dropTable('handler_ids'),
+    down: (queryInterface) => queryInterface.dropTable('handler_ids'),
 };
