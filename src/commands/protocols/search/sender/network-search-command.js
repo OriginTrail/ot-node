@@ -1,26 +1,26 @@
 const NetworkProtocolCommand = require('../../common/network-protocol-command');
 const { ERROR_TYPE } = require('../../../../constants/constants');
 
-class NetworkGetCommand extends NetworkProtocolCommand {
+class NetworkSearchCommand extends NetworkProtocolCommand {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.getService;
+        this.operationService = ctx.searchService;
 
-        this.errorType = ERROR_TYPE.GET.GET_NETWORK_ERROR;
+        this.errorType = ERROR_TYPE.SEARCH.NETWORK_SEARCH_ERROR;
     }
 
     getKeywords(command) {
-        return [command.data.assertionId];
+        return command.data.keywords;
     }
 
     /**
-     * Builds default networkGetCommand
+     * Builds default networkSearchCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'networkGetCommand',
+            name: 'networkSearchCommand',
             delay: 0,
             transactional: false,
         };
@@ -29,4 +29,4 @@ class NetworkGetCommand extends NetworkProtocolCommand {
     }
 }
 
-module.exports = NetworkGetCommand;
+module.exports = NetworkSearchCommand;

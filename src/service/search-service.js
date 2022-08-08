@@ -1,31 +1,100 @@
-const { OPERATION_ID_STATUS } = require('../constants/constants');
+const { Mutex } = require('async-mutex');
+const OperationService = require('./operation-service');
+const {
+    OPERATION_ID_STATUS,
+    SEARCH_REQUEST_STATUS,
+    SEARCH_STATUS,
+    NETWORK_PROTOCOLS,
+    ERROR_TYPE,
+} = require('../constants/constants');
+const { result } = require('underscore');
 
-class SearchService {
+class SearchService extends OperationService {
     constructor(ctx) {
-        this.logger = ctx.logger;
+        super(ctx);
 
-        this.operationIdService = ctx.operationIdService;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.commandExecutor = ctx.commandExecutor;
+        this.operationName = 'search';
+        this.networkProtocol = NETWORK_PROTOCOLS.SEARCH;
+        this.operationRequestStatus = SEARCH_REQUEST_STATUS;
+        this.operationStatus = SEARCH_STATUS;
+        this.errorType = ERROR_TYPE.SEARCH.SEARCH_ERROR;
+        this.completedStatuses = [OPERATION_ID_STATUS.COMPLETED];
+        this.operationRepositoryMutex = new Mutex();
+        this.operationCacheMutex = new Mutex();
     }
 
-    async processSearchResponse(command, responseData, status, errorMessage = null) {
-        const { operationId } = command.data;
-
-        await this.operationIdService.updateOperationIdStatus(
+    async processResponse(command, responseStatus, responseData, errorMessage = null) {
+        const {
             operationId,
-            OPERATION_ID_STATUS.SEARCH_ASSERTIONS.SEARCH_END,
-        );
-        await this.operationIdService.updateOperationIdStatus(
+            numberOfFoundNodes,
+            numberOfNodesInBatch,
+            leftoverNodes,
+            keyword,
+            keywords,
+        } = command.data;
+
+        const keywordsStatuses = await this.getResponsesStatuses(
+            responseStatus,
+            errorMessage,
             operationId,
-            OPERATION_ID_STATUS.SEARCH_ASSERTIONS.COMPLETED,
+            keyword,
+            keywords,
         );
 
-        let data = await this.operationIdService.getCachedOperationIdData(operationId);
+        const { completedNumber, failedNumber } = keywordsStatuses[keyword];
+        const numberOfResponses = completedNumber + failedNumber;
+        this.logger.debug(
+            `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
+        );
 
-        data = [...new Set([...data, ...responseData])];
+        if (completedNumber === 1) {
+            let currentResults = await this.operationIdService.getCachedOperationIdData(
+                operationId,
+            );
 
-        await this.operationIdService.cacheOperationIdData(operationId, data);
+            currentResults = currentResults
+                ? {
+                      ...currentResults,
+                      [keyword]: responseData.results,
+                  }
+                : { [keyword]: responseData.results };
+
+            await this.operationCacheMutex.runExclusive(async () => {
+                await this.operationIdService.cacheOperationIdData(operationId, currentResults);
+            });
+
+            if (Object.keys(currentResults).length === keywords.length) {
+                await this.markOperationAsCompleted(
+                    operationId,
+                    { currentResults },
+                    this.completedStatuses,
+                );
+                this.logResponsesSummary(completedNumber, failedNumber);
+            }
+        } else if (
+            completedNumber < 1 &&
+            (numberOfFoundNodes === numberOfResponses ||
+                numberOfResponses % numberOfNodesInBatch === 0)
+        ) {
+            if (leftoverNodes.length === 0) {
+                await this.markOperationAsCompleted(
+                    operationId,
+                    {
+                        message: 'Unable to find assertion on the network!',
+                    },
+                    this.completedStatuses,
+                );
+                this.logResponsesSummary(completedNumber, failedNumber);
+            } else {
+                await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
+            }
+        }
+    }
+
+    localSearch(keyword, limit, offset) {
+        this.logger.info(`Searching for assets indexed with keyword: ${keyword}`);
+
+        return this.tripleStoreModuleManager.searchAssets(keyword, limit, offset);
     }
 }
 

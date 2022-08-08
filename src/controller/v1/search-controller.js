@@ -1,7 +1,6 @@
 const BaseController = require('./base-controller');
 const {
     OPERATION_ID_STATUS,
-    NETWORK_PROTOCOLS,
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
 } = require('../../constants/constants');
@@ -9,175 +8,77 @@ const {
 class SearchController extends BaseController {
     constructor(ctx) {
         super(ctx);
-        this.logger = ctx.logger;
-        this.fileService = ctx.fileService;
         this.commandExecutor = ctx.commandExecutor;
+        this.operationService = ctx.searchService;
         this.operationIdService = ctx.operationIdService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
-    async handleHttpApiSearchAssertionsRequest(req, res) {
-        const { query } = req.query;
-
+    async handleHttpApiSearchRequest(req, res) {
         const operationId = await this.operationIdService.generateOperationId(
-            OPERATION_ID_STATUS.SEARCH_ASSERTIONS.SEARCH_START,
+            OPERATION_ID_STATUS.SEARCH.SEARCH_START,
         );
-
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            OPERATION_ID_STATUS.SEARCH_ASSERTIONS.VALIDATING_QUERY,
-        );
+        const { keywords, limit, offset } = req.body;
 
         this.returnResponse(res, 202, {
             operationId,
         });
 
         this.logger.info(
-            `Search assertions for ${query} with operation id ${operationId} initiated.`,
+            `Search for ${keywords} with ${limit}, ${offset},operation id ${operationId} initiated.`,
         );
 
         try {
-            // TODO: updated with query params from get req
-            const options = {
-                prefix: true,
-                limit: 40,
-            };
-
-            const commandData = {
+            await this.repositoryModuleManager.createOperationRecord(
+                this.operationService.getOperationName(),
                 operationId,
-                query,
-                options,
-                networkProtocol: NETWORK_PROTOCOLS.SEARCH_ASSERTIONS,
-            };
-
-            const commandSequence = [
-                'localSearchAssertionsCommand',
-                'findNodesCommand',
-                'searchAssertionsCommand',
-            ];
+                this.operationService.getOperationStatus().IN_PROGRESS,
+            );
 
             await this.commandExecutor.add({
-                name: commandSequence[0],
-                sequence: commandSequence.slice(1),
+                name: 'networkSearchCommand',
+                sequence: [],
                 delay: 0,
-                data: commandData,
+                data: {
+                    operationId,
+                    keywords,
+                    limit,
+                    offset,
+                },
                 transactional: false,
             });
         } catch (error) {
-            this.logger.error(
-                `Error while initializing search for assertions: ${error.message}. ${error.stack}`,
-            );
+            this.logger.error(`Error while initializing search: ${error.message}. ${error.stack}`);
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 OPERATION_ID_STATUS.FAILED,
-                'Unable to search for assertions, Failed to process input data!',
+                'Unable to search, Failed to process input data!',
+                ERROR_TYPE.SEARCH.SEARCH_ROUTE_ERROR,
             );
         }
     }
 
-    async handleHttpApiSearchEntitiesRequest(req, res) {
-        const { query } = req.query;
-
-        const operationId = await this.operationIdService.generateOperationId(
-            OPERATION_ID_STATUS.SEARCH_ENTITIES.VALIDATING_QUERY,
-        );
-
-        this.returnResponse(res, 202, {
-            operationId,
-        });
-
-        this.logger.info(
-            `Search entities for ${query} with operation id ${operationId} initiated.`,
-        );
-
-        try {
-            // TODO: updated with query params
-            const options = {
-                prefix: true,
-                limit: 40,
-            };
-
-            const commandData = {
-                operationId,
-                query,
-                options,
-                networkProtocol: NETWORK_PROTOCOLS.SEARCH,
-            };
-
-            const commandSequence = [
-                'localSearchEntitiesCommand',
-                'findNodesCommand',
-                'searchEntitiesCommand',
-            ];
-
-            await this.commandExecutor.add({
-                name: commandSequence[0],
-                sequence: commandSequence.slice(1),
-                delay: 0,
-                data: commandData,
-                transactional: false,
-            });
-        } catch (error) {
-            this.logger.error(
-                `Error while initializing search for entities: ${error.message}. ${error.stack}`,
-            );
-            await this.operationIdService.updateOperationIdStatus(
-                operationId,
-                OPERATION_ID_STATUS.FAILED,
-                'Unable to search for entities, Failed to process input data!',
-            );
-        }
-    }
-
-    handleHttpApiQueryRequest(req, res) {}
-
-    handleHttpApiProofsRequest(req, res) {}
-
-    async handleNetworkSearchAssertionsRequest(message, remotePeerId) {
-        let commandName;
-        const { operationId } = message.header;
-        const commandData = { message, remotePeerId, operationId };
-        switch (message.header.messageType) {
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
-                commandName = 'handleSearchAssertionsInitCommand';
-                break;
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
-                commandName = 'handleSearchAssertionsRequestCommand';
-                break;
-            default:
-                throw Error('unknown messageType');
-        }
-
-        await this.commandExecutor.add({
-            name: commandName,
+    async handleNetworkSearchRequest(message, remotePeerId) {
+        const { operationId, keywordUuid, messageType } = message.header;
+        const { keyword, limit, offset } = message.data;
+        const command = {
             sequence: [],
             delay: 0,
-            data: commandData,
+            data: { remotePeerId, operationId, keywordUuid, keyword, limit, offset },
             transactional: false,
-        });
-    }
-
-    async handleNetworkSearchEntitiesRequest(message, remotePeerId) {
-        let commandName;
-        const { operationId } = message.header;
-        const commandData = { message, remotePeerId, operationId };
-        switch (message.header.messageType) {
+        };
+        switch (messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
-                commandName = 'handleSearchEntitiesInitCommand';
+                command.name = 'handleSearchInitCommand';
                 break;
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
-                commandName = 'handleSearchEntitiesRequestCommand';
+                command.name = 'handleSearchRequestCommand';
                 break;
             default:
-                throw Error('unknown messageType');
+                throw Error(`Unknown publish type ${publishType}`);
         }
 
-        await this.commandExecutor.add({
-            name: commandName,
-            sequence: [],
-            delay: 0,
-            data: commandData,
-            transactional: false,
-        });
+        await this.commandExecutor.add(command);
     }
 }
 

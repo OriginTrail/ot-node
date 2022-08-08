@@ -1,12 +1,11 @@
 const { OPERATION_ID_STATUS, ERROR_TYPE } = require('../../constants/constants');
 const BaseController = require('./base-controller');
 
-const availableOperations = ['publish', 'get', 'assertions:search', 'entities:search'];
+const availableOperations = ['publish', 'get', 'search'];
 
 class ResultController extends BaseController {
     constructor(ctx) {
         super(ctx);
-        this.logger = ctx.logger;
         this.operationIdService = ctx.operationIdService;
     }
 
@@ -37,25 +36,10 @@ class ResultController extends BaseController {
                     response.data = JSON.parse(handlerRecord.data);
                 }
 
-                switch (operation) {
-                    case 'assertions:search':
-                    case 'entities:search':
-                    case 'get':
-                        if (handlerRecord.status === OPERATION_ID_STATUS.COMPLETED) {
-                            response.data = await this.operationIdService.getCachedOperationIdData(
-                                operationId,
-                            );
-                        }
-                        break;
-                    case 'publish':
-                        if (handlerRecord.status === OPERATION_ID_STATUS.COMPLETED) {
-                            response.data = await this.operationIdService.getCachedOperationIdData(
-                                operationId,
-                            );
-                        }
-                        break;
-                    default:
-                        break;
+                if (handlerRecord.status === OPERATION_ID_STATUS.COMPLETED) {
+                    response.data = await this.operationIdService.getCachedOperationIdData(
+                        operationId,
+                    );
                 }
 
                 return this.returnResponse(res, 200, response);

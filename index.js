@@ -1,4 +1,8 @@
 require('dotenv').config();
+
+const SegfaultHandler = require('segfault-handler');
+SegfaultHandler.registerHandler('crash.log');
+
 const fs = require('fs-extra');
 const path = require('path');
 const appRootPath = require('app-root-path');

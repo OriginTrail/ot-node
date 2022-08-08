@@ -18,7 +18,6 @@ class HttpApiRouter {
     }
 
     async initializeListeners() {
-        // POST REQUESTS
         this.httpClientModuleManager.post(
             '/publish',
             (req, res) => {
@@ -26,14 +25,6 @@ class HttpApiRouter {
             },
             { rateLimit: true, requestSchema: this.jsonSchemaService.publishSchema() },
         );
-
-        // this.httpClientModuleManager.post('/provision', (req, res) => {
-        //     this.publishController.handleHttpApiProvisionRequest(req, res);
-        // });
-        //
-        // this.httpClientModuleManager.post('/update', (req, res) => {
-        //     this.publishController.handleHttpApiUpdateRequest(req, res);
-        // });
         //
         // this.httpClientModuleManager.post(HTTP_API_ROUTES.QUERY, (req, res) => {
         //     this.searchController.handleHttpApiQueryRequest(req, res);
@@ -51,21 +42,12 @@ class HttpApiRouter {
             { rateLimit: true, requestSchema: this.jsonSchemaService.getSchema() },
         );
 
-        // TODO: Get params validation needs to be implemented
-        this.httpClientModuleManager.get(
-            '/assertions:search',
+        this.httpClientModuleManager.post(
+            '/search',
             (req, res) => {
-                this.searchController.handleHttpApiSearchAssertionsRequest(req, res);
+                this.searchController.handleHttpApiSearchRequest(req, res);
             },
-            { rateLimit: true },
-        );
-
-        this.httpClientModuleManager.get(
-            '/entities:search',
-            (req, res) => {
-                this.searchController.handleHttpApiSearchEntitiesRequest(req, res);
-            },
-            { rateLimit: true },
+            { rateLimit: true, requestSchema: this.jsonSchemaService.searchSchema() },
         );
 
         this.httpClientModuleManager.get('/:operation/:operationId', (req, res) => {

@@ -15,7 +15,6 @@ class PublishService extends OperationService {
         super(ctx);
         this.ualService = ctx.ualService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.validationModuleManager = ctx.validationModuleManager;
         this.dataService = ctx.dataService;
 
@@ -29,7 +28,7 @@ class PublishService extends OperationService {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_END,
             OPERATION_ID_STATUS.COMPLETED,
         ];
-        this.operationMutex = new Mutex();
+        this.operationRepositoryMutex = new Mutex();
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
@@ -41,6 +40,7 @@ class PublishService extends OperationService {
             leftoverNodes,
             numberOfNodesInBatch,
             keyword,
+            keywords,
         } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
@@ -48,6 +48,7 @@ class PublishService extends OperationService {
             errorMessage,
             operationId,
             keyword,
+            keywords,
         );
 
         const { completedNumber, failedNumber } = keywordsStatuses[keyword];
@@ -56,7 +57,7 @@ class PublishService extends OperationService {
             `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
         );
 
-        if (completedNumber == this.config.minimumReplicationFactor) {
+        if (completedNumber === this.config.minimumReplicationFactor) {
             let allCompleted = true;
             for (const key in keywordsStatuses) {
                 if (keywordsStatuses[key].completedNumber < this.config.minimumReplicationFactor) {

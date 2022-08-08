@@ -28,9 +28,9 @@ class RpcRouter {
         );
 
         this.networkModuleManager.handleMessage(
-            constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS,
+            constants.NETWORK_PROTOCOLS.SEARCH,
             (message, remotePeerId) =>
-                this.searchController.handleNetworkSearchAssertionsRequest(message, remotePeerId),
+                this.searchController.handleNetworkSearchRequest(message, remotePeerId),
         );
 
         // this.networkModuleManager.handleMessage(

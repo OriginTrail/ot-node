@@ -20,7 +20,7 @@ class GetController extends BaseController {
         );
 
         this.returnResponse(res, 202, {
-            operation_id: operationId,
+            operationId,
         });
 
         await this.repositoryModuleManager.createOperationRecord(
@@ -61,26 +61,24 @@ class GetController extends BaseController {
     async handleNetworkGetRequest(message, remotePeerId) {
         const { operationId, keywordUuid, messageType } = message.header;
         const { assertionId } = message.data;
-        let commandName;
-        const commandData = { assertionId, remotePeerId, operationId, keywordUuid };
-        switch (messageType) {
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
-                commandName = 'handleGetInitCommand';
-                break;
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
-                commandName = 'handleGetRequestCommand';
-                break;
-            default:
-                throw Error('unknown messageType');
-        }
-
-        await this.commandExecutor.add({
-            name: commandName,
+        const command = {
             sequence: [],
             delay: 0,
-            data: commandData,
+            data: { assertionId, remotePeerId, operationId, keywordUuid },
             transactional: false,
-        });
+        };
+        switch (messageType) {
+            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
+                command.name = 'handleGetInitCommand';
+                break;
+            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
+                command.name = 'handleGetRequestCommand';
+                break;
+            default:
+                throw Error(`Unknown publish type ${publishType}`);
+        }
+
+        await this.commandExecutor.add(command);
     }
 }
 

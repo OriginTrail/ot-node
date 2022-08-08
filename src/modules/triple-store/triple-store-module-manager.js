@@ -46,37 +46,15 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async assertionsByAsset(uri) {
+    async searchAssets(keyword, limit, offset) {
         if (this.initialized) {
-            return this.getImplementation().module.assertionsByAsset(uri);
-        }
-    }
-
-    async findAssetsByKeyword(query, options, localQuery) {
-        if (this.initialized) {
-            return this.getImplementation().module.findAssetsByKeyword(query, options, localQuery);
-        }
-    }
-
-    async findAssertionsByKeyword(query, options, localQuery) {
-        if (this.initialized) {
-            return this.getImplementation().module.findAssertionsByKeyword(
-                query,
-                options,
-                localQuery,
-            );
+            return this.getImplementation().module.searchAssets(keyword, limit, offset);
         }
     }
 
     async construct(query) {
         if (this.initialized) {
             return this.getImplementation().module.construct(query);
-        }
-    }
-
-    async findAssertions(nquads) {
-        if (this.initialized) {
-            return this.getImplementation().module.findAssertions(nquads);
         }
     }
 

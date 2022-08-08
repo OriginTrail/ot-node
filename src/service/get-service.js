@@ -13,7 +13,6 @@ class GetService extends OperationService {
         super(ctx);
 
         this.dataService = ctx.dataService;
-        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
 
         this.operationName = 'get';
         this.networkProtocol = NETWORK_PROTOCOLS.GET;
@@ -25,18 +24,25 @@ class GetService extends OperationService {
             OPERATION_ID_STATUS.GET.GET_END,
             OPERATION_ID_STATUS.COMPLETED,
         ];
-        this.operationMutex = new Mutex();
+        this.operationRepositoryMutex = new Mutex();
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
-        const { operationId, numberOfFoundNodes, numberOfNodesInBatch, leftoverNodes, keyword } =
-            command.data;
+        const {
+            operationId,
+            numberOfFoundNodes,
+            numberOfNodesInBatch,
+            leftoverNodes,
+            keyword,
+            keywords,
+        } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
             errorMessage,
             operationId,
             keyword,
+            keywords,
         );
 
         const { completedNumber, failedNumber } = keywordsStatuses[keyword];
@@ -54,7 +60,8 @@ class GetService extends OperationService {
             this.logResponsesSummary(completedNumber, failedNumber);
         } else if (
             completedNumber < 1 &&
-            (numberOfFoundNodes === failedNumber || failedNumber % numberOfNodesInBatch === 0)
+            (numberOfFoundNodes === numberOfResponses ||
+                numberOfResponses % numberOfNodesInBatch === 0)
         ) {
             if (leftoverNodes.length === 0) {
                 await this.markOperationAsCompleted(

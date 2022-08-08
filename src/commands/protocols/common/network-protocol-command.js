@@ -28,6 +28,7 @@ class NetworkProtocolCommand extends Command {
                 data: {
                     ...command.data,
                     keyword,
+                    keywords,
                     errorType: this.errorType,
                     networkProtocol: this.operationService.getNetworkProtocol(),
                 },

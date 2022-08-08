@@ -4,6 +4,7 @@ class OperationService {
     constructor(ctx) {
         this.config = ctx.config;
         this.logger = ctx.logger;
+        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.operationIdService = ctx.operationIdService;
         this.commandExecutor = ctx.commandExecutor;
@@ -25,10 +26,10 @@ class OperationService {
         return this.operationStatus;
     }
 
-    async getResponsesStatuses(responseStatus, errorMessage, operationId, keyword) {
+    async getResponsesStatuses(responseStatus, errorMessage, operationId, keyword, keywords) {
         const self = this;
         let responses = 0;
-        await this.operationMutex.runExclusive(async () => {
+        await this.operationRepositoryMutex.runExclusive(async () => {
             await self.repositoryModuleManager.createOperationResponseRecord(
                 responseStatus,
                 this.operationName,
@@ -42,11 +43,12 @@ class OperationService {
             );
         });
 
-        const keywordsStatuses = {};
-        responses.forEach((response) => {
-            if (!keywordsStatuses[response.keyword])
-                keywordsStatuses[response.keyword] = { failedNumber: 0, completedNumber: 0 };
+        let keywordsStatuses = {};
+        for (const key of keywords) {
+            keywordsStatuses[key] = { failedNumber: 0, completedNumber: 0 };
+        }
 
+        responses.forEach((response) => {
             if (response.status === this.operationRequestStatus.FAILED) {
                 keywordsStatuses[response.keyword].failedNumber += 1;
             } else {

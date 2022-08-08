@@ -10,18 +10,8 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
     }
 
     getKeywords(command) {
-        const { publishType } = command.data;
-
-        if (publishType === PUBLISH_TYPES.INDEX) return [...command.data.keywords];
+        if (command.data.publishType === PUBLISH_TYPES.INDEX) return [...command.data.keywords];
         else return [command.data.assertionId];
-    }
-
-    getNextCommandData(command) {
-        const { publishType, assertionId, blockchain, contract } = command.data;
-        const assertionCommandData = { publishType, assertionId, blockchain, contract };
-
-        if (publishType === PUBLISH_TYPES.ASSERTION) return assertionCommandData;
-        else return { ...assertionCommandData, tokenId: command.data.tokenId };
     }
 
     /**

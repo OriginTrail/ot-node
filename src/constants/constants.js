@@ -32,16 +32,6 @@ exports.MAX_FILE_SIZE = 2621440;
 exports.INIT_STAKE_AMOUNT = 3000;
 
 /**
- * @constant {object} SERVICE_API_SLOW_DOWN
- * - Express slow down configuration constants
- */
-exports.SERVICE_API_SLOW_DOWN = {
-    TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    DELAY_AFTER_SECONDS: 5,
-    DELAY_MILLS: 3 * 1000,
-};
-
-/**
  * @constant {object} NETWORK_API_RATE_LIMIT
  * - Network (Libp2p) rate limiter configuration constants
  */
@@ -127,18 +117,6 @@ exports.TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 exports.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10; // 10 seconds
 
 /**
- * @constant {number} TRIPLE_STORE_QUEUE_LIMIT
- * - Triple store queue limit
- */
-exports.TRIPLE_STORE_QUEUE_LIMIT = 5000;
-
-/**
- * @constant {number} BLOCKCHAIN_QUEUE_LIMIT
- * - Blockchain queue limit
- */
-exports.BLOCKCHAIN_QUEUE_LIMIT = 25000;
-
-/**
  * @constant {number} GET_MAX_TIME_MILLIS
  * - Maximum time for get operation
  */
@@ -220,8 +198,6 @@ exports.NETWORK_PROTOCOLS = {
     GET: '/get/1.0.1',
     SEARCH: '/search/1.0.1',
     SEARCH_RESULT: '/search/1.0.1/result',
-    SEARCH_ASSERTIONS: '/search/assertions/1.0.1',
-    SEARCH_ASSERTIONS_RESULT: '/search/assertions/1.0.1/result',
 };
 
 /**
@@ -230,13 +206,9 @@ exports.NETWORK_PROTOCOLS = {
  */
 exports.SERVICE_API_ROUTES = {
     PUBLISH: '/publish',
-    PROVISION: '/provision',
-    UPDATE: '/update',
     GET: '/get',
-    SEARCH: '/entities::search',
-    SEARCH_ASSERTIONS: '/assertions::search',
+    SEARCH: '/search',
     QUERY: '/query',
-    PROOFS: '/proofs::get',
     OPERATION_RESULT: '/:operation/:operation_id',
     INFO: '/info',
 };
@@ -270,6 +242,16 @@ exports.ERROR_TYPE = {
         GET_REQUEST_REMOTE_ERROR: 'GetRequestRemoteError',
         GET_ERROR: 'GetError',
     },
+    SEARCH: {
+        SEARCH_ROUTE_ERROR: 'SearchRouteError',
+        SEARCH_INIT_ERROR: 'SearchInitError',
+        SEARCH_REQUEST_ERROR: 'SearchRequestError',
+        HANDLE_SEARCH_INIT_ERROR: 'HandleSearchInitError',
+        HANDLE_SEARCH_REQUEST_ERROR: 'HandleSearchRequestError',
+        NETWORK_SEARCH_ERROR: 'NetworkSearchError',
+        SEARCH_SCHEDULE_MESSAGES_COMMAND: 'SearchScheduleMessagesCommand',
+        SEARCH_ERROR: 'SearchError',
+    },
     INSERT_ASSERTION_ERROR: 'InsertAssertionError',
     PREPARE_ASSERTION_ERROR: 'PrepareAssertionError',
     VALIDATE_ASSERTION_ERROR: 'ValidateAssertionError',
@@ -281,21 +263,6 @@ exports.ERROR_TYPE = {
     CHECKING_UPDATE_ERROR: 'CheckingUpdateError',
     API_ERROR_400: 'ApiError400',
     API_ERROR_500: 'ApiError500',
-    PUBLISH_START_ERROR: 'PublishStartError',
-    PUBLISH_ROUTE_ERROR: 'PublishRouteError',
-    GET_ROUTE_ERROR: 'GetRouteError',
-    SEARCH_ASSERTIONS_ROUTE_ERROR: 'SearchAssertionsRouteError',
-    SEARCH_ASSERTIONS_INIT_ERROR: 'SearchAssertionsInitError',
-    SEARCH_ASSERTIONS_REQUEST_ERROR: 'SearchAssertionsRequestError',
-    LOCAL_SEARCH_ASSERTIONS_ERROR: 'LocalSearchAssertionsError',
-    HANDLE_SEARCH_ASSERTIONS_INIT_ERROR: 'handleSearchAssertionsInitError',
-    HANDLE_SEARCH_ASSERTIONS_REQUEST_ERROR: 'handleSearchAssertionsRequestError',
-    SEARCH_ENTITIES_ROUTE_ERROR: 'SearchEntitiesRouteError',
-    SEARCH_ENTITIES_INIT_ERROR: 'SearchEntitiesInitError',
-    SEARCH_ENTITIES_REQUEST_ERROR: 'SearchEntitiesRequestError',
-    LOCAL_SEARCH_ENTITIES_ERROR: 'LocalSearchEntitiesError',
-    HANDLE_SEARCH_ENTITIES_INIT_ERROR: 'handleSearchEntitiesInitError',
-    HANDLE_SEARCH_ENTITIES_REQUEST_ERROR: 'handleSearchEntitiesRequestError',
     QUERY_ROUTE_ERROR: 'QueryRouteError',
     PROOFS_ROUTE_ERROR: 'ProofsRouteError',
     RESULTS_ROUTE_ERROR: 'ResultsRouteError',
@@ -390,17 +357,8 @@ exports.OPERATION_ID_STATUS = {
         GET_SAVE_ASSERTION_END: '',
         GET_END: 'GET_END',
     },
-    SEARCH_ASSERTIONS: {
-        VALIDATING_QUERY: 'VALIDATING_QUERY',
-        SEARCHING_ASSERTIONS: 'SEARCHING_ASSERTIONS',
-        FAILED: 'FAILED',
-        COMPLETED: 'COMPLETED',
+    SEARCH: {
         SEARCH_START: 'SEARCH_START',
-        SEARCH_END: 'SEARCH_END',
-    },
-    SEARCH_ENTITIES: {
-        VALIDATING_QUERY: 'VALIDATING_QUERY',
-        SEARCHING_ENTITIES: 'SEARCHING_ENTITIES',
     },
 };
 
@@ -409,16 +367,6 @@ exports.OPERATION_ID_STATUS = {
  *  Possible statuses for publish procedure
  */
 exports.PUBLISH_STATUS = {
-    IN_PROGRESS: 'IN_PROGRESS',
-    FAILED: 'FAILED',
-    COMPLETED: 'COMPLETED',
-};
-
-/**
- * @constant {object} GET_STATUS -
- *  Possible statuses for get procedure
- */
-exports.GET_STATUS = {
     IN_PROGRESS: 'IN_PROGRESS',
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
@@ -434,10 +382,39 @@ exports.PUBLISH_REQUEST_STATUS = {
 };
 
 /**
+ * @constant {object} GET_STATUS -
+ *  Possible statuses for get procedure
+ */
+exports.GET_STATUS = {
+    IN_PROGRESS: 'IN_PROGRESS',
+    FAILED: 'FAILED',
+    COMPLETED: 'COMPLETED',
+};
+
+/**
  * @constant {object} GET_REQUEST_STATUS -
  *  Possible statuses for get request
  */
 exports.GET_REQUEST_STATUS = {
+    FAILED: 'FAILED',
+    COMPLETED: 'COMPLETED',
+};
+
+/**
+ * @constant {object} SEARCH_STATUS -
+ *  Possible statuses for search procedure
+ */
+exports.SEARCH_STATUS = {
+    IN_PROGRESS: 'IN_PROGRESS',
+    FAILED: 'FAILED',
+    COMPLETED: 'COMPLETED',
+};
+
+/**
+ * @constant {object} SEARCH_REQUEST_STATUS -
+ *  Possible statuses for search request
+ */
+exports.SEARCH_REQUEST_STATUS = {
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
 };
