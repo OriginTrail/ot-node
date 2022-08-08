@@ -18,6 +18,7 @@ class OtTripleStore {
                     constants.TRIPLE_STORE_CONNECT_MAX_RETRIES
                 }. Retrying in ${constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`,
             );
+            /* eslint-disable no-await-in-loop */
             await setTimeout(constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000);
             ready = await this.healthCheck();
         }
@@ -54,23 +55,31 @@ class OtTripleStore {
         };
     }
 
-    initializeSparqlEndpoints(url, repository) {
+    initializeSparqlEndpoints() {
         // overridden by subclasses
         return true;
     }
 
-    async insert(triples, graphName) {
-        const exists = await this.assertionExists(graphName);
-        if (!exists) {
-            const insertion = `
-                                  PREFIX schema: <${SCHEMA_CONTEXT}>
-                                  INSERT DATA
-                                  { GRAPH <${graphName}> 
-                                    { ${triples} } 
-                                  }`;
-            await this.queryEngine.queryVoid(insertion, this.insertContext);
-            return true;
-        }
+    async insertAsset(assertion, assertionId, assetInfo, ual) {
+        const insertion = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            DELETE {<${ual}> schema:latestAssertion ?o}
+            WHERE {
+                GRAPH <assets:graph> {
+                    ?s ?p ?o .
+                    <${ual}> schema:latestAssertion ?o .
+                }
+            };
+            INSERT DATA {
+                GRAPH <assets:graph> { 
+                    ${assetInfo} 
+                }
+                
+                GRAPH <assertion:${assertionId}> { 
+                    ${assertion} 
+                } 
+            }`;
+        await this.queryEngine.queryVoid(insertion, this.insertContext);
     }
 
     async construct(query) {

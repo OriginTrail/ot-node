@@ -64,19 +64,19 @@ class ProtocolMessageCommand extends Command {
                     command,
                     `Received unknown message type from node during ${command.name}`,
                 );
-                return command.empty();
+                return Command.empty();
         }
     }
 
-    async handleAck(command, responseData) {
+    async handleAck(command) {
         return this.continueSequence(command.data, command.sequence);
     }
 
-    async handleBusy(command, responseData) {
+    async handleBusy() {
         return Command.retry();
     }
 
-    async handleNack(command, responseData) {
+    async handleNack(command) {
         await this.markResponseAsFailed(
             command,
             `Received NACK response from node during ${command.name}`,

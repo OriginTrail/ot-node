@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         {},
     );
-    get_response.associate = (models) => {
+    get_response.associate = () => {
         // associations can be defined here
     };
     return get_response;

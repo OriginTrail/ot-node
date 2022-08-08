@@ -17,36 +17,40 @@ class HandleProtocolMessageCommand extends Command {
     async execute(command) {
         const { remotePeerId, operationId, keywordUuid } = command.data;
 
-        const { messageType, messageData } = await this.prepareMessage(command.data);
-
-        await this.networkModuleManager.sendMessageResponse(
-            this.operationService.getNetworkProtocol(),
-            remotePeerId,
-            messageType,
-            operationId,
-            keywordUuid,
-            messageData,
-        );
+        try {
+            const { messageType, messageData } = await this.prepareMessage(command.data);
+            await this.networkModuleManager.sendMessageResponse(
+                this.operationService.getNetworkProtocol(),
+                remotePeerId,
+                messageType,
+                operationId,
+                keywordUuid,
+                messageData,
+            );
+        } catch (error) {
+            if (command.retries) return Command.retry();
+            await this.handleError(error.message, command);
+        }
 
         return Command.empty();
     }
 
-    async prepareMessage(commandData) {
+    async prepareMessage() {
         // overridden by subclasses
     }
 
-    async handleError(operationId, keywordUuid, errorMessage, errorName, commandData) {
-        super.handleError(operationId, errorMessage, errorName, true);
+    async handleError(errorMessage, command) {
+        const { operationId, remotePeerId, keywordUuid } = command.data;
 
+        await super.handleError(operationId, errorMessage, this.errorType, true);
         await this.networkModuleManager.sendMessageResponse(
             this.operationService.getNetworkProtocol(),
-            commandData.remotePeerId,
+            remotePeerId,
             NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
             operationId,
             keywordUuid,
             {},
         );
-        return Command.empty();
     }
 }
 

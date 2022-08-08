@@ -5,9 +5,14 @@ class TripleStoreModuleManager extends BaseModuleManager {
         return 'tripleStore';
     }
 
-    async insert(triples, assertionId) {
+    async insertAsset(assertion, assertionId, assetInfo, ual) {
         if (this.initialized) {
-            return this.getImplementation().module.insert(triples, assertionId);
+            return this.getImplementation().module.insertAsset(
+                assertion,
+                assertionId,
+                assetInfo,
+                ual,
+            );
         }
     }
 

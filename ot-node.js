@@ -10,17 +10,17 @@ const Logger = require('./modules/logger/logger');
 const constants = require('./src/constants/constants');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
-const M1FolderStructureInitialMigration = require('./modules/migration/m1-folder-structure-initial-migration');
 const FileService = require('./src/service/file-service');
 
 class OTNode {
     constructor(config) {
         this.initializeConfiguration(config);
         this.logger = new Logger(this.config.logLevel, this.config.telemetryHub.enabled);
+        this.checkNodeVersion();
     }
 
     async start() {
-        await this.runFolderStructureInitialMigration();
+        await this.removeUpdateFile();
 
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
@@ -38,7 +38,7 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
-        await this.createProfile();
+        await this.createProfiles();
         await this.saveNetworkModulePeerIdAndPrivKey();
 
         await this.initializeControllers();
@@ -48,12 +48,16 @@ class OTNode {
         this.logger.info('Node is up and running!');
     }
 
-    async runFolderStructureInitialMigration() {
-        const m1FolderStructureInitialMigration = new M1FolderStructureInitialMigration(
-            this.logger,
-            this.config,
-        );
-        return m1FolderStructureInitialMigration.run();
+    checkNodeVersion() {
+        const nodeMajorVersion = process.versions.node.split('.')[0];
+        this.logger.warn('======================================================');
+        this.logger.warn(`Using node.js version: ${process.versions.node}`);
+        if (nodeMajorVersion < constants.MIN_NODE_VERSION) {
+            this.logger.warn(
+                `This node was tested with node.js version 16. To make sure that your node is running properly please update your node version!`,
+            );
+        }
+        this.logger.warn('======================================================');
     }
 
     initializeConfiguration(userConfig) {
@@ -67,16 +71,6 @@ class OTNode {
         if (!this.config.configFilename) {
             // set default user configuration filename
             this.config.configFilename = '.origintrail_noderc';
-        }
-
-        const fileService = new FileService({ config: this.config });
-
-        const updateFilePath = fileService.getUpdateFilePath();
-        if (fs.existsSync(updateFilePath)) {
-            this.config.otNodeUpdated = true;
-            fileService.removeFile(updateFilePath).catch((error) => {
-                this.logger.warn(`Unable to remove update file. Error: ${error}`);
-            });
         }
     }
 
@@ -133,20 +127,46 @@ class OTNode {
         }
     }
 
-    async createProfile() {
+    async createProfiles() {
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
-        if (!blockchainModuleManager.identityExists()) {
-            const networkModuleManager = this.container.resolve('networkModuleManager');
-            const peerId = networkModuleManager.getPeerId();
-            await blockchainModuleManager.deployIdentity();
-            await new Promise(resolve => setTimeout(resolve, 15000));
-            await blockchainModuleManager.createProfile(peerId);
-            if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
-                this.saveIdentityInUserConfigurationFile(blockchainModuleManager.getIdentity());
-            }
-        }
+        const createProfilesPromises = blockchainModuleManager
+            .getImplementationsNames()
+            .map(async (blockchain) => {
+                try {
+                    if (!blockchainModuleManager.identityExists(blockchain)) {
+                        const networkModuleManager = this.container.resolve('networkModuleManager');
+                        const peerId = networkModuleManager.getPeerId();
+                        await blockchainModuleManager.deployIdentity(blockchain);
+                        await blockchainModuleManager.createProfile(blockchain, peerId);
+                        if (
+                            process.env.NODE_ENV !== 'development' &&
+                            process.env.NODE_ENV !== 'test'
+                        ) {
+                            this.saveIdentityInUserConfigurationFile(
+                                blockchainModuleManager.getIdentity(blockchain),
+                                blockchain,
+                            );
+                        }
+                    }
+                    this.logger.info(
+                        `${blockchain} blockchain identity is ${blockchainModuleManager.getIdentity(
+                            blockchain,
+                        )}`,
+                    );
+                } catch (error) {
+                    this.logger.warn(
+                        `Unable to create ${blockchain} blockchain profile. Removing implementation.`,
+                    );
+                    blockchainModuleManager.removeImplementation(blockchain);
+                }
+            });
 
-        this.logger.info(`Blockchain identity is ${blockchainModuleManager.getIdentity()}`);
+        await Promise.all(createProfilesPromises);
+
+        if (!blockchainModuleManager.getImplementationsNames().length) {
+            this.logger.info(`Unable to create blockchain profiles. OT-node shutting down...`);
+            process.exit(1);
+        }
     }
 
     async saveNetworkModulePeerIdAndPrivKey() {
@@ -210,20 +230,30 @@ class OTNode {
         }
     }
 
-    saveIdentityInUserConfigurationFile(identity) {
+    saveIdentityInUserConfigurationFile(identity, blockchain) {
         const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
         const configFile = JSON.parse(fs.readFileSync(configurationFilePath));
         if (
             configFile.modules.blockchain &&
             configFile.modules.blockchain.implementation &&
-            configFile.modules.blockchain.implementation['web3-service'] &&
-            configFile.modules.blockchain.implementation['web3-service'].config
+            configFile.modules.blockchain.implementation[blockchain] &&
+            configFile.modules.blockchain.implementation[blockchain].config
         ) {
-            if (!configFile.modules.blockchain.implementation['web3-service'].config.identity) {
-                configFile.modules.blockchain.implementation['web3-service'].config.identity =
-                    identity;
+            if (!configFile.modules.blockchain.implementation[blockchain].config.identity) {
+                configFile.modules.blockchain.implementation[blockchain].config.identity = identity;
                 fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
             }
+        }
+    }
+
+    async removeUpdateFile() {
+        const fileService = new FileService({ config: this.config, logger: this.logger });
+        const updateFilePath = fileService.getUpdateFilePath();
+        if (fs.existsSync(updateFilePath)) {
+            this.config.otNodeUpdated = true;
+            await fileService.removeFile(updateFilePath).catch((error) => {
+                this.logger.warn(`Unable to remove update file. Error: ${error}`);
+            });
         }
     }
 

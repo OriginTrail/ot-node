@@ -4,14 +4,19 @@ exports.OTTELEMETRY = 'ottelemetry';
 exports.MERKLE_TREE = 'Merkle Tree';
 exports.BASIC = 'Basic';
 exports.DID = 'DID';
-exports.SCHEMA_CONTEXT = 'https://schema.org/';
+exports.SCHEMA_CONTEXT = 'http://schema.org/';
+
+/**
+ * @constant {number} MIN_NODE_VERSION
+ * - Required node.js version to run the ot-node
+ */
+exports.MIN_NODE_VERSION = 16;
 
 /**
  * @constant {number} MAX_FILE_SIZE
  * - Max file size for publish
  */
 exports.MAX_FILE_SIZE = 2621440;
-
 
 // TODO retrieve from the blockchain
 /**

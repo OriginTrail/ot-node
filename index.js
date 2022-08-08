@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 require('dotenv').config();
 const fs = require('fs-extra');
 const path = require('path');

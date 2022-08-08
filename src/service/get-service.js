@@ -1,3 +1,4 @@
+const { Mutex } = require('async-mutex');
 const OperationService = require('./operation-service');
 const {
     GET_REQUEST_STATUS,
@@ -24,6 +25,7 @@ class GetService extends OperationService {
             OPERATION_ID_STATUS.GET.GET_END,
             OPERATION_ID_STATUS.COMPLETED,
         ];
+        this.operationMutex = new Mutex();
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
@@ -40,7 +42,7 @@ class GetService extends OperationService {
         const { completedNumber, failedNumber } = keywordsStatuses[keyword];
         const numberOfResponses = completedNumber + failedNumber;
         this.logger.debug(
-            `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}`,
+            `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
         );
 
         if (completedNumber === 1) {
@@ -50,11 +52,17 @@ class GetService extends OperationService {
                 this.completedStatuses,
             );
             this.logResponsesSummary(completedNumber, failedNumber);
-        } else if (numberOfFoundNodes === failedNumber || numberOfNodesInBatch === failedNumber) {
+        } else if (
+            completedNumber < 1 &&
+            (numberOfFoundNodes === failedNumber || failedNumber % numberOfNodesInBatch === 0)
+        ) {
             if (leftoverNodes.length === 0) {
-                await this.markOperationAsFailed(
+                await this.markOperationAsCompleted(
                     operationId,
-                    'Unable to find assertion on the network!',
+                    {
+                        message: 'Unable to find assertion on the network!',
+                    },
+                    this.completedStatuses,
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);
             } else {
@@ -73,14 +81,12 @@ class GetService extends OperationService {
 
         this.logger.debug(
             `Assertion: ${assertionGraphName} for operationId: ${operationId} ${
-                nquads ? '' : 'not'
+                nquads.length ? '' : 'not'
             } found in local database.`,
         );
 
-        if (nquads) {
-            this.logger.debug(
-                `Number of n-quads retrieved from the database : ${nquads.length ?? 0}`,
-            );
+        if (nquads.length) {
+            this.logger.debug(`Number of n-quads retrieved from the database : ${nquads.length}`);
         }
 
         return nquads;

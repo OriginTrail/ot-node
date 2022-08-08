@@ -24,6 +24,7 @@ class BaseModuleManager {
                     moduleConfig.defaultImplementation &&
                     implementationName !== moduleConfig.defaultImplementation
                 ) {
+                    // eslint-disable-next-line no-continue
                     continue;
                 }
                 const implementationConfig = moduleConfig.implementation[implementationName];
@@ -76,6 +77,18 @@ class BaseModuleManager {
             return this.handlers[keys[0]];
         }
         return this.handlers[name];
+    }
+
+    getImplementationsNames() {
+        return Object.keys(this.handlers);
+    }
+
+    removeImplementation(name = null) {
+        const keys = Object.keys(this.handlers);
+        if (keys.length === 1 || !name) {
+            delete this.handlers[keys[0]];
+        }
+        delete this.handlers[name];
     }
 }
 
