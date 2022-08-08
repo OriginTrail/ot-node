@@ -21,7 +21,7 @@ class OTAutoUpdater {
     async compareVersions() {
         try {
             this.logger.debug('AutoUpdater - Comparing versions...');
-            const currentVersion = this.readAppVersion(appRootPath.path);
+            const currentVersion = await this.readAppVersion(appRootPath.path);
             const remoteVersion = await this.readRemoteVersion();
             this.logger.debug(`AutoUpdater - Current version: ${currentVersion}`);
             this.logger.debug(`AutoUpdater - Remote Version: ${remoteVersion}`);
@@ -54,7 +54,7 @@ class OTAutoUpdater {
             const currentDirectory = appRootPath.path;
             const rootPath = path.join(currentDirectory, '..');
 
-            const currentVersion = this.readAppVersion(currentDirectory);
+            const currentVersion = await this.readAppVersion(currentDirectory);
             const newVersion = await this.readRemoteVersion();
             const updateDirectory = path.join(rootPath, newVersion);
             const zipArchiveDestination = `${updateDirectory}.zip`;
@@ -118,10 +118,10 @@ class OTAutoUpdater {
     /**
      * Reads the applications version from the package.json file.
      */
-    readAppVersion(appPath) {
+    async readAppVersion(appPath) {
         const file = path.join(appPath, 'package.json');
         this.logger.debug(`AutoUpdater - Reading app version from ${file}`);
-        const appPackage = fs.readFileSync(file);
+        const appPackage = await fs.promises.readFile(file);
         return JSON.parse(appPackage).version;
     }
 
@@ -170,7 +170,7 @@ class OTAutoUpdater {
         }
     }
 
-    downloadUpdate(destination) {
+    async downloadUpdate(destination) {
         return new Promise((resolve, reject) => {
             const url = `https://${path.join(ARCHIVE_REPOSITORY_URL, this.config.branch)}.zip`;
             this.logger.debug(`AutoUpdater - Downloading ot-node .zip file from url: ${url}`);
@@ -184,7 +184,7 @@ class OTAutoUpdater {
                     });
                     fileStream.on('error', (err) => {
                         // Handle errors
-                        fs.unlinkSync(destination);
+                        await fs.promises.unlink(destination);
                         reject(err);
                     });
                 })
@@ -198,7 +198,7 @@ class OTAutoUpdater {
         });
     }
 
-    unzipFile(destination, source) {
+    async unzipFile(destination, source) {
         this.logger.debug(`AutoUpdater - Unzipping ot-node new version archive`);
         return new Promise((resolve, reject) => {
             const fileReadStream = fs
