@@ -38,7 +38,7 @@ class PublishController extends BaseController {
         );
 
         this.returnResponse(res, 202, {
-            operation_id: operationId,
+            operationId,
         });
 
         const { assertion, options } = req.body;
