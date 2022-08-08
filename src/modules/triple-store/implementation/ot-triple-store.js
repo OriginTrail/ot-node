@@ -2,6 +2,7 @@ const Engine = require('@comunica/query-sparql').QueryEngine;
 const { DataFactory } = require('rdf-data-factory');
 const { setTimeout: sleep } = require('timers/promises');
 const N3 = require('n3');
+const { fromRdf } = require('rdf-literal');
 const { SCHEMA_CONTEXT } = require('../../../constants/constants');
 const constants = require('./triple-store-constants');
 
@@ -157,7 +158,7 @@ class OtTripleStore {
                     const quad = dataFactory.quad(row.s, row.p, row.o, row.ual);
                     if (!assetResults[row.ual.value]) {
                         assetResults[row.ual.value] = {
-                            rank: row.rank.value,
+                            rank: fromRdf(row.rank),
                             assertion: [quad],
                         };
                     } else {
