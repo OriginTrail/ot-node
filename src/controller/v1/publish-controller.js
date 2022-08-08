@@ -5,12 +5,9 @@ const { OPERATION_ID_STATUS } = require('../../constants/constants');
 class PublishController extends BaseController {
     constructor(ctx) {
         super(ctx);
-        this.workerPool = ctx.workerPool;
         this.publishService = ctx.publishService;
-        this.logger = ctx.logger;
-        this.fileService = ctx.fileService;
+        this.ualService = ctx.ualService;
         this.commandExecutor = ctx.commandExecutor;
-        this.dataService = ctx.dataService;
         this.operationIdService = ctx.operationIdService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
@@ -41,7 +38,7 @@ class PublishController extends BaseController {
             operationId,
         });
 
-        const { assertion, options } = req.body;
+        const { assertion, blockchain, contract, tokenId } = req.body;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
@@ -55,11 +52,12 @@ class PublishController extends BaseController {
 
             await this.operationIdService.cacheOperationIdData(operationId, { assertion });
 
-            this.logger.info(`Received assertion with ual: ${options.ual}`);
+            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+            this.logger.info(`Received assertion with ual: ${ual}`);
 
             const commandData = {
-                method,
-                ual: options.ual,
+                ual,
                 operationId,
             };
 
