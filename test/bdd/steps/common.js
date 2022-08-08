@@ -94,6 +94,8 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
                             config: {
                                 useSsl: false,
                                 port: rpcPort,
+                                sslKeyPath: "/root/certs/privkey.pem",
+                                sslCertificatePath: "/root/certs/fullchain.pem",
                                 rateLimiter: {
                                     timeWindowSeconds: 60,
                                     maxRequests: 10
@@ -131,6 +133,16 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
                     port: rpcPort,
                     useSSL: false,
                     timeout: 25,
+                    communicationType: 'http',
+                    loglevel: 'trace',
+                    blockchainConfig: {
+                        ganache: {
+                            rpc: "http://localhost:7545",
+                            hubContract: this.state.localBlockchain.uaiRegistryContractAddress(),
+                            wallet: wallet.address,
+                            privateKey: wallet.privateKey
+                        },
+                    }
                 });
                 this.state.nodes[i] = {
                     client,
@@ -151,13 +163,14 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 120000 }, function (nodeCount, 
     expect(nodeCount).to.be.equal(1); // Currently not supported more.
     console.log('Initializing bootstrap node');
     const wallets = this.state.localBlockchain.getWallets();
+    const wallet = wallets[0]
     const nodeName = 'origintrail-test-bootstrap';
     const bootstrapNodeConfiguration = {
         modules: {
             blockchain: getBlockchainConfiguration(
               this.state.localBlockchain,
-              wallets[0].privateKey,
-              wallets[0].address,
+              wallet.privateKey,
+              wallet.address,
               wallets[30].address
             )[0],
             network: {
@@ -206,6 +219,8 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 120000 }, function (nodeCount, 
                         config: {
                             useSsl: false,
                             port: 8900,
+                            sslKeyPath: "/root/certs/privkey.pem",
+                            sslCertificatePath: "/root/certs/fullchain.pem",
                             rateLimiter: {
                                 timeWindowSeconds: 60,
                                 maxRequests: 10
@@ -246,6 +261,16 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 120000 }, function (nodeCount, 
                 port: 8900,
                 useSSL: false,
                 timeout: 25,
+                communicationType: 'http',
+                loglevel: 'trace',
+                blockchainConfig: {
+                    ganache: {
+                        rpc: "http://localhost:7545",
+                        hubContract: this.state.localBlockchain.uaiRegistryContractAddress(),
+                        wallet: wallet.address,
+                        privateKey: wallet.privateKey
+                    },
+                }
             });
             this.state.bootstraps.push({
                 client,

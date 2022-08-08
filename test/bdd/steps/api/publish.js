@@ -13,11 +13,11 @@ When(
             !!assertions[assertionName],
             `Assertion with name: ${assertionName} not found!`,
         ).to.be.equal(true);
-
+        const publicKey = this.state.nodes[node-1].configuration.modules.blockchain.implementation.ganache.config.publicKey;
         const parsedKeywords = utilities.unpackRawTableToArray(keywords);
         const assertion = assertions[assertionName];
         const result = await this.state.nodes[node - 1].client
-            .publish(assertion, parsedKeywords)
+            .publish(assertion, publicKey)
             .catch((error) => {
                 assert.fail(`Error while trying to publish assertion. ${error}`);
             });
