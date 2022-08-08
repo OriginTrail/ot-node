@@ -45,8 +45,8 @@ class ExpressHttpClient {
         if (this.config.useSsl) {
             this.httpsServer = https.createServer(
                 {
-                    key: fs.readFileSync(this.config.sslKeyPath),
-                    cert: fs.readFileSync(this.config.sslCertificatePath),
+                    key: await fs.promises.readFile(this.config.sslKeyPath),
+                    cert: await fs.promises.readFile(this.config.sslCertificatePath),
                 },
                 this.app,
             );
