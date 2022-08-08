@@ -513,25 +513,26 @@ touch $CONFIG_DIR/.origintrail_noderc
 jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "ipWhitelist": ["::1", "127.0.0.1"], "modules": {"tripleStore":{"defaultImplementation": $tripleStore}}}' > $CONFIG_DIR/.origintrail_noderc
 
 
-blockchains=("otp" "polygon")
-for ((i = 0; i < ${#blockchains[@]}; ++i));
-do
-    read -p "Do you want to connect your node to blockchain: ${blockchains[$i]} ? [Y]Yes [N]No [E]Exit: " choice
-	case "$choice" in
-        [Yy]* )
+#blockchains=("otp" "polygon")
+#for ((i = 0; i < ${#blockchains[@]}; ++i));
+#do
+ #   read -p "Do you want to connect your node to blockchain: ${blockchains[$i]} ? [Y]Yes [N]No [E]Exit: " choice
+#	case "$choice" in
+ #       [Yy]* )
+ 
             read -p "Enter the operational wallet address: " NODE_WALLET
             echo "Node wallet: $NODE_WALLET"
 
             read -p "Enter the private key: " NODE_PRIVATE_KEY
             echo "Node private key: $NODE_PRIVATE_KEY"
 
-            jq --arg blockchain "${blockchains[$i]}" --arg wallet "$NODE_WALLET" --arg privateKey "$NODE_PRIVATE_KEY" '.modules.blockchain.implementation[$blockchain].config |= {"publicKey": $wallet, "privateKey": $privateKey} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
+            jq --arg blockchain "otp" --arg wallet "$NODE_WALLET" --arg privateKey "$NODE_PRIVATE_KEY" '.modules.blockchain.implementation[$blockchain].config |= {"publicKey": $wallet, "privateKey": $privateKey} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
             mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc ;;
-        [Nn]* ) ;;
-        [Ee]* ) echo "Installer stopped by user"; exit;;
-        * ) ((--i));echo "Please make a valid choice and try again.";;
-    esac
-done
+  #      [Nn]* ) ;;
+   #     [Ee]* ) echo "Installer stopped by user"; exit;;
+    #    * ) ((--i));echo "Please make a valid choice and try again.";;
+    #esac
+#done
 
 echo -n "Copying otnode service file: "
 
