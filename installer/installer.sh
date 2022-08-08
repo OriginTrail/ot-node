@@ -370,6 +370,19 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
+echo -n "Adding sql repository password to .env: "
+
+read -p "Enter sql repository password: " password
+OUTPUT=$(echo "REPOSITORY_PASSWORD=$password" > .env)
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error adding the env variable."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
 echo -n "Creating a local operational database: "
 
 mysql -u root -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;"
@@ -380,7 +393,7 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';"
+mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$password';"
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error updating mysql.user set plugin (Step 2 of 2)."
@@ -477,20 +490,7 @@ fi
 
 echo -n "Adding NODE_ENV=testnet to .env: "
 
-OUTPUT=$(echo "NODE_ENV=testnet" > .env)
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error adding the env variable."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
-echo -n "Adding sql repository password to .env: "
-
-read -p "Enter sql repository password: " password
-OUTPUT=$(echo "REPOSITORY_PASSWORD=$password" > .env)
+OUTPUT=$(echo "NODE_ENV=testnet" >> .env)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error adding the env variable."
@@ -527,7 +527,8 @@ jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "ipWhite
             echo "Node private key: $NODE_PRIVATE_KEY"
 
             jq --arg blockchain "otp" --arg wallet "$NODE_WALLET" --arg privateKey "$NODE_PRIVATE_KEY" '.modules.blockchain.implementation[$blockchain].config |= {"publicKey": $wallet, "privateKey": $privateKey} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
-            mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc ;;
+            mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc 
+            # ;;
   #      [Nn]* ) ;;
    #     [Ee]* ) echo "Installer stopped by user"; exit;;
     #    * ) ((--i));echo "Please make a valid choice and try again.";;
