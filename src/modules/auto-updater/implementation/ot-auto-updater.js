@@ -170,7 +170,7 @@ class OTAutoUpdater {
         }
     }
 
-    downloadUpdate(destination) {
+    async downloadUpdate(destination) {
         return new Promise((resolve, reject) => {
             const url = `https://${path.join(ARCHIVE_REPOSITORY_URL, this.config.branch)}.zip`;
             this.logger.debug(`AutoUpdater - Downloading ot-node .zip file from url: ${url}`);
@@ -184,7 +184,7 @@ class OTAutoUpdater {
                     });
                     fileStream.on('error', (err) => {
                         // Handle errors
-                        fs.unlinkSync(destination);
+                        await fs.promises.unlink(destination);
                         reject(err);
                     });
                 })
@@ -198,7 +198,7 @@ class OTAutoUpdater {
         });
     }
 
-    unzipFile(destination, source) {
+    async unzipFile(destination, source) {
         this.logger.debug(`AutoUpdater - Unzipping ot-node new version archive`);
         return new Promise((resolve, reject) => {
             const fileReadStream = fs
