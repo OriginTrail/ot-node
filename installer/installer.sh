@@ -373,7 +373,7 @@ fi
 echo -n "Adding sql repository password to .env: "
 
 read -p "Enter sql repository password: " password
-OUTPUT=$(echo "REPOSITORY_PASSWORD=$password" > .env)
+OUTPUT=$(echo "REPOSITORY_PASSWORD=$password" > $OTNODE_DIR/.env)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error adding the env variable."
@@ -490,7 +490,7 @@ fi
 
 echo -n "Adding NODE_ENV=testnet to .env: "
 
-OUTPUT=$(echo "NODE_ENV=testnet" >> .env)
+OUTPUT=$(echo "NODE_ENV=testnet" >> $OTNODE_DIR/.env)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error adding the env variable."
