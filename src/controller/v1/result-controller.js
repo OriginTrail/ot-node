@@ -1,4 +1,4 @@
-const { OPERATION_ID_STATUS, ERROR_TYPE } = require('../../constants/constants');
+const { OPERATION_ID_STATUS } = require('../../constants/constants');
 const BaseController = require('./base-controller');
 
 const availableOperations = ['publish', 'get', 'assertions:search', 'entities:search'];

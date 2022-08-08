@@ -10,7 +10,6 @@ const Logger = require('./modules/logger/logger');
 const constants = require('./src/constants/constants');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
-const M1FolderStructureInitialMigration = require('./modules/migration/m1-folder-structure-initial-migration');
 const FileService = require('./src/service/file-service');
 
 class OTNode {
@@ -22,7 +21,6 @@ class OTNode {
 
     async start() {
         await this.removeUpdateFile();
-        await this.runFolderStructureInitialMigration();
 
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
@@ -60,14 +58,6 @@ class OTNode {
             );
         }
         this.logger.warn('======================================================');
-    }
-
-    async runFolderStructureInitialMigration() {
-        const m1FolderStructureInitialMigration = new M1FolderStructureInitialMigration(
-            this.logger,
-            this.config,
-        );
-        return m1FolderStructureInitialMigration.run();
     }
 
     initializeConfiguration(userConfig) {

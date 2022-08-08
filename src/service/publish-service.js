@@ -34,8 +34,6 @@ class PublishService extends OperationService {
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
         const {
             operationId,
-            ual,
-            assertionId,
             numberOfFoundNodes,
             leftoverNodes,
             numberOfNodesInBatch,
@@ -55,7 +53,7 @@ class PublishService extends OperationService {
             `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
         );
 
-        if (completedNumber == this.config.minimumReplicationFactor) {
+        if (completedNumber === this.config.minimumReplicationFactor) {
             let allCompleted = true;
             for (const key in keywordsStatuses) {
                 if (keywordsStatuses[key].completedNumber < this.config.minimumReplicationFactor) {
@@ -81,7 +79,7 @@ class PublishService extends OperationService {
         }
     }
 
-    async getAssertion(ual, operationId) {
+    async getAssertion(ual) {
         this.logger.info(`Getting assertion for ual: ${ual}`);
 
         const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);

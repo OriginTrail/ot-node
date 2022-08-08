@@ -17,6 +17,7 @@ class OtTripleStore {
                     constants.TRIPLE_STORE_CONNECT_MAX_RETRIES
                 }. Retrying in ${constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`,
             );
+            /* eslint-disable no-await-in-loop */
             await setTimeout(constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000);
             ready = await this.healthCheck();
         }
@@ -53,7 +54,7 @@ class OtTripleStore {
         };
     }
 
-    initializeSparqlEndpoints(url, repository) {
+    initializeSparqlEndpoints() {
         // overridden by subclasses
         return true;
     }

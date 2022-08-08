@@ -2,7 +2,6 @@ const BaseController = require('./base-controller');
 const {
     OPERATION_ID_STATUS,
     NETWORK_PROTOCOLS,
-    ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
 } = require('../../constants/constants');
 
@@ -128,9 +127,9 @@ class SearchController extends BaseController {
         }
     }
 
-    handleHttpApiQueryRequest(req, res) {}
+    handleHttpApiQueryRequest() {}
 
-    handleHttpApiProofsRequest(req, res) {}
+    handleHttpApiProofsRequest() {}
 
     async handleNetworkSearchAssertionsRequest(message, remotePeerId) {
         let commandName;

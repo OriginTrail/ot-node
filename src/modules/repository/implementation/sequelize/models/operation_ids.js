@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         {},
     );
-    operation_ids.associate = (models) => {
+    operation_ids.associate = () => {
         // associations can be defined here
     };
     return operation_ids;

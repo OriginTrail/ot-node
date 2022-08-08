@@ -96,7 +96,6 @@ const wallets = accountPrivateKeys.map((privateKey) => ({
  */
 class LocalBlockchain {
     constructor(options = {}) {
-        console.log('Initializing local bockchain');
         this.logger = options.logger || console;
         this.port = options.port || 7545;
         this.name = options.name || 'ganache';
@@ -114,7 +113,7 @@ class LocalBlockchain {
 
     async initialize() {
         return new Promise((accept, reject) => {
-            this.server.listen(this.port, async (err, blockchain) => {
+            this.server.listen(this.port, async (err) => {
                 if (err) {
                     reject(err);
                     return;

@@ -163,7 +163,7 @@ class Libp2pService {
         return rec.serialize();
     }
 
-    async handleMessage(protocol, handler, options) {
+    async handleMessage(protocol, handler) {
         this.logger.info(`Enabling network protocol: ${protocol}`);
 
         this.node.handle(protocol, async (handlerProps) => {
@@ -400,7 +400,7 @@ class Libp2pService {
     }
 
     async readMessageSink(source, isMessageValid, remotePeerId) {
-        let message = {};
+        const message = {};
         let stringifiedData = '';
         // we expect first buffer to be header
         const stringifiedHeader = (await source.next()).value;
@@ -447,12 +447,12 @@ class Libp2pService {
         return this.sessionExists(remotePeerId, header.operationId, header.keywordUuid);
     }
 
-    sessionExists(remotePeerId, operationId, keywordUuid) {
+    sessionExists() {
         return true;
         // return this.sessions[remotePeerId._idB58String] && this.sessions[remotePeerId._idB58String][operationId];
     }
 
-    async isResponseValid(header, remotePeerId) {
+    async isResponseValid() {
         return true;
         // return (
         //     header.operationId &&
@@ -492,9 +492,9 @@ class Libp2pService {
                 );
 
                 return true;
-            } else {
-                delete this.blackList[remotePeerId];
             }
+                delete this.blackList[remotePeerId];
+
         }
 
         if (await this.rateLimiter.spamDetection.limit(remotePeerId)) {
@@ -504,7 +504,7 @@ class Libp2pService {
             );
 
             return true;
-        } else if (await this.rateLimiter.basicRateLimiter.limit(remotePeerId)) {
+        } if (await this.rateLimiter.basicRateLimiter.limit(remotePeerId)) {
             this.logger.debug(
                 `Blocking request from ${remotePeerId}. Max number of requests exceeded.`,
             );

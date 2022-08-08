@@ -66,8 +66,7 @@ class DkgClientHelper {
                 operation_id,
                 operation,
             })
-            .catch((error) => {
-                console.log(`Error getting result. ${error}`);
+            .catch(() => {
             });
     }
 }

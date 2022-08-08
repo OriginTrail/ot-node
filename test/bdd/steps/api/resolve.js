@@ -1,4 +1,4 @@
-const { When, Then, Given } = require('@cucumber/cucumber');
+const { When, Given } = require('@cucumber/cucumber');
 const { expect, assert } = require('chai');
 const { setTimeout } = require('timers/promises');
 const sortedStringify = require('json-stable-stringify');
@@ -6,7 +6,7 @@ const sortedStringify = require('json-stable-stringify');
 When(
     /^I call resolve on node (\d+) for last published assertion/,
     { timeout: 120000 },
-    async function (node) {
+    async function resolveCall (node) {
         this.logger.log('I call resolve route successfully');
         expect(
             !!this.state.lastPublishData,
@@ -28,7 +28,7 @@ When(
     },
 );
 
-Given('I wait for last resolve to finalize', { timeout: 120000 }, async function () {
+Given('I wait for last resolve to finalize', { timeout: 120000 }, async function resolveFinalizeCall () {
     this.logger.log('I wait for last resolve to finalize');
     expect(
         !!this.state.lastResolveData,
@@ -66,7 +66,7 @@ Given('I wait for last resolve to finalize', { timeout: 120000 }, async function
 Given(
     /Last resolve finished with status: ([COMPLETED|FAILED]+)$/,
     { timeout: 120000 },
-    async function (status) {
+    async function lastResolveFinishedCall (status) {
         this.logger.log(`Last resolve finished with status: ${status}`);
         expect(
             !!this.state.lastResolveData,
@@ -84,7 +84,7 @@ Given(
     },
 );
 
-Given(/Last resolve returned valid result$/, { timeout: 120000 }, async function () {
+Given(/Last resolve returned valid result$/, { timeout: 120000 }, async function resolveCall () {
     this.logger.log('Last resolve returned valid result');
     expect(
         !!this.state.lastResolveData,
@@ -100,7 +100,7 @@ Given(/Last resolve returned valid result$/, { timeout: 120000 }, async function
         'Resolve result data expected to be array',
     ).to.be.equal(true);
     // todo only one element in array should be returned
-    //expect(resolveData.result.data.length, 'Returned data array length').to.be.equal(1);
+    // expect(resolveData.result.data.length, 'Returned data array length').to.be.equal(1);
 
     const resolvedAssertion = resolveData.result.data[0].assertion.data;
     const publishedAssertion = this.state.lastPublishData.assertion;

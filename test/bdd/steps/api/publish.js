@@ -1,4 +1,4 @@
-const { When, Then, Given } = require('@cucumber/cucumber');
+const { When, Given } = require('@cucumber/cucumber');
 const { expect, assert } = require('chai');
 const { setTimeout } = require('timers/promises');
 const assertions = require('./datasets/assertions.json');
@@ -7,7 +7,7 @@ const utilities = require('../../../utilities/utilities');
 When(
     /^I call publish on node (\d+) with ([^"]*) with keywords:*$/,
     { timeout: 120000 },
-    async function (node, assertionName, keywords) {
+    async function publish (node, assertionName, keywords) {
         this.logger.log('I call publish route successfully');
         expect(
             !!assertions[assertionName],
@@ -32,7 +32,7 @@ When(
     },
 );
 
-Given('I wait for last publish to finalize', { timeout: 120000 }, async function () {
+Given('I wait for last publish to finalize', { timeout: 120000 }, async function publishFinalize () {
     this.logger.log('I wait for last publish to finalize');
     expect(
         !!this.state.lastPublishData,
@@ -70,7 +70,7 @@ Given('I wait for last publish to finalize', { timeout: 120000 }, async function
 Given(
     /Last publish finished with status: ([COMPLETED|FAILED]+)$/,
     { timeout: 120000 },
-    async function (status) {
+    async function lastPublishFinished (status) {
         this.logger.log(`Last publish finished with status: ${status}`);
         expect(
             !!this.state.lastPublishData,
