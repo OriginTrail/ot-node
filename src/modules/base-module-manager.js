@@ -24,6 +24,7 @@ class BaseModuleManager {
                     moduleConfig.defaultImplementation &&
                     implementationName !== moduleConfig.defaultImplementation
                 ) {
+                    // eslint-disable-next-line no-continue
                     continue;
                 }
                 const implementationConfig = moduleConfig.implementation[implementationName];

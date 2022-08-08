@@ -1,6 +1,5 @@
 module.exports = {
-  up: (queryInterface, Sequelize) => {
-    return Promise.all([queryInterface.addColumn(
+  up: (queryInterface, Sequelize) => Promise.all([queryInterface.addColumn(
       'assertions',
       'triple_store',
       {
@@ -15,15 +14,14 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       }
-    )])},
+    )]),
 
-  down: (queryInterface, Sequelize) => {
-    return Promise.all([queryInterface.removeColumn(
+  down: (queryInterface) => Promise.all([queryInterface.removeColumn(
       'assertions',
       'triple_store',
     ),
     queryInterface.removeColumn(
       'assertions',
       'status',
-    )])}
+    )])
 };

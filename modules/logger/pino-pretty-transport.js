@@ -1,4 +1,5 @@
 // pino-pretty-transport.js
+// eslint-disable-next-line global-require
 module.exports = opts => require('pino-pretty')({
     ...opts,
     translateTime: 'yyyy-mm-dd HH:MM:ss',

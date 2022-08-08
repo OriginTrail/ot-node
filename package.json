@@ -56,9 +56,10 @@
         "solc": "0.7.6"
     },
     "dependencies": {
-        "assertion-tools": "^1.0.3",
         "@comunica/query-sparql": "^2.2.1",
         "app-root-path": "^3.0.0",
+        "assertion-tools": "^1.0.3",
+        "async": "^3.2.4",
         "async-mutex": "^0.3.2",
         "awilix": "^5.0.1",
         "axios": "^0.24.0",

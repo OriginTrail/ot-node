@@ -35,6 +35,7 @@ class Logger {
                 level: logLevel,
             });
         } catch (e) {
+            // eslint-disable-next-line no-console
             console.error(`Failed to create logger. Error message: ${e.message}`);
         }
     }
