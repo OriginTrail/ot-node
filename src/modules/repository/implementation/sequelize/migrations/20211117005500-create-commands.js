@@ -55,7 +55,7 @@ module.exports = {
                 allowNull: true,
             },
             transactional: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.BOOLEAN,
                 allowNull: false,
             },
             created_at: {

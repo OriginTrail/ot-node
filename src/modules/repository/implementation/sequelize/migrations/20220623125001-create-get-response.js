@@ -1,19 +1,26 @@
 module.exports = {
     up: async (queryInterface, Sequelize) => {
-        await queryInterface.createTable('assertions', {
-            hash: {
-                type: Sequelize.STRING,
+        await queryInterface.createTable('get_response', {
+            id: {
+                type: Sequelize.INTEGER,
                 primaryKey: true,
+                autoIncrement: true,
+            },
+            operation_id: {
+                type: Sequelize.INTEGER,
+                references: { model: 'resolve', key: 'id' },
+            },
+            keyword: {
                 allowNull: false,
-            },
-            owner: {
                 type: Sequelize.STRING,
             },
-            signature: {
+            status: {
+                allowNull: false,
+                type: Sequelize.STRING,
+            },
+            message: {
+                allowNull: true,
                 type: Sequelize.TEXT,
-            },
-            topics: {
-                type: Sequelize.STRING,
             },
             created_at: {
                 allowNull: false,
@@ -28,6 +35,6 @@ module.exports = {
         });
     },
     down: async (queryInterface) => {
-        await queryInterface.dropTable('assertions');
+        await queryInterface.dropTable('get_response');
     },
 };
