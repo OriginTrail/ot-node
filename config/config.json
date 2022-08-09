@@ -104,12 +104,23 @@
             "blockchain": {
                 "enabled": true,
                 "implementation": {
+                    "ganache": {
+                        "package": "./blockchain/implementation/ganache/ganache-service",
+                        "config": {
+                            "blockchainTitle": "ganache",
+                            "networkId": "ganache::testnet",
+                            "hubContractAddress": "0xF21dD87cFC5cF5D073398833AFe5EFC543b78a00",
+                            "rpcEndpoints": ["http://localhost:7545"],
+                            "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                        }
+                    },
                     "otp": {
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
                         "config": {
                             "networkId": "otp::testnet",
                             "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
-                            "rpcEndpoints": ["wss://parachain-tempnet-01.origin-trail.network"]
+                            "rpcEndpoints": ["wss://parachain-tempnet-01.origin-trail.network"],
+                            "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
                         }
                     },
                     "polygon": {
@@ -140,14 +151,12 @@
             "enabled": false,
             "packages": ["ot-telemetry-collector"],
             "url": ""
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
-            "ipWhitelist": [
-                "::1",
-                "127.0.0.1"
-            ],
+            "ipWhitelist": ["::1", "127.0.0.1"],
             "publicOperations": []
         }
     },
@@ -192,9 +201,10 @@
             },
             "blockchain": {
                 "enabled": true,
+                "defaultImplementation": "ganache",
                 "implementation": {
-                    "web3-service": {
-                        "package": "./blockchain/implementation/web3-service",
+                    "ganache": {
+                        "package": "./blockchain/implementation/ganache/ganache-service",
                         "config": {
                             "blockchainTitle": "ganache",
                             "networkId": "ganache::testnet",
@@ -254,10 +264,7 @@
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
-            "ipWhitelist": [
-                "::1",
-                "127.0.0.1"
-            ],
+            "ipWhitelist": ["::1", "127.0.0.1"],
             "publicOperations": []
         }
     },
@@ -407,14 +414,12 @@
             "enabled": true,
             "packages": ["ot-telemetry-collector"],
             "url": "https://polaris.delta.origin-trail.network/metrics/"
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
-            "ipWhitelist": [
-                "::1",
-                "127.0.0.1"
-            ],
+            "ipWhitelist": ["::1", "127.0.0.1"],
             "publicOperations": []
         }
     },
@@ -542,14 +547,12 @@
             "enabled": false,
             "packages": ["ot-telemetry-collector"],
             "url": ""
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
-            "ipWhitelist": [
-                "::1",
-                "127.0.0.1"
-            ],
+            "ipWhitelist": ["::1", "127.0.0.1"],
             "publicOperations": []
         }
     }
