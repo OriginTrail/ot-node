@@ -24,7 +24,7 @@ class PublishController extends BaseController {
         return this.handleHttpApiPublishMethod(req, res, PUBLISH_METHOD.UPDATE);
     }
 
-    async handleHttpApiPublishMethod(req, res, method) {
+    async handleHttpApiPublishMethod(req, res) {
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_START,
         );
