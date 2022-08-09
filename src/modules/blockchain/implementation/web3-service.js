@@ -29,6 +29,7 @@ class Web3Service {
 
             try {
                 this.web3 = new Web3(this.config.rpcEndpoints[this.rpcNumber]);
+                // eslint-disable-next-line no-await-in-loop
                 isRpcConnected = await this.web3.eth.net.isListening();
             } catch (e) {
                 this.logger.warn(
@@ -198,8 +199,10 @@ class Web3Service {
         let result;
         while (!result) {
             try {
+                // eslint-disable-next-line no-await-in-loop
                 result = await contractInstance.methods[functionName](...args).call();
             } catch (error) {
+                // eslint-disable-next-line no-await-in-loop
                 await this.handleError(error, functionName);
             }
         }
@@ -211,6 +214,7 @@ class Web3Service {
         let result;
         while (!result) {
             try {
+                /* eslint-disable no-await-in-loop */
                 const gasPrice = await this.getGasPrice();
 
                 const gasLimit = await contractInstance.methods[functionName](...args).estimateGas({

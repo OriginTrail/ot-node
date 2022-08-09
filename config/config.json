@@ -140,6 +140,15 @@
             "enabled": false,
             "packages": ["ot-telemetry-collector"],
             "url": ""
+        "auth": {
+            "ipBasedAuthEnabled": true,
+            "tokenBasedAuthEnabled": false,
+            "loggingEnabled": true,
+            "ipWhitelist": [
+                "::1",
+                "127.0.0.1"
+            ],
+            "publicOperations": []
         }
     },
     "test": {
@@ -240,6 +249,16 @@
             "enabled": false,
             "packages": ["ot-telemetry-collector"],
             "url": ""
+        },
+        "auth": {
+            "ipBasedAuthEnabled": true,
+            "tokenBasedAuthEnabled": false,
+            "loggingEnabled": true,
+            "ipWhitelist": [
+                "::1",
+                "127.0.0.1"
+            ],
+            "publicOperations": []
         }
     },
     "testnet": {
@@ -388,6 +407,15 @@
             "enabled": true,
             "packages": ["ot-telemetry-collector"],
             "url": "https://polaris.delta.origin-trail.network/metrics/"
+        "auth": {
+            "ipBasedAuthEnabled": true,
+            "tokenBasedAuthEnabled": false,
+            "loggingEnabled": true,
+            "ipWhitelist": [
+                "::1",
+                "127.0.0.1"
+            ],
+            "publicOperations": []
         }
     },
     "mainnet": {
@@ -514,6 +542,15 @@
             "enabled": false,
             "packages": ["ot-telemetry-collector"],
             "url": ""
+        "auth": {
+            "ipBasedAuthEnabled": true,
+            "tokenBasedAuthEnabled": false,
+            "loggingEnabled": true,
+            "ipWhitelist": [
+                "::1",
+                "127.0.0.1"
+            ],
+            "publicOperations": []
         }
     }
 }

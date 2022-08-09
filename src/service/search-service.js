@@ -9,7 +9,7 @@ class SearchService {
         this.commandExecutor = ctx.commandExecutor;
     }
 
-    async processSearchResponse(command, responseData, status, errorMessage = null) {
+    async processSearchResponse(command, responseData) {
         const { operationId } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(

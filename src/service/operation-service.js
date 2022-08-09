@@ -68,9 +68,11 @@ class OperationService {
 
         await this.operationIdService.cacheOperationIdData(operationId, responseData);
 
+        const updatePromises = [];
         for (const status of endStatuses) {
-            await this.operationIdService.updateOperationIdStatus(operationId, status);
+            updatePromises.push(this.operationIdService.updateOperationIdStatus(operationId, status))
         }
+        await Promise.all(updatePromises);
     }
 
     async markOperationAsFailed(operationId, message) {

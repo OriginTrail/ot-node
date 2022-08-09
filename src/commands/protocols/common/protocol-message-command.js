@@ -68,15 +68,15 @@ class ProtocolMessageCommand extends Command {
         }
     }
 
-    async handleAck(command, responseData) {
+    async handleAck(command) {
         return this.continueSequence(command.data, command.sequence);
     }
 
-    async handleBusy(command, responseData) {
+    async handleBusy() {
         return Command.retry();
     }
 
-    async handleNack(command, responseData) {
+    async handleNack(command) {
         await this.markResponseAsFailed(
             command,
             `Received NACK response from node during ${command.name}`,

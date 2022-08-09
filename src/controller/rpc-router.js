@@ -1,4 +1,4 @@
-const constants = require('../../src/constants/constants');
+const constants = require("../constants/constants");
 
 class RpcRouter {
     constructor(ctx) {

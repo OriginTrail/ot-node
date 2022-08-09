@@ -1,6 +1,5 @@
 const axios = require('axios');
 const Command = require('../command');
-const constants = require('../../constants/constants');
 const pjson = require('../../../package.json');
 
 class SendTelemetryCommand extends Command {
