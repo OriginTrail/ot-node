@@ -1,10 +1,10 @@
 const pjson = require('../../../package.json');
+const BaseController = require('./base-controller');
 
-class InfoController {
+class InfoController extends BaseController {
     handleHttpApiInfoRequest(req, res) {
         const { version } = pjson;
-
-        res.status(200).send({
+        this.returnResponse(res, 200, {
             version,
         });
     }

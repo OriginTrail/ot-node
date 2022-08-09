@@ -9,7 +9,8 @@ class WorkerPool {
 
     offload(fn, args) {
         return new Promise((accept, reject) => {
-            this.pool.exec(fn, args)
+            this.pool
+                .exec(fn, args)
                 .then((result) => {
                     accept(result);
                 })

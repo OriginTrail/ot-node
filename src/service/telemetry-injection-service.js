@@ -1,12 +1,15 @@
 class TelemetryInjectionService {
     constructor(ctx) {
         this.logger = ctx.logger;
+        this.config = ctx.config;
         this.eventEmitter = ctx.eventEmitter;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
     initialize() {
-        this.listenOnEvents();
+        if (this.config.telemetry.enabled) {
+            this.listenOnEvents();
+        }
     }
 
     listenOnEvents() {

@@ -132,13 +132,12 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "minimumReplicationFactor": 5,
         "publishFindNodesCount": 20,
-        "signalingServerUrl": null,
         "appDataPath": "data",
         "logLevel": "info",
-        "telemetryHub": {
-            "enabled": false,
-            "packages": ["ot-telemetry-collector"],
-            "url": ""
+        "telemetry": {
+            "enabled": true,
+            "sendTelemetryData": false,
+            "signalingServerUrl": "null"
         },
         "auth": {
             "ipBasedAuthEnabled": true,
@@ -239,12 +238,11 @@
         "minimumReplicationFactor": 5,
         "publishFindNodesCount": 20,
         "appDataPath": "data",
-        "signalingServerUrl": null,
         "logLevel": "trace",
-        "telemetryHub": {
-            "enabled": false,
-            "packages": ["ot-telemetry-collector"],
-            "url": ""
+        "telemetry": {
+            "enabled": true,
+            "sendTelemetryData": false,
+            "signalingServerUrl": "null"
         },
         "auth": {
             "ipBasedAuthEnabled": true,
@@ -326,7 +324,10 @@
                         "config": {
                             "networkId": "parachain::testnet",
                             "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
-                            "rpcEndpoints": ["wss://parachain-tempnet-01.origin-trail.network"]
+                            "rpcEndpoints": [
+                                "wss://parachain-tempnet-01.origin-trail.network"
+                            ],
+                            "managementKey": "0xe1EEB4f09809C6c8664c0b1e3B26211d139076fF"
                         }
                     },
                     "polygon": {
@@ -390,13 +391,12 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "minimumReplicationFactor": 5,
         "publishFindNodesCount": 20,
-        "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "appDataPath": "data",
         "logLevel": "trace",
-        "telemetryHub": {
+        "telemetry": {
             "enabled": true,
-            "packages": ["ot-telemetry-collector"],
-            "url": "https://polaris.delta.origin-trail.network/metrics/"
+            "sendTelemetryData": true,
+            "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal"
         },
         "auth": {
             "ipBasedAuthEnabled": true,
@@ -525,10 +525,10 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
-        "telemetryHub": {
+        "telemetry": {
             "enabled": false,
-            "packages": ["ot-telemetry-collector"],
-            "url": ""
+            "sendTelemetryData": false,
+            "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal"
         },
         "auth": {
             "ipBasedAuthEnabled": true,
