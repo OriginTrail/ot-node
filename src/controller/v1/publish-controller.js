@@ -103,11 +103,10 @@ class PublishController extends BaseController {
                 break;
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
                 // eslint-disable-next-line no-case-declarations
-                const { assertionId : cachedAssertionId } = await this.operationIdService.getCachedOperationIdData(
-                    operationId,
-                );
+                const { assertionId: cachedAssertionId } =
+                    await this.operationIdService.getCachedOperationIdData(operationId);
                 await this.operationIdService.cacheOperationIdData(operationId, {
-                    cachedAssertionId,
+                    assertionId: cachedAssertionId,
                     assertion: message.data.assertion,
                 });
                 command.name = 'handleStoreRequestCommand';

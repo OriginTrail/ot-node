@@ -68,11 +68,10 @@ class OperationService {
 
         await this.operationIdService.cacheOperationIdData(operationId, responseData);
 
-        const updatePromises = [];
         for (const status of endStatuses) {
-            updatePromises.push(this.operationIdService.updateOperationIdStatus(operationId, status))
+            // eslint-disable-next-line no-await-in-loop
+            await this.operationIdService.updateOperationIdStatus(operationId, status);
         }
-        await Promise.all(updatePromises);
     }
 
     async markOperationAsFailed(operationId, message) {

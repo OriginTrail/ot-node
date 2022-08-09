@@ -146,7 +146,6 @@
         "signalingServerUrl": null,
         "appDataPath": "data",
         "logLevel": "info",
-        "ipWhitelist": ["::1", "127.0.0.1"],
         "telemetryHub": {
             "enabled": false,
             "packages": ["ot-telemetry-collector"],
@@ -254,7 +253,6 @@
         "appDataPath": "data",
         "signalingServerUrl": null,
         "logLevel": "trace",
-        "ipWhitelist": ["::1", "127.0.0.1"],
         "telemetryHub": {
             "enabled": false,
             "packages": ["ot-telemetry-collector"],
@@ -340,8 +338,7 @@
                         "config": {
                             "networkId": "parachain::testnet",
                             "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
-                            "rpcEndpoints": ["wss://parachain-tempnet-01.origin-trail.network"],
-                            "managementKey": "0xe1EEB4f09809C6c8664c0b1e3B26211d139076fF"
+                            "rpcEndpoints": ["wss://parachain-tempnet-01.origin-trail.network"]
                         }
                     },
                     "polygon": {
@@ -354,8 +351,7 @@
                                 "https://matic-mumbai.chainstacklabs.com",
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
-                            ],
-                            "managementKey": "0xe1EEB4f09809C6c8664c0b1e3B26211d139076fF"
+                            ]
                         }
                     }
                 }
@@ -409,7 +405,6 @@
         "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "appDataPath": "data",
         "logLevel": "trace",
-        "ipWhitelist": ["::1", "127.0.0.1"],
         "telemetryHub": {
             "enabled": true,
             "packages": ["ot-telemetry-collector"],
@@ -542,7 +537,6 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
-        "ipWhitelist": ["::1", "127.0.0.1"],
         "telemetryHub": {
             "enabled": false,
             "packages": ["ot-telemetry-collector"],
