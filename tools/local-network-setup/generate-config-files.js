@@ -6,8 +6,8 @@ const keys = require('./keys.json');
 
 const numberOfNodes = process.argv.length === 3 ? parseInt(process.argv[2], 10) : 4;
 
-const templatePath = './tools/local-network-setup/.dh_origintrail_noderc';
-const bootstrapTemplatePath = './tools/local-network-setup/.bootstrap_origintrail_noderc';
+const templatePath = '.dh_origintrail_noderc';
+const bootstrapTemplatePath = '.bootstrap_origintrail_noderc';
 
 const template = JSON.parse(fs.readFileSync(templatePath));
 const bootstrapTemplate = JSON.parse(fs.readFileSync(bootstrapTemplatePath));
@@ -43,7 +43,7 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     }
     console.log(`Configuring node ${nodeName}`);
 
-    const configPath = path.join(`./tools/local-network-setup/.dh${i}_origintrail_noderc`);
+    const configPath = path.join(`.dh${i}_origintrail_noderc`);
     execSync(`touch ${configPath}`);
 
     const parsedTemplate = JSON.parse(JSON.stringify(template));

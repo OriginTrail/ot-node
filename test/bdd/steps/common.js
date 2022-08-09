@@ -86,6 +86,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function nodeSetup (nodeC
                         }
                     }
                 },
+
                 httpClient: {
                     enabled: true,
                     implementation: {
@@ -130,11 +131,12 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function nodeSetup (nodeC
             } else {
                 // todo if started
                 const client = new DkgClientHelper({
-                    endpoint: '127.0.0.1',
+                    endpoint: 'http://localhost',
                     port: rpcPort,
                     useSSL: false,
                     timeout: 25,
                     communicationType: 'http',
+                    blockchain: 'ganache',
                     loglevel: 'trace',
                     blockchainConfig: {
                         ganache: {
@@ -159,11 +161,12 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function nodeSetup (nodeC
     }
 });
 
-Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function bootstrapRunning (nodeCount, done) {
+Given(/^(\d+) bootstrap is running$/, { timeout: 120000 }, function bootstrapRunning (nodeCount, done) {
     expect(this.state.bootstraps).to.have.length(0);
     expect(nodeCount).to.be.equal(1); // Currently not supported more.
+    this.logger.log('Initializing bootstrap node');
     const wallets = this.state.localBlockchain.getWallets();
-    const wallet = wallets[0]
+    const wallet = wallets[0];
     const nodeName = 'origintrail-test-bootstrap';
     const bootstrapNodeConfiguration = {
         modules: {
@@ -236,10 +239,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function bootstrapRunn
         operationalDatabase: {
             databaseName: 'operationaldbbootstrap',
         },
-        rpcPort: 8900,
-/*        publicKey: wallets[0].address,
-        privateKey:wallets[0].privateKey,
-        managementKey: wallets[30]*/
+        rpcPort: 8900
     };
     const forkedNode = fork(otNodeProcessPath, [], { silent: true });
 

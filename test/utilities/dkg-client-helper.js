@@ -1,5 +1,4 @@
 const DKG = require('dkg.js');
-const Ganache = require("ganache");
 
 class DkgClientHelper {
     constructor(config) {
@@ -20,15 +19,16 @@ class DkgClientHelper {
     }
 
     async publish(data, wallet) {
-        let options = {
+        const options = {
             visibility: 'public',
             holdingTimeInYears: 1,
             tokenAmount: 10,
-            wallet: wallet,
+            wallet,
             maxNumberOfRetries: 5,
-            blockchain: 'ganache',
+            // what should i send trough
+            // blockchain: 'ganache',
         };
-        return await this.client.asset.create(data, options);
+        return this.client.asset.create(data, options);
     }
 
     async update(data, keywords, ual) {
