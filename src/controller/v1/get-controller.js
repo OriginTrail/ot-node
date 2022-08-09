@@ -20,7 +20,7 @@ class GetController extends BaseController {
         );
 
         this.returnResponse(res, 202, {
-            operation_id: operationId,
+            operationId,
         });
 
         await this.repositoryModuleManager.createOperationRecord(
