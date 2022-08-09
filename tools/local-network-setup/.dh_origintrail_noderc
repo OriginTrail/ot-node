@@ -1,37 +1,7 @@
 {
-    "graphDatabase": {
-        "username": "admin",
-        "password": ""
-    },
     "logLevel": "trace",
     "rpcPort": 8901,
     "modules": {
-        "httpClient": {
-            "enabled": true,
-            "implementation": {
-                "express-http-client": {
-                    "package": "./http-client/implementation/express-http-client",
-                    "config": {}
-                }
-            }
-        },
-        "tripleStore": {
-            "enabled": true,
-            "defaultImplementation": "ot-graphdb",
-            "implementation": {
-                "ot-graphdb": {
-                    "config": {}
-                }
-            }
-        },
-        "repository": {
-            "enabled": true,
-            "implementation": {
-                "sequelize-repository": {
-                    "config": {}
-                }
-            }
-        },
         "network": {
             "enabled": true,
             "implementation": {
@@ -47,14 +17,9 @@
             }
         },
         "blockchain": {
-            "enabled": true,
             "implementation": {
                 "otp": {
-                    "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
                     "config": {
-                        "blockchainTitle": "Parachain",
-                        "networkId": "parachain::testnet",
-                        "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
                         "rpcEndpoints": [
                             "wss://parachain-tempnet-01.origin-trail.network"
                         ],
@@ -64,18 +29,7 @@
                     }
                 },
                 "polygon": {
-                    "package": "./blockchain/implementation/polygon/polygon-service",
-                    "config": {
-                        "blockchainTitle": "Polygon",
-                        "networkId": "polygon::testnet",
-                        "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
-                        "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
-                        "rpcEndpoints": [
-                            "https://matic-mumbai.chainstacklabs.com",
-                            "https://rpc-mumbai.matic.today",
-                            "https://matic-testnet-archive-rpc.bwarelabs.com"
-                        ]
-                    }
+                    "config": {}
                 }
             }
         }

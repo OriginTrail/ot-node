@@ -1,19 +1,34 @@
 {
-  "graphDatabase": {
-    "username": "admin",
-    "password": ""
-  },
-  "logLevel": "trace",
-  "rpcPort": 8900,
-  "modules": {
-    "httpClient": {
-      "enabled": true,
-      "implementation": {
-        "express-http-client": {
-          "package": "./http-client/implementation/express-http-client",
-          "config": {}
+    "logLevel": "trace",
+    "rpcPort": 8900,
+    "modules": {
+        "blockchain": {
+            "implementation": {
+                "otp": {
+                    "config": {
+                        "rpcEndpoints": [
+                            "wss://parachain-tempnet-01.origin-trail.network"
+                        ],
+                        "publicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
+                        "privateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
+                        "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                    }
+                },
+                "polygon": {
+                    "config": {
+                        "rpcEndpoints": [
+                            "wss://polygon-mumbai.g.alchemy.com/v2/bkYqCNrIC0TX3nZHuwo_cx7xqP4pYQ9s",
+                            "https://matic-mumbai.chainstacklabs.com",
+                            "https://rpc-mumbai.matic.today",
+                            "https://matic-testnet-archive-rpc.bwarelabs.com"
+                        ],
+                        "publicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
+                        "privateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
+                        "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                    }
+                }
+            }
         }
-      }
     },
     "repository": {
       "enabled": true,
@@ -44,43 +59,6 @@
         }
       }
     },
-    "blockchain": {
-      "enabled": true,
-      "implementation": {
-        "otp": {
-          "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
-          "config": {
-            "blockchainTitle": "Parachain",
-            "networkId": "parachain::testnet",
-            "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
-            "rpcEndpoints": [
-              "wss://parachain-tempnet-01.origin-trail.network"
-            ],
-            "publicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
-            "privateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
-            "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
-          }
-        },
-        "polygon": {
-          "package": "./blockchain/implementation/polygon/polygon-service",
-          "config": {
-            "blockchainTitle": "Polygon",
-            "networkId": "polygon::testnet",
-            "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
-            "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
-            "rpcEndpoints": [
-              "wss://polygon-mumbai.g.alchemy.com/v2/bkYqCNrIC0TX3nZHuwo_cx7xqP4pYQ9s",
-              "https://matic-mumbai.chainstacklabs.com",
-              "https://rpc-mumbai.matic.today",
-              "https://matic-testnet-archive-rpc.bwarelabs.com"
-            ],
-            "publicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
-            "privateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
-            "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
-          }
-        }
-      }
-    }
   },
   "ipWhitelist": [
     "::1",

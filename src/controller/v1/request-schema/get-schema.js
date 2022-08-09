@@ -1,4 +1,4 @@
-module.exports = {
+module.exports = () => ({
     type: 'object',
     required: ['id'],
     properties: {
@@ -6,4 +6,4 @@ module.exports = {
             type: 'string',
         },
     },
-};
+});
