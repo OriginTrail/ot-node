@@ -184,7 +184,7 @@ class OTAutoUpdater {
                     });
                     fileStream.on('error', (err) => {
                         // Handle errors
-                        await fs.promises.unlink(destination);
+                        fs.unlinkSync(destination);
                         reject(err);
                     });
                 })
@@ -198,7 +198,7 @@ class OTAutoUpdater {
         });
     }
 
-    async unzipFile(destination, source) {
+    unzipFile(destination, source) {
         this.logger.debug(`AutoUpdater - Unzipping ot-node new version archive`);
         return new Promise((resolve, reject) => {
             const fileReadStream = fs
