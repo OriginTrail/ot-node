@@ -7,9 +7,7 @@ class TelemetryInjectionService {
     }
 
     initialize() {
-        if (this.config.telemetry.enabled) {
-            this.listenOnEvents();
-        }
+        this.listenOnEvents();
     }
 
     listenOnEvents() {

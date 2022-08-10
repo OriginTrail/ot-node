@@ -1,3 +1,5 @@
+const constants = require('../constants/constants');
+
 class RpcRouter {
     constructor(ctx) {
         this.networkModuleManager = ctx.networkModuleManager;
@@ -6,8 +8,6 @@ class RpcRouter {
         this.publishController = ctx.publishController;
         this.getController = ctx.getController;
         this.searchController = ctx.searchController;
-
-        this.protocolVersion = '1.0.1';
     }
 
     async initialize() {
@@ -16,19 +16,19 @@ class RpcRouter {
 
     async initializeListeners() {
         this.networkModuleManager.handleMessage(
-            `/store/${this.protocolVersion}`,
+            constants.NETWORK_PROTOCOLS.STORE,
             (message, remotePeerId) =>
                 this.publishController.handleNetworkStoreRequest(message, remotePeerId),
         );
 
         this.networkModuleManager.handleMessage(
-            `/get/${this.protocolVersion}`,
+            constants.NETWORK_PROTOCOLS.GET,
             (message, remotePeerId) =>
                 this.getController.handleNetworkGetRequest(message, remotePeerId),
         );
 
         this.networkModuleManager.handleMessage(
-            `/search/assertions/${this.protocolVersion}`,
+            constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS,
             (message, remotePeerId) =>
                 this.searchController.handleNetworkSearchAssertionsRequest(message, remotePeerId),
         );

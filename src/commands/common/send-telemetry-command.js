@@ -16,7 +16,7 @@ class SendTelemetryCommand extends Command {
      * @param command
      */
     async execute() {
-        if (this.config.telemetry.sendTelemetryData) {
+        if (this.config.telemetry.enabled && this.config.telemetry.sendTelemetryData) {
             return Command.empty();
         }
         try {

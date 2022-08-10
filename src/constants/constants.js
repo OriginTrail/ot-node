@@ -295,6 +295,19 @@ exports.OPERATION_ID_STATUS = {
 };
 
 /**
+ * @constant {object} NETWORK_PROTOCOLS -
+ *  Network protocols
+ */
+exports.NETWORK_PROTOCOLS = {
+    STORE: '/store/1.0.1',
+    GET: '/get/1.0.1',
+    SEARCH: '/search/1.0.1',
+    SEARCH_RESULT: '/search/1.0.1/result',
+    SEARCH_ASSERTIONS: '/search/assertions/1.0.1',
+    SEARCH_ASSERTIONS_RESULT: '/search/assertions/1.0.1/result',
+};
+
+/**
  * @constant {object} PUBLISH_STATUS -
  *  Possible statuses for publish procedure
  */

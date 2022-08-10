@@ -10,7 +10,6 @@ class DependencyInjection {
             [
                 'src/controller/**/*.js',
                 'src/service/*.js',
-                'src/worker/*.js',
                 'src/commands/**/**/*.js',
                 'src/commands/*.js',
                 'src/modules/base-module-manager.js',
