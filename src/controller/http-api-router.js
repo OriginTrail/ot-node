@@ -27,15 +27,6 @@ class HttpApiRouter {
             },
             { rateLimit: true, requestSchema: this.jsonSchemaService.publishSchema() },
         );
-        //
-        // this.httpClientModuleManager.post(HTTP_API_ROUTES.QUERY, (req, res) => {
-        //     this.searchController.handleHttpApiQueryRequest(req, res);
-        // });
-        //
-        // this.httpClientModuleManager.post(HTTP_API_ROUTES.PROOFS, (req, res) => {
-        //     this.searchController.handleHttpApiProofsRequest(req, res);
-        // });
-        //
         this.httpClientModuleManager.post(
             '/get',
             (req, res) => {
@@ -43,14 +34,6 @@ class HttpApiRouter {
             },
             { rateLimit: true, requestSchema: this.jsonSchemaService.getSchema() },
         );
-
-        /* this.httpClientModuleManager.post(
-            '/search',
-            (req, res) => {
-                this.searchController.handleHttpApiSearchRequest(req, res);
-            },
-            { rateLimit: true, requestSchema: this.jsonSchemaService.searchSchema() },
-        ); */
 
         this.httpClientModuleManager.get('/:operation/:operationId', (req, res) => {
             this.resultController.handleHttpApiOperationResultRequest(req, res);

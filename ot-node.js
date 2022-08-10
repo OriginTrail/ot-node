@@ -6,7 +6,7 @@ const appRootPath = require('app-root-path');
 const path = require('path');
 const EventEmitter = require('events');
 const DependencyInjection = require('./src/service/dependency-injection');
-const Logger = require('./modules/logger/logger');
+const Logger = require('./src/logger/logger');
 const constants = require('./src/constants/constants');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -15,7 +15,7 @@ const FileService = require('./src/service/file-service');
 class OTNode {
     constructor(config) {
         this.initializeConfiguration(config);
-        this.logger = new Logger(this.config.logLevel, this.config.telemetryHub.enabled);
+        this.logger = new Logger(this.config.logLevel, this.config.telemetry.enabled);
         this.checkNodeVersion();
     }
 
@@ -115,7 +115,9 @@ class OTNode {
             const httpApiRouter = this.container.resolve('httpApiRouter');
             await httpApiRouter.initialize();
         } catch (e) {
-            this.logger.error(`Http api router initialization failed. Error message: ${e.message}`);
+            this.logger.error(
+                `Http api router initialization failed. Error message: ${e.message}, ${e.stackTrace}`,
+            );
         }
 
         try {
@@ -123,7 +125,9 @@ class OTNode {
             const rpcRouter = this.container.resolve('rpcRouter');
             await rpcRouter.initialize();
         } catch (e) {
-            this.logger.error(`RPC router initialization failed. Error message: ${e.message}`);
+            this.logger.error(
+                `RPC router initialization failed. Error message: ${e.message}, ${e.stackTrace}`,
+            );
         }
     }
 
@@ -192,14 +196,18 @@ class OTNode {
     }
 
     async initializeTelemetryInjectionService() {
-        try {
-            const telemetryHubModuleManager = this.container.resolve('telemetryInjectionService');
-            telemetryHubModuleManager.initialize();
-            this.logger.info('Telemetry Injection Service initialized successfully');
-        } catch (e) {
-            this.logger.error(
-                `Telemetry hub module initialization failed. Error message: ${e.message}`,
-            );
+        if (this.config.telemetry.enabled) {
+            try {
+                const telemetryHubModuleManager = this.container.resolve(
+                    'telemetryInjectionService',
+                );
+                telemetryHubModuleManager.initialize();
+                this.logger.info('Telemetry Injection Service initialized successfully');
+            } catch (e) {
+                this.logger.error(
+                    `Telemetry hub module initialization failed. Error message: ${e.message}`,
+                );
+            }
         }
     }
 

@@ -6,7 +6,7 @@ module.exports = {
                 primaryKey: true,
                 autoIncrement: true,
             },
-            handler_id: {
+            operation_id: {
                 type: Sequelize.UUID,
                 allowNull: false,
             },
@@ -43,6 +43,6 @@ module.exports = {
         });
     },
     down: async (queryInterface) => {
-        await queryInterface.dropTable('resolve_response');
+        await queryInterface.dropTable('event');
     },
 };

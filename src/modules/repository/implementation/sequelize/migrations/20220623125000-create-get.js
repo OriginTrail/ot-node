@@ -1,28 +1,18 @@
 module.exports = {
     up: async (queryInterface, Sequelize) => {
-        await queryInterface.createTable('jobs', {
+        await queryInterface.createTable('get', {
             id: {
-                allowNull: false,
+                type: Sequelize.INTEGER,
                 primaryKey: true,
+                autoIncrement: true,
+            },
+            operation_id: {
+                type: Sequelize.UUID,
+                allowNull: false,
+            },
+            status: {
+                allowNull: false,
                 type: Sequelize.STRING,
-            },
-            publisher: {
-                type: Sequelize.STRING,
-            },
-            assertion_hash: {
-                type: Sequelize.STRING,
-            },
-            tx_hash: {
-                type: Sequelize.STRING,
-            },
-            signature: {
-                type: Sequelize.TEXT,
-            },
-            blockchain_id: {
-                type: Sequelize.STRING,
-            },
-            published_to: {
-                type: Sequelize.TEXT,
             },
             created_at: {
                 allowNull: false,
@@ -37,6 +27,6 @@ module.exports = {
         });
     },
     down: async (queryInterface) => {
-        await queryInterface.dropTable('jobs');
+        await queryInterface.dropTable('get');
     },
 };

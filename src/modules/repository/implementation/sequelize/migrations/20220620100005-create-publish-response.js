@@ -6,9 +6,13 @@ module.exports = {
                 primaryKey: true,
                 autoIncrement: true,
             },
-            handler_id: {
+            operation_id: {
                 type: Sequelize.UUID,
                 allowNull: false,
+            },
+            keyword: {
+                allowNull: false,
+                type: Sequelize.STRING,
             },
             status: {
                 allowNull: false,

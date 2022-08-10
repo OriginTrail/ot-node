@@ -32,13 +32,8 @@ class PublishService extends OperationService {
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
-        const {
-            operationId,
-            numberOfFoundNodes,
-            leftoverNodes,
-            numberOfNodesInBatch,
-            keyword,
-        } = command.data;
+        const { operationId, numberOfFoundNodes, leftoverNodes, numberOfNodesInBatch, keyword } =
+            command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
@@ -50,7 +45,7 @@ class PublishService extends OperationService {
         const { completedNumber, failedNumber } = keywordsStatuses[keyword];
         const numberOfResponses = completedNumber + failedNumber;
         this.logger.debug(
-            `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
+            `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${this.config.minimumReplicationFactor}`,
         );
 
         if (completedNumber === this.config.minimumReplicationFactor) {
@@ -64,6 +59,9 @@ class PublishService extends OperationService {
             if (allCompleted) {
                 await this.markOperationAsCompleted(operationId, {}, this.completedStatuses);
                 this.logResponsesSummary(completedNumber, failedNumber);
+                this.logger.info(
+                    `Publish with operation id: ${operationId} with status: ${this.completedStatuses.pop()}`,
+                );
             }
         } else if (
             completedNumber < this.config.minimumReplicationFactor &&
