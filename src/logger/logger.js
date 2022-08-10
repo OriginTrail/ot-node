@@ -1,5 +1,7 @@
 const pino = require('pino');
 const path = require('path');
+const { existsSync } = require('fs');
+const { mkdirpSync } = require('fs-extra');
 
 class Logger {
     constructor(logLevel = 'trace', telemetryHubEnabled) {
@@ -10,6 +12,10 @@ class Logger {
     initialize(logLevel, telemetryHubEnabled) {
         try {
             const logFilename = path.join(path.resolve(__dirname, '../../'), 'logs/active.log');
+            const logDirname = path.join(path.resolve(__dirname, '../../'), 'logs');
+            if (!existsSync(logDirname)) {
+                mkdirpSync(logDirname);
+            }
             const chosenTargets = [
                 {
                     target: './pino-pretty-transport',
