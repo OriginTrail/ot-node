@@ -7,8 +7,8 @@ module.exports = {
                 autoIncrement: true,
             },
             operation_id: {
-                type: Sequelize.INTEGER,
-                references: { model: 'resolve', key: 'id' },
+                type: Sequelize.UUID,
+                allowNull: false,
             },
             keyword: {
                 allowNull: false,
