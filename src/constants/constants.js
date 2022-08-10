@@ -299,12 +299,12 @@ exports.OPERATION_ID_STATUS = {
  *  Network protocols
  */
 exports.NETWORK_PROTOCOLS = {
-    STORE: '/store/1.0.1',
-    GET: '/get/1.0.1',
-    SEARCH: '/search/1.0.1',
-    SEARCH_RESULT: '/search/1.0.1/result',
-    SEARCH_ASSERTIONS: '/search/assertions/1.0.1',
-    SEARCH_ASSERTIONS_RESULT: '/search/assertions/1.0.1/result',
+    STORE: '/store/1.0.0',
+    GET: '/get/1.0.0',
+    SEARCH: '/search/1.0.0',
+    SEARCH_RESULT: '/search/1.0.0/result',
+    SEARCH_ASSERTIONS: '/search/assertions/1.0.0',
+    SEARCH_ASSERTIONS_RESULT: '/search/assertions/1.0.0/result',
 };
 
 /**
