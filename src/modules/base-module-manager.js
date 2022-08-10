@@ -1,4 +1,11 @@
-const requiredModules = ['repository'];
+const requiredModules = [
+    'repository',
+    'httpClient',
+    'network',
+    'validation',
+    'blockchain',
+    'tripleStore',
+];
 
 class BaseModuleManager {
     constructor(ctx) {
@@ -53,6 +60,9 @@ class BaseModuleManager {
                     module,
                     config: implementationConfig,
                 };
+            }
+            if (Object.keys(this.handlers).length === 0) {
+                throw new Error(`No implementation initialized for module: ${this.getName()}.`);
             }
             this.initialized = true;
             return true;
