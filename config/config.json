@@ -330,6 +330,7 @@
             },
             "blockchain": {
                 "enabled": true,
+                "defaultImplementation": "otp",
                 "implementation": {
                     "otp": {
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
