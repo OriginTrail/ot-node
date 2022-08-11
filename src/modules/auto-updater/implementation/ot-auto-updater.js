@@ -170,7 +170,7 @@ class OTAutoUpdater {
         }
     }
 
-    async downloadUpdate(destination) {
+    downloadUpdate(destination) {
         return new Promise((resolve, reject) => {
             const url = `https://${path.join(ARCHIVE_REPOSITORY_URL, this.config.branch)}.zip`;
             this.logger.debug(`AutoUpdater - Downloading ot-node .zip file from url: ${url}`);
