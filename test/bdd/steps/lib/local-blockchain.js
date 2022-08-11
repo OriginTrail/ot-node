@@ -127,8 +127,10 @@ class LocalBlockchain {
                 await this.deployContracts();
                 // console.log('Contracts have been deployed!');
 
-                /* console.log(`\t Hub contract address: \t\t\t\t\t${this.contracts.hub.instance._address}`);
-                console.log(`\t AssertionRegistry contract address: \t\t\t${this.contracts.assertionRegistry.instance._address}`);
+                console.log(
+                    `\t Hub contract address: \t\t\t\t\t${this.contracts.hub.instance._address}`,
+                );
+                /* console.log(`\t AssertionRegistry contract address: \t\t\t${this.contracts.assertionRegistry.instance._address}`);
                 console.log(`\t UAIRegistry contract address: \t\t\t\t${this.contracts.uaiRegistry.instance._address}`);
                 console.log(`\t AssetRegistry contract address: \t\t\t${this.contracts.assetRegistry.instance._address}`);
 

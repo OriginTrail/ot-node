@@ -70,7 +70,7 @@ Given('I wait for last publish to finalize', { timeout: 120000 }, async function
 });
 
 Given(
-    /Last publish finished with status: ([COMPLETED|FAILED]+)$/,
+    /Last publish finished with status: ([COMPLETED|FAILED|PUBLISH_START_ERROR]+)$/,
     { timeout: 120000 },
     async function lastPublishFinished(status) {
         this.logger.log(`Last publish finished with status: ${status}`);
