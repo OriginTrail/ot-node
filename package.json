@@ -58,6 +58,7 @@
     },
     "dependencies": {
         "@comunica/query-sparql": "^2.2.1",
+        "@polkadot/api": "^9.1.1",
         "app-root-path": "^3.0.0",
         "assertion-tools": "^1.0.3",
         "async": "^3.2.4",
