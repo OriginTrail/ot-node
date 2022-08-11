@@ -1,4 +1,5 @@
 const { ApiPromise, WsProvider } = require('@polkadot/api');
+const { Keyring } = require('@polkadot/keyring');
 const Web3Service = require('../web3-service');
 
 class OtParachainService extends Web3Service {
@@ -17,46 +18,60 @@ class OtParachainService extends Web3Service {
         const { operationalAccount, managementAccount } =
             await this.getOperationalAndManagementAccount();
 
-        this.operationalAccount = operationalAccount;
-        this.managementAccount = managementAccount;
+        const keyring = new Keyring({ type: 'sr25519' });
+        this.operationalKeyring = keyring.createFromUri(
+            this.config.substrateOperationalWalletPrivateKey,
+        );
+        this.managementKeyring = keyring.createFromUri(
+            this.config.substrateManagementWalletPrivateKey,
+        );
+
+        this.evmOperationalAccount = operationalAccount;
+        this.evmManagementAccount = managementAccount;
     }
 
     async getOperationalAndManagementAccount() {
         const {
-            operationalWalletPublicKey,
-            operationalWalletPrivateKey,
-            managementWalletPublicKey,
-            managementWalletPrivateKey,
+            substrateOperationalWalletPublicKey,
+            substrateManagementWalletPublicKey,
+            evmOperationalWalletPublicKey,
+            evmOperationalWalletPrivateKey,
+            evmManagementWalletPublicKey,
+            evmManagementWalletPrivateKey,
         } = this.config;
 
         let operationalAccount = await this.queryParachainState('evmAccounts', 'accounts', [
-            operationalWalletPublicKey,
+            substrateOperationalWalletPublicKey,
         ]);
 
         if (!operationalAccount) {
             const signature = await this.generateSignatureForMappingCall(
-                operationalWalletPublicKey,
-                operationalWalletPrivateKey,
+                evmOperationalWalletPublicKey,
+                evmOperationalWalletPrivateKey,
             );
-            operationalAccount = await this.callParachainExtrinsic('evmAccounts', 'claimAccount', [
-                operationalWalletPublicKey,
-                signature,
-            ]);
+            operationalAccount = await this.callParachainExtrinsic(
+                this.operationalKeyring,
+                'evmAccounts',
+                'claimAccount',
+                [evmOperationalWalletPublicKey, signature],
+            );
         }
 
         let managementAccount = await this.queryParachainState('evmAccounts', 'accounts', [
-            managementWalletPublicKey,
+            substrateManagementWalletPublicKey,
         ]);
 
         if (!managementAccount) {
             const signature = await this.generateSignatureForMappingCall(
-                managementWalletPublicKey,
-                managementWalletPrivateKey,
+                evmManagementWalletPublicKey,
+                evmManagementWalletPrivateKey,
             );
-            managementAccount = await this.callParachainExtrinsic('evmAccounts', 'claimAccount', [
-                managementWalletPublicKey,
-                signature,
-            ]);
+            managementAccount = await this.callParachainExtrinsic(
+                this.managementKeyring,
+                'evmAccounts',
+                'claimAccount',
+                [evmManagementWalletPublicKey, signature],
+            );
         }
 
         if (!operationalAccount || !managementAccount) {
@@ -68,14 +83,34 @@ class OtParachainService extends Web3Service {
         };
     }
 
-    async callParachainExtrinsic(extrinsic, method, args) {
-        // add error handling for rpc error
-        return this.parachainProvider.tx[extrinsic][method](...args);
+    async callParachainExtrinsic(keyring, extrinsic, method, args) {
+        let result;
+        while (!result) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                result = this.parachainProvider.tx[extrinsic][method](...args).signAndSend(keyring);
+
+                return result;
+            } catch (error) {
+                // eslint-disable-next-line no-await-in-loop
+                await this.handleParachainError(error, method);
+            }
+        }
     }
 
     async queryParachainState(state, method, args) {
-        // add error handling for rpc error
-        return this.parachainProvider.query[state][method](...args);
+        let result;
+        while (!result) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                result = await this.parachainProvider.query[state][method](...args);
+
+                return result;
+            } catch (error) {
+                // eslint-disable-next-line no-await-in-loop
+                await this.handleParachainError(error, method);
+            }
+        }
     }
 
     async generateSignatureForMappingCall(publicKey, privateKey) {
@@ -85,8 +120,8 @@ class OtParachainService extends Web3Service {
 
     async initializeParachainProvider() {
         let tries = 0;
-        let isParachainProviderConnected = false;
-        while (!isParachainProviderConnected) {
+        let isRpcConnected = false;
+        while (!isRpcConnected) {
             if (tries >= this.config.rpcEndpoints.length) {
                 throw Error(
                     'Blockchain initialisation failed, unable to initialize parachain provider!',
@@ -95,22 +130,19 @@ class OtParachainService extends Web3Service {
 
             try {
                 // Initialise the provider to connect to the local node
-                const provider = new WsProvider(
-                    this.config.rpcEndpoints[this.parachainProviderRpcNumber],
-                );
+                const provider = new WsProvider(this.config.rpcEndpoints[this.rpcNumber]);
 
                 // eslint-disable-next-line no-await-in-loop
                 this.parachainProvider = await ApiPromise.create({ provider });
-                isParachainProviderConnected = true;
+                isRpcConnected = true;
             } catch (e) {
                 this.logger.warn(
                     `Unable to create parachain provider for endpoint : ${
-                        this.config.rpcEndpoints[this.parachainProviderRpcNumber]
+                        this.config.rpcEndpoints[this.rpcNumber]
                     }.`,
                 );
                 tries += 1;
-                this.parachainProviderRpcNumber =
-                    (this.parachainProviderRpcNumber + 1) % this.config.rpcEndpoints.length;
+                this.rpcNumber = (this.rpcNumber + 1) % this.config.rpcEndpoints.length;
             }
         }
     }
@@ -123,6 +155,32 @@ class OtParachainService extends Web3Service {
         } catch (error) {
             return undefined;
         }
+    }
+
+    async handleParachainError(error, method) {
+        let isRpcError = false;
+        try {
+            await this.parachainProvider.rpc.net.listening();
+        } catch (rpcError) {
+            isRpcError = true;
+            this.logger.warn(
+                `Unable to execute substrate method ${method} using blockchain rpc : ${
+                    this.config.rpcEndpoints[this.rpcNumber]
+                }.`,
+            );
+            await this.restartParachainProvider();
+        }
+        if (!isRpcError) throw error;
+    }
+
+    async restartParachainProvider() {
+        this.rpcNumber = (this.rpcNumber + 1) % this.config.rpcEndpoints.length;
+        this.logger.warn(
+            `There was an issue with current parachain provider. Connecting to ${
+                this.config.rpcEndpoints[this.rpcNumber]
+            }`,
+        );
+        await this.initializeParachainProvider();
     }
 }
 
