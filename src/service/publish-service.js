@@ -60,7 +60,9 @@ class PublishService extends OperationService {
                 await this.markOperationAsCompleted(operationId, {}, this.completedStatuses);
                 this.logResponsesSummary(completedNumber, failedNumber);
                 this.logger.info(
-                    `Publish with operation id: ${operationId} with status: ${this.completedStatuses.pop()}`,
+                    `Publish with operation id: ${operationId} with status: ${
+                        this.completedStatuses[this.completedStatuses.length - 1]
+                    }`,
                 );
             }
         } else if (
@@ -109,24 +111,25 @@ class PublishService extends OperationService {
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
         const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
 
+        const assertionGraphName = `assertion:${assertionId}`;
+
+        // TODO: move to assertion-tools
         const assetNquads = await this.dataService.toNQuads({
             '@context': SCHEMA_CONTEXT,
             '@id': ual,
             blockchain,
             contract,
             tokenId,
-            assertion: assertionId,
-            latestAssertion: assertionId,
+            assertion: { '@id': assertionGraphName },
+            latestAssertion: { '@id': assertionGraphName },
         });
 
-        this.logger.info(`Inserting assertion with ual:${ual} in database.`);
+        this.logger.info(`Inserting assertion with ual: ${ual} in database.`);
 
-        await this.tripleStoreModuleManager.insertAsset(
-            assertion.join('\n'),
-            assertionId,
-            assetNquads.join('\n'),
-            ual,
-        );
+        await Promise.all([
+            this.tripleStoreModuleManager.updateAssetsGraph(ual, assetNquads.join('\n')),
+            this.tripleStoreModuleManager.insertAssertion(assertionId, assertion.join('\n')),
+        ]);
 
         this.logger.info(`Assertion ${ual} has been successfully inserted!`);
     }

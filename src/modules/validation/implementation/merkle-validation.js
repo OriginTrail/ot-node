@@ -1,9 +1,6 @@
-const keccak256 = require('keccak256')
-const web3 = require('web3')
-const {MerkleTree} = require('merkletreejs')
-const {
-    calculateRoot
-} = require('assertion-tools');
+const keccak256 = require('keccak256');
+const web3 = require('web3');
+const { MerkleTree } = require('merkletreejs');
 
 class MerkleValidation {
     async initialize(config, logger) {
@@ -11,23 +8,28 @@ class MerkleValidation {
         this.logger = logger;
     }
 
+    // TODO: move to assertion-tools
     calculateRoot(assertion) {
-        return calculateRoot(assertion);
+        assertion.sort();
+        const leaves = assertion.map((element, index) =>
+            keccak256(web3.utils.encodePacked(keccak256(element), index)),
+        );
+        const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+        return `0x${tree.getRoot().toString('hex')}`;
     }
 
     // TODO move to assertion-tools
     getMerkleProof(nquadsArray, challenge) {
         nquadsArray.sort();
 
-        const leaves = nquadsArray.map((element, index) => keccak256(web3.utils.encodePacked(
-            keccak256(element),
-            index
-        )))
-        const tree = new MerkleTree(leaves, keccak256, {sortPairs: true})
+        const leaves = nquadsArray.map((element, index) =>
+            keccak256(web3.utils.encodePacked(keccak256(element), index)),
+        );
+        const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
 
         const proof = tree.getProof(leaves[parseInt(challenge, 10)]);
 
-        return {leaf: leaves[parseInt(challenge, 10)], proof: proof.map(x => x.data)};
+        return { leaf: leaves[parseInt(challenge, 10)], proof: proof.map((x) => x.data) };
     }
 }
 
