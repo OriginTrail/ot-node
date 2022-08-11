@@ -1,12 +1,12 @@
 /* eslint-disable max-len */
 const Ganache = require('ganache-core');
 const Web3 = require('web3');
-const BN = require("bn.js");
 const fs = require('fs');
 const path = require('path');
 const Wallet = require('ethereumjs-wallet').default;
-const PATH_TO_CONTRACTS = '../../../../src/modules/blockchain/implementation/build/contracts/';
 
+const PATH_TO_CONTRACTS = '../../../../src/modules/blockchain/implementation/build/contracts/';
+// const contractNames = ['Hub','AssertionRegistry','UAIRegistry','AssetRegistry','ERC20Token','ProfileStorage','Profile'];
 const accountPrivateKeys = [
     '3cf97be6177acdd12796b387f58f84f177d0fe20d8558004e8db9a41cf90392a',
     '1e60c8e9aa35064cd2eaa4c005bda2b76ef1a858feebb6c8e131c472d16f9740',
@@ -65,9 +65,10 @@ const accountPrivateKeys = [
     '952e45854ca5470a6d0b6cb86346c0e9c4f8f3a5a459657df8c94265183b9253',
 ];
 
-
 const wallets = accountPrivateKeys.map((privateKey) => ({
-    address: `0x${Wallet.fromPrivateKey(Buffer.from(privateKey, 'hex')).getAddress().toString('hex')}`,
+    address: `0x${Wallet.fromPrivateKey(Buffer.from(privateKey, 'hex'))
+        .getAddress()
+        .toString('hex')}`,
     privateKey,
 }));
 
@@ -102,11 +103,10 @@ class LocalBlockchain {
         this.server = Ganache.server({
             gasLimit: 7000000,
             time: new Date(),
-            accounts:
-                accountPrivateKeys.map((account) => ({
-                    secretKey: `0x${account}`,
-                    balance: `0x${Web3.utils.toWei('100', 'ether').toString('hex')}`,
-                })),
+            accounts: accountPrivateKeys.map((account) => ({
+                secretKey: `0x${account}`,
+                balance: `0x${Web3.utils.toWei('100', 'ether').toString('hex')}`,
+            })),
         });
         this.initialized = false;
     }
@@ -120,34 +120,66 @@ class LocalBlockchain {
                 }
 
                 this.logger.info(`Blockchain is up at http://localhost:${this.port}/`);
-                this.web3 = new Web3(new Web3.providers.HttpProvider(`http://localhost:${this.port}`));
+                this.web3 = new Web3(
+                    new Web3.providers.HttpProvider(`http://localhost:${this.port}`),
+                );
                 this.fetchContracts();
                 await this.deployContracts();
-                console.log('Contracts have been deployed!');
+                // console.log('Contracts have been deployed!');
 
-                /*console.log(`\t Hub contract address: \t\t\t\t\t${this.contracts.hub.instance._address}`);
+                /* console.log(`\t Hub contract address: \t\t\t\t\t${this.contracts.hub.instance._address}`);
                 console.log(`\t AssertionRegistry contract address: \t\t\t${this.contracts.assertionRegistry.instance._address}`);
                 console.log(`\t UAIRegistry contract address: \t\t\t\t${this.contracts.uaiRegistry.instance._address}`);
                 console.log(`\t AssetRegistry contract address: \t\t\t${this.contracts.assetRegistry.instance._address}`);
 
                 console.log(`\t Token contract address: \t\t\t\t${this.contracts.erc20Token.instance._address}`);
                 console.log(`\t ProfileStorage contract address: \t\t\t${this.contracts.profileStorage.instance._address}`);
-                console.log(`\t Profile contract address: \t\t\t${this.contracts.profile.instance._address}`);*/
+                console.log(`\t Profile contract address: \t\t\t${this.contracts.profile.instance._address}`); */
                 accept();
             });
         });
     }
 
     fetchContracts() {
-        const hubSource = JSON.parse(fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}Hub.json`)).toString());
-        const assertionRegistrySource = JSON.parse(fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}AssertionRegistry.json`)).toString());
-        const uaiRegistrySource = JSON.parse(fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}UAIRegistry.json`)).toString());
-        const assetRegistrySource = JSON.parse(fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}AssetRegistry.json`)).toString());
-        const erc20TokenSource = JSON.parse(fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}ERC20Token.json`)).toString());
-        const profileStorageSource = JSON.parse(fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}ProfileStorage.json`)).toString());
-        const profileSource = JSON.parse(fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}Profile.json`)).toString());
+        // contractNames.forEach(getContracts(contractName))
+        const hubSource = JSON.parse(
+            fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}Hub.json`)).toString(),
+        );
+        const assertionRegistrySource = JSON.parse(
+            fs
+                .readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}AssertionRegistry.json`))
+                .toString(),
+        );
+        const uaiRegistrySource = JSON.parse(
+            fs
+                .readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}UAIRegistry.json`))
+                .toString(),
+        );
+        const assetRegistrySource = JSON.parse(
+            fs
+                .readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}AssetRegistry.json`))
+                .toString(),
+        );
+        const erc20TokenSource = JSON.parse(
+            fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}ERC20Token.json`)).toString(),
+        );
+        const profileStorageSource = JSON.parse(
+            fs
+                .readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}ProfileStorage.json`))
+                .toString(),
+        );
+        const profileSource = JSON.parse(
+            fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}Profile.json`)).toString(),
+        );
 
         this.contracts = {};
+        /*      this.getContract(hubSource);
+        this.getContract(assertionRegistrySource);
+        this.getContract(uaiRegistrySource);
+        this.getContract(assetRegistrySource);
+        this.getContract(erc20TokenSource);
+        this.getContract(profileStorageSource);
+        this.getContract(profileSource); */
 
         this.contracts.hub = {};
         this.contracts.hub.data = hubSource.bytecode;
@@ -157,27 +189,37 @@ class LocalBlockchain {
         this.contracts.uaiRegistry = {};
         this.contracts.uaiRegistry.data = uaiRegistrySource.bytecode;
         this.contracts.uaiRegistry.abi = uaiRegistrySource.abi;
-        this.contracts.uaiRegistry.artifact = new this.web3.eth.Contract(this.contracts.uaiRegistry.abi);
+        this.contracts.uaiRegistry.artifact = new this.web3.eth.Contract(
+            this.contracts.uaiRegistry.abi,
+        );
 
         this.contracts.assertionRegistry = {};
         this.contracts.assertionRegistry.data = assertionRegistrySource.bytecode;
         this.contracts.assertionRegistry.abi = assertionRegistrySource.abi;
-        this.contracts.assertionRegistry.artifact = new this.web3.eth.Contract(this.contracts.assertionRegistry.abi);
+        this.contracts.assertionRegistry.artifact = new this.web3.eth.Contract(
+            this.contracts.assertionRegistry.abi,
+        );
 
         this.contracts.assetRegistry = {};
         this.contracts.assetRegistry.data = assetRegistrySource.bytecode;
         this.contracts.assetRegistry.abi = assetRegistrySource.abi;
-        this.contracts.assetRegistry.artifact = new this.web3.eth.Contract(this.contracts.assetRegistry.abi);
+        this.contracts.assetRegistry.artifact = new this.web3.eth.Contract(
+            this.contracts.assetRegistry.abi,
+        );
 
         this.contracts.erc20Token = {};
         this.contracts.erc20Token.data = erc20TokenSource.bytecode;
         this.contracts.erc20Token.abi = erc20TokenSource.abi;
-        this.contracts.erc20Token.artifact = new this.web3.eth.Contract(this.contracts.erc20Token.abi);
+        this.contracts.erc20Token.artifact = new this.web3.eth.Contract(
+            this.contracts.erc20Token.abi,
+        );
 
         this.contracts.profileStorage = {};
         this.contracts.profileStorage.data = profileStorageSource.bytecode;
         this.contracts.profileStorage.abi = profileStorageSource.abi;
-        this.contracts.profileStorage.artifact = new this.web3.eth.Contract(this.contracts.profileStorage.abi);
+        this.contracts.profileStorage.artifact = new this.web3.eth.Contract(
+            this.contracts.profileStorage.abi,
+        );
 
         this.contracts.profile = {};
         this.contracts.profile.data = profileSource.bytecode;
@@ -186,129 +228,148 @@ class LocalBlockchain {
     }
 
     async deployContracts() {
-        this.logger.log('Deploying hubContract');
+        // this.logger.log('Deploying hubContract');
         const deployingWallet = this.getWallets()[7];
-        [this.contracts.hub.deploymentReceipt, this.contracts.hub.instance] = await this._deployContract(
-          this.web3, this.contracts.hub.artifact, this.contracts.hub.data,
-          [], deployingWallet.address,
+        [this.contracts.hub.deploymentReceipt, this.contracts.hub.instance] =
+            await this._deployContract(
+                this.web3,
+                this.contracts.hub.artifact,
+                this.contracts.hub.data,
+                [],
+                deployingWallet.address,
+            );
+
+        await this.contracts.hub.instance.methods
+            .setContractAddress('Owner', deployingWallet.address)
+            .send({ from: deployingWallet.address, gas: 3000000 })
+            .on('error', console.error);
+
+        // this.logger.log('Deploying uaiRegistryContract');
+        [this.contracts.uaiRegistry.deploymentReceipt, this.contracts.uaiRegistry.instance] =
+            await this._deployContract(
+                this.web3,
+                this.contracts.uaiRegistry.artifact,
+                this.contracts.uaiRegistry.data,
+                [this.contracts.hub.instance._address],
+                deployingWallet.address,
+            );
+        await this.contracts.hub.instance.methods
+            .setContractAddress('UAIRegistry', this.contracts.uaiRegistry.instance._address)
+            .send({ from: deployingWallet.address, gas: 3000000 })
+            .on('error', console.error);
+
+        // this.logger.log('Deploying Assertion Registry Contract');
+        [
+            this.contracts.assertionRegistry.deploymentReceipt,
+            this.contracts.assertionRegistry.instance,
+        ] = await this._deployContract(
+            this.web3,
+            this.contracts.assertionRegistry.artifact,
+            this.contracts.assertionRegistry.data,
+            [this.contracts.hub.instance._address],
+            deployingWallet.address,
         );
 
-        await this.contracts.hub.instance.methods.setContractAddress('Owner', deployingWallet.address
-        )
-          .send({ from: deployingWallet.address
-              , gas: 3000000 })
-          .on('error', console.error);
+        await this.contracts.hub.instance.methods
+            .setContractAddress(
+                'AssertionRegistry',
+                this.contracts.assertionRegistry.instance._address,
+            )
+            .send({ from: deployingWallet.address, gas: 3000000 })
+            .on('error', console.error);
 
-        this.logger.log('Deploying uaiRegistryContract');
-        [this.contracts.uaiRegistry.deploymentReceipt, this.contracts.uaiRegistry.instance] = await this._deployContract(
-          this.web3, this.contracts.uaiRegistry.artifact, this.contracts.uaiRegistry.data,
-          [this.contracts.hub.instance._address], deployingWallet.address
-          ,
-        );
-        await this.contracts.hub.instance.methods.setContractAddress('UAIRegistry', this.contracts.uaiRegistry.instance._address)
-          .send({ from: deployingWallet.address
-              , gas: 3000000 })
-          .on('error', console.error);
+        // this.logger.log('Deploying Asset Registry Contract');
+        [this.contracts.assetRegistry.deploymentReceipt, this.contracts.assetRegistry.instance] =
+            await this._deployContract(
+                this.web3,
+                this.contracts.assetRegistry.artifact,
+                this.contracts.assetRegistry.data,
+                [this.contracts.hub.instance._address],
+                deployingWallet.address,
+            );
 
-        this.logger.log('Deploying Assertion Registry Contract');
-        [this.contracts.assertionRegistry.deploymentReceipt, this.contracts.assertionRegistry.instance] = await this._deployContract(
-          this.web3, this.contracts.assertionRegistry.artifact, this.contracts.assertionRegistry.data,
-          [this.contracts.hub.instance._address], deployingWallet.address
-          ,
-        );
+        await this.contracts.hub.instance.methods
+            .setContractAddress('AssetRegistry', this.contracts.assetRegistry.instance._address)
+            .send({ from: deployingWallet.address, gas: 3000000 })
+            .on('error', console.error);
 
-        await this.contracts.hub.instance.methods.setContractAddress('AssertionRegistry', this.contracts.assertionRegistry.instance._address)
-          .send({ from: deployingWallet.address
-              , gas: 3000000 })
-          .on('error', console.error);
-
-        this.logger.log('Deploying Asset Registry Contract');
-        [this.contracts.assetRegistry.deploymentReceipt, this.contracts.assetRegistry.instance] = await this._deployContract(
-          this.web3, this.contracts.assetRegistry.artifact, this.contracts.assetRegistry.data,
-          [this.contracts.hub.instance._address], deployingWallet.address
-          ,
+        await this.setupRole(
+            this.contracts.uaiRegistry,
+            this.contracts.assetRegistry.instance._address,
         );
 
-        await this.contracts.hub.instance.methods.setContractAddress('AssetRegistry', this.contracts.assetRegistry.instance._address)
-          .send({ from: deployingWallet.address
-              , gas: 3000000 })
-          .on('error', console.error);
+        // this.logger.log('Deploying profileStorageContract');
+        [this.contracts.profileStorage.deploymentReceipt, this.contracts.profileStorage.instance] =
+            await this._deployContract(
+                this.web3,
+                this.contracts.profileStorage.artifact,
+                this.contracts.profileStorage.data,
+                [this.contracts.hub.instance._address],
+                deployingWallet.address,
+            );
 
-        await this.setupRole(this.contracts.uaiRegistry, this.contracts.assetRegistry.instance._address);
-
-        this.logger.log('Deploying profileStorageContract');
-        [this.contracts.profileStorage.deploymentReceipt, this.contracts.profileStorage.instance] = await this._deployContract(
-          this.web3, this.contracts.profileStorage.artifact, this.contracts.profileStorage.data,
-          [this.contracts.hub.instance._address], deployingWallet.address
-          ,
-        );
-
-        await this.contracts.hub.instance.methods.setContractAddress('ProfileStorage', this.contracts.profileStorage.instance._address)
-          .send({ from: deployingWallet.address
-              , gas: 3000000 })
-          .on('error', console.error);
+        await this.contracts.hub.instance.methods
+            .setContractAddress('ProfileStorage', this.contracts.profileStorage.instance._address)
+            .send({ from: deployingWallet.address, gas: 3000000 })
+            .on('error', console.error);
 
         // await this.contracts.profileStorage.instance.methods.setupRole()
 
-        this.logger.log('Deploying Token contract');
-        [this.contracts.erc20Token.deploymentReceipt, this.contracts.erc20Token.instance] = await this._deployContract(
-          this.web3, this.contracts.erc20Token.artifact, this.contracts.erc20Token.data,
-          [this.contracts.hub.instance._address], deployingWallet.address
-          ,
-        );
+        // this.logger.log('Deploying Token contract');
+        [this.contracts.erc20Token.deploymentReceipt, this.contracts.erc20Token.instance] =
+            await this._deployContract(
+                this.web3,
+                this.contracts.erc20Token.artifact,
+                this.contracts.erc20Token.data,
+                [this.contracts.hub.instance._address],
+                deployingWallet.address,
+            );
 
-        await this.contracts.hub.instance.methods.setContractAddress('Token', this.contracts.erc20Token.instance._address)
-          .send({ from: deployingWallet.address
-              , gas: 3000000 })
-          .on('error', console.error);
+        await this.contracts.hub.instance.methods
+            .setContractAddress('Token', this.contracts.erc20Token.instance._address)
+            .send({ from: deployingWallet.address, gas: 3000000 })
+            .on('error', console.error);
 
-        await this.contracts.erc20Token.instance.methods.setupRole(deployingWallet.address
-        )
-          .send({ from: deployingWallet.address
-              , gas: 3000000 })
-          .on('error', console.error);
-        //await this.setupRole(this.contracts.erc20Token.instance, this.getWallets()[7].address
-        // );
+        await this.contracts.erc20Token.instance.methods
+            .setupRole(deployingWallet.address)
+            .send({ from: deployingWallet.address, gas: 3000000 })
+            .on('error', console.error);
 
-        this.logger.log('Deploying Profile contract');
-        [this.contracts.profile.deploymentReceipt, this.contracts.profile.instance] = await this._deployContract(
-          this.web3, this.contracts.profile.artifact, this.contracts.profile.data,
-          [this.contracts.hub.instance._address], deployingWallet.address
-          ,
-        );
+        // this.logger.log('Deploying Profile contract');
+        [this.contracts.profile.deploymentReceipt, this.contracts.profile.instance] =
+            await this._deployContract(
+                this.web3,
+                this.contracts.profile.artifact,
+                this.contracts.profile.data,
+                [this.contracts.hub.instance._address],
+                deployingWallet.address,
+            );
 
-        await this.contracts.hub.instance.methods.setContractAddress('Profile', this.contracts.profile.instance._address)
-          .send({ from: deployingWallet.address
-              , gas: 3000000 })
-          .on('error', console.error);
+        await this.contracts.hub.instance.methods
+            .setContractAddress('Profile', this.contracts.profile.instance._address)
+            .send({ from: deployingWallet.address, gas: 3000000 })
+            .on('error', console.error);
 
         // // Deploy tokens.
-        const amountToMint = '50000000000000000000000000';// 5e25
+        const amountToMint = '50000000000000000000000000'; // 5e25
         for (let i = 0; i < this.getWallets().length; i += 1) {
-            await this.contracts.erc20Token.instance.methods.mint(this.getWallets()[i].address,amountToMint)
-              .send({ from: deployingWallet.address
-                  , gas: 3000000 })
-              .on('error', console.error);
-            //console.log(`[${i}]Balance of ${this.getWallets()[i].address} address is ${await this.getBalanceInEthers(this.getWallets()[i].address)} ETH`);
+            this.contracts.erc20Token.instance.methods
+                .mint(this.getWallets()[i].address, amountToMint)
+                .send({ from: deployingWallet.address, gas: 3000000 })
+                .on('error', console.error);
         }
-        //console.log(`Balance of ${this.contracts.profile.instance._address} address is ${await this.getBalanceInEthers(this.contracts.profile.instance._address)} ETH`);
         this.initialized = true;
     }
 
-    async _deployContract(
-        web3,
-        contract,
-        contractData,
-        constructorArguments,
-        deployerAddress,
-    ) {
+    async _deployContract(web3, contract, contractData, constructorArguments, deployerAddress) {
         let deploymentReceipt;
         let contractInstance;
         return new Promise((accept, reject) => {
-            contract.deploy({
-                data: contractData,
-                arguments: constructorArguments,
-            })
+            contract
+                .deploy({
+                    data: contractData,
+                    arguments: constructorArguments,
+                })
                 .send({ from: deployerAddress, gas: 6900000 })
                 .on('receipt', (receipt) => {
                     deploymentReceipt = receipt;
@@ -324,21 +385,22 @@ class LocalBlockchain {
                 });
         });
     }
-    async getContractAddress (hubContract, contractName){
-        console.log(`Attempting to get ${contractName} contract address from Hub contract`);
-        const accounts = await this.web3.eth.getAccounts();
-        return await hubContract.methods.getContractAddress(contractName).call({ from: this.getWallets()[7].address
-        }, function(error, result) {
-        });
-    };
-    async setupRole (contract,contractAddress ){
-        console.log(`Setting role for address: ${contract.instance._address}`);
-        await contract.instance.methods.setupRole(contractAddress)
-          .send({ from: this.getWallets()[7].address
-              , gas: 3000000 })
-          .on('error', console.error);
 
-    };
+    async getContractAddress(hubContract, contractName) {
+        // console.log(`Attempting to get ${contractName} contract address from Hub contract`);
+        return hubContract.methods
+            .getContractAddress(contractName)
+            .call({ from: this.getWallets()[7].address });
+    }
+
+    async setupRole(contract, contractAddress) {
+        // console.log(`Setting role for address: ${contract.instance._address}`);
+        contract.instance.methods
+            .setupRole(contractAddress)
+            .send({ from: this.getWallets()[7].address, gas: 3000000 })
+            .on('error', console.error);
+    }
+
     uaiRegistryContractAddress() {
         return this.contracts.hub.instance._address;
     }
@@ -355,4 +417,5 @@ class LocalBlockchain {
         return this.web3.eth.getBalance(wallet);
     }
 }
+
 module.exports = LocalBlockchain;

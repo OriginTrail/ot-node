@@ -6,27 +6,21 @@ class DkgClientHelper {
     }
 
     async info() {
-        return this.client.nodeInfo();
+        return this.client.node.info();
     }
 
-    async provision(data, keywords) {
-        return this.client._publishRequest({
-            content: data,
-            keywords,
-            method: 'provision',
-            visibility: 'public',
-        });
-    }
-
-    async publish(data, wallet) {
+    async publish(data, wallet, hubContract) {
         const options = {
             visibility: 'public',
             holdingTimeInYears: 1,
             tokenAmount: 10,
-            wallet,
             maxNumberOfRetries: 5,
-            // what should i send trough
-            // blockchain: 'ganache',
+            blockchain: {
+                name: 'ganache',
+                publicKey: wallet.publicKey,
+                privateKey: wallet.privateKey,
+                hubContract,
+            },
         };
         return this.client.asset.create(data, options);
     }
@@ -60,14 +54,13 @@ class DkgClientHelper {
         });
     }
 
-    async getResult(operation_id, operation) {
-        return this.client
-            ._getResult({
-                operation_id,
-                operation,
-            })
-            .catch(() => {
-            });
+    async getResult(UAL) {
+        const getOptions = {
+            validate: true,
+            commitOffset: 0,
+            maxNumberOfRetries: 5,
+        };
+        return this.client.asset.get(UAL, getOptions).catch(() => {});
     }
 }
 

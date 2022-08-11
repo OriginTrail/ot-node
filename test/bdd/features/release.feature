@@ -10,17 +10,15 @@ Feature: Release related tests
 
   @release
   Scenario: Node is able to publish on the network, expect status completed on publish result
-    Given I setup 2 nodes
-    When I call publish on node 1 with validAssertion with keywords:
-    | keyword 1 | keyword 2 |
+    Given I setup 4 nodes
+    When I call publish on node 1 with validAssertion
     And I wait for last publish to finalize
     And Last publish finished with status: COMPLETED
 
   @release
   Scenario: Node is able to resolve assertion previously published
     Given I setup 4 nodes
-    When I call publish on node 1 with validAssertion with keywords:
-      | keyword s21 | keyword s22 |
+    When I call publish on node 1 with validAssertion
     And I wait for last publish to finalize
     And Last publish finished with status: COMPLETED
     And I call resolve on node 1 for last published assertion

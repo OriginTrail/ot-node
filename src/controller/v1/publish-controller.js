@@ -106,7 +106,7 @@ class PublishController extends BaseController {
                 const { assertionId: cachedAssertionId } =
                     await this.operationIdService.getCachedOperationIdData(operationId);
                 await this.operationIdService.cacheOperationIdData(operationId, {
-                    cachedAssertionId,
+                    assertionId: cachedAssertionId,
                     assertion: message.data.assertion,
                 });
                 command.name = 'handleStoreRequestCommand';

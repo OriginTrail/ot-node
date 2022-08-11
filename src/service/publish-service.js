@@ -32,13 +32,8 @@ class PublishService extends OperationService {
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
-        const {
-            operationId,
-            numberOfFoundNodes,
-            leftoverNodes,
-            numberOfNodesInBatch,
-            keyword,
-        } = command.data;
+        const { operationId, numberOfFoundNodes, leftoverNodes, numberOfNodesInBatch, keyword } =
+            command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
@@ -120,7 +115,6 @@ class PublishService extends OperationService {
             assertion: assertionId,
             latestAssertion: assertionId,
         });
-
         this.logger.info(`Inserting assertion with ual:${ual} in database.`);
 
         await this.tripleStoreModuleManager.insertAsset(

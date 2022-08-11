@@ -1,0 +1,97 @@
+{
+  "modules": {
+    "blockchain": {
+      "defaultImplementation": "ganache",
+      "implementation": {
+        "ganache": {
+          "config": {
+            "blockchainTitle": "ganache",
+            "networkId": "ganache::testnet",
+            "rpcEndpoints": [
+              "http://localhost:7545"
+            ],
+            "hubContractAddress": "0x378ec78F621E2C8Aeff345b39334c38B0Bb7b96F",
+            "publicKey": "0x19ad96f87f8e1c13e99a98d8174e00f5a7c82df1",
+            "privateKey": "1e60c8e9aa35064cd2eaa4c005bda2b76ef1a858feebb6c8e131c472d16f9740",
+            "managementKey": "0x1de33ab36099f60c6a41a1b8f71939428773b169"
+          }
+        }
+      }
+    },
+    "network": {
+      "enabled": true,
+      "implementation": {
+        "libp2p-service": {
+          "package": "./network/implementation/libp2p-service",
+          "config": {
+            "port": 9001,
+            "bootstrap": [
+              "/ip4/0.0.0.0/tcp/9000/p2p/QmWyf3dtqJnhuCpzEDTNmNFYc5tjxTrXhGcUUmGHdg2gtj"
+            ]
+          }
+        }
+      }
+    },
+    "repository": {
+      "implementation": {
+        "sequelize-repository": {
+          "config": {
+            "database": "operationaldbnode0",
+            "password": ""
+          }
+        }
+      }
+    },
+    "tripleStore": {
+      "enabled": true,
+      "defaultImplementation": "ot-graphdb",
+      "implementation": {
+        "ot-graphdb": {
+          "package": "./triple-store/implementation/ot-graphdb/ot-graphdb",
+          "config": {
+            "url": "http://localhost:7200",
+            "repository": "origintrail-test-0",
+            "username": "admin",
+            "password": ""
+          }
+        }
+      }
+    },
+    "validation": {
+      "enabled": true,
+      "implementation": {
+        "merkle-validation": {
+          "package": "./validation/implementation/merkle-validation",
+          "config": {}
+        }
+      }
+    },
+    "httpClient": {
+      "enabled": true,
+      "implementation": {
+        "express-http-client": {
+          "package": "./http-client/implementation/express-http-client",
+          "config": {
+            "useSsl": false,
+            "port": 8901,
+            "sslKeyPath": "/root/certs/privkey.pem",
+            "sslCertificatePath": "/root/certs/fullchain.pem",
+            "rateLimiter": {
+              "timeWindowSeconds": 60,
+              "maxRequests": 10
+            }
+          }
+        }
+      }
+    }
+  },
+  "operationalDatabase": {
+    "databaseName": "operationaldbnode0"
+  },
+  "graphDatabase": {
+    "name": "origintrail-test-0"
+  },
+  "rpcPort": 8901,
+  "minimumReplicationFactor": 4,
+  "appDataPath": "data0"
+}

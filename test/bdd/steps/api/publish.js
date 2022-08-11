@@ -2,37 +2,39 @@ const { When, Given } = require('@cucumber/cucumber');
 const { expect, assert } = require('chai');
 const { setTimeout } = require('timers/promises');
 const assertions = require('./datasets/assertions.json');
-const utilities = require('../../../utilities/utilities');
 
 When(
-    /^I call publish on node (\d+) with ([^"]*) with keywords:*$/,
-    { timeout: 120000 },
-    async function publish (node, assertionName, keywords) {
+    /^I call publish on node (\d+) with ([^"]*)/,
+    { timeout: 220000 },
+    async function publish(node, assertionName) {
         this.logger.log('I call publish route successfully');
         expect(
             !!assertions[assertionName],
             `Assertion with name: ${assertionName} not found!`,
         ).to.be.equal(true);
-        const {publicKey} = this.state.nodes[node-1].configuration.modules.blockchain.implementation.ganache.config;
-        const parsedKeywords = utilities.unpackRawTableToArray(keywords);
+        const { publicKey, privateKey } =
+            this.state.nodes[node - 1].configuration.modules.blockchain.implementation.ganache
+                .config;
+        const hubContract = this.state.localBlockchain.uaiRegistryContractAddress();
         const assertion = assertions[assertionName];
         const result = await this.state.nodes[node - 1].client
-            .publish(assertion, publicKey)
+            .publish(assertion, { publicKey, privateKey }, hubContract)
             .catch((error) => {
                 assert.fail(`Error while trying to publish assertion. ${error}`);
             });
-        const operationId = result.data.operation_id;
-
+        const { operationId } = result.operation;
         this.state.lastPublishData = {
             nodeId: node - 1,
+            UAL: result.UAL,
+            assertionId: result.assertionId,
             operationId,
-            keywords: parsedKeywords,
+            // keywords: parsedKeywords,
             assertion: assertions[assertionName],
         };
     },
 );
 
-Given('I wait for last publish to finalize', { timeout: 120000 }, async function publishFinalize () {
+Given('I wait for last publish to finalize', { timeout: 120000 }, async function publishFinalize() {
     this.logger.log('I wait for last publish to finalize');
     expect(
         !!this.state.lastPublishData,
@@ -48,7 +50,7 @@ Given('I wait for last publish to finalize', { timeout: 120000 }, async function
         );
         // eslint-disable-next-line no-await-in-loop
         const publishResult = await this.state.nodes[publishData.nodeId].client
-            .getResult(publishData.operationId, 'publish')
+            .getResult(publishData.UAL)
             .catch((error) => {
                 assert.fail(`Error while trying to get publish result assertion. ${error}`);
             });
@@ -70,7 +72,7 @@ Given('I wait for last publish to finalize', { timeout: 120000 }, async function
 Given(
     /Last publish finished with status: ([COMPLETED|FAILED]+)$/,
     { timeout: 120000 },
-    async function lastPublishFinished (status) {
+    async function lastPublishFinished(status) {
         this.logger.log(`Last publish finished with status: ${status}`);
         expect(
             !!this.state.lastPublishData,
@@ -81,9 +83,10 @@ Given(
             'Last publish data result is undefined. Publish is not finished.',
         ).to.be.equal(true);
         const publishData = this.state.lastPublishData;
-        expect(publishData.result.status, 'Publish result status validation failed').to.be.equal(
-            status,
-        );
+        expect(
+            publishData.result.operation.status,
+            'Publish result status validation failed',
+        ).to.be.equal(status);
     },
 );
 
