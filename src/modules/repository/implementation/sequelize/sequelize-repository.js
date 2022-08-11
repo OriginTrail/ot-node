@@ -137,6 +137,15 @@ class SequelizeRepository {
         });
     }
 
+    async removeFinalizedCommands(finalizedStatuses) {
+        await this.models.commands.destroy({
+            where: {
+                status: { [Sequelize.Op.in]: finalizedStatuses },
+                started_at: { [Sequelize.Op.lte]: Date.now() },
+            },
+        });
+    }
+
     // OPERATION_ID
     async createOperationIdRecord(handlerData) {
         const handlerRecord = await this.models.operation_ids.create(handlerData);
@@ -156,6 +165,15 @@ class SequelizeRepository {
         await this.models.operation_ids.update(data, {
             where: {
                 operation_id: operationId,
+            },
+        });
+    }
+
+    async removeOperationIdRecord(timeToBeDeleted, statuses) {
+        await this.models.operation_ids.destroy({
+            where: {
+                timestamp: { [Sequelize.Op.lt]: timeToBeDeleted },
+                status: { [Sequelize.Op.in]: statuses },
             },
         });
     }

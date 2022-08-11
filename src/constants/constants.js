@@ -78,7 +78,12 @@ exports.OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 /**
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
  */
-exports.PERMANENT_COMMANDS = ['otnodeUpdateCommand', 'sendTelemetryCommand'];
+exports.PERMANENT_COMMANDS = [
+    'otnodeUpdateCommand',
+    'sendTelemetryCommand',
+    'operationIdCleanerCommand',
+    'commandsCleanerCommand',
+];
 
 /**
  * @constant {number} MAX_COMMAND_DELAY_IN_MILLS - Maximum delay for commands
@@ -292,6 +297,29 @@ exports.OPERATION_ID_STATUS = {
         VALIDATING_QUERY: 'VALIDATING_QUERY',
         SEARCHING_ENTITIES: 'SEARCHING_ENTITIES',
     },
+};
+
+/**
+ * @constant {number} OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS -
+ * operation id command cleanup interval time 24h
+ */
+exports.OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+/**
+ * @constant {number} FINALIZED_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time
+ * finalized commands command cleanup interval time 24h
+ */
+exports.FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+/**
+ * @constant {number} COMMAND_STATUS -
+ * Status for commands
+ */
+exports.COMMAND_STATUS = {
+    FAILED: 'FAILED',
+    EXPIRED: 'EXPIRED',
+    STARTED: 'STARTED',
+    PENDING: 'PENDING',
+    COMPLETED: 'COMPLETED',
+    REPEATING: 'REPEATING',
 };
 
 /**
