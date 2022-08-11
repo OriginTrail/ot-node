@@ -8,7 +8,7 @@ process.env.NODE_ENV = 'test';
 
 BeforeAll(() => {});
 
-Before(function beforeMethod (testCase, done) {
+Before(function beforeMethod(testCase, done) {
     this.logger = console;
     this.logger.log('Starting scenario: ', testCase.pickle.name, `${testCase.pickle.uri}`);
     // Initialize variables
@@ -24,7 +24,7 @@ Before(function beforeMethod (testCase, done) {
     done();
 });
 
-After(function afterMethod (testCase, done) {
+After(function afterMethod(testCase, done) {
     this.logger.log(
         'Completed scenario: ',
         testCase.pickle.name,
@@ -70,11 +70,26 @@ After(function afterMethod (testCase, done) {
     const server = new GraphDBServerClient(serverConfig);
     const promises = [];
 
-    for (const name in graphRepositoryNames) {
-        promises.push(server.deleteRepository(name));
-    }
+    graphRepositoryNames.forEach((element) => {
+        server
+            .hasRepository(element)
+            .then((exists) => {
+                if (exists) {
+                    promises.push(server.deleteRepository(element));
+                }
+            })
+            .catch((err) => console.log(err));
+    });
+    /* for (const name in graphRepositoryNames) {
+        // promises.push(server.deleteRepository(name));
+
+
+        /!* server.deleteRepository(name).then((result) => {
+            // successfully deleted
+            console.log(result);
+        }).catch(err => console.log(err)); *!/
+    } */
     Promise.all(promises).then(() => {
-        // todo this will not delete repository we need to research more about this
         done();
     });
 });
