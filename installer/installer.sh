@@ -526,7 +526,10 @@ jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "ipWhite
             read -p "Enter the private key: " NODE_PRIVATE_KEY
             echo "Node private key: $NODE_PRIVATE_KEY"
 
-            jq --arg blockchain "otp" --arg wallet "$NODE_WALLET" --arg privateKey "$NODE_PRIVATE_KEY" '.modules.blockchain.implementation[$blockchain].config |= {"publicKey": $wallet, "privateKey": $privateKey} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
+            read -p "Enter the management key: " MANAGEMENT_KEY
+            echo "Node management key: $MANAGEMENT_KEY"
+
+            jq --arg blockchain "otp" --arg wallet "$NODE_WALLET" --arg privateKey "$NODE_PRIVATE_KEY" --arg managementKey "$MANAGEMENT_KEY" '.modules.blockchain.implementation[$blockchain].config |= {"publicKey": $wallet, "privateKey": $privateKey, "managementKey": $managementKey} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
             mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc 
             # ;;
   #      [Nn]* ) ;;
