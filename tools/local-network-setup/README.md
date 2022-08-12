@@ -1,4 +1,4 @@
-DKG local Network Setup Tool
+DKG local network setup tool
 ========================
 
 This tool will help you set up a local DKG v6 network running with the Ganache blockchain. It is useful for development and testing purposes and is used internally by the OriginTrail core developers.
@@ -10,7 +10,6 @@ This tool will help you set up a local DKG v6 network running with the Ganache b
 
 Prerequisites
 =============
-
 
 * An installed and running triplestore (graph database)
   * We recommend testing with GraphDB. In order to download GraphDB, please visit their official [website](https://graphdb.ontotext.com/). Alternatively other triple stores can be used (Blazegraph, Apache Jena and other RDF native graph databases)
@@ -72,12 +71,16 @@ npm run deploy
 ## Specifying the number of nodes
 You can specify to run anywhere between one and ten nodes with the `--nodes` parameter.
 
+**Note:** All nodes assume MySQL username root and no password. To change the MySQL login information update the .dh_origintrail_noderc template file  sequelize-repository config object with your username and password<br/>
+
 The first node will be named `bootstrap`, while subsequent nodes will be named `dh1, dh2, ...`. <br/>
 
 ```bash
 bash ./tools/local-network-setup/setup-macos-environment.sh --nodes=6
 ```
 **Note:** With the above command, we will deploy a 6 nodes network (1 bootstrap and 5 subsequent nodes)<br/>
+
+
 
 <br/>
 
