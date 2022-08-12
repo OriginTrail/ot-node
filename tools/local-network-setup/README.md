@@ -7,6 +7,10 @@ From there you're ready to send API calls to your local nodes and test new featu
 
 **Note: This tool is an internal tool used by the OriginTrail team and thus is developed for our workflow, meaning that it currently only supports MacOS**, but we encourage you to adapt it for your workflow as well.
 
+**Nodes will be deployed to Ganache network which is a personal blockchain for application development.**
+
+
+
 Prerequisites
 =============
 
@@ -73,8 +77,6 @@ npm run deploy
 You can specify to run anywhere between one and ten nodes with the `--nodes` parameter.
 
 The first node will be named `bootstrap`, while subsequent nodes will be named `dh1, dh2, ...`. <br/>
-**The nodes will be deployed to Ganache network which is a personal blockchain for application development.**
-
 
 ```bash
 bash ./tools/local-network-setup/setup-macos-environment.sh --nodes=6
