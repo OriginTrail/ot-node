@@ -21,13 +21,17 @@ class OtGraphdb extends OtTripleStore {
             const newConfig = new RepositoryConfig(
                 this.config.repository,
                 '',
-                new Map(),
-                '',
-                'Repo title',
-                RepositoryType.FREE,
+                {},
+                'graphdb:SailRepository',
+                'title',
+                'graphdb',
             );
-            // Use the configuration to create new repository
-            await server.createRepository(newConfig);
+            try {
+                await server.createRepository(newConfig);
+            } catch (e) {
+                newConfig.type = RepositoryType.FREE;
+                await server.createRepository(newConfig);
+            }
         }
     }
 
