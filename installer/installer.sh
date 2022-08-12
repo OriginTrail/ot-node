@@ -510,7 +510,7 @@ fi
 
 CONFIG_DIR=$OTNODE_DIR/..
 touch $CONFIG_DIR/.origintrail_noderc
-jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "ipWhitelist": ["::1", "127.0.0.1"], "modules": {"tripleStore":{"defaultImplementation": $tripleStore}}}' > $CONFIG_DIR/.origintrail_noderc
+jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}, "modules": {"tripleStore":{"defaultImplementation": $tripleStore}}}' > $CONFIG_DIR/.origintrail_noderc
 
 
 #blockchains=("otp" "polygon")
@@ -519,17 +519,32 @@ jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "ipWhite
  #   read -p "Do you want to connect your node to blockchain: ${blockchains[$i]} ? [Y]Yes [N]No [E]Exit: " choice
 #	case "$choice" in
  #       [Yy]* )
+
+            read -p "Enter your substrate operational wallet address: " SUBSTRATE_OPERATIONAL_WALLET
+            echo "Substrate operational wallet address: $SUBSTRATE_OPERATIONAL_WALLET"
+
+            read -p "Enter your substrate operational wallet private key: " SUBSTRATE_OPERATIONAL_PRIVATE_KEY
+            echo "Substrate operational wallet private key: $SUBSTRATE_OPERATIONAL_PRIVATE_KEY"
+
+            read -p "Enter your EVM operational wallet address (this wallet will be mapped to your substate operational wallet address): " EVM_OPERATIONAL_WALLET
+            echo "EVM operational wallet address: $EVM_OPERATIONAL_WALLET"
+
+            read -p "Enter your EVM operational wallet private key: " EVM_OPERATIONAL_PRIVATE_KEY
+            echo "EVM operational wallet private key: $EVM_OPERATIONAL_PRIVATE_KEY"
+
+            read -p "Enter your substrate management wallet address: " SUBSTRATE_MANAGEMENT_WALLET
+            echo "Substrate management wallet address: $SUBSTRATE_MANAGEMENT_WALLET"
+
+            read -p "Enter your substrate management wallet private key: " SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY
+            echo "Substrate management wallet private key: $SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY"
  
-            read -p "Enter the operational wallet address: " NODE_WALLET
-            echo "Node wallet: $NODE_WALLET"
+            read -p "Enter your EVM management wallet address (this wallet will be mapped to your substate management wallet address): " EVM_MANAGEMENT_WALLET
+            echo "EVM management wallet address: $EVM_MANAGEMENT_WALLET"
 
-            read -p "Enter the private key: " NODE_PRIVATE_KEY
-            echo "Node private key: $NODE_PRIVATE_KEY"
+            read -p "Enter your EVM management wallet private key: " EVM_MANAGEMENT_PRIVATE_KEY
+            echo "EVM management wallet private key: $EVM_MANAGEMENT_PRIVATE_KEY"
 
-            read -p "Enter the management key: " MANAGEMENT_KEY
-            echo "Node management key: $MANAGEMENT_KEY"
-
-            jq --arg blockchain "otp" --arg wallet "$NODE_WALLET" --arg privateKey "$NODE_PRIVATE_KEY" --arg managementKey "$MANAGEMENT_KEY" '.modules.blockchain.implementation[$blockchain].config |= {"publicKey": $wallet, "privateKey": $privateKey, "managementKey": $managementKey} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
+            jq --arg blockchain "otp" --arg substrateOperationalWallet "$SUBSTRATE_OPERATIONAL_WALLET" --arg substrateOperationalPrivateKey "$SUBSTRATE_OPERATIONAL_PRIVATE_KEY" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg substrateManagementWallet "$SUBSTRATE_MANAGEMENT_WALLET" --arg substrateManagementPrivateKey "$SUBSTRATE_MANAGEMENT_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" --arg evmManagementWalletPrivateKey "$EVM_MANAGEMENT_PRIVATE_KEY" '.modules.blockchain.implementation[$blockchain].config |= {"substrateOperationalWallePublicKey": $substrateOperationalWallet, "substrateOperationalWallePrivateKey": $substrateOperationalPrivateKey, "evmOperationalWallePublicKey": $evmOperationalWallet, "evmOperationalWallePrivateKey": $evmOperationalWalletPrivateKey, "substrateManagementWallePublicKey": $substrateManagementWallet, "substrateManagementWallePrivateKey": $substrateManagementPrivateKey, "evmManagementWallePublicKey": $evmManagementWallet, "evmManagementWallePrivateKey": $evmManagementWalletPrivateKey} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
             mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc 
             # ;;
   #      [Nn]* ) ;;
