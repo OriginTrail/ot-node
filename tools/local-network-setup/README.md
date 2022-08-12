@@ -32,13 +32,24 @@ git checkout v6/refactor/develop && npm install
 ## 2. CLONE DKG REPOSITORIES & INSTALL DKG SMART CONTRACT DEPENDENCIES
 **Note:** DO NOT clone **dkg-evm-module** repository inside of the **ot-node** directory. 
 
-After cloning the **dkg-evm-module** repository, install dependencies with:
+After cloning the **dkg-evm-module** repository:
+```bash
+git clone https://github.com/OriginTrail/dkg-evm-module.git
+```
+
+install dependencies with:
 ```bash
 npm install
 ```
 
+and run local Ganache by executing:
+```bash
+npm run ganache
+```
+<br/>
 
-### 2.2 Create the .env file inside the "dkg-evm-module" directory:
+
+### 2.2 Create the .env file inside the "dkg-evm-module" directory and deploy DKG smart contract:
 ```bash
 nano .env
 ```
@@ -49,8 +60,7 @@ PRIVATE_KEY = 02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e
 ```
 **Note:** The private key above is used ONLY for convenience and SHOULD be changed to a secure key when used in production. 
 
-### 2.3 Deploy DKG smart contract:
-After preparing the .env file, deploy contracts by executing the following command:
+After preparing the .env file, deploy DKG smart contracts by executing the following command:
 ```bash
 npm run deploy 
 ```
@@ -59,7 +69,6 @@ npm run deploy
 ## 3. START LOCAL NETWORK
 
 ## Specifying the number of nodes
-The LNS tool deploys nodes that are connected to Polygon Mumbai testnet.
 You can specify to run anywhere between one and ten nodes with the `--nodes` parameter.
 
 The first node will be named `bootstrap`, while subsequent nodes will be named `dh1, dh2, ...`.
