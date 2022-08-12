@@ -2,7 +2,8 @@ Local Network Setup Tool
 ========================
 
 The Local Network Setup tool will  set up the configuration files for the nodes and start the nodes in separate windows.
-From there you're ready to send API calls to your local nodes and test new features on the ot-node.
+From there you're ready to send API calls to your local nodes and test new features on the ot-node.<br/>
+
 
 **Note: This tool is an internal tool used by the OriginTrail team and thus is developed for our workflow, meaning that it currently only supports MacOS**, but we encourage you to adapt it for your workflow as well.
 
@@ -13,7 +14,7 @@ Prerequisites
 * An installed and running tripplestore database
   * We suggest using GraphDB. In order to download GraphDB, please visit their official [website](https://graphdb.ontotext.com/) and fill out a form. Installation files will be provided to you via email.
 * An installed and running MySQL 
-  * You need to create empty table named operationaldb inside MySQL
+  * You need to create empty table named "operationaldb" inside MySQL
 * You should have installed npm and Node.js (v16) or higher
 
 
@@ -71,13 +72,14 @@ npm run deploy
 ## Specifying the number of nodes
 You can specify to run anywhere between one and ten nodes with the `--nodes` parameter.
 
-The first node will be named `bootstrap`, while subsequent nodes will be named `dh1, dh2, ...`.
+The first node will be named `bootstrap`, while subsequent nodes will be named `dh1, dh2, ...`. <br/>
+**The nodes will be deployed to Ganache network which is a personal blockchain for application development.**
 
 
 ```bash
 bash ./tools/local-network-setup/setup-macos-environment.sh --nodes=6
 ```
-**Note:** In the command above, we have deployed 6 nodes network (1 bootstrap and 5 subsequent nodes)
+**Note:** In the command above, we have deployed 6 nodes network (1 bootstrap and 5 subsequent nodes)<br/>
 
 <br/>
 
