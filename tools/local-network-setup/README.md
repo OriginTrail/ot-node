@@ -7,7 +7,7 @@ From there you're ready to send API calls to your local nodes and test new featu
 
 **Note: This tool is an internal tool used by the OriginTrail team and thus is developed for our workflow, meaning that it currently only supports MacOS**, but we encourage you to adapt it for your workflow as well.
 
-**Nodes will be deployed to Ganache network which is a personal blockchain for application development.**
+**Nodes will be deployed to Ganache network which is a local blockchain for application development.**
 
 
 
