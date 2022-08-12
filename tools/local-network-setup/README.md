@@ -79,7 +79,7 @@ The first node will be named `bootstrap`, while subsequent nodes will be named `
 ```bash
 bash ./tools/local-network-setup/setup-macos-environment.sh --nodes=6
 ```
-**Note:** In the command above, we have deployed 6 nodes network (1 bootstrap and 5 subsequent nodes)<br/>
+**Note:** With the above command, we will deploy a 6 nodes network (1 bootstrap and 5 subsequent nodes)<br/>
 
 <br/>
 
