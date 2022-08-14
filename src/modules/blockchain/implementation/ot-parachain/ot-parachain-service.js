@@ -11,76 +11,56 @@ class OtParachainService extends Web3Service {
     }
 
     async initialize(config, logger) {
-        await super.initialize(config, logger);
+        this.config = config;
+        this.logger = logger;
+        this.rpcNumber = 0;
 
-        await this.initializeParachainProvider();
-
-        const { operationalAccount, managementAccount } =
-            await this.getOperationalAndManagementAccount();
-
-        const keyring = new Keyring({ type: 'sr25519' });
-        this.operationalKeyring = keyring.createFromUri(
-            this.config.substrateOperationalWalletPrivateKey,
-        );
-        this.managementKeyring = keyring.createFromUri(
-            this.config.substrateManagementWalletPrivateKey,
-        );
-
-        this.evmOperationalAccount = operationalAccount;
-        this.evmManagementAccount = managementAccount;
+        await Promise.all([this.initializeWeb3(), this.initializeParachainProvider()]);
+        await this.initializeEvmAccounts();
+        await this.initializeContracts();
     }
 
-    async getOperationalAndManagementAccount() {
+    async bindEvmAccounts() {
         const {
-            substrateOperationalWalletPublicKey,
-            substrateManagementWalletPublicKey,
+            substrateOperationalWalletPrivateKey,
+            substrateManagementWalletPrivateKey,
             evmOperationalWalletPublicKey,
             evmOperationalWalletPrivateKey,
             evmManagementWalletPublicKey,
             evmManagementWalletPrivateKey,
         } = this.config;
 
-        let operationalAccount = await this.queryParachainState('evmAccounts', 'accounts', [
-            substrateOperationalWalletPublicKey,
-        ]);
-
-        if (!operationalAccount) {
-            const signature = await this.generateSignatureForMappingCall(
+        await Promise.all([
+            this.bindEvmAccount(
                 evmOperationalWalletPublicKey,
                 evmOperationalWalletPrivateKey,
-            );
-            operationalAccount = await this.callParachainExtrinsic(
-                this.operationalKeyring,
-                'evmAccounts',
-                'claimAccount',
-                [evmOperationalWalletPublicKey, signature],
-            );
-        }
-
-        let managementAccount = await this.queryParachainState('evmAccounts', 'accounts', [
-            substrateManagementWalletPublicKey,
-        ]);
-
-        if (!managementAccount) {
-            const signature = await this.generateSignatureForMappingCall(
+                substrateOperationalWalletPrivateKey,
+            ),
+            this.bindEvmAccount(
                 evmManagementWalletPublicKey,
                 evmManagementWalletPrivateKey,
-            );
-            managementAccount = await this.callParachainExtrinsic(
-                this.managementKeyring,
+                substrateManagementWalletPrivateKey,
+            ),
+        ]);
+    }
+
+    async bindEvmAccount(evmPublicKey, evmPrivateKey, substratePrivateKey) {
+        let account = await this.queryParachainState('evmAccounts', 'accounts', [evmPublicKey]);
+
+        if (account.toHex() === '0x') {
+            const { signature } = await this.web3.eth.accounts.sign(evmPublicKey, evmPrivateKey);
+            const keyring = new Keyring({ type: 'sr25519' });
+            account = await this.callParachainExtrinsic(
+                keyring.createFromUri(substratePrivateKey),
                 'evmAccounts',
                 'claimAccount',
-                [evmManagementWalletPublicKey, signature],
+                [evmPublicKey, signature],
             );
         }
 
-        if (!operationalAccount || !managementAccount) {
-            throw new Error(`Unable to create account mapping for otp`);
-        }
-        return {
-            operationalAccount,
-            managementAccount,
-        };
+        if (account.toHex() === '0x') throw Error('Unable to create account mapping for otp');
+
+        return account;
     }
 
     async callParachainExtrinsic(keyring, extrinsic, method, args) {
@@ -113,11 +93,6 @@ class OtParachainService extends Web3Service {
         }
     }
 
-    async generateSignatureForMappingCall(publicKey, privateKey) {
-        const result = await this.web3.eth.accounts.sign(publicKey, privateKey);
-        return result.signature;
-    }
-
     async initializeParachainProvider() {
         let tries = 0;
         let isRpcConnected = false;
@@ -133,7 +108,7 @@ class OtParachainService extends Web3Service {
                 const provider = new WsProvider(this.config.rpcEndpoints[this.rpcNumber]);
 
                 // eslint-disable-next-line no-await-in-loop
-                this.parachainProvider = await ApiPromise.create({ provider });
+                this.parachainProvider = await new ApiPromise({ provider }).isReady;
                 isRpcConnected = true;
             } catch (e) {
                 this.logger.warn(
