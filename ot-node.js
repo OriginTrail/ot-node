@@ -235,7 +235,10 @@ class OTNode {
             if (!configFile.modules.network.implementation['libp2p-service'].config.privateKey) {
                 configFile.modules.network.implementation['libp2p-service'].config.privateKey =
                     privateKey;
-                await fs.promises.writeFile(configurationFilePath, JSON.stringify(configFile, null, 2));
+                await fs.promises.writeFile(
+                    configurationFilePath,
+                    JSON.stringify(configFile, null, 2),
+                );
             }
         }
     }
@@ -251,7 +254,10 @@ class OTNode {
         ) {
             if (!configFile.modules.blockchain.implementation[blockchain].config.identity) {
                 configFile.modules.blockchain.implementation[blockchain].config.identity = identity;
-                await fs.promises.writeFile(configurationFilePath, JSON.stringify(configFile, null, 2));
+                await fs.promises.writeFile(
+                    configurationFilePath,
+                    JSON.stringify(configFile, null, 2),
+                );
             }
         }
     }

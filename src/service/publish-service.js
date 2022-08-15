@@ -1,4 +1,5 @@
 const { Mutex } = require('async-mutex');
+const { formatAssertion } = require('assertion-tools');
 const OperationService = require('./operation-service');
 const {
     OPERATION_ID_STATUS,
@@ -113,8 +114,7 @@ class PublishService extends OperationService {
 
         const assertionGraphName = `assertion:${assertionId}`;
 
-        // TODO: move to assertion-tools
-        const assetNquads = await this.dataService.toNQuads({
+        const assetNquads = await formatAssertion({
             '@context': SCHEMA_CONTEXT,
             '@id': ual,
             blockchain,

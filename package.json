@@ -59,7 +59,7 @@
     "dependencies": {
         "@comunica/query-sparql": "^2.2.1",
         "app-root-path": "^3.0.0",
-        "assertion-tools": "^1.0.3",
+        "assertion-tools": "^1.0.7",
         "async": "^3.2.4",
         "async-mutex": "^0.3.2",
         "awilix": "^5.0.1",
@@ -70,6 +70,7 @@
         "cors": "^2.8.5",
         "crypto-js": "^4.1.1",
         "deep-extend": "^0.6.0",
+        "dkg-evm-module": "^1.0.1",
         "dotenv": "^10.0.0",
         "elliptic": "^6.5.4",
         "express": "^4.17.1",
