@@ -89,6 +89,7 @@ After(function afterMethod(testCase, done) {
             console.log(result);
         }).catch(err => console.log(err)); *!/
     } */
+    this.logger.log(new Date().toLocaleTimeString());
     Promise.all(promises).then(() => {
         done();
     });

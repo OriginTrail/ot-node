@@ -38,7 +38,7 @@ class OperationIdService {
 
         if (errorMessage !== null) {
             this.logger.debug(`Marking operation id ${operationId} as failed`);
-            response.data = JSON.stringify({ errorMessage });
+            response.data = JSON.stringify({ errorMessage, errorType });
             await this.removeOperationIdCache(operationId);
         }
 
