@@ -2,7 +2,7 @@ const routes = [
     'PUBLISH',
     'PROVISION',
     'UPDATE',
-    'RESOLVE',
+    'GET',
     'SEARCH',
     'SEARCH_ASSERTION',
     'QUERY',

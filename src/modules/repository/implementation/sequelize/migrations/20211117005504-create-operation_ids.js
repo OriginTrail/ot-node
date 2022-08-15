@@ -1,19 +1,21 @@
 module.exports = {
-    up: async (queryInterface, Sequelize) => {
-        await queryInterface.createTable('assertions', {
-            hash: {
-                type: Sequelize.STRING,
-                primaryKey: true,
+    up: (queryInterface, Sequelize) =>
+        queryInterface.createTable('operation_ids', {
+            operation_id: {
                 allowNull: false,
-            },
-            owner: {
+                primaryKey: true,
                 type: Sequelize.STRING,
             },
-            signature: {
+            data: {
+                allowNull: true,
                 type: Sequelize.TEXT,
             },
-            topics: {
+            status: {
+                allowNull: false,
                 type: Sequelize.STRING,
+            },
+            timestamp: {
+                type: Sequelize.BIGINT,
             },
             created_at: {
                 allowNull: false,
@@ -25,9 +27,6 @@ module.exports = {
                 type: Sequelize.DATE,
                 defaultValue: Sequelize.literal('NOW()'),
             },
-        });
-    },
-    down: async (queryInterface) => {
-        await queryInterface.dropTable('assertions');
-    },
+        }),
+    down: (queryInterface) => queryInterface.dropTable('operation_ids'),
 };

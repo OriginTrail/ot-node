@@ -1,13 +1,12 @@
 const Web3 = require('web3');
-const web3 = new Web3('wss://parachain-tempnet-01.origin-trail.network');
 const axios = require('axios');
 const { peerId2Hash } = require('assertion-tools');
-const Hub = require('./build/contracts/Hub.json');
-const AssetRegistry = require('./build/contracts/AssetRegistry.json');
-const ERC20Token = require('./build/contracts/ERC20Token.json');
-const Identity = require('./build/contracts/Identity.json');
-const Profile = require('./build/contracts/Profile.json');
-const ProfileStorage = require('./build/contracts/ProfileStorage.json');
+const Hub = require('dkg-evm-module/build/contracts/Hub.json');
+const AssetRegistry = require('dkg-evm-module/build/contracts/AssetRegistry.json');
+const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
+const Identity = require('dkg-evm-module/build/contracts/Identity.json');
+const Profile = require('dkg-evm-module/build/contracts/Profile.json');
+const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
 const constants = require('../../../constants/constants');
 
 class Web3Service {

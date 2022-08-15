@@ -1,9 +1,3 @@
-exports.GS1EPCIS = 'gs1-epcis';
-exports.ERC721 = 'erc721';
-exports.OTTELEMETRY = 'ottelemetry';
-exports.MERKLE_TREE = 'Merkle Tree';
-exports.BASIC = 'Basic';
-exports.DID = 'DID';
 exports.SCHEMA_CONTEXT = 'http://schema.org/';
 
 /**
@@ -17,12 +11,6 @@ exports.PUBLISH_TYPES = { ASSERTION: 'assertion', ASSET: 'asset', INDEX: 'index'
  * - Required node.js version to run the ot-node
  */
 exports.MIN_NODE_VERSION = 16;
-
-/**
- * @constant {number} MAX_FILE_SIZE
- * - Max file size for publish
- */
-exports.MAX_FILE_SIZE = 2621440;
 
 // TODO retrieve from the blockchain
 /**
@@ -90,14 +78,7 @@ exports.OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 /**
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
  */
-exports.PERMANENT_COMMANDS = [
-    'otnodeUpdateCommand',
-    // 'testCommand',
-    'sendTelemetryCommand',
-    // 'cleanerCommand',
-    // 'operationIdsCleanerCommand',
-    // 'keepAliveCommand',
-];
+exports.PERMANENT_COMMANDS = ['otnodeUpdateCommand', 'sendTelemetryCommand'];
 
 /**
  * @constant {number} MAX_COMMAND_DELAY_IN_MILLS - Maximum delay for commands
@@ -212,36 +193,6 @@ exports.MAX_OPEN_SESSIONS = 10;
 exports.NETWORK_HANDLER_TIMEOUT = 120e3;
 
 /**
- * @constant {object} NETWORK_PROTOCOLS -
- *  Network protocols
- */
-exports.NETWORK_PROTOCOLS = {
-    STORE: '/store/1.0.1',
-    GET: '/get/1.0.1',
-    SEARCH: '/search/1.0.1',
-    SEARCH_RESULT: '/search/1.0.1/result',
-    SEARCH_ASSERTIONS: '/search/assertions/1.0.1',
-    SEARCH_ASSERTIONS_RESULT: '/search/assertions/1.0.1/result',
-};
-
-/**
- * @constant {object} SERVICE_API_ROUTES
- *  Service api routes
- */
-exports.SERVICE_API_ROUTES = {
-    PUBLISH: '/publish',
-    PROVISION: '/provision',
-    UPDATE: '/update',
-    GET: '/get',
-    SEARCH: '/entities::search',
-    SEARCH_ASSERTIONS: '/assertions::search',
-    QUERY: '/query',
-    PROOFS: '/proofs::get',
-    OPERATION_RESULT: '/:operation/:operation_id',
-    INFO: '/info',
-};
-
-/**
  * @constant {object} ERROR_TYPE -
  *  Types of errors supported
  */
@@ -270,67 +221,6 @@ exports.ERROR_TYPE = {
         GET_REQUEST_REMOTE_ERROR: 'GetRequestRemoteError',
         GET_ERROR: 'GetError',
     },
-    INSERT_ASSERTION_ERROR: 'InsertAssertionError',
-    PREPARE_ASSERTION_ERROR: 'PrepareAssertionError',
-    VALIDATE_ASSERTION_ERROR: 'ValidateAssertionError',
-    SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
-    FIND_NODES_ERROR: 'FindNodesError',
-    SEND_ASSERTION_ERROR: 'SendAssertionError',
-    SEND_ASSERTION_ERROR_BUSY: 'SendAssertionErrorBusy',
-    SENDING_TELEMETRY_DATA_ERROR: 'SendingDataTelemetryError',
-    CHECKING_UPDATE_ERROR: 'CheckingUpdateError',
-    API_ERROR_400: 'ApiError400',
-    API_ERROR_500: 'ApiError500',
-    PUBLISH_START_ERROR: 'PublishStartError',
-    PUBLISH_ROUTE_ERROR: 'PublishRouteError',
-    GET_ROUTE_ERROR: 'GetRouteError',
-    SEARCH_ASSERTIONS_ROUTE_ERROR: 'SearchAssertionsRouteError',
-    SEARCH_ASSERTIONS_INIT_ERROR: 'SearchAssertionsInitError',
-    SEARCH_ASSERTIONS_REQUEST_ERROR: 'SearchAssertionsRequestError',
-    LOCAL_SEARCH_ASSERTIONS_ERROR: 'LocalSearchAssertionsError',
-    HANDLE_SEARCH_ASSERTIONS_INIT_ERROR: 'handleSearchAssertionsInitError',
-    HANDLE_SEARCH_ASSERTIONS_REQUEST_ERROR: 'handleSearchAssertionsRequestError',
-    SEARCH_ENTITIES_ROUTE_ERROR: 'SearchEntitiesRouteError',
-    SEARCH_ENTITIES_INIT_ERROR: 'SearchEntitiesInitError',
-    SEARCH_ENTITIES_REQUEST_ERROR: 'SearchEntitiesRequestError',
-    LOCAL_SEARCH_ENTITIES_ERROR: 'LocalSearchEntitiesError',
-    HANDLE_SEARCH_ENTITIES_INIT_ERROR: 'handleSearchEntitiesInitError',
-    HANDLE_SEARCH_ENTITIES_REQUEST_ERROR: 'handleSearchEntitiesRequestError',
-    QUERY_ROUTE_ERROR: 'QueryRouteError',
-    PROOFS_ROUTE_ERROR: 'ProofsRouteError',
-    RESULTS_ROUTE_ERROR: 'ResultsRouteError',
-    NODE_INFO_ROUTE_ERROR: 'NodeInfoRouteError',
-    STORE_INIT_ERROR: 'StoreInitError',
-    STORE_REQUEST_ERROR: 'StoreRequestError',
-    GET_ASSERTION_COMMAND: 'GetAssertionCommand',
-    GET_START_ERROR: 'GetStartError',
-    GET_INIT_ERROR: 'GetInitError',
-    GET_REQUEST_ERROR: 'GetRequestError',
-    LOCAL_GET_ERROR: 'LocalGetError',
-    LOCAL_STORE_ERROR: 'LocalStoreError',
-    HANDLE_STORE_ERROR: 'HandleStoreError',
-    HANDLE_STORE_INIT_ERROR: 'HandleStoreInitError',
-    HANDLE_STORE_REQUEST_ERROR: 'HandleStoreRequestError',
-    HANDLE_GET_INIT_ERROR: 'HandleGetInitError',
-    HANDLE_GET_REQUEST_ERROR: 'HandleGetRequestError',
-    EXTRACT_METADATA_ERROR: 'ExtractMetadataError',
-    TRIPLE_STORE_UNAVAILABLE_ERROR: 'TripleStoreUnavailableError',
-    TRIPLE_STORE_INSERT_ERROR: 'TripleStoreInsertError',
-    LIBP2P_HANDLE_MSG_ERROR: 'Libp2pHandleMessageError',
-    VERIFY_ASSERTION_ERROR: 'VerifyAssertionError',
-    BLOCKCHAIN_CHECK_ERROR: 'BlockchainCheckError',
-    COMMAND_EXECUTOR_ERROR: 'CommandExecutorError',
-    FAILED_COMMAND_ERROR: 'FailedCommandError',
-    MODULE_INITIALIZATION_ERROR: 'ModuleInitializationError',
-    UPDATE_INITIALIZATION_ERROR: 'UpdateInitializationError',
-    DATA_MODULE_INITIALIZATION_ERROR: 'DataModuleInitializationError',
-    OPERATIONALDB_MODULE_INITIALIZATION_ERROR: 'OperationalDbModuleInitializationError',
-    NETWORK_INITIALIZATION_ERROR: 'NetworkInitializationError',
-    VALIDATION_INITIALIZATION_ERROR: 'ValidationInitializationError',
-    BLOCKCHAIN_INITIALIZATION_ERROR: 'BlockchainInitializationError',
-    COMMAND_EXECUTOR_INITIALIZATION_ERROR: 'CommandExecutorInitializationError',
-    RPC_INITIALIZATION_ERROR: 'RpcInitializationError',
-    KEEP_ALIVE_ERROR: 'KeepAliveError',
 };
 /**
  * @constant {object} OPERATION_ID_STATUS -
@@ -402,6 +292,19 @@ exports.OPERATION_ID_STATUS = {
         VALIDATING_QUERY: 'VALIDATING_QUERY',
         SEARCHING_ENTITIES: 'SEARCHING_ENTITIES',
     },
+};
+
+/**
+ * @constant {object} NETWORK_PROTOCOLS -
+ *  Network protocols
+ */
+exports.NETWORK_PROTOCOLS = {
+    STORE: '/store/1.0.0',
+    GET: '/get/1.0.0',
+    SEARCH: '/search/1.0.0',
+    SEARCH_RESULT: '/search/1.0.0/result',
+    SEARCH_ASSERTIONS: '/search/assertions/1.0.0',
+    SEARCH_ASSERTIONS_RESULT: '/search/assertions/1.0.0/result',
 };
 
 /**
