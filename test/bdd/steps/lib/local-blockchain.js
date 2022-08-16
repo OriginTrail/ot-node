@@ -1,11 +1,17 @@
 /* eslint-disable max-len */
 const Ganache = require('ganache-core');
 const Web3 = require('web3');
-const fs = require('fs');
-const path = require('path');
 const Wallet = require('ethereumjs-wallet').default;
+const hubSource = require('dkg-evm-module/build/contracts/Hub.json');
+const assertionRegistrySource = require('dkg-evm-module/build/contracts/AssertionRegistry.json');
+const uaiRegistrySource = require('dkg-evm-module/build/contracts/UAIRegistry.json');
+const assetRegistrySource = require('dkg-evm-module/build/contracts/AssetRegistry.json');
+const erc20TokenSource = require('dkg-evm-module/build/contracts/ERC20Token.json');
+const profileStorageSource = require('dkg-evm-module/build/contracts/ProfileStorage.json');
+const profileSource = require('dkg-evm-module/build/contracts/Profile.json');
 
-const PATH_TO_CONTRACTS = '../../../../src/modules/blockchain/implementation/build/contracts/';
+// const PATH_TO_CONTRACTS = '../../../../node_modules/dkg-evm-module/build/contracts/';
+
 // const contractNames = ['Hub','AssertionRegistry','UAIRegistry','AssetRegistry','ERC20Token','ProfileStorage','Profile'];
 const accountPrivateKeys = [
     '3cf97be6177acdd12796b387f58f84f177d0fe20d8558004e8db9a41cf90392a',
@@ -126,17 +132,28 @@ class LocalBlockchain {
                 this.fetchContracts();
                 await this.deployContracts();
                 // console.log('Contracts have been deployed!');
-
                 console.log(
                     `\t Hub contract address: \t\t\t\t\t${this.contracts.hub.instance._address}`,
                 );
-                /* console.log(`\t AssertionRegistry contract address: \t\t\t${this.contracts.assertionRegistry.instance._address}`);
-                console.log(`\t UAIRegistry contract address: \t\t\t\t${this.contracts.uaiRegistry.instance._address}`);
-                console.log(`\t AssetRegistry contract address: \t\t\t${this.contracts.assetRegistry.instance._address}`);
+                console.log(
+                    `\t AssertionRegistry contract address: \t\t\t${this.contracts.assertionRegistry.instance._address}`,
+                );
+                console.log(
+                    `\t UAIRegistry contract address: \t\t\t\t${this.contracts.uaiRegistry.instance._address}`,
+                );
+                console.log(
+                    `\t AssetRegistry contract address: \t\t\t${this.contracts.assetRegistry.instance._address}`,
+                );
 
-                console.log(`\t Token contract address: \t\t\t\t${this.contracts.erc20Token.instance._address}`);
-                console.log(`\t ProfileStorage contract address: \t\t\t${this.contracts.profileStorage.instance._address}`);
-                console.log(`\t Profile contract address: \t\t\t${this.contracts.profile.instance._address}`); */
+                console.log(
+                    `\t Token contract address: \t\t\t\t${this.contracts.erc20Token.instance._address}`,
+                );
+                console.log(
+                    `\t ProfileStorage contract address: \t\t\t${this.contracts.profileStorage.instance._address}`,
+                );
+                console.log(
+                    `\t Profile contract address: \t\t\t${this.contracts.profile.instance._address}`,
+                );
                 accept();
             });
         });
@@ -144,44 +161,8 @@ class LocalBlockchain {
 
     fetchContracts() {
         // contractNames.forEach(getContracts(contractName))
-        const hubSource = JSON.parse(
-            fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}Hub.json`)).toString(),
-        );
-        const assertionRegistrySource = JSON.parse(
-            fs
-                .readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}AssertionRegistry.json`))
-                .toString(),
-        );
-        const uaiRegistrySource = JSON.parse(
-            fs
-                .readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}UAIRegistry.json`))
-                .toString(),
-        );
-        const assetRegistrySource = JSON.parse(
-            fs
-                .readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}AssetRegistry.json`))
-                .toString(),
-        );
-        const erc20TokenSource = JSON.parse(
-            fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}ERC20Token.json`)).toString(),
-        );
-        const profileStorageSource = JSON.parse(
-            fs
-                .readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}ProfileStorage.json`))
-                .toString(),
-        );
-        const profileSource = JSON.parse(
-            fs.readFileSync(path.join(__dirname, `${PATH_TO_CONTRACTS}Profile.json`)).toString(),
-        );
 
         this.contracts = {};
-        /*      this.getContract(hubSource);
-        this.getContract(assertionRegistrySource);
-        this.getContract(uaiRegistrySource);
-        this.getContract(assetRegistrySource);
-        this.getContract(erc20TokenSource);
-        this.getContract(profileStorageSource);
-        this.getContract(profileSource); */
 
         this.contracts.hub = {};
         this.contracts.hub.data = hubSource.bytecode;
