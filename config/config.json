@@ -409,7 +409,7 @@
         "telemetry": {
             "enabled": true,
             "sendTelemetryData": true,
-            "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal"
+            "signalingServerUrl": "https://testnet-signaling.origin-trail.network/signal"
         },
         "auth": {
             "ipBasedAuthEnabled": true,
