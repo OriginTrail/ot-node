@@ -20,12 +20,15 @@ if (!keys) {
 }
 
 for (const implementation in bootstrapTemplate.modules.blockchain.implementation) {
-    bootstrapTemplate.modules.blockchain.implementation[implementation].config.publicKey =
-        keys.publicKey[0];
-    bootstrapTemplate.modules.blockchain.implementation[implementation].config.privateKey =
-        keys.privateKey[0];
-    bootstrapTemplate.modules.blockchain.implementation[implementation].config.managementKey =
-        keys.managementKey;
+    bootstrapTemplate.modules.blockchain.implementation[
+        implementation
+    ].config.evmOperationalWalletPublicKey = keys.publicKey[0];
+    bootstrapTemplate.modules.blockchain.implementation[
+        implementation
+    ].config.evmOperationalWalletPrivateKey = keys.privateKey[0];
+    bootstrapTemplate.modules.blockchain.implementation[
+        implementation
+    ].config.evmManagementWalletPublicKey = keys.managementKey;
 }
 
 fs.writeFileSync(bootstrapTemplatePath, JSON.stringify(bootstrapTemplate, null, 2));
@@ -65,12 +68,15 @@ for (let i = 0; i < numberOfNodes; i += 1) {
                 'https://matic-testnet-archive-rpc.bwarelabs.com',
             ];
         }
-        parsedTemplate.modules.blockchain.implementation[implementation].config.publicKey =
-            keys.publicKey[i + 1];
-        parsedTemplate.modules.blockchain.implementation[implementation].config.privateKey =
-            keys.privateKey[i + 1];
-        parsedTemplate.modules.blockchain.implementation[implementation].config.managementKey =
-            keys.managementKey;
+        parsedTemplate.modules.blockchain.implementation[
+            implementation
+        ].config.evmOperationalWalletPublicKey = keys.publicKey[i + 1];
+        parsedTemplate.modules.blockchain.implementation[
+            implementation
+        ].config.evmOperationalWalletPrivateKey = keys.privateKey[i + 1];
+        parsedTemplate.modules.blockchain.implementation[
+            implementation
+        ].config.evmManagementWalletPublicKey = keys.managementKey;
     }
 
     parsedTemplate.modules.httpClient.implementation['express-http-client'].config.port = 8900 + i;

@@ -43,9 +43,9 @@
                         "rpcEndpoints": [
                             "http://localhost:7545"
                         ],
-                        "publicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
-                        "privateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
-                        "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                        "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
+                        "evmOperationalWalletPrivateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
+                        "evmManagementWalletPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
                     }
                 },
                 "otp": {
@@ -53,9 +53,9 @@
                         "rpcEndpoints": [
                             "wss://parachain-tempnet-01.origin-trail.network"
                         ],
-                        "publicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
-                        "privateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
-                        "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                        "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
+                        "evmOperationalWalletPrivateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
+                        "evmManagementWalletPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
                     }
                 },
                 "polygon": {
@@ -66,9 +66,9 @@
                             "https://rpc-mumbai.matic.today",
                             "https://matic-testnet-archive-rpc.bwarelabs.com"
                         ],
-                        "publicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
-                        "privateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
-                        "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                        "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
+                        "evmOperationalWalletPrivateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
+                        "evmManagementWalletPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
                     }
                 }
             }
