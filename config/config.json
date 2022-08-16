@@ -111,7 +111,7 @@
                             "networkId": "ganache::testnet",
                             "hubContractAddress": "0xF21dD87cFC5cF5D073398833AFe5EFC543b78a00",
                             "rpcEndpoints": ["http://localhost:7545"],
-                            "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                            "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
                         }
                     },
                     "otp": {
@@ -120,7 +120,7 @@
                             "networkId": "otp::testnet",
                             "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
                             "rpcEndpoints": ["wss://parachain-tempnet-01.origin-trail.network"],
-                            "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                            "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
                         }
                     },
                     "polygon": {
@@ -134,7 +134,7 @@
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
                             ],
-                            "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                            "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
                         }
                     }
                 }
@@ -339,8 +339,7 @@
                             "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
                             "rpcEndpoints": [
                                 "wss://parachain-tempnet-01.origin-trail.network"
-                            ],
-                            "managementKey": "0xe1EEB4f09809C6c8664c0b1e3B26211d139076fF"
+                            ]
                         }
                     },
                     "polygon": {
@@ -409,7 +408,7 @@
         "telemetry": {
             "enabled": true,
             "sendTelemetryData": true,
-            "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal"
+            "signalingServerUrl": "https://testnet-signaling.origin-trail.network/signal"
         },
         "auth": {
             "ipBasedAuthEnabled": true,
