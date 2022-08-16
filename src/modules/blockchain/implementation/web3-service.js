@@ -1,12 +1,12 @@
 const Web3 = require('web3');
 const axios = require('axios');
-const { sha256 } = require('multiformats/hashes/sha2');
-const Hub = require('./build/contracts/Hub.json');
-const AssetRegistry = require('./build/contracts/AssetRegistry.json');
-const ERC20Token = require('./build/contracts/ERC20Token.json');
-const Identity = require('./build/contracts/Identity.json');
-const Profile = require('./build/contracts/Profile.json');
-const ProfileStorage = require('./build/contracts/ProfileStorage.json');
+const { peerId2Hash } = require('assertion-tools');
+const Hub = require('dkg-evm-module/build/contracts/Hub.json');
+const AssetRegistry = require('dkg-evm-module/build/contracts/AssetRegistry.json');
+const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
+const Identity = require('dkg-evm-module/build/contracts/Identity.json');
+const Profile = require('dkg-evm-module/build/contracts/Profile.json');
+const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
 const constants = require('../../../constants/constants');
 
 class Web3Service {
@@ -132,7 +132,7 @@ class Web3Service {
             constants.INIT_STAKE_AMOUNT,
         ]);
 
-        const nodeId = await this.peerId2Hash(peerId);
+        const nodeId = await peerId2Hash(peerId);
 
         await this.executeContractFunction(this.ProfileContract, 'createProfile', [
             this.getManagementKey(),
@@ -297,11 +297,6 @@ class Web3Service {
         );
 
         return assertionId;
-    }
-
-    // TODO: move to assertion-tools
-    async peerId2Hash(peerId) {
-        return `0x${Buffer.from((await sha256.digest(peerId.toBytes())).digest).toString('hex')}`;
     }
 
     async healthCheck() {

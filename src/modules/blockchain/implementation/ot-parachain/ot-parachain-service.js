@@ -16,11 +16,28 @@ class OtParachainService extends Web3Service {
         this.rpcNumber = 0;
 
         await Promise.all([this.initializeWeb3(), this.initializeParachainProvider()]);
-        await this.initializeEvmAccounts();
+        await this.checkEvmAccountsMapping();
         await this.initializeContracts();
     }
 
-    async bindEvmAccounts() {
+    async checkEvmAccountsMapping() {
+        const { evmOperationalWalletPublicKey, evmManagementWalletPublicKey } = this.config;
+        const operationalAccount = await this.queryParachainState('evmAccounts', 'accounts', [
+            evmOperationalWalletPublicKey,
+        ]);
+        if (!operationalAccount || operationalAccount.toHex() === '0x') {
+            throw Error('Missing account mapping for operational wallet');
+        }
+
+        const managementAccount = await this.queryParachainState('evmAccounts', 'accounts', [
+            evmManagementWalletPublicKey,
+        ]);
+        if (!managementAccount || managementAccount.toHex() === '0x') {
+            throw Error('Missing account mapping for management wallet');
+        }
+    }
+
+    async initializeEvmAccounts() {
         const {
             substrateOperationalWalletPrivateKey,
             substrateManagementWalletPrivateKey,

@@ -75,7 +75,7 @@ class SequelizeRepository {
             this.config,
         );
         const models = {};
-        fs.readdirSync(modelsDirectory)
+        (await fs.promises.readdir(modelsDirectory))
             .filter((file) => file.indexOf('.') !== 0 && file.slice(-3) === '.js')
             .forEach((file) => {
                 // eslint-disable-next-line global-require,import/no-dynamic-require

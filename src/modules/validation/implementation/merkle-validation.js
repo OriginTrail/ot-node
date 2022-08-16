@@ -1,6 +1,7 @@
 const keccak256 = require('keccak256');
 const web3 = require('web3');
 const { MerkleTree } = require('merkletreejs');
+const { calculateRoot } = require('assertion-tools');
 
 class MerkleValidation {
     async initialize(config, logger) {
@@ -8,14 +9,8 @@ class MerkleValidation {
         this.logger = logger;
     }
 
-    // TODO: move to assertion-tools
     calculateRoot(assertion) {
-        assertion.sort();
-        const leaves = assertion.map((element, index) =>
-            keccak256(web3.utils.encodePacked(keccak256(element), index)),
-        );
-        const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
-        return `0x${tree.getRoot().toString('hex')}`;
+        return calculateRoot(assertion);
     }
 
     // TODO move to assertion-tools
