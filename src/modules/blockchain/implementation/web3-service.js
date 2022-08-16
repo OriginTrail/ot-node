@@ -174,15 +174,15 @@ class Web3Service {
     }
 
     getPrivateKey() {
-        return this.config.privateKey;
+        return this.config.evmOperationalWalletPrivateKey;
     }
 
     getPublicKey() {
-        return this.config.publicKey;
+        return this.config.evmOperationalWalletPublicKey;
     }
 
     getManagementKey() {
-        return this.config.managementKey;
+        return this.config.evmManagementWalletPublicKey;
     }
 
     async getGasPrice() {
@@ -218,12 +218,12 @@ class Web3Service {
                 const gasPrice = await this.getGasPrice();
 
                 const gasLimit = await contractInstance.methods[functionName](...args).estimateGas({
-                    from: this.config.publicKey,
+                    from: this.getPublicKey(),
                 });
 
                 const encodedABI = contractInstance.methods[functionName](...args).encodeABI();
                 const tx = {
-                    from: this.config.publicKey,
+                    from: this.getPublicKey(),
                     to: contractInstance.options.address,
                     data: encodedABI,
                     gasPrice: gasPrice || this.web3.utils.toWei('20', 'Gwei'),
@@ -232,7 +232,7 @@ class Web3Service {
 
                 const createdTransaction = await this.web3.eth.accounts.signTransaction(
                     tx,
-                    this.config.privateKey,
+                    this.getPrivateKey(),
                 );
                 result = await this.web3.eth.sendSignedTransaction(
                     createdTransaction.rawTransaction,
@@ -258,7 +258,7 @@ class Web3Service {
                         arguments: args,
                     })
                     .estimateGas({
-                        from: this.config.publicKey,
+                        from: this.getPublicKey(),
                     });
 
                 const encodedABI = contractInstance
@@ -269,7 +269,7 @@ class Web3Service {
                     .encodeABI();
 
                 const tx = {
-                    from: this.config.publicKey,
+                    from: this.getPublicKey(),
                     data: encodedABI,
                     gasPrice: gasPrice || this.web3.utils.toWei('20', 'Gwei'),
                     gas: gasLimit || this.web3.utils.toWei('900', 'Kwei'),
@@ -277,7 +277,7 @@ class Web3Service {
 
                 const createdTransaction = await this.web3.eth.accounts.signTransaction(
                     tx,
-                    this.config.privateKey,
+                    this.getPrivateKey(),
                 );
 
                 return this.web3.eth.sendSignedTransaction(createdTransaction.rawTransaction);

@@ -520,32 +520,32 @@ jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": 
 #	case "$choice" in
  #       [Yy]* )
 
-            read -p "Enter your substrate operational wallet address: " SUBSTRATE_OPERATIONAL_WALLET
-            echo "Substrate operational wallet address: $SUBSTRATE_OPERATIONAL_WALLET"
+#            read -p "Enter your substrate operational wallet address: " SUBSTRATE_OPERATIONAL_WALLET
+#            echo "Substrate operational wallet address: $SUBSTRATE_OPERATIONAL_WALLET"
+#
+#            read -p "Enter your substrate operational wallet private key: " SUBSTRATE_OPERATIONAL_PRIVATE_KEY
+#            echo "Substrate operational wallet private key: $SUBSTRATE_OPERATIONAL_PRIVATE_KEY"
 
-            read -p "Enter your substrate operational wallet private key: " SUBSTRATE_OPERATIONAL_PRIVATE_KEY
-            echo "Substrate operational wallet private key: $SUBSTRATE_OPERATIONAL_PRIVATE_KEY"
-
-            read -p "Enter your EVM operational wallet address (this wallet will be mapped to your substate operational wallet address): " EVM_OPERATIONAL_WALLET
+            read -p "Enter your EVM operational wallet address: " EVM_OPERATIONAL_WALLET
             echo "EVM operational wallet address: $EVM_OPERATIONAL_WALLET"
 
             read -p "Enter your EVM operational wallet private key: " EVM_OPERATIONAL_PRIVATE_KEY
             echo "EVM operational wallet private key: $EVM_OPERATIONAL_PRIVATE_KEY"
 
-            read -p "Enter your substrate management wallet address: " SUBSTRATE_MANAGEMENT_WALLET
-            echo "Substrate management wallet address: $SUBSTRATE_MANAGEMENT_WALLET"
+#            read -p "Enter your substrate management wallet address: " SUBSTRATE_MANAGEMENT_WALLET
+#            echo "Substrate management wallet address: $SUBSTRATE_MANAGEMENT_WALLET"
+#
+#            read -p "Enter your substrate management wallet private key: " SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY
+#            echo "Substrate management wallet private key: $SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY"
 
-            read -p "Enter your substrate management wallet private key: " SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY
-            echo "Substrate management wallet private key: $SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY"
- 
-            read -p "Enter your EVM management wallet address (this wallet will be mapped to your substate management wallet address): " EVM_MANAGEMENT_WALLET
+            read -p "Enter your EVM management wallet address: " EVM_MANAGEMENT_WALLET
             echo "EVM management wallet address: $EVM_MANAGEMENT_WALLET"
 
-            read -p "Enter your EVM management wallet private key: " EVM_MANAGEMENT_PRIVATE_KEY
-            echo "EVM management wallet private key: $EVM_MANAGEMENT_PRIVATE_KEY"
+#            read -p "Enter your EVM management wallet private key: " EVM_MANAGEMENT_PRIVATE_KEY
+#            echo "EVM management wallet private key: $EVM_MANAGEMENT_PRIVATE_KEY"
 
-            jq --arg blockchain "otp" --arg substrateOperationalWallet "$SUBSTRATE_OPERATIONAL_WALLET" --arg substrateOperationalPrivateKey "$SUBSTRATE_OPERATIONAL_PRIVATE_KEY" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg substrateManagementWallet "$SUBSTRATE_MANAGEMENT_WALLET" --arg substrateManagementPrivateKey "$SUBSTRATE_MANAGEMENT_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" --arg evmManagementWalletPrivateKey "$EVM_MANAGEMENT_PRIVATE_KEY" '.modules.blockchain.implementation[$blockchain].config |= {"substrateOperationalWallePublicKey": $substrateOperationalWallet, "substrateOperationalWallePrivateKey": $substrateOperationalPrivateKey, "evmOperationalWallePublicKey": $evmOperationalWallet, "evmOperationalWallePrivateKey": $evmOperationalWalletPrivateKey, "substrateManagementWallePublicKey": $substrateManagementWallet, "substrateManagementWallePrivateKey": $substrateManagementPrivateKey, "evmManagementWallePublicKey": $evmManagementWallet, "evmManagementWallePrivateKey": $evmManagementWalletPrivateKey} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
-            mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc 
+            jq --arg blockchain "otp" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" '.modules.blockchain.implementation[$blockchain].config |= { "evmOperationalWalletPublicKey": $evmOperationalWallet, "evmOperationalWalletPrivateKey": $evmOperationalWalletPrivateKey, "evmManagementWalletPublicKey": $evmManagementWallet} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
+            mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc
             # ;;
   #      [Nn]* ) ;;
    #     [Ee]* ) echo "Installer stopped by user"; exit;;
