@@ -110,6 +110,7 @@
         "merkletreejs": "^0.2.32",
         "ms": "^2.1.3",
         "multiformats": "^9.4.7",
+        "mysql": "^2.18.1",
         "mysql2": "^2.3.3",
         "n3": "^1.12.2",
         "ot-telemetry-collector": "^1.0.7",

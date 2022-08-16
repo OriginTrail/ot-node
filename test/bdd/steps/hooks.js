@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Before, BeforeAll, After, AfterAll } = require('@cucumber/cucumber');
 const slugify = require('slugify');
 const fs = require('fs');
+// const mysql = require("mysql");
 const { ServerClientConfig, GraphDBServerClient } = require('graphdb').server;
 
 process.env.NODE_ENV = 'test';
@@ -43,13 +44,16 @@ After(function afterMethod(testCase, done) {
         this.logger.log(testCase.result.exception);
     }
     const graphRepositoryNames = [];
+    const databaseNames = [];
     for (const key in this.state.nodes) {
         this.state.nodes[key].forkedNode.kill();
         graphRepositoryNames.push(this.state.nodes[key].configuration.graphDatabase.name);
+        databaseNames.push(this.state.nodes[key].configuration.operationalDatabase.databaseName);
     }
     this.state.bootstraps.forEach((node) => {
         node.forkedNode.kill();
         graphRepositoryNames.push(node.configuration.graphDatabase.name);
+        databaseNames.push(node.configuration.operationalDatabase.databaseName);
     });
     if (this.state.localBlockchain) {
         if (Array.isArray(this.state.localBlockchain)) {
@@ -69,7 +73,30 @@ After(function afterMethod(testCase, done) {
         .setKeepAlive(true);
     const server = new GraphDBServerClient(serverConfig);
     const promises = [];
-
+    // databaseNames.forEach((element) => {
+    //     console.log(element);
+    //     const con = mysql.createConnection({
+    //         host: "localhost",
+    //         user: "root",
+    //         password: "",
+    //         database: element
+    //     });
+    //     con.connect(async (err) => {
+    //         if (err) throw err;
+    //         const sql = `DROP DATABASE ${element}`;
+    //         // eslint-disable-next-line no-shadow
+    //         await con.query(sql, (err) => {
+    //             if (err) throw err;
+    //             console.log("Table deleted");
+    //         });
+    //     });
+    //     con.end((err) => {
+    //         if (err) {
+    //             return console.log('error:' + err.message);
+    //         }
+    //         console.log('Close the database connection.');
+    //     });
+    // })
     graphRepositoryNames.forEach((element) => {
         server
             .hasRepository(element)

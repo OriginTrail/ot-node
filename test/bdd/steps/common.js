@@ -28,7 +28,7 @@ function getBlockchainConfiguration(localBlockchain, privateKey, publicKey, mana
     ];
 }
 
-Given(/^I setup (\d+) node[s]*$/, { timeout: 220000 }, function nodeSetup(nodeCount, done) {
+Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function nodeSetup(nodeCount, done) {
     this.logger.log(`I setup ${nodeCount} node${nodeCount !== 1 ? 's' : ''}`);
     const wallets = this.state.localBlockchain.getWallets();
     let nodesStarted = 0;
