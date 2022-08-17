@@ -95,9 +95,9 @@ class Web3Service {
             this.getPublicKey(),
         ]);
         this.logger.info(
-            `Balance of ${this.getPublicKey()} is ${nativeBalance} ${
+            `Balance of ${this.getPublicKey()} is ${this.web3.utils.fromWei(nativeBalance)} ${
                 this.baseTokenTicker
-            } and ${tokenBalance} ${this.tracTicker}.`,
+            } and ${this.web3.utils.fromWei(tokenBalance)} ${this.tracTicker}.`,
         );
     }
 
