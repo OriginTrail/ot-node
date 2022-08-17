@@ -337,9 +337,7 @@
                         "config": {
                             "networkId": "parachain::testnet",
                             "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
-                            "rpcEndpoints": [
-                                "wss://parachain-tempnet-01.origin-trail.network"
-                            ]
+                            "rpcEndpoints": ["wss://lofar.origin-trail.network"]
                         }
                     },
                     "polygon": {
