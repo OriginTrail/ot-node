@@ -17,8 +17,8 @@ class DkgClientHelper {
             maxNumberOfRetries: 5,
             blockchain: {
                 name: 'ganache',
-                publicKey: wallet.publicKey,
-                privateKey: wallet.privateKey,
+                publicKey: wallet.evmOperationalWalletPublicKey,
+                privateKey: wallet.evmOperationalWalletPrivateKey,
                 hubContract,
             },
         };

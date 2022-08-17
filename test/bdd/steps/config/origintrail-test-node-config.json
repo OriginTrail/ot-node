@@ -11,9 +11,10 @@
               "http://localhost:7545"
             ],
             "hubContractAddress": "0x378ec78F621E2C8Aeff345b39334c38B0Bb7b96F",
-            "publicKey": "0x19ad96f87f8e1c13e99a98d8174e00f5a7c82df1",
-            "privateKey": "1e60c8e9aa35064cd2eaa4c005bda2b76ef1a858feebb6c8e131c472d16f9740",
-            "managementKey": "0x1de33ab36099f60c6a41a1b8f71939428773b169"
+            "evmOperationalWalletPublicKey": "0x19ad96f87f8e1c13e99a98d8174e00f5a7c82df1",
+            "evmOperationalWalletPrivateKey": "1e60c8e9aa35064cd2eaa4c005bda2b76ef1a858feebb6c8e131c472d16f9740",
+            "evmManagementWalletPublicKey": "0x1de33ab36099f60c6a41a1b8f71939428773b169",
+            "evmManagementPublicKey" : "0x1de33ab36099f60c6a41a1b8f71939428773b169"
           }
         }
       }

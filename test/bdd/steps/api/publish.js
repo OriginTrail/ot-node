@@ -14,13 +14,17 @@ When(
             !!assertions[assertionName],
             `Assertion with name: ${assertionName} not found!`,
         ).to.be.equal(true);
-        const { publicKey, privateKey } =
+        const { evmOperationalWalletPublicKey, evmOperationalWalletPrivateKey } =
             this.state.nodes[node - 1].configuration.modules.blockchain.implementation.ganache
                 .config;
         const hubContract = this.state.localBlockchain.uaiRegistryContractAddress();
         const assertion = assertions[assertionName];
         const result = await this.state.nodes[node - 1].client
-            .publish(assertion, { publicKey, privateKey }, hubContract)
+            .publish(
+                assertion,
+                { evmOperationalWalletPublicKey, evmOperationalWalletPrivateKey },
+                hubContract,
+            )
             .catch((error) => {
                 assert.fail(`Error while trying to publish assertion. ${error}`);
             });
