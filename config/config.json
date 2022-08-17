@@ -284,11 +284,7 @@
                         "package": "./network/implementation/libp2p-service",
                         "config": {
                             "port": 9000,
-                            "bootstrap": [
-                                "/ip4/165.232.122.94/tcp/9000/p2p/QmQ2zigjQikYnyYUSXZydNXrDRhBut2mubwJBaLXobMt3A",
-                                "/ip4/46.101.111.223/tcp/9000/p2p/QmdTKEP4DDSwYzX2CHEsBfpEAKAVyE4mPq9ouh4ehZZbg5",
-                                "/ip4/46.101.153.21/tcp/9000/p2p/QmXzmTqVT3TPUtTz4dBDN5NWSABqnX9rKXCG9WCLXMfEaM"
-                            ]
+                            "bootstrap": []
                         }
                     }
                 }
@@ -336,10 +332,8 @@
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
                         "config": {
                             "networkId": "parachain::testnet",
-                            "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
-                            "rpcEndpoints": [
-                                "wss://parachain-tempnet-01.origin-trail.network"
-                            ]
+                            "hubContractAddress": "0x256736AEb3f19AC6738E9F4D10C9B61da71CEB9F",
+                            "rpcEndpoints": ["wss://lofar.origin-trail.network"]
                         }
                     },
                     "polygon": {
