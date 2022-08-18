@@ -1,28 +1,10 @@
 const { v1: uuidv1 } = require('uuid');
-const Models = require('../../../models');
-const { HANDLER_ID_STATUS } = require('../../../modules/constants');
 
 class BaseController {
-    generateHandlerId() {
-        return Models.handler_ids.create({
-            status: HANDLER_ID_STATUS.PENDING,
-        });
-    }
-
-    async updateFailedHandlerId(handlerId, error) {
-        if (handlerId !== null) {
-            await Models.handler_ids.update(
-                {
-                    status: HANDLER_ID_STATUS.FAILED,
-                    data: JSON.stringify({ errorMessage: error.message }),
-                },
-                {
-                    where: {
-                        handler_id: handlerId,
-                    },
-                },
-            );
-        }
+    constructor(ctx) {
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.fileService = ctx.fileService;
+        this.logger = ctx.logger;
     }
 
     returnResponse(res, status, data) {
@@ -30,7 +12,9 @@ class BaseController {
     }
 
     generateOperationId() {
-        return uuidv1();
+        const operationId = uuidv1();
+        this.logger.debug(`Generated operation id for request ${operationId}`);
+        return operationId;
     }
 }
 

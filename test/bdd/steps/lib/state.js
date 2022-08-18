@@ -3,6 +3,7 @@
  * This object looks like this:
  */
 
+// eslint-disable-next-line no-unused-vars
 const state = {
     // this is local blockchain object look at test/bdd/steps/lib/local-blockchain.js
     localBlockchain: {},
@@ -20,14 +21,14 @@ const state = {
     bootstraps: [],
     lastPublishData: {
         nodeId: 1,
-        handlerId: '',
+        operationId: '',
         keywords: ['', ''],
         assertion: {},
         result: {},
     },
     lastResolveData: {
         nodeId: 1,
-        handlerId: '',
+        operationId: '',
         assertionIds: ['', ''],
         result: {},
     },

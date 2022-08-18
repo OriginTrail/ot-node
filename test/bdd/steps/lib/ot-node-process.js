@@ -1,4 +1,4 @@
-const sleep = require('sleep-async')().Promise;
+const {setTimeout} = require('timers/promises');
 const OTNode = require('../../../../ot-node');
 const HttpApiHelper = require('../../../utilities/http-api-helper');
 
@@ -19,7 +19,7 @@ process.on('message', async (data) => {
                     started = true;
                 } catch (error) {
                     // eslint-disable-next-line no-await-in-loop
-                    await sleep.sleep(1000);
+                    await setTimeout(1000);
                 }
             }
 

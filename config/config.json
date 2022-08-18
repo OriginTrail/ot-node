@@ -17,19 +17,40 @@
                 "implementation": {
                     "express-http-client": {
                         "package": "./http-client/implementation/express-http-client",
-                        "config": {}
+                        "config": {
+                            "useSsl": false,
+                            "port": 8900,
+                            "sslKeyPath": "/root/certs/privkey.pem",
+                            "sslCertificatePath": "/root/certs/fullchain.pem",
+                            "rateLimiter": {
+                                "timeWindowSeconds": 60,
+                                "maxRequests": 10
+                            }
+                        }
+                    }
+                }
+            },
+            "network": {
+                "enabled": true,
+                "implementation": {
+                    "libp2p-service": {
+                        "package": "./network/implementation/libp2p-service",
+                        "config": {
+                            "port": 9000,
+                            "bootstrap": []
+                        }
                     }
                 }
             },
             "repository": {
-                "enabled": false,
+                "enabled": true,
                 "implementation": {
                     "sequelize-repository": {
                         "package": "./repository/implementation/sequelize/sequelize-repository",
                         "config": {
                             "database": "operationaldb",
                             "user": "root",
-                            "password": "password",
+                            "password": "",
                             "port": "3306",
                             "host": "localhost",
                             "dialect": "mysql",
@@ -37,44 +58,104 @@
                         }
                     }
                 }
+            },
+            "tripleStore": {
+                "enabled": true,
+                "defaultImplementation": "ot-graphdb",
+                "implementation": {
+                    "ot-blazegraph": {
+                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph",
+                        "config": {
+                            "url": "http://localhost:9999/blazegraph",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    },
+                    "ot-fuseki": {
+                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki",
+                        "config": {
+                            "url": "http://localhost:3030",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    },
+                    "ot-graphdb": {
+                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb",
+                        "config": {
+                            "url": "http://localhost:7200",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    }
+                }
+            },
+            "validation": {
+                "enabled": true,
+                "implementation": {
+                    "merkle-validation": {
+                        "package": "./validation/implementation/merkle-validation",
+                        "config": {}
+                    }
+                }
+            },
+            "blockchain": {
+                "enabled": true,
+                "implementation": {
+                    "ganache": {
+                        "package": "./blockchain/implementation/ganache/ganache-service",
+                        "config": {
+                            "blockchainTitle": "ganache",
+                            "networkId": "ganache::testnet",
+                            "hubContractAddress": "0xF21dD87cFC5cF5D073398833AFe5EFC543b78a00",
+                            "rpcEndpoints": ["http://localhost:7545"],
+                            "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                        }
+                    },
+                    "otp": {
+                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
+                        "config": {
+                            "networkId": "otp::testnet",
+                            "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
+                            "rpcEndpoints": ["wss://parachain-tempnet-01.origin-trail.network"],
+                            "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                        }
+                    },
+                    "polygon": {
+                        "package": "./blockchain/implementation/polygon/polygon-service",
+                        "config": {
+                            "networkId": "polygon::testnet",
+                            "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
+                            "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
+                            "rpcEndpoints": [
+                                "https://matic-mumbai.chainstacklabs.com",
+                                "https://rpc-mumbai.matic.today",
+                                "https://matic-testnet-archive-rpc.bwarelabs.com"
+                            ],
+                            "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                        }
+                    }
+                }
             }
         },
+        "commandExecutorVerboseLoggingEnabled": false,
+        "minimumReplicationFactor": 5,
+        "publishFindNodesCount": 20,
         "appDataPath": "data",
-        "blockchain": [
-            {
-                "blockchainTitle": "Polygon",
-                "networkId": "polygon::mainnet",
-                "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
-                "rpcEndpoints": [
-                    "https://rpc-mumbai.maticvigil.com/",
-                    "https://matic-mumbai.chainstacklabs.com",
-                    "https://rpc-mumbai.matic.today",
-                    "https://matic-testnet-archive-rpc.bwarelabs.com"
-                ]
-            }
-        ],
-        "graphDatabase": {
-            "implementation": "GraphDB",
-            "url": "http://localhost:7200",
-            "name": "node0",
-            "username": "admin",
-            "password": ""
+        "logLevel": "info",
+        "telemetry": {
+            "enabled": true,
+            "sendTelemetryData": false,
+            "signalingServerUrl": "null"
         },
-        "logLevel": "trace",
-        "replicationFactor": 5,
-        "rpcPort": 8900,
-        "network": {
-            "port": 9000,
-            "bootstrap": []
-        },
-        "ipWhitelist": ["::1", "127.0.0.1"],
-        "telemetryHub": {
-            "enabled": false,
-            "packages": ["ot-telemetry-collector"],
-            "url": ""
-        },
-        "operationalDatabase": {
-            "databaseName": "operationaldb"
+        "auth": {
+            "ipBasedAuthEnabled": true,
+            "tokenBasedAuthEnabled": false,
+            "loggingEnabled": true,
+            "ipWhitelist": ["::1", "127.0.0.1"],
+            "publicOperations": []
         }
     },
     "test": {
@@ -100,7 +181,7 @@
                 }
             },
             "repository": {
-                "enabled": false,
+                "enabled": true,
                 "implementation": {
                     "sequelize-repository": {
                         "package": "./repository/implementation/sequelize/sequelize-repository",
@@ -115,39 +196,72 @@
                         }
                     }
                 }
+            },
+            "blockchain": {
+                "enabled": true,
+                "defaultImplementation": "ganache",
+                "implementation": {
+                    "ganache": {
+                        "package": "./blockchain/implementation/ganache/ganache-service",
+                        "config": {
+                            "blockchainTitle": "ganache",
+                            "networkId": "ganache::testnet",
+                            "hubContractAddress": "0xF21dD87cFC5cF5D073398833AFe5EFC543b78a00",
+                            "rpcEndpoints": ["http://localhost:7545"]
+                        }
+                    }
+                }
+            },
+            "tripleStore": {
+                "enabled": true,
+                "defaultImplementation": "ot-graphdb",
+                "implementation": {
+                    "ot-blazegraph": {
+                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph",
+                        "config": {
+                            "url": "http://localhost:9999/blazegraph",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    },
+                    "ot-fuseki": {
+                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki",
+                        "config": {
+                            "url": "http://localhost:3030",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    },
+                    "ot-graphdb": {
+                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb",
+                        "config": {
+                            "url": "http://localhost:7200",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    }
+                }
             }
         },
+        "commandExecutorVerboseLoggingEnabled": false,
+        "minimumReplicationFactor": 5,
+        "publishFindNodesCount": 20,
         "appDataPath": "data",
-        "blockchain": [
-            {
-                "blockchainTitle": "ganache",
-                "networkId": "ganache::testnet",
-                "hubContractAddress": "",
-                "rpcEndpoints": ["http://localhost:7545"]
-            }
-        ],
-        "graphDatabase": {
-            "implementation": "GraphDB",
-            "url": "http://localhost:7200",
-            "name": "node0",
-            "username": "admin",
-            "password": ""
-        },
         "logLevel": "trace",
-        "replicationFactor": 5,
-        "rpcPort": 8900,
-        "network": {
-            "port": 9000,
-            "bootstrap": []
+        "telemetry": {
+            "enabled": true,
+            "sendTelemetryData": false,
+            "signalingServerUrl": "null"
         },
-        "ipWhitelist": ["::1", "127.0.0.1"],
-        "telemetryHub": {
-            "enabled": false,
-            "packages": ["ot-telemetry-collector"],
-            "url": ""
-        },
-        "operationalDatabase": {
-            "databaseName": "operationaldb"
+        "auth": {
+            "ipBasedAuthEnabled": true,
+            "tokenBasedAuthEnabled": false,
+            "loggingEnabled": true,
+            "ipWhitelist": ["::1", "127.0.0.1"],
+            "publicOperations": []
         }
     },
     "testnet": {
@@ -163,17 +277,38 @@
                     }
                 }
             },
+            "network": {
+                "enabled": true,
+                "implementation": {
+                    "libp2p-service": {
+                        "package": "./network/implementation/libp2p-service",
+                        "config": {
+                            "port": 9000,
+                            "bootstrap": []
+                        }
+                    }
+                }
+            },
             "httpClient": {
                 "enabled": true,
                 "implementation": {
                     "express-http-client": {
                         "package": "./http-client/implementation/express-http-client",
-                        "config": {}
+                        "config": {
+                            "useSsl": true,
+                            "port": 8900,
+                            "sslKeyPath": "/root/certs/privkey.pem",
+                            "sslCertificatePath": "/root/certs/fullchain.pem",
+                            "rateLimiter": {
+                                "timeWindowSeconds": 60,
+                                "maxRequests": 10
+                            }
+                        }
                     }
                 }
             },
             "repository": {
-                "enabled": false,
+                "enabled": true,
                 "implementation": {
                     "sequelize-repository": {
                         "package": "./repository/implementation/sequelize/sequelize-repository",
@@ -188,48 +323,93 @@
                         }
                     }
                 }
+            },
+            "blockchain": {
+                "enabled": true,
+                "defaultImplementation": "otp",
+                "implementation": {
+                    "otp": {
+                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
+                        "config": {
+                            "networkId": "parachain::testnet",
+                            "hubContractAddress": "0x256736AEb3f19AC6738E9F4D10C9B61da71CEB9F",
+                            "rpcEndpoints": ["wss://lofar.origin-trail.network"]
+                        }
+                    },
+                    "polygon": {
+                        "package": "./blockchain/implementation/polygon/polygon-service",
+                        "config": {
+                            "networkId": "polygon::testnet",
+                            "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
+                            "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
+                            "rpcEndpoints": [
+                                "https://matic-mumbai.chainstacklabs.com",
+                                "https://rpc-mumbai.matic.today",
+                                "https://matic-testnet-archive-rpc.bwarelabs.com"
+                            ]
+                        }
+                    }
+                }
+            },
+            "validation": {
+                "enabled": true,
+                "implementation": {
+                    "merkle-validation": {
+                        "package": "./validation/implementation/merkle-validation",
+                        "config": {}
+                    }
+                }
+            },
+            "tripleStore": {
+                "enabled": true,
+                "defaultImplementation": "ot-blazegraph",
+                "implementation": {
+                    "ot-blazegraph": {
+                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph",
+                        "config": {
+                            "url": "http://localhost:9999/blazegraph",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    },
+                    "ot-fuseki": {
+                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki",
+                        "config": {
+                            "url": "http://localhost:3030",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    },
+                    "ot-graphdb": {
+                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb",
+                        "config": {
+                            "url": "http://localhost:7200",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    }
+                }
             }
         },
+        "commandExecutorVerboseLoggingEnabled": false,
+        "minimumReplicationFactor": 5,
+        "publishFindNodesCount": 20,
         "appDataPath": "data",
-        "blockchain": [
-            {
-                "blockchainTitle": "Polygon",
-                "networkId": "polygon::testnet",
-                "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
-                "rpcEndpoints": [
-                    "https://rpc-mumbai.maticvigil.com/",
-                    "https://matic-mumbai.chainstacklabs.com",
-                    "https://rpc-mumbai.matic.today",
-                    "https://matic-testnet-archive-rpc.bwarelabs.com"
-                ]
-            }
-        ],
-        "graphDatabase": {
-            "implementation": "GraphDB",
-            "url": "http://localhost:7200",
-            "name": "node0",
-            "username": "admin",
-            "password": ""
-        },
         "logLevel": "trace",
-        "replicationFactor": 5,
-        "rpcPort": 8900,
-        "network": {
-            "port": 9000,
-            "bootstrap": [
-                "/ip4/165.232.122.94/tcp/9000/p2p/QmQ2zigjQikYnyYUSXZydNXrDRhBut2mubwJBaLXobMt3A",
-                "/ip4/46.101.111.223/tcp/9000/p2p/QmdTKEP4DDSwYzX2CHEsBfpEAKAVyE4mPq9ouh4ehZZbg5",
-                "/ip4/46.101.153.21/tcp/9000/p2p/QmXzmTqVT3TPUtTz4dBDN5NWSABqnX9rKXCG9WCLXMfEaM"
-            ]
-        },
-        "ipWhitelist": ["::1", "127.0.0.1"],
-        "telemetryHub": {
+        "telemetry": {
             "enabled": true,
-            "packages": ["ot-telemetry-collector"],
-            "url": "https://polaris.delta.origin-trail.network/metrics/"
+            "sendTelemetryData": true,
+            "signalingServerUrl": "https://testnet-signaling.origin-trail.network/signal"
         },
-        "operationalDatabase": {
-            "databaseName": "operationaldb"
+        "auth": {
+            "ipBasedAuthEnabled": true,
+            "tokenBasedAuthEnabled": false,
+            "loggingEnabled": true,
+            "ipWhitelist": ["::1", "127.0.0.1"],
+            "publicOperations": []
         }
     },
     "mainnet": {
@@ -250,12 +430,21 @@
                 "implementation": {
                     "express-http-client": {
                         "package": "./http-client/implementation/express-http-client",
-                        "config": {}
+                        "config": {
+                            "useSsl": true,
+                            "port": 8900,
+                            "sslKeyPath": "/root/certs/privkey.pem",
+                            "sslCertificatePath": "/root/certs/fullchain.pem",
+                            "rateLimiter": {
+                                "timeWindowSeconds": 60,
+                                "maxRequests": 10
+                            }
+                        }
                     }
                 }
             },
             "repository": {
-                "enabled": false,
+                "enabled": true,
                 "implementation": {
                     "sequelize-repository": {
                         "package": "./repository/implementation/sequelize/sequelize-repository",
@@ -270,32 +459,89 @@
                         }
                     }
                 }
+            },
+            "validation": {
+                "enabled": true,
+                "implementation": {
+                    "merkle-validation": {
+                        "package": "./validation/implementation/merkle-validation",
+                        "config": {}
+                    }
+                }
+            },
+            "tripleStore": {
+                "enabled": true,
+                "defaultImplementation": "ot-blazegraph",
+                "implementation": {
+                    "ot-blazegraph": {
+                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph",
+                        "config": {
+                            "url": "http://localhost:9999/blazegraph",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    },
+                    "ot-fuseki": {
+                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki",
+                        "config": {
+                            "url": "http://localhost:3030",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    },
+                    "ot-graphdb": {
+                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb",
+                        "config": {
+                            "url": "http://localhost:7200",
+                            "repository": "node0",
+                            "username": "admin",
+                            "password": ""
+                        }
+                    }
+                }
+            },
+            "blockchain": {
+                "enabled": true,
+                "implementation": {
+                    "otp": {
+                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
+                        "config": {
+                            "networkId": "otp::mainnet",
+                            "hubContractAddress": "",
+                            "rpcEndpoints": []
+                        }
+                    },
+                    "polygon": {
+                        "package": "./blockchain/implementation/polygon/polygon-service",
+                        "config": {
+                            "networkId": "polygon::mainnet",
+                            "hubContractAddress": "",
+                            "gasPriceOracleLink": "",
+                            "rpcEndpoints": []
+                        }
+                    }
+                }
             }
         },
+        "minimumReplicationFactor": 5,
+        "publishFindNodesCount": 20,
+        "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
+        "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
-        "blockchain": [],
-        "graphDatabase": {
-            "implementation": "GraphDB",
-            "url": "http://localhost:7200",
-            "name": "node0",
-            "username": "admin",
-            "password": ""
-        },
         "logLevel": "trace",
-        "replicationFactor": 5,
-        "rpcPort": 8900,
-        "network": {
-            "port": 9000,
-            "bootstrap": []
-        },
-        "ipWhitelist": ["::1", "127.0.0.1"],
-        "telemetryHub": {
+        "telemetry": {
             "enabled": false,
-            "packages": ["ot-telemetry-collector"],
-            "url": ""
+            "sendTelemetryData": false,
+            "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal"
         },
-        "operationalDatabase": {
-            "databaseName": "operationaldb"
+        "auth": {
+            "ipBasedAuthEnabled": true,
+            "tokenBasedAuthEnabled": false,
+            "loggingEnabled": true,
+            "ipWhitelist": ["::1", "127.0.0.1"],
+            "publicOperations": []
         }
     }
 }

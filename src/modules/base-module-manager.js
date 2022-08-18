@@ -1,4 +1,11 @@
-const constants = require('../../modules/constants');
+const requiredModules = [
+    'repository',
+    'httpClient',
+    'network',
+    'validation',
+    'blockchain',
+    'tripleStore',
+];
 
 class BaseModuleManager {
     constructor(ctx) {
@@ -10,14 +17,23 @@ class BaseModuleManager {
         try {
             const moduleConfig = this.config.modules[this.getName()];
             if (!moduleConfig || !moduleConfig.enabled) {
-                this.logger.warn(
-                    `${this.getName()} module not defined or enabled in configuration`,
-                );
+                const message = `${this.getName()} module not defined or enabled in configuration`;
+                if (requiredModules.includes(this.getName())) {
+                    throw new Error(`${message} but it's required!`);
+                }
+                this.logger.warn(message);
                 return false;
             }
 
             this.handlers = {};
             for (const implementationName in moduleConfig.implementation) {
+                if (
+                    moduleConfig.defaultImplementation &&
+                    implementationName !== moduleConfig.defaultImplementation
+                ) {
+                    // eslint-disable-next-line no-continue
+                    continue;
+                }
                 const implementationConfig = moduleConfig.implementation[implementationName];
 
                 if (!implementationConfig) {
@@ -45,13 +61,18 @@ class BaseModuleManager {
                     config: implementationConfig,
                 };
             }
+            if (Object.keys(this.handlers).length === 0) {
+                throw new Error(`No implementation initialized for module: ${this.getName()}.`);
+            }
             this.initialized = true;
             return true;
-        } catch (e) {
-            this.logger.error({
-                msg: e.message,
-                Event_name: constants.ERROR_TYPE.MODULE_INITIALIZATION_ERROR,
-            });
+        } catch (error) {
+            if (requiredModules.includes(this.getName())) {
+                throw new Error(
+                    `Module is required but got error during initialization - ${error.message}`,
+                );
+            }
+            this.logger.error(error.message);
             return false;
         }
     }
@@ -66,6 +87,18 @@ class BaseModuleManager {
             return this.handlers[keys[0]];
         }
         return this.handlers[name];
+    }
+
+    getImplementationsNames() {
+        return Object.keys(this.handlers);
+    }
+
+    removeImplementation(name = null) {
+        const keys = Object.keys(this.handlers);
+        if (keys.length === 1 || !name) {
+            delete this.handlers[keys[0]];
+        }
+        delete this.handlers[name];
     }
 }
 

@@ -1,18 +1,15 @@
-const path = require('path');
-const { MAX_FILE_SIZE, PUBLISH_METHOD } = require('../../../modules/constants');
-const Utilities = require('../../../modules/utilities');
 const BaseController = require('./base-controller');
-
-const PublishAllowedVisibilityParams = ['public', 'private'];
+const { PUBLISH_METHOD, ERROR_TYPE, NETWORK_MESSAGE_TYPES } = require('../../constants/constants');
+const { OPERATION_ID_STATUS } = require('../../constants/constants');
 
 class PublishController extends BaseController {
     constructor(ctx) {
-        super();
-        this.workerPool = ctx.workerPool;
+        super(ctx);
         this.publishService = ctx.publishService;
-        this.logger = ctx.logger;
-        this.fileService = ctx.fileService;
+        this.ualService = ctx.ualService;
         this.commandExecutor = ctx.commandExecutor;
+        this.operationIdService = ctx.operationIdService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
     async handleHttpApiPublishRequest(req, res) {
@@ -27,192 +24,99 @@ class PublishController extends BaseController {
         return this.handleHttpApiPublishMethod(req, res, PUBLISH_METHOD.UPDATE);
     }
 
-    async handleHttpApiPublishMethod(req, res, method) {
-        const operationId = this.generateOperationId();
-        this.logger.emit({
-            msg: 'Started measuring execution of publish command',
-            Event_name: 'publish_start',
-            Operation_name: 'publish',
-            Id_operation: operationId,
-        });
-        this.logger.emit({
-            msg: 'Started measuring execution of check arguments for publishing',
-            Event_name: 'publish_init_start',
-            Operation_name: 'publish_init',
-            Id_operation: operationId,
-        });
+    async handleHttpApiPublishMethod(req, res) {
+        const operationId = await this.operationIdService.generateOperationId(
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_START,
+        );
 
-        const validity = this.isRequestValid(req, true, true, true, true, false);
-
-        if (!validity.isValid) {
-            return this.returnResponse(res, validity.code, { message: validity.message });
-        }
-
-        const handlerObject = await this.generateHandlerId();
-
-        const handlerId = handlerObject.handler_id;
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_START,
+        );
 
         this.returnResponse(res, 202, {
-            handler_id: handlerId,
+            operationId,
         });
 
-        this.logger.emit({
-            msg: 'Finished measuring execution of check arguments for publishing',
-            Event_name: 'publish_init_end',
-            Operation_name: 'publish_init',
-            Id_operation: operationId,
-        });
+        const { assertion, blockchain, contract, tokenId } = req.body;
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
+        );
+        try {
+            await this.repositoryModuleManager.createOperationRecord(
+                this.publishService.getOperationName(),
+                operationId,
+                this.publishService.getOperationStatus().IN_PROGRESS,
+            );
 
-        this.logger.emit({
-            msg: 'Started measuring execution of preparing arguments for publishing',
-            Event_name: 'publish_prep_args_start',
-            Operation_name: 'publish_prep_args',
-            Id_operation: operationId,
-        });
+            await this.operationIdService.cacheOperationIdData(operationId, { assertion });
 
-        let fileContent;
-        const fileExtension = '.json';
-        if (req.files) {
-            fileContent = req.files.file.data.toString();
-        } else {
-            fileContent = req.body.data;
-        }
+            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
-        const { ual } = req.body;
+            this.logger.info(`Received assertion with ual: ${ual}`);
 
-        const { visibility } = req.body;
+            const commandData = {
+                ual,
+                operationId,
+            };
 
-        let keywords = [];
-        if (req.body.keywords) {
-            keywords = await this.workerPool.exec('JSONParse', [req.body.keywords.toLowerCase()]);
-        }
-        if (keywords.length > 10) {
-            keywords = keywords.slice(0, 10);
-            this.logger.warn(
-                'Too many keywords provided, limit is 10. Publishing only to the first 10 keywords.',
+            const commandSequence = ['validateAssertionCommand', 'networkPublishCommand'];
+
+            await this.commandExecutor.add({
+                name: commandSequence[0],
+                sequence: commandSequence.slice(1),
+                delay: 0,
+                period: 5000,
+                retries: 3,
+                data: commandData,
+                transactional: false,
+            });
+        } catch (error) {
+            this.logger.error(
+                `Error while initializing publish data: ${error.message}. ${error.stack}`,
+            );
+            await this.operationIdService.updateOperationIdStatus(
+                operationId,
+                OPERATION_ID_STATUS.FAILED,
+                'Unable to publish data, Failed to process input data!',
+                ERROR_TYPE.PUBLISH.PUBLISH_ROUTE_ERROR,
             );
         }
-        this.logger.emit({
-            msg: 'Finished measuring execution of preparing arguments for publishing',
-            Event_name: 'publish_prep_args_end',
-            Operation_name: 'publish_prep_args',
-            Id_operation: operationId,
-        });
-
-        const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
-
-        const documentPath = await this.fileService.writeContentsToFile(
-            handlerIdCachePath,
-            handlerId,
-            fileContent,
-        );
-        const commandData = {
-            fileExtension,
-            keywords,
-            visibility,
-            method,
-            ual,
-            handlerId,
-            operationId,
-            documentPath,
-        };
-
-        const commandSequence = [
-            'prepareAssertionForPublish',
-            'submitProofsCommand',
-            'insertAssertionCommand',
-            'sendAssertionCommand',
-        ];
-
-        await this.commandExecutor.add({
-            name: commandSequence[0],
-            sequence: commandSequence.slice(1),
-            delay: 0,
-            data: commandData,
-            transactional: false,
-        });
     }
 
-    isRequestValid(
-        req,
-        validateFiles = true,
-        validateFileSize = true,
-        validateKeywords = true,
-        validateVisibility = true,
-        validateUal = true,
-    ) {
-        if (
-            validateFiles &&
-            (!req.files ||
-                !req.files.file ||
-                path.extname(req.files.file.name).toLowerCase() !== '.json') &&
-            !req.body.data
-        ) {
-            return {
-                isValid: false,
-                code: 400,
-                message:
-                    'No data provided. It is required to have assertion file or data in body, they must be in JSON-LD format.',
-            };
-        }
-
-        if (validateFileSize && req.files && req.files.file.size > MAX_FILE_SIZE) {
-            return {
-                isValid: false,
-                code: 400,
-                message: `File size limit is ${MAX_FILE_SIZE / (1024 * 1024)}MB.`,
-            };
-        }
-
-        if (
-            validateFileSize &&
-            req.body &&
-            req.body.data &&
-            Buffer.byteLength(req.body.data, 'utf-8') > MAX_FILE_SIZE
-        ) {
-            return {
-                isValid: false,
-                code: 400,
-                message: `File size limit is ${MAX_FILE_SIZE / (1024 * 1024)}MB.`,
-            };
-        }
-
-        if (
-            validateKeywords &&
-            req.body.keywords &&
-            !Utilities.isArrayOfStrings(req.body.keywords)
-        ) {
-            return {
-                isValid: false,
-                code: 400,
-                message:
-                    'Keywords must be a non-empty array of strings, all strings must have double quotes.',
-            };
-        }
-
-        if (
-            validateVisibility &&
-            req.body.visibility &&
-            !PublishAllowedVisibilityParams.includes(req.body.visibility)
-        ) {
-            return {
-                isValid: false,
-                code: 400,
-                message: 'Visibility must be a string, value can be public or private.',
-            };
-        }
-
-        if (validateUal && req.body.ual) {
-            return {
-                isValid: false,
-                code: 400,
-                message: 'Ual parameter missing in request.',
-            };
-        }
-
-        return {
-            isValid: true,
+    async handleNetworkStoreRequest(message, remotePeerId) {
+        const { operationId, keywordUuid, messageType } = message.header;
+        const { assertionId, ual } = message.data;
+        const command = {
+            sequence: [],
+            delay: 0,
+            data: { remotePeerId, operationId, keywordUuid, assertionId, ual },
+            transactional: false,
         };
+        switch (messageType) {
+            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
+                command.name = 'handleStoreInitCommand';
+                command.period = 5000;
+                command.retries = 3;
+
+                break;
+            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
+                // eslint-disable-next-line no-case-declarations
+                const { assertionId: cachedAssertionId } =
+                    await this.operationIdService.getCachedOperationIdData(operationId);
+                await this.operationIdService.cacheOperationIdData(operationId, {
+                    assertionId: cachedAssertionId,
+                    assertion: message.data.assertion,
+                });
+                command.name = 'handleStoreRequestCommand';
+
+                break;
+            default:
+                throw Error('unknown messageType');
+        }
+
+        await this.commandExecutor.add(command);
     }
 }
 
