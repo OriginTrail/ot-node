@@ -1,7 +1,7 @@
 {
     "name": "origintrail_node",
     "version": "6.0.0-beta.2.0",
-    "description": "OTNode v6 Beta 1",
+    "description": "OTNode v6 Beta 2",
     "main": "index.js",
     "scripts": {
         "start": "node index.js",
