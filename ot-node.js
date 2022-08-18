@@ -38,8 +38,8 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
-        await this.createProfiles();
         await this.saveNetworkModulePeerIdAndPrivKey();
+        await this.createProfiles();
 
         await this.initializeControllers();
         await this.initializeCommandExecutor();
