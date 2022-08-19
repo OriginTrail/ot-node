@@ -90,15 +90,29 @@ class Web3Service {
             `Connected to blockchain rpc : ${this.config.rpcEndpoints[this.rpcNumber]}.`,
         );
 
+        await this.logBalances();
+    }
+
+    async logBalances() {
+        const nativeBalance = await this.getNativeTokenBalance();
+        const tokenBalance = await this.getTokenBalance();
+        this.logger.info(
+            `Balance of ${this.getPublicKey()} is ${nativeBalance} ${
+                this.baseTokenTicker
+            } and ${tokenBalance} ${this.tracTicker}.`,
+        );
+    }
+
+    async getNativeTokenBalance() {
         const nativeBalance = await this.web3.eth.getBalance(this.getPublicKey());
+        return this.web3.utils.fromWei(nativeBalance);
+    }
+
+    async getTokenBalance() {
         const tokenBalance = await this.callContractFunction(this.TokenContract, 'balanceOf', [
             this.getPublicKey(),
         ]);
-        this.logger.info(
-            `Balance of ${this.getPublicKey()} is ${this.web3.utils.fromWei(nativeBalance)} ${
-                this.baseTokenTicker
-            } and ${this.web3.utils.fromWei(tokenBalance)} ${this.tracTicker}.`,
-        );
+        return this.web3.utils.fromWei(tokenBalance);
     }
 
     identityExists() {
