@@ -223,7 +223,7 @@ class OTAutoUpdater {
             throw Error('Extracted archive for new ot-node version is not valid');
         }
         const sourcePath = path.join(extractedDataPath, destinationDirFiles[0]);
-
+        await fs.remove(destinationPath);
         await fs.move(sourcePath, destinationPath);
 
         await fs.remove(extractedDataPath);
@@ -246,7 +246,7 @@ class OTAutoUpdater {
             });
             let rejected = false;
             child.stderr.on('data', (data) => {
-                if (data.includes('ERROR')) {
+                if (data.includes('npm ERROR')) {
                     // npm passes warnings as errors, only reject if "error" is included
                     const errorData = data.replace(/\r?\n|\r/g, '');
                     this.logger.error(
