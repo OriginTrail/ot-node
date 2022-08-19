@@ -7,7 +7,7 @@ const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
 const Identity = require('dkg-evm-module/build/contracts/Identity.json');
 const Profile = require('dkg-evm-module/build/contracts/Profile.json');
 const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
-const constants = require('../../../constants/constants');
+const { INIT_STAKE_AMOUNT, WEBSOCKET_PROVIDER_OPTIONS } = require('../../../constants/constants');
 
 class Web3Service {
     async initialize(config, logger) {
@@ -28,7 +28,15 @@ class Web3Service {
             }
 
             try {
-                this.web3 = new Web3(this.config.rpcEndpoints[this.rpcNumber]);
+                if (this.config.rpcEndpoints[this.rpcNumber].startsWith('wss')) {
+                    const provider = new Web3.providers.WebsocketProvider(
+                        this.config.rpcEndpoints[this.rpcNumber],
+                        WEBSOCKET_PROVIDER_OPTIONS,
+                    );
+                    this.web3 = new Web3(provider);
+                } else {
+                    this.web3 = new Web3(this.config.rpcEndpoints[this.rpcNumber]);
+                }
                 // eslint-disable-next-line no-await-in-loop
                 isRpcConnected = await this.web3.eth.net.isListening();
             } catch (e) {
@@ -129,7 +137,7 @@ class Web3Service {
     async createProfile(peerId) {
         await this.executeContractFunction(this.TokenContract, 'increaseAllowance', [
             this.ProfileContract.options.address,
-            constants.INIT_STAKE_AMOUNT,
+            INIT_STAKE_AMOUNT,
         ]);
 
         const nodeId = await peerId2Hash(peerId);
@@ -137,7 +145,7 @@ class Web3Service {
         await this.executeContractFunction(this.ProfileContract, 'createProfile', [
             this.getManagementKey(),
             nodeId,
-            constants.INIT_STAKE_AMOUNT,
+            INIT_STAKE_AMOUNT,
             this.getIdentity(),
         ]);
     }
