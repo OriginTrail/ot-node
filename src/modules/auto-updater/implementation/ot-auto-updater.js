@@ -244,15 +244,18 @@ class OTAutoUpdater {
             child.stdout.on('data', (data) => {
                 this.logger.trace(`AutoUpdater - npm ci - ${data.replace(/\r?\n|\r/g, '')}`);
             });
-
+            let rejected = false;
             child.stderr.on('data', (data) => {
-                if (data.toLowerCase().includes('error')) {
+                if (data.includes('ERROR')) {
                     // npm passes warnings as errors, only reject if "error" is included
                     const errorData = data.replace(/\r?\n|\r/g, '');
                     this.logger.error(
                         `AutoUpdater - Error installing dependencies. Error message: ${errorData}`,
                     );
-                    reject(errorData);
+                    if (!rejected) {
+                        rejected = true;
+                        reject(errorData);
+                    }
                 }
             });
             child.stdout.on('end', () => {
