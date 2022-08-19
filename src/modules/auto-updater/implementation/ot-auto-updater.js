@@ -240,13 +240,14 @@ class OTAutoUpdater {
 
             const command = `cd ${destination} && npm ci --omit=dev --ignore-scripts`;
             const child = exec(command);
-
+            let rejected = false;
             child.stdout.on('data', (data) => {
                 this.logger.trace(`AutoUpdater - npm ci - ${data.replace(/\r?\n|\r/g, '')}`);
             });
-            let rejected = false;
+
             child.stderr.on('data', (data) => {
-                if (data.includes('npm ERROR')) {
+                if (data.includes(' error ')) {
+                    this.logger.trace(`Error message: ${data}`);
                     // npm passes warnings as errors, only reject if "error" is included
                     const errorData = data.replace(/\r?\n|\r/g, '');
                     this.logger.error(
@@ -259,8 +260,10 @@ class OTAutoUpdater {
                 }
             });
             child.stdout.on('end', () => {
-                this.logger.debug(`AutoUpdater - Dependencies installed successfully`);
-                resolve();
+                if (!rejected) {
+                    this.logger.debug(`AutoUpdater - Dependencies installed successfully`);
+                    resolve();
+                }
             });
         });
     }
