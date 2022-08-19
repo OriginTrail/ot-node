@@ -8,6 +8,7 @@
         "dev": "nodemon index.js",
         "prepare": "husky install",
         "lint-staged": "lint-staged",
+        "create-account-mapping-signature": "node tools/ot-parachain-account-mapping/create-account-mapping-signature.js ",
         "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
         "test:unit": "nyc --all mocha --exit $(find test/unit -name '*.js')",
         "test:bdd:release": "cucumber-js --tags=@release --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
@@ -54,7 +55,12 @@
         "request": "^2.88.2",
         "sinon": "^14.0.0",
         "slugify": "^1.6.5",
-        "solc": "0.7.6"
+        "solc": "0.7.6",
+        "@ethersproject/bytes": "^5.6.1",
+        "@ethersproject/hash": "^5.6.1",
+        "@ethersproject/wallet": "^5.6.2",
+        "@polkadot/util": "^10.1.4",
+        "@polkadot/util-crypto": "^10.1.4"
     },
     "dependencies": {
         "@comunica/query-sparql": "^2.2.1",
