@@ -246,7 +246,7 @@ class OTAutoUpdater {
             });
 
             child.stderr.on('data', (data) => {
-                if (data.includes(' error ')) {
+                if (data.includes('ERROR')) {
                     this.logger.trace(`Error message: ${data}`);
                     // npm passes warnings as errors, only reject if "error" is included
                     const errorData = data.replace(/\r?\n|\r/g, '');
