@@ -28,7 +28,7 @@ class Web3Service {
             }
 
             try {
-                if (this.config.rpcEndpoints[this.rpcNumber].startsWith('wss')) {
+                if (this.config.rpcEndpoints[this.rpcNumber].startsWith('ws')) {
                     const provider = new Web3.providers.WebsocketProvider(
                         this.config.rpcEndpoints[this.rpcNumber],
                         WEBSOCKET_PROVIDER_OPTIONS,
