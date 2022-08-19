@@ -37,8 +37,8 @@ class DkgClientHelper {
         });
     }
 
-    async resolve(ids) {
-        return this.client._resolveRequest({
+    async get(ids) {
+        return this.client._getRequest({
             ids,
         });
     }
@@ -56,14 +56,13 @@ class DkgClientHelper {
         });
     }
 
-    async getResult(handler_id, operation) {
+    async getResult(operation_id, operation) {
         return this.client
             ._getResult({
-                handler_id,
+                operation_id,
                 operation,
             })
-            .catch((error) => {
-                console.log(`Error getting result. ${error}`);
+            .catch(() => {
             });
     }
 }

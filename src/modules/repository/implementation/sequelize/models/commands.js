@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
         deadline_at: DataTypes.INTEGER,
         period: DataTypes.INTEGER,
         status: DataTypes.STRING,
-        message: DataTypes.STRING,
+        message: DataTypes.TEXT,
         parent_id: DataTypes.UUID,
         transactional: DataTypes.BOOLEAN,
         retries: {

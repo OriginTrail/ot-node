@@ -1,17 +1,14 @@
 require('dotenv').config();
-const {
-    Before, BeforeAll, After, AfterAll,
-} = require('@cucumber/cucumber');
+const { Before, BeforeAll, After, AfterAll } = require('@cucumber/cucumber');
 const slugify = require('slugify');
 const fs = require('fs');
 const { ServerClientConfig, GraphDBServerClient } = require('graphdb').server;
 
 process.env.NODE_ENV = 'test';
 
-BeforeAll(() => {
-});
+BeforeAll(() => {});
 
-Before(function (testCase, done) {
+Before(function beforeMethod (testCase, done) {
     this.logger = console;
     this.logger.log('Starting scenario: ', testCase.pickle.name, `${testCase.pickle.uri}`);
     // Initialize variables
@@ -27,9 +24,19 @@ Before(function (testCase, done) {
     done();
 });
 
-After(function (testCase, done) {
-    this.logger.log('Completed scenario: ', testCase.pickle.name, `${testCase.gherkinDocument.uri}:${testCase.gherkinDocument.feature.location.line}`);
-    this.logger.log('with status: ', testCase.result.status, ' and duration: ', testCase.result.duration, ' miliseconds.');
+After(function afterMethod (testCase, done) {
+    this.logger.log(
+        'Completed scenario: ',
+        testCase.pickle.name,
+        `${testCase.gherkinDocument.uri}:${testCase.gherkinDocument.feature.location.line}`,
+    );
+    this.logger.log(
+        'with status: ',
+        testCase.result.status,
+        ' and duration: ',
+        testCase.result.duration,
+        ' miliseconds.',
+    );
 
     if (testCase.result.status === 'failed') {
         this.logger.log('Oops, exception occurred:');
@@ -56,7 +63,7 @@ After(function (testCase, done) {
         }
     }
     this.logger.log('After test hook, cleaning repositories');
-    // delete graphdb repositories
+    // delete ot-graphdb repositories
     const serverConfig = new ServerClientConfig('http://localhost:7200')
         .setTimeout(40000)
         .setKeepAlive(true);
@@ -72,10 +79,8 @@ After(function (testCase, done) {
     });
 });
 
-AfterAll(async () => {
-});
+AfterAll(async () => {});
 
-process.on('unhandledRejection', (reason, p) => {
-    console.log(`Unhandled Rejection:\n${reason.stack}`);
+process.on('unhandledRejection', () => {
     process.abort();
 });

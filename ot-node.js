@@ -1,26 +1,26 @@
-const { execSync } = require('child_process');
 const DeepExtend = require('deep-extend');
 const rc = require('rc');
 const fs = require('fs');
 const queue = require('fastq');
 const appRootPath = require('app-root-path');
 const path = require('path');
-const DependencyInjection = require('./modules/service/dependency-injection');
-const Logger = require('./modules/logger/logger');
-const constants = require('./modules/constants');
+const EventEmitter = require('events');
+const DependencyInjection = require('./src/service/dependency-injection');
+const Logger = require('./src/logger/logger');
+const constants = require('./src/constants/constants');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
-const M1FolderStructureInitialMigration = require('./modules/migration/m1-folder-structure-initial-migration');
-const FileService = require('./modules/service/file-service');
+const FileService = require('./src/service/file-service');
 
 class OTNode {
     constructor(config) {
         this.initializeConfiguration(config);
-        this.logger = new Logger(this.config.logLevel, this.config.telemetryHub.enabled);
+        this.logger = new Logger(this.config.logLevel, this.config.telemetry.enabled);
+        this.checkNodeVersion();
     }
 
     async start() {
-        await this.runFolderStructureInitialMigration();
+        await this.removeUpdateFile();
 
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
@@ -35,24 +35,29 @@ class OTNode {
         this.logger.info(`Node is running in ${process.env.NODE_ENV} environment`);
 
         this.initializeDependencyContainer();
+        this.initializeEventEmitter();
+
         await this.initializeModules();
-        await this.initializeDataModule();
-        await this.initializeOperationalDbModule();
-        await this.initializeValidationModule();
-        await this.initializeBlockchainModule();
-        await this.initializeNetworkModule();
+        await this.saveNetworkModulePeerIdAndPrivKey();
+        await this.createProfiles();
+
+        await this.initializeControllers();
         await this.initializeCommandExecutor();
-        await this.initializeTelemetryHubModule();
-        await this.initializeRpcModule();
-        // await this.initializeWatchdog();
+        await this.initializeTelemetryInjectionService();
+
+        this.logger.info('Node is up and running!');
     }
 
-    async runFolderStructureInitialMigration() {
-        const m1FolderStructureInitialMigration = new M1FolderStructureInitialMigration(
-            this.logger,
-            this.config,
-        );
-        return m1FolderStructureInitialMigration.run();
+    checkNodeVersion() {
+        const nodeMajorVersion = process.versions.node.split('.')[0];
+        this.logger.warn('======================================================');
+        this.logger.warn(`Using node.js version: ${process.versions.node}`);
+        if (nodeMajorVersion < constants.MIN_NODE_VERSION) {
+            this.logger.warn(
+                `This node was tested with node.js version 16. To make sure that your node is running properly please update your node version!`,
+            );
+        }
+        this.logger.warn('======================================================');
     }
 
     initializeConfiguration(userConfig) {
@@ -66,23 +71,6 @@ class OTNode {
         if (!this.config.configFilename) {
             // set default user configuration filename
             this.config.configFilename = '.origintrail_noderc';
-        }
-        if (
-            !this.config.blockchain[0].hubContractAddress &&
-            this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId
-        ) {
-            this.config.blockchain[0].hubContractAddress =
-                configjson[process.env.NODE_ENV].blockchain[0].hubContractAddress;
-        }
-
-        const fileService = new FileService({ config: this.config });
-
-        const updateFilePath = fileService.getUpdateFilePath();
-        if (fs.existsSync(updateFilePath)) {
-            this.config.otNodeUpdated = true;
-            fileService.removeFile(updateFilePath).catch((error) => {
-                this.logger.warn(`Unable to remove update file. Error: ${error}`);
-            });
         }
     }
 
@@ -109,98 +97,90 @@ class OTNode {
             await Promise.all(initializationPromises);
             this.logger.info(`All modules initialized!`);
         } catch (e) {
-            this.logger.error({
-                msg: `Module initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.MODULE_INITIALIZATION_ERROR,
-            });
+            this.logger.error(`Module initialization failed. Error message: ${e.message}`);
             process.exit(1);
         }
     }
 
-    async initializeDataModule() {
+    initializeEventEmitter() {
+        const eventEmitter = new EventEmitter();
+        DependencyInjection.registerValue(this.container, 'eventEmitter', eventEmitter);
+
+        this.logger.info('Event emitter initialized');
+    }
+
+    async initializeControllers() {
         try {
-            const dataService = this.container.resolve('dataService');
-            await dataService.initialize();
-            this.logger.info(`Data module: ${dataService.getName()} implementation`);
+            this.logger.info('Initializing http api router');
+            const httpApiRouter = this.container.resolve('httpApiRouter');
+            await httpApiRouter.initialize();
         } catch (e) {
-            this.logger.error({
-                msg: `Data module initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.DATA_MODULE_INITIALIZATION_ERROR,
-            });
+            this.logger.error(
+                `Http api router initialization failed. Error message: ${e.message}, ${e.stackTrace}`,
+            );
+        }
+
+        try {
+            this.logger.info('Initializing rpc router');
+            const rpcRouter = this.container.resolve('rpcRouter');
+            await rpcRouter.initialize();
+        } catch (e) {
+            this.logger.error(
+                `RPC router initialization failed. Error message: ${e.message}, ${e.stackTrace}`,
+            );
         }
     }
 
-    async initializeOperationalDbModule() {
-        try {
-            this.logger.info('Operational database module: sequelize implementation');
-            // eslint-disable-next-line global-require
-            const db = require('./models');
-
-            if (this.config.otNodeUpdated) {
-                execSync(`npx sequelize --config=./config/sequelizeConfig.js db:migrate`);
-            }
-
-            await db.sequelize.sync();
-        } catch (e) {
-            this.logger.error({
-                msg: `Operational database module initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.OPERATIONALDB_MODULE_INITIALIZATION_ERROR,
-            });
-        }
-    }
-
-    async initializeNetworkModule() {
-        try {
-            const networkService = this.container.resolve('networkService');
-            const result = await networkService.initialize();
-
-            this.config.network.peerId = result.peerId;
-            if (
-                !this.config.network.privateKey &&
-                this.config.network.privateKey !== result.privateKey
-            ) {
-                this.config.network.privateKey = result.privateKey;
-                if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
-                    this.savePrivateKeyInUserConfigurationFile(result.privateKey);
+    async createProfiles() {
+        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        const createProfilesPromises = blockchainModuleManager
+            .getImplementationsNames()
+            .map(async (blockchain) => {
+                try {
+                    if (!blockchainModuleManager.identityExists(blockchain)) {
+                        this.logger.info(`Creating blockchain identity on network: ${blockchain}`);
+                        const networkModuleManager = this.container.resolve('networkModuleManager');
+                        const peerId = networkModuleManager.getPeerId();
+                        await blockchainModuleManager.deployIdentity(blockchain);
+                        this.logger.info(`Creating profile on network: ${blockchain}`);
+                        await blockchainModuleManager.createProfile(blockchain, peerId);
+                        if (
+                            process.env.NODE_ENV !== 'development' &&
+                            process.env.NODE_ENV !== 'test'
+                        ) {
+                            await this.saveIdentityInUserConfigurationFile(
+                                blockchainModuleManager.getIdentity(blockchain),
+                                blockchain,
+                            );
+                        }
+                    }
+                    this.logger.info(
+                        `${blockchain} blockchain identity is ${blockchainModuleManager.getIdentity(
+                            blockchain,
+                        )}`,
+                    );
+                } catch (error) {
+                    this.logger.warn(
+                        `Unable to create ${blockchain} blockchain profile. Removing implementation.`,
+                    );
+                    blockchainModuleManager.removeImplementation(blockchain);
                 }
-            }
-
-            const rankingService = this.container.resolve('rankingService');
-            await rankingService.initialize();
-            this.logger.info(`Network module: ${networkService.getName()} implementation`);
-        } catch (e) {
-            this.logger.error({
-                msg: `Network module initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.NETWORK_INITIALIZATION_ERROR,
             });
+
+        await Promise.all(createProfilesPromises);
+
+        if (!blockchainModuleManager.getImplementationsNames().length) {
+            this.logger.info(`Unable to create blockchain profiles. OT-node shutting down...`);
+            process.exit(1);
         }
     }
 
-    async initializeValidationModule() {
-        try {
-            const validationService = this.container.resolve('validationService');
+    async saveNetworkModulePeerIdAndPrivKey() {
+        const networkModuleManager = this.container.resolve('networkModuleManager');
+        const privateKey = networkModuleManager.getPrivateKey();
 
-            await validationService.initialize();
-            this.logger.info(`Validation module: ${validationService.getName()} implementation`);
-        } catch (e) {
-            this.logger.error({
-                msg: `Validation module initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.VALIDATION_INITIALIZATION_ERROR,
-            });
-        }
-    }
-
-    async initializeBlockchainModule() {
-        try {
-            const blockchainService = this.container.resolve('blockchainService');
-
-            await blockchainService.initialize();
-            this.logger.info(`Blockchain module: ${blockchainService.getName()} implementation`);
-        } catch (e) {
-            this.logger.error({
-                msg: `Blockchain module initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.BLOCKCHAIN_INITIALIZATION_ERROR,
-            });
+        if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
+            await this.savePrivateKeyAndPeerIdInUserConfigurationFile(privateKey);
         }
     }
 
@@ -211,37 +191,25 @@ class OTNode {
             commandExecutor.replay();
             await commandExecutor.start();
         } catch (e) {
-            this.logger.error({
-                msg: `Command executor initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.COMMAND_EXECUTOR_INITIALIZATION_ERROR,
-            });
+            this.logger.error(
+                `Command executor initialization failed. Error message: ${e.message}`,
+            );
         }
     }
 
-    async initializeRpcModule() {
-        try {
-            const rpcController = this.container.resolve('rpcController');
-            await rpcController.initialize();
-        } catch (e) {
-            this.logger.error({
-                msg: `RPC service initialization failed. Error message: ${e.message}`,
-                Event_name: constants.ERROR_TYPE.RPC_INITIALIZATION_ERROR,
-            });
-        }
-    }
-
-    async initializeTelemetryHubModule() {
-        try {
-            const telemetryHubModuleManager = this.container.resolve('telemetryHubModuleManager');
-            if (telemetryHubModuleManager.initialize(this.config.telemetryHub, this.logger)) {
-                this.logger.info(
-                    `Telemetry hub module initialized successfully, using ${telemetryHubModuleManager.config.telemetryHub.packages} package(s)`,
+    async initializeTelemetryInjectionService() {
+        if (this.config.telemetry.enabled) {
+            try {
+                const telemetryHubModuleManager = this.container.resolve(
+                    'telemetryInjectionService',
+                );
+                telemetryHubModuleManager.initialize();
+                this.logger.info('Telemetry Injection Service initialized successfully');
+            } catch (e) {
+                this.logger.error(
+                    `Telemetry hub module initialization failed. Error message: ${e.message}`,
                 );
             }
-        } catch (e) {
-            this.logger.error(
-                `Telemetry hub module initialization failed. Error message: ${e.message}`,
-            );
         }
     }
 
@@ -255,11 +223,64 @@ class OTNode {
         }
     }
 
-    savePrivateKeyInUserConfigurationFile(privateKey) {
+    async savePrivateKeyAndPeerIdInUserConfigurationFile(privateKey) {
         const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
-        const configFile = JSON.parse(fs.readFileSync(configurationFilePath));
-        configFile.network.privateKey = privateKey;
-        fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
+        const configFile = JSON.parse(await fs.promises.readFile(configurationFilePath));
+
+        if (!configFile.modules.network) {
+            configFile.modules.network = {
+                implementation: {
+                    'libp2p-service': {
+                        config: {},
+                    },
+                },
+            };
+        } else if (!configFile.modules.network.implementation) {
+            configFile.modules.network.implementation = {
+                'libp2p-service': {
+                    config: {},
+                },
+            };
+        } else if (!configFile.modules.network.implementation['libp2p-service']) {
+            configFile.modules.network.implementation['libp2p-service'] = {
+                config: {},
+            };
+        }
+        if (!configFile.modules.network.implementation['libp2p-service'].config.privateKey) {
+            configFile.modules.network.implementation['libp2p-service'].config.privateKey =
+                privateKey;
+            await fs.promises.writeFile(configurationFilePath, JSON.stringify(configFile, null, 2));
+        }
+    }
+
+    async saveIdentityInUserConfigurationFile(identity, blockchain) {
+        const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
+        const configFile = JSON.parse(await fs.promises.readFile(configurationFilePath));
+        if (
+            configFile.modules.blockchain &&
+            configFile.modules.blockchain.implementation &&
+            configFile.modules.blockchain.implementation[blockchain] &&
+            configFile.modules.blockchain.implementation[blockchain].config
+        ) {
+            if (!configFile.modules.blockchain.implementation[blockchain].config.identity) {
+                configFile.modules.blockchain.implementation[blockchain].config.identity = identity;
+                await fs.promises.writeFile(
+                    configurationFilePath,
+                    JSON.stringify(configFile, null, 2),
+                );
+            }
+        }
+    }
+
+    async removeUpdateFile() {
+        const fileService = new FileService({ config: this.config, logger: this.logger });
+        const updateFilePath = fileService.getUpdateFilePath();
+        if (await fileService.fileExists(updateFilePath)) {
+            this.config.otNodeUpdated = true;
+            await fileService.removeFile(updateFilePath).catch((error) => {
+                this.logger.warn(`Unable to remove update file. Error: ${error}`);
+            });
+        }
     }
 
     stop() {

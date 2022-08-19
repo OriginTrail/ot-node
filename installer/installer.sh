@@ -370,6 +370,19 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
+echo -n "Adding sql repository password to .env: "
+
+read -p "Enter sql repository password: " password
+OUTPUT=$(echo "REPOSITORY_PASSWORD=$password" > $OTNODE_DIR/.env)
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error adding the env variable."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
 echo -n "Creating a local operational database: "
 
 mysql -u root -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;"
@@ -380,7 +393,7 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';"
+mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$password';"
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error updating mysql.user set plugin (Step 2 of 2)."
@@ -477,7 +490,7 @@ fi
 
 echo -n "Adding NODE_ENV=testnet to .env: "
 
-OUTPUT=$(echo "NODE_ENV=testnet" > .env)
+OUTPUT=$(echo "NODE_ENV=testnet" >> $OTNODE_DIR/.env)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error adding the env variable."
@@ -487,45 +500,58 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo "Creating default noderc config${N1}"
-
-read -p "Enter the operational wallet address: " NODE_WALLET
-echo "Node wallet: $NODE_WALLET"
-
-read -p "Enter the private key: " NODE_PRIVATE_KEY
-echo "Node private key: $NODE_PRIVATE_KEY"
-
-CONFIG_DIR=$OTNODE_DIR/../
-
-cp $OTNODE_DIR/.origintrail_noderc_example $CONFIG_DIR/.origintrail_noderc
-
-jq --arg newval "$NODE_WALLET" '.blockchain[].publicKey |= $newval' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
-mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
-
-jq --arg newval "$NODE_PRIVATE_KEY" '.blockchain[].privateKey |= $newval' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
-mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
-
+tripleStore=""
 if [[ $DATABASE = "blazegraph" ]]; then
-    jq '.graphDatabase |= {"implementation": "Blazegraph", "url": "http://localhost:9999/blazegraph"} + .' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
-    mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
+    tripleStore="ot-blazegraph"
 fi
-
 if [[ $DATABASE = "fuseki" ]]; then
-    jq '.graphDatabase |= {"name": "node0", "implementation": "Fuseki", "url": "http://localhost:3030"} + .' $CONFIG_DIR/.origintrail_noderc >> $CONFIG_DIR/origintrail_noderc_temp
-    mv $CONFIG_DIR/origintrail_noderc_temp $CONFIG_DIR/.origintrail_noderc
+    tripleStore="ot-fuseki"
 fi
 
-echo -n "Running DB migrations: "
+CONFIG_DIR=$OTNODE_DIR/..
+touch $CONFIG_DIR/.origintrail_noderc
+jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}, "modules": {"tripleStore":{"defaultImplementation": $tripleStore}}}' > $CONFIG_DIR/.origintrail_noderc
 
-OUTPUT=$(npx sequelize --config=./config/sequelizeConfig.js db:migrate 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error running the db migrations."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
+
+#blockchains=("otp" "polygon")
+#for ((i = 0; i < ${#blockchains[@]}; ++i));
+#do
+ #   read -p "Do you want to connect your node to blockchain: ${blockchains[$i]} ? [Y]Yes [N]No [E]Exit: " choice
+#	case "$choice" in
+ #       [Yy]* )
+
+#            read -p "Enter your substrate operational wallet address: " SUBSTRATE_OPERATIONAL_WALLET
+#            echo "Substrate operational wallet address: $SUBSTRATE_OPERATIONAL_WALLET"
+#
+#            read -p "Enter your substrate operational wallet private key: " SUBSTRATE_OPERATIONAL_PRIVATE_KEY
+#            echo "Substrate operational wallet private key: $SUBSTRATE_OPERATIONAL_PRIVATE_KEY"
+
+            read -p "Enter your EVM operational wallet address: " EVM_OPERATIONAL_WALLET
+            echo "EVM operational wallet address: $EVM_OPERATIONAL_WALLET"
+
+            read -p "Enter your EVM operational wallet private key: " EVM_OPERATIONAL_PRIVATE_KEY
+            echo "EVM operational wallet private key: $EVM_OPERATIONAL_PRIVATE_KEY"
+
+#            read -p "Enter your substrate management wallet address: " SUBSTRATE_MANAGEMENT_WALLET
+#            echo "Substrate management wallet address: $SUBSTRATE_MANAGEMENT_WALLET"
+#
+#            read -p "Enter your substrate management wallet private key: " SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY
+#            echo "Substrate management wallet private key: $SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY"
+
+            read -p "Enter your EVM management wallet address: " EVM_MANAGEMENT_WALLET
+            echo "EVM management wallet address: $EVM_MANAGEMENT_WALLET"
+
+#            read -p "Enter your EVM management wallet private key: " EVM_MANAGEMENT_PRIVATE_KEY
+#            echo "EVM management wallet private key: $EVM_MANAGEMENT_PRIVATE_KEY"
+
+            jq --arg blockchain "otp" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" '.modules.blockchain.implementation[$blockchain].config |= { "evmOperationalWalletPublicKey": $evmOperationalWallet, "evmOperationalWalletPrivateKey": $evmOperationalWalletPrivateKey, "evmManagementWalletPublicKey": $evmManagementWallet} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
+            mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc
+            # ;;
+  #      [Nn]* ) ;;
+   #     [Ee]* ) echo "Installer stopped by user"; exit;;
+    #    * ) ((--i));echo "Please make a valid choice and try again.";;
+    #esac
+#done
 
 echo -n "Copying otnode service file: "
 

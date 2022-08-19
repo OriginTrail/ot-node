@@ -1,3 +1,4 @@
+/* eslint-disable */
 const Blazegraph = require('../../external/blazegraph-service')
 const GraphDB = require('../../external/graphdb-service');
 const Fuseki = require('../../external/fuseki-service');
