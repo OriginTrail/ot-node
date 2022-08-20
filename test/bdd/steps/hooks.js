@@ -73,30 +73,19 @@ After(function afterMethod(testCase, done) {
         .setKeepAlive(true);
     const server = new GraphDBServerClient(serverConfig);
     const promises = [];
-    // databaseNames.forEach((element) => {
-    //     console.log(element);
-    //     const con = mysql.createConnection({
-    //         host: "localhost",
-    //         user: "root",
-    //         password: "",
-    //         database: element
-    //     });
-    //     con.connect(async (err) => {
-    //         if (err) throw err;
-    //         const sql = `DROP DATABASE ${element}`;
-    //         // eslint-disable-next-line no-shadow
-    //         await con.query(sql, (err) => {
-    //             if (err) throw err;
-    //             console.log("Table deleted");
-    //         });
-    //     });
-    //     con.end((err) => {
-    //         if (err) {
-    //             return console.log('error:' + err.message);
-    //         }
-    //         console.log('Close the database connection.');
-    //     });
-    // })
+    /* const con = mysql.createConnection({
+        host: "localhost",
+        user: "root",
+        password: "",
+    });
+    databaseNames.forEach((element) => {
+        con.connect(async (err) => {
+            if (err) throw err;
+            const sql = `DROP DATABASE ${element}`;
+            // eslint-disable-next-line no-shadow
+             promises.push(con.query(sql));
+        });
+    }); */
     graphRepositoryNames.forEach((element) => {
         server
             .hasRepository(element)

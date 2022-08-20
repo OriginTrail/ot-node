@@ -1,4 +1,3 @@
-const {setTimeout} = require('timers/promises');
 const OTNode = require('../../../../ot-node');
 const HttpApiHelper = require('../../../utilities/http-api-helper');
 

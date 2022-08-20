@@ -28,7 +28,13 @@ function getBlockchainConfiguration(localBlockchain, privateKey, publicKey, mana
     ];
 }
 
-Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function nodeSetup(nodeCount, done) {
+function forkNode(nodeConfiguration) {
+    const forkedNode = fork(otNodeProcessPath, [], { silent: true });
+    forkedNode.send(JSON.stringify(nodeConfiguration));
+    return forkedNode;
+}
+
+Given(/^I setup (\d+) node[s]*$/, { timeout: 60000 }, function nodeSetup(nodeCount, done) {
     this.logger.log(`I setup ${nodeCount} node${nodeCount !== 1 ? 's' : ''}`);
     const wallets = this.state.localBlockchain.getWallets();
     let nodesStarted = 0;
@@ -66,7 +72,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function nodeSetup(nodeCo
         nodeConfiguration.rpcPort = rpcPort;
         nodeConfiguration.appDataPath = `data${i}`;
 
-        const forkedNode = fork(otNodeProcessPath, [], { silent: true });
+        const forkedNode = forkNode(nodeConfiguration);
 
         const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
         forkedNode.stdout.setEncoding('utf8');
@@ -74,8 +80,6 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function nodeSetup(nodeCo
             // Here is where the output goes
             logFileStream.write(data);
         });
-        forkedNode.send(JSON.stringify(nodeConfiguration));
-
         // eslint-disable-next-line no-loop-func
         forkedNode.on('message', (response) => {
             if (response.error) {
@@ -103,22 +107,9 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function nodeSetup(nodeCo
     }
 });
 
-function forkNode(nodeName, nodeConfiguration) {
-    const forkedNode = fork(otNodeProcessPath, [], { silent: true });
-
-    const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
-    forkedNode.stdout.setEncoding('utf8');
-    forkedNode.stdout.on('data', (data) => {
-        // Here is where the output goes
-        logFileStream.write(data);
-    });
-    forkedNode.send(JSON.stringify(nodeConfiguration));
-    return forkedNode;
-}
-
 Given(
     /^(\d+) bootstrap is running$/,
-    { timeout: 120000 },
+    { timeout: 60000 },
     function bootstrapRunning(nodeCount, done) {
         expect(this.state.bootstraps).to.have.length(0);
         expect(nodeCount).to.be.equal(1); // Currently not supported more.
@@ -129,7 +120,14 @@ Given(
                 .readFileSync(path.join(__dirname, `${PATH_TO_CONFIGS}${nodeName}-config.json`))
                 .toString(),
         );
-        const forkedNode = forkNode.call(this, nodeName, bootstrapNodeConfiguration);
+        const forkedNode = forkNode(bootstrapNodeConfiguration);
+
+        const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
+        forkedNode.stdout.setEncoding('utf8');
+        forkedNode.stdout.on('data', (data) => {
+            // Here is where the output goes
+            logFileStream.write(data);
+        });
 
         forkedNode.on('message', async (response) => {
             if (response.error) {

@@ -1,4 +1,5 @@
 const Engine = require('@comunica/query-sparql').QueryEngine;
+const { setTimeout } = require('timers/promises');
 const { SCHEMA_CONTEXT } = require('../../../constants/constants');
 const constants = require('./triple-store-constants');
 

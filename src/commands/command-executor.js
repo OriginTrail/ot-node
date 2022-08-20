@@ -1,4 +1,5 @@
 const async = require('async');
+const { setTimeout: sleep } = require('timers/promises');
 const { forEach } = require('p-iteration');
 
 const Command = require('./command');

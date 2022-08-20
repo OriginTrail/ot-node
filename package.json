@@ -127,6 +127,7 @@
         "semver": "^7.3.5",
         "sequelize": "^6.9.0",
         "sequelize-cli": "^6.3.0",
+        "setTimeout": "^0.4.9",
         "simple-git": "^3.6.0",
         "split": "^1.0.1",
         "streaming-iterables": "^6.0.0",

@@ -7,7 +7,7 @@ const HttpApiHelper = require('../../../utilities/http-api-helper');
 
 When(
     /^I call publish on node (\d+) with ([^"]*)/,
-    { timeout: 220000 },
+    { timeout: 60000 },
     async function publish(node, assertionName) {
         this.logger.log('I call publish route successfully');
         expect(
@@ -42,7 +42,7 @@ When(
 );
 When(
     /^I call publish on ot-node (\d+) directly with ([^"]*)/,
-    { timeout: 220000 },
+    { timeout: 60000 },
     async function publish(node, requestName) {
         expect(
             !!requests[requestName],
@@ -65,7 +65,7 @@ When(
     },
 );
 
-Given('I wait for last publish to finalize', { timeout: 120000 }, async function publishFinalize() {
+Given('I wait for last publish to finalize', { timeout: 60000 }, async function publishFinalize() {
     this.logger.log('I wait for last publish to finalize');
     expect(
         !!this.state.lastPublishData,
