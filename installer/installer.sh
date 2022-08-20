@@ -105,10 +105,8 @@ install_blazegraph() {
 }
 
 install_mysql() {
-    mysql -u root -e "DROP DATABASE IF EXISTS operationaldb;"
-    exit 0
-    mysql -p$password -u root -e "DROP DATABASE IF EXISTS operationaldb;"
-    exit 0
+    ! mysql -u root -e "DROP DATABASE IF EXISTS operationaldb;"
+    ! mysql -p$password -u root -e "DROP DATABASE IF EXISTS operationaldb;"
     mysql -u root -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;"
     mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$password';"
 
