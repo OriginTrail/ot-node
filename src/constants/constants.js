@@ -1,6 +1,12 @@
 exports.SCHEMA_CONTEXT = 'http://schema.org/';
 
 /**
+ * @constant {number} MAX_FILE_SIZE
+ * - Max file size for publish
+ */
+module.exports.MAX_FILE_SIZE = 2621440;
+
+/**
  * @constant {object} PUBLISH_TYPES
  * - Different types of publish
  */
