@@ -26,7 +26,7 @@ Before(function beforeMethod(testCase, done) {
     done();
 });
 
-After(async function afterMethod(testCase) {
+After(function afterMethod(testCase, done) {
     const graphRepositoryNames = [];
     const databaseNames = [];
     for (const key in this.state.nodes) {
@@ -52,20 +52,24 @@ After(async function afterMethod(testCase) {
     }
     this.logger.log('After test hook, cleaning repositories');
 
+    const promises = [];
     const con = mysql.createConnection({
         host: 'localhost',
         user: 'root',
-        password: process.env.REPOSITORY_PASSWORD,
+        password: '',
     });
-
-    /* databaseNames.forEach((element) => {
-        con.connect(async (err) => {
-            if (err) throw err;
-            const sql = `DROP DATABASE IF EXISTS \`${element}\`;`;
-            // eslint-disable-next-line no-shadow
-            promises.push(con.promise().query(sql));
-        });
+    databaseNames.forEach((element) => {
+        const sql = `DROP DATABASE IF EXISTS \`${element}\`;`;
+        promises.push(con.promise().query(sql));
     });
+    promises.push(con);
+    const serverConfig = new ServerClientConfig('http://localhost:7200')
+        .setTimeout(40000)
+        .setHeaders({
+            Accept: RDFMimeType.N_QUADS,
+        })
+        .setKeepAlive(true);
+    const server = new GraphDBServerClient(serverConfig);
     graphRepositoryNames.forEach((element) => {
         server
             .hasRepository(element)
@@ -75,54 +79,40 @@ After(async function afterMethod(testCase) {
                 }
             })
             .catch((err) => this.logger.error(err));
-    }); */
+    });
 
-    try {
+    /* try {
         for (const item of databaseNames) {
             this.logger.log('Removing operation database: ', item);
             // eslint-disable-next-line no-await-in-loop
-            await con.connect();
+            await con.connect();:ki
             const sql = `DROP DATABASE IF EXISTS \`${item}\`;`;
             // eslint-disable-next-line no-await-in-loop
             await con.promise().query(sql);
         }
     } catch (error) {
         this.logger.error('Error while removing operation database. ', error);
-    }
+    } */
     // delete ot-graphdb repositories
-    const serverConfig = new ServerClientConfig('http://localhost:7200')
-        .setTimeout(40000)
-        .setHeaders({
-            Accept: RDFMimeType.N_QUADS,
+    Promise.all(promises)
+        .then(() => {
+            con.end();
         })
-        .setKeepAlive(true);
-    const server = new GraphDBServerClient(serverConfig);
-    for (const element of graphRepositoryNames) {
-        this.logger.log('Removing graph repository: ', element);
-        // eslint-disable-next-line no-await-in-loop
-        const hasRepository = await server.hasRepository(element);
-        if (hasRepository) {
-            // eslint-disable-next-line no-await-in-loop
-            await server.deleteRepository(element);
-        }
-    }
-    this.logger.log(
-        'Completed scenario: ',
-        testCase.pickle.name,
-        `${testCase.gherkinDocument.uri}:${testCase.gherkinDocument.feature.location.line}`,
-    );
-    this.logger.log(
-        'with status: ',
-        testCase.result.status,
-        ' and duration: ',
-        testCase.result.duration,
-        ' miliseconds.',
-    );
-
-    if (testCase.result.status === 'failed') {
-        this.logger.log('Oops, exception occurred:');
-        this.logger.log(testCase.result.exception);
-    }
+        .then(() => {
+            this.logger.log(
+                'Completed scenario: ',
+                testCase.pickle.name,
+                `${testCase.gherkinDocument.uri}:${testCase.gherkinDocument.feature.location.line}`,
+            );
+            this.logger.log(
+                'with status: ',
+                testCase.result.status,
+                ' and duration: ',
+                testCase.result.duration,
+                ' miliseconds.',
+            );
+            done();
+        });
 });
 
 AfterAll(async () => {});

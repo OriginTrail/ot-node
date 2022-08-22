@@ -70,6 +70,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 60000 }, function nodeSetup(nodeCou
         nodeConfiguration.operationalDatabase.databaseName = `operationaldbnode${i}`;
         nodeConfiguration.rpcPort = rpcPort;
         nodeConfiguration.appDataPath = `data${i}`;
+        nodeConfiguration.graphDatabase.name = nodeName;
 
         const forkedNode = forkNode(nodeConfiguration);
 
