@@ -3,6 +3,7 @@ const { Before, BeforeAll, After, AfterAll } = require('@cucumber/cucumber');
 const slugify = require('slugify');
 const fs = require('fs');
 const mysql = require('mysql2');
+const { RDFMimeType } = require('graphdb').http;
 const { ServerClientConfig, GraphDBServerClient } = require('graphdb').server;
 
 process.env.NODE_ENV = 'test';
@@ -25,24 +26,7 @@ Before(function beforeMethod(testCase, done) {
     done();
 });
 
-After(function afterMethod(testCase, done) {
-    this.logger.log(
-        'Completed scenario: ',
-        testCase.pickle.name,
-        `${testCase.gherkinDocument.uri}:${testCase.gherkinDocument.feature.location.line}`,
-    );
-    this.logger.log(
-        'with status: ',
-        testCase.result.status,
-        ' and duration: ',
-        testCase.result.duration,
-        ' miliseconds.',
-    );
-
-    if (testCase.result.status === 'failed') {
-        this.logger.log('Oops, exception occurred:');
-        this.logger.log(testCase.result.exception);
-    }
+After(async function afterMethod(testCase) {
     const graphRepositoryNames = [];
     const databaseNames = [];
     for (const key in this.state.nodes) {
@@ -67,18 +51,14 @@ After(function afterMethod(testCase, done) {
         }
     }
     this.logger.log('After test hook, cleaning repositories');
-    // delete ot-graphdb repositories
-    const serverConfig = new ServerClientConfig('http://localhost:7200')
-        .setTimeout(40000)
-        .setKeepAlive(true);
-    const server = new GraphDBServerClient(serverConfig);
-    const promises = [];
+
     const con = mysql.createConnection({
         host: 'localhost',
         user: 'root',
-        password: '',
+        password: process.env.REPOSITORY_PASSWORD,
     });
-    databaseNames.forEach((element) => {
+
+    /* databaseNames.forEach((element) => {
         con.connect(async (err) => {
             if (err) throw err;
             const sql = `DROP DATABASE IF EXISTS \`${element}\`;`;
@@ -95,20 +75,54 @@ After(function afterMethod(testCase, done) {
                 }
             })
             .catch((err) => this.logger.error(err));
-    });
-    /* for (const name in graphRepositoryNames) {
-        // promises.push(server.deleteRepository(name));
+    }); */
 
+    try {
+        for (const item of databaseNames) {
+            this.logger.log('Removing operation database: ', item);
+            // eslint-disable-next-line no-await-in-loop
+            await con.connect();
+            const sql = `DROP DATABASE IF EXISTS \`${item}\`;`;
+            // eslint-disable-next-line no-await-in-loop
+            await con.promise().query(sql);
+        }
+    } catch (error) {
+        this.logger.error('Error while removing operation database. ', error);
+    }
+    // delete ot-graphdb repositories
+    const serverConfig = new ServerClientConfig('http://localhost:7200')
+        .setTimeout(40000)
+        .setHeaders({
+            Accept: RDFMimeType.N_QUADS,
+        })
+        .setKeepAlive(true);
+    const server = new GraphDBServerClient(serverConfig);
+    for (const element of graphRepositoryNames) {
+        this.logger.log('Removing graph repository: ', element);
+        // eslint-disable-next-line no-await-in-loop
+        const hasRepository = await server.hasRepository(element);
+        if (hasRepository) {
+            // eslint-disable-next-line no-await-in-loop
+            await server.deleteRepository(element);
+        }
+    }
+    this.logger.log(
+        'Completed scenario: ',
+        testCase.pickle.name,
+        `${testCase.gherkinDocument.uri}:${testCase.gherkinDocument.feature.location.line}`,
+    );
+    this.logger.log(
+        'with status: ',
+        testCase.result.status,
+        ' and duration: ',
+        testCase.result.duration,
+        ' miliseconds.',
+    );
 
-        /!* server.deleteRepository(name).then((result) => {
-            // successfully deleted
-            console.log(result);
-        }).catch(err => console.log(err)); *!/
-    } */
-    this.logger.log(new Date().toLocaleTimeString());
-    Promise.all(promises).then(() => {
-        done();
-    });
+    if (testCase.result.status === 'failed') {
+        this.logger.log('Oops, exception occurred:');
+        this.logger.log(testCase.result.exception);
+    }
 });
 
 AfterAll(async () => {});
