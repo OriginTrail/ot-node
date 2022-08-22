@@ -413,6 +413,26 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
+OUTPUT=$(sed -i '/disable_log_bin/a wait_timeout = 31536000' /etc/mysql/mysql.conf.d/mysqld.cnf 2>&1)
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error commenting out max_binlog_size."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+OUTPUT=$(sed -i '/disable_log_bin/a interactive_timeout = 31536000' /etc/mysql/mysql.conf.d/mysqld.cnf 2>&1)
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error commenting out max_binlog_size."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
 echo -n "Disabling binary logs: "
 
 OUTPUT=$(echo "disable_log_bin" >> /etc/mysql/mysql.conf.d/mysqld.cnf)
