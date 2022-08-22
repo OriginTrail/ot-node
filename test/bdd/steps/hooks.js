@@ -26,7 +26,7 @@ Before(function beforeMethod(testCase, done) {
     done();
 });
 
-After(async function afterMethod(testCase, done) {
+After(async function afterMethod(testCase) {
     const graphRepositoryNames = [];
     const databaseNames = [];
     for (const key in this.state.nodes) {
@@ -57,13 +57,17 @@ After(async function afterMethod(testCase, done) {
         user: 'root',
         password: process.env.REPOSITORY_PASSWORD,
     });
-    for (const item of databaseNames) {
-        this.logger.log('Removing operation database: ', item);
-        // eslint-disable-next-line no-await-in-loop
-        await con.connect();
-        const sql = `DROP DATABASE IF EXISTS \`${item}\`;`;
-        // eslint-disable-next-line no-await-in-loop
-        await con.query(sql);
+    try {
+        for (const item of databaseNames) {
+            this.logger.log('Removing operation database: ', item);
+            // eslint-disable-next-line no-await-in-loop
+            await con.connect();
+            const sql = `DROP DATABASE IF EXISTS \`${item}\`;`;
+            // eslint-disable-next-line no-await-in-loop
+            await con.promise().query(sql);
+        }
+    } catch (error) {
+        this.logger.error('Error while removing operation database. ', error);
     }
 
     // delete ot-graphdb repositories
@@ -100,7 +104,6 @@ After(async function afterMethod(testCase, done) {
         this.logger.log('Oops, exception occurred:');
         this.logger.log(testCase.result.exception);
     }
-    done();
 });
 
 AfterAll(async () => {});
