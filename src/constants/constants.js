@@ -65,6 +65,12 @@ exports.DID_PREFIX = 'did:dkg';
 exports.HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 4000;
 
 /**
+ * @constant {number} SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES
+ * - Interval between sending of telemetry events
+ */
+exports.SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES = 15;
+
+/**
  * @constant {number} DEFAULT_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time
  */
 exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;

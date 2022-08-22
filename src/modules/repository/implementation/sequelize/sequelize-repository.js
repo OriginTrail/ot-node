@@ -6,6 +6,7 @@ const Sequelize = require('sequelize');
 const {
     OPERATION_ID_STATUS,
     HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR,
+    SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES,
 } = require('../../../../constants/constants');
 
 class SequelizeRepository {
@@ -274,7 +275,9 @@ class SequelizeRepository {
                 },
             },
             order: [['timestamp', 'ASC']],
-            limit: HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR / 4,
+            limit:
+                (HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR / 60) *
+                SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES,
         });
 
         operationIds = operationIds.map((e) => e.operation_id);
