@@ -2,6 +2,7 @@
 const Ganache = require('ganache-core');
 const Web3 = require('web3');
 const Wallet = require('ethereumjs-wallet').default;
+
 const hubSource = require('dkg-evm-module/build/contracts/Hub.json');
 const assertionRegistrySource = require('dkg-evm-module/build/contracts/AssertionRegistry.json');
 const uaiRegistrySource = require('dkg-evm-module/build/contracts/UAIRegistry.json');
@@ -10,9 +11,8 @@ const erc20TokenSource = require('dkg-evm-module/build/contracts/ERC20Token.json
 const profileStorageSource = require('dkg-evm-module/build/contracts/ProfileStorage.json');
 const profileSource = require('dkg-evm-module/build/contracts/Profile.json');
 
-// const PATH_TO_CONTRACTS = '../../../../node_modules/dkg-evm-module/build/contracts/';
+// const contractNames = ['hub','uaiRegistry','assertionRegistry','assetRegistry','erc20Token','profileStorage','profile'];
 
-// const contractNames = ['Hub','AssertionRegistry','UAIRegistry','AssetRegistry','ERC20Token','ProfileStorage','Profile'];
 const accountPrivateKeys = [
     '3cf97be6177acdd12796b387f58f84f177d0fe20d8558004e8db9a41cf90392a',
     '1e60c8e9aa35064cd2eaa4c005bda2b76ef1a858feebb6c8e131c472d16f9740',
@@ -152,7 +152,7 @@ class LocalBlockchain {
                     `\t ProfileStorage contract address: \t\t\t${this.contracts.profileStorage.instance._address}`,
                 );
                 this.logger.info(
-                    `\t Profile contract address: \t\t\t${this.contracts.profile.instance._address}`,
+                    `\t Profile contract address: \t\t\t\t${this.contracts.profile.instance._address}`,
                 );
                 accept();
             });
@@ -160,54 +160,28 @@ class LocalBlockchain {
     }
 
     fetchContracts() {
-        // contractNames.forEach(getContracts(contractName))
-
         this.contracts = {};
+        // TODO: pass contracts sources by their names
+        /* contractNames.forEach((name) => {
+            this.populateContractObject(name, `${name}Source`)
+        }) */
 
-        this.contracts.hub = {};
-        this.contracts.hub.data = hubSource.bytecode;
-        this.contracts.hub.abi = hubSource.abi;
-        this.contracts.hub.artifact = new this.web3.eth.Contract(this.contracts.hub.abi);
+        this.populateContractObject('hub', hubSource);
+        this.populateContractObject('uaiRegistry', uaiRegistrySource);
+        this.populateContractObject('assertionRegistry', assertionRegistrySource);
+        this.populateContractObject('assetRegistry', assetRegistrySource);
+        this.populateContractObject('erc20Token', erc20TokenSource);
+        this.populateContractObject('profileStorage', profileStorageSource);
+        this.populateContractObject('profile', profileSource);
+    }
 
-        this.contracts.uaiRegistry = {};
-        this.contracts.uaiRegistry.data = uaiRegistrySource.bytecode;
-        this.contracts.uaiRegistry.abi = uaiRegistrySource.abi;
-        this.contracts.uaiRegistry.artifact = new this.web3.eth.Contract(
-            this.contracts.uaiRegistry.abi,
+    populateContractObject(contractName, source) {
+        this.contracts[contractName] = {};
+        this.contracts[contractName].data = source.bytecode;
+        this.contracts[contractName].abi = source.abi;
+        this.contracts[contractName].artifact = new this.web3.eth.Contract(
+            this.contracts[contractName].abi,
         );
-
-        this.contracts.assertionRegistry = {};
-        this.contracts.assertionRegistry.data = assertionRegistrySource.bytecode;
-        this.contracts.assertionRegistry.abi = assertionRegistrySource.abi;
-        this.contracts.assertionRegistry.artifact = new this.web3.eth.Contract(
-            this.contracts.assertionRegistry.abi,
-        );
-
-        this.contracts.assetRegistry = {};
-        this.contracts.assetRegistry.data = assetRegistrySource.bytecode;
-        this.contracts.assetRegistry.abi = assetRegistrySource.abi;
-        this.contracts.assetRegistry.artifact = new this.web3.eth.Contract(
-            this.contracts.assetRegistry.abi,
-        );
-
-        this.contracts.erc20Token = {};
-        this.contracts.erc20Token.data = erc20TokenSource.bytecode;
-        this.contracts.erc20Token.abi = erc20TokenSource.abi;
-        this.contracts.erc20Token.artifact = new this.web3.eth.Contract(
-            this.contracts.erc20Token.abi,
-        );
-
-        this.contracts.profileStorage = {};
-        this.contracts.profileStorage.data = profileStorageSource.bytecode;
-        this.contracts.profileStorage.abi = profileStorageSource.abi;
-        this.contracts.profileStorage.artifact = new this.web3.eth.Contract(
-            this.contracts.profileStorage.abi,
-        );
-
-        this.contracts.profile = {};
-        this.contracts.profile.data = profileSource.bytecode;
-        this.contracts.profile.abi = profileSource.abi;
-        this.contracts.profile.artifact = new this.web3.eth.Contract(this.contracts.profile.abi);
     }
 
     async deployContracts() {

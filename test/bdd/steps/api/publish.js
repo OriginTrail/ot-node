@@ -51,7 +51,7 @@ When(
         const requestBody = requests[requestName];
         const httpApiHelper = new HttpApiHelper();
         const result = await httpApiHelper.publish(
-            `http://localhost:${this.state.nodes[node - 1].configuration.rpcPort}`,
+            this.state.nodes[node - 1].nodeRpcUrl,
             requestBody,
         );
         const { operationId } = result.data;
@@ -140,7 +140,7 @@ Given(
         await setTimeout(numberOfSeconds * 1000);
         // eslint-disable-next-line no-await-in-loop
         this.state.lastPublishData.result = await httpApiHelper.getOperationResult(
-            `http://localhost:${this.state.nodes[publishData.nodeId].configuration.rpcPort}`,
+            this.state.nodes[publishData.nodeId].nodeRpcUrl,
             publishData.operationId,
         );
     },

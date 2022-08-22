@@ -78,10 +78,10 @@ After(function afterMethod(testCase, done) {
         user: 'root',
         password: '',
     });
-    databaseNames.forEach(() => {
+    databaseNames.forEach((element) => {
         con.connect(async (err) => {
             if (err) throw err;
-            const sql = `DROP DATABASE IF EXISTS \`${this.config.database}\`;`;
+            const sql = `DROP DATABASE IF EXISTS \`${element}\`;`;
             // eslint-disable-next-line no-shadow
             promises.push(con.promise().query(sql));
         });

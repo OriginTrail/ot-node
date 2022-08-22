@@ -96,6 +96,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 60000 }, function nodeSetup(nodeCou
                     client,
                     forkedNode,
                     configuration: nodeConfiguration,
+                    nodeRpcUrl: `http://localhost:${rpcPort}`,
                 };
             }
             nodesStarted += 1;
@@ -144,6 +145,7 @@ Given(
                     client,
                     forkedNode,
                     configuration: bootstrapNodeConfiguration,
+                    nodeRpcUrl: `http://localhost:${bootstrapNodeConfiguration.rpcPort}`,
                 });
             }
             done();
