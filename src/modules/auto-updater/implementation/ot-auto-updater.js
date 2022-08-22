@@ -223,7 +223,7 @@ class OTAutoUpdater {
             throw Error('Extracted archive for new ot-node version is not valid');
         }
         const sourcePath = path.join(extractedDataPath, destinationDirFiles[0]);
-
+        await fs.remove(destinationPath);
         await fs.move(sourcePath, destinationPath);
 
         await fs.remove(extractedDataPath);
@@ -240,24 +240,30 @@ class OTAutoUpdater {
 
             const command = `cd ${destination} && npm ci --omit=dev --ignore-scripts`;
             const child = exec(command);
-
+            let rejected = false;
             child.stdout.on('data', (data) => {
                 this.logger.trace(`AutoUpdater - npm ci - ${data.replace(/\r?\n|\r/g, '')}`);
             });
 
             child.stderr.on('data', (data) => {
-                if (data.toLowerCase().includes('error')) {
+                if (data.includes('ERROR')) {
+                    this.logger.trace(`Error message: ${data}`);
                     // npm passes warnings as errors, only reject if "error" is included
                     const errorData = data.replace(/\r?\n|\r/g, '');
                     this.logger.error(
                         `AutoUpdater - Error installing dependencies. Error message: ${errorData}`,
                     );
-                    reject(errorData);
+                    if (!rejected) {
+                        rejected = true;
+                        reject(errorData);
+                    }
                 }
             });
             child.stdout.on('end', () => {
-                this.logger.debug(`AutoUpdater - Dependencies installed successfully`);
-                resolve();
+                if (!rejected) {
+                    this.logger.debug(`AutoUpdater - Dependencies installed successfully`);
+                    resolve();
+                }
             });
         });
     }

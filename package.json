@@ -1,7 +1,7 @@
 {
     "name": "origintrail_node",
-    "version": "6.0.0-beta.1.58",
-    "description": "OTNode v6 Beta 1",
+    "version": "6.0.0-beta.2.0",
+    "description": "OTNode v6 Beta 2",
     "main": "index.js",
     "scripts": {
         "bootstrap-node": "node index.js tools/local-network-setup/.bootstrap_origintrail_noderc",
@@ -10,6 +10,7 @@
         "prepare": "husky install",
         "ganache": "ganache-cli -e 1000000000000 -i 5777 -p 7545 -l 10000000 -a 30 -m \"aspect ask story desert profit engage tuition leave fade giraffe exclude brief\"",
         "lint-staged": "lint-staged",
+        "create-account-mapping-signature": "node tools/ot-parachain-account-mapping/create-account-mapping-signature.js ",
         "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
         "test:unit": "nyc --all mocha --exit $(find test/unit -name '*.js')",
         "test:bdd:release": "cucumber-js --tags=@release --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
@@ -58,7 +59,12 @@
         "request": "^2.88.2",
         "sinon": "^14.0.0",
         "slugify": "^1.6.5",
-        "solc": "0.7.6"
+        "solc": "0.7.6",
+        "@ethersproject/bytes": "^5.6.1",
+        "@ethersproject/hash": "^5.6.1",
+        "@ethersproject/wallet": "^5.6.2",
+        "@polkadot/util": "^10.1.4",
+        "@polkadot/util-crypto": "^10.1.4"
     },
     "dependencies": {
         "@comunica/query-sparql": "^2.2.1",
