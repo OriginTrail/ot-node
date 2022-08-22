@@ -22,8 +22,8 @@ class TelemetryInjectionService {
         });
     }
 
-    async getUnpublishedEvents(options) {
-        return this.repositoryModuleManager.getUnpublishedEvents(options);
+    async getUnpublishedEvents() {
+        return this.repositoryModuleManager.getUnpublishedEvents();
     }
 
     async removePublishedEvents(events) {

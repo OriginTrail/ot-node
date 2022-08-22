@@ -3,7 +3,10 @@ const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const Sequelize = require('sequelize');
-const { OPERATION_ID_STATUS } = require('../../../../constants/constants');
+const {
+    OPERATION_ID_STATUS,
+    HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR,
+} = require('../../../../constants/constants');
 
 class SequelizeRepository {
     async initialize(config, logger) {
@@ -247,7 +250,7 @@ class SequelizeRepository {
         });
     }
 
-    async getUnpublishedEvents(options = {}) {
+    async getUnpublishedEvents() {
         // events without COMPLETE/FAILED status which are older than 30min
         // are also considered finished
         const minutes = 5;
@@ -271,7 +274,7 @@ class SequelizeRepository {
                 },
             },
             order: [['timestamp', 'ASC']],
-            ...options,
+            limit: HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR / 4,
         });
 
         operationIds = operationIds.map((e) => e.operation_id);

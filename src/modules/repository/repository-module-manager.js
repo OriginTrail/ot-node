@@ -151,9 +151,9 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async getUnpublishedEvents(options) {
+    async getUnpublishedEvents() {
         if (this.initialized) {
-            return this.getImplementation().module.getUnpublishedEvents(options);
+            return this.getImplementation().module.getUnpublishedEvents();
         }
     }
 
