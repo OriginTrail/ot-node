@@ -197,6 +197,15 @@ exports.NETWORK_MESSAGE_TYPES = {
 };
 
 /**
+ * @constant {number} MINIMUM_ACK_RESPONSES -
+ * Minimum number of ACK responses for operation to be marked as COMPLETED
+ */
+exports.MINIMUM_ACK_RESPONSES = {
+    PUBLISH: 5,
+    GET: 1,
+};
+
+/**
  * @constant {number} MAX_OPEN_SESSIONS -
  * Max number of open sessions
  */

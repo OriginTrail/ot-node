@@ -6,6 +6,7 @@ const {
     GET_STATUS,
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
+    MINIMUM_ACK_RESPONSES,
 } = require('../constants/constants');
 
 class GetService extends OperationService {
@@ -16,6 +17,7 @@ class GetService extends OperationService {
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
 
         this.operationName = 'get';
+        this.minimumAckResponses = MINIMUM_ACK_RESPONSES.GET;
         this.networkProtocol = NETWORK_PROTOCOLS.GET;
         this.operationRequestStatus = GET_REQUEST_STATUS;
         this.operationStatus = GET_STATUS;
@@ -45,7 +47,7 @@ class GetService extends OperationService {
             `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
         );
 
-        if (completedNumber === 1) {
+        if (completedNumber === this.minimumAckResponses) {
             await this.markOperationAsCompleted(
                 operationId,
                 { assertion: responseData.nquads },
@@ -53,7 +55,7 @@ class GetService extends OperationService {
             );
             this.logResponsesSummary(completedNumber, failedNumber);
         } else if (
-            completedNumber < 1 &&
+            completedNumber < this.minimumAckResponses &&
             (numberOfFoundNodes === failedNumber || failedNumber % numberOfNodesInBatch === 0)
         ) {
             if (leftoverNodes.length === 0) {

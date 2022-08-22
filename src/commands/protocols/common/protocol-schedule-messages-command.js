@@ -13,11 +13,10 @@ class ProtocolScheduleMessagesCommand extends Command {
     async execute(command) {
         const { operationId, keyword, leftoverNodes, numberOfFoundNodes } = command.data;
 
-        const currentBatchNodes = leftoverNodes.slice(0, this.config.minimumReplicationFactor);
+        const batchSize = this.operationService.getMinimumAckResponses() * 2;
+        const currentBatchNodes = leftoverNodes.slice(0, batchSize);
         const currentBatchLeftoverNodes =
-            this.config.minimumReplicationFactor < leftoverNodes.length
-                ? leftoverNodes.slice(this.config.minimumReplicationFactor)
-                : [];
+            batchSize < leftoverNodes.length ? leftoverNodes.slice(batchSize) : [];
 
         await this.operationIdService.updateOperationIdStatus(operationId, this.startEvent);
 

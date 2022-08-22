@@ -1,5 +1,5 @@
 const Command = require('../../command');
-const { OPERATION_ID_STATUS, NETWORK_PROTOCOLS } = require('../../../constants/constants');
+const { OPERATION_ID_STATUS } = require('../../../constants/constants');
 
 class FindNodesCommand extends Command {
     constructor(ctx) {
@@ -30,19 +30,6 @@ class FindNodesCommand extends Command {
         );
 
         this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${keyword}`);
-
-        if (
-            networkProtocol === NETWORK_PROTOCOLS.PUBLISH &&
-            closestNodes.length < this.config.minimumReplicationFactor
-        ) {
-            this.handleError(
-                operationId,
-                `Unable to find enough nodes for ${networkProtocol}. Minimum replication factor: ${this.config.minimumReplicationFactor}`,
-                this.errorType,
-                true,
-            );
-            return Command.empty();
-        }
 
         return this.continueSequence(
             {

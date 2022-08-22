@@ -25,6 +25,10 @@ class OperationService {
         return this.operationStatus;
     }
 
+    getMinimumAckResponses() {
+        return this.minimumAckResponses;
+    }
+
     async getResponsesStatuses(responseStatus, errorMessage, operationId, keyword) {
         const self = this;
         let responses = 0;
