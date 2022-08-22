@@ -60,6 +60,14 @@ exports.NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
 exports.DID_PREFIX = 'did:dkg';
 
 /**
+ * @constant {number} HIGH_TRAFFIC_EVENTS_NUMBER_PER_HOUR - Maximum expected number of events per hour
+ */
+exports.HIGH_TRAFFIC_EVENTS_NUMBER_PER_HOUR =
+    4000 * // 4000 operations per hour
+    10 * // 10 messages per operation
+    10; // 10 events per node
+
+/**
  * @constant {number} DEFAULT_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time
  */
 exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;

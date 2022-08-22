@@ -247,7 +247,7 @@ class SequelizeRepository {
         });
     }
 
-    async getUnpublishedEvents() {
+    async getUnpublishedEvents(options = {}) {
         // events without COMPLETE/FAILED status which are older than 30min
         // are also considered finished
         const minutes = 5;
@@ -270,6 +270,8 @@ class SequelizeRepository {
                     },
                 },
             },
+            order: [['timestamp', 'ASC']],
+            ...options,
         });
 
         operationIds = operationIds.map((e) => e.operation_id);

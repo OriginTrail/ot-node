@@ -1,6 +1,7 @@
 const axios = require('axios');
 const Command = require('../command');
 const pjson = require('../../../package.json');
+const { HIGH_TRAFFIC_EVENTS_NUMBER_PER_HOUR } = require('../../constants/constants');
 
 class SendTelemetryCommand extends Command {
     constructor(ctx) {
@@ -20,7 +21,9 @@ class SendTelemetryCommand extends Command {
             return Command.empty();
         }
         try {
-            const events = await this.telemetryInjectionService.getUnpublishedEvents();
+            const events = await this.telemetryInjectionService.getUnpublishedEvents({
+                limit: HIGH_TRAFFIC_EVENTS_NUMBER_PER_HOUR / 4,
+            });
             if (events && events.length > 0) {
                 const signalingMessage = {
                     nodeData: {
