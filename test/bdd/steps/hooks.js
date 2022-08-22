@@ -56,7 +56,7 @@ After(function afterMethod(testCase, done) {
     const con = mysql.createConnection({
         host: 'localhost',
         user: 'root',
-        password: '',
+        password: process.env.REPOSITORY_PASSWORD,
     });
     databaseNames.forEach((element) => {
         const sql = `DROP DATABASE IF EXISTS \`${element}\`;`;
