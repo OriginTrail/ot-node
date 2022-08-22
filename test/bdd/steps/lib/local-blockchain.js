@@ -222,10 +222,7 @@ class LocalBlockchain {
                 deployingWallet.address,
             );
 
-        await this.contracts.hub.instance.methods
-            .setContractAddress('Owner', deployingWallet.address)
-            .send({ from: deployingWallet.address, gas: 3000000 })
-            .on('error', this.logger.error('Unable to set contract address in HUB'));
+        await this.setContractAddress('Owner', deployingWallet.address, deployingWallet);
 
         // this.logger.log('Deploying uaiRegistryContract');
         [this.contracts.uaiRegistry.deploymentReceipt, this.contracts.uaiRegistry.instance] =
@@ -236,10 +233,12 @@ class LocalBlockchain {
                 [this.contracts.hub.instance._address],
                 deployingWallet.address,
             );
-        await this.contracts.hub.instance.methods
-            .setContractAddress('UAIRegistry', this.contracts.uaiRegistry.instance._address)
-            .send({ from: deployingWallet.address, gas: 3000000 })
-            .on('error', this.logger.error('Unable to set contract address in HUB'));
+
+        await this.setContractAddress(
+            'UAIRegistry',
+            this.contracts.uaiRegistry.instance._address,
+            deployingWallet,
+        );
 
         // this.logger.log('Deploying Assertion Registry Contract');
         [
@@ -253,13 +252,11 @@ class LocalBlockchain {
             deployingWallet.address,
         );
 
-        await this.contracts.hub.instance.methods
-            .setContractAddress(
-                'AssertionRegistry',
-                this.contracts.assertionRegistry.instance._address,
-            )
-            .send({ from: deployingWallet.address, gas: 3000000 })
-            .on('error', this.logger.error('Unable to set contract address in HUB'));
+        await this.setContractAddress(
+            'AssertionRegistry',
+            this.contracts.assertionRegistry.instance._address,
+            deployingWallet,
+        );
 
         // this.logger.log('Deploying Asset Registry Contract');
         [this.contracts.assetRegistry.deploymentReceipt, this.contracts.assetRegistry.instance] =
@@ -271,10 +268,11 @@ class LocalBlockchain {
                 deployingWallet.address,
             );
 
-        await this.contracts.hub.instance.methods
-            .setContractAddress('AssetRegistry', this.contracts.assetRegistry.instance._address)
-            .send({ from: deployingWallet.address, gas: 3000000 })
-            .on('error', this.logger.error('Unable to set contract address in HUB'));
+        await this.setContractAddress(
+            'AssetRegistry',
+            this.contracts.assetRegistry.instance._address,
+            deployingWallet,
+        );
 
         await this.setupRole(
             this.contracts.uaiRegistry,
@@ -290,11 +288,11 @@ class LocalBlockchain {
                 [this.contracts.hub.instance._address],
                 deployingWallet.address,
             );
-
-        await this.contracts.hub.instance.methods
-            .setContractAddress('ProfileStorage', this.contracts.profileStorage.instance._address)
-            .send({ from: deployingWallet.address, gas: 3000000 })
-            .on('error', this.logger.error('Unable to se contract address in HUB'));
+        await this.setContractAddress(
+            'ProfileStorage',
+            this.contracts.profileStorage.instance._address,
+            deployingWallet,
+        );
 
         // await this.contracts.profileStorage.instance.methods.setupRole()
 
@@ -308,15 +306,12 @@ class LocalBlockchain {
                 deployingWallet.address,
             );
 
-        await this.contracts.hub.instance.methods
-            .setContractAddress('Token', this.contracts.erc20Token.instance._address)
-            .send({ from: deployingWallet.address, gas: 3000000 })
-            .on('error', this.logger.error('Unable to se contract address in HUB'));
-
-        await this.contracts.erc20Token.instance.methods
-            .setupRole(deployingWallet.address)
-            .send({ from: deployingWallet.address, gas: 3000000 })
-            .on('error', this.logger.error('Unable to setup role.'));
+        await this.setContractAddress(
+            'Token',
+            this.contracts.erc20Token.instance._address,
+            deployingWallet,
+        );
+        await this.setupRole(this.contracts.erc20Token, deployingWallet.address);
 
         // this.logger.log('Deploying Profile contract');
         [this.contracts.profile.deploymentReceipt, this.contracts.profile.instance] =
@@ -327,11 +322,11 @@ class LocalBlockchain {
                 [this.contracts.hub.instance._address],
                 deployingWallet.address,
             );
-
-        await this.contracts.hub.instance.methods
-            .setContractAddress('Profile', this.contracts.profile.instance._address)
-            .send({ from: deployingWallet.address, gas: 3000000 })
-            .on('error', this.logger.error('Unable to set contract address in HUB'));
+        await this.setContractAddress(
+            'Profile',
+            this.contracts.profile.instance._address,
+            deployingWallet,
+        );
 
         // // Deploy tokens.
         const amountToMint = '50000000000000000000000000'; // 5e25
@@ -339,7 +334,7 @@ class LocalBlockchain {
             this.contracts.erc20Token.instance.methods
                 .mint(this.getWallets()[i].address, amountToMint)
                 .send({ from: deployingWallet.address, gas: 3000000 })
-                .on('error', this.logger.error('Unable to set contract address in HUB'));
+                .on('error', (error) => this.logger.error('Minting error: ', error));
         }
         this.initialized = true;
     }
@@ -369,6 +364,18 @@ class LocalBlockchain {
         });
     }
 
+    async setContractAddress(contractName, contractAddress, sendingWallet) {
+        return this.contracts.hub.instance.methods
+            .setContractAddress(contractName, contractAddress)
+            .send({ from: sendingWallet.address, gas: 3000000 })
+            .on('error', (error) =>
+                this.logger.error(
+                    `Unable to set contract ${contractName} address in HUB. Error: `,
+                    error,
+                ),
+            );
+    }
+
     async getContractAddress(hubContract, contractName) {
         // this.logger.info(`Attempting to get ${contractName} contract address from Hub contract`);
         return hubContract.methods
@@ -381,7 +388,7 @@ class LocalBlockchain {
         contract.instance.methods
             .setupRole(contractAddress)
             .send({ from: this.getWallets()[7].address, gas: 3000000 })
-            .on('error', this.logger.error('Unable to set contract address in HUB'));
+            .on('error', (error) => this.logger.error('Unable to setup role. Error: ', error));
     }
 
     uaiRegistryContractAddress() {
