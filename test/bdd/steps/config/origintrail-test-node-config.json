@@ -38,7 +38,7 @@
         "sequelize-repository": {
           "config": {
             "database": "operationaldbnode0",
-            "password": ""
+            "password": "password"
           }
         }
       }

@@ -68,7 +68,6 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 60000 }, function nodeSetup(nodeCou
         nodeConfiguration.modules.httpClient.implementation['express-http-client'].config.port =
             rpcPort;
         nodeConfiguration.operationalDatabase.databaseName = `operationaldbnode${i}`;
-        nodeConfiguration.graphDatabase.name = nodeName;
         nodeConfiguration.rpcPort = rpcPort;
         nodeConfiguration.appDataPath = `data${i}`;
 

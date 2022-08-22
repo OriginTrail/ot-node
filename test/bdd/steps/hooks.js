@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Before, BeforeAll, After, AfterAll } = require('@cucumber/cucumber');
 const slugify = require('slugify');
 const fs = require('fs');
+const mysql = require('mysql2');
 const { ServerClientConfig, GraphDBServerClient } = require('graphdb').server;
 
 process.env.NODE_ENV = 'test';
@@ -72,19 +73,19 @@ After(function afterMethod(testCase, done) {
         .setKeepAlive(true);
     const server = new GraphDBServerClient(serverConfig);
     const promises = [];
-    /* const con = mysql.createConnection({
-        host: "localhost",
-        user: "root",
-        password: "",
+    const con = mysql.createConnection({
+        host: 'localhost',
+        user: 'root',
+        password: '',
     });
-    databaseNames.forEach((element) => {
+    databaseNames.forEach(() => {
         con.connect(async (err) => {
             if (err) throw err;
-            const sql = `DROP DATABASE ${element}`;
+            const sql = `DROP DATABASE IF EXISTS \`${this.config.database}\`;`;
             // eslint-disable-next-line no-shadow
-             promises.push(con.query(sql));
+            promises.push(con.promise().query(sql));
         });
-    }); */
+    });
     graphRepositoryNames.forEach((element) => {
         server
             .hasRepository(element)
@@ -93,7 +94,7 @@ After(function afterMethod(testCase, done) {
                     promises.push(server.deleteRepository(element));
                 }
             })
-            .catch((err) => console.log(err));
+            .catch((err) => this.logger.error(err));
     });
     /* for (const name in graphRepositoryNames) {
         // promises.push(server.deleteRepository(name));
