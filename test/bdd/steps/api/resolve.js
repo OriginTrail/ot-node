@@ -6,13 +6,13 @@ const sortedStringify = require('json-stable-stringify');
 When(
     /^I call resolve on node (\d+) for last published assertion/,
     { timeout: 120000 },
-    async function resolveCall (node) {
+    async function resolveCall(node) {
         this.logger.log('I call resolve route successfully');
         expect(
             !!this.state.lastPublishData,
             'Last publish data is undefined. Publish is not finalized.',
         ).to.be.equal(true);
-        const assertionIds = [this.state.lastPublishData.result.data.id];
+        const assertionIds = [this.state.lastPublishData.result.assertion.id];
         const result = await this.state.nodes[node - 1].client
             .resolve(assertionIds)
             .catch((error) => {
@@ -28,45 +28,49 @@ When(
     },
 );
 
-Given('I wait for last resolve to finalize', { timeout: 120000 }, async function resolveFinalizeCall () {
-    this.logger.log('I wait for last resolve to finalize');
-    expect(
-        !!this.state.lastResolveData,
-        'Last resolve data is undefined. Resolve is not started.',
-    ).to.be.equal(true);
-    const resolveData = this.state.lastResolveData;
-    let loopForResolveResult = true;
-    let retryCount = 0;
-    const maxRetryCount = 2;
-    while (loopForResolveResult) {
-        this.logger.log(
-            `Getting resolve result for operation id: ${resolveData.operationId} on node: ${resolveData.nodeId}`,
-        );
-        // eslint-disable-next-line no-await-in-loop
-        const resolveResult = await this.state.nodes[resolveData.nodeId].client
-            .getResult(resolveData.operationId, 'resolve')
-            .catch((error) => {
-                assert.fail(`Error while trying to get resolve result assertion. ${error}`);
-            });
-        if (resolveResult) {
-            this.state.lastResolveData.result = resolveResult;
-            loopForResolveResult = false;
-        }
-        if (retryCount === maxRetryCount) {
-            loopForResolveResult = true;
-            assert.fail('Unable to get publish result');
-        } else {
-            retryCount += 1;
+Given(
+    'I wait for last resolve to finalize',
+    { timeout: 120000 },
+    async function resolveFinalizeCall() {
+        this.logger.log('I wait for last resolve to finalize');
+        expect(
+            !!this.state.lastResolveData,
+            'Last resolve data is undefined. Resolve is not started.',
+        ).to.be.equal(true);
+        const resolveData = this.state.lastResolveData;
+        let loopForResolveResult = true;
+        let retryCount = 0;
+        const maxRetryCount = 2;
+        while (loopForResolveResult) {
+            this.logger.log(
+                `Getting resolve result for operation id: ${resolveData.operationId} on node: ${resolveData.nodeId}`,
+            );
             // eslint-disable-next-line no-await-in-loop
-            await setTimeout(5000);
+            const resolveResult = await this.state.nodes[resolveData.nodeId].client
+                .getResult(resolveData.operationId, 'resolve')
+                .catch((error) => {
+                    assert.fail(`Error while trying to get resolve result assertion. ${error}`);
+                });
+            if (resolveResult) {
+                this.state.lastResolveData.result = resolveResult;
+                loopForResolveResult = false;
+            }
+            if (retryCount === maxRetryCount) {
+                loopForResolveResult = true;
+                assert.fail('Unable to get publish result');
+            } else {
+                retryCount += 1;
+                // eslint-disable-next-line no-await-in-loop
+                await setTimeout(5000);
+            }
         }
-    }
-});
+    },
+);
 
 Given(
     /Last resolve finished with status: ([COMPLETED|FAILED]+)$/,
     { timeout: 120000 },
-    async function lastResolveFinishedCall (status) {
+    async function lastResolveFinishedCall(status) {
         this.logger.log(`Last resolve finished with status: ${status}`);
         expect(
             !!this.state.lastResolveData,
@@ -84,7 +88,7 @@ Given(
     },
 );
 
-Given(/Last resolve returned valid result$/, { timeout: 120000 }, async function resolveCall () {
+Given(/Last resolve returned valid result$/, { timeout: 120000 }, async function resolveCall() {
     this.logger.log('Last resolve returned valid result');
     expect(
         !!this.state.lastResolveData,
