@@ -254,11 +254,6 @@ done
 
 header_color $BGREEN "Installing MySQL..."
 
-text_color $YELLOW "For non technical users, please use admin as sql repository password."
-echo ""
-read -p "Enter sql repository password: " password
-echo "REPOSITORY_PASSWORD=$password" > $OTNODE_DIR/.env
-
 install_mysql
 
 header_color $BGREEN "Configuring OriginTrail node..."
