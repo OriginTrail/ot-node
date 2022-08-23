@@ -1,6 +1,12 @@
 exports.SCHEMA_CONTEXT = 'http://schema.org/';
 
 /**
+ * @constant {number} MAX_FILE_SIZE
+ * - Max file size for publish
+ */
+module.exports.MAX_FILE_SIZE = 2621440;
+
+/**
  * @constant {object} PUBLISH_TYPES
  * - Different types of publish
  */
@@ -58,6 +64,17 @@ exports.NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
  * - DID prefix for graph database
  */
 exports.DID_PREFIX = 'did:dkg';
+
+/**
+ * @constant {number} HIGH_TRAFFIC_EVENTS_NUMBER_PER_HOUR - Maximum expected number of events per hour
+ */
+exports.HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 16000;
+
+/**
+ * @constant {number} SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES
+ * - Interval between sending of telemetry events
+ */
+exports.SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES = 15;
 
 /**
  * @constant {number} DEFAULT_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time

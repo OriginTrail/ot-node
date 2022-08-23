@@ -1,6 +1,7 @@
 const axios = require('axios');
 const Command = require('../command');
 const pjson = require('../../../package.json');
+const { SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES } = require('../../constants/constants');
 
 class SendTelemetryCommand extends Command {
     constructor(ctx) {
@@ -69,7 +70,7 @@ class SendTelemetryCommand extends Command {
             name: 'sendTelemetryCommand',
             delay: 0,
             data: {},
-            period: 15 * 60 * 1000,
+            period: SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES * 60 * 1000,
             transactional: false,
         };
         Object.assign(command, map);
