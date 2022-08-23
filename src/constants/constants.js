@@ -26,16 +26,6 @@ exports.MIN_NODE_VERSION = 16;
 exports.INIT_STAKE_AMOUNT = 3000;
 
 /**
- * @constant {object} SERVICE_API_SLOW_DOWN
- * - Express slow down configuration constants
- */
-exports.SERVICE_API_SLOW_DOWN = {
-    TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    DELAY_AFTER_SECONDS: 5,
-    DELAY_MILLS: 3 * 1000,
-};
-
-/**
  * @constant {object} NETWORK_API_RATE_LIMIT
  * - Network (Libp2p) rate limiter configuration constants
  */
@@ -58,12 +48,6 @@ exports.NETWORK_API_SPAM_DETECTION = {
  * - Network (Libp2p) black list time window in minutes
  */
 exports.NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
-
-/**
- * @constant {number} DID_PREFIX
- * - DID prefix for graph database
- */
-exports.DID_PREFIX = 'did:dkg';
 
 /**
  * @constant {number} HIGH_TRAFFIC_EVENTS_NUMBER_PER_HOUR - Maximum expected number of events per hour
@@ -113,30 +97,6 @@ exports.DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 exports.DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
 
 /**
- * @constant {number} TRIPLE_STORE_CONNECT_MAX_RETRIES
- * - Maximum retries for connecting to triple store
- */
-exports.TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
-
-/**
- * @constant {number} TRIPLE_STORE_CONNECT_RETRY_FREQUENCY
- * - Wait interval between retries for connecting to triple store
- */
-exports.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10; // 10 seconds
-
-/**
- * @constant {number} TRIPLE_STORE_QUEUE_LIMIT
- * - Triple store queue limit
- */
-exports.TRIPLE_STORE_QUEUE_LIMIT = 5000;
-
-/**
- * @constant {number} BLOCKCHAIN_QUEUE_LIMIT
- * - Blockchain queue limit
- */
-exports.BLOCKCHAIN_QUEUE_LIMIT = 25000;
-
-/**
  * @constant {number} WEBSOCKET_PROVIDER_OPTIONS
  * - Websocket provider options
  */
@@ -151,41 +111,6 @@ module.exports.WEBSOCKET_PROVIDER_OPTIONS = {
         keepaliveInterval: 30 * 1000, // ms
     },
 };
-
-/**
- * @constant {number} GET_MAX_TIME_MILLIS
- * - Maximum time for get operation
- */
-exports.GET_MAX_TIME_MILLIS = 15 * 1000;
-
-/**
- * @constant {number} STORE_MAX_RETRIES
- * - Maximum number of retries
- */
-exports.STORE_MAX_TRIES = 3;
-
-/**
- * @constant {number} STORE_BUSY_REPEAT_INTERVAL_IN_MILLS
- * - Wait interval between retries for sending store requests
- */
-exports.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS = 4 * 1000;
-
-/**
- * @constant {number} BUSYNESS_LIMITS
- * - Max number of operations in triple store queue that indicate busyness
- */
-exports.BUSYNESS_LIMITS = {
-    HANDLE_STORE: 20,
-    HANDLE_GET: 20,
-    HANDLE_SEARCH_ASSERTIONS: 20,
-    HANDLE_SEARCH_ENTITIES: 15,
-};
-
-/**
- * @constant {number} STORE_MIN_SUCCESS_RATE
- * - Min rate of successful responses from store queries for publish to be maked as COMPLETED
- */
-exports.STORE_MIN_SUCCESS_RATE = 0.8;
 
 /**
  * @constant {object} TRIPLE_STORE_IMPLEMENTATION -
@@ -218,12 +143,6 @@ exports.NETWORK_MESSAGE_TYPES = {
  * Max number of open sessions
  */
 exports.MAX_OPEN_SESSIONS = 10;
-
-/**
- * @constant {number} NETWORK_HANDLER_TIMEOUT -
- * Timeout for all handler methods for network requests
- */
-exports.NETWORK_HANDLER_TIMEOUT = 120e3;
 
 /**
  * @constant {object} ERROR_TYPE -
@@ -263,7 +182,6 @@ exports.OPERATION_ID_STATUS = {
     PENDING: 'PENDING',
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
-    SEARCHING_FOR_NODES: 'SEARCHING_FOR_NODES',
     FIND_NODES_START: 'FIND_NODES_START',
     FIND_NODES_END: 'FIND_NODES_END',
     PUBLISH: {
@@ -271,21 +189,11 @@ exports.OPERATION_ID_STATUS = {
         VALIDATING_ASSERTION_END: 'VALIDATING_ASSERTION_END',
         VALIDATING_ASSERTION_REMOTE_START: 'VALIDATING_ASSERTION_REMOTE_START',
         VALIDATING_ASSERTION_REMOTE_END: 'VALIDATING_ASSERTION_REMOTE_END',
-        VALIDATING_ASSERTION_STAKE_START: 'VALIDATING_ASSERTION_STAKE_START',
-        VALIDATING_ASSERTION_STAKE_END: 'VALIDATING_ASSERTION_STAKE_END',
         INSERTING_ASSERTION: 'INSERTING_ASSERTION',
         PUBLISHING_ASSERTION: 'PUBLISHING_ASSERTION',
         PUBLISH_START: 'PUBLISH_START',
         PUBLISH_INIT_START: 'PUBLISH_INIT_START',
         PUBLISH_INIT_END: 'PUBLISH_INIT_END',
-        PUBLISH_PREP_ARGS_START: '',
-        PUBLISH_PREP_ARGS_END: '',
-        PUBLISH_CANONIZATION_START: '',
-        PUBLISH_CANONIZATION_END: '',
-        PUBLISH_GENERATE_METADATA_START: 'PUBLISH_GENERATE_METADATA_START',
-        PUBLISH_GENERATE_METADATA_END: 'PUBLISH_GENERATE_METADATA_END',
-        PUBLISH_BLOCKCHAIN_START: 'PUBLISH_BLOCKCHAIN_START',
-        PUBLISH_BLOCKCHAIN_END: 'PUBLISH_BLOCKCHAIN_END',
         PUBLISH_LOCAL_STORE_START: 'PUBLISH_LOCAL_STORE_START',
         PUBLISH_LOCAL_STORE_END: 'PUBLISH_LOCAL_STORE_END',
         PUBLISH_REPLICATE_START: 'PUBLISH_REPLICATE_START',
@@ -295,7 +203,6 @@ exports.OPERATION_ID_STATUS = {
     GET: {
         ASSERTION_EXISTS_LOCAL_START: 'ASSERTION_EXISTS_LOCAL_START',
         ASSERTION_EXISTS_LOCAL_END: 'ASSERTION_EXISTS_LOCAL_END',
-        GET_ASSERTION: 'GET_ASSERTION',
         GET_START: 'GET_START',
         GET_INIT_START: 'GET_INIT_START',
         GET_INIT_END: 'GET_INIT_END',
@@ -305,12 +212,6 @@ exports.OPERATION_ID_STATUS = {
         GET_REMOTE_END: 'GET_REMOTE_END',
         GET_FETCH_FROM_NODES_START: 'GET_FETCH_FROM_NODES_START',
         GET_FETCH_FROM_NODES_END: 'GET_FETCH_FROM_NODES_START',
-        GET_CREATE_ASSERTION_START: '',
-        GET_CREATE_ASSERTION_END: '',
-        GET_VERIFY_ASSERTION_START: '',
-        GET_VERIFY_ASSERTION_END: '',
-        GET_SAVE_ASSERTION_START: '',
-        GET_SAVE_ASSERTION_END: '',
         GET_END: 'GET_END',
     },
     SEARCH_ASSERTIONS: {
@@ -335,9 +236,6 @@ exports.NETWORK_PROTOCOLS = {
     STORE: '/store/1.0.0',
     GET: '/get/1.0.0',
     SEARCH: '/search/1.0.0',
-    SEARCH_RESULT: '/search/1.0.0/result',
-    SEARCH_ASSERTIONS: '/search/assertions/1.0.0',
-    SEARCH_ASSERTIONS_RESULT: '/search/assertions/1.0.0/result',
 };
 
 /**
