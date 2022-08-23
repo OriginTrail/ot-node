@@ -120,6 +120,22 @@ exports.TRIPLE_STORE_QUEUE_LIMIT = 5000;
 exports.BLOCKCHAIN_QUEUE_LIMIT = 25000;
 
 /**
+ * @constant {number} WEBSOCKET_PROVIDER_OPTIONS
+ * - Websocket provider options
+ */
+module.exports.WEBSOCKET_PROVIDER_OPTIONS = {
+    reconnect: {
+        auto: true,
+        delay: 1000, // ms
+        maxAttempts: 3,
+    },
+    clientConfig: {
+        keepalive: true,
+        keepaliveInterval: 30 * 1000, // ms
+    },
+};
+
+/**
  * @constant {number} GET_MAX_TIME_MILLIS
  * - Maximum time for get operation
  */

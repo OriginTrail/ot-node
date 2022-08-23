@@ -6,6 +6,7 @@ env:
   NODE_ENV: test
   ARTIFACTS_DIR: artifacts
   CUCUMBER_ARTIFACTS_DIR: artifacts/cucumber
+  REPOSITORY_PASSWORD: password
 jobs:
 
   test-release:

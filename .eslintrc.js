@@ -19,12 +19,12 @@ module.exports = {
         'no-continue': 1,
         'no-underscore-dangle': 0,
     },
-    "overrides": [
+    overrides: [
         {
-            "files": ["*.test.js", "*.spec.js"],
-            "rules": {
-                "no-unused-expressions": "off"
-            }
-        }
-    ]
+            files: ['*.test.js', '*.spec.js'],
+            rules: {
+                'no-unused-expressions': 'off',
+            },
+        },
+    ],
 };

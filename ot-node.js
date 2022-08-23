@@ -38,8 +38,8 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
-        await this.createProfiles();
         await this.saveNetworkModulePeerIdAndPrivKey();
+        await this.createProfiles();
 
         await this.initializeControllers();
         await this.initializeCommandExecutor();
@@ -71,6 +71,14 @@ class OTNode {
         if (!this.config.configFilename) {
             // set default user configuration filename
             this.config.configFilename = '.origintrail_noderc';
+        }
+        const fileService = new FileService({ config: this.config });
+        const updateFilePath = fileService.getUpdateFilePath();
+        if (fs.existsSync(updateFilePath)) {
+            this.config.otNodeUpdated = true;
+            fileService.removeFile(updateFilePath).catch((error) => {
+                this.logger.warn(`Unable to remove update file. Error: ${error}`);
+            });
         }
     }
 
@@ -226,20 +234,30 @@ class OTNode {
     async savePrivateKeyAndPeerIdInUserConfigurationFile(privateKey) {
         const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
         const configFile = JSON.parse(await fs.promises.readFile(configurationFilePath));
-        if (
-            configFile.modules.network &&
-            configFile.modules.network.implementation &&
-            configFile.modules.network.implementation['libp2p-service'] &&
-            configFile.modules.network.implementation['libp2p-service'].config
-        ) {
-            if (!configFile.modules.network.implementation['libp2p-service'].config.privateKey) {
-                configFile.modules.network.implementation['libp2p-service'].config.privateKey =
-                    privateKey;
-                await fs.promises.writeFile(
-                    configurationFilePath,
-                    JSON.stringify(configFile, null, 2),
-                );
-            }
+
+        if (!configFile.modules.network) {
+            configFile.modules.network = {
+                implementation: {
+                    'libp2p-service': {
+                        config: {},
+                    },
+                },
+            };
+        } else if (!configFile.modules.network.implementation) {
+            configFile.modules.network.implementation = {
+                'libp2p-service': {
+                    config: {},
+                },
+            };
+        } else if (!configFile.modules.network.implementation['libp2p-service']) {
+            configFile.modules.network.implementation['libp2p-service'] = {
+                config: {},
+            };
+        }
+        if (!configFile.modules.network.implementation['libp2p-service'].config.privateKey) {
+            configFile.modules.network.implementation['libp2p-service'].config.privateKey =
+                privateKey;
+            await fs.promises.writeFile(configurationFilePath, JSON.stringify(configFile, null, 2));
         }
     }
 

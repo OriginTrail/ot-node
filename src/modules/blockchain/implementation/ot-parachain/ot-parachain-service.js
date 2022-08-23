@@ -2,12 +2,14 @@ const { ApiPromise, WsProvider } = require('@polkadot/api');
 const { Keyring } = require('@polkadot/keyring');
 const Web3Service = require('../web3-service');
 
+const NATIVE_TOKEN_DECIMALS = 12;
+
 class OtParachainService extends Web3Service {
     constructor(ctx) {
         super(ctx);
 
         this.baseTokenTicker = 'OTP';
-        this.tracTicker = 'pTRAC';
+        this.tracTicker = 'TRAC';
     }
 
     async initialize(config, logger) {
@@ -173,6 +175,11 @@ class OtParachainService extends Web3Service {
             }`,
         );
         await this.initializeParachainProvider();
+    }
+
+    async getNativeTokenBalance() {
+        const nativeBalance = await this.web3.eth.getBalance(this.getPublicKey());
+        return nativeBalance / 10 ** NATIVE_TOKEN_DECIMALS;
     }
 }
 
