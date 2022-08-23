@@ -26,7 +26,7 @@ class OperationService {
     }
 
     getMinimumAckResponses() {
-        return this.minimumAckResponses;
+        return this.config.minimumAckResponses[this.operationName];
     }
 
     async getResponsesStatuses(responseStatus, errorMessage, operationId, keyword) {
