@@ -258,7 +258,10 @@ class SequelizeRepository {
 
         let operationIds = await this.models.event.findAll({
             raw: true,
-            attributes: [Sequelize.fn('DISTINCT', Sequelize.col('operation_id'))],
+            attributes: [
+                Sequelize.fn('DISTINCT', Sequelize.col('operation_id')),
+                Sequelize.col('timestamp'),
+            ],
             where: {
                 [Sequelize.Op.or]: {
                     name: {
@@ -276,7 +279,7 @@ class SequelizeRepository {
             },
             order: [['timestamp', 'ASC']],
             limit:
-                (HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR / 60) *
+                Math.floor(HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR / 60) *
                 SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES,
         });
 
