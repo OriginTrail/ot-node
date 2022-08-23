@@ -140,9 +140,11 @@
                 }
             }
         },
+        "minimumAckResponses": {
+            "publish": 5,
+            "get": 1
+        },
         "commandExecutorVerboseLoggingEnabled": false,
-        "minimumReplicationFactor": 5,
-        "publishFindNodesCount": 20,
         "appDataPath": "data",
         "logLevel": "info",
         "telemetry": {
@@ -246,9 +248,11 @@
                 }
             }
         },
+        "minimumAckResponses": {
+            "publish": 2,
+            "get": 1
+        },
         "commandExecutorVerboseLoggingEnabled": false,
-        "minimumReplicationFactor": 5,
-        "publishFindNodesCount": 20,
         "appDataPath": "data",
         "logLevel": "trace",
         "telemetry": {
@@ -301,7 +305,7 @@
                     "express-http-client": {
                         "package": "./http-client/implementation/express-http-client",
                         "config": {
-                            "useSsl": true,
+                            "useSsl": false,
                             "port": 8900,
                             "sslKeyPath": "/root/certs/privkey.pem",
                             "sslCertificatePath": "/root/certs/fullchain.pem",
@@ -400,9 +404,11 @@
                 }
             }
         },
+        "minimumAckResponses": {
+            "publish": 5,
+            "get": 1
+        },
         "commandExecutorVerboseLoggingEnabled": false,
-        "minimumReplicationFactor": 5,
-        "publishFindNodesCount": 20,
         "appDataPath": "data",
         "logLevel": "trace",
         "telemetry": {
@@ -437,7 +443,7 @@
                     "express-http-client": {
                         "package": "./http-client/implementation/express-http-client",
                         "config": {
-                            "useSsl": true,
+                            "useSsl": false,
                             "port": 8900,
                             "sslKeyPath": "/root/certs/privkey.pem",
                             "sslCertificatePath": "/root/certs/fullchain.pem",
@@ -531,8 +537,10 @@
                 }
             }
         },
-        "minimumReplicationFactor": 5,
-        "publishFindNodesCount": 20,
+        "minimumAckResponses": {
+            "publish": 5,
+            "get": 1
+        },
         "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
