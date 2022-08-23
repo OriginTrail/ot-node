@@ -123,9 +123,7 @@ class PublishService extends OperationService {
             assertion: { '@id': assertionGraphName },
             latestAssertion: { '@id': assertionGraphName },
         });
-
         this.logger.info(`Inserting assertion with ual: ${ual} in database.`);
-
         await Promise.all([
             this.tripleStoreModuleManager.updateAssetsGraph(ual, assetNquads.join('\n')),
             this.tripleStoreModuleManager.insertAssertion(assertionId, assertion.join('\n')),

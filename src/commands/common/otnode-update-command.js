@@ -1,5 +1,4 @@
 const semver = require('semver');
-const fs = require('fs-extra');
 const Command = require('../command');
 
 class OtnodeUpdateCommand extends Command {
@@ -39,8 +38,12 @@ class OtnodeUpdateCommand extends Command {
                 const success = await this.autoUpdaterModuleManager.update();
 
                 if (success) {
-                    const updateFilePath = this.fileService.getUpdateFilePath();
-                    await fs.promises.writeFile(updateFilePath, 'UPDATED');
+                    const updateFolderPath = this.fileService.getDataFolderPath();
+                    await this.fileService.writeContentsToFile(
+                        updateFolderPath,
+                        'UPDATED',
+                        'UPDATED',
+                    );
                     this.logger.info('Node will now restart!');
                     process.exit(1);
                 }
