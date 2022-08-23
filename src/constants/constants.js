@@ -229,6 +229,16 @@ exports.OPERATION_ID_STATUS = {
 };
 
 /**
+ * @constant {object} OPERATIONS -
+ *  Operations
+ */
+exports.OPERATIONS = {
+    PUBLISH: 'publish',
+    GET: 'get',
+    SEARCH: 'search',
+};
+
+/**
  * @constant {object} NETWORK_PROTOCOLS -
  *  Network protocols
  */

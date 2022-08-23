@@ -8,6 +8,7 @@ const {
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     SCHEMA_CONTEXT,
+    OPERATIONS,
 } = require('../constants/constants');
 
 class PublishService extends OperationService {
@@ -19,7 +20,7 @@ class PublishService extends OperationService {
         this.validationModuleManager = ctx.validationModuleManager;
         this.dataService = ctx.dataService;
 
-        this.operationName = 'publish';
+        this.operationName = OPERATIONS.PUBLISH;
         this.networkProtocol = NETWORK_PROTOCOLS.STORE;
         this.operationRequestStatus = PUBLISH_REQUEST_STATUS;
         this.operationStatus = PUBLISH_STATUS;
@@ -46,13 +47,17 @@ class PublishService extends OperationService {
         const { completedNumber, failedNumber } = keywordsStatuses[keyword];
         const numberOfResponses = completedNumber + failedNumber;
         this.logger.debug(
-            `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${this.config.minimumReplicationFactor}`,
+            `Processing ${
+                this.networkProtocol
+            } response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${
+                leftoverNodes.length
+            }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${this.getMinimumAckResponses()}`,
         );
 
-        if (completedNumber === this.config.minimumReplicationFactor) {
+        if (completedNumber === this.getMinimumAckResponses()) {
             let allCompleted = true;
             for (const key in keywordsStatuses) {
-                if (keywordsStatuses[key].completedNumber < this.config.minimumReplicationFactor) {
+                if (keywordsStatuses[key].completedNumber < this.getMinimumAckResponses()) {
                     allCompleted = false;
                     break;
                 }
@@ -67,7 +72,7 @@ class PublishService extends OperationService {
                 );
             }
         } else if (
-            completedNumber < this.config.minimumReplicationFactor &&
+            completedNumber < this.getMinimumAckResponses() &&
             (numberOfFoundNodes === numberOfResponses ||
                 numberOfResponses % numberOfNodesInBatch === 0)
         ) {
