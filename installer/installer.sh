@@ -105,15 +105,82 @@ install_blazegraph() {
 }
 
 install_mysql() {
-    ! mysql -u root -e "DROP DATABASE IF EXISTS operationaldb;"
-    ! mysql -p$password -u root -e "DROP DATABASE IF EXISTS operationaldb;"
-    mysql -u root -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;"
-    mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$password';"
+    if [ -d "/var/lib/mysql/operationaldb/" ]; then
+    #check if operationaldb already exists
+        text_color $YELLOW "Old sql database detected. Please enter your sql password to overwrite it."
+        for x in {1..5}; do
+            read -p "Enter your sql repository password (leave blank if none): " password
+            echo -n "Deleting old sql database: "
+            OUTPUT=$(MYSQL_PWD=$password mysql -u root -e "DROP DATABASE IF EXISTS operationaldb;" 2>&1)     
+            if [[ $? -ne 0 ]]; then
+                text_color $RED "FAILED"
+                echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
+                text_color $YELLOW "Wrong password entered. Try again ($x/5)"
+            else
+                text_color $GREEN "OK"
+                if [ -z "$password" ]; then
+                    read -p "Enter a new sql repository password if you wish (leave blank if none): " password
+                    if [ -n "$password" ]; then
+                        mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$password';"
+                    fi
+                fi
+                break
+            fi
+            if [ $x == 5 ]; then
+                text_color $RED "FAILED. If you forgot your sql password, you must reset it before attempting this installer again."
+                exit 1
+            fi
+        done
+    else
+        OUTPUT=$(mysql -u root -e "status;" 2>&1)
+        #check if sql is password protected
+        if [[ $? -ne 0 ]]; then
+            for y in {1..5}; do
+                read -p "Enter your sql repository password: " password
+                echo -n "Password check: "
+                OUTPUT=$(MYSQL_PWD=$password mysql -u root -e "status;" 2>&1)
+                #check whether entered password matches current sql password
+                if [[ $? -ne 0 ]]; then
+                    text_color $YELLOW "ERROR - The sql password provided does not match your current sql password. Please try again ($y/5)"
+                else
+                    text_color $GREEN "OK"
+                    break
+                fi
+                if [ $y == 5 ]; then
+                    text_color $RED "FAILED. If you forgot your sql password, you must reset it before attempting this installer again."
+                    exit 1
+                fi
+            done
+        else
+            text_color $YELLOW "No sql repository password detected."
+            read -p "Enter a new sql repository password (leave blank if none): " password
+            if [ -n "$password" ]; then
+            #if password isn't blank
+                echo -n "Configuring new sql password: "
+                OUTPUT=$(mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$password';" 2>&1)
+                if [[ $? -ne 0 ]]; then
+                    text_color $RED "FAILED"
+                    echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
+                    exit 1
+                else
+                    text_color $GREEN "OK"
+                fi
+            fi
+        fi
+    fi
 
-    sed -i 's|max_binlog_size|#max_binlog_size|' /etc/mysql/mysql.conf.d/mysqld.cnf
-
+    echo "REPOSITORY_PASSWORD=$password" > $OTNODE_DIR/.env
+    echo -n "Creating new sql database: "
+    OUTPUT=$(MYSQL_PWD=$password mysql -u root -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;" 2>&1)
+    if [[ $? -ne 0 ]]; then
+        text_color $RED "FAILED"
+        echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
+        exit 1
+    else
+        text_color $GREEN "OK"
+    fi
+    perform_step sed -i 's|max_binlog_size|#max_binlog_size|' /etc/mysql/mysql.conf.d/mysqld.cnf "Setting max log size"
     echo "disable_log_bin" >> /etc/mysql/mysql.conf.d/mysqld.cnf
-
     systemctl restart mysql
 }
 
@@ -192,7 +259,7 @@ echo ""
 read -p "Enter sql repository password: " password
 echo "REPOSITORY_PASSWORD=$password" > $OTNODE_DIR/.env
 
-perform_step install_mysql "Configuring MySQL"
+install_mysql
 
 header_color $BGREEN "Configuring OriginTrail node..."
 
