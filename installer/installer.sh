@@ -198,6 +198,9 @@ install_mysql() {
         text_color $GREEN "OK"
     fi
     perform_step sed -i 's|max_binlog_size|#max_binlog_size|' /etc/mysql/mysql.conf.d/mysqld.cnf "Setting max log size"
+    perform_step sed -i '/disable_log_bin/a wait_timeout = 31536000' /etc/mysql/mysql.conf.d/mysqld.cnf "Setting wait timeout"
+    perform_step sed -i 'sed -i '/disable_log_bin/a interactive_timeout = 31536000' /etc/mysql/mysql.conf.d/mysqld.cnf "Setting interactive timeout"
+
     echo "disable_log_bin" >> /etc/mysql/mysql.conf.d/mysqld.cnf
     systemctl restart mysql
 }
