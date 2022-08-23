@@ -7,6 +7,7 @@ const requestValidationMiddleware = require('./middleware/request-validation-mid
 const rateLimiterMiddleware = require('./middleware/rate-limiter-middleware');
 const authenticationMiddleware = require('./middleware/authentication-middleware');
 const authorizationMiddleware = require('./middleware/authorization-middleware');
+const { MAX_FILE_SIZE } = require('../../../constants/constants');
 
 class ExpressHttpClient {
     async initialize(config, logger) {
@@ -71,7 +72,7 @@ class ExpressHttpClient {
         );
 
         this.app.use(cors());
-        this.app.use(express.json());
+        this.app.use(express.json({ limit: `${MAX_FILE_SIZE / (1024 * 1024)}mb` }));
         this.app.use((req, res, next) => {
             this.logger.api(`${req.method}: ${req.url} request received`);
             return next();
