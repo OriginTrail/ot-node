@@ -62,7 +62,7 @@ exports.DID_PREFIX = 'did:dkg';
 /**
  * @constant {number} HIGH_TRAFFIC_EVENTS_NUMBER_PER_HOUR - Maximum expected number of events per hour
  */
-exports.HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 4000;
+exports.HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 16000;
 
 /**
  * @constant {number} SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES
