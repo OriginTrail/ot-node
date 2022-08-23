@@ -119,10 +119,23 @@ install_mysql() {
             else
                 text_color $GREEN "OK"
                 if [ -z "$password" ]; then
-                    read -p "Enter a new sql repository password if you wish (leave blank if none): " password
-                    if [ -n "$password" ]; then
-                        mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$password';"
-                    fi
+                    for z in {1..2}; do
+                        read -p "Enter a new sql repository password if you wish (do not leave blank): " password
+                        if [ -n "$password" ]; then
+                            echo -n "Configuring new sql password: "
+                            OUTPUT=$(mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$password';" 2>&1)
+                            if [[ $? -ne 0 ]]; then
+                                text_color $RED "FAILED"
+                                echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
+                                exit 1
+                            else
+                                text_color $GREEN "OK"
+                                break
+                            fi
+                        else
+                            text_color $YELLOW "You must enter a sql repository password. Please try again." 
+                        fi
+                    done
                 fi
                 break
             fi
