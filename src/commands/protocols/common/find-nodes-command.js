@@ -12,7 +12,8 @@ class FindNodesCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { keyword, operationId, networkProtocol, errorType } = command.data;
+        const { keyword, operationId, minimumAckResponses, networkProtocol, errorType } =
+            command.data;
 
         this.errorType = errorType;
         this.logger.debug(`Searching for closest node(s) for keyword ${keyword}`);
@@ -31,9 +32,21 @@ class FindNodesCommand extends Command {
 
         this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${keyword}`);
 
+        const batchSize = 2 * minimumAckResponses;
+        if (closestNodes.length < batchSize) {
+            this.handleError(
+                operationId,
+                `Unable to find enough nodes for ${networkProtocol}. Minimum number of nodes required: ${batchSize}`,
+                this.errorType,
+                true,
+            );
+            return Command.empty();
+        }
+
         return this.continueSequence(
             {
                 ...command.data,
+                batchSize,
                 leftoverNodes: closestNodes,
                 numberOfFoundNodes: closestNodes.length,
             },

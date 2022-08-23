@@ -249,7 +249,7 @@
             }
         },
         "minimumAckResponses": {
-            "publish": 5,
+            "publish": 4,
             "get": 1
         },
         "commandExecutorVerboseLoggingEnabled": false,

@@ -11,9 +11,8 @@ class ProtocolScheduleMessagesCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, keyword, leftoverNodes, numberOfFoundNodes } = command.data;
+        const { operationId, keyword, leftoverNodes, numberOfFoundNodes, batchSize } = command.data;
 
-        const batchSize = this.operationService.getMinimumAckResponses() * 2;
         const currentBatchNodes = leftoverNodes.slice(0, batchSize);
         const currentBatchLeftoverNodes =
             batchSize < leftoverNodes.length ? leftoverNodes.slice(batchSize) : [];

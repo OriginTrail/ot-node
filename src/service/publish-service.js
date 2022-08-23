@@ -8,6 +8,7 @@ const {
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     SCHEMA_CONTEXT,
+    OPERATIONS,
 } = require('../constants/constants');
 
 class PublishService extends OperationService {
@@ -19,7 +20,7 @@ class PublishService extends OperationService {
         this.validationModuleManager = ctx.validationModuleManager;
         this.dataService = ctx.dataService;
 
-        this.operationName = 'publish';
+        this.operationName = OPERATIONS.PUBLISH;
         this.networkProtocol = NETWORK_PROTOCOLS.STORE;
         this.operationRequestStatus = PUBLISH_REQUEST_STATUS;
         this.operationStatus = PUBLISH_STATUS;

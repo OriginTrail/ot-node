@@ -6,6 +6,7 @@ const {
     GET_STATUS,
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
+    OPERATIONS,
 } = require('../constants/constants');
 
 class GetService extends OperationService {
@@ -15,7 +16,7 @@ class GetService extends OperationService {
         this.dataService = ctx.dataService;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
 
-        this.operationName = 'get';
+        this.operationName = OPERATIONS.GET;
         this.networkProtocol = NETWORK_PROTOCOLS.GET;
         this.operationRequestStatus = GET_REQUEST_STATUS;
         this.operationStatus = GET_STATUS;
