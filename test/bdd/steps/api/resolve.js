@@ -12,18 +12,18 @@ When(
             !!this.state.lastPublishData,
             'Last publish data is undefined. Publish is not finalized.',
         ).to.be.equal(true);
-        const assertionIds = [this.state.lastPublishData.result.assertion.id];
+        // const assertionIds = [this.state.lastPublishData.result.assertion.id];
         const result = await this.state.nodes[node - 1].client
-            .resolve(assertionIds)
+            .getResult(this.state.lastPublishData.UAL)
             .catch((error) => {
                 assert.fail(`Error while trying to resolve assertion. ${error}`);
             });
-        const operationId = result.data.operation_id;
+        const { operationId } = result.operation;
 
         this.state.lastResolveData = {
             nodeId: node - 1,
             operationId,
-            assertionIds,
+            result,
         };
     },
 );
@@ -82,9 +82,10 @@ Given(
         ).to.be.equal(true);
 
         const resolveData = this.state.lastResolveData;
-        expect(resolveData.result.status, 'Publish result status validation failed').to.be.equal(
-            status,
-        );
+        expect(
+            resolveData.result.operation.status,
+            'Publish result status validation failed',
+        ).to.be.equal(status);
     },
 );
 

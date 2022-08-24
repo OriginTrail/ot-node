@@ -94,5 +94,9 @@
   },
   "rpcPort": 8901,
   "minimumReplicationFactor": 4,
-  "appDataPath": "data0"
+  "appDataPath": "data0",
+  "minimumAckResponses": {
+    "publish": 2,
+    "get": 1
+  }
 }

@@ -3,20 +3,21 @@ Feature: Publish errors test
     Given the blockchain is set up
     And 1 bootstrap is running
 
-##  Scenario: Node is not able to start publish on the network with valid assertion
-##    Given I setup 4 nodes
-##    When I call publish on node 1 with validAssertion
-##    And I wait for last publish to finalize
-##    And Last publish finished with status: PUBLISH_START_ERROR
+#  Scenario: Node is not able to start publish on the network with valid assertion
+#    Given I setup publish node 0 with invalid configuration
+#    Given I setup 3 nodes
+#    When I call publish on node 1 with validAssertion
+#    And I wait for last publish to finalize
+#    And Last publish finished with status: PublishStartError
+
 ##
-#
   Scenario: Node is not able to validate assertion on the network
     Given I setup 4 nodes
     When I call publish on ot-node 1 directly with invalidPublishRequestBody
     And I wait for 15 seconds and check operationId status
     And Last publish finished with status: PublishValidateAssertionError
-
-##  Scenario: Node is not able to store publish result in the local database
+#
+###  Scenario: Node is not able to store publish result in the local database
 ##    Given I setup 4 nodes
 ##    When I call publish on node 1 with validAssertion
 ##    And I wait for last publish to finalize

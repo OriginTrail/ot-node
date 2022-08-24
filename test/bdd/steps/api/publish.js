@@ -60,9 +60,6 @@ When(
             nodeId: node - 1,
             operationId,
         };
-        // await setTimeout(15000);
-        // const status = await httpApiHelper.getOperationResult(`http://localhost:${this.state.nodes[node - 1].configuration.rpcPort}`, operationId);
-        // console.log(JSON.stringify(status.data,null,2));
     },
 );
 
@@ -103,7 +100,7 @@ Given('I wait for last publish to finalize', { timeout: 60000 }, async () => {
 });
 
 Given(
-    /Last publish finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError]+)$/,
+    /Last publish finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError,PUblishStartError]+)$/,
     { timeout: 120000 },
     async function lastPublishFinished(status) {
         this.logger.log(`Last publish finished with status: ${status}`);
