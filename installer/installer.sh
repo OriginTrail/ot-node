@@ -137,7 +137,7 @@ install_sql() {
                         read -p "Enter a new sql repository password if you wish (do not leave blank): " password
                         if [ -n "$password" ]; then
                             echo -n "Configuring new sql password: "
-                            OUTPUT=$($sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$password';" 2>&1)
+                            OUTPUT=$($sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$password';" 2>&1)
                             if [[ $? -ne 0 ]]; then
                                 text_color $RED "FAILED"
                                 echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
@@ -185,7 +185,7 @@ install_sql() {
                 if [ -n "$password" ]; then
                 #if password isn't blank
                     echo -n "Configuring new sql password: "
-                    OUTPUT=$($sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$password';" 2>&1)
+                    OUTPUT=$($sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$password';" 2>&1)
                     if [[ $? -ne 0 ]]; then
                         text_color $RED "FAILED"
                         echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
