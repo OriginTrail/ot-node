@@ -55,9 +55,6 @@
                 },
                 "otp": {
                     "config": {
-                        "rpcEndpoints": [
-                            "wss://parachain-tempnet-01.origin-trail.network"
-                        ],
                         "evmOperationalWalletPublicKey": "...",
                         "evmOperationalWalletPrivateKey": "...",
                         "evmManagementWalletPublicKey": "..."

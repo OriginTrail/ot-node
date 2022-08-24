@@ -118,9 +118,8 @@
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
                         "config": {
                             "networkId": "otp::testnet",
-                            "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
-                            "rpcEndpoints": ["wss://parachain-tempnet-01.origin-trail.network"],
-                            "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                            "hubContractAddress": "0x256736AEb3f19AC6738E9F4D10C9B61da71CEB9F",
+                            "rpcEndpoints": ["wss://lofar.origin-trail.network"]
                         }
                     },
                     "polygon": {
