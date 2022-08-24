@@ -1,11 +1,17 @@
 /* eslint-disable max-len */
-const Ganache = require('ganache');
+const Ganache = require('ganache-core');
 const Web3 = require('web3');
-const fs = require('fs');
-const path = require('path');
 const Wallet = require('ethereumjs-wallet').default;
 
-const tokenContractAddress = '0x470561DB00b4A21A35bD285c3e17e542DCa8B52c';
+const hubSource = require('dkg-evm-module/build/contracts/Hub.json');
+const assertionRegistrySource = require('dkg-evm-module/build/contracts/AssertionRegistry.json');
+const uaiRegistrySource = require('dkg-evm-module/build/contracts/UAIRegistry.json');
+const assetRegistrySource = require('dkg-evm-module/build/contracts/AssetRegistry.json');
+const erc20TokenSource = require('dkg-evm-module/build/contracts/ERC20Token.json');
+const profileStorageSource = require('dkg-evm-module/build/contracts/ProfileStorage.json');
+const profileSource = require('dkg-evm-module/build/contracts/Profile.json');
+
+// const contractNames = ['hub','uaiRegistry','assertionRegistry','assetRegistry','erc20Token','profileStorage','profile'];
 
 const accountPrivateKeys = [
     '3cf97be6177acdd12796b387f58f84f177d0fe20d8558004e8db9a41cf90392a',
@@ -66,7 +72,9 @@ const accountPrivateKeys = [
 ];
 
 const wallets = accountPrivateKeys.map((privateKey) => ({
-    address: `0x${Wallet.fromPrivateKey(Buffer.from(privateKey, 'hex')).getAddress().toString('hex')}`,
+    address: `0x${Wallet.fromPrivateKey(Buffer.from(privateKey, 'hex'))
+        .getAddress()
+        .toString('hex')}`,
     privateKey,
 }));
 
@@ -101,11 +109,10 @@ class LocalBlockchain {
         this.server = Ganache.server({
             gasLimit: 7000000,
             time: new Date(),
-            accounts:
-                accountPrivateKeys.map((account) => ({
-                    secretKey: `0x${account}`,
-                    balance: `0x${Web3.utils.toWei('100', 'ether').toString('hex')}`,
-                })),
+            accounts: accountPrivateKeys.map((account) => ({
+                secretKey: `0x${account}`,
+                balance: `0x${Web3.utils.toWei('100', 'ether').toString('hex')}`,
+            })),
         });
         this.initialized = false;
     }
@@ -117,64 +124,204 @@ class LocalBlockchain {
                     reject(err);
                     return;
                 }
-                this.logger.info(`Blockchain is up at http://localhost:${this.port}/`);
 
-                this.web3 = new Web3(new Web3.providers.HttpProvider(`http://localhost:${this.port}`));
+                this.logger.info(`Blockchain is up at http://localhost:${this.port}/`);
+                this.web3 = new Web3(
+                    new Web3.providers.HttpProvider(`http://localhost:${this.port}`),
+                );
                 this.fetchContracts();
                 await this.deployContracts();
+                // this.logger.info('Contracts have been deployed!');
+                this.logger.info(
+                    `\t Hub contract address: \t\t\t\t\t${this.contracts.hub.instance._address}`,
+                );
+                this.logger.info(
+                    `\t AssertionRegistry contract address: \t\t\t${this.contracts.assertionRegistry.instance._address}`,
+                );
+                this.logger.info(
+                    `\t UAIRegistry contract address: \t\t\t\t${this.contracts.uaiRegistry.instance._address}`,
+                );
+                this.logger.info(
+                    `\t AssetRegistry contract address: \t\t\t${this.contracts.assetRegistry.instance._address}`,
+                );
+
+                this.logger.info(
+                    `\t Token contract address: \t\t\t\t${this.contracts.erc20Token.instance._address}`,
+                );
+                this.logger.info(
+                    `\t ProfileStorage contract address: \t\t\t${this.contracts.profileStorage.instance._address}`,
+                );
+                this.logger.info(
+                    `\t Profile contract address: \t\t\t\t${this.contracts.profile.instance._address}`,
+                );
                 accept();
             });
         });
     }
 
     fetchContracts() {
-        const dkgSource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../build/contracts/DKGcontract.json')).toString());
-        const uaiRegistrySource = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../build/contracts/UAIRegistry.json')).toString());
-
         this.contracts = {};
+        // TODO: pass contracts sources by their names
+        /* contractNames.forEach((name) => {
+            this.populateContractObject(name, `${name}Source`)
+        }) */
 
-        this.contracts.dkg = {};
-        this.contracts.dkg.data = dkgSource.bytecode;
-        this.contracts.dkg.abi = dkgSource.abi;
-        this.contracts.dkg.artifact = new this.web3.eth.Contract(this.contracts.dkg.abi);
+        this.populateContractObject('hub', hubSource);
+        this.populateContractObject('uaiRegistry', uaiRegistrySource);
+        this.populateContractObject('assertionRegistry', assertionRegistrySource);
+        this.populateContractObject('assetRegistry', assetRegistrySource);
+        this.populateContractObject('erc20Token', erc20TokenSource);
+        this.populateContractObject('profileStorage', profileStorageSource);
+        this.populateContractObject('profile', profileSource);
+    }
 
-        this.contracts.uaiRegistry = {};
-        this.contracts.uaiRegistry.data = uaiRegistrySource.bytecode;
-        this.contracts.uaiRegistry.abi = uaiRegistrySource.abi;
-        this.contracts.uaiRegistry.artifact = new this.web3.eth.Contract(this.contracts.uaiRegistry.abi);
+    populateContractObject(contractName, source) {
+        this.contracts[contractName] = {};
+        this.contracts[contractName].data = source.bytecode;
+        this.contracts[contractName].abi = source.abi;
+        this.contracts[contractName].artifact = new this.web3.eth.Contract(
+            this.contracts[contractName].abi,
+        );
     }
 
     async deployContracts() {
-        const accounts = await this.web3.eth.getAccounts();
-        // this.logger.log('Deploying dkg');
-        [this.contracts.dkg.deploymentReceipt, this.contracts.dkg.instance] = await this._deployContract(
-            this.web3, this.contracts.dkg.artifact, this.contracts.dkg.data,
-            [tokenContractAddress], accounts[7],
+        // this.logger.log('Deploying hubContract');
+        const deployingWallet = this.getWallets()[7];
+        [this.contracts.hub.deploymentReceipt, this.contracts.hub.instance] =
+            await this._deployContract(
+                this.web3,
+                this.contracts.hub.artifact,
+                this.contracts.hub.data,
+                [],
+                deployingWallet.address,
+            );
+
+        await this.setContractAddress('Owner', deployingWallet.address, deployingWallet);
+
+        // this.logger.log('Deploying uaiRegistryContract');
+        [this.contracts.uaiRegistry.deploymentReceipt, this.contracts.uaiRegistry.instance] =
+            await this._deployContract(
+                this.web3,
+                this.contracts.uaiRegistry.artifact,
+                this.contracts.uaiRegistry.data,
+                [this.contracts.hub.instance._address],
+                deployingWallet.address,
+            );
+
+        await this.setContractAddress(
+            'UAIRegistry',
+            this.contracts.uaiRegistry.instance._address,
+            deployingWallet,
         );
-        // this.logger.log(`Dkg contract deployed on address: ${this.contracts.dkg.instance._address}`);
-        // this.logger.log('Deploying uai registry');
-        [this.contracts.uaiRegistry.deploymentReceipt, this.contracts.uaiRegistry.instance] = await this._deployContract(
-            this.web3, this.contracts.uaiRegistry.artifact, this.contracts.uaiRegistry.data,
-            [tokenContractAddress, this.contracts.dkg.instance._address], accounts[7],
+
+        // this.logger.log('Deploying Assertion Registry Contract');
+        [
+            this.contracts.assertionRegistry.deploymentReceipt,
+            this.contracts.assertionRegistry.instance,
+        ] = await this._deployContract(
+            this.web3,
+            this.contracts.assertionRegistry.artifact,
+            this.contracts.assertionRegistry.data,
+            [this.contracts.hub.instance._address],
+            deployingWallet.address,
         );
-        // this.logger.log(`Uai registry contract deployed on address: ${this.contracts.uaiRegistry.instance._address}`);
+
+        await this.setContractAddress(
+            'AssertionRegistry',
+            this.contracts.assertionRegistry.instance._address,
+            deployingWallet,
+        );
+
+        // this.logger.log('Deploying Asset Registry Contract');
+        [this.contracts.assetRegistry.deploymentReceipt, this.contracts.assetRegistry.instance] =
+            await this._deployContract(
+                this.web3,
+                this.contracts.assetRegistry.artifact,
+                this.contracts.assetRegistry.data,
+                [this.contracts.hub.instance._address],
+                deployingWallet.address,
+            );
+
+        await this.setContractAddress(
+            'AssetRegistry',
+            this.contracts.assetRegistry.instance._address,
+            deployingWallet,
+        );
+
+        await this.setupRole(
+            this.contracts.uaiRegistry,
+            this.contracts.assetRegistry.instance._address,
+        );
+
+        // this.logger.log('Deploying profileStorageContract');
+        [this.contracts.profileStorage.deploymentReceipt, this.contracts.profileStorage.instance] =
+            await this._deployContract(
+                this.web3,
+                this.contracts.profileStorage.artifact,
+                this.contracts.profileStorage.data,
+                [this.contracts.hub.instance._address],
+                deployingWallet.address,
+            );
+        await this.setContractAddress(
+            'ProfileStorage',
+            this.contracts.profileStorage.instance._address,
+            deployingWallet,
+        );
+
+        // await this.contracts.profileStorage.instance.methods.setupRole()
+
+        // this.logger.log('Deploying Token contract');
+        [this.contracts.erc20Token.deploymentReceipt, this.contracts.erc20Token.instance] =
+            await this._deployContract(
+                this.web3,
+                this.contracts.erc20Token.artifact,
+                this.contracts.erc20Token.data,
+                [this.contracts.hub.instance._address],
+                deployingWallet.address,
+            );
+
+        await this.setContractAddress(
+            'Token',
+            this.contracts.erc20Token.instance._address,
+            deployingWallet,
+        );
+        await this.setupRole(this.contracts.erc20Token, deployingWallet.address);
+
+        // this.logger.log('Deploying Profile contract');
+        [this.contracts.profile.deploymentReceipt, this.contracts.profile.instance] =
+            await this._deployContract(
+                this.web3,
+                this.contracts.profile.artifact,
+                this.contracts.profile.data,
+                [this.contracts.hub.instance._address],
+                deployingWallet.address,
+            );
+        await this.setContractAddress(
+            'Profile',
+            this.contracts.profile.instance._address,
+            deployingWallet,
+        );
+
+        // // Deploy tokens.
+        const amountToMint = '50000000000000000000000000'; // 5e25
+        for (let i = 0; i < this.getWallets().length; i += 1) {
+            this.contracts.erc20Token.instance.methods
+                .mint(this.getWallets()[i].address, amountToMint)
+                .send({ from: deployingWallet.address, gas: 3000000 })
+                .on('error', (error) => this.logger.error('Minting error: ', error));
+        }
         this.initialized = true;
     }
 
-    async _deployContract(
-        web3,
-        contract,
-        contractData,
-        constructorArguments,
-        deployerAddress,
-    ) {
+    async _deployContract(web3, contract, contractData, constructorArguments, deployerAddress) {
         let deploymentReceipt;
         let contractInstance;
         return new Promise((accept, reject) => {
-            contract.deploy({
-                data: contractData,
-                arguments: constructorArguments,
-            })
+            contract
+                .deploy({
+                    data: contractData,
+                    arguments: constructorArguments,
+                })
                 .send({ from: deployerAddress, gas: 6900000 })
                 .on('receipt', (receipt) => {
                     deploymentReceipt = receipt;
@@ -191,12 +338,35 @@ class LocalBlockchain {
         });
     }
 
-    dkgContractAddress() {
-        return this.contracts.dkg.instance._address;
+    async setContractAddress(contractName, contractAddress, sendingWallet) {
+        return this.contracts.hub.instance.methods
+            .setContractAddress(contractName, contractAddress)
+            .send({ from: sendingWallet.address, gas: 3000000 })
+            .on('error', (error) =>
+                this.logger.error(
+                    `Unable to set contract ${contractName} address in HUB. Error: `,
+                    error,
+                ),
+            );
+    }
+
+    async getContractAddress(hubContract, contractName) {
+        // this.logger.info(`Attempting to get ${contractName} contract address from Hub contract`);
+        return hubContract.methods
+            .getContractAddress(contractName)
+            .call({ from: this.getWallets()[7].address });
+    }
+
+    async setupRole(contract, contractAddress) {
+        // this.logger.info(`Setting role for address: ${contract.instance._address}`);
+        contract.instance.methods
+            .setupRole(contractAddress)
+            .send({ from: this.getWallets()[7].address, gas: 3000000 })
+            .on('error', (error) => this.logger.error('Unable to setup role. Error: ', error));
     }
 
     uaiRegistryContractAddress() {
-        return this.contracts.uaiRegistry.instance._address;
+        return this.contracts.hub.instance._address;
     }
 
     isInitialized() {
@@ -211,4 +381,5 @@ class LocalBlockchain {
         return this.web3.eth.getBalance(wallet);
     }
 }
+
 module.exports = LocalBlockchain;
