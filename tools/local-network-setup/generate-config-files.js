@@ -6,8 +6,8 @@ const keys = require('./keys.json');
 
 const numberOfNodes = process.argv.length === 3 ? parseInt(process.argv[2], 10) : 4;
 
-const templatePath = '.dh_origintrail_noderc';
-const bootstrapTemplatePath = '.bootstrap_origintrail_noderc';
+const templatePath = './tools/local-network-setup/.dh_origintrail_noderc';
+const bootstrapTemplatePath = './tools/local-network-setup/.bootstrap_origintrail_noderc';
 
 const template = JSON.parse(fs.readFileSync(templatePath));
 const bootstrapTemplate = JSON.parse(fs.readFileSync(bootstrapTemplatePath));
@@ -28,7 +28,7 @@ for (const implementation in bootstrapTemplate.modules.blockchain.implementation
     ].config.evmOperationalWalletPrivateKey = keys.privateKey[0];
     bootstrapTemplate.modules.blockchain.implementation[
         implementation
-    ].config.evmManagementWalletPublicKey = keys.managementKey;
+    ].config.evmManagementWalletPublicKey = keys.publicKey[keys.publicKey.length - 1];
 }
 
 fs.writeFileSync(bootstrapTemplatePath, JSON.stringify(bootstrapTemplate, null, 2));
@@ -46,28 +46,12 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     }
     console.log(`Configuring node ${nodeName}`);
 
-    const configPath = path.join(`.dh${i}_origintrail_noderc`);
+    const configPath = path.join(`./tools/local-network-setup/.dh${i}_origintrail_noderc`);
     execSync(`touch ${configPath}`);
 
     const parsedTemplate = JSON.parse(JSON.stringify(template));
 
-    const polygonEndpoints = [
-        'wss://polygon-mumbai.g.alchemy.com/v2/HWQYg3FX49VALP0FMMZxKhZDVrIRDiMo',
-        'wss://polygon-mumbai.g.alchemy.com/v2/A5XW59zlZH8Q4NYvHPOByry6RpYHVsZG',
-        'wss://polygon-mumbai.g.alchemy.com/v2/pjhHpEpgUyQcKde6lZGNK9i5DStsfg8P',
-        'wss://polygon-mumbai.g.alchemy.com/v2/PS344yOFOjNVjy7l4HywB824lD-tELBj',
-        'wss://polygon-mumbai.g.alchemy.com/v2/o1tqYf3FW4dFZMhKw5Pjrv1M9grn485F',
-    ];
-
     for (const implementation in parsedTemplate.modules.blockchain.implementation) {
-        if (implementation === 'polygon') {
-            parsedTemplate.modules.blockchain.implementation[implementation].config.rpcEndpoints = [
-                polygonEndpoints[i - 1],
-                'https://matic-mumbai.chainstacklabs.com',
-                'https://rpc-mumbai.matic.today',
-                'https://matic-testnet-archive-rpc.bwarelabs.com',
-            ];
-        }
         parsedTemplate.modules.blockchain.implementation[
             implementation
         ].config.evmOperationalWalletPublicKey = keys.publicKey[i + 1];
@@ -76,7 +60,7 @@ for (let i = 0; i < numberOfNodes; i += 1) {
         ].config.evmOperationalWalletPrivateKey = keys.privateKey[i + 1];
         parsedTemplate.modules.blockchain.implementation[
             implementation
-        ].config.evmManagementWalletPublicKey = keys.managementKey;
+        ].config.evmManagementWalletPublicKey = keys.publicKey[keys.publicKey.length - 1];
     }
 
     parsedTemplate.modules.httpClient.implementation['express-http-client'].config.port = 8900 + i;
