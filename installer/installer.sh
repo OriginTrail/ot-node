@@ -64,10 +64,10 @@ install_directory() {
     OTNODE_VERSION=$(jq -r '.version' $BRANCH_DIR/package.json)
     mkdir $OTNODE_DIR
     mkdir $OTNODE_DIR/$OTNODE_VERSION
-    shopt -s dotglob
-    mv $BRANCH_DIR/* $OTNODE_DIR/$OTNODE_VERSION/
+    OUTPUT=$(mv $BRANCH_DIR/* $OTNODE_DIR/$OTNODE_VERSION/ 2>&1)
+    OUTPUT=$(mv $BRANCH_DIR/.* $OTNODE_DIR/$OTNODE_VERSION/ 2>&1)
     rm -rf $BRANCH_DIR
-    perform_step ln -sfn $OTNODE_DIR/$OTNODE_VERSION $OTNODE_DIR/current "Configuring node directory"
+    ln -sfn $OTNODE_DIR/$OTNODE_VERSION $OTNODE_DIR/current
 }
 
 install_firewall() {
@@ -103,21 +103,19 @@ install_blazegraph() {
 }
 
 install_sql() {
+    text_color $YELLOW "IMPORTANT NOTE: to avoid potential migration issues from one SQL to another, please select the one you are currently using. If this is your first installation, both choices are valid. If you don't know the answer, select [1]."
     while true; do
-        read -p "Please select the SQL you would like to use: [1]MySQL [2]MariaDB [E]xit " choice
+        read -p "Please select the SQL you would like to use: (Default: MySQL) [1]MySQL [2]MariaDB [E]xit " choice
         case "$choice" in
-            [1]* )  text_color $GREEN "MySQL selected. Proceeding with installation."
-                    sql=mysql
-                    export DEBIAN_FRONTEND=noninteractive
-                    perform_step apt-get install mysql-server -y "Installing mysql-server"
-                    break;;
             [2]* )  text_color $GREEN "MariaDB selected. Proceeding with installation."
                     sql=mariadb
-                    export DEBIAN_FRONTEND=noninteractive
                     perform_step apt-get install mariadb-server -y "Installing mariadb-server"
                     break;;
             [Ee]* ) text_color $RED "Installer stopped by user"; exit;;
-            * )     text_color $YELLOW "Please make a valid choice and try again.";;
+            * )     text_color $GREEN "MySQL selected. Proceeding with installation."
+                    sql=mysql
+                    perform_step apt-get install tcllib mysql-server -y "Installing mysql-server"
+                    break;;
         esac
     done
 
@@ -139,7 +137,7 @@ install_sql() {
                         read -p "Enter a new sql repository password if you wish (do not leave blank): " password
                         if [ -n "$password" ]; then
                             echo -n "Configuring new sql password: "
-                            OUTPUT=$($sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$password';" 2>&1)
+                            OUTPUT=$($sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$password';" 2>&1)
                             if [[ $? -ne 0 ]]; then
                                 text_color $RED "FAILED"
                                 echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
@@ -187,7 +185,7 @@ install_sql() {
                 if [ -n "$password" ]; then
                 #if password isn't blank
                     echo -n "Configuring new sql password: "
-                    OUTPUT=$($sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$password';" 2>&1)
+                    OUTPUT=$($sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$password';" 2>&1)
                     if [[ $? -ne 0 ]]; then
                         text_color $RED "FAILED"
                         echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
@@ -216,15 +214,11 @@ install_sql() {
     
     if [ $sql = mysql ]; then
         perform_step sed -i 's|max_binlog_size|#max_binlog_size|' /etc/mysql/mysql.conf.d/mysqld.cnf "Setting max log size"
-        echo "disable_log_bin" >> /etc/mysql/mysql.conf.d/mysqld.cnf
-        perform_step sed -i '/disable_log_bin/a wait_timeout = 31536000' /etc/mysql/mysql.conf.d/mysqld.cnf "Setting wait timeout"
-        perform_step sed -i '/disable_log_bin/a interactive_timeout = 31536000' /etc/mysql/mysql.conf.d/mysqld.cnf "Setting interactive timeout"
+        echo -e "disable_log_bin\nwait_timeout = 31536000\ninteractive_timeout = 31536000" >> /etc/mysql/mysql.conf.d/mysqld.cnf
     fi
     if [ $sql = mariadb ]; then
         perform_step sed -i 's|max_binlog_size|#max_binlog_size|' /etc/mysql/mariadb.conf.d/50-server.cnf "Setting max log size"
-        echo "disable_log_bin" >> /etc/mysql/mariadb.conf.d/50-server.cnf
-        perform_step sed -i '/disable_log_bin/a wait_timeout = 31536000' /etc/mysql/mariadb.conf.d/50-server.cnf "Setting wait timeout"
-        perform_step sed -i '/disable_log_bin/a interactive_timeout = 31536000' /etc/mysql/mariadb.conf.d/50-server.cnf "Setting interactive timeout"
+        echo -e "disable_log_bin\nwait_timeout = 31536000\ninteractive_timeout = 31536000" >> /etc/mysql/mariadb.conf.d/50-server.cnf "Disabling logs, setting wait timeout and interactive timeout"
     fi
     perform_step systemctl restart $sql "Restarting $sql"
 }
@@ -233,7 +227,7 @@ install_node() {
     # Change directory to ot-node/current
     cd $OTNODE_DIR
 
-    perform_step npm ci --omit=dev --ignore-scripts "Executing npm ci --omit=dev --ignore-scripts"
+    perform_step npm ci --omit=dev --ignore-scripts "Executing npm install"
 
     echo "NODE_ENV=testnet" >> $OTNODE_DIR/.env
 
@@ -264,13 +258,14 @@ perform_step install_aliases "Updating .bashrc file with OriginTrail node aliase
 perform_step rm -rf /var/lib/dpkg/lock-frontend "Removing any frontend locks"
 perform_step apt update "Updating Ubuntu package repository"
 perform_step apt upgrade -y "Updating Ubuntu to latest version"
-perform_step apt install default-jre unzip jq build-essential -y "Installing default-jre, unzip, jq"
+perform_step apt install default-jre unzip jq -y "Installing default-jre, unzip, jq"
+perform_step apt install build-essential -y "Installing build-essential"
 perform_step wget https://deb.nodesource.com/setup_$NODEJS_VER.x "Downloading Node.js v$NODEJS_VER"
 chmod +x setup_$NODEJS_VER.x
 perform_step ./setup_$NODEJS_VER.x "Installing Node.js v$NODEJS_VER"
 rm -rf setup_$NODEJS_VER.x
 perform_step apt update "Updating Ubuntu package repository"
-perform_step apt-get install nodejs tcllib -y "Installing node.js and tcllib"
+perform_step apt-get install nodejs -y "Installing node.js"
 perform_step npm install -g npm "Installing npm"
 perform_step install_firewall "Configuring firewall"
 perform_step apt remove unattended-upgrades -y "Remove unattended upgrades"
@@ -281,12 +276,11 @@ header_color $BGREEN "Preparing OriginTrail node directory..."
 
 if [[ -d "$OTNODE_DIR" ]]; then
     while true; do
-        read -p "Previous ot-node directory detected. Would you like to overwrite it ? [Y]es [N]o [E]xit " choice
+        read -p "Previous ot-node directory detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
         case "$choice" in
-        [yY]* ) text_color $GREEN "Reinstalling ot-node directory."; rm -rf $OTNODE_DIR; install_directory; break;;
         [nN]* ) text_color $GREEN "Keeping previous ot-node directory."; break;;
         [eE]* ) text_color $RED "Installer stopped by user"; exit;;
-        * )     text_color $YELLOW "Please make a valid choice and try again.";;
+        * ) text_color $GREEN "Reinstalling ot-node directory."; rm -rf $OTNODE_DIR; install_directory; break;;
         esac
     done
 else
@@ -298,24 +292,22 @@ OTNODE_DIR=$OTNODE_DIR/current
 header_color $BGREEN "Installing Triplestore (Graph Database)..."
 
 while true; do
-    read -p "Please select the database you would like to use: [1]Fuseki [2]Blazegraph [E]xit: " choice
+    read -p "Please select the database you would like to use: (Default: Blazegraph) [1]Blazegraph [2]Fuseki [E]xit: " choice
     case "$choice" in
-        [1gG]* ) text_color $GREEN "Fuseki selected. Proceeding with installation."; tripleStore=ot-fuseki; break;;
-        [2bB]* ) text_color $GREEN "Blazegraph selected. Proceeding with installation."; tripleStore=ot-blazegraph; break;;
-        [Ee]* )  text_color $RED "Installer stopped by user"; exit;;
-        * )      text_color $YELLOW "Please make a valid choice and try again.";;
+        [2fF] ) text_color $GREEN "Fuseki selected. Proceeding with installation."; tripleStore=ot-fuseki; break;;
+        [Ee] )  text_color $RED "Installer stopped by user"; exit;;
+        * )     text_color $GREEN "Blazegraph selected. Proceeding with installation."; tripleStore=ot-blazegraph; break;;
     esac
 done
 
 if [ $tripleStore = "ot-fuseki" ]; then
     if [ -d "/root/fuseki" ]; then
         while true; do
-            read -p "Previous Fuseki triplestore detected. Would you like to overwrite it ? [Y]es [N]o [E]xit " choice
+            read -p "Previous Fuseki triplestore detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
             case "$choice" in
-            [yY]* ) text_color $GREEN "Reinstalling Fuseki."; rm -rf fuseki*; install_fuseki; break;;
             [nN]* ) text_color $GREEN "Keeping previous Fuseki installation."; break;;
             [eE]* ) text_color $RED "Installer stopped by user"; exit;;
-            * )     text_color $YELLOW "Please make a valid choice and try again.";;
+            * ) text_color $GREEN "Reinstalling Fuseki."; rm -rf fuseki*; install_fuseki; break;;
             esac
         done
     else
@@ -326,12 +318,11 @@ fi
 if [ $tripleStore = "ot-blazegraph" ]; then
     if [ -f "blazegraph.jar" ]; then
         while true; do
-            read -p "Previous Blazegraph triplestore detected. Would you like to overwrite it ? [Y]es [N]o [E]xit " choice
+            read -p "Previous Blazegraph triplestore detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
             case "$choice" in
-            [yY]* ) text_color $GREEN "Reinstalling Blazegraph."; rm -rf blazegraph*; install_blazegraph; break;;
             [nN]* ) text_color $GREEN "Keeping old Blazegraph Installation."; break;;
             [eE]* ) text_color $RED "Installer stopped by user"; exit;;
-            * )     text_color $YELLOW "Please make a valid choice and try again.";;
+            * ) text_color $GREEN "Reinstalling Blazegraph."; rm -rf blazegraph*; install_blazegraph; break;;
             esac
         done
     else
