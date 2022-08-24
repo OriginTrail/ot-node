@@ -3,7 +3,11 @@ const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const Sequelize = require('sequelize');
-const { OPERATION_ID_STATUS } = require('../../../../constants/constants');
+const {
+    OPERATION_ID_STATUS,
+    HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR,
+    SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES,
+} = require('../../../../constants/constants');
 
 class SequelizeRepository {
     async initialize(config, logger) {
@@ -75,7 +79,7 @@ class SequelizeRepository {
             this.config,
         );
         const models = {};
-        fs.readdirSync(modelsDirectory)
+        (await fs.promises.readdir(modelsDirectory))
             .filter((file) => file.indexOf('.') !== 0 && file.slice(-3) === '.js')
             .forEach((file) => {
                 // eslint-disable-next-line global-require,import/no-dynamic-require
@@ -254,7 +258,10 @@ class SequelizeRepository {
 
         let operationIds = await this.models.event.findAll({
             raw: true,
-            attributes: [Sequelize.fn('DISTINCT', Sequelize.col('operation_id'))],
+            attributes: [
+                Sequelize.fn('DISTINCT', Sequelize.col('operation_id')),
+                Sequelize.col('timestamp'),
+            ],
             where: {
                 [Sequelize.Op.or]: {
                     name: {
@@ -270,6 +277,10 @@ class SequelizeRepository {
                     },
                 },
             },
+            order: [['timestamp', 'ASC']],
+            limit:
+                Math.floor(HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR / 60) *
+                SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES,
         });
 
         operationIds = operationIds.map((e) => e.operation_id);
@@ -291,6 +302,43 @@ class SequelizeRepository {
                 },
             },
         });
+    }
+
+    async getUser(username) {
+        return this.models.User.findOne({
+            where: {
+                name: username,
+            },
+        });
+    }
+
+    async saveToken(tokenId, userId, tokenName, expiresAt) {
+        return this.models.Token.create({
+            id: tokenId,
+            userId,
+            expiresAt,
+            name: tokenName,
+        });
+    }
+
+    async isTokenRevoked(tokenId) {
+        const token = await this.models.Token.findByPk(tokenId);
+
+        return token && token.revoked;
+    }
+
+    async getTokenAbilities(tokenId) {
+        const abilities = await this.models.sequelize.query(
+            `SELECT a.name FROM token t
+INNER JOIN user u ON t.user_id = u.id
+INNER JOIN role r ON u.role_id = u.id
+INNER JOIN role_ability ra on r.id = ra.role_id
+INNER JOIN ability a on ra.ability_id = a.id
+WHERE t.id=$tokenId;`,
+            { bind: { tokenId }, type: Sequelize.QueryTypes.SELECT },
+        );
+
+        return abilities.map((e) => e.name);
     }
 }
 

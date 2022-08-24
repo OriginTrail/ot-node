@@ -29,8 +29,6 @@ class FileService {
         return fullpath;
     }
 
-    createFolder(folderName) {}
-
     readFileOnPath(filePath) {
         return this._readFile(filePath, false);
     }
@@ -67,12 +65,8 @@ class FileService {
 
     async removeFile(filePath) {
         this.logger.debug(`Removing file on path: ${filePath}`);
-        let successful = false;
-        try {
-            await unlink(filePath);
-            successful = true;
-        } catch (e) {}
-        return successful;
+        await unlink(filePath);
+        return true;
     }
 
     getDataFolderPath() {

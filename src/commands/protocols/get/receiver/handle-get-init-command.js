@@ -21,9 +21,7 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.GET.ASSERTION_EXISTS_LOCAL_START,
         );
 
-        const assertionExists = await this.tripleStoreModuleManager.assertionExists(
-            `assertion:${assertionId}`,
-        );
+        const assertionExists = await this.tripleStoreModuleManager.assertionExists(assertionId);
         const messageType = assertionExists
             ? NETWORK_MESSAGE_TYPES.RESPONSES.ACK
             : NETWORK_MESSAGE_TYPES.RESPONSES.NACK;

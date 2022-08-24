@@ -155,7 +155,7 @@ class SearchController extends BaseController {
         });
     }
 
-    handleHttpApiProofsRequest(req, res) {}
+    handleHttpApiProofsRequest() {}
 
     async handleNetworkSearchAssertionsRequest(message, remotePeerId) {
         let commandName;

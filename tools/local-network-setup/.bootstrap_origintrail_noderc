@@ -1,24 +1,11 @@
 {
-  "graphDatabase": {
-    "username": "admin",
-    "password": ""
-  },
   "logLevel": "trace",
-  "rpcPort": 8900,
   "modules": {
-    "httpClient": {
-      "enabled": true,
-      "implementation": {
-        "express-http-client": {
-          "package": "./http-client/implementation/express-http-client",
-          "config": {}
-        }
-      }
-    },
     "repository": {
       "enabled": true,
       "implementation": {
         "sequelize-repository": {
+          "package": "./repository/implementation/sequelize/sequelize-repository",
           "config": {}
         }
       }
@@ -28,6 +15,7 @@
       "defaultImplementation": "ot-graphdb",
       "implementation": {
         "ot-graphdb": {
+          "package": "./triple-store/implementation/ot-graphdb/ot-graphdb",
           "config": {}
         }
       }
@@ -45,45 +33,48 @@
       }
     },
     "blockchain": {
-      "enabled": true,
+      "defaultImplementation": "ganache",
       "implementation": {
-        "otp": {
-          "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
+        "ganache": {
           "config": {
-            "blockchainTitle": "Parachain",
-            "networkId": "parachain::testnet",
-            "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
+            "blockchainTitle": "ganache",
+            "networkId": "ganache::testnet",
+            "hubContractAddress": "0xF21dD87cFC5cF5D073398833AFe5EFC543b78a00",
             "rpcEndpoints": [
-              "wss://parachain-tempnet-01.origin-trail.network"
+              "http://localhost:7545"
             ],
-            "publicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
-            "privateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
-            "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+            "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
+            "evmOperationalWalletPrivateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
+            "evmManagementWalletPublicKey": "0x64B592e8e9AF51Eb0DBa5d4c18b817C01e8e75a8"
+          }
+        },
+        "otp": {
+          "config": {
+            "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
+            "evmOperationalWalletPrivateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
+            "evmManagementWalletPublicKey": "0x64B592e8e9AF51Eb0DBa5d4c18b817C01e8e75a8"
           }
         },
         "polygon": {
-          "package": "./blockchain/implementation/polygon/polygon-service",
           "config": {
-            "blockchainTitle": "Polygon",
-            "networkId": "polygon::testnet",
-            "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
-            "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
             "rpcEndpoints": [
               "wss://polygon-mumbai.g.alchemy.com/v2/bkYqCNrIC0TX3nZHuwo_cx7xqP4pYQ9s",
               "https://matic-mumbai.chainstacklabs.com",
               "https://rpc-mumbai.matic.today",
               "https://matic-testnet-archive-rpc.bwarelabs.com"
             ],
-            "publicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
-            "privateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
-            "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+            "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
+            "evmOperationalWalletPrivateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
+            "evmManagementWalletPublicKey": "0x64B592e8e9AF51Eb0DBa5d4c18b817C01e8e75a8"
           }
         }
       }
     }
   },
-  "ipWhitelist": [
-    "::1",
-    "127.0.0.1"
-  ]
+  "auth": {
+    "ipWhitelist": [
+      "::1",
+      "127.0.0.1"
+    ]
+  }
 }

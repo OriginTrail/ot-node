@@ -104,22 +104,27 @@
             "blockchain": {
                 "enabled": true,
                 "implementation": {
+                    "ganache": {
+                        "package": "./blockchain/implementation/ganache/ganache-service",
+                        "config": {
+                            "blockchainTitle": "ganache",
+                            "networkId": "ganache::testnet",
+                            "hubContractAddress": "0xF21dD87cFC5cF5D073398833AFe5EFC543b78a00",
+                            "rpcEndpoints": ["http://localhost:7545"],
+                            "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                        }
+                    },
                     "otp": {
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
                         "config": {
-                            "blockchainTitle": "Parachain",
-                            "networkId": "parachain::testnet",
-                            "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
-                            "rpcEndpoints": ["wss://parachain-tempnet-01.origin-trail.network"],
-                            "publicKey": "0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b",
-                            "privateKey": "0x99b3c12287537e38c90a9219d4cb074a89a16e9cdb20bf85728ebd97c343e342",
-                            "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                            "networkId": "otp::testnet",
+                            "hubContractAddress": "0x256736AEb3f19AC6738E9F4D10C9B61da71CEB9F",
+                            "rpcEndpoints": ["wss://lofar.origin-trail.network"]
                         }
                     },
                     "polygon": {
                         "package": "./blockchain/implementation/polygon/polygon-service",
                         "config": {
-                            "blockchainTitle": "Polygon",
                             "networkId": "polygon::testnet",
                             "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
                             "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
@@ -128,38 +133,30 @@
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
                             ],
-                            "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                            "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
                         }
                     }
                 }
             }
         },
+        "minimumAckResponses": {
+            "publish": 5,
+            "get": 1
+        },
         "commandExecutorVerboseLoggingEnabled": false,
-        "minimumReplicationFactor": 5,
-        "publishFindNodesCount": 20,
-        "signalingServerUrl": null,
         "appDataPath": "data",
-        "graphDatabase": {
-            "implementation": "GraphDB",
-            "url": "http://localhost:7200",
-            "name": "node0",
-            "username": "admin",
-            "password": ""
-        },
         "logLevel": "info",
-        "replicationFactor": 5,
-        "network": {
-            "port": 9000,
-            "bootstrap": []
+        "telemetry": {
+            "enabled": true,
+            "sendTelemetryData": false,
+            "signalingServerUrl": "null"
         },
-        "ipWhitelist": ["::1", "127.0.0.1"],
-        "telemetryHub": {
-            "enabled": false,
-            "packages": ["ot-telemetry-collector"],
-            "url": ""
-        },
-        "operationalDatabase": {
-            "databaseName": "operationaldb"
+        "auth": {
+            "ipBasedAuthEnabled": true,
+            "tokenBasedAuthEnabled": false,
+            "loggingEnabled": true,
+            "ipWhitelist": ["::1", "127.0.0.1"],
+            "publicOperations": []
         }
     },
     "test": {
@@ -203,9 +200,10 @@
             },
             "blockchain": {
                 "enabled": true,
+                "defaultImplementation": "ganache",
                 "implementation": {
-                    "web3-service": {
-                        "package": "./blockchain/implementation/web3-service",
+                    "ganache": {
+                        "package": "./blockchain/implementation/ganache/ganache-service",
                         "config": {
                             "blockchainTitle": "ganache",
                             "networkId": "ganache::testnet",
@@ -249,32 +247,24 @@
                 }
             }
         },
+        "minimumAckResponses": {
+            "publish": 2,
+            "get": 1
+        },
         "commandExecutorVerboseLoggingEnabled": false,
-        "minimumReplicationFactor": 5,
-        "publishFindNodesCount": 20,
         "appDataPath": "data",
-        "signalingServerUrl": null,
-        "graphDatabase": {
-            "implementation": "GraphDB",
-            "url": "http://localhost:7200",
-            "name": "node0",
-            "username": "admin",
-            "password": ""
-        },
         "logLevel": "trace",
-        "replicationFactor": 5,
-        "network": {
-            "port": 9000,
-            "bootstrap": []
+        "telemetry": {
+            "enabled": true,
+            "sendTelemetryData": false,
+            "signalingServerUrl": "null"
         },
-        "ipWhitelist": ["::1", "127.0.0.1"],
-        "telemetryHub": {
-            "enabled": false,
-            "packages": ["ot-telemetry-collector"],
-            "url": ""
-        },
-        "operationalDatabase": {
-            "databaseName": "operationaldb"
+        "auth": {
+            "ipBasedAuthEnabled": true,
+            "tokenBasedAuthEnabled": false,
+            "loggingEnabled": true,
+            "ipWhitelist": ["::1", "127.0.0.1"],
+            "publicOperations": []
         }
     },
     "testnet": {
@@ -297,7 +287,13 @@
                         "package": "./network/implementation/libp2p-service",
                         "config": {
                             "port": 9000,
-                            "bootstrap": []
+                            "bootstrap": [
+                                "/ip4/139.59.174.24/tcp/9000/p2p/QmU7p61f8qgzCtfTEUynJaqnsLRN4QExjtWfsMRQ7oiMuS",
+                                "/ip4/142.93.166.214/tcp/9000/p2p/QmXPcjsvURvyC4hEbwgirRue7KzcvpvYgsaPUharRMJAcP",
+                                "/ip4/178.128.117.211/tcp/9000/p2p/QmVdXs1PhoXcXYWGEH6Q4BnGN9uNNUcm4ctMt2Pttq8Dgc",
+                                "/ip4/3.125.64.137/tcp/9000/p2p/QmQWvBBAJKTwPTzHr47LZaLWFwCESE97iwJwmYb7spZuHt",
+                                "/ip4/3.126.112.75/tcp/9000/p2p/QmeB5srsgkwwhkVieHXunjsVsGkV9MyL4EqV122u1wZHoj"
+                            ]
                         }
                     }
                 }
@@ -308,7 +304,7 @@
                     "express-http-client": {
                         "package": "./http-client/implementation/express-http-client",
                         "config": {
-                            "useSsl": true,
+                            "useSsl": false,
                             "port": 8900,
                             "sslKeyPath": "/root/certs/privkey.pem",
                             "sslCertificatePath": "/root/certs/fullchain.pem",
@@ -339,21 +335,19 @@
             },
             "blockchain": {
                 "enabled": true,
+                "defaultImplementation": "otp",
                 "implementation": {
                     "otp": {
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
                         "config": {
-                            "blockchainTitle": "Parachain",
                             "networkId": "parachain::testnet",
-                            "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
-                            "rpcEndpoints": ["wss://parachain-tempnet-01.origin-trail.network"],
-                            "managementKey": "0xe1EEB4f09809C6c8664c0b1e3B26211d139076fF"
+                            "hubContractAddress": "0x256736AEb3f19AC6738E9F4D10C9B61da71CEB9F",
+                            "rpcEndpoints": ["wss://lofar.origin-trail.network"]
                         }
                     },
                     "polygon": {
                         "package": "./blockchain/implementation/polygon/polygon-service",
                         "config": {
-                            "blockchainTitle": "Polygon",
                             "networkId": "polygon::testnet",
                             "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
                             "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
@@ -361,8 +355,7 @@
                                 "https://matic-mumbai.chainstacklabs.com",
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
-                            ],
-                            "managementKey": "0xe1EEB4f09809C6c8664c0b1e3B26211d139076fF"
+                            ]
                         }
                     }
                 }
@@ -378,7 +371,7 @@
             },
             "tripleStore": {
                 "enabled": true,
-                "defaultImplementation": "ot-graphdb",
+                "defaultImplementation": "ot-blazegraph",
                 "implementation": {
                     "ot-blazegraph": {
                         "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph",
@@ -410,36 +403,24 @@
                 }
             }
         },
+        "minimumAckResponses": {
+            "publish": 5,
+            "get": 1
+        },
         "commandExecutorVerboseLoggingEnabled": false,
-        "minimumReplicationFactor": 5,
-        "publishFindNodesCount": 20,
-        "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "appDataPath": "data",
-        "graphDatabase": {
-            "implementation": "GraphDB",
-            "url": "http://localhost:7200",
-            "name": "node0",
-            "username": "admin",
-            "password": ""
-        },
         "logLevel": "trace",
-        "replicationFactor": 5,
-        "network": {
-            "port": 9000,
-            "bootstrap": [
-                "/ip4/165.232.122.94/tcp/9000/p2p/QmQ2zigjQikYnyYUSXZydNXrDRhBut2mubwJBaLXobMt3A",
-                "/ip4/46.101.111.223/tcp/9000/p2p/QmdTKEP4DDSwYzX2CHEsBfpEAKAVyE4mPq9ouh4ehZZbg5",
-                "/ip4/46.101.153.21/tcp/9000/p2p/QmXzmTqVT3TPUtTz4dBDN5NWSABqnX9rKXCG9WCLXMfEaM"
-            ]
-        },
-        "ipWhitelist": ["::1", "127.0.0.1"],
-        "telemetryHub": {
+        "telemetry": {
             "enabled": true,
-            "packages": ["ot-telemetry-collector"],
-            "url": "https://polaris.delta.origin-trail.network/metrics/"
+            "sendTelemetryData": true,
+            "signalingServerUrl": "https://testnet-signaling.origin-trail.network/signal"
         },
-        "operationalDatabase": {
-            "databaseName": "operationaldb"
+        "auth": {
+            "ipBasedAuthEnabled": true,
+            "tokenBasedAuthEnabled": false,
+            "loggingEnabled": true,
+            "ipWhitelist": ["::1", "127.0.0.1"],
+            "publicOperations": []
         }
     },
     "mainnet": {
@@ -461,7 +442,7 @@
                     "express-http-client": {
                         "package": "./http-client/implementation/express-http-client",
                         "config": {
-                            "useSsl": true,
+                            "useSsl": false,
                             "port": 8900,
                             "sslKeyPath": "/root/certs/privkey.pem",
                             "sslCertificatePath": "/root/certs/fullchain.pem",
@@ -490,18 +471,18 @@
                     }
                 }
             },
-            "blockchain": {
+            "validation": {
                 "enabled": true,
                 "implementation": {
-                    "web3-service": {
-                        "package": "./blockchain/implementation/web3-service",
+                    "merkle-validation": {
+                        "package": "./validation/implementation/merkle-validation",
                         "config": {}
                     }
                 }
             },
             "tripleStore": {
                 "enabled": true,
-                "defaultImplementation": "ot-graphdb",
+                "defaultImplementation": "ot-blazegraph",
                 "implementation": {
                     "ot-blazegraph": {
                         "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph",
@@ -531,35 +512,49 @@
                         }
                     }
                 }
+            },
+            "blockchain": {
+                "enabled": true,
+                "implementation": {
+                    "otp": {
+                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
+                        "config": {
+                            "networkId": "otp::mainnet",
+                            "hubContractAddress": "",
+                            "rpcEndpoints": []
+                        }
+                    },
+                    "polygon": {
+                        "package": "./blockchain/implementation/polygon/polygon-service",
+                        "config": {
+                            "networkId": "polygon::mainnet",
+                            "hubContractAddress": "",
+                            "gasPriceOracleLink": "",
+                            "rpcEndpoints": []
+                        }
+                    }
+                }
             }
         },
-        "minimumReplicationFactor": 5,
-        "publishFindNodesCount": 20,
+        "minimumAckResponses": {
+            "publish": 5,
+            "get": 1
+        },
         "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
-        "blockchain": [],
-        "graphDatabase": {
-            "implementation": "GraphDB",
-            "url": "http://localhost:7200",
-            "name": "node0",
-            "username": "admin",
-            "password": ""
-        },
         "logLevel": "trace",
-        "replicationFactor": 5,
-        "network": {
-            "port": 9000,
-            "bootstrap": []
-        },
-        "ipWhitelist": ["::1", "127.0.0.1"],
-        "telemetryHub": {
+        "telemetry": {
             "enabled": false,
-            "packages": ["ot-telemetry-collector"],
-            "url": ""
+            "sendTelemetryData": false,
+            "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal"
         },
-        "operationalDatabase": {
-            "databaseName": "operationaldb"
+        "auth": {
+            "ipBasedAuthEnabled": true,
+            "tokenBasedAuthEnabled": false,
+            "loggingEnabled": true,
+            "ipWhitelist": ["::1", "127.0.0.1"],
+            "publicOperations": []
         }
     }
 }

@@ -6,25 +6,23 @@ class DkgClientHelper {
     }
 
     async info() {
-        return this.client.nodeInfo();
+        return this.client.node.info();
     }
 
-    async provision(data, keywords) {
-        return this.client._publishRequest({
-            content: data,
-            keywords,
-            method: 'provision',
+    async publish(data, wallet, hubContract) {
+        const options = {
             visibility: 'public',
-        });
-    }
-
-    async publish(data, keywords) {
-        return this.client._publishRequest({
-            content: data,
-            keywords,
-            method: 'publish',
-            visibility: 'public',
-        });
+            holdingTimeInYears: 1,
+            tokenAmount: 10,
+            maxNumberOfRetries: 5,
+            blockchain: {
+                name: 'ganache',
+                publicKey: wallet.evmOperationalWalletPublicKey,
+                privateKey: wallet.evmOperationalWalletPrivateKey,
+                hubContract,
+            },
+        };
+        return this.client.asset.create(data, options);
     }
 
     async update(data, keywords, ual) {
@@ -56,15 +54,13 @@ class DkgClientHelper {
         });
     }
 
-    async getResult(operation_id, operation) {
-        return this.client
-            ._getResult({
-                operation_id,
-                operation,
-            })
-            .catch((error) => {
-                console.log(`Error getting result. ${error}`);
-            });
+    async getResult(UAL) {
+        const getOptions = {
+            validate: true,
+            commitOffset: 0,
+            maxNumberOfRetries: 5,
+        };
+        return this.client.asset.get(UAL, getOptions).catch(() => {});
     }
 }
 

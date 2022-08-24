@@ -1,5 +1,5 @@
 const Command = require('../../command');
-const { OPERATION_ID_STATUS, NETWORK_PROTOCOLS } = require('../../../constants/constants');
+const { OPERATION_ID_STATUS } = require('../../../constants/constants');
 
 class FindNodesCommand extends Command {
     constructor(ctx) {
@@ -12,7 +12,8 @@ class FindNodesCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { keyword, operationId, networkProtocol, errorType } = command.data;
+        const { keyword, operationId, minimumAckResponses, networkProtocol, errorType } =
+            command.data;
 
         this.errorType = errorType;
         this.logger.debug(`Searching for closest node(s) for keyword ${keyword}`);
@@ -31,13 +32,11 @@ class FindNodesCommand extends Command {
 
         this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${keyword}`);
 
-        if (
-            networkProtocol === NETWORK_PROTOCOLS.PUBLISH &&
-            closestNodes.length < this.config.minimumReplicationFactor
-        ) {
+        const batchSize = 2 * minimumAckResponses;
+        if (closestNodes.length < batchSize) {
             this.handleError(
                 operationId,
-                `Unable to find enough nodes for ${networkProtocol}. Minimum replication factor: ${this.config.minimumReplicationFactor}`,
+                `Unable to find enough nodes for ${networkProtocol}. Minimum number of nodes required: ${batchSize}`,
                 this.errorType,
                 true,
             );
@@ -47,6 +46,7 @@ class FindNodesCommand extends Command {
         return this.continueSequence(
             {
                 ...command.data,
+                batchSize,
                 leftoverNodes: closestNodes,
                 numberOfFoundNodes: closestNodes.length,
             },

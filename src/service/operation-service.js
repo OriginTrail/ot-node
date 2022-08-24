@@ -25,6 +25,10 @@ class OperationService {
         return this.operationStatus;
     }
 
+    getMinimumAckResponses() {
+        return this.config.minimumAckResponses[this.operationName];
+    }
+
     async getResponsesStatuses(responseStatus, errorMessage, operationId, keyword) {
         const self = this;
         let responses = 0;
@@ -69,6 +73,7 @@ class OperationService {
         await this.operationIdService.cacheOperationIdData(operationId, responseData);
 
         for (const status of endStatuses) {
+            // eslint-disable-next-line no-await-in-loop
             await this.operationIdService.updateOperationIdStatus(operationId, status);
         }
     }

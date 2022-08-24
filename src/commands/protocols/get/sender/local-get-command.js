@@ -22,27 +22,29 @@ class LocalGetCommand extends Command {
             operationId,
             OPERATION_ID_STATUS.GET.GET_LOCAL_START,
         );
+        const assertionExists = await this.tripleStoreModuleManager.assertionExists(assertionId);
+        if (assertionExists) {
+            const assertion = await this.getService.localGet(assertionId, operationId);
 
-        const assertion = await this.getService.localGet(assertionId, operationId);
+            if (assertion.length) {
+                await this.operationIdService.cacheOperationIdData(operationId, {
+                    assertion,
+                });
+                await this.operationIdService.updateOperationIdStatus(
+                    operationId,
+                    OPERATION_ID_STATUS.GET.GET_LOCAL_END,
+                );
+                await this.operationIdService.updateOperationIdStatus(
+                    operationId,
+                    OPERATION_ID_STATUS.GET.GET_END,
+                );
+                await this.operationIdService.updateOperationIdStatus(
+                    operationId,
+                    OPERATION_ID_STATUS.COMPLETED,
+                );
 
-        if (assertion.length) {
-            await this.operationIdService.cacheOperationIdData(operationId, {
-                assertion,
-            });
-            await this.operationIdService.updateOperationIdStatus(
-                operationId,
-                OPERATION_ID_STATUS.GET.GET_LOCAL_END,
-            );
-            await this.operationIdService.updateOperationIdStatus(
-                operationId,
-                OPERATION_ID_STATUS.GET.GET_END,
-            );
-            await this.operationIdService.updateOperationIdStatus(
-                operationId,
-                OPERATION_ID_STATUS.COMPLETED,
-            );
-
-            return Command.empty();
+                return Command.empty();
+            }
         }
 
         await this.operationIdService.updateOperationIdStatus(

@@ -24,7 +24,9 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             await this.operationIdService.getCachedOperationIdData(operationId);
 
         if (storeInitAssertionId !== assertionId) {
-            throw Error('Store request assertion id does not match store init assertion id');
+            throw Error(
+                `Store request assertion id ${assertionId} does not match store init assertion id ${storeInitAssertionId}`,
+            );
         }
 
         await this.operationIdService.updateOperationIdStatus(
@@ -37,7 +39,6 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             operationId,
             OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_END,
         );
-
         await this.operationService.localStore(ual, assertionId, operationId);
         await this.operationIdService.updateOperationIdStatus(
             operationId,

@@ -2,13 +2,15 @@ require('dotenv').config();
 const { Before, BeforeAll, After, AfterAll } = require('@cucumber/cucumber');
 const slugify = require('slugify');
 const fs = require('fs');
-const { ServerClientConfig, GraphDBServerClient } = require('ot-graphdb').server;
+const mysql = require('mysql2');
+const { RDFMimeType } = require('graphdb').http;
+const { ServerClientConfig, GraphDBServerClient } = require('graphdb').server;
 
 process.env.NODE_ENV = 'test';
 
 BeforeAll(() => {});
 
-Before(function (testCase, done) {
+Before(function beforeMethod(testCase, done) {
     this.logger = console;
     this.logger.log('Starting scenario: ', testCase.pickle.name, `${testCase.pickle.uri}`);
     // Initialize variables
@@ -24,32 +26,18 @@ Before(function (testCase, done) {
     done();
 });
 
-After(function (testCase, done) {
-    this.logger.log(
-        'Completed scenario: ',
-        testCase.pickle.name,
-        `${testCase.gherkinDocument.uri}:${testCase.gherkinDocument.feature.location.line}`,
-    );
-    this.logger.log(
-        'with status: ',
-        testCase.result.status,
-        ' and duration: ',
-        testCase.result.duration,
-        ' miliseconds.',
-    );
-
-    if (testCase.result.status === 'failed') {
-        this.logger.log('Oops, exception occurred:');
-        this.logger.log(testCase.result.exception);
-    }
+After(function afterMethod(testCase, done) {
     const graphRepositoryNames = [];
+    const databaseNames = [];
     for (const key in this.state.nodes) {
         this.state.nodes[key].forkedNode.kill();
         graphRepositoryNames.push(this.state.nodes[key].configuration.graphDatabase.name);
+        databaseNames.push(this.state.nodes[key].configuration.operationalDatabase.databaseName);
     }
     this.state.bootstraps.forEach((node) => {
         node.forkedNode.kill();
         graphRepositoryNames.push(node.configuration.graphDatabase.name);
+        databaseNames.push(node.configuration.operationalDatabase.databaseName);
     });
     if (this.state.localBlockchain) {
         if (Array.isArray(this.state.localBlockchain)) {
@@ -63,25 +51,72 @@ After(function (testCase, done) {
         }
     }
     this.logger.log('After test hook, cleaning repositories');
-    // delete ot-graphdb repositories
+
+    const promises = [];
+    const con = mysql.createConnection({
+        host: 'localhost',
+        user: 'root',
+        password: process.env.REPOSITORY_PASSWORD,
+    });
+    databaseNames.forEach((element) => {
+        const sql = `DROP DATABASE IF EXISTS \`${element}\`;`;
+        promises.push(con.promise().query(sql));
+    });
+    promises.push(con);
     const serverConfig = new ServerClientConfig('http://localhost:7200')
         .setTimeout(40000)
+        .setHeaders({
+            Accept: RDFMimeType.N_QUADS,
+        })
         .setKeepAlive(true);
     const server = new GraphDBServerClient(serverConfig);
-    const promises = [];
-
-    for (const name in graphRepositoryNames) {
-        promises.push(server.deleteRepository(name));
-    }
-    Promise.all(promises).then(() => {
-        // todo this will not delete repository we need to research more about this
-        done();
+    graphRepositoryNames.forEach((element) => {
+        server
+            .hasRepository(element)
+            .then((exists) => {
+                if (exists) {
+                    promises.push(server.deleteRepository(element));
+                }
+            })
+            .catch((err) => this.logger.error(err));
     });
+
+    /* try {
+        for (const item of databaseNames) {
+            this.logger.log('Removing operation database: ', item);
+            // eslint-disable-next-line no-await-in-loop
+            await con.connect();:ki
+            const sql = `DROP DATABASE IF EXISTS \`${item}\`;`;
+            // eslint-disable-next-line no-await-in-loop
+            await con.promise().query(sql);
+        }
+    } catch (error) {
+        this.logger.error('Error while removing operation database. ', error);
+    } */
+    // delete ot-graphdb repositories
+    Promise.all(promises)
+        .then(() => {
+            con.end();
+        })
+        .then(() => {
+            this.logger.log(
+                'Completed scenario: ',
+                testCase.pickle.name,
+                `${testCase.gherkinDocument.uri}:${testCase.gherkinDocument.feature.location.line}`,
+            );
+            this.logger.log(
+                'with status: ',
+                testCase.result.status,
+                ' and duration: ',
+                testCase.result.duration,
+                ' miliseconds.',
+            );
+            done();
+        });
 });
 
 AfterAll(async () => {});
 
-process.on('unhandledRejection', (reason, p) => {
-    console.log(`Unhandled Rejection:\n${reason.stack}`);
+process.on('unhandledRejection', () => {
     process.abort();
 });

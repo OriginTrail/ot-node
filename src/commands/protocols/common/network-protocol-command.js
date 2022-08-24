@@ -6,7 +6,6 @@ class NetworkProtocolCommand extends Command {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
-        this.operationService = ctx.publishService;
     }
 
     /**
@@ -30,6 +29,7 @@ class NetworkProtocolCommand extends Command {
                     ...this.getNextCommandData(command),
                     keyword,
                     operationId,
+                    minimumAckResponses: this.operationService.getMinimumAckResponses(),
                     errorType: this.errorType,
                     networkProtocol: this.operationService.getNetworkProtocol(),
                 },
@@ -42,12 +42,12 @@ class NetworkProtocolCommand extends Command {
         return Command.empty();
     }
 
-    getKeywords(command) {
+    getKeywords() {
         // overridden by subclasses
         return [];
     }
 
-    getNextCommandData(command, keyword) {
+    getNextCommandData() {
         // overridden by subclasses
     }
 

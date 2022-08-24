@@ -1,7 +1,7 @@
 const axios = require('axios');
 const Command = require('../command');
-const constants = require('../../constants/constants');
 const pjson = require('../../../package.json');
+const { SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES } = require('../../constants/constants');
 
 class SendTelemetryCommand extends Command {
     constructor(ctx) {
@@ -17,7 +17,7 @@ class SendTelemetryCommand extends Command {
      * @param command
      */
     async execute() {
-        if (process.env.NODE_ENV !== 'testnet') {
+        if (!this.config.telemetry.enabled || !this.config.telemetry.sendTelemetryData) {
             return Command.empty();
         }
         try {
@@ -33,7 +33,7 @@ class SendTelemetryCommand extends Command {
                 };
                 const config = {
                     method: 'post',
-                    url: this.config.signalingServerUrl,
+                    url: this.config.telemetry.signalingServerUrl,
                     headers: {
                         'Content-Type': 'application/json',
                     },
@@ -70,7 +70,7 @@ class SendTelemetryCommand extends Command {
             name: 'sendTelemetryCommand',
             delay: 0,
             data: {},
-            period: 15 * 60 * 1000,
+            period: SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES * 60 * 1000,
             transactional: false,
         };
         Object.assign(command, map);

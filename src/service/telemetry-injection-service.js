@@ -1,6 +1,7 @@
 class TelemetryInjectionService {
     constructor(ctx) {
         this.logger = ctx.logger;
+        this.config = ctx.config;
         this.eventEmitter = ctx.eventEmitter;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
