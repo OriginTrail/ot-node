@@ -1,10 +1,12 @@
 const Command = require('../command');
-const { OPERATION_ID_STATUS } = require('../../constants/constants');
+const { OPERATION_ID_STATUS, ERROR_TYPE } = require('../../constants/constants');
 
 class QueryCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.queryService = ctx.queryService;
+
+        this.errorType = ERROR_TYPE.QUERY.LOCAL_QUERY_ERROR;
     }
 
     async execute(command) {
@@ -31,11 +33,7 @@ class QueryCommand extends Command {
                 OPERATION_ID_STATUS.COMPLETED,
             );
         } catch (e) {
-            await this.operationIdService.updateOperationIdStatus(
-                operationId,
-                OPERATION_ID_STATUS.FAILED,
-                e.message,
-            );
+            await this.handleError(operationId, e.message, this.errorType, true);
         }
 
         return Command.empty();

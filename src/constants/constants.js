@@ -173,6 +173,9 @@ exports.ERROR_TYPE = {
         GET_REQUEST_REMOTE_ERROR: 'GetRequestRemoteError',
         GET_ERROR: 'GetError',
     },
+    QUERY: {
+        LOCAL_QUERY_ERROR: 'LocalQueryError',
+    },
 };
 /**
  * @constant {object} OPERATION_ID_STATUS -

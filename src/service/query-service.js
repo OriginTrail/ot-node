@@ -1,11 +1,7 @@
-const OperationService = require('./operation-service');
-const { OPERATION_ID_STATUS, QUERY_TYPES } = require('../constants/constants');
+const { QUERY_TYPES } = require('../constants/constants');
 
-class QueryService extends OperationService {
+class QueryService {
     constructor(ctx) {
-        super(ctx);
-        this.operationName = 'query';
-        this.operationStatus = OPERATION_ID_STATUS.QUERY;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.dataService = ctx.dataService;
     }
