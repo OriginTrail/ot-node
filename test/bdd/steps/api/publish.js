@@ -63,40 +63,40 @@ When(
     },
 );
 
-Given('I wait for last publish to finalize', { timeout: 60000 }, async () => {
-    // this.logger.log('I wait for last publish to finalize');
-    // expect(
-    //     !!this.state.lastPublishData,
-    //     'Last publish data is undefined. Publish is not started.',
-    // ).to.be.equal(true);
-    // const publishData = this.state.lastPublishData;
-    // let loopForPublishResult = true;
-    // let retryCount = 0;
-    // const maxRetryCount = 2;
-    // while (loopForPublishResult) {
-    //     this.logger.log(
-    //         `Getting publish result for operation id: ${publishData.operationId} on node: ${publishData.nodeId}`,
-    //     );
-    //     // const publishResult = await httpApiHelper.getOperationResult(`http://localhost:${this.state.nodes[publishData.nodeId].configuration.rpcPort}`, publishData.operationId);
-    //     // eslint-disable-next-line no-await-in-loop
-    //     const publishResult = await this.state.nodes[publishData.nodeId].client
-    //         .getResult(publishData.UAL)
-    //         .catch((error) => {
-    //             assert.fail(`Error while trying to get publish result assertion. ${error}`);
-    //         });
-    //     if (publishResult) {
-    //         this.state.lastPublishData.result = publishResult;
-    //         loopForPublishResult = false;
-    //     }
-    //     if (retryCount === maxRetryCount) {
-    //         loopForPublishResult = true;
-    //         assert.fail('Unable to get publish result');
-    //     } else {
-    //         retryCount += 1;
-    //         // eslint-disable-next-line no-await-in-loop
-    //         await setTimeout(5000);
-    //     }
-    // }
+Given('I wait for last publish to finalize', { timeout: 60000 }, async function publishFinalize() {
+    this.logger.log('I wait for last publish to finalize');
+    expect(
+        !!this.state.lastPublishData,
+        'Last publish data is undefined. Publish is not started.',
+    ).to.be.equal(true);
+    const publishData = this.state.lastPublishData;
+    let loopForPublishResult = true;
+    let retryCount = 0;
+    const maxRetryCount = 2;
+    while (loopForPublishResult) {
+        this.logger.log(
+            `Getting publish result for operation id: ${publishData.operationId} on node: ${publishData.nodeId}`,
+        );
+        // const publishResult = await httpApiHelper.getOperationResult(`http://localhost:${this.state.nodes[publishData.nodeId].configuration.rpcPort}`, publishData.operationId);
+        // eslint-disable-next-line no-await-in-loop
+        const publishResult = await this.state.nodes[publishData.nodeId].client
+            .getResult(publishData.UAL)
+            .catch((error) => {
+                assert.fail(`Error while trying to get publish result assertion. ${error}`);
+            });
+        if (publishResult) {
+            this.state.lastPublishData.result = publishResult;
+            loopForPublishResult = false;
+        }
+        if (retryCount === maxRetryCount) {
+            loopForPublishResult = true;
+            assert.fail('Unable to get publish result');
+        } else {
+            retryCount += 1;
+            // eslint-disable-next-line no-await-in-loop
+            await setTimeout(5000);
+        }
+    }
 });
 
 Given(

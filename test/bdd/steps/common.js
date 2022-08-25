@@ -34,7 +34,7 @@ function forkNode(nodeConfiguration) {
     return forkedNode;
 }
 
-Given(/^I setup (\d+) node[s]*$/, { timeout: 60000 }, function nodeSetup(nodeCount, done) {
+Given(/^I setup (\d+) node[s]*$/, { timeout: 80000 }, function nodeSetup(nodeCount, done) {
     this.logger.log(`I setup ${nodeCount} node${nodeCount !== 1 ? 's' : ''}`);
     const wallets = this.state.localBlockchain.getWallets();
     const currentNumberOfNodes = Object.keys(this.state.nodes).length;
@@ -301,7 +301,7 @@ Given(
             } else {
                 // todo if started
                 const client = new DkgClientHelper({
-                    endpoint: '127.0.0.1',
+                    endpoint: 'http://localhost',
                     port: rpcPort,
                     useSSL: false,
                     timeout: 25,
