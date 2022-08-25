@@ -18,6 +18,4 @@ Feature: Release related tests
     And Last resolve finished with status: COMPLETED
     And I setup 1 additional node
     And I call resolve on node 5 for last published assertion
-#    And I wait for last resolve to finalize#
     And Last resolve finished with status: COMPLETED
-#    And Last resolve returned valid result
