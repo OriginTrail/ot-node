@@ -1,4 +1,4 @@
-const validator = require('validator');
+const uuid = require('uuid');
 
 class OperationIdService {
     constructor(ctx) {
@@ -28,7 +28,7 @@ class OperationIdService {
     }
 
     operationIdInRightFormat(operationId) {
-        return validator.isUUID(operationId);
+        return uuid.validate(operationId);
     }
 
     async updateOperationIdStatus(operationId, status, errorMessage = null, errorType = null) {

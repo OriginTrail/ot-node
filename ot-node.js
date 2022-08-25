@@ -1,7 +1,6 @@
 const DeepExtend = require('deep-extend');
 const rc = require('rc');
 const fs = require('fs');
-const queue = require('fastq');
 const appRootPath = require('app-root-path');
 const path = require('path');
 const EventEmitter = require('events');
@@ -87,8 +86,6 @@ class OTNode {
         DependencyInjection.registerValue(this.container, 'config', this.config);
         DependencyInjection.registerValue(this.container, 'logger', this.logger);
         DependencyInjection.registerValue(this.container, 'constants', constants);
-        DependencyInjection.registerValue(this.container, 'blockchainQueue', queue);
-        DependencyInjection.registerValue(this.container, 'tripleStoreQueue', queue);
 
         this.logger.info('Dependency injection module is initialized');
     }
