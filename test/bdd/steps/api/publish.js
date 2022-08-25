@@ -122,7 +122,7 @@ Given(
     },
 );
 Given(
-    /I wait for (\d+) seconds and check operationId status/,
+    /I wait for (\d+) seconds and check operation status/,
     { timeout: 120000 },
     async function publishWait(numberOfSeconds) {
         this.logger.log(`I wait for ${numberOfSeconds} seconds`);

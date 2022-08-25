@@ -14,7 +14,7 @@ Feature: Publish errors test
   Scenario: Node is not able to validate assertion on the network
     Given I setup 4 nodes
     When I call publish on ot-node 1 directly with invalidPublishRequestBody
-    And I wait for 20 seconds and check operationId status
+    And I wait for 20 seconds and check operation status
     And Last publish finished with status: PublishValidateAssertionError
 #
 ###  Scenario: Node is not able to store publish result in the local database
