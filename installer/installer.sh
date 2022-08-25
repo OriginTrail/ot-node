@@ -126,7 +126,7 @@ install_sql() {
             [2]* )  text_color $GREEN"MariaDB selected. Proceeding with installation."
                     sql=mariadb
                     perform_step apt-get install curl software-properties-common dirmngr ca-certificates apt-transport-https -y "Installing mariadb dependencies"
-                    perform_step curl -LsS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version=10.8 "Setting mariadb version to 10.8"
+                    curl -LsS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version=10.8
                     perform_step apt-get install mariadb-server -y "Installing mariadb-server"
                     break;;
             [Ee]* ) text_color $RED"Installer stopped by user"; exit;;
@@ -236,7 +236,7 @@ install_sql() {
     fi
     if [ $sql = mariadb ]; then
         perform_step sed -i 's|max_binlog_size|#max_binlog_size|' /etc/mysql/mariadb.conf.d/50-server.cnf "Setting max log size"
-        echo -e "disable_log_bin\nwait_timeout = 31536000\ninteractive_timeout = 31536000" >> /etc/mysql/mariadb.conf.d/50-server.cnf "Disabling logs, setting wait timeout and interactive timeout"
+        echo -e "disable_log_bin\nwait_timeout = 31536000\ninteractive_timeout = 31536000" >> /etc/mysql/mariadb.conf.d/50-server.cnf
     fi
     perform_step systemctl restart $sql "Restarting $sql"
 }
