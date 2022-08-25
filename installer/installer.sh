@@ -4,7 +4,7 @@ ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive"
 BRANCH="v6/release/testnet"
 BRANCH_DIR="/root/ot-node-6-release-testnet"
 OTNODE_DIR="/root/ot-node"
-FUSEKI_VER="apache-jena-fuseki-4.5.0"
+FUSEKI_VER="apache-jena-fuseki-4.6.0"
 NODEJS_VER="16"
 
 text_color() {
@@ -118,17 +118,19 @@ install_blazegraph() {
 }
 
 install_sql() {
-    text_color $YELLOW "IMPORTANT NOTE: to avoid potential migration issues from one SQL to another, please select the one you are currently using. If this is your first installation, both choices are valid. If you don't know the answer, select [1].
+    text_color $YELLOW"IMPORTANT NOTE: to avoid potential migration issues from one SQL to another, please select the one you are currently using. If this is your first installation, both choices are valid. If you don't know the answer, select [1].
     "
     while true; do
         read -p "Please select the SQL you would like to use: (Default: MySQL) [1]MySQL [2]MariaDB [E]xit " choice
         case "$choice" in
-            [2]* )  text_color $GREEN "MariaDB selected. Proceeding with installation."
+            [2]* )  text_color $GREEN"MariaDB selected. Proceeding with installation."
                     sql=mariadb
+                    perform_step apt-get install curl software-properties-common dirmngr ca-certificates apt-transport-https -y "Installing mariadb dependencies"
+                    perform_step curl -LsS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version=10.8 "Setting mariadb version to 10.8"
                     perform_step apt-get install mariadb-server -y "Installing mariadb-server"
                     break;;
-            [Ee]* ) text_color $RED "Installer stopped by user"; exit;;
-            * )     text_color $GREEN "MySQL selected. Proceeding with installation."
+            [Ee]* ) text_color $RED"Installer stopped by user"; exit;;
+            * )     text_color $GREEN"MySQL selected. Proceeding with installation."
                     sql=mysql
                     mysql_native_password=" WITH mysql_native_password"
                     perform_step apt-get install tcllib mysql-server -y "Installing mysql-server"
@@ -146,7 +148,7 @@ install_sql() {
             if [[ $? -ne 0 ]]; then
                 text_color $RED "FAILED"
                 echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
-                text_color $YELLOW "Wrong password entered. Try again ($x/5)"
+                text_color $YELLOW"Wrong password entered. Try again ($x/5)"
             else
                 text_color $GREEN "OK"
                 if [ -z "$password" ]; then
@@ -164,14 +166,14 @@ install_sql() {
                                 break
                             fi
                         else
-                            text_color $YELLOW "You must enter a sql repository password. Please try again." 
+                            text_color $YELLOW"You must enter a sql repository password. Please try again." 
                         fi
                     done
                 fi
                 break
             fi
             if [ $x == 5 ]; then
-                text_color $RED "FAILED. If you forgot your sql password, you must reset it before attempting this installer again."
+                text_color $RED"FAILED. If you forgot your sql password, you must reset it before attempting this installer again."
                 exit 1
             fi
         done
@@ -195,7 +197,7 @@ install_sql() {
                 fi
             done
         else
-            text_color $YELLOW "No sql repository password detected."
+            text_color $YELLOW"No sql repository password detected."
             for y in {1..2}; do
                 read -p "Enter a new sql repository password (do not leave blank): " password
                 if [ -n "$password" ]; then
@@ -211,7 +213,7 @@ install_sql() {
                         break
                     fi
                 else
-                    text_color $YELLOW "You must enter a sql repository password. Please try again." 
+                    text_color $YELLOW"You must enter a sql repository password. Please try again." 
                 fi
             done
         fi
@@ -305,22 +307,22 @@ clear
 
 cd /root
 
-header_color $BGREEN "Welcome to the OriginTrail Installer. Please sit back while the installer runs. "
+header_color $BGREEN"Welcome to the OriginTrail Installer. Please sit back while the installer runs. "
 
-header_color $BGREEN "Installing OriginTrail node pre-requisites..."
+header_color $BGREEN"Installing OriginTrail node pre-requisites..."
 
 install_prereqs
 
-header_color $BGREEN "Preparing OriginTrail node directory..."
+header_color $BGREEN"Preparing OriginTrail node directory..."
 
 
 if [[ -d "$OTNODE_DIR" ]]; then
     while true; do
         read -p "Previous ot-node directory detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
         case "$choice" in
-        [nN]* ) text_color $GREEN "Keeping previous ot-node directory."; break;;
-        [eE]* ) text_color $RED "Installer stopped by user"; exit;;
-        * ) text_color $GREEN "Reconfiguring ot-node directory."; rm -rf $OTNODE_DIR; install_directory; break;;
+        [nN]* ) text_color $GREEN"Keeping previous ot-node directory."; break;;
+        [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+        * ) text_color $GREEN"Reconfiguring ot-node directory."; rm -rf $OTNODE_DIR; install_directory; break;;
         esac
     done
 else
@@ -329,14 +331,14 @@ fi
 
 OTNODE_DIR=$OTNODE_DIR/current
 
-header_color $BGREEN "Installing Triplestore (Graph Database)..."
+header_color $BGREEN"Installing Triplestore (Graph Database)..."
 
 while true; do
     read -p "Please select the database you would like to use: (Default: Blazegraph) [1]Blazegraph [2]Fuseki [E]xit: " choice
     case "$choice" in
-        [2fF] ) text_color $GREEN "Fuseki selected. Proceeding with installation."; tripleStore=ot-fuseki; break;;
-        [Ee] )  text_color $RED "Installer stopped by user"; exit;;
-        * )     text_color $GREEN "Blazegraph selected. Proceeding with installation."; tripleStore=ot-blazegraph; break;;
+        [2fF] ) text_color $GREEN"Fuseki selected. Proceeding with installation."; tripleStore=ot-fuseki; break;;
+        [Ee] )  text_color $RED"Installer stopped by user"; exit;;
+        * )     text_color $GREEN"Blazegraph selected. Proceeding with installation."; tripleStore=ot-blazegraph; break;;
     esac
 done
 
@@ -345,9 +347,9 @@ if [ $tripleStore = "ot-fuseki" ]; then
         while true; do
             read -p "Previous Fuseki triplestore detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
             case "$choice" in
-            [nN]* ) text_color $GREEN "Keeping previous Fuseki installation."; break;;
-            [eE]* ) text_color $RED "Installer stopped by user"; exit;;
-            * ) text_color $GREEN "Reinstalling Fuseki."; rm -rf fuseki*; install_fuseki; break;;
+            [nN]* ) text_color $GREEN"Keeping previous Fuseki installation."; break;;
+            [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+            * ) text_color $GREEN"Reinstalling Fuseki."; rm -rf fuseki*; install_fuseki; break;;
             esac
         done
     else
@@ -360,9 +362,9 @@ if [ $tripleStore = "ot-blazegraph" ]; then
         while true; do
             read -p "Previous Blazegraph triplestore detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
             case "$choice" in
-            [nN]* ) text_color $GREEN "Keeping old Blazegraph Installation."; break;;
-            [eE]* ) text_color $RED "Installer stopped by user"; exit;;
-            * ) text_color $GREEN "Reinstalling Blazegraph."; rm -rf blazegraph*; install_blazegraph; break;;
+            [nN]* ) text_color $GREEN"Keeping old Blazegraph Installation."; break;;
+            [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+            * ) text_color $GREEN"Reinstalling Blazegraph."; rm -rf blazegraph*; install_blazegraph; break;;
             esac
         done
     else
@@ -370,15 +372,15 @@ if [ $tripleStore = "ot-blazegraph" ]; then
     fi
 fi
 
-header_color $BGREEN "Installing SQL..."
+header_color $BGREEN"Installing SQL..."
 
 install_sql
 
-header_color $BGREEN "Configuring OriginTrail node..."
+header_color $BGREEN"Configuring OriginTrail node..."
 
 install_node
 
-header_color $BGREEN "INSTALLATION COMPLETE !"
+header_color $BGREEN"INSTALLATION COMPLETE !"
 
 text_color $GREEN "
 New aliases added:
@@ -398,4 +400,4 @@ If the logs do not show and the screen hangs, press ctrl+c to exit the installat
 "
 read -p "Press enter to continue..."
 
-journalctl -u otnode --output cat -fn 100
+journalctl -u otnode --output cat -fn 200
