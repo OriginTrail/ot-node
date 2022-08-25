@@ -6,7 +6,6 @@ BRANCH_DIR="/root/ot-node-6-release-testnet"
 OTNODE_DIR="/root/ot-node"
 FUSEKI_VER="apache-jena-fuseki-4.5.0"
 NODEJS_VER="16"
-BASHRC_FILE=/root/.bashrc
 
 text_color() {
     GREEN='\033[0;32m'
@@ -39,8 +38,8 @@ perform_step() {
 }
 
 install_aliases() {
-    if [ -f "$BASHRC_FILE" ]; then
-        if grep -Fxq "alias otnode-restart='systemctl restart otnode.service'" $BASHRC_FILE; then
+    if [ -f "/root/.bashrc" ]; then
+        if grep -Fxq "alias otnode-restart='systemctl restart otnode.service'" ~/.bashrc; then
             echo "Aliases found, skipping."
         else
             echo "alias otnode-restart='systemctl restart otnode.service'" >> ~/.bashrc
@@ -48,11 +47,34 @@ install_aliases() {
             echo "alias otnode-start='systemctl start otnode.service'" >> ~/.bashrc
             echo "alias otnode-logs='journalctl -u otnode --output cat -f'" >> ~/.bashrc
             echo "alias otnode-config='nano ~/ot-node/.origintrail_noderc'" >> ~/.bashrc
-            source ~/.bashrc
         fi
     else
-        echo "$BASHRC_FILE does not exist. Proceeding with OriginTrail node installation."
+        echo "bashrc does not exist. Proceeding with OriginTrail node installation."
     fi
+}
+
+install_firewall() {
+    ufw allow 22/tcp && ufw allow 8900 && ufw allow 9000
+    yes | ufw enable
+}
+
+install_prereqs() {
+    export DEBIAN_FRONTEND=noninteractive
+    perform_step install_aliases "Updating .bashrc file with OriginTrail node aliases"
+    perform_step rm -rf /var/lib/dpkg/lock-frontend "Removing any frontend locks"
+    perform_step apt update "Updating Ubuntu package repository"
+    perform_step apt upgrade -y "Updating Ubuntu to latest version"
+    perform_step apt install default-jre unzip jq -y "Installing default-jre, unzip, jq"
+    perform_step apt install build-essential -y "Installing build-essential"
+    perform_step wget https://deb.nodesource.com/setup_$NODEJS_VER.x "Downloading Node.js v$NODEJS_VER"
+    chmod +x setup_$NODEJS_VER.x
+    perform_step ./setup_$NODEJS_VER.x "Installing Node.js v$NODEJS_VER"
+    rm -rf setup_$NODEJS_VER.x
+    perform_step apt update "Updating Ubuntu package repository"
+    perform_step apt-get install nodejs -y "Installing node.js"
+    perform_step npm install -g npm "Installing npm"
+    perform_step install_firewall "Configuring firewall"
+    perform_step apt remove unattended-upgrades -y "Remove unattended upgrades"
 }
 
 install_directory() {
@@ -68,13 +90,6 @@ install_directory() {
     OUTPUT=$(mv $BRANCH_DIR/.* $OTNODE_DIR/$OTNODE_VERSION/ 2>&1)
     rm -rf $BRANCH_DIR
     ln -sfn $OTNODE_DIR/$OTNODE_VERSION $OTNODE_DIR/current
-}
-
-install_firewall() {
-    ufw allow 22/tcp
-    ufw allow 8900
-    ufw allow 9000
-    yes | ufw enable
 }
 
 install_fuseki() {
@@ -103,7 +118,8 @@ install_blazegraph() {
 }
 
 install_sql() {
-    text_color $YELLOW "IMPORTANT NOTE: to avoid potential migration issues from one SQL to another, please select the one you are currently using. If this is your first installation, both choices are valid. If you don't know the answer, select [1]."
+    text_color $YELLOW "IMPORTANT NOTE: to avoid potential migration issues from one SQL to another, please select the one you are currently using. If this is your first installation, both choices are valid. If you don't know the answer, select [1].
+    "
     while true; do
         read -p "Please select the SQL you would like to use: (Default: MySQL) [1]MySQL [2]MariaDB [E]xit " choice
         case "$choice" in
@@ -114,13 +130,14 @@ install_sql() {
             [Ee]* ) text_color $RED "Installer stopped by user"; exit;;
             * )     text_color $GREEN "MySQL selected. Proceeding with installation."
                     sql=mysql
+                    mysql_native_password=" WITH mysql_native_password"
                     perform_step apt-get install tcllib mysql-server -y "Installing mysql-server"
                     break;;
         esac
     done
 
     if [ -d "/var/lib/mysql/operationaldb/" ]; then
-    #check if operationaldb already exists
+    #checks if operationaldb already exists, overwrite it if it does and ask user to input a new password (if old one was empty)
         text_color $YELLOW "Old sql database detected. Please enter your sql password to overwrite it."
         for x in {1..5}; do
             read -p "Enter your sql repository password (leave blank if none): " password
@@ -137,7 +154,7 @@ install_sql() {
                         read -p "Enter a new sql repository password if you wish (do not leave blank): " password
                         if [ -n "$password" ]; then
                             echo -n "Configuring new sql password: "
-                            OUTPUT=$($sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$password';" 2>&1)
+                            OUTPUT=$($sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED$mysql_native_password BY '$password';" 2>&1)
                             if [[ $? -ne 0 ]]; then
                                 text_color $RED "FAILED"
                                 echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
@@ -159,14 +176,13 @@ install_sql() {
             fi
         done
     else
+    #if operationaldb doesn't exist, check if sql is password protected, if not, prompt user to create one
         OUTPUT=$($sql -u root -e "status;" 2>&1)
-        #check if sql is password protected
         if [[ $? -ne 0 ]]; then
             for y in {1..5}; do
                 read -p "Enter your sql repository password: " password
                 echo -n "Password check: "
                 OUTPUT=$(MYSQL_PWD=$password $sql -u root -e "status;" 2>&1)
-                #check whether entered password matches current sql password
                 if [[ $? -ne 0 ]]; then
                     text_color $YELLOW "ERROR - The sql password provided does not match your current sql password. Please try again ($y/5)"
                 else
@@ -185,7 +201,7 @@ install_sql() {
                 if [ -n "$password" ]; then
                 #if password isn't blank
                     echo -n "Configuring new sql password: "
-                    OUTPUT=$($sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$password';" 2>&1)
+                    OUTPUT=$($sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED$mysql_native_password BY '$password';" 2>&1)
                     if [[ $? -ne 0 ]]; then
                         text_color $RED "FAILED"
                         echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
@@ -224,6 +240,46 @@ install_sql() {
 }
 
 install_node() {
+
+    CONFIG_DIR=$OTNODE_DIR/..
+
+    #blockchains=("otp" "polygon")
+    #for ((i = 0; i < ${#blockchains[@]}; ++i));
+    #do
+    #   read -p "Do you want to connect your node to blockchain: ${blockchains[$i]} ? [Y]Yes [N]No [E]Exit: " choice
+    #	case "$choice" in
+    #       [Yy]* )
+
+    #            read -p "Enter your substrate operational wallet address: " SUBSTRATE_OPERATIONAL_WALLET
+    #            echo "Substrate operational wallet address: $SUBSTRATE_OPERATIONAL_WALLET"
+
+    #            read -p "Enter your substrate operational wallet private key: " SUBSTRATE_OPERATIONAL_PRIVATE_KEY
+    #            echo "Substrate operational wallet private key: $SUBSTRATE_OPERATIONAL_PRIVATE_KEY"
+
+                read -p "Enter your EVM operational wallet address: " EVM_OPERATIONAL_WALLET
+                text_color $GREEN "EVM operational wallet address: $EVM_OPERATIONAL_WALLET"
+
+                read -p "Enter your EVM operational wallet private key: " EVM_OPERATIONAL_PRIVATE_KEY
+                text_color $GREEN "EVM operational wallet private key: $EVM_OPERATIONAL_PRIVATE_KEY"
+
+    #            read -p "Enter your substrate management wallet address: " SUBSTRATE_MANAGEMENT_WALLET
+    #            echo "Substrate management wallet address: $SUBSTRATE_MANAGEMENT_WALLET"
+
+    #            read -p "Enter your substrate management wallet private key: " SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY
+    #            echo "Substrate management wallet private key: $SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY"
+
+                read -p "Enter your EVM management wallet address: " EVM_MANAGEMENT_WALLET
+                text_color $GREEN "EVM management wallet address: $EVM_MANAGEMENT_WALLET"
+
+    #            read -p "Enter your EVM management wallet private key: " EVM_MANAGEMENT_PRIVATE_KEY
+    #            echo "EVM management wallet private key: $EVM_MANAGEMENT_PRIVATE_KEY"
+                # ;;
+    #      [Nn]* ) ;;
+    #     [Ee]* ) echo "Installer stopped by user"; exit;;
+        #    * ) ((--i));echo "Please make a valid choice and try again.";;
+        #esac
+    #done
+    
     # Change directory to ot-node/current
     cd $OTNODE_DIR
 
@@ -253,23 +309,7 @@ header_color $BGREEN "Welcome to the OriginTrail Installer. Please sit back whil
 
 header_color $BGREEN "Installing OriginTrail node pre-requisites..."
 
-export DEBIAN_FRONTEND=noninteractive
-perform_step install_aliases "Updating .bashrc file with OriginTrail node aliases"
-perform_step rm -rf /var/lib/dpkg/lock-frontend "Removing any frontend locks"
-perform_step apt update "Updating Ubuntu package repository"
-perform_step apt upgrade -y "Updating Ubuntu to latest version"
-perform_step apt install default-jre unzip jq -y "Installing default-jre, unzip, jq"
-perform_step apt install build-essential -y "Installing build-essential"
-perform_step wget https://deb.nodesource.com/setup_$NODEJS_VER.x "Downloading Node.js v$NODEJS_VER"
-chmod +x setup_$NODEJS_VER.x
-perform_step ./setup_$NODEJS_VER.x "Installing Node.js v$NODEJS_VER"
-rm -rf setup_$NODEJS_VER.x
-perform_step apt update "Updating Ubuntu package repository"
-perform_step apt-get install nodejs -y "Installing node.js"
-perform_step npm install -g npm "Installing npm"
-perform_step install_firewall "Configuring firewall"
-perform_step apt remove unattended-upgrades -y "Remove unattended upgrades"
-
+install_prereqs
 
 header_color $BGREEN "Preparing OriginTrail node directory..."
 
@@ -280,7 +320,7 @@ if [[ -d "$OTNODE_DIR" ]]; then
         case "$choice" in
         [nN]* ) text_color $GREEN "Keeping previous ot-node directory."; break;;
         [eE]* ) text_color $RED "Installer stopped by user"; exit;;
-        * ) text_color $GREEN "Reinstalling ot-node directory."; rm -rf $OTNODE_DIR; install_directory; break;;
+        * ) text_color $GREEN "Reconfiguring ot-node directory."; rm -rf $OTNODE_DIR; install_directory; break;;
         esac
     done
 else
@@ -336,51 +376,26 @@ install_sql
 
 header_color $BGREEN "Configuring OriginTrail node..."
 
-CONFIG_DIR=$OTNODE_DIR/..
-
-#blockchains=("otp" "polygon")
-#for ((i = 0; i < ${#blockchains[@]}; ++i));
-#do
-#   read -p "Do you want to connect your node to blockchain: ${blockchains[$i]} ? [Y]Yes [N]No [E]Exit: " choice
-#	case "$choice" in
-#       [Yy]* )
-
-#            read -p "Enter your substrate operational wallet address: " SUBSTRATE_OPERATIONAL_WALLET
-#            echo "Substrate operational wallet address: $SUBSTRATE_OPERATIONAL_WALLET"
-
-#            read -p "Enter your substrate operational wallet private key: " SUBSTRATE_OPERATIONAL_PRIVATE_KEY
-#            echo "Substrate operational wallet private key: $SUBSTRATE_OPERATIONAL_PRIVATE_KEY"
-
-            read -p "Enter your EVM operational wallet address: " EVM_OPERATIONAL_WALLET
-            text_color $GREEN "EVM operational wallet address: $EVM_OPERATIONAL_WALLET"
-
-            read -p "Enter your EVM operational wallet private key: " EVM_OPERATIONAL_PRIVATE_KEY
-            text_color $GREEN "EVM operational wallet private key: $EVM_OPERATIONAL_PRIVATE_KEY"
-
-#            read -p "Enter your substrate management wallet address: " SUBSTRATE_MANAGEMENT_WALLET
-#            echo "Substrate management wallet address: $SUBSTRATE_MANAGEMENT_WALLET"
-
-#            read -p "Enter your substrate management wallet private key: " SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY
-#            echo "Substrate management wallet private key: $SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY"
-
-            read -p "Enter your EVM management wallet address: " EVM_MANAGEMENT_WALLET
-            text_color $GREEN "EVM management wallet address: $EVM_MANAGEMENT_WALLET"
-
-#            read -p "Enter your EVM management wallet private key: " EVM_MANAGEMENT_PRIVATE_KEY
-#            echo "EVM management wallet private key: $EVM_MANAGEMENT_PRIVATE_KEY"
-            # ;;
-#      [Nn]* ) ;;
-#     [Ee]* ) echo "Installer stopped by user"; exit;;
-    #    * ) ((--i));echo "Please make a valid choice and try again.";;
-    #esac
-#done
-
 install_node
 
-text_color $GREEN "Logs will be displayed. Press ctrl+c to exit the logs. The node WILL stay running after you return to the command prompt."
-echo ""
-text_color $GREEN "If the logs do not show and the screen hangs, press ctrl+c to exit the installation and reboot your server."
-echo ""
+header_color $BGREEN "INSTALLATION COMPLETE !"
+
+text_color $GREEN "
+New aliases added:
+otnode-restart
+otnode-stop
+otnode-start
+otnode-logs
+otnode-config
+
+To start using aliases, run:
+source ~/.bashrc
+"
+text_color $YELLOW"Logs will be displayed. Press ctrl+c to exit the logs. The node WILL stay running after you return to the command prompt.
+
+If the logs do not show and the screen hangs, press ctrl+c to exit the installation and reboot your server.
+
+"
 read -p "Press enter to continue..."
 
 journalctl -u otnode --output cat -fn 100
