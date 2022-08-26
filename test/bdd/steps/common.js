@@ -1,4 +1,5 @@
 const { Given } = require('@cucumber/cucumber');
+const DeepExtend = require('deep-extend');
 const { expect, assert } = require('chai');
 const { fork } = require('child_process');
 const fs = require('fs');
@@ -34,6 +35,63 @@ function forkNode(nodeConfiguration) {
     return forkedNode;
 }
 
+function createNodeConfiguration(wallet, managementWallet, nodeIndex, nodeName, rpcPort) {
+    return {
+        modules: {
+            blockchain: getBlockchainConfiguration(
+                this.state.localBlockchain,
+                wallet.privateKey,
+                wallet.address,
+                managementWallet.address,
+            )[0],
+            network: {
+                implementation: {
+                    'libp2p-service': {
+                        config: {
+                            port: 9001 + nodeIndex,
+                        },
+                    },
+                },
+            },
+            repository: {
+                implementation: {
+                    'sequelize-repository': {
+                        config: {
+                            database: `operationaldbnode${nodeIndex}`,
+                        },
+                    },
+                },
+            },
+            tripleStore: {
+                implementation: {
+                    'ot-graphdb': {
+                        config: {
+                            repository: nodeName,
+                        },
+                    },
+                },
+            },
+            httpClient: {
+                implementation: {
+                    'express-http-client': {
+                        config: {
+                            port: rpcPort,
+                        },
+                    },
+                },
+            },
+        },
+        operationalDatabase: {
+            databaseName: `operationaldbnode${nodeIndex}`,
+        },
+        rpcPort,
+        appDataPath: `data${nodeIndex}`,
+        graphDatabase: {
+            name: nodeName,
+        },
+    };
+}
+
 Given(/^I setup (\d+) node[s]*$/, { timeout: 80000 }, function nodeSetup(nodeCount, done) {
     this.logger.log(`I setup ${nodeCount} node${nodeCount !== 1 ? 's' : ''}`);
     const wallets = this.state.localBlockchain.getWallets();
@@ -46,35 +104,26 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 80000 }, function nodeSetup(nodeCou
         const rpcPort = 8901 + nodeIndex;
         const nodeName = `origintrail-test-${nodeIndex}`;
 
-        const nodeConfiguration = JSON.parse(
+        const defaultConfiguration = JSON.parse(
             fs
                 .readFileSync(
                     path.join(__dirname, `${PATH_TO_CONFIGS}origintrail-test-node-config.json`),
                 )
                 .toString(),
         );
+
         // eslint-disable-next-line prefer-destructuring
-        nodeConfiguration.modules.blockchain = getBlockchainConfiguration(
-            this.state.localBlockchain,
-            wallet.privateKey,
-            wallet.address,
-            managementWallet.address,
-        )[0];
-
-        nodeConfiguration.modules.network.implementation['libp2p-service'].config.port =
-            9001 + nodeIndex;
-        nodeConfiguration.modules.repository.implementation[
-            'sequelize-repository'
-        ].config.database = `operationaldbnode${nodeIndex}`;
-        nodeConfiguration.modules.tripleStore.implementation['ot-graphdb'].config.repository =
-            nodeName;
-        nodeConfiguration.modules.httpClient.implementation['express-http-client'].config.port =
-            rpcPort;
-        nodeConfiguration.operationalDatabase.databaseName = `operationaldbnode${nodeIndex}`;
-        nodeConfiguration.rpcPort = rpcPort;
-        nodeConfiguration.appDataPath = `data${nodeIndex}`;
-        nodeConfiguration.graphDatabase.name = nodeName;
-
+        const nodeConfiguration = DeepExtend(
+            defaultConfiguration,
+            createNodeConfiguration.call(
+                this,
+                wallet,
+                managementWallet,
+                nodeIndex,
+                nodeName,
+                rpcPort,
+            ),
+        );
         const forkedNode = forkNode(nodeConfiguration);
 
         const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
@@ -173,35 +222,24 @@ Given(
             const managementWallet = wallets[nodeIndex + 28];
             const rpcPort = 8901 + nodeIndex;
             const nodeName = `origintrail-test-${nodeIndex}`;
-            const nodeConfiguration = JSON.parse(
+            const defaultConfiguration = JSON.parse(
                 fs
                     .readFileSync(
                         path.join(__dirname, `${PATH_TO_CONFIGS}origintrail-test-node-config.json`),
                     )
                     .toString(),
             );
-            // eslint-disable-next-line prefer-destructuring
-            nodeConfiguration.modules.blockchain = getBlockchainConfiguration(
-                this.state.localBlockchain,
-                wallet.privateKey,
-                wallet.address,
-                managementWallet.address,
-            )[0];
-
-            nodeConfiguration.modules.network.implementation['libp2p-service'].config.port =
-                9001 + nodeIndex;
-            nodeConfiguration.modules.repository.implementation[
-                'sequelize-repository'
-            ].config.database = `operationaldbnode${nodeIndex}`;
-            nodeConfiguration.modules.tripleStore.implementation['ot-graphdb'].config.repository =
-                nodeName;
-            nodeConfiguration.modules.httpClient.implementation['express-http-client'].config.port =
-                rpcPort;
-            nodeConfiguration.operationalDatabase.databaseName = `operationaldbnode${nodeIndex}`;
-            nodeConfiguration.rpcPort = rpcPort;
-            nodeConfiguration.appDataPath = `data${nodeIndex}`;
-            nodeConfiguration.graphDatabase.name = nodeName;
-
+            const nodeConfiguration = DeepExtend(
+                defaultConfiguration,
+                createNodeConfiguration.call(
+                    this,
+                    wallet,
+                    managementWallet,
+                    nodeIndex,
+                    nodeName,
+                    rpcPort,
+                ),
+            );
             const forkedNode = forkNode(nodeConfiguration);
 
             const logFileStream = fs.createWriteStream(
@@ -252,7 +290,7 @@ Given(
         const managementWallet = this.state.localBlockchain.getWallets()[nodeIndex + 28];
         const rpcPort = 8901 + nodeIndex;
         const nodeName = `origintrail-test-${nodeIndex}`;
-        const nodeConfiguration = JSON.parse(
+        const defaultConfiguration = JSON.parse(
             fs
                 .readFileSync(
                     path.join(__dirname, `${PATH_TO_CONFIGS}origintrail-test-node-config.json`),
@@ -260,29 +298,18 @@ Given(
                 .toString(),
         );
         // eslint-disable-next-line prefer-destructuring
-        nodeConfiguration.modules.blockchain = getBlockchainConfiguration(
-            this.state.localBlockchain,
-            wallet.privateKey,
-            wallet.address,
-            managementWallet.address,
-        )[0];
-
-        nodeConfiguration.modules.network.implementation['libp2p-service'].config.port =
-            9001 + nodeIndex;
-        nodeConfiguration.modules.repository.implementation[
-            'sequelize-repository'
-        ].config.database = `operationaldbnode${nodeIndex}`;
-        nodeConfiguration.modules.tripleStore.implementation['ot-graphdb'].config.repository =
-            nodeName;
-        nodeConfiguration.modules.httpClient.implementation['express-http-client'].config.port =
-            rpcPort;
-        nodeConfiguration.operationalDatabase.databaseName = `operationaldbnode${nodeIndex}`;
-        nodeConfiguration.rpcPort = rpcPort;
-        nodeConfiguration.appDataPath = `data${nodeIndex}`;
-        nodeConfiguration.graphDatabase.name = nodeName;
-
+        const nodeConfiguration = DeepExtend(
+            defaultConfiguration,
+            createNodeConfiguration.call(
+                this,
+                wallet,
+                managementWallet,
+                nodeIndex,
+                nodeName,
+                rpcPort,
+            ),
+        );
         nodeConfiguration.minimumAckResponses.publish = 10;
-
         const forkedNode = forkNode(nodeConfiguration);
 
         const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
