@@ -104,7 +104,7 @@ install_fuseki() {
     perform_step cp $OTNODE_DIR/installer/data/fuseki.service /lib/systemd/system/ "Copying Fuseki service file"
     systemctl daemon-reload
     perform_step systemctl enable fuseki "Enabling Fuseki"
-    perform_step systemctl start fuseki "Starting Fuseki"
+    perform_step systemctl restart fuseki "Starting Fuseki"
     perform_step systemctl status fuseki "Fuseki status"
 }
 
@@ -113,7 +113,7 @@ install_blazegraph() {
     perform_step cp $OTNODE_DIR/installer/data/blazegraph.service /lib/systemd/system/ "Copying Blazegraph service file"
     systemctl daemon-reload
     perform_step systemctl enable blazegraph "Enabling Blazegrpah"
-    perform_step systemctl start blazegraph "Starting Blazegraph"
+    perform_step systemctl restart blazegraph "Starting Blazegraph"
     perform_step systemctl status blazegraph "Blazegraph status"
 }
 
@@ -299,7 +299,7 @@ install_node() {
     
     systemctl daemon-reload
     perform_step systemctl enable otnode "Enabling otnode"
-    perform_step systemctl start otnode "Starting otnode"
+    perform_step systemctl restart otnode "Starting otnode"
     perform_step systemctl status otnode "otnode status"
 }
 
