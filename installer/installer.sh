@@ -1,11 +1,6 @@
 #!/bin/bash
 
-ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive"
-BRANCH="v6/release/testnet"
-BRANCH_DIR="/root/ot-node-6-release-testnet"
 OTNODE_DIR="/root/ot-node"
-FUSEKI_VER="apache-jena-fuseki-4.6.0"
-NODEJS_VER="16"
 
 text_color() {
     GREEN='\033[0;32m'
@@ -38,7 +33,7 @@ perform_step() {
 }
 
 install_aliases() {
-    if [ -f "/root/.bashrc" ]; then
+    if [[ -f "/root/.bashrc" ]]; then
         if grep -Fxq "alias otnode-restart='systemctl restart otnode.service'" ~/.bashrc; then
             echo "Aliases found, skipping."
         else
@@ -53,6 +48,25 @@ install_aliases() {
     fi
 }
 
+install_directory() {
+    ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive"
+    BRANCH="v6/release/testnet"
+    BRANCH_DIR="/root/ot-node-6-release-testnet"
+
+    #Download new version .zip file
+    #Unpack to init folder
+    perform_step wget https://$ARCHIVE_REPOSITORY_URL/$BRANCH.zip "Downloading node files"
+    perform_step unzip *.zip "Unzipping node files"
+    perform_step rm *.zip "Removing zip file"
+    OTNODE_VERSION=$(jq -r '.version' $BRANCH_DIR/package.json)
+    perform_step mkdir $OTNODE_DIR "Creating new ot-node directory"
+    perform_step mkdir $OTNODE_DIR/$OTNODE_VERSION "Creating new ot-node version directory"
+    perform_step mv $BRANCH_DIR/* $OTNODE_DIR/$OTNODE_VERSION/ "Moving downloaded node files to ot-node version directory"
+    OUTPUT=$(mv $BRANCH_DIR/.* $OTNODE_DIR/$OTNODE_VERSION/ 2>&1)
+    perform_step rm -rf $BRANCH_DIR "Removing old directories"
+    perform_step ln -sfn $OTNODE_DIR/$OTNODE_VERSION $OTNODE_DIR/current "Creating symlink from $OTNODE_DIR/$OTNODE_VERSION to $OTNODE_DIR/current"
+}
+
 install_firewall() {
     ufw allow 22/tcp && ufw allow 8900 && ufw allow 9000
     yes | ufw enable
@@ -60,11 +74,14 @@ install_firewall() {
 
 install_prereqs() {
     export DEBIAN_FRONTEND=noninteractive
+    NODEJS_VER="16"
+
     perform_step install_aliases "Updating .bashrc file with OriginTrail node aliases"
     perform_step rm -rf /var/lib/dpkg/lock-frontend "Removing any frontend locks"
     perform_step apt update "Updating Ubuntu package repository"
     perform_step apt upgrade -y "Updating Ubuntu to latest version"
-    perform_step apt install default-jre unzip jq -y "Installing default-jre, unzip, jq"
+    perform_step apt install unzip jq -y "Installing unzip, jq"
+    perform_step apt install default-jre -y "Installing default-jre"
     perform_step apt install build-essential -y "Installing build-essential"
     perform_step wget https://deb.nodesource.com/setup_$NODEJS_VER.x "Downloading Node.js v$NODEJS_VER"
     chmod +x setup_$NODEJS_VER.x
@@ -77,34 +94,21 @@ install_prereqs() {
     perform_step apt remove unattended-upgrades -y "Remove unattended upgrades"
 }
 
-install_directory() {
-    #Download new version .zip file
-    #Unpack to init folder
-    perform_step wget https://$ARCHIVE_REPOSITORY_URL/$BRANCH.zip "Downloading node files"
-    perform_step unzip *.zip "Unzipping node files"
-    rm *.zip
-    OTNODE_VERSION=$(jq -r '.version' $BRANCH_DIR/package.json)
-    mkdir $OTNODE_DIR
-    mkdir $OTNODE_DIR/$OTNODE_VERSION
-    OUTPUT=$(mv $BRANCH_DIR/* $OTNODE_DIR/$OTNODE_VERSION/ 2>&1)
-    OUTPUT=$(mv $BRANCH_DIR/.* $OTNODE_DIR/$OTNODE_VERSION/ 2>&1)
-    rm -rf $BRANCH_DIR
-    ln -sfn $OTNODE_DIR/$OTNODE_VERSION $OTNODE_DIR/current
-}
-
 install_fuseki() {
+    FUSEKI_VER="apache-jena-fuseki-4.6.0"
+
     perform_step wget https://dlcdn.apache.org/jena/binaries/$FUSEKI_VER.zip "Downloading Fuseki"
     perform_step unzip $FUSEKI_VER.zip "Unzipping Fuseki"
-    rm /root/$FUSEKI_VER.zip
-    mkdir /root/fuseki
-    mkdir /root/fuseki/tdb
-    cp /root/$FUSEKI_VER/fuseki-server.jar /root/fuseki/
-    cp -r /root/$FUSEKI_VER/webapp/ /root/fuseki/
-    rm -r /root/$FUSEKI_VER
+    perform_step rm /root/$FUSEKI_VER.zip "Removing Fuseki zip file"
+    perform_step mkdir /root/fuseki "Making /root/fuseki directory"
+    perform_step mkdir /root/fuseki/tdb "Making /root/fuseki/tdb directory"
+    perform_step cp /root/$FUSEKI_VER/fuseki-server.jar /root/fuseki/ "Copying Fuseki files to /root/fuseki/ 1/2"
+    perform_step cp -r /root/$FUSEKI_VER/webapp/ /root/fuseki/ "Copying Fuseki files to /root/fuseki/ 1/2"
+    perform_step rm -r /root/$FUSEKI_VER "Removing the remaining /root/$FUSEKI_VER directory"
     perform_step cp $OTNODE_DIR/installer/data/fuseki.service /lib/systemd/system/ "Copying Fuseki service file"
     systemctl daemon-reload
     perform_step systemctl enable fuseki "Enabling Fuseki"
-    perform_step systemctl restart fuseki "Starting Fuseki"
+    perform_step systemctl start fuseki "Starting Fuseki"
     perform_step systemctl status fuseki "Fuseki status"
 }
 
@@ -113,11 +117,12 @@ install_blazegraph() {
     perform_step cp $OTNODE_DIR/installer/data/blazegraph.service /lib/systemd/system/ "Copying Blazegraph service file"
     systemctl daemon-reload
     perform_step systemctl enable blazegraph "Enabling Blazegrpah"
-    perform_step systemctl restart blazegraph "Starting Blazegraph"
+    perform_step systemctl start blazegraph "Starting Blazegraph"
     perform_step systemctl status blazegraph "Blazegraph status"
 }
 
 install_sql() {
+    #check which sql to install/update
     text_color $YELLOW"IMPORTANT NOTE: to avoid potential migration issues from one SQL to another, please select the one you are currently using. If this is your first installation, both choices are valid. If you don't know the answer, select [1].
     "
     while true; do
@@ -138,105 +143,60 @@ install_sql() {
         esac
     done
 
-    if [ -d "/var/lib/mysql/operationaldb/" ]; then
-    #checks if operationaldb already exists, overwrite it if it does and ask user to input a new password (if old one was empty)
-        text_color $YELLOW "Old sql database detected. Please enter your sql password to overwrite it."
-        for x in {1..5}; do
-            read -p "Enter your sql repository password (leave blank if none): " password
-            echo -n "Deleting old sql database: "
-            OUTPUT=$(MYSQL_PWD=$password $sql -u root -e "DROP DATABASE IF EXISTS operationaldb;" 2>&1)     
+    #check old sql password
+    OUTPUT=$($sql -u root -e "status;" 2>&1)
+    if [[ $? -ne 0 ]]; then
+        while true; do
+            read -s -p "Enter your old sql password: " oldpassword
+            echo
+            echo -n "Password check: "
+            OUTPUT=$(MYSQL_PWD=$oldpassword $sql -u root -e "status;" 2>&1)
             if [[ $? -ne 0 ]]; then
-                text_color $RED "FAILED"
-                echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
-                text_color $YELLOW"Wrong password entered. Try again ($x/5)"
+                text_color $YELLOW "ERROR - The sql repository password provided does not match your sql password. Please try again."
             else
                 text_color $GREEN "OK"
-                if [ -z "$password" ]; then
-                    for z in {1..2}; do
-                        read -p "Enter a new sql repository password if you wish (do not leave blank): " password
-                        if [ -n "$password" ]; then
-                            echo -n "Configuring new sql password: "
-                            OUTPUT=$($sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED$mysql_native_password BY '$password';" 2>&1)
-                            if [[ $? -ne 0 ]]; then
-                                text_color $RED "FAILED"
-                                echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
-                                exit 1
-                            else
-                                text_color $GREEN "OK"
-                                break
-                            fi
-                        else
-                            text_color $YELLOW"You must enter a sql repository password. Please try again." 
-                        fi
-                    done
-                fi
                 break
             fi
-            if [ $x == 5 ]; then
-                text_color $RED"FAILED. If you forgot your sql password, you must reset it before attempting this installer again."
-                exit 1
-            fi
         done
-    else
-    #if operationaldb doesn't exist, check if sql is password protected, if not, prompt user to create one
-        OUTPUT=$($sql -u root -e "status;" 2>&1)
-        if [[ $? -ne 0 ]]; then
-            for y in {1..5}; do
-                read -p "Enter your sql repository password: " password
-                echo -n "Password check: "
-                OUTPUT=$(MYSQL_PWD=$password $sql -u root -e "status;" 2>&1)
-                if [[ $? -ne 0 ]]; then
-                    text_color $YELLOW "ERROR - The sql password provided does not match your current sql password. Please try again ($y/5)"
-                else
-                    text_color $GREEN "OK"
-                    break
-                fi
-                if [ $y == 5 ]; then
-                    text_color $RED "FAILED. If you forgot your sql password, you must reset it before attempting this installer again."
-                    exit 1
-                fi
-            done
-        else
-            text_color $YELLOW"No sql repository password detected."
-            for y in {1..2}; do
-                read -p "Enter a new sql repository password (do not leave blank): " password
-                if [ -n "$password" ]; then
-                #if password isn't blank
-                    echo -n "Configuring new sql password: "
-                    OUTPUT=$($sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED$mysql_native_password BY '$password';" 2>&1)
-                    if [[ $? -ne 0 ]]; then
-                        text_color $RED "FAILED"
-                        echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
-                        exit 1
-                    else
-                        text_color $GREEN "OK"
-                        break
-                    fi
-                else
-                    text_color $YELLOW"You must enter a sql repository password. Please try again." 
-                fi
-            done
-        fi
     fi
 
-    echo "REPOSITORY_PASSWORD=$password" > $OTNODE_DIR/.env
-    echo -n "Creating new sql database: "
-    OUTPUT=$(MYSQL_PWD=$password $sql -u root -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;" 2>&1)
-    if [[ $? -ne 0 ]]; then
-        text_color $RED "FAILED"
-        echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
-        exit 1
-    else
-        text_color $GREEN "OK"
+    #check operationaldb
+    if [[ -d "/var/lib/mysql/operationaldb/" ]]; then
+        read -p "Old operationaldb repository detected. Would you like to overwrite it ? (Default: No) [Y]es [N]o [E]xit " choice
+        case "$choice" in
+            [yY]* ) perform_step $(MYSQL_PWD=$oldpassword $sql -u root -e "DROP DATABASE IF EXISTS operationaldb;") "Overwritting slq repository";;
+            [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+            * )     text_color $GREEN"Keeping previous sql repository"; NEW_DB=FALSE;;
+        esac
     fi
-    
-    if [ $sql = mysql ]; then
+
+    #check sql new password
+    read -p "Would you like to change your sql password or add one ? (Default: Yes) [Y]es [N]o [E]xit " choice
+    case "$choice" in
+        [nN]* ) text_color $GREEN"Keeping previous sql password"; password=$oldpassword;;
+        [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+        * )     while true; do
+                    read -s -p "Enter your new sql password: " password
+                    echo
+                    read -s -p "Please confirm your new sql password: " password2
+                    echo
+                    [[ $password = $password2 ]] && break
+                    text_color $YELLOW "Password entered do not match. Please try again."
+                done
+                perform_step $(MYSQL_PWD=$oldpassword $sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED$mysql_native_password BY '$password';") "Changing sql password";;
+    esac
+
+    perform_step $(echo "REPOSITORY_PASSWORD=$password" > $OTNODE_DIR/.env) "Adding sql password to .env"
+    if [[ $NEW_DB != FALSE ]]; then
+        perform_step $(MYSQL_PWD=$password $sql -u root -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;") "Creating new sql repository"
+    fi
+    if [[ $sql = mysql ]]; then
         perform_step sed -i 's|max_binlog_size|#max_binlog_size|' /etc/mysql/mysql.conf.d/mysqld.cnf "Setting max log size"
-        echo -e "disable_log_bin\nwait_timeout = 31536000\ninteractive_timeout = 31536000" >> /etc/mysql/mysql.conf.d/mysqld.cnf
+        perform_step $(echo -e "disable_log_bin\nwait_timeout = 31536000\ninteractive_timeout = 31536000" >> /etc/mysql/mysql.conf.d/mysqld.cnf) "Adding disable_log_bin, wait_timeout, interactive_timeout to sql config"
     fi
-    if [ $sql = mariadb ]; then
+    if [[ $sql = mariadb ]]; then
         perform_step sed -i 's|max_binlog_size|#max_binlog_size|' /etc/mysql/mariadb.conf.d/50-server.cnf "Setting max log size"
-        echo -e "disable_log_bin\nwait_timeout = 31536000\ninteractive_timeout = 31536000" >> /etc/mysql/mariadb.conf.d/50-server.cnf
+        perform_step $(echo -e "disable_log_bin\nwait_timeout = 31536000\ninteractive_timeout = 31536000" >> /etc/mysql/mariadb.conf.d/50-server.cnf) "Adding disable_log_bin, wait_timeout, interactive_timeout to sql config"
     fi
     perform_step systemctl restart $sql "Restarting $sql"
 }
@@ -290,19 +250,25 @@ install_node() {
     echo "NODE_ENV=testnet" >> $OTNODE_DIR/.env
 
     perform_step touch $CONFIG_DIR/.origintrail_noderc "Configuring node config file"
-    jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}, "modules": {"tripleStore":{"defaultImplementation": $tripleStore}}}' > $CONFIG_DIR/.origintrail_noderc
+    perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}, "modules": {"tripleStore":{"defaultImplementation": $tripleStore}}}' > $CONFIG_DIR/.origintrail_noderc) "Adding tripleStore $tripleStore to node config file"
 
-    jq --arg blockchain "otp" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" '.modules.blockchain.implementation[$blockchain].config |= { "evmOperationalWalletPublicKey": $evmOperationalWallet, "evmOperationalWalletPrivateKey": $evmOperationalWalletPrivateKey, "evmManagementWalletPublicKey": $evmManagementWallet} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
-    mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc
+    perform_step $(jq --arg blockchain "otp" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" '.modules.blockchain.implementation[$blockchain].config |= { "evmOperationalWalletPublicKey": $evmOperationalWallet, "evmOperationalWalletPrivateKey": $evmOperationalWalletPrivateKey, "evmManagementWalletPublicKey": $evmManagementWallet} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding wallet inputs to node config file 1/2"
+    perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding wallet inputs to node config file 1/2"
 
     perform_step cp $OTNODE_DIR/installer/data/otnode.service /lib/systemd/system/ "Copying otnode service file"
     
     systemctl daemon-reload
     perform_step systemctl enable otnode "Enabling otnode"
-    perform_step systemctl restart otnode "Starting otnode"
+    perform_step systemctl start otnode "Starting otnode"
     perform_step systemctl status otnode "otnode status"
 }
 
+#For Arch Linux installation
+if [[ ! -z $(grep "arch" "/etc/os-release") ]]; then
+    source <(curl -s https://raw.githubusercontent.com/OriginTrail/ot-node/v6/develop/installer/data/archlinux)
+fi
+
+#### INSTALLATION START ####
 clear
 
 cd /root
@@ -315,16 +281,13 @@ install_prereqs
 
 header_color $BGREEN"Preparing OriginTrail node directory..."
 
-
 if [[ -d "$OTNODE_DIR" ]]; then
-    while true; do
-        read -p "Previous ot-node directory detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
-        case "$choice" in
-        [nN]* ) text_color $GREEN"Keeping previous ot-node directory."; break;;
+    read -p "Previous ot-node directory detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
+    case "$choice" in
+        [nN]* ) text_color $GREEN"Keeping previous ot-node directory.";;
         [eE]* ) text_color $RED"Installer stopped by user"; exit;;
-        * ) text_color $GREEN"Reconfiguring ot-node directory."; rm -rf $OTNODE_DIR; install_directory; break;;
-        esac
-    done
+        * ) text_color $GREEN"Reconfiguring ot-node directory."; perform_step rm -rf $OTNODE_DIR "Deleting $OTNODE_DIR"; install_directory;;
+    esac
 else
     install_directory
 fi
@@ -333,40 +296,34 @@ OTNODE_DIR=$OTNODE_DIR/current
 
 header_color $BGREEN"Installing Triplestore (Graph Database)..."
 
-while true; do
-    read -p "Please select the database you would like to use: (Default: Blazegraph) [1]Blazegraph [2]Fuseki [E]xit: " choice
-    case "$choice" in
-        [2fF] ) text_color $GREEN"Fuseki selected. Proceeding with installation."; tripleStore=ot-fuseki; break;;
-        [Ee] )  text_color $RED"Installer stopped by user"; exit;;
-        * )     text_color $GREEN"Blazegraph selected. Proceeding with installation."; tripleStore=ot-blazegraph; break;;
-    esac
-done
+read -p "Please select the database you would like to use: (Default: Blazegraph) [1]Blazegraph [2]Fuseki [E]xit: " choice
+case "$choice" in
+    [2fF] ) text_color $GREEN"Fuseki selected. Proceeding with installation."; tripleStore=ot-fuseki;;
+    [Ee] )  text_color $RED"Installer stopped by user"; exit;;
+    * )     text_color $GREEN"Blazegraph selected. Proceeding with installation."; tripleStore=ot-blazegraph;;
+esac
 
-if [ $tripleStore = "ot-fuseki" ]; then
-    if [ -d "/root/fuseki" ]; then
-        while true; do
-            read -p "Previous Fuseki triplestore detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
-            case "$choice" in
-            [nN]* ) text_color $GREEN"Keeping previous Fuseki installation."; break;;
+if [[ $tripleStore = "ot-fuseki" ]]; then
+    if [[ -d "/root/fuseki" ]]; then
+        read -p "Previously installed Fuseki triplestore detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
+        case "$choice" in
+            [nN]* ) text_color $GREEN"Keeping previous Fuseki installation.";;
             [eE]* ) text_color $RED"Installer stopped by user"; exit;;
-            * ) text_color $GREEN"Reinstalling Fuseki."; rm -rf fuseki*; install_fuseki; break;;
-            esac
-        done
+            * )     text_color $GREEN"Reinstalling Fuseki."; perform_step rm -rf fuseki* "Removing previous Fuseki installation"; install_fuseki;;
+        esac
     else
         install_fuseki
     fi
 fi
 
-if [ $tripleStore = "ot-blazegraph" ]; then
-    if [ -f "blazegraph.jar" ]; then
-        while true; do
-            read -p "Previous Blazegraph triplestore detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
-            case "$choice" in
-            [nN]* ) text_color $GREEN"Keeping old Blazegraph Installation."; break;;
+if [[ $tripleStore = "ot-blazegraph" ]]; then
+    if [[ -f "blazegraph.jar" ]]; then
+        read -p "Previously installed Blazegraph triplestore detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
+        case "$choice" in
+            [nN]* ) text_color $GREEN"Keeping old Blazegraph Installation.";;
             [eE]* ) text_color $RED"Installer stopped by user"; exit;;
-            * ) text_color $GREEN"Reinstalling Blazegraph."; rm -rf blazegraph*; install_blazegraph; break;;
-            esac
-        done
+            * )     text_color $GREEN"Reinstalling Blazegraph."; perform_step rm -rf blazegraph* "Removing previous Blazegraph installation"; install_blazegraph;;
+        esac
     else
         install_blazegraph
     fi
