@@ -4,10 +4,10 @@ const { setTimeout } = require('timers/promises');
 const sortedStringify = require('json-stable-stringify');
 
 When(
-    /^I call resolve on node (\d+) for last published assertion/,
+    /^I get operation result from node (\d+) for last published assertion/,
     { timeout: 120000 },
     async function resolveCall(node) {
-        this.logger.log('I call resolve route successfully');
+        this.logger.log('I call get result for the last operation');
         expect(
             !!this.state.lastPublishData,
             'Last publish data is undefined. Publish is not finalized.',
@@ -68,17 +68,17 @@ Given(
 );
 
 Given(
-    /Last resolve finished with status: ([COMPLETED|FAILED]+)$/,
+    /Last operation finished with status: ([COMPLETED|FAILED]+)$/,
     { timeout: 120000 },
     async function lastResolveFinishedCall(status) {
-        this.logger.log(`Last resolve finished with status: ${status}`);
+        this.logger.log(`Last get result finished with status: ${status}`);
         expect(
             !!this.state.lastResolveData,
-            'Last resolve data is undefined. Resolve is not started.',
+            'Last get result data is undefined. Get result not started.',
         ).to.be.equal(true);
         expect(
             !!this.state.lastResolveData.result,
-            'Last resolve data result is undefined. Resolve is not finished.',
+            'Last  get result data result is undefined. Get result is not finished.',
         ).to.be.equal(true);
 
         const resolveData = this.state.lastResolveData;
