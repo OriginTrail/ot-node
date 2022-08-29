@@ -12,9 +12,9 @@
         "ganache": "ganache-cli -e 1000000000000 -i 5777 -p 7545 -l 10000000 -a 30 -m \"aspect ask story desert profit engage tuition leave fade giraffe exclude brief\"",
         "lint-staged": "lint-staged",
         "create-account-mapping-signature": "node tools/ot-parachain-account-mapping/create-account-mapping-signature.js ",
-        "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+        "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/",
         "test:unit": "nyc --all mocha --exit $(find test/unit -name '*.js')",
-        "test:bdd:release": "cucumber-js --tags=@release --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+        "test:bdd:release": "cucumber-js --tags=@release --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/",
         "lint": "eslint ."
     },
     "repository": {
@@ -113,7 +113,6 @@
         "rolling-rate-limiter": "^0.2.13",
         "semver": "^7.3.7",
         "sequelize": "^6.21.4",
-        "sequelize-cli": "^6.4.1",
         "timers": "^0.1.1",
         "toobusy-js": "^0.5.1",
         "uint8arrays": "^3.1.0",

@@ -7,7 +7,7 @@ import { Noise } from '@chainsafe/libp2p-noise';
 import { KadDHT } from '@libp2p/kad-dht';
 import { TCP } from '@libp2p/tcp';
 import { pipe } from 'it-pipe';
-import * as lp from 'it-length-prefixed/index';
+import * as lp from 'it-length-prefixed';
 import { unmarshalPrivateKey } from '@libp2p/crypto/keys';
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string';
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string';

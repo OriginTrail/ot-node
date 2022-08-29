@@ -4,12 +4,12 @@ import { fork } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import DkgClientHelper from '../../utilities/dkg-client-helper';
+import DkgClientHelper from '../../utilities/dkg-client-helper.mjs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 const PATH_TO_CONFIGS = './config/';
-const otNodeProcessPath = './test/bdd/steps/lib/ot-node-process.js';
+const otNodeProcessPath = './test/bdd/steps/lib/ot-node-process.mjs';
 function getBlockchainConfiguration(localBlockchain, privateKey, publicKey, managementKey) {
     return [
         {
@@ -132,7 +132,6 @@ Given(
             // Here is where the output goes
             logFileStream.write(data);
         });
-
         forkedNode.on('message', async (response) => {
             if (response.error) {
                 // todo handle error

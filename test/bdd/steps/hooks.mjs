@@ -3,7 +3,8 @@ import { Before, BeforeAll, After, AfterAll } from '@cucumber/cucumber';
 import slugify from 'slugify';
 import fs from 'fs';
 import mysql from 'mysql2';
-import { http, server } from 'graphdb';
+import graphdb from 'graphdb';
+const {http,server} = graphdb;
 
 process.env.NODE_ENV = 'test';
 

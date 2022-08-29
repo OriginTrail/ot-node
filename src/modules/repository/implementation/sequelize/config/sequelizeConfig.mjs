@@ -1,4 +1,4 @@
-module.exports = {
+export default {
     username: process.env.SEQUELIZE_REPOSITORY_USER,
     password: process.env.SEQUELIZE_REPOSITORY_PASSWORD,
     database: process.env.SEQUELIZE_REPOSITORY_DATABASE,

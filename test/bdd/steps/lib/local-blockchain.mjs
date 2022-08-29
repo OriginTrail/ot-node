@@ -1,15 +1,17 @@
 /* eslint-disable max-len */
 import Ganache from 'ganache-core';
 import Web3 from 'web3';
-import { Wallet } from 'ethereumjs-wallet';
+import ethereumjs from 'ethereumjs-wallet';
+const Wallet = ethereumjs.default;
 
-import hubSource from 'dkg-evm-module/build/contracts/Hub.json';
-import assertionRegistrySource from 'dkg-evm-module/build/contracts/AssertionRegistry.json';
-import uaiRegistrySource from 'dkg-evm-module/build/contracts/UAIRegistry.json';
-import assetRegistrySource from 'dkg-evm-module/build/contracts/AssetRegistry.json';
-import erc20TokenSource from 'dkg-evm-module/build/contracts/ERC20Token.json';
-import profileStorageSource from 'dkg-evm-module/build/contracts/ProfileStorage.json';
-import profileSource from 'dkg-evm-module/build/contracts/Profile.json';
+
+import hubSource from 'dkg-evm-module/build/contracts/Hub.json' assert {type: "json"};
+import assertionRegistrySource from 'dkg-evm-module/build/contracts/AssertionRegistry.json' assert {type: "json"};
+import uaiRegistrySource from 'dkg-evm-module/build/contracts/UAIRegistry.json' assert {type: "json"};
+import assetRegistrySource from 'dkg-evm-module/build/contracts/AssetRegistry.json' assert {type: "json"};
+import erc20TokenSource from 'dkg-evm-module/build/contracts/ERC20Token.json' assert {type: "json"};
+import profileStorageSource from 'dkg-evm-module/build/contracts/ProfileStorage.json' assert {type: "json"};
+import profileSource from 'dkg-evm-module/build/contracts/Profile.json' assert {type: "json"};
 
 // const contractNames = ['hub','uaiRegistry','assertionRegistry','assetRegistry','erc20Token','profileStorage','profile'];
 
