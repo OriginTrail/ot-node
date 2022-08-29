@@ -1,4 +1,5 @@
-const BaseModuleManager = require('../base-module-manager');
+/* eslint-disable import/extensions */
+import BaseModuleManager from '../base-module-manager.js';
 
 class TripleStoreModuleManager extends BaseModuleManager {
     getName() {
@@ -76,4 +77,4 @@ class TripleStoreModuleManager extends BaseModuleManager {
     }
 }
 
-module.exports = TripleStoreModuleManager;
+export default TripleStoreModuleManager;

@@ -1,5 +1,5 @@
-const request = require('request');
-const axios = require('axios');
+import request from 'request';
+import axios from 'axios';
 
 class HttpApiHelper {
     info(nodeRpcUrl) {
@@ -54,4 +54,4 @@ class HttpApiHelper {
     } */
 }
 
-module.exports = HttpApiHelper;
+export default HttpApiHelper;

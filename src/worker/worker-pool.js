@@ -1,4 +1,7 @@
-const workerpool = require('workerpool');
+import workerpool from 'workerpool';
+import { fileURLToPath } from 'url';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 class WorkerPool {
     constructor() {
@@ -25,4 +28,4 @@ class WorkerPool {
     }
 }
 
-module.exports = WorkerPool;
+export default WorkerPool;

@@ -1,5 +1,6 @@
-const ProtocolInitCommand = require('../../common/protocol-init-command');
-const { ERROR_TYPE } = require('../../../../constants/constants');
+/* eslint-disable import/extensions */
+import ProtocolInitCommand from '../../common/protocol-init-command.js';
+import { ERROR_TYPE } from '../../../../constants/constants.js';
 
 class PublishInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
@@ -35,4 +36,4 @@ class PublishInitCommand extends ProtocolInitCommand {
     }
 }
 
-module.exports = PublishInitCommand;
+export default PublishInitCommand;

@@ -1,5 +1,6 @@
-const { ApiPromise, WsProvider } = require('@polkadot/api');
-const Web3Service = require('../web3-service');
+/* eslint-disable import/extensions */
+import { ApiPromise, WsProvider } from '@polkadot/api';
+import Web3Service from '../web3-service.js';
 
 const NATIVE_TOKEN_DECIMALS = 12;
 
@@ -139,4 +140,4 @@ class OtParachainService extends Web3Service {
     }
 }
 
-module.exports = OtParachainService;
+export default OtParachainService;

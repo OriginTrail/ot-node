@@ -1,13 +1,17 @@
-const mysql = require('mysql2');
-const { exec } = require('child_process');
-const path = require('path');
-const fs = require('fs');
-const Sequelize = require('sequelize');
-const {
+/* eslint-disable import/extensions */
+import mysql from 'mysql2';
+import { exec } from 'child_process';
+import path from 'path';
+import fs from 'fs';
+import Sequelize from 'sequelize';
+import { fileURLToPath } from 'url';
+import {
     OPERATION_ID_STATUS,
     HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR,
     SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES,
-} = require('../../../../constants/constants');
+} from '../../../../constants/constants.js';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 class SequelizeRepository {
     async initialize(config, logger) {
@@ -50,7 +54,7 @@ class SequelizeRepository {
 
     async runMigrations() {
         return new Promise((resolve, reject) => {
-            const configurationPath = path.join(__dirname, 'config', 'sequelizeConfig.js');
+            const configurationPath = path.join(__dirname, 'config', 'sequelizeConfig.cjs');
             const migrationFolderPath = path.join(__dirname, 'migrations');
             const migrate = exec(
                 `npx sequelize --config=${configurationPath} --migrations-path=${migrationFolderPath} db:migrate`,
@@ -79,16 +83,15 @@ class SequelizeRepository {
             this.config,
         );
         const models = {};
-        (await fs.promises.readdir(modelsDirectory))
-            .filter((file) => file.indexOf('.') !== 0 && file.slice(-3) === '.js')
-            .forEach((file) => {
-                // eslint-disable-next-line global-require,import/no-dynamic-require
-                const model = require(path.join(modelsDirectory, file))(
-                    sequelize,
-                    Sequelize.DataTypes,
-                );
-                models[model.name] = model;
-            });
+        const files = (await fs.promises.readdir(modelsDirectory)).filter(
+            (file) => file.indexOf('.') !== 0 && file.slice(-3) === '.js',
+        );
+        for (const file of files) {
+            // eslint-disable-next-line no-await-in-loop
+            const { default: f } = await import(`./models/${file}`);
+            const model = f(sequelize, Sequelize.DataTypes);
+            models[model.name] = model;
+        }
 
         Object.keys(models).forEach((modelName) => {
             if (models[modelName].associate) {
@@ -342,4 +345,4 @@ WHERE t.id=$tokenId;`,
     }
 }
 
-module.exports = SequelizeRepository;
+export default SequelizeRepository;

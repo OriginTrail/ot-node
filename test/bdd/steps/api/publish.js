@@ -1,9 +1,9 @@
-const { When, Given } = require('@cucumber/cucumber');
-const { expect, assert } = require('chai');
-const { setTimeout } = require('timers/promises');
-const assertions = require('./datasets/assertions.json');
-const requests = require('./datasets/requests.json');
-const HttpApiHelper = require('../../../utilities/http-api-helper');
+import { When, Given } from '@cucumber/cucumber';
+import { expect, assert } from 'chai';
+import { setTimeout } from 'timers/promises';
+import assertions from './datasets/assertions.json';
+import requests from './datasets/requests.json';
+import HttpApiHelper from '../../../utilities/http-api-helper';
 
 When(
     /^I call publish on node (\d+) with ([^"]*)/,

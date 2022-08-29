@@ -1,6 +1,11 @@
-const BaseController = require('./base-controller');
-const { PUBLISH_METHOD, ERROR_TYPE, NETWORK_MESSAGE_TYPES } = require('../../constants/constants');
-const { OPERATION_ID_STATUS } = require('../../constants/constants');
+/* eslint-disable import/extensions */
+import BaseController from './base-controller.js';
+import {
+    PUBLISH_METHOD,
+    ERROR_TYPE,
+    NETWORK_MESSAGE_TYPES,
+    OPERATION_ID_STATUS,
+} from '../../constants/constants.js';
 
 class PublishController extends BaseController {
     constructor(ctx) {
@@ -120,4 +125,4 @@ class PublishController extends BaseController {
     }
 }
 
-module.exports = PublishController;
+export default PublishController;

@@ -1,5 +1,6 @@
-const pjson = require('../../../package.json');
-const BaseController = require('./base-controller');
+/* eslint-disable import/extensions */
+import pjson from '../../../package.json' assert { type: 'json' };
+import BaseController from './base-controller.js';
 
 class InfoController extends BaseController {
     handleHttpApiInfoRequest(req, res) {
@@ -10,4 +11,4 @@ class InfoController extends BaseController {
     }
 }
 
-module.exports = InfoController;
+export default InfoController;

@@ -1,6 +1,7 @@
-const publishSchema = require('../controller/v1/request-schema/publish-schema');
-const getSchema = require('../controller/v1/request-schema/get-schema');
-const searchSchema = require('../controller/v1/request-schema/search-schema');
+/* eslint-disable import/extensions */
+import publishSchema from '../controller/v1/request-schema/publish-schema.js';
+import getSchema from '../controller/v1/request-schema/get-schema.js';
+import searchSchema from '../controller/v1/request-schema/search-schema.js';
 
 class JsonSchemaService {
     constructor(ctx) {
@@ -20,4 +21,4 @@ class JsonSchemaService {
     }
 }
 
-module.exports = JsonSchemaService;
+export default JsonSchemaService;

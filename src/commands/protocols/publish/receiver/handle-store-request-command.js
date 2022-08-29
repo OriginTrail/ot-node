@@ -1,9 +1,11 @@
-const HandleProtocolMessageCommand = require('../../common/handle-protocol-message-command');
-const {
+/* eslint-disable import/extensions */
+import HandleProtocolMessageCommand from '../../common/handle-protocol-message-command.js';
+
+import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
-} = require('../../../../constants/constants');
+} from '../../../../constants/constants.js';
 
 class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
@@ -88,4 +90,4 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     }
 }
 
-module.exports = HandleStoreRequestCommand;
+export default HandleStoreRequestCommand;

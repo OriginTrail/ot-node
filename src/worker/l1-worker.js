@@ -1,5 +1,5 @@
-const workerpool = require('workerpool');
-const jsonld = require('jsonld');
+import workerpool from 'workerpool';
+import jsonld from 'jsonld';
 
 function JSONParse(args) {
     return JSON.parse(args);

@@ -1,6 +1,7 @@
-const path = require('path');
-const fs = require('fs-extra');
-const FileService = require('../service/file-service');
+/* eslint-disable import/extensions */
+import path from 'path';
+import fs from 'fs-extra';
+import FileService from '../service/file-service.js';
 
 class BaseMigration {
     constructor(migrationName, logger, config) {
@@ -49,4 +50,4 @@ class BaseMigration {
     }
 }
 
-module.exports = BaseMigration;
+export default BaseMigration;

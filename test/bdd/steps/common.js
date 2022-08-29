@@ -1,9 +1,12 @@
-const { Given } = require('@cucumber/cucumber');
-const { expect, assert } = require('chai');
-const { fork } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const DkgClientHelper = require('../../utilities/dkg-client-helper');
+import { Given } from '@cucumber/cucumber';
+import { expect, assert } from 'chai';
+import { fork } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import DkgClientHelper from '../../utilities/dkg-client-helper';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 const PATH_TO_CONFIGS = './config/';
 const otNodeProcessPath = './test/bdd/steps/lib/ot-node-process.js';

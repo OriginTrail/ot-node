@@ -1,6 +1,6 @@
-const path = require('path');
-const { mkdir, writeFile, readFile, unlink, stat } = require('fs/promises');
-const appRootPath = require('app-root-path');
+import path from 'path';
+import { mkdir, writeFile, readFile, unlink, stat } from 'fs/promises';
+import appRootPath from 'app-root-path';
 
 const MIGRATION_FOLDER_NAME = 'migrations';
 
@@ -93,4 +93,4 @@ class FileService {
     }
 }
 
-module.exports = FileService;
+export default FileService;

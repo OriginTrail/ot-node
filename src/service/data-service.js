@@ -1,5 +1,6 @@
-const jsonld = require('jsonld');
-const { SCHEMA_CONTEXT } = require('../constants/constants');
+/* eslint-disable import/extensions */
+import jsonld from 'jsonld';
+import { SCHEMA_CONTEXT } from '../constants/constants.js';
 
 const ALGORITHM = 'URDNA2015';
 const FORMAT = 'application/n-quads';
@@ -43,4 +44,4 @@ class DataService {
     }
 }
 
-module.exports = DataService;
+export default DataService;

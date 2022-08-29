@@ -1,9 +1,16 @@
-const async = require('async');
-const { setTimeout: sleep } = require('timers/promises');
-const { forEach } = require('p-iteration');
+/* eslint-disable import/extensions */
+import async from 'async';
+import { setTimeout as sleep } from 'timers/promises';
+import pIteration from 'p-iteration';
+import Command from './command.js';
+import {
+    PERMANENT_COMMANDS,
+    DEFAULT_COMMAND_DELAY_IN_MILLS,
+    MAX_COMMAND_DELAY_IN_MILLS,
+    DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS,
+} from '../constants/constants.js';
 
-const Command = require('./command');
-const constants = require('../constants/constants');
+const { forEach } = pIteration;
 
 /**
  * Command statuses
@@ -68,9 +75,7 @@ class CommandExecutor {
      * @returns {Promise<void>}
      */
     async init() {
-        await forEach(constants.PERMANENT_COMMANDS, async (command) =>
-            this._startDefaultCommand(command),
-        );
+        await forEach(PERMANENT_COMMANDS, async (command) => this._startDefaultCommand(command));
         if (this.verboseLoggingEnabled) {
             this.logger.trace('Command executor has been initialized...');
         }
@@ -128,7 +133,7 @@ class CommandExecutor {
                     `Command ${command.name} with ID ${command.id} should be delayed`,
                 );
             }
-            await this.add(command, Math.min(waitMs, constants.MAX_COMMAND_DELAY_IN_MILLS), false);
+            await this.add(command, Math.min(waitMs, MAX_COMMAND_DELAY_IN_MILLS), false);
             return;
         }
 
@@ -157,7 +162,7 @@ class CommandExecutor {
 
                     const period = command.period
                         ? command.period
-                        : constants.DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS;
+                        : DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS;
                     await this.add(command, period, false);
                     return Command.repeat();
                 }
@@ -241,7 +246,7 @@ class CommandExecutor {
     async _startDefaultCommand(name) {
         await this._delete(name);
         const handler = this.commandResolver.resolve(name);
-        await this.add(handler.default(), constants.DEFAULT_COMMAND_DELAY_IN_MILLS, true);
+        await this.add(handler.default(), DEFAULT_COMMAND_DELAY_IN_MILLS, true);
         if (this.verboseLoggingEnabled) {
             this.logger.trace(`Permanent command ${name} created.`);
         }
@@ -258,12 +263,12 @@ class CommandExecutor {
         let delay = addDelay;
         const now = new Date().getTime() / 1000;
 
-        if (delay != null && delay > constants.MAX_COMMAND_DELAY_IN_MILLS) {
+        if (delay != null && delay > MAX_COMMAND_DELAY_IN_MILLS) {
             if (command.ready_at == null) {
                 command.ready_at = now;
             }
             command.ready_at += delay;
-            delay = constants.MAX_COMMAND_DELAY_IN_MILLS;
+            delay = MAX_COMMAND_DELAY_IN_MILLS;
         }
 
         if (insert) {
@@ -415,7 +420,7 @@ class CommandExecutor {
                 [STATUS.pending, STATUS.started, STATUS.repeating],
                 ['cleanerCommand', 'autoupdaterCommand'],
             )
-        ).filter((command) => !constants.PERMANENT_COMMANDS.includes(command.name));
+        ).filter((command) => !PERMANENT_COMMANDS.includes(command.name));
 
         // TODO consider JOIN instead
         const commands = pendingCommands.filter(async (pc) => {
@@ -453,4 +458,4 @@ class CommandExecutor {
     }
 }
 
-module.exports = CommandExecutor;
+export default CommandExecutor;

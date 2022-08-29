@@ -1,4 +1,5 @@
-const Web3Service = require('../web3-service');
+/* eslint-disable import/extensions */
+import Web3Service from '../web3-service.js';
 
 class GanacheService extends Web3Service {
     constructor(ctx) {
@@ -9,4 +10,4 @@ class GanacheService extends Web3Service {
     }
 }
 
-module.exports = GanacheService;
+export default GanacheService;

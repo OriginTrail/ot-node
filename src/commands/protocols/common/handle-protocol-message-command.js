@@ -1,6 +1,6 @@
-const Command = require('../../command');
-
-const { NETWORK_MESSAGE_TYPES } = require('../../../constants/constants');
+/* eslint-disable import/extensions */
+import Command from '../../command.js';
+import { NETWORK_MESSAGE_TYPES } from '../../../constants/constants.js';
 
 class HandleProtocolMessageCommand extends Command {
     constructor(ctx) {
@@ -54,4 +54,4 @@ class HandleProtocolMessageCommand extends Command {
     }
 }
 
-module.exports = HandleProtocolMessageCommand;
+export default HandleProtocolMessageCommand;

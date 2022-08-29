@@ -1,4 +1,4 @@
-const { v1: uuidv1 } = require('uuid');
+import { v1 as uuidv1 } from 'uuid';
 
 class BaseController {
     constructor(ctx) {
@@ -18,4 +18,4 @@ class BaseController {
     }
 }
 
-module.exports = BaseController;
+export default BaseController;

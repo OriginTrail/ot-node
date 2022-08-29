@@ -1,5 +1,6 @@
-const semver = require('semver');
-const Command = require('../command');
+/* eslint-disable import/extensions */
+import semver from 'semver';
+import Command from '../command.js';
 
 class OtnodeUpdateCommand extends Command {
     constructor(ctx) {
@@ -87,4 +88,4 @@ class OtnodeUpdateCommand extends Command {
     }
 }
 
-module.exports = OtnodeUpdateCommand;
+export default OtnodeUpdateCommand;

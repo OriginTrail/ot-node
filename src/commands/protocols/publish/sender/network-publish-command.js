@@ -1,5 +1,6 @@
-const NetworkProtocolCommand = require('../../common/network-protocol-command');
-const { ERROR_TYPE } = require('../../../../constants/constants');
+/* eslint-disable import/extensions */
+import NetworkProtocolCommand from '../../common/network-protocol-command.js';
+import { ERROR_TYPE } from '../../../../constants/constants.js';
 
 class NetworkPublishCommand extends NetworkProtocolCommand {
     constructor(ctx) {
@@ -38,4 +39,4 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
     }
 }
 
-module.exports = NetworkPublishCommand;
+export default NetworkPublishCommand;

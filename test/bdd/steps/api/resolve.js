@@ -1,6 +1,6 @@
-const { When, Given } = require('@cucumber/cucumber');
-const { expect, assert } = require('chai');
-const { setTimeout } = require('timers/promises');
+import { When, Given } from '@cucumber/cucumber';
+import { expect, assert } from 'chai';
+import { setTimeout } from 'timers/promises';
 
 When(
     /^I call resolve on node (\d+) for last published assertion/,

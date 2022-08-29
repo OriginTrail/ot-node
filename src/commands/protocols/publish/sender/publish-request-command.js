@@ -1,5 +1,6 @@
-const ProtocolRequestCommand = require('../../common/protocol-request-command');
-const { ERROR_TYPE } = require('../../../../constants/constants');
+/* eslint-disable import/extensions */
+import ProtocolRequestCommand from '../../common/protocol-request-command.js';
+import { ERROR_TYPE } from '../../../../constants/constants.js';
 
 class PublishRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
@@ -37,4 +38,4 @@ class PublishRequestCommand extends ProtocolRequestCommand {
     }
 }
 
-module.exports = PublishRequestCommand;
+export default PublishRequestCommand;

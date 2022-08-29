@@ -1,4 +1,5 @@
-const { OPERATION_ID_STATUS } = require('../constants/constants');
+/* eslint-disable import/extensions */
+import { OPERATION_ID_STATUS } from '../constants/constants.js';
 
 /**
  * Describes one command handler
@@ -166,4 +167,4 @@ class Command {
     }
 }
 
-module.exports = Command;
+export default Command;

@@ -53,4 +53,4 @@ class HttpApiRouter {
     }
 }
 
-module.exports = HttpApiRouter;
+export default HttpApiRouter;

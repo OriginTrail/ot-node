@@ -1,7 +1,8 @@
-const ipLib = require('ip');
-const jwtUtil = require('./util/jwt-util');
+/* eslint-disable import/extensions */
+import ipLib from 'ip';
+import jwtUtil from './util/jwt-util.js';
 
-module.exports = class AuthService {
+class AuthService {
     constructor(ctx) {
         this._authConfig = ctx.config.auth;
         this._repository = ctx.repositoryModuleManager;
@@ -142,4 +143,6 @@ module.exports = class AuthService {
             this._logger.info(`[AUTH] ${message}`);
         }
     }
-};
+}
+
+export default AuthService;

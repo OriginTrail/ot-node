@@ -1,5 +1,6 @@
-const Command = require('../../../command');
-const { ERROR_TYPE, OPERATION_ID_STATUS } = require('../../../../constants/constants');
+/* eslint-disable import/extensions */
+import Command from '../../../command.js';
+import { ERROR_TYPE, OPERATION_ID_STATUS } from '../../../../constants/constants.js';
 
 class ValidateAssertionCommand extends Command {
     constructor(ctx) {
@@ -66,4 +67,4 @@ class ValidateAssertionCommand extends Command {
     }
 }
 
-module.exports = ValidateAssertionCommand;
+export default ValidateAssertionCommand;

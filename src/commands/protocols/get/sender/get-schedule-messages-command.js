@@ -1,5 +1,6 @@
-const ProtocolScheduleMessagesCommand = require('../../common/protocol-schedule-messages-command');
-const { OPERATION_ID_STATUS, ERROR_TYPE } = require('../../../../constants/constants');
+/* eslint-disable import/extensions */
+import ProtocolScheduleMessagesCommand from '../../common/protocol-schedule-messages-command.js';
+import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
 
 class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     constructor(ctx) {
@@ -34,4 +35,4 @@ class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     }
 }
 
-module.exports = GetScheduleMessagesCommand;
+export default GetScheduleMessagesCommand;

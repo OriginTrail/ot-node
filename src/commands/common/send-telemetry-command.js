@@ -1,7 +1,8 @@
-const axios = require('axios');
-const Command = require('../command');
-const pjson = require('../../../package.json');
-const { SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES } = require('../../constants/constants');
+/* eslint-disable import/extensions */
+import axios from 'axios';
+import Command from '../command.js';
+import pjson from '../../../package.json' assert { type: 'json' };
+import { SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES } from '../../constants/constants.js';
 
 class SendTelemetryCommand extends Command {
     constructor(ctx) {
@@ -78,4 +79,4 @@ class SendTelemetryCommand extends Command {
     }
 }
 
-module.exports = SendTelemetryCommand;
+export default SendTelemetryCommand;

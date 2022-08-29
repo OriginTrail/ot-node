@@ -1,6 +1,7 @@
-const Command = require('../../command');
-const ProtocolMessageCommand = require('./protocol-message-command');
-const { NETWORK_MESSAGE_TYPES } = require('../../../constants/constants');
+/* eslint-disable import/extensions */
+import Command from '../../command.js';
+import ProtocolMessageCommand from './protocol-message-command.js';
+import { NETWORK_MESSAGE_TYPES } from '../../../constants/constants.js';
 
 class ProtocolRequestCommand extends ProtocolMessageCommand {
     async execute(command) {
@@ -20,4 +21,4 @@ class ProtocolRequestCommand extends ProtocolMessageCommand {
     }
 }
 
-module.exports = ProtocolRequestCommand;
+export default ProtocolRequestCommand;

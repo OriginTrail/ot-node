@@ -13,7 +13,7 @@ const parseIp = (req) => {
     return xForwardedFor || socketRemoteAddress;
 };
 
-module.exports = (authService) => async (req, res, next) => {
+export default (authService) => async (req, res, next) => {
     const operation = req.url.split('/')[1].toUpperCase();
 
     if (authService.isPublicOperation(operation)) {

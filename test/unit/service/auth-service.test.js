@@ -1,12 +1,11 @@
-require('dotenv').config();
-const { expect } = require('chai');
-const { describe, it, afterEach } = require('mocha');
-const uuid = require('uuid').v4;
-const sinon = require('sinon');
-
-const AuthService = require('../../../src/service/auth-service');
-const jwtUtil = require('../../../src/service/util/jwt-util');
-const RepositoryModuleManager = require('../../../src/modules/repository/repository-module-manager');
+import 'dotenv/config';
+import { expect } from 'chai';
+import { describe, it, afterEach } from 'mocha';
+import { v4 as uuid } from 'uuid';
+import sinon from 'sinon';
+import AuthService from '../../../src/service/auth-service';
+import jwtUtil from '../../../src/service/util/jwt-util';
+import RepositoryModuleManager from '../../../src/modules/repository/repository-module-manager';
 
 const whitelistedIps = [
     '::1',

@@ -1,4 +1,5 @@
-const Command = require('../../../command');
+/* eslint-disable import/extensions */
+import Command from '../../../command.js';
 
 class SearchAssertionsCommand extends Command {
     constructor(ctx) {
@@ -50,4 +51,4 @@ class SearchAssertionsCommand extends Command {
     }
 }
 
-module.exports = SearchAssertionsCommand;
+export default SearchAssertionsCommand;
