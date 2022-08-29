@@ -382,4 +382,4 @@ class LocalBlockchain {
     }
 }
 
-module.exports = LocalBlockchain;
+export default LocalBlockchain;
