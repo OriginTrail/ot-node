@@ -71,7 +71,7 @@
     },
     "dependencies": {
         "@chainsafe/libp2p-noise": "^8.0.1",
-        "@comunica/query-sparql": "^2.4.2",
+        "@comunica/query-sparql": "^2.4.0",
         "@libp2p/bootstrap": "^2.0.0",
         "@libp2p/kad-dht": "^3.0.4",
         "@libp2p/mplex": "^5.0.0",
@@ -113,6 +113,7 @@
         "rolling-rate-limiter": "^0.2.13",
         "semver": "^7.3.7",
         "sequelize": "^6.21.4",
+        "sequelize-cli": "^6.4.1",
         "timers": "^0.1.1",
         "toobusy-js": "^0.5.1",
         "uint8arrays": "^3.1.0",
