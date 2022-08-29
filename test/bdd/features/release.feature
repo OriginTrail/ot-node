@@ -8,7 +8,7 @@ Feature: Release related tests
     Given I setup 4 nodes
     When I call publish on node 1 with validAssertion
     And Last publish finished with status: COMPLETED
-#
+
   @release
   Scenario: Node is able to get result of the operation previously published
     Given I setup 4 nodes

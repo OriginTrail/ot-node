@@ -13,18 +13,24 @@ When(
             'Last publish data is undefined. Publish is not finalized.',
         ).to.be.equal(true);
         // const assertionIds = [this.state.lastPublishData.result.assertion.id];
-        const result = await this.state.nodes[node - 1].client
-            .getResult(this.state.lastPublishData.UAL)
-            .catch((error) => {
-                assert.fail(`Error while trying to resolve assertion. ${error}`);
-            });
-        const { operationId } = result.operation;
 
-        this.state.lastResolveData = {
-            nodeId: node - 1,
-            operationId,
-            result,
-        };
+        // TODO: CALLING GET RESULT WITH WRONG UAL RETURNS UNDEFINED RESULT, IT SHOULD PROBABLY RETURN A FAILED RESULT MESSAGE OR SOMETHING LIKE THAT
+        try {
+            const result = await this.state.nodes[node - 1].client
+                .getResult(this.state.lastPublishData.UAL)
+                .catch((error) => {
+                    assert.fail(`Error while trying to resolve assertion. ${error}`);
+                });
+            const { operationId } = result.operation;
+
+            this.state.lastResolveData = {
+                nodeId: node - 1,
+                operationId,
+                result,
+            };
+        } catch (e) {
+            this.logger.log(`Error while getting operation result: ${e}`);
+        }
     },
 );
 
@@ -77,7 +83,7 @@ Given(
             'Last get result data is undefined. Get result not started.',
         ).to.be.equal(true);
         expect(
-            !!this.state.lastResolveData.result,
+            !!this.state.lastResolveData.result.operation,
             'Last  get result data result is undefined. Get result is not finished.',
         ).to.be.equal(true);
 
