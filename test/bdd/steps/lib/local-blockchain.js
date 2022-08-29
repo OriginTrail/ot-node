@@ -272,7 +272,7 @@ class LocalBlockchain {
             .on('error', (error) => this.logger.error('Unable to setup role. Error: ', error));
     }
 
-    uaiRegistryContractAddress() {
+    getHubAddress() {
         return this.contracts.hub.instance._address;
     }
 

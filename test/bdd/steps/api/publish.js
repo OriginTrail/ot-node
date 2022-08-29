@@ -7,9 +7,9 @@ const HttpApiHelper = require('../../../utilities/http-api-helper');
 
 When(
     /^I call publish on node (\d+) with ([^"]*)/,
-    { timeout: 60000 },
+    { timeout: 120000 },
     async function publish(node, assertionName) {
-        this.logger.log('I call publish route successfully');
+        this.logger.log(`I call publish route on node ${node}`);
         expect(
             !!assertions[assertionName],
             `Assertion with name: ${assertionName} not found!`,
@@ -17,7 +17,7 @@ When(
         const { evmOperationalWalletPublicKey, evmOperationalWalletPrivateKey } =
             this.state.nodes[node - 1].configuration.modules.blockchain.implementation.ganache
                 .config;
-        const hubContract = this.state.localBlockchain.uaiRegistryContractAddress();
+        const hubContract = this.state.localBlockchain.getHubAddress();
         const assertion = assertions[assertionName];
         const result = await this.state.nodes[node - 1].client
             .publish(
@@ -63,45 +63,42 @@ When(
     },
 );
 
-Given('I wait for last publish to finalize', { timeout: 60000 }, async function publishFinalize() {
+Given('I wait for last publish to finalize', { timeout: 80000 }, async function publishFinalize() {
     this.logger.log('I wait for last publish to finalize');
     expect(
         !!this.state.lastPublishData,
         'Last publish data is undefined. Publish is not started.',
     ).to.be.equal(true);
     const publishData = this.state.lastPublishData;
-    let loopForPublishResult = true;
     let retryCount = 0;
-    const maxRetryCount = 2;
-    while (loopForPublishResult) {
+    const maxRetryCount = 5;
+    const httpApiHelper = new HttpApiHelper();
+    for (retryCount = 0; retryCount < maxRetryCount; retryCount += 1) {
         this.logger.log(
             `Getting publish result for operation id: ${publishData.operationId} on node: ${publishData.nodeId}`,
         );
         // const publishResult = await httpApiHelper.getOperationResult(`http://localhost:${this.state.nodes[publishData.nodeId].configuration.rpcPort}`, publishData.operationId);
         // eslint-disable-next-line no-await-in-loop
-        const publishResult = await this.state.nodes[publishData.nodeId].client
-            .getResult(publishData.UAL)
-            .catch((error) => {
-                assert.fail(`Error while trying to get publish result assertion. ${error}`);
-            });
-        if (publishResult) {
+        const publishResult = await httpApiHelper.getOperationResult(
+            this.state.nodes[publishData.nodeId].nodeRpcUrl,
+            publishData.operationId,
+        );
+        this.logger.log(`Operation status: ${publishResult.data.status}`);
+        if (['COMPLETED', 'FAILED'].includes(publishResult.data.status)) {
             this.state.lastPublishData.result = publishResult;
-            loopForPublishResult = false;
+            break;
         }
-        if (retryCount === maxRetryCount) {
-            loopForPublishResult = true;
+        if (retryCount === maxRetryCount - 1) {
             assert.fail('Unable to get publish result');
-        } else {
-            retryCount += 1;
-            // eslint-disable-next-line no-await-in-loop
-            await setTimeout(5000);
         }
+        // eslint-disable-next-line no-await-in-loop
+        await setTimeout(4000);
     }
 });
 
 Given(
     /Last publish finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError,PUblishStartError]+)$/,
-    { timeout: 120000 },
+    { timeout: 60000 },
     async function lastPublishFinished(status) {
         this.logger.log(`Last publish finished with status: ${status}`);
         expect(

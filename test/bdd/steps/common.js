@@ -18,7 +18,7 @@ function getBlockchainConfiguration(localBlockchain, privateKey, publicKey, mana
                         blockchainTitle: 'ganache',
                         networkId: 'ganache::testnet',
                         rpcEndpoints: ['http://localhost:7545'],
-                        hubContractAddress: localBlockchain.uaiRegistryContractAddress(),
+                        hubContractAddress: localBlockchain.getHubAddress(),
                         evmOperationalWalletPublicKey: publicKey,
                         evmOperationalWalletPrivateKey: privateKey,
                         evmManagementWalletPublicKey: managementKey,
@@ -99,7 +99,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 80000 }, function nodeSetup(nodeCou
     let nodesStarted = 0;
     for (let i = 0; i < nodeCount; i += 1) {
         const nodeIndex = currentNumberOfNodes + i;
-        const wallet = wallets[nodeIndex + 1];
+        const wallet = wallets[nodeIndex];
         const managementWallet = wallets[nodeIndex + 28];
         const rpcPort = 8901 + nodeIndex;
         const nodeName = `origintrail-test-${nodeIndex}`;
@@ -210,7 +210,7 @@ Given(
 
 Given(
     /^I setup (\d+) additional node[s]*$/,
-    { timeout: 120000 },
+    { timeout: 60000 },
     function setupAdditionalNode(nodeCount, done) {
         this.logger.log(`I setup ${nodeCount} additional node${nodeCount !== 1 ? 's' : ''}`);
         const wallets = this.state.localBlockchain.getWallets();
@@ -286,10 +286,10 @@ Given(
     { timeout: 120000 },
     function setupPublishNode(nodeIndex, done) {
         this.logger.log(`I setup node ${nodeIndex} with invalid configuration`);
-        const wallet = this.state.localBlockchain.getWallets()[nodeIndex];
-        const managementWallet = this.state.localBlockchain.getWallets()[nodeIndex + 28];
-        const rpcPort = 8901 + nodeIndex;
-        const nodeName = `origintrail-test-${nodeIndex}`;
+        const wallet = this.state.localBlockchain.getWallets()[nodeIndex - 1];
+        const managementWallet = this.state.localBlockchain.getWallets()[nodeIndex - 1 + 28];
+        const rpcPort = 8901 + nodeIndex - 1;
+        const nodeName = `origintrail-test-${nodeIndex - 1}`;
         const defaultConfiguration = JSON.parse(
             fs
                 .readFileSync(
@@ -304,7 +304,7 @@ Given(
                 this,
                 wallet,
                 managementWallet,
-                nodeIndex,
+                nodeIndex - 1,
                 nodeName,
                 rpcPort,
             ),
@@ -323,7 +323,7 @@ Given(
         forkedNode.on('message', (response) => {
             if (response.error) {
                 assert.fail(
-                    `Error while trying initialize node${nodeIndex} client: ${response.error}`,
+                    `Error while trying initialize node${nodeIndex - 1} client: ${response.error}`,
                 );
             } else {
                 // todo if started
@@ -334,7 +334,7 @@ Given(
                     timeout: 25,
                     loglevel: 'trace',
                 });
-                this.state.nodes[nodeIndex] = {
+                this.state.nodes[nodeIndex - 1] = {
                     client,
                     forkedNode,
                     configuration: nodeConfiguration,
