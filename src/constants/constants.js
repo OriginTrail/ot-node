@@ -173,6 +173,9 @@ exports.ERROR_TYPE = {
         GET_REQUEST_REMOTE_ERROR: 'GetRequestRemoteError',
         GET_ERROR: 'GetError',
     },
+    QUERY: {
+        LOCAL_QUERY_ERROR: 'LocalQueryError',
+    },
 };
 /**
  * @constant {object} OPERATION_ID_STATUS -
@@ -225,6 +228,13 @@ exports.OPERATION_ID_STATUS = {
     SEARCH_ENTITIES: {
         VALIDATING_QUERY: 'VALIDATING_QUERY',
         SEARCHING_ENTITIES: 'SEARCHING_ENTITIES',
+    },
+
+    QUERY: {
+        QUERY_INIT_START: 'QUERY_INIT_START',
+        QUERY_INIT_END: 'QUERY_INIT_END',
+        QUERY_START: 'QUERY_START',
+        QUERY_END: 'QUERY_END',
     },
 };
 
@@ -294,4 +304,13 @@ exports.PUBLISH_METHOD = {
     PUBLISH: 'PUBLISH',
     PROVISION: 'PROVISION',
     UPDATE: 'UPDATE',
+};
+
+/**
+ * Local query types
+ * @type {{CONSTRUCT: string, SELECT: string}}
+ */
+exports.QUERY_TYPES = {
+    SELECT: 'SELECT',
+    CONSTRUCT: 'CONSTRUCT',
 };
