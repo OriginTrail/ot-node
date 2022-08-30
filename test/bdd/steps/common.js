@@ -22,6 +22,7 @@ function getBlockchainConfiguration(localBlockchain, privateKey, publicKey, mana
                         evmOperationalWalletPublicKey: publicKey,
                         evmOperationalWalletPrivateKey: privateKey,
                         evmManagementWalletPublicKey: managementKey,
+                        evmManagementPublicKey: managementKey,
                     },
                 },
             },
@@ -99,8 +100,8 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 80000 }, function nodeSetup(nodeCou
     let nodesStarted = 0;
     for (let i = 0; i < nodeCount; i += 1) {
         const nodeIndex = currentNumberOfNodes + i;
-        const wallet = wallets[nodeIndex];
-        const managementWallet = wallets[nodeIndex + 28];
+        const wallet = wallets[nodeIndex + 1];
+        const managementWallet = wallets[nodeIndex + 1 + 27];
         const rpcPort = 8901 + nodeIndex;
         const nodeName = `origintrail-test-${nodeIndex}`;
 
@@ -205,8 +206,8 @@ Given(
         let nodesStarted = 0;
         for (let i = 0; i < nodeCount; i += 1) {
             const nodeIndex = currentNumberOfNodes + i;
-            const wallet = wallets[nodeIndex];
-            const managementWallet = wallets[nodeIndex + 28];
+            const wallet = wallets[nodeIndex + 1];
+            const managementWallet = wallets[nodeIndex + 1 + 27];
             const rpcPort = 8901 + nodeIndex;
             const nodeName = `origintrail-test-${nodeIndex}`;
             const nodeConfiguration = DeepExtend(
@@ -267,8 +268,8 @@ Given(
     { timeout: 120000 },
     function setupPublishNode(nodeIndex, done) {
         this.logger.log(`I setup node ${nodeIndex} with invalid configuration`);
-        const wallet = this.state.localBlockchain.getWallets()[nodeIndex - 1];
-        const managementWallet = this.state.localBlockchain.getWallets()[nodeIndex - 1 + 28];
+        const wallet = this.state.localBlockchain.getWallets()[nodeIndex];
+        const managementWallet = this.state.localBlockchain.getWallets()[nodeIndex + 27];
         const rpcPort = 8901 + nodeIndex - 1;
         const nodeName = `origintrail-test-${nodeIndex - 1}`;
         const nodeConfiguration = DeepExtend(
@@ -278,7 +279,7 @@ Given(
                 this,
                 wallet,
                 managementWallet,
-                nodeIndex,
+                nodeIndex - 1,
                 nodeName,
                 rpcPort,
             ),
