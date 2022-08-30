@@ -19,7 +19,7 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         const assertionCommandData = { publishType, assertionId, blockchain, contract };
 
         if (publishType === PUBLISH_TYPES.ASSERTION) return assertionCommandData;
-        else return { ...assertionCommandData, tokenId: command.data.tokenId };
+        return { ...assertionCommandData, tokenId: command.data.tokenId };
     }
 
     /**

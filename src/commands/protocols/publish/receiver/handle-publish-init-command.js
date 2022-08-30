@@ -28,8 +28,7 @@ class HandlePublishInitCommand extends HandleProtocolMessageCommand {
             const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
             this.logger.info(`Validating assertion with ual: ${ual}`);
 
-            let blockchainAssertionId;
-            blockchainAssertionId = await this.operationService.getAssertion(
+            const blockchainAssertionId = await this.operationService.getAssertion(
                 blockchain,
                 contract,
                 tokenId,

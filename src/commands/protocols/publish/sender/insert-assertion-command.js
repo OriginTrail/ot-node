@@ -1,5 +1,5 @@
 const Command = require('../../../command');
-const { OPERATION_ID_STATUS, ERROR_TYPE } = require('../../../../constants/constants');
+const { ERROR_TYPE } = require('../../../../constants/constants');
 
 class InsertAssertionCommand extends Command {
     constructor(ctx) {
@@ -10,11 +10,7 @@ class InsertAssertionCommand extends Command {
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_ERROR;
     }
 
-    /**
-     * Executes command and produces one or more events
-     * @param command
-     */
-    async execute(command) {
+    async execute() {
         /* const { operationId, ual, assertionId } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(

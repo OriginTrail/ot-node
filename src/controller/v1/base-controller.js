@@ -1,5 +1,3 @@
-const { v1: uuidv1 } = require('uuid');
-
 class BaseController {
     constructor(ctx) {
         this.logger = ctx.logger;

@@ -3,7 +3,11 @@ const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const Sequelize = require('sequelize');
-const { OPERATION_ID_STATUS } = require('../../../../constants/constants');
+const {
+    OPERATION_ID_STATUS,
+    HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR,
+    SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES,
+} = require('../../../../constants/constants');
 
 class SequelizeRepository {
     async initialize(config, logger) {
@@ -254,7 +258,10 @@ class SequelizeRepository {
 
         let operationIds = await this.models.event.findAll({
             raw: true,
-            attributes: [Sequelize.fn('DISTINCT', Sequelize.col('operation_id'))],
+            attributes: [
+                Sequelize.fn('DISTINCT', Sequelize.col('operation_id')),
+                Sequelize.col('timestamp'),
+            ],
             where: {
                 [Sequelize.Op.or]: {
                     name: {
@@ -270,6 +277,10 @@ class SequelizeRepository {
                     },
                 },
             },
+            order: [['timestamp', 'ASC']],
+            limit:
+                Math.floor(HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR / 60) *
+                SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES,
         });
 
         operationIds = operationIds.map((e) => e.operation_id);

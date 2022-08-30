@@ -14,7 +14,8 @@ class PublishInitCommand extends ProtocolInitCommand {
         const assertionMessage = { publishType, assertionId, blockchain, contract };
 
         if (publishType === PUBLISH_TYPES.ASSERTION) return assertionMessage;
-        else return { ...assertionMessage, tokenId: command.data.tokenId };
+
+        return { ...assertionMessage, tokenId: command.data.tokenId };
     }
 
     /**

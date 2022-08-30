@@ -22,14 +22,15 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         };
 
         if (publishType === PUBLISH_TYPES.ASSERTION) return assertionMessage;
-        else if (publishType === PUBLISH_TYPES.ASSET)
+
+        if (publishType === PUBLISH_TYPES.ASSET)
             return { ...assertionMessage, tokenId: command.data.tokenId };
-        else
-            return {
-                ...assertionMessage,
-                tokenId: command.data.tokenId,
-                keyword: command.data.keyword,
-            };
+
+        return {
+            ...assertionMessage,
+            tokenId: command.data.tokenId,
+            keyword: command.data.keyword,
+        };
     }
 
     /**

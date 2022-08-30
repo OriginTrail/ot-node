@@ -3,10 +3,7 @@ const Command = require('../../command');
 class NetworkProtocolCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.config = ctx.config;
-        this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
-        this.operationService = ctx.publishService;
     }
 
     /**
@@ -28,6 +25,7 @@ class NetworkProtocolCommand extends Command {
                 data: {
                     ...command.data,
                     keyword,
+                    minimumAckResponses: this.operationService.getMinimumAckResponses(),
                     errorType: this.errorType,
                     networkProtocol: this.operationService.getNetworkProtocol(),
                 },

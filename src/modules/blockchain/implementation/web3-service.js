@@ -7,7 +7,7 @@ const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
 const Identity = require('dkg-evm-module/build/contracts/Identity.json');
 const Profile = require('dkg-evm-module/build/contracts/Profile.json');
 const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
-const constants = require('../../../constants/constants');
+const { INIT_STAKE_AMOUNT, WEBSOCKET_PROVIDER_OPTIONS } = require('../../../constants/constants');
 
 class Web3Service {
     async initialize(config, logger) {
@@ -28,7 +28,15 @@ class Web3Service {
             }
 
             try {
-                this.web3 = new Web3(this.config.rpcEndpoints[this.rpcNumber]);
+                if (this.config.rpcEndpoints[this.rpcNumber].startsWith('ws')) {
+                    const provider = new Web3.providers.WebsocketProvider(
+                        this.config.rpcEndpoints[this.rpcNumber],
+                        WEBSOCKET_PROVIDER_OPTIONS,
+                    );
+                    this.web3 = new Web3(provider);
+                } else {
+                    this.web3 = new Web3(this.config.rpcEndpoints[this.rpcNumber]);
+                }
                 // eslint-disable-next-line no-await-in-loop
                 isRpcConnected = await this.web3.eth.net.isListening();
             } catch (e) {
@@ -90,15 +98,29 @@ class Web3Service {
             `Connected to blockchain rpc : ${this.config.rpcEndpoints[this.rpcNumber]}.`,
         );
 
+        await this.logBalances();
+    }
+
+    async logBalances() {
+        const nativeBalance = await this.getNativeTokenBalance();
+        const tokenBalance = await this.getTokenBalance();
+        this.logger.info(
+            `Balance of ${this.getPublicKey()} is ${nativeBalance} ${
+                this.baseTokenTicker
+            } and ${tokenBalance} ${this.tracTicker}.`,
+        );
+    }
+
+    async getNativeTokenBalance() {
         const nativeBalance = await this.web3.eth.getBalance(this.getPublicKey());
+        return this.web3.utils.fromWei(nativeBalance);
+    }
+
+    async getTokenBalance() {
         const tokenBalance = await this.callContractFunction(this.TokenContract, 'balanceOf', [
             this.getPublicKey(),
         ]);
-        this.logger.info(
-            `Balance of ${this.getPublicKey()} is ${this.web3.utils.fromWei(nativeBalance)} ${
-                this.baseTokenTicker
-            } and ${this.web3.utils.fromWei(tokenBalance)} ${this.tracTicker}.`,
-        );
+        return this.web3.utils.fromWei(tokenBalance);
     }
 
     identityExists() {
@@ -129,7 +151,7 @@ class Web3Service {
     async createProfile(peerId) {
         await this.executeContractFunction(this.TokenContract, 'increaseAllowance', [
             this.ProfileContract.options.address,
-            constants.INIT_STAKE_AMOUNT,
+            INIT_STAKE_AMOUNT,
         ]);
 
         const nodeId = await peerId2Hash(peerId);
@@ -137,7 +159,7 @@ class Web3Service {
         await this.executeContractFunction(this.ProfileContract, 'createProfile', [
             this.getManagementKey(),
             nodeId,
-            constants.INIT_STAKE_AMOUNT,
+            INIT_STAKE_AMOUNT,
             this.getIdentity(),
         ]);
     }

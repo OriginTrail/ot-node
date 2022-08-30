@@ -13,7 +13,8 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
         const { publishType } = command.data;
 
         if (publishType === PUBLISH_TYPES.INDEX) return [...command.data.keywords];
-        else return [command.data.assertionId];
+
+        return [command.data.assertionId];
     }
 
     getNextCommandData(command) {
@@ -21,7 +22,8 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
         const assertionCommandData = { publishType, assertionId, blockchain, contract };
 
         if (publishType === PUBLISH_TYPES.ASSERTION) return assertionCommandData;
-        else return { ...assertionCommandData, tokenId: command.data.tokenId };
+
+        return { ...assertionCommandData, tokenId: command.data.tokenId };
     }
 
     /**
