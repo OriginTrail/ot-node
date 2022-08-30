@@ -92,5 +92,9 @@
     "name": "origintrail-test-bootstrap"
   },
   "rpcPort": 8900,
-  "minimumReplicationFactor": 4
+  "minimumReplicationFactor": 4,
+  "minimumAckResponses": {
+    "publish": 2,
+    "get": 1
+  }
 }
