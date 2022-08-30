@@ -11,7 +11,7 @@ Feature: Publish errors test
 #    When I call publish on node 1 with validAssertion
 #    And Last publish finished with status: PublishStartError
 
-##
+
   @publish-errors
   Scenario: Node is not able to validate assertion on the network
     Given I setup 4 nodes
