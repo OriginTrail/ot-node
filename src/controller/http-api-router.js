@@ -33,7 +33,7 @@ class HttpApiRouter {
             (req, res) => {
                 this.searchController.handleHttpApiQueryRequest(req, res);
             },
-            { rateLimit: true, requestSchema: this.jsonSchemaService.querySchema() },
+            { requestSchema: this.jsonSchemaService.querySchema() },
         );
 
         this.httpClientModuleManager.post(

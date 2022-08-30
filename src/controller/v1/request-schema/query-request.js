@@ -1,6 +1,6 @@
 const { QUERY_TYPES } = require('../../../constants/constants');
 
-module.exports = {
+module.exports = () => ({
     type: 'object',
     required: ['type', 'query'],
     properties: {
@@ -11,4 +11,4 @@ module.exports = {
             type: 'string',
         },
     },
-};
+});
