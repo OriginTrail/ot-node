@@ -135,8 +135,8 @@ class PublishService extends OperationService {
 
         await Promise.all(
             this.tripleStoreModuleManager.insertIndex(
-                indexNquads.join('\n'),
                 keyword,
+                indexNquads.join('\n'),
                 assetNquads.join('\n'),
             ),
             this.tripleStoreModuleManager.insertAssertion(assertionId, assertion.join('\n')),
@@ -152,7 +152,7 @@ class PublishService extends OperationService {
 
         this.logger.info(`Inserting assertion with id: ${assertionId} in triple store.`);
 
-        await this.tripleStoreModuleManager.insertAssertion(assertion.join('\n'), assertionId);
+        await this.tripleStoreModuleManager.insertAssertion(assertionId, assertion.join('\n'));
 
         this.logger.info(`Assertion with id ${assertionId} has been successfully inserted!`);
     }

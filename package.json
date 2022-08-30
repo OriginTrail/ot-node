@@ -69,7 +69,7 @@
         "@polkadot/util-crypto": "^10.1.4"
     },
     "dependencies": {
-        "@comunica/query-sparql": "^2.2.1",
+        "@comunica/query-sparql": "2.4.0",
         "@polkadot/api": "^9.2.1",
         "@polkadot/keyring": "^10.1.4",
         "app-root-path": "^3.0.0",
