@@ -47,6 +47,12 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
+    async findAssertions(nquads) {
+        if (this.initialized) {
+            return this.getImplementation().module.findAssertions(nquads);
+        }
+    }
+
     async healthCheck() {
         if (this.initialized) {
             return this.getImplementation().module.healthCheck();
