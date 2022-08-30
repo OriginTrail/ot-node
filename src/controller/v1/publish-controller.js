@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import BaseController from './base-controller.js';
 import {
     PUBLISH_METHOD,

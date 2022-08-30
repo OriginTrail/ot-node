@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import path from 'path';
 import fs from 'fs-extra';
 import FileService from '../service/file-service.js';

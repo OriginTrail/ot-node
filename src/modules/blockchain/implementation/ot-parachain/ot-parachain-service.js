@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import Web3Service from '../web3-service.js';
 

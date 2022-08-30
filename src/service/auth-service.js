@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import ipLib from 'ip';
 import jwtUtil from './util/jwt-util.js';
 

@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import ProtocolRequestCommand from '../../common/protocol-request-command.js';
 import { ERROR_TYPE } from '../../../../constants/constants.js';
 

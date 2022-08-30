@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import NetworkProtocolCommand from '../../common/network-protocol-command.js';
 import { ERROR_TYPE } from '../../../../constants/constants.js';
 

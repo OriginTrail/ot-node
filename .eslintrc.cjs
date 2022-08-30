@@ -7,6 +7,8 @@ module.exports = {
     parser: '@babel/eslint-parser',
     parserOptions: {
         requireConfigFile: false,
+        sourceType: 'module',
+        ecmaVersion: 'latest',
         babelOptions: {
             plugins: ['@babel/plugin-syntax-import-assertions'],
         },
@@ -21,6 +23,7 @@ module.exports = {
         'no-console': 'warn',
         'no-continue': 1,
         'no-underscore-dangle': 0,
+        'import/extensions': 0,
     },
     overrides: [
         {

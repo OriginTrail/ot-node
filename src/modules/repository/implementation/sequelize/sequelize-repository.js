@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import mysql from 'mysql2';
 import { exec } from 'child_process';
 import path from 'path';

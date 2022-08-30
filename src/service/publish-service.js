@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import { Mutex } from 'async-mutex';
 import { formatAssertion } from 'assertion-tools';
 import OperationService from './operation-service.js';

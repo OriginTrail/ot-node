@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import HandleProtocolMessageCommand from '../../common/handle-protocol-message-command.js';
 
 import {

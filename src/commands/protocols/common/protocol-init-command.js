@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import ProtocolMessageCommand from './protocol-message-command.js';
 import { NETWORK_MESSAGE_TYPES } from '../../../constants/constants.js';
 

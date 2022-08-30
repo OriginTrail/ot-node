@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import DeepExtend from 'deep-extend';
 import rc from 'rc';
 import fs from 'fs';

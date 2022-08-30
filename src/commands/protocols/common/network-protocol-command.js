@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import Command from '../../command.js';
 
 class NetworkProtocolCommand extends Command {

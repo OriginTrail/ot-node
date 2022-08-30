@@ -3,8 +3,6 @@ import Ganache from 'ganache-core';
 import Web3 from 'web3';
 import ethereumjs from 'ethereumjs-wallet';
 const Wallet = ethereumjs.default;
-
-
 import hubSource from 'dkg-evm-module/build/contracts/Hub.json' assert {type: "json"};
 import assertionRegistrySource from 'dkg-evm-module/build/contracts/AssertionRegistry.json' assert {type: "json"};
 import uaiRegistrySource from 'dkg-evm-module/build/contracts/UAIRegistry.json' assert {type: "json"};

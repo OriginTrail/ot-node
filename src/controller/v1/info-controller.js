@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import pjson from '../../../package.json' assert { type: 'json' };
 import BaseController from './base-controller.js';
 

@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import async from 'async';
 import { setTimeout as sleep } from 'timers/promises';
 import pIteration from 'p-iteration';

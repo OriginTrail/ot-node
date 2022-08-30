@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import graphdb from 'graphdb';
 import axios from 'axios';
 import { execSync } from 'child_process';

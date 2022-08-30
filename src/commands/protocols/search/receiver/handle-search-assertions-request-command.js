@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import Command from '../../../command.js';
 import {
     ERROR_TYPE,

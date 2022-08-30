@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import semver from 'semver';
 import Command from '../command.js';
 

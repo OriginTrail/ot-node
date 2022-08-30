@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import axios from 'axios';
 import OtTripleStore from '../ot-triple-store.js';
 

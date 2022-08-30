@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import { OPERATION_ID_STATUS } from '../constants/constants.js';
 
 /**

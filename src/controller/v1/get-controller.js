@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import { NETWORK_MESSAGE_TYPES, OPERATION_ID_STATUS } from '../../constants/constants.js';
 import BaseController from './base-controller.js';
 

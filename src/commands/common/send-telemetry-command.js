@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import axios from 'axios';
 import Command from '../command.js';
 import pjson from '../../../package.json' assert { type: 'json' };

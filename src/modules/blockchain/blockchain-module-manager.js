@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import BaseModuleManager from '../base-module-manager.js';
 
 class BlockchainModuleManager extends BaseModuleManager {

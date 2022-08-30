@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import ProtocolScheduleMessagesCommand from '../../common/protocol-schedule-messages-command.js';
 import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
 

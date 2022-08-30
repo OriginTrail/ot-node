@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import { QueryEngine as Engine } from '@comunica/query-sparql';
 import { setTimeout } from 'timers/promises';
 import {

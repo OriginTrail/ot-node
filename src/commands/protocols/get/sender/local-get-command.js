@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import Command from '../../../command.js';
 import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
 

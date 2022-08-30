@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import { NETWORK_PROTOCOLS } from '../constants/constants.js';
 
 class RpcRouter {

@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 /* eslint-disable import/no-unresolved */
 import { createLibp2p } from 'libp2p';
 import { Bootstrap } from '@libp2p/bootstrap';

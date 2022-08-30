@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import Command from '../../command.js';
 import { NETWORK_MESSAGE_TYPES } from '../../../constants/constants.js';
 
