@@ -45,6 +45,7 @@ When(
     /^I call publish on ot-node (\d+) directly with ([^"]*)/,
     { timeout: 60000 },
     async function publish(node, requestName) {
+        this.logger.log(`I call publish on ot-node ${node} directly`);
         expect(
             !!requests[requestName],
             `Request body with name: ${requestName} not found!`,
@@ -92,12 +93,12 @@ Given('I wait for last publish to finalize', { timeout: 80000 }, async function 
             assert.fail('Unable to get publish result');
         }
         // eslint-disable-next-line no-await-in-loop
-        await setTimeout(4000);
+        await setTimeout(5000);
     }
 });
 
 Given(
-    /Last publish finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError,PUblishStartError]+)$/,
+    /Last publish finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError,PublishStartError]+)$/,
     { timeout: 60000 },
     async function lastPublishFinished(status) {
         this.logger.log(`Last publish finished with status: ${status}`);
