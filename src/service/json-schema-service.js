@@ -21,7 +21,7 @@ class JsonSchemaService {
     }
 
     querySchema() {
-        return querySchema;
+        return querySchema();
     }
 }
 
