@@ -133,12 +133,13 @@ class PublishService extends OperationService {
             `Inserting index for asset: ${ual}, keyword: ${keyword}, with assertion id: ${assertionId} in triple store.`,
         );
 
-        await this.tripleStoreModuleManager.insertIndex(
-            assertion.join('\n'),
-            assertionId,
-            indexNquads.join('\n'),
-            keyword,
-            assetNquads.join('\n'),
+        await Promise.all(
+            this.tripleStoreModuleManager.insertIndex(
+                indexNquads.join('\n'),
+                keyword,
+                assetNquads.join('\n'),
+            ),
+            this.tripleStoreModuleManager.insertAssertion(assertionId, assertion.join('\n')),
         );
 
         this.logger.info(
@@ -175,7 +176,7 @@ class PublishService extends OperationService {
         );
 
         await Promise.all([
-            this.tripleStoreModuleManager.updateAssetsGraph(ual, assetNquads.join('\n')),
+            this.tripleStoreModuleManager.insertAsset(ual, assetNquads.join('\n')),
             this.tripleStoreModuleManager.insertAssertion(assertionId, assertion.join('\n')),
         ]);
 

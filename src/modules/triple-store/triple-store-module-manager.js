@@ -4,10 +4,10 @@ class TripleStoreModuleManager extends BaseModuleManager {
     getName() {
         return 'tripleStore';
     }
-    
-    async insertAsset(assertion, assertionId, assetInfo, ual) {
+
+    async insertAsset(ual, assetNquads) {
         if (this.initialized) {
-            return this.getImplementation().module.insertAsset(assertion, assertionId, assetInfo, ual);
+            return this.getImplementation().module.insertAsset(ual, assetNquads);
         }
     }
 
@@ -17,15 +17,9 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async insertIndex(assertionNquads, assertionId, indexNquads, keyword, assetNquads) {
+    async insertIndex(keyword, indexNquads, assetNquads) {
         if (this.initialized) {
-            return this.getImplementation().module.insertIndex(
-                assertionNquads,
-                assertionId,
-                indexNquads,
-                keyword,
-                assetNquads,
-            );
+            return this.getImplementation().module.insertIndex(keyword, indexNquads, assetNquads);
         }
     }
 
@@ -41,37 +35,9 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async assertionsByAsset(uri) {
-        if (this.initialized) {
-            return this.getImplementation().module.assertionsByAsset(uri);
-        }
-    }
-
-    async findAssetsByKeyword(query, options, localQuery) {
-        if (this.initialized) {
-            return this.getImplementation().module.findAssetsByKeyword(query, options, localQuery);
-        }
-    }
-
-    async findAssertionsByKeyword(query, options, localQuery) {
-        if (this.initialized) {
-            return this.getImplementation().module.findAssertionsByKeyword(
-                query,
-                options,
-                localQuery,
-            );
-        }
-    }
-
     async construct(query) {
         if (this.initialized) {
             return this.getImplementation().module.construct(query);
-        }
-    }
-
-    async findAssertions(nquads) {
-        if (this.initialized) {
-            return this.getImplementation().module.findAssertions(nquads);
         }
     }
 

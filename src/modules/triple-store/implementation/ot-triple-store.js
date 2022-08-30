@@ -60,8 +60,7 @@ class OtTripleStore {
         return true;
     }
 
-    async insertAsset(assertionNquads, assertionId, assetNquads, ual) {
-
+    async insertAsset(ual, assetNquads) {
         const insertion = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             DELETE {<${ual}> schema:latestAssertion ?o}
@@ -75,15 +74,11 @@ class OtTripleStore {
                 GRAPH <assets:graph> { 
                     ${assetNquads} 
                 }
-                
-                GRAPH <assertion:${assertionId}> { 
-                    ${assertionNquads} 
-                } 
             }`;
         await this.queryEngine.queryVoid(insertion, this.insertContext);
     }
 
-    async insertIndex(assertionNquads, assertionId, indexNquads, keyword, assetNquads) {
+    async insertIndex(keyword, indexNquads, assetNquads) {
         const insertion = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             INSERT DATA {
@@ -93,9 +88,6 @@ class OtTripleStore {
                 GRAPH <keyword:${keyword}> {
                     ${indexNquads}
                 }
-                GRAPH <assertion:${assertionId}> { 
-                    ${assertionNquads} 
-                } 
             }`;
         await this.queryEngine.queryVoid(insertion, this.insertContext);
     }
