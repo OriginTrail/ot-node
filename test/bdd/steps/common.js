@@ -101,7 +101,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 80000 }, function nodeSetup(nodeCou
     for (let i = 0; i < nodeCount; i += 1) {
         const nodeIndex = currentNumberOfNodes + i;
         const wallet = wallets[nodeIndex + 1];
-        const managementWallet = wallets[nodeIndex + 1 + 27];
+        const managementWallet = wallets[nodeIndex + 1 + Math.floor(wallets.length / 2)];
         const rpcPort = 8901 + nodeIndex;
         const nodeName = `origintrail-test-${nodeIndex}`;
 
@@ -207,7 +207,7 @@ Given(
         for (let i = 0; i < nodeCount; i += 1) {
             const nodeIndex = currentNumberOfNodes + i;
             const wallet = wallets[nodeIndex + 1];
-            const managementWallet = wallets[nodeIndex + 1 + 27];
+            const managementWallet = wallets[nodeIndex + 1 + Math.floor(wallets.length / 2)];
             const rpcPort = 8901 + nodeIndex;
             const nodeName = `origintrail-test-${nodeIndex}`;
             const nodeConfiguration = DeepExtend(
@@ -268,8 +268,10 @@ Given(
     { timeout: 120000 },
     function setupPublishNode(nodeIndex, done) {
         this.logger.log(`I setup node ${nodeIndex} with invalid configuration`);
-        const wallet = this.state.localBlockchain.getWallets()[nodeIndex];
-        const managementWallet = this.state.localBlockchain.getWallets()[nodeIndex + 27];
+        const wallets = this.state.localBlockchain.getWallets();
+        const wallet = wallets[nodeIndex];
+        const managementWallet =
+            this.state.localBlockchain.getWallets()[nodeIndex + Math.floor(wallets.length / 2)];
         const rpcPort = 8901 + nodeIndex - 1;
         const nodeName = `origintrail-test-${nodeIndex - 1}`;
         const nodeConfiguration = DeepExtend(
