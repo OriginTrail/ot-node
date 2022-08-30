@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 require('dotenv').config();
 const fs = require('fs-extra');
 const path = require('path');
@@ -16,7 +17,7 @@ process.env.NODE_ENV =
     try {
         if (process.env.NODE_ENV === 'development' && process.argv.length === 3) {
             const configurationFilename = process.argv[2];
-            userConfig = JSON.parse(fs.readFileSync(process.argv[2]));
+            userConfig = JSON.parse(await fs.promises.readFile(process.argv[2]));
             userConfig.configFilename = configurationFilename;
         }
     } catch (error) {

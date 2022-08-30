@@ -21,7 +21,7 @@ class OTAutoUpdater {
     async compareVersions() {
         try {
             this.logger.debug('AutoUpdater - Comparing versions...');
-            const currentVersion = this.readAppVersion(appRootPath.path);
+            const currentVersion = await this.readAppVersion(appRootPath.path);
             const remoteVersion = await this.readRemoteVersion();
             this.logger.debug(`AutoUpdater - Current version: ${currentVersion}`);
             this.logger.debug(`AutoUpdater - Remote Version: ${remoteVersion}`);
@@ -54,7 +54,7 @@ class OTAutoUpdater {
             const currentDirectory = appRootPath.path;
             const rootPath = path.join(currentDirectory, '..');
 
-            const currentVersion = this.readAppVersion(currentDirectory);
+            const currentVersion = await this.readAppVersion(currentDirectory);
             const newVersion = await this.readRemoteVersion();
             const updateDirectory = path.join(rootPath, newVersion);
             const zipArchiveDestination = `${updateDirectory}.zip`;
@@ -118,10 +118,10 @@ class OTAutoUpdater {
     /**
      * Reads the applications version from the package.json file.
      */
-    readAppVersion(appPath) {
+    async readAppVersion(appPath) {
         const file = path.join(appPath, 'package.json');
         this.logger.debug(`AutoUpdater - Reading app version from ${file}`);
-        const appPackage = fs.readFileSync(file);
+        const appPackage = await fs.promises.readFile(file);
         return JSON.parse(appPackage).version;
     }
 

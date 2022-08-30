@@ -13,10 +13,8 @@ class Command {
 
     /**
      * Executes command and produces one or more events
-     * @param command - Command object
-     * @param [transaction] - Optional database transaction
      */
-    async execute(command, transaction) {
+    async execute() {
         return Command.empty();
     }
 
@@ -34,7 +32,6 @@ class Command {
 
     /**
      * Execute strategy when event is too late
-     * @param command
      */
     async expired() {
         return Command.empty();
@@ -132,7 +129,6 @@ class Command {
 
     /**
      * Builds default command
-     * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default() {

@@ -3,29 +3,16 @@ const https = require('https');
 const fs = require('fs-extra');
 const fileUpload = require('express-fileupload');
 const cors = require('cors');
-const requestValidationMiddleware = require('./request-validation-middleware');
-const rateLimiterMiddleware = require('./rate-limiter-middleware');
+const requestValidationMiddleware = require('./middleware/request-validation-middleware');
+const rateLimiterMiddleware = require('./middleware/rate-limiter-middleware');
+const authenticationMiddleware = require('./middleware/authentication-middleware');
+const authorizationMiddleware = require('./middleware/authorization-middleware');
 
 class ExpressHttpClient {
     async initialize(config, logger) {
         this.config = config;
         this.logger = logger;
         this.app = express();
-
-        this.app.use(
-            fileUpload({
-                createParentPath: true,
-            }),
-        );
-
-        this.app.use(cors());
-
-        this.app.use(express.json());
-
-        this.app.use((req, res, next) => {
-            this.logger.api(`${req.method}: ${req.url} request received`);
-            return next();
-        });
     }
 
     async get(route, callback, options) {
@@ -45,8 +32,8 @@ class ExpressHttpClient {
         if (this.config.useSsl) {
             this.httpsServer = https.createServer(
                 {
-                    key: fs.readFileSync(this.config.sslKeyPath),
-                    cert: fs.readFileSync(this.config.sslCertificatePath),
+                    key: await fs.promises.readFile(this.config.sslKeyPath),
+                    cert: await fs.promises.readFile(this.config.sslCertificatePath),
                 },
                 this.app,
             );
@@ -64,6 +51,31 @@ class ExpressHttpClient {
             middlewares.push(requestValidationMiddleware(options.requestSchema));
 
         return middlewares;
+    }
+
+    async initializeBeforeMiddlewares(authService) {
+        this.app.use(authenticationMiddleware(authService));
+        this.app.use(authorizationMiddleware(authService));
+        this._initializeBaseMiddlewares();
+    }
+
+    async initializeAfterMiddlewares() {
+        // placeholder method for after middlewares
+    }
+
+    _initializeBaseMiddlewares() {
+        this.app.use(
+            fileUpload({
+                createParentPath: true,
+            }),
+        );
+
+        this.app.use(cors());
+        this.app.use(express.json());
+        this.app.use((req, res, next) => {
+            this.logger.api(`${req.method}: ${req.url} request received`);
+            return next();
+        });
     }
 }
 

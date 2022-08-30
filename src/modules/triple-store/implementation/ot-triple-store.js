@@ -18,6 +18,7 @@ class OtTripleStore {
                     constants.TRIPLE_STORE_CONNECT_MAX_RETRIES
                 }. Retrying in ${constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`,
             );
+            /* eslint-disable no-await-in-loop */
             await setTimeout(constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000);
             ready = await this.healthCheck();
         }
@@ -54,12 +55,13 @@ class OtTripleStore {
         };
     }
 
-    initializeSparqlEndpoints(url, repository) {
+    initializeSparqlEndpoints() {
         // overridden by subclasses
         return true;
     }
 
     async insertAsset(assertionNquads, assertionId, assetNquads, ual) {
+
         const insertion = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             DELETE {<${ual}> schema:latestAssertion ?o}
@@ -74,17 +76,6 @@ class OtTripleStore {
                     ${assetNquads} 
                 }
                 
-                GRAPH <assertion:${assertionId}> { 
-                    ${assertionNquads} 
-                } 
-            }`;
-        await this.queryEngine.queryVoid(insertion, this.insertContext);
-    }
-
-    async insertAssertion(assertionNquads, assertionId) {
-        const insertion = `
-            PREFIX schema: <${SCHEMA_CONTEXT}>
-            INSERT DATA {
                 GRAPH <assertion:${assertionId}> { 
                     ${assertionNquads} 
                 } 
@@ -109,6 +100,21 @@ class OtTripleStore {
         await this.queryEngine.queryVoid(insertion, this.insertContext);
     }
 
+    async insertAssertion(assertionId, assertionNquads) {
+        const exists = await this.assertionExists(assertionId);
+
+        if (!exists) {
+            const insertion = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            INSERT DATA {
+                GRAPH <assertion:${assertionId}> { 
+                    ${assertionNquads} 
+                } 
+            }`;
+            await this.queryEngine.queryVoid(insertion, this.insertContext);
+        }
+    }
+
     async construct(query) {
         const result = await this.executeQuery(query);
         return result;
@@ -121,7 +127,7 @@ class OtTripleStore {
 
     async assertionExists(graphName) {
         const escapedGraphName = this.cleanEscapeCharacter(graphName);
-        const query = `ASK WHERE { GRAPH <${escapedGraphName}> { ?s ?p ?o } }`;
+        const query = `ASK WHERE { GRAPH <assertion:${escapedGraphName}> { ?s ?p ?o } }`;
 
         return this.ask(query);
     }
@@ -133,124 +139,13 @@ class OtTripleStore {
                     CONSTRUCT { ?s ?p ?o }
                     WHERE {
                         {
-                            GRAPH <${escapedGraphName}>
+                            GRAPH <assertion:${escapedGraphName}>
                             {
                                 ?s ?p ?o .
                             }
                         }
                     }`;
-        const nquads = await this.construct(query);
-        return nquads;
-    }
-
-    async assertionsByAsset(uri) {
-        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
-            SELECT ?assertionId ?issuer ?timestamp
-            WHERE {
-                 ?assertionId schema:hasUALs "${uri}" ;
-                     schema:hasTimestamp ?timestamp ;
-                     schema:hasIssuer ?issuer .
-            }
-            ORDER BY DESC(?timestamp)`;
-        const result = await this.execute(query);
-
-        return result;
-    }
-
-    async findAssertions(nquads) {
-        const query = `SELECT ?g
-                       WHERE {
-                            GRAPH ?g {
-                            ${nquads}
-                            }
-                       }`;
-        let graph = await this.execute(query);
-        graph = graph.map((x) => x.g.replace(`${constants.DID_PREFIX}:`, ''));
-        if (graph.length && graph[0] === 'http://www.bigdata.com/rdf#nullGraph') {
-            return [];
-        }
-        return graph;
-    }
-
-    async findAssertionsByKeyword(query, options, localQuery) {
-        if (options.prefix && !this.isBoolean(options.prefix)) {
-            this.logger.error(`Failed FindassertionsByKeyword: ${options.prefix} is not a boolean`);
-            throw new Error('Prefix is not an boolean');
-        }
-        if (localQuery && !this.isBoolean(localQuery)) {
-            this.logger.error(`Failed FindassertionsByKeyword: ${localQuery} is not a boolean`);
-            throw new Error('Localquery is not an boolean');
-        }
-        let limitQuery = '';
-        limitQuery = this.createLimitQuery(options);
-
-        const publicVisibilityQuery = !localQuery
-            ? ' ?assertionId schema:hasVisibility "public" .'
-            : '';
-        const filterQuery = options.prefix
-            ? this.createFilterParameter(query, this.filtertype.KEYWORDPREFIX)
-            : this.createFilterParameter(query, this.filtertype.KEYWORD);
-
-        const sparqlQuery = `PREFIX schema: <${SCHEMA_CONTEXT}> 
-                            SELECT distinct ?assertionId
-                            WHERE {
-                                ?assertionId schema:hasKeywords ?keyword .
-                                ${publicVisibilityQuery}
-                                ${filterQuery}
-                            }
-                        ${limitQuery}`;
-
-        const result = await this.execute(sparqlQuery);
-        return result;
-    }
-
-    async findAssetsByKeyword(query, options, localQuery) {
-        if (options.prefix && !this.isBoolean(options.prefix)) {
-            this.logger.error(`Failed FindAssetsByKeyword: ${options.prefix} is not a boolean`);
-            //      throw new Error('Prefix is not an boolean');
-        }
-        if (localQuery && !this.isBoolean(localQuery)) {
-            this.logger.error(`Failed FindAssetsByKeyword: ${localQuery} is not a boolean`);
-            throw new Error('Localquery is not an boolean');
-        }
-        const escapedQuery = this.cleanEscapeCharacter(query);
-        const limitQuery = this.createLimitQuery(options);
-
-        const publicVisibilityQuery = !localQuery ? 'schema:hasVisibility "public" ;' : '';
-        const filterQuery = options.prefix
-            ? this.createFilterParameter(escapedQuery, this.filtertype.KEYWORDPREFIX)
-            : this.createFilterParameter(escapedQuery, this.filtertype.KEYWORD);
-        const issuerFilter = options.issuers
-            ? this.createFilterParameter(options.issuers, this.filtertype.ISSUERS)
-            : '';
-        const typesFilter = options.types
-            ? this.createFilterParameter(options.types, this.filtertype.TYPES)
-            : '';
-
-        const sparqlQuery = `PREFIX schema: <${SCHEMA_CONTEXT}> 
-                            SELECT ?assertionId ?assetId
-                            WHERE {
-                                ?assertionId schema:hasTimestamp ?latestTimestamp ;
-                                 ${publicVisibilityQuery}
-                                                     schema:hasUALs ?assetId .
-                                    {
-                                        SELECT ?assetId (MAX(?timestamp) AS ?latestTimestamp)
-                                        WHERE {
-                                            ?assertionId schema:hasKeywords ?keyword ;
-                                                         schema:hasIssuer ?issuer ;
-                                                         schema:hasType ?type ;
-                                                         schema:hasTimestamp ?timestamp ;
-                                                         schema:hasUALs ?assetId
-                                            ${filterQuery}
-                                            ${issuerFilter}
-                                            ${typesFilter}
-                                        }
-                                        GROUP BY ?assetId
-                                        ${limitQuery}
-                                    }
-                            }`;
-        const result = await this.execute(sparqlQuery);
-        return result;
+        return this.construct(query);
     }
 
     async healthCheck() {

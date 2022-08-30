@@ -55,7 +55,7 @@ module.exports = {
                 allowNull: true,
             },
             transactional: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.BOOLEAN,
                 allowNull: false,
             },
             created_at: {
@@ -70,7 +70,7 @@ module.exports = {
             },
         });
     },
-    down: async (queryInterface, Sequelize) => {
+    down: async (queryInterface) => {
         await queryInterface.dropTable('commands');
     },
 };

@@ -38,7 +38,7 @@ class HandleProtocolMessageCommand extends Command {
         return Command.empty();
     }
 
-    async prepareMessage(commandData) {
+    async prepareMessage() {
         // overridden by subclasses
     }
 

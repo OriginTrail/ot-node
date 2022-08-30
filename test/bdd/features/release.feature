@@ -11,6 +11,8 @@ Feature: Release related tests
   @release
   Scenario: Node is able to publish on the network, expect status completed on publish result
     Given I setup 4 nodes
+    And I override configuration for node 1 for parameter hubContractAddres = 0x123567
+    And I start the nodes
     When I call publish on node 1 with validAssertion with keywords:
     | keyword 1 | keyword 2 |
     And I wait for last publish to finalize

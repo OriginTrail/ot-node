@@ -4,21 +4,16 @@ class TripleStoreModuleManager extends BaseModuleManager {
     getName() {
         return 'tripleStore';
     }
-
-    async insertAssertion(assertionNquads, assertionId) {
+    
+    async insertAsset(assertion, assertionId, assetInfo, ual) {
         if (this.initialized) {
-            return this.getImplementation().module.insertAssertion(assertionNquads, assertionId);
+            return this.getImplementation().module.insertAsset(assertion, assertionId, assetInfo, ual);
         }
     }
 
-    async insertAsset(assertion, assertionId, assetInfo, ual) {
+    async insertAssertion(assertionId, assertionNquads) {
         if (this.initialized) {
-            return this.getImplementation().module.insertAsset(
-                assertion,
-                assertionId,
-                assetInfo,
-                ual,
-            );
+            return this.getImplementation().module.insertAssertion(assertionId, assertionNquads);
         }
     }
 

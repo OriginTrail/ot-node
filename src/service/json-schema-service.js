@@ -1,5 +1,6 @@
-const getSchema = require('../controller/v1/request-schema/get-schema');
 const publishSchema = require('../controller/v1/request-schema/publish-schema');
+const getSchema = require('../controller/v1/request-schema/get-schema');
+const searchSchema = require('../controller/v1/request-schema/search-schema');
 
 class JsonSchemaService {
     constructor(ctx) {
@@ -12,6 +13,10 @@ class JsonSchemaService {
 
     getSchema() {
         return getSchema();
+    }
+
+    searchSchema() {
+        return searchSchema();
     }
 }
 

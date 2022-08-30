@@ -1,6 +1,5 @@
 const axios = require('axios');
 const Command = require('../command');
-const constants = require('../../constants/constants');
 const pjson = require('../../../package.json');
 
 class SendTelemetryCommand extends Command {
@@ -17,7 +16,7 @@ class SendTelemetryCommand extends Command {
      * @param command
      */
     async execute() {
-        if (process.env.NODE_ENV !== 'testnet') {
+        if (!this.config.telemetry.enabled || !this.config.telemetry.sendTelemetryData) {
             return Command.empty();
         }
         try {
@@ -33,7 +32,7 @@ class SendTelemetryCommand extends Command {
                 };
                 const config = {
                     method: 'post',
-                    url: this.config.signalingServerUrl,
+                    url: this.config.telemetry.signalingServerUrl,
                     headers: {
                         'Content-Type': 'application/json',
                     },

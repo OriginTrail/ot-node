@@ -1,4 +1,11 @@
-const requiredModules = ['repository'];
+const requiredModules = [
+    'repository',
+    'httpClient',
+    'network',
+    'validation',
+    'blockchain',
+    'tripleStore',
+];
 
 class BaseModuleManager {
     constructor(ctx) {
@@ -24,6 +31,7 @@ class BaseModuleManager {
                     moduleConfig.defaultImplementation &&
                     implementationName !== moduleConfig.defaultImplementation
                 ) {
+                    // eslint-disable-next-line no-continue
                     continue;
                 }
                 const implementationConfig = moduleConfig.implementation[implementationName];
@@ -52,6 +60,9 @@ class BaseModuleManager {
                     module,
                     config: implementationConfig,
                 };
+            }
+            if (Object.keys(this.handlers).length === 0) {
+                throw new Error(`No implementation initialized for module: ${this.getName()}.`);
             }
             this.initialized = true;
             return true;

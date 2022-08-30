@@ -13,12 +13,13 @@ class HttpApiRouter {
     }
 
     async initialize() {
+        await this.initializeBeforeMiddlewares();
         await this.initializeListeners();
+        await this.initializeAfterMiddlewares();
         await this.httpClientModuleManager.listen();
     }
 
     async initializeListeners() {
-        // POST REQUESTS
         this.httpClientModuleManager.post(
             '/publish',
             (req, res) => {
@@ -26,46 +27,12 @@ class HttpApiRouter {
             },
             { rateLimit: true, requestSchema: this.jsonSchemaService.publishSchema() },
         );
-
-        // this.httpClientModuleManager.post('/provision', (req, res) => {
-        //     this.publishController.handleHttpApiProvisionRequest(req, res);
-        // });
-        //
-        // this.httpClientModuleManager.post('/update', (req, res) => {
-        //     this.publishController.handleHttpApiUpdateRequest(req, res);
-        // });
-        //
-        // this.httpClientModuleManager.post(HTTP_API_ROUTES.QUERY, (req, res) => {
-        //     this.searchController.handleHttpApiQueryRequest(req, res);
-        // });
-        //
-        // this.httpClientModuleManager.post(HTTP_API_ROUTES.PROOFS, (req, res) => {
-        //     this.searchController.handleHttpApiProofsRequest(req, res);
-        // });
-        //
         this.httpClientModuleManager.post(
             '/get',
             (req, res) => {
                 this.getController.handleHttpApiGetRequest(req, res);
             },
             { rateLimit: true, requestSchema: this.jsonSchemaService.getSchema() },
-        );
-
-        // TODO: Get params validation needs to be implemented
-        this.httpClientModuleManager.get(
-            '/assertions:search',
-            (req, res) => {
-                this.searchController.handleHttpApiSearchAssertionsRequest(req, res);
-            },
-            { rateLimit: true },
-        );
-
-        this.httpClientModuleManager.get(
-            '/entities:search',
-            (req, res) => {
-                this.searchController.handleHttpApiSearchEntitiesRequest(req, res);
-            },
-            { rateLimit: true },
         );
 
         this.httpClientModuleManager.get('/:operation/:operationId', (req, res) => {
@@ -75,6 +42,14 @@ class HttpApiRouter {
         this.httpClientModuleManager.get('/info', (req, res) => {
             this.infoController.handleHttpApiInfoRequest(req, res);
         });
+    }
+
+    async initializeBeforeMiddlewares() {
+        await this.httpClientModuleManager.initializeBeforeMiddlewares();
+    }
+
+    async initializeAfterMiddlewares() {
+        await this.httpClientModuleManager.initializeAfterMiddlewares();
     }
 }
 

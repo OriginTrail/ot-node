@@ -40,12 +40,12 @@ class NetworkProtocolCommand extends Command {
         return Command.empty();
     }
 
-    getKeywords(command) {
+    getKeywords() {
         // overridden by subclasses
         return [];
     }
 
-    getNextCommandData(command, keyword) {
+    getNextCommandData() {
         // overridden by subclasses
     }
 

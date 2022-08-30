@@ -72,15 +72,13 @@ class GetService extends OperationService {
     }
 
     async localGet(assertionId, operationId) {
-        const assertionGraphName = `assertion:${assertionId}`;
-
         this.logger.debug(`Getting assertion: ${assertionId} for operationId: ${operationId}`);
 
-        let nquads = await this.tripleStoreModuleManager.get(assertionGraphName);
+        let nquads = await this.tripleStoreModuleManager.get(assertionId);
         nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
 
         this.logger.debug(
-            `Assertion: ${assertionGraphName} for operationId: ${operationId} ${
+            `Assertion: ${assertionId} for operationId: ${operationId} ${
                 nquads.length ? '' : 'not'
             } found in local triple store.`,
         );
