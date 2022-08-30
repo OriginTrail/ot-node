@@ -1,4 +1,4 @@
-name: TEST-release
+name: TEST-bdd
 
 #todo this test should be execute when opening PR to prerelease/release branches
 on: [pull_request]
@@ -9,7 +9,7 @@ env:
   REPOSITORY_PASSWORD: password
 jobs:
 
-  test-release:
+  test-bdd:
     #todo think about locking the version - version should be the same as the one in official documentation
     runs-on: ubuntu-latest
     services:

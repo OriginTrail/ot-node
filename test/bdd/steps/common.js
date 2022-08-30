@@ -3,11 +3,11 @@ const DeepExtend = require('deep-extend');
 const { expect, assert } = require('chai');
 const { fork } = require('child_process');
 const fs = require('fs');
-const path = require('path');
 const DkgClientHelper = require('../../utilities/dkg-client-helper');
 
-const PATH_TO_CONFIGS = './config/';
 const otNodeProcessPath = './test/bdd/steps/lib/ot-node-process.js';
+const defaultConfiguration = require(`./config/origintrail-test-node-config.json`);
+const bootstrapNodeConfiguration = require(`./config/origintrail-test-bootstrap-config.json`);
 function getBlockchainConfiguration(localBlockchain, privateKey, publicKey, managementKey) {
     return [
         {
@@ -104,16 +104,8 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 80000 }, function nodeSetup(nodeCou
         const rpcPort = 8901 + nodeIndex;
         const nodeName = `origintrail-test-${nodeIndex}`;
 
-        const defaultConfiguration = JSON.parse(
-            fs
-                .readFileSync(
-                    path.join(__dirname, `${PATH_TO_CONFIGS}origintrail-test-node-config.json`),
-                )
-                .toString(),
-        );
-
-        // eslint-disable-next-line prefer-destructuring
         const nodeConfiguration = DeepExtend(
+            {},
             defaultConfiguration,
             createNodeConfiguration.call(
                 this,
@@ -170,11 +162,6 @@ Given(
         expect(nodeCount).to.be.equal(1); // Currently not supported more.
         this.logger.log('Initializing bootstrap node');
         const nodeName = 'origintrail-test-bootstrap';
-        const bootstrapNodeConfiguration = JSON.parse(
-            fs
-                .readFileSync(path.join(__dirname, `${PATH_TO_CONFIGS}${nodeName}-config.json`))
-                .toString(),
-        );
         const forkedNode = forkNode(bootstrapNodeConfiguration);
 
         const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
@@ -222,14 +209,8 @@ Given(
             const managementWallet = wallets[nodeIndex + 28];
             const rpcPort = 8901 + nodeIndex;
             const nodeName = `origintrail-test-${nodeIndex}`;
-            const defaultConfiguration = JSON.parse(
-                fs
-                    .readFileSync(
-                        path.join(__dirname, `${PATH_TO_CONFIGS}origintrail-test-node-config.json`),
-                    )
-                    .toString(),
-            );
             const nodeConfiguration = DeepExtend(
+                {},
                 defaultConfiguration,
                 createNodeConfiguration.call(
                     this,
@@ -290,21 +271,14 @@ Given(
         const managementWallet = this.state.localBlockchain.getWallets()[nodeIndex - 1 + 28];
         const rpcPort = 8901 + nodeIndex - 1;
         const nodeName = `origintrail-test-${nodeIndex - 1}`;
-        const defaultConfiguration = JSON.parse(
-            fs
-                .readFileSync(
-                    path.join(__dirname, `${PATH_TO_CONFIGS}origintrail-test-node-config.json`),
-                )
-                .toString(),
-        );
-        // eslint-disable-next-line prefer-destructuring
         const nodeConfiguration = DeepExtend(
+            {},
             defaultConfiguration,
             createNodeConfiguration.call(
                 this,
                 wallet,
                 managementWallet,
-                nodeIndex - 1,
+                nodeIndex,
                 nodeName,
                 rpcPort,
             ),
