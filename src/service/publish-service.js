@@ -1,4 +1,5 @@
 const { Mutex } = require('async-mutex');
+const { formatAssertion } = require('assertion-tools');
 const OperationService = require('./operation-service');
 const {
     OPERATION_ID_STATUS,
@@ -7,6 +8,7 @@ const {
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     SCHEMA_CONTEXT,
+    OPERATIONS,
 } = require('../constants/constants');
 
 class PublishService extends OperationService {
@@ -18,7 +20,7 @@ class PublishService extends OperationService {
         this.validationModuleManager = ctx.validationModuleManager;
         this.dataService = ctx.dataService;
 
-        this.operationName = 'publish';
+        this.operationName = OPERATIONS.PUBLISH;
         this.networkProtocol = NETWORK_PROTOCOLS.STORE;
         this.operationRequestStatus = PUBLISH_REQUEST_STATUS;
         this.operationStatus = PUBLISH_STATUS;
@@ -45,13 +47,17 @@ class PublishService extends OperationService {
         const { completedNumber, failedNumber } = keywordsStatuses[keyword];
         const numberOfResponses = completedNumber + failedNumber;
         this.logger.debug(
-            `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${this.config.minimumReplicationFactor}`,
+            `Processing ${
+                this.networkProtocol
+            } response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${
+                leftoverNodes.length
+            }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${this.getMinimumAckResponses()}`,
         );
 
-        if (completedNumber === this.config.minimumReplicationFactor) {
+        if (completedNumber === this.getMinimumAckResponses()) {
             let allCompleted = true;
             for (const key in keywordsStatuses) {
-                if (keywordsStatuses[key].completedNumber < this.config.minimumReplicationFactor) {
+                if (keywordsStatuses[key].completedNumber < this.getMinimumAckResponses()) {
                     allCompleted = false;
                     break;
                 }
@@ -60,11 +66,13 @@ class PublishService extends OperationService {
                 await this.markOperationAsCompleted(operationId, {}, this.completedStatuses);
                 this.logResponsesSummary(completedNumber, failedNumber);
                 this.logger.info(
-                    `Publish with operation id: ${operationId} with status: ${this.completedStatuses.pop()}`,
+                    `Publish with operation id: ${operationId} with status: ${
+                        this.completedStatuses[this.completedStatuses.length - 1]
+                    }`,
                 );
             }
         } else if (
-            completedNumber < this.config.minimumReplicationFactor &&
+            completedNumber < this.getMinimumAckResponses() &&
             (numberOfFoundNodes === numberOfResponses ||
                 numberOfResponses % numberOfNodesInBatch === 0)
         ) {
@@ -109,24 +117,22 @@ class PublishService extends OperationService {
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
         const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
 
-        const assetNquads = await this.dataService.toNQuads({
+        const assertionGraphName = `assertion:${assertionId}`;
+
+        const assetNquads = await formatAssertion({
             '@context': SCHEMA_CONTEXT,
             '@id': ual,
             blockchain,
             contract,
             tokenId,
-            assertion: assertionId,
-            latestAssertion: assertionId,
+            assertion: { '@id': assertionGraphName },
+            latestAssertion: { '@id': assertionGraphName },
         });
-
-        this.logger.info(`Inserting assertion with ual:${ual} in database.`);
-
-        await this.tripleStoreModuleManager.insertAsset(
-            assertion.join('\n'),
-            assertionId,
-            assetNquads.join('\n'),
-            ual,
-        );
+        this.logger.info(`Inserting assertion with ual: ${ual} in database.`);
+        await Promise.all([
+            this.tripleStoreModuleManager.updateAssetsGraph(ual, assetNquads.join('\n')),
+            this.tripleStoreModuleManager.insertAssertion(assertionId, assertion.join('\n')),
+        ]);
 
         this.logger.info(`Assertion ${ual} has been successfully inserted!`);
     }

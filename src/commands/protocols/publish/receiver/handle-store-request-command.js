@@ -39,7 +39,6 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             operationId,
             OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_END,
         );
-
         await this.operationService.localStore(ual, assertionId, operationId);
         await this.operationIdService.updateOperationIdStatus(
             operationId,

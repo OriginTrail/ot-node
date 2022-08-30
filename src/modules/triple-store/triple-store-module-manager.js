@@ -5,14 +5,15 @@ class TripleStoreModuleManager extends BaseModuleManager {
         return 'tripleStore';
     }
 
-    async insertAsset(assertion, assertionId, assetInfo, ual) {
+    async insertAssertion(assertionId, assertionNquads) {
         if (this.initialized) {
-            return this.getImplementation().module.insertAsset(
-                assertion,
-                assertionId,
-                assetInfo,
-                ual,
-            );
+            return this.getImplementation().module.insertAssertion(assertionId, assertionNquads);
+        }
+    }
+
+    async updateAssetsGraph(ual, assetNquads) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateAssetsGraph(ual, assetNquads);
         }
     }
 
@@ -56,15 +57,15 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async findAssertions(nquads) {
-        if (this.initialized) {
-            return this.getImplementation().module.findAssertions(nquads);
-        }
-    }
-
     async select(query) {
         if (this.initialized) {
             return this.getImplementation().module.select(query);
+        }
+    }
+
+    async findAssertions(nquads) {
+        if (this.initialized) {
+            return this.getImplementation().module.findAssertions(nquads);
         }
     }
 

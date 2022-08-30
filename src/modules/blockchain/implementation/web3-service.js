@@ -1,13 +1,13 @@
 const Web3 = require('web3');
 const axios = require('axios');
 const { peerId2Hash } = require('assertion-tools');
-const Hub = require('./build/contracts/Hub.json');
-const AssetRegistry = require('./build/contracts/AssetRegistry.json');
-const ERC20Token = require('./build/contracts/ERC20Token.json');
-const Identity = require('./build/contracts/Identity.json');
-const Profile = require('./build/contracts/Profile.json');
-const ProfileStorage = require('./build/contracts/ProfileStorage.json');
-const constants = require('../../../constants/constants');
+const Hub = require('dkg-evm-module/build/contracts/Hub.json');
+const AssetRegistry = require('dkg-evm-module/build/contracts/AssetRegistry.json');
+const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
+const Identity = require('dkg-evm-module/build/contracts/Identity.json');
+const Profile = require('dkg-evm-module/build/contracts/Profile.json');
+const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
+const { INIT_STAKE_AMOUNT, WEBSOCKET_PROVIDER_OPTIONS } = require('../../../constants/constants');
 
 class Web3Service {
     async initialize(config, logger) {
@@ -28,7 +28,15 @@ class Web3Service {
             }
 
             try {
-                this.web3 = new Web3(this.config.rpcEndpoints[this.rpcNumber]);
+                if (this.config.rpcEndpoints[this.rpcNumber].startsWith('ws')) {
+                    const provider = new Web3.providers.WebsocketProvider(
+                        this.config.rpcEndpoints[this.rpcNumber],
+                        WEBSOCKET_PROVIDER_OPTIONS,
+                    );
+                    this.web3 = new Web3(provider);
+                } else {
+                    this.web3 = new Web3(this.config.rpcEndpoints[this.rpcNumber]);
+                }
                 // eslint-disable-next-line no-await-in-loop
                 isRpcConnected = await this.web3.eth.net.isListening();
             } catch (e) {
@@ -90,15 +98,29 @@ class Web3Service {
             `Connected to blockchain rpc : ${this.config.rpcEndpoints[this.rpcNumber]}.`,
         );
 
-        const nativeBalance = await this.web3.eth.getBalance(this.getPublicKey());
-        const tokenBalance = await this.callContractFunction(this.TokenContract, 'balanceOf', [
-            this.getPublicKey(),
-        ]);
+        await this.logBalances();
+    }
+
+    async logBalances() {
+        const nativeBalance = await this.getNativeTokenBalance();
+        const tokenBalance = await this.getTokenBalance();
         this.logger.info(
             `Balance of ${this.getPublicKey()} is ${nativeBalance} ${
                 this.baseTokenTicker
             } and ${tokenBalance} ${this.tracTicker}.`,
         );
+    }
+
+    async getNativeTokenBalance() {
+        const nativeBalance = await this.web3.eth.getBalance(this.getPublicKey());
+        return this.web3.utils.fromWei(nativeBalance);
+    }
+
+    async getTokenBalance() {
+        const tokenBalance = await this.callContractFunction(this.TokenContract, 'balanceOf', [
+            this.getPublicKey(),
+        ]);
+        return this.web3.utils.fromWei(tokenBalance);
     }
 
     identityExists() {
@@ -129,7 +151,7 @@ class Web3Service {
     async createProfile(peerId) {
         await this.executeContractFunction(this.TokenContract, 'increaseAllowance', [
             this.ProfileContract.options.address,
-            constants.INIT_STAKE_AMOUNT,
+            INIT_STAKE_AMOUNT,
         ]);
 
         const nodeId = await peerId2Hash(peerId);
@@ -137,7 +159,7 @@ class Web3Service {
         await this.executeContractFunction(this.ProfileContract, 'createProfile', [
             this.getManagementKey(),
             nodeId,
-            constants.INIT_STAKE_AMOUNT,
+            INIT_STAKE_AMOUNT,
             this.getIdentity(),
         ]);
     }
@@ -174,15 +196,15 @@ class Web3Service {
     }
 
     getPrivateKey() {
-        return this.config.privateKey;
+        return this.config.evmOperationalWalletPrivateKey;
     }
 
     getPublicKey() {
-        return this.config.publicKey;
+        return this.config.evmOperationalWalletPublicKey;
     }
 
     getManagementKey() {
-        return this.config.managementKey;
+        return this.config.evmManagementWalletPublicKey;
     }
 
     async getGasPrice() {
@@ -218,12 +240,12 @@ class Web3Service {
                 const gasPrice = await this.getGasPrice();
 
                 const gasLimit = await contractInstance.methods[functionName](...args).estimateGas({
-                    from: this.config.publicKey,
+                    from: this.getPublicKey(),
                 });
 
                 const encodedABI = contractInstance.methods[functionName](...args).encodeABI();
                 const tx = {
-                    from: this.config.publicKey,
+                    from: this.getPublicKey(),
                     to: contractInstance.options.address,
                     data: encodedABI,
                     gasPrice: gasPrice || this.web3.utils.toWei('20', 'Gwei'),
@@ -232,7 +254,7 @@ class Web3Service {
 
                 const createdTransaction = await this.web3.eth.accounts.signTransaction(
                     tx,
-                    this.config.privateKey,
+                    this.getPrivateKey(),
                 );
                 result = await this.web3.eth.sendSignedTransaction(
                     createdTransaction.rawTransaction,
@@ -258,7 +280,7 @@ class Web3Service {
                         arguments: args,
                     })
                     .estimateGas({
-                        from: this.config.publicKey,
+                        from: this.getPublicKey(),
                     });
 
                 const encodedABI = contractInstance
@@ -269,7 +291,7 @@ class Web3Service {
                     .encodeABI();
 
                 const tx = {
-                    from: this.config.publicKey,
+                    from: this.getPublicKey(),
                     data: encodedABI,
                     gasPrice: gasPrice || this.web3.utils.toWei('20', 'Gwei'),
                     gas: gasLimit || this.web3.utils.toWei('900', 'Kwei'),
@@ -277,7 +299,7 @@ class Web3Service {
 
                 const createdTransaction = await this.web3.eth.accounts.signTransaction(
                     tx,
-                    this.config.privateKey,
+                    this.getPrivateKey(),
                 );
 
                 return this.web3.eth.sendSignedTransaction(createdTransaction.rawTransaction);

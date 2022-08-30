@@ -6,6 +6,7 @@ const {
     GET_STATUS,
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
+    OPERATIONS,
 } = require('../constants/constants');
 
 class GetService extends OperationService {
@@ -15,7 +16,7 @@ class GetService extends OperationService {
         this.dataService = ctx.dataService;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
 
-        this.operationName = 'get';
+        this.operationName = OPERATIONS.GET;
         this.networkProtocol = NETWORK_PROTOCOLS.GET;
         this.operationRequestStatus = GET_REQUEST_STATUS;
         this.operationStatus = GET_STATUS;
@@ -45,7 +46,7 @@ class GetService extends OperationService {
             `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
         );
 
-        if (completedNumber === 1) {
+        if (completedNumber === this.getMinimumAckResponses()) {
             await this.markOperationAsCompleted(
                 operationId,
                 { assertion: responseData.nquads },
@@ -53,7 +54,7 @@ class GetService extends OperationService {
             );
             this.logResponsesSummary(completedNumber, failedNumber);
         } else if (
-            completedNumber < 1 &&
+            completedNumber < this.getMinimumAckResponses() &&
             (numberOfFoundNodes === failedNumber || failedNumber % numberOfNodesInBatch === 0)
         ) {
             if (leftoverNodes.length === 0) {
@@ -72,15 +73,13 @@ class GetService extends OperationService {
     }
 
     async localGet(assertionId, operationId) {
-        const assertionGraphName = `assertion:${assertionId}`;
-
         this.logger.debug(`Getting assertion: ${assertionId} for operationId: ${operationId}`);
 
-        let nquads = await this.tripleStoreModuleManager.get(assertionGraphName);
+        let nquads = await this.tripleStoreModuleManager.get(assertionId);
         nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
 
         this.logger.debug(
-            `Assertion: ${assertionGraphName} for operationId: ${operationId} ${
+            `Assertion: ${assertionId} for operationId: ${operationId} ${
                 nquads.length ? '' : 'not'
             } found in local database.`,
         );

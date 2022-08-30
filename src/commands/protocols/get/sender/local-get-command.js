@@ -17,17 +17,19 @@ class LocalGetCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const {operationId, assertionId} = command.data;
+        const { operationId, assertionId } = command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.GET.GET_LOCAL_START,
         );
-        const assertionExists = await this.tripleStoreModuleManager.assertionExists(`assertion:${assertionId}`);
+        const assertionExists = await this.tripleStoreModuleManager.assertionExists(assertionId);
         if (assertionExists) {
-            const nquads = await this.getService.localGet(assertionId, operationId);
+            const assertion = await this.getService.localGet(assertionId, operationId);
 
-            if (nquads.length) {
-                await this.operationIdService.cacheOperationIdData(operationId, nquads);
+            if (assertion.length) {
+                await this.operationIdService.cacheOperationIdData(operationId, {
+                    assertion,
+                });
                 await this.operationIdService.updateOperationIdStatus(
                     operationId,
                     OPERATION_ID_STATUS.GET.GET_LOCAL_END,

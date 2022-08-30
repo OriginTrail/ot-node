@@ -38,8 +38,8 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
-        await this.createProfiles();
         await this.saveNetworkModulePeerIdAndPrivKey();
+        await this.createProfiles();
 
         await this.initializeControllers();
         await this.initializeCommandExecutor();
@@ -71,6 +71,14 @@ class OTNode {
         if (!this.config.configFilename) {
             // set default user configuration filename
             this.config.configFilename = '.origintrail_noderc';
+        }
+        const fileService = new FileService({ config: this.config });
+        const updateFilePath = fileService.getUpdateFilePath();
+        if (fs.existsSync(updateFilePath)) {
+            this.config.otNodeUpdated = true;
+            fileService.removeFile(updateFilePath).catch((error) => {
+                this.logger.warn(`Unable to remove update file. Error: ${error}`);
+            });
         }
     }
 
@@ -148,7 +156,7 @@ class OTNode {
                             process.env.NODE_ENV !== 'development' &&
                             process.env.NODE_ENV !== 'test'
                         ) {
-                            this.saveIdentityInUserConfigurationFile(
+                            await this.saveIdentityInUserConfigurationFile(
                                 blockchainModuleManager.getIdentity(blockchain),
                                 blockchain,
                             );
@@ -180,7 +188,7 @@ class OTNode {
         const privateKey = networkModuleManager.getPrivateKey();
 
         if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
-            this.savePrivateKeyAndPeerIdInUserConfigurationFile(privateKey);
+            await this.savePrivateKeyAndPeerIdInUserConfigurationFile(privateKey);
         }
     }
 
@@ -223,26 +231,39 @@ class OTNode {
         }
     }
 
-    savePrivateKeyAndPeerIdInUserConfigurationFile(privateKey) {
+    async savePrivateKeyAndPeerIdInUserConfigurationFile(privateKey) {
         const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
-        const configFile = JSON.parse(fs.readFileSync(configurationFilePath));
-        if (
-            configFile.modules.network &&
-            configFile.modules.network.implementation &&
-            configFile.modules.network.implementation['libp2p-service'] &&
-            configFile.modules.network.implementation['libp2p-service'].config
-        ) {
-            if (!configFile.modules.network.implementation['libp2p-service'].config.privateKey) {
-                configFile.modules.network.implementation['libp2p-service'].config.privateKey =
-                    privateKey;
-                fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
-            }
+        const configFile = JSON.parse(await fs.promises.readFile(configurationFilePath));
+
+        if (!configFile.modules.network) {
+            configFile.modules.network = {
+                implementation: {
+                    'libp2p-service': {
+                        config: {},
+                    },
+                },
+            };
+        } else if (!configFile.modules.network.implementation) {
+            configFile.modules.network.implementation = {
+                'libp2p-service': {
+                    config: {},
+                },
+            };
+        } else if (!configFile.modules.network.implementation['libp2p-service']) {
+            configFile.modules.network.implementation['libp2p-service'] = {
+                config: {},
+            };
+        }
+        if (!configFile.modules.network.implementation['libp2p-service'].config.privateKey) {
+            configFile.modules.network.implementation['libp2p-service'].config.privateKey =
+                privateKey;
+            await fs.promises.writeFile(configurationFilePath, JSON.stringify(configFile, null, 2));
         }
     }
 
-    saveIdentityInUserConfigurationFile(identity, blockchain) {
+    async saveIdentityInUserConfigurationFile(identity, blockchain) {
         const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
-        const configFile = JSON.parse(fs.readFileSync(configurationFilePath));
+        const configFile = JSON.parse(await fs.promises.readFile(configurationFilePath));
         if (
             configFile.modules.blockchain &&
             configFile.modules.blockchain.implementation &&
@@ -251,7 +272,10 @@ class OTNode {
         ) {
             if (!configFile.modules.blockchain.implementation[blockchain].config.identity) {
                 configFile.modules.blockchain.implementation[blockchain].config.identity = identity;
-                fs.writeFileSync(configurationFilePath, JSON.stringify(configFile, null, 2));
+                await fs.promises.writeFile(
+                    configurationFilePath,
+                    JSON.stringify(configFile, null, 2),
+                );
             }
         }
     }
@@ -259,7 +283,7 @@ class OTNode {
     async removeUpdateFile() {
         const fileService = new FileService({ config: this.config, logger: this.logger });
         const updateFilePath = fileService.getUpdateFilePath();
-        if (fs.existsSync(updateFilePath)) {
+        if (await fileService.fileExists(updateFilePath)) {
             this.config.otNodeUpdated = true;
             await fileService.removeFile(updateFilePath).catch((error) => {
                 this.logger.warn(`Unable to remove update file. Error: ${error}`);
