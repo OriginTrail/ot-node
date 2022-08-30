@@ -1,7 +1,7 @@
 const { OPERATION_ID_STATUS } = require('../../constants/constants');
 const BaseController = require('./base-controller');
 
-const availableOperations = ['publish', 'get', 'assertions:search', 'entities:search'];
+const availableOperations = ['publish', 'get', 'assertions:search', 'entities:search', 'query'];
 
 class ResultController extends BaseController {
     constructor(ctx) {
@@ -41,13 +41,8 @@ class ResultController extends BaseController {
                     case 'assertions:search':
                     case 'entities:search':
                     case 'get':
-                        if (handlerRecord.status === OPERATION_ID_STATUS.COMPLETED) {
-                            response.data = await this.operationIdService.getCachedOperationIdData(
-                                operationId,
-                            );
-                        }
-                        break;
                     case 'publish':
+                    case 'query':
                         if (handlerRecord.status === OPERATION_ID_STATUS.COMPLETED) {
                             response.data = await this.operationIdService.getCachedOperationIdData(
                                 operationId,
