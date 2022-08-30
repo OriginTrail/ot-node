@@ -1,6 +1,6 @@
 {
     "name": "origintrail_node",
-    "version": "6.0.0-beta.2.2.1",
+    "version": "6.0.0-beta.2.2.2",
     "description": "OTNode v6 Beta 2",
     "main": "index.js",
     "scripts": {
@@ -14,6 +14,7 @@
         "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
         "test:unit": "nyc --all mocha --exit $(find test/unit -name '*.js')",
         "test:bdd:release": "cucumber-js --tags=@release --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+        "test:bdd:publish-errors": "cucumber-js --tags=@publish-errors --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
         "lint": "eslint ."
     },
     "repository": {
