@@ -1,15 +1,14 @@
 /* eslint-disable max-len */
 import Ganache from 'ganache';
 import Web3 from 'web3';
-import hub from 'dkg-evm-module/build/contracts/Hub.json';
-import assertionRegistry from 'dkg-evm-module/build/contracts/AssertionRegistry.json';
-import uaiRegistry from 'dkg-evm-module/build/contracts/UAIRegistry.json';
-import assetRegistry from 'dkg-evm-module/build/contracts/AssetRegistry.json';
-import erc20Token from 'dkg-evm-module/build/contracts/ERC20Token.json';
-import profileStorage from 'dkg-evm-module/build/contracts/ProfileStorage.json';
-import profile from 'dkg-evm-module/build/contracts/Profile.json';
-
-import accountPrivateKeys from '../api/datasets/privateKeys.json';
+import hub from 'dkg-evm-module/build/contracts/Hub.json' assert { type: 'json' };
+import assertionRegistry from 'dkg-evm-module/build/contracts/AssertionRegistry.json' assert { type: 'json' };
+import uaiRegistry from 'dkg-evm-module/build/contracts/UAIRegistry.json' assert { type: 'json' };
+import assetRegistry from 'dkg-evm-module/build/contracts/AssetRegistry.json' assert { type: 'json' };
+import erc20Token from 'dkg-evm-module/build/contracts/ERC20Token.json' assert { type: 'json' };
+import profileStorage from 'dkg-evm-module/build/contracts/ProfileStorage.json' assert { type: 'json' };
+import profile from 'dkg-evm-module/build/contracts/Profile.json' assert { type: 'json' };
+import accountPrivateKeys from '../api/datasets/privateKeys.json' assert { type: 'json' };
 
 const sources = {
     hub,

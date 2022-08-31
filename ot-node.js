@@ -7,8 +7,8 @@ import EventEmitter from 'events';
 import DependencyInjection from './src/service/dependency-injection.js';
 import Logger from './src/logger/logger.js';
 import { MIN_NODE_VERSION } from './src/constants/constants.js';
-import pjson from './package.json';
-import configjson from './config/config.json';
+import pjson from './package.json' assert { type: 'json' };
+import configjson from './config/config.json' assert { type: 'json' };
 import FileService from './src/service/file-service.js';
 
 class OTNode {

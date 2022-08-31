@@ -1,8 +1,8 @@
 import { When, Given } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
 import { setTimeout } from 'timers/promises';
-import assertions from './datasets/assertions.json';
-import requests from './datasets/requests.json';
+import assertions from './datasets/assertions.json' assert {type: 'json'};
+import requests from './datasets/requests.json' assert { type: 'json' };
 import HttpApiHelper from '../../../utilities/http-api-helper.mjs';
 
 When(

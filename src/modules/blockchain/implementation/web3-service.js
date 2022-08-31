@@ -1,12 +1,12 @@
 import Web3 from 'web3';
 import axios from 'axios';
 import { peerId2Hash } from 'assertion-tools';
-import Hub from 'dkg-evm-module/build/contracts/Hub.json';
-import AssetRegistry from 'dkg-evm-module/build/contracts/AssetRegistry.json';
-import ERC20Token from 'dkg-evm-module/build/contracts/ERC20Token.json';
-import Identity from 'dkg-evm-module/build/contracts/Identity.json';
-import Profile from 'dkg-evm-module/build/contracts/Profile.json';
-import ProfileStorage from 'dkg-evm-module/build/contracts/ProfileStorage.json';
+import Hub from 'dkg-evm-module/build/contracts/Hub.json' assert { type: 'json' };
+import AssetRegistry from 'dkg-evm-module/build/contracts/AssetRegistry.json' assert { type: 'json' };
+import ERC20Token from 'dkg-evm-module/build/contracts/ERC20Token.json' assert { type: 'json' };
+import Identity from 'dkg-evm-module/build/contracts/Identity.json' assert { type: 'json' };
+import Profile from 'dkg-evm-module/build/contracts/Profile.json' assert { type: 'json' };
+import ProfileStorage from 'dkg-evm-module/build/contracts/ProfileStorage.json' assert { type: 'json' };
 import { INIT_STAKE_AMOUNT, WEBSOCKET_PROVIDER_OPTIONS } from '../../../constants/constants.js';
 
 class Web3Service {
