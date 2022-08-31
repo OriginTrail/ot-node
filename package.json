@@ -42,7 +42,7 @@
         "@ethersproject/bytes": "^5.6.1",
         "@ethersproject/hash": "^5.6.1",
         "@ethersproject/wallet": "^5.6.2",
-        "@openzeppelin/contracts": "^4.6.0",
+        "@openzeppelin/contracts": "^4.7.3",
         "@polkadot/util": "^10.1.4",
         "@polkadot/util-crypto": "^10.1.4",
         "bn.js": "^5.1.3",
