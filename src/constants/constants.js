@@ -325,16 +325,6 @@ exports.GET_REQUEST_STATUS = {
 };
 
 /**
- * @constant {object} PUBLISH_METHOD -
- *  Possible methods for publish
- */
-exports.PUBLISH_METHOD = {
-    PUBLISH: 'PUBLISH',
-    PROVISION: 'PROVISION',
-    UPDATE: 'UPDATE',
-};
-
-/**
  * Local query types
  * @type {{CONSTRUCT: string, SELECT: string}}
  */
