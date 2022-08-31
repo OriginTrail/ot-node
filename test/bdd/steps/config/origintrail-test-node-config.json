@@ -13,8 +13,8 @@
             "hubContractAddress": "0x378ec78F621E2C8Aeff345b39334c38B0Bb7b96F",
             "evmOperationalWalletPublicKey": "0x19ad96f87f8e1c13e99a98d8174e00f5a7c82df1",
             "evmOperationalWalletPrivateKey": "1e60c8e9aa35064cd2eaa4c005bda2b76ef1a858feebb6c8e131c472d16f9740",
-            "evmManagementWalletPublicKey": "0x1de33ab36099f60c6a41a1b8f71939428773b169",
-            "evmManagementPublicKey" : "0x1de33ab36099f60c6a41a1b8f71939428773b169"
+            "evmManagementWalletPublicKey": "0xc96dfe1017168f5b5e2518df8048b7b6da9f7bd1",
+            "evmManagementPublicKey" : "0xc96dfe1017168f5b5e2518df8048b7b6da9f7bd1"
           }
         }
       }
@@ -94,5 +94,9 @@
   },
   "rpcPort": 8901,
   "minimumReplicationFactor": 4,
-  "appDataPath": "data0"
+  "appDataPath": "data0",
+  "minimumAckResponses": {
+    "publish": 2,
+    "get": 1
+  }
 }

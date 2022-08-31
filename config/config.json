@@ -140,7 +140,7 @@
             }
         },
         "minimumAckResponses": {
-            "publish": 1,
+            "publish": 2,
             "get": 1
         },
         "commandExecutorVerboseLoggingEnabled": false,

@@ -10,6 +10,7 @@ class SendTelemetryCommand extends Command {
         this.config = ctx.config;
         this.telemetryInjectionService = ctx.telemetryInjectionService;
         this.networkModuleManager = ctx.networkModuleManager;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
     }
 
     /**
@@ -28,6 +29,10 @@ class SendTelemetryCommand extends Command {
                         version: pjson.version,
                         identity: this.networkModuleManager.getPeerId()._idB58String,
                         hostname: this.config.hostname,
+                        operational_wallet: this.blockchainModuleManager.getPublicKey(),
+                        management_wallet: this.blockchainModuleManager.getManagementKey(),
+                        triple_store: this.config.modules.tripleStore.defaultImplementation,
+                        auto_update_enabled: this.config.modules.autoUpdater.enabled,
                     },
                     events,
                 };

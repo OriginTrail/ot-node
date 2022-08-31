@@ -1,23 +1,35 @@
 import ProtocolRequestCommand from '../../common/protocol-request-command.js';
-import { ERROR_TYPE } from '../../../../constants/constants.js';
+import { ERROR_TYPE, PUBLISH_TYPES } from '../../../../constants/constants.js';
 
 class PublishRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_REQUEST_ERROR;
     }
 
     async prepareMessage(command) {
-        const { operationId, assertionId, ual } = command.data;
+        const { publishType, operationId, assertionId, blockchain, contract } = command.data;
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
 
-        return {
-            assertion,
+        const assertionMessage = {
+            publishType,
             assertionId,
-            ual,
+            blockchain,
+            contract,
+            assertion,
+        };
+
+        if (publishType === PUBLISH_TYPES.ASSERTION) return assertionMessage;
+
+        if (publishType === PUBLISH_TYPES.ASSET)
+            return { ...assertionMessage, tokenId: command.data.tokenId };
+
+        return {
+            ...assertionMessage,
+            tokenId: command.data.tokenId,
+            keyword: command.data.keyword,
         };
     }
 

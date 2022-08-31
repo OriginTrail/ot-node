@@ -85,17 +85,12 @@ class PublishService extends OperationService {
         }
     }
 
-    async getAssertion(ual) {
+    async getAssertion(blockchain, contract, tokenId) {
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
         this.logger.info(`Getting assertion for ual: ${ual}`);
 
-        const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
-        const assertionId = await this.blockchainModuleManager.getLatestCommitHash(
-            blockchain,
-            contract,
-            tokenId,
-        );
-
-        return assertionId;
+        return this.blockchainModuleManager.getLatestCommitHash(blockchain, contract, tokenId);
     }
 
     async validateAssertion(assertionId, operationId) {
@@ -106,18 +101,65 @@ class PublishService extends OperationService {
 
         if (assertionId !== calculatedAssertionId) {
             throw Error(
-                `Invalid root hash. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`,
+                `Invalid assertion id. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`,
             );
         }
 
         this.logger.info(`Assertion integrity validated!`);
     }
 
-    async localStore(ual, assertionId, operationId) {
+    async localStoreIndex(assertionId, blockchain, contract, tokenId, keyword, operationId) {
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
-        const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
-        const assertionGraphName = `assertion:${assertionId}`;
+        // TODO get rank from blockchain
+        const rank = 1;
+
+        const indexNquads = await formatAssertion({
+            '@context': SCHEMA_CONTEXT,
+            '@id': ual,
+            rank,
+            metadata: { '@id': `assertion:${assertionId}` },
+        });
+        const assetNquads = await formatAssertion({
+            '@context': SCHEMA_CONTEXT,
+            '@id': ual,
+            blockchain,
+            contract,
+            tokenId,
+        });
+
+        this.logger.info(
+            `Inserting index for asset: ${ual}, keyword: ${keyword}, with assertion id: ${assertionId} in triple store.`,
+        );
+
+        await Promise.all(
+            this.tripleStoreModuleManager.insertIndex(
+                keyword,
+                indexNquads.join('\n'),
+                assetNquads.join('\n'),
+            ),
+            this.tripleStoreModuleManager.insertAssertion(assertionId, assertion.join('\n')),
+        );
+
+        this.logger.info(
+            `Index for asset: ${ual}, keyword: ${keyword}, with assertion id ${assertionId} has been successfully inserted!`,
+        );
+    }
+
+    async localStoreAssertion(assertionId, operationId) {
+        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
+
+        this.logger.info(`Inserting assertion with id: ${assertionId} in triple store.`);
+
+        await this.tripleStoreModuleManager.insertAssertion(assertionId, assertion.join('\n'));
+
+        this.logger.info(`Assertion with id ${assertionId} has been successfully inserted!`);
+    }
+
+    async localStoreAsset(assertionId, blockchain, contract, tokenId, operationId) {
+        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         const assetNquads = await formatAssertion({
             '@context': SCHEMA_CONTEXT,
@@ -125,16 +167,22 @@ class PublishService extends OperationService {
             blockchain,
             contract,
             tokenId,
-            assertion: { '@id': assertionGraphName },
-            latestAssertion: { '@id': assertionGraphName },
+            assertion: { '@id': `assertion:${assertionId}` },
+            latestAssertion: { '@id': `assertion:${assertionId}` },
         });
 
-        this.logger.info(`Inserting assertion with ual: ${ual} in database.`);
+        this.logger.info(
+            `Inserting asset with assertion id: ${assertionId}, ual: ${ual} in triple store.`,
+        );
+
         await Promise.all([
-            this.tripleStoreModuleManager.updateAssetsGraph(ual, assetNquads.join('\n')),
+            this.tripleStoreModuleManager.insertAsset(ual, assetNquads.join('\n')),
             this.tripleStoreModuleManager.insertAssertion(assertionId, assertion.join('\n')),
         ]);
-        this.logger.info(`Assertion ${ual} has been successfully inserted!`);
+
+        this.logger.info(
+            `Asset with assertion id: ${assertionId}, ual: ${ual} has been successfully inserted!`,
+        );
     }
 }
 

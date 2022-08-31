@@ -1,15 +1,15 @@
 import { Given } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
 import { fork } from 'child_process';
+import deepExtend from 'deep-extend';
 import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import DkgClientHelper from '../../utilities/dkg-client-helper.mjs';
 
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
-
-const PATH_TO_CONFIGS = './config/';
 const otNodeProcessPath = './test/bdd/steps/lib/ot-node-process.mjs';
+
+const defaultConfiguration = JSON.parse(fs.readFileSync(`./config/origintrail-test-node-config.json`));
+const bootstrapNodeConfiguration = JSON.parse(fs.readFileSync(`./config/origintrail-test-bootstrap-config.json`));
+
 function getBlockchainConfiguration(localBlockchain, privateKey, publicKey, managementKey) {
     return [
         {
@@ -20,10 +20,11 @@ function getBlockchainConfiguration(localBlockchain, privateKey, publicKey, mana
                         blockchainTitle: 'ganache',
                         networkId: 'ganache::testnet',
                         rpcEndpoints: ['http://localhost:7545'],
-                        hubContractAddress: localBlockchain.uaiRegistryContractAddress(),
+                        hubContractAddress: localBlockchain.getHubAddress(),
                         evmOperationalWalletPublicKey: publicKey,
                         evmOperationalWalletPrivateKey: privateKey,
                         evmManagementWalletPublicKey: managementKey,
+                        evmManagementPublicKey: managementKey,
                     },
                 },
             },
@@ -37,44 +38,87 @@ function forkNode(nodeConfiguration) {
     return forkedNode;
 }
 
-Given(/^I setup (\d+) node[s]*$/, { timeout: 60000 }, function nodeSetup(nodeCount, done) {
+function createNodeConfiguration(wallet, managementWallet, nodeIndex, nodeName, rpcPort) {
+    return {
+        modules: {
+            blockchain: getBlockchainConfiguration(
+                this.state.localBlockchain,
+                wallet.privateKey,
+                wallet.address,
+                managementWallet.address,
+            )[0],
+            network: {
+                implementation: {
+                    'libp2p-service': {
+                        config: {
+                            port: 9001 + nodeIndex,
+                        },
+                    },
+                },
+            },
+            repository: {
+                implementation: {
+                    'sequelize-repository': {
+                        config: {
+                            database: `operationaldbnode${nodeIndex}`,
+                        },
+                    },
+                },
+            },
+            tripleStore: {
+                implementation: {
+                    'ot-graphdb': {
+                        config: {
+                            repository: nodeName,
+                        },
+                    },
+                },
+            },
+            httpClient: {
+                implementation: {
+                    'express-http-client': {
+                        config: {
+                            port: rpcPort,
+                        },
+                    },
+                },
+            },
+        },
+        operationalDatabase: {
+            databaseName: `operationaldbnode${nodeIndex}`,
+        },
+        rpcPort,
+        appDataPath: `data${nodeIndex}`,
+        graphDatabase: {
+            name: nodeName,
+        },
+    };
+}
+
+Given(/^I setup (\d+) node[s]*$/, { timeout: 80000 }, function nodeSetup(nodeCount, done) {
     this.logger.log(`I setup ${nodeCount} node${nodeCount !== 1 ? 's' : ''}`);
     const wallets = this.state.localBlockchain.getWallets();
+    const currentNumberOfNodes = Object.keys(this.state.nodes).length;
     let nodesStarted = 0;
     for (let i = 0; i < nodeCount; i += 1) {
-        const wallet = wallets[i + 1];
-        const managementWallet = wallets[i + 28];
-        const rpcPort = 8901 + i;
-        const nodeName = `origintrail-test-${i}`;
+        const nodeIndex = currentNumberOfNodes + i;
+        const wallet = wallets[nodeIndex + 1];
+        const managementWallet = wallets[nodeIndex + 1 + 27];
+        const rpcPort = 8901 + nodeIndex;
+        const nodeName = `origintrail-test-${nodeIndex}`;
 
-        const nodeConfiguration = JSON.parse(
-            fs
-                .readFileSync(
-                    path.join(__dirname, `${PATH_TO_CONFIGS}origintrail-test-node-config.json`),
-                )
-                .toString(),
+        const nodeConfiguration = deepExtend(
+            {},
+            defaultConfiguration,
+            createNodeConfiguration.call(
+                this,
+                wallet,
+                managementWallet,
+                nodeIndex,
+                nodeName,
+                rpcPort,
+            ),
         );
-        // eslint-disable-next-line prefer-destructuring
-        nodeConfiguration.modules.blockchain = getBlockchainConfiguration(
-            this.state.localBlockchain,
-            wallet.privateKey,
-            wallet.address,
-            managementWallet.address,
-        )[0];
-
-        nodeConfiguration.modules.network.implementation['libp2p-service'].config.port = 9001 + i;
-        nodeConfiguration.modules.repository.implementation[
-            'sequelize-repository'
-        ].config.database = `operationaldbnode${i}`;
-        nodeConfiguration.modules.tripleStore.implementation['ot-graphdb'].config.repository =
-            nodeName;
-        nodeConfiguration.modules.httpClient.implementation['express-http-client'].config.port =
-            rpcPort;
-        nodeConfiguration.operationalDatabase.databaseName = `operationaldbnode${i}`;
-        nodeConfiguration.rpcPort = rpcPort;
-        nodeConfiguration.appDataPath = `data${i}`;
-        nodeConfiguration.graphDatabase.name = nodeName;
-
         const forkedNode = forkNode(nodeConfiguration);
 
         const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
@@ -86,7 +130,9 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 60000 }, function nodeSetup(nodeCou
         // eslint-disable-next-line no-loop-func
         forkedNode.on('message', (response) => {
             if (response.error) {
-                assert.fail(`Error while trying initialize node${i} client: ${response.error}`);
+                assert.fail(
+                    `Error while trying initialize node${nodeIndex} client: ${response.error}`,
+                );
             } else {
                 // todo if started
                 const client = new DkgClientHelper({
@@ -96,7 +142,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 60000 }, function nodeSetup(nodeCou
                     timeout: 25,
                     loglevel: 'trace',
                 });
-                this.state.nodes[i] = {
+                this.state.nodes[nodeIndex] = {
                     client,
                     forkedNode,
                     configuration: nodeConfiguration,
@@ -119,11 +165,6 @@ Given(
         expect(nodeCount).to.be.equal(1); // Currently not supported more.
         this.logger.log('Initializing bootstrap node');
         const nodeName = 'origintrail-test-bootstrap';
-        const bootstrapNodeConfiguration = JSON.parse(
-            fs
-                .readFileSync(path.join(__dirname, `${PATH_TO_CONFIGS}${nodeName}-config.json`))
-                .toString(),
-        );
         const forkedNode = forkNode(bootstrapNodeConfiguration);
 
         const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
@@ -158,7 +199,7 @@ Given(
 
 Given(
     /^I setup (\d+) additional node[s]*$/,
-    { timeout: 120000 },
+    { timeout: 60000 },
     function setupAdditionalNode(nodeCount, done) {
         this.logger.log(`I setup ${nodeCount} additional node${nodeCount !== 1 ? 's' : ''}`);
         const wallets = this.state.localBlockchain.getWallets();
@@ -166,49 +207,53 @@ Given(
         let nodesStarted = 0;
         for (let i = 0; i < nodeCount; i += 1) {
             const nodeIndex = currentNumberOfNodes + i;
-            const wallet = wallets[nodeIndex];
+            const wallet = wallets[nodeIndex + 1];
+            const managementWallet = wallets[nodeIndex + 1 + 27];
             const rpcPort = 8901 + nodeIndex;
             const nodeName = `origintrail-test-${nodeIndex}`;
-            const nodeConfiguration = {
-                graphDatabase: {
-                    name: nodeName,
-                },
-                blockchain: getBlockchainConfiguration(
-                    this.state.localBlockchain,
-                    wallet.privateKey,
-                    wallet.address,
+            const nodeConfiguration = deepExtend(
+                {},
+                defaultConfiguration,
+                createNodeConfiguration.call(
+                    this,
+                    wallet,
+                    managementWallet,
+                    nodeIndex,
+                    nodeName,
+                    rpcPort,
                 ),
-                operationalDatabase: {
-                    databaseName: `operationaldbnode${nodeIndex}`,
-                },
-                rpcPort,
-                network: {
-                    id: 'Devnet',
-                    port: 9001 + nodeIndex,
-                    bootstrap: [
-                        '/ip4/0.0.0.0/tcp/9000/p2p/QmWyf3dtqJnhuCpzEDTNmNFYc5tjxTrXhGcUUmGHdg2gtj',
-                    ],
-                },
-            };
+            );
+            const forkedNode = forkNode(nodeConfiguration);
 
-            const forkedNode = forkNode.call(this, nodeName, nodeConfiguration);
+            const logFileStream = fs.createWriteStream(
+                `${this.state.scenarionLogDir}/${nodeName}.log`,
+            );
+            forkedNode.stdout.setEncoding('utf8');
+            forkedNode.stdout.on('data', (data) => {
+                // Here is where the output goes
+                logFileStream.write(data);
+            });
 
             // eslint-disable-next-line no-loop-func
             forkedNode.on('message', (response) => {
                 if (response.error) {
-                    // todo handle error
+                    assert.fail(
+                        `Error while trying initialize node${nodeIndex} client: ${response.error}`,
+                    );
                 } else {
                     // todo if started
                     const client = new DkgClientHelper({
-                        endpoint: '127.0.0.1',
+                        endpoint: 'http://localhost',
                         port: rpcPort,
                         useSSL: false,
                         timeout: 25,
+                        loglevel: 'trace',
                     });
                     this.state.nodes[nodeIndex] = {
                         client,
                         forkedNode,
                         configuration: nodeConfiguration,
+                        nodeRpcUrl: `http://localhost:${rpcPort}`,
                     };
                 }
                 nodesStarted += 1;
@@ -217,5 +262,62 @@ Given(
                 }
             });
         }
+    },
+);
+Given(
+    /^I setup publish node (\d+) with invalid configuration/,
+    { timeout: 120000 },
+    function setupPublishNode(nodeIndex, done) {
+        this.logger.log(`I setup node ${nodeIndex} with invalid configuration`);
+        const wallet = this.state.localBlockchain.getWallets()[nodeIndex];
+        const managementWallet = this.state.localBlockchain.getWallets()[nodeIndex + 27];
+        const rpcPort = 8901 + nodeIndex - 1;
+        const nodeName = `origintrail-test-${nodeIndex - 1}`;
+        const nodeConfiguration = deepExtend(
+            {},
+            defaultConfiguration,
+            createNodeConfiguration.call(
+                this,
+                wallet,
+                managementWallet,
+                nodeIndex - 1,
+                nodeName,
+                rpcPort,
+            ),
+        );
+        nodeConfiguration.minimumAckResponses.publish = 10;
+        const forkedNode = forkNode(nodeConfiguration);
+
+        const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
+        forkedNode.stdout.setEncoding('utf8');
+        forkedNode.stdout.on('data', (data) => {
+            // Here is where the output goes
+            logFileStream.write(data);
+        });
+
+        // eslint-disable-next-line no-loop-func
+        forkedNode.on('message', (response) => {
+            if (response.error) {
+                assert.fail(
+                    `Error while trying initialize node${nodeIndex - 1} client: ${response.error}`,
+                );
+            } else {
+                // todo if started
+                const client = new DkgClientHelper({
+                    endpoint: 'http://localhost',
+                    port: rpcPort,
+                    useSSL: false,
+                    timeout: 25,
+                    loglevel: 'trace',
+                });
+                this.state.nodes[nodeIndex - 1] = {
+                    client,
+                    forkedNode,
+                    configuration: nodeConfiguration,
+                    nodeRpcUrl: `http://localhost:${rpcPort}`,
+                };
+            }
+            done();
+        });
     },
 );

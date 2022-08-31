@@ -1,6 +1,6 @@
 {
     "name": "origintrail_node",
-    "version": "6.0.0-beta.2.2.1",
+    "version": "6.0.0-beta.2.2.2",
     "description": "OTNode v6 Beta 2",
     "main": "index.js",
     "type": "module",
@@ -54,7 +54,6 @@
         "eslint-config-prettier": "^8.5.0",
         "ethereumjs-wallet": "^1.0.2",
         "ganache": "^7.0.4",
-        "ganache-core": "^2.13.2",
         "husky": "^6.0.0",
         "lint-staged": "^12.3.7",
         "mocha": "^9.2.2",
@@ -69,7 +68,7 @@
     },
     "dependencies": {
         "@chainsafe/libp2p-noise": "^8.0.1",
-        "@comunica/query-sparql": "2.4.0",
+        "@comunica/query-sparql": "2.2.1",
         "@libp2p/bootstrap": "^2.0.0",
         "@libp2p/kad-dht": "^3.0.4",
         "@libp2p/mplex": "^5.0.0",

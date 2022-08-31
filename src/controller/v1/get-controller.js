@@ -7,6 +7,7 @@ class GetController extends BaseController {
         this.commandExecutor = ctx.commandExecutor;
         this.operationIdService = ctx.operationIdService;
         this.getService = ctx.getService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
     async handleHttpApiGetRequest(req, res) {

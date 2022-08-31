@@ -8,6 +8,28 @@ export const MAX_FILE_SIZE = 2621440;
 
 export const PUBLISH_TYPES = { ASSERTION: 'assertion', ASSET: 'asset', INDEX: 'index' };
 
+/**
+ * Triple store media types
+ * @type {{APPLICATION_JSON: string, N_QUADS: string, SPARQL_RESULTS_JSON: string, LD_JSON: string}}
+ */
+export const MEDIA_TYPES = {
+    LD_JSON: 'application/ld+json',
+    N_QUADS: 'application/n-quads',
+    SPARQL_RESULTS_JSON: 'application/sparql-results+json',
+};
+
+/**
+ * XML data types
+ * @type {{FLOAT: string, DECIMAL: string, DOUBLE: string, BOOLEAN: string, INTEGER: string}}
+ */
+export const XML_DATA_TYPES = {
+    DECIMAL: 'http://www.w3.org/2001/XMLSchema#decimal',
+    FLOAT: 'http://www.w3.org/2001/XMLSchema#float',
+    DOUBLE: 'http://www.w3.org/2001/XMLSchema#double',
+    INTEGER: 'http://www.w3.org/2001/XMLSchema#integer',
+    BOOLEAN: 'http://www.w3.org/2001/XMLSchema#boolean',
+};
+
 export const MIN_NODE_VERSION = 16;
 
 export const INIT_STAKE_AMOUNT = 3000;
@@ -34,7 +56,12 @@ export const REMOVE_SESSION_COMMAND_DELAY = 2 * 60 * 1000;
 
 export const OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
-export const PERMANENT_COMMANDS = ['otnodeUpdateCommand', 'sendTelemetryCommand'];
+export const PERMANENT_COMMANDS = [
+    'otnodeUpdateCommand',
+    'sendTelemetryCommand',
+    'operationIdCleanerCommand',
+    'commandsCleanerCommand',
+];
 
 export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
 
@@ -99,6 +126,9 @@ export const ERROR_TYPE = {
         GET_REQUEST_REMOTE_ERROR: 'GetRequestRemoteError',
         GET_ERROR: 'GetError',
     },
+    QUERY: {
+        LOCAL_QUERY_ERROR: 'LocalQueryError',
+    },
 };
 export const OPERATION_ID_STATUS = {
     PENDING: 'PENDING',
@@ -148,6 +178,13 @@ export const OPERATION_ID_STATUS = {
         VALIDATING_QUERY: 'VALIDATING_QUERY',
         SEARCHING_ENTITIES: 'SEARCHING_ENTITIES',
     },
+
+    QUERY: {
+        QUERY_INIT_START: 'QUERY_INIT_START',
+        QUERY_INIT_END: 'QUERY_INIT_END',
+        QUERY_START: 'QUERY_START',
+        QUERY_END: 'QUERY_END',
+    },
 };
 
 export const OPERATIONS = {
@@ -156,6 +193,33 @@ export const OPERATIONS = {
     SEARCH: 'search',
 };
 
+/**
+ * @constant {number} OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS -
+ * operation id command cleanup interval time 24h
+ */
+export const OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+/**
+ * @constant {number} FINALIZED_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time
+ * finalized commands command cleanup interval time 24h
+ */
+export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+/**
+ * @constant {number} COMMAND_STATUS -
+ * Status for commands
+ */
+export const COMMAND_STATUS = {
+    FAILED: 'FAILED',
+    EXPIRED: 'EXPIRED',
+    STARTED: 'STARTED',
+    PENDING: 'PENDING',
+    COMPLETED: 'COMPLETED',
+    REPEATING: 'REPEATING',
+};
+
+/**
+ * @constant {object} NETWORK_PROTOCOLS -
+ *  Network protocols
+ */
 export const NETWORK_PROTOCOLS = {
     STORE: '/store/1.0.0',
     GET: '/get/1.0.0',
@@ -184,8 +248,11 @@ export const GET_REQUEST_STATUS = {
     COMPLETED: 'COMPLETED',
 };
 
-export const PUBLISH_METHOD = {
-    PUBLISH: 'PUBLISH',
-    PROVISION: 'PROVISION',
-    UPDATE: 'UPDATE',
+/**
+ * Local query types
+ * @type {{CONSTRUCT: string, SELECT: string}}
+ */
+export const QUERY_TYPES = {
+    SELECT: 'SELECT',
+    CONSTRUCT: 'CONSTRUCT',
 };

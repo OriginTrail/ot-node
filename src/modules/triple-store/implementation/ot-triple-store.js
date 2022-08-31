@@ -4,6 +4,7 @@ import {
     SCHEMA_CONTEXT,
     TRIPLE_STORE_CONNECT_MAX_RETRIES,
     TRIPLE_STORE_CONNECT_RETRY_FREQUENCY,
+    MEDIA_TYPES,
 } from '../../../constants/constants.js';
 
 class OtTripleStore {
@@ -61,7 +62,7 @@ class OtTripleStore {
         return true;
     }
 
-    async updateAssetsGraph(ual, assetNquads) {
+    async insertAsset(ual, assetNquads) {
         const insertion = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             DELETE {<${ual}> schema:latestAssertion ?o}
@@ -74,7 +75,21 @@ class OtTripleStore {
             INSERT DATA {
                 GRAPH <assets:graph> { 
                     ${assetNquads} 
-                } 
+                }
+            }`;
+        await this.queryEngine.queryVoid(insertion, this.insertContext);
+    }
+
+    async insertIndex(keyword, indexNquads, assetNquads) {
+        const insertion = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            INSERT DATA {
+                GRAPH <assets:graph> { 
+                    ${assetNquads} 
+                }
+                GRAPH <keyword:${keyword}> {
+                    ${indexNquads}
+                }
             }`;
         await this.queryEngine.queryVoid(insertion, this.insertContext);
     }
@@ -95,8 +110,16 @@ class OtTripleStore {
     }
 
     async construct(query) {
-        const result = await this.executeQuery(query);
+        const result = await this._executeQuery(query, MEDIA_TYPES.N_QUADS);
         return result;
+    }
+
+    async select(query) {
+        // todo: add media type once bug is fixed
+        // no media type is passed because of comunica bug
+        // https://github.com/comunica/comunica/issues/1034
+        const result = await this._executeQuery(query);
+        return JSON.parse(result);
     }
 
     async ask(query) {
@@ -131,28 +154,17 @@ class OtTripleStore {
         return true;
     }
 
-    async executeQuery(query) {
+    async _executeQuery(query, mediaType) {
         const result = await this.queryEngine.query(query, this.queryContext);
-        const { data } = await this.queryEngine.resultToString(
-            result,
-            'application/n-quads',
-            this.queryContext,
-        );
-        let nquads = '';
-        for await (const nquad of data) {
-            nquads += nquad;
-        }
-        return nquads;
-    }
+        const { data } = await this.queryEngine.resultToString(result, mediaType);
 
-    async execute(query) {
-        const result = await this.queryEngine.query(query, this.queryContext);
-        const { data } = await this.queryEngine.resultToString(result);
         let response = '';
+
         for await (const chunk of data) {
             response += chunk;
         }
-        return JSON.parse(response);
+
+        return response;
     }
 
     cleanEscapeCharacter(query) {

@@ -7,22 +7,10 @@ import {
     DEFAULT_COMMAND_DELAY_IN_MILLS,
     MAX_COMMAND_DELAY_IN_MILLS,
     DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS,
+    COMMAND_STATUS,
 } from '../constants/constants.js';
 
 const { forEach } = pIteration;
-
-/**
- * Command statuses
- * @type {{failed: string, expired: string, started: string, pending: string, completed: string}}
- */
-const STATUS = {
-    failed: 'FAILED',
-    expired: 'EXPIRED',
-    started: 'STARTED',
-    pending: 'PENDING',
-    completed: 'COMPLETED',
-    repeating: 'REPEATING',
-};
 
 /**
  * How many commands will run in parallel
@@ -110,7 +98,7 @@ class CommandExecutor {
         if (command.deadline_at && now > command.deadline_at) {
             this.logger.warn(`Command ${command.name} and ID ${command.id} is too late...`);
             await this._update(command, {
-                status: STATUS.expired,
+                status: COMMAND_STATUS.EXPIRED,
             });
             try {
                 const result = await handler.expired(command);
@@ -141,7 +129,7 @@ class CommandExecutor {
                 await this._update(
                     command,
                     {
-                        status: STATUS.started,
+                        status: COMMAND_STATUS.STARTED,
                     },
                     transaction,
                 );
@@ -152,7 +140,7 @@ class CommandExecutor {
                     await this._update(
                         command,
                         {
-                            status: STATUS.repeating,
+                            status: COMMAND_STATUS.REPEATING,
                         },
                         transaction,
                     );
@@ -183,7 +171,7 @@ class CommandExecutor {
                 await this._update(
                     command,
                     {
-                        status: STATUS.completed,
+                        status: COMMAND_STATUS.COMPLETED,
                     },
                     transaction,
                 );
@@ -297,7 +285,7 @@ class CommandExecutor {
         if (command.retries > 1) {
             command.data = handler.pack(command.data);
             await this._update(command, {
-                status: STATUS.pending,
+                status: COMMAND_STATUS.PENDING,
                 retries: command.retries - 1,
             });
             const period = command.period ? command.period : 0;
@@ -326,7 +314,7 @@ class CommandExecutor {
         } else {
             try {
                 await this._update(command, {
-                    status: STATUS.failed,
+                    status: COMMAND_STATUS.FAILED,
                     message: err.message,
                 });
                 this.logger.warn(`Error in command: ${command.name}, error: ${err.message}`);
@@ -363,7 +351,7 @@ class CommandExecutor {
             const commandInstance = this.commandResolver.resolve(command.name);
             command.data = commandInstance.pack(command.data);
         }
-        command.status = STATUS.pending;
+        command.status = COMMAND_STATUS.PENDING;
         const opts = {};
         if (transaction != null) {
             opts.transaction = transaction;
@@ -416,7 +404,7 @@ class CommandExecutor {
         this.logger.info('Replay pending/started commands from the database...');
         const pendingCommands = (
             await this.repositoryModuleManager.getCommandsWithStatus(
-                [STATUS.pending, STATUS.started, STATUS.repeating],
+                [COMMAND_STATUS.PENDING, COMMAND_STATUS.STARTED, COMMAND_STATUS.REPEATING],
                 ['cleanerCommand', 'autoupdaterCommand'],
             )
         ).filter((command) => !PERMANENT_COMMANDS.includes(command.name));

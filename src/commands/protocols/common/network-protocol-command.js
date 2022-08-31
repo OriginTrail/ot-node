@@ -3,8 +3,6 @@ import Command from '../../command.js';
 class NetworkProtocolCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.config = ctx.config;
-        this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
     }
 
@@ -13,7 +11,6 @@ class NetworkProtocolCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId } = command.data;
         const keywords = this.getKeywords(command);
         const commandSequence = [
             'findNodesCommand',
@@ -26,9 +23,8 @@ class NetworkProtocolCommand extends Command {
                 sequence: commandSequence.slice(1),
                 delay: 0,
                 data: {
-                    ...this.getNextCommandData(command),
+                    ...command.data,
                     keyword,
-                    operationId,
                     minimumAckResponses: this.operationService.getMinimumAckResponses(),
                     errorType: this.errorType,
                     networkProtocol: this.operationService.getNetworkProtocol(),

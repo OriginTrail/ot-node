@@ -27,7 +27,10 @@ class HandleProtocolMessageCommand extends Command {
                 messageData,
             );
         } catch (error) {
-            if (command.retries) return Command.retry();
+            if (command.retries) {
+                this.logger.warn(error.message);
+                return Command.retry();
+            }
             await this.handleError(error.message, command);
         }
 
