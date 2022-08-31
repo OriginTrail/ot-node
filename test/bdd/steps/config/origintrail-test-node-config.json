@@ -93,7 +93,6 @@
     "name": "origintrail-test-0"
   },
   "rpcPort": 8901,
-  "minimumReplicationFactor": 4,
   "appDataPath": "data0",
   "minimumAckResponses": {
     "publish": 2,

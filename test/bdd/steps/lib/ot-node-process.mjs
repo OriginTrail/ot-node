@@ -1,9 +1,7 @@
 import OTNode from '../../../../ot-node.js';
 import HttpApiHelper from '../../../utilities/http-api-helper.mjs';
 
-console.log('*******************BEFORE PROCESSON*************');
 process.on('message', async (data) => {
-    console.log('*******************child-process*************');
     const config = JSON.parse(data);
     try {
         process.env.OPERATIONAL_DB_NAME = config.operationalDatabase.databaseName;

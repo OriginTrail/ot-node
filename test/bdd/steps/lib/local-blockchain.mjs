@@ -55,6 +55,11 @@ class LocalBlockchain {
         this.port = options.port || 7545;
         this.name = options.name || 'ganache';
         this.server = Ganache.server({
+            logging: {
+                logger: {
+                    log: () => {},
+                },
+            },
             gasLimit: 7000000,
             time: new Date(),
             accounts: accountPrivateKeys.map((account) => ({
