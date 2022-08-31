@@ -1,5 +1,8 @@
-const Command = require('../command');
-const constants = require('../../constants/constants');
+import Command from '../command.js';
+import {
+    OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS,
+    OPERATION_ID_STATUS,
+} from '../../constants/constants.js';
 
 /**
  * Increases approval for Bidding contract on blockchain
@@ -16,10 +19,10 @@ class OperationIdCleanerCommand extends Command {
      * @param command
      */
     async execute() {
-        const timeToBeDeleted = Date.now() - constants.OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS;
+        const timeToBeDeleted = Date.now() - OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS;
         await this.repositoryModuleManager.removeOperationIdRecord(timeToBeDeleted, [
-            constants.OPERATION_ID_STATUS.COMPLETED,
-            constants.OPERATION_ID_STATUS.FAILED,
+            OPERATION_ID_STATUS.COMPLETED,
+            OPERATION_ID_STATUS.FAILED,
         ]);
         return Command.repeat();
     }
@@ -42,7 +45,7 @@ class OperationIdCleanerCommand extends Command {
     default(map) {
         const command = {
             name: 'operationIdCleanerCommand',
-            period: constants.OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS,
+            period: OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS,
             data: {},
             transactional: false,
         };
@@ -51,4 +54,4 @@ class OperationIdCleanerCommand extends Command {
     }
 }
 
-module.exports = OperationIdCleanerCommand;
+export default OperationIdCleanerCommand;

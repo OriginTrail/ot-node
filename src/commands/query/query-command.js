@@ -1,5 +1,5 @@
-const Command = require('../command');
-const { OPERATION_ID_STATUS, ERROR_TYPE } = require('../../constants/constants');
+import Command from '../command.js';
+import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../constants/constants.js';
 
 class QueryCommand extends Command {
     constructor(ctx) {
@@ -56,4 +56,4 @@ class QueryCommand extends Command {
     }
 }
 
-module.exports = QueryCommand;
+export default QueryCommand;

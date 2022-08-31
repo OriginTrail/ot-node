@@ -4,11 +4,10 @@ import { fork } from 'child_process';
 import deepExtend from 'deep-extend';
 import fs from 'fs';
 import DkgClientHelper from '../../utilities/dkg-client-helper.mjs';
+import defaultConfiguration from './config/origintrail-test-node-config.json' assert {type: 'json'}
+import bootstrapNodeConfiguration from './config/origintrail-test-bootstrap-config.json' assert { type: 'json' };
 
 const otNodeProcessPath = './test/bdd/steps/lib/ot-node-process.mjs';
-
-const defaultConfiguration = JSON.parse(fs.readFileSync(`./config/origintrail-test-node-config.json`));
-const bootstrapNodeConfiguration = JSON.parse(fs.readFileSync(`./config/origintrail-test-bootstrap-config.json`));
 
 function getBlockchainConfiguration(localBlockchain, privateKey, publicKey, managementKey) {
     return [

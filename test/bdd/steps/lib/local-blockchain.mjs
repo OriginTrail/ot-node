@@ -1,8 +1,6 @@
 /* eslint-disable max-len */
-import {readFileSync} from 'fs'
 import Ganache from 'ganache';
 import Web3 from 'web3';
-import Wallet from 'ethereumjs-wallet';
 import hub from 'dkg-evm-module/build/contracts/Hub.json' assert {type: 'json'};
 import assertionRegistry from 'dkg-evm-module/build/contracts/AssertionRegistry.json' assert { type: 'json' };
 import uaiRegistry from 'dkg-evm-module/build/contracts/UAIRegistry.json' assert { type: 'json' };
@@ -13,20 +11,18 @@ import profile from 'dkg-evm-module/build/contracts/Profile.json' assert { type:
 
 import accountPrivateKeys from '../api/datasets/privateKeys.json' assert {type: 'json'};
 
-const contractNames = [
-    'hub',
-    'uaiRegistry',
-    'assertionRegistry',
-    'assetRegistry',
-    'erc20Token',
-    'profileStorage',
-    'profile',
-];
-
+const sources = {
+    hub,
+    uaiRegistry,
+    assertionRegistry,
+    assetRegistry,
+    erc20Token,
+    profileStorage,
+    profile,
+};
+const web3 = new Web3();
 const wallets = accountPrivateKeys.map((privateKey) => ({
-    address: `0x${Wallet.fromPrivateKey(Buffer.from(privateKey, 'hex'))
-        .getAddress()
-        .toString('hex')}`,
+    address: web3.eth.accounts.privateKeyToAccount(privateKey).address,
     privateKey,
 }));
 
@@ -113,9 +109,9 @@ class LocalBlockchain {
 
     fetchContracts() {
         this.contracts = {};
-        contractNames.forEach((name) => {
-            this.populateContractObject(name, sources[name]);
-        });
+        for (const [name, source] of Object.entries(sources)) {
+            this.populateContractObject(name, source);
+        }
     }
 
     populateContractObject(contractName, source) {

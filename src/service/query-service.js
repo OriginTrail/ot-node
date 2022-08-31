@@ -1,4 +1,4 @@
-const { QUERY_TYPES } = require('../constants/constants');
+import { QUERY_TYPES } from '../constants/constants.js';
 
 class QueryService {
     constructor(ctx) {
@@ -27,4 +27,4 @@ class QueryService {
     }
 }
 
-module.exports = QueryService;
+export default QueryService;
