@@ -1,7 +1,6 @@
 const DeepExtend = require('deep-extend');
 const rc = require('rc');
 const fs = require('fs');
-const queue = require('fastq');
 const appRootPath = require('app-root-path');
 const path = require('path');
 const EventEmitter = require('events');
@@ -35,7 +34,9 @@ class OTNode {
         this.logger.info(`Node is running in ${process.env.NODE_ENV} environment`);
 
         this.initializeDependencyContainer();
+        this.logger.info(`dependency container initialized`);
         this.initializeEventEmitter();
+        this.logger.info(` event emitter initialized`);
 
         await this.initializeModules();
         await this.saveNetworkModulePeerIdAndPrivKey();
@@ -86,9 +87,6 @@ class OTNode {
         this.container = DependencyInjection.initialize();
         DependencyInjection.registerValue(this.container, 'config', this.config);
         DependencyInjection.registerValue(this.container, 'logger', this.logger);
-        DependencyInjection.registerValue(this.container, 'constants', constants);
-        DependencyInjection.registerValue(this.container, 'blockchainQueue', queue);
-        DependencyInjection.registerValue(this.container, 'tripleStoreQueue', queue);
 
         this.logger.info('Dependency injection module is initialized');
     }
@@ -97,6 +95,7 @@ class OTNode {
         const initializationPromises = [];
         for (const moduleName in this.config.modules) {
             const moduleManagerName = `${moduleName}ModuleManager`;
+            this.logger.info(`schedulinginitializing ${moduleManagerName}`);
 
             const moduleManager = this.container.resolve(moduleManagerName);
             initializationPromises.push(moduleManager.initialize());

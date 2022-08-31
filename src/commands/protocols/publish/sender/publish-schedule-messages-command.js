@@ -1,5 +1,9 @@
 const ProtocolScheduleMessagesCommand = require('../../common/protocol-schedule-messages-command');
-const { OPERATION_ID_STATUS, ERROR_TYPE } = require('../../../../constants/constants');
+const {
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+    PUBLISH_TYPES,
+} = require('../../../../constants/constants');
 
 class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     constructor(ctx) {
@@ -7,16 +11,15 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         this.operationService = ctx.publishService;
 
         this.startEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_START;
-
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR;
     }
 
     getNextCommandData(command) {
-        const { assertionId, ual } = command.data;
-        return {
-            assertionId,
-            ual,
-        };
+        const { publishType, assertionId, blockchain, contract } = command.data;
+        const assertionCommandData = { publishType, assertionId, blockchain, contract };
+
+        if (publishType === PUBLISH_TYPES.ASSERTION) return assertionCommandData;
+        return { ...assertionCommandData, tokenId: command.data.tokenId };
     }
 
     /**

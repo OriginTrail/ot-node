@@ -81,7 +81,7 @@ class GetService extends OperationService {
         this.logger.debug(
             `Assertion: ${assertionId} for operationId: ${operationId} ${
                 nquads.length ? '' : 'not'
-            } found in local database.`,
+            } found in local triple store.`,
         );
 
         if (nquads.length) {
