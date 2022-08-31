@@ -2,8 +2,8 @@ import sinon from 'sinon';
 import { describe, it, afterEach } from 'mocha';
 import { expect } from 'chai';
 
-import authenticationMiddleware from '../../../src/modules/http-client/implementation/middleware/authentication-middleware';
-import AuthService from '../../../src/service/auth-service';
+import authenticationMiddleware from '../../../src/modules/http-client/implementation/middleware/authentication-middleware.js';
+import AuthService from '../../../src/service/auth-service.js';
 
 describe('authentication middleware test', async () => {
     const sandbox = sinon.createSandbox();

@@ -4,8 +4,8 @@ import { fork } from 'child_process';
 import deepExtend from 'deep-extend';
 import fs from 'fs';
 import DkgClientHelper from '../../utilities/dkg-client-helper.mjs';
-import defaultConfiguration from './config/origintrail-test-node-config.json' assert {type: 'json'}
-import bootstrapNodeConfiguration from './config/origintrail-test-bootstrap-config.json' assert { type: 'json' };
+import defaultConfiguration from './config/origintrail-test-node-config.json';
+import bootstrapNodeConfiguration from './config/origintrail-test-bootstrap-config.json';
 
 const otNodeProcessPath = './test/bdd/steps/lib/ot-node-process.mjs';
 

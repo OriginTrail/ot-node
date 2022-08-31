@@ -3,9 +3,9 @@ import { expect } from 'chai';
 import { describe, it, afterEach } from 'mocha';
 import { v4 as uuid } from 'uuid';
 import sinon from 'sinon';
-import AuthService from '../../../src/service/auth-service';
-import jwtUtil from '../../../src/service/util/jwt-util';
-import RepositoryModuleManager from '../../../src/modules/repository/repository-module-manager';
+import AuthService from '../../../src/service/auth-service.js';
+import jwtUtil from '../../../src/service/util/jwt-util.js';
+import RepositoryModuleManager from '../../../src/modules/repository/repository-module-manager.js';
 
 const whitelistedIps = [
     '::1',

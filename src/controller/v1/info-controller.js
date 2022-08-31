@@ -1,4 +1,4 @@
-import pjson from '../../../package.json' assert { type: 'json' };
+import pjson from '../../../package.json';
 import BaseController from './base-controller.js';
 
 class InfoController extends BaseController {

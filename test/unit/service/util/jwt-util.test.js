@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { v4 as uuid } from 'uuid';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
-import jwtUtil from '../../../../src/service/util/jwt-util';
+import jwtUtil from '../../../../src/service/util/jwt-util.js';
 
 const getPayload = (token) => {
     const b64Payload = token.split('.')[1];

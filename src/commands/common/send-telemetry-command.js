@@ -1,6 +1,6 @@
 import axios from 'axios';
 import Command from '../command.js';
-import pjson from '../../../package.json' assert { type: 'json' };
+import pjson from '../../../package.json';
 import { SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES } from '../../constants/constants.js';
 
 class SendTelemetryCommand extends Command {

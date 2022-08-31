@@ -7,7 +7,7 @@ import fs from 'fs-extra';
 import { v4 as uuid } from 'uuid';
 import Logger from '../src/logger/logger';
 import configjson from '../config/config.json';
-import pjson from '../package.json' assert { type: 'json' };
+import pjson from '../package.json';
 import RepositoryModuleManager from '../src/modules/repository/repository-module-manager';
 import jwtUtil from '../src/service/util/jwt-util';
 
