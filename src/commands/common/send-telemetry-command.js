@@ -1,7 +1,10 @@
 import axios from 'axios';
+import { createRequire } from 'module';
 import Command from '../command.js';
-import pjson from '../../../package.json' assert { type: 'json' };
 import { SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES } from '../../constants/constants.js';
+
+const require = createRequire(import.meta.url);
+const pjson = require('../../../package.json');
 
 class SendTelemetryCommand extends Command {
     constructor(ctx) {

@@ -7,7 +7,6 @@
     "scripts": {
         "bootstrap-node": "node index.js tools/local-network-setup/.bootstrap_origintrail_noderc",
         "start": "node index.js",
-        "dev": "nodemon index.js",
         "prepare": "husky install",
         "ganache": "ganache-cli -e 1000000000000 -i 5777 -p 7545 -l 10000000 -a 30 -m \"aspect ask story desert profit engage tuition leave fade giraffe exclude brief\"",
         "lint-staged": "lint-staged",
@@ -36,9 +35,6 @@
         "npm": ">=6.14.15"
     },
     "devDependencies": {
-        "@babel/core": "^7.15.5",
-        "@babel/eslint-parser": "^7.18.9",
-        "@babel/plugin-syntax-import-assertions": "^7.18.6",
         "@cucumber/cucumber": "^8.5.2",
         "@ethersproject/bytes": "^5.6.1",
         "@ethersproject/hash": "^5.6.1",
@@ -55,10 +51,8 @@
         "ganache": "^7.0.4",
         "husky": "^6.0.0",
         "lint-staged": "^12.3.7",
-        "mocha": "^9.2.2",
-        "nodemon": "^2.0.15",
+        "mocha": "^10.0.0",
         "nyc": "^15.1.0",
-        "openzeppelin-solidity": "3.4.2",
         "prettier": "^2.6.2",
         "request": "^2.88.2",
         "sinon": "^14.0.0",

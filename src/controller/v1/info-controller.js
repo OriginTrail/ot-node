@@ -1,9 +1,11 @@
-import pjson from '../../../package.json' assert { type: 'json' };
+import { createRequire } from 'module';
 import BaseController from './base-controller.js';
+
+const require = createRequire(import.meta.url);
+const { version } = require('../../../package.json');
 
 class InfoController extends BaseController {
     handleHttpApiInfoRequest(req, res) {
-        const { version } = pjson;
         this.returnResponse(res, 200, {
             version,
         });

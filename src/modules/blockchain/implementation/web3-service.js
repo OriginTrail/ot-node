@@ -1,13 +1,16 @@
 import Web3 from 'web3';
 import axios from 'axios';
 import { peerId2Hash } from 'assertion-tools';
-import Hub from 'dkg-evm-module/build/contracts/Hub.json' assert { type: 'json' };
-import AssetRegistry from 'dkg-evm-module/build/contracts/AssetRegistry.json' assert { type: 'json' };
-import ERC20Token from 'dkg-evm-module/build/contracts/ERC20Token.json' assert { type: 'json' };
-import Identity from 'dkg-evm-module/build/contracts/Identity.json' assert { type: 'json' };
-import Profile from 'dkg-evm-module/build/contracts/Profile.json' assert { type: 'json' };
-import ProfileStorage from 'dkg-evm-module/build/contracts/ProfileStorage.json' assert { type: 'json' };
+import { createRequire } from 'module';
 import { INIT_STAKE_AMOUNT, WEBSOCKET_PROVIDER_OPTIONS } from '../../../constants/constants.js';
+
+const require = createRequire(import.meta.url);
+const Hub = require('dkg-evm-module/build/contracts/Hub.json');
+const AssetRegistry = require('dkg-evm-module/build/contracts/AssetRegistry.json');
+const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
+const Identity = require('dkg-evm-module/build/contracts/Identity.json');
+const Profile = require('dkg-evm-module/build/contracts/Profile.json');
+const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
 
 class Web3Service {
     async initialize(config, logger) {

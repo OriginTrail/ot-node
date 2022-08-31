@@ -1,9 +1,12 @@
 import { When, Given } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
 import { setTimeout } from 'timers/promises';
-import assertions from './datasets/assertions.json' assert {type: 'json'};
-import requests from './datasets/requests.json' assert { type: 'json' };
+import { createRequire } from 'module';
 import HttpApiHelper from '../../../utilities/http-api-helper.mjs';
+
+const require = createRequire(import.meta.url);
+const assertions = require('./datasets/assertions.json');
+const requests = require('./datasets/requests.json');
 
 When(
     /^I call publish on node (\d+) with ([^"]*)/,

@@ -62,7 +62,21 @@ class OtTripleStore {
         return true;
     }
 
-    async insertAsset(ual, assetNquads) {
+    async assetExists(ual, assertionId) {
+        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
+                        ASK WHERE {
+                            GRAPH <assets:graph> {
+                                <${ual}> schema:assertion <assertion:${assertionId}>
+                            }
+                        }`;
+
+        return this.ask(query);
+    }
+
+    async insertAsset(ual, assertionId, assetNquads) {
+        // const exists = await this.assetExists(ual, assertionId)
+
+        // if(!exists) {
         const insertion = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             DELETE {<${ual}> schema:latestAssertion ?o}
@@ -78,6 +92,7 @@ class OtTripleStore {
                 }
             }`;
         await this.queryEngine.queryVoid(insertion, this.insertContext);
+        // }
     }
 
     async insertIndex(keyword, indexNquads, assetNquads) {

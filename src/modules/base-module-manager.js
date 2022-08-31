@@ -69,7 +69,9 @@ class BaseModuleManager {
         } catch (error) {
             if (requiredModules.includes(this.getName())) {
                 throw new Error(
-                    `Module is required but got error during initialization - ${error.message}`,
+                    `${this.getName()} module is required but got error during initialization - ${
+                        error.message
+                    }`,
                 );
             }
             this.logger.error(error.message);

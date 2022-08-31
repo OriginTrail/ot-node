@@ -22,7 +22,7 @@ COPY config/papertrail.yml /etc/log_files.yml
 
 
 
-#Install nodemon
+#Install forever
 RUN npm install -g forever
 
 

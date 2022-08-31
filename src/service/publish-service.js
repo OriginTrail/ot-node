@@ -176,7 +176,7 @@ class PublishService extends OperationService {
         );
 
         await Promise.all([
-            this.tripleStoreModuleManager.insertAsset(ual, assetNquads.join('\n')),
+            this.tripleStoreModuleManager.insertAsset(ual, assertionId, assetNquads.join('\n')),
             this.tripleStoreModuleManager.insertAssertion(assertionId, assertion.join('\n')),
         ]);
 

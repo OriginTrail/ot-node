@@ -3,9 +3,12 @@ import { expect, assert } from 'chai';
 import { fork } from 'child_process';
 import deepExtend from 'deep-extend';
 import fs from 'fs';
+import { createRequire } from 'module';
 import DkgClientHelper from '../../utilities/dkg-client-helper.mjs';
-import defaultConfiguration from './config/origintrail-test-node-config.json' assert { type: 'json' };
-import bootstrapNodeConfiguration from './config/origintrail-test-bootstrap-config.json' assert {type: 'json'};
+
+const require = createRequire(import.meta.url);
+const defaultConfiguration = require('./config/origintrail-test-node-config.json');
+const bootstrapNodeConfiguration = require('./config/origintrail-test-bootstrap-config.json');
 
 const otNodeProcessPath = './test/bdd/steps/lib/ot-node-process.mjs';
 

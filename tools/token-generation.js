@@ -5,11 +5,14 @@ import DeepExtend from 'deep-extend';
 import rc from 'rc';
 import fs from 'fs-extra';
 import { v4 as uuid } from 'uuid';
+import { createRequire } from 'module';
 import Logger from '../src/logger/logger';
-import configjson from '../config/config.json' assert { type: 'json' };
-import pjson from '../package.json' assert { type: 'json' };
 import RepositoryModuleManager from '../src/modules/repository/repository-module-manager';
 import jwtUtil from '../src/service/util/jwt-util';
+
+const require = createRequire(import.meta.url);
+const configjson = require('../config/config.json');
+const pjson = require('../package.json');
 
 const getLogger = () => new Logger('silent', false);
 let repository;

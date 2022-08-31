@@ -3,13 +3,10 @@ module.exports = {
         es6: true,
         node: true,
     },
-    extends: ['airbnb/base', 'prettier'],
-    parser: '@babel/eslint-parser',
+    extends: ['airbnb', 'prettier'],
     parserOptions: {
-        requireConfigFile: false,
-        babelOptions: {
-            plugins: ['@babel/plugin-syntax-import-assertions'],
-        },
+        sourceType: 'module',
+        ecmaVersion: 'latest'
     },
     rules: {
         'linebreak-style': ['error', 'unix'],
@@ -21,7 +18,7 @@ module.exports = {
         'no-console': 'warn',
         'no-continue': 1,
         'no-underscore-dangle': 0,
-        'import/extensions': 0
+        'import/extensions': 0,
     },
     overrides: [
         {
