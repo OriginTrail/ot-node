@@ -3,7 +3,7 @@ module.exports = {
         es6: true,
         node: true,
     },
-    extends: ['airbnb', 'prettier'],
+    extends: ['airbnb/base', 'prettier'],
     parserOptions: {
         sourceType: 'module',
         ecmaVersion: 'latest'
