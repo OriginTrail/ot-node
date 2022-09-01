@@ -37,6 +37,8 @@ When(
             operationId,
             // keywords: parsedKeywords,
             assertion: assertions[assertionName],
+            status: result.operation.status,
+            errorType: result.operation.errorType,
             result,
         };
     },
@@ -87,6 +89,8 @@ Given('I wait for last publish to finalize', { timeout: 80000 }, async function 
         this.logger.log(`Operation status: ${publishResult.data.status}`);
         if (['COMPLETED', 'FAILED'].includes(publishResult.data.status)) {
             this.state.lastPublishData.result = publishResult;
+            this.state.lastPublishData.status = publishResult.data.status;
+            this.state.lastPublishData.errorType = publishResult.data.data?.errorType;
             break;
         }
         if (retryCount === maxRetryCount - 1) {
@@ -111,10 +115,10 @@ Given(
             'Last publish data result is undefined. Publish is not finished.',
         ).to.be.equal(true);
         const publishData = this.state.lastPublishData;
+        // happy path publish koristi =>
+        // publish validate assertion
         expect(
-            publishData.result.data?.data.errorType
-                ? publishData.result.data.data.errorType
-                : publishData.result.operation.status,
+            publishData.errorType ?? publishData.status,
             'Publish result status validation failed',
         ).to.be.equal(status);
     },

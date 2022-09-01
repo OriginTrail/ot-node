@@ -3,7 +3,6 @@ const DKG = require('dkg.js');
 class DkgClientHelper {
     constructor(config) {
         this.client = new DKG(config);
-        this.clientConfig = config;
     }
 
     async info() {

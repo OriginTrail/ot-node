@@ -86,7 +86,7 @@
   "rpcPort": 8901,
   "appDataPath": "data0",
   "minimumAckResponses": {
-    "publish": 5,
+    "publish": 2,
     "get": 1
   }
 }
