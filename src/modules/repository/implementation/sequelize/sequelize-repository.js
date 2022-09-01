@@ -1,5 +1,4 @@
 import mysql from 'mysql2';
-import { exec } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import Sequelize from 'sequelize';
@@ -9,6 +8,7 @@ import {
     HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR,
     SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES,
 } from '../../../../constants/constants.js';
+import createMigrator from './sequelize-migrator.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
@@ -19,18 +19,29 @@ class SequelizeRepository {
 
         this.setEnvParameters();
         await this.createDatabaseIfNotExists();
+        this.initializeSequelize();
         await this.runMigrations();
+        await this.loadModels();
+    }
 
-        this.models = await this.loadModels();
+    initializeSequelize() {
+        this.config.define = {
+            timestamps: false,
+            freezeTableName: true,
+        };
+        const sequelize = new Sequelize(
+            process.env.SEQUELIZE_REPOSITORY_DATABASE,
+            process.env.SEQUELIZE_REPOSITORY_USER,
+            process.env.SEQUELIZE_REPOSITORY_PASSWORD,
+            this.config,
+        );
+        this.models = { sequelize, Sequelize };
     }
 
     setEnvParameters() {
         process.env.SEQUELIZE_REPOSITORY_USER = this.config.user;
-        const useEnvPassword =
-            process.env.REPOSITORY_PASSWORD && process.env.REPOSITORY_PASSWORD !== '';
-        process.env.SEQUELIZE_REPOSITORY_PASSWORD = useEnvPassword
-            ? process.env.REPOSITORY_PASSWORD
-            : this.config.password;
+        process.env.SEQUELIZE_REPOSITORY_PASSWORD =
+            process.env.REPOSITORY_PASSWORD ?? this.config.password;
         process.env.SEQUELIZE_REPOSITORY_DATABASE = this.config.database;
         process.env.SEQUELIZE_REPOSITORY_HOST = this.config.host;
         process.env.SEQUELIZE_REPOSITORY_PORT = this.config.port;
@@ -52,55 +63,28 @@ class SequelizeRepository {
     }
 
     async runMigrations() {
-        return new Promise((resolve, reject) => {
-            const configurationPath = path.join(__dirname, 'config', 'sequelizeConfig.cjs');
-            const migrationFolderPath = path.join(__dirname, 'migrations');
-            const migrate = exec(
-                `npx sequelize --config=${configurationPath} --migrations-path=${migrationFolderPath} db:migrate`,
-                { env: process.env },
-                (err) => (err ? reject(err) : resolve()),
-            );
-            if (this.config.logging) {
-                // Forward stdout+stderr to this process
-                migrate.stdout.pipe(process.stdout);
-                migrate.stderr.pipe(process.stderr);
-            }
-        });
+        const migrator = createMigrator(this.models.sequelize, this.config);
+        await migrator.up();
     }
 
     async loadModels() {
         const modelsDirectory = path.join(__dirname, 'models');
         // disable automatic timestamps
-        this.config.define = {
-            timestamps: false,
-            freezeTableName: true,
-        };
-        const sequelize = new Sequelize(
-            process.env.SEQUELIZE_REPOSITORY_DATABASE,
-            process.env.SEQUELIZE_REPOSITORY_USER,
-            process.env.SEQUELIZE_REPOSITORY_PASSWORD,
-            this.config,
-        );
-        const models = {};
         const files = (await fs.promises.readdir(modelsDirectory)).filter(
             (file) => file.indexOf('.') !== 0 && file.slice(-3) === '.js',
         );
         for (const file of files) {
             // eslint-disable-next-line no-await-in-loop
             const { default: f } = await import(`./models/${file}`);
-            const model = f(sequelize, Sequelize.DataTypes);
-            models[model.name] = model;
+            const model = f(this.models.sequelize, Sequelize.DataTypes);
+            this.models[model.name] = model;
         }
 
-        Object.keys(models).forEach((modelName) => {
-            if (models[modelName].associate) {
-                models[modelName].associate(models);
+        Object.keys(this.models).forEach((modelName) => {
+            if (this.models[modelName].associate) {
+                this.models[modelName].associate(this.models);
             }
         });
-        models.sequelize = sequelize;
-        models.Sequelize = Sequelize;
-
-        return models;
     }
 
     transaction(execFn) {
@@ -350,11 +334,11 @@ class SequelizeRepository {
     async getTokenAbilities(tokenId) {
         const abilities = await this.models.sequelize.query(
             `SELECT a.name FROM token t
-INNER JOIN user u ON t.user_id = u.id
-INNER JOIN role r ON u.role_id = u.id
-INNER JOIN role_ability ra on r.id = ra.role_id
-INNER JOIN ability a on ra.ability_id = a.id
-WHERE t.id=$tokenId;`,
+                INNER JOIN user u ON t.user_id = u.id
+                INNER JOIN role r ON u.role_id = u.id
+                INNER JOIN role_ability ra on r.id = ra.role_id
+                INNER JOIN ability a on ra.ability_id = a.id
+                WHERE t.id=$tokenId;`,
             { bind: { tokenId }, type: Sequelize.QueryTypes.SELECT },
         );
 
