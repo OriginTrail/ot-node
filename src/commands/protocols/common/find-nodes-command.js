@@ -32,6 +32,9 @@ class FindNodesCommand extends Command {
 
         this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${keyword}`);
 
+        this.logger.debug(
+            `#############################3minAckResponse:${minimumAckResponses}##########################`,
+        );
         const batchSize = 2 * minimumAckResponses;
         if (closestNodes.length < batchSize) {
             this.handleError(

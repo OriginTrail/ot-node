@@ -264,16 +264,17 @@ Given(
     },
 );
 Given(
-    /^I setup publish node (\d+) with invalid configuration/,
+    /^I setup publish node with invalid configuration/,
     { timeout: 120000 },
-    function setupPublishNode(nodeIndex, done) {
-        this.logger.log(`I setup node ${nodeIndex} with invalid configuration`);
+    function setupPublishNode(done) {
+        this.logger.log(`I setup node publish node with invalid configuration`);
+        const nodeIndex = Object.keys(this.state.nodes).length;
         const wallets = this.state.localBlockchain.getWallets();
-        const wallet = wallets[nodeIndex];
+        const wallet = wallets[nodeIndex + 1];
         const managementWallet =
-            this.state.localBlockchain.getWallets()[nodeIndex + Math.floor(wallets.length / 2)];
-        const rpcPort = 8901 + nodeIndex - 1;
-        const nodeName = `origintrail-test-${nodeIndex - 1}`;
+            this.state.localBlockchain.getWallets()[nodeIndex + 1 + Math.floor(wallets.length / 2)];
+        const rpcPort = 8901 + nodeIndex;
+        const nodeName = `origintrail-test-${nodeIndex}`;
         const nodeConfiguration = DeepExtend(
             {},
             defaultConfiguration,
@@ -281,7 +282,7 @@ Given(
                 this,
                 wallet,
                 managementWallet,
-                nodeIndex - 1,
+                nodeIndex,
                 nodeName,
                 rpcPort,
             ),
@@ -300,7 +301,7 @@ Given(
         forkedNode.on('message', (response) => {
             if (response.error) {
                 assert.fail(
-                    `Error while trying initialize node${nodeIndex - 1} client: ${response.error}`,
+                    `Error while trying initialize node${nodeIndex} client: ${response.error}`,
                 );
             } else {
                 // todo if started
@@ -311,8 +312,15 @@ Given(
                     timeout: 25,
                     loglevel: 'trace',
                 });
-                this.state.nodes[nodeIndex - 1] = {
+                this.state.nodes[nodeIndex] = {
                     client,
+                    clientConfig: {
+                        endpoint: 'http://localhost',
+                        port: rpcPort,
+                        useSSL: false,
+                        timeout: 25,
+                        loglevel: 'trace',
+                    },
                     forkedNode,
                     configuration: nodeConfiguration,
                     nodeRpcUrl: `http://localhost:${rpcPort}`,
