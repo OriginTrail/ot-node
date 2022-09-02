@@ -1,6 +1,5 @@
 import async from 'async';
 import { setTimeout as sleep } from 'timers/promises';
-import pIteration from 'p-iteration';
 import Command from './command.js';
 import {
     PERMANENT_COMMANDS,
@@ -9,8 +8,6 @@ import {
     DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS,
     COMMAND_STATUS,
 } from '../constants/constants.js';
-
-const { forEach } = pIteration;
 
 /**
  * How many commands will run in parallel
@@ -62,7 +59,8 @@ class CommandExecutor {
      * @returns {Promise<void>}
      */
     async init() {
-        await forEach(PERMANENT_COMMANDS, async (command) => this._startDefaultCommand(command));
+        await Promise.all(PERMANENT_COMMANDS.map((command) => this._startDefaultCommand(command)));
+
         if (this.verboseLoggingEnabled) {
             this.logger.trace('Command executor has been initialized...');
         }

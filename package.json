@@ -39,10 +39,10 @@
         "@ethersproject/bytes": "^5.7.0",
         "@ethersproject/hash": "^5.7.0",
         "@ethersproject/wallet": "^5.7.0",
-        "@polkadot/util": "^10.1.6",
-        "@polkadot/util-crypto": "^10.1.6",
+        "@polkadot/util": "^10.1.7",
+        "@polkadot/util-crypto": "^10.1.7",
         "chai": "^4.3.6",
-        "dkg.js": "^6.0.0-beta.3.0.1",
+        "dkg.js": "^6.0.0-beta.3.0.3",
         "eslint": "^8.23.0",
         "eslint-config-airbnb": "^19.0.4",
         "eslint-config-prettier": "^8.5.0",
@@ -53,8 +53,7 @@
         "nyc": "^15.1.0",
         "prettier": "^2.7.1",
         "sinon": "^14.0.0",
-        "slugify": "^1.6.5",
-        "solc": "^0.8.16"
+        "slugify": "^1.6.5"
     },
     "dependencies": {
         "@chainsafe/libp2p-noise": "^8.0.1",
@@ -84,7 +83,7 @@
         "it-length-prefixed": "^8.0.2",
         "it-map": "^1.0.6",
         "it-pipe": "^2.0.4",
-        "jsonld": "^8.0.0",
+        "jsonld": "^8.1.0",
         "jsonschema": "^1.4.1",
         "jsonwebtoken": "^8.5.1",
         "keccak256": "^1.0.6",
