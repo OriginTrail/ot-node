@@ -80,7 +80,6 @@ Given('I wait for last publish to finalize', { timeout: 80000 }, async function 
         this.logger.log(
             `Getting publish result for operation id: ${publishData.operationId} on node: ${publishData.nodeId}`,
         );
-        // const publishResult = await httpApiHelper.getOperationResult(`http://localhost:${this.state.nodes[publishData.nodeId].configuration.rpcPort}`, publishData.operationId);
         // eslint-disable-next-line no-await-in-loop
         const publishResult = await httpApiHelper.getOperationResult(
             this.state.nodes[publishData.nodeId].nodeRpcUrl,
@@ -115,8 +114,6 @@ Given(
             'Last publish data result is undefined. Publish is not finished.',
         ).to.be.equal(true);
         const publishData = this.state.lastPublishData;
-        // happy path publish koristi =>
-        // publish validate assertion
         expect(
             publishData.errorType ?? publishData.status,
             'Publish result status validation failed',

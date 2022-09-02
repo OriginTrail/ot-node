@@ -96,5 +96,8 @@
   "minimumAckResponses": {
     "publish": 2,
     "get": 1
+  },
+  "auth": {
+    "ipBasedAuthEnabled": false
   }
 }
