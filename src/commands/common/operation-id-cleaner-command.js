@@ -12,6 +12,7 @@ class OperationIdCleanerCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.fileService = ctx.fileService;
     }
 
     /**
@@ -24,6 +25,7 @@ class OperationIdCleanerCommand extends Command {
             OPERATION_ID_STATUS.COMPLETED,
             OPERATION_ID_STATUS.FAILED,
         ]);
+        await this.fileService.removeExpiredCacheFiles(OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS);
         return Command.repeat();
     }
 
