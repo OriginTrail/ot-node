@@ -27,6 +27,15 @@ class HttpApiRouter {
             },
             { rateLimit: true, requestSchema: this.jsonSchemaService.publishSchema() },
         );
+
+        this.httpClientModuleManager.post(
+            '/query',
+            (req, res) => {
+                this.searchController.handleHttpApiQueryRequest(req, res);
+            },
+            { requestSchema: this.jsonSchemaService.querySchema() },
+        );
+
         this.httpClientModuleManager.post(
             '/get',
             (req, res) => {
@@ -53,4 +62,4 @@ class HttpApiRouter {
     }
 }
 
-module.exports = HttpApiRouter;
+export default HttpApiRouter;

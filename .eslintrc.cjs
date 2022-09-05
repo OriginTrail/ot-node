@@ -6,7 +6,7 @@ module.exports = {
     extends: ['airbnb/base', 'prettier'],
     parserOptions: {
         sourceType: 'module',
-        ecmaVersion: 2021,
+        ecmaVersion: 'latest'
     },
     rules: {
         'linebreak-style': ['error', 'unix'],
@@ -18,6 +18,7 @@ module.exports = {
         'no-console': 'warn',
         'no-continue': 1,
         'no-underscore-dangle': 0,
+        'import/extensions': 0,
     },
     overrides: [
         {

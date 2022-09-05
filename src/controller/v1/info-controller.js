@@ -1,13 +1,15 @@
-const pjson = require('../../../package.json');
-const BaseController = require('./base-controller');
+import { createRequire } from 'module';
+import BaseController from './base-controller.js';
+
+const require = createRequire(import.meta.url);
+const { version } = require('../../../package.json');
 
 class InfoController extends BaseController {
     handleHttpApiInfoRequest(req, res) {
-        const { version } = pjson;
         this.returnResponse(res, 200, {
             version,
         });
     }
 }
 
-module.exports = InfoController;
+export default InfoController;

@@ -1,5 +1,5 @@
-// const Command = require('../../command');
-// const constants = require('../../../constants/constants');
+// import Command from '../../command';
+// import constants from '../../../constants/constants';
 //
 // class AnswerChallengeCommand extends Command {
 //     constructor(ctx) {

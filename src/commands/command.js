@@ -1,4 +1,4 @@
-const { OPERATION_ID_STATUS } = require('../constants/constants');
+import { OPERATION_ID_STATUS } from '../constants/constants.js';
 
 /**
  * Describes one command handler
@@ -104,7 +104,7 @@ class Command {
     }
 
     async retryFinished(command) {
-        this.logger.trace(`Retry count for command: ${command.name} reached!`);
+        this.logger.trace(`Max retry count for command: ${command.name} reached!`);
     }
 
     /**
@@ -166,4 +166,4 @@ class Command {
     }
 }
 
-module.exports = Command;
+export default Command;

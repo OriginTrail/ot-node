@@ -1,4 +1,4 @@
-const Command = require('../../../command');
+import Command from '../../../command.js';
 
 class SearchAssertionsCommand extends Command {
     constructor(ctx) {
@@ -50,4 +50,4 @@ class SearchAssertionsCommand extends Command {
     }
 }
 
-module.exports = SearchAssertionsCommand;
+export default SearchAssertionsCommand;

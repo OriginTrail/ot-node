@@ -1,13 +1,13 @@
-const express = require('express');
-const https = require('https');
-const fs = require('fs-extra');
-const fileUpload = require('express-fileupload');
-const cors = require('cors');
-const requestValidationMiddleware = require('./middleware/request-validation-middleware');
-const rateLimiterMiddleware = require('./middleware/rate-limiter-middleware');
-const authenticationMiddleware = require('./middleware/authentication-middleware');
-const authorizationMiddleware = require('./middleware/authorization-middleware');
-const { MAX_FILE_SIZE } = require('../../../constants/constants');
+import express from 'express';
+import https from 'https';
+import fs from 'fs-extra';
+import fileUpload from 'express-fileupload';
+import cors from 'cors';
+import requestValidationMiddleware from './middleware/request-validation-middleware.js';
+import rateLimiterMiddleware from './middleware/rate-limiter-middleware.js';
+import authenticationMiddleware from './middleware/authentication-middleware.js';
+import authorizationMiddleware from './middleware/authorization-middleware.js';
+import { MAX_FILE_SIZE } from '../../../constants/constants.js';
 
 class ExpressHttpClient {
     async initialize(config, logger) {
@@ -80,4 +80,4 @@ class ExpressHttpClient {
     }
 }
 
-module.exports = ExpressHttpClient;
+export default ExpressHttpClient;

@@ -1,5 +1,5 @@
-const Command = require('../../../command');
-const { OPERATION_ID_STATUS } = require('../../../../constants/constants');
+import Command from '../../../command.js';
+import { OPERATION_ID_STATUS } from '../../../../constants/constants.js';
 
 class LocalSearchAssertionsCommand extends Command {
     constructor(ctx) {
@@ -66,4 +66,4 @@ class LocalSearchAssertionsCommand extends Command {
     }
 }
 
-module.exports = LocalSearchAssertionsCommand;
+export default LocalSearchAssertionsCommand;

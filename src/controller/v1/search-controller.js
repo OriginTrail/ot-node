@@ -1,9 +1,10 @@
-const BaseController = require('./base-controller');
-const {
+import BaseController from './base-controller.js';
+
+import {
     OPERATION_ID_STATUS,
     NETWORK_PROTOCOLS,
     NETWORK_MESSAGE_TYPES,
-} = require('../../constants/constants');
+} from '../../constants/constants.js';
 
 class SearchController extends BaseController {
     constructor(ctx) {
@@ -12,6 +13,7 @@ class SearchController extends BaseController {
         this.fileService = ctx.fileService;
         this.commandExecutor = ctx.commandExecutor;
         this.operationIdService = ctx.operationIdService;
+        this.queryService = ctx.queryService;
     }
 
     async handleHttpApiSearchAssertionsRequest(req, res) {
@@ -127,7 +129,32 @@ class SearchController extends BaseController {
         }
     }
 
-    handleHttpApiQueryRequest() {}
+    async handleHttpApiQueryRequest(req, res) {
+        const { query, type: queryType } = req.body;
+
+        const operationId = await this.operationIdService.generateOperationId(
+            OPERATION_ID_STATUS.QUERY.QUERY_INIT_START,
+        );
+
+        this.returnResponse(res, 202, {
+            operationId,
+        });
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.QUERY.QUERY_INIT_END,
+        );
+
+        const commandSequence = ['queryCommand'];
+
+        await this.commandExecutor.add({
+            name: commandSequence[0],
+            sequence: commandSequence.slice(1),
+            delay: 0,
+            data: { query, queryType, operationId },
+            transactional: false,
+        });
+    }
 
     handleHttpApiProofsRequest() {}
 
@@ -180,4 +207,4 @@ class SearchController extends BaseController {
     }
 }
 
-module.exports = SearchController;
+export default SearchController;

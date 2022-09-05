@@ -1,4 +1,4 @@
-const Command = require('../../command');
+import Command from '../../command.js';
 
 class ProtocolScheduleMessagesCommand extends Command {
     constructor(ctx) {
@@ -73,4 +73,4 @@ class ProtocolScheduleMessagesCommand extends Command {
     }
 }
 
-module.exports = ProtocolScheduleMessagesCommand;
+export default ProtocolScheduleMessagesCommand;
