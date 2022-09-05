@@ -1,12 +1,14 @@
 import { When, Given } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
 import { setTimeout } from 'timers/promises';
-import HttpApiHelper from '../../../utilities/http-api-helper.mjs';
 
-import assertions from './datasets/assertions.json' assert {type: "json"};
-import requests from './datasets/requests.json' assert {type: "json"};
+import { createRequire } from 'module';
+import {publish as directPublish,getOperationResult} from "../../../utilities/http-api-helper.mjs";
 
-const httpApiHelper = new HttpApiHelper();
+const require = createRequire(import.meta.url);
+const assertions = require('./datasets/assertions.json');
+const requests = require('./datasets/requests.json');
+
 
 When(
     /^I call publish on node (\d+) with ([^"]*)/,
@@ -59,7 +61,7 @@ When(
             `Request body with name: ${requestName} not found!`,
         ).to.be.equal(true);
         const requestBody = requests[requestName];
-        const result = await httpApiHelper.publish(
+        const result = await directPublish(
             this.state.nodes[node - 1].nodeRpcUrl,
             requestBody,
         );
@@ -85,7 +87,7 @@ Given('I wait for last publish to finalize', { timeout: 80000 }, async function 
             `Getting publish result for operation id: ${publishData.operationId} on node: ${publishData.nodeId}`,
         );
         // eslint-disable-next-line no-await-in-loop
-        const publishResult = await httpApiHelper.getOperationResult(
+        const publishResult = await getOperationResult(
             this.state.nodes[publishData.nodeId].nodeRpcUrl,
             publishData.operationId,
         );
@@ -119,7 +121,7 @@ Given(
         );
         await setTimeout(numberOfSeconds * 1000);
         // eslint-disable-next-line no-await-in-loop
-        this.state.lastPublishData.result = await httpApiHelper.getOperationResult(
+        this.state.lastPublishData.result = await getOperationResult(
             this.state.nodes[publishData.nodeId].nodeRpcUrl,
             publishData.operationId,
         );

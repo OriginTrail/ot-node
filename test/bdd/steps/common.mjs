@@ -1,14 +1,14 @@
 import { Given } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
-import fs from 'fs';
 import DkgClientHelper from '../../utilities/dkg-client-helper.mjs';
 import DeepExtend from "deep-extend";
+import { createRequire } from 'module';
 
-
-import defaultConfiguration from './config/origintrail-test-node-config.json' assert {type: "json"};
-import bootstrapNodeConfiguration from  './config/origintrail-test-bootstrap-config.json' assert {type: "json"};
+const require = createRequire(import.meta.url);
+const defaultConfiguration = require('./config/origintrail-test-node-config.json');
+const bootstrapNodeConfiguration = require('./config/origintrail-test-bootstrap-config.json');
 import {createNodeConfiguration, forkNode} from "../../utilities/steps-utils.mjs";
-import {setTimeout} from "timers/promises";
+import fs from "fs";
 
 Given(
     /^I setup (\d+)[ additional]* node[s]*$/,
@@ -115,7 +115,6 @@ Given(
         });
     },
 );
-
 // TODO: Implement input error handling
 Given(
     'I setup node {int} with {word} set to {string}',
@@ -195,7 +194,6 @@ Given(
         });
     },
 );
-
 Given(
     /Last (GET|PUBLISH) operation finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError|PublishStartError|GetAssertionIdError|GetLocalError|PublishRouteError]+)$/,
     { timeout: 120000 },
@@ -217,3 +215,4 @@ Given(
         ).to.be.equal(status);
     },
 );
+

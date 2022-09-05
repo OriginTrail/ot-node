@@ -1,11 +1,12 @@
-import requests from './datasets/requests.json' assert {type: "json"};
-import HttpApiHelper from '../../../utilities/http-api-helper.mjs';
 import { When, Given } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
 import { setTimeout } from 'timers/promises';
+import {createRequire} from "module";
+import {getOperationResult,get} from "../../../utilities/http-api-helper.mjs";
 
+const require = createRequire(import.meta.url);
+const requests = require('./datasets/requests.json');
 
-const httpApiHelper = new HttpApiHelper();
 When(
     /^I get operation result from node (\d+) for last published assertion/,
     { timeout: 120000 },
@@ -57,7 +58,7 @@ Given(
                 `Getting resolve result for operation id: ${resolveData.operationId} on node: ${resolveData.nodeId}`,
             );
             // eslint-disable-next-line no-await-in-loop
-            const resolveResult = await httpApiHelper.getOperationResult(
+            const resolveResult = await getOperationResult(
                 this.state.nodes[resolveData.nodeId].nodeRpcUrl,
                 resolveData.operationId,
             );
@@ -115,7 +116,7 @@ Given(
             requestName !== 'lastPublishedAssetUAL'
                 ? requests[requestName]
                 : { id: this.state.lastPublishData.UAL };
-        const result = await httpApiHelper.get(this.state.nodes[node - 1].nodeRpcUrl, requestBody);
+        const result = await get(this.state.nodes[node - 1].nodeRpcUrl, requestBody);
         const { operationId } = result.data;
         this.state.lastResolveData = {
             nodeId: node - 1,

@@ -1,5 +1,5 @@
 import OTNode from '../../../../ot-node.js';
-import HttpApiHelper from '../../../utilities/http-api-helper.mjs';
+import {info} from '../../../utilities/http-api-helper.mjs';
 
 process.on('message', async (data) => {
     const config = JSON.parse(data);
@@ -8,12 +8,11 @@ process.on('message', async (data) => {
         const newNode = new OTNode(config);
         newNode.start().then(async () => {
             let started = false;
-            const httpApiHelper = new HttpApiHelper();
             while (!started) {
                 try {
                     const nodeHostname = `http://localhost:${config.rpcPort}`;
                     // eslint-disable-next-line no-await-in-loop
-                    await httpApiHelper.info(nodeHostname);
+                    await info(nodeHostname);
                     started = true;
                 } catch (error) {
                     // eslint-disable-next-line no-await-in-loop
