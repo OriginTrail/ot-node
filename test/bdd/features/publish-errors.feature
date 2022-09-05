@@ -5,7 +5,7 @@ Feature: Publish errors test
 
 
   @publish-errors
-  Scenario: Publish on a node with minimum replication factor greater the number of nodes
+  Scenario: Publish on a node with minimum replication factor greater than the number of nodes
     Given I setup 3 nodes
     Given I setup node 4 with minimumAckResponses.publish set to '10'
     When I call publish on node 4 with validAssertion

@@ -209,7 +209,7 @@ Given(
     { timeout: 120000 },
     function setupPublishNode(nodeNum, propertyName, propertyValue, done) {
         const propertyNameSplit = propertyName.split('.');
-        this.logger.log(`I setup node publish node with invalid configuration`);
+        this.logger.log(`I setup node ${nodeNum} with invalid configuration`);
         expect(
             Object.prototype.hasOwnProperty.call(defaultConfiguration, propertyNameSplit[0]),
             `Property ${propertyName} doesn't exist`,
