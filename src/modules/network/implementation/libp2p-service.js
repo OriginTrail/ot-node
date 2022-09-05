@@ -136,13 +136,28 @@ class Libp2pService {
 
     async findNodes(key) {
         const encodedKey = new TextEncoder().encode(key);
-        const nodes = this.node.peerRouting.getClosestPeers(encodedKey);
-        const peerIds = [];
-        for await (const node of nodes) {
-            peerIds.push(node.id);
+        const self = this;
+        const finalPeerIds = pipe(
+            self.node.dht.getClosestPeers(encodedKey),
+            async function* storeAddresses(source) {
+                for await (const event of source) {
+                    if (event.name === 'FINAL_PEER') {
+                        await self.node.peerStore.addressBook.add(
+                            event.peer.id,
+                            event.peer.multiaddrs,
+                        );
+                        yield event.peer.id;
+                    }
+                }
+            },
+        );
+
+        const nodes = [];
+        for await (const finalPeerId of finalPeerIds) {
+            nodes.push(finalPeerId);
         }
 
-        return peerIds;
+        return nodes;
     }
 
     getPeers() {
