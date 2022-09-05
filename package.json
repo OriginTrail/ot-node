@@ -35,6 +35,9 @@
         "npm": ">=8.0.0"
     },
     "devDependencies": {
+        "@truffle/hdwallet-provider": "^2.0.14",
+        "@openzeppelin/contracts": "^4.7.3",
+        "solhint": "^3.3.7",
         "@cucumber/cucumber": "^8.5.2",
         "@ethersproject/bytes": "^5.7.0",
         "@ethersproject/hash": "^5.7.0",
