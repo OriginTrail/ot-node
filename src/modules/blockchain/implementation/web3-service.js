@@ -317,7 +317,8 @@ class Web3Service {
                 tokenId,
                 0,
             ]);
-        } catch {
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
             return false;
         }
     }
