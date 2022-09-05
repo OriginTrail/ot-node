@@ -99,7 +99,7 @@ class PublishController extends BaseController {
         };
         switch (messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
-                command.name = 'handlePublishInitCommand';
+                command.name = 'handleStoreInitCommand';
                 command.period = 5000;
                 command.retries = 3;
 
@@ -112,7 +112,7 @@ class PublishController extends BaseController {
                     assertionId: cachedAssertionId,
                     assertion: message.data.assertion,
                 });
-                command.name = 'handlePublishRequestCommand';
+                command.name = 'handleStoreRequestCommand';
                 command.data.keyword = message.data.keyword;
 
                 break;
