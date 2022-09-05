@@ -1,4 +1,4 @@
-const validator = require('validator');
+import { validate } from 'uuid';
 
 class OperationIdService {
     constructor(ctx) {
@@ -28,7 +28,7 @@ class OperationIdService {
     }
 
     operationIdInRightFormat(operationId) {
-        return validator.isUUID(operationId);
+        return validate(operationId);
     }
 
     async updateOperationIdStatus(operationId, status, errorMessage = null, errorType = null) {
@@ -109,4 +109,4 @@ class OperationIdService {
     }
 }
 
-module.exports = OperationIdService;
+export default OperationIdService;

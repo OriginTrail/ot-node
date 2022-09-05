@@ -1,16 +1,12 @@
-const request = require('request');
-const axios = require('axios');
+import axios from 'axios';
 
 class HttpApiHelper {
-    info(nodeRpcUrl) {
-        return new Promise((accept, reject) => {
-            request(`${nodeRpcUrl}/info`, { json: true }, (err, res, body) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                accept(body);
-            });
+    async info(nodeRpcUrl) {
+        return axios({
+            method: 'get',
+            url: `${nodeRpcUrl}/info`,
+        }).catch((e) => {
+            throw Error(`Unable to get info: ${e.message}`);
         });
     }
 
@@ -41,17 +37,15 @@ class HttpApiHelper {
             });
     }
 
-    publish(nodeRpcUrl, requestBody) {
+    async publish(nodeRpcUrl, requestBody) {
         return axios({
             method: 'post',
             url: `${nodeRpcUrl}/publish`,
             data: requestBody,
-        })
-            .then((response) => response)
-            .catch((e) => {
-                throw Error(`Unable to publish: ${e.message}`);
-            });
+        }).catch((e) => {
+            throw Error(`Unable to publish: ${e.message}`);
+        });
     }
 }
 
-module.exports = HttpApiHelper;
+export default HttpApiHelper;

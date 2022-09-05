@@ -1,4 +1,4 @@
-const constants = require('../constants/constants');
+import { NETWORK_PROTOCOLS } from '../constants/constants.js';
 
 class RpcRouter {
     constructor(ctx) {
@@ -14,18 +14,14 @@ class RpcRouter {
     }
 
     async initializeListeners() {
-        this.networkModuleManager.handleMessage(
-            constants.NETWORK_PROTOCOLS.STORE,
-            (message, remotePeerId) =>
-                this.publishController.handleNetworkStoreRequest(message, remotePeerId),
+        this.networkModuleManager.handleMessage(NETWORK_PROTOCOLS.STORE, (message, remotePeerId) =>
+            this.publishController.handleNetworkStoreRequest(message, remotePeerId),
         );
 
-        this.networkModuleManager.handleMessage(
-            constants.NETWORK_PROTOCOLS.GET,
-            (message, remotePeerId) =>
-                this.getController.handleNetworkGetRequest(message, remotePeerId),
+        this.networkModuleManager.handleMessage(NETWORK_PROTOCOLS.GET, (message, remotePeerId) =>
+            this.getController.handleNetworkGetRequest(message, remotePeerId),
         );
     }
 }
 
-module.exports = RpcRouter;
+export default RpcRouter;

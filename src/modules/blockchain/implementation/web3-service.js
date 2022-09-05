@@ -1,13 +1,16 @@
-const Web3 = require('web3');
-const axios = require('axios');
-const { peerId2Hash } = require('assertion-tools');
+import Web3 from 'web3';
+import axios from 'axios';
+import { peerId2Hash } from 'assertion-tools';
+import { createRequire } from 'module';
+import { INIT_STAKE_AMOUNT, WEBSOCKET_PROVIDER_OPTIONS } from '../../../constants/constants.js';
+
+const require = createRequire(import.meta.url);
 const Hub = require('dkg-evm-module/build/contracts/Hub.json');
 const AssetRegistry = require('dkg-evm-module/build/contracts/AssetRegistry.json');
 const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
 const Identity = require('dkg-evm-module/build/contracts/Identity.json');
 const Profile = require('dkg-evm-module/build/contracts/Profile.json');
 const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
-const { INIT_STAKE_AMOUNT, WEBSOCKET_PROVIDER_OPTIONS } = require('../../../constants/constants');
 
 class Web3Service {
     async initialize(config, logger) {
@@ -362,4 +365,4 @@ class Web3Service {
     }
 }
 
-module.exports = Web3Service;
+export default Web3Service;

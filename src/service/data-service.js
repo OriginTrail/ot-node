@@ -1,10 +1,6 @@
-const jsonld = require('jsonld');
-
-const { SCHEMA_CONTEXT } = require('../constants/constants');
-const {
-    MEDIA_TYPES,
-    XML_DATA_TYPES,
-} = require('../modules/triple-store/implementation/triple-store-constants');
+/* eslint-disable import/extensions */
+import jsonld from 'jsonld';
+import { SCHEMA_CONTEXT, MEDIA_TYPES, XML_DATA_TYPES } from '../constants/constants.js';
 
 const ALGORITHM = 'URDNA2015';
 
@@ -89,4 +85,4 @@ class DataService {
     }
 }
 
-module.exports = DataService;
+export default DataService;

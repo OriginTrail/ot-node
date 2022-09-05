@@ -1,5 +1,5 @@
-const pino = require('pino');
-const pretty = require('pino-pretty');
+import { pino } from 'pino';
+import pretty from 'pino-pretty';
 
 class Logger {
     constructor(logLevel = 'trace') {
@@ -75,4 +75,4 @@ class Logger {
     }
 }
 
-module.exports = Logger;
+export default Logger;

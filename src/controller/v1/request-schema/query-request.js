@@ -1,6 +1,6 @@
-const { QUERY_TYPES } = require('../../../constants/constants');
+import { QUERY_TYPES } from '../../../constants/constants.js';
 
-module.exports = () => ({
+export default () => ({
     type: 'object',
     required: ['type', 'query'],
     properties: {

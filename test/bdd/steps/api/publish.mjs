@@ -1,9 +1,12 @@
-const { When, Given } = require('@cucumber/cucumber');
-const { expect, assert } = require('chai');
-const { setTimeout } = require('timers/promises');
+import { When, Given } from '@cucumber/cucumber';
+import { expect, assert } from 'chai';
+import { setTimeout } from 'timers/promises';
+import { createRequire } from 'module';
+import HttpApiHelper from '../../../utilities/http-api-helper.mjs';
+
+const require = createRequire(import.meta.url);
 const assertions = require('./datasets/assertions.json');
 const requests = require('./datasets/requests.json');
-const HttpApiHelper = require('../../../utilities/http-api-helper');
 
 const httpApiHelper = new HttpApiHelper();
 
@@ -11,6 +14,7 @@ When(
     /^I call publish on node (\d+) with ([^"]*)/,
     { timeout: 120000 },
     async function publish(node, assertionName) {
+        await setTimeout(10 * 1000); // wait 10 seconds to allow nodes to connect to each other
         this.logger.log(`I call publish route on node ${node}`);
         expect(
             !!assertions[assertionName],
@@ -47,8 +51,9 @@ When(
 );
 When(
     /^I call publish on ot-node (\d+) directly with ([^"]*)/,
-    { timeout: 60000 },
+    { timeout: 70000 },
     async function publish(node, requestName) {
+        await setTimeout(10 * 1000); // wait 10 seconds to allow nodes to connect to each other
         this.logger.log(`I call publish on ot-node ${node} directly`);
         expect(
             !!requests[requestName],

@@ -1,9 +1,10 @@
-const BaseController = require('./base-controller');
-const {
+import BaseController from './base-controller.js';
+
+import {
     OPERATION_ID_STATUS,
     NETWORK_PROTOCOLS,
     NETWORK_MESSAGE_TYPES,
-} = require('../../constants/constants');
+} from '../../constants/constants.js';
 
 class SearchController extends BaseController {
     constructor(ctx) {
@@ -206,4 +207,4 @@ class SearchController extends BaseController {
     }
 }
 
-module.exports = SearchController;
+export default SearchController;

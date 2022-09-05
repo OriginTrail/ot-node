@@ -1,4 +1,4 @@
-const BaseModuleManager = require('../base-module-manager');
+import BaseModuleManager from '../base-module-manager.js';
 
 class RepositoryModuleManager extends BaseModuleManager {
     getName() {
@@ -203,4 +203,4 @@ class RepositoryModuleManager extends BaseModuleManager {
     }
 }
 
-module.exports = RepositoryModuleManager;
+export default RepositoryModuleManager;

@@ -1,4 +1,4 @@
-const Command = require('../../command');
+import Command from '../../command.js';
 
 class NetworkProtocolCommand extends Command {
     constructor(ctx) {
@@ -63,4 +63,4 @@ class NetworkProtocolCommand extends Command {
     }
 }
 
-module.exports = NetworkProtocolCommand;
+export default NetworkProtocolCommand;

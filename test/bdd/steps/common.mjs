@@ -1,13 +1,15 @@
-const { Given } = require('@cucumber/cucumber');
-const DeepExtend = require('deep-extend');
-const { expect, assert } = require('chai');
-const { fork } = require('child_process');
-const fs = require('fs');
-const DkgClientHelper = require('../../utilities/dkg-client-helper');
+import { Given } from '@cucumber/cucumber';
+import { expect, assert } from 'chai';
+import { fork } from 'child_process';
+import fs from 'fs';
+import DkgClientHelper from '../../utilities/dkg-client-helper.mjs';
+import DeepExtend from "deep-extend";
 
-const otNodeProcessPath = './test/bdd/steps/lib/ot-node-process.js';
-const defaultConfiguration = require(`./config/origintrail-test-node-config.json`);
-const bootstrapNodeConfiguration = require(`./config/origintrail-test-bootstrap-config.json`);
+
+import defaultConfiguration from './config/origintrail-test-node-config.json';
+import bootstrapNodeConfiguration from  './config/origintrail-test-bootstrap-config.json';
+
+import otNodeProcessPath from './test/bdd/steps/lib/ot-node-process.mjs';
 
 // TODO: move this functions to different module after transition to ESM
 function getBlockchainConfiguration(localBlockchain, privateKey, publicKey, managementKey) {
@@ -122,7 +124,6 @@ Given(
                 ),
             );
             const forkedNode = forkNode(nodeConfiguration);
-
             const logFileStream = fs.createWriteStream(
                 `${this.state.scenarionLogDir}/${nodeName}.log`,
             );
@@ -178,7 +179,6 @@ Given(
             // Here is where the output goes
             logFileStream.write(data);
         });
-
         forkedNode.on('message', async (response) => {
             if (response.error) {
                 // todo handle error

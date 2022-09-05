@@ -1,6 +1,10 @@
-const BaseController = require('./base-controller');
-const { ERROR_TYPE, NETWORK_MESSAGE_TYPES, PUBLISH_TYPES } = require('../../constants/constants');
-const { OPERATION_ID_STATUS } = require('../../constants/constants');
+import BaseController from './base-controller.js';
+import {
+    ERROR_TYPE,
+    NETWORK_MESSAGE_TYPES,
+    OPERATION_ID_STATUS,
+    PUBLISH_TYPES,
+} from '../../constants/constants.js';
 
 class PublishController extends BaseController {
     constructor(ctx) {
@@ -138,4 +142,4 @@ class PublishController extends BaseController {
     }
 }
 
-module.exports = PublishController;
+export default PublishController;

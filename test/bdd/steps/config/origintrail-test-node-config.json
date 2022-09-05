@@ -18,7 +18,7 @@
       "enabled": true,
       "implementation": {
         "libp2p-service": {
-          "package": "./network/implementation/libp2p-service",
+          "package": "./network/implementation/libp2p-service.js",
           "config": {
             "port": 9001,
             "bootstrap": [
@@ -44,6 +44,7 @@
       "defaultImplementation": "ot-graphdb",
       "implementation": {
         "ot-graphdb": {
+          "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
           "config": {
             "repository": "origintrail-test-0"
           }
@@ -54,7 +55,7 @@
       "enabled": true,
       "implementation": {
         "merkle-validation": {
-          "package": "./validation/implementation/merkle-validation",
+          "package": "./validation/implementation/merkle-validation.js",
           "config": {}
         }
       }
@@ -63,7 +64,7 @@
       "enabled": true,
       "implementation": {
         "express-http-client": {
-          "package": "./http-client/implementation/express-http-client",
+          "package": "./http-client/implementation/express-http-client.js",
           "config": {
             "useSsl": false,
             "port": 8901,

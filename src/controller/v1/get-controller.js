@@ -1,5 +1,5 @@
-const { NETWORK_MESSAGE_TYPES, OPERATION_ID_STATUS } = require('../../constants/constants');
-const BaseController = require('./base-controller');
+import { NETWORK_MESSAGE_TYPES, OPERATION_ID_STATUS } from '../../constants/constants.js';
+import BaseController from './base-controller.js';
 
 class GetController extends BaseController {
     constructor(ctx) {
@@ -85,4 +85,4 @@ class GetController extends BaseController {
     }
 }
 
-module.exports = GetController;
+export default GetController;
