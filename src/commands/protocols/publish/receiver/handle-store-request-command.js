@@ -7,7 +7,7 @@ import {
     PUBLISH_TYPES,
 } from '../../../../constants/constants.js';
 
-class HandlePublishRequestCommand extends HandleProtocolMessageCommand {
+class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
@@ -103,13 +103,13 @@ class HandlePublishRequestCommand extends HandleProtocolMessageCommand {
     }
 
     /**
-     * Builds default handlePublishRequestCommand
+     * Builds default handleStoreRequestCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'handlePublishRequestCommand',
+            name: 'handleStoreRequestCommand',
             delay: 0,
             transactional: false,
         };
@@ -118,4 +118,4 @@ class HandlePublishRequestCommand extends HandleProtocolMessageCommand {
     }
 }
 
-export default HandlePublishRequestCommand;
+export default HandleStoreRequestCommand;
