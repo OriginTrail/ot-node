@@ -1,5 +1,5 @@
-import requests from './datasets/requests.json';
-import HttpApiHelper from '../../../utilities/http-api-helper';
+import requests from './datasets/requests.json' assert {type: "json"};
+import HttpApiHelper from '../../../utilities/http-api-helper.mjs';
 import { When, Given } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
 import { setTimeout } from 'timers/promises';
@@ -33,6 +33,7 @@ When(
                 status: result.operation.status,
                 errorType: result.operation.data?.data.errorType,
             };
+            this.logger.log(JSON.stringify(this.state.lastResolveData,null,4));
         } catch (e) {
             this.logger.log(`Error while getting operation result: ${e}`);
         }

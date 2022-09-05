@@ -1,12 +1,10 @@
 import { When, Given } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
 import { setTimeout } from 'timers/promises';
-import { createRequire } from 'module';
 import HttpApiHelper from '../../../utilities/http-api-helper.mjs';
 
-const require = createRequire(import.meta.url);
-const assertions = require('./datasets/assertions.json');
-const requests = require('./datasets/requests.json');
+import assertions from './datasets/assertions.json' assert {type: "json"};
+import requests from './datasets/requests.json' assert {type: "json"};
 
 const httpApiHelper = new HttpApiHelper();
 
@@ -14,7 +12,7 @@ When(
     /^I call publish on node (\d+) with ([^"]*)/,
     { timeout: 120000 },
     async function publish(node, assertionName) {
-        await setTimeout(10 * 1000); // wait 10 seconds to allow nodes to connect to each other
+        await setTimeout(5 * 1000); // wait 10 seconds to allow nodes to connect to each other
         this.logger.log(`I call publish route on node ${node}`);
         expect(
             !!assertions[assertionName],
@@ -47,13 +45,14 @@ When(
             errorType: result.operation.errorType,
             result,
         };
+        this.logger.log(JSON.stringify(this.state.lastPublishData,null,4));
     },
 );
 When(
     /^I call publish on ot-node (\d+) directly with ([^"]*)/,
     { timeout: 70000 },
     async function publish(node, requestName) {
-        await setTimeout(10 * 1000); // wait 10 seconds to allow nodes to connect to each other
+        await setTimeout(5 * 1000); // wait 10 seconds to allow nodes to connect to each other
         this.logger.log(`I call publish on ot-node ${node} directly`);
         expect(
             !!requests[requestName],

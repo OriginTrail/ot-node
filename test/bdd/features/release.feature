@@ -6,15 +6,15 @@ Feature: Release related tests
   @release
   Scenario: Publishing a valid assertion
     Given I setup 4 nodes
-    When I call publish on node 1 with validAssertion
+    When I call publish on node 4 with validAssertion
     And Last PUBLISH operation finished with status: COMPLETED
 
   @release
   Scenario: Getting a result of the previously published assertion
     Given I setup 4 nodes
-    When I call publish on node 1 with validAssertion
+    When I call publish on node 4 with validAssertion
     And Last PUBLISH operation finished with status: COMPLETED
-    And I get operation result from node 1 for last published assertion
+    And I get operation result from node 4 for last published assertion
     And Last GET operation finished with status: COMPLETED
     And I setup 1 additional node
     And I get operation result from node 5 for last published assertion

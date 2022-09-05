@@ -1,101 +1,14 @@
 import { Given } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
-import { fork } from 'child_process';
 import fs from 'fs';
 import DkgClientHelper from '../../utilities/dkg-client-helper.mjs';
 import DeepExtend from "deep-extend";
 
 
-import defaultConfiguration from './config/origintrail-test-node-config.json';
-import bootstrapNodeConfiguration from  './config/origintrail-test-bootstrap-config.json';
-
-import otNodeProcessPath from './test/bdd/steps/lib/ot-node-process.mjs';
-
-// TODO: move this functions to different module after transition to ESM
-function getBlockchainConfiguration(localBlockchain, privateKey, publicKey, managementKey) {
-    return [
-        {
-            defaultImplementation: 'ganache',
-            implementation: {
-                ganache: {
-                    config: {
-                        blockchainTitle: 'ganache',
-                        networkId: 'ganache::testnet',
-                        rpcEndpoints: ['http://localhost:7545'],
-                        hubContractAddress: localBlockchain.getHubAddress(),
-                        evmOperationalWalletPublicKey: publicKey,
-                        evmOperationalWalletPrivateKey: privateKey,
-                        evmManagementWalletPublicKey: managementKey,
-                        evmManagementPublicKey: managementKey,
-                    },
-                },
-            },
-        },
-    ];
-}
-
-function forkNode(nodeConfiguration) {
-    const forkedNode = fork(otNodeProcessPath, [], { silent: true });
-    forkedNode.send(JSON.stringify(nodeConfiguration));
-    return forkedNode;
-}
-
-function createNodeConfiguration(wallet, managementWallet, nodeIndex, nodeName, rpcPort) {
-    return {
-        modules: {
-            blockchain: getBlockchainConfiguration(
-                this.state.localBlockchain,
-                wallet.privateKey,
-                wallet.address,
-                managementWallet.address,
-            )[0],
-            network: {
-                implementation: {
-                    'libp2p-service': {
-                        config: {
-                            port: 9001 + nodeIndex,
-                        },
-                    },
-                },
-            },
-            repository: {
-                implementation: {
-                    'sequelize-repository': {
-                        config: {
-                            database: `operationaldbnode${nodeIndex}`,
-                        },
-                    },
-                },
-            },
-            tripleStore: {
-                implementation: {
-                    'ot-graphdb': {
-                        config: {
-                            repository: nodeName,
-                        },
-                    },
-                },
-            },
-            httpClient: {
-                implementation: {
-                    'express-http-client': {
-                        config: {
-                            port: rpcPort,
-                        },
-                    },
-                },
-            },
-        },
-        operationalDatabase: {
-            databaseName: `operationaldbnode${nodeIndex}`,
-        },
-        rpcPort,
-        appDataPath: `data${nodeIndex}`,
-        graphDatabase: {
-            name: nodeName,
-        },
-    };
-}
+import defaultConfiguration from './config/origintrail-test-node-config.json' assert {type: "json"};
+import bootstrapNodeConfiguration from  './config/origintrail-test-bootstrap-config.json' assert {type: "json"};
+import {createNodeConfiguration, forkNode} from "../../utilities/steps-utils.mjs";
+import {setTimeout} from "timers/promises";
 
 Given(
     /^I setup (\d+)[ additional]* node[s]*$/,
