@@ -12,7 +12,7 @@ When(
     /^I call publish on node (\d+) with ([^"]*)/,
     { timeout: 120000 },
     async function publish(node, assertionName) {
-        await setTimeout(5 * 1000); // wait 10 seconds to allow nodes to connect to each other
+        await setTimeout(10 * 1000); // wait 10 seconds to allow nodes to connect to each other
         this.logger.log(`I call publish route on node ${node}`);
         expect(
             !!assertions[assertionName],
@@ -52,7 +52,7 @@ When(
     /^I call publish on ot-node (\d+) directly with ([^"]*)/,
     { timeout: 70000 },
     async function publish(node, requestName) {
-        await setTimeout(5 * 1000); // wait 10 seconds to allow nodes to connect to each other
+        await setTimeout(10 * 1000); // wait 10 seconds to allow nodes to connect to each other
         this.logger.log(`I call publish on ot-node ${node} directly`);
         expect(
             !!requests[requestName],

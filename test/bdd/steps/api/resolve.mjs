@@ -11,6 +11,7 @@ When(
     { timeout: 120000 },
     async function resolveCall(node) {
         this.logger.log('I call get result for the last operation');
+        await setTimeout(10 * 1000); // wait 10 seconds to allow nodes to connect to each other
         expect(
             !!this.state.lastPublishData,
             'Last publish data is undefined. Publish is not finalized.',
@@ -33,7 +34,6 @@ When(
                 status: result.operation.status,
                 errorType: result.operation.data?.data.errorType,
             };
-            this.logger.log(JSON.stringify(this.state.lastResolveData,null,4));
         } catch (e) {
             this.logger.log(`Error while getting operation result: ${e}`);
         }
@@ -66,7 +66,6 @@ Given(
                 this.state.lastResolveData.result = resolveResult;
                 this.state.lastResolveData.status = resolveResult.data.status;
                 this.state.lastResolveData.errorType = resolveResult.data.data?.errorType;
-                this.logger.log(this.state.lastResolveData.errorType);
                 break;
             }
             if (retryCount === maxRetryCount - 1) {
