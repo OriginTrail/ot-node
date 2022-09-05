@@ -30,6 +30,8 @@ When(
                 nodeId: node - 1,
                 operationId,
                 result,
+                status: result.operation.status,
+                errorType: result.operation.data?.data.errorType,
             };
         } catch (e) {
             this.logger.log(`Error while getting operation result: ${e}`);
@@ -70,30 +72,8 @@ Given(
                 assert.fail('Unable to get publish result');
             }
             // eslint-disable-next-line no-await-in-loop
-            await setTimeout(5000);
+            await setTimeout(4000);
         }
-    },
-);
-
-Given(
-    /Last operation finished with status: ([COMPLETED|FAILED|GetAssertionIdError]+)$/,
-    { timeout: 120000 },
-    async function lastResolveFinishedCall(status) {
-        this.logger.log(`Last get result finished with status: ${status}`);
-        expect(
-            !!this.state.lastResolveData,
-            'Last get result data is undefined. Get result not started.',
-        ).to.be.equal(true);
-        expect(
-            !!this.state.lastResolveData.result,
-            'Last get result data result is undefined. Get result is not finished.',
-        ).to.be.equal(true);
-
-        const resolveData = this.state.lastResolveData;
-        expect(
-            resolveData.errorType ?? resolveData.status,
-            'Get result status validation failed',
-        ).to.be.equal(status);
     },
 );
 
@@ -125,12 +105,16 @@ Given(
     { timeout: 30000 },
     async function getFromNode(node, requestName) {
         this.logger.log(`I call get on ot-node ${node} directly`);
-        expect(
-            !!requests[requestName],
-            `Request body with name: ${requestName} not found!`,
-        ).to.be.equal(true);
-        const requestBody = requests[requestName];
-        // requestBody.id = this.state.lastPublishData.UAL;
+        if (requestName !== 'lastPublishedAssetUAL') {
+            expect(
+                !!requests[requestName],
+                `Request body with name: ${requestName} not found!`,
+            ).to.be.equal(true);
+        }
+        const requestBody =
+            requestName !== 'lastPublishedAssetUAL'
+                ? requests[requestName]
+                : { id: this.state.lastPublishData.UAL };
         const result = await httpApiHelper.get(this.state.nodes[node - 1].nodeRpcUrl, requestBody);
         const { operationId } = result.data;
         this.state.lastResolveData = {

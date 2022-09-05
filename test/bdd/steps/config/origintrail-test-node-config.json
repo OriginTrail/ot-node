@@ -29,6 +29,7 @@
       }
     },
     "repository": {
+      "enabled": true,
       "implementation": {
         "sequelize-repository": {
           "config": {

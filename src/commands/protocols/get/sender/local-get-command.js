@@ -43,6 +43,14 @@ class LocalGetCommand extends Command {
                     OPERATION_ID_STATUS.COMPLETED,
                 );
 
+                /* JUST FOR TESTING
+                this.handleError(
+                    operationId,
+                    `Unable to find assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
+                    this.errorType,
+                    true,
+                ); */
+
                 return Command.empty();
             }
         }

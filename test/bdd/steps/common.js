@@ -8,6 +8,8 @@ const DkgClientHelper = require('../../utilities/dkg-client-helper');
 const otNodeProcessPath = './test/bdd/steps/lib/ot-node-process.js';
 const defaultConfiguration = require(`./config/origintrail-test-node-config.json`);
 const bootstrapNodeConfiguration = require(`./config/origintrail-test-bootstrap-config.json`);
+
+// TODO: move this functions to different module after transition to ESM
 function getBlockchainConfiguration(localBlockchain, privateKey, publicKey, managementKey) {
     return [
         {
@@ -93,67 +95,72 @@ function createNodeConfiguration(wallet, managementWallet, nodeIndex, nodeName, 
     };
 }
 
-Given(/^I setup (\d+) node[s]*$/, { timeout: 80000 }, function nodeSetup(nodeCount, done) {
-    this.logger.log(`I setup ${nodeCount} node${nodeCount !== 1 ? 's' : ''}`);
-    const wallets = this.state.localBlockchain.getWallets();
-    const currentNumberOfNodes = Object.keys(this.state.nodes).length;
-    let nodesStarted = 0;
-    for (let i = 0; i < nodeCount; i += 1) {
-        const nodeIndex = currentNumberOfNodes + i;
-        const wallet = wallets[nodeIndex + 1];
-        const managementWallet = wallets[nodeIndex + 1 + Math.floor(wallets.length / 2)];
-        const rpcPort = 8901 + nodeIndex;
-        const nodeName = `origintrail-test-${nodeIndex}`;
+Given(
+    /^I setup (\d+)[ additional]* node[s]*$/,
+    { timeout: 80000 },
+    function nodeSetup(nodeCount, done) {
+        this.logger.log(`I setup ${nodeCount} node${nodeCount !== 1 ? 's' : ''}`);
+        const wallets = this.state.localBlockchain.getWallets();
+        const currentNumberOfNodes = Object.keys(this.state.nodes).length;
+        let nodesStarted = 0;
+        for (let i = 0; i < nodeCount; i += 1) {
+            const nodeIndex = currentNumberOfNodes + i;
+            const wallet = wallets[nodeIndex + 1];
+            const managementWallet = wallets[nodeIndex + 1 + Math.floor(wallets.length / 2)];
+            const rpcPort = 8901 + nodeIndex;
+            const nodeName = `origintrail-test-${nodeIndex}`;
+            const nodeConfiguration = DeepExtend(
+                {},
+                defaultConfiguration,
+                createNodeConfiguration.call(
+                    this,
+                    wallet,
+                    managementWallet,
+                    nodeIndex,
+                    nodeName,
+                    rpcPort,
+                ),
+            );
+            const forkedNode = forkNode(nodeConfiguration);
 
-        const nodeConfiguration = DeepExtend(
-            {},
-            defaultConfiguration,
-            createNodeConfiguration.call(
-                this,
-                wallet,
-                managementWallet,
-                nodeIndex,
-                nodeName,
-                rpcPort,
-            ),
-        );
-        const forkedNode = forkNode(nodeConfiguration);
-
-        const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
-        forkedNode.stdout.setEncoding('utf8');
-        forkedNode.stdout.on('data', (data) => {
-            // Here is where the output goes
-            logFileStream.write(data);
-        });
-        // eslint-disable-next-line no-loop-func
-        forkedNode.on('message', (response) => {
-            if (response.error) {
-                assert.fail(
-                    `Error while trying initialize node${nodeIndex} client: ${response.error}`,
-                );
-            } else {
-                // todo if started
-                const client = new DkgClientHelper({
-                    endpoint: 'http://localhost',
-                    port: rpcPort,
-                    useSSL: false,
-                    timeout: 25,
-                    loglevel: 'trace',
-                });
-                this.state.nodes[nodeIndex] = {
-                    client,
-                    forkedNode,
-                    configuration: nodeConfiguration,
-                    nodeRpcUrl: `http://localhost:${rpcPort}`,
-                };
-            }
-            nodesStarted += 1;
-            if (nodesStarted === nodeCount) {
-                done();
-            }
-        });
-    }
-});
+            const logFileStream = fs.createWriteStream(
+                `${this.state.scenarionLogDir}/${nodeName}.log`,
+            );
+            forkedNode.stdout.setEncoding('utf8');
+            forkedNode.stdout.on('data', (data) => {
+                // Here is where the output goes
+                logFileStream.write(data);
+            });
+            // eslint-disable-next-line no-loop-func
+            forkedNode.on('message', (response) => {
+                if (response.error) {
+                    assert.fail(
+                        `Error while trying initialize node${nodeIndex} client: ${response.error}`,
+                    );
+                } else {
+                    // todo if started
+                    const client = new DkgClientHelper({
+                        endpoint: 'http://localhost',
+                        port: rpcPort,
+                        useSSL: false,
+                        timeout: 25,
+                        loglevel: 'trace',
+                    });
+                    this.state.nodes[nodeIndex] = {
+                        client,
+                        forkedNode,
+                        configuration: nodeConfiguration,
+                        nodeRpcUrl: `http://localhost:${rpcPort}`,
+                    };
+                }
+                nodesStarted += 1;
+                if (nodesStarted === nodeCount) {
+                    done();
+                }
+            });
+        }
+    },
+);
 
 Given(
     /^(\d+) bootstrap is running$/,
@@ -196,78 +203,17 @@ Given(
     },
 );
 
+// TODO: Implement input error handling
 Given(
-    /^I setup (\d+) additional node[s]*$/,
-    { timeout: 60000 },
-    function setupAdditionalNode(nodeCount, done) {
-        this.logger.log(`I setup ${nodeCount} additional node${nodeCount !== 1 ? 's' : ''}`);
-        const wallets = this.state.localBlockchain.getWallets();
-        const currentNumberOfNodes = Object.keys(this.state.nodes).length;
-        let nodesStarted = 0;
-        for (let i = 0; i < nodeCount; i += 1) {
-            const nodeIndex = currentNumberOfNodes + i;
-            const wallet = wallets[nodeIndex + 1];
-            const managementWallet = wallets[nodeIndex + 1 + Math.floor(wallets.length / 2)];
-            const rpcPort = 8901 + nodeIndex;
-            const nodeName = `origintrail-test-${nodeIndex}`;
-            const nodeConfiguration = DeepExtend(
-                {},
-                defaultConfiguration,
-                createNodeConfiguration.call(
-                    this,
-                    wallet,
-                    managementWallet,
-                    nodeIndex,
-                    nodeName,
-                    rpcPort,
-                ),
-            );
-            const forkedNode = forkNode(nodeConfiguration);
-
-            const logFileStream = fs.createWriteStream(
-                `${this.state.scenarionLogDir}/${nodeName}.log`,
-            );
-            forkedNode.stdout.setEncoding('utf8');
-            forkedNode.stdout.on('data', (data) => {
-                // Here is where the output goes
-                logFileStream.write(data);
-            });
-
-            // eslint-disable-next-line no-loop-func
-            forkedNode.on('message', (response) => {
-                if (response.error) {
-                    assert.fail(
-                        `Error while trying initialize node${nodeIndex} client: ${response.error}`,
-                    );
-                } else {
-                    // todo if started
-                    const client = new DkgClientHelper({
-                        endpoint: 'http://localhost',
-                        port: rpcPort,
-                        useSSL: false,
-                        timeout: 25,
-                        loglevel: 'trace',
-                    });
-                    this.state.nodes[nodeIndex] = {
-                        client,
-                        forkedNode,
-                        configuration: nodeConfiguration,
-                        nodeRpcUrl: `http://localhost:${rpcPort}`,
-                    };
-                }
-                nodesStarted += 1;
-                if (nodesStarted === nodeCount) {
-                    done();
-                }
-            });
-        }
-    },
-);
-Given(
-    /^I setup publish node with invalid configuration/,
+    'I setup node {int} with {word} set to {string}',
     { timeout: 120000 },
-    function setupPublishNode(done) {
+    function setupPublishNode(nodeNum, propertyName, propertyValue, done) {
+        const propertyNameSplit = propertyName.split('.');
         this.logger.log(`I setup node publish node with invalid configuration`);
+        expect(
+            Object.prototype.hasOwnProperty.call(defaultConfiguration, propertyNameSplit[0]),
+            `Property ${propertyName} doesn't exist`,
+        ).to.be.equal(true);
         const nodeIndex = Object.keys(this.state.nodes).length;
         const wallets = this.state.localBlockchain.getWallets();
         const wallet = wallets[nodeIndex + 1];
@@ -287,7 +233,13 @@ Given(
                 rpcPort,
             ),
         );
-        nodeConfiguration.minimumAckResponses.publish = 10;
+        const propertyNameSplitLen = propertyNameSplit.length;
+        let propName = nodeConfiguration;
+        for (let i = 0; i < propertyNameSplitLen - 1; i += 1) {
+            propName = propName[propertyNameSplit[i]];
+        }
+        // TODO: ugly workaround, change it
+        propName[propertyNameSplit.slice(-1)] = propertyValue === '\\0' ? '\0' : propertyValue;
         const forkedNode = forkNode(nodeConfiguration);
 
         const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
@@ -328,5 +280,27 @@ Given(
             }
             done();
         });
+    },
+);
+
+Given(
+    /Last (GET|PUBLISH) operation finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError|PublishStartError|GetAssertionIdError|GetLocalError|PublishRouteError]+)$/,
+    { timeout: 120000 },
+    async function lastResolveFinishedCall(operationName, status) {
+        this.logger.log(`Last ${operationName} operation finished with status: ${status}`);
+        const operationData = operationName === 'GET' ? 'lastResolveData' : 'lastPublishData';
+        expect(
+            !!this.state[operationData],
+            `Last ${operationName} result is undefined. ${operationName} result not started.`,
+        ).to.be.equal(true);
+        expect(
+            !!this.state[operationData].result,
+            `Last ${operationName} result data result is undefined. ${operationName} result is not finished.`,
+        ).to.be.equal(true);
+
+        expect(
+            this.state[operationData].errorType ?? this.state[operationData].status,
+            `${operationName} result status validation failed`,
+        ).to.be.equal(status);
     },
 );

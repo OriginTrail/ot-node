@@ -5,6 +5,8 @@ const assertions = require('./datasets/assertions.json');
 const requests = require('./datasets/requests.json');
 const HttpApiHelper = require('../../../utilities/http-api-helper');
 
+const httpApiHelper = new HttpApiHelper();
+
 When(
     /^I call publish on node (\d+) with ([^"]*)/,
     { timeout: 120000 },
@@ -53,7 +55,6 @@ When(
             `Request body with name: ${requestName} not found!`,
         ).to.be.equal(true);
         const requestBody = requests[requestName];
-        const httpApiHelper = new HttpApiHelper();
         const result = await httpApiHelper.publish(
             this.state.nodes[node - 1].nodeRpcUrl,
             requestBody,
@@ -75,7 +76,6 @@ Given('I wait for last publish to finalize', { timeout: 80000 }, async function 
     const publishData = this.state.lastPublishData;
     let retryCount = 0;
     const maxRetryCount = 5;
-    const httpApiHelper = new HttpApiHelper();
     for (retryCount = 0; retryCount < maxRetryCount; retryCount += 1) {
         this.logger.log(
             `Getting publish result for operation id: ${publishData.operationId} on node: ${publishData.nodeId}`,
@@ -96,30 +96,10 @@ Given('I wait for last publish to finalize', { timeout: 80000 }, async function 
             assert.fail('Unable to get publish result');
         }
         // eslint-disable-next-line no-await-in-loop
-        await setTimeout(5000);
+        await setTimeout(4000);
     }
 });
 
-Given(
-    /Last publish finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError,PublishStartError]+)$/,
-    { timeout: 60000 },
-    async function lastPublishFinished(status) {
-        this.logger.log(`Last publish finished with status: ${status}`);
-        expect(
-            !!this.state.lastPublishData,
-            'Last publish data is undefined. Publish is not started.',
-        ).to.be.equal(true);
-        expect(
-            !!this.state.lastPublishData.result,
-            'Last publish data result is undefined. Publish is not finished.',
-        ).to.be.equal(true);
-        const publishData = this.state.lastPublishData;
-        expect(
-            publishData.errorType ?? publishData.status,
-            'Publish result status validation failed',
-        ).to.be.equal(status);
-    },
-);
 Given(
     /I wait for (\d+) seconds and check operation status/,
     { timeout: 120000 },
@@ -130,7 +110,6 @@ Given(
             'Last publish data is undefined. Publish is not started.',
         ).to.be.equal(true);
         const publishData = this.state.lastPublishData;
-        const httpApiHelper = new HttpApiHelper();
         this.logger.log(
             `Getting publish result for operation id: ${publishData.operationId} on node: ${publishData.nodeId}`,
         );
