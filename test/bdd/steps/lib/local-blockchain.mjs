@@ -1,40 +1,30 @@
 /* eslint-disable max-len */
-const Ganache = require('ganache-core');
-const Web3 = require('web3');
-const Wallet = require('ethereumjs-wallet').default;
+import Ganache from 'ganache';
+import Web3 from 'web3';
+import { createRequire } from 'module';
 
-const sources = {
-    // eslint-disable-next-line global-require
-    hubSource: require('dkg-evm-module/build/contracts/Hub.json'),
-    // eslint-disable-next-line global-require
-    assertionRegistrySource: require('dkg-evm-module/build/contracts/AssertionRegistry.json'),
-    // eslint-disable-next-line global-require
-    uaiRegistrySource: require('dkg-evm-module/build/contracts/UAIRegistry.json'),
-    // eslint-disable-next-line global-require
-    assetRegistrySource: require('dkg-evm-module/build/contracts/AssetRegistry.json'),
-    // eslint-disable-next-line global-require
-    erc20TokenSource: require('dkg-evm-module/build/contracts/ERC20Token.json'),
-    // eslint-disable-next-line global-require
-    profileStorageSource: require('dkg-evm-module/build/contracts/ProfileStorage.json'),
-    // eslint-disable-next-line global-require
-    profileSource: require('dkg-evm-module/build/contracts/Profile.json'),
-};
+const require = createRequire(import.meta.url);
+const hub = require('dkg-evm-module/build/contracts/Hub.json');
+const uaiRegistry = require('dkg-evm-module/build/contracts/UAIRegistry.json');
+const assertionRegistry = require('dkg-evm-module/build/contracts/AssertionRegistry.json');
+const assetRegistry = require('dkg-evm-module/build/contracts/AssetRegistry.json');
+const erc20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
+const profile = require('dkg-evm-module/build/contracts/Profile.json');
+const profileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
 const accountPrivateKeys = require('../api/datasets/privateKeys.json');
 
-const contractNames = [
-    'hub',
-    'uaiRegistry',
-    'assertionRegistry',
-    'assetRegistry',
-    'erc20Token',
-    'profileStorage',
-    'profile',
-];
-
+const sources = {
+    hub,
+    uaiRegistry,
+    assertionRegistry,
+    assetRegistry,
+    erc20Token,
+    profileStorage,
+    profile,
+};
+const web3 = new Web3();
 const wallets = accountPrivateKeys.map((privateKey) => ({
-    address: `0x${Wallet.fromPrivateKey(Buffer.from(privateKey, 'hex'))
-        .getAddress()
-        .toString('hex')}`,
+    address: web3.eth.accounts.privateKeyToAccount(privateKey).address,
     privateKey,
 }));
 
@@ -67,6 +57,11 @@ class LocalBlockchain {
         this.port = options.port || 7545;
         this.name = options.name || 'ganache';
         this.server = Ganache.server({
+            logging: {
+                logger: {
+                    log: () => {},
+                },
+            },
             gasLimit: 7000000,
             time: new Date(),
             accounts: accountPrivateKeys.map((account) => ({
@@ -121,9 +116,9 @@ class LocalBlockchain {
 
     fetchContracts() {
         this.contracts = {};
-        contractNames.forEach((name) => {
-            this.populateContractObject(name, sources[`${name}Source`]);
-        });
+        for (const [name, source] of Object.entries(sources)) {
+            this.populateContractObject(name, source);
+        }
     }
 
     populateContractObject(contractName, source) {
@@ -289,4 +284,4 @@ class LocalBlockchain {
     }
 }
 
-module.exports = LocalBlockchain;
+export default LocalBlockchain;

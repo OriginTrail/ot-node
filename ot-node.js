@@ -1,15 +1,18 @@
-const DeepExtend = require('deep-extend');
-const rc = require('rc');
-const fs = require('fs');
-const appRootPath = require('app-root-path');
-const path = require('path');
-const EventEmitter = require('events');
-const DependencyInjection = require('./src/service/dependency-injection');
-const Logger = require('./src/logger/logger');
-const constants = require('./src/constants/constants');
+import DeepExtend from 'deep-extend';
+import rc from 'rc';
+import fs from 'fs';
+import appRootPath from 'app-root-path';
+import path from 'path';
+import EventEmitter from 'events';
+import { createRequire } from 'module';
+import DependencyInjection from './src/service/dependency-injection.js';
+import Logger from './src/logger/logger.js';
+import { MIN_NODE_VERSION } from './src/constants/constants.js';
+import FileService from './src/service/file-service.js';
+
+const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
-const FileService = require('./src/service/file-service');
 
 class OTNode {
     constructor(config) {
@@ -33,10 +36,8 @@ class OTNode {
         this.logger.info('======================================================');
         this.logger.info(`Node is running in ${process.env.NODE_ENV} environment`);
 
-        this.initializeDependencyContainer();
-        this.logger.info(`dependency container initialized`);
+        await this.initializeDependencyContainer();
         this.initializeEventEmitter();
-        this.logger.info(` event emitter initialized`);
 
         await this.initializeModules();
         await this.saveNetworkModulePeerIdAndPrivKey();
@@ -53,7 +54,7 @@ class OTNode {
         const nodeMajorVersion = process.versions.node.split('.')[0];
         this.logger.warn('======================================================');
         this.logger.warn(`Using node.js version: ${process.versions.node}`);
-        if (nodeMajorVersion < constants.MIN_NODE_VERSION) {
+        if (nodeMajorVersion < MIN_NODE_VERSION) {
             this.logger.warn(
                 `This node was tested with node.js version 16. To make sure that your node is running properly please update your node version!`,
             );
@@ -83,8 +84,8 @@ class OTNode {
         }
     }
 
-    initializeDependencyContainer() {
-        this.container = DependencyInjection.initialize();
+    async initializeDependencyContainer() {
+        this.container = await DependencyInjection.initialize();
         DependencyInjection.registerValue(this.container, 'config', this.config);
         DependencyInjection.registerValue(this.container, 'logger', this.logger);
 
@@ -95,7 +96,6 @@ class OTNode {
         const initializationPromises = [];
         for (const moduleName in this.config.modules) {
             const moduleManagerName = `${moduleName}ModuleManager`;
-            this.logger.info(`schedulinginitializing ${moduleManagerName}`);
 
             const moduleManager = this.container.resolve(moduleManagerName);
             initializationPromises.push(moduleManager.initialize());
@@ -220,16 +220,6 @@ class OTNode {
         }
     }
 
-    async initializeWatchdog() {
-        try {
-            const watchdogService = this.container.resolve('watchdogService');
-            await watchdogService.initialize();
-            this.logger.info('Watchdog service initialized');
-        } catch (e) {
-            this.logger.warn(`Watchdog service initialization failed. Error message: ${e.message}`);
-        }
-    }
-
     async savePrivateKeyAndPeerIdInUserConfigurationFile(privateKey) {
         const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
         const configFile = JSON.parse(await fs.promises.readFile(configurationFilePath));
@@ -296,4 +286,4 @@ class OTNode {
     }
 }
 
-module.exports = OTNode;
+export default OTNode;

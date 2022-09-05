@@ -1,13 +1,13 @@
-const BaseModuleManager = require('../base-module-manager');
+import BaseModuleManager from '../base-module-manager.js';
 
 class TripleStoreModuleManager extends BaseModuleManager {
     getName() {
         return 'tripleStore';
     }
 
-    async insertAsset(ual, assetNquads) {
+    async insertAsset(ual, assertionId, assetNquads) {
         if (this.initialized) {
-            return this.getImplementation().module.insertAsset(ual, assetNquads);
+            return this.getImplementation().module.insertAsset(ual, assertionId, assetNquads);
         }
     }
 
@@ -54,4 +54,4 @@ class TripleStoreModuleManager extends BaseModuleManager {
     }
 }
 
-module.exports = TripleStoreModuleManager;
+export default TripleStoreModuleManager;

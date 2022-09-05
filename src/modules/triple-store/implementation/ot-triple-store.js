@@ -1,8 +1,11 @@
-const Engine = require('@comunica/query-sparql').QueryEngine;
-const { setTimeout } = require('timers/promises');
-const { SCHEMA_CONTEXT } = require('../../../constants/constants');
-const constants = require('./triple-store-constants');
-const { MEDIA_TYPES } = require('./triple-store-constants');
+import { QueryEngine as Engine } from '@comunica/query-sparql';
+import { setTimeout } from 'timers/promises';
+import {
+    SCHEMA_CONTEXT,
+    TRIPLE_STORE_CONNECT_MAX_RETRIES,
+    TRIPLE_STORE_CONNECT_RETRY_FREQUENCY,
+    MEDIA_TYPES,
+} from '../../../constants/constants.js';
 
 class OtTripleStore {
     async initialize(config, logger) {
@@ -12,18 +15,16 @@ class OtTripleStore {
 
         let ready = await this.healthCheck();
         let retries = 0;
-        while (!ready && retries < constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
+        while (!ready && retries < TRIPLE_STORE_CONNECT_MAX_RETRIES) {
             retries += 1;
             this.logger.warn(
-                `Cannot connect to Triple store (${this.getName()}), retry number: ${retries}/${
-                    constants.TRIPLE_STORE_CONNECT_MAX_RETRIES
-                }. Retrying in ${constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`,
+                `Cannot connect to Triple store (${this.getName()}), retry number: ${retries}/${TRIPLE_STORE_CONNECT_MAX_RETRIES}. Retrying in ${TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`,
             );
             /* eslint-disable no-await-in-loop */
-            await setTimeout(constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000);
+            await setTimeout(TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000);
             ready = await this.healthCheck();
         }
-        if (retries === constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
+        if (retries === TRIPLE_STORE_CONNECT_MAX_RETRIES) {
             this.logger.error(
                 `Triple Store (${this.getName()}) not available, max retries reached.`,
             );
@@ -61,7 +62,21 @@ class OtTripleStore {
         return true;
     }
 
-    async insertAsset(ual, assetNquads) {
+    async assetExists(ual, assertionId) {
+        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
+                        ASK WHERE {
+                            GRAPH <assets:graph> {
+                                <${ual}> schema:assertion <assertion:${assertionId}>
+                            }
+                        }`;
+
+        return this.ask(query);
+    }
+
+    async insertAsset(ual, assertionId, assetNquads) {
+        // const exists = await this.assetExists(ual, assertionId)
+
+        // if(!exists) {
         const insertion = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             DELETE {<${ual}> schema:latestAssertion ?o}
@@ -77,6 +92,7 @@ class OtTripleStore {
                 }
             }`;
         await this.queryEngine.queryVoid(insertion, this.insertContext);
+        // }
     }
 
     async insertIndex(keyword, indexNquads, assetNquads) {
@@ -218,4 +234,4 @@ class OtTripleStore {
     }
 }
 
-module.exports = OtTripleStore;
+export default OtTripleStore;

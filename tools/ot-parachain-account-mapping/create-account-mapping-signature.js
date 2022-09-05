@@ -1,10 +1,10 @@
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-console */
-const { Wallet } = require('@ethersproject/wallet');
-const { joinSignature } = require('@ethersproject/bytes');
-const { _TypedDataEncoder } = require('@ethersproject/hash');
-const { u8aToHex } = require('@polkadot/util');
-const { decodeAddress } = require('@polkadot/util-crypto');
+import { Wallet } from '@ethersproject/wallet';
+import { joinSignature } from '@ethersproject/bytes';
+import { _TypedDataEncoder } from '@ethersproject/hash';
+import { u8aToHex } from '@polkadot/util';
+import { decodeAddress } from '@polkadot/util-crypto';
 
 if (!process.argv[2]) {
     console.log('Missing argument PRIVATE_ETH_KEY');

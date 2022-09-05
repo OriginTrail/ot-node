@@ -1,5 +1,5 @@
-const NetworkProtocolCommand = require('../../common/network-protocol-command');
-const { ERROR_TYPE } = require('../../../../constants/constants');
+import NetworkProtocolCommand from '../../common/network-protocol-command.js';
+import { ERROR_TYPE } from '../../../../constants/constants.js';
 
 class NetworkGetCommand extends NetworkProtocolCommand {
     constructor(ctx) {
@@ -37,4 +37,4 @@ class NetworkGetCommand extends NetworkProtocolCommand {
     }
 }
 
-module.exports = NetworkGetCommand;
+export default NetworkGetCommand;

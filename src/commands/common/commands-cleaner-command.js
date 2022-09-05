@@ -1,8 +1,5 @@
-const Command = require('../command');
-const {
-    COMMAND_STATUS,
-    FINALIZED_COMMAND_CLEANUP_TIME_MILLS,
-} = require('../../constants/constants');
+import Command from '../command.js';
+import { COMMAND_STATUS, FINALIZED_COMMAND_CLEANUP_TIME_MILLS } from '../../constants/constants.js';
 
 /**
  * Increases approval for Bidding contract on blockchain
@@ -54,4 +51,4 @@ class CommandsCleanerCommand extends Command {
     }
 }
 
-module.exports = CommandsCleanerCommand;
+export default CommandsCleanerCommand;

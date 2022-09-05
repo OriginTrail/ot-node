@@ -1,13 +1,14 @@
-const { Mutex } = require('async-mutex');
-const OperationService = require('./operation-service');
-const {
+import { Mutex } from 'async-mutex';
+import OperationService from './operation-service.js';
+
+import {
     GET_REQUEST_STATUS,
     OPERATION_ID_STATUS,
     GET_STATUS,
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     OPERATIONS,
-} = require('../constants/constants');
+} from '../constants/constants.js';
 
 class GetService extends OperationService {
     constructor(ctx) {
@@ -92,4 +93,4 @@ class GetService extends OperationService {
     }
 }
 
-module.exports = GetService;
+export default GetService;

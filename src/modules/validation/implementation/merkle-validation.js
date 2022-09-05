@@ -1,7 +1,7 @@
-const keccak256 = require('keccak256');
-const web3 = require('web3');
-const { MerkleTree } = require('merkletreejs');
-const { calculateRoot } = require('assertion-tools');
+import keccak256 from 'keccak256';
+import web3 from 'web3';
+import { MerkleTree } from 'merkletreejs';
+import { calculateRoot } from 'assertion-tools';
 
 class MerkleValidation {
     async initialize(config, logger) {
@@ -28,4 +28,4 @@ class MerkleValidation {
     }
 }
 
-module.exports = MerkleValidation;
+export default MerkleValidation;

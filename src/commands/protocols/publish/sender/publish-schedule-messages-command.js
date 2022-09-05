@@ -1,9 +1,5 @@
-const ProtocolScheduleMessagesCommand = require('../../common/protocol-schedule-messages-command');
-const {
-    OPERATION_ID_STATUS,
-    ERROR_TYPE,
-    PUBLISH_TYPES,
-} = require('../../../../constants/constants');
+import ProtocolScheduleMessagesCommand from '../../common/protocol-schedule-messages-command.js';
+import { OPERATION_ID_STATUS, PUBLISH_TYPES, ERROR_TYPE } from '../../../../constants/constants.js';
 
 class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     constructor(ctx) {
@@ -38,4 +34,4 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     }
 }
 
-module.exports = PublishScheduleMessagesCommand;
+export default PublishScheduleMessagesCommand;

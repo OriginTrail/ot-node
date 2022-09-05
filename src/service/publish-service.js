@@ -1,7 +1,8 @@
-const { Mutex } = require('async-mutex');
-const { formatAssertion } = require('assertion-tools');
-const OperationService = require('./operation-service');
-const {
+import { Mutex } from 'async-mutex';
+import { formatAssertion } from 'assertion-tools';
+import OperationService from './operation-service.js';
+
+import {
     OPERATION_ID_STATUS,
     PUBLISH_REQUEST_STATUS,
     PUBLISH_STATUS,
@@ -9,7 +10,7 @@ const {
     ERROR_TYPE,
     SCHEMA_CONTEXT,
     OPERATIONS,
-} = require('../constants/constants');
+} from '../constants/constants.js';
 
 class PublishService extends OperationService {
     constructor(ctx) {
@@ -18,7 +19,6 @@ class PublishService extends OperationService {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.validationModuleManager = ctx.validationModuleManager;
-        this.dataService = ctx.dataService;
 
         this.operationName = OPERATIONS.PUBLISH;
         this.networkProtocol = NETWORK_PROTOCOLS.STORE;
@@ -176,7 +176,7 @@ class PublishService extends OperationService {
         );
 
         await Promise.all([
-            this.tripleStoreModuleManager.insertAsset(ual, assetNquads.join('\n')),
+            this.tripleStoreModuleManager.insertAsset(ual, assertionId, assetNquads.join('\n')),
             this.tripleStoreModuleManager.insertAssertion(assertionId, assertion.join('\n')),
         ]);
 
@@ -186,4 +186,4 @@ class PublishService extends OperationService {
     }
 }
 
-module.exports = PublishService;
+export default PublishService;

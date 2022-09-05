@@ -1,5 +1,5 @@
-const ProtocolInitCommand = require('../../common/protocol-init-command');
-const { ERROR_TYPE, PUBLISH_TYPES } = require('../../../../constants/constants');
+import ProtocolInitCommand from '../../common/protocol-init-command.js';
+import { ERROR_TYPE, PUBLISH_TYPES } from '../../../../constants/constants.js';
 
 class PublishInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
@@ -34,4 +34,4 @@ class PublishInitCommand extends ProtocolInitCommand {
     }
 }
 
-module.exports = PublishInitCommand;
+export default PublishInitCommand;

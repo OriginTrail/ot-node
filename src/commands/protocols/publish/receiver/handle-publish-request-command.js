@@ -1,10 +1,11 @@
-const HandleProtocolMessageCommand = require('../../common/handle-protocol-message-command');
-const {
+import HandleProtocolMessageCommand from '../../common/handle-protocol-message-command.js';
+
+import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     PUBLISH_TYPES,
-} = require('../../../../constants/constants');
+} from '../../../../constants/constants.js';
 
 class HandlePublishRequestCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
@@ -117,4 +118,4 @@ class HandlePublishRequestCommand extends HandleProtocolMessageCommand {
     }
 }
 
-module.exports = HandlePublishRequestCommand;
+export default HandlePublishRequestCommand;

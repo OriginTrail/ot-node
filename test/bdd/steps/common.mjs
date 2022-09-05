@@ -1,13 +1,17 @@
-const { Given } = require('@cucumber/cucumber');
-const DeepExtend = require('deep-extend');
-const { expect, assert } = require('chai');
-const { fork } = require('child_process');
-const fs = require('fs');
-const DkgClientHelper = require('../../utilities/dkg-client-helper');
+import { Given } from '@cucumber/cucumber';
+import { expect, assert } from 'chai';
+import { fork } from 'child_process';
+import deepExtend from 'deep-extend';
+import fs from 'fs';
+import { createRequire } from 'module';
+import DkgClientHelper from '../../utilities/dkg-client-helper.mjs';
 
-const otNodeProcessPath = './test/bdd/steps/lib/ot-node-process.js';
-const defaultConfiguration = require(`./config/origintrail-test-node-config.json`);
-const bootstrapNodeConfiguration = require(`./config/origintrail-test-bootstrap-config.json`);
+const require = createRequire(import.meta.url);
+const defaultConfiguration = require('./config/origintrail-test-node-config.json');
+const bootstrapNodeConfiguration = require('./config/origintrail-test-bootstrap-config.json');
+
+const otNodeProcessPath = './test/bdd/steps/lib/ot-node-process.mjs';
+
 function getBlockchainConfiguration(localBlockchain, privateKey, publicKey, managementKey) {
     return [
         {
@@ -105,7 +109,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 80000 }, function nodeSetup(nodeCou
         const rpcPort = 8901 + nodeIndex;
         const nodeName = `origintrail-test-${nodeIndex}`;
 
-        const nodeConfiguration = DeepExtend(
+        const nodeConfiguration = deepExtend(
             {},
             defaultConfiguration,
             createNodeConfiguration.call(
@@ -171,7 +175,6 @@ Given(
             // Here is where the output goes
             logFileStream.write(data);
         });
-
         forkedNode.on('message', async (response) => {
             if (response.error) {
                 // todo handle error
@@ -210,7 +213,7 @@ Given(
             const managementWallet = wallets[nodeIndex + 1 + 27];
             const rpcPort = 8901 + nodeIndex;
             const nodeName = `origintrail-test-${nodeIndex}`;
-            const nodeConfiguration = DeepExtend(
+            const nodeConfiguration = deepExtend(
                 {},
                 defaultConfiguration,
                 createNodeConfiguration.call(
@@ -272,7 +275,7 @@ Given(
         const managementWallet = this.state.localBlockchain.getWallets()[nodeIndex + 27];
         const rpcPort = 8901 + nodeIndex - 1;
         const nodeName = `origintrail-test-${nodeIndex - 1}`;
-        const nodeConfiguration = DeepExtend(
+        const nodeConfiguration = deepExtend(
             {},
             defaultConfiguration,
             createNodeConfiguration.call(

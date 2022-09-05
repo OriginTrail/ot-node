@@ -1,5 +1,5 @@
-const ProtocolRequestCommand = require('../../common/protocol-request-command');
-const { ERROR_TYPE, PUBLISH_TYPES } = require('../../../../constants/constants');
+import ProtocolRequestCommand from '../../common/protocol-request-command.js';
+import { ERROR_TYPE, PUBLISH_TYPES } from '../../../../constants/constants.js';
 
 class PublishRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
@@ -49,4 +49,4 @@ class PublishRequestCommand extends ProtocolRequestCommand {
     }
 }
 
-module.exports = PublishRequestCommand;
+export default PublishRequestCommand;

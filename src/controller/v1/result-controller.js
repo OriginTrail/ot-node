@@ -1,5 +1,5 @@
-const { OPERATION_ID_STATUS } = require('../../constants/constants');
-const BaseController = require('./base-controller');
+import { OPERATION_ID_STATUS } from '../../constants/constants.js';
+import BaseController from './base-controller.js';
 
 const availableOperations = ['publish', 'get', 'assertions:search', 'entities:search', 'query'];
 
@@ -72,4 +72,4 @@ class ResultController extends BaseController {
     }
 }
 
-module.exports = ResultController;
+export default ResultController;

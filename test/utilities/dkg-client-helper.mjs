@@ -1,4 +1,4 @@
-const DKG = require('dkg.js');
+import DKG from 'dkg.js';
 
 class DkgClientHelper {
     constructor(config) {
@@ -64,4 +64,4 @@ class DkgClientHelper {
     }
 }
 
-module.exports = DkgClientHelper;
+export default DkgClientHelper;

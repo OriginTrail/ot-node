@@ -1,5 +1,5 @@
-const Command = require('../../../command');
-const { ERROR_TYPE } = require('../../../../constants/constants');
+import Command from '../../../command.js';
+import { ERROR_TYPE } from '../../../../constants/constants.js';
 
 class InsertAssertionCommand extends Command {
     constructor(ctx) {
@@ -47,4 +47,4 @@ class InsertAssertionCommand extends Command {
     }
 }
 
-module.exports = InsertAssertionCommand;
+export default InsertAssertionCommand;
