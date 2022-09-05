@@ -95,7 +95,12 @@ install_prereqs() {
 }
 
 install_fuseki() {
-    FUSEKI_VER="apache-jena-fuseki-4.6.0"
+    FUSEKI_VER="apache-jena-fuseki-$(git ls-remote --tags https://github.com/apache/jena | grep -o 'refs/tags/jena-[0-9]*\.[0-9]*\.[0-9]*' | sort -r | head -n 1 | grep -o '[^\/-]*$')"
+    FUSEKI_PREV_VER="apache-jena-fuseki-$(git ls-remote --tags https://github.com/apache/jena | grep -o 'refs/tags/jena-[0-9]*\.[0-9]*\.[0-9]*' | sort -r | head -n 3 | tail -n 1 | grep -o '[^\/-]*$')"
+    wget -q --spider https://dlcdn.apache.org/jena/binaries/$FUSEKI_VER.zip
+    if [[ $? -ne 0 ]]; then
+        FUSEKI_VER=$FUSEKI_PREV_VER
+    fi
 
     perform_step wget https://dlcdn.apache.org/jena/binaries/$FUSEKI_VER.zip "Downloading Fuseki"
     perform_step unzip $FUSEKI_VER.zip "Unzipping Fuseki"
