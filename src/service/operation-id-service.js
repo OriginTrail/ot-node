@@ -97,9 +97,7 @@ class OperationIdService {
     async removeOperationIdCache(operationId) {
         this.logger.debug(`Removing operation id: ${operationId} cached data`);
         const operationIdCachePath = this.fileService.getOperationIdDocumentPath(operationId);
-        if (await this.fileService.fileExists(operationIdCachePath)) {
-            await this.fileService.removeFile(operationIdCachePath);
-        }
+        await this.fileService.removeFile(operationIdCachePath);
         this.removeOperationIdMemoryCache(operationId);
     }
 

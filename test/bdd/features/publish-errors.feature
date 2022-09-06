@@ -7,7 +7,7 @@ Feature: Publish errors test
   @publish-errors
   Scenario: Publish on a node with minimum replication factor greater than the number of nodes
     Given I setup 3 nodes
-    Given I setup node 4 with minimumAckResponses.publish set to '10'
+    Given I setup node 4 with minimumAckResponses.publish set to 10
     When I call publish on node 4 with validAssertion
     And Last PUBLISH operation finished with status: PublishStartError
 
@@ -23,7 +23,7 @@ Feature: Publish errors test
   @publish-errors
   Scenario: Publish on a node with invalid data path
     Given I setup 3 nodes
-    Given I setup node 4 with appDataPath set to '\0'
+    Given I setup node 4 with appDataPath set to \0
     When I call publish on node 4 with validAssertion
     And Last PUBLISH operation finished with status: PublishRouteError
 #

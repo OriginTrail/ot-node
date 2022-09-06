@@ -3,12 +3,12 @@ import { expect, assert } from 'chai';
 import { setTimeout } from 'timers/promises';
 
 import { createRequire } from 'module';
-import {publish as directPublish,getOperationResult} from "../../../utilities/http-api-helper.mjs";
+import HttpApiHelper from "../../../utilities/http-api-helper.mjs";
 
 const require = createRequire(import.meta.url);
 const assertions = require('./datasets/assertions.json');
 const requests = require('./datasets/requests.json');
-
+const httpApiHelper = new HttpApiHelper();
 
 When(
     /^I call publish on node (\d+) with ([^"]*)/,
@@ -47,7 +47,6 @@ When(
             errorType: result.operation.errorType,
             result,
         };
-        this.logger.log(JSON.stringify(this.state.lastPublishData,null,4));
     },
 );
 When(
@@ -61,7 +60,7 @@ When(
             `Request body with name: ${requestName} not found!`,
         ).to.be.equal(true);
         const requestBody = requests[requestName];
-        const result = await directPublish(
+        const result = await httpApiHelper.publish(
             this.state.nodes[node - 1].nodeRpcUrl,
             requestBody,
         );
@@ -87,7 +86,7 @@ Given('I wait for last publish to finalize', { timeout: 80000 }, async function 
             `Getting publish result for operation id: ${publishData.operationId} on node: ${publishData.nodeId}`,
         );
         // eslint-disable-next-line no-await-in-loop
-        const publishResult = await getOperationResult(
+        const publishResult = await httpApiHelper.getOperationResult(
             this.state.nodes[publishData.nodeId].nodeRpcUrl,
             publishData.operationId,
         );
@@ -121,7 +120,7 @@ Given(
         );
         await setTimeout(numberOfSeconds * 1000);
         // eslint-disable-next-line no-await-in-loop
-        this.state.lastPublishData.result = await getOperationResult(
+        this.state.lastPublishData.result = await httpApiHelper.getOperationResult(
             this.state.nodes[publishData.nodeId].nodeRpcUrl,
             publishData.operationId,
         );

@@ -3,12 +3,13 @@ import { expect, assert } from 'chai';
 import DkgClientHelper from '../../utilities/dkg-client-helper.mjs';
 import DeepExtend from "deep-extend";
 import { createRequire } from 'module';
+import StepsUtils from "../../utilities/steps-utils.mjs";
+import fs from "fs";
 
 const require = createRequire(import.meta.url);
 const defaultConfiguration = require('./config/origintrail-test-node-config.json');
 const bootstrapNodeConfiguration = require('./config/origintrail-test-bootstrap-config.json');
-import {createNodeConfiguration, forkNode} from "../../utilities/steps-utils.mjs";
-import fs from "fs";
+const stepsUtils = new StepsUtils();
 
 Given(
     /^I setup (\d+)[ additional]* node[s]*$/,
@@ -27,8 +28,8 @@ Given(
             const nodeConfiguration = DeepExtend(
                 {},
                 defaultConfiguration,
-                createNodeConfiguration.call(
-                    this,
+                stepsUtils.createNodeConfiguration(
+                    this.state.localBlockchain,
                     wallet,
                     managementWallet,
                     nodeIndex,
@@ -36,7 +37,7 @@ Given(
                     rpcPort,
                 ),
             );
-            const forkedNode = forkNode(nodeConfiguration);
+            const forkedNode = stepsUtils.forkNode(nodeConfiguration);
             const logFileStream = fs.createWriteStream(
                 `${this.state.scenarionLogDir}/${nodeName}.log`,
             );
@@ -49,7 +50,7 @@ Given(
             forkedNode.on('message', (response) => {
                 if (response.error) {
                     assert.fail(
-                        `Error while trying initialize node${nodeIndex} client: ${response.error}`,
+                        `Error while initializing node${nodeIndex}: ${response.error}`,
                     );
                 } else {
                     // todo if started
@@ -84,7 +85,7 @@ Given(
         expect(nodeCount).to.be.equal(1); // Currently not supported more.
         this.logger.log('Initializing bootstrap node');
         const nodeName = 'origintrail-test-bootstrap';
-        const forkedNode = forkNode(bootstrapNodeConfiguration);
+        const forkedNode = stepsUtils.forkNode(bootstrapNodeConfiguration);
 
         const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
         forkedNode.stdout.setEncoding('utf8');
@@ -94,9 +95,8 @@ Given(
         });
         forkedNode.on('message', async (response) => {
             if (response.error) {
-                // todo handle error
+                this.logger.debug(`Error while initializing bootstrap node: ${response.error}`)
             } else {
-                // todo if started
                 const client = new DkgClientHelper({
                     endpoint: 'http://localhost',
                     port: 8900,
@@ -116,12 +116,13 @@ Given(
     },
 );
 // TODO: Implement input error handling
+// regex allows strings separated by dots
 Given(
-    'I setup node {int} with {word} set to {string}',
+    /^I setup node (\d+) with ([a-z][\w-]*(?:\.[\w-]+)*) set to ([^"]*)$/,
     { timeout: 120000 },
     function setupPublishNode(nodeNum, propertyName, propertyValue, done) {
         const propertyNameSplit = propertyName.split('.');
-        this.logger.log(`I setup node ${nodeNum} with invalid configuration`);
+        this.logger.log(`I setup node ${nodeNum} with ${propertyName} set to ${propertyValue}`);
         expect(
             Object.prototype.hasOwnProperty.call(defaultConfiguration, propertyNameSplit[0]),
             `Property ${propertyName} doesn't exist`,
@@ -136,8 +137,8 @@ Given(
         const nodeConfiguration = DeepExtend(
             {},
             defaultConfiguration,
-            createNodeConfiguration.call(
-                this,
+            stepsUtils.createNodeConfiguration(
+                this.state.localBlockchain,
                 wallet,
                 managementWallet,
                 nodeIndex,
@@ -150,9 +151,12 @@ Given(
         for (let i = 0; i < propertyNameSplitLen - 1; i += 1) {
             propName = propName[propertyNameSplit[i]];
         }
-        // TODO: ugly workaround, change it
-        propName[propertyNameSplit.slice(-1)] = propertyValue === '\\0' ? '\0' : propertyValue;
-        const forkedNode = forkNode(nodeConfiguration);
+        if(propName[propertyNameSplit.slice(-1)] !== undefined){
+            propName[propertyNameSplit.slice(-1)] = propertyValue === '\\0' ? '\0' : propertyValue;
+        }else{
+            assert.fail(`Property ${propertyName} doesn't exist`);
+        }
+        const forkedNode = stepsUtils.forkNode(nodeConfiguration);
 
         const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
         forkedNode.stdout.setEncoding('utf8');
@@ -165,10 +169,9 @@ Given(
         forkedNode.on('message', (response) => {
             if (response.error) {
                 assert.fail(
-                    `Error while trying initialize node${nodeIndex} client: ${response.error}`,
+                    `Error while initializing node${nodeIndex} : ${response.error}`,
                 );
             } else {
-                // todo if started
                 const client = new DkgClientHelper({
                     endpoint: 'http://localhost',
                     port: rpcPort,

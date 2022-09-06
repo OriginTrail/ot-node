@@ -272,12 +272,10 @@ class OTNode {
     async removeUpdateFile() {
         const fileService = new FileService({ config: this.config, logger: this.logger });
         const updateFilePath = fileService.getUpdateFilePath();
-        if (await fileService.fileExists(updateFilePath)) {
-            this.config.otNodeUpdated = true;
-            await fileService.removeFile(updateFilePath).catch((error) => {
-                this.logger.warn(`Unable to remove update file. Error: ${error}`);
-            });
-        }
+        await fileService.removeFile(updateFilePath).catch((error) => {
+            this.logger.warn(`Unable to remove update file. Error: ${error}`);
+        });
+        this.config.otNodeUpdated = true;
     }
 
     stop() {
