@@ -134,16 +134,30 @@ class Libp2pService {
         return { ...peer, protocols: [] };
     }
 
-    async findNodes(key, protocol) {
+    async findNodes(key) {
         const encodedKey = new TextEncoder().encode(key);
-        const nodes = this.node.peerRouting.getClosestPeers(encodedKey);
-        const promises = [];
-        for await (const node of nodes) {
-            promises.push(this.peerWithProtocols(node));
-        }
-        const peers = await Promise.all(promises);
+        const self = this;
+        const finalPeerIds = pipe(
+            self.node.dht.getClosestPeers(encodedKey),
+            async function* storeAddresses(source) {
+                for await (const event of source) {
+                    if (event.name === 'FINAL_PEER') {
+                        await self.node.peerStore.addressBook.add(
+                            event.peer.id,
+                            event.peer.multiaddrs,
+                        );
+                        yield event.peer.id;
+                    }
+                }
+            },
+        );
 
-        return peers.filter((peer) => peer.protocols.includes(protocol)).map((peer) => peer.id);
+        const nodes = [];
+        for await (const finalPeerId of finalPeerIds) {
+            nodes.push(finalPeerId);
+        }
+
+        return nodes;
     }
 
     getPeers() {
