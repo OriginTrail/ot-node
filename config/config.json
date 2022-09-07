@@ -135,6 +135,16 @@
                             ],
                             "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
                         }
+                    },
+                    "rinkeby": {
+                        "package": "./blockchain/implementation/polygon/eth-service.js",
+                        "config": {
+                            "networkId": "eth::rinkeby",
+                            "hubContractAddress": "",
+                            "gasPriceOracleLink": "",
+                            "rpcEndpoints": [
+                            ]
+                        }
                     }
                 }
             }
