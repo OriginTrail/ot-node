@@ -36,8 +36,8 @@ nano .env
 and paste the following content inside (save and close):
 ```bash
 NODE_ENV=development
-RPC_ENDPOINT = http://localhost:7545 # for ganache network
-PRIVATE_KEY = 02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e #you can use this value for ganache network
+RPC_ENDPOINT=http://localhost:7545
+PRIVATE_KEY=02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e
 ```
 **Note:** The private key above is used ONLY for convenience and SHOULD be changed to a secure key when used in production. If you are connecting to rinkeby testnet network you need to provide valid RPC_ENDPOINT
 <br/>
