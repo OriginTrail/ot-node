@@ -7,25 +7,28 @@ Feature: Publish errors test
   @publish-errors
   Scenario: Publish on a node with minimum replication factor greater than the number of nodes
     Given I setup 3 nodes
-    Given I setup node 4 with minimumAckResponses.publish set to 10
-    When I call publish on node 4 with validAssertion
-    And Last PUBLISH operation finished with status: PublishStartError
+    And I setup node 4 with minimumAckResponses.publish set to 10
+    And I wait for 10 seconds
+    And I call publish on node 4 with validAssertion
+    Then Last PUBLISH operation finished with status: PublishStartError
 
 
   @publish-errors
   Scenario: Publish an asset directly on the node
     Given I setup 4 nodes
-    When I call publish on ot-node 4 directly with validPublishRequestBody
+    And I wait for 10 seconds
+    And I call publish on ot-node 4 directly with validPublishRequestBody
     And I wait for last publish to finalize
-    And Last PUBLISH operation finished with status: PublishValidateAssertionError
+    Then Last PUBLISH operation finished with status: PublishValidateAssertionError
 
 
   @publish-errors
   Scenario: Publish on a node with invalid data path
     Given I setup 3 nodes
-    Given I setup node 4 with appDataPath set to \0
-    When I call publish on node 4 with validAssertion
-    And Last PUBLISH operation finished with status: PublishRouteError
+    And I setup node 4 with appDataPath set to \0
+    And I wait for 10 seconds
+    And I call publish on node 4 with validAssertion
+    Then Last PUBLISH operation finished with status: PublishRouteError
 #
 #
 

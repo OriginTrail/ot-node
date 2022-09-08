@@ -28,6 +28,6 @@
     "tokenId": 0
   },
   "nonExistentUAL": {
-    "id": "did:ganache:0x378ec78f621e2c8aeff345b39334c38b0bb7b96f/0"
+    "id": "did:ganache:0x378ec78f621e2c8aeff345b39334c38b0bb7b96f/1"
   }
 }

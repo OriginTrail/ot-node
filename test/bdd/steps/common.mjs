@@ -5,6 +5,7 @@ import DeepExtend from "deep-extend";
 import { createRequire } from 'module';
 import StepsUtils from "../../utilities/steps-utils.mjs";
 import fs from "fs";
+import { setTimeout as sleep } from 'timers/promises';
 
 const require = createRequire(import.meta.url);
 const defaultConfiguration = require('./config/origintrail-test-node-config.json');
@@ -198,7 +199,7 @@ Given(
     },
 );
 Given(
-    /Last (GET|PUBLISH) operation finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError|PublishStartError|GetAssertionIdError|GetLocalError|PublishRouteError]+)$/,
+    /Last (GET|PUBLISH) operation finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError|PublishStartError|GetAssertionIdError|GetNetworkError|GetLocalError|PublishRouteError]+)$/,
     { timeout: 120000 },
     async function lastResolveFinishedCall(operationName, status) {
         this.logger.log(`Last ${operationName} operation finished with status: ${status}`);
@@ -219,3 +220,7 @@ Given(
     },
 );
 
+Given(/^I wait for (\d+) seconds$/,{ timeout: 100000}, async function waitFor(seconds) {
+    this.logger.log(`I wait for ${seconds} seconds for nodes to connect to each other`);
+    await sleep(seconds * 1000);
+})

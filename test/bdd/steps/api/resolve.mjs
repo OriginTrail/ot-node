@@ -14,14 +14,12 @@ When(
     { timeout: 120000 },
     async function resolveCall(node) {
         this.logger.log('I call get result for the last operation');
-        await setTimeout(10 * 1000); // wait 10 seconds to allow nodes to connect to each other
+        // await setTimeout(10 * 1000); // wait 10 seconds to allow nodes to connect to each other
         expect(
             !!this.state.lastPublishData,
             'Last publish data is undefined. Publish is not finalized.',
         ).to.be.equal(true);
-        // const assertionIds = [this.state.lastPublishData.result.assertion.id];
 
-        // TODO: CALLING GET RESULT WITH WRONG UAL RETURNS UNDEFINED RESULT, IT SHOULD PROBABLY RETURN A FAILED RESULT MESSAGE OR SOMETHING LIKE THAT
         try {
             const result = await this.state.nodes[node - 1].client
                 .getResult(this.state.lastPublishData.UAL)
@@ -54,7 +52,7 @@ Given(
         ).to.be.equal(true);
         const resolveData = this.state.lastResolveData;
         let retryCount = 0;
-        const maxRetryCount = 5;
+        const maxRetryCount = 20;
         for (retryCount = 0; retryCount < maxRetryCount; retryCount += 1) {
             this.logger.log(
                 `Getting resolve result for operation id: ${resolveData.operationId} on node: ${resolveData.nodeId}`,
@@ -72,7 +70,7 @@ Given(
                 break;
             }
             if (retryCount === maxRetryCount - 1) {
-                assert.fail('Unable to get publish result');
+                assert.fail('Unable to get GET result');
             }
             // eslint-disable-next-line no-await-in-loop
             await setTimeout(4000);
@@ -107,6 +105,7 @@ Given(
     /^I call get directly to ot-node (\d+) with ([^"]*)/,
     { timeout: 30000 },
     async function getFromNode(node, requestName) {
+        // await setTimeout(10 * 1000);
         this.logger.log(`I call get on ot-node ${node} directly`);
         if (requestName !== 'lastPublishedAssetUAL') {
             expect(
@@ -123,6 +122,9 @@ Given(
         this.state.lastResolveData = {
             nodeId: node - 1,
             operationId,
+            // result,
+            // status : result.operation.status,
+            // errorType : result.operation.errorType
         };
     },
 );
