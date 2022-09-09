@@ -39,7 +39,10 @@ class Libp2pService {
         this.config = config;
         this.logger = logger;
 
-        initializationObject.dht = new KadDHT({ kBucketSize: this.config.kBucketSize });
+        initializationObject.dht = new KadDHT({
+            kBucketSize: this.config.kBucketSize,
+            clientMode: false,
+        });
         initializationObject.peerRouting = this.config.peerRouting;
         initializationObject.connectionManager = this.config.connectionManager;
 
