@@ -64,7 +64,7 @@ class FileService {
     }
 
     async removeFile(filePath) {
-        this.logger.debug(`Removing file on path: ${filePath}`);
+        this.logger.trace(`Removing file on path: ${filePath}`);
         await unlink(filePath);
         return true;
     }
@@ -107,7 +107,6 @@ class FileService {
             if (createdDate.getTime() + expiredTimeout < now.getTime()) {
                 // eslint-disable-next-line no-await-in-loop
                 await this.removeFile(filePath);
-                this.logger.trace(`Successfully removed expired cache file: ${filePath}`);
             }
         }
     }
