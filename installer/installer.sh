@@ -291,7 +291,7 @@ if [[ -d "$OTNODE_DIR" ]]; then
     case "$choice" in
         [nN]* ) text_color $GREEN"Keeping previous ot-node directory.";;
         [eE]* ) text_color $RED"Installer stopped by user"; exit;;
-        * ) text_color $GREEN"Reconfiguring ot-node directory."; perform_step rm -rf $OTNODE_DIR "Deleting $OTNODE_DIR"; install_directory;;
+        * ) text_color $GREEN"Reconfiguring ot-node directory."; systemctl is-active --quiet otnode && systemctl stop otnode; perform_step rm -rf $OTNODE_DIR "Deleting $OTNODE_DIR"; install_directory;;
     esac
 else
     install_directory
