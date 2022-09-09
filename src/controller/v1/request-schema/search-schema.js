@@ -1,4 +1,4 @@
-export default () => ({
+module.exports = () => ({
     type: 'object',
     required: ['keywords', 'limit', 'offset'],
     properties: {

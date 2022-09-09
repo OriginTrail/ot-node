@@ -1,5 +1,5 @@
-import axios from 'axios';
-import OtTripleStore from '../ot-triple-store.js';
+const axios = require('axios');
+const OtTripleStore = require('../ot-triple-store');
 
 class OtBlazegraph extends OtTripleStore {
     initializeSparqlEndpoints(url) {
@@ -24,4 +24,4 @@ class OtBlazegraph extends OtTripleStore {
     }
 }
 
-export default OtBlazegraph;
+module.exports = OtBlazegraph;

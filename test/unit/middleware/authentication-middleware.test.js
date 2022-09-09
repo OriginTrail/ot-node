@@ -1,9 +1,9 @@
-import sinon from 'sinon';
-import { describe, it, afterEach } from 'mocha';
-import { expect } from 'chai';
+const sinon = require('sinon');
+const { describe, it, afterEach } = require('mocha');
+const { expect } = require('chai');
 
-import authenticationMiddleware from '../../../src/modules/http-client/implementation/middleware/authentication-middleware.js';
-import AuthService from '../../../src/service/auth-service.js';
+const authenticationMiddleware = require('../../../src/modules/http-client/implementation/middleware/authentication-middleware');
+const AuthService = require('../../../src/service/auth-service');
 
 describe('authentication middleware test', async () => {
     const sandbox = sinon.createSandbox();

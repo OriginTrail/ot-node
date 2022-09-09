@@ -1,43 +1,9 @@
-import Command from '../command.js';
-import {
-    OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS,
-    OPERATION_ID_STATUS,
-} from '../../constants/constants.js';
+const Command = require('../command.js');
 
 /**
  * Increases approval for Bidding contract on blockchain
  */
 class OperationIdCleanerCommand extends Command {
-    constructor(ctx) {
-        super(ctx);
-        this.logger = ctx.logger;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.fileService = ctx.fileService;
-    }
-
-    /**
-     * Executes command and produces one or more events
-     * @param command
-     */
-    async execute() {
-        const timeToBeDeleted = Date.now() - OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS;
-        await this.repositoryModuleManager.removeOperationIdRecord(timeToBeDeleted, [
-            OPERATION_ID_STATUS.COMPLETED,
-            OPERATION_ID_STATUS.FAILED,
-        ]);
-        await this.fileService.removeExpiredCacheFiles(OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS);
-        return Command.repeat();
-    }
-
-    /**
-     * Recover system from failure
-     * @param command
-     * @param error
-     */
-    async recover(command, error) {
-        this.logger.warn(`Failed to clean operation ids table: error: ${error.message}`);
-        return Command.repeat();
-    }
 
     /**
      * Builds default command
@@ -47,7 +13,7 @@ class OperationIdCleanerCommand extends Command {
     default(map) {
         const command = {
             name: 'operationIdCleanerCommand',
-            period: OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS,
+            period: 0,
             data: {},
             transactional: false,
         };
@@ -56,4 +22,4 @@ class OperationIdCleanerCommand extends Command {
     }
 }
 
-export default OperationIdCleanerCommand;
+module.exports = OperationIdCleanerCommand;

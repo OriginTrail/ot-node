@@ -1,6 +1,6 @@
-import path from 'path';
-import fs from 'fs-extra';
-import FileService from '../service/file-service.js';
+const path = require('path');
+const fs = require('fs-extra');
+const FileService = require('../service/file-service');
 
 class BaseMigration {
     constructor(migrationName, logger, config) {
@@ -49,4 +49,4 @@ class BaseMigration {
     }
 }
 
-export default BaseMigration;
+module.exports = BaseMigration;

@@ -1,11 +1,7 @@
-import { QueryEngine as Engine } from '@comunica/query-sparql';
-import { setTimeout } from 'timers/promises';
-import {
-    SCHEMA_CONTEXT,
-    TRIPLE_STORE_CONNECT_MAX_RETRIES,
-    TRIPLE_STORE_CONNECT_RETRY_FREQUENCY,
-    MEDIA_TYPES,
-} from '../../../constants/constants.js';
+const Engine = require('@comunica/query-sparql').QueryEngine;
+const { setTimeout } = require('timers/promises');
+const { SCHEMA_CONTEXT } = require('../../../constants/constants');
+const constants = require('./triple-store-constants');
 
 class OtTripleStore {
     async initialize(config, logger) {
@@ -15,16 +11,18 @@ class OtTripleStore {
 
         let ready = await this.healthCheck();
         let retries = 0;
-        while (!ready && retries < TRIPLE_STORE_CONNECT_MAX_RETRIES) {
+        while (!ready && retries < constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
             retries += 1;
             this.logger.warn(
-                `Cannot connect to Triple store (${this.getName()}), retry number: ${retries}/${TRIPLE_STORE_CONNECT_MAX_RETRIES}. Retrying in ${TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`,
+                `Cannot connect to Triple store (${this.getName()}), retry number: ${retries}/${
+                    constants.TRIPLE_STORE_CONNECT_MAX_RETRIES
+                }. Retrying in ${constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`,
             );
             /* eslint-disable no-await-in-loop */
-            await setTimeout(TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000);
+            await setTimeout(constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000);
             ready = await this.healthCheck();
         }
-        if (retries === TRIPLE_STORE_CONNECT_MAX_RETRIES) {
+        if (retries === constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
             this.logger.error(
                 `Triple Store (${this.getName()}) not available, max retries reached.`,
             );
@@ -62,21 +60,7 @@ class OtTripleStore {
         return true;
     }
 
-    async assetExists(ual, assertionId) {
-        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
-                        ASK WHERE {
-                            GRAPH <assets:graph> {
-                                <${ual}> schema:assertion <assertion:${assertionId}>
-                            }
-                        }`;
-
-        return this.ask(query);
-    }
-
-    async insertAsset(ual, assertionId, assetNquads) {
-        // const exists = await this.assetExists(ual, assertionId)
-
-        // if(!exists) {
+    async updateAssetsGraph(ual, assetNquads) {
         const insertion = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             DELETE {<${ual}> schema:latestAssertion ?o}
@@ -89,22 +73,7 @@ class OtTripleStore {
             INSERT DATA {
                 GRAPH <assets:graph> { 
                     ${assetNquads} 
-                }
-            }`;
-        await this.queryEngine.queryVoid(insertion, this.insertContext);
-        // }
-    }
-
-    async insertIndex(keyword, indexNquads, assetNquads) {
-        const insertion = `
-            PREFIX schema: <${SCHEMA_CONTEXT}>
-            INSERT DATA {
-                GRAPH <assets:graph> { 
-                    ${assetNquads} 
-                }
-                GRAPH <keyword:${keyword}> {
-                    ${indexNquads}
-                }
+                } 
             }`;
         await this.queryEngine.queryVoid(insertion, this.insertContext);
     }
@@ -125,16 +94,8 @@ class OtTripleStore {
     }
 
     async construct(query) {
-        const result = await this._executeQuery(query, MEDIA_TYPES.N_QUADS);
+        const result = await this.executeQuery(query);
         return result;
-    }
-
-    async select(query) {
-        // todo: add media type once bug is fixed
-        // no media type is passed because of comunica bug
-        // https://github.com/comunica/comunica/issues/1034
-        const result = await this._executeQuery(query);
-        return JSON.parse(result);
     }
 
     async ask(query) {
@@ -169,17 +130,28 @@ class OtTripleStore {
         return true;
     }
 
-    async _executeQuery(query, mediaType) {
+    async executeQuery(query) {
         const result = await this.queryEngine.query(query, this.queryContext);
-        const { data } = await this.queryEngine.resultToString(result, mediaType);
+        const { data } = await this.queryEngine.resultToString(
+            result,
+            'application/n-quads',
+            this.queryContext,
+        );
+        let nquads = '';
+        for await (const nquad of data) {
+            nquads += nquad;
+        }
+        return nquads;
+    }
 
+    async execute(query) {
+        const result = await this.queryEngine.query(query, this.queryContext);
+        const { data } = await this.queryEngine.resultToString(result);
         let response = '';
-
         for await (const chunk of data) {
             response += chunk;
         }
-
-        return response;
+        return JSON.parse(response);
     }
 
     cleanEscapeCharacter(query) {
@@ -234,4 +206,4 @@ class OtTripleStore {
     }
 }
 
-export default OtTripleStore;
+module.exports = OtTripleStore;

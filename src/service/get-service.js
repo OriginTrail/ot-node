@@ -1,14 +1,13 @@
-import { Mutex } from 'async-mutex';
-import OperationService from './operation-service.js';
-
-import {
+const { Mutex } = require('async-mutex');
+const OperationService = require('./operation-service');
+const {
     GET_REQUEST_STATUS,
     OPERATION_ID_STATUS,
     GET_STATUS,
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     OPERATIONS,
-} from '../constants/constants.js';
+} = require('../constants/constants');
 
 class GetService extends OperationService {
     constructor(ctx) {
@@ -82,7 +81,7 @@ class GetService extends OperationService {
         this.logger.debug(
             `Assertion: ${assertionId} for operationId: ${operationId} ${
                 nquads.length ? '' : 'not'
-            } found in local triple store.`,
+            } found in local database.`,
         );
 
         if (nquads.length) {
@@ -93,4 +92,4 @@ class GetService extends OperationService {
     }
 }
 
-export default GetService;
+module.exports = GetService;

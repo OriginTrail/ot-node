@@ -1,32 +1,40 @@
-import axios from 'axios';
+const request = require('request');
+const axios = require('axios');
 
 class HttpApiHelper {
-    async info(nodeRpcUrl) {
-        return axios({
-            method: 'get',
-            url: `${nodeRpcUrl}/info`,
-        }).catch((e) => {
-            throw Error(`Unable to get info: ${e.message}`);
+    info(nodeRpcUrl) {
+        return new Promise((accept, reject) => {
+            request(`${nodeRpcUrl}/info`, { json: true }, (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            });
         });
     }
 
-    async getOperationResult(nodeRpcUrl, operationId) {
+    getOperationResult(nodeRpcUrl, operationId) {
         return axios({
             method: 'get',
             url: `${nodeRpcUrl}/publish/${operationId}`,
-        }).catch((e) => {
-            throw Error(`Unable to publish: ${e.message}`);
-        });
+        })
+            .then((response) => response)
+            .catch((e) => {
+                throw Error(`Unable to publish: ${e.message}`);
+            });
     }
 
-    async publish(nodeRpcUrl, requestBody) {
+    publish(nodeRpcUrl, requestBody) {
         return axios({
             method: 'post',
             url: `${nodeRpcUrl}/publish`,
             data: requestBody,
-        }).catch((e) => {
-            throw Error(`Unable to publish: ${e.message}`);
-        });
+        })
+            .then((response) => response)
+            .catch((e) => {
+                throw Error(`Unable to publish: ${e.message}`);
+            });
     }
 
     // PUBLISH REQUEST BODY
@@ -46,4 +54,4 @@ class HttpApiHelper {
     } */
 }
 
-export default HttpApiHelper;
+module.exports = HttpApiHelper;

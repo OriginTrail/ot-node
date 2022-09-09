@@ -1,5 +1,5 @@
-import Command from '../../../command.js';
-import { ERROR_TYPE } from '../../../../constants/constants.js';
+const Command = require('../../../command');
+const { ERROR_TYPE } = require('../../../../constants/constants');
 
 class GetLatestAssertionIdCommand extends Command {
     constructor(ctx) {
@@ -79,4 +79,4 @@ class GetLatestAssertionIdCommand extends Command {
     }
 }
 
-export default GetLatestAssertionIdCommand;
+module.exports = GetLatestAssertionIdCommand;

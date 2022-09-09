@@ -2,23 +2,6 @@
 pathToOtNode=$(pwd)
 numberOfNodes=4
 
-echo ================================
-echo ====== Starting ganache ======
-echo ================================
-
-osascript -e "tell app \"Terminal\"
-      do script \"cd $pathToOtNode
-      npm explore dkg-evm-module -- npm run ganache\"
-  end tell"
-
-echo ================================
-echo ====== Deploying contracts ======
-echo ================================
-
-export PRIVATE_KEY="02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e"
-export ACCESS_KEY="http://127.0.0.1:7545"
-npm explore dkg-evm-module -- npm run deploy
-
 # Check for script arguments
 while [ $# -gt 0 ]; do
   case "$1" in

@@ -1,5 +1,5 @@
-import ProtocolMessageCommand from './protocol-message-command.js';
-import { NETWORK_MESSAGE_TYPES } from '../../../constants/constants.js';
+const ProtocolMessageCommand = require('./protocol-message-command');
+const { NETWORK_MESSAGE_TYPES } = require('../../../constants/constants');
 
 class ProtocolInitCommand extends ProtocolMessageCommand {
     async execute(command) {
@@ -10,4 +10,4 @@ class ProtocolInitCommand extends ProtocolMessageCommand {
     }
 }
 
-export default ProtocolInitCommand;
+module.exports = ProtocolInitCommand;

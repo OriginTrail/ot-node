@@ -1,5 +1,5 @@
-import ProtocolRequestCommand from '../../common/protocol-request-command.js';
-import { ERROR_TYPE } from '../../../../constants/constants.js';
+const ProtocolRequestCommand = require('../../common/protocol-request-command');
+const { ERROR_TYPE } = require('../../../../constants/constants');
 
 class GetRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
@@ -32,4 +32,4 @@ class GetRequestCommand extends ProtocolRequestCommand {
     }
 }
 
-export default GetRequestCommand;
+module.exports = GetRequestCommand;

@@ -1,5 +1,5 @@
-import ProtocolInitCommand from '../../common/protocol-init-command.js';
-import { ERROR_TYPE } from '../../../../constants/constants.js';
+const ProtocolInitCommand = require('../../common/protocol-init-command');
+const { ERROR_TYPE } = require('../../../../constants/constants');
 
 class GetInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
@@ -33,4 +33,4 @@ class GetInitCommand extends ProtocolInitCommand {
     }
 }
 
-export default GetInitCommand;
+module.exports = GetInitCommand;

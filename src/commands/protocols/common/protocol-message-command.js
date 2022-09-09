@@ -1,5 +1,5 @@
-import Command from '../../command.js';
-import { NETWORK_MESSAGE_TYPES } from '../../../constants/constants.js';
+const Command = require('../../command');
+const { NETWORK_MESSAGE_TYPES } = require('../../../constants/constants');
 
 class ProtocolMessageCommand extends Command {
     constructor(ctx) {
@@ -106,4 +106,4 @@ class ProtocolMessageCommand extends Command {
     }
 }
 
-export default ProtocolMessageCommand;
+module.exports = ProtocolMessageCommand;

@@ -1,4 +1,4 @@
-import BaseModuleManager from '../base-module-manager.js';
+const BaseModuleManager = require('../base-module-manager');
 
 class BlockchainModuleManager extends BaseModuleManager {
     getName() {
@@ -108,4 +108,4 @@ class BlockchainModuleManager extends BaseModuleManager {
     }
 }
 
-export default BlockchainModuleManager;
+module.exports = BlockchainModuleManager;

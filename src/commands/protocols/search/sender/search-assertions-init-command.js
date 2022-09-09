@@ -1,5 +1,5 @@
-import ProtocolInitCommand from '../../common/protocol-init-command.js';
-import { ERROR_TYPE, NETWORK_PROTOCOLS } from '../../../../constants/constants.js';
+const ProtocolInitCommand = require('../../common/protocol-init-command');
+const { ERROR_TYPE, NETWORK_PROTOCOLS } = require('../../../../constants/constants');
 
 class SearchAssertionsInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
@@ -33,4 +33,4 @@ class SearchAssertionsInitCommand extends ProtocolInitCommand {
     }
 }
 
-export default SearchAssertionsInitCommand;
+module.exports = SearchAssertionsInitCommand;

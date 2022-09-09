@@ -1,5 +1,5 @@
-import OTNode from '../../../../ot-node.js';
-import HttpApiHelper from '../../../utilities/http-api-helper.mjs';
+const OTNode = require('../../../../ot-node');
+const HttpApiHelper = require('../../../utilities/http-api-helper');
 
 process.on('message', async (data) => {
     const config = JSON.parse(data);

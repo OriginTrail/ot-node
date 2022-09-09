@@ -1,10 +1,7 @@
-import axios from 'axios';
-import { createRequire } from 'module';
-import Command from '../command.js';
-import { SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES } from '../../constants/constants.js';
-
-const require = createRequire(import.meta.url);
+const axios = require('axios');
+const Command = require('../command');
 const pjson = require('../../../package.json');
+const { SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES } = require('../../constants/constants');
 
 class SendTelemetryCommand extends Command {
     constructor(ctx) {
@@ -86,4 +83,4 @@ class SendTelemetryCommand extends Command {
     }
 }
 
-export default SendTelemetryCommand;
+module.exports = SendTelemetryCommand;

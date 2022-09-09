@@ -41,4 +41,4 @@ class UALService {
     }
 }
 
-export default UALService;
+module.exports = UALService;

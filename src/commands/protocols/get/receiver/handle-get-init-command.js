@@ -1,10 +1,9 @@
-import HandleProtocolMessageCommand from '../../common/handle-protocol-message-command.js';
-
-import {
+const HandleProtocolMessageCommand = require('../../common/handle-protocol-message-command');
+const {
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
-} from '../../../../constants/constants.js';
+} = require('../../../../constants/constants');
 
 class HandleGetInitCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
@@ -51,4 +50,4 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
     }
 }
 
-export default HandleGetInitCommand;
+module.exports = HandleGetInitCommand;

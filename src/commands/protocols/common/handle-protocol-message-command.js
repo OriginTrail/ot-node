@@ -1,5 +1,6 @@
-import Command from '../../command.js';
-import { NETWORK_MESSAGE_TYPES } from '../../../constants/constants.js';
+const Command = require('../../command');
+
+const { NETWORK_MESSAGE_TYPES } = require('../../../constants/constants');
 
 class HandleProtocolMessageCommand extends Command {
     constructor(ctx) {
@@ -27,10 +28,7 @@ class HandleProtocolMessageCommand extends Command {
                 messageData,
             );
         } catch (error) {
-            if (command.retries) {
-                this.logger.warn(error.message);
-                return Command.retry();
-            }
+            if (command.retries) return Command.retry();
             await this.handleError(error.message, command);
         }
 
@@ -56,4 +54,4 @@ class HandleProtocolMessageCommand extends Command {
     }
 }
 
-export default HandleProtocolMessageCommand;
+module.exports = HandleProtocolMessageCommand;

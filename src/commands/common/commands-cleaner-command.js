@@ -1,38 +1,10 @@
-import Command from '../command.js';
-import { COMMAND_STATUS, FINALIZED_COMMAND_CLEANUP_TIME_MILLS } from '../../constants/constants.js';
+const Command = require('../command.js');
 
 /**
  * Increases approval for Bidding contract on blockchain
  */
 class CommandsCleanerCommand extends Command {
-    constructor(ctx) {
-        super(ctx);
-        this.logger = ctx.logger;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
-    }
 
-    /**
-     * Executes command and produces one or more events
-     * @param command
-     */
-    async execute() {
-        await this.repositoryModuleManager.removeFinalizedCommands([
-            COMMAND_STATUS.COMPLETED,
-            COMMAND_STATUS.FAILED,
-            COMMAND_STATUS.EXPIRED,
-        ]);
-        return Command.repeat();
-    }
-
-    /**
-     * Recover system from failure
-     * @param command
-     * @param error
-     */
-    async recover(command, error) {
-        this.logger.warn(`Failed to clean finalized commands: error: ${error.message}`);
-        return Command.repeat();
-    }
 
     /**
      * Builds default command
@@ -43,7 +15,7 @@ class CommandsCleanerCommand extends Command {
         const command = {
             name: 'commandsCleanerCommand',
             data: {},
-            period: FINALIZED_COMMAND_CLEANUP_TIME_MILLS,
+            period: 0,
             transactional: false,
         };
         Object.assign(command, map);
@@ -51,4 +23,4 @@ class CommandsCleanerCommand extends Command {
     }
 }
 
-export default CommandsCleanerCommand;
+module.exports = CommandsCleanerCommand;

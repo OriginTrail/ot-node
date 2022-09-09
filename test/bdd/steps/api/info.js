@@ -1,9 +1,9 @@
-import { When, Then } from '@cucumber/cucumber';
-import assert from 'assert';
+const { When, Then } = require('@cucumber/cucumber');
+const assert = require('assert');
 
 let info = {};
 
-When(/^I call info route on node (\d+)/, { timeout: 120000 }, async function infoRouteCall(node) {
+When(/^I call info route on node (\d+)/, { timeout: 120000 }, async function infoRouteCall (node) {
     // todo validate node number
     this.logger.log('I call info route on node: ', node);
     info = await this.state.nodes[node - 1].client.info();

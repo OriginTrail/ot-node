@@ -1,4 +1,4 @@
-import { PUBLISH_TYPES } from '../../../constants/constants.js';
+const { PUBLISH_TYPES } = require('../../../constants/constants');
 
 const assertionSchemaProperties = (blockchainImplementationNames) => ({
     assertionId: {
@@ -53,7 +53,7 @@ const indexSchemaProperties = (blockchainImplementationNames) => ({
 
 const indexSchemaRequired = [...assetSchemaRequired, 'keywords'];
 
-const publishSchema = (blockchainImplementationNames) => ({
+module.exports = (blockchainImplementationNames) => ({
     type: 'object',
     required: ['publishType'],
     properties: {
@@ -91,5 +91,3 @@ const publishSchema = (blockchainImplementationNames) => ({
         },
     ],
 });
-
-export default publishSchema;

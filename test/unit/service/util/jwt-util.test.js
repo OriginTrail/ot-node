@@ -1,14 +1,16 @@
-import 'dotenv/config';
-import { v4 as uuid } from 'uuid';
-import { expect } from 'chai';
-import { describe, it } from 'mocha';
-import jwtUtil from '../../../../src/service/util/jwt-util.js';
+require('dotenv').config();
+const uuid = require('uuid').v4;
+const { expect } = require('chai');
+
+const { describe, it } = require('mocha');
 
 const getPayload = (token) => {
     const b64Payload = token.split('.')[1];
 
     return JSON.parse(Buffer.from(b64Payload, 'base64').toString());
 };
+
+const jwtUtil = require('../../../../src/service/util/jwt-util');
 
 const nonJwts = [
     '123',

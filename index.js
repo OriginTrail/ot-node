@@ -1,11 +1,11 @@
 /* eslint-disable no-console */
-import 'dotenv/config';
-import fs from 'fs-extra';
-import path from 'path';
-import appRootPath from 'app-root-path';
-import { execSync } from 'child_process';
-import semver from 'semver';
-import OTNode from './ot-node.js';
+require('dotenv').config();
+const fs = require('fs-extra');
+const path = require('path');
+const appRootPath = require('app-root-path');
+const { execSync } = require('child_process');
+const semver = require('semver');
+const OTNode = require('./ot-node');
 
 process.env.NODE_ENV =
     process.env.NODE_ENV && ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0

@@ -1,8 +1,8 @@
-import { Validator } from 'jsonschema';
+const { Validator } = require('jsonschema');
 
 const v = new Validator();
 
-export default function requestValidationMiddleware(requestSchema) {
+module.exports = function requestValidationMiddleware(requestSchema) {
     return (req, res, next) => {
         if (req.get('Content-Type') !== 'application/json') {
             res.status(401).send('Invalid header format');
@@ -19,4 +19,4 @@ export default function requestValidationMiddleware(requestSchema) {
             next();
         }
     };
-}
+};

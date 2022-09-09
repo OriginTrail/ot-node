@@ -20,4 +20,4 @@ class CommandResolver {
     }
 }
 
-export default CommandResolver;
+module.exports = CommandResolver;

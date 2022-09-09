@@ -1,4 +1,4 @@
-import BaseModuleManager from '../base-module-manager.js';
+const BaseModuleManager = require('../base-module-manager');
 
 class AutoUpdaterModuleManager extends BaseModuleManager {
     getName() {
@@ -32,4 +32,4 @@ class AutoUpdaterModuleManager extends BaseModuleManager {
     }
 }
 
-export default AutoUpdaterModuleManager;
+module.exports = AutoUpdaterModuleManager;
