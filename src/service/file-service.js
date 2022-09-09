@@ -109,6 +109,7 @@ class FileService {
                 await this.removeFile(filePath);
             }
         }
+        this.logger.trace(`Successfully removed ${fileList.length} expired cache files`);
     }
 }
 
