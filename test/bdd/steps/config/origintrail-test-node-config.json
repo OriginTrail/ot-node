@@ -25,10 +25,11 @@
         "libp2p-service": {
           "package": "./network/implementation/libp2p-service.js",
           "config": {
-            "port": 9001,
-            "bootstrap": [
-              "/ip4/0.0.0.0/tcp/9000/p2p/QmWyf3dtqJnhuCpzEDTNmNFYc5tjxTrXhGcUUmGHdg2gtj"
-            ]
+              "kBucketSize": 20,
+              "port": 9001,
+              "bootstrap": [
+                  "/ip4/0.0.0.0/tcp/9000/p2p/QmWyf3dtqJnhuCpzEDTNmNFYc5tjxTrXhGcUUmGHdg2gtj"
+              ]
           }
         }
       }
