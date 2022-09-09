@@ -13,8 +13,8 @@
             "hubContractAddress": "0x378ec78F621E2C8Aeff345b39334c38B0Bb7b96F",
             "evmOperationalWalletPublicKey": "0x1152b7ea23b7b9890ce2e9abf95119038d7644e0",
             "evmOperationalWalletPrivateKey": "3cf97be6177acdd12796b387f58f84f177d0fe20d8558004e8db9a41cf90392a",
-            "evmManagementWalletPublicKey": "0x20bd8f91585bebf91ae96c897c38429ebc2291c7",
-            "evmManagementPublicKey": "0x20bd8f91585bebf91ae96c897c38429ebc2291c7"
+            "evmManagementWalletPublicKey": "0x76014481ed80a4bb57eba8f279d0d2489db5d136",
+            "evmManagementPublicKey": "0x76014481ed80a4bb57eba8f279d0d2489db5d136"
           }
         }
       }
@@ -23,11 +23,24 @@
       "enabled": true,
       "implementation": {
         "libp2p-service": {
-          "package": "./network/implementation/libp2p-service",
+          "package": "./network/implementation/libp2p-service.js",
           "config": {
-            "port": 9000,
-            "bootstrap": [],
-            "privateKey": "CAAS4QQwggJdAgEAAoGBALOYSCZsmINMpFdH8ydA9CL46fB08F3ELfb9qiIq+z4RhsFwi7lByysRnYT/NLm8jZ4RvlsSqOn2ZORJwBywYD5MCvU1TbEWGKxl5LriW85ZGepUwiTZJgZdDmoLIawkpSdmUOc1Fbnflhmj/XzAxlnl30yaa/YvKgnWtZI1/IwfAgMBAAECgYEAiZq2PWqbeI6ypIVmUr87z8f0Rt7yhIWZylMVllRkaGw5WeGHzQwSRQ+cJ5j6pw1HXMOvnEwxzAGT0C6J2fFx60C6R90TPos9W0zSU+XXLHA7AtazjlSnp6vHD+RxcoUhm1RUPeKU6OuUNcQVJu1ZOx6cAcP/I8cqL38JUOOS7XECQQDex9WUKtDnpHEHU/fl7SvCt0y2FbGgGdhq6k8nrWtBladP5SoRUFuQhCY8a20fszyiAIfxQrtpQw1iFPBpzoq1AkEAzl/s3XPGi5vFSNGLsLqbVKbvoW9RUaGN8o4rU9oZmPFL31Jo9FLA744YRer6dYE7jJMel7h9VVWsqa9oLGS8AwJALYwfv45Nbb6yGTRyr4Cg/MtrFKM00K3YEGvdSRhsoFkPfwc0ZZvPTKmoA5xXEC8eC2UeZhYlqOy7lL0BNjCzLQJBAMpvcgtwa8u6SvU5B0ueYIvTDLBQX3YxgOny5zFjeUR7PS+cyPMQ0cyql8jNzEzDLcSg85tkDx1L4wi31Pnm/j0CQFH/6MYn3r9benPm2bYSe9aoJp7y6ht2DmXmoveNbjlEbb8f7jAvYoTklJxmJCcrdbNx/iCj2BuAinPPgEmUzfQ="
+              "kBucketSize": 20,
+              "connectionManager": {
+                  "autoDial": true,
+                  "autoDialInterval": 10e3,
+                  "dialTimeout": 2e3
+              },
+              "peerRouting": {
+                  "refreshManager": {
+                      "enabled": true,
+                      "interval": 6e5,
+                      "bootDelay": 2e3
+                  }
+              },
+              "port": 9000,
+              "bootstrap": [],
+              "privateKey": "CAAS4QQwggJdAgEAAoGBALOYSCZsmINMpFdH8ydA9CL46fB08F3ELfb9qiIq+z4RhsFwi7lByysRnYT/NLm8jZ4RvlsSqOn2ZORJwBywYD5MCvU1TbEWGKxl5LriW85ZGepUwiTZJgZdDmoLIawkpSdmUOc1Fbnflhmj/XzAxlnl30yaa/YvKgnWtZI1/IwfAgMBAAECgYEAiZq2PWqbeI6ypIVmUr87z8f0Rt7yhIWZylMVllRkaGw5WeGHzQwSRQ+cJ5j6pw1HXMOvnEwxzAGT0C6J2fFx60C6R90TPos9W0zSU+XXLHA7AtazjlSnp6vHD+RxcoUhm1RUPeKU6OuUNcQVJu1ZOx6cAcP/I8cqL38JUOOS7XECQQDex9WUKtDnpHEHU/fl7SvCt0y2FbGgGdhq6k8nrWtBladP5SoRUFuQhCY8a20fszyiAIfxQrtpQw1iFPBpzoq1AkEAzl/s3XPGi5vFSNGLsLqbVKbvoW9RUaGN8o4rU9oZmPFL31Jo9FLA744YRer6dYE7jJMel7h9VVWsqa9oLGS8AwJALYwfv45Nbb6yGTRyr4Cg/MtrFKM00K3YEGvdSRhsoFkPfwc0ZZvPTKmoA5xXEC8eC2UeZhYlqOy7lL0BNjCzLQJBAMpvcgtwa8u6SvU5B0ueYIvTDLBQX3YxgOny5zFjeUR7PS+cyPMQ0cyql8jNzEzDLcSg85tkDx1L4wi31Pnm/j0CQFH/6MYn3r9benPm2bYSe9aoJp7y6ht2DmXmoveNbjlEbb8f7jAvYoTklJxmJCcrdbNx/iCj2BuAinPPgEmUzfQ="
           }
         }
       }
@@ -47,7 +60,7 @@
       "defaultImplementation": "ot-graphdb",
       "implementation": {
         "ot-graphdb": {
-          "package": "./triple-store/implementation/ot-graphdb/ot-graphdb",
+          "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
           "config": {
             "url": "http://localhost:7200",
             "repository": "origintrail-test-bootstrap",
@@ -61,7 +74,7 @@
       "enabled": true,
       "implementation": {
         "merkle-validation": {
-          "package": "./validation/implementation/merkle-validation",
+          "package": "./validation/implementation/merkle-validation.js",
           "config": {}
         }
       }
@@ -70,7 +83,7 @@
       "enabled": true,
       "implementation": {
         "express-http-client": {
-          "package": "./http-client/implementation/express-http-client",
+          "package": "./http-client/implementation/express-http-client.js",
           "config": {
             "useSsl": false,
             "port": 8900,
@@ -92,5 +105,8 @@
     "name": "origintrail-test-bootstrap"
   },
   "rpcPort": 8900,
-  "minimumReplicationFactor": 4
+  "minimumAckResponses": {
+    "publish": 2,
+    "get": 1
+  }
 }

@@ -1,12 +1,12 @@
-const awilix = require('awilix');
+import awilix from 'awilix';
 
 class DependencyInjection {
-    static initialize() {
+    static async initialize() {
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        container.loadModules(
+        await container.loadModules(
             [
                 'src/controller/**/*.js',
                 'src/service/*.js',
@@ -16,6 +16,7 @@ class DependencyInjection {
                 'src/modules/**/*module-manager.js',
             ],
             {
+                esModules: true,
                 formatName: 'camelCase',
                 resolverOptions: {
                     lifetime: awilix.Lifetime.SINGLETON,
@@ -34,4 +35,4 @@ class DependencyInjection {
     }
 }
 
-module.exports = DependencyInjection;
+export default DependencyInjection;

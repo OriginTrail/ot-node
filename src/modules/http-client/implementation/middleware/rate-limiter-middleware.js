@@ -1,6 +1,6 @@
-const rateLimiter = require('express-rate-limit');
+import rateLimiter from 'express-rate-limit';
 
-module.exports = (config) =>
+export default (config) =>
     rateLimiter({
         windowMs: config.timeWindowSeconds * 1000,
         max: config.maxRequests,

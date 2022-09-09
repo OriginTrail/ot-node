@@ -1,8 +1,14 @@
-const BaseModuleManager = require('../base-module-manager');
+import BaseModuleManager from '../base-module-manager.js';
 
 class TripleStoreModuleManager extends BaseModuleManager {
     getName() {
         return 'tripleStore';
+    }
+
+    async insertAsset(ual, assertionId, assetNquads) {
+        if (this.initialized) {
+            return this.getImplementation().module.insertAsset(ual, assertionId, assetNquads);
+        }
     }
 
     async insertAssertion(assertionId, assertionNquads) {
@@ -11,9 +17,9 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async updateAssetsGraph(ual, assetNquads) {
+    async insertIndex(keyword, indexNquads, assetNquads) {
         if (this.initialized) {
-            return this.getImplementation().module.updateAssetsGraph(ual, assetNquads);
+            return this.getImplementation().module.insertIndex(keyword, indexNquads, assetNquads);
         }
     }
 
@@ -29,37 +35,9 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async assertionsByAsset(uri) {
-        if (this.initialized) {
-            return this.getImplementation().module.assertionsByAsset(uri);
-        }
-    }
-
-    async findAssetsByKeyword(query, options, localQuery) {
-        if (this.initialized) {
-            return this.getImplementation().module.findAssetsByKeyword(query, options, localQuery);
-        }
-    }
-
-    async findAssertionsByKeyword(query, options, localQuery) {
-        if (this.initialized) {
-            return this.getImplementation().module.findAssertionsByKeyword(
-                query,
-                options,
-                localQuery,
-            );
-        }
-    }
-
     async construct(query) {
         if (this.initialized) {
             return this.getImplementation().module.construct(query);
-        }
-    }
-
-    async findAssertions(nquads) {
-        if (this.initialized) {
-            return this.getImplementation().module.findAssertions(nquads);
         }
     }
 
@@ -76,4 +54,4 @@ class TripleStoreModuleManager extends BaseModuleManager {
     }
 }
 
-module.exports = TripleStoreModuleManager;
+export default TripleStoreModuleManager;

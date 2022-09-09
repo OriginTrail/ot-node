@@ -1,9 +1,11 @@
-const HandleProtocolMessageCommand = require('../../common/handle-protocol-message-command');
-const {
+import HandleProtocolMessageCommand from '../../common/handle-protocol-message-command.js';
+
+import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
-} = require('../../../../constants/constants');
+    PUBLISH_TYPES,
+} from '../../../../constants/constants.js';
 
 class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
@@ -14,12 +16,8 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { ual, operationId, assertionId } = commandData;
+        const { publishType, operationId, assertionId } = commandData;
 
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
-        );
         const { assertionId: storeInitAssertionId } =
             await this.operationIdService.getCachedOperationIdData(operationId);
 
@@ -39,7 +37,39 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             operationId,
             OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_END,
         );
-        await this.operationService.localStore(ual, assertionId, operationId);
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
+        );
+
+        switch (publishType) {
+            case PUBLISH_TYPES.ASSERTION:
+                await this.operationService.localStoreAssertion(assertionId, operationId);
+                break;
+            case PUBLISH_TYPES.ASSET:
+                await this.operationService.localStoreAsset(
+                    assertionId,
+                    commandData.blockchain,
+                    commandData.contract,
+                    commandData.tokenId,
+                    operationId,
+                );
+                break;
+            case PUBLISH_TYPES.INDEX:
+                await this.operationService.localStoreIndex(
+                    assertionId,
+                    commandData.blockchain,
+                    commandData.contract,
+                    commandData.tokenId,
+                    commandData.keyword,
+                    operationId,
+                );
+                break;
+            default:
+                throw Error(`Unknown publish type ${publishType}`);
+        }
+
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
@@ -88,4 +118,4 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     }
 }
 
-module.exports = HandleStoreRequestCommand;
+export default HandleStoreRequestCommand;

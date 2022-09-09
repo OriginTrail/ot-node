@@ -1,5 +1,5 @@
-const NetworkProtocolCommand = require('../../common/network-protocol-command');
-const { ERROR_TYPE } = require('../../../../constants/constants');
+import NetworkProtocolCommand from '../../common/network-protocol-command.js';
+import { ERROR_TYPE, PUBLISH_TYPES } from '../../../../constants/constants.js';
 
 class NetworkPublishCommand extends NetworkProtocolCommand {
     constructor(ctx) {
@@ -10,16 +10,20 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
     }
 
     getKeywords(command) {
-        const { assertionId } = command.data;
-        return [assertionId];
+        const { publishType } = command.data;
+
+        if (publishType === PUBLISH_TYPES.INDEX) return [...command.data.keywords];
+
+        return [command.data.assertionId];
     }
 
     getNextCommandData(command) {
-        const { assertionId, ual } = command.data;
-        return {
-            assertionId,
-            ual,
-        };
+        const { publishType, assertionId, blockchain, contract } = command.data;
+        const assertionCommandData = { publishType, assertionId, blockchain, contract };
+
+        if (publishType === PUBLISH_TYPES.ASSERTION) return assertionCommandData;
+
+        return { ...assertionCommandData, tokenId: command.data.tokenId };
     }
 
     /**
@@ -38,4 +42,4 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
     }
 }
 
-module.exports = NetworkPublishCommand;
+export default NetworkPublishCommand;

@@ -1,20 +1,21 @@
-const ProtocolInitCommand = require('../../common/protocol-init-command');
-const { ERROR_TYPE } = require('../../../../constants/constants');
+import ProtocolInitCommand from '../../common/protocol-init-command.js';
+import { ERROR_TYPE, PUBLISH_TYPES } from '../../../../constants/constants.js';
 
 class PublishInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
         super(ctx);
-
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.operationService = ctx.publishService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_INIT_ERROR;
     }
 
     async prepareMessage(command) {
-        const { assertionId, ual } = command.data;
+        const { publishType, assertionId, blockchain, contract } = command.data;
+        const assertionMessage = { publishType, assertionId, blockchain, contract };
 
-        return { assertionId, ual };
+        if (publishType === PUBLISH_TYPES.ASSERTION) return assertionMessage;
+
+        return { ...assertionMessage, tokenId: command.data.tokenId };
     }
 
     /**
@@ -26,8 +27,6 @@ class PublishInitCommand extends ProtocolInitCommand {
         const command = {
             name: 'publishInitCommand',
             delay: 0,
-            period: 5000,
-            retries: 3,
             transactional: false,
         };
         Object.assign(command, map);
@@ -35,4 +34,4 @@ class PublishInitCommand extends ProtocolInitCommand {
     }
 }
 
-module.exports = PublishInitCommand;
+export default PublishInitCommand;

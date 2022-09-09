@@ -48,8 +48,8 @@ class BaseModuleManager {
                     return false;
                 }
 
-                // eslint-disable-next-line global-require,import/no-dynamic-require
-                const ModuleClass = require(implementationConfig.package);
+                // eslint-disable-next-line no-await-in-loop
+                const ModuleClass = (await import(implementationConfig.package)).default;
                 const module = new ModuleClass();
                 // eslint-disable-next-line no-await-in-loop
                 await module.initialize(implementationConfig.config, this.logger);
@@ -69,7 +69,9 @@ class BaseModuleManager {
         } catch (error) {
             if (requiredModules.includes(this.getName())) {
                 throw new Error(
-                    `Module is required but got error during initialization - ${error.message}`,
+                    `${this.getName()} module is required but got error during initialization - ${
+                        error.message
+                    }`,
                 );
             }
             this.logger.error(error.message);
@@ -102,4 +104,4 @@ class BaseModuleManager {
     }
 }
 
-module.exports = BaseModuleManager;
+export default BaseModuleManager;

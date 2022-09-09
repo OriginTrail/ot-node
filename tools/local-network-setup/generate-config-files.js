@@ -1,8 +1,7 @@
 /* eslint-disable */
-const path = require('path');
-const fs = require('fs');
-const { execSync } = require('child_process');
-const keys = require('./keys.json');
+import path from 'path';
+import fs from 'fs';
+import { execSync } from 'child_process';
 
 const numberOfNodes = process.argv.length === 3 ? parseInt(process.argv[2], 10) : 4;
 
@@ -11,6 +10,7 @@ const bootstrapTemplatePath = './tools/local-network-setup/.bootstrap_origintrai
 
 const template = JSON.parse(fs.readFileSync(templatePath));
 const bootstrapTemplate = JSON.parse(fs.readFileSync(bootstrapTemplatePath));
+const keys = JSON.parse(fs.readFileSync('./tools/local-network-setup/keys.json'));
 
 console.log('Preparing keys for blockchain');
 

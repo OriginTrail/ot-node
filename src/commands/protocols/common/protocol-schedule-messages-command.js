@@ -1,4 +1,4 @@
-const Command = require('../../command');
+import Command from '../../command.js';
 
 class ProtocolScheduleMessagesCommand extends Command {
     constructor(ctx) {
@@ -43,6 +43,7 @@ class ProtocolScheduleMessagesCommand extends Command {
                     keyword,
                     node,
                     numberOfFoundNodes,
+                    batchSize,
                     numberOfNodesInBatch: currentBatchNodes.length,
                     leftoverNodes: currentBatchLeftoverNodes,
                 },
@@ -73,4 +74,4 @@ class ProtocolScheduleMessagesCommand extends Command {
     }
 }
 
-module.exports = ProtocolScheduleMessagesCommand;
+export default ProtocolScheduleMessagesCommand;
