@@ -32,19 +32,6 @@ const initializationObject = {
     transports: [new TCP()],
     streamMuxers: [new Mplex()],
     connectionEncryption: [new Noise()],
-    connectionManager: {
-        autoDial: true,
-        autoDialInterval: 10e3,
-        dialTimeout: 2e3,
-    },
-    peerRouting: {
-        refreshManager: {
-            // Refresh known and connected closest peers
-            enabled: true, // Should find the closest peers.
-            interval: 6e5, // Interval for getting the new for closest peers of 10min
-            bootDelay: 2e3, // Delay for the initial query for closest peers
-        },
-    },
 };
 
 class Libp2pService {
@@ -53,6 +40,8 @@ class Libp2pService {
         this.logger = logger;
 
         initializationObject.dht = new KadDHT({ kBucketSize: this.config.kBucketSize });
+        initializationObject.peerRouting = this.config.peerRouting;
+        initializationObject.connectionManager = this.config.connectionManager;
 
         if (this.config.bootstrap.length > 0) {
             initializationObject.peerDiscovery = [
