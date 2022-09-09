@@ -1,4 +1,4 @@
-import Web3Service from '../web3-service.js';
+const Web3Service = require('../web3-service');
 
 class PolygonService extends Web3Service {
     constructor(ctx) {
@@ -9,4 +9,4 @@ class PolygonService extends Web3Service {
     }
 }
 
-export default PolygonService;
+module.exports = PolygonService;

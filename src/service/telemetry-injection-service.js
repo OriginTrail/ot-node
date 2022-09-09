@@ -33,4 +33,4 @@ class TelemetryInjectionService {
     }
 }
 
-export default TelemetryInjectionService;
+module.exports = TelemetryInjectionService;

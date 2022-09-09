@@ -1,17 +1,23 @@
-import Command from '../../../command.js';
-import { ERROR_TYPE } from '../../../../constants/constants.js';
+const Command = require('../../../command');
+const { OPERATION_ID_STATUS, ERROR_TYPE } = require('../../../../constants/constants');
 
 class InsertAssertionCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.logger = ctx.logger;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+        this.fileService = ctx.fileService;
         this.operationIdService = ctx.operationIdService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_ERROR;
     }
 
-    async execute() {
-        /* const { operationId, ual, assertionId } = command.data;
+    /**
+     * Executes command and produces one or more events
+     * @param command
+     */
+    async execute(command) {
+        const { operationId, ual, assertionId } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -28,7 +34,7 @@ class InsertAssertionCommand extends Command {
         } catch (error) {
             this.handleError(operationId, error.message, this.errorType, true);
             return Command.empty();
-        } */
+        }
     }
 
     /**
@@ -47,4 +53,4 @@ class InsertAssertionCommand extends Command {
     }
 }
 
-export default InsertAssertionCommand;
+module.exports = InsertAssertionCommand;

@@ -1,10 +1,10 @@
-import ProtocolRequestCommand from '../../common/protocol-request-command.js';
-import {
+const ProtocolRequestCommand = require('../../common/protocol-request-command');
+const {
     ERROR_TYPE,
     NETWORK_PROTOCOLS,
     OPERATION_ID_STATUS,
-} from '../../../../constants/constants.js';
-import Command from '../../../command.js';
+} = require('../../../../constants/constants');
+const Command = require('../../../command');
 
 class searchAssertionsRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
@@ -67,4 +67,4 @@ class searchAssertionsRequestCommand extends ProtocolRequestCommand {
     }
 }
 
-export default searchAssertionsRequestCommand;
+module.exports = searchAssertionsRequestCommand;

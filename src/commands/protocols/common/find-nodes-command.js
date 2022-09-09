@@ -1,5 +1,5 @@
-import Command from '../../command.js';
-import { OPERATION_ID_STATUS } from '../../../constants/constants.js';
+const Command = require('../../command');
+const { OPERATION_ID_STATUS } = require('../../../constants/constants');
 
 class FindNodesCommand extends Command {
     constructor(ctx) {
@@ -70,4 +70,4 @@ class FindNodesCommand extends Command {
     }
 }
 
-export default FindNodesCommand;
+module.exports = FindNodesCommand;

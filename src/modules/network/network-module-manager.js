@@ -1,4 +1,4 @@
-import BaseModuleManager from '../base-module-manager.js';
+const BaseModuleManager = require('../base-module-manager');
 
 class NetworkModuleManager extends BaseModuleManager {
     getName() {
@@ -87,4 +87,4 @@ class NetworkModuleManager extends BaseModuleManager {
     }
 }
 
-export default NetworkModuleManager;
+module.exports = NetworkModuleManager;

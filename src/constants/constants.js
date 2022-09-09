@@ -1,75 +1,106 @@
-export const SCHEMA_CONTEXT = 'http://schema.org/';
-
-export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
-
-export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
-
-export const MAX_FILE_SIZE = 2621440;
-
-export const PUBLISH_TYPES = { ASSERTION: 'assertion', ASSET: 'asset', INDEX: 'index' };
+exports.SCHEMA_CONTEXT = 'http://schema.org/';
 
 /**
- * Triple store media types
- * @type {{APPLICATION_JSON: string, N_QUADS: string, SPARQL_RESULTS_JSON: string, LD_JSON: string}}
+ * @constant {number} MAX_FILE_SIZE
+ * - Max file size for publish
  */
-export const MEDIA_TYPES = {
-    LD_JSON: 'application/ld+json',
-    N_QUADS: 'application/n-quads',
-    SPARQL_RESULTS_JSON: 'application/sparql-results+json',
-};
+module.exports.MAX_FILE_SIZE = 2621440;
 
 /**
- * XML data types
- * @type {{FLOAT: string, DECIMAL: string, DOUBLE: string, BOOLEAN: string, INTEGER: string}}
+ * @constant {object} PUBLISH_TYPES
+ * - Different types of publish
  */
-export const XML_DATA_TYPES = {
-    DECIMAL: 'http://www.w3.org/2001/XMLSchema#decimal',
-    FLOAT: 'http://www.w3.org/2001/XMLSchema#float',
-    DOUBLE: 'http://www.w3.org/2001/XMLSchema#double',
-    INTEGER: 'http://www.w3.org/2001/XMLSchema#integer',
-    BOOLEAN: 'http://www.w3.org/2001/XMLSchema#boolean',
-};
+exports.PUBLISH_TYPES = { ASSERTION: 'assertion', ASSET: 'asset', INDEX: 'index' };
 
-export const MIN_NODE_VERSION = 16;
+/**
+ * @constant {number} MIN_NODE_VERSION
+ * - Required node.js version to run the ot-node
+ */
+exports.MIN_NODE_VERSION = 16;
 
-export const INIT_STAKE_AMOUNT = 3000;
+// TODO retrieve from the blockchain
+/**
+ * @constant {number} INIT_STAKE_AMOUNT
+ * - Initial stake amount for profile creation
+ */
+exports.INIT_STAKE_AMOUNT = 3000;
 
-export const NETWORK_API_RATE_LIMIT = {
+/**
+ * @constant {object} NETWORK_API_RATE_LIMIT
+ * - Network (Libp2p) rate limiter configuration constants
+ */
+exports.NETWORK_API_RATE_LIMIT = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
     MAX_NUMBER: 20,
 };
 
-export const NETWORK_API_SPAM_DETECTION = {
+/**
+ * @constant {object} NETWORK_API_SPAM_DETECTION
+ * - Network (Libp2p) spam detection rate limiter configuration constants
+ */
+exports.NETWORK_API_SPAM_DETECTION = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
     MAX_NUMBER: 40,
 };
 
-export const NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
+/**
+ * @constant {object} NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES
+ * - Network (Libp2p) black list time window in minutes
+ */
+exports.NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
 
-export const HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 16000;
+/**
+ * @constant {number} HIGH_TRAFFIC_EVENTS_NUMBER_PER_HOUR - Maximum expected number of events per hour
+ */
+exports.HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 16000;
 
-export const SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES = 15;
+/**
+ * @constant {number} SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES
+ * - Interval between sending of telemetry events
+ */
+exports.SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES = 15;
 
-export const DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
+/**
+ * @constant {number} DEFAULT_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time
+ */
+exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
 
-export const REMOVE_SESSION_COMMAND_DELAY = 2 * 60 * 1000;
+/**
+ * @constant {number} REMOVE_SESSION_COMMAND_DELAY - Remove session comand delay
+ */
+exports.REMOVE_SESSION_COMMAND_DELAY = 2 * 60 * 1000;
 
-export const OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+/**
+ * @constant {number} OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS -
+ * Export command cleanup interval time 24h
+ */
+exports.OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
-export const PERMANENT_COMMANDS = [
-    'otnodeUpdateCommand',
-    'sendTelemetryCommand',
-    'operationIdCleanerCommand',
-    'commandsCleanerCommand',
-];
+/**
+ * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
+ */
+exports.PERMANENT_COMMANDS = ['otnodeUpdateCommand', 'sendTelemetryCommand'];
 
-export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
+/**
+ * @constant {number} MAX_COMMAND_DELAY_IN_MILLS - Maximum delay for commands
+ */
+exports.MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
 
-export const DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
+/**
+ * @constant {number} DEFAULT_COMMAND_REPEAT_IN_MILLS - Default repeat interval
+ */
+exports.DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 
-export const DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
+/**
+ * @constant {number} DEFAULT_COMMAND_DELAY_IN_MILLS - Delay for default commands
+ */
+exports.DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
 
-export const WEBSOCKET_PROVIDER_OPTIONS = {
+/**
+ * @constant {number} WEBSOCKET_PROVIDER_OPTIONS
+ * - Websocket provider options
+ */
+module.exports.WEBSOCKET_PROVIDER_OPTIONS = {
     reconnect: {
         auto: true,
         delay: 1000, // ms
@@ -81,13 +112,21 @@ export const WEBSOCKET_PROVIDER_OPTIONS = {
     },
 };
 
-export const TRIPLE_STORE_IMPLEMENTATION = {
+/**
+ * @constant {object} TRIPLE_STORE_IMPLEMENTATION -
+ *  Names of available triple store implementations
+ */
+exports.TRIPLE_STORE_IMPLEMENTATION = {
     BLAZEGRAPH: 'Blazegraph',
     GRAPHDB: 'GraphDB',
     FUSEKI: 'Fuseki',
 };
 
-export const NETWORK_MESSAGE_TYPES = {
+/**
+ * @constant {number} NETWORK_MESSAGE_TYPES -
+ * Network message types
+ */
+exports.NETWORK_MESSAGE_TYPES = {
     REQUESTS: {
         PROTOCOL_INIT: 'PROTOCOL_INIT',
         PROTOCOL_REQUEST: 'PROTOCOL_REQUEST',
@@ -99,9 +138,17 @@ export const NETWORK_MESSAGE_TYPES = {
     },
 };
 
-export const MAX_OPEN_SESSIONS = 10;
+/**
+ * @constant {number} MAX_OPEN_SESSIONS -
+ * Max number of open sessions
+ */
+exports.MAX_OPEN_SESSIONS = 10;
 
-export const ERROR_TYPE = {
+/**
+ * @constant {object} ERROR_TYPE -
+ *  Types of errors supported
+ */
+exports.ERROR_TYPE = {
     PUBLISH: {
         PUBLISH_START_ERROR: 'PublishStartError',
         PUBLISH_ROUTE_ERROR: 'PublishRouteError',
@@ -126,11 +173,12 @@ export const ERROR_TYPE = {
         GET_REQUEST_REMOTE_ERROR: 'GetRequestRemoteError',
         GET_ERROR: 'GetError',
     },
-    QUERY: {
-        LOCAL_QUERY_ERROR: 'LocalQueryError',
-    },
 };
-export const OPERATION_ID_STATUS = {
+/**
+ * @constant {object} OPERATION_ID_STATUS -
+ *  Possible statuses for operation id
+ */
+exports.OPERATION_ID_STATUS = {
     PENDING: 'PENDING',
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
@@ -178,81 +226,72 @@ export const OPERATION_ID_STATUS = {
         VALIDATING_QUERY: 'VALIDATING_QUERY',
         SEARCHING_ENTITIES: 'SEARCHING_ENTITIES',
     },
-
-    QUERY: {
-        QUERY_INIT_START: 'QUERY_INIT_START',
-        QUERY_INIT_END: 'QUERY_INIT_END',
-        QUERY_START: 'QUERY_START',
-        QUERY_END: 'QUERY_END',
-    },
 };
 
-export const OPERATIONS = {
+/**
+ * @constant {object} OPERATIONS -
+ *  Operations
+ */
+exports.OPERATIONS = {
     PUBLISH: 'publish',
     GET: 'get',
     SEARCH: 'search',
 };
 
 /**
- * @constant {number} OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS -
- * operation id command cleanup interval time 24h
- */
-export const OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
-/**
- * @constant {number} FINALIZED_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time
- * finalized commands command cleanup interval time 24h
- */
-export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
-/**
- * @constant {number} COMMAND_STATUS -
- * Status for commands
- */
-export const COMMAND_STATUS = {
-    FAILED: 'FAILED',
-    EXPIRED: 'EXPIRED',
-    STARTED: 'STARTED',
-    PENDING: 'PENDING',
-    COMPLETED: 'COMPLETED',
-    REPEATING: 'REPEATING',
-};
-
-/**
  * @constant {object} NETWORK_PROTOCOLS -
  *  Network protocols
  */
-export const NETWORK_PROTOCOLS = {
-    STORE: '/store/1.0.1',
+exports.NETWORK_PROTOCOLS = {
+    STORE: '/store/1.0.0',
     GET: '/get/1.0.0',
     SEARCH: '/search/1.0.0',
 };
 
-export const PUBLISH_STATUS = {
+/**
+ * @constant {object} PUBLISH_STATUS -
+ *  Possible statuses for publish procedure
+ */
+exports.PUBLISH_STATUS = {
     IN_PROGRESS: 'IN_PROGRESS',
-    FAILED: 'FAILED',
-    COMPLETED: 'COMPLETED',
-};
-
-export const GET_STATUS = {
-    IN_PROGRESS: 'IN_PROGRESS',
-    FAILED: 'FAILED',
-    COMPLETED: 'COMPLETED',
-};
-
-export const PUBLISH_REQUEST_STATUS = {
-    FAILED: 'FAILED',
-    COMPLETED: 'COMPLETED',
-};
-
-export const GET_REQUEST_STATUS = {
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
 };
 
 /**
- * Local query types
- * @type {{CONSTRUCT: string, SELECT: string}}
+ * @constant {object} GET_STATUS -
+ *  Possible statuses for get procedure
  */
-export const QUERY_TYPES = {
-    SELECT: 'SELECT',
-    CONSTRUCT: 'CONSTRUCT',
+exports.GET_STATUS = {
+    IN_PROGRESS: 'IN_PROGRESS',
+    FAILED: 'FAILED',
+    COMPLETED: 'COMPLETED',
+};
+
+/**
+ * @constant {object} PUBLISH_STATUS -
+ *  Possible statuses for publish procedure
+ */
+exports.PUBLISH_REQUEST_STATUS = {
+    FAILED: 'FAILED',
+    COMPLETED: 'COMPLETED',
+};
+
+/**
+ * @constant {object} GET_REQUEST_STATUS -
+ *  Possible statuses for get request
+ */
+exports.GET_REQUEST_STATUS = {
+    FAILED: 'FAILED',
+    COMPLETED: 'COMPLETED',
+};
+
+/**
+ * @constant {object} PUBLISH_METHOD -
+ *  Possible methods for publish
+ */
+exports.PUBLISH_METHOD = {
+    PUBLISH: 'PUBLISH',
+    PROVISION: 'PROVISION',
+    UPDATE: 'UPDATE',
 };

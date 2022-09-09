@@ -1,5 +1,5 @@
-import semver from 'semver';
-import Command from '../command.js';
+const semver = require('semver');
+const Command = require('../command');
 
 class OtnodeUpdateCommand extends Command {
     constructor(ctx) {
@@ -87,4 +87,4 @@ class OtnodeUpdateCommand extends Command {
     }
 }
 
-export default OtnodeUpdateCommand;
+module.exports = OtnodeUpdateCommand;

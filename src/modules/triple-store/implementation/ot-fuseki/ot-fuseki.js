@@ -1,5 +1,5 @@
-import axios from 'axios';
-import OtTripleStore from '../ot-triple-store.js';
+const axios = require('axios');
+const OtTripleStore = require('../ot-triple-store');
 
 class OtFuseki extends OtTripleStore {
     initializeSparqlEndpoints(url, repository) {
@@ -24,4 +24,4 @@ class OtFuseki extends OtTripleStore {
     }
 }
 
-export default OtFuseki;
+module.exports = OtFuseki;

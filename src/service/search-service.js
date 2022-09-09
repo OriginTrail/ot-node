@@ -1,4 +1,4 @@
-import { OPERATION_ID_STATUS } from '../constants/constants.js';
+const { OPERATION_ID_STATUS } = require('../constants/constants');
 
 class SearchService {
     constructor(ctx) {
@@ -29,4 +29,4 @@ class SearchService {
     }
 }
 
-export default SearchService;
+module.exports = SearchService;

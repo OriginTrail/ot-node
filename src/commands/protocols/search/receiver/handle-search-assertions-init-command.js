@@ -1,9 +1,6 @@
-import Command from '../../../command.js';
-import {
-    ERROR_TYPE,
-    NETWORK_MESSAGE_TYPES,
-    NETWORK_PROTOCOLS,
-} from '../../../../constants/constants.js';
+const Command = require('../../../command');
+const { ERROR_TYPE } = require('../../../../constants/constants');
+const constants = require('../../../../constants/constants');
 
 class HandleSearchAssertionsInitCommand extends Command {
     constructor(ctx) {
@@ -21,10 +18,10 @@ class HandleSearchAssertionsInitCommand extends Command {
     async execute(command) {
         const { remotePeerId, operationId } = command.data;
 
-        const messageType = NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
+        const messageType = constants.NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
         const messageData = {};
         await this.networkModuleManager.sendMessageResponse(
-            NETWORK_PROTOCOLS.SEARCH_ASSERTIONS,
+            constants.NETWORK_PROTOCOLS.SEARCH_ASSERTIONS,
             remotePeerId,
             messageType,
             operationId,
@@ -55,4 +52,4 @@ class HandleSearchAssertionsInitCommand extends Command {
     }
 }
 
-export default HandleSearchAssertionsInitCommand;
+module.exports = HandleSearchAssertionsInitCommand;

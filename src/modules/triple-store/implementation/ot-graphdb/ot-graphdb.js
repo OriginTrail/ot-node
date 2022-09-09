@@ -1,37 +1,37 @@
-import graphdb from 'graphdb';
-import axios from 'axios';
-import { execSync } from 'child_process';
-import OtTripleStore from '../ot-triple-store.js';
-
-const { server, repository, http } = graphdb;
+const { ServerClientConfig, GraphDBServerClient } = require('graphdb').server;
+const { RepositoryConfig, RepositoryType } = require('graphdb').repository;
+const { RDFMimeType } = require('graphdb').http;
+const axios = require('axios');
+const { execSync } = require('child_process');
+const OtTripleStore = require('../ot-triple-store');
 
 class OtGraphdb extends OtTripleStore {
     async initialize(config, logger) {
         await super.initialize(config, logger);
-        const serverConfig = new server.ServerClientConfig(this.config.url)
+        const serverConfig = new ServerClientConfig(this.config.url)
             .setTimeout(40000)
             .setHeaders({
-                Accept: http.RDFMimeType.N_QUADS,
+                Accept: RDFMimeType.N_QUADS,
             })
             .setKeepAlive(true);
-        const s = new server.GraphDBServerClient(serverConfig);
+        const server = new GraphDBServerClient(serverConfig);
 
-        const exists = await s.hasRepository(this.config.repository);
+        const exists = await server.hasRepository(this.config.repository);
         if (!exists) {
             try {
-                await s.createRepository(
-                    new repository.RepositoryConfig(
+                await server.createRepository(
+                    new RepositoryConfig(
                         this.config.repository,
                         '',
                         new Map(),
                         '',
                         'Repo title',
-                        repository.RepositoryType.FREE,
+                        RepositoryType.FREE,
                     ),
                 );
             } catch (e) {
-                await s.createRepository(
-                    new repository.RepositoryConfig(
+                await server.createRepository(
+                    new RepositoryConfig(
                         this.config.repository,
                         '',
                         {},
@@ -44,9 +44,9 @@ class OtGraphdb extends OtTripleStore {
         }
     }
 
-    initializeSparqlEndpoints(url, repo) {
-        this.sparqlEndpoint = `${url}/repositories/${repo}`;
-        this.sparqlEndpointUpdate = `${url}/repositories/${repo}/statements`;
+    initializeSparqlEndpoints(url, repository) {
+        this.sparqlEndpoint = `${url}/repositories/${repository}`;
+        this.sparqlEndpointUpdate = `${url}/repositories/${repository}/statements`;
     }
 
     async healthCheck() {
@@ -89,4 +89,4 @@ class OtGraphdb extends OtTripleStore {
     }
 }
 
-export default OtGraphdb;
+module.exports = OtGraphdb;

@@ -1,4 +1,4 @@
-import BaseModuleManager from '../base-module-manager.js';
+const BaseModuleManager = require('../base-module-manager');
 
 class ValidationModuleManager extends BaseModuleManager {
     getName() {
@@ -18,4 +18,4 @@ class ValidationModuleManager extends BaseModuleManager {
     }
 }
 
-export default ValidationModuleManager;
+module.exports = ValidationModuleManager;

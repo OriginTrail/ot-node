@@ -1,5 +1,5 @@
-import { NETWORK_MESSAGE_TYPES, OPERATION_ID_STATUS } from '../../constants/constants.js';
-import BaseController from './base-controller.js';
+const { NETWORK_MESSAGE_TYPES, OPERATION_ID_STATUS } = require('../../constants/constants');
+const BaseController = require('./base-controller');
 
 class GetController extends BaseController {
     constructor(ctx) {
@@ -7,7 +7,6 @@ class GetController extends BaseController {
         this.commandExecutor = ctx.commandExecutor;
         this.operationIdService = ctx.operationIdService;
         this.getService = ctx.getService;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
     async handleHttpApiGetRequest(req, res) {
@@ -85,4 +84,4 @@ class GetController extends BaseController {
     }
 }
 
-export default GetController;
+module.exports = GetController;

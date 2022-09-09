@@ -1,10 +1,10 @@
-import 'dotenv/config';
-import { Before, BeforeAll, After, AfterAll } from '@cucumber/cucumber';
-import slugify from 'slugify';
-import fs from 'fs';
-import mysql from 'mysql2';
-import graphdb from 'graphdb';
-const {http,server} = graphdb;
+require('dotenv').config();
+const { Before, BeforeAll, After, AfterAll } = require('@cucumber/cucumber');
+const slugify = require('slugify');
+const fs = require('fs');
+const mysql = require('mysql2');
+const { RDFMimeType } = require('graphdb').http;
+const { ServerClientConfig, GraphDBServerClient } = require('graphdb').server;
 
 process.env.NODE_ENV = 'test';
 
@@ -63,18 +63,19 @@ After(function afterMethod(testCase, done) {
         promises.push(con.promise().query(sql));
     });
     promises.push(con);
-    const serverConfig = new server.ServerClientConfig('http://localhost:7200')
+    const serverConfig = new ServerClientConfig('http://localhost:7200')
         .setTimeout(40000)
         .setHeaders({
-            Accept: http.RDFMimeType.N_QUADS,
+            Accept: RDFMimeType.N_QUADS,
         })
         .setKeepAlive(true);
-    const s = new server.GraphDBServerClient(serverConfig);
+    const server = new GraphDBServerClient(serverConfig);
     graphRepositoryNames.forEach((element) => {
-        s.hasRepository(element)
+        server
+            .hasRepository(element)
             .then((exists) => {
                 if (exists) {
-                    promises.push(s.deleteRepository(element));
+                    promises.push(server.deleteRepository(element));
                 }
             })
             .catch((err) => this.logger.error(err));

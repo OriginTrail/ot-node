@@ -1,18 +1,16 @@
-import DeepExtend from 'deep-extend';
-import rc from 'rc';
-import fs from 'fs';
-import appRootPath from 'app-root-path';
-import path from 'path';
-import EventEmitter from 'events';
-import { createRequire } from 'module';
-import DependencyInjection from './src/service/dependency-injection.js';
-import Logger from './src/logger/logger.js';
-import { MIN_NODE_VERSION } from './src/constants/constants.js';
-import FileService from './src/service/file-service.js';
-
-const require = createRequire(import.meta.url);
+const DeepExtend = require('deep-extend');
+const rc = require('rc');
+const fs = require('fs');
+const queue = require('fastq');
+const appRootPath = require('app-root-path');
+const path = require('path');
+const EventEmitter = require('events');
+const DependencyInjection = require('./src/service/dependency-injection');
+const Logger = require('./src/logger/logger');
+const constants = require('./src/constants/constants');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
+const FileService = require('./src/service/file-service');
 
 class OTNode {
     constructor(config) {
@@ -36,7 +34,7 @@ class OTNode {
         this.logger.info('======================================================');
         this.logger.info(`Node is running in ${process.env.NODE_ENV} environment`);
 
-        await this.initializeDependencyContainer();
+        this.initializeDependencyContainer();
         this.initializeEventEmitter();
 
         await this.initializeModules();
@@ -54,7 +52,7 @@ class OTNode {
         const nodeMajorVersion = process.versions.node.split('.')[0];
         this.logger.warn('======================================================');
         this.logger.warn(`Using node.js version: ${process.versions.node}`);
-        if (nodeMajorVersion < MIN_NODE_VERSION) {
+        if (nodeMajorVersion < constants.MIN_NODE_VERSION) {
             this.logger.warn(
                 `This node was tested with node.js version 16. To make sure that your node is running properly please update your node version!`,
             );
@@ -74,12 +72,23 @@ class OTNode {
             // set default user configuration filename
             this.config.configFilename = '.origintrail_noderc';
         }
+        const fileService = new FileService({ config: this.config });
+        const updateFilePath = fileService.getUpdateFilePath();
+        if (fs.existsSync(updateFilePath)) {
+            this.config.otNodeUpdated = true;
+            fileService.removeFile(updateFilePath).catch((error) => {
+                this.logger.warn(`Unable to remove update file. Error: ${error}`);
+            });
+        }
     }
 
-    async initializeDependencyContainer() {
-        this.container = await DependencyInjection.initialize();
+    initializeDependencyContainer() {
+        this.container = DependencyInjection.initialize();
         DependencyInjection.registerValue(this.container, 'config', this.config);
         DependencyInjection.registerValue(this.container, 'logger', this.logger);
+        DependencyInjection.registerValue(this.container, 'constants', constants);
+        DependencyInjection.registerValue(this.container, 'blockchainQueue', queue);
+        DependencyInjection.registerValue(this.container, 'tripleStoreQueue', queue);
 
         this.logger.info('Dependency injection module is initialized');
     }
@@ -212,6 +221,16 @@ class OTNode {
         }
     }
 
+    async initializeWatchdog() {
+        try {
+            const watchdogService = this.container.resolve('watchdogService');
+            await watchdogService.initialize();
+            this.logger.info('Watchdog service initialized');
+        } catch (e) {
+            this.logger.warn(`Watchdog service initialization failed. Error message: ${e.message}`);
+        }
+    }
+
     async savePrivateKeyAndPeerIdInUserConfigurationFile(privateKey) {
         const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
         const configFile = JSON.parse(await fs.promises.readFile(configurationFilePath));
@@ -278,4 +297,4 @@ class OTNode {
     }
 }
 
-export default OTNode;
+module.exports = OTNode;
