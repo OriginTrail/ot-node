@@ -52,7 +52,7 @@ Given(
         ).to.be.equal(true);
         const resolveData = this.state.lastResolveData;
         let retryCount = 0;
-        const maxRetryCount = 20;
+        const maxRetryCount = 5;
         for (retryCount = 0; retryCount < maxRetryCount; retryCount += 1) {
             this.logger.log(
                 `Getting resolve result for operation id: ${resolveData.operationId} on node: ${resolveData.nodeId}`,
