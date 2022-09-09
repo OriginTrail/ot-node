@@ -37,15 +37,14 @@
         "npm": ">=8.0.0"
     },
     "devDependencies": {
-        "@truffle/hdwallet-provider": "^2.0.14",
-        "@openzeppelin/contracts": "^4.7.3",
-        "solhint": "^3.3.7",
         "@cucumber/cucumber": "^8.5.2",
         "@ethersproject/bytes": "^5.7.0",
         "@ethersproject/hash": "^5.7.0",
         "@ethersproject/wallet": "^5.7.0",
+        "@openzeppelin/contracts": "^4.7.3",
         "@polkadot/util": "^10.1.7",
         "@polkadot/util-crypto": "^10.1.7",
+        "@truffle/hdwallet-provider": "^2.0.14",
         "chai": "^4.3.6",
         "dkg.js": "^6.0.0-beta.3.0.4",
         "eslint": "^8.23.0",
@@ -58,7 +57,9 @@
         "nyc": "^15.1.0",
         "prettier": "^2.7.1",
         "sinon": "^14.0.0",
-        "slugify": "^1.6.5"
+        "slugify": "^1.6.5",
+        "solhint": "^3.3.7",
+        "truffle": "^5.5.29"
     },
     "dependencies": {
         "@chainsafe/libp2p-noise": "^8.0.1",
@@ -78,7 +79,7 @@
         "axios": "^0.27.2",
         "cors": "^2.8.5",
         "deep-extend": "^0.6.0",
-        "dkg-evm-module": "^1.0.2",
+        "dkg-evm-module": "^1.0.3",
         "dotenv": "^16.0.1",
         "express": "^4.18.1",
         "express-fileupload": "^1.4.0",
