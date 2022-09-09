@@ -218,6 +218,10 @@
 - **version**: ^2.1.3
 - **description**: convert expiration time to milliseconds in `token-generation.js`
 
+##### [multiformats](https://www.npmjs.com/package/multiformats)
+-   **version**: ^9.8.1
+-   **description**: calculate sha256 hash of peerIds (libp2p find nodes operation)
+
 ##### [mysql2](https://www.npmjs.com/package/mysql2) 
 - **version**: ^2.3.3
 - **description**: 
