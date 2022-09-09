@@ -16,7 +16,6 @@ Feature: Release related tests
     And I wait for 10 seconds
     When I call publish on node 4 with validAssertion
     And Last PUBLISH operation finished with status: COMPLETED
-    And I wait for 10 seconds
     And I get operation result from node 4 for last published assertion
     And Last GET operation finished with status: COMPLETED
     And I setup 1 additional node

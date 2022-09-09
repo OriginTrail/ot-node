@@ -1,12 +1,10 @@
 import { When, Given } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
 import { setTimeout } from 'timers/promises';
-import {createRequire} from "module";
 import HttpApiHelper from "../../../utilities/http-api-helper.mjs";
+import {readFile} from "fs/promises";
 
-
-const require = createRequire(import.meta.url);
-const requests = require('./datasets/requests.json');
+const requests = JSON.parse(await readFile("test/bdd/steps/api/datasets/requests.json"));
 const httpApiHelper = new HttpApiHelper()
 
 When(
@@ -14,7 +12,6 @@ When(
     { timeout: 120000 },
     async function resolveCall(node) {
         this.logger.log('I call get result for the last operation');
-        // await setTimeout(10 * 1000); // wait 10 seconds to allow nodes to connect to each other
         expect(
             !!this.state.lastPublishData,
             'Last publish data is undefined. Publish is not finalized.',
@@ -105,7 +102,6 @@ Given(
     /^I call get directly to ot-node (\d+) with ([^"]*)/,
     { timeout: 30000 },
     async function getFromNode(node, requestName) {
-        // await setTimeout(10 * 1000);
         this.logger.log(`I call get on ot-node ${node} directly`);
         if (requestName !== 'lastPublishedAssetUAL') {
             expect(
@@ -122,9 +118,6 @@ Given(
         this.state.lastResolveData = {
             nodeId: node - 1,
             operationId,
-            // result,
-            // status : result.operation.status,
-            // errorType : result.operation.errorType
         };
     },
 );

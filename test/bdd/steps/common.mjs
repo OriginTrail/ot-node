@@ -2,14 +2,13 @@ import { Given } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
 import DkgClientHelper from '../../utilities/dkg-client-helper.mjs';
 import DeepExtend from "deep-extend";
-import { createRequire } from 'module';
 import StepsUtils from "../../utilities/steps-utils.mjs";
 import fs from "fs";
 import { setTimeout as sleep } from 'timers/promises';
+import {readFile} from "fs/promises";
 
-const require = createRequire(import.meta.url);
-const defaultConfiguration = require('./config/origintrail-test-node-config.json');
-const bootstrapNodeConfiguration = require('./config/origintrail-test-bootstrap-config.json');
+const defaultConfiguration = JSON.parse(await readFile("test/bdd/steps/config/origintrail-test-node-config.json"));
+const bootstrapNodeConfiguration =  JSON.parse(await readFile("test/bdd/steps/config/origintrail-test-bootstrap-config.json"));
 const stepsUtils = new StepsUtils();
 
 Given(
@@ -116,7 +115,6 @@ Given(
         });
     },
 );
-// TODO: Implement input error handling
 // regex allows strings separated by dots
 Given(
     /^I setup node (\d+) with ([a-z][\w-]*(?:\.[\w-]+)*) set to ([^"]*)$/,
