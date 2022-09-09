@@ -74,14 +74,6 @@ class OTNode {
             // set default user configuration filename
             this.config.configFilename = '.origintrail_noderc';
         }
-        const fileService = new FileService({ config: this.config });
-        const updateFilePath = fileService.getUpdateFilePath();
-        if (fs.existsSync(updateFilePath)) {
-            this.config.otNodeUpdated = true;
-            fileService.removeFile(updateFilePath).catch((error) => {
-                this.logger.warn(`Unable to remove update file. Error: ${error}`);
-            });
-        }
     }
 
     async initializeDependencyContainer() {
