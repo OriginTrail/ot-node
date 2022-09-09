@@ -1,20 +1,18 @@
 import { When, Given } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
 import { setTimeout } from 'timers/promises';
-
-import { createRequire } from 'module';
 import HttpApiHelper from "../../../utilities/http-api-helper.mjs";
+import {readFile} from "fs/promises";
 
-const require = createRequire(import.meta.url);
-const assertions = require('./datasets/assertions.json');
-const requests = require('./datasets/requests.json');
+const assertions = JSON.parse(await readFile("test/bdd/steps/api/datasets/assertions.json"));
+const requests = JSON.parse(await readFile("test/bdd/steps/api/datasets/requests.json"));
+
 const httpApiHelper = new HttpApiHelper();
 
 When(
     /^I call publish on node (\d+) with ([^"]*)/,
     { timeout: 120000 },
     async function publish(node, assertionName) {
-        // await setTimeout(10 * 1000); // wait 10 seconds to allow nodes to connect to each other
         this.logger.log(`I call publish route on node ${node}`);
         expect(
             !!assertions[assertionName],
@@ -35,19 +33,16 @@ When(
                 assert.fail(`Error while trying to publish assertion. ${error}`);
             });
         const { operationId } = result.operation;
-        // console.log(JSON.stringify(result.operation,null,2));
         this.state.lastPublishData = {
             nodeId: node - 1,
             UAL: result.UAL,
             assertionId: result.assertionId,
             operationId,
-            // keywords: parsedKeywords,
             assertion: assertions[assertionName],
             status: result.operation.status,
             errorType: result.operation.errorType,
             result,
         };
-        this.logger.log(this.state.lastPublishData.UAL);
     },
 );
 When(
