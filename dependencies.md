@@ -87,7 +87,7 @@
 - **description**: libp2p connection encription module
 
 ##### [@comunica/query-sparql](https://www.npmjs.com/package/@comunica/query-sparql) 
-- **version**: 2.2.1
+- **version**: ^2.4.3
 - **description**: sparql query engine
 
 ##### [@libp2p/bootstrap](https://www.npmjs.com/package/@libp2p/bootstrap) 

@@ -61,7 +61,7 @@
     },
     "dependencies": {
         "@chainsafe/libp2p-noise": "^8.0.1",
-        "@comunica/query-sparql": "2.2.1",
+        "@comunica/query-sparql": "^2.4.3",
         "@libp2p/bootstrap": "^2.0.0",
         "@libp2p/crypto": "^1.0.4",
         "@libp2p/kad-dht": "^3.0.4",
