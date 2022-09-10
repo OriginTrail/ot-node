@@ -43,6 +43,7 @@ class ProtocolScheduleMessagesCommand extends Command {
                     keyword,
                     node,
                     numberOfFoundNodes,
+                    batchSize,
                     numberOfNodesInBatch: currentBatchNodes.length,
                     leftoverNodes: currentBatchLeftoverNodes,
                 },
