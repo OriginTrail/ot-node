@@ -1,5 +1,6 @@
 import ProtocolInitCommand from '../../common/protocol-init-command.js';
 import { ERROR_TYPE } from '../../../../constants/constants.js';
+import Command from '../../../command.js';
 
 class GetInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
@@ -14,6 +15,15 @@ class GetInitCommand extends ProtocolInitCommand {
         const { assertionId } = command.data;
 
         return { assertionId };
+    }
+
+    async handleNack(command, responseData) {
+        await this.operationService.processResponse(
+            command,
+            this.operationService.getOperationRequestStatus().FAILED,
+            responseData,
+        );
+        return Command.empty();
     }
 
     /**

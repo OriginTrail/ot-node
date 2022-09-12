@@ -5,9 +5,33 @@ class NetworkModuleManager extends BaseModuleManager {
         return 'network';
     }
 
+    async serializePeers(peerIds) {
+        if (this.initialized) {
+            return this.getImplementation().module.serializePeers(peerIds);
+        }
+    }
+
+    async deserializePeers(serializedPeers) {
+        if (this.initialized) {
+            return this.getImplementation().module.deserializePeers(serializedPeers);
+        }
+    }
+
+    async sortPeers(key, peerIds, count) {
+        if (this.initialized) {
+            return this.getImplementation().module.sortPeers(key, peerIds, count);
+        }
+    }
+
     async findNodes(key, protocol) {
         if (this.initialized) {
             return this.getImplementation().module.findNodes(key, protocol);
+        }
+    }
+
+    async findNodesLocal(key, protocol) {
+        if (this.initialized) {
+            return this.getImplementation().module.findNodesLocal(key, protocol);
         }
     }
 

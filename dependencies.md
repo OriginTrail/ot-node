@@ -110,6 +110,10 @@
 - **version**: ^3.0.3
 - **description**: libp2p TCP module
 
+##### [@multiformats/multiaddr](https://www.npmjs.com/package/@multiformats/multiaddr)
+-   **version**: ^10.4.1
+-   **description**: create libp2p peers multiaddresses from string
+
 ##### [@polkadot/api](https://www.npmjs.com/package/@polkadot/api) 
 - **version**: ^9.2.4
 - **description**: used to interact with substrate nodes

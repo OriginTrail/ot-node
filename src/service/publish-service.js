@@ -34,8 +34,7 @@ class PublishService extends OperationService {
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
-        const { operationId, numberOfFoundNodes, leftoverNodes, numberOfNodesInBatch, keyword } =
-            command.data;
+        const { operationId, numberOfFoundNodes, leftoverNodes, keyword, batchSize } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
@@ -49,7 +48,7 @@ class PublishService extends OperationService {
         this.logger.debug(
             `Processing ${
                 this.networkProtocol
-            } response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${
+            } response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${batchSize} number of leftover nodes: ${
                 leftoverNodes.length
             }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${this.getMinimumAckResponses()}`,
         );
@@ -73,8 +72,7 @@ class PublishService extends OperationService {
             }
         } else if (
             completedNumber < this.getMinimumAckResponses() &&
-            (numberOfFoundNodes === numberOfResponses ||
-                numberOfResponses % numberOfNodesInBatch === 0)
+            (numberOfFoundNodes === numberOfResponses || numberOfResponses % batchSize === 0)
         ) {
             if (leftoverNodes.length === 0) {
                 await this.markOperationAsFailed(operationId, 'Not replicated to enough nodes!');

@@ -15,6 +15,7 @@ class GetService extends OperationService {
         super(ctx);
 
         this.dataService = ctx.dataService;
+        this.networkModuleManager = ctx.networkModuleManager;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
 
         this.operationName = OPERATIONS.GET;
@@ -31,8 +32,15 @@ class GetService extends OperationService {
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
-        const { operationId, numberOfFoundNodes, numberOfNodesInBatch, leftoverNodes, keyword } =
-            command.data;
+        const {
+            operationId,
+            numberOfFoundNodes,
+            leftoverNodes,
+            keyword,
+            batchSize,
+            nodesSeen,
+            newFoundNodes,
+        } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
@@ -44,7 +52,7 @@ class GetService extends OperationService {
         const { completedNumber, failedNumber } = keywordsStatuses[keyword];
         const numberOfResponses = completedNumber + failedNumber;
         this.logger.debug(
-            `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
+            `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${batchSize} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
         );
 
         if (completedNumber === this.getMinimumAckResponses()) {
@@ -54,9 +62,27 @@ class GetService extends OperationService {
                 this.completedStatuses,
             );
             this.logResponsesSummary(completedNumber, failedNumber);
-        } else if (
+        } else if (responseData?.nodes?.length) {
+            const leftoverNodesString = leftoverNodes.map((node) => node.toString());
+            const thisNodeId = this.networkModuleManager.getPeerId().toString();
+            const newDiscoveredNodes = responseData.nodes.filter(
+                (node) =>
+                    node.id !== thisNodeId &&
+                    !nodesSeen.includes(node.id) &&
+                    !leftoverNodesString.includes(node.id),
+            );
+
+            const deserializedNodes = await this.networkModuleManager.deserializePeers(
+                newDiscoveredNodes,
+            );
+            for (const node of deserializedNodes) {
+                newFoundNodes[node.id.toString()] = node.id;
+            }
+        }
+
+        if (
             completedNumber < this.getMinimumAckResponses() &&
-            (numberOfFoundNodes === failedNumber || failedNumber % numberOfNodesInBatch === 0)
+            (numberOfFoundNodes === failedNumber || failedNumber % batchSize === 0)
         ) {
             if (leftoverNodes.length === 0) {
                 await this.markOperationAsCompleted(
@@ -68,7 +94,12 @@ class GetService extends OperationService {
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);
             } else {
-                await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
+                const newLeftoverNodes = await this.networkModuleManager.sortPeers(
+                    keyword,
+                    leftoverNodes.concat(Object.values(newFoundNodes)),
+                    leftoverNodes.length,
+                );
+                await this.scheduleOperationForLeftoverNodes(command.data, newLeftoverNodes);
             }
         }
     }

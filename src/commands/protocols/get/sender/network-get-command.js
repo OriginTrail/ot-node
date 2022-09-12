@@ -21,6 +21,10 @@ class NetworkGetCommand extends NetworkProtocolCommand {
         };
     }
 
+    getFindNodesCommand() {
+        return 'findNodesLocalCommand';
+    }
+
     /**
      * Builds default networkGetCommand
      * @param map

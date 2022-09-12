@@ -23,7 +23,7 @@ class FindNodesCommand extends Command {
             OPERATION_ID_STATUS.FIND_NODES_START,
         );
 
-        const closestNodes = await this.networkModuleManager.findNodes(keyword, networkProtocol);
+        const closestNodes = await this.findNodes(keyword, networkProtocol);
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -48,10 +48,13 @@ class FindNodesCommand extends Command {
                 ...command.data,
                 batchSize,
                 leftoverNodes: closestNodes,
-                numberOfFoundNodes: closestNodes.length,
             },
             command.sequence,
         );
+    }
+
+    async findNodes(keyword, networkProtocol) {
+        return this.networkModuleManager.findNodes(keyword, networkProtocol);
     }
 
     /**

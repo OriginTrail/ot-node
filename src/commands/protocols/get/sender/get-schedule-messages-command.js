@@ -15,6 +15,7 @@ class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         return {
             ual,
             assertionId,
+            newFoundNodes: {},
         };
     }
 
