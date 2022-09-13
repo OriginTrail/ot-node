@@ -64,9 +64,13 @@ class FileService {
     }
 
     async removeFile(filePath) {
-        this.logger.debug(`Removing file on path: ${filePath}`);
-        await unlink(filePath);
-        return true;
+        if (await this.fileExists(filePath)) {
+            this.logger.debug(`Removing file on path: ${filePath}`);
+            await unlink(filePath);
+            return true;
+        }
+        this.logger.debug(`File doesn't exist on file path: ${filePath}`);
+        return false;
     }
 
     getDataFolderPath() {

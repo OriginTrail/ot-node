@@ -5,11 +5,6 @@
       "implementation": {
         "ganache": {
           "config": {
-            "blockchainTitle": "ganache",
-            "networkId": "ganache::testnet",
-            "rpcEndpoints": [
-              "http://localhost:7545"
-            ],
             "hubContractAddress": "0x378ec78F621E2C8Aeff345b39334c38B0Bb7b96F",
             "evmOperationalWalletPublicKey": "0x19ad96f87f8e1c13e99a98d8174e00f5a7c82df1",
             "evmOperationalWalletPrivateKey": "1e60c8e9aa35064cd2eaa4c005bda2b76ef1a858feebb6c8e131c472d16f9740",
@@ -34,6 +29,7 @@
       }
     },
     "repository": {
+      "enabled": true,
       "implementation": {
         "sequelize-repository": {
           "config": {
@@ -50,10 +46,7 @@
         "ot-graphdb": {
           "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
           "config": {
-            "url": "http://localhost:7200",
-            "repository": "origintrail-test-0",
-            "username": "admin",
-            "password": ""
+            "repository": "origintrail-test-0"
           }
         }
       }
@@ -97,5 +90,8 @@
   "minimumAckResponses": {
     "publish": 2,
     "get": 1
+  },
+  "auth": {
+    "ipBasedAuthEnabled": false
   }
 }
