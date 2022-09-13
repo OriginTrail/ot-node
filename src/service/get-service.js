@@ -1,10 +1,7 @@
 import { Mutex } from 'async-mutex';
 import OperationService from './operation-service.js';
-
 import {
-    GET_REQUEST_STATUS,
     OPERATION_ID_STATUS,
-    GET_STATUS,
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     OPERATIONS,
@@ -20,8 +17,6 @@ class GetService extends OperationService {
 
         this.operationName = OPERATIONS.GET;
         this.networkProtocol = NETWORK_PROTOCOLS.GET;
-        this.operationRequestStatus = GET_REQUEST_STATUS;
-        this.operationStatus = GET_STATUS;
         this.errorType = ERROR_TYPE.GET.GET_ERROR;
         this.completedStatuses = [
             OPERATION_ID_STATUS.GET.GET_FETCH_FROM_NODES_END,
@@ -55,7 +50,7 @@ class GetService extends OperationService {
             `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${batchSize} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
         );
 
-        if (completedNumber === this.getMinimumAckResponses()) {
+        if (await this.shouldMarkAsCompleted(operationId, completedNumber)) {
             await this.markOperationAsCompleted(
                 operationId,
                 { assertion: responseData.nquads },

@@ -1,4 +1,8 @@
-import { OPERATION_ID_STATUS } from '../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    OPERATION_REQUEST_STATUS,
+    OPERATION_STATUS,
+} from '../constants/constants.js';
 
 class OperationService {
     constructor(ctx) {
@@ -17,16 +21,19 @@ class OperationService {
         return this.networkProtocol;
     }
 
-    getOperationRequestStatus() {
-        return this.operationRequestStatus;
-    }
-
-    getOperationStatus() {
-        return this.operationStatus;
-    }
-
     getMinimumAckResponses() {
         return this.config.minimumAckResponses[this.operationName];
+    }
+
+    async getOperationStatus(operationId) {
+        return this.repositoryModuleManager.getOperationStatus(this.operationName, operationId);
+    }
+
+    async shouldMarkAsCompleted(operationId, completedResponses) {
+        return (
+            completedResponses === this.getMinimumAckResponses() &&
+            (await this.getOperationStatus(operationId)).status === OPERATION_STATUS.IN_PROGRESS
+        );
     }
 
     async getResponsesStatuses(responseStatus, errorMessage, operationId, keyword) {
@@ -51,7 +58,7 @@ class OperationService {
             if (!keywordsStatuses[response.keyword])
                 keywordsStatuses[response.keyword] = { failedNumber: 0, completedNumber: 0 };
 
-            if (response.status === this.operationRequestStatus.FAILED) {
+            if (response.status === OPERATION_REQUEST_STATUS.FAILED) {
                 keywordsStatuses[response.keyword].failedNumber += 1;
             } else {
                 keywordsStatuses[response.keyword].completedNumber += 1;
@@ -67,7 +74,7 @@ class OperationService {
         await this.repositoryModuleManager.updateOperationStatus(
             this.operationName,
             operationId,
-            this.operationStatus.COMPLETED,
+            OPERATION_STATUS.COMPLETED,
         );
 
         await this.operationIdService.cacheOperationIdData(operationId, responseData);

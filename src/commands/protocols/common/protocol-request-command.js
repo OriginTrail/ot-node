@@ -1,6 +1,6 @@
 import Command from '../../command.js';
 import ProtocolMessageCommand from './protocol-message-command.js';
-import { NETWORK_MESSAGE_TYPES } from '../../../constants/constants.js';
+import { NETWORK_MESSAGE_TYPES, OPERATION_REQUEST_STATUS } from '../../../constants/constants.js';
 
 class ProtocolRequestCommand extends ProtocolMessageCommand {
     async execute(command) {
@@ -13,7 +13,7 @@ class ProtocolRequestCommand extends ProtocolMessageCommand {
     async handleAck(command, responseData) {
         await this.operationService.processResponse(
             command,
-            this.operationService.getOperationRequestStatus().COMPLETED,
+            OPERATION_REQUEST_STATUS.COMPLETED,
             responseData,
         );
         return Command.empty();

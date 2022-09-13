@@ -323,6 +323,7 @@ class Libp2pService {
     }
 
     async sendMessage(protocol, remotePeerId, messageType, operationId, keyword, message) {
+        const failedResponse = { header: { messageType: 'NACK' }, data: {} };
         const keywordUuid = uuidv5(keyword, uuidv5.URL);
 
         this.logger.trace(
@@ -334,7 +335,12 @@ class Libp2pService {
         this.logger.trace(
             `Dialing remotePeerId: ${remotePeerId.toString()} for protocol: ${protocol}`,
         );
-        const stream = await this.node.dialProtocol(remotePeerId, protocol);
+        let stream;
+        try {
+            stream = await this.node.dialProtocol(remotePeerId, protocol);
+        } catch (error) {
+            return failedResponse;
+        }
         // } else {
         //     stream = sessionStream;
         // }
@@ -347,27 +353,33 @@ class Libp2pService {
             keywordUuid,
             messageType,
         );
+        let readMessage;
+        try {
+            await this._sendMessageToStream(stream, streamMessage);
+            // if (!this.sessions[remotePeerId.toString()]) {
+            //     this.sessions[remotePeerId.toString()] = {
+            //         [operationId]: {
+            //             stream
+            //         }
+            //     }
+            // } else {
+            //     this.sessions[remotePeerId.toString()][operationId] = {
+            //             stream
+            //     }
+            // }
+            // if (!this.sessions.sender[message.header.sessionId]) {
+            //     this.sessions.sender[message.header.sessionId] = {};
+            // }
+            readMessage = await this._readMessageFromStream(
+                stream,
+                this.isResponseValid.bind(this),
+                remotePeerId.toString(),
+            );
+        } catch (error) {
+            return failedResponse;
+        }
+        const { message: response, valid } = readMessage;
 
-        await this._sendMessageToStream(stream, streamMessage);
-        // if (!this.sessions[remotePeerId.toString()]) {
-        //     this.sessions[remotePeerId.toString()] = {
-        //         [operationId]: {
-        //             stream
-        //         }
-        //     }
-        // } else {
-        //     this.sessions[remotePeerId.toString()][operationId] = {
-        //             stream
-        //     }
-        // }
-        // if (!this.sessions.sender[message.header.sessionId]) {
-        //     this.sessions.sender[message.header.sessionId] = {};
-        // }
-        const { message: response, valid } = await this._readMessageFromStream(
-            stream,
-            this.isResponseValid.bind(this),
-            remotePeerId.toString(),
-        );
         this.logger.trace(
             `Receiving response from ${remotePeerId.toString()} : event=${protocol}, messageType=${
                 response.header.messageType

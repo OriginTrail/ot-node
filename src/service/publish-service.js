@@ -4,8 +4,6 @@ import OperationService from './operation-service.js';
 
 import {
     OPERATION_ID_STATUS,
-    PUBLISH_REQUEST_STATUS,
-    PUBLISH_STATUS,
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     SCHEMA_CONTEXT,
@@ -22,8 +20,6 @@ class PublishService extends OperationService {
 
         this.operationName = OPERATIONS.PUBLISH;
         this.networkProtocol = NETWORK_PROTOCOLS.STORE;
-        this.operationRequestStatus = PUBLISH_REQUEST_STATUS;
-        this.operationStatus = PUBLISH_STATUS;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_ERROR;
         this.completedStatuses = [
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_END,
@@ -53,7 +49,7 @@ class PublishService extends OperationService {
             }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${this.getMinimumAckResponses()}`,
         );
 
-        if (completedNumber === this.getMinimumAckResponses()) {
+        if (await this.shouldMarkAsCompleted(operationId, completedNumber)) {
             let allCompleted = true;
             for (const key in keywordsStatuses) {
                 if (keywordsStatuses[key].completedNumber < this.getMinimumAckResponses()) {

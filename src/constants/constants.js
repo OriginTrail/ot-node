@@ -226,24 +226,13 @@ export const NETWORK_PROTOCOLS = {
     SEARCH: '/search/1.0.0',
 };
 
-export const PUBLISH_STATUS = {
+export const OPERATION_STATUS = {
     IN_PROGRESS: 'IN_PROGRESS',
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
 };
 
-export const GET_STATUS = {
-    IN_PROGRESS: 'IN_PROGRESS',
-    FAILED: 'FAILED',
-    COMPLETED: 'COMPLETED',
-};
-
-export const PUBLISH_REQUEST_STATUS = {
-    FAILED: 'FAILED',
-    COMPLETED: 'COMPLETED',
-};
-
-export const GET_REQUEST_STATUS = {
+export const OPERATION_REQUEST_STATUS = {
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
 };
