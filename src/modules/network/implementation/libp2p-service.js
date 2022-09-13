@@ -1,5 +1,6 @@
 /* eslint-disable import/no-unresolved */
 import { createLibp2p } from 'libp2p';
+import { sha256 } from 'multiformats/hashes/sha2';
 import { Bootstrap } from '@libp2p/bootstrap';
 import { Mplex } from '@libp2p/mplex';
 import { Noise } from '@chainsafe/libp2p-noise';
@@ -10,6 +11,8 @@ import * as lp from 'it-length-prefixed';
 import { unmarshalPrivateKey } from '@libp2p/crypto/keys';
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string';
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string';
+import { xor as uint8ArrayXor } from 'uint8arrays/xor';
+import { compare as uint8ArrayCompare } from 'uint8arrays/compare';
 import map from 'it-map';
 import { createFromPrivKey, createRSAPeerId } from '@libp2p/peer-id-factory';
 import { InMemoryRateLimiter } from 'rolling-rate-limiter';
@@ -29,13 +32,19 @@ const initializationObject = {
     transports: [new TCP()],
     streamMuxers: [new Mplex()],
     connectionEncryption: [new Noise()],
-    dht: new KadDHT(),
 };
 
 class Libp2pService {
     async initialize(config, logger) {
         this.config = config;
         this.logger = logger;
+
+        initializationObject.dht = new KadDHT({
+            kBucketSize: this.config.kBucketSize,
+            clientMode: false,
+        });
+        initializationObject.peerRouting = this.config.peerRouting;
+        initializationObject.connectionManager = this.config.connectionManager;
 
         if (this.config.bootstrap.length > 0) {
             initializationObject.peerDiscovery = [
@@ -87,9 +96,6 @@ class Libp2pService {
     }
 
     _initializeNodeListeners() {
-        this.node.addEventListener('peer:discovery', (peer) => {
-            this._onPeerDiscovery(peer);
-        });
         this.node.connectionManager.addEventListener('peer:connect', (connection) => {
             this._onPeerConnect(connection);
         });
@@ -114,12 +120,6 @@ class Libp2pService {
         this.blackList = {};
     }
 
-    _onPeerDiscovery(peer) {
-        this.logger.trace(
-            `Node ${this.node.peerId.toString()} discovered ${peer.detail.id.toString()}`,
-        );
-    }
-
     _onPeerConnect(connection) {
         this.logger.trace(
             `Node ${this.node.peerId.toString()} connected to ${connection.detail.remotePeer.toString()}`,
@@ -134,16 +134,40 @@ class Libp2pService {
         return { ...peer, protocols: [] };
     }
 
-    async findNodes(key, protocol) {
+    async findNodes(key) {
         const encodedKey = new TextEncoder().encode(key);
-        const nodes = this.node.peerRouting.getClosestPeers(encodedKey);
-        const promises = [];
-        for await (const node of nodes) {
-            promises.push(this.peerWithProtocols(node));
-        }
-        const peers = await Promise.all(promises);
+        const self = this;
+        const finalPeerIds = pipe(
+            self.node.dht.getClosestPeers(encodedKey),
+            async function* storeAddresses(source) {
+                for await (const event of source) {
+                    if (event.name === 'FINAL_PEER') {
+                        await self.node.peerStore.addressBook.add(
+                            event.peer.id,
+                            event.peer.multiaddrs,
+                        );
+                        yield event.peer.id;
+                    }
+                }
+            },
+        );
 
-        return peers.filter((peer) => peer.protocols.includes(protocol)).map((peer) => peer.id);
+        const keyHash = Buffer.from((await sha256.digest(encodedKey)).digest);
+        const unsortedPeerDistances = [];
+        for await (const finalPeerId of finalPeerIds) {
+            const peerHash = Buffer.from((await sha256.digest(finalPeerId.toBytes())).digest);
+
+            unsortedPeerDistances.push({
+                peerId: finalPeerId,
+                distance: uint8ArrayXor(keyHash, peerHash),
+            });
+        }
+
+        const sortedPeers = unsortedPeerDistances
+            .sort((a, b) => uint8ArrayCompare(a.distance, b.distance))
+            .map((pd) => pd.peerId);
+
+        return sortedPeers.slice(0, this.config.kBucketSize);
     }
 
     getPeers() {
