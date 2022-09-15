@@ -28,7 +28,7 @@ const evmAccountWithTokens = {
 };
 
 const walletsPath = path.join(appRootPath.path, 'tools/substrate-accounts-mapping/wallets.json');
-const numberOfAccounts = 52;
+const numberOfAccounts = 1;
 
 class AccountsMapping {
     async initialize() {
@@ -247,7 +247,7 @@ class AccountsMapping {
             domain: {
                 name: 'OTP EVM claim',
                 version: '1',
-                chainId: '101',
+                chainId: '2160',
                 salt: '0x0542e99b538e30d713d3e020f18fa6717eb2c5452bd358e0dd791628260a36f0',
             },
             message: {
