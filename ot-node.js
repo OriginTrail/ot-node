@@ -5,6 +5,7 @@ import appRootPath from 'app-root-path';
 import path from 'path';
 import EventEmitter from 'events';
 import { createRequire } from 'module';
+import { toString as uint8ArrayToString } from 'uint8arrays/to-string';
 import DependencyInjection from './src/service/dependency-injection.js';
 import Logger from './src/logger/logger.js';
 import { MIN_NODE_VERSION } from './src/constants/constants.js';
@@ -237,7 +238,7 @@ class OTNode {
         }
         if (!configFile.modules.network.implementation['libp2p-service'].config.privateKey) {
             configFile.modules.network.implementation['libp2p-service'].config.privateKey =
-                privateKey;
+                uint8ArrayToString(privateKey, 'base64pad');
             await fs.promises.writeFile(configurationFilePath, JSON.stringify(configFile, null, 2));
         }
     }
