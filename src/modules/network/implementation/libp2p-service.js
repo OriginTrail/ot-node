@@ -18,6 +18,7 @@ import { createFromPrivKey, createRSAPeerId } from '@libp2p/peer-id-factory';
 import { InMemoryRateLimiter } from 'rolling-rate-limiter';
 import toobusy from 'toobusy-js';
 import { v5 as uuidv5 } from 'uuid';
+import { PeerSet } from '@libp2p/peer-collections';
 import {
     NETWORK_API_RATE_LIMIT,
     NETWORK_API_SPAM_DETECTION,
@@ -62,7 +63,7 @@ class Libp2pService {
         if (!this.config.peerId) {
             if (!this.config.privateKey) {
                 id = await createRSAPeerId({ bits: 1024 });
-                this.config.privateKey = id.privateKey;
+                this.config.privateKey = uint8ArrayToString(id.privateKey, 'base64pad');
             } else {
                 const encoded = uint8ArrayFromString(this.config.privateKey, 'base64pad');
                 id = await createFromPrivKey(await unmarshalPrivateKey(encoded));
@@ -153,8 +154,11 @@ class Libp2pService {
         );
 
         const keyHash = Buffer.from((await sha256.digest(encodedKey)).digest);
+        const peersSeen = new PeerSet();
         const unsortedPeerDistances = [];
         for await (const finalPeerId of finalPeerIds) {
+            if (peersSeen.has(finalPeerId)) continue;
+            peersSeen.add(finalPeerId);
             const peerHash = Buffer.from((await sha256.digest(finalPeerId.toBytes())).digest);
 
             unsortedPeerDistances.push({
