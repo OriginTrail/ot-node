@@ -290,7 +290,16 @@ class Libp2pService {
         this.logger.trace(
             `Dialing remotePeerId: ${remotePeerId.toString()} for protocol: ${protocol}`,
         );
-        const stream = await this.node.dialProtocol(remotePeerId, protocol);
+        let stream;
+        try {
+            stream = await this.node.dialProtocol(remotePeerId, protocol);
+        } catch (error) {
+            throw Error(
+                `Unable to dial peer: ${remotePeerId.toString()} with protocol: ${protocol}. Error: ${
+                    error.message
+                }`,
+            );
+        }
         // } else {
         //     stream = sessionStream;
         // }
