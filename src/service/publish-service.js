@@ -54,7 +54,10 @@ class PublishService extends OperationService {
             }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${this.getMinimumAckResponses()}`,
         );
 
-        if (completedNumber === this.getMinimumAckResponses()) {
+        if (
+            responseStatus === this.getOperationRequestStatus().COMPLETED &&
+            completedNumber === this.getMinimumAckResponses()
+        ) {
             let allCompleted = true;
             for (const key in keywordsStatuses) {
                 if (keywordsStatuses[key].completedNumber < this.getMinimumAckResponses()) {
