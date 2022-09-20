@@ -17,6 +17,12 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
+    getMultiAddrs() {
+        if (this.initialized) {
+            return this.getImplementation().module.getMultiAddrs();
+        }
+    }
+
     /**
      * Store the given key/value pair at the peer `target`.
      *

@@ -182,6 +182,10 @@ class Libp2pService {
         return this.node.peerId;
     }
 
+    getMultiAddrs() {
+        return this.node.getMultiaddrs();
+    }
+
     async handleMessage(protocol, handler) {
         this.logger.info(`Enabling network protocol: ${protocol}`);
 
