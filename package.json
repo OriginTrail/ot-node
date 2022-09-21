@@ -103,7 +103,6 @@
         "p-iteration": "^1.1.8",
         "pino": "^8.4.2",
         "pino-pretty": "^9.1.0",
-        "private-ip": "^2.3.4",
         "rc": "^1.2.8",
         "rolling-rate-limiter": "^0.2.13",
         "semver": "^7.3.7",

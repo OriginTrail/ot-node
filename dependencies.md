@@ -234,10 +234,6 @@
 - **version**: ^9.1.0
 - **description**: prettifier for pino logger
 
-##### [private-ip](https://www.npmjs.com/package/private-ip)
-- **version**: ^2.3.4
-- **description**: check if input ip is private
-
 ##### [rc](https://www.npmjs.com/package/rc) 
 - **version**: ^1.2.8
 - **description**: configuration loader

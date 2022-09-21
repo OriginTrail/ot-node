@@ -19,7 +19,7 @@ import { InMemoryRateLimiter } from 'rolling-rate-limiter';
 import toobusy from 'toobusy-js';
 import { v5 as uuidv5 } from 'uuid';
 import { PeerSet } from '@libp2p/peer-collections';
-import isPrivateIp from 'private-ip';
+import ip from 'ip';
 import os from 'os';
 import {
     NETWORK_API_RATE_LIMIT,
@@ -130,7 +130,7 @@ class Libp2pService {
             if (netAddrs != null) {
                 for (const netAddr of netAddrs) {
                     if (netAddr.family === 'IPv4') {
-                        if (!isPrivateIp(netAddr.address)) {
+                        if (!ip.isPrivate(netAddr.address)) {
                             return new TCP();
                         }
                     }
@@ -143,8 +143,10 @@ class Libp2pService {
                 "Public Ip not found. Please specify your node's public ip in the config file.",
             );
         }
-
-        if (isPrivateIp(publicIp)) {
+        if (ip.isV4Format(publicIp)) {
+            throw Error('Specified Ip must be in v4 format.');
+        }
+        if (!ip.isPublic(publicIp)) {
             throw Error('Specified Ip must be public.');
         }
 
