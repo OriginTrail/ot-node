@@ -169,7 +169,7 @@ class Libp2pService {
         const encodedKey = new TextEncoder().encode(key);
         const self = this;
         const finalPeerIds = pipe(
-            self.node.dht.wan.getClosestPeers(encodedKey),
+            self.node.dht.getClosestPeers(encodedKey),
             async function* storeAddresses(source) {
                 for await (const event of source) {
                     if (event.name === 'FINAL_PEER') {
