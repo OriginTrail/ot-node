@@ -19,6 +19,8 @@ import { InMemoryRateLimiter } from 'rolling-rate-limiter';
 import toobusy from 'toobusy-js';
 import { v5 as uuidv5 } from 'uuid';
 import { PeerSet } from '@libp2p/peer-collections';
+import ip from 'ip';
+import os from 'os';
 import {
     NETWORK_API_RATE_LIMIT,
     NETWORK_API_SPAM_DETECTION,
@@ -30,7 +32,6 @@ const initializationObject = {
     addresses: {
         listen: ['/ip4/0.0.0.0/tcp/9000'],
     },
-    transports: [new TCP()],
     streamMuxers: [new Mplex()],
     connectionEncryption: [new Noise()],
 };
@@ -40,6 +41,7 @@ class Libp2pService {
         this.config = config;
         this.logger = logger;
 
+        initializationObject.transports = [this._initializeTCP(this.config.publicIp)];
         initializationObject.dht = new KadDHT({
             kBucketSize: this.config.kBucketSize,
             clientMode: false,
@@ -119,6 +121,36 @@ class Libp2pService {
         };
 
         this.blackList = {};
+    }
+
+    _initializeTCP(publicIp) {
+        if (process.env.NODE_ENV !== 'testnet') return new TCP();
+
+        for (const [, netAddrs] of Object.entries(os.networkInterfaces())) {
+            if (netAddrs != null) {
+                for (const netAddr of netAddrs) {
+                    if (netAddr.family === 'IPv4') {
+                        if (!ip.isPrivate(netAddr.address)) {
+                            return new TCP();
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!publicIp) {
+            throw Error(
+                "Public Ip not found. Please specify your node's public ip in the config file.",
+            );
+        }
+        if (ip.isV4Format(publicIp)) {
+            throw Error('Specified Ip must be in v4 format.');
+        }
+        if (!ip.isPublic(publicIp)) {
+            throw Error('Specified Ip must be public.');
+        }
+
+        return new TCP({ publicIp });
     }
 
     _onPeerConnect(connection) {
