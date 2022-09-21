@@ -143,7 +143,7 @@ class Libp2pService {
                 "Public Ip not found. Please specify your node's public ip in the config file.",
             );
         }
-        if (ip.isV4Format(publicIp)) {
+        if (!ip.isV4Format(publicIp)) {
             throw Error('Specified Ip must be in v4 format.');
         }
         if (!ip.isPublic(publicIp)) {
