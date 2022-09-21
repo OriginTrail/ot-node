@@ -36,6 +36,19 @@
                     "libp2p-service": {
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
+                            "kBucketSize": 20,
+                            "connectionManager": {
+                                "autoDial": true,
+                                "autoDialInterval": 10e3,
+                                "dialTimeout": 2e3
+                            },
+                            "peerRouting": {
+                                "refreshManager": {
+                                    "enabled": true,
+                                    "interval": 6e5,
+                                    "bootDelay": 2e3
+                                }
+                            },
                             "port": 9000,
                             "bootstrap": []
                         }
@@ -191,6 +204,33 @@
                     }
                 }
             },
+            "network": {
+                "enabled": true,
+                "implementation": {
+                    "libp2p-service": {
+                        "package": "./network/implementation/libp2p-service.js",
+                        "config": {
+                            "kBucketSize": 20,
+                            "connectionManager": {
+                                "autoDial": true,
+                                "autoDialInterval": 10e3,
+                                "dialTimeout": 2e3
+                            },
+                            "peerRouting": {
+                                "refreshManager": {
+                                    "enabled": true,
+                                    "interval": 6e5,
+                                    "bootDelay": 2e3
+                                }
+                            },
+                            "port": 9000,
+                            "bootstrap": [
+                                "/ip4/0.0.0.0/tcp/9000/p2p/QmWyf3dtqJnhuCpzEDTNmNFYc5tjxTrXhGcUUmGHdg2gtj"
+                            ]
+                        }
+                    }
+                }
+            },
             "repository": {
                 "enabled": true,
                 "implementation": {
@@ -296,6 +336,19 @@
                     "libp2p-service": {
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
+                            "kBucketSize": 20,
+                            "connectionManager": {
+                                "autoDial": true,
+                                "autoDialInterval": 10e3,
+                                "dialTimeout": 2e3
+                            },
+                            "peerRouting": {
+                                "refreshManager": {
+                                    "enabled": true,
+                                    "interval": 6e5,
+                                    "bootDelay": 2e3
+                                }
+                            },
                             "port": 9000,
                             "bootstrap": [
                                 "/ip4/139.59.174.24/tcp/9000/p2p/QmU7p61f8qgzCtfTEUynJaqnsLRN4QExjtWfsMRQ7oiMuS",

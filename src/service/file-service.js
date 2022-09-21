@@ -111,9 +111,9 @@ class FileService {
             if (createdDate.getTime() + expiredTimeout < now.getTime()) {
                 // eslint-disable-next-line no-await-in-loop
                 await this.removeFile(filePath);
-                this.logger.trace(`Successfully removed expired cache file: ${filePath}`);
             }
         }
+        this.logger.trace(`Successfully removed ${fileList.length} expired cache files`);
     }
 }
 
