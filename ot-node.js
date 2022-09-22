@@ -43,9 +43,10 @@ class OTNode {
         await this.saveNetworkModulePeerIdAndPrivKey();
         await this.createProfiles();
 
-        await this.initializeControllers();
         await this.initializeCommandExecutor();
         await this.initializeTelemetryInjectionService();
+
+        await this.initializeControllers();
 
         this.logger.info('Node is up and running!');
     }
@@ -97,7 +98,7 @@ class OTNode {
             this.logger.info(`All modules initialized!`);
         } catch (e) {
             this.logger.error(`Module initialization failed. Error message: ${e.message}`);
-            process.exit(1);
+            this.stop(1);
         }
     }
 
@@ -117,6 +118,7 @@ class OTNode {
             this.logger.error(
                 `Http api router initialization failed. Error message: ${e.message}, ${e.stackTrace}`,
             );
+            this.stop(1);
         }
 
         try {
@@ -127,6 +129,7 @@ class OTNode {
             this.logger.error(
                 `RPC router initialization failed. Error message: ${e.message}, ${e.stackTrace}`,
             );
+            this.stop(1);
         }
     }
 
@@ -170,7 +173,7 @@ class OTNode {
 
         if (!blockchainModuleManager.getImplementationsNames().length) {
             this.logger.info(`Unable to create blockchain profiles. OT-node shutting down...`);
-            process.exit(1);
+            this.stop(1);
         }
     }
 
@@ -193,6 +196,7 @@ class OTNode {
             this.logger.error(
                 `Command executor initialization failed. Error message: ${e.message}`,
             );
+            this.stop(1);
         }
     }
 
@@ -270,9 +274,9 @@ class OTNode {
         this.config.otNodeUpdated = true;
     }
 
-    stop() {
+    stop(code = 0) {
         this.logger.info('Stopping node...');
-        process.exit(0);
+        process.exit(code);
     }
 }
 
