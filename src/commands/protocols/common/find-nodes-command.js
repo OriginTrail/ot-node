@@ -18,17 +18,7 @@ class FindNodesCommand extends Command {
         this.errorType = errorType;
         this.logger.debug(`Searching for closest node(s) for keyword ${keyword}`);
 
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            OPERATION_ID_STATUS.FIND_NODES_START,
-        );
-
-        const closestNodes = await this.findNodes(keyword, networkProtocol);
-
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            OPERATION_ID_STATUS.FIND_NODES_END,
-        );
+        const closestNodes = await this.findNodes(keyword, networkProtocol, operationId);
 
         this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${keyword}`);
 
@@ -53,8 +43,20 @@ class FindNodesCommand extends Command {
         );
     }
 
-    async findNodes(keyword, networkProtocol) {
-        return this.networkModuleManager.findNodes(keyword, networkProtocol);
+    async findNodes(keyword, networkProtocol, operationId) {
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.FIND_NODES_START,
+        );
+
+        const closestNodes = await this.networkModuleManager.findNodes(keyword, networkProtocol);
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.FIND_NODES_END,
+        );
+
+        return closestNodes;
     }
 
     /**

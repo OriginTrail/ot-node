@@ -93,7 +93,7 @@ class GetService extends OperationService {
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);
             } else {
-                const newLeftoverNodes = await this.networkModuleManager.sortPeers(
+                const newLeftoverNodes = await this.networkModuleManager.sortPeerIds(
                     keyword,
                     leftoverNodes.concat(Object.values(newFoundNodes)),
                     leftoverNodes.length,

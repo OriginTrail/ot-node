@@ -20,6 +20,14 @@ import { peerIdFromString } from '@libp2p/peer-id';
 import { InMemoryRateLimiter } from 'rolling-rate-limiter';
 import toobusy from 'toobusy-js';
 import { v5 as uuidv5 } from 'uuid';
+import { PeerSet } from '@libp2p/peer-collections';
+import filter from 'it-filter';
+import merge from 'it-merge';
+import all from 'it-all';
+import each from 'it-foreach';
+import sort from 'it-sort';
+import take from 'it-take';
+
 import {
     NETWORK_API_RATE_LIMIT,
     NETWORK_API_SPAM_DETECTION,
@@ -161,61 +169,61 @@ class Libp2pService {
         return Promise.all(serializedPeers.map((peer) => this.deserializePeer(peer)));
     }
 
-    async sortPeers(key, peerIds, count = this.config.kBucketSize) {
-        const encodedKey = new TextEncoder().encode(key);
-        const keyHash = Buffer.from((await sha256.digest(encodedKey)).digest);
-        const unsortedPeerDistances = [];
+    async sortPeerIds(key, peerIds, count = this.config.kBucketSize) {
+        const keyHash = await this.toHash(new TextEncoder().encode(key));
+        const sorted = pipe(
+            peerIds,
+            (source) =>
+                map(source, async (peerId) => ({
+                    peerId,
+                    distance: uint8ArrayXor(keyHash, await this.toHash(peerId.toBytes())),
+                })),
+            (source) => sort(source, (a, b) => uint8ArrayCompare(a.distance, b.distance)),
+        );
 
-        for await (const peerId of peerIds) {
-            const peerHash = Buffer.from((await sha256.digest(peerId.toBytes())).digest);
+        return all(
+            map(sorted, (pd) => pd.peerId),
+            (source) => take(source, count),
+        );
+    }
 
-            unsortedPeerDistances.push({
-                peerId,
-                distance: uint8ArrayXor(keyHash, peerHash),
-            });
-        }
-
-        return unsortedPeerDistances
-            .sort((a, b) => uint8ArrayCompare(a.distance, b.distance))
-            .slice(0, count)
-            .map((pd) => pd.peerId);
+    async toHash(encodedKey) {
+        return Buffer.from((await sha256.digest(encodedKey)).digest);
     }
 
     async findNodesLocal(key) {
         const encodedKey = new TextEncoder().encode(key);
         const keyHash = Buffer.from((await sha256.digest(encodedKey)).digest);
 
-        const wanClosestPeers = this.node.dht.wan.routingTable.closestPeers(
-            keyHash,
-            this.config.kBucketSize,
-        );
-        const lanClosestPeers = this.node.dht.lan.routingTable.closestPeers(
-            keyHash,
-            this.config.kBucketSize,
+        const peers = await all(
+            merge(
+                this.node.dht.wan.routingTable.closestPeers(keyHash, this.config.kBucketSize),
+                this.node.dht.lan.routingTable.closestPeers(keyHash, this.config.kBucketSize),
+            ),
         );
 
-        return this.sortPeers(key, wanClosestPeers.concat(lanClosestPeers));
+        return this.sortPeerIds(key, new PeerSet(peers));
     }
 
     async findNodes(key) {
         const encodedKey = new TextEncoder().encode(key);
         const self = this;
-        const finalPeerIds = pipe(
-            self.node.dht.getClosestPeers(encodedKey),
-            async function* storeAddresses(source) {
-                for await (const event of source) {
-                    if (event.name === 'FINAL_PEER') {
+        const peers = await all(
+            pipe(
+                self.node.dht.getClosestPeers(encodedKey),
+                (source) => filter(source, (event) => event.name === 'FINAL_PEER'),
+                (source) =>
+                    each(source, async (event) => {
                         await self.node.peerStore.addressBook.add(
                             event.peer.id,
                             event.peer.multiaddrs,
                         );
-                        yield event.peer.id;
-                    }
-                }
-            },
+                    }),
+                (source) => map(source, async (event) => event.peer.id),
+            ),
         );
 
-        return this.sortPeers(key, finalPeerIds);
+        return this.sortPeerIds(key, new PeerSet(peers));
     }
 
     getPeers() {
@@ -323,7 +331,6 @@ class Libp2pService {
     }
 
     async sendMessage(protocol, remotePeerId, messageType, operationId, keyword, message) {
-        const failedResponse = { header: { messageType: 'NACK' }, data: {} };
         const keywordUuid = uuidv5(keyword, uuidv5.URL);
 
         this.logger.trace(
@@ -335,12 +342,8 @@ class Libp2pService {
         this.logger.trace(
             `Dialing remotePeerId: ${remotePeerId.toString()} for protocol: ${protocol}`,
         );
-        let stream;
-        try {
-            stream = await this.node.dialProtocol(remotePeerId, protocol);
-        } catch (error) {
-            return failedResponse;
-        }
+        const stream = await this.node.dialProtocol(remotePeerId, protocol);
+
         // } else {
         //     stream = sessionStream;
         // }
@@ -353,32 +356,26 @@ class Libp2pService {
             keywordUuid,
             messageType,
         );
-        let readMessage;
-        try {
-            await this._sendMessageToStream(stream, streamMessage);
-            // if (!this.sessions[remotePeerId.toString()]) {
-            //     this.sessions[remotePeerId.toString()] = {
-            //         [operationId]: {
-            //             stream
-            //         }
-            //     }
-            // } else {
-            //     this.sessions[remotePeerId.toString()][operationId] = {
-            //             stream
-            //     }
-            // }
-            // if (!this.sessions.sender[message.header.sessionId]) {
-            //     this.sessions.sender[message.header.sessionId] = {};
-            // }
-            readMessage = await this._readMessageFromStream(
-                stream,
-                this.isResponseValid.bind(this),
-                remotePeerId.toString(),
-            );
-        } catch (error) {
-            return failedResponse;
-        }
-        const { message: response, valid } = readMessage;
+        await this._sendMessageToStream(stream, streamMessage);
+        // if (!this.sessions[remotePeerId.toString()]) {
+        //     this.sessions[remotePeerId.toString()] = {
+        //         [operationId]: {
+        //             stream
+        //         }
+        //     }
+        // } else {
+        //     this.sessions[remotePeerId.toString()][operationId] = {
+        //             stream
+        //     }
+        // }
+        // if (!this.sessions.sender[message.header.sessionId]) {
+        //     this.sessions.sender[message.header.sessionId] = {};
+        // }
+        const { message: response, valid } = await this._readMessageFromStream(
+            stream,
+            this.isResponseValid.bind(this),
+            remotePeerId.toString(),
+        );
 
         this.logger.trace(
             `Receiving response from ${remotePeerId.toString()} : event=${protocol}, messageType=${
