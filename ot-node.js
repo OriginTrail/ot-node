@@ -46,7 +46,7 @@ class OTNode {
         await this.initializeCommandExecutor();
         await this.initializeTelemetryInjectionService();
 
-        await this.initializeControllers();
+        await this.initializeRouters();
 
         this.logger.info('Node is up and running!');
     }
@@ -109,26 +109,29 @@ class OTNode {
         this.logger.info('Event emitter initialized');
     }
 
-    async initializeControllers() {
+    async initializeRouters() {
         try {
-            this.logger.info('Initializing http api router');
+            this.logger.info('Initializing http api and rpc router');
             const httpApiRouter = this.container.resolve('httpApiRouter');
-            await httpApiRouter.initialize();
-        } catch (e) {
-            this.logger.error(
-                `Http api router initialization failed. Error message: ${e.message}, ${e.stackTrace}`,
-            );
-            this.stop(1);
-        }
-
-        try {
-            this.logger.info('Initializing rpc router');
             const rpcRouter = this.container.resolve('rpcRouter');
-            await rpcRouter.initialize();
+
+            await Promise.all([
+                httpApiRouter.initialize().catch((err) => {
+                    this.logger.error(
+                        `Http api router initialization failed. Error message: ${err.message}, ${err.stackTrace}`,
+                    );
+                    this.stop(1);
+                }),
+                rpcRouter.initialize().catch((err) => {
+                    this.logger.error(
+                        `RPC router initialization failed. Error message: ${err.message}, ${err.stackTrace}`,
+                    );
+                    this.stop(1);
+                }),
+            ]);
+            this.logger.info('Routers initialized successfully');
         } catch (e) {
-            this.logger.error(
-                `RPC router initialization failed. Error message: ${e.message}, ${e.stackTrace}`,
-            );
+            this.logger.error(`Failed to initialize routers: ${e.message}, ${e.stackTrace}`);
             this.stop(1);
         }
     }
