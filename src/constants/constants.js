@@ -8,6 +8,8 @@ export const MAX_FILE_SIZE = 2621440;
 
 export const PUBLISH_TYPES = { ASSERTION: 'assertion', ASSET: 'asset', INDEX: 'index' };
 
+export const DHT_TYPES = { DUAL: 'dual', WAN: 'wan', LAN: 'lan' };
+
 /**
  * Triple store media types
  * @type {{APPLICATION_JSON: string, N_QUADS: string, SPARQL_RESULTS_JSON: string, LD_JSON: string}}

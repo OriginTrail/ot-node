@@ -35,6 +35,7 @@ import {
     NETWORK_API_SPAM_DETECTION,
     NETWORK_MESSAGE_TYPES,
     NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES,
+    DHT_TYPES,
 } from '../../../constants/constants.js';
 
 const initializationObject = {
@@ -132,22 +133,21 @@ class Libp2pService {
     }
 
     _initializeDHT(dhtConfig) {
+        const dhtTypes = Object.values(DHT_TYPES);
+
+        if (
+            !dhtConfig?.type ||
+            typeof dhtConfig.type !== 'string' ||
+            !dhtTypes.includes(dhtConfig.type)
+        )
+            throw Error(`Invalid dht type found in config. Allowed dht types: ${dhtTypes}`);
+
         const dualKadDht = new KadDHT({ kBucketSize: dhtConfig?.kBucketSize, clientMode: false });
+        this.dhtType = dhtConfig.type.toLowerCase();
 
-        if (!dhtConfig?.types?.length || !dhtConfig.types.length !== 1) {
-            return dualKadDht;
-        }
-
-        const dhtType = dhtConfig.types[0].toLowerCase();
-
-        if (dhtType === 'wan') {
-            return dualKadDht.wan;
-        }
-        if (dhtType === 'lan') {
-            return dualKadDht.lan;
-        }
-
-        throw Error('Invalid dht type found in config. Dht can be wan or lan.');
+        if (this.dhtType === DHT_TYPES.WAN) return dualKadDht.wan;
+        if (this.dhtType === DHT_TYPES.LAN) return dualKadDht.lan;
+        return dualKadDht;
     }
 
     _initializeTCP(publicIp) {
@@ -227,12 +227,11 @@ class Libp2pService {
                     distance: uint8ArrayXor(keyHash, await this.toHash(peerId.toBytes())),
                 })),
             (source) => sort(source, (a, b) => uint8ArrayCompare(a.distance, b.distance)),
+            (source) => take(source, count),
+            (source) => map(source, (pd) => pd.peerId),
         );
 
-        return all(
-            map(sorted, (pd) => pd.peerId),
-            (source) => take(source, count),
-        );
+        return all(sorted);
     }
 
     async toHash(encodedKey) {
@@ -243,14 +242,18 @@ class Libp2pService {
         const encodedKey = new TextEncoder().encode(key);
         const keyHash = Buffer.from((await sha256.digest(encodedKey)).digest);
 
-        const peers = await all(
-            merge(
-                this.node.dht.wan.routingTable.closestPeers(keyHash, this.config.kBucketSize),
-                this.node.dht.lan.routingTable.closestPeers(keyHash, this.config.kBucketSize),
-            ),
-        );
+        if (this.dhtType === DHT_TYPES.DUAL) {
+            const peers = await all(
+                merge(
+                    this.node.dht.wan.routingTable.closestPeers(keyHash, this.config.kBucketSize),
+                    this.node.dht.lan.routingTable.closestPeers(keyHash, this.config.kBucketSize),
+                ),
+            );
 
-        return this.sortPeerIds(key, new PeerSet(peers));
+            return this.sortPeerIds(key, new PeerSet(peers));
+        }
+
+        return this.node.dht.routingTable.closestPeers(keyHash, this.config.kBucketSize);
     }
 
     async findNodes(key) {
@@ -271,7 +274,7 @@ class Libp2pService {
             ),
         );
 
-        return this.sortPeerIds(key, new PeerSet(peers));
+        return this.dhtType === DHT_TYPES.DUAL ? this.sortPeerIds(key, new PeerSet(peers)) : peers;
     }
 
     getPeers() {
