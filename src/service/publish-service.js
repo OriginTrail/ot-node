@@ -8,6 +8,7 @@ import {
     ERROR_TYPE,
     SCHEMA_CONTEXT,
     OPERATIONS,
+    OPERATION_REQUEST_STATUS,
 } from '../constants/constants.js';
 
 class PublishService extends OperationService {
@@ -49,7 +50,10 @@ class PublishService extends OperationService {
             }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${this.getMinimumAckResponses()}`,
         );
 
-        if (await this.shouldMarkAsCompleted(operationId, completedNumber)) {
+        if (
+            responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
+            completedNumber === this.getMinimumAckResponses()
+        ) {
             let allCompleted = true;
             for (const key in keywordsStatuses) {
                 if (keywordsStatuses[key].completedNumber < this.getMinimumAckResponses()) {

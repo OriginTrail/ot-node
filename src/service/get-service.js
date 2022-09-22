@@ -5,6 +5,7 @@ import {
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     OPERATIONS,
+    OPERATION_REQUEST_STATUS,
 } from '../constants/constants.js';
 
 class GetService extends OperationService {
@@ -50,7 +51,10 @@ class GetService extends OperationService {
             `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${batchSize} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
         );
 
-        if (await this.shouldMarkAsCompleted(operationId, completedNumber)) {
+        if (
+            responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
+            completedNumber === this.getMinimumAckResponses()
+        ) {
             await this.markOperationAsCompleted(
                 operationId,
                 { assertion: responseData.nquads },

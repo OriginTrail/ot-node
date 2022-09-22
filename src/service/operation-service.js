@@ -29,13 +29,6 @@ class OperationService {
         return this.repositoryModuleManager.getOperationStatus(this.operationName, operationId);
     }
 
-    async shouldMarkAsCompleted(operationId, completedResponses) {
-        return (
-            completedResponses === this.getMinimumAckResponses() &&
-            (await this.getOperationStatus(operationId)).status === OPERATION_STATUS.IN_PROGRESS
-        );
-    }
-
     async getResponsesStatuses(responseStatus, errorMessage, operationId, keyword) {
         const self = this;
         let responses = 0;
