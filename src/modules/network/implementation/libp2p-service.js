@@ -123,7 +123,7 @@ class Libp2pService {
     _initializeDHT(dhtConfig) {
         const dualKadDht = new KadDHT({ kBucketSize: dhtConfig?.kBucketSize, clientMode: false });
 
-        if (!dhtConfig?.types?.length || !dhtConfig.types.length !== 1) {
+        if (!dhtConfig?.types?.length || dhtConfig.types.length !== 1) {
             return dualKadDht;
         }
 
