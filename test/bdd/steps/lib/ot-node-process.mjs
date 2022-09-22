@@ -1,6 +1,7 @@
 import OTNode from '../../../../ot-node.js';
 import HttpApiHelper from '../../../utilities/http-api-helper.mjs';
 
+const httpApiHelper = new HttpApiHelper();
 process.on('message', async (data) => {
     const config = JSON.parse(data);
     try {
@@ -8,7 +9,6 @@ process.on('message', async (data) => {
         const newNode = new OTNode(config);
         newNode.start().then(async () => {
             let started = false;
-            const httpApiHelper = new HttpApiHelper();
             while (!started) {
                 try {
                     const nodeHostname = `http://localhost:${config.rpcPort}`;

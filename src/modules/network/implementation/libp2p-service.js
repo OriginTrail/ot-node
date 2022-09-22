@@ -28,6 +28,8 @@ import each from 'it-foreach';
 import sort from 'it-sort';
 import take from 'it-take';
 
+import ip from 'ip';
+import os from 'os';
 import {
     NETWORK_API_RATE_LIMIT,
     NETWORK_API_SPAM_DETECTION,
@@ -39,7 +41,6 @@ const initializationObject = {
     addresses: {
         listen: ['/ip4/0.0.0.0/tcp/9000'],
     },
-    transports: [new TCP()],
     streamMuxers: [new Mplex()],
     connectionEncryption: [new Noise()],
 };
@@ -49,10 +50,8 @@ class Libp2pService {
         this.config = config;
         this.logger = logger;
 
-        initializationObject.dht = new KadDHT({
-            kBucketSize: this.config.kBucketSize,
-            clientMode: false,
-        });
+        initializationObject.transports = [this._initializeTCP(this.config.publicIp)];
+        initializationObject.dht = this._initializeDHT(this.config.dht);
         initializationObject.peerRouting = this.config.peerRouting;
         initializationObject.connectionManager = this.config.connectionManager;
 
@@ -72,7 +71,7 @@ class Libp2pService {
         if (!this.config.peerId) {
             if (!this.config.privateKey) {
                 id = await createRSAPeerId({ bits: 1024 });
-                this.config.privateKey = id.privateKey;
+                this.config.privateKey = uint8ArrayToString(id.privateKey, 'base64pad');
             } else {
                 const encoded = uint8ArrayFromString(this.config.privateKey, 'base64pad');
                 id = await createFromPrivKey(await unmarshalPrivateKey(encoded));
@@ -130,6 +129,55 @@ class Libp2pService {
         };
 
         this.blackList = {};
+    }
+
+    _initializeDHT(dhtConfig) {
+        const dualKadDht = new KadDHT({ kBucketSize: dhtConfig?.kBucketSize, clientMode: false });
+
+        if (!dhtConfig?.types?.length || !dhtConfig.types.length !== 1) {
+            return dualKadDht;
+        }
+
+        const dhtType = dhtConfig.types[0].toLowerCase();
+
+        if (dhtType === 'wan') {
+            return dualKadDht.wan;
+        }
+        if (dhtType === 'lan') {
+            return dualKadDht.lan;
+        }
+
+        throw Error('Invalid dht type found in config. Dht can be wan or lan.');
+    }
+
+    _initializeTCP(publicIp) {
+        if (process.env.NODE_ENV !== 'testnet') return new TCP();
+
+        for (const [, netAddrs] of Object.entries(os.networkInterfaces())) {
+            if (netAddrs != null) {
+                for (const netAddr of netAddrs) {
+                    if (netAddr.family === 'IPv4') {
+                        if (!ip.isPrivate(netAddr.address)) {
+                            return new TCP();
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!publicIp) {
+            throw Error(
+                "Public Ip not found. Please specify your node's public ip in the config file.",
+            );
+        }
+        if (!ip.isV4Format(publicIp)) {
+            throw Error('Specified Ip must be in v4 format.');
+        }
+        if (!ip.isPublic(publicIp)) {
+            throw Error('Specified Ip must be public.');
+        }
+
+        return new TCP({ publicIp });
     }
 
     async serializePeer(peerId) {
@@ -232,6 +280,10 @@ class Libp2pService {
 
     getPeerId() {
         return this.node.peerId;
+    }
+
+    getMultiAddrs() {
+        return this.node.getMultiaddrs();
     }
 
     async handleMessage(protocol, handler) {
@@ -342,8 +394,16 @@ class Libp2pService {
         this.logger.trace(
             `Dialing remotePeerId: ${remotePeerId.toString()} for protocol: ${protocol}`,
         );
-        const stream = await this.node.dialProtocol(remotePeerId, protocol);
-
+        let stream;
+        try {
+            stream = await this.node.dialProtocol(remotePeerId, protocol);
+        } catch (error) {
+            throw Error(
+                `Unable to dial peer: ${remotePeerId.toString()} with protocol: ${protocol}. Error: ${
+                    error.message
+                }`,
+            );
+        }
         // } else {
         //     stream = sessionStream;
         // }

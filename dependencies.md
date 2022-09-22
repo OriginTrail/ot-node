@@ -349,6 +349,16 @@
 -   **version**: ^6.21.4
 -   **description**: used to communicate with sql repository
 
+##### [multiformats](https://www.npmjs.com/package/multiformats)
+
+-   **version**: ^9.8.1
+-   **description**: calculate sha256 hash of peerIds (libp2p find nodes operation)
+
+##### [mysql2](https://www.npmjs.com/package/mysql2)
+
+-   **version**: ^2.3.3
+-   **description**:
+
 ##### [toobusy-js](https://www.npmjs.com/package/toobusy-js)
 
 -   **version**: ^0.5.1

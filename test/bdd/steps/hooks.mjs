@@ -12,7 +12,7 @@ BeforeAll(() => {});
 
 Before(function beforeMethod(testCase, done) {
     this.logger = console;
-    this.logger.log('Starting scenario: ', testCase.pickle.name, `${testCase.pickle.uri}`);
+    this.logger.log('\nStarting scenario: ', testCase.pickle.name, `${testCase.pickle.uri}`);
     // Initialize variables
     this.state = {};
     this.state.localBlockchain = null;
@@ -79,19 +79,6 @@ After(function afterMethod(testCase, done) {
             })
             .catch((err) => this.logger.error(err));
     });
-
-    /* try {
-        for (const item of databaseNames) {
-            this.logger.log('Removing operation database: ', item);
-            // eslint-disable-next-line no-await-in-loop
-            await con.connect();:ki
-            const sql = `DROP DATABASE IF EXISTS \`${item}\`;`;
-            // eslint-disable-next-line no-await-in-loop
-            await con.promise().query(sql);
-        }
-    } catch (error) {
-        this.logger.error('Error while removing operation database. ', error);
-    } */
     // delete ot-graphdb repositories
     Promise.all(promises)
         .then(() => {
