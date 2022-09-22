@@ -189,14 +189,15 @@ class Libp2pService {
         const peersSeen = new PeerSet();
         const unsortedPeerDistances = [];
         for await (const finalPeerId of finalPeerIds) {
-            if (peersSeen.has(finalPeerId)) continue;
-            peersSeen.add(finalPeerId);
-            const peerHash = Buffer.from((await sha256.digest(finalPeerId.toBytes())).digest);
+            if (!peersSeen.has(finalPeerId)) {
+                peersSeen.add(finalPeerId);
+                const peerHash = Buffer.from((await sha256.digest(finalPeerId.toBytes())).digest);
 
-            unsortedPeerDistances.push({
-                peerId: finalPeerId,
-                distance: uint8ArrayXor(keyHash, peerHash),
-            });
+                unsortedPeerDistances.push({
+                    peerId: finalPeerId,
+                    distance: uint8ArrayXor(keyHash, peerHash),
+                });
+            }
         }
 
         const sortedPeers = unsortedPeerDistances
