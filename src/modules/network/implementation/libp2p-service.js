@@ -42,10 +42,7 @@ class Libp2pService {
         this.logger = logger;
 
         initializationObject.transports = [this._initializeTCP(this.config.publicIp)];
-        initializationObject.dht = new KadDHT({
-            kBucketSize: this.config.kBucketSize,
-            clientMode: false,
-        });
+        initializationObject.dht = this._initializeDHT(this.config.dht);
         initializationObject.peerRouting = this.config.peerRouting;
         initializationObject.connectionManager = this.config.connectionManager;
 
@@ -121,6 +118,25 @@ class Libp2pService {
         };
 
         this.blackList = {};
+    }
+
+    _initializeDHT(dhtConfig) {
+        const dualKadDht = new KadDHT({ kBucketSize: dhtConfig?.kBucketSize, clientMode: false });
+
+        if (!dhtConfig?.types?.length || !dhtConfig.types.length !== 1) {
+            return dualKadDht;
+        }
+
+        const dhtType = dhtConfig.types[0].toLowerCase();
+
+        if (dhtType === 'wan') {
+            return dualKadDht.wan;
+        }
+        if (dhtType === 'lan') {
+            return dualKadDht.lan;
+        }
+
+        throw Error('Invalid dht type found in config. Dht can be wan or lan.');
     }
 
     _initializeTCP(publicIp) {

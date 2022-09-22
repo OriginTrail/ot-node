@@ -36,7 +36,10 @@
                     "libp2p-service": {
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
-                            "kBucketSize": 20,
+                            "dht": {
+                                "kBucketSize": 20,
+                                "types": ["lan"]
+                            },
                             "connectionManager": {
                                 "autoDial": true,
                                 "autoDialInterval": 10e3,
@@ -209,7 +212,10 @@
                     "libp2p-service": {
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
-                            "kBucketSize": 20,
+                            "dht": {
+                                "kBucketSize": 20,
+                                "types": ["lan"]
+                            },
                             "connectionManager": {
                                 "autoDial": true,
                                 "autoDialInterval": 10e3,
@@ -335,7 +341,10 @@
                     "libp2p-service": {
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
-                            "kBucketSize": 20,
+                            "dht": {
+                                "kBucketSize": 20,
+                                "types": ["wan"]
+                            },
                             "connectionManager": {
                                 "autoDial": true,
                                 "autoDialInterval": 10e3,
