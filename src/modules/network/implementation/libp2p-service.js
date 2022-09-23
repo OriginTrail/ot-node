@@ -274,22 +274,13 @@ class Libp2pService {
             ),
         );
 
-        const finalPeers = this.dhtType === DHT_TYPES.DUAL ? this.sortPeerIds(key, new PeerSet(peers)) : peers;
-        const localPeers = this.findNodesLocal(key).map((peer) => peer.toString());
-        
-        let differences = 0;
-        for (const finalPeer of finalPeers) {
-            if (!localPeers.includes(finalPeer.toString())) {
-                differences += 1;
-            }
-        }
+        return this.dhtType === DHT_TYPES.DUAL ? this.sortPeerIds(key, new PeerSet(peers)) : peers;
+    }
 
-        return {
-            differences,
-            nodes: finalPeers,
-            routingTableSize: this.node.dht.routingTable.size,
-        };
-
+    getRoutingTableSize() {
+        return this.dhtType === DHT_TYPES.DUAL
+            ? this.node.dht.wan.routingTable.size
+            : this.node.dht.routingTable.size;
     }
 
     getPeers() {
