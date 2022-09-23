@@ -12,7 +12,7 @@ BeforeAll(() => {});
 
 Before(function beforeMethod(testCase, done) {
     this.logger = console;
-    this.logger.log('\nStarting scenario: ', testCase.pickle.name, `${testCase.pickle.uri}`);
+    this.logger.log('\n\nStarting scenario: ', testCase.pickle.name, `${testCase.pickle.uri}`);
     // Initialize variables
     this.state = {};
     this.state.localBlockchain = null;
@@ -88,14 +88,9 @@ After(function afterMethod(testCase, done) {
             this.logger.log(
                 'Completed scenario: ',
                 testCase.pickle.name,
-                `${testCase.gherkinDocument.uri}:${testCase.gherkinDocument.feature.location.line}`,
-            );
-            this.logger.log(
+                `${testCase.gherkinDocument.uri}:${testCase.gherkinDocument.feature.name}\n`,
                 'with status: ',
-                testCase.result.status,
-                ' and duration: ',
-                testCase.result.duration,
-                ' miliseconds.',
+                testCase.result.status
             );
             done();
         });

@@ -11,11 +11,11 @@
         "ganache": "ganache-cli -e 1000000000000 -i 5777 -p 7545 -l 10000000 -a 30 -m \"aspect ask story desert profit engage tuition leave fade giraffe exclude brief\"",
         "lint-staged": "lint-staged",
         "create-account-mapping-signature": "node tools/ot-parachain-account-mapping/create-account-mapping-signature.js ",
-        "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/",
+        "test:bdd": "cucumber-js --format usage summary  --format-options '{\"colorsEnabled\": true}' --fail-fast test/bdd/ --import test/bdd/steps/",
         "test:unit": "nyc --all mocha --exit $(find test/unit -name '*.js')",
-        "test:bdd:release": "cucumber-js --tags=@release --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/",
-        "test:bdd:publish-errors": "cucumber-js --tags=@publish-errors --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/",
-        "test:bdd:get-errors": "cucumber-js --tags=@get-errors --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/",
+        "test:bdd:release": "cucumber-js --format usage summary  --format-options '{\"colorsEnabled\": true}' --tags=@release --fail-fast --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/",
+        "test:bdd:publish-errors": "cucumber-js --format summary --format-options '{\"colorsEnabled\": true}' --tags=@publish-errors --fail-fast test/bdd/ --import test/bdd/steps/",
+        "test:bdd:get-errors": "cucumber-js --format summary --format-options '{\"colorsEnabled\": true}' --tags=@get-errors --fail-fast test/bdd/ --import test/bdd/steps/",
         "lint": "eslint ."
     },
     "repository": {
