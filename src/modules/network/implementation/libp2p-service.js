@@ -95,7 +95,6 @@ class Libp2pService {
          */
         this.sessions = {};
         this.node = await createLibp2p(initializationObject);
-        this._initializeNodeListeners();
         await this.node.start();
         const port = parseInt(this.node.getMultiaddrs().toString().split('/')[4], 10);
 
@@ -103,14 +102,6 @@ class Libp2pService {
         this.logger.info(
             `Network ID is ${this.node.peerId.toString()}, connection port is ${port}`,
         );
-    }
-
-    _initializeNodeListeners() {
-        this.node.connectionManager.addEventListener('peer:connect', async (connection) => {
-            this.logger.trace(
-                `Node ${this.node.peerId.toString()} connected to ${connection.detail.remotePeer.toString()}`,
-            );
-        });
     }
 
     _initializeRateLimiters() {
