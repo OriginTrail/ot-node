@@ -23,11 +23,17 @@ class FindNodesCommand extends Command {
             OPERATION_ID_STATUS.FIND_NODES_START,
         );
 
-        const closestNodes = await this.networkModuleManager.findNodes(keyword, networkProtocol);
+        const {
+            nodes: closestNodes,
+            differences,
+            routingTableSize,
+        } = await this.networkModuleManager.findNodes(keyword, networkProtocol);
 
-        await this.operationIdService.updateOperationIdStatus(
+        await this.operationIdService.updateOperationIdStatusWithValues(
             operationId,
             OPERATION_ID_STATUS.FIND_NODES_END,
+            differences,
+            routingTableSize,
         );
 
         this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${keyword}`);
