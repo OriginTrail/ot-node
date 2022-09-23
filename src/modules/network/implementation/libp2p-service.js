@@ -216,11 +216,27 @@ class Libp2pService {
             }
         }
 
-        const sortedPeers = unsortedPeerDistances
+        const finalPeers = unsortedPeerDistances
             .sort((a, b) => uint8ArrayCompare(a.distance, b.distance))
-            .map((pd) => pd.peerId);
+            .map((pd) => pd.peerId)
+            .slice(0, this.config.kBucketSize);
 
-        return sortedPeers.slice(0, this.config.kBucketSize);
+        const localPeers = this.node.dht.routingTable
+            .closestPeers(keyHash, this.config.kBucketSize)
+            .map((peer) => peer.toString());
+
+        let differences = 0;
+        for (const finalPeer of finalPeers) {
+            if (!localPeers.includes(finalPeer.toString())) {
+                differences += 1;
+            }
+        }
+
+        return {
+            differences,
+            nodes: finalPeers,
+            routingTableSize: this.node.dht.routingTable.size,
+        };
     }
 
     getPeers() {

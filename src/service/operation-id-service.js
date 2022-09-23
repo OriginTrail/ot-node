@@ -31,6 +31,16 @@ class OperationIdService {
         return validate(operationId);
     }
 
+    async updateOperationIdStatusWithValues(operationId, status, value1 = null, value2 = null) {
+        const response = {
+            status,
+        };
+
+        this.emitChangeEvent(status, operationId, value1, value2);
+
+        await this.repositoryModuleManager.updateOperationIdRecord(response, operationId);
+    }
+
     async updateOperationIdStatus(operationId, status, errorMessage = null, errorType = null) {
         const response = {
             status,
