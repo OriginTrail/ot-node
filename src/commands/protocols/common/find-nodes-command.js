@@ -18,23 +18,7 @@ class FindNodesCommand extends Command {
         this.errorType = errorType;
         this.logger.debug(`Searching for closest node(s) for keyword ${keyword}`);
 
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            OPERATION_ID_STATUS.FIND_NODES_START,
-        );
-
-        const {
-            nodes: closestNodes,
-            differences,
-            routingTableSize,
-        } = await this.networkModuleManager.findNodes(keyword, networkProtocol);
-
-        await this.operationIdService.updateOperationIdStatusWithValues(
-            operationId,
-            OPERATION_ID_STATUS.FIND_NODES_END,
-            differences,
-            routingTableSize,
-        );
+        const closestNodes = await this.findNodes(keyword, networkProtocol, operationId);
 
         this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${keyword}`);
 
@@ -54,10 +38,38 @@ class FindNodesCommand extends Command {
                 ...command.data,
                 batchSize,
                 leftoverNodes: closestNodes,
-                numberOfFoundNodes: closestNodes.length,
             },
             command.sequence,
         );
+    }
+
+    async findNodes(keyword, networkProtocol, operationId) {
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.FIND_NODES_START,
+        );
+
+        const localPeers = (await this.networkModuleManager.findNodesLocal(keyword)).map((peer) =>
+            peer.toString(),
+        );
+        const closestNodes = await this.networkModuleManager.findNodes(keyword, networkProtocol);
+
+        let differences = 0;
+        for (const closestNode of closestNodes) {
+            if (!localPeers.includes(closestNode.toString())) {
+                differences += 1;
+            }
+        }
+        const routingTableSize = this.networkModuleManager.getRoutingTableSize();
+
+        await this.operationIdService.updateOperationIdStatusWithValues(
+            operationId,
+            OPERATION_ID_STATUS.FIND_NODES_END,
+            differences,
+            routingTableSize,
+        );
+
+        return closestNodes;
     }
 
     /**

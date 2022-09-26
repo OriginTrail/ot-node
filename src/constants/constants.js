@@ -8,6 +8,8 @@ export const MAX_FILE_SIZE = 2621440;
 
 export const PUBLISH_TYPES = { ASSERTION: 'assertion', ASSET: 'asset', INDEX: 'index' };
 
+export const DHT_TYPES = { DUAL: 'dual', WAN: 'wan', LAN: 'lan' };
+
 /**
  * Triple store media types
  * @type {{APPLICATION_JSON: string, N_QUADS: string, SPARQL_RESULTS_JSON: string, LD_JSON: string}}
@@ -136,6 +138,8 @@ export const OPERATION_ID_STATUS = {
     COMPLETED: 'COMPLETED',
     FIND_NODES_START: 'FIND_NODES_START',
     FIND_NODES_END: 'FIND_NODES_END',
+    FIND_NODES_LOCAL_START: 'FIND_NODES_LOCAL_START',
+    FIND_NODES_LOCAL_END: 'FIND_NODES_LOCAL_END',
     PUBLISH: {
         VALIDATING_ASSERTION_START: 'VALIDATING_ASSERTION_START',
         VALIDATING_ASSERTION_END: 'VALIDATING_ASSERTION_END',
@@ -226,24 +230,13 @@ export const NETWORK_PROTOCOLS = {
     SEARCH: '/search/1.0.0',
 };
 
-export const PUBLISH_STATUS = {
+export const OPERATION_STATUS = {
     IN_PROGRESS: 'IN_PROGRESS',
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
 };
 
-export const GET_STATUS = {
-    IN_PROGRESS: 'IN_PROGRESS',
-    FAILED: 'FAILED',
-    COMPLETED: 'COMPLETED',
-};
-
-export const PUBLISH_REQUEST_STATUS = {
-    FAILED: 'FAILED',
-    COMPLETED: 'COMPLETED',
-};
-
-export const GET_REQUEST_STATUS = {
+export const OPERATION_REQUEST_STATUS = {
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
 };

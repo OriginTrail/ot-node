@@ -38,7 +38,7 @@
                         "config": {
                             "dht": {
                                 "kBucketSize": 20,
-                                "types": ["lan"]
+                                "type": "dual"
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -214,7 +214,7 @@
                         "config": {
                             "dht": {
                                 "kBucketSize": 20,
-                                "types": ["lan"]
+                                "type": "lan"
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -343,7 +343,7 @@
                         "config": {
                             "dht": {
                                 "kBucketSize": 20,
-                                "types": ["wan"]
+                                "type": "wan"
                             },
                             "connectionManager": {
                                 "autoDial": true,
