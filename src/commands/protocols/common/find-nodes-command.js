@@ -52,7 +52,13 @@ class FindNodesCommand extends Command {
         const localPeers = (await this.networkModuleManager.findNodesLocal(keyword)).map((peer) =>
             peer.toString(),
         );
-        const closestNodes = await this.networkModuleManager.findNodes(keyword, networkProtocol);
+        // eslint-disable-next-line no-unused-vars
+        const { nodes: closestNodes, telemetryData } = await this.networkModuleManager.findNodes(
+            keyword,
+            networkProtocol,
+        );
+
+        // TODO: send telemetry data
 
         let differences = 0;
         for (const closestNode of closestNodes) {

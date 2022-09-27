@@ -250,9 +250,18 @@ class Libp2pService {
     async findNodes(key) {
         const encodedKey = new TextEncoder().encode(key);
         const self = this;
+        const telemetryData = [];
         const peers = await all(
             pipe(
                 self.node.dht.getClosestPeers(encodedKey),
+                async function* collectTelemetryData(source) {
+                    for await (const event of source) {
+                        if (event.telemetry) {
+                            telemetryData.push(event.telemetry);
+                        }
+                        yield event;
+                    }
+                },
                 (source) => filter(source, (event) => event.name === 'FINAL_PEER'),
                 (source) =>
                     each(source, async (event) => {
@@ -265,7 +274,10 @@ class Libp2pService {
             ),
         );
 
-        return this.dhtType === DHT_TYPES.DUAL ? this.sortPeerIds(key, new PeerSet(peers)) : peers;
+        const finalPeers =
+            this.dhtType === DHT_TYPES.DUAL ? this.sortPeerIds(key, new PeerSet(peers)) : peers;
+
+        return { nodes: finalPeers, telemetryData };
     }
 
     getRoutingTableSize() {
