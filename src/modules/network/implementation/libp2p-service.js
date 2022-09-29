@@ -258,14 +258,12 @@ class Libp2pService {
         const peers = await all(
             pipe(
                 self.node.dht.getClosestPeers(encodedKey),
-                async function* collectTelemetryData(source) {
-                    for await (const event of source) {
+                (source) =>
+                    each(source, async (event) => {
                         if (event.telemetry) {
-                            telemetryData.push(event.telemetry);
+                            telemetryData.push({ ...event.telemetry, peerId: event.from });
                         }
-                        yield event;
-                    }
-                },
+                    }),
                 (source) => filter(source, (event) => event.name === 'FINAL_PEER'),
                 (source) =>
                     each(source, async (event) => {
@@ -279,7 +277,9 @@ class Libp2pService {
         );
 
         const finalPeers =
-            this.dhtType === DHT_TYPES.DUAL ? this.sortPeerIds(key, new PeerSet(peers)) : peers;
+            this.dhtType === DHT_TYPES.DUAL
+                ? await this.sortPeerIds(key, new PeerSet(peers))
+                : peers;
 
         return { nodes: finalPeers, telemetryData };
     }
