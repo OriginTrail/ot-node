@@ -141,7 +141,7 @@
 
 ##### [@multiformats/multiaddr](https://www.npmjs.com/package/@multiformats/multiaddr)
 
--   **version**: ^10.4.1
+-   **version**: ^11.0.1
 -   **description**: create libp2p peers multiaddresses from string
 
 ##### [@polkadot/api](https://www.npmjs.com/package/@polkadot/api)
