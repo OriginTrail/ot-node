@@ -1,7 +1,7 @@
 /* eslint-disable import/no-unresolved */
 import { createLibp2p } from 'libp2p';
 import { sha256 } from 'multiformats/hashes/sha2';
-import { Multiaddr } from '@multiformats/multiaddr';
+import { multiaddr } from '@multiformats/multiaddr';
 import { Bootstrap } from '@libp2p/bootstrap';
 import { Mplex } from '@libp2p/mplex';
 import { Noise } from '@chainsafe/libp2p-noise';
@@ -190,7 +190,7 @@ class Libp2pService {
 
     async deserializePeer(serializedPeer) {
         const peerId = peerIdFromString(serializedPeer.id);
-        const multiaddrs = serializedPeer.multiaddrs.map((addr) => new Multiaddr(addr));
+        const multiaddrs = serializedPeer.multiaddrs.map((addr) => multiaddr(addr));
 
         await Promise.all([
             this.node.peerStore.addressBook.add(peerId, multiaddrs),
