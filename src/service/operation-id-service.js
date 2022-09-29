@@ -31,12 +31,19 @@ class OperationIdService {
         return validate(operationId);
     }
 
-    async updateOperationIdStatusWithValues(operationId, status, value1 = null, value2 = null) {
+    async updateOperationIdStatusWithValues(
+        operationId,
+        status,
+        value1 = null,
+        value2 = null,
+        timestamp = Date.now(),
+    ) {
         const response = {
             status,
+            timestamp,
         };
 
-        this.emitChangeEvent(status, operationId, value1, value2);
+        this.emitChangeEvent(status, operationId, value1, value2, timestamp);
 
         await this.repositoryModuleManager.updateOperationIdRecord(response, operationId);
     }
@@ -57,12 +64,13 @@ class OperationIdService {
         await this.repositoryModuleManager.updateOperationIdRecord(response, operationId);
     }
 
-    async updateOperationIdData(data, operationId) {
-        await this.repositoryModuleManager.updateOperationIdRecord(data, operationId);
-    }
-
-    emitChangeEvent(status, operationId, errorMessage = null, errorType = null) {
-        const timestamp = Date.now();
+    emitChangeEvent(
+        status,
+        operationId,
+        errorMessage = null,
+        errorType = null,
+        timestamp = Date.now(),
+    ) {
         const eventName = 'operation_status_changed';
 
         const eventData = {

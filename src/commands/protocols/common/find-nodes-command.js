@@ -52,7 +52,69 @@ class FindNodesCommand extends Command {
         const localPeers = (await this.networkModuleManager.findNodesLocal(keyword)).map((peer) =>
             peer.toString(),
         );
-        const closestNodes = await this.networkModuleManager.findNodes(keyword, networkProtocol);
+
+        const { nodes: closestNodes, telemetryData } = await this.networkModuleManager.findNodes(
+            keyword,
+            networkProtocol,
+        );
+
+        const promises = [];
+        for (const telemetry of telemetryData) {
+            const {
+                peerId,
+                openConnectionStart,
+                createStreamStart,
+                sendMessageStart,
+                sendMessageEnd,
+            } = telemetry;
+            const stringifiedPeerId = peerId.toString();
+
+            promises.concat([
+                this.operationIdService.updateOperationIdStatusWithValues(
+                    operationId,
+                    OPERATION_ID_STATUS.FIND_NODES_OPEN_CONNECTION_START,
+                    stringifiedPeerId,
+                    null,
+                    openConnectionStart,
+                ),
+                this.operationIdService.updateOperationIdStatusWithValues(
+                    operationId,
+                    OPERATION_ID_STATUS.FIND_NODES_OPEN_CONNECTION_END,
+                    stringifiedPeerId,
+                    null,
+                    createStreamStart,
+                ),
+                this.operationIdService.updateOperationIdStatusWithValues(
+                    operationId,
+                    OPERATION_ID_STATUS.FIND_NODES_CREATE_STREAM_START,
+                    stringifiedPeerId,
+                    null,
+                    createStreamStart,
+                ),
+                this.operationIdService.updateOperationIdStatusWithValues(
+                    operationId,
+                    OPERATION_ID_STATUS.FIND_NODES_CREATE_STREAM_END,
+                    stringifiedPeerId,
+                    null,
+                    sendMessageStart,
+                ),
+                this.operationIdService.updateOperationIdStatusWithValues(
+                    operationId,
+                    OPERATION_ID_STATUS.FIND_NODES_SEND_MESSAGE_START,
+                    stringifiedPeerId,
+                    null,
+                    sendMessageStart,
+                ),
+                this.operationIdService.updateOperationIdStatusWithValues(
+                    operationId,
+                    OPERATION_ID_STATUS.FIND_NODES_SEND_MESSAGE_END,
+                    stringifiedPeerId,
+                    null,
+                    sendMessageEnd,
+                ),
+            ]);
+        }
+        await Promise.all(promises);
 
         let differences = 0;
         for (const closestNode of closestNodes) {
