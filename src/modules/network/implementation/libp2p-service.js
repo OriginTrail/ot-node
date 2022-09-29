@@ -39,11 +39,9 @@ import {
 } from '../../../constants/constants.js';
 
 const initializationObject = {
-    addresses: {
-        listen: ['/ip4/0.0.0.0/tcp/9000'],
-    },
     streamMuxers: [new Mplex()],
     connectionEncryption: [new Noise()],
+    transports: [new TCP()],
 };
 
 class Libp2pService {
@@ -51,7 +49,6 @@ class Libp2pService {
         this.config = config;
         this.logger = logger;
 
-        initializationObject.transports = [this._initializeTCP(this.config.publicIp)];
         initializationObject.dht = this._initializeDHT(this.config.dht);
         initializationObject.peerRouting = this.config.peerRouting;
         initializationObject.connectionManager = this.config.connectionManager;
@@ -64,10 +61,17 @@ class Libp2pService {
                 }),
             ];
         }
+
         initializationObject.addresses = {
-            listen: [`/ip4/0.0.0.0/tcp/${this.config.port}`], // for production
-            // announce: ['/dns4/auto-relay.libp2p.io/tcp/443/wss/p2p/QmWDn2LY8nannvSWJzruUYoLZ4vV83vfCBwd8DipvdgQc3']
+            listen: [`/ip4/0.0.0.0/tcp/${this.config.port}`],
         };
+
+        if (this._usePublicIp(this.config.publicIp)) {
+            initializationObject.addresses.announce = [
+                `/ip4/${this.config.publicIp}/tcp/${this.config.port}`,
+            ];
+        }
+
         let id;
         if (!this.config.peerId) {
             if (!this.config.privateKey) {
@@ -141,15 +145,15 @@ class Libp2pService {
         return dualKadDht;
     }
 
-    _initializeTCP(publicIp) {
-        if (process.env.NODE_ENV !== 'testnet') return new TCP();
+    _usePublicIp(publicIp) {
+        if (process.env.NODE_ENV !== 'testnet') return false;
 
         for (const [, netAddrs] of Object.entries(os.networkInterfaces())) {
             if (netAddrs != null) {
                 for (const netAddr of netAddrs) {
                     if (netAddr.family === 'IPv4') {
                         if (!ip.isPrivate(netAddr.address)) {
-                            return new TCP();
+                            return false;
                         }
                     }
                 }
@@ -168,7 +172,7 @@ class Libp2pService {
             throw Error('Specified Ip must be public.');
         }
 
-        return new TCP({ publicIp });
+        return true;
     }
 
     async serializePeer(peerId) {
