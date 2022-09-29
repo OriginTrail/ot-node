@@ -65,7 +65,7 @@ class FileService {
 
     async removeFile(filePath) {
         if (await this.fileExists(filePath)) {
-            this.logger.debug(`Removing file on path: ${filePath}`);
+            this.logger.trace(`Removing file on path: ${filePath}`);
             await unlink(filePath);
             return true;
         }
@@ -103,17 +103,18 @@ class FileService {
             return;
         }
         const fileList = await readdir(cacheFolderPath);
-        for (const fileName of fileList) {
+        const deleteFile = async (fileName) => {
             const filePath = path.join(cacheFolderPath, fileName);
             const now = new Date();
-            // eslint-disable-next-line no-await-in-loop
             const createdDate = (await stat(filePath)).mtime;
             if (createdDate.getTime() + expiredTimeout < now.getTime()) {
-                // eslint-disable-next-line no-await-in-loop
                 await this.removeFile(filePath);
+                return true;
             }
-        }
-        this.logger.trace(`Successfully removed ${fileList.length} expired cache files`);
+            return false;
+        };
+        const deleted = await Promise.all(fileList.map((fileName) => deleteFile(fileName)));
+        return deleted.filter((x) => x).length;
     }
 }
 
