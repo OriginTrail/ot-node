@@ -5,7 +5,7 @@ import { multiaddr } from '@multiformats/multiaddr';
 import { Bootstrap } from '@libp2p/bootstrap';
 import { Mplex } from '@libp2p/mplex';
 import { Noise } from '@chainsafe/libp2p-noise';
-import { KadDHT } from '@libp2p/kad-dht';
+import { KadDHT } from '@tracelabs/kad-dht';
 import { TCP } from '@libp2p/tcp';
 import { pipe } from 'it-pipe';
 import * as lp from 'it-length-prefixed';
