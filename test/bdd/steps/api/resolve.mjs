@@ -39,10 +39,10 @@ When(
 );
 
 Given(
-    'I wait for last resolve to finalize',
+    'I wait for last get to finalize',
     { timeout: 120000 },
     async function resolveFinalizeCall() {
-        this.logger.log('I wait for last resolve to finalize');
+        this.logger.log('I wait for last get to finalize');
         expect(
             !!this.state.lastResolveData,
             'Last resolve data is undefined. Resolve is not started.',

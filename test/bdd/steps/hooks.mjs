@@ -12,7 +12,8 @@ BeforeAll(() => {});
 
 Before(function beforeMethod(testCase, done) {
     this.logger = console;
-    this.logger.log('\n\nStarting scenario: ', testCase.pickle.name, `${testCase.pickle.uri}`);
+    this.logger.log('\n====================================================================================');
+    this.logger.log('Starting scenario: ', testCase.pickle.name, `${testCase.pickle.uri}`);
     // Initialize variables
     this.state = {};
     this.state.localBlockchain = null;

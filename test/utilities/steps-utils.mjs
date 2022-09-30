@@ -9,7 +9,11 @@ class StepsUtils {
     }
 
 
-    createNodeConfiguration(blockchain, wallet, managementWallet, nodeIndex, nodeName, rpcPort) {
+    createNodeConfiguration( nodeIndex, rpcPort) {
+        const wallets = this.localBlockchain.getWallets();
+        const wallet = wallets[nodeIndex + 1];
+        const managementWallet = wallets[nodeIndex + 1 + Math.floor(wallets.length / 2)];
+        const nodeName = `origintrail-test-${nodeIndex}`;
         return {
             modules: {
                 blockchain:
@@ -18,10 +22,10 @@ class StepsUtils {
                         implementation: {
                             ganache: {
                                 config: {
-                                    blockchainTitle: 'ganache',
+                                    blockchainTitle: this.localBlockchain.name,
                                     networkId: 'ganache::testnet',
-                                    rpcEndpoints: ['http://localhost:7545'],
-                                    hubContractAddress: blockchain.getHubAddress(),
+                                    rpcEndpoints: [`http://localhost:${this.localBlockchain.port}`],
+                                    hubContractAddress: this.localBlockchain.getHubAddress(),
                                     evmOperationalWalletPublicKey: wallet.address,
                                     evmOperationalWalletPrivateKey: wallet.privateKey,
                                     evmManagementWalletPublicKey: managementWallet.address,

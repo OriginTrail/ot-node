@@ -8,7 +8,7 @@ Feature: Get errors test
   @get-errors
   Scenario: Getting non existent UAL
     And I call get directly to ot-node 1 with nonExistentUAL
-    And I wait for last resolve to finalize
+    And I wait for last get to finalize
     Then Last GET operation finished with status: GetAssertionIdError
 
   @get-errors
@@ -18,7 +18,7 @@ Feature: Get errors test
     When I setup node 5 with minimumAckResponses.get set to 10
     And I wait for 4 seconds
     And I get operation result from node 5 for last published assertion
-    And I wait for last resolve to finalize
+    And I wait for last get to finalize
     Then Last GET operation finished with status: GetNetworkError
 
 
