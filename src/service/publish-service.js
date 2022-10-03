@@ -4,12 +4,11 @@ import OperationService from './operation-service.js';
 
 import {
     OPERATION_ID_STATUS,
-    PUBLISH_REQUEST_STATUS,
-    PUBLISH_STATUS,
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     SCHEMA_CONTEXT,
     OPERATIONS,
+    OPERATION_REQUEST_STATUS,
 } from '../constants/constants.js';
 
 class PublishService extends OperationService {
@@ -22,8 +21,6 @@ class PublishService extends OperationService {
 
         this.operationName = OPERATIONS.PUBLISH;
         this.networkProtocol = NETWORK_PROTOCOLS.STORE;
-        this.operationRequestStatus = PUBLISH_REQUEST_STATUS;
-        this.operationStatus = PUBLISH_STATUS;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_ERROR;
         this.completedStatuses = [
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_END,
@@ -34,8 +31,7 @@ class PublishService extends OperationService {
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
-        const { operationId, numberOfFoundNodes, leftoverNodes, numberOfNodesInBatch, keyword } =
-            command.data;
+        const { operationId, numberOfFoundNodes, leftoverNodes, keyword, batchSize } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
@@ -49,12 +45,15 @@ class PublishService extends OperationService {
         this.logger.debug(
             `Processing ${
                 this.networkProtocol
-            } response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${
+            } response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${batchSize} number of leftover nodes: ${
                 leftoverNodes.length
             }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${this.getMinimumAckResponses()}`,
         );
 
-        if (completedNumber === this.getMinimumAckResponses()) {
+        if (
+            responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
+            completedNumber === this.getMinimumAckResponses()
+        ) {
             let allCompleted = true;
             for (const key in keywordsStatuses) {
                 if (keywordsStatuses[key].completedNumber < this.getMinimumAckResponses()) {
@@ -73,8 +72,7 @@ class PublishService extends OperationService {
             }
         } else if (
             completedNumber < this.getMinimumAckResponses() &&
-            (numberOfFoundNodes === numberOfResponses ||
-                numberOfResponses % numberOfNodesInBatch === 0)
+            (numberOfFoundNodes === numberOfResponses || numberOfResponses % batchSize === 0)
         ) {
             if (leftoverNodes.length === 0) {
                 await this.markOperationAsFailed(operationId, 'Not replicated to enough nodes!');

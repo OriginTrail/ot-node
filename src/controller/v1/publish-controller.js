@@ -3,6 +3,7 @@ import {
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
+    OPERATION_STATUS,
     PUBLISH_TYPES,
 } from '../../constants/constants.js';
 
@@ -40,7 +41,7 @@ class PublishController extends BaseController {
                 this.repositoryModuleManager.createOperationRecord(
                     this.operationService.getOperationName(),
                     operationId,
-                    this.operationService.getOperationStatus().IN_PROGRESS,
+                    OPERATION_STATUS.IN_PROGRESS,
                 ),
                 this.operationIdService.cacheOperationIdData(operationId, { assertion }),
             ]);

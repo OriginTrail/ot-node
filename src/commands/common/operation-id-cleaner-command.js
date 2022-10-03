@@ -20,12 +20,29 @@ class OperationIdCleanerCommand extends Command {
      * @param command
      */
     async execute() {
+        this.logger.debug('Starting command for removal of expired cache files');
         const timeToBeDeleted = Date.now() - OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS;
         await this.repositoryModuleManager.removeOperationIdRecord(timeToBeDeleted, [
             OPERATION_ID_STATUS.COMPLETED,
             OPERATION_ID_STATUS.FAILED,
         ]);
-        await this.fileService.removeExpiredCacheFiles(OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS);
+        let removed = await this.operationIdService.removeExpiredOperationIdMemoryCache(
+            OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS,
+        );
+        if (removed) {
+            this.logger.debug(
+                `Successfully removed ${
+                    removed / 1024
+                } Kbs expired cached operation entries from memory`,
+            );
+        }
+        removed = await this.operationIdService.removeExpiredOperationIdFileCache(
+            OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS,
+        );
+        if (removed) {
+            this.logger.debug(`Successfully removed ${removed} expired cached operation files`);
+        }
+
         return Command.repeat();
     }
 

@@ -18,17 +18,7 @@ class FindNodesCommand extends Command {
         this.errorType = errorType;
         this.logger.debug(`Searching for closest node(s) for keyword ${keyword}`);
 
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            OPERATION_ID_STATUS.FIND_NODES_START,
-        );
-
-        const closestNodes = await this.networkModuleManager.findNodes(keyword, networkProtocol);
-
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            OPERATION_ID_STATUS.FIND_NODES_END,
-        );
+        const closestNodes = await this.findNodes(keyword, networkProtocol, operationId);
 
         this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${keyword}`);
 
@@ -48,10 +38,100 @@ class FindNodesCommand extends Command {
                 ...command.data,
                 batchSize,
                 leftoverNodes: closestNodes,
-                numberOfFoundNodes: closestNodes.length,
             },
             command.sequence,
         );
+    }
+
+    async findNodes(keyword, networkProtocol, operationId) {
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.FIND_NODES_START,
+        );
+
+        const localPeers = (await this.networkModuleManager.findNodesLocal(keyword)).map((peer) =>
+            peer.toString(),
+        );
+
+        const { nodes: closestNodes, telemetryData } = await this.networkModuleManager.findNodes(
+            keyword,
+            networkProtocol,
+        );
+
+        const promises = [];
+        for (const telemetry of telemetryData) {
+            const {
+                peerId,
+                openConnectionStart,
+                createStreamStart,
+                sendMessageStart,
+                sendMessageEnd,
+            } = telemetry;
+            const stringifiedPeerId = peerId.toString();
+
+            promises.concat([
+                this.operationIdService.updateOperationIdStatusWithValues(
+                    operationId,
+                    OPERATION_ID_STATUS.FIND_NODES_OPEN_CONNECTION_START,
+                    stringifiedPeerId,
+                    null,
+                    openConnectionStart,
+                ),
+                this.operationIdService.updateOperationIdStatusWithValues(
+                    operationId,
+                    OPERATION_ID_STATUS.FIND_NODES_OPEN_CONNECTION_END,
+                    stringifiedPeerId,
+                    null,
+                    createStreamStart,
+                ),
+                this.operationIdService.updateOperationIdStatusWithValues(
+                    operationId,
+                    OPERATION_ID_STATUS.FIND_NODES_CREATE_STREAM_START,
+                    stringifiedPeerId,
+                    null,
+                    createStreamStart,
+                ),
+                this.operationIdService.updateOperationIdStatusWithValues(
+                    operationId,
+                    OPERATION_ID_STATUS.FIND_NODES_CREATE_STREAM_END,
+                    stringifiedPeerId,
+                    null,
+                    sendMessageStart,
+                ),
+                this.operationIdService.updateOperationIdStatusWithValues(
+                    operationId,
+                    OPERATION_ID_STATUS.FIND_NODES_SEND_MESSAGE_START,
+                    stringifiedPeerId,
+                    null,
+                    sendMessageStart,
+                ),
+                this.operationIdService.updateOperationIdStatusWithValues(
+                    operationId,
+                    OPERATION_ID_STATUS.FIND_NODES_SEND_MESSAGE_END,
+                    stringifiedPeerId,
+                    null,
+                    sendMessageEnd,
+                ),
+            ]);
+        }
+        await Promise.all(promises);
+
+        let differences = 0;
+        for (const closestNode of closestNodes) {
+            if (!localPeers.includes(closestNode.toString())) {
+                differences += 1;
+            }
+        }
+        const routingTableSize = this.networkModuleManager.getRoutingTableSize();
+
+        await this.operationIdService.updateOperationIdStatusWithValues(
+            operationId,
+            OPERATION_ID_STATUS.FIND_NODES_END,
+            differences,
+            routingTableSize,
+        );
+
+        return closestNodes;
     }
 
     /**

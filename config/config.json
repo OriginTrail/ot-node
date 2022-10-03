@@ -36,7 +36,10 @@
                     "libp2p-service": {
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
-                            "kBucketSize": 20,
+                            "dht": {
+                                "kBucketSize": 20,
+                                "type": "dual"
+                            },
                             "connectionManager": {
                                 "autoDial": true,
                                 "autoDialInterval": 10e3,
@@ -155,8 +158,7 @@
                             "networkId": "eth::rinkeby",
                             "hubContractAddress": "",
                             "gasPriceOracleLink": "",
-                            "rpcEndpoints": [
-                            ]
+                            "rpcEndpoints": []
                         }
                     }
                 }
@@ -210,7 +212,10 @@
                     "libp2p-service": {
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
-                            "kBucketSize": 20,
+                            "dht": {
+                                "kBucketSize": 20,
+                                "type": "lan"
+                            },
                             "connectionManager": {
                                 "autoDial": true,
                                 "autoDialInterval": 10e3,
@@ -336,7 +341,10 @@
                     "libp2p-service": {
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
-                            "kBucketSize": 20,
+                            "dht": {
+                                "kBucketSize": 20,
+                                "type": "wan"
+                            },
                             "connectionManager": {
                                 "autoDial": true,
                                 "autoDialInterval": 10e3,
@@ -351,11 +359,8 @@
                             },
                             "port": 9000,
                             "bootstrap": [
-                                "/ip4/139.59.174.24/tcp/9000/p2p/QmU7p61f8qgzCtfTEUynJaqnsLRN4QExjtWfsMRQ7oiMuS",
-                                "/ip4/142.93.166.214/tcp/9000/p2p/QmXPcjsvURvyC4hEbwgirRue7KzcvpvYgsaPUharRMJAcP",
-                                "/ip4/178.128.117.211/tcp/9000/p2p/QmVdXs1PhoXcXYWGEH6Q4BnGN9uNNUcm4ctMt2Pttq8Dgc",
-                                "/ip4/3.125.64.137/tcp/9000/p2p/QmQWvBBAJKTwPTzHr47LZaLWFwCESE97iwJwmYb7spZuHt",
-                                "/ip4/3.126.112.75/tcp/9000/p2p/QmeB5srsgkwwhkVieHXunjsVsGkV9MyL4EqV122u1wZHoj"
+                                "/ip4/64.225.99.151/tcp/9000/p2p/QmawsTRqaLPyLQ5PfStpFcpQW4bvNQ59zV1by2G5aJHuVn",
+                                "/ip4/18.157.122.121/tcp/9000/p2p/QmfDebvsKNwCggBBmEWB43cAZtTa2umMsnRvBnMV4sY5th"
                             ]
                         }
                     }
@@ -603,7 +608,6 @@
             "publish": 5,
             "get": 1
         },
-        "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
