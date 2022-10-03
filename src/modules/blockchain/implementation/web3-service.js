@@ -315,13 +315,15 @@ class Web3Service {
     }
 
     async getLatestCommitHash(contract, tokenId) {
-        const assertionId = await this.callContractFunction(
-            this.AssetRegistryContract,
-            'getCommitHash',
-            [tokenId, 0],
-        );
-
-        return assertionId;
+        try {
+            return await this.callContractFunction(this.AssetRegistryContract, 'getCommitHash', [
+                tokenId,
+                0,
+            ]);
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
     }
 
     async healthCheck() {

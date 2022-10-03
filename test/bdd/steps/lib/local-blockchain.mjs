@@ -2,16 +2,18 @@
 import Ganache from 'ganache';
 import Web3 from 'web3';
 import { createRequire } from 'module';
+import {readFile} from "fs/promises";
 
 const require = createRequire(import.meta.url);
-const hub = require('dkg-evm-module/build/contracts/Hub.json');
-const uaiRegistry = require('dkg-evm-module/build/contracts/UAIRegistry.json');
-const assertionRegistry = require('dkg-evm-module/build/contracts/AssertionRegistry.json');
-const assetRegistry = require('dkg-evm-module/build/contracts/AssetRegistry.json');
-const erc20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
-const profile = require('dkg-evm-module/build/contracts/Profile.json');
-const profileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
-const accountPrivateKeys = require('../api/datasets/privateKeys.json');
+
+const hub = JSON.parse(await readFile("node_modules/dkg-evm-module/build/contracts/Hub.json"));
+const uaiRegistry = JSON.parse(await readFile("node_modules/dkg-evm-module/build/contracts/UAIRegistry.json"));
+const assertionRegistry = JSON.parse(await readFile("node_modules/dkg-evm-module/build/contracts/AssertionRegistry.json"));
+const assetRegistry = JSON.parse(await readFile("node_modules/dkg-evm-module/build/contracts/AssetRegistry.json"));
+const erc20Token = JSON.parse(await readFile("node_modules/dkg-evm-module/build/contracts/ERC20Token.json"));
+const profile = JSON.parse(await readFile("node_modules/dkg-evm-module/build/contracts/Profile.json"));
+const profileStorage = JSON.parse(await readFile("node_modules/dkg-evm-module/build/contracts/ProfileStorage.json"));
+const accountPrivateKeys = JSON.parse(await readFile("test/bdd/steps/api/datasets/privateKeys.json"));
 
 const sources = {
     hub,

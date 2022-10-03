@@ -36,7 +36,10 @@
                     "libp2p-service": {
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
-                            "kBucketSize": 20,
+                            "dht": {
+                                "kBucketSize": 20,
+                                "type": "dual"
+                            },
                             "connectionManager": {
                                 "autoDial": true,
                                 "autoDialInterval": 10e3,
@@ -148,6 +151,15 @@
                             ],
                             "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
                         }
+                    },
+                    "rinkeby": {
+                        "package": "./blockchain/implementation/polygon/eth-service.js",
+                        "config": {
+                            "networkId": "eth::rinkeby",
+                            "hubContractAddress": "",
+                            "gasPriceOracleLink": "",
+                            "rpcEndpoints": []
+                        }
                     }
                 }
             }
@@ -200,7 +212,10 @@
                     "libp2p-service": {
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
-                            "kBucketSize": 20,
+                            "dht": {
+                                "kBucketSize": 20,
+                                "type": "lan"
+                            },
                             "connectionManager": {
                                 "autoDial": true,
                                 "autoDialInterval": 10e3,
@@ -326,7 +341,10 @@
                     "libp2p-service": {
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
-                            "kBucketSize": 20,
+                            "dht": {
+                                "kBucketSize": 20,
+                                "type": "wan"
+                            },
                             "connectionManager": {
                                 "autoDial": true,
                                 "autoDialInterval": 10e3,
@@ -593,7 +611,6 @@
             "publish": 5,
             "get": 1
         },
-        "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",

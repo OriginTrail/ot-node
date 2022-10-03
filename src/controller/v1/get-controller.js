@@ -1,4 +1,8 @@
-import { NETWORK_MESSAGE_TYPES, OPERATION_ID_STATUS } from '../../constants/constants.js';
+import {
+    NETWORK_MESSAGE_TYPES,
+    OPERATION_ID_STATUS,
+    OPERATION_STATUS,
+} from '../../constants/constants.js';
 import BaseController from './base-controller.js';
 
 class GetController extends BaseController {
@@ -27,7 +31,7 @@ class GetController extends BaseController {
         await this.repositoryModuleManager.createOperationRecord(
             this.getService.getOperationName(),
             operationId,
-            this.getService.getOperationStatus().IN_PROGRESS,
+            OPERATION_STATUS.IN_PROGRESS,
         );
 
         const { id } = req.body;

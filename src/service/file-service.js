@@ -33,6 +33,14 @@ class FileService {
         return this._readFile(filePath, false);
     }
 
+    async readDirectory(dirPath) {
+        return readdir(dirPath);
+    }
+
+    async stat(filePath) {
+        return stat(filePath);
+    }
+
     /**
      * Loads JSON data from file
      * @returns {Promise<JSON object>}
@@ -64,9 +72,13 @@ class FileService {
     }
 
     async removeFile(filePath) {
-        this.logger.trace(`Removing file on path: ${filePath}`);
-        await unlink(filePath);
-        return true;
+        if (await this.fileExists(filePath)) {
+            this.logger.trace(`Removing file on path: ${filePath}`);
+            await unlink(filePath);
+            return true;
+        }
+        this.logger.debug(`File doesn't exist on file path: ${filePath}`);
+        return false;
     }
 
     getDataFolderPath() {
@@ -92,25 +104,6 @@ class FileService {
         return path.join(this.getOperationIdCachePath(), operationId);
     }
 
-    async removeExpiredCacheFiles(expiredTimeout) {
-        const cacheFolderPath = this.getOperationIdCachePath();
-        const cacheFolderExists = await this.fileExists(cacheFolderPath);
-        if (!cacheFolderExists) {
-            return;
-        }
-        const fileList = await readdir(cacheFolderPath);
-        for (const fileName of fileList) {
-            const filePath = path.join(cacheFolderPath, fileName);
-            const now = new Date();
-            // eslint-disable-next-line no-await-in-loop
-            const createdDate = (await stat(filePath)).mtime;
-            if (createdDate.getTime() + expiredTimeout < now.getTime()) {
-                // eslint-disable-next-line no-await-in-loop
-                await this.removeFile(filePath);
-            }
-        }
-        this.logger.trace(`Successfully removed ${fileList.length} expired cache files`);
-    }
 }
 
 export default FileService;
