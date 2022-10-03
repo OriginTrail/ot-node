@@ -31,7 +31,9 @@ class OperationIdCleanerCommand extends Command {
         );
         if (removed) {
             this.logger.debug(
-                `Successfully removed ${removed} expired cached operation entries from memory`,
+                `Successfully removed ${
+                    removed / 1024
+                } Kbs expired cached operation entries from memory`,
             );
         }
         removed = await this.operationIdService.removeExpiredOperationIdFileCache(

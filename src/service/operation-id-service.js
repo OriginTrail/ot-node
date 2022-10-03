@@ -129,9 +129,10 @@ class OperationIdService {
         const now = Date.now();
         let deleted = 0;
         for (const operationId in this.memoryCachedHandlersData) {
-            if (this.memoryCachedHandlersData[operationId].timestamp + expiredTimeout < now) {
+            const { data, timestamp } = this.memoryCachedHandlersData[operationId];
+            if (timestamp + expiredTimeout < now) {
                 delete this.memoryCachedHandlersData[operationId];
-                deleted += 1;
+                deleted += Buffer.from(JSON.stringify(data)).byteLength;
             }
         }
         return deleted;
