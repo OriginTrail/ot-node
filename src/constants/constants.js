@@ -207,7 +207,7 @@ export const OPERATIONS = {
  * @constant {number} OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS -
  * operation id command cleanup interval time 24h
  */
-export const OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS = 60 * 1000;
+export const OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 /**
  * @constant {number} FINALIZED_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time
  * finalized commands command cleanup interval time 24h
