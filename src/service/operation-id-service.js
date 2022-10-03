@@ -1,4 +1,5 @@
 import { validate } from 'uuid';
+import path from 'path';
 
 class OperationIdService {
     constructor(ctx) {
@@ -94,13 +95,13 @@ class OperationIdService {
             JSON.stringify(data),
         );
 
-        this.memoryCachedHandlersData[operationId] = data;
+        this.memoryCachedHandlersData[operationId] = { data, timestamp: Date.now() };
     }
 
     async getCachedOperationIdData(operationId) {
         if (this.memoryCachedHandlersData[operationId]) {
             this.logger.debug(`Reading operation id: ${operationId} cached data from memory`);
-            return this.memoryCachedHandlersData[operationId];
+            return this.memoryCachedHandlersData[operationId].data;
         }
 
         this.logger.debug(`Reading operation id: ${operationId} cached data from file`);
@@ -122,6 +123,39 @@ class OperationIdService {
     removeOperationIdMemoryCache(operationId) {
         this.logger.debug(`Removing operation id: ${operationId} cached data from memory`);
         delete this.memoryCachedHandlersData[operationId];
+    }
+
+    async removeExpiredOperationIdMemoryCache(expiredTimeout) {
+        const now = Date.now();
+        let deleted = 0;
+        for (const operationId in this.memoryCachedHandlersData) {
+            if (this.memoryCachedHandlersData[operationId].timestamp + expiredTimeout < now) {
+                delete this.memoryCachedHandlersData[operationId];
+                deleted += 1;
+            }
+        }
+        return deleted;
+    }
+
+    async removeExpiredOperationIdFileCache(expiredTimeout) {
+        const cacheFolderPath = this.fileService.getOperationIdCachePath();
+        const cacheFolderExists = await this.fileService.fileExists(cacheFolderPath);
+        if (!cacheFolderExists) {
+            return;
+        }
+        const fileList = await this.fileService.readDirectory(cacheFolderPath);
+        const deleteFile = async (fileName) => {
+            const filePath = path.join(cacheFolderPath, fileName);
+            const now = new Date();
+            const createdDate = (await this.fileService.stat(filePath)).mtime;
+            if (createdDate.getTime() + expiredTimeout < now.getTime()) {
+                await this.fileService.removeFile(filePath);
+                return true;
+            }
+            return false;
+        };
+        const deleted = await Promise.all(fileList.map((fileName) => deleteFile(fileName)));
+        return deleted.filter((x) => x).length;
     }
 }
 

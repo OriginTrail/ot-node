@@ -33,6 +33,14 @@ class FileService {
         return this._readFile(filePath, false);
     }
 
+    async readDirectory(dirPath) {
+        return readdir(dirPath);
+    }
+
+    async stat(filePath) {
+        return stat(filePath);
+    }
+
     /**
      * Loads JSON data from file
      * @returns {Promise<JSON object>}
@@ -94,27 +102,6 @@ class FileService {
 
     getOperationIdDocumentPath(operationId) {
         return path.join(this.getOperationIdCachePath(), operationId);
-    }
-
-    async removeExpiredCacheFiles(expiredTimeout) {
-        const cacheFolderPath = this.getOperationIdCachePath();
-        const cacheFolderExists = await this.fileExists(cacheFolderPath);
-        if (!cacheFolderExists) {
-            return;
-        }
-        const fileList = await readdir(cacheFolderPath);
-        const deleteFile = async (fileName) => {
-            const filePath = path.join(cacheFolderPath, fileName);
-            const now = new Date();
-            const createdDate = (await stat(filePath)).mtime;
-            if (createdDate.getTime() + expiredTimeout < now.getTime()) {
-                await this.removeFile(filePath);
-                return true;
-            }
-            return false;
-        };
-        const deleted = await Promise.all(fileList.map((fileName) => deleteFile(fileName)));
-        return deleted.filter((x) => x).length;
     }
 }
 

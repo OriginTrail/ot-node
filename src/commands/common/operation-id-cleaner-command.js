@@ -26,10 +26,20 @@ class OperationIdCleanerCommand extends Command {
             OPERATION_ID_STATUS.COMPLETED,
             OPERATION_ID_STATUS.FAILED,
         ]);
-        const removed = await this.fileService.removeExpiredCacheFiles(
+        let removed = await this.operationIdService.removeExpiredOperationIdMemoryCache(
             OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS,
         );
-        this.logger.debug(`Successfully removed ${removed} expired cache files`);
+        if (removed) {
+            this.logger.debug(
+                `Successfully removed ${removed} expired cached operation entries from memory`,
+            );
+        }
+        removed = await this.operationIdService.removeExpiredOperationIdFileCache(
+            OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS,
+        );
+        if (removed) {
+            this.logger.debug(`Successfully removed ${removed} expired cached operation files`);
+        }
 
         return Command.repeat();
     }
