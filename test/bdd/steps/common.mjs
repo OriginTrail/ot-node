@@ -167,13 +167,6 @@ Given(
                 });
                 this.state.nodes[nodeIndex] = {
                     client,
-                    clientConfig: {
-                        endpoint: 'http://localhost',
-                        port: rpcPort,
-                        useSSL: false,
-                        timeout: 25,
-                        loglevel: 'trace',
-                    },
                     forkedNode,
                     configuration: nodeConfiguration,
                     nodeRpcUrl: `http://localhost:${rpcPort}`,
@@ -188,7 +181,7 @@ Given(
     { timeout: 120000 },
     async function lastResolveFinishedCall(operationName, status) {
         this.logger.log(`Last ${operationName} operation finished with status: ${status}`);
-        const operationData = operationName === 'GET' ? 'lastResolveData' : 'lastPublishData';
+        const operationData = operationName === 'GET' ? 'lastGetData' : 'lastPublishData';
         expect(
             !!this.state[operationData],
             `Last ${operationName} result is undefined. ${operationName} result not started.`,
