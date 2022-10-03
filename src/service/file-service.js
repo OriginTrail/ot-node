@@ -103,6 +103,7 @@ class FileService {
     getOperationIdDocumentPath(operationId) {
         return path.join(this.getOperationIdCachePath(), operationId);
     }
+
 }
 
 export default FileService;

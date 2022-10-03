@@ -355,7 +355,6 @@
 -   **description**: calculate sha256 hash of peerIds (libp2p find nodes operation)
 
 ##### [mysql2](https://www.npmjs.com/package/mysql2)
-
 -   **version**: ^2.3.3
 -   **description**:
 
