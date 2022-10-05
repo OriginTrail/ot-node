@@ -11,12 +11,12 @@ class ProtocolScheduleMessagesCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, keyword, leftoverNodes, batchSize, nodesSeen = [] } = command.data;
+        const { operationId, keyword, batchSize, leftoverNodes, nodesSeen = [] } = command.data;
 
         const currentBatchNodes = leftoverNodes.slice(0, batchSize);
         const currentBatchLeftoverNodes =
             batchSize < leftoverNodes.length ? leftoverNodes.slice(batchSize) : [];
-        currentBatchNodes.forEach((node) => nodesSeen.push(node.toString()));
+        currentBatchNodes.forEach((node) => nodesSeen.push(node.id.toString()));
 
         await this.operationIdService.updateOperationIdStatus(operationId, this.startEvent);
 
@@ -45,7 +45,6 @@ class ProtocolScheduleMessagesCommand extends Command {
                     node,
                     numberOfFoundNodes: currentBatchLeftoverNodes.length + nodesSeen.length,
                     batchSize,
-
                     leftoverNodes: currentBatchLeftoverNodes,
                     nodesSeen,
                 },

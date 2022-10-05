@@ -30,14 +30,14 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
             message.messageType = NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
             message.messageData = {};
         } else {
-            const nodeIds = await this.networkModuleManager.findNodesLocal(
+            const peers = await this.networkModuleManager.findNodesLocal(
                 assertionId,
                 networkProtocol,
             );
 
             message.messageType = NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
             message.messageData = {
-                nodes: await this.networkModuleManager.serializePeers(nodeIds),
+                nodes: await this.networkModuleManager.serializePeers(peers),
             };
         }
 

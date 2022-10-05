@@ -20,7 +20,7 @@ class PublishService extends OperationService {
         this.validationModuleManager = ctx.validationModuleManager;
 
         this.operationName = OPERATIONS.PUBLISH;
-        this.networkProtocol = NETWORK_PROTOCOLS.STORE;
+        this.networkProtocols = NETWORK_PROTOCOLS.STORE;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_ERROR;
         this.completedStatuses = [
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_END,
@@ -44,7 +44,7 @@ class PublishService extends OperationService {
         const numberOfResponses = completedNumber + failedNumber;
         this.logger.debug(
             `Processing ${
-                this.networkProtocol
+                this.operationName
             } response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${batchSize} number of leftover nodes: ${
                 leftoverNodes.length
             }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${this.getMinimumAckResponses()}`,

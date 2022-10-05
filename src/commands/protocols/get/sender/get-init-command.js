@@ -6,7 +6,6 @@ class GetInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.getService;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.GET.GET_INIT_ERROR;
     }

@@ -27,7 +27,7 @@ class NetworkProtocolCommand extends Command {
                     keyword,
                     minimumAckResponses: this.operationService.getMinimumAckResponses(),
                     errorType: this.errorType,
-                    networkProtocol: this.operationService.getNetworkProtocol(),
+                    networkProtocols: this.operationService.getNetworkProtocols(),
                 },
                 transactional: false,
             }),

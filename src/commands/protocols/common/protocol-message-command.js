@@ -45,8 +45,8 @@ class ProtocolMessageCommand extends Command {
         const { node, operationId, keyword } = command.data;
 
         const response = await this.networkModuleManager.sendMessage(
-            this.operationService.getNetworkProtocol(),
-            node,
+            node.protocol,
+            node.id,
             messageType,
             operationId,
             keyword,
