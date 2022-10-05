@@ -1,10 +1,10 @@
-import HandleProtocolMessageCommand from '../../common/handle-protocol-message-command.js';
+import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
 
 import {
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
-} from '../../../../constants/constants.js';
+} from '../../../../../constants/constants.js';
 
 class HandleGetInitCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
@@ -56,7 +56,7 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
      */
     default(map) {
         const command = {
-            name: 'handleGetInitCommand',
+            name: 'v1_0_0HandleGetInitCommand',
             delay: 0,
             transactional: false,
         };

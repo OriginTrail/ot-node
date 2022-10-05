@@ -23,6 +23,7 @@ class FindNodesCommand extends Command {
             for (const protocol of networkProtocols) {
                 if (node.protocols.includes(protocol)) {
                     closestNodes.push({ id: node.id, protocol });
+                    break;
                 }
             }
         }

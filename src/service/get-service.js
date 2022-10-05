@@ -78,6 +78,7 @@ class GetService extends OperationService {
                 for (const protocol of this.getNetworkProtocols()) {
                     if (node.protocols.includes(protocol)) {
                         newFoundNodes[node.id.toString()] = { ...node, protocol };
+                        break;
                     }
                 }
             }

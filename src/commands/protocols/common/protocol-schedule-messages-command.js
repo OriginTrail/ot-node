@@ -4,6 +4,7 @@ class ProtocolScheduleMessagesCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
+        this.protocolService = ctx.protocolService;
     }
 
     /**
@@ -20,11 +21,6 @@ class ProtocolScheduleMessagesCommand extends Command {
 
         await this.operationIdService.updateOperationIdStatus(operationId, this.startEvent);
 
-        const commandSequence = [
-            `${this.operationService.getOperationName()}InitCommand`,
-            `${this.operationService.getOperationName()}RequestCommand`,
-        ];
-
         this.logger.debug(
             `Trying to ${this.operationService.getOperationName()} to batch of ${
                 currentBatchNodes.length
@@ -33,8 +29,9 @@ class ProtocolScheduleMessagesCommand extends Command {
             }`,
         );
 
-        const addCommandPromises = currentBatchNodes.map((node) =>
-            this.commandExecutor.add({
+        const addCommandPromises = currentBatchNodes.map(async (node) => {
+            const commandSequence = this.getCommandSequence(node.protocol);
+            await this.commandExecutor.add({
                 name: commandSequence[0],
                 sequence: commandSequence.slice(1),
                 delay: 0,
@@ -51,12 +48,23 @@ class ProtocolScheduleMessagesCommand extends Command {
                 period: 5000,
                 retries: 3,
                 transactional: false,
-            }),
-        );
+            });
+        });
 
         await Promise.all(addCommandPromises);
 
         return Command.empty();
+    }
+
+    getCommandSequence(protocol) {
+        const version = this.protocolService.toAwilixVersion(protocol);
+        const operation = this.operationService.getOperationName();
+        const capitalizedOperation = operation.charAt(0).toUpperCase() + operation.slice(1);
+
+        return [
+            `${version}${capitalizedOperation}InitCommand`,
+            `${version}${capitalizedOperation}RequestCommand`,
+        ];
     }
 
     /**

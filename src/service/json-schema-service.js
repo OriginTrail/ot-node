@@ -1,7 +1,7 @@
-import publishSchema from '../controller/v1/request-schema/publish-schema.js';
-import getSchema from '../controller/v1/request-schema/get-schema.js';
-import searchSchema from '../controller/v1/request-schema/search-schema.js';
-import querySchema from '../controller/v1/request-schema/query-request.js';
+import publishSchema from '../controllers/http-api/v1.0.0/request-schema/publish-schema.js';
+import getSchema from '../controllers/http-api/v1.0.0/request-schema/get-schema.js';
+import searchSchema from '../controllers/http-api/v1.0.0/request-schema/search-schema.js';
+import querySchema from '../controllers/http-api/v1.0.0/request-schema/query-schema.js';
 
 class JsonSchemaService {
     constructor(ctx) {

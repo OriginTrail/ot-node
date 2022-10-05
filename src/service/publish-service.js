@@ -84,10 +84,6 @@ class PublishService extends OperationService {
     }
 
     async getAssertion(blockchain, contract, tokenId) {
-        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
-        this.logger.info(`Getting assertion for ual: ${ual}`);
-
         return this.blockchainModuleManager.getLatestCommitHash(blockchain, contract, tokenId);
     }
 

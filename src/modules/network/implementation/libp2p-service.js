@@ -27,7 +27,6 @@ import all from 'it-all';
 import each from 'it-foreach';
 import sort from 'it-sort';
 import take from 'it-take';
-
 import ip from 'ip';
 import os from 'os';
 import {
@@ -421,11 +420,12 @@ class Libp2pService {
         try {
             stream = await this.node.dialProtocol(remotePeerId, protocol);
         } catch (error) {
-            throw Error(
+            this.logger.warn(
                 `Unable to dial peer: ${remotePeerId.toString()} with protocol: ${protocol}. Error: ${
                     error.message
                 }`,
             );
+            return { header: { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK }, data: {} };
         }
         // } else {
         //     stream = sessionStream;
