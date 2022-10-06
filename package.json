@@ -44,7 +44,7 @@
         "@openzeppelin/contracts": "^4.7.3",
         "@polkadot/util": "^10.1.7",
         "@polkadot/util-crypto": "^10.1.7",
-        "@truffle/hdwallet-provider": "^2.0.14",
+        "@truffle/hdwallet-provider": "^2.0.16",
         "chai": "^4.3.6",
         "dkg.js": "^6.0.0-beta.3.1.2",
         "eslint": "^8.23.0",
@@ -58,8 +58,7 @@
         "prettier": "^2.7.1",
         "sinon": "^14.0.0",
         "slugify": "^1.6.5",
-        "solhint": "^3.3.7",
-        "truffle": "^5.5.29"
+        "solhint": "^3.3.7"
     },
     "dependencies": {
         "@chainsafe/libp2p-noise": "^8.0.1",

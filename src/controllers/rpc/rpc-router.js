@@ -13,7 +13,9 @@ class RpcRouter {
     }
 
     initializeListeners() {
-        for (const protocol of this.protocolService.getProtocols()) {
+        const protocols = this.protocolService.getProtocols().flatMap((p) => p);
+
+        for (const protocol of protocols) {
             const version = this.protocolService.toAwilixVersion(protocol);
             const operation = this.protocolService.toOperation(protocol);
             const handleRequest = this.protocolService.isLatest(protocol)

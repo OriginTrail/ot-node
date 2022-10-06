@@ -7,6 +7,10 @@ class BaseController {
     returnResponse(res, status, data) {
         res.status(status).send(data);
     }
+
+    getCommandSequence(protocol) {
+        return this.protocolService.getReceiverCommandSequence(protocol);
+    }
 }
 
 export default BaseController;

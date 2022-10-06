@@ -5,9 +5,7 @@ class ProtocolService {
         this.config = config;
         this.logger = logger;
 
-        this.latestProtocols = Object.keys(NETWORK_PROTOCOLS).map(
-            (protocol) => NETWORK_PROTOCOLS[protocol][0],
-        );
+        this.latestProtocols = Object.values(NETWORK_PROTOCOLS).map((protocols) => protocols[0]);
     }
 
     toAwilixVersion(protocol) {
@@ -21,7 +19,7 @@ class ProtocolService {
     }
 
     isLatest(protocol) {
-        this.latestProtocols.includes(protocol);
+        return this.latestProtocols.includes(protocol);
     }
 
     getProtocols() {
@@ -39,11 +37,11 @@ class ProtocolService {
     }
 
     getReceiverCommandSequence(protocol) {
-        const version = this.protocolService.toAwilixVersion(protocol);
-        const { name } = this.protocolService.resolveProtocol(protocol);
+        const version = this.toAwilixVersion(protocol);
+        const { name } = this.resolveProtocol(protocol);
         const capitalizedOperation = name.charAt(0).toUpperCase() + name.slice(1);
 
-        const prefix = this.protocolService.isLatest(protocol)
+        const prefix = this.isLatest(protocol)
             ? `handle${capitalizedOperation}`
             : `${version}Handle${capitalizedOperation}`;
 
@@ -51,11 +49,11 @@ class ProtocolService {
     }
 
     getSenderCommandSequence(protocol) {
-        const version = this.protocolService.toAwilixVersion(protocol);
-        const operation = this.operationService.getOperationName();
+        const version = this.toAwilixVersion(protocol);
+        const operation = this.toOperation(protocol);
         const capitalizedOperation = operation.charAt(0).toUpperCase() + operation.slice(1);
 
-        const prefix = this.protocolService.isLatest(protocol)
+        const prefix = this.isLatest(protocol)
             ? `${operation}`
             : `${version}${capitalizedOperation}`;
 
