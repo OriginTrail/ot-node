@@ -1,4 +1,4 @@
-import { OPERATION_ID_STATUS, OPERATION_STATUS } from '../../../constants/constants.js';
+import { OPERATION_ID_STATUS, OPERATION_STATUS } from '../../constants/constants.js';
 import BaseController from './base-http-api-controller.js';
 
 class GetController extends BaseController {

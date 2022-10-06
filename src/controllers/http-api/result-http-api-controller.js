@@ -1,4 +1,4 @@
-import { OPERATION_ID_STATUS } from '../../../constants/constants.js';
+import { OPERATION_ID_STATUS } from '../../constants/constants.js';
 import BaseController from './base-http-api-controller.js';
 
 const availableOperations = ['publish', 'get', 'assertions:search', 'entities:search', 'query'];

@@ -1,4 +1,4 @@
-import { PUBLISH_TYPES } from '../../../../constants/constants.js';
+import { PUBLISH_TYPES } from '../../../constants/constants.js';
 
 const assertionSchemaProperties = (blockchainImplementationNames) => ({
     assertionId: {

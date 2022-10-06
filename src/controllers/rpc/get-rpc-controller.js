@@ -1,5 +1,5 @@
-import { NETWORK_MESSAGE_TYPES } from '../../../constants/constants.js';
-import BaseController from '../base-rpc-controller.js';
+import { NETWORK_MESSAGE_TYPES } from '../../constants/constants.js';
+import BaseController from './base-rpc-controller.js';
 
 class GetController extends BaseController {
     constructor(ctx) {

@@ -30,7 +30,7 @@ class ProtocolScheduleMessagesCommand extends Command {
         );
 
         const addCommandPromises = currentBatchNodes.map(async (node) => {
-            const commandSequence = this.getCommandSequence(node.protocol);
+            const commandSequence = this.protocolService.getSenderCommandSequence(node.protocol);
             await this.commandExecutor.add({
                 name: commandSequence[0],
                 sequence: commandSequence.slice(1),
@@ -54,17 +54,6 @@ class ProtocolScheduleMessagesCommand extends Command {
         await Promise.all(addCommandPromises);
 
         return Command.empty();
-    }
-
-    getCommandSequence(protocol) {
-        const version = this.protocolService.toAwilixVersion(protocol);
-        const operation = this.operationService.getOperationName();
-        const capitalizedOperation = operation.charAt(0).toUpperCase() + operation.slice(1);
-
-        return [
-            `${version}${capitalizedOperation}InitCommand`,
-            `${version}${capitalizedOperation}RequestCommand`,
-        ];
     }
 
     /**

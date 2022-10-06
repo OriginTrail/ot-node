@@ -1,6 +1,6 @@
 import BaseController from './base-http-api-controller.js';
 
-import { OPERATION_ID_STATUS, NETWORK_PROTOCOLS } from '../../../constants/constants.js';
+import { OPERATION_ID_STATUS, NETWORK_PROTOCOLS } from '../../constants/constants.js';
 
 class SearchController extends BaseController {
     constructor(ctx) {

@@ -4,7 +4,7 @@ import {
     OPERATION_ID_STATUS,
     OPERATION_STATUS,
     PUBLISH_TYPES,
-} from '../../../constants/constants.js';
+} from '../../constants/constants.js';
 
 class PublishController extends BaseController {
     constructor(ctx) {
