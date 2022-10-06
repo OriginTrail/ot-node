@@ -3,7 +3,7 @@ export default (sequelize, DataTypes) => {
         'user',
         {
             name: {
-                type: DataTypes.INTEGER,
+                type: DataTypes.STRING,
                 unique: true,
             },
             created_at: DataTypes.DATE,
