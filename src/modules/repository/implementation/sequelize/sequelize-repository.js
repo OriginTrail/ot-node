@@ -309,7 +309,7 @@ class SequelizeRepository {
     }
 
     async getUser(username) {
-        return this.models.User.findOne({
+        return this.models.user.findOne({
             where: {
                 name: username,
             },
@@ -317,16 +317,16 @@ class SequelizeRepository {
     }
 
     async saveToken(tokenId, userId, tokenName, expiresAt) {
-        return this.models.Token.create({
+        return this.models.token.create({
             id: tokenId,
-            userId,
-            expiresAt,
+            user_id: userId,
+            expires_at: expiresAt,
             name: tokenName,
         });
     }
 
     async isTokenRevoked(tokenId) {
-        const token = await this.models.Token.findByPk(tokenId);
+        const token = await this.models.token.findByPk(tokenId);
 
         return token && token.revoked;
     }

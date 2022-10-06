@@ -1,45 +1,21 @@
-import { Model } from 'sequelize';
-
 export default (sequelize, DataTypes) => {
-    class Token extends Model {
-        /**
-         * Helper method for defining associations.
-         * This method is not a part of Sequelize lifecycle.
-         * The `models/index` file will call this method automatically.
-         */
-        static associate(models) {
-            Token.belongsTo(models.User, { as: 'user' });
-        }
-    }
-    Token.init(
+    const token = sequelize.define(
+        'token',
         {
             id: { type: DataTypes.STRING, primaryKey: true },
             revoked: DataTypes.BOOLEAN,
-            userId: {
-                type: DataTypes.INTEGER,
-                field: 'user_id',
-            },
+            user_id: DataTypes.INTEGER,
             name: {
                 type: DataTypes.STRING,
             },
-            expiresAt: {
-                type: DataTypes.DATE,
-                field: 'expires_at',
-            },
-            createdAt: {
-                type: DataTypes.DATE,
-                field: 'created_at',
-            },
-            updatedAt: {
-                type: DataTypes.DATE,
-                field: 'updated_at',
-            },
+            expires_at: DataTypes.DATE,
+            created_at: DataTypes.DATE,
+            updated_at: DataTypes.DATE,
         },
-        {
-            sequelize,
-            modelName: 'Token',
-            underscored: true,
-        },
+        {},
     );
-    return Token;
+    token.associate = (models) => {
+        token.belongsTo(models.user, { as: 'user' });
+    };
+    return token;
 };
