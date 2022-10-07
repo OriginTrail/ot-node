@@ -2,16 +2,13 @@ import FindNodesCommand from './find-nodes-command.js';
 import { OPERATION_ID_STATUS } from '../../../constants/constants.js';
 
 class FindNodesLocalCommand extends FindNodesCommand {
-    async findNodes(keyword, networkProtocol, operationId) {
+    async findNodes(keyword, operationId) {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.FIND_NODES_LOCAL_START,
         );
 
-        const closestNodes = await this.networkModuleManager.findNodesLocal(
-            keyword,
-            networkProtocol,
-        );
+        const closestNodes = await this.networkModuleManager.findNodesLocal(keyword);
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

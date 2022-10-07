@@ -1,19 +1,13 @@
 import { createRequire } from 'module';
-import BaseController from './base-controller.js';
+import BaseController from './base-http-api-controller.js';
 
 const require = createRequire(import.meta.url);
 const { version } = require('../../../package.json');
 
 class InfoController extends BaseController {
-    constructor(ctx) {
-        super(ctx);
-        this.networkModuleManager = ctx.networkModuleManager;
-    }
-
-    handleHttpApiInfoRequest(req, res) {
+    handleInfoRequest(req, res) {
         this.returnResponse(res, 200, {
             version,
-            multiAddresses: this.networkModuleManager.getMultiAddrs(),
         });
     }
 }

@@ -4,6 +4,7 @@ class ProtocolScheduleMessagesCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
+        this.protocolService = ctx.protocolService;
     }
 
     /**
@@ -11,19 +12,14 @@ class ProtocolScheduleMessagesCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, keyword, leftoverNodes, batchSize, nodesSeen = [] } = command.data;
+        const { operationId, keyword, batchSize, leftoverNodes, nodesSeen = [] } = command.data;
 
         const currentBatchNodes = leftoverNodes.slice(0, batchSize);
         const currentBatchLeftoverNodes =
             batchSize < leftoverNodes.length ? leftoverNodes.slice(batchSize) : [];
-        currentBatchNodes.forEach((node) => nodesSeen.push(node.toString()));
+        currentBatchNodes.forEach((node) => nodesSeen.push(node.id.toString()));
 
         await this.operationIdService.updateOperationIdStatus(operationId, this.startEvent);
-
-        const commandSequence = [
-            `${this.operationService.getOperationName()}InitCommand`,
-            `${this.operationService.getOperationName()}RequestCommand`,
-        ];
 
         this.logger.debug(
             `Trying to ${this.operationService.getOperationName()} to batch of ${
@@ -33,8 +29,9 @@ class ProtocolScheduleMessagesCommand extends Command {
             }`,
         );
 
-        const addCommandPromises = currentBatchNodes.map((node) =>
-            this.commandExecutor.add({
+        const addCommandPromises = currentBatchNodes.map(async (node) => {
+            const commandSequence = this.protocolService.getSenderCommandSequence(node.protocol);
+            await this.commandExecutor.add({
                 name: commandSequence[0],
                 sequence: commandSequence.slice(1),
                 delay: 0,
@@ -45,15 +42,14 @@ class ProtocolScheduleMessagesCommand extends Command {
                     node,
                     numberOfFoundNodes: currentBatchLeftoverNodes.length + nodesSeen.length,
                     batchSize,
-
                     leftoverNodes: currentBatchLeftoverNodes,
                     nodesSeen,
                 },
                 period: 5000,
                 retries: 3,
                 transactional: false,
-            }),
-        );
+            });
+        });
 
         await Promise.all(addCommandPromises);
 
