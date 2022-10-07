@@ -19,6 +19,9 @@ const assertionSchemaProperties = (blockchainImplementationNames) => ({
         type: 'string',
         minLength: 1,
     },
+    visibility: {
+        enum: ['public', 'private'],
+    },
 });
 
 const assertionSchemaRequired = ['assertionId', 'assertion', 'blockchain', 'contract'];
@@ -28,7 +31,7 @@ const assetSchemaProperties = (blockchainImplementationNames) => ({
     tokenId: {
         type: 'integer',
         minimum: 0,
-    },
+    }
 });
 
 const assetSchemaRequired = [...assertionSchemaRequired, 'tokenId'];

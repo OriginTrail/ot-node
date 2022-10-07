@@ -38,7 +38,7 @@ class PublishController extends BaseController {
             operationId,
         });
 
-        const { assertion, blockchain, contract, tokenId } = req.body;
+        const { assertion, blockchain, contract, tokenId, visibility } = req.body;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
@@ -61,11 +61,12 @@ class PublishController extends BaseController {
                 operationId,
             };
 
-            const commandSequence = ['validateAssertionCommand', 'networkPublishCommand'];
-
             await this.commandExecutor.add({
-                name: commandSequence[0],
-                sequence: commandSequence.slice(1),
+                name: 'validateAssertionCommand',
+                sequence:
+                    visibility === 'public'
+                        ? ['networkPublishCommand']
+                        : ['insertAssertionCommand'],
                 delay: 0,
                 period: 5000,
                 retries: 3,

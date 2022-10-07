@@ -8,6 +8,7 @@ class InsertAssertionCommand extends Command {
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.fileService = ctx.fileService;
         this.operationIdService = ctx.operationIdService;
+        this.operationService = ctx.publishService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_ERROR;
     }
@@ -29,6 +30,12 @@ class InsertAssertionCommand extends Command {
                 operationId,
                 OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
             );
+            if (!command.sequence.length) {
+                this.operationService.markOperationAsCompleted(operationId, {}, [
+                    OPERATION_ID_STATUS.PUBLISH.PUBLISH_END,
+                    OPERATION_ID_STATUS.COMPLETED,
+                ]);
+            }
 
             return this.continueSequence(command.data, command.sequence);
         } catch (error) {
