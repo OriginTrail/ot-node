@@ -1,9 +1,5 @@
-import {
-    NETWORK_MESSAGE_TYPES,
-    OPERATION_ID_STATUS,
-    OPERATION_STATUS,
-} from '../../constants/constants.js';
-import BaseController from './base-controller.js';
+import { OPERATION_ID_STATUS, OPERATION_STATUS } from '../../constants/constants.js';
+import BaseController from './base-http-api-controller.js';
 
 class GetController extends BaseController {
     constructor(ctx) {
@@ -14,7 +10,7 @@ class GetController extends BaseController {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
-    async handleHttpApiGetRequest(req, res) {
+    async handleGetRequest(req, res) {
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.GET.GET_START,
         );
@@ -61,31 +57,6 @@ class GetController extends BaseController {
             operationId,
             OPERATION_ID_STATUS.GET.GET_INIT_END,
         );
-    }
-
-    async handleNetworkGetRequest(message, remotePeerId) {
-        const { operationId, keywordUuid, messageType } = message.header;
-        const { assertionId } = message.data;
-        let commandName;
-        const commandData = { assertionId, remotePeerId, operationId, keywordUuid };
-        switch (messageType) {
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
-                commandName = 'handleGetInitCommand';
-                break;
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
-                commandName = 'handleGetRequestCommand';
-                break;
-            default:
-                throw Error('unknown messageType');
-        }
-
-        await this.commandExecutor.add({
-            name: commandName,
-            sequence: [],
-            delay: 0,
-            data: commandData,
-            transactional: false,
-        });
     }
 }
 

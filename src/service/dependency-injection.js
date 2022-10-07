@@ -8,9 +8,9 @@ class DependencyInjection {
 
         await container.loadModules(
             [
-                'src/controller/**/*.js',
+                'src/controllers/**/*.js',
                 'src/service/*.js',
-                'src/commands/**/**/*.js',
+                'src/commands/**/**/**/*.js',
                 'src/commands/*.js',
                 'src/modules/base-module-manager.js',
                 'src/modules/**/*module-manager.js',

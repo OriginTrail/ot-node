@@ -5,9 +5,9 @@ class NetworkModuleManager extends BaseModuleManager {
         return 'network';
     }
 
-    async serializePeers(peerIds) {
+    async serializePeers(peer) {
         if (this.initialized) {
-            return this.getImplementation().module.serializePeers(peerIds);
+            return this.getImplementation().module.serializePeers(peer);
         }
     }
 
@@ -17,21 +17,21 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    async sortPeerIds(key, peerIds, count) {
+    async sortPeers(key, peerIds, count) {
         if (this.initialized) {
-            return this.getImplementation().module.sortPeerIds(key, peerIds, count);
+            return this.getImplementation().module.sortPeers(key, peerIds, count);
         }
     }
 
-    async findNodes(key, protocol) {
+    async findNodes(key) {
         if (this.initialized) {
-            return this.getImplementation().module.findNodes(key, protocol);
+            return this.getImplementation().module.findNodes(key);
         }
     }
 
-    async findNodesLocal(key, protocol) {
+    async findNodesLocal(key) {
         if (this.initialized) {
-            return this.getImplementation().module.findNodesLocal(key, protocol);
+            return this.getImplementation().module.findNodesLocal(key);
         }
     }
 
@@ -47,22 +47,15 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    getMultiAddrs() {
+    async getProtocols(peerId) {
         if (this.initialized) {
-            return this.getImplementation().module.getMultiAddrs();
+            return this.getImplementation().module.getProtocols(peerId);
         }
     }
 
-    /**
-     * Store the given key/value pair at the peer `target`.
-     *
-     * @param {String} key
-     * @param {Object} object - value to be stored
-     * @param {PeerId} target
-     */
-    store(peer, key, object) {
+    async getAddresses(peerId) {
         if (this.initialized) {
-            return this.getImplementation().module.store(peer, key, object);
+            return this.getImplementation().module.getAddresses(peerId);
         }
     }
 

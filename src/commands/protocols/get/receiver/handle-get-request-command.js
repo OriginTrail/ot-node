@@ -43,7 +43,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
      */
     default(map) {
         const command = {
-            name: 'handleGetRequestCommand',
+            name: 'v1_0_0HandleGetRequestCommand',
             delay: 0,
             transactional: false,
             errorType: ERROR_TYPE.HANDLE_GET_REQUEST_ERROR,

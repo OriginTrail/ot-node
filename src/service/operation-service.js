@@ -17,8 +17,8 @@ class OperationService {
         return this.operationName;
     }
 
-    getNetworkProtocol() {
-        return this.networkProtocol;
+    getNetworkProtocols() {
+        return this.networkProtocols;
     }
 
     getMinimumAckResponses() {
@@ -62,7 +62,7 @@ class OperationService {
     }
 
     async markOperationAsCompleted(operationId, responseData, endStatuses) {
-        this.logger.info(`Finalizing ${this.networkProtocol} for operationId: ${operationId}`);
+        this.logger.info(`Finalizing ${this.operationName} for operationId: ${operationId}`);
 
         await this.repositoryModuleManager.updateOperationStatus(
             this.operationName,
