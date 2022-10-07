@@ -1,37 +1,19 @@
-import { Model } from 'sequelize';
-
 export default (sequelize, DataTypes) => {
-    class User extends Model {
-        /**
-         * Helper method for defining associations.
-         * This method is not a part of Sequelize lifecycle.
-         * The `models/index` file will call this method automatically.
-         */
-        static associate(models) {
-            User.hasMany(models.Token, { as: 'tokens' });
-            User.hasOne(models.Role, { as: 'role' });
-        }
-    }
-    User.init(
+    const user = sequelize.define(
+        'user',
         {
             name: {
                 type: DataTypes.STRING,
                 unique: true,
             },
-            createdAt: {
-                type: DataTypes.DATE,
-                field: 'created_at',
-            },
-            updatedAt: {
-                type: DataTypes.DATE,
-                field: 'updated_at',
-            },
+            created_at: DataTypes.DATE,
+            updated_at: DataTypes.DATE,
         },
-        {
-            sequelize,
-            modelName: 'User',
-            underscored: true,
-        },
+        {},
     );
-    return User;
+    user.associate = (models) => {
+        user.hasMany(models.token, { as: 'tokens' });
+        user.hasOne(models.role, { as: 'role' });
+    };
+    return user;
 };

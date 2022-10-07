@@ -308,7 +308,9 @@ class CommandExecutor {
             await this._update(command, {
                 retries: command.retries - 1,
             });
-            await this.add(command, command.delay ? command.delay : 0, false);
+            const period = command.period ? command.period : 0;
+            const delay = command.delay ? command.delay : 0;
+            await this.add(command, period + delay, false);
         } else {
             try {
                 await this._update(command, {

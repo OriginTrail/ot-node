@@ -1,10 +1,6 @@
-import BaseController from './base-controller.js';
+import BaseController from './base-http-api-controller.js';
 
-import {
-    OPERATION_ID_STATUS,
-    NETWORK_PROTOCOLS,
-    NETWORK_MESSAGE_TYPES,
-} from '../../constants/constants.js';
+import { OPERATION_ID_STATUS, NETWORK_PROTOCOLS } from '../../constants/constants.js';
 
 class SearchController extends BaseController {
     constructor(ctx) {
@@ -16,7 +12,7 @@ class SearchController extends BaseController {
         this.queryService = ctx.queryService;
     }
 
-    async handleHttpApiSearchAssertionsRequest(req, res) {
+    async handleSearchAssertionsRequest(req, res) {
         const { query } = req.query;
 
         const operationId = await this.operationIdService.generateOperationId(
@@ -75,7 +71,7 @@ class SearchController extends BaseController {
         }
     }
 
-    async handleHttpApiSearchEntitiesRequest(req, res) {
+    async handleSearchEntitiesRequest(req, res) {
         const { query } = req.query;
 
         const operationId = await this.operationIdService.generateOperationId(
@@ -129,7 +125,7 @@ class SearchController extends BaseController {
         }
     }
 
-    async handleHttpApiQueryRequest(req, res) {
+    async handleQueryRequest(req, res) {
         const { query, type: queryType } = req.body;
 
         const operationId = await this.operationIdService.generateOperationId(
@@ -152,56 +148,6 @@ class SearchController extends BaseController {
             sequence: commandSequence.slice(1),
             delay: 0,
             data: { query, queryType, operationId },
-            transactional: false,
-        });
-    }
-
-    handleHttpApiProofsRequest() {}
-
-    async handleNetworkSearchAssertionsRequest(message, remotePeerId) {
-        let commandName;
-        const { operationId } = message.header;
-        const commandData = { message, remotePeerId, operationId };
-        switch (message.header.messageType) {
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
-                commandName = 'handleSearchAssertionsInitCommand';
-                break;
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
-                commandName = 'handleSearchAssertionsRequestCommand';
-                break;
-            default:
-                throw Error('unknown messageType');
-        }
-
-        await this.commandExecutor.add({
-            name: commandName,
-            sequence: [],
-            delay: 0,
-            data: commandData,
-            transactional: false,
-        });
-    }
-
-    async handleNetworkSearchEntitiesRequest(message, remotePeerId) {
-        let commandName;
-        const { operationId } = message.header;
-        const commandData = { message, remotePeerId, operationId };
-        switch (message.header.messageType) {
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
-                commandName = 'handleSearchEntitiesInitCommand';
-                break;
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
-                commandName = 'handleSearchEntitiesRequestCommand';
-                break;
-            default:
-                throw Error('unknown messageType');
-        }
-
-        await this.commandExecutor.add({
-            name: commandName,
-            sequence: [],
-            delay: 0,
-            data: commandData,
             transactional: false,
         });
     }

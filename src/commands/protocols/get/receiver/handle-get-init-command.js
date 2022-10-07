@@ -16,23 +16,37 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { assertionId, operationId } = commandData;
+        const { assertionId, operationId, networkProtocol } = commandData;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.GET.ASSERTION_EXISTS_LOCAL_START,
         );
 
         const assertionExists = await this.tripleStoreModuleManager.assertionExists(assertionId);
-        const messageType = assertionExists
-            ? NETWORK_MESSAGE_TYPES.RESPONSES.ACK
-            : NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
+
+        const message = {};
+
+        if (assertionExists) {
+            message.messageType = NETWORK_MESSAGE_TYPES.RESPONSES.ACK;
+            message.messageData = {};
+        } else {
+            const peers = await this.networkModuleManager.findNodesLocal(
+                assertionId,
+                networkProtocol,
+            );
+
+            message.messageType = NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
+            message.messageData = {
+                nodes: await this.networkModuleManager.serializePeers(peers),
+            };
+        }
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.GET.ASSERTION_EXISTS_LOCAL_END,
         );
 
-        return { messageType, messageData: {} };
+        return message;
     }
 
     /**
@@ -42,7 +56,7 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
      */
     default(map) {
         const command = {
-            name: 'handleGetInitCommand',
+            name: 'v1_0_0HandleGetInitCommand',
             delay: 0,
             transactional: false,
         };

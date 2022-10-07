@@ -43,9 +43,10 @@ class OTNode {
         await this.saveNetworkModulePeerIdAndPrivKey();
         await this.createProfiles();
 
-        await this.initializeControllers();
         await this.initializeCommandExecutor();
         await this.initializeTelemetryInjectionService();
+
+        await this.initializeRouters();
 
         this.logger.info('Node is up and running!');
     }
@@ -97,7 +98,7 @@ class OTNode {
             this.logger.info(`All modules initialized!`);
         } catch (e) {
             this.logger.error(`Module initialization failed. Error message: ${e.message}`);
-            process.exit(1);
+            this.stop(1);
         }
     }
 
@@ -108,25 +109,30 @@ class OTNode {
         this.logger.info('Event emitter initialized');
     }
 
-    async initializeControllers() {
+    async initializeRouters() {
         try {
-            this.logger.info('Initializing http api router');
+            this.logger.info('Initializing http api and rpc router');
             const httpApiRouter = this.container.resolve('httpApiRouter');
-            await httpApiRouter.initialize();
-        } catch (e) {
-            this.logger.error(
-                `Http api router initialization failed. Error message: ${e.message}, ${e.stackTrace}`,
-            );
-        }
-
-        try {
-            this.logger.info('Initializing rpc router');
             const rpcRouter = this.container.resolve('rpcRouter');
-            await rpcRouter.initialize();
+
+            await Promise.all([
+                httpApiRouter.initialize().catch((err) => {
+                    this.logger.error(
+                        `Http api router initialization failed. Error message: ${err.message}, ${err.stackTrace}`,
+                    );
+                    this.stop(1);
+                }),
+                rpcRouter.initialize().catch((err) => {
+                    this.logger.error(
+                        `RPC router initialization failed. Error message: ${err.message}, ${err.stackTrace}`,
+                    );
+                    this.stop(1);
+                }),
+            ]);
+            this.logger.info('Routers initialized successfully');
         } catch (e) {
-            this.logger.error(
-                `RPC router initialization failed. Error message: ${e.message}, ${e.stackTrace}`,
-            );
+            this.logger.error(`Failed to initialize routers: ${e.message}, ${e.stackTrace}`);
+            this.stop(1);
         }
     }
 
@@ -170,7 +176,7 @@ class OTNode {
 
         if (!blockchainModuleManager.getImplementationsNames().length) {
             this.logger.info(`Unable to create blockchain profiles. OT-node shutting down...`);
-            process.exit(1);
+            this.stop(1);
         }
     }
 
@@ -193,6 +199,7 @@ class OTNode {
             this.logger.error(
                 `Command executor initialization failed. Error message: ${e.message}`,
             );
+            this.stop(1);
         }
     }
 
@@ -270,9 +277,9 @@ class OTNode {
         this.config.otNodeUpdated = true;
     }
 
-    stop() {
+    stop(code = 0) {
         this.logger.info('Stopping node...');
-        process.exit(0);
+        process.exit(code);
     }
 }
 
