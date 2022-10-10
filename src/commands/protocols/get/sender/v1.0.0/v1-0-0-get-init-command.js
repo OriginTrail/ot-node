@@ -1,6 +1,6 @@
-import ProtocolInitCommand from '../../common/protocol-init-command.js';
-import { ERROR_TYPE, OPERATION_REQUEST_STATUS } from '../../../../constants/constants.js';
-import Command from '../../../command.js';
+import ProtocolInitCommand from '../../../common/protocol-init-command.js';
+import { ERROR_TYPE, OPERATION_REQUEST_STATUS } from '../../../../../constants/constants.js';
+import Command from '../../../../command.js';
 
 class GetInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
@@ -32,7 +32,7 @@ class GetInitCommand extends ProtocolInitCommand {
      */
     default(map) {
         const command = {
-            name: 'getInitCommand',
+            name: 'v1_0_0GetInitCommand',
             delay: 0,
             retries: 0,
             transactional: false,

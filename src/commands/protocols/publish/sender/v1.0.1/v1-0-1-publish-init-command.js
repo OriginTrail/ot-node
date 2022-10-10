@@ -1,5 +1,5 @@
-import ProtocolInitCommand from '../../common/protocol-init-command.js';
-import { ERROR_TYPE, PUBLISH_TYPES } from '../../../../constants/constants.js';
+import ProtocolInitCommand from '../../../common/protocol-init-command.js';
+import { ERROR_TYPE, PUBLISH_TYPES } from '../../../../../constants/constants.js';
 
 class PublishInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
@@ -25,7 +25,7 @@ class PublishInitCommand extends ProtocolInitCommand {
      */
     default(map) {
         const command = {
-            name: 'publishInitCommand',
+            name: 'v1_0_1PublishInitCommand',
             delay: 0,
             transactional: false,
         };

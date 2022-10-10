@@ -8,7 +8,7 @@ class GetController extends BaseController {
         this.operationService = ctx.getService;
     }
 
-    async handleRequest(message, remotePeerId, protocol) {
+    async v1_0_0HandleRequest(message, remotePeerId, protocol) {
         const { operationId, keywordUuid, messageType } = message.header;
         const { assertionId } = message.data;
         let commandName;

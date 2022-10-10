@@ -18,9 +18,7 @@ class RpcRouter {
         for (const protocol of protocols) {
             const version = this.protocolService.toAwilixVersion(protocol);
             const operation = this.protocolService.toOperation(protocol);
-            const handleRequest = this.protocolService.isLatest(protocol)
-                ? `handleRequest`
-                : `${version}handleRequest`;
+            const handleRequest = `${version}HandleRequest`;
             const controller = `${operation}RpcController`;
 
             this.networkModuleManager.handleMessage(protocol, (message, remotePeerId) =>

@@ -4,8 +4,6 @@ class ProtocolService {
     constructor(config, logger) {
         this.config = config;
         this.logger = logger;
-
-        this.latestProtocols = Object.values(NETWORK_PROTOCOLS).map((protocols) => protocols[0]);
     }
 
     toAwilixVersion(protocol) {
@@ -16,10 +14,6 @@ class ProtocolService {
     resolveProtocol(protocol) {
         const [, name, version] = protocol.split('/');
         return { name, version };
-    }
-
-    isLatest(protocol) {
-        return this.latestProtocols.includes(protocol);
     }
 
     getProtocols() {
@@ -41,9 +35,7 @@ class ProtocolService {
         const { name } = this.resolveProtocol(protocol);
         const capitalizedOperation = name.charAt(0).toUpperCase() + name.slice(1);
 
-        const prefix = this.isLatest(protocol)
-            ? `handle${capitalizedOperation}`
-            : `${version}Handle${capitalizedOperation}`;
+        const prefix = `${version}Handle${capitalizedOperation}`;
 
         return [`${prefix}InitCommand`, `${prefix}RequestCommand`];
     }
@@ -53,9 +45,7 @@ class ProtocolService {
         const operation = this.toOperation(protocol);
         const capitalizedOperation = operation.charAt(0).toUpperCase() + operation.slice(1);
 
-        const prefix = this.isLatest(protocol)
-            ? `${operation}`
-            : `${version}${capitalizedOperation}`;
+        const prefix = `${version}${capitalizedOperation}`;
 
         return [`${prefix}InitCommand`, `${prefix}RequestCommand`];
     }
