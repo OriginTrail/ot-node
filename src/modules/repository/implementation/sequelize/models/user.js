@@ -9,7 +9,7 @@ export default (sequelize, DataTypes) => {
             created_at: DataTypes.DATE,
             updated_at: DataTypes.DATE,
         },
-        {},
+        { underscored: true },
     );
     user.associate = (models) => {
         user.hasMany(models.token, { as: 'tokens' });
