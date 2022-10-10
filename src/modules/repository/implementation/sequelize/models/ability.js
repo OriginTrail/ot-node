@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
             created_at: DataTypes.DATE,
             updated_at: DataTypes.DATE,
         },
-        {},
+        { underscored: true },
     );
     ability.associate = () => {
         // define association here

@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
             created_at: DataTypes.DATE,
             updated_at: DataTypes.DATE,
         },
-        {},
+        { underscored: true },
     );
     roleAbility.associate = (models) => {
         roleAbility.hasOne(models.ability, { as: 'ability' });
