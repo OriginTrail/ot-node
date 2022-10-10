@@ -272,7 +272,8 @@ class Libp2pService {
         const encodedKey = new TextEncoder().encode(key);
         const self = this;
         const telemetryData = [];
-        let peers = await all(
+        const peersSeen = new PeerSet();
+        const peers = await all(
             pipe(
                 self.node.dht.getClosestPeers(encodedKey),
                 (source) =>
@@ -282,11 +283,17 @@ class Libp2pService {
                         }
                     }),
                 (source) => filter(source, (event) => event.name === 'FINAL_PEER'),
-                (source) => map(source, async (event) => event.peer.id),
+                (source) => map(source, async (event) => event.peer),
+                (source) =>
+                    filter(source, async (peer) => {
+                        if (!peersSeen.has(peer.id)) {
+                            peersSeen.add(peer.id);
+                            return true;
+                        }
+                        return false;
+                    }),
             ),
         );
-
-        peers = await all(map(new PeerSet(peers), async (peerId) => this.fromPeerId(peerId)));
 
         const finalPeers =
             this.dhtType === DHT_TYPES.DUAL ? await this.sortPeers(key, peers) : peers;

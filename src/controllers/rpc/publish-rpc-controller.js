@@ -9,7 +9,7 @@ class PublishController extends BaseController {
         this.operationIdService = ctx.operationIdService;
     }
 
-    async v1_0_0handleRequest(message, remotePeerId, protocol) {
+    async v1_0_0HandleRequest(message, remotePeerId, protocol) {
         const { operationId, keywordUuid, messageType } = message.header;
         const { assertionId, ual } = message.data;
         const command = {
@@ -50,7 +50,7 @@ class PublishController extends BaseController {
         await this.commandExecutor.add(command);
     }
 
-    async handleRequest(message, remotePeerId, protocol) {
+    async v1_0_1HandleRequest(message, remotePeerId, protocol) {
         const { operationId, keywordUuid, messageType } = message.header;
         const { publishType, assertionId, blockchain, contract } = message.data;
         let commandData = {

@@ -8,7 +8,7 @@ class SearchController extends BaseController {
         this.commandExecutor = ctx.commandExecutor;
     }
 
-    async handleRequest(message, remotePeerId) {
+    async v1_0_0HandleRequest(message, remotePeerId) {
         let commandName;
         const { operationId } = message.header;
         const commandData = { message, remotePeerId, operationId };

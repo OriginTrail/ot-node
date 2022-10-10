@@ -1,11 +1,11 @@
-import HandleProtocolMessageCommand from '../../common/handle-protocol-message-command.js';
+import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
 
 import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     PUBLISH_TYPES,
-} from '../../../../constants/constants.js';
+} from '../../../../../constants/constants.js';
 
 class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
@@ -109,7 +109,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
      */
     default(map) {
         const command = {
-            name: 'handleStoreRequestCommand',
+            name: 'v1_0_1HandleStoreRequestCommand',
             delay: 0,
             transactional: false,
         };
