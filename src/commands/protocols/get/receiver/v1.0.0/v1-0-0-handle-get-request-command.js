@@ -1,10 +1,10 @@
-import HandleProtocolMessageCommand from '../../common/handle-protocol-message-command.js';
+import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
 
 import {
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
-} from '../../../../constants/constants.js';
+} from '../../../../../constants/constants.js';
 
 class HandleGetRequestCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {

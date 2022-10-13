@@ -12,7 +12,7 @@ export default (sequelize, DataTypes) => {
             created_at: DataTypes.DATE,
             updated_at: DataTypes.DATE,
         },
-        {},
+        { underscored: true },
     );
     token.associate = (models) => {
         token.belongsTo(models.user, { as: 'user' });
