@@ -1,15 +1,18 @@
 /* eslint no-console: 0 */
-const ms = require('ms');
-const DeepExtend = require('deep-extend');
-const rc = require('rc');
-const fs = require('fs-extra');
-const uuid = require('uuid').v4;
-const Logger = require('../src/logger/logger');
+import 'dotenv/config';
+import ms from 'ms';
+import DeepExtend from 'deep-extend';
+import rc from 'rc';
+import fs from 'fs-extra';
+import { v4 as uuid } from 'uuid';
+import { createRequire } from 'module';
+import Logger from '../src/logger/logger.js';
+import RepositoryModuleManager from '../src/modules/repository/repository-module-manager.js';
+import jwtUtil from '../src/service/util/jwt-util.js';
+
+const require = createRequire(import.meta.url);
 const configjson = require('../config/config.json');
 const pjson = require('../package.json');
-const RepositoryModuleManager = require('../src/modules/repository/repository-module-manager');
-require('dotenv').config();
-const jwtUtil = require('../src/service/util/jwt-util');
 
 const getLogger = () => new Logger('silent', false);
 let repository;

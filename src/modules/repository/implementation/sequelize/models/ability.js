@@ -1,33 +1,15 @@
-const { Model } = require('sequelize');
-
-module.exports = (sequelize, DataTypes) => {
-    class Ability extends Model {
-        /**
-         * Helper method for defining associations.
-         * This method is not a part of Sequelize lifecycle.
-         * The `models/index` file will call this method automatically.
-         */
-        static associate() {
-            // define association here
-        }
-    }
-    Ability.init(
+export default (sequelize, DataTypes) => {
+    const ability = sequelize.define(
+        'ability',
         {
             name: DataTypes.STRING,
-            createdAt: {
-                type: DataTypes.DATE,
-                field: 'created_at',
-            },
-            updatedAt: {
-                type: DataTypes.DATE,
-                field: 'updated_at',
-            },
+            created_at: DataTypes.DATE,
+            updated_at: DataTypes.DATE,
         },
-        {
-            sequelize,
-            modelName: 'Ability',
-            underscored: true,
-        },
+        { underscored: true },
     );
-    return Ability;
+    ability.associate = () => {
+        // define association here
+    };
+    return ability;
 };

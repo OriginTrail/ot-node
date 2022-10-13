@@ -1,24 +1,24 @@
 /* eslint-disable */
-// const Blazegraph = require('../../src/modules/triple-store/implementation/ot-blazegraph/ot-blazegraph');
-// const GraphDB = require('../../src/modules/triple-store/implementation/ot-graphdb/ot-graphdb');
-// const Fuseki = require('../../src/modules/triple-store/implementation/ot-fuseki/ot-fuseki');
+// import Blazegraph from '../../src/modules/triple-store/implementation/ot-blazegraph/ot-blazegraph';
+// import GraphDB from '../../src/modules/triple-store/implementation/ot-graphdb/ot-graphdb';
+// import Fuseki from '../../src/modules/triple-store/implementation/ot-fuseki/ot-fuseki';
 // const {
 //     describe,
 //     it,
 //     before,
 //     after,
 // } = require('mocha');
-// const chai = require('chai');
+// import chai from 'chai';
 //
 // const {
 //     assert,
 //     expect,
 // } = chai;
 //
-// const Sparql = require('../../external/sparqlquery-service');
-// const Logger = require('../../src/logger/logger');
-// const fs = require('fs');
-// const GraphdbService = require('../../external/graphdb-service');
+// import Sparql from '../../external/sparqlquery-service';
+// import Logger from '../../src/logger/logger';
+// import fs from 'fs';
+// import GraphdbService from '../../external/graphdb-service';
 //
 // let sparqlService = null;
 // let logger = null;

@@ -1,6 +1,7 @@
-const publishSchema = require('../controller/v1/request-schema/publish-schema');
-const getSchema = require('../controller/v1/request-schema/get-schema');
-const searchSchema = require('../controller/v1/request-schema/search-schema');
+import publishSchema from '../controllers/http-api/request-schema/publish-schema.js';
+import getSchema from '../controllers/http-api/request-schema/get-schema.js';
+import searchSchema from '../controllers/http-api/request-schema/search-schema.js';
+import querySchema from '../controllers/http-api/request-schema/query-schema.js';
 
 class JsonSchemaService {
     constructor(ctx) {
@@ -18,6 +19,10 @@ class JsonSchemaService {
     searchSchema() {
         return searchSchema();
     }
+
+    querySchema() {
+        return querySchema();
+    }
 }
 
-module.exports = JsonSchemaService;
+export default JsonSchemaService;

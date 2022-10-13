@@ -1,25 +1,23 @@
-const { Mutex } = require('async-mutex');
-const OperationService = require('./operation-service');
-const {
-    GET_REQUEST_STATUS,
+import { Mutex } from 'async-mutex';
+import OperationService from './operation-service.js';
+import {
     OPERATION_ID_STATUS,
-    GET_STATUS,
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     OPERATIONS,
-} = require('../constants/constants');
+    OPERATION_REQUEST_STATUS,
+} from '../constants/constants.js';
 
 class GetService extends OperationService {
     constructor(ctx) {
         super(ctx);
 
         this.dataService = ctx.dataService;
+        this.networkModuleManager = ctx.networkModuleManager;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
 
         this.operationName = OPERATIONS.GET;
-        this.networkProtocol = NETWORK_PROTOCOLS.GET;
-        this.operationRequestStatus = GET_REQUEST_STATUS;
-        this.operationStatus = GET_STATUS;
+        this.networkProtocols = NETWORK_PROTOCOLS.GET;
         this.errorType = ERROR_TYPE.GET.GET_ERROR;
         this.completedStatuses = [
             OPERATION_ID_STATUS.GET.GET_FETCH_FROM_NODES_END,
@@ -30,8 +28,15 @@ class GetService extends OperationService {
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
-        const { operationId, numberOfFoundNodes, numberOfNodesInBatch, leftoverNodes, keyword } =
-            command.data;
+        const {
+            operationId,
+            numberOfFoundNodes,
+            leftoverNodes,
+            keyword,
+            batchSize,
+            nodesSeen,
+            newFoundNodes,
+        } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
@@ -43,21 +48,50 @@ class GetService extends OperationService {
         const { completedNumber, failedNumber } = keywordsStatuses[keyword];
         const numberOfResponses = completedNumber + failedNumber;
         this.logger.debug(
-            `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${numberOfNodesInBatch} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
+            `Processing ${this.operationName} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${batchSize} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
         );
 
-        if (completedNumber === this.getMinimumAckResponses()) {
+        if (
+            responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
+            completedNumber === this.getMinimumAckResponses()
+        ) {
             await this.markOperationAsCompleted(
                 operationId,
                 { assertion: responseData.nquads },
                 this.completedStatuses,
             );
             this.logResponsesSummary(completedNumber, failedNumber);
-        } else if (
+        } else if (responseData?.nodes?.length) {
+            const leftoverNodesString = leftoverNodes.map((node) => node.id.toString());
+            const thisNodeId = this.networkModuleManager.getPeerId().toString();
+            const newDiscoveredNodes = responseData.nodes.filter(
+                (node) =>
+                    node.id !== thisNodeId &&
+                    !nodesSeen.includes(node.id) &&
+                    !leftoverNodesString.includes(node.id),
+            );
+
+            const deserializedNodes = await this.networkModuleManager.deserializePeers(
+                newDiscoveredNodes,
+            );
+            for (const node of deserializedNodes) {
+                for (const protocol of this.getNetworkProtocols()) {
+                    if (node.protocols.includes(protocol)) {
+                        newFoundNodes[node.id.toString()] = { ...node, protocol };
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (
             completedNumber < this.getMinimumAckResponses() &&
-            (numberOfFoundNodes === failedNumber || failedNumber % numberOfNodesInBatch === 0)
+            (numberOfFoundNodes === failedNumber || failedNumber % batchSize === 0)
         ) {
             if (leftoverNodes.length === 0) {
+                this.logger.info(
+                    `Unable to find assertion on the network for operation id: ${operationId}`,
+                );
                 await this.markOperationAsCompleted(
                     operationId,
                     {
@@ -67,7 +101,12 @@ class GetService extends OperationService {
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);
             } else {
-                await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
+                const newLeftoverNodes = await this.networkModuleManager.sortPeers(
+                    keyword,
+                    leftoverNodes.concat(Object.values(newFoundNodes)),
+                    leftoverNodes.length,
+                );
+                await this.scheduleOperationForLeftoverNodes(command.data, newLeftoverNodes);
             }
         }
     }
@@ -81,7 +120,7 @@ class GetService extends OperationService {
         this.logger.debug(
             `Assertion: ${assertionId} for operationId: ${operationId} ${
                 nquads.length ? '' : 'not'
-            } found in local database.`,
+            } found in local triple store.`,
         );
 
         if (nquads.length) {
@@ -92,4 +131,4 @@ class GetService extends OperationService {
     }
 }
 
-module.exports = GetService;
+export default GetService;

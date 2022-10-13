@@ -1,4 +1,5 @@
-const validator = require('validator');
+import { validate } from 'uuid';
+import path from 'path';
 
 class OperationIdService {
     constructor(ctx) {
@@ -28,7 +29,24 @@ class OperationIdService {
     }
 
     operationIdInRightFormat(operationId) {
-        return validator.isUUID(operationId);
+        return validate(operationId);
+    }
+
+    async updateOperationIdStatusWithValues(
+        operationId,
+        status,
+        value1 = null,
+        value2 = null,
+        timestamp = Date.now(),
+    ) {
+        const response = {
+            status,
+            timestamp,
+        };
+
+        this.emitChangeEvent(status, operationId, value1, value2, timestamp);
+
+        await this.repositoryModuleManager.updateOperationIdRecord(response, operationId);
     }
 
     async updateOperationIdStatus(operationId, status, errorMessage = null, errorType = null) {
@@ -47,12 +65,13 @@ class OperationIdService {
         await this.repositoryModuleManager.updateOperationIdRecord(response, operationId);
     }
 
-    async updateOperationIdData(data, operationId) {
-        await this.repositoryModuleManager.updateOperationIdRecord(data, operationId);
-    }
-
-    emitChangeEvent(status, operationId, errorMessage = null, errorType = null) {
-        const timestamp = Date.now();
+    emitChangeEvent(
+        status,
+        operationId,
+        errorMessage = null,
+        errorType = null,
+        timestamp = Date.now(),
+    ) {
         const eventName = 'operation_status_changed';
 
         const eventData = {
@@ -76,13 +95,13 @@ class OperationIdService {
             JSON.stringify(data),
         );
 
-        this.memoryCachedHandlersData[operationId] = data;
+        this.memoryCachedHandlersData[operationId] = { data, timestamp: Date.now() };
     }
 
     async getCachedOperationIdData(operationId) {
         if (this.memoryCachedHandlersData[operationId]) {
             this.logger.debug(`Reading operation id: ${operationId} cached data from memory`);
-            return this.memoryCachedHandlersData[operationId];
+            return this.memoryCachedHandlersData[operationId].data;
         }
 
         this.logger.debug(`Reading operation id: ${operationId} cached data from file`);
@@ -105,6 +124,40 @@ class OperationIdService {
         this.logger.debug(`Removing operation id: ${operationId} cached data from memory`);
         delete this.memoryCachedHandlersData[operationId];
     }
+
+    async removeExpiredOperationIdMemoryCache(expiredTimeout) {
+        const now = Date.now();
+        let deleted = 0;
+        for (const operationId in this.memoryCachedHandlersData) {
+            const { data, timestamp } = this.memoryCachedHandlersData[operationId];
+            if (timestamp + expiredTimeout < now) {
+                delete this.memoryCachedHandlersData[operationId];
+                deleted += Buffer.from(JSON.stringify(data)).byteLength;
+            }
+        }
+        return deleted;
+    }
+
+    async removeExpiredOperationIdFileCache(expiredTimeout) {
+        const cacheFolderPath = this.fileService.getOperationIdCachePath();
+        const cacheFolderExists = await this.fileService.fileExists(cacheFolderPath);
+        if (!cacheFolderExists) {
+            return;
+        }
+        const fileList = await this.fileService.readDirectory(cacheFolderPath);
+        const deleteFile = async (fileName) => {
+            const filePath = path.join(cacheFolderPath, fileName);
+            const now = new Date();
+            const createdDate = (await this.fileService.stat(filePath)).mtime;
+            if (createdDate.getTime() + expiredTimeout < now.getTime()) {
+                await this.fileService.removeFile(filePath);
+                return true;
+            }
+            return false;
+        };
+        const deleted = await Promise.all(fileList.map((fileName) => deleteFile(fileName)));
+        return deleted.filter((x) => x).length;
+    }
 }
 
-module.exports = OperationIdService;
+export default OperationIdService;

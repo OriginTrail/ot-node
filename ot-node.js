@@ -1,16 +1,18 @@
-const DeepExtend = require('deep-extend');
-const rc = require('rc');
-const fs = require('fs');
-const queue = require('fastq');
-const appRootPath = require('app-root-path');
-const path = require('path');
-const EventEmitter = require('events');
-const DependencyInjection = require('./src/service/dependency-injection');
-const Logger = require('./src/logger/logger');
-const constants = require('./src/constants/constants');
+import DeepExtend from 'deep-extend';
+import rc from 'rc';
+import fs from 'fs';
+import appRootPath from 'app-root-path';
+import path from 'path';
+import EventEmitter from 'events';
+import { createRequire } from 'module';
+import DependencyInjection from './src/service/dependency-injection.js';
+import Logger from './src/logger/logger.js';
+import { MIN_NODE_VERSION } from './src/constants/constants.js';
+import FileService from './src/service/file-service.js';
+
+const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
-const FileService = require('./src/service/file-service');
 
 class OTNode {
     constructor(config) {
@@ -34,16 +36,17 @@ class OTNode {
         this.logger.info('======================================================');
         this.logger.info(`Node is running in ${process.env.NODE_ENV} environment`);
 
-        this.initializeDependencyContainer();
+        await this.initializeDependencyContainer();
         this.initializeEventEmitter();
 
         await this.initializeModules();
         await this.saveNetworkModulePeerIdAndPrivKey();
         await this.createProfiles();
 
-        await this.initializeControllers();
         await this.initializeCommandExecutor();
         await this.initializeTelemetryInjectionService();
+
+        await this.initializeRouters();
 
         this.logger.info('Node is up and running!');
     }
@@ -52,7 +55,7 @@ class OTNode {
         const nodeMajorVersion = process.versions.node.split('.')[0];
         this.logger.warn('======================================================');
         this.logger.warn(`Using node.js version: ${process.versions.node}`);
-        if (nodeMajorVersion < constants.MIN_NODE_VERSION) {
+        if (nodeMajorVersion < MIN_NODE_VERSION) {
             this.logger.warn(
                 `This node was tested with node.js version 16. To make sure that your node is running properly please update your node version!`,
             );
@@ -72,23 +75,12 @@ class OTNode {
             // set default user configuration filename
             this.config.configFilename = '.origintrail_noderc';
         }
-        const fileService = new FileService({ config: this.config });
-        const updateFilePath = fileService.getUpdateFilePath();
-        if (fs.existsSync(updateFilePath)) {
-            this.config.otNodeUpdated = true;
-            fileService.removeFile(updateFilePath).catch((error) => {
-                this.logger.warn(`Unable to remove update file. Error: ${error}`);
-            });
-        }
     }
 
-    initializeDependencyContainer() {
-        this.container = DependencyInjection.initialize();
+    async initializeDependencyContainer() {
+        this.container = await DependencyInjection.initialize();
         DependencyInjection.registerValue(this.container, 'config', this.config);
         DependencyInjection.registerValue(this.container, 'logger', this.logger);
-        DependencyInjection.registerValue(this.container, 'constants', constants);
-        DependencyInjection.registerValue(this.container, 'blockchainQueue', queue);
-        DependencyInjection.registerValue(this.container, 'tripleStoreQueue', queue);
 
         this.logger.info('Dependency injection module is initialized');
     }
@@ -106,7 +98,7 @@ class OTNode {
             this.logger.info(`All modules initialized!`);
         } catch (e) {
             this.logger.error(`Module initialization failed. Error message: ${e.message}`);
-            process.exit(1);
+            this.stop(1);
         }
     }
 
@@ -117,25 +109,30 @@ class OTNode {
         this.logger.info('Event emitter initialized');
     }
 
-    async initializeControllers() {
+    async initializeRouters() {
         try {
-            this.logger.info('Initializing http api router');
+            this.logger.info('Initializing http api and rpc router');
             const httpApiRouter = this.container.resolve('httpApiRouter');
-            await httpApiRouter.initialize();
-        } catch (e) {
-            this.logger.error(
-                `Http api router initialization failed. Error message: ${e.message}, ${e.stackTrace}`,
-            );
-        }
-
-        try {
-            this.logger.info('Initializing rpc router');
             const rpcRouter = this.container.resolve('rpcRouter');
-            await rpcRouter.initialize();
+
+            await Promise.all([
+                httpApiRouter.initialize().catch((err) => {
+                    this.logger.error(
+                        `Http api router initialization failed. Error message: ${err.message}, ${err.stackTrace}`,
+                    );
+                    this.stop(1);
+                }),
+                rpcRouter.initialize().catch((err) => {
+                    this.logger.error(
+                        `RPC router initialization failed. Error message: ${err.message}, ${err.stackTrace}`,
+                    );
+                    this.stop(1);
+                }),
+            ]);
+            this.logger.info('Routers initialized successfully');
         } catch (e) {
-            this.logger.error(
-                `RPC router initialization failed. Error message: ${e.message}, ${e.stackTrace}`,
-            );
+            this.logger.error(`Failed to initialize routers: ${e.message}, ${e.stackTrace}`);
+            this.stop(1);
         }
     }
 
@@ -179,7 +176,7 @@ class OTNode {
 
         if (!blockchainModuleManager.getImplementationsNames().length) {
             this.logger.info(`Unable to create blockchain profiles. OT-node shutting down...`);
-            process.exit(1);
+            this.stop(1);
         }
     }
 
@@ -202,6 +199,7 @@ class OTNode {
             this.logger.error(
                 `Command executor initialization failed. Error message: ${e.message}`,
             );
+            this.stop(1);
         }
     }
 
@@ -218,16 +216,6 @@ class OTNode {
                     `Telemetry hub module initialization failed. Error message: ${e.message}`,
                 );
             }
-        }
-    }
-
-    async initializeWatchdog() {
-        try {
-            const watchdogService = this.container.resolve('watchdogService');
-            await watchdogService.initialize();
-            this.logger.info('Watchdog service initialized');
-        } catch (e) {
-            this.logger.warn(`Watchdog service initialization failed. Error message: ${e.message}`);
         }
     }
 
@@ -283,18 +271,16 @@ class OTNode {
     async removeUpdateFile() {
         const fileService = new FileService({ config: this.config, logger: this.logger });
         const updateFilePath = fileService.getUpdateFilePath();
-        if (await fileService.fileExists(updateFilePath)) {
-            this.config.otNodeUpdated = true;
-            await fileService.removeFile(updateFilePath).catch((error) => {
-                this.logger.warn(`Unable to remove update file. Error: ${error}`);
-            });
-        }
+        await fileService.removeFile(updateFilePath).catch((error) => {
+            this.logger.warn(`Unable to remove update file. Error: ${error}`);
+        });
+        this.config.otNodeUpdated = true;
     }
 
-    stop() {
+    stop(code = 0) {
         this.logger.info('Stopping node...');
-        process.exit(0);
+        process.exit(code);
     }
 }
 
-module.exports = OTNode;
+export default OTNode;

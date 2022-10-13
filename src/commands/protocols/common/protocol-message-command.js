@@ -1,11 +1,14 @@
-const Command = require('../../command');
-const { NETWORK_MESSAGE_TYPES } = require('../../../constants/constants');
+import Command from '../../command.js';
+import {
+    NETWORK_MESSAGE_TYPES,
+    OPERATION_REQUEST_STATUS,
+    OPERATION_STATUS,
+} from '../../../constants/constants.js';
 
 class ProtocolMessageCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.networkModuleManager = ctx.networkModuleManager;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
     async executeProtocolMessageCommand(command, messageType) {
@@ -20,16 +23,13 @@ class ProtocolMessageCommand extends Command {
     async shouldSendMessage(command) {
         const { operationId } = command.data;
 
-        const operation = await this.repositoryModuleManager.getOperationStatus(
-            this.operationService.getOperationName(),
-            operationId,
-        );
+        const { status } = await this.operationService.getOperationStatus(operationId);
 
-        if (operation.status === this.operationService.getOperationStatus().IN_PROGRESS) {
+        if (status === OPERATION_STATUS.IN_PROGRESS) {
             return true;
         }
         this.logger.trace(
-            `${command.name} skipped for operationId: ${operationId} with status ${operation.status}`,
+            `${command.name} skipped for operationId: ${operationId} with status ${status}`,
         );
 
         return false;
@@ -45,8 +45,8 @@ class ProtocolMessageCommand extends Command {
         const { node, operationId, keyword } = command.data;
 
         const response = await this.networkModuleManager.sendMessage(
-            this.operationService.getNetworkProtocol(),
-            node,
+            node.protocol,
+            node.id,
             messageType,
             operationId,
             keyword,
@@ -92,7 +92,7 @@ class ProtocolMessageCommand extends Command {
     async markResponseAsFailed(command, errorMessage) {
         await this.operationService.processResponse(
             command,
-            this.operationService.getOperationRequestStatus().FAILED,
+            OPERATION_REQUEST_STATUS.FAILED,
             null,
             errorMessage,
         );
@@ -106,4 +106,4 @@ class ProtocolMessageCommand extends Command {
     }
 }
 
-module.exports = ProtocolMessageCommand;
+export default ProtocolMessageCommand;

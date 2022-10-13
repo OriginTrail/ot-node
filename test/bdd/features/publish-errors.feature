@@ -3,48 +3,29 @@ Feature: Publish errors test
     Given the blockchain is set up
     And 1 bootstrap is running
 
-##  Scenario: Node is not able to start publish on the network with valid assertion
-##    Given I setup 4 nodes
-##    When I call publish on node 1 with validAssertion
-##    And I wait for last publish to finalize
-##    And Last publish finished with status: PUBLISH_START_ERROR
-##
-#
-  Scenario: Node is not able to validate assertion on the network
-    Given I setup 4 nodes
-    When I call publish on ot-node 1 directly with invalidPublishRequestBody
-    And I wait for 15 seconds and check operationId status
-    And Last publish finished with status: PublishValidateAssertionError
+  @publish-errors
+  Scenario: Publish on a node with minimum replication factor greater than the number of nodes
+    Given I setup 3 nodes
+    And I setup node 4 with minimumAckResponses.publish set to 10
+    And I wait for 10 seconds
+    And I call publish on node 4 with validAssertion
+    Then Last PUBLISH operation finished with status: PublishStartError
 
-##  Scenario: Node is not able to store publish result in the local database
-##    Given I setup 4 nodes
-##    When I call publish on node 1 with validAssertion
-##    And I wait for last publish to finalize
-##    And Last publish failed to store publish result with error: publishLocalStoreError
-##
-##  Scenario: Node is not able to store publish init commands during the publish process
-##    Given I setup 4 nodes
-##    When I call publish on node 1 with validAssertion
-##    And I wait for last publish to finalize
-##    And Last publish failed to store publish init commands with error: publishStoreInitError
-##
-##  Scenario: Node is not able to store publish request during the publish process
-##    Given I setup 4 nodes
-##    When I call publish on node 1 with validAssertion
-##    And I wait for last publish to finalize
-##    And Last publish failed to store publish request with error: publishStoreRequestError
-##
-##  Scenario: Node is not able to find node during the publish process
-##    Given I setup 4 nodes
-##    When I call publish on node 1 with validAssertion
-##    And I wait for last publish to finalize
-##    And Last publish failed to find node with error: publishFindNodesError
-##
-##  Scenario: Node is not able to finalized publish on the network with valid assertion
-##    Given I setup 4 nodes
-##    When I call publish on node 1 with validAssertion
-##    And I wait for last publish to finalize
-##    And Last publish failed with error: publishError
-##
-##
-##
+  @publish-errors
+  Scenario: Publish an asset directly on the node
+    Given I setup 4 nodes
+    And I wait for 10 seconds
+    And I call publish on ot-node 4 directly with validPublishRequestBody
+    And I wait for last publish to finalize
+    Then Last PUBLISH operation finished with status: PublishValidateAssertionError
+
+  @publish-errors
+  Scenario: Publish on a node with invalid data path
+    Given I setup 3 nodes
+    And I setup node 4 with appDataPath set to \0
+    And I wait for 10 seconds
+    And I call publish on node 4 with validAssertion
+    Then Last PUBLISH operation finished with status: PublishRouteError
+#
+#
+

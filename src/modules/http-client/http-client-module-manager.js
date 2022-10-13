@@ -1,4 +1,4 @@
-const BaseModuleManager = require('../base-module-manager');
+import BaseModuleManager from '../base-module-manager.js';
 
 class HttpClientModuleManager extends BaseModuleManager {
     constructor(ctx) {
@@ -47,4 +47,4 @@ class HttpClientModuleManager extends BaseModuleManager {
     }
 }
 
-module.exports = HttpClientModuleManager;
+export default HttpClientModuleManager;

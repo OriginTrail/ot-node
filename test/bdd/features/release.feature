@@ -4,24 +4,21 @@ Feature: Release related tests
     And 1 bootstrap is running
 
   @release
-  Scenario: Node is able to publish on the network, expect status completed on publish result
+  Scenario: Publishing a valid assertion
     Given I setup 4 nodes
-    When I call publish on node 1 with validAssertion
-    And I wait for last publish to finalize
-    And Last publish finished with status: COMPLETED
+    And I wait for 10 seconds
+    When I call publish on node 4 with validAssertion
+    Then Last PUBLISH operation finished with status: COMPLETED
 
-#  @release
-#  Scenario: Node is able to resolve assertion previously published
-#    Given I setup 4 nodes
-#    When I call publish on node 1 with validAssertion
-#    And I wait for last publish to finalize
-#    And Last publish finished with status: COMPLETED
-#    And I call resolve on node 1 for last published assertion
-#    And I wait for last resolve to finalize
-#    And Last resolve finished with status: COMPLETED
-#    And Last resolve returned valid result
-##    And I setup 1 additional node
-##    And I call resolve on node 5 for last published assertion
-##    And I wait for last resolve to finalize
-##    And Last resolve finished with status: COMPLETED
-##    And Last resolve returned valid result
+  @release
+  Scenario: Getting a result of the previously published assertion
+    Given I setup 4 nodes
+    And I wait for 10 seconds
+    When I call publish on node 4 with validAssertion
+    And Last PUBLISH operation finished with status: COMPLETED
+    And I get operation result from node 4 for last published assertion
+    And Last GET operation finished with status: COMPLETED
+    And I setup 1 additional node
+    And I wait for 10 seconds
+    And I get operation result from node 5 for last published assertion
+    Then Last GET operation finished with status: COMPLETED

@@ -1,7 +1,10 @@
-const axios = require('axios');
-const Command = require('../command');
+import axios from 'axios';
+import { createRequire } from 'module';
+import Command from '../command.js';
+import { SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES } from '../../constants/constants.js';
+
+const require = createRequire(import.meta.url);
 const pjson = require('../../../package.json');
-const { SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES } = require('../../constants/constants');
 
 class SendTelemetryCommand extends Command {
     constructor(ctx) {
@@ -27,7 +30,7 @@ class SendTelemetryCommand extends Command {
                 const signalingMessage = {
                     nodeData: {
                         version: pjson.version,
-                        identity: this.networkModuleManager.getPeerId()._idB58String,
+                        identity: this.networkModuleManager.getPeerId().toString(),
                         hostname: this.config.hostname,
                         operational_wallet: this.blockchainModuleManager.getPublicKey(),
                         management_wallet: this.blockchainModuleManager.getManagementKey(),
@@ -83,4 +86,4 @@ class SendTelemetryCommand extends Command {
     }
 }
 
-module.exports = SendTelemetryCommand;
+export default SendTelemetryCommand;

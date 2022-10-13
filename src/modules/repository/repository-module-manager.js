@@ -1,4 +1,4 @@
-const BaseModuleManager = require('../base-module-manager');
+import BaseModuleManager from '../base-module-manager.js';
 
 class RepositoryModuleManager extends BaseModuleManager {
     getName() {
@@ -45,6 +45,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async removeFinalizedCommands(finalizedStatuses) {
+        if (this.initialized) {
+            return this.getImplementation().module.removeFinalizedCommands(finalizedStatuses);
+        }
+    }
+
     // OPERATION ID TABLE
     async createOperationIdRecord(handlerData) {
         if (this.initialized) {
@@ -61,6 +67,15 @@ class RepositoryModuleManager extends BaseModuleManager {
     async getOperationIdRecord(operationId) {
         if (this.initialized) {
             return this.getImplementation().module.getOperationIdRecord(operationId);
+        }
+    }
+
+    async removeOperationIdRecord(timeToBeDeleted, statuses) {
+        if (this.initialized) {
+            return this.getImplementation().module.removeOperationIdRecord(
+                timeToBeDeleted,
+                statuses,
+            );
         }
     }
 
@@ -188,4 +203,4 @@ class RepositoryModuleManager extends BaseModuleManager {
     }
 }
 
-module.exports = RepositoryModuleManager;
+export default RepositoryModuleManager;

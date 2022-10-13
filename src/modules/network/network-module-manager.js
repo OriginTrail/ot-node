@@ -1,13 +1,43 @@
-const BaseModuleManager = require('../base-module-manager');
+import BaseModuleManager from '../base-module-manager.js';
 
 class NetworkModuleManager extends BaseModuleManager {
     getName() {
         return 'network';
     }
 
-    async findNodes(key, protocol) {
+    async serializePeers(peer) {
         if (this.initialized) {
-            return this.getImplementation().module.findNodes(key, protocol);
+            return this.getImplementation().module.serializePeers(peer);
+        }
+    }
+
+    async deserializePeers(serializedPeers) {
+        if (this.initialized) {
+            return this.getImplementation().module.deserializePeers(serializedPeers);
+        }
+    }
+
+    async sortPeers(key, peerIds, count) {
+        if (this.initialized) {
+            return this.getImplementation().module.sortPeers(key, peerIds, count);
+        }
+    }
+
+    async findNodes(key) {
+        if (this.initialized) {
+            return this.getImplementation().module.findNodes(key);
+        }
+    }
+
+    async findNodesLocal(key) {
+        if (this.initialized) {
+            return this.getImplementation().module.findNodesLocal(key);
+        }
+    }
+
+    getRoutingTableSize() {
+        if (this.initialized) {
+            return this.getImplementation().module.getRoutingTableSize();
         }
     }
 
@@ -17,16 +47,15 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    /**
-     * Store the given key/value pair at the peer `target`.
-     *
-     * @param {String} key
-     * @param {Object} object - value to be stored
-     * @param {PeerId} target
-     */
-    store(peer, key, object) {
+    async getProtocols(peerId) {
         if (this.initialized) {
-            return this.getImplementation().module.store(peer, key, object);
+            return this.getImplementation().module.getProtocols(peerId);
+        }
+    }
+
+    async getAddresses(peerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getAddresses(peerId);
         }
     }
 
@@ -87,4 +116,4 @@ class NetworkModuleManager extends BaseModuleManager {
     }
 }
 
-module.exports = NetworkModuleManager;
+export default NetworkModuleManager;

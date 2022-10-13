@@ -1,11 +1,9 @@
-const Command = require('../../command');
-
-const { NETWORK_MESSAGE_TYPES } = require('../../../constants/constants');
+import Command from '../../command.js';
+import { NETWORK_MESSAGE_TYPES } from '../../../constants/constants.js';
 
 class HandleProtocolMessageCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.config = ctx.config;
         this.networkModuleManager = ctx.networkModuleManager;
         this.operationIdService = ctx.operationIdService;
     }
@@ -15,12 +13,12 @@ class HandleProtocolMessageCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { remotePeerId, operationId, keywordUuid } = command.data;
+        const { remotePeerId, operationId, keywordUuid, networkProtocols } = command.data;
 
         try {
             const { messageType, messageData } = await this.prepareMessage(command.data);
             await this.networkModuleManager.sendMessageResponse(
-                this.operationService.getNetworkProtocol(),
+                networkProtocols,
                 remotePeerId,
                 messageType,
                 operationId,
@@ -28,7 +26,10 @@ class HandleProtocolMessageCommand extends Command {
                 messageData,
             );
         } catch (error) {
-            if (command.retries) return Command.retry();
+            if (command.retries) {
+                this.logger.warn(error.message);
+                return Command.retry();
+            }
             await this.handleError(error.message, command);
         }
 
@@ -40,11 +41,11 @@ class HandleProtocolMessageCommand extends Command {
     }
 
     async handleError(errorMessage, command) {
-        const { operationId, remotePeerId, keywordUuid } = command.data;
+        const { operationId, remotePeerId, keywordUuid, networkProtocols } = command.data;
 
         await super.handleError(operationId, errorMessage, this.errorType, true);
         await this.networkModuleManager.sendMessageResponse(
-            this.operationService.getNetworkProtocol(),
+            networkProtocols,
             remotePeerId,
             NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
             operationId,
@@ -54,4 +55,4 @@ class HandleProtocolMessageCommand extends Command {
     }
 }
 
-module.exports = HandleProtocolMessageCommand;
+export default HandleProtocolMessageCommand;
