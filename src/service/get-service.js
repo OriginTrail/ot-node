@@ -17,7 +17,7 @@ class GetService extends OperationService {
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
 
         this.operationName = OPERATIONS.GET;
-        this.networkProtocol = NETWORK_PROTOCOLS.GET;
+        this.networkProtocols = NETWORK_PROTOCOLS.GET;
         this.errorType = ERROR_TYPE.GET.GET_ERROR;
         this.completedStatuses = [
             OPERATION_ID_STATUS.GET.GET_FETCH_FROM_NODES_END,
@@ -48,7 +48,7 @@ class GetService extends OperationService {
         const { completedNumber, failedNumber } = keywordsStatuses[keyword];
         const numberOfResponses = completedNumber + failedNumber;
         this.logger.debug(
-            `Processing ${this.networkProtocol} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${batchSize} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
+            `Processing ${this.operationName} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${batchSize} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
         );
 
         if (
@@ -62,7 +62,7 @@ class GetService extends OperationService {
             );
             this.logResponsesSummary(completedNumber, failedNumber);
         } else if (responseData?.nodes?.length) {
-            const leftoverNodesString = leftoverNodes.map((node) => node.toString());
+            const leftoverNodesString = leftoverNodes.map((node) => node.id.toString());
             const thisNodeId = this.networkModuleManager.getPeerId().toString();
             const newDiscoveredNodes = responseData.nodes.filter(
                 (node) =>
@@ -75,7 +75,12 @@ class GetService extends OperationService {
                 newDiscoveredNodes,
             );
             for (const node of deserializedNodes) {
-                newFoundNodes[node.id.toString()] = node.id;
+                for (const protocol of this.getNetworkProtocols()) {
+                    if (node.protocols.includes(protocol)) {
+                        newFoundNodes[node.id.toString()] = { ...node, protocol };
+                        break;
+                    }
+                }
             }
         }
 
@@ -96,7 +101,7 @@ class GetService extends OperationService {
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);
             } else {
-                const newLeftoverNodes = await this.networkModuleManager.sortPeerIds(
+                const newLeftoverNodes = await this.networkModuleManager.sortPeers(
                     keyword,
                     leftoverNodes.concat(Object.values(newFoundNodes)),
                     leftoverNodes.length,

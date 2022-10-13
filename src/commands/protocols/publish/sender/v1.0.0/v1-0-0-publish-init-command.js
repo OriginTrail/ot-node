@@ -1,21 +1,19 @@
-import ProtocolInitCommand from '../../common/protocol-init-command.js';
-import { ERROR_TYPE, PUBLISH_TYPES } from '../../../../constants/constants.js';
+import ProtocolInitCommand from '../../../common/protocol-init-command.js';
+import { ERROR_TYPE } from '../../../../../constants/constants.js';
 
 class PublishInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
+        this.ualService = ctx.ualService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_INIT_ERROR;
     }
 
     async prepareMessage(command) {
-        const { publishType, assertionId, blockchain, contract } = command.data;
-        const assertionMessage = { publishType, assertionId, blockchain, contract };
+        const { assertionId, blockchain, contract, tokenId } = command.data;
 
-        if (publishType === PUBLISH_TYPES.ASSERTION) return assertionMessage;
-
-        return { ...assertionMessage, tokenId: command.data.tokenId };
+        return { assertionId, ual: this.ualService.deriveUAL(blockchain, contract, tokenId) };
     }
 
     /**
@@ -25,7 +23,7 @@ class PublishInitCommand extends ProtocolInitCommand {
      */
     default(map) {
         const command = {
-            name: 'publishInitCommand',
+            name: 'v1_0_0PublishInitCommand',
             delay: 0,
             transactional: false,
         };

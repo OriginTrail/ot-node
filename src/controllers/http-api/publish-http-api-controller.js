@@ -1,7 +1,6 @@
-import BaseController from './base-controller.js';
+import BaseController from './base-http-api-controller.js';
 import {
     ERROR_TYPE,
-    NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     OPERATION_STATUS,
     PUBLISH_TYPES,
@@ -16,7 +15,7 @@ class PublishController extends BaseController {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
-    async handleHttpApiPublishRequest(req, res) {
+    async handlePublishRequest(req, res) {
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_START,
         );
@@ -75,53 +74,6 @@ class PublishController extends BaseController {
                 ERROR_TYPE.PUBLISH.PUBLISH_ROUTE_ERROR,
             );
         }
-    }
-
-    async handleNetworkStoreRequest(message, remotePeerId) {
-        const { operationId, keywordUuid, messageType } = message.header;
-        const { publishType, assertionId, blockchain, contract } = message.data;
-        let commandData = {
-            remotePeerId,
-            operationId,
-            keywordUuid,
-            publishType,
-            assertionId,
-            blockchain,
-            contract,
-        };
-        if (publishType === PUBLISH_TYPES.ASSET || PUBLISH_TYPES.INDEX) {
-            commandData = { ...commandData, tokenId: message.data.tokenId };
-        }
-        const command = {
-            sequence: [],
-            delay: 0,
-            data: commandData,
-            transactional: false,
-        };
-        switch (messageType) {
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
-                command.name = 'handleStoreInitCommand';
-                command.period = 5000;
-                command.retries = 3;
-
-                break;
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
-                // eslint-disable-next-line no-case-declarations
-                const { assertionId: cachedAssertionId } =
-                    await this.operationIdService.getCachedOperationIdData(operationId);
-                await this.operationIdService.cacheOperationIdData(operationId, {
-                    assertionId: cachedAssertionId,
-                    assertion: message.data.assertion,
-                });
-                command.name = 'handleStoreRequestCommand';
-                command.data.keyword = message.data.keyword;
-
-                break;
-            default:
-                throw Error('unknown message type');
-        }
-
-        await this.commandExecutor.add(command);
     }
 
     logReceivedAssertionMessage(requestBody) {

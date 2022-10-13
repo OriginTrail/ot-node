@@ -12,13 +12,21 @@ class FindNodesCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { keyword, operationId, minimumAckResponses, networkProtocol, errorType } =
+        const { keyword, operationId, minimumAckResponses, errorType, networkProtocols } =
             command.data;
 
         this.errorType = errorType;
         this.logger.debug(`Searching for closest node(s) for keyword ${keyword}`);
 
-        const closestNodes = await this.findNodes(keyword, networkProtocol, operationId);
+        const closestNodes = [];
+        for (const node of await this.findNodes(keyword, operationId)) {
+            for (const protocol of networkProtocols) {
+                if (node.protocols.includes(protocol)) {
+                    closestNodes.push({ id: node.id, protocol });
+                    break;
+                }
+            }
+        }
 
         this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${keyword}`);
 
@@ -26,7 +34,7 @@ class FindNodesCommand extends Command {
         if (closestNodes.length < batchSize) {
             this.handleError(
                 operationId,
-                `Unable to find enough nodes for ${networkProtocol}. Minimum number of nodes required: ${batchSize}`,
+                `Unable to find enough nodes for ${operationId}. Minimum number of nodes required: ${batchSize}`,
                 this.errorType,
                 true,
             );
@@ -43,7 +51,7 @@ class FindNodesCommand extends Command {
         );
     }
 
-    async findNodes(keyword, networkProtocol, operationId) {
+    async findNodes(keyword, operationId) {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.FIND_NODES_START,
@@ -55,7 +63,6 @@ class FindNodesCommand extends Command {
 
         const { nodes: closestNodes, telemetryData } = await this.networkModuleManager.findNodes(
             keyword,
-            networkProtocol,
         );
 
         const promises = [];
@@ -118,7 +125,7 @@ class FindNodesCommand extends Command {
 
         let differences = 0;
         for (const closestNode of closestNodes) {
-            if (!localPeers.includes(closestNode.toString())) {
+            if (!localPeers.includes(closestNode.id.toString())) {
                 differences += 1;
             }
         }
