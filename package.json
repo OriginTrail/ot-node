@@ -71,7 +71,7 @@
         "@libp2p/tcp": "^3.1.2",
         "@multiformats/multiaddr": "^11.0.1",
         "@polkadot/api": "^9.3.2",
-        "@tracelabs/kad-dht": "^3.1.0",
+        "@tracelabs/kad-dht": "3.0.6",
         "app-root-path": "^3.1.0",
         "assertion-tools": "^1.0.9",
         "async": "^3.2.4",
