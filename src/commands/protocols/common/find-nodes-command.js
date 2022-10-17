@@ -18,15 +18,11 @@ class FindNodesCommand extends Command {
         this.errorType = errorType;
         this.logger.debug(`Searching for closest node(s) for keyword ${keyword}`);
 
-        const closestNodes = [];
-        for (const node of await this.findNodes(keyword, operationId)) {
-            for (const protocol of networkProtocols) {
-                if (node.protocols.includes(protocol)) {
-                    closestNodes.push({ id: node.id, protocol });
-                    break;
-                }
-            }
-        }
+        // TODO: implement protocol selection
+        const closestNodes = (await this.findNodes(keyword, operationId)).map((node) => ({
+            id: node.id,
+            protocol: networkProtocols[0],
+        }));
 
         this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${keyword}`);
 
