@@ -359,11 +359,8 @@
                             },
                             "port": 9000,
                             "bootstrap": [
-                                "/ip4/139.59.174.24/tcp/9000/p2p/QmU7p61f8qgzCtfTEUynJaqnsLRN4QExjtWfsMRQ7oiMuS",
-                                "/ip4/142.93.166.214/tcp/9000/p2p/QmXPcjsvURvyC4hEbwgirRue7KzcvpvYgsaPUharRMJAcP",
-                                "/ip4/178.128.117.211/tcp/9000/p2p/QmVdXs1PhoXcXYWGEH6Q4BnGN9uNNUcm4ctMt2Pttq8Dgc",
-                                "/ip4/3.125.64.137/tcp/9000/p2p/QmQWvBBAJKTwPTzHr47LZaLWFwCESE97iwJwmYb7spZuHt",
-                                "/ip4/3.126.112.75/tcp/9000/p2p/QmeB5srsgkwwhkVieHXunjsVsGkV9MyL4EqV122u1wZHoj"
+                                "/ip4/142.93.166.214/tcp/9000/p2p/QmZxK6jL7wWQDFB6m28ebZgJHbfkzy61KtYgNwxr38GMbz",
+                                "/ip4/178.128.117.211/tcp/9000/p2p/Qmagy41BrgnkT9MyLjsaxx68oLhNJZqUer58M7VP4SEX6q"
                             ]
                         }
                     }
