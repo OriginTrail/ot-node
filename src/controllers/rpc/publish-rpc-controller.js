@@ -21,6 +21,7 @@ class PublishController extends BaseController {
                 keywordUuid,
                 assertionId,
                 ual,
+                protocol,
             },
             transactional: false,
         };
@@ -61,6 +62,7 @@ class PublishController extends BaseController {
             assertionId,
             blockchain,
             contract,
+            protocol,
         };
         if (publishType === PUBLISH_TYPES.ASSET || PUBLISH_TYPES.INDEX) {
             commandData = { ...commandData, tokenId: message.data.tokenId };
