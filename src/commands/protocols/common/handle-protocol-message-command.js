@@ -13,12 +13,12 @@ class HandleProtocolMessageCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { remotePeerId, operationId, keywordUuid, networkProtocols } = command.data;
+        const { remotePeerId, operationId, keywordUuid, protocol } = command.data;
 
         try {
             const { messageType, messageData } = await this.prepareMessage(command.data);
             await this.networkModuleManager.sendMessageResponse(
-                networkProtocols,
+                protocol,
                 remotePeerId,
                 messageType,
                 operationId,
@@ -41,11 +41,11 @@ class HandleProtocolMessageCommand extends Command {
     }
 
     async handleError(errorMessage, command) {
-        const { operationId, remotePeerId, keywordUuid, networkProtocols } = command.data;
+        const { operationId, remotePeerId, keywordUuid, protocol } = command.data;
 
         await super.handleError(operationId, errorMessage, this.errorType, true);
         await this.networkModuleManager.sendMessageResponse(
-            networkProtocols,
+            protocol,
             remotePeerId,
             NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
             operationId,

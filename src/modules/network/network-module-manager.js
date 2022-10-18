@@ -35,6 +35,12 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
+    getMultiaddrs() {
+        if (this.initialized) {
+            return this.getImplementation().module.getMultiaddrs();
+        }
+    }
+
     getRoutingTableSize() {
         if (this.initialized) {
             return this.getImplementation().module.getRoutingTableSize();
