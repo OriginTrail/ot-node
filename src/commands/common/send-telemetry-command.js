@@ -36,6 +36,7 @@ class SendTelemetryCommand extends Command {
                         management_wallet: this.blockchainModuleManager.getManagementKey(),
                         triple_store: this.config.modules.tripleStore.defaultImplementation,
                         auto_update_enabled: this.config.modules.autoUpdater.enabled,
+                        multiaddresses: this.networkModuleManager.getMultiaddrs(),
                     },
                     events,
                 };
