@@ -12,7 +12,7 @@ class GetController extends BaseController {
         const { operationId, keywordUuid, messageType } = message.header;
         const { assertionId } = message.data;
         let commandName;
-        const commandData = { assertionId, remotePeerId, operationId, keywordUuid };
+        const commandData = { assertionId, remotePeerId, operationId, keywordUuid, protocol };
         const [handleInitCommand, handleRequestCommand] = this.getCommandSequence(protocol);
         switch (messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
