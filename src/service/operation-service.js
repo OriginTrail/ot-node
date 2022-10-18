@@ -84,7 +84,7 @@ class OperationService {
         await this.repositoryModuleManager.updateOperationStatus(
             this.operationName,
             operationId,
-            this.operationStatus.FAILED,
+            OPERATION_STATUS.FAILED,
         );
 
         await this.operationIdService.updateOperationIdStatus(
