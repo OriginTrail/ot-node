@@ -174,6 +174,10 @@ class Libp2pService {
         return true;
     }
 
+    getMultiaddrs() {
+        return this.node.getMultiaddrs();
+    }
+
     async getProtocols(peerId) {
         return this.node.peerStore.protoBook.get(peerId);
     }
@@ -420,20 +424,46 @@ class Libp2pService {
 
         // const sessionStream = this.getSessionStream(operationId, remotePeerId.toString());
         // if (!sessionStream) {
+
+        const networkInfo = ((await this.node.peerStore.addressBook.get(remotePeerId)) ?? [])
+            .map((addr) => addr.multiaddr)
+            .filter((addr) => addr.isThinWaistAddress())
+            .map((addr) => addr.toString().split('/'))
+            .filter((splittedAddr) => !ip.isPrivate(splittedAddr[2]))
+            .map((splittedAddr) => ({ publicIp: splittedAddr[2], port: splittedAddr[4] }))[0];
+
         this.logger.trace(
-            `Dialing remotePeerId: ${remotePeerId.toString()} for protocol: ${protocol}`,
+            `Dialing remotePeerId: ${remotePeerId.toString()} with public ip: ${
+                networkInfo?.publicIp
+            }:${networkInfo?.port} for protocol: ${protocol}`,
         );
+
         let stream;
+        let dialStart;
+        let dialEnd;
         try {
+            dialStart = Date.now();
             stream = await this.node.dialProtocol(remotePeerId, protocol);
+            dialEnd = Date.now();
         } catch (error) {
+            dialEnd = Date.now();
             this.logger.warn(
-                `Unable to dial peer: ${remotePeerId.toString()} with protocol: ${protocol}. Error: ${
-                    error.message
-                }`,
+                `Unable to dial peer: ${remotePeerId.toString()} with protocol: ${protocol}. Dial execution time: ${
+                    dialEnd - dialStart
+                } ms. Error: ${error.message}`,
             );
-            return { header: { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK }, data: {} };
+            return {
+                header: { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK },
+                data: {},
+                telemetryData: { start: dialStart, end: dialEnd, networkInfo, error },
+            };
         }
+        this.logger.trace(
+            `Created stream for peer: ${remotePeerId.toString()}, protocol: ${protocol}. Dial execution time: ${
+                dialEnd - dialStart
+            } ms.`,
+        );
+
         // } else {
         //     stream = sessionStream;
         // }
@@ -473,7 +503,9 @@ class Libp2pService {
             };`,
         );
 
-        return valid ? response : null;
+        return valid
+            ? { ...response, telemetryData: { start: dialStart, end: dialEnd, networkInfo } }
+            : { telemetryData: { start: dialStart, end: dialEnd, networkInfo } };
     }
 
     async sendMessageResponse(
