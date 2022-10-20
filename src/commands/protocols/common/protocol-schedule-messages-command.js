@@ -17,7 +17,7 @@ class ProtocolScheduleMessagesCommand extends Command {
         const currentBatchNodes = leftoverNodes.slice(0, batchSize);
         const currentBatchLeftoverNodes =
             batchSize < leftoverNodes.length ? leftoverNodes.slice(batchSize) : [];
-        currentBatchNodes.forEach((node) => nodesSeen.push(node.id.toString()));
+        currentBatchNodes.forEach((node) => nodesSeen.push(node.id._idB58String));
 
         await this.operationIdService.updateOperationIdStatus(operationId, this.startEvent);
 
