@@ -19,6 +19,6 @@ Feature: Release related tests
     And I get operation result from node 4 for last published assertion
     And Last GET operation finished with status: COMPLETED
     And I setup 1 additional node
-    #And I wait for 10 seconds
+    And I wait for 4 seconds
     And I get operation result from node 5 for last published assertion
     Then Last GET operation finished with status: COMPLETED
