@@ -28,15 +28,18 @@ class BaseMigration {
             this.fileService.getMigrationFolderPath(),
             this.migrationName,
         );
-        if (await fs.exists(migrationFilePath)) {
+        if (await this.fileService.fileExists(migrationFilePath)) {
             return true;
         }
-        this.logger.info(`Starting ${this.migrationName} migration.`);
-        this.startedTimestamp = Date.now();
         return false;
     }
 
-    async finalizeMigration(migrationPath = null) {
+    async migrate(migrationPath = null) {
+        this.logger.info(`Starting ${this.migrationName} migration.`);
+        this.startedTimestamp = Date.now();
+
+        await this.executeMigration();
+
         const migrationFolderPath = migrationPath || this.fileService.getMigrationFolderPath();
         await fs.ensureDir(migrationFolderPath);
         const migrationFilePath = path.join(migrationFolderPath, this.migrationName);
