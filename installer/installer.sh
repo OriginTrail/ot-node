@@ -209,7 +209,6 @@ install_sql() {
 install_node() {
 
     CONFIG_DIR=$OTNODE_DIR/..
-    PUBLICIP=$(curl ifconfig.me)
 
     #blockchains=("otp" "polygon")
     #for ((i = 0; i < ${#blockchains[@]}; ++i));
@@ -261,15 +260,27 @@ install_node() {
     perform_step $(jq --arg blockchain "otp" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" '.modules.blockchain.implementation[$blockchain].config |= { "evmOperationalWalletPublicKey": $evmOperationalWallet, "evmOperationalWalletPrivateKey": $evmOperationalWalletPrivateKey, "evmManagementWalletPublicKey": $evmManagementWallet} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2"
     perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
 
-    perform_step $(jq --arg network "libp2p-service" --arg publicIp "$PUBLICIP" '.modules.network.implementation[$network].config |= { "publicIp": $publicIp} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding public Ip to node config file 1/2"
-    perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding public Ip to node config file 2/2"
-
     perform_step cp $OTNODE_DIR/installer/data/otnode.service /lib/systemd/system/ "Copying otnode service file"
     
     systemctl daemon-reload
     perform_step systemctl enable otnode "Enabling otnode"
     perform_step systemctl start otnode "Starting otnode"
-    perform_step systemctl status otnode "otnode status"
+    perform_step systemctl status otnode "otnode service status"
+}
+
+error_check() {
+    
+    sleep 5s
+
+    #node running behind a NAT requires public IP on config file
+    IPERROR=$(journalctl --quiet -u otnode -n 100 | grep "Public Ip not found" 2>&1)
+    if [[ $? -eq 0 ]]; then
+        text_color $YELLOW"Node running behind a NAT - Public IP is required."
+        PUBLICIP=$(curl -s ifconfig.me)
+        perform_step $(jq --arg network "libp2p-service" --arg publicIp "$PUBLICIP" '.modules.network.implementation[$network].config |= { "publicIp": $publicIp} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding public Ip to node config file 1/2"
+        perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding public Ip to node config file 2/2"
+        perform_step systemctl restart otnode "Restarting otnode"
+    fi
 }
 
 #For Arch Linux installation
@@ -345,6 +356,10 @@ install_sql
 header_color $BGREEN"Configuring OriginTrail node..."
 
 install_node
+
+header_color $BGREEN"Checking logs for errors..."
+
+error_check
 
 header_color $BGREEN"INSTALLATION COMPLETE !"
 
