@@ -9,10 +9,14 @@ class NetworkPrivateKeyMigration extends BaseMigration {
             this.config.modules?.network?.implementation?.['libp2p-service']?.config?.privateKey;
 
         if (networkPrivateKey) {
-            const directoryPath = join(this.config.appDataPath, LIBP2P_KEY_DIRECTORY);
-            const fullPath = join(directoryPath, LIBP2P_KEY_FILENAME);
-            await mkdir(directoryPath, { recursive: true });
-            await writeFile(fullPath, networkPrivateKey);
+            try {
+                const directoryPath = join(this.config.appDataPath, LIBP2P_KEY_DIRECTORY);
+                const fullPath = join(directoryPath, LIBP2P_KEY_FILENAME);
+                await mkdir(directoryPath, { recursive: true });
+                await writeFile(fullPath, networkPrivateKey);
+            } catch (error) {
+                this.logger.warn(`Unable to execute migration: ${this.migrationName}`);
+            }
         }
     }
 }
