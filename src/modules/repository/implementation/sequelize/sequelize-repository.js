@@ -243,6 +243,68 @@ class SequelizeRepository {
         });
     }
 
+    // Sharding Table
+    async createManyPeerRecords(peers) {
+        await this.models.shard.bulkCreate(peers);
+    }
+
+    async createPeerRecord(peerId, ask, stake, ipAddress, lastSeen, publicAddress) {
+        await this.models.shard.create({
+            peer_id: peerId,
+            ask,
+            stake,
+            ip_address: ipAddress,
+            last_seen: lastSeen,
+            public_address: publicAddress,
+        });
+    }
+
+    async removePeerRecord(peerId) {
+        await this.models.shard.destroy({
+            where: {
+                peer_id: peerId,
+            },
+        });
+    }
+
+    async updatePeerParams(peerId, ask, stake) {
+        await this.models.shard.update(
+            {
+                ask,
+                stake,
+            },
+            {
+                where: { peer_id: peerId },
+            },
+        );
+    }
+
+    async getNeighbourhood(assertionId, offlineLimit, r2) {
+        return this.models.shard.findAll({
+            attributes: ['peer_id, ask, stake'],
+            where: {
+                last_seen: {
+                    [Sequelize.Op.lte]: new Date(),
+                    [Sequelize.Op.gt]: new Date(
+                        new Date(Sequelize.col('last_seen')) - offlineLimit * 60 * 60 * 1000,
+                    ),
+                },
+                distance: Sequelize.literal(`SELECT BINARY(${assertionId}) ^ BINARY(peer_id)`),
+            },
+            order: ['distance', 'DESC'],
+            limit: r2,
+        });
+    }
+
+    async updatePeerLastSeen(peerId, lastSeen) {
+        await this.models.shard.update(
+            { last_seen: lastSeen },
+            {
+                where: { peer_id: peerId },
+            },
+        );
+    }
+
     // EVENT
     async createEventRecord(operationId, name, timestamp, value1, value2, value3) {
         return this.models.event.create({

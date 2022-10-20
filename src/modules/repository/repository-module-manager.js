@@ -145,6 +145,50 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    // Sharding Table
+    async createManyPeerRecords(peers) {
+        if (this.initialized) {
+            return this.getImplementation().module.createManyPeerRecords(peers);
+        }
+    }
+
+    async createPeerRecord(peerId, ask, stake, ipAddress, lastSeen, publicAddress) {
+        if (this.initialized) {
+            return this.getImplementation().module.createPeerRecord(
+                peerId,
+                ask,
+                stake,
+                ipAddress,
+                lastSeen,
+                publicAddress,
+            );
+        }
+    }
+
+    async removePeerRecord(peerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.removePeerRecord(peerId);
+        }
+    }
+
+    async updatePeerParams(peerId, ask, stake) {
+        if (this.initialized) {
+            return this.getImplementation().module.updatePeerParams(peerId, ask, stake);
+        }
+    }
+
+    async getNeighbourhood(assertionId, r2) {
+        if (this.initialized) {
+            return this.getImplementation().module.getNeighbourhood(assertionId, r2);
+        }
+    }
+
+    async updatePeerLastSeen(peerId, lastSeen) {
+        if (this.initialized) {
+            return this.getImplementation().module.updatePeerLastSeen(peerId, lastSeen);
+        }
+    }
+
     // EVENT
     async createEventRecord(
         operationId,

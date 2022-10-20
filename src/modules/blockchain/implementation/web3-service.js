@@ -11,6 +11,7 @@ const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
 const Identity = require('dkg-evm-module/build/contracts/Identity.json');
 const Profile = require('dkg-evm-module/build/contracts/Profile.json');
 const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
+const ShardingTable = require('dkg-evm-module/build/contracts/ShardingTable.json');
 
 class Web3Service {
     async initialize(config, logger) {
@@ -91,6 +92,16 @@ class Web3Service {
         this.ProfileStorageContract = new this.web3.eth.Contract(
             ProfileStorage.abi,
             profileStorageAddress,
+        );
+
+        const shardingTableAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['ShardingTable'],
+        );
+        this.ShardingTableContract = new this.web3.eth.Contract(
+            ShardingTable.abi,
+            shardingTableAddress,
         );
 
         if (this.identityExists()) {
@@ -362,6 +373,88 @@ class Web3Service {
         );
         await this.initializeWeb3();
         await this.initializeContracts();
+    }
+
+    async getPeer(peerId) {
+        try {
+            return await this.callContractFunction(this.ShardingTableContract, 'getPeer', [peerId]);
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async getShardingTablePage(startingPeerId, nodesNum) {
+        try {
+            return await this.callContractFunction(this.ShardingTableContract, 'getShardingTable', [
+                startingPeerId,
+                nodesNum,
+            ]);
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async getShardingTableFull() {
+        try {
+            return await this.callContractFunction(
+                this.ShardingTableContract,
+                'getShardingTable',
+                [],
+            );
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async pushPeerBack(peerId, ask, stake) {
+        try {
+            return this.executeContractFunction(this.ShardingTableContract, 'pushBack', [
+                peerId,
+                ask,
+                stake,
+            ]);
+        } catch (e) {
+            this.logger.error(`Error on executing contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async pushPeerFront(peerId, ask, stake) {
+        try {
+            return this.executeContractFunction(this.ShardingTableContract, 'pushFront', [
+                peerId,
+                ask,
+                stake,
+            ]);
+        } catch (e) {
+            this.logger.error(`Error on executing contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async updatePeerParams(peerId, ask, stake) {
+        try {
+            return this.executeContractFunction(this.ShardingTableContract, 'updateParams', [
+                peerId,
+                ask,
+                stake,
+            ]);
+        } catch (e) {
+            this.logger.error(`Error on executing contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async removePeer(peerId) {
+        try {
+            return this.executeContractFunction(this.ShardingTableContract, 'removePeer', [peerId]);
+        } catch (e) {
+            this.logger.error(`Error on executing contract function. ${e}`);
+            return false;
+        }
     }
 }
 

@@ -106,6 +106,51 @@ class BlockchainModuleManager extends BaseModuleManager {
             return this.getImplementation(blockchain).module.restartService();
         }
     }
+
+    async getPeer(blockchain, peerId) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getPeer(peerId);
+        }
+    }
+
+    async getShardingTablePage(blockchain, startingPeerId, nodesNum) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getShardingTable(
+                startingPeerId,
+                nodesNum,
+            );
+        }
+    }
+
+    async getShardingTableFull(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getShardingTable();
+        }
+    }
+
+    async pushPeerBack(blockchain, peerId, ask, stake) {
+        if (this.getImplementation(blockchain)) {
+            await this.getImplementation(blockchain).module.pushPeerBack(peerId, ask, stake);
+        }
+    }
+
+    async pushPeerFront(blockchain, peerId, ask, stake) {
+        if (this.getImplementation(blockchain)) {
+            await this.getImplementation(blockchain).module.pushPeerFront(peerId, ask, stake);
+        }
+    }
+
+    async updatePeerParams(blockchain, peerId, ask, stake) {
+        if (this.getImplementation(blockchain)) {
+            await this.getImplementation(blockchain).module.updatePeerParams(peerId, ask, stake);
+        }
+    }
+
+    async removePeer(blockchain, peerId) {
+        if (this.getImplementation(blockchain)) {
+            await this.getImplementation(blockchain).module.removePeer(peerId);
+        }
+    }
 }
 
 export default BlockchainModuleManager;
