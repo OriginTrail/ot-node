@@ -1,5 +1,6 @@
 import libp2p from 'libp2p';
 import KadDHT from 'libp2p-kad-dht';
+import { join } from 'path';
 import Bootstrap, { tag } from 'libp2p-bootstrap';
 import { NOISE } from 'libp2p-noise';
 import MPLEX from 'libp2p-mplex';
@@ -18,11 +19,14 @@ import { compare as uint8ArrayCompare } from 'uint8arrays/compare';
 import sort from 'it-sort';
 import take from 'it-take';
 import all from 'it-all';
+import { mkdir, writeFile, readFile, stat } from 'fs/promises';
 import {
     NETWORK_API_RATE_LIMIT,
     NETWORK_API_SPAM_DETECTION,
     NETWORK_MESSAGE_TYPES,
     NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES,
+    LIBP2P_KEY_DIRECTORY,
+    LIBP2P_KEY_FILENAME,
 } from '../../../constants/constants.js';
 
 const initializationObject = {
@@ -65,16 +69,17 @@ class Libp2pService {
             // announce: ['/dns4/auto-relay.libp2p.io/tcp/443/wss/p2p/QmWDn2LY8nannvSWJzruUYoLZ4vV83vfCBwd8DipvdgQc3']
         };
         let id;
-        let privKey;
         if (!this.config.peerId) {
+            this.config.privateKey = await this.readPrivateKeyFromFile();
             if (!this.config.privateKey) {
                 id = await _create({ bits: 1024, keyType: 'RSA' });
-                privKey = id.toJSON().privKey;
+                this.config.privateKey = id.toJSON().privKey;
+                if (process.env.NODE_ENV === 'development') {
+                    await this.savePrivateKeyInFile(this.config.privateKey);
+                }
             } else {
-                privKey = this.config.privateKey;
                 id = await createFromPrivKey(this.config.privateKey);
             }
-            this.config.privateKey = privKey;
             this.config.peerId = id;
         }
 
@@ -99,6 +104,35 @@ class Libp2pService {
         const peerId = this.node.peerId._idB58String;
         this.config.id = peerId;
         this.logger.info(`Network ID is ${peerId}, connection port is ${port}`);
+    }
+
+    async savePrivateKeyInFile(privateKey) {
+        const { fullPath, directoryPath } = this.getKeyPath();
+        await mkdir(directoryPath, { recursive: true });
+        await writeFile(fullPath, privateKey);
+    }
+
+    getKeyPath() {
+        const directoryPath = join(this.config.appDataPath, LIBP2P_KEY_DIRECTORY);
+        const fullPath = join(directoryPath, LIBP2P_KEY_FILENAME);
+        return { fullPath, directoryPath };
+    }
+
+    async readPrivateKeyFromFile() {
+        const keyPath = this.getKeyPath();
+        if (await this.fileExists(keyPath.fullPath)) {
+            const key = (await readFile(keyPath.fullPath)).toString();
+            return key;
+        }
+    }
+
+    async fileExists(filePath) {
+        try {
+            await stat(filePath);
+            return true;
+        } catch (e) {
+            return false;
+        }
     }
 
     _initializeNodeListeners() {
