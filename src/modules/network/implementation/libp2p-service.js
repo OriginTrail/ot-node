@@ -181,7 +181,7 @@ class Libp2pService {
 
     serializePeer(peer) {
         return {
-            id: peer.id.toString(),
+            id: peer.id._idB58String,
             multiaddrs: (peer.multiaddrs ?? []).map((addr) => addr.multiaddr),
             protocols: peer.protocols ?? [],
         };
@@ -239,7 +239,7 @@ class Libp2pService {
         );
 
         const result = [];
-        for await (const node of nodes) {
+        for (const node of nodes) {
             result.push({
                 id: node,
                 multiaddrs: this.getAddresses(node),
@@ -382,7 +382,7 @@ class Libp2pService {
             .map((addr) => addr.multiaddr)
             .filter((addr) => addr.isThinWaistAddress())
             .map((addr) => addr.toString().split('/'))
-            .filter((splittedAddr) => !ip.isPrivate(splittedAddr[2]))[0][2];
+            .filter((splittedAddr) => !ip.isPrivate(splittedAddr[2]))[0]?.[2];
 
         this.logger.trace(
             `Dialing remotePeerId: ${remotePeerId._idB58String} with public ip: ${publicIp}: protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}`,
