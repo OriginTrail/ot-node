@@ -1,3 +1,4 @@
+import appRootPath from 'app-root-path';
 import libp2p from 'libp2p';
 import KadDHT from 'libp2p-kad-dht';
 import { join } from 'path';
@@ -114,7 +115,18 @@ class Libp2pService {
     }
 
     getKeyPath() {
-        const directoryPath = join(this.config.appDataPath, LIBP2P_KEY_DIRECTORY);
+        let directoryPath;
+        if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
+            directoryPath = join(
+                appRootPath.path,
+                '..',
+                this.config.appDataPath,
+                LIBP2P_KEY_DIRECTORY,
+            );
+        } else {
+            directoryPath = join(appRootPath.path, this.config.appDataPath, LIBP2P_KEY_DIRECTORY);
+        }
+
         const fullPath = join(directoryPath, LIBP2P_KEY_FILENAME);
         return { fullPath, directoryPath };
     }
