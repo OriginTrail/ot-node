@@ -9,6 +9,7 @@ import DependencyInjection from './src/service/dependency-injection.js';
 import Logger from './src/logger/logger.js';
 import { MIN_NODE_VERSION } from './src/constants/constants.js';
 import FileService from './src/service/file-service.js';
+import NetworkPrivateKeyMigration from './src/migration/network-private-key-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -23,6 +24,14 @@ class OTNode {
 
     async start() {
         await this.removeUpdateFile();
+        const migrationManager = new NetworkPrivateKeyMigration(
+            'NetworkPrivateKeyMigration',
+            this.logger,
+            this.config,
+        );
+        if (!(await migrationManager.migrationAlreadyExecuted())) {
+            await migrationManager.migrate();
+        }
 
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
