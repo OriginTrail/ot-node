@@ -30,7 +30,7 @@ class SendTelemetryCommand extends Command {
                 const signalingMessage = {
                     nodeData: {
                         version: pjson.version,
-                        identity: this.networkModuleManager.getPeerId().toString(),
+                        identity: this.networkModuleManager.getPeerId()._idB58String,
                         hostname: this.config.hostname,
                         operational_wallet: this.blockchainModuleManager.getPublicKey(),
                         management_wallet: this.blockchainModuleManager.getManagementKey(),
