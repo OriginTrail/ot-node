@@ -101,7 +101,7 @@ class OtParachainService extends Web3Service {
         if (this.config.gasPriceOracleLink) return super.getGasPrice();
 
         try {
-            return this.web3.eth.getGasPrice();
+            return (await this.web3.eth.getGasPrice()) * 1000;
         } catch (error) {
             return undefined;
         }
