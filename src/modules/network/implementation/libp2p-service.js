@@ -230,7 +230,7 @@ class Libp2pService {
         return serializedPeers.map((peer) => this.deserializePeer(peer));
     }
 
-    async sortPeers(key, peers, count = this.config.kBucketSize) {
+    async sortPeers(key, peers, count = this.config.dht.kBucketSize) {
         const keyHash = await this.toHash(new TextEncoder().encode(key));
         const sorted = pipe(
             peers,
@@ -254,7 +254,10 @@ class Libp2pService {
     async findNodesLocal(key) {
         const keyHash = await this.toHash(new TextEncoder().encode(key));
 
-        const nodes = this.node._dht.routingTable.closestPeers(keyHash, this.config.kBucketSize);
+        const nodes = this.node._dht.routingTable.closestPeers(
+            keyHash,
+            this.config.dht.kBucketSize,
+        );
 
         const result = [];
         for await (const node of nodes) {
