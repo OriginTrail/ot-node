@@ -39,20 +39,21 @@ const initializationObject = {
         connEncryption: [NOISE],
         dht: KadDHT,
     },
-    dialer: {
-        dialTimeout: 2e3,
-    },
-    config: {
-        dht: {
-            enabled: true,
-        },
-    },
 };
 
 class Libp2pService {
     async initialize(config, logger) {
         this.config = config;
         this.logger = logger;
+
+        initializationObject.peerRouting = this.config.peerRouting;
+        initializationObject.config = {
+            dht: {
+                enabled: true,
+                ...this.config.dht,
+            },
+        };
+        initializationObject.dialer = this.config.connectionManager;
 
         if (this.config.bootstrap.length > 0) {
             initializationObject.modules.peerDiscovery = [Bootstrap];
