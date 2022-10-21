@@ -52,11 +52,12 @@ class PublishController extends BaseController {
                 operationId,
             };
 
-            const commandSequence = ['validateAssertionCommand', 'networkPublishCommand'];
+            const commandSequence = req.body.localStore ? ['localStoreCommand'] : [];
+            commandSequence.push('networkPublishCommand');
 
             await this.commandExecutor.add({
-                name: commandSequence[0],
-                sequence: commandSequence.slice(1),
+                name: 'validateAssertionCommand',
+                sequence: commandSequence,
                 delay: 0,
                 period: 5000,
                 retries: 3,
