@@ -1,7 +1,7 @@
 import { OPERATION_ID_STATUS, ERROR_TYPE, PUBLISH_TYPES } from '../../../../constants/constants.js';
 import Command from '../../../command.js';
 
-class localPublishCommand extends Command {
+class LocalStoreCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
@@ -53,13 +53,13 @@ class localPublishCommand extends Command {
     }
 
     /**
-     * Builds default localPublishCommand
+     * Builds default localStoreCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'localPublishCommand',
+            name: 'localStoreCommand',
             delay: 0,
             transactional: false,
         };
@@ -68,4 +68,4 @@ class localPublishCommand extends Command {
     }
 }
 
-export default localPublishCommand;
+export default LocalStoreCommand;

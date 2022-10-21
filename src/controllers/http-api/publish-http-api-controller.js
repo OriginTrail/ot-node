@@ -52,7 +52,7 @@ class PublishController extends BaseController {
                 operationId,
             };
 
-            const commandSequence = req.body.localStore ? ['localPublishCommand'] : [];
+            const commandSequence = req.body.localStore ? ['localStoreCommand'] : [];
             commandSequence.push('networkPublishCommand');
 
             await this.commandExecutor.add({
