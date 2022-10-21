@@ -44,7 +44,7 @@ class OTNode {
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
-        // await this.initializeShardingTableService();
+        await this.initializeShardingTableService('ganache');
         await this.initializeTelemetryInjectionService();
 
         await this.initializeRouters();
@@ -207,7 +207,7 @@ class OTNode {
     async initializeShardingTableService(blockchain) {
         try {
             const shardingHubModuleManager = this.container.resolve('shardingTableService');
-            shardingHubModuleManager.initialize('ganache');
+            await shardingHubModuleManager.initialize('ganache');
             this.logger.info(
                 `Sharding Table Service initialized successfully for '${blockchain}' blockchain`,
             );

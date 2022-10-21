@@ -8,23 +8,17 @@ class ShardingTableService {
         this.eventEmitter = ctx.eventEmitter;
     }
 
-    initialize(blockchain) {
-        this.pullBlockchainShardingTable(blockchain);
+    async initialize(blockchain) {
+        await this.pullBlockchainShardingTable(blockchain);
         // this.listenOnEvents();
     }
 
-    pullBlockchainShardingTable(blockchain) {
-        const shardingTable = this.blockchainModuleManager.getShardingTableFull(blockchain);
-
-        // option 1
-        // TODO: Find IP addresses
+    async pullBlockchainShardingTable(blockchain) {
+        const shardingTable = await this.blockchainModuleManager.getShardingTableFull(blockchain);
         const multiaddresses = this.networkModuleManager.getPeerStoreIpAddresses();
-        shardingTable.map((peer) => peer.add(multiaddresses.get(peer.id))); // 2 index is peerId
-        shardingTable.forEach((peer) => this.repositoryModuleManager.createPeerRecord(...peer));
 
-        // option 2
-        // TODO: Find IP addresses
-        this.repositoryModuleManager.createManyPeerRecords(shardingTable);
+        shardingTable.map((peer) => peer.add(multiaddresses.get(peer.id)));
+        shardingTable.forEach((peer) => this.repositoryModuleManager.createPeerRecord(...peer));
     }
 
     listenOnEvents() {
