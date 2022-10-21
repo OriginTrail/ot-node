@@ -5,16 +5,13 @@
       "implementation": {
         "ganache": {
           "config": {
-            "blockchainTitle": "ganache",
-            "networkId": "ganache::testnet",
-            "rpcEndpoints": [
-              "http://localhost:7545"
-            ],
-            "hubContractAddress": "0x378ec78F621E2C8Aeff345b39334c38B0Bb7b96F",
-            "evmOperationalWalletPublicKey": "0x1152b7ea23b7b9890ce2e9abf95119038d7644e0",
-            "evmOperationalWalletPrivateKey": "3cf97be6177acdd12796b387f58f84f177d0fe20d8558004e8db9a41cf90392a",
-            "evmManagementWalletPublicKey": "0x76014481ed80a4bb57eba8f279d0d2489db5d136",
-            "evmManagementPublicKey": "0x76014481ed80a4bb57eba8f279d0d2489db5d136"
+              "blockchainTitle": "ganache",
+              "networkId": "ganache::testnet",
+              "rpcEndpoints": ["http://localhost:7545"],
+              "hubContractAddress": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
+              "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
+              "evmOperationalWalletPrivateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
+              "evmManagementWalletPublicKey": "0xBaF76aC0d0ef9a2FFF76884d54C9D3e270290a43"
           }
         }
       }

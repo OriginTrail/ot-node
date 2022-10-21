@@ -5,11 +5,10 @@
       "implementation": {
         "ganache": {
           "config": {
-            "hubContractAddress": "0x378ec78F621E2C8Aeff345b39334c38B0Bb7b96F",
-            "evmOperationalWalletPublicKey": "0x19ad96f87f8e1c13e99a98d8174e00f5a7c82df1",
-            "evmOperationalWalletPrivateKey": "1e60c8e9aa35064cd2eaa4c005bda2b76ef1a858feebb6c8e131c472d16f9740",
-            "evmManagementWalletPublicKey": "0xc96dfe1017168f5b5e2518df8048b7b6da9f7bd1",
-            "evmManagementPublicKey" : "0xc96dfe1017168f5b5e2518df8048b7b6da9f7bd1"
+              "hubContractAddress": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
+              "evmOperationalWalletPrivateKey": "0x8ab3477bf3a1e0af66ab468fafd6cf982df99a59fee405d99861e7faf4db1f7b",
+              "evmManagementWalletPublicKey": "0xBaF76aC0d0ef9a2FFF76884d54C9D3e270290a43",
+              "evmOperationalWalletPublicKey": "0xBCc7F04c73214D160AA6C892FcA6DB881fb3E0F5"
           }
         }
       }

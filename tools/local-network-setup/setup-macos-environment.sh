@@ -45,25 +45,10 @@ then
   echo ====== Starting ganache ======
   echo ================================
 
-  ganachePID="$(ps aux | grep '[g]anache-cli' | head -1 | awk '{print $2}')"
-  if [ $ganachePID ]
-  then
-    echo Ganache is already running, stopping previous ganache process...
-    kill -9 $ganachePID
-  fi
-
   osascript -e "tell app \"Terminal\"
         do script \"cd $pathToOtNode
-        npm explore dkg-evm-module -- npm run ganache\"
+        node tools/local-network-setup/run-local-blockchain.js\"
     end tell"
-
-  echo ==================================================
-  echo ====== Deploying contracts on local ganache ======
-  echo ==================================================
-
-  hubContractAddress=`npm explore dkg-evm-module -- npm run deploy | awk '/Hub address:/ {print $3}'`
-  echo Using hub contract address: $hubContractAddress
-
 fi
 
 if [[ $network == rinkeby ]]
