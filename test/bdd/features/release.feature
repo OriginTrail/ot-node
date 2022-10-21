@@ -5,8 +5,8 @@ Feature: Release related tests
 
   @release
   Scenario: Publishing a valid assertion
-    Given I setup 4 nodes
-    And I wait for 10 seconds
+    Given I setup 11 nodes
+    And I wait for 5 seconds
     When I call publish on node 4 with validAssertion
     Then Last PUBLISH operation finished with status: COMPLETED
 

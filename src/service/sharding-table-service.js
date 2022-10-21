@@ -17,6 +17,8 @@ class ShardingTableService {
 
         // option 1
         // TODO: Find IP addresses
+        const multiaddresses = this.networkModuleManager.getPeerStoreIpAddresses();
+        shardingTable.map((peer) => peer.add(multiaddresses.get(peer.id))); // 2 index is peerId
         shardingTable.forEach((peer) => this.repositoryModuleManager.createPeerRecord(...peer));
 
         // option 2

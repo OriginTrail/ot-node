@@ -120,6 +120,12 @@ class NetworkModuleManager extends BaseModuleManager {
             return this.getImplementation().module.healthCheck();
         }
     }
+
+    async getPeerStoreIpAddresses() {
+        if (this.initialized) {
+            return this.getImplementation().module.getPeerStoreIpAddresses();
+        }
+    }
 }
 
 export default NetworkModuleManager;

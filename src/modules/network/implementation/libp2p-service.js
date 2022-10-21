@@ -728,6 +728,26 @@ class Libp2pService {
     getName() {
         return 'Libp2p';
     }
+
+    async getPeerStoreIpAddresses() {
+        const peers = this.node.getPeers();
+        const seenPeers = new Map();
+        for (const peer of peers) {
+            // eslint-disable-next-line
+            (await this.findNodes(peer.toString())).nodes.forEach((seenPeer) => {
+                if (!seenPeers.has(seenPeer.id.toString())) {
+                    peers.push(seenPeer);
+                    seenPeers.set(
+                        seenPeer.id.toString(),
+                        seenPeer.multiaddrs.map((addrs) => addrs.toString()),
+                    );
+                }
+            });
+        }
+        // console.log(`=================================seenPeersSize${seenPeers.size} =================================`);
+        // console.log(seenPeers);
+        return seenPeers;
+    }
 }
 
 export default Libp2pService;

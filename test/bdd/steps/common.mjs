@@ -13,7 +13,7 @@ const stepsUtils = new StepsUtils();
 
 Given(
     /^I setup (\d+)[ additional]* node[s]*$/,
-    { timeout: 80000 },
+    { timeout: 180000 },
     function nodeSetup(nodeCount, done) {
         this.logger.log(`I setup ${nodeCount} node${nodeCount !== 1 ? 's' : ''}`);
         const wallets = this.state.localBlockchain.getWallets();

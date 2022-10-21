@@ -12,6 +12,7 @@ const assertionRegistry = JSON.parse(await readFile("node_modules/dkg-evm-module
 const assetRegistry = JSON.parse(await readFile("node_modules/dkg-evm-module/build/contracts/AssetRegistry.json"));
 const erc20Token = JSON.parse(await readFile("node_modules/dkg-evm-module/build/contracts/ERC20Token.json"));
 const profile = JSON.parse(await readFile("node_modules/dkg-evm-module/build/contracts/Profile.json"));
+const shardingTable = JSON.parse(await readFile("node_modules/dkg-evm-module/build/contracts/ShardingTable.json"));
 const profileStorage = JSON.parse(await readFile("node_modules/dkg-evm-module/build/contracts/ProfileStorage.json"));
 const accountPrivateKeys = JSON.parse(await readFile("test/bdd/steps/api/datasets/privateKeys.json"));
 
@@ -22,6 +23,7 @@ const sources = {
     assetRegistry,
     erc20Token,
     profileStorage,
+    shardingTable,
     profile,
 };
 const web3 = new Web3();
@@ -111,6 +113,9 @@ class LocalBlockchain {
                 this.logger.info(
                     `\t Profile contract address: \t\t\t\t${this.contracts.profile.instance._address}`,
                 );
+                this.logger.info(
+                    `\t Sharding table contract address: \t\t\t${this.contracts.shardingTable.instance._address}`,
+                );
                 accept();
             });
         });
@@ -152,6 +157,15 @@ class LocalBlockchain {
         await this.setContractAddress(
             'AssertionRegistry',
             this.contracts.assertionRegistry.instance._address,
+            deployingWallet,
+        );
+
+        await this.deploy('shardingTable', deployingWallet, [
+        ]);
+
+        await this.setContractAddress(
+            'ShardingTable',
+            this.contracts.shardingTable.instance._address,
             deployingWallet,
         );
 

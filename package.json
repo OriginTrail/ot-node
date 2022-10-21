@@ -80,7 +80,7 @@
         "axios": "^0.27.2",
         "cors": "^2.8.5",
         "deep-extend": "^0.6.0",
-        "dkg-evm-module": "^1.0.3",
+        "dkg-evm-module": "OriginTrail/dkg-evm-module#feature/sharding-table",
         "dotenv": "^16.0.1",
         "express": "^4.18.1",
         "express-fileupload": "^1.4.0",
