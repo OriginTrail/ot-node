@@ -4,6 +4,7 @@ class ShardingTableService {
         this.logger = ctx.logger;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.networkModuleManager = ctx.networkModuleManager;
         this.eventEmitter = ctx.eventEmitter;
     }
 
