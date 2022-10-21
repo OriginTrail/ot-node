@@ -3,8 +3,6 @@ import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_REQUEST_STATUS,
     OPERATION_STATUS,
-    OPERATION_ID_STATUS,
-    ERROR_TYPE,
 } from '../../../constants/constants.js';
 
 class ProtocolMessageCommand extends Command {
@@ -54,37 +52,6 @@ class ProtocolMessageCommand extends Command {
             keyword,
             message,
         );
-
-        if (response?.telemetryData?.start && response?.telemetryData?.end) {
-            if (response?.telemetryData?.error) {
-                this.operationIdService.emitChangeEvent(
-                    OPERATION_ID_STATUS.FAILED,
-                    operationId,
-                    response?.telemetryData?.error.message,
-                    ERROR_TYPE.DIAL_PROTOCOL_ERROR,
-                    response.telemetryData.start,
-                );
-            } else {
-                const networkInfo = response.telemetryData.networkInfo
-                    ? `${response.telemetryData.networkInfo.publicIp}:${response.telemetryData.networkInfo.port}`
-                    : null;
-
-                await this.operationIdService.emitChangeEvent(
-                    OPERATION_ID_STATUS.DIAL_PROTOCOL_START,
-                    operationId,
-                    node.id.toString(),
-                    networkInfo,
-                    response.telemetryData.start,
-                );
-                await this.operationIdService.emitChangeEvent(
-                    OPERATION_ID_STATUS.DIAL_PROTOCOL_END,
-                    operationId,
-                    node.id.toString(),
-                    networkInfo,
-                    response.telemetryData.end,
-                );
-            }
-        }
 
         switch (response.header.messageType) {
             case NETWORK_MESSAGE_TYPES.RESPONSES.BUSY:
