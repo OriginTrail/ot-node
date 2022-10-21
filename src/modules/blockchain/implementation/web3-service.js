@@ -14,10 +14,10 @@ const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.js
 const ShardingTable = require('dkg-evm-module/build/contracts/ShardingTable.json');
 
 class Web3Service {
-    async initialize(ctx) {
-        this.config = ctx.config;
-        this.logger = ctx.logger;
-        this.eventEmitter = ctx.eventEmitter;
+    async initialize(config, logger) {
+        this.config = config;
+        this.logger = logger;
+        // this.eventEmitter = ctx.eventEmitter
 
         this.rpcNumber = 0;
         await this.initializeWeb3();
@@ -105,9 +105,9 @@ class Web3Service {
             shardingTableAddress,
         );
 
-        ['PeerObjCreated', 'PeerParamsUpdated', 'PeerRemoved'].forEach((eventName) => {
-            this.subscribeToContractEvent(this.ShardingTableContract, eventName);
-        });
+        // ['PeerObjCreated', 'PeerParamsUpdated', 'PeerRemoved'].forEach((eventName) => {
+        //     this.subscribeToContractEvent(this.ShardingTableContract, eventName);
+        // });
 
         if (this.identityExists()) {
             this.identityContract = new this.web3.eth.Contract(Identity.abi, this.getIdentity());

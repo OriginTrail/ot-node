@@ -10,7 +10,7 @@ class ShardingTableService {
 
     initialize(blockchain) {
         this.pullBlockchainShardingTable(blockchain);
-        this.listenOnEvents();
+        // this.listenOnEvents();
     }
 
     pullBlockchainShardingTable(blockchain) {
