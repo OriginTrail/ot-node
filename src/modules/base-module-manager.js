@@ -48,6 +48,7 @@ class BaseModuleManager {
                     return false;
                 }
 
+                implementationConfig.config.appDataPath = this.config.appDataPath;
                 // eslint-disable-next-line no-await-in-loop
                 const ModuleClass = (await import(implementationConfig.package)).default;
                 const module = new ModuleClass();

@@ -5,13 +5,13 @@ class NetworkModuleManager extends BaseModuleManager {
         return 'network';
     }
 
-    async serializePeers(peer) {
+    serializePeers(peer) {
         if (this.initialized) {
             return this.getImplementation().module.serializePeers(peer);
         }
     }
 
-    async deserializePeers(serializedPeers) {
+    deserializePeers(serializedPeers) {
         if (this.initialized) {
             return this.getImplementation().module.deserializePeers(serializedPeers);
         }

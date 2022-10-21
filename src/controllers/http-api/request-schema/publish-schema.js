@@ -19,6 +19,9 @@ const assertionSchemaProperties = (blockchainImplementationNames) => ({
         type: 'string',
         minLength: 1,
     },
+    localStore: {
+        type: 'boolean',
+    },
 });
 
 const assertionSchemaRequired = ['assertionId', 'assertion', 'blockchain', 'contract'];

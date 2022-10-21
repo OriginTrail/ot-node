@@ -9,6 +9,9 @@ import DependencyInjection from './src/service/dependency-injection.js';
 import Logger from './src/logger/logger.js';
 import { MIN_NODE_VERSION } from './src/constants/constants.js';
 import FileService from './src/service/file-service.js';
+import NetworkPrivateKeyMigration from './src/migration/network-private-key-migration.js';
+import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
+import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -17,12 +20,16 @@ const configjson = require('./config/config.json');
 class OTNode {
     constructor(config) {
         this.initializeConfiguration(config);
-        this.logger = new Logger(this.config.logLevel, this.config.telemetry.enabled);
+        this.initializeLogger();
+        this.initializeFileService();
+        this.initializeAutoUpdaterModule();
         this.checkNodeVersion();
     }
 
     async start() {
+        await this.checkForUpdate();
         await this.removeUpdateFile();
+        await this.executeMigrations();
 
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
@@ -61,6 +68,22 @@ class OTNode {
             );
         }
         this.logger.warn('======================================================');
+    }
+
+    initializeLogger() {
+        this.logger = new Logger(this.config.logLevel, this.config.telemetry.enabled);
+    }
+
+    initializeFileService() {
+        this.fileService = new FileService({ config: this.config, logger: this.logger });
+    }
+
+    initializeAutoUpdaterModule() {
+        this.autoUpdaterModuleManager = new OtAutoUpdater();
+        this.autoUpdaterModuleManager.initialize(
+            this.config.modules.autoUpdater.implementation['ot-auto-updater'].config,
+            this.logger,
+        );
     }
 
     initializeConfiguration(userConfig) {
@@ -269,12 +292,33 @@ class OTNode {
     }
 
     async removeUpdateFile() {
-        const fileService = new FileService({ config: this.config, logger: this.logger });
-        const updateFilePath = fileService.getUpdateFilePath();
-        await fileService.removeFile(updateFilePath).catch((error) => {
+        const updateFilePath = this.fileService.getUpdateFilePath();
+        await this.fileService.removeFile(updateFilePath).catch((error) => {
             this.logger.warn(`Unable to remove update file. Error: ${error}`);
         });
         this.config.otNodeUpdated = true;
+    }
+
+    async executeMigrations() {
+        const networkPrivateKeyMigration = new NetworkPrivateKeyMigration(
+            'NetworkPrivateKeyMigration',
+            this.logger,
+            this.config,
+        );
+        if (!(await networkPrivateKeyMigration.migrationAlreadyExecuted())) {
+            await networkPrivateKeyMigration.migrate();
+        }
+    }
+
+    async checkForUpdate() {
+        const autoUpdaterCommand = new OtnodeUpdateCommand({
+            logger: this.logger,
+            config: this.config,
+            fileService: this.fileService,
+            autoUpdaterModuleManager: this.autoUpdaterModuleManager,
+        });
+
+        await autoUpdaterCommand.execute();
     }
 
     stop(code = 0) {
