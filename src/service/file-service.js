@@ -67,7 +67,7 @@ class FileService {
             const data = await readFile(filePath);
             return convertToJSON ? JSON.parse(data) : data.toString();
         } catch (e) {
-            throw Error(`File doesn't exist on file path: ${filePath}`);
+            throw Error(`File not found on path: ${filePath}`);
         }
     }
 
@@ -77,7 +77,7 @@ class FileService {
             await unlink(filePath);
             return true;
         }
-        this.logger.debug(`File doesn't exist on file path: ${filePath}`);
+        this.logger.debug(`File not found on path: ${filePath}`);
         return false;
     }
 
@@ -103,7 +103,6 @@ class FileService {
     getOperationIdDocumentPath(operationId) {
         return path.join(this.getOperationIdCachePath(), operationId);
     }
-
 }
 
 export default FileService;
