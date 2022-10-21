@@ -24,14 +24,8 @@ class OTNode {
 
     async start() {
         await this.removeUpdateFile();
-        const migrationManager = new NetworkPrivateKeyMigration(
-            'NetworkPrivateKeyMigration',
-            this.logger,
-            this.config,
-        );
-        if (!(await migrationManager.migrationAlreadyExecuted())) {
-            await migrationManager.migrate();
-        }
+
+        await this.executeMigrations();
 
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
@@ -284,6 +278,17 @@ class OTNode {
             this.logger.warn(`Unable to remove update file. Error: ${error}`);
         });
         this.config.otNodeUpdated = true;
+    }
+
+    async executeMigrations() {
+        const networkPrivateKeyMigration = new NetworkPrivateKeyMigration(
+            'NetworkPrivateKeyMigration',
+            this.logger,
+            this.config,
+        );
+        if (!(await networkPrivateKeyMigration.migrationAlreadyExecuted())) {
+            await networkPrivateKeyMigration.migrate();
+        }
     }
 
     stop(code = 0) {
