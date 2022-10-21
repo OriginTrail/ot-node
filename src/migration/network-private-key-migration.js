@@ -1,6 +1,5 @@
 import { join } from 'path';
 import appRootPath from 'app-root-path';
-import { mkdir, writeFile } from 'fs/promises';
 import BaseMigration from './base-migration.js';
 import { LIBP2P_KEY_DIRECTORY, LIBP2P_KEY_FILENAME } from '../constants/constants.js';
 
@@ -25,9 +24,11 @@ class NetworkPrivateKeyMigration extends BaseMigration {
                     LIBP2P_KEY_DIRECTORY,
                 );
             }
-            const fullPath = join(directoryPath, LIBP2P_KEY_FILENAME);
-            await mkdir(directoryPath, { recursive: true });
-            await writeFile(fullPath, networkPrivateKey);
+            await this.fileService.writeContentsToFile(
+                directoryPath,
+                LIBP2P_KEY_FILENAME,
+                networkPrivateKey,
+            );
         }
     }
 }

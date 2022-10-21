@@ -1,5 +1,4 @@
 import path from 'path';
-import fs from 'fs-extra';
 import FileService from '../service/file-service.js';
 
 class BaseMigration {
@@ -41,14 +40,20 @@ class BaseMigration {
         await this.executeMigration();
 
         const migrationFolderPath = migrationPath || this.fileService.getMigrationFolderPath();
-        await fs.ensureDir(migrationFolderPath);
-        const migrationFilePath = path.join(migrationFolderPath, this.migrationName);
-        await fs.writeFile(migrationFilePath, 'MIGRATED');
+        await this.fileService.writeContentsToFile(
+            migrationFolderPath,
+            this.migrationName,
+            'MIGRATED',
+        );
         this.logger.info(
             `${this.migrationName} migration completed. Lasted: ${
                 Date.now() - this.startedTimestamp
             } millisecond(s).`,
         );
+    }
+
+    async executeMigration() {
+        throw Error('Execute migration method not implemented');
     }
 }
 
