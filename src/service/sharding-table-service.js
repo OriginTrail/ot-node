@@ -1,28 +1,49 @@
 class ShardingTableService {
-    constructor(ctx, blockchain) {
+    constructor(ctx) {
         this.config = ctx.config;
         this.logger = ctx.logger;
-        this.blockchain = blockchain;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.eventEmitter = ctx.eventEmitter;
     }
 
-    pullBlockchainShardingTable() {
-        const shardingTable = this.blockchainModuleManager.getShardingTableFull();
+    initialize(blockchain) {
+        this.pullBlockchainShardingTable(blockchain);
+        this.listenOnEvents();
+    }
+
+    pullBlockchainShardingTable(blockchain) {
+        const shardingTable = this.blockchainModuleManager.getShardingTableFull(blockchain);
 
         // option 1
         // TODO: Find IP addresses
-        shardingTable.forEach((peer) => this.blockchainModuleManager.createPeerRecord(...peer));
+        shardingTable.forEach((peer) => this.repositoryModuleManager.createPeerRecord(...peer));
 
         // option 2
         // TODO: Find IP addresses
         this.repositoryModuleManager.createManyPeerRecords(shardingTable);
     }
 
-    async updateLocalTable(blockchainTableUpdateEvent) {
-        const { peerId, ask, stake } = blockchainTableUpdateEvent.currentTarget;
+    listenOnEvents() {
+        this.eventEmitter.on('PeerObjCreated', (eventData) => {
+            this.repositoryModuleManager.createPeerRecord(
+                eventData.peerId,
+                eventData.ask,
+                eventData.stake,
+            );
+        });
 
-        await this.repositoryModuleManager.updatePeerRecord(peerId, ask, stake);
+        this.eventEmitter.on('PeerParamsUpdated', (eventData) => {
+            this.repositoryModuleManager.updatePeerParams(
+                eventData.peerId,
+                eventData.ask,
+                eventData.stake,
+            );
+        });
+
+        this.eventEmitter.on('PeerRemoved', (eventData) => {
+            this.repositoryModuleManager.removePeerRecord(eventData.peerId);
+        });
     }
 
     async findNeighbourhood(assertionId, r2) {

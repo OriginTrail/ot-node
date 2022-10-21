@@ -259,14 +259,6 @@ class SequelizeRepository {
         });
     }
 
-    async removePeerRecord(peerId) {
-        await this.models.shard.destroy({
-            where: {
-                peer_id: peerId,
-            },
-        });
-    }
-
     async updatePeerParams(peerId, ask, stake) {
         await this.models.shard.update(
             {
@@ -277,6 +269,14 @@ class SequelizeRepository {
                 where: { peer_id: peerId },
             },
         );
+    }
+
+    async removePeerRecord(peerId) {
+        await this.models.shard.destroy({
+            where: {
+                peer_id: peerId,
+            },
+        });
     }
 
     async getNeighbourhood(assertionId, offlineLimit, r2) {

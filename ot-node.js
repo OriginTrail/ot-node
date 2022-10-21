@@ -44,6 +44,7 @@ class OTNode {
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
+        await this.initializeShardingTableService();
         await this.initializeTelemetryInjectionService();
 
         await this.initializeRouters();
@@ -201,6 +202,28 @@ class OTNode {
             );
             this.stop(1);
         }
+    }
+
+    async initializeShardingTableService() {
+        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        const initShardingServices = blockchainModuleManager
+            .getImplementationsNames()
+            .map(async (blockchain) => {
+                try {
+                    const shardingHubModuleManager = this.container.resolve('shardingTableService');
+                    shardingHubModuleManager.initialize(blockchain);
+                    this.logger.info(
+                        `Sharding Table Service initialized successfully for '${blockchain}' blockchain`,
+                    );
+                } catch (e) {
+                    this.logger.error(
+                        `Sharding hub module initialization for '${blockchain}' blockchain failed.
+                        Error message: ${e.message}`,
+                    );
+                }
+            });
+
+        await Promise.all(initShardingServices);
     }
 
     async initializeTelemetryInjectionService() {
