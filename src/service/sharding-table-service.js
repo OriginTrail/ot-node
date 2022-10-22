@@ -15,10 +15,19 @@ class ShardingTableService {
 
     async pullBlockchainShardingTable(blockchain) {
         const shardingTable = await this.blockchainModuleManager.getShardingTableFull(blockchain);
+
         const multiaddresses = this.networkModuleManager.getPeerStoreIpAddresses();
 
-        shardingTable.map((peer) => peer.add(multiaddresses.get(peer.id)));
-        shardingTable.forEach((peer) => this.repositoryModuleManager.createPeerRecord(...peer));
+        shardingTable.forEach((peer) =>
+            this.repositoryModuleManager.createPeerRecord(
+                peer.id,
+                peer.ask,
+                peer.stake,
+                multiaddresses.get(peer.id),
+                Date.now(),
+                '', // public address?
+            ),
+        );
     }
 
     listenOnEvents() {

@@ -245,11 +245,18 @@ class SequelizeRepository {
 
     // Sharding Table
     async createManyPeerRecords(peers) {
-        await this.models.shard.bulkCreate(peers);
+        return this.models.shard.bulkCreate(peers);
     }
 
     async createPeerRecord(peerId, ask, stake, ipAddress, lastSeen, publicAddress) {
-        await this.models.shard.create({
+        console.log('Creating:');
+        console.log(`peerId: ${peerId}`);
+        console.log(`ask: ${ask}`);
+        console.log(`stake: ${stake}`);
+        console.log(`ipAdress: ${ipAddress}`);
+        console.log(`lastSeen: ${lastSeen}`);
+        console.log(`publicAddress: ${publicAddress}`);
+        return this.models.shard.create({
             peer_id: peerId,
             ask,
             stake,
@@ -257,6 +264,10 @@ class SequelizeRepository {
             last_seen: lastSeen,
             public_address: publicAddress,
         });
+    }
+
+    async getAllPeerRecords() {
+        return this.models.shard.findAll({ raw: true });
     }
 
     async updatePeerParams(peerId, ask, stake) {
