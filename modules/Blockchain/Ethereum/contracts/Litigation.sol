@@ -58,12 +58,11 @@ contract Litigation {
         if(litigationStatus == LitigationStorage.LitigationStatus.initiated) {
             require(parameters[0] + parameters[1].mul(3) < block.timestamp,
                 "The litigation is initiated and awaiting holder response, cannot initiate another litigation!");
+            require(parameters[0] + parameters[1] < block.timestamp,
+                "The litigation interval has not passed yet, cannot initiate another litigation!");
         } else if(litigationStatus == LitigationStorage.LitigationStatus.answered) {
             require(parameters[0] + parameters[1].mul(2) < block.timestamp,
                 "The litigation is answered and awaiting previous litigator response, cannot initiate another litigation!");
-        } else if(litigationStatus == LitigationStorage.LitigationStatus.initiated) {
-            require(parameters[0] + parameters[1] < block.timestamp,
-                "The litigation interval has not passed yet, cannot initiate another litigation!");
         }
 
         // Write litigation information into the storage
