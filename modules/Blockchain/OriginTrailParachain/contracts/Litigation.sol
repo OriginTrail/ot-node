@@ -58,12 +58,11 @@ contract Litigation {
         if(litigationStatus == LitigationStorage.LitigationStatus.initiated) {
             require(parameters[0] + parameters[1].mul(3) < block.timestamp,
                 "The litigation is initiated and awaiting holder response, cannot initiate another litigation!");
+            require(parameters[0] + parameters[1] < block.timestamp,
+                "The litigation interval has not passed yet, cannot initiate another litigation!");
         } else if(litigationStatus == LitigationStorage.LitigationStatus.answered) {
             require(parameters[0] + parameters[1].mul(2) < block.timestamp,
                 "The litigation is answered and awaiting previous litigator response, cannot initiate another litigation!");
-        } else if(litigationStatus == LitigationStorage.LitigationStatus.initiated) {
-            require(parameters[0] + parameters[1] < block.timestamp,
-                "The litigation interval has not passed yet, cannot initiate another litigation!");
         }
 
         // Write litigation information into the storage
@@ -146,7 +145,7 @@ contract Litigation {
 
         if(litigationStatus == LitigationStorage.LitigationStatus.initiated) {
             // Litigator claims that the DH is inactive
-            // Verify that the asnwer window has passes and that the completion window has not passed
+            // Verify that the answer window has passes and that the completion window has not passed
             require(parameters[0] + parameters[1].mul(2) >= block.timestamp,
                 "The time window for completing the unanswered litigation has passed!");
             require(parameters[0] + parameters[1] < block.timestamp,
