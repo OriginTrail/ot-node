@@ -145,7 +145,7 @@ contract Litigation {
 
         if(litigationStatus == LitigationStorage.LitigationStatus.initiated) {
             // Litigator claims that the DH is inactive
-            // Verify that the answer window has passes and that the completion window has not passed
+            // Verify that the asnwer window has passes and that the completion window has not passed
             require(parameters[0] + parameters[1].mul(2) >= block.timestamp,
                 "The time window for completing the unanswered litigation has passed!");
             require(parameters[0] + parameters[1] < block.timestamp,
