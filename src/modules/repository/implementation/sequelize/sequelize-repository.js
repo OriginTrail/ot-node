@@ -249,13 +249,6 @@ class SequelizeRepository {
     }
 
     async createPeerRecord(peerId, ask, stake, ipAddress, lastSeen, publicAddress) {
-        console.log('Creating:');
-        console.log(`peerId: ${peerId}`);
-        console.log(`ask: ${ask}`);
-        console.log(`stake: ${stake}`);
-        console.log(`ipAdress: ${ipAddress}`);
-        console.log(`lastSeen: ${lastSeen}`);
-        console.log(`publicAddress: ${publicAddress}`);
         return this.models.shard.create({
             peer_id: peerId,
             ask,

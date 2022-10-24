@@ -1,11 +1,11 @@
 import { Given } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
-import DkgClientHelper from '../../utilities/dkg-client-helper.mjs';
-import DeepExtend from "deep-extend";
-import StepsUtils from "../../utilities/steps-utils.mjs";
-import fs from "fs";
+import fs from 'fs';
 import { setTimeout as sleep } from 'timers/promises';
-import {readFile} from "fs/promises";
+import { readFile } from 'fs/promises';
+import DeepExtend from 'deep-extend';
+import DkgClientHelper from '../../utilities/dkg-client-helper.mjs';
+import StepsUtils from "../../utilities/steps-utils.mjs";
 
 const defaultConfiguration = JSON.parse(await readFile("test/bdd/steps/config/origintrail-test-node-config.json"));
 const bootstrapNodeConfiguration =  JSON.parse(await readFile("test/bdd/steps/config/origintrail-test-bootstrap-config.json"));

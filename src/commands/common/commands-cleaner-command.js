@@ -20,6 +20,7 @@ class CommandsCleanerCommand extends Command {
             COMMAND_STATUS.COMPLETED,
             COMMAND_STATUS.FAILED,
             COMMAND_STATUS.EXPIRED,
+            COMMAND_STATUS.UNKNOWN,
         ]);
         return Command.repeat();
     }

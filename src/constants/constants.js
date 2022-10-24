@@ -1,5 +1,9 @@
 export const SCHEMA_CONTEXT = 'http://schema.org/';
 
+export const LIBP2P_KEY_DIRECTORY = 'libp2p';
+
+export const LIBP2P_KEY_FILENAME = 'privateKey';
+
 export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 
 export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
@@ -223,6 +227,7 @@ export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 export const COMMAND_STATUS = {
     FAILED: 'FAILED',
     EXPIRED: 'EXPIRED',
+    UNKNOWN: 'UNKNOWN',
     STARTED: 'STARTED',
     PENDING: 'PENDING',
     COMPLETED: 'COMPLETED',
