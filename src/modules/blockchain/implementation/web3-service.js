@@ -323,6 +323,40 @@ class Web3Service {
             });
     }
 
+    async getAllPastEvents(contractName, onEventsReceived, getLastEvent) {
+        const contract = this[contractName];
+        if (!contract) {
+            throw Error(`Error while getting all past events. Unknown contract: ${contractName}`);
+        }
+
+        const blockchainId = this.getBlockchainId();
+        let fromBlock;
+
+        const lastEvent = await getLastEvent(contractName, blockchainId);
+
+        const currentBlock = await this.getBlockNumber();
+        // TODO test and review from block offsets
+        if (lastEvent) {
+            fromBlock = Math.max(currentBlock - 2000, lastEvent.block + 1);
+        } else {
+            fromBlock = Math.max(currentBlock - 100, 0);
+        }
+        const events = await contract.getPastEvents('allEvents', {
+            fromBlock,
+            toBlock: 'latest',
+        });
+
+        await onEventsReceived(
+            events.map((event) => ({
+                contract: contractName,
+                event: event.event,
+                data: JSON.stringify(event.returnValues),
+                block: event.blockNumber,
+                blockchainId,
+            })),
+        );
+    }
+
     async deployContract(contract, args) {
         let result;
         while (!result) {
@@ -497,6 +531,10 @@ class Web3Service {
             this.logger.error(`Error on executing contract function. ${e}`);
             return false;
         }
+    }
+
+    getBlockchainId() {
+        throw Error('Get blockchain id not implemented');
     }
 }
 
