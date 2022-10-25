@@ -4,6 +4,10 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             type: Sequelize.STRING,
             primaryKey: true,
         },
+        blockchain_id: {
+            type: Sequelize.STRING,
+            primaryKey: true,
+        },
         ask: {
             type: Sequelize.INTEGER,
             allowNull: true,
@@ -12,16 +16,12 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             type: Sequelize.INTEGER,
             allowNull: false,
         },
-        ip_address: {
-            type: Sequelize.STRING,
-            allowNull: false,
-        },
         last_seen: {
             type: Sequelize.DATE,
             allowNull: false,
             defaultValue: Sequelize.literal('NOW()'),
         },
-        public_address: {
+        sha256: {
             type: Sequelize.STRING,
             allowNull: false,
         },

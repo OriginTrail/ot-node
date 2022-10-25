@@ -1,3 +1,6 @@
+import { setTimeout } from 'timers/promises';
+import { peerId2Hash } from 'assertion-tools';
+
 class ShardingTableService {
     constructor(ctx) {
         this.config = ctx.config;
@@ -14,20 +17,38 @@ class ShardingTableService {
     }
 
     async pullBlockchainShardingTable(blockchain) {
-        const shardingTable = await this.blockchainModuleManager.getShardingTableFull(blockchain);
+        // const shardingTable = await this.blockchainModuleManager.getShardingTableFull(blockchain);
+        await setTimeout(5 * 1000);
+        const shardingTable = [];
+        for (const connections of this.networkModuleManager.getPeers().values()) {
+            const id = connections[0].remotePeer;
+            const ask = 1;
+            const stake = 3000;
+            // eslint-disable-next-line no-await-in-loop
+            const sha = await peerId2Hash(id);
+            shardingTable.push({ id, ask, stake, blockchain, sha });
+        }
 
-        const multiaddresses = this.networkModuleManager.getPeerStoreIpAddresses();
-
-        shardingTable.forEach((peer) =>
+        for (const peer of shardingTable) {
             this.repositoryModuleManager.createPeerRecord(
-                peer.id,
+                peer.id._idB58String,
+                blockchain,
                 peer.ask,
                 peer.stake,
-                multiaddresses.get(peer.id),
                 Date.now(),
-                '', // public address?
+                peer.sha,
+            );
+        }
+
+        /* const hash = await this.networkModuleManager.toHash(
+            new TextEncoder().encode(
+                '0x41af3e2d170aad38821133f8f59923b342e04aae1a16e7bde1bebc558d97a0d5',
             ),
         );
+
+        const neighborhood = await this.findNeighbourhood(`0x${await hash.toString('hex')}`, 10);
+
+        console.log("neighborhood: ", neighborhood); */
     }
 
     listenOnEvents() {
@@ -53,7 +74,7 @@ class ShardingTableService {
     }
 
     async findNeighbourhood(assertionId, r2) {
-        return this.repositoryModuleManager.getNeighbourhood(assertionId, r2);
+        return this.repositoryModuleManager.getNeighbourhood(assertionId, 24 * 60 * 60 * 1000, r2);
     }
 
     async getBidSuggestion(neighbourhood, R0, higherPercentile) {

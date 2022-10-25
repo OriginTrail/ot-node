@@ -248,14 +248,14 @@ class SequelizeRepository {
         return this.models.shard.bulkCreate(peers);
     }
 
-    async createPeerRecord(peerId, ask, stake, ipAddress, lastSeen, publicAddress) {
+    async createPeerRecord(peerId, blockchain, ask, stake, lastSeen, sha256) {
         return this.models.shard.create({
             peer_id: peerId,
+            blockchain_id: blockchain,
             ask,
             stake,
-            ip_address: ipAddress,
             last_seen: lastSeen,
-            public_address: publicAddress,
+            sha256,
         });
     }
 
@@ -285,15 +285,18 @@ class SequelizeRepository {
 
     async getNeighbourhood(assertionId, offlineLimit, r2) {
         return this.models.shard.findAll({
-            attributes: ['peer_id, ask, stake'],
+            attributes: [
+                'peer_id',
+                'ask',
+                'stake',
+                'sha256',
+                Sequelize.literal(`(HEX('${assertionId}') ^ HEX(sha256)) as distance`),
+            ],
             where: {
                 last_seen: {
                     [Sequelize.Op.lte]: new Date(),
-                    [Sequelize.Op.gt]: new Date(
-                        new Date(Sequelize.col('last_seen')) - offlineLimit * 60 * 60 * 1000,
-                    ),
+                    [Sequelize.Op.gt]: new Date(Date.now() - offlineLimit),
                 },
-                distance: Sequelize.literal(`SELECT BINARY(${assertionId}) ^ BINARY(peer_id)`),
             },
             order: ['distance', 'DESC'],
             limit: r2,

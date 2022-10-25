@@ -2,15 +2,12 @@ export default (sequelize, DataTypes) => {
     const shard = sequelize.define(
         'shard',
         {
-            peer_id: {
-                type: DataTypes.STRING,
-                primaryKey: true,
-            },
+            peer_id: { type: DataTypes.STRING, primaryKey: true },
+            blockchain_id: { type: DataTypes.STRING, primaryKey: true },
             ask: DataTypes.INTEGER,
             stake: DataTypes.INTEGER,
-            ip_address: DataTypes.STRING,
             last_seen: DataTypes.DATE,
-            public_address: DataTypes.STRING,
+            sha256: DataTypes.STRING,
         },
         { underscored: true },
     );

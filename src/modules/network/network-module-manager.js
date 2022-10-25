@@ -121,9 +121,15 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    async getPeerStoreIpAddresses() {
+    async findPeer(peerId) {
         if (this.initialized) {
-            return this.getImplementation().module.getPeerStoreIpAddresses();
+            return this.getImplementation().module.findPeer(peerId);
+        }
+    }
+
+    async toHash(key) {
+        if (this.initialized) {
+            return this.getImplementation().module.toHash(key);
         }
     }
 }

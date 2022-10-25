@@ -230,7 +230,7 @@ class OTNode {
     async initializeShardingTableService(blockchain) {
         try {
             const shardingHubModuleManager = this.container.resolve('shardingTableService');
-            await shardingHubModuleManager.initialize('ganache');
+            await shardingHubModuleManager.initialize(blockchain);
             this.logger.info(
                 `Sharding Table Service initialized successfully for '${blockchain}' blockchain`,
             );

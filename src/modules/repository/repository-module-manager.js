@@ -152,15 +152,15 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async createPeerRecord(peerId, ask, stake, ipAddress, lastSeen, publicAddress) {
+    async createPeerRecord(peerId, blockchain, ask, stake, lastSeen, sha256) {
         if (this.initialized) {
             return this.getImplementation().module.createPeerRecord(
                 peerId,
+                blockchain,
                 ask,
                 stake,
-                ipAddress,
                 lastSeen,
-                publicAddress,
+                sha256,
             );
         }
     }
