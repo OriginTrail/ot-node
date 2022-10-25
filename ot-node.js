@@ -51,11 +51,11 @@ class OTNode {
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
-        await this.initializeShardingTableService('ganache');
+        // await this.initializeShardingTableService('ganache');
         await this.initializeTelemetryInjectionService();
 
         await this.initializeRouters();
-
+        await this.startListeningOnBlockchainEvents();
         this.logger.info('Node is up and running!');
     }
 
@@ -259,6 +259,39 @@ class OTNode {
         //         }
         //     });
         // await Promise.all(initShardingServices);
+    }
+
+    async startListeningOnBlockchainEvents() {
+        this.logger.info('Starting blockchain event listener');
+        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
+
+        const onEventsReceived = async (events) => {
+            await repositoryModuleManager.insertBlockchainEvents(events);
+        };
+
+        const getLastEvent = async (contractName, blockchainId) => {
+            await repositoryModuleManager.getLastEvent(contractName, blockchainId);
+        };
+
+        let working = false;
+
+        setInterval(async () => {
+            if (!working) {
+                try {
+                    working = true;
+                    await blockchainModuleManager.getAllPastEvents(
+                        'ShardingTableContract',
+                        onEventsReceived,
+                        getLastEvent,
+                    );
+                } catch (e) {
+                    this.logger.error(`Failed to get blockchain events. Error: ${e}`);
+                } finally {
+                    working = false;
+                }
+            }
+        }, 5000);
     }
 
     async initializeTelemetryInjectionService() {

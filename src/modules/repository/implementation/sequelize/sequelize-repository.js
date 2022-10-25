@@ -410,6 +410,55 @@ class SequelizeRepository {
 
         return abilities.map((e) => e.name);
     }
+
+    async insertBlockchainEvents(blockchainEvents) {
+        const insertPromises = [];
+        for (const event of blockchainEvents) {
+            insertPromises.push(
+                new Promise((resolve, reject) => {
+                    this.models.blockchain_event
+                        .findOne({
+                            where: {
+                                contract: event.contract,
+                                event: event.event,
+                                data: event.data,
+                                block: event.block,
+                                blockchain_id: event.blockchainId,
+                            },
+                        })
+                        .then(async (databaseEvent) => {
+                            if (!databaseEvent) {
+                                await this.models.blockchain_event
+                                    .create({
+                                        contract: event.contract,
+                                        event: event.event,
+                                        data: event.data,
+                                        block: event.block,
+                                        blockchain_id: event.blockchainId,
+                                        finished: 0,
+                                    })
+                                    .then(resolve());
+                            }
+                            resolve();
+                        })
+                        .catch((error) => {
+                            reject(error);
+                        });
+                }),
+            );
+        }
+        await Promise.all(insertPromises);
+    }
+
+    async getLastEvent(contractName, blockchainId) {
+        return this.models.blockchain_event.findOne({
+            where: {
+                contract: contractName,
+                blockchain_id: blockchainId,
+            },
+            order: [['block', 'DESC']],
+        });
+    }
 }
 
 export default SequelizeRepository;

@@ -151,6 +151,21 @@ class BlockchainModuleManager extends BaseModuleManager {
             await this.getImplementation(blockchain).module.removePeer(peerId);
         }
     }
+
+    async getAllPastEvents(contractName, onEventsReceived, getLastEvent) {
+        const blockchainIds = this.getImplementationsNames();
+        const getEventsPromises = [];
+        for (const blockchainId of blockchainIds) {
+            getEventsPromises.push(
+                this.getImplementation(blockchainId).module.getAllPastEvents(
+                    contractName,
+                    onEventsReceived,
+                    getLastEvent,
+                ),
+            );
+        }
+        return Promise.all(getEventsPromises);
+    }
 }
 
 export default BlockchainModuleManager;

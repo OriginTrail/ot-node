@@ -251,6 +251,18 @@ class RepositoryModuleManager extends BaseModuleManager {
             return this.getImplementation().module.getTokenAbilities(tokenId);
         }
     }
+
+    async insertBlockchainEvents(events) {
+        if (this.initialized) {
+            return this.getImplementation().module.insertBlockchainEvents(events);
+        }
+    }
+
+    async getLastEvent(contractName, blockchainId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getLastEvent(contractName, blockchainId);
+        }
+    }
 }
 
 export default RepositoryModuleManager;

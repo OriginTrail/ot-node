@@ -137,6 +137,10 @@ class OtParachainService extends Web3Service {
         const nativeBalance = await this.web3.eth.getBalance(this.getPublicKey());
         return nativeBalance / 10 ** NATIVE_TOKEN_DECIMALS;
     }
+
+    getBlockchainId() {
+        return 'otp';
+    }
 }
 
 export default OtParachainService;
