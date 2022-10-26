@@ -1,5 +1,4 @@
-import { setTimeout } from 'timers/promises';
-import { peerId2Hash } from 'assertion-tools';
+import { PEER_OFFLINE_LIMIT } from '../constants/constants.js';
 
 class ShardingTableService {
     constructor(ctx) {
@@ -17,41 +16,25 @@ class ShardingTableService {
     }
 
     async pullBlockchainShardingTable(blockchain) {
-        // const shardingTable = await this.blockchainModuleManager.getShardingTableFull(blockchain);
-        await setTimeout(5 * 1000);
-        const shardingTable = [];
-        for (const connections of this.networkModuleManager.getPeers().values()) {
-            const id = connections[0].remotePeer;
-            const ask = 1;
-            const stake = 3000;
-            // eslint-disable-next-line no-await-in-loop
-            const sha = await peerId2Hash(id);
-            shardingTable.push({ id, ask, stake, blockchain, sha });
-        }
+        const shardingTable = await this.blockchainModuleManager.getShardingTableFull(blockchain);
 
-        for (const peer of shardingTable) {
-            this.repositoryModuleManager.createPeerRecord(
-                peer.id._idB58String,
-                blockchain,
-                peer.ask,
-                peer.stake,
-                Date.now(),
-                peer.sha,
-            );
-        }
-
-        // const hash = await this.networkModuleManager.toHash(
-        //     new TextEncoder().encode(
-        //         '0x41af3e2d170aad38821133f8f59923b342e04aae1a16e7bde1bebc558d97a0d5',
-        //     ),
-        // );
-
-        // const nodes = await this.repositoryModuleManager.getAllPeerRecords();
-        // console.log("nodes: ", nodes);
-
-        // const neighborhood = await this.findNeighbourhood(`0x${await hash.toString('hex')}`, 10);
-
-        // console.log("neighborhood: ", neighborhood);
+        const textEncoder = new TextEncoder();
+        await this.repositoryModuleManager.createManyPeerRecords(
+            await Promise.all(
+                shardingTable.map(async (peer) => ({
+                    peer_id: peer.id._idB58String,
+                    blockchain_id: blockchain,
+                    ask: peer.ask,
+                    stake: peer.stake,
+                    last_seen: Date.now(),
+                    sha256: (
+                        await this.networkModuleManager.toHash(
+                            textEncoder.encode(peer.id._idB58String),
+                        )
+                    ).toString('hex'),
+                })),
+            ),
+        );
     }
 
     listenOnEvents() {
@@ -76,8 +59,13 @@ class ShardingTableService {
         });
     }
 
-    async findNeighbourhood(assertionId, r2) {
-        return this.repositoryModuleManager.getNeighbourhood(assertionId, 24 * 60 * 60 * 1000, r2);
+    async findNeighbourhood(key, blockchain, r2) {
+        const peers = await this.repositoryModuleManager.getAllPeerRecords(
+            blockchain,
+            PEER_OFFLINE_LIMIT,
+        );
+
+        return this.networkModuleManager.sortPeers(key, peers, r2);
     }
 
     async getBidSuggestion(neighbourhood, R0, higherPercentile) {

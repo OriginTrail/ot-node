@@ -210,13 +210,14 @@ class Libp2pService {
     }
 
     async sortPeers(key, peers, count = this.config.dht.kBucketSize) {
-        const keyHash = await this.toHash(new TextEncoder().encode(key));
+        const textEncoder = new TextEncoder();
+        const keyHash = await this.toHash(textEncoder.encode(key));
         const sorted = pipe(
             peers,
             (source) =>
                 map(source, async (peer) => ({
                     peer,
-                    distance: uint8ArrayXor(keyHash, await this.toHash(peer.id.toBytes())),
+                    distance: uint8ArrayXor(keyHash, Buffer.from(peer.sha256, 'hex')),
                 })),
             (source) => sort(source, (a, b) => uint8ArrayCompare(a.distance, b.distance)),
             (source) => take(source, count),

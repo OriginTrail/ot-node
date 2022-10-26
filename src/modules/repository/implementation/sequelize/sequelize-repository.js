@@ -259,8 +259,19 @@ class SequelizeRepository {
         });
     }
 
-    async getAllPeerRecords() {
-        return this.models.shard.findAll({ raw: true });
+    async getAllPeerRecords(blockchain, offlineLimit) {
+        return this.models.shard.findAll({
+            where: {
+                blockchain_id: {
+                    [Sequelize.Op.eq]: blockchain,
+                },
+                last_seen: {
+                    [Sequelize.Op.lte]: new Date(),
+                    [Sequelize.Op.gt]: new Date(Date.now() - offlineLimit),
+                },
+            },
+            raw: true,
+        });
     }
 
     async updatePeerParams(peerId, ask, stake) {
@@ -280,27 +291,6 @@ class SequelizeRepository {
             where: {
                 peer_id: peerId,
             },
-        });
-    }
-
-    async getNeighbourhood(assertionId, offlineLimit, r2) {
-        return this.models.shard.findAll({
-            attributes: [
-                'peer_id',
-                'ask',
-                'stake',
-                'sha256',
-                Sequelize.literal(`(HEX('${assertionId}') ^ HEX(sha256)) as distance`),
-            ],
-            where: {
-                last_seen: {
-                    [Sequelize.Op.lte]: new Date(),
-                    [Sequelize.Op.gt]: new Date(Date.now() - offlineLimit),
-                },
-            },
-            order: [[Sequelize.literal('distance'), 'desc']],
-            limit: r2,
-            raw: true,
         });
     }
 

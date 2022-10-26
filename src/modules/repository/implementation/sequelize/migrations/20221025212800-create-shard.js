@@ -22,7 +22,7 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             defaultValue: Sequelize.literal('NOW()'),
         },
         sha256: {
-            type: Sequelize.STRING,
+            type: Sequelize.STRING(64).BINARY,
             allowNull: false,
         },
     });

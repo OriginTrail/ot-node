@@ -14,6 +14,8 @@ export const PUBLISH_TYPES = { ASSERTION: 'assertion', ASSET: 'asset', INDEX: 'i
 
 export const DHT_TYPES = { DUAL: 'dual', WAN: 'wan', LAN: 'lan' };
 
+export const PEER_OFFLINE_LIMIT = 24 * 60 * 60 * 1000;
+
 /**
  * Triple store media types
  * @type {{APPLICATION_JSON: string, N_QUADS: string, SPARQL_RESULTS_JSON: string, LD_JSON: string}}
