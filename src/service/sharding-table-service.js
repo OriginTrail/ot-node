@@ -26,7 +26,6 @@ class ShardingTableService {
                     blockchain_id: blockchainId,
                     ask: peer.ask,
                     stake: peer.stake,
-                    last_seen: Date.now(),
                     sha256: (
                         await this.networkModuleManager.toHash(
                             textEncoder.encode(peer.id._idB58String),
@@ -45,7 +44,7 @@ class ShardingTableService {
                 event.blockchain_id,
                 eventData.ask,
                 eventData.stake,
-                Date.now(),
+                new Date(0),
                 eventData.sha,
             );
 
@@ -97,6 +96,24 @@ class ShardingTableService {
 
     async findEligibleNodes(neighbourhood, bid, R1, R0) {
         return neighbourhood.filter((node) => node.ask <= bid / R0).slice(0, R1);
+    }
+
+    async dial(peerId) {
+        let { addresses } = this.networkModuleManager.getPeerInfo(peerId);
+        if (!addresses.length) {
+            try {
+                this.logger.trace(`Searching for peer ${peerId} multiaddresses.`);
+                addresses = (await this.networkModuleManager.findPeer(peerId)).multiaddrs;
+            } catch (error) {
+                this.logger.warn(`Unable to find peer ${peerId}. Error: ${error.message}`);
+            }
+        }
+        if (addresses.length) {
+            await this.networkModuleManager.dial(peerId);
+            await this.repositoryModuleManager.updatePeerRecordLastSeenAndLastDialed(peerId);
+        } else {
+            await this.repositoryModuleManager.updatePeerRecordLastDialed(peerId);
+        }
     }
 }
 

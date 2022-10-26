@@ -7,6 +7,7 @@ export default (sequelize, DataTypes) => {
             ask: DataTypes.INTEGER,
             stake: DataTypes.INTEGER,
             last_seen: DataTypes.DATE,
+            last_dialed: DataTypes.DATE,
             sha256: DataTypes.STRING,
         },
         { underscored: true },

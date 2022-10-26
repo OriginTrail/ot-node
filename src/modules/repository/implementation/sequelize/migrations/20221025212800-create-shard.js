@@ -19,10 +19,15 @@ export async function up({ context: { queryInterface, Sequelize } }) {
         last_seen: {
             type: Sequelize.DATE,
             allowNull: false,
-            defaultValue: Sequelize.literal('NOW()'),
+            defaultValue: new Date(0),
+        },
+        last_dialed: {
+            type: Sequelize.DATE,
+            allowNull: false,
+            defaultValue: new Date(0),
         },
         sha256: {
-            type: Sequelize.STRING(64).BINARY,
+            type: Sequelize.STRING,
             allowNull: false,
         },
     });

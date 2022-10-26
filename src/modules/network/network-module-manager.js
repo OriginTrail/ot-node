@@ -127,6 +127,12 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
+    async dial(peerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.dialPeer(peerId);
+        }
+    }
+
     async toHash(key) {
         if (this.initialized) {
             return this.getImplementation().module.toHash(key);

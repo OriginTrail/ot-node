@@ -171,9 +171,27 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async getPeersToDial(limit) {
+        if (this.initialized) {
+            return this.getImplementation().module.getPeersToDial(limit);
+        }
+    }
+
     async removePeerRecord(peerId) {
         if (this.initialized) {
             return this.getImplementation().module.removePeerRecord(peerId);
+        }
+    }
+
+    async updatePeerRecordLastDialed(peerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.updatePeerRecordLastDialed(peerId);
+        }
+    }
+
+    async updatePeerRecordLastSeenAndLastDialed(peerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.updatePeerRecordLastSeenAndLastDialed(peerId);
         }
     }
 

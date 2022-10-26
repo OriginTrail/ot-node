@@ -274,6 +274,14 @@ class SequelizeRepository {
         });
     }
 
+    async getPeersToDial(limit) {
+        return this.models.shard.findAll({
+            attributes: ['peer_id'],
+            order: [['last_dialed', 'ASC']],
+            limit,
+        });
+    }
+
     async updatePeerAsk(peerId, ask) {
         await this.models.shard.update(
             {
@@ -289,6 +297,29 @@ class SequelizeRepository {
         await this.models.shard.update(
             {
                 stake,
+            },
+            {
+                where: { peer_id: peerId },
+            },
+        );
+    }
+
+    async updatePeerRecordLastDialed(peerId) {
+        await this.models.shard.update(
+            {
+                last_dialed: new Date(),
+            },
+            {
+                where: { peer_id: peerId },
+            },
+        );
+    }
+
+    async updatePeerRecordLastSeenAndLastDialed(peerId) {
+        await this.models.shard.update(
+            {
+                last_dialed: new Date(),
+                last_seen: new Date(),
             },
             {
                 where: { peer_id: peerId },

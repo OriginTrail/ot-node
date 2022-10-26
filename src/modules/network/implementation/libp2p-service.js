@@ -724,7 +724,15 @@ class Libp2pService {
     }
 
     async findPeer(peerId) {
-        return this.node._dht.findPeer(peerId);
+        return this.node.peerRouting.findPeer(createFromB58String(peerId));
+    }
+
+    async dial(peerId) {
+        return this.node.dial(peerId);
+    }
+
+    async getPeerInfo(peerId) {
+        return this.node.peerStore.get(peerId);
     }
 }
 
