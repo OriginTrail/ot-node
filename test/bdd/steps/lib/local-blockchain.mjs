@@ -4,6 +4,9 @@ import Web3 from 'web3';
 import { readFile } from 'fs/promises';
 
 const hub = JSON.parse(await readFile('node_modules/dkg-evm-module/build/contracts/Hub.json'));
+const shardingTable = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/ShardingTable.json'),
+);
 const uaiRegistry = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/UAIRegistry.json'),
 );
@@ -19,9 +22,6 @@ const erc20Token = JSON.parse(
 const profile = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/Profile.json'),
 );
-const shardingTable = JSON.parse(
-    await readFile("node_modules/dkg-evm-module/build/contracts/ShardingTable.json")
-);
 const profileStorage = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/ProfileStorage.json'),
 );
@@ -31,12 +31,12 @@ const accountPrivateKeys = JSON.parse(
 
 const sources = {
     hub,
+    shardingTable,
     uaiRegistry,
     assertionRegistry,
     assetRegistry,
     erc20Token,
     profileStorage,
-    shardingTable,
     profile,
 };
 const web3 = new Web3();
@@ -108,6 +108,9 @@ class LocalBlockchain {
                     `\t Hub contract address: \t\t\t\t\t${this.contracts.hub.instance._address}`,
                 );
                 this.logger.info(
+                    `\t Sharding table contract address: \t\t\t${this.contracts.shardingTable.instance._address}`,
+                );
+                this.logger.info(
                     `\t AssertionRegistry contract address: \t\t\t${this.contracts.assertionRegistry.instance._address}`,
                 );
                 this.logger.info(
@@ -125,9 +128,6 @@ class LocalBlockchain {
                 );
                 this.logger.info(
                     `\t Profile contract address: \t\t\t\t${this.contracts.profile.instance._address}`,
-                );
-                this.logger.info(
-                    `\t Sharding table contract address: \t\t\t${this.contracts.shardingTable.instance._address}`,
                 );
                 accept();
             });
@@ -156,6 +156,13 @@ class LocalBlockchain {
         await this.deploy('hub', deployingWallet, []);
         await this.setContractAddress('Owner', deployingWallet.address, deployingWallet);
 
+        await this.deploy('shardingTable', deployingWallet, [this.contracts.hub.instance._address]);
+        await this.setContractAddress(
+            'ShardingTable',
+            this.contracts.shardingTable.instance._address,
+            deployingWallet,
+        );
+
         await this.deploy('uaiRegistry', deployingWallet, [this.contracts.hub.instance._address]);
         await this.setContractAddress(
             'UAIRegistry',
@@ -169,13 +176,6 @@ class LocalBlockchain {
         await this.setContractAddress(
             'AssertionRegistry',
             this.contracts.assertionRegistry.instance._address,
-            deployingWallet,
-        );
-
-        await this.deploy('shardingTable', deployingWallet, []);
-        await this.setContractAddress(
-            'ShardingTable',
-            this.contracts.shardingTable.instance._address,
             deployingWallet,
         );
 

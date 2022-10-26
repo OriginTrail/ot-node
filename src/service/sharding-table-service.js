@@ -12,7 +12,7 @@ class ShardingTableService {
 
     async initialize(blockchainId) {
         await this.pullBlockchainShardingTable(blockchainId);
-        this.listenOnEvents(blockchainId);
+        await this.listenOnEvents(blockchainId);
     }
 
     async pullBlockchainShardingTable(blockchainId) {
@@ -22,30 +22,33 @@ class ShardingTableService {
         await this.repositoryModuleManager.createManyPeerRecords(
             await Promise.all(
                 shardingTable.map(async (peer) => ({
-                    peer_id: peer.id._idB58String,
+                    peer_id: peer.id,
                     blockchain_id: blockchainId,
                     ask: peer.ask,
                     stake: peer.stake,
                     sha256: (
-                        await this.networkModuleManager.toHash(
-                            textEncoder.encode(peer.id._idB58String),
-                        )
+                        await this.networkModuleManager.toHash(textEncoder.encode(peer.id))
                     ).toString('hex'),
                 })),
             ),
         );
     }
 
-    listenOnEvents(blockchainId) {
-        this.eventEmitter.on(`${blockchainId}-NodeObjCreated`, (event) => {
+    async listenOnEvents(blockchainId) {
+        this.eventEmitter.on(`${blockchainId}-NodeObjCreated`, async (event) => {
             const eventData = JSON.parse(event.data);
+
             this.repositoryModuleManager.createPeerRecord(
                 eventData.nodeId,
                 event.blockchain_id,
                 eventData.ask,
                 eventData.stake,
                 new Date(0),
-                eventData.sha,
+                (
+                    await this.networkModuleManager.toHash(
+                        new TextEncoder().encode(eventData.nodeId),
+                    )
+                ).toString('hex'),
             );
 
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);

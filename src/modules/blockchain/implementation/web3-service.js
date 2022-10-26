@@ -2,7 +2,11 @@ import Web3 from 'web3';
 import axios from 'axios';
 import { peerId2Hash } from 'assertion-tools';
 import { createRequire } from 'module';
-import { INIT_STAKE_AMOUNT, WEBSOCKET_PROVIDER_OPTIONS } from '../../../constants/constants.js';
+import {
+    INIT_ASK_AMOUNT,
+    INIT_STAKE_AMOUNT,
+    WEBSOCKET_PROVIDER_OPTIONS,
+} from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
 const Hub = require('dkg-evm-module/build/contracts/Hub.json');
@@ -60,6 +64,16 @@ class Web3Service {
         this.logger.info(`Hub contract address is ${this.config.hubContractAddress}`);
         this.hubContract = new this.web3.eth.Contract(Hub.abi, this.config.hubContractAddress);
 
+        const shardingTableAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['ShardingTable'],
+        );
+        this.ShardingTableContract = new this.web3.eth.Contract(
+            ShardingTable.abi,
+            shardingTableAddress,
+        );
+
         const assetRegistryAddress = await this.callContractFunction(
             this.hubContract,
             'getContractAddress',
@@ -92,16 +106,6 @@ class Web3Service {
         this.ProfileStorageContract = new this.web3.eth.Contract(
             ProfileStorage.abi,
             profileStorageAddress,
-        );
-
-        const shardingTableAddress = await this.callContractFunction(
-            this.hubContract,
-            'getContractAddress',
-            ['ShardingTable'],
-        );
-        this.ShardingTableContract = new this.web3.eth.Contract(
-            ShardingTable.abi,
-            shardingTableAddress,
         );
 
         if (this.identityExists()) {
@@ -175,6 +179,7 @@ class Web3Service {
             nodeId,
             INIT_STAKE_AMOUNT,
             this.getIdentity(),
+            INIT_ASK_AMOUNT,
         ]);
     }
 

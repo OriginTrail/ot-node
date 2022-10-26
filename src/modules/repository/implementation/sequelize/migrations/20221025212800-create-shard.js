@@ -10,7 +10,7 @@ export async function up({ context: { queryInterface, Sequelize } }) {
         },
         ask: {
             type: Sequelize.INTEGER,
-            allowNull: true,
+            allowNull: false,
         },
         stake: {
             type: Sequelize.INTEGER,

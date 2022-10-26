@@ -245,18 +245,25 @@ class SequelizeRepository {
 
     // Sharding Table
     async createManyPeerRecords(peers) {
-        return this.models.shard.bulkCreate(peers);
+        return this.models.shard.bulkCreate(peers, {
+            ignoreDuplicates: true,
+        });
     }
 
     async createPeerRecord(peerId, blockchain, ask, stake, lastSeen, sha256) {
-        return this.models.shard.create({
-            peer_id: peerId,
-            blockchain_id: blockchain,
-            ask,
-            stake,
-            last_seen: lastSeen,
-            sha256,
-        });
+        return this.models.shard.create(
+            {
+                peer_id: peerId,
+                blockchain_id: blockchain,
+                ask,
+                stake,
+                last_seen: lastSeen,
+                sha256,
+            },
+            {
+                ignoreDuplicates: true,
+            },
+        );
     }
 
     async getAllPeerRecords(blockchain, offlineLimit) {
@@ -277,7 +284,7 @@ class SequelizeRepository {
     async getPeersToDial(limit) {
         return this.models.shard.findAll({
             attributes: ['peer_id'],
-            order: [['last_dialed', 'ASC']],
+            order: [['last_dialed', 'asc']],
             limit,
         });
     }
@@ -382,7 +389,7 @@ class SequelizeRepository {
                     },
                 },
             },
-            order: [['timestamp', 'ASC']],
+            order: [['timestamp', 'asc']],
             limit:
                 Math.floor(HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR / 60) *
                 SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES,

@@ -133,6 +133,12 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
+    async getPeerInfo(peerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getPeerInfo(peerId);
+        }
+    }
+
     async toHash(key) {
         if (this.initialized) {
             return this.getImplementation().module.toHash(key);
