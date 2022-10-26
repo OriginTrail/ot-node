@@ -9,7 +9,7 @@ class JsonSchemaService {
     }
 
     publishSchema() {
-        return publishSchema(this.blockchainModuleManager.getImplementationsNames());
+        return publishSchema(this.blockchainModuleManager.getImplementationNames());
     }
 
     getSchema() {

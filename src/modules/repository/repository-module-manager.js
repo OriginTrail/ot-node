@@ -263,6 +263,12 @@ class RepositoryModuleManager extends BaseModuleManager {
             return this.getImplementation().module.getLastEvent(contractName, blockchainId);
         }
     }
+
+    async markBlockchainEventAsProcessed() {
+        if (this.initialized) {
+            return this.getImplementation().module.markBlockchainEventAsProcessed();
+        }
+    }
 }
 
 export default RepositoryModuleManager;

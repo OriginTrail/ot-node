@@ -410,18 +410,15 @@ class SequelizeRepository {
         for (const event of blockchainEvents) {
             insertPromises.push(
                 new Promise((resolve, reject) => {
-                    this.models.blockchain_event
-                        .findOne({
-                            where: {
-                                contract: event.contract,
-                                event: event.event,
-                                data: event.data,
-                                block: event.block,
-                                blockchain_id: event.blockchainId,
-                            },
-                        })
-                        .then(async (databaseEvent) => {
-                            if (!databaseEvent) {
+                    this.blockchainEventExists(
+                        event.contract,
+                        event.event,
+                        event.data,
+                        event.block,
+                        event.blockchainId,
+                    )
+                        .then(async (exists) => {
+                            if (!exists) {
                                 await this.models.blockchain_event
                                     .create({
                                         contract: event.contract,
@@ -429,11 +426,11 @@ class SequelizeRepository {
                                         data: event.data,
                                         block: event.block,
                                         blockchain_id: event.blockchainId,
-                                        finished: 0,
+                                        processed: 0,
                                     })
-                                    .then(resolve());
+                                    .then((result) => resolve(result));
                             }
-                            resolve();
+                            resolve(null);
                         })
                         .catch((error) => {
                             reject(error);
@@ -441,7 +438,49 @@ class SequelizeRepository {
                 }),
             );
         }
-        await Promise.all(insertPromises);
+        return Promise.all(insertPromises);
+    }
+
+    async blockchainEventExists(contract, event, data, block, blockchainId) {
+        const dbEvent = await this.models.blockchain_event.findOne({
+            where: {
+                contract,
+                event,
+                data,
+                block,
+                blockchain_id: blockchainId,
+            },
+        });
+        return !!dbEvent;
+    }
+
+    async markBlockchainEventAsProcessed(
+        id,
+        contract = null,
+        event = null,
+        data = null,
+        block = null,
+        blockchainId = null,
+    ) {
+        let condition;
+        if (id) {
+            condition = {
+                where: {
+                    id,
+                },
+            };
+        } else {
+            condition = {
+                where: {
+                    contract,
+                    event,
+                    data,
+                    block,
+                    blockchain_id: blockchainId,
+                },
+            };
+        }
+        return this.models.blockchain_event.update({ processed: true }, condition);
     }
 
     async getLastEvent(contractName, blockchainId) {
