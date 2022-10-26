@@ -11,19 +11,19 @@ class ShardingTableService {
     }
 
     async initialize(blockchainId) {
-        // await this.pullBlockchainShardingTable(blockchainId);
+        await this.pullBlockchainShardingTable(blockchainId);
         this.listenOnEvents(blockchainId);
     }
 
-    async pullBlockchainShardingTable(blockchain) {
-        const shardingTable = await this.blockchainModuleManager.getShardingTableFull(blockchain);
+    async pullBlockchainShardingTable(blockchainId) {
+        const shardingTable = await this.blockchainModuleManager.getShardingTableFull(blockchainId);
 
         const textEncoder = new TextEncoder();
         await this.repositoryModuleManager.createManyPeerRecords(
             await Promise.all(
                 shardingTable.map(async (peer) => ({
                     peer_id: peer.id._idB58String,
-                    blockchain_id: blockchain,
+                    blockchain_id: blockchainId,
                     ask: peer.ask,
                     stake: peer.stake,
                     last_seen: Date.now(),
@@ -63,7 +63,7 @@ class ShardingTableService {
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
 
-        this.eventEmitter.on('PeerRemoved', (event) => {
+        this.eventEmitter.on(`${blockchainId}-PeerRemoved`, (event) => {
             const eventData = JSON.parse(event.data);
             this.repositoryModuleManager.removePeerRecord(eventData.peerId);
 
