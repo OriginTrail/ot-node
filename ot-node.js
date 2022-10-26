@@ -51,7 +51,7 @@ class OTNode {
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
-        // await this.initializeShardingTableService('ganache');
+        await this.initializeShardingTableService('ganache');
         await this.initializeTelemetryInjectionService();
 
         await this.initializeRouters();

@@ -298,8 +298,9 @@ class SequelizeRepository {
                     [Sequelize.Op.gt]: new Date(Date.now() - offlineLimit),
                 },
             },
-            order: ['distance', 'DESC'],
+            order: [[Sequelize.literal('distance'), 'desc']],
             limit: r2,
+            raw: true,
         });
     }
 

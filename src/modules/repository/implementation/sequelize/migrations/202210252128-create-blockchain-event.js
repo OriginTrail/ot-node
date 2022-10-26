@@ -28,5 +28,5 @@ export async function up({ context: { queryInterface, Sequelize } }) {
     });
 }
 export async function down({ context: { queryInterface } }) {
-    await queryInterface.dropTable('publish_response');
+    await queryInterface.dropTable('shard');
 }

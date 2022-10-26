@@ -40,15 +40,18 @@ class ShardingTableService {
             );
         }
 
-        /* const hash = await this.networkModuleManager.toHash(
-            new TextEncoder().encode(
-                '0x41af3e2d170aad38821133f8f59923b342e04aae1a16e7bde1bebc558d97a0d5',
-            ),
-        );
+        // const hash = await this.networkModuleManager.toHash(
+        //     new TextEncoder().encode(
+        //         '0x41af3e2d170aad38821133f8f59923b342e04aae1a16e7bde1bebc558d97a0d5',
+        //     ),
+        // );
 
-        const neighborhood = await this.findNeighbourhood(`0x${await hash.toString('hex')}`, 10);
+        // const nodes = await this.repositoryModuleManager.getAllPeerRecords();
+        // console.log("nodes: ", nodes);
 
-        console.log("neighborhood: ", neighborhood); */
+        // const neighborhood = await this.findNeighbourhood(`0x${await hash.toString('hex')}`, 10);
+
+        // console.log("neighborhood: ", neighborhood);
     }
 
     listenOnEvents() {
