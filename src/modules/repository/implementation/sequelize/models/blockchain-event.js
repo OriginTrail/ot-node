@@ -12,7 +12,7 @@ export default (sequelize, DataTypes) => {
             event: DataTypes.STRING,
             data: DataTypes.TEXT,
             block: DataTypes.INTEGER,
-            finished: DataTypes.INTEGER,
+            processed: DataTypes.BOOLEAN,
         },
         {},
     );

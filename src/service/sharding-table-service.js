@@ -11,12 +11,12 @@ class ShardingTableService {
         this.eventEmitter = ctx.eventEmitter;
     }
 
-    async initialize(blockchain) {
-        await this.pullBlockchainShardingTable(blockchain);
-        // this.listenOnEvents();
+    async initialize(blockchainId) {
+        // await this.pullBlockchainShardingTable(blockchainId);
+        this.listenOnEvents(blockchainId);
     }
 
-    async pullBlockchainShardingTable(blockchain) {
+    async pullBlockchainShardingTable(blockchainId) {
         // const shardingTable = await this.blockchainModuleManager.getShardingTableFull(blockchain);
         await setTimeout(5 * 1000);
         const shardingTable = [];
@@ -26,13 +26,13 @@ class ShardingTableService {
             const stake = 3000;
             // eslint-disable-next-line no-await-in-loop
             const sha = await peerId2Hash(id);
-            shardingTable.push({ id, ask, stake, blockchain, sha });
+            shardingTable.push({ id, ask, stake, blockchainId, sha });
         }
 
         for (const peer of shardingTable) {
             this.repositoryModuleManager.createPeerRecord(
                 peer.id._idB58String,
-                blockchain,
+                blockchainId,
                 peer.ask,
                 peer.stake,
                 Date.now(),
@@ -54,25 +54,37 @@ class ShardingTableService {
         // console.log("neighborhood: ", neighborhood);
     }
 
-    listenOnEvents() {
-        this.eventEmitter.on('PeerObjCreated', (eventData) => {
+    listenOnEvents(blockchainId) {
+        this.eventEmitter.on(`${blockchainId}-PeerObjCreated`, (event) => {
+            const eventData = JSON.parse(event.data);
             this.repositoryModuleManager.createPeerRecord(
                 eventData.peerId,
+                event.blockchain_id,
                 eventData.ask,
                 eventData.stake,
+                Date.now(),
+                eventData.sha,
             );
+
+            this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
 
-        this.eventEmitter.on('PeerParamsUpdated', (eventData) => {
+        this.eventEmitter.on(`${blockchainId}-PeerParamsUpdated`, (event) => {
+            const eventData = JSON.parse(event.data);
             this.repositoryModuleManager.updatePeerParams(
                 eventData.peerId,
                 eventData.ask,
                 eventData.stake,
             );
+
+            this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
 
-        this.eventEmitter.on('PeerRemoved', (eventData) => {
+        this.eventEmitter.on('PeerRemoved', (event) => {
+            const eventData = JSON.parse(event.data);
             this.repositoryModuleManager.removePeerRecord(eventData.peerId);
+
+            this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
     }
 

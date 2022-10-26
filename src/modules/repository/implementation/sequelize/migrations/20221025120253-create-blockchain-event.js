@@ -25,9 +25,9 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             allowNull: false,
             type: Sequelize.INTEGER,
         },
-        finished: {
+        processed: {
             allowNull: false,
-            type: Sequelize.INTEGER,
+            type: Sequelize.BOOLEAN,
         },
         created_at: {
             allowNull: false,

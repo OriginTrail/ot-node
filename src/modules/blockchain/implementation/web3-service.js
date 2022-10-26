@@ -346,15 +346,17 @@ class Web3Service {
             toBlock: 'latest',
         });
 
-        await onEventsReceived(
-            events.map((event) => ({
-                contract: contractName,
-                event: event.event,
-                data: JSON.stringify(event.returnValues),
-                block: event.blockNumber,
-                blockchainId,
-            })),
-        );
+        if (events.length > 0) {
+            await onEventsReceived(
+                events.map((event) => ({
+                    contract: contractName,
+                    event: event.event,
+                    data: JSON.stringify(event.returnValues),
+                    block: event.blockNumber,
+                    blockchainId,
+                })),
+            );
+        }
     }
 
     async deployContract(contract, args) {

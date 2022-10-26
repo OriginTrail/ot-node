@@ -260,9 +260,18 @@ class OTNode {
         this.logger.info('Starting blockchain event listener');
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
+        const eventEmitter = this.container.resolve('eventEmitter');
 
         const onEventsReceived = async (events) => {
-            await repositoryModuleManager.insertBlockchainEvents(events);
+            if (events.length > 0) {
+                const insertedEvents = await repositoryModuleManager.insertBlockchainEvents(events);
+                insertedEvents.forEach((event) => {
+                    if (event) {
+                        const eventName = `${event.blockchain_id}-${event.event}`;
+                        eventEmitter.emit(eventName, event);
+                    }
+                });
+            }
         };
 
         const getLastEvent = async (contractName, blockchainId) => {
@@ -277,6 +286,11 @@ class OTNode {
                     working = true;
                     await blockchainModuleManager.getAllPastEvents(
                         'ShardingTableContract',
+                        onEventsReceived,
+                        getLastEvent,
+                    );
+                    await blockchainModuleManager.getAllPastEvents(
+                        'AssetRegistryContract',
                         onEventsReceived,
                         getLastEvent,
                     );
