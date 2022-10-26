@@ -102,16 +102,18 @@ class ShardingTableService {
     }
 
     async dial(peerId) {
+        this.logger.trace(`Searching for peer ${peerId} multiaddresses in peer store.`);
         let { addresses } = this.networkModuleManager.getPeerInfo(peerId);
         if (!addresses.length) {
             try {
-                this.logger.trace(`Searching for peer ${peerId} multiaddresses.`);
+                this.logger.trace(`Searching for peer ${peerId} multiaddresses on the network.`);
                 addresses = (await this.networkModuleManager.findPeer(peerId)).multiaddrs;
             } catch (error) {
                 this.logger.warn(`Unable to find peer ${peerId}. Error: ${error.message}`);
             }
         }
         if (addresses.length) {
+            this.logger.trace(`Dialing peer ${peerId}.`);
             await this.networkModuleManager.dial(peerId);
             await this.repositoryModuleManager.updatePeerRecordLastSeenAndLastDialed(peerId);
         } else {

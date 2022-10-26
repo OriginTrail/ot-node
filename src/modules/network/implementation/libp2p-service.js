@@ -728,11 +728,11 @@ class Libp2pService {
     }
 
     async dial(peerId) {
-        return this.node.dial(peerId);
+        return this.node.dial(createFromB58String(peerId));
     }
 
     async getPeerInfo(peerId) {
-        return this.node.peerStore.get(peerId);
+        return this.node.peerStore.get(createFromB58String(peerId));
     }
 }
 

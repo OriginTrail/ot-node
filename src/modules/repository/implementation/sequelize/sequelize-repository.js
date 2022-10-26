@@ -286,6 +286,7 @@ class SequelizeRepository {
             attributes: ['peer_id'],
             order: [['last_dialed', 'asc']],
             limit,
+            raw: true,
         });
     }
 

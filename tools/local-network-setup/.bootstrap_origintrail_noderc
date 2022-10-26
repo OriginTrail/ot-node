@@ -38,7 +38,7 @@
             "blockchainTitle": "ganache",
             "networkId": "ganache::testnet",
             "rpcEndpoints": [
-              "http://localhost:7545"
+              "http://127.0.0.1:7545"
             ],
             "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
             "evmOperationalWalletPrivateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
