@@ -51,7 +51,7 @@ class OTNode {
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
-        await this.initializeShardingTableService('ganache');
+        await this.initializeShardingTableService();
         await this.initializeTelemetryInjectionService();
 
         await this.initializeRouters();
@@ -163,7 +163,7 @@ class OTNode {
     async createProfiles() {
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const createProfilesPromises = blockchainModuleManager
-            .getImplementationsNames()
+            .getImplementationNames()
             .map(async (blockchain) => {
                 try {
                     if (!blockchainModuleManager.identityExists(blockchain)) {
@@ -198,8 +198,8 @@ class OTNode {
 
         await Promise.all(createProfilesPromises);
 
-        if (!blockchainModuleManager.getImplementationsNames().length) {
-            this.logger.info(`Unable to create blockchain profiles. OT-node shutting down...`);
+        if (!blockchainModuleManager.getImplementationNames().length) {
+            this.logger.error(`Unable to create blockchain profiles. OT-node shutting down...`);
             this.stop(1);
         }
     }
@@ -227,38 +227,33 @@ class OTNode {
         }
     }
 
-    async initializeShardingTableService(blockchain) {
-        try {
-            const shardingHubModuleManager = this.container.resolve('shardingTableService');
-            await shardingHubModuleManager.initialize(blockchain);
-            this.logger.info(
-                `Sharding Table Service initialized successfully for '${blockchain}' blockchain`,
-            );
-        } catch (e) {
-            this.logger.error(
-                `Sharding hub module initialization for '${blockchain}' blockchain failed.
-                Error message: ${e.message}`,
-            );
-        }
+    async initializeShardingTableService() {
+        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        const initShardingServices = blockchainModuleManager
+            .getImplementationNames()
+            .map(async (blockchain) => {
+                try {
+                    const shardingTableService = this.container.resolve('shardingTableService');
+                    shardingTableService.initialize(blockchain);
+                    this.logger.info(
+                        `Sharding Table Service initialized successfully for '${blockchain}' blockchain`,
+                    );
+                } catch (e) {
+                    this.logger.error(
+                        `Sharding table service initialization for '${blockchain}' blockchain failed.
+                        Error message: ${e.message}`,
+                    );
+                    blockchainModuleManager.removeImplementation(blockchain);
+                }
+            });
+        await Promise.all(initShardingServices);
 
-        // const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
-        // const initShardingServices = blockchainModuleManager
-        //     .getImplementationsNames()
-        //     .map(async (blockchain) => {
-        //         try {
-        //             const shardingHubModuleManager = this.container.resolve('shardingTableService');
-        //             shardingHubModuleManager.initialize(blockchain);
-        //             this.logger.info(
-        //                 `Sharding Table Service initialized successfully for '${blockchain}' blockchain`,
-        //             );
-        //         } catch (e) {
-        //             this.logger.error(
-        //                 `Sharding hub module initialization for '${blockchain}' blockchain failed.
-        //                 Error message: ${e.message}`,
-        //             );
-        //         }
-        //     });
-        // await Promise.all(initShardingServices);
+        if (!blockchainModuleManager.getImplementationNames().length) {
+            this.logger.error(
+                `Unable to initialize sharding table service. OT-node shutting down...`,
+            );
+            this.stop(1);
+        }
     }
 
     async startListeningOnBlockchainEvents() {
