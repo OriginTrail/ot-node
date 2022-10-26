@@ -17,7 +17,6 @@ class Web3Service {
     async initialize(config, logger) {
         this.config = config;
         this.logger = logger;
-        // this.eventEmitter = ctx.eventEmitter
 
         this.rpcNumber = 0;
         await this.initializeWeb3();
@@ -104,10 +103,6 @@ class Web3Service {
             ShardingTable.abi,
             shardingTableAddress,
         );
-
-        // ['PeerObjCreated', 'PeerParamsUpdated', 'PeerRemoved'].forEach((eventName) => {
-        //     this.subscribeToContractEvent(this.ShardingTableContract, eventName);
-        // });
 
         if (this.identityExists()) {
             this.identityContract = new this.web3.eth.Contract(Identity.abi, this.getIdentity());
@@ -284,43 +279,6 @@ class Web3Service {
         }
 
         return result;
-    }
-
-    async subscribeToContractEvent(contract, eventName) {
-        contract.events[eventName](
-            {
-                fromBlock: 'pending', // block number to start listening from
-            },
-            () => {},
-        )
-            .on('connected', (subscriptionId) => {
-                // fired after subscribing to an event
-                this.logger.debug(
-                    `Subscribed to '${eventName}' event. Subscription ID: '${subscriptionId}'`,
-                );
-            })
-            .on('data', (event) => {
-                // fired when we get a new log that matches the filters for the
-                // event type we subscribed to will be fired at the same moment
-                // as the callback above
-                this.eventEmitter.emit(eventName, event.returnValues);
-            })
-            .on('changed', (event) => {
-                // fired when the event is removed from the blockchain
-                // (it adds this property on the event: removed = true
-                this.logger.warn(
-                    `Event '${eventName}' has been removed from the blockchain.
-                Event: ${event}`,
-                );
-            })
-            .on('error', (error, receipt) => {
-                // fired if the subscribe transaction was rejected by the network
-                // with a receipt, the second parameter will be the receipt.
-                this.logger.error(
-                    `Error: ${error}
-                Receipt: ${receipt}`,
-                );
-            });
     }
 
     async getAllPastEvents(contractName, onEventsReceived, getLastEvent) {

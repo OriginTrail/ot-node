@@ -177,9 +177,15 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async updatePeerParams(peerId, ask, stake) {
+    async updatePeerAsk(peerId, ask) {
         if (this.initialized) {
-            return this.getImplementation().module.updatePeerParams(peerId, ask, stake);
+            return this.getImplementation().module.updatePeerAsk(peerId, ask);
+        }
+    }
+
+    async updatePeerStake(peerId, stake) {
+        if (this.initialized) {
+            return this.getImplementation().module.updatePeerStake(peerId, stake);
         }
     }
 

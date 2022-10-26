@@ -274,10 +274,20 @@ class SequelizeRepository {
         });
     }
 
-    async updatePeerParams(peerId, ask, stake) {
+    async updatePeerAsk(peerId, ask) {
         await this.models.shard.update(
             {
                 ask,
+            },
+            {
+                where: { peer_id: peerId },
+            },
+        );
+    }
+
+    async updatePeerStake(peerId, stake) {
+        await this.models.shard.update(
+            {
                 stake,
             },
             {

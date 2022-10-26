@@ -38,10 +38,10 @@ class ShardingTableService {
     }
 
     listenOnEvents(blockchainId) {
-        this.eventEmitter.on(`${blockchainId}-PeerObjCreated`, (event) => {
+        this.eventEmitter.on(`${blockchainId}-NodeObjCreated`, (event) => {
             const eventData = JSON.parse(event.data);
             this.repositoryModuleManager.createPeerRecord(
-                eventData.peerId,
+                eventData.nodeId,
                 event.blockchain_id,
                 eventData.ask,
                 eventData.stake,
@@ -52,20 +52,16 @@ class ShardingTableService {
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
 
-        this.eventEmitter.on(`${blockchainId}-PeerParamsUpdated`, (event) => {
+        this.eventEmitter.on(`${blockchainId}-StakeUpdated`, (event) => {
             const eventData = JSON.parse(event.data);
-            this.repositoryModuleManager.updatePeerParams(
-                eventData.peerId,
-                eventData.ask,
-                eventData.stake,
-            );
+            this.repositoryModuleManager.updatePeerStake(eventData.nodeId, eventData.stake);
 
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
 
-        this.eventEmitter.on(`${blockchainId}-PeerRemoved`, (event) => {
+        this.eventEmitter.on(`${blockchainId}-NodeRemoved`, (event) => {
             const eventData = JSON.parse(event.data);
-            this.repositoryModuleManager.removePeerRecord(eventData.peerId);
+            this.repositoryModuleManager.removePeerRecord(eventData.nodeId);
 
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
