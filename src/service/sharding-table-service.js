@@ -13,6 +13,14 @@ class ShardingTableService {
     async initialize(blockchainId) {
         await this.pullBlockchainShardingTable(blockchainId);
         await this.listenOnEvents(blockchainId);
+        const that = this;
+        await this.networkModuleManager.onPeerConnected((connection) => {
+            that.repositoryModuleManager
+                .updatePeerRecordLastSeenAndLastDialed(connection.remotePeer._idB58String)
+                .catch((error) => {
+                    this.logger.warn(`Unable to update connected peer, error: ${error.message}`);
+                });
+        });
     }
 
     async pullBlockchainShardingTable(blockchainId) {

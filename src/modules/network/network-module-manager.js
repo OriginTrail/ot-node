@@ -11,6 +11,12 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
+    async onPeerConnected(listener) {
+        if (this.initialized) {
+            return this.getImplementation().module.onPeerConnected(listener);
+        }
+    }
+
     deserializePeers(serializedPeers) {
         if (this.initialized) {
             return this.getImplementation().module.deserializePeers(serializedPeers);

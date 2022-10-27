@@ -108,6 +108,10 @@ class Libp2pService {
         this.logger.info(`Network ID is ${peerId}, connection port is ${port}`);
     }
 
+    async onPeerConnected(listener) {
+        this.node.connectionManager.on('peer:connect', listener);
+    }
+
     async savePrivateKeyInFile(privateKey) {
         const { fullPath, directoryPath } = this.getKeyPath();
         await mkdir(directoryPath, { recursive: true });
