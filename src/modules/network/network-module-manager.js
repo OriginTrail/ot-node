@@ -87,7 +87,7 @@ class NetworkModuleManager extends BaseModuleManager {
 
     async dial(peerId) {
         if (this.initialized) {
-            return this.getImplementation().module.dialPeer(peerId);
+            return this.getImplementation().module.dial(peerId);
         }
     }
 

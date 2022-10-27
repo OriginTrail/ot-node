@@ -33,7 +33,7 @@ class ShardingTableService {
                 blockchain_id: blockchainId,
                 ask: peer.ask,
                 stake: peer.stake,
-                sha256: peer.id_sha256,
+                sha256: peer.idSha256,
             })),
         );
     }
@@ -41,20 +41,22 @@ class ShardingTableService {
     listenOnEvents(blockchainId) {
         this.eventEmitter.on(`${blockchainId}-NodeObjCreated`, (event) => {
             const eventData = JSON.parse(event.data);
+            const nodeId = this.blockchainModuleManager.convertHexToAscii(
+                event.blockchain_id,
+                eventData.nodeId,
+            );
+
             this.logger.debug(
-                `${blockchainId}-NodeObjCreated event caught, adding peer id: ${eventData.nodeId} to sharding table.`,
+                `${blockchainId}-NodeObjCreated event caught, adding peer id: ${nodeId} to sharding table.`,
             );
 
             this.repositoryModuleManager.createPeerRecord(
-                this.blockchainModuleManager.convertHexToAscii(
-                    event.blockchain_id,
-                    eventData.nodeId,
-                ),
+                nodeId,
                 event.blockchain_id,
                 eventData.ask,
                 eventData.stake,
                 new Date(0),
-                eventData.id_sha256,
+                eventData.nodeIdSha256,
             );
 
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
@@ -62,20 +64,28 @@ class ShardingTableService {
 
         this.eventEmitter.on(`${blockchainId}-StakeUpdated`, (event) => {
             const eventData = JSON.parse(event.data);
-            this.logger.debug(
-                `${blockchainId}-StakeUpdated event caught, updating stake value for peer id: ${eventData.nodeId} in sharding table.`,
+            const nodeId = this.blockchainModuleManager.convertHexToAscii(
+                event.blockchain_id,
+                eventData.nodeId,
             );
-            this.repositoryModuleManager.updatePeerStake(eventData.nodeId, eventData.stake);
+            this.logger.debug(
+                `${blockchainId}-StakeUpdated event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
+            );
+            this.repositoryModuleManager.updatePeerStake(nodeId, eventData.stake);
 
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
 
         this.eventEmitter.on(`${blockchainId}-NodeRemoved`, (event) => {
             const eventData = JSON.parse(event.data);
-            this.logger.debug(
-                `${blockchainId}-NodeRemoved event caught, removing peer id: ${eventData.nodeId} from sharding table.`,
+            const nodeId = this.blockchainModuleManager.convertHexToAscii(
+                event.blockchain_id,
+                eventData.nodeId,
             );
-            this.repositoryModuleManager.removePeerRecord(eventData.nodeId);
+            this.logger.debug(
+                `${blockchainId}-NodeRemoved event caught, removing peer id: ${nodeId} from sharding table.`,
+            );
+            this.repositoryModuleManager.removePeerRecord(nodeId);
 
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
@@ -111,14 +121,17 @@ class ShardingTableService {
     }
 
     async dial(peerId) {
-        const peerInfo = await this.findPeerAddressAndProtocols(peerId);
-        if (peerInfo.addresses.length) {
-            this.logger.trace(`Dialing peer ${peerId}.`);
-            try {
-                await this.networkModuleManager.dial(peerId);
-            } catch (error) {
-                this.logger.warn(`Unable to dial peer ${peerId}. Error: ${error.message}`);
+        const { addresses } = await this.findPeerAddressAndProtocols(peerId);
+        if (addresses.length) {
+            if (!peerId !== this.networkModuleManager.getPeerId().toB58String()) {
+                this.logger.trace(`Dialing peer ${peerId}.`);
+                try {
+                    await this.networkModuleManager.dial(peerId);
+                } catch (error) {
+                    this.logger.warn(`Unable to dial peer ${peerId}. Error: ${error.message}`);
+                }
             }
+
             await this.repositoryModuleManager.updatePeerRecordLastSeenAndLastDialed(peerId);
         } else {
             await this.repositoryModuleManager.updatePeerRecordLastDialed(peerId);
@@ -127,21 +140,24 @@ class ShardingTableService {
 
     async findPeerAddressAndProtocols(peerId) {
         this.logger.trace(`Searching for peer ${peerId} multiaddresses in peer store.`);
-        const { addresses, protocols } = this.networkModuleManager.getPeerInfo(peerId);
-        if (!addresses.length && !protocols?.length) {
+        const peerInfo = this.networkModuleManager.getPeerInfo(peerId);
+        if (
+            !peerInfo.addresses?.length &&
+            peerId !== this.networkModuleManager.getPeerId().toB58String()
+        ) {
             try {
                 this.logger.trace(`Searching for peer ${peerId} multiaddresses on the network.`);
-                const peerFound = await this.networkModuleManager.findPeer(peerId);
-                return {
-                    id: peerId,
-                    addresses: peerFound.multiaddrs,
-                    protocols: peerFound.protocols,
-                };
+                const peer = await this.networkModuleManager.findPeer(peerId);
+                peerInfo.addresses = peer.multiaddrs;
             } catch (error) {
                 this.logger.warn(`Unable to find peer ${peerId}. Error: ${error.message}`);
             }
         }
-        return { id: peerId, addresses, protocols };
+        return {
+            id: peerId,
+            addresses: peerInfo.addresses ?? [],
+            protocols: peerInfo.protocols ?? [],
+        };
     }
 }
 

@@ -73,8 +73,8 @@ class FindNodesCommand extends Command {
         );
 
         const nodesFound = await Promise.all(
-            closestNodes.map((peerId) =>
-                this.shardingTableService.findPeerAddressAndProtocols(peerId),
+            closestNodes.map((node) =>
+                this.shardingTableService.findPeerAddressAndProtocols(node.peer_id),
             ),
         );
 

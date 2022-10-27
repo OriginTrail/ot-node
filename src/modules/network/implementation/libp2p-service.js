@@ -190,7 +190,7 @@ class Libp2pService {
             (source) =>
                 map(source, async (peer) => ({
                     peer,
-                    distance: uint8ArrayXor(keyHash, Buffer.from(peer.sha256, 'hex')),
+                    distance: uint8ArrayXor(keyHash, Buffer.from(peer.sha256.slice(2), 'hex')),
                 })),
             (source) => sort(source, (a, b) => uint8ArrayCompare(a.distance, b.distance)),
             (source) => take(source, count),

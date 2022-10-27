@@ -171,21 +171,13 @@ class Web3Service {
             INIT_STAKE_AMOUNT,
         ]);
 
-        const nodeId = this.convertAsciiToHex(peerId);
-
-        console.log(nodeId);
-
-        try {
-            await this.executeContractFunction(this.ProfileContract, 'createProfile', [
-                this.getManagementKey(),
-                nodeId,
-                INIT_ASK_AMOUNT,
-                INIT_STAKE_AMOUNT,
-                this.getIdentity(),
-            ]);
-        } catch (err) {
-            console.log(err);
-        }
+        await this.executeContractFunction(this.ProfileContract, 'createProfile', [
+            this.getManagementKey(),
+            this.convertAsciiToHex(peerId),
+            INIT_ASK_AMOUNT,
+            INIT_STAKE_AMOUNT,
+            this.getIdentity(),
+        ]);
     }
 
     getEpochs(UAI) {
