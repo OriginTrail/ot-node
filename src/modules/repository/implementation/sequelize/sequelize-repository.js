@@ -266,15 +266,11 @@ class SequelizeRepository {
         );
     }
 
-    async getAllPeerRecords(blockchain, offlineLimit) {
+    async getAllPeerRecords(blockchain) {
         return this.models.shard.findAll({
             where: {
                 blockchain_id: {
                     [Sequelize.Op.eq]: blockchain,
-                },
-                last_seen: {
-                    [Sequelize.Op.lte]: new Date(),
-                    [Sequelize.Op.gt]: new Date(Date.now() - offlineLimit),
                 },
             },
             raw: true,

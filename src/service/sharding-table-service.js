@@ -1,5 +1,3 @@
-import { PEER_OFFLINE_LIMIT } from '../constants/constants.js';
-
 class ShardingTableService {
     constructor(ctx) {
         this.config = ctx.config;
@@ -27,24 +25,30 @@ class ShardingTableService {
         const shardingTable = await this.blockchainModuleManager.getShardingTableFull(blockchainId);
 
         const textEncoder = new TextEncoder();
-        await this.repositoryModuleManager.createManyPeerRecords(
-            await Promise.all(
-                shardingTable.map(async (peer) => ({
-                    peer_id: peer.id,
-                    blockchain_id: blockchainId,
-                    ask: peer.ask,
-                    stake: peer.stake,
-                    sha256: (
-                        await this.networkModuleManager.toHash(textEncoder.encode(peer.id))
-                    ).toString('hex'),
-                })),
-            ),
-        );
+        const thisPeerId = this.networkModuleManager.getPeerId().toB58String();
+        const promises = [];
+        for (const peer of shardingTable) {
+            if (peer.id !== thisPeerId) {
+                this.networkModuleManager.toHash(textEncoder.encode(peer.id)).then((sha256) =>
+                    promises.push({
+                        peer_id: peer.id,
+                        blockchain_id: blockchainId,
+                        ask: peer.ask,
+                        stake: peer.stake,
+                        sha256: sha256.toString('hex'),
+                    }),
+                );
+            }
+        }
+        await this.repositoryModuleManager.createManyPeerRecords(await Promise.all(promises));
     }
 
     async listenOnEvents(blockchainId) {
         this.eventEmitter.on(`${blockchainId}-NodeObjCreated`, async (event) => {
             const eventData = JSON.parse(event.data);
+            this.logger.debug(
+                `${blockchainId}-NodeObjCreated event caught, adding peer id: ${eventData.nodeId} to sharding table.`,
+            );
 
             this.repositoryModuleManager.createPeerRecord(
                 eventData.nodeId,
@@ -64,6 +68,9 @@ class ShardingTableService {
 
         this.eventEmitter.on(`${blockchainId}-StakeUpdated`, (event) => {
             const eventData = JSON.parse(event.data);
+            this.logger.debug(
+                `${blockchainId}-StakeUpdated event caught, updating stake value for peer id: ${eventData.nodeId} in sharding table.`,
+            );
             this.repositoryModuleManager.updatePeerStake(eventData.nodeId, eventData.stake);
 
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
@@ -71,17 +78,17 @@ class ShardingTableService {
 
         this.eventEmitter.on(`${blockchainId}-NodeRemoved`, (event) => {
             const eventData = JSON.parse(event.data);
+            this.logger.debug(
+                `${blockchainId}-NodeRemoved event caught, removing peer id: ${eventData.nodeId} from sharding table.`,
+            );
             this.repositoryModuleManager.removePeerRecord(eventData.nodeId);
 
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
     }
 
-    async findNeighbourhood(key, blockchain, r2) {
-        const peers = await this.repositoryModuleManager.getAllPeerRecords(
-            blockchain,
-            PEER_OFFLINE_LIMIT,
-        );
+    async findNeighbourhood(key, blockchainId, r2) {
+        const peers = await this.repositoryModuleManager.getAllPeerRecords(blockchainId);
 
         return this.networkModuleManager.sortPeers(key, peers, r2);
     }
@@ -122,7 +129,11 @@ class ShardingTableService {
         }
         if (addresses.length) {
             this.logger.trace(`Dialing peer ${peerId}.`);
-            await this.networkModuleManager.dial(peerId);
+            try {
+                await this.networkModuleManager.dial(peerId);
+            } catch (error) {
+                this.logger.warn(`Unable to dial peer ${peerId}. Error: ${error.message}`);
+            }
             await this.repositoryModuleManager.updatePeerRecordLastSeenAndLastDialed(peerId);
         } else {
             await this.repositoryModuleManager.updatePeerRecordLastDialed(peerId);
