@@ -27,43 +27,37 @@ class ShardingTableService {
     async pullBlockchainShardingTable(blockchainId) {
         const shardingTable = await this.blockchainModuleManager.getShardingTableFull(blockchainId);
 
-        const textEncoder = new TextEncoder();
-        const thisPeerId = this.networkModuleManager.getPeerId().toB58String();
-        const promises = [];
-        for (const peer of shardingTable) {
-            if (peer.id !== thisPeerId) {
-                this.networkModuleManager.toHash(textEncoder.encode(peer.id)).then((sha256) =>
-                    promises.push({
-                        peer_id: peer.id,
-                        blockchain_id: blockchainId,
-                        ask: peer.ask,
-                        stake: peer.stake,
-                        sha256: sha256.toString('hex'),
-                    }),
-                );
-            }
-        }
-        await this.repositoryModuleManager.createManyPeerRecords(await Promise.all(promises));
+        await this.repositoryModuleManager.createManyPeerRecords(
+            shardingTable.map((peer) => ({
+                peer_id: this.blockchainModuleManager.convertHexToAscii(
+                    blockchainId,
+                    peer.id.slice(2),
+                ),
+                blockchain_id: blockchainId,
+                ask: peer.ask,
+                stake: peer.stake,
+                sha256: peer.id_sha256,
+            })),
+        );
     }
 
-    async listenOnEvents(blockchainId) {
-        this.eventEmitter.on(`${blockchainId}-NodeObjCreated`, async (event) => {
+    listenOnEvents(blockchainId) {
+        this.eventEmitter.on(`${blockchainId}-NodeObjCreated`, (event) => {
             const eventData = JSON.parse(event.data);
             this.logger.debug(
                 `${blockchainId}-NodeObjCreated event caught, adding peer id: ${eventData.nodeId} to sharding table.`,
             );
 
             this.repositoryModuleManager.createPeerRecord(
-                eventData.nodeId,
+                this.blockchainModuleManager.convertHexToAscii(
+                    event.blockchain_id,
+                    eventData.nodeId.slice(2),
+                ),
                 event.blockchain_id,
                 eventData.ask,
                 eventData.stake,
                 new Date(0),
-                (
-                    await this.networkModuleManager.toHash(
-                        new TextEncoder().encode(eventData.nodeId),
-                    )
-                ).toString('hex'),
+                eventData.id_sha256,
             );
 
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
@@ -96,7 +90,7 @@ class ShardingTableService {
         return this.networkModuleManager.sortPeers(key, peers, r2);
     }
 
-    async getBidSuggestion(neighbourhood, R0, higherPercentile) {
+    async getBidSuggestion(neighbourhood, r0, higherPercentile) {
         const neighbourhoodSortedByAsk = neighbourhood.sort(
             (node_one, node_two) => node_one.ask < node_two.ask,
         );
@@ -110,13 +104,13 @@ class ShardingTableService {
             (node_one, node_two) => node_one.stake > node_two.stake,
         );
 
-        const awardedNodes = eligibleNodesSortedByStake.slice(0, R0);
+        const awardedNodes = eligibleNodesSortedByStake.slice(0, r0);
 
-        return Math.max(...awardedNodes.map((node) => node.ask)) * R0;
+        return Math.max(...awardedNodes.map((node) => node.ask)) * r0;
     }
 
-    async findEligibleNodes(neighbourhood, bid, R1, R0) {
-        return neighbourhood.filter((node) => node.ask <= bid / R0).slice(0, R1);
+    async findEligibleNodes(neighbourhood, bid, r1, r0) {
+        return neighbourhood.filter((node) => node.ask <= bid / r0).slice(0, r1);
     }
 
     async dial(peerId) {

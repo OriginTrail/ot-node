@@ -1,6 +1,5 @@
 import Web3 from 'web3';
 import axios from 'axios';
-import { peerId2Hash } from 'assertion-tools';
 import { createRequire } from 'module';
 import {
     INIT_ASK_AMOUNT,
@@ -172,7 +171,7 @@ class Web3Service {
             INIT_STAKE_AMOUNT,
         ]);
 
-        const nodeId = await peerId2Hash(peerId);
+        const nodeId = `0x${this.convertAsciiToHex(peerId)}`;
 
         await this.executeContractFunction(this.ProfileContract, 'createProfile', [
             this.getManagementKey(),
@@ -500,6 +499,14 @@ class Web3Service {
 
     getBlockchainId() {
         throw Error('Get blockchain id not implemented');
+    }
+
+    convertAsciiToHex(peerId) {
+        return Web3.utils.asciiToHex(peerId);
+    }
+
+    convertHexToAscii(peerIdHex) {
+        return Web3.utils.hexToAscii(peerIdHex);
     }
 }
 

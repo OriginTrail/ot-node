@@ -166,6 +166,18 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
         return Promise.all(getEventsPromises);
     }
+
+    convertAsciiToHex(blockchain, peerId) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.convertAsciiToHex(peerId);
+        }
+    }
+
+    convertHexToAscii(blockchain, peerIdHex) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.convertHexToAscii(peerIdHex);
+        }
+    }
 }
 
 export default BlockchainModuleManager;
