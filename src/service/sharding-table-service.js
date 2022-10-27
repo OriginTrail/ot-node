@@ -120,17 +120,8 @@ class ShardingTableService {
     }
 
     async dial(peerId) {
-        this.logger.trace(`Searching for peer ${peerId} multiaddresses in peer store.`);
-        let { addresses } = this.networkModuleManager.getPeerInfo(peerId);
-        if (!addresses.length) {
-            try {
-                this.logger.trace(`Searching for peer ${peerId} multiaddresses on the network.`);
-                addresses = (await this.networkModuleManager.findPeer(peerId)).multiaddrs;
-            } catch (error) {
-                this.logger.warn(`Unable to find peer ${peerId}. Error: ${error.message}`);
-            }
-        }
-        if (addresses.length) {
+        const peerInfo = await this.findPeerAddressAndProtocols(peerId);
+        if (peerInfo.addresses.length) {
             this.logger.trace(`Dialing peer ${peerId}.`);
             try {
                 await this.networkModuleManager.dial(peerId);
@@ -141,6 +132,25 @@ class ShardingTableService {
         } else {
             await this.repositoryModuleManager.updatePeerRecordLastDialed(peerId);
         }
+    }
+
+    async findPeerAddressAndProtocols(peerId) {
+        this.logger.trace(`Searching for peer ${peerId} multiaddresses in peer store.`);
+        const { addresses, protocols } = this.networkModuleManager.getPeerInfo(peerId);
+        if (!addresses.length && !protocols?.length) {
+            try {
+                this.logger.trace(`Searching for peer ${peerId} multiaddresses on the network.`);
+                const peerFound = await this.networkModuleManager.findPeer(peerId);
+                return {
+                    id: peerId,
+                    addresses: peerFound.multiaddrs,
+                    protocols: peerFound.protocols,
+                };
+            } catch (error) {
+                this.logger.warn(`Unable to find peer ${peerId}. Error: ${error.message}`);
+            }
+        }
+        return { id: peerId, addresses, protocols };
     }
 }
 
