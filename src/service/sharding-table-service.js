@@ -29,10 +29,7 @@ class ShardingTableService {
 
         await this.repositoryModuleManager.createManyPeerRecords(
             shardingTable.map((peer) => ({
-                peer_id: this.blockchainModuleManager.convertHexToAscii(
-                    blockchainId,
-                    peer.id.slice(2),
-                ),
+                peer_id: this.blockchainModuleManager.convertHexToAscii(blockchainId, peer.id),
                 blockchain_id: blockchainId,
                 ask: peer.ask,
                 stake: peer.stake,
@@ -51,7 +48,7 @@ class ShardingTableService {
             this.repositoryModuleManager.createPeerRecord(
                 this.blockchainModuleManager.convertHexToAscii(
                     event.blockchain_id,
-                    eventData.nodeId.slice(2),
+                    eventData.nodeId,
                 ),
                 event.blockchain_id,
                 eventData.ask,
