@@ -14,6 +14,8 @@ export const PUBLISH_TYPES = { ASSERTION: 'assertion', ASSET: 'asset', INDEX: 'i
 
 export const DHT_TYPES = { DUAL: 'dual', WAN: 'wan', LAN: 'lan' };
 
+export const PEER_OFFLINE_LIMIT = 24 * 60 * 60 * 1000;
+
 /**
  * Triple store media types
  * @type {{APPLICATION_JSON: string, N_QUADS: string, SPARQL_RESULTS_JSON: string, LD_JSON: string}}
@@ -38,7 +40,9 @@ export const XML_DATA_TYPES = {
 
 export const MIN_NODE_VERSION = 16;
 
-export const INIT_STAKE_AMOUNT = 3000;
+export const INIT_ASK_AMOUNT = 5; // TODO: Change value
+
+export const INIT_STAKE_AMOUNT = 50000;
 
 export const NETWORK_API_RATE_LIMIT = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
@@ -62,11 +66,16 @@ export const REMOVE_SESSION_COMMAND_DELAY = 2 * 60 * 1000;
 
 export const OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
+export const DIAL_PEERS_COMMAND_FREQUENCY_MILLS = 30 * 1000;
+
+export const DIAL_PEERS_CONCURRENCY = 10;
+
 export const PERMANENT_COMMANDS = [
     'otnodeUpdateCommand',
     'sendTelemetryCommand',
     'operationIdCleanerCommand',
     'commandsCleanerCommand',
+    'dialPeersCommand',
 ];
 
 export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days

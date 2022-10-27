@@ -5,6 +5,7 @@ class FindNodesCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.networkModuleManager = ctx.networkModuleManager;
+        this.shardingTableService = ctx.shardingTableService;
     }
 
     /**
@@ -12,14 +13,22 @@ class FindNodesCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { keyword, operationId, minimumAckResponses, errorType, networkProtocols } =
-            command.data;
+        const {
+            keyword,
+            operationId,
+            blockchain,
+            minimumAckResponses,
+            errorType,
+            networkProtocols,
+        } = command.data;
 
         this.errorType = errorType;
         this.logger.debug(`Searching for closest node(s) for keyword ${keyword}`);
 
         const closestNodes = [];
-        for (const node of await this.findNodes(keyword, operationId)) {
+        for (const node of await this.findNodes(keyword, operationId, blockchain)) {
+            if (node.id === this.networkModuleManager.getPeerId().toB58String()) continue;
+
             for (const protocol of networkProtocols) {
                 if (node.protocols.includes(protocol)) {
                     closestNodes.push({ id: node.id, protocol });
@@ -46,25 +55,41 @@ class FindNodesCommand extends Command {
                 ...command.data,
                 batchSize,
                 leftoverNodes: closestNodes,
+                numberOfFoundNodes: closestNodes.length,
             },
             command.sequence,
         );
     }
 
-    async findNodes(keyword, operationId) {
+    async findNodes(keyword, operationId, blockchainId) {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.FIND_NODES_START,
         );
 
-        const closestNodes = await this.networkModuleManager.findNodes(keyword);
+        // todo r2 hardcoded to 20,
+        const closestNodes = await this.shardingTableService.findNeighbourhood(
+            keyword,
+            blockchainId,
+            20,
+        );
+
+        console.log('closest nodes ', closestNodes);
+
+        const nodesFound = await Promise.all(
+            closestNodes.map((node) =>
+                this.shardingTableService.findPeerAddressAndProtocols(node.peer_id),
+            ),
+        );
+
+        console.log('found nodes ', nodesFound);
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.FIND_NODES_END,
         );
 
-        return closestNodes;
+        return nodesFound;
     }
 
     /**
