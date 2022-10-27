@@ -28,15 +28,7 @@ class GetService extends OperationService {
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
-        const {
-            operationId,
-            numberOfFoundNodes,
-            leftoverNodes,
-            keyword,
-            batchSize,
-            nodesSeen,
-            newFoundNodes,
-        } = command.data;
+        const { operationId, numberOfFoundNodes, leftoverNodes, keyword, batchSize } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
@@ -61,26 +53,6 @@ class GetService extends OperationService {
                 this.completedStatuses,
             );
             this.logResponsesSummary(completedNumber, failedNumber);
-        } else if (responseData?.nodes?.length) {
-            const leftoverNodesString = leftoverNodes.map((node) => node.id.toB58String());
-            const thisNodeId = this.networkModuleManager.getPeerId().toB58String();
-            const newDiscoveredNodes = responseData.nodes.filter(
-                (node) =>
-                    node.id !== thisNodeId &&
-                    !nodesSeen.includes(node.id) &&
-                    !leftoverNodesString.includes(node.id),
-            );
-
-            const deserializedNodes =
-                this.networkModuleManager.deserializePeers(newDiscoveredNodes);
-            for (const node of deserializedNodes) {
-                for (const protocol of this.getNetworkProtocols()) {
-                    if (node.protocols.includes(protocol)) {
-                        newFoundNodes[node.id.toB58String()] = { ...node, protocol };
-                        break;
-                    }
-                }
-            }
         }
 
         if (
@@ -100,12 +72,7 @@ class GetService extends OperationService {
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);
             } else {
-                const newLeftoverNodes = await this.networkModuleManager.sortPeers(
-                    keyword,
-                    leftoverNodes.concat(Object.values(newFoundNodes)),
-                    leftoverNodes.length,
-                );
-                await this.scheduleOperationForLeftoverNodes(command.data, newLeftoverNodes);
+                await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
             }
         }
     }

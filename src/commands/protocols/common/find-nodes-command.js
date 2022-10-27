@@ -53,6 +53,7 @@ class FindNodesCommand extends Command {
                 ...command.data,
                 batchSize,
                 leftoverNodes: closestNodes,
+                numberOfFoundNodes: closestNodes.length,
             },
             command.sequence,
         );

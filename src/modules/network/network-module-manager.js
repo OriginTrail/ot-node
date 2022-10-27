@@ -5,21 +5,9 @@ class NetworkModuleManager extends BaseModuleManager {
         return 'network';
     }
 
-    serializePeers(peer) {
-        if (this.initialized) {
-            return this.getImplementation().module.serializePeers(peer);
-        }
-    }
-
     async onPeerConnected(listener) {
         if (this.initialized) {
             return this.getImplementation().module.onPeerConnected(listener);
-        }
-    }
-
-    deserializePeers(serializedPeers) {
-        if (this.initialized) {
-            return this.getImplementation().module.deserializePeers(serializedPeers);
         }
     }
 
@@ -29,45 +17,15 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    async findNodes(key) {
-        if (this.initialized) {
-            return this.getImplementation().module.findNodes(key);
-        }
-    }
-
-    async findNodesLocal(key) {
-        if (this.initialized) {
-            return this.getImplementation().module.findNodesLocal(key);
-        }
-    }
-
     getMultiaddrs() {
         if (this.initialized) {
             return this.getImplementation().module.getMultiaddrs();
         }
     }
 
-    getRoutingTableSize() {
-        if (this.initialized) {
-            return this.getImplementation().module.getRoutingTableSize();
-        }
-    }
-
     getPeers() {
         if (this.initialized) {
             return this.getImplementation().module.getPeers();
-        }
-    }
-
-    async getProtocols(peerId) {
-        if (this.initialized) {
-            return this.getImplementation().module.getProtocols(peerId);
-        }
-    }
-
-    async getAddresses(peerId) {
-        if (this.initialized) {
-            return this.getImplementation().module.getAddresses(peerId);
         }
     }
 
@@ -112,12 +70,6 @@ class NetworkModuleManager extends BaseModuleManager {
     getPeerId() {
         if (this.initialized) {
             return this.getImplementation().module.getPeerId();
-        }
-    }
-
-    getPrivateKey() {
-        if (this.initialized) {
-            return this.getImplementation().module.getPrivateKey();
         }
     }
 

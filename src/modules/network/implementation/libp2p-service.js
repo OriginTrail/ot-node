@@ -7,7 +7,6 @@ import { NOISE } from 'libp2p-noise';
 import MPLEX from 'libp2p-mplex';
 import TCP from 'libp2p-tcp';
 import pipe from 'it-pipe';
-import { Multiaddr } from 'multiaddr';
 import { encode, decode } from 'it-length-prefixed';
 import { sha256 } from 'multiformats/hashes/sha2';
 import map from 'it-map';
@@ -183,36 +182,6 @@ class Libp2pService {
         return this.node.peerStore.addressBook.get(peerId);
     }
 
-    serializePeer(peer) {
-        return {
-            id: peer.id.toB58String(),
-            multiaddrs: (peer.multiaddrs ?? []).map((addr) => addr.multiaddr),
-            protocols: peer.protocols ?? [],
-        };
-    }
-
-    serializePeers(peers) {
-        return peers.map((peer) => this.serializePeer(peer));
-    }
-
-    deserializePeer(serializedPeer) {
-        const peerId = createFromB58String(serializedPeer.id);
-        const multiaddrs = serializedPeer.multiaddrs.map((addr) => new Multiaddr(addr));
-
-        this.node.peerStore.addressBook.add(peerId, multiaddrs);
-        this.node.peerStore.protoBook.add(peerId, serializedPeer.protocols);
-
-        return {
-            id: peerId,
-            multiaddrs: serializedPeer.multiaddrs ?? [],
-            protocols: serializedPeer.protocols ?? [],
-        };
-    }
-
-    deserializePeers(serializedPeers) {
-        return serializedPeers.map((peer) => this.deserializePeer(peer));
-    }
-
     async sortPeers(key, peers, count = this.config.dht.kBucketSize) {
         const textEncoder = new TextEncoder();
         const keyHash = await this.toHash(textEncoder.encode(key));
@@ -233,41 +202,6 @@ class Libp2pService {
 
     async toHash(encodedKey) {
         return Buffer.from((await sha256.digest(encodedKey)).digest);
-    }
-
-    async findNodesLocal(key) {
-        const keyHash = await this.toHash(new TextEncoder().encode(key));
-
-        const nodes = this.node._dht.routingTable.closestPeers(
-            keyHash,
-            this.config.dht.kBucketSize,
-        );
-
-        const result = [];
-        for (const node of nodes) {
-            result.push({
-                id: node,
-                multiaddrs: this.getAddresses(node),
-                protocols: this.getProtocols(node),
-            });
-        }
-
-        return result;
-    }
-
-    async findNodes(key) {
-        const encodedKey = new TextEncoder().encode(key);
-        const nodes = this.node._dht.peerRouting.getClosestPeers(encodedKey);
-        const result = [];
-        for await (const node of nodes) {
-            result.push({
-                id: node,
-                multiaddrs: this.getAddresses(node),
-                protocols: this.getProtocols(node),
-            });
-        }
-
-        return result;
     }
 
     getPeers() {
