@@ -7,7 +7,6 @@ import { NOISE } from 'libp2p-noise';
 import MPLEX from 'libp2p-mplex';
 import TCP from 'libp2p-tcp';
 import pipe from 'it-pipe';
-import { Multiaddr } from 'multiaddr';
 import { encode, decode } from 'it-length-prefixed';
 import { sha256 } from 'multiformats/hashes/sha2';
 import map from 'it-map';
@@ -103,9 +102,13 @@ class Libp2pService {
         this.node = await libp2p.create(initializationObject);
         await this.node.start();
         const port = parseInt(this.node.multiaddrs.toString().split('/')[4], 10);
-        const peerId = this.node.peerId._idB58String;
+        const peerId = this.node.peerId.toB58String();
         this.config.id = peerId;
         this.logger.info(`Network ID is ${peerId}, connection port is ${port}`);
+    }
+
+    async onPeerConnected(listener) {
+        this.node.connectionManager.on('peer:connect', listener);
     }
 
     async savePrivateKeyInFile(privateKey) {
@@ -179,44 +182,15 @@ class Libp2pService {
         return this.node.peerStore.addressBook.get(peerId);
     }
 
-    serializePeer(peer) {
-        return {
-            id: peer.id._idB58String,
-            multiaddrs: (peer.multiaddrs ?? []).map((addr) => addr.multiaddr),
-            protocols: peer.protocols ?? [],
-        };
-    }
-
-    serializePeers(peers) {
-        return peers.map((peer) => this.serializePeer(peer));
-    }
-
-    deserializePeer(serializedPeer) {
-        const peerId = createFromB58String(serializedPeer.id);
-        const multiaddrs = serializedPeer.multiaddrs.map((addr) => new Multiaddr(addr));
-
-        this.node.peerStore.addressBook.add(peerId, multiaddrs);
-        this.node.peerStore.protoBook.add(peerId, serializedPeer.protocols);
-
-        return {
-            id: peerId,
-            multiaddrs: serializedPeer.multiaddrs ?? [],
-            protocols: serializedPeer.protocols ?? [],
-        };
-    }
-
-    deserializePeers(serializedPeers) {
-        return serializedPeers.map((peer) => this.deserializePeer(peer));
-    }
-
     async sortPeers(key, peers, count = this.config.dht.kBucketSize) {
-        const keyHash = await this.toHash(new TextEncoder().encode(key));
+        const textEncoder = new TextEncoder();
+        const keyHash = await this.toHash(textEncoder.encode(key));
         const sorted = pipe(
             peers,
             (source) =>
                 map(source, async (peer) => ({
                     peer,
-                    distance: uint8ArrayXor(keyHash, await this.toHash(peer.id.toBytes())),
+                    distance: uint8ArrayXor(keyHash, Buffer.from(peer.sha256.slice(2), 'hex')),
                 })),
             (source) => sort(source, (a, b) => uint8ArrayCompare(a.distance, b.distance)),
             (source) => take(source, count),
@@ -228,41 +202,6 @@ class Libp2pService {
 
     async toHash(encodedKey) {
         return Buffer.from((await sha256.digest(encodedKey)).digest);
-    }
-
-    async findNodesLocal(key) {
-        const keyHash = await this.toHash(new TextEncoder().encode(key));
-
-        const nodes = this.node._dht.routingTable.closestPeers(
-            keyHash,
-            this.config.dht.kBucketSize,
-        );
-
-        const result = [];
-        for (const node of nodes) {
-            result.push({
-                id: node,
-                multiaddrs: this.getAddresses(node),
-                protocols: this.getProtocols(node),
-            });
-        }
-
-        return result;
-    }
-
-    async findNodes(key) {
-        const encodedKey = new TextEncoder().encode(key);
-        const nodes = this.node._dht.peerRouting.getClosestPeers(encodedKey);
-        const result = [];
-        for await (const node of nodes) {
-            result.push({
-                id: node,
-                multiaddrs: this.getAddresses(node),
-                protocols: this.getProtocols(node),
-            });
-        }
-
-        return result;
     }
 
     getPeers() {
@@ -278,7 +217,7 @@ class Libp2pService {
 
         this.node.handle(protocol, async (handlerProps) => {
             const { stream } = handlerProps;
-            const remotePeerId = handlerProps.connection.remotePeer._idB58String;
+            const remotePeerId = handlerProps.connection.remotePeer.toB58String();
             const { message, valid, busy } = await this._readMessageFromStream(
                 stream,
                 this.isRequestValid.bind(this),
@@ -369,14 +308,16 @@ class Libp2pService {
         };
     }
 
-    async sendMessage(protocol, remotePeerId, messageType, operationId, keyword, message) {
+    async sendMessage(protocol, peerId, messageType, operationId, keyword, message) {
         const keywordUuid = uuidv5(keyword, uuidv5.URL);
 
-        // const sessionStream = this.getSessionStream(operationId, remotePeerId._idB58String);
+        // const sessionStream = this.getSessionStream(operationId, remotePeerId.toB58String());
         // if (!sessionStream) {
         // } else {
         //     stream = sessionStream;
         // }
+
+        const remotePeerId = createFromB58String(peerId);
 
         const publicIp = (this.getAddresses(remotePeerId) ?? [])
             .map((addr) => addr.multiaddr)
@@ -385,7 +326,7 @@ class Libp2pService {
             .filter((splittedAddr) => !ip.isPrivate(splittedAddr[2]))[0]?.[2];
 
         this.logger.trace(
-            `Dialing remotePeerId: ${remotePeerId._idB58String} with public ip: ${publicIp}: protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}`,
+            `Dialing remotePeerId: ${remotePeerId.toB58String()} with public ip: ${publicIp}: protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}`,
         );
         let dialResult;
         let dialStart;
@@ -397,9 +338,7 @@ class Libp2pService {
         } catch (error) {
             dialEnd = Date.now();
             this.logger.warn(
-                `Unable to dial peer: ${
-                    remotePeerId._idB58String
-                }. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, dial execution time: ${
+                `Unable to dial peer: ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, dial execution time: ${
                     dialEnd - dialStart
                 } ms. Error: ${error.message}`,
             );
@@ -409,15 +348,13 @@ class Libp2pService {
             };
         }
         this.logger.trace(
-            `Created stream for peer: ${
-                remotePeerId._idB58String
-            }. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, dial execution time: ${
+            `Created stream for peer: ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, dial execution time: ${
                 dialEnd - dialStart
             } ms.`,
         );
         const { stream } = dialResult;
 
-        this.updateSessionStream(operationId, keywordUuid, remotePeerId._idB58String, stream);
+        this.updateSessionStream(operationId, keywordUuid, remotePeerId.toB58String(), stream);
 
         const streamMessage = this.createStreamMessage(
             message,
@@ -427,7 +364,7 @@ class Libp2pService {
         );
 
         this.logger.trace(
-            `Sending message to ${remotePeerId._idB58String}. protocol: ${protocol}, messageType: ${messageType}, operationId: ${operationId}`,
+            `Sending message to ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType}, operationId: ${operationId}`,
         );
 
         let sendMessageStart;
@@ -439,9 +376,7 @@ class Libp2pService {
         } catch (error) {
             sendMessageEnd = Date.now();
             this.logger.warn(
-                `Unable to send message to peer: ${
-                    remotePeerId._idB58String
-                }. protocol: ${protocol}, messageType: ${messageType}, operationId: ${operationId}, execution time: ${
+                `Unable to send message to peer: ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType}, operationId: ${operationId}, execution time: ${
                     sendMessageEnd - sendMessageStart
                 } ms. Error: ${error.message}`,
             );
@@ -451,14 +386,14 @@ class Libp2pService {
             };
         }
 
-        // if (!this.sessions[remotePeerId._idB58String]) {
-        //     this.sessions[remotePeerId._idB58String] = {
+        // if (!this.sessions[remotePeerId.toB58String()]) {
+        //     this.sessions[remotePeerId.toB58String()] = {
         //         [operationId]: {
         //             stream
         //         }
         //     }
         // } else {
-        //     this.sessions[remotePeerId._idB58String][operationId] = {
+        //     this.sessions[remotePeerId.toB58String()][operationId] = {
         //             stream
         //     }
         // }
@@ -473,15 +408,13 @@ class Libp2pService {
             response = await this._readMessageFromStream(
                 stream,
                 this.isResponseValid.bind(this),
-                remotePeerId._idB58String,
+                remotePeerId.toB58String(),
             );
             readResponseEnd = Date.now();
         } catch (error) {
             readResponseEnd = Date.now();
             this.logger.warn(
-                `Unable to read response from peer ${
-                    remotePeerId._idB58String
-                }. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, execution time: ${
+                `Unable to read response from peer ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, execution time: ${
                     readResponseEnd - readResponseStart
                 } ms. Error: ${error.message}`,
             );
@@ -491,9 +424,7 @@ class Libp2pService {
             };
         }
         this.logger.trace(
-            `Receiving response from ${
-                remotePeerId._idB58String
-            }. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, execution time: ${
+            `Receiving response from ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, execution time: ${
                 readResponseEnd - readResponseStart
             } ms.`,
         );
@@ -638,7 +569,7 @@ class Libp2pService {
 
     sessionExists() {
         return true;
-        // return this.sessions[remotePeerId._idB58String] && this.sessions[remotePeerId._idB58String][operationId];
+        // return this.sessions[remotePeerId.toB58String()] && this.sessions[remotePeerId.toB58String()][operationId];
     }
 
     async isResponseValid() {
@@ -720,6 +651,18 @@ class Libp2pService {
 
     getName() {
         return 'Libp2p';
+    }
+
+    async findPeer(peerId) {
+        return this.node.peerRouting.findPeer(createFromB58String(peerId));
+    }
+
+    async dial(peerId) {
+        return this.node.dial(createFromB58String(peerId));
+    }
+
+    async getPeerInfo(peerId) {
+        return this.node.peerStore.get(createFromB58String(peerId));
     }
 }
 

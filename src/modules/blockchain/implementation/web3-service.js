@@ -1,16 +1,21 @@
 import Web3 from 'web3';
 import axios from 'axios';
-import { peerId2Hash } from 'assertion-tools';
 import { createRequire } from 'module';
-import { INIT_STAKE_AMOUNT, WEBSOCKET_PROVIDER_OPTIONS } from '../../../constants/constants.js';
+import {
+    INIT_ASK_AMOUNT,
+    INIT_STAKE_AMOUNT,
+    WEBSOCKET_PROVIDER_OPTIONS,
+} from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
 const Hub = require('dkg-evm-module/build/contracts/Hub.json');
+const AssertionRegistry = require('dkg-evm-module/build/contracts/AssertionRegistry.json');
 const AssetRegistry = require('dkg-evm-module/build/contracts/AssetRegistry.json');
 const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
 const Identity = require('dkg-evm-module/build/contracts/Identity.json');
 const Profile = require('dkg-evm-module/build/contracts/Profile.json');
 const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
+const ShardingTable = require('dkg-evm-module/build/contracts/ShardingTable.json');
 
 class Web3Service {
     async initialize(config, logger) {
@@ -58,6 +63,26 @@ class Web3Service {
         // TODO encapsulate in a generic function
         this.logger.info(`Hub contract address is ${this.config.hubContractAddress}`);
         this.hubContract = new this.web3.eth.Contract(Hub.abi, this.config.hubContractAddress);
+
+        const shardingTableAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['ShardingTable'],
+        );
+        this.ShardingTableContract = new this.web3.eth.Contract(
+            ShardingTable.abi,
+            shardingTableAddress,
+        );
+
+        const assertionRegistryAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['AssertionRegistry'],
+        );
+        this.AssertionRegistryContract = new this.web3.eth.Contract(
+            AssertionRegistry.abi,
+            assertionRegistryAddress,
+        );
 
         const assetRegistryAddress = await this.callContractFunction(
             this.hubContract,
@@ -157,11 +182,10 @@ class Web3Service {
             INIT_STAKE_AMOUNT,
         ]);
 
-        const nodeId = await peerId2Hash(peerId);
-
         await this.executeContractFunction(this.ProfileContract, 'createProfile', [
             this.getManagementKey(),
-            nodeId,
+            this.convertAsciiToHex(peerId),
+            INIT_ASK_AMOUNT,
             INIT_STAKE_AMOUNT,
             this.getIdentity(),
         ]);
@@ -270,6 +294,42 @@ class Web3Service {
         return result;
     }
 
+    async getAllPastEvents(contractName, onEventsReceived, getLastEvent) {
+        const contract = this[contractName];
+        if (!contract) {
+            throw Error(`Error while getting all past events. Unknown contract: ${contractName}`);
+        }
+
+        const blockchainId = this.getBlockchainId();
+        let fromBlock;
+
+        const lastEvent = await getLastEvent(contractName, blockchainId);
+
+        const currentBlock = await this.getBlockNumber();
+        // TODO test and review from block offsets
+        if (lastEvent) {
+            fromBlock = Math.max(currentBlock - 2000, lastEvent.block + 1);
+        } else {
+            fromBlock = Math.max(currentBlock - 100, 0);
+        }
+        const events = await contract.getPastEvents('allEvents', {
+            fromBlock,
+            toBlock: 'latest',
+        });
+
+        if (events.length > 0) {
+            await onEventsReceived(
+                events.map((event) => ({
+                    contract: contractName,
+                    event: event.event,
+                    data: JSON.stringify(event.returnValues),
+                    block: event.blockNumber,
+                    blockchainId,
+                })),
+            );
+        }
+    }
+
     async deployContract(contract, args) {
         let result;
         while (!result) {
@@ -362,6 +422,106 @@ class Web3Service {
         );
         await this.initializeWeb3();
         await this.initializeContracts();
+    }
+
+    async getAssertionIssuer(assertionId) {
+        return this.callContractFunction(this.AssertionRegistryContract, 'getIssuer', [
+            assertionId,
+        ]);
+    }
+
+    async getPeer(peerId) {
+        try {
+            return await this.callContractFunction(this.ShardingTableContract, 'getPeer', [peerId]);
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async getShardingTablePage(startingPeerId, nodesNum) {
+        try {
+            return await this.callContractFunction(this.ShardingTableContract, 'getShardingTable', [
+                startingPeerId,
+                nodesNum,
+            ]);
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async getShardingTableFull() {
+        try {
+            return await this.callContractFunction(
+                this.ShardingTableContract,
+                'getShardingTable',
+                [],
+            );
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async pushPeerBack(peerId, ask, stake) {
+        try {
+            return this.executeContractFunction(this.ShardingTableContract, 'pushBack', [
+                peerId,
+                ask,
+                stake,
+            ]);
+        } catch (e) {
+            this.logger.error(`Error on executing contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async pushPeerFront(peerId, ask, stake) {
+        try {
+            return this.executeContractFunction(this.ShardingTableContract, 'pushFront', [
+                peerId,
+                ask,
+                stake,
+            ]);
+        } catch (e) {
+            this.logger.error(`Error on executing contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async updatePeerParams(peerId, ask, stake) {
+        try {
+            return this.executeContractFunction(this.ShardingTableContract, 'updateParams', [
+                peerId,
+                ask,
+                stake,
+            ]);
+        } catch (e) {
+            this.logger.error(`Error on executing contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async removePeer(peerId) {
+        try {
+            return this.executeContractFunction(this.ShardingTableContract, 'removePeer', [peerId]);
+        } catch (e) {
+            this.logger.error(`Error on executing contract function. ${e}`);
+            return false;
+        }
+    }
+
+    getBlockchainId() {
+        throw Error('Get blockchain id not implemented');
+    }
+
+    convertAsciiToHex(peerId) {
+        return Web3.utils.asciiToHex(peerId);
+    }
+
+    convertHexToAscii(peerIdHex) {
+        return Web3.utils.hexToAscii(peerIdHex);
     }
 }
 
