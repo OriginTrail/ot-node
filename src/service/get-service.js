@@ -62,8 +62,8 @@ class GetService extends OperationService {
             );
             this.logResponsesSummary(completedNumber, failedNumber);
         } else if (responseData?.nodes?.length) {
-            const leftoverNodesString = leftoverNodes.map((node) => node.id._idB58String);
-            const thisNodeId = this.networkModuleManager.getPeerId()._idB58String;
+            const leftoverNodesString = leftoverNodes.map((node) => node.id.toB58String());
+            const thisNodeId = this.networkModuleManager.getPeerId().toB58String();
             const newDiscoveredNodes = responseData.nodes.filter(
                 (node) =>
                     node.id !== thisNodeId &&
@@ -76,7 +76,7 @@ class GetService extends OperationService {
             for (const node of deserializedNodes) {
                 for (const protocol of this.getNetworkProtocols()) {
                     if (node.protocols.includes(protocol)) {
-                        newFoundNodes[node.id._idB58String] = { ...node, protocol };
+                        newFoundNodes[node.id.toB58String()] = { ...node, protocol };
                         break;
                     }
                 }

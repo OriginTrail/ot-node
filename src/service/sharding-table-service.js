@@ -13,8 +13,11 @@ class ShardingTableService {
         await this.listenOnEvents(blockchainId);
         const that = this;
         await this.networkModuleManager.onPeerConnected((connection) => {
+            this.logger.debug(
+                `Node connected to ${connection.remotePeer.toB58String()}, updating sharding table last seen and last dialed.`,
+            );
             that.repositoryModuleManager
-                .updatePeerRecordLastSeenAndLastDialed(connection.remotePeer._idB58String)
+                .updatePeerRecordLastSeenAndLastDialed(connection.remotePeer.toB58String())
                 .catch((error) => {
                     this.logger.warn(`Unable to update connected peer, error: ${error.message}`);
                 });
