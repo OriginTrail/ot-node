@@ -107,6 +107,12 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
+    async getAssertionIssuer(blockchain, assertionId) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getAssertionIssuer(assertionId);
+        }
+    }
+
     async getPeer(blockchain, peerId) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getPeer(peerId);

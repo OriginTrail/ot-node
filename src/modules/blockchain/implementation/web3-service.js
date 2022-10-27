@@ -9,6 +9,7 @@ import {
 
 const require = createRequire(import.meta.url);
 const Hub = require('dkg-evm-module/build/contracts/Hub.json');
+const AssertionRegistry = require('dkg-evm-module/build/contracts/AssertionRegistry.json');
 const AssetRegistry = require('dkg-evm-module/build/contracts/AssetRegistry.json');
 const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
 const Identity = require('dkg-evm-module/build/contracts/Identity.json');
@@ -71,6 +72,16 @@ class Web3Service {
         this.ShardingTableContract = new this.web3.eth.Contract(
             ShardingTable.abi,
             shardingTableAddress,
+        );
+
+        const assertionRegistryAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['AssertionRegistry'],
+        );
+        this.AssertionRegistryContract = new this.web3.eth.Contract(
+            AssertionRegistry.abi,
+            assertionRegistryAddress,
         );
 
         const assetRegistryAddress = await this.callContractFunction(
@@ -411,6 +422,12 @@ class Web3Service {
         );
         await this.initializeWeb3();
         await this.initializeContracts();
+    }
+
+    async getAssertionIssuer(assertionId) {
+        return this.callContractFunction(this.AssertionRegistryContract, 'getIssuer', [
+            assertionId,
+        ]);
     }
 
     async getPeer(peerId) {

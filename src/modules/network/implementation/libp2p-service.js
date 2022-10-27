@@ -308,7 +308,7 @@ class Libp2pService {
         };
     }
 
-    async sendMessage(protocol, remotePeerId, messageType, operationId, keyword, message) {
+    async sendMessage(protocol, peerId, messageType, operationId, keyword, message) {
         const keywordUuid = uuidv5(keyword, uuidv5.URL);
 
         // const sessionStream = this.getSessionStream(operationId, remotePeerId.toB58String());
@@ -316,6 +316,8 @@ class Libp2pService {
         // } else {
         //     stream = sessionStream;
         // }
+
+        const remotePeerId = createFromB58String(peerId);
 
         const publicIp = (this.getAddresses(remotePeerId) ?? [])
             .map((addr) => addr.multiaddr)

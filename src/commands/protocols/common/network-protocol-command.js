@@ -43,10 +43,6 @@ class NetworkProtocolCommand extends Command {
         return [];
     }
 
-    getNextCommandData() {
-        // overridden by subclasses
-    }
-
     /**
      * Builds default protocolNetworkCommand
      * @param map

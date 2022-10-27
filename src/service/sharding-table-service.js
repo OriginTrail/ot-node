@@ -123,7 +123,7 @@ class ShardingTableService {
     async dial(peerId) {
         const { addresses } = await this.findPeerAddressAndProtocols(peerId);
         if (addresses.length) {
-            if (!peerId !== this.networkModuleManager.getPeerId().toB58String()) {
+            if (peerId !== this.networkModuleManager.getPeerId().toB58String()) {
                 this.logger.trace(`Dialing peer ${peerId}.`);
                 try {
                     await this.networkModuleManager.dial(peerId);
@@ -140,23 +140,24 @@ class ShardingTableService {
 
     async findPeerAddressAndProtocols(peerId) {
         this.logger.trace(`Searching for peer ${peerId} multiaddresses in peer store.`);
-        const peerInfo = this.networkModuleManager.getPeerInfo(peerId);
+        let peerInfo = await this.networkModuleManager.getPeerInfo(peerId);
         if (
-            !peerInfo.addresses?.length &&
+            !peerInfo?.addresses?.length &&
             peerId !== this.networkModuleManager.getPeerId().toB58String()
         ) {
             try {
                 this.logger.trace(`Searching for peer ${peerId} multiaddresses on the network.`);
                 const peer = await this.networkModuleManager.findPeer(peerId);
-                peerInfo.addresses = peer.multiaddrs;
+                peerInfo = { ...peerInfo, addresses: peer.multiaddrs };
             } catch (error) {
                 this.logger.warn(`Unable to find peer ${peerId}. Error: ${error.message}`);
             }
         }
+
         return {
             id: peerId,
-            addresses: peerInfo.addresses ?? [],
-            protocols: peerInfo.protocols ?? [],
+            addresses: peerInfo?.addresses ?? [],
+            protocols: peerInfo?.protocols ?? [],
         };
     }
 }
