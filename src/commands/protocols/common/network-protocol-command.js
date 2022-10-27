@@ -13,7 +13,7 @@ class NetworkProtocolCommand extends Command {
     async execute(command) {
         const keywords = this.getKeywords(command);
         const commandSequence = [
-            this.getFindNodesCommand(),
+            'findNodesCommand',
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
         ];
 
@@ -38,17 +38,9 @@ class NetworkProtocolCommand extends Command {
         return Command.empty();
     }
 
-    getFindNodesCommand() {
-        return 'findNodesCommand';
-    }
-
     getKeywords() {
         // overridden by subclasses
         return [];
-    }
-
-    getNextCommandData() {
-        // overridden by subclasses
     }
 
     /**

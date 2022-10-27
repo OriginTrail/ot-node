@@ -4,6 +4,9 @@ import Web3 from 'web3';
 import { readFile } from 'fs/promises';
 
 const hub = JSON.parse(await readFile('node_modules/dkg-evm-module/build/contracts/Hub.json'));
+const shardingTable = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/ShardingTable.json'),
+);
 const uaiRegistry = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/UAIRegistry.json'),
 );
@@ -28,6 +31,7 @@ const accountPrivateKeys = JSON.parse(
 
 const sources = {
     hub,
+    shardingTable,
     uaiRegistry,
     assertionRegistry,
     assetRegistry,
@@ -104,6 +108,9 @@ class LocalBlockchain {
                     `\t Hub contract address: \t\t\t\t\t${this.contracts.hub.instance._address}`,
                 );
                 this.logger.info(
+                    `\t Sharding table contract address: \t\t\t${this.contracts.shardingTable.instance._address}`,
+                );
+                this.logger.info(
                     `\t AssertionRegistry contract address: \t\t\t${this.contracts.assertionRegistry.instance._address}`,
                 );
                 this.logger.info(
@@ -149,6 +156,13 @@ class LocalBlockchain {
         await this.deploy('hub', deployingWallet, []);
         await this.setContractAddress('Owner', deployingWallet.address, deployingWallet);
 
+        await this.deploy('shardingTable', deployingWallet, [this.contracts.hub.instance._address]);
+        await this.setContractAddress(
+            'ShardingTable',
+            this.contracts.shardingTable.instance._address,
+            deployingWallet,
+        );
+
         await this.deploy('uaiRegistry', deployingWallet, [this.contracts.hub.instance._address]);
         await this.setContractAddress(
             'UAIRegistry',
@@ -159,7 +173,6 @@ class LocalBlockchain {
         await this.deploy('assertionRegistry', deployingWallet, [
             this.contracts.hub.instance._address,
         ]);
-
         await this.setContractAddress(
             'AssertionRegistry',
             this.contracts.assertionRegistry.instance._address,
@@ -167,19 +180,16 @@ class LocalBlockchain {
         );
 
         await this.deploy('assetRegistry', deployingWallet, [this.contracts.hub.instance._address]);
-
         await this.setContractAddress(
             'AssetRegistry',
             this.contracts.assetRegistry.instance._address,
             deployingWallet,
         );
-
         await this.setupRole(
             this.contracts.uaiRegistry,
             this.contracts.assetRegistry.instance._address,
         );
 
-        // this.logger.log('Deploying profileStorageContract');
         await this.deploy('profileStorage', deployingWallet, [
             this.contracts.hub.instance._address,
         ]);
@@ -190,7 +200,6 @@ class LocalBlockchain {
         );
 
         await this.deploy('erc20Token', deployingWallet, [this.contracts.hub.instance._address]);
-
         await this.setContractAddress(
             'Token',
             this.contracts.erc20Token.instance._address,
@@ -199,7 +208,6 @@ class LocalBlockchain {
         await this.setupRole(this.contracts.erc20Token, deployingWallet.address);
 
         await this.deploy('profile', deployingWallet, [this.contracts.hub.instance._address]);
-
         await this.setContractAddress(
             'Profile',
             this.contracts.profile.instance._address,
