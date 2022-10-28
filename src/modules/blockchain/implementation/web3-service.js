@@ -27,6 +27,7 @@ class Web3Service {
         this.rpcNumber = 0;
         await this.initializeWeb3();
         await this.initializeContracts();
+        this.currentBlock = await this.web3.eth.getBlockNumber();
     }
 
     async initializeWeb3() {
@@ -313,19 +314,18 @@ class Web3Service {
             await getLastCheckedBlock(blockchainId);
 
         let fromBlock;
-        const currentBlock = await this.getBlockNumber();
 
         if (this.isOlderThan(timestamp, DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS)) {
-            fromBlock = currentBlock - 10;
+            fromBlock = this.currentBlock - 10;
         } else {
             fromBlock = lastCheckedBlock + 1;
         }
 
         let events = [];
-        if (currentBlock - fromBlock > MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH) {
+        if (this.currentBlock - fromBlock > MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH) {
             let iteration = 1;
 
-            while (fromBlock - MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH > currentBlock) {
+            while (fromBlock - MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH > this.currentBlock) {
                 events.concat(
                     await contract.getPastEvents('allEvents', {
                         fromBlock,
@@ -338,11 +338,11 @@ class Web3Service {
         } else {
             events = await contract.getPastEvents('allEvents', {
                 fromBlock,
-                toBlock: currentBlock,
+                toBlock: this.currentBlock,
             });
         }
 
-        await updateLastCheckedBlock(blockchainId, currentBlock, Date.now());
+        await updateLastCheckedBlock(blockchainId, this.currentBlock, Date.now());
         if (events.length > 0) {
             await onEventsReceived(
                 events.map((event) => ({

@@ -50,6 +50,7 @@ class ShardingTableService {
             `Started pulling ${shardingTableLength} nodes from blockchain sharding table.`,
         );
 
+        let sliceIndex = 0;
         // TODO: mark starting block and listen to events from that block
         while (shardingTable.length < shardingTableLength) {
             // eslint-disable-next-line no-await-in-loop
@@ -58,7 +59,8 @@ class ShardingTableService {
                 startingPeerId,
                 pageSize,
             );
-            shardingTable.push(...nodes.filter((node) => node.id !== '0x'));
+            shardingTable.push(...nodes.slice(sliceIndex).filter((node) => node.id !== '0x'));
+            sliceIndex = 1;
             startingPeerId = nodes[nodes.length - 1].id;
         }
 
@@ -186,8 +188,8 @@ class ShardingTableService {
         ) {
             try {
                 this.logger.trace(`Searching for peer ${peerId} multiaddresses on the network.`);
-                const peer = await this.networkModuleManager.findPeer(peerId);
-                peerInfo = { ...peerInfo, addresses: peer.multiaddrs };
+                await this.networkModuleManager.findPeer(peerId);
+                peerInfo = await this.networkModuleManager.getPeerInfo(peerId);
             } catch (error) {
                 this.logger.warn(`Unable to find peer ${peerId}. Error: ${error.message}`);
             }

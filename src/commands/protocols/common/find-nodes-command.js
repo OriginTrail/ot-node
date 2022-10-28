@@ -25,15 +25,11 @@ class FindNodesCommand extends Command {
         this.errorType = errorType;
         this.logger.debug(`Searching for closest node(s) for keyword ${keyword}`);
 
+        // TODO: protocol selection
         const closestNodes = [];
         for (const node of await this.findNodes(keyword, operationId, blockchain)) {
             if (node.id !== this.networkModuleManager.getPeerId().toB58String()) {
-                for (const protocol of networkProtocols) {
-                    if (node.protocols.includes(protocol)) {
-                        closestNodes.push({ id: node.id, protocol });
-                        break;
-                    }
-                }
+                closestNodes.push({ id: node.id, protocol: networkProtocols[0] });
             }
         }
 
