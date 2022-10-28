@@ -47,6 +47,12 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
+    async saveIdentityInFile(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.saveIdentityInFile();
+        }
+    }
+
     async getEpochs(blockchain, UAI) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getEpochs(UAI);

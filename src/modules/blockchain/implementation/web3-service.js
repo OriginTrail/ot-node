@@ -3,7 +3,7 @@ import axios from 'axios';
 import { createRequire } from 'module';
 import { join } from 'path';
 import appRootPath from 'app-root-path';
-import { readFile, stat } from 'fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'fs/promises';
 import {
     INIT_ASK_AMOUNT,
     INIT_STAKE_AMOUNT,
@@ -27,9 +27,9 @@ class Web3Service {
         this.logger = logger;
 
         this.rpcNumber = 0;
+        await this.readIdentity();
         await this.initializeWeb3();
         await this.initializeContracts();
-        await this.readIdentity();
     }
 
     async initializeWeb3() {
@@ -173,6 +173,14 @@ class Web3Service {
             return true;
         } catch (e) {
             return false;
+        }
+    }
+
+    async saveIdentityInFile() {
+        if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
+            const { fullPath, directoryPath } = this.getKeyPath();
+            await mkdir(directoryPath, { recursive: true });
+            await writeFile(fullPath, this.config.identity);
         }
     }
 

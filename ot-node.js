@@ -170,6 +170,7 @@ class OTNode {
                         await blockchainModuleManager.deployIdentity(blockchain);
                         this.logger.info(`Creating profile on network: ${blockchain}`);
                         await blockchainModuleManager.createProfile(blockchain, peerId);
+                        await blockchainModuleManager.saveIdentityInFile();
                     }
                     this.logger.info(
                         `${blockchain} blockchain identity is ${blockchainModuleManager.getIdentity(
