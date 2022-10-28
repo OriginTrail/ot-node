@@ -318,7 +318,7 @@ class Web3Service {
         if (this.isOlderThan(timestamp, DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS)) {
             fromBlock = currentBlock - 10;
         } else {
-            fromBlock = lastCheckedBlock;
+            fromBlock = lastCheckedBlock + 1;
         }
 
         let events = [];

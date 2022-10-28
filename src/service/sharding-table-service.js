@@ -27,10 +27,15 @@ class ShardingTableService {
     }
 
     async pullBlockchainShardingTable(blockchainId) {
-        const { last_checked_timestamp: timestamp } =
-            await this.repositoryModuleManager.getLastCheckedBlock(blockchainId);
+        const lastCheckedBlock = await this.repositoryModuleManager.getLastCheckedBlock(
+            blockchainId,
+        );
 
-        if (Date.now() - timestamp < DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS) {
+        if (
+            lastCheckedBlock?.last_checked_timestamp &&
+            Date.now() - lastCheckedBlock.last_checked_timestamp <
+                DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS
+        ) {
             return;
         }
 

@@ -365,6 +365,12 @@ class SequelizeRepository {
         );
     }
 
+    async createManyBlockchainRecords(blockchainIds) {
+        this.models.blockchain.bulkCreate(blockchainIds, {
+            ignoreDuplicates: true,
+        });
+    }
+
     // EVENT
     async createEventRecord(operationId, name, timestamp, value1, value2, value3) {
         return this.models.event.create({

@@ -309,6 +309,12 @@ class RepositoryModuleManager extends BaseModuleManager {
             );
         }
     }
+
+    async createManyBlockchainRecords(blockchainIds) {
+        if (this.initialized) {
+            return this.getImplementation().module.createManyBlockchainRecords(blockchainIds);
+        }
+    }
 }
 
 export default RepositoryModuleManager;

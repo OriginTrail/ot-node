@@ -5,12 +5,14 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             primaryKey: true,
         },
         last_checked_block: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.BIGINT,
             allowNull: false,
+            defaultValue: -1,
         },
         last_checked_timestamp: {
-            type: Sequelize.DATE,
+            type: Sequelize.BIGINT,
             allowNull: false,
+            defaultValue: 0,
         },
     });
 }

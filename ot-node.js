@@ -252,6 +252,12 @@ class OTNode {
         const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
         const eventEmitter = this.container.resolve('eventEmitter');
 
+        await repositoryModuleManager.createManyBlockchainRecords(
+            blockchainModuleManager
+                .getImplementationNames()
+                .map((blockchainId) => ({ blockchain_id: blockchainId })),
+        );
+
         const onEventsReceived = async (events) => {
             if (events.length > 0) {
                 const insertedEvents = await repositoryModuleManager.insertBlockchainEvents(events);

@@ -6,8 +6,8 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 primaryKey: true,
             },
-            last_checked_block: DataTypes.INTEGER,
-            last_checked_timestamp: DataTypes.INTEGER,
+            last_checked_block: DataTypes.BIGINT,
+            last_checked_timestamp: DataTypes.BIGINT,
         },
         { underscored: true },
     );
