@@ -4,6 +4,8 @@ export const LIBP2P_KEY_DIRECTORY = 'libp2p';
 
 export const LIBP2P_KEY_FILENAME = 'privateKey';
 
+export const BLOCKCHAIN_IDENTITY_DIRECTORY = 'blockchain';
+
 export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 
 export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
