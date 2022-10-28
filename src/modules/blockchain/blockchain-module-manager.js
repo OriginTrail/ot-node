@@ -119,6 +119,18 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
+    async getShardingTableHead(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getShardingTableHead();
+        }
+    }
+
+    async getShardingTableLength(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getShardingTableLength();
+        }
+    }
+
     async getShardingTablePage(blockchain, startingPeerId, nodesNum) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getShardingTablePage(

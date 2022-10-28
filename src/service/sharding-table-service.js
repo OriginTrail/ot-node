@@ -10,7 +10,7 @@ class ShardingTableService {
 
     async initialize(blockchainId) {
         await this.pullBlockchainShardingTable(blockchainId);
-        await this.listenOnEvents(blockchainId);
+        this.listenOnEvents(blockchainId);
         const that = this;
         await this.networkModuleManager.onPeerConnected((connection) => {
             this.logger.debug(
@@ -25,7 +25,32 @@ class ShardingTableService {
     }
 
     async pullBlockchainShardingTable(blockchainId) {
-        const shardingTable = await this.blockchainModuleManager.getShardingTableFull(blockchainId);
+        const shardingTableLength = await this.blockchainModuleManager.getShardingTableLength(
+            blockchainId,
+        );
+        let startingPeerId = await this.blockchainModuleManager.getShardingTableHead(blockchainId);
+        const pageSize = 10;
+        const shardingTable = [];
+
+        this.logger.debug(
+            `Started pulling ${shardingTableLength} nodes from blockchain sharding table.`,
+        );
+
+        // TODO: mark starting block and listen to events from that block
+        while (shardingTable.length < shardingTableLength) {
+            // eslint-disable-next-line no-await-in-loop
+            const nodes = await this.blockchainModuleManager.getShardingTablePage(
+                blockchainId,
+                startingPeerId,
+                pageSize,
+            );
+            shardingTable.push(...nodes.filter((node) => node.id !== '0x'));
+            startingPeerId = nodes[nodes.length - 1].id;
+        }
+
+        this.logger.debug(
+            `Finished pulling ${shardingTable.length} nodes from blockchain sharding table.`,
+        );
 
         await this.repositoryModuleManager.createManyPeerRecords(
             shardingTable.map((peer) => ({

@@ -439,6 +439,24 @@ class Web3Service {
         }
     }
 
+    async getShardingTableHead() {
+        try {
+            return await this.callContractFunction(this.ShardingTableContract, 'head', []);
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async getShardingTableLength() {
+        try {
+            return await this.callContractFunction(this.ShardingTableContract, 'nodeCount', []);
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
     async getShardingTablePage(startingPeerId, nodesNum) {
         try {
             return await this.callContractFunction(this.ShardingTableContract, 'getShardingTable', [
