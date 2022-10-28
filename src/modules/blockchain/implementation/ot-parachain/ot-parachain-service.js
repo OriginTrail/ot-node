@@ -17,6 +17,7 @@ class OtParachainService extends Web3Service {
         this.rpcNumber = 0;
 
         await Promise.all([this.initializeWeb3(), this.initializeParachainProvider()]);
+        this.currentBlock = await this.web3.eth.getBlockNumber();
         await this.checkEvmAccountsMapping();
         await this.initializeContracts();
     }

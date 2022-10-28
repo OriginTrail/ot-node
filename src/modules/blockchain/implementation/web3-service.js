@@ -26,8 +26,8 @@ class Web3Service {
 
         this.rpcNumber = 0;
         await this.initializeWeb3();
-        await this.initializeContracts();
         this.currentBlock = await this.web3.eth.getBlockNumber();
+        await this.initializeContracts();
     }
 
     async initializeWeb3() {
@@ -388,8 +388,8 @@ class Web3Service {
                 const tx = {
                     from: this.getPublicKey(),
                     data: encodedABI,
-                    gasPrice: gasPrice || this.web3.utils.toWei('20', 'Gwei'),
-                    gas: gasLimit || this.web3.utils.toWei('900', 'Kwei'),
+                    gasPrice: gasPrice ?? this.web3.utils.toWei('20', 'Gwei'),
+                    gas: gasLimit ?? this.web3.utils.toWei('900', 'Kwei'),
                 };
 
                 const createdTransaction = await this.web3.eth.accounts.signTransaction(
