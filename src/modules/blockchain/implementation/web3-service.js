@@ -482,7 +482,7 @@ class Web3Service {
 
     async getShardingTableLength() {
         try {
-            return await this.callContractFunction(this.ShardingTableContract, 'nodeCount', []);
+            return await this.callContractFunction(this.ShardingTableContract, 'nodesCount', []);
         } catch (e) {
             this.logger.error(`Error on calling contract function. ${e}`);
             return false;
