@@ -16,6 +16,8 @@ export const DHT_TYPES = { DUAL: 'dual', WAN: 'wan', LAN: 'lan' };
 
 export const PEER_OFFLINE_LIMIT = 24 * 60 * 60 * 1000;
 
+export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000;
+
 /**
  * Triple store media types
  * @type {{APPLICATION_JSON: string, N_QUADS: string, SPARQL_RESULTS_JSON: string, LD_JSON: string}}
