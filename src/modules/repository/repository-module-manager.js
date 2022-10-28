@@ -294,9 +294,19 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async getLastBlockCheckedTimestamp(blockchainId) {
+    async getLastCheckedBlock(blockchainId) {
         if (this.initialized) {
-            return this.getImplementation().module.getLastBlockCheckedTimestamp(blockchainId);
+            return this.getImplementation().module.getLastCheckedBlock(blockchainId);
+        }
+    }
+
+    async updateLastCheckedBlock(blockchainId, currentBlock, timestamp) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateLastCheckedBlock(
+                blockchainId,
+                currentBlock,
+                timestamp,
+            );
         }
     }
 }

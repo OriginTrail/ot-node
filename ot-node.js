@@ -267,8 +267,8 @@ class OTNode {
         const getLastCheckedBlock = async (blockchainId) =>
             repositoryModuleManager.getLastCheckedBlock(blockchainId);
 
-        const updateLastCheckedBlock = async (blockchainId, currentBlock) =>
-            repositoryModuleManager.updateLastCheckedBlock(blockchainId, currentBlock);
+        const updateLastCheckedBlock = async (blockchainId, currentBlock, timestamp) =>
+            repositoryModuleManager.updateLastCheckedBlock(blockchainId, currentBlock, timestamp);
 
         let working = false;
 

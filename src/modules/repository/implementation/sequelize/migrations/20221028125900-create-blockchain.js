@@ -7,12 +7,10 @@ export async function up({ context: { queryInterface, Sequelize } }) {
         last_checked_block: {
             type: Sequelize.INTEGER,
             allowNull: false,
-            defaultValue: -1,
         },
         last_checked_timestamp: {
             type: Sequelize.DATE,
             allowNull: false,
-            defaultValue: new Date(0),
         },
     });
 }

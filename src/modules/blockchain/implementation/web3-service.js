@@ -309,7 +309,8 @@ class Web3Service {
 
         const blockchainId = this.getBlockchainId();
 
-        const { lastCheckedBlock, timestamp } = await getLastCheckedBlock(blockchainId);
+        const { last_checked_block: lastCheckedBlock, last_checked_timestamp: timestamp } =
+            await getLastCheckedBlock(blockchainId);
 
         let fromBlock;
         const currentBlock = await this.getBlockNumber();
@@ -341,7 +342,7 @@ class Web3Service {
             });
         }
 
-        await updateLastCheckedBlock(blockchainId, currentBlock);
+        await updateLastCheckedBlock(blockchainId, currentBlock, Date.now());
         if (events.length > 0) {
             await onEventsReceived(
                 events.map((event) => ({

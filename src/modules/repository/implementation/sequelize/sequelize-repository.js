@@ -348,12 +348,21 @@ class SequelizeRepository {
         );
     }
 
-    async getLastBlockCheckedTimestamp(blockchainId) {
-        return this.models.shard.findOne({
-            attributes: ['timestamp'],
+    async getLastCheckedBlock(blockchainId) {
+        return this.models.blockchain.findOne({
+            attributes: ['last_checked_block', 'last_checked_timestamp'],
             where: { blockchain_id: blockchainId },
             raw: true,
         });
+    }
+
+    async updateLastCheckedBlock(blockchainId, currentBlock, timestamp) {
+        this.models.blockchain.update(
+            { last_checked_block: currentBlock, last_checked_timestamp: timestamp },
+            {
+                where: { blockchain_id: blockchainId },
+            },
+        );
     }
 
     // EVENT

@@ -7,7 +7,7 @@ export default (sequelize, DataTypes) => {
                 primaryKey: true,
             },
             last_checked_block: DataTypes.INTEGER,
-            last_checked_timestamp: DataTypes.DATE,
+            last_checked_timestamp: DataTypes.INTEGER,
         },
         { underscored: true },
     );
