@@ -264,9 +264,11 @@ class OTNode {
             }
         };
 
-        const getLastEvent = async (contractName, blockchainId) => {
-            await repositoryModuleManager.getLastEvent(contractName, blockchainId);
-        };
+        const getLastCheckedBlock = async (blockchainId) =>
+            repositoryModuleManager.getLastCheckedBlock(blockchainId);
+
+        const updateLastCheckedBlock = async (blockchainId, currentBlock) =>
+            repositoryModuleManager.updateLastCheckedBlock(blockchainId, currentBlock);
 
         let working = false;
 
@@ -277,12 +279,14 @@ class OTNode {
                     await blockchainModuleManager.getAllPastEvents(
                         'ShardingTableContract',
                         onEventsReceived,
-                        getLastEvent,
+                        getLastCheckedBlock,
+                        updateLastCheckedBlock,
                     );
                     await blockchainModuleManager.getAllPastEvents(
                         'AssetRegistryContract',
                         onEventsReceived,
-                        getLastEvent,
+                        getLastCheckedBlock,
+                        updateLastCheckedBlock,
                     );
                 } catch (e) {
                     this.logger.error(`Failed to get blockchain events. Error: ${e}`);

@@ -5,6 +5,8 @@ import {
     INIT_ASK_AMOUNT,
     INIT_STAKE_AMOUNT,
     WEBSOCKET_PROVIDER_OPTIONS,
+    DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
+    MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -294,29 +296,52 @@ class Web3Service {
         return result;
     }
 
-    async getAllPastEvents(contractName, onEventsReceived, getLastEvent) {
+    async getAllPastEvents(
+        contractName,
+        onEventsReceived,
+        getLastCheckedBlock,
+        updateLastCheckedBlock,
+    ) {
         const contract = this[contractName];
         if (!contract) {
             throw Error(`Error while getting all past events. Unknown contract: ${contractName}`);
         }
 
         const blockchainId = this.getBlockchainId();
+
+        const { lastCheckedBlock, timestamp } = await getLastCheckedBlock(blockchainId);
+
         let fromBlock;
-
-        const lastEvent = await getLastEvent(contractName, blockchainId);
-
         const currentBlock = await this.getBlockNumber();
-        // TODO test and review from block offsets
-        if (lastEvent) {
-            fromBlock = Math.max(currentBlock - 2000, lastEvent.block + 1);
-        } else {
-            fromBlock = Math.max(currentBlock - 100, 0);
-        }
-        const events = await contract.getPastEvents('allEvents', {
-            fromBlock,
-            toBlock: 'latest',
-        });
 
+        if (this.isOlderThan(timestamp, DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS)) {
+            fromBlock = currentBlock - 10;
+        } else {
+            fromBlock = lastCheckedBlock;
+        }
+
+        let events = [];
+        if (currentBlock - fromBlock > MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH) {
+            let iteration = 1;
+
+            while (fromBlock - MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH > currentBlock) {
+                events.concat(
+                    await contract.getPastEvents('allEvents', {
+                        fromBlock,
+                        toBlock: fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH * iteration,
+                    }),
+                );
+                fromBlock += MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH * iteration;
+                iteration += 1;
+            }
+        } else {
+            events = await contract.getPastEvents('allEvents', {
+                fromBlock,
+                toBlock: currentBlock,
+            });
+        }
+
+        await updateLastCheckedBlock(blockchainId, currentBlock);
         if (events.length > 0) {
             await onEventsReceived(
                 events.map((event) => ({
@@ -328,6 +353,12 @@ class Web3Service {
                 })),
             );
         }
+    }
+
+    isOlderThan(timestamp, olderThanInMills) {
+        if (!timestamp) return true;
+        const timestampThirtyDaysInPast = new Date().getTime() - olderThanInMills;
+        return timestamp < timestampThirtyDaysInPast;
     }
 
     async deployContract(contract, args) {

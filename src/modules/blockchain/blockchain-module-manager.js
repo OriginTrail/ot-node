@@ -170,7 +170,12 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getAllPastEvents(contractName, onEventsReceived, getLastEvent) {
+    async getAllPastEvents(
+        contractName,
+        onEventsReceived,
+        getLastCheckedBlock,
+        updateLastCheckedBlock,
+    ) {
         const blockchainIds = this.getImplementationNames();
         const getEventsPromises = [];
         for (const blockchainId of blockchainIds) {
@@ -178,7 +183,8 @@ class BlockchainModuleManager extends BaseModuleManager {
                 this.getImplementation(blockchainId).module.getAllPastEvents(
                     contractName,
                     onEventsReceived,
-                    getLastEvent,
+                    getLastCheckedBlock,
+                    updateLastCheckedBlock,
                 ),
             );
         }
