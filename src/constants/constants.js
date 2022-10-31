@@ -277,3 +277,11 @@ export const QUERY_TYPES = {
     SELECT: 'SELECT',
     CONSTRUCT: 'CONSTRUCT',
 };
+
+/**
+ * Contract names
+ * @type {{SHARDING_TABLE_CONTRACT: string}}
+ */
+export const CONTRACTS = {
+    SHARDING_TABLE_CONTRACT: 'ShardingTableContract',
+};

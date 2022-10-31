@@ -4,6 +4,10 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             type: Sequelize.STRING,
             primaryKey: true,
         },
+        contract: {
+            type: Sequelize.STRING,
+            primaryKey: true,
+        },
         last_checked_block: {
             type: Sequelize.BIGINT,
             allowNull: false,

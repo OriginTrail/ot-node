@@ -4,7 +4,7 @@ import EventEmitter from 'events';
 import { createRequire } from 'module';
 import DependencyInjection from './src/service/dependency-injection.js';
 import Logger from './src/logger/logger.js';
-import { MIN_NODE_VERSION } from './src/constants/constants.js';
+import { CONTRACTS, MIN_NODE_VERSION } from './src/constants/constants.js';
 import FileService from './src/service/file-service.js';
 import NetworkPrivateKeyMigration from './src/migration/network-private-key-migration.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
@@ -242,12 +242,6 @@ class OTNode {
         const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
         const eventEmitter = this.container.resolve('eventEmitter');
 
-        await repositoryModuleManager.createManyBlockchainRecords(
-            blockchainModuleManager
-                .getImplementationNames()
-                .map((blockchainId) => ({ blockchain_id: blockchainId })),
-        );
-
         const onEventsReceived = async (events) => {
             if (events.length > 0) {
                 const insertedEvents = await repositoryModuleManager.insertBlockchainEvents(events);
@@ -260,11 +254,16 @@ class OTNode {
             }
         };
 
-        const getLastCheckedBlock = async (blockchainId) =>
-            repositoryModuleManager.getLastCheckedBlock(blockchainId);
+        const getLastCheckedBlock = async (blockchainId, contract) =>
+            repositoryModuleManager.getLastCheckedBlock(blockchainId, contract);
 
-        const updateLastCheckedBlock = async (blockchainId, currentBlock, timestamp) =>
-            repositoryModuleManager.updateLastCheckedBlock(blockchainId, currentBlock, timestamp);
+        const updateLastCheckedBlock = async (blockchainId, currentBlock, timestamp, contract) =>
+            repositoryModuleManager.updateLastCheckedBlock(
+                blockchainId,
+                currentBlock,
+                timestamp,
+                contract,
+            );
 
         let working = false;
 
@@ -273,13 +272,7 @@ class OTNode {
                 try {
                     working = true;
                     await blockchainModuleManager.getAllPastEvents(
-                        'ShardingTableContract',
-                        onEventsReceived,
-                        getLastCheckedBlock,
-                        updateLastCheckedBlock,
-                    );
-                    await blockchainModuleManager.getAllPastEvents(
-                        'AssetRegistryContract',
+                        CONTRACTS.SHARDING_TABLE_CONTRACT,
                         onEventsReceived,
                         getLastCheckedBlock,
                         updateLastCheckedBlock,

@@ -1,4 +1,7 @@
-import { DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS } from '../constants/constants.js';
+import {
+    CONTRACTS,
+    DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
+} from '../constants/constants.js';
 
 class ShardingTableService {
     constructor(ctx) {
@@ -29,6 +32,7 @@ class ShardingTableService {
     async pullBlockchainShardingTable(blockchainId) {
         const lastCheckedBlock = await this.repositoryModuleManager.getLastCheckedBlock(
             blockchainId,
+            CONTRACTS.SHARDING_TABLE_CONTRACT,
         );
 
         if (

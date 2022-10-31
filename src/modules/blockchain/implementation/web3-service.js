@@ -368,16 +368,20 @@ class Web3Service {
         }
 
         const blockchainId = this.getBlockchainId();
-
-        const { last_checked_block: lastCheckedBlock, last_checked_timestamp: timestamp } =
-            await getLastCheckedBlock(blockchainId);
+        const lastCheckedBlockObject = await getLastCheckedBlock(blockchainId, contractName);
 
         let fromBlock;
 
-        if (this.isOlderThan(timestamp, DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS)) {
+        if (
+            this.isOlderThan(
+                lastCheckedBlockObject?.last_checked_timestamp,
+                DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
+            )
+        ) {
             fromBlock = this.currentBlock - 10;
         } else {
-            fromBlock = lastCheckedBlock + 1;
+            this.currentBlock = await this.getBlockNumber();
+            fromBlock = lastCheckedBlockObject.last_checked_block + 1;
         }
 
         let events = [];
@@ -401,7 +405,7 @@ class Web3Service {
             });
         }
 
-        await updateLastCheckedBlock(blockchainId, this.currentBlock, Date.now());
+        await updateLastCheckedBlock(blockchainId, this.currentBlock, Date.now(), contractName);
         if (events.length > 0) {
             await onEventsReceived(
                 events.map((event) => ({

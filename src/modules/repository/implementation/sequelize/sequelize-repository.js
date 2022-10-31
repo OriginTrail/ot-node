@@ -348,26 +348,20 @@ class SequelizeRepository {
         );
     }
 
-    async getLastCheckedBlock(blockchainId) {
+    async getLastCheckedBlock(blockchainId, contract) {
         return this.models.blockchain.findOne({
             attributes: ['last_checked_block', 'last_checked_timestamp'],
-            where: { blockchain_id: blockchainId },
+            where: { blockchain_id: blockchainId, contract },
             raw: true,
         });
     }
 
-    async updateLastCheckedBlock(blockchainId, currentBlock, timestamp) {
-        this.models.blockchain.update(
-            { last_checked_block: currentBlock, last_checked_timestamp: timestamp },
-            {
-                where: { blockchain_id: blockchainId },
-            },
-        );
-    }
-
-    async createManyBlockchainRecords(blockchainIds) {
-        this.models.blockchain.bulkCreate(blockchainIds, {
-            ignoreDuplicates: true,
+    async updateLastCheckedBlock(blockchainId, currentBlock, timestamp, contract) {
+        return this.models.blockchain.upsert({
+            blockchain_id: blockchainId,
+            contract,
+            last_checked_block: currentBlock,
+            last_checked_timestamp: timestamp,
         });
     }
 
