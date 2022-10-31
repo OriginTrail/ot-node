@@ -15,7 +15,7 @@ class ShardingTableService {
         this.listenOnEvents(blockchainId);
         const that = this;
         await this.networkModuleManager.onPeerConnected((connection) => {
-            this.logger.debug(
+            this.logger.trace(
                 `Node connected to ${connection.remotePeer.toB58String()}, updating sharding table last seen and last dialed.`,
             );
             that.repositoryModuleManager
