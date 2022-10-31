@@ -1,9 +1,13 @@
 import Web3 from 'web3';
 import axios from 'axios';
 import { createRequire } from 'module';
+import { join } from 'path';
+import appRootPath from 'app-root-path';
+import { mkdir, readFile, stat, writeFile } from 'fs/promises';
 import {
     INIT_ASK_AMOUNT,
     INIT_STAKE_AMOUNT,
+    BLOCKCHAIN_IDENTITY_DIRECTORY,
     WEBSOCKET_PROVIDER_OPTIONS,
 } from '../../../constants/constants.js';
 
@@ -23,6 +27,7 @@ class Web3Service {
         this.logger = logger;
 
         this.rpcNumber = 0;
+        await this.readIdentity();
         await this.initializeWeb3();
         await this.initializeContracts();
     }
@@ -127,6 +132,56 @@ class Web3Service {
         );
 
         await this.logBalances();
+    }
+
+    async readIdentity() {
+        this.config.indentity = await this.getIdentityFromFile();
+    }
+
+    getKeyPath() {
+        let directoryPath;
+        if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
+            directoryPath = join(
+                appRootPath.path,
+                '..',
+                this.config.appDataPath,
+                BLOCKCHAIN_IDENTITY_DIRECTORY,
+            );
+        } else {
+            directoryPath = join(
+                appRootPath.path,
+                this.config.appDataPath,
+                BLOCKCHAIN_IDENTITY_DIRECTORY,
+            );
+        }
+
+        const fullPath = join(directoryPath, this.config.identityFileName);
+        return { fullPath, directoryPath };
+    }
+
+    async getIdentityFromFile() {
+        const keyPath = this.getKeyPath();
+        if (await this.fileExists(keyPath.fullPath)) {
+            const key = (await readFile(keyPath.fullPath)).toString();
+            return key;
+        }
+    }
+
+    async fileExists(filePath) {
+        try {
+            await stat(filePath);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    async saveIdentityInFile() {
+        if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
+            const { fullPath, directoryPath } = this.getKeyPath();
+            await mkdir(directoryPath, { recursive: true });
+            await writeFile(fullPath, this.config.identity);
+        }
     }
 
     async logBalances() {

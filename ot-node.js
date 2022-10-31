@@ -1,8 +1,5 @@
 import DeepExtend from 'deep-extend';
 import rc from 'rc';
-import fs from 'fs';
-import appRootPath from 'app-root-path';
-import path from 'path';
 import EventEmitter from 'events';
 import { createRequire } from 'module';
 import DependencyInjection from './src/service/dependency-injection.js';
@@ -12,6 +9,7 @@ import FileService from './src/service/file-service.js';
 import NetworkPrivateKeyMigration from './src/migration/network-private-key-migration.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
+import BlockchainIdentityMigration from './src/migration/blockchain-identity-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -172,15 +170,7 @@ class OTNode {
                         await blockchainModuleManager.deployIdentity(blockchain);
                         this.logger.info(`Creating profile on network: ${blockchain}`);
                         await blockchainModuleManager.createProfile(blockchain, peerId);
-                        if (
-                            process.env.NODE_ENV !== 'development' &&
-                            process.env.NODE_ENV !== 'test'
-                        ) {
-                            await this.saveIdentityInUserConfigurationFile(
-                                blockchainModuleManager.getIdentity(blockchain),
-                                blockchain,
-                            );
-                        }
+                        await blockchainModuleManager.saveIdentityInFile();
                     }
                     this.logger.info(
                         `${blockchain} blockchain identity is ${blockchainModuleManager.getIdentity(
@@ -309,25 +299,6 @@ class OTNode {
         }
     }
 
-    async saveIdentityInUserConfigurationFile(identity, blockchain) {
-        const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
-        const configFile = JSON.parse(await fs.promises.readFile(configurationFilePath));
-        if (
-            configFile.modules.blockchain &&
-            configFile.modules.blockchain.implementation &&
-            configFile.modules.blockchain.implementation[blockchain] &&
-            configFile.modules.blockchain.implementation[blockchain].config
-        ) {
-            if (!configFile.modules.blockchain.implementation[blockchain].config.identity) {
-                configFile.modules.blockchain.implementation[blockchain].config.identity = identity;
-                await fs.promises.writeFile(
-                    configurationFilePath,
-                    JSON.stringify(configFile, null, 2),
-                );
-            }
-        }
-    }
-
     async removeUpdateFile() {
         const updateFilePath = this.fileService.getUpdateFilePath();
         await this.fileService.removeFile(updateFilePath).catch((error) => {
@@ -344,6 +315,15 @@ class OTNode {
         );
         if (!(await networkPrivateKeyMigration.migrationAlreadyExecuted())) {
             await networkPrivateKeyMigration.migrate();
+        }
+
+        const blockchainIdentityMigration = new BlockchainIdentityMigration(
+            'BlockchainIdentityMigration',
+            this.logger,
+            this.config,
+        );
+        if (!(await blockchainIdentityMigration.migrationAlreadyExecuted())) {
+            await blockchainIdentityMigration.migrate();
         }
     }
 
