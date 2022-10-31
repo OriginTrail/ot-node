@@ -47,6 +47,12 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
+    async saveIdentityInFile(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.saveIdentityInFile();
+        }
+    }
+
     async getEpochs(blockchain, UAI) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getEpochs(UAI);
@@ -119,6 +125,18 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
+    async getShardingTableHead(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getShardingTableHead();
+        }
+    }
+
+    async getShardingTableLength(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getShardingTableLength();
+        }
+    }
+
     async getShardingTablePage(blockchain, startingPeerId, nodesNum) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getShardingTablePage(
@@ -158,7 +176,12 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getAllPastEvents(contractName, onEventsReceived, getLastEvent) {
+    async getAllPastEvents(
+        contractName,
+        onEventsReceived,
+        getLastCheckedBlock,
+        updateLastCheckedBlock,
+    ) {
         const blockchainIds = this.getImplementationNames();
         const getEventsPromises = [];
         for (const blockchainId of blockchainIds) {
@@ -166,7 +189,8 @@ class BlockchainModuleManager extends BaseModuleManager {
                 this.getImplementation(blockchainId).module.getAllPastEvents(
                     contractName,
                     onEventsReceived,
-                    getLastEvent,
+                    getLastCheckedBlock,
+                    updateLastCheckedBlock,
                 ),
             );
         }

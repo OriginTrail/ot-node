@@ -1,10 +1,16 @@
 import Web3 from 'web3';
 import axios from 'axios';
 import { createRequire } from 'module';
+import { join } from 'path';
+import appRootPath from 'app-root-path';
+import { mkdir, readFile, stat, writeFile } from 'fs/promises';
 import {
     INIT_ASK_AMOUNT,
     INIT_STAKE_AMOUNT,
+    BLOCKCHAIN_IDENTITY_DIRECTORY,
     WEBSOCKET_PROVIDER_OPTIONS,
+    DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
+    MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -23,7 +29,9 @@ class Web3Service {
         this.logger = logger;
 
         this.rpcNumber = 0;
+        await this.readIdentity();
         await this.initializeWeb3();
+        this.currentBlock = await this.web3.eth.getBlockNumber();
         await this.initializeContracts();
     }
 
@@ -129,6 +137,56 @@ class Web3Service {
         await this.logBalances();
     }
 
+    async readIdentity() {
+        this.config.identity = await this.getIdentityFromFile();
+    }
+
+    getKeyPath() {
+        let directoryPath;
+        if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
+            directoryPath = join(
+                appRootPath.path,
+                '..',
+                this.config.appDataPath,
+                BLOCKCHAIN_IDENTITY_DIRECTORY,
+            );
+        } else {
+            directoryPath = join(
+                appRootPath.path,
+                this.config.appDataPath,
+                BLOCKCHAIN_IDENTITY_DIRECTORY,
+            );
+        }
+
+        const fullPath = join(directoryPath, this.config.identityFileName);
+        return { fullPath, directoryPath };
+    }
+
+    async getIdentityFromFile() {
+        const keyPath = this.getKeyPath();
+        if (await this.fileExists(keyPath.fullPath)) {
+            const key = (await readFile(keyPath.fullPath)).toString();
+            return key;
+        }
+    }
+
+    async fileExists(filePath) {
+        try {
+            await stat(filePath);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    async saveIdentityInFile() {
+        if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
+            const { fullPath, directoryPath } = this.getKeyPath();
+            await mkdir(directoryPath, { recursive: true });
+            await writeFile(fullPath, this.config.identity);
+        }
+    }
+
     async logBalances() {
         const nativeBalance = await this.getNativeTokenBalance();
         const tokenBalance = await this.getTokenBalance();
@@ -169,11 +227,15 @@ class Web3Service {
     }
 
     async deployIdentity() {
-        const transactionReceipt = await this.deployContract(Identity, [
-            this.getPublicKey(),
-            this.getManagementKey(),
-        ]);
-        this.config.identity = transactionReceipt.contractAddress;
+        if (!this.config.identity) {
+            const transactionReceipt = await this.deployContract(Identity, [
+                this.getPublicKey(),
+                this.getManagementKey(),
+            ]);
+            this.config.identity = transactionReceipt.contractAddress;
+        } else {
+            this.logger.info(`Using existing identity: ${this.config.identity}`);
+        }
     }
 
     async createProfile(peerId) {
@@ -294,29 +356,56 @@ class Web3Service {
         return result;
     }
 
-    async getAllPastEvents(contractName, onEventsReceived, getLastEvent) {
+    async getAllPastEvents(
+        contractName,
+        onEventsReceived,
+        getLastCheckedBlock,
+        updateLastCheckedBlock,
+    ) {
         const contract = this[contractName];
         if (!contract) {
             throw Error(`Error while getting all past events. Unknown contract: ${contractName}`);
         }
 
         const blockchainId = this.getBlockchainId();
+        const lastCheckedBlockObject = await getLastCheckedBlock(blockchainId, contractName);
+
         let fromBlock;
 
-        const lastEvent = await getLastEvent(contractName, blockchainId);
-
-        const currentBlock = await this.getBlockNumber();
-        // TODO test and review from block offsets
-        if (lastEvent) {
-            fromBlock = Math.max(currentBlock - 2000, lastEvent.block + 1);
+        if (
+            this.isOlderThan(
+                lastCheckedBlockObject?.last_checked_timestamp,
+                DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
+            )
+        ) {
+            fromBlock = this.currentBlock - 10;
         } else {
-            fromBlock = Math.max(currentBlock - 100, 0);
+            this.currentBlock = await this.getBlockNumber();
+            fromBlock = lastCheckedBlockObject.last_checked_block + 1;
         }
-        const events = await contract.getPastEvents('allEvents', {
-            fromBlock,
-            toBlock: 'latest',
-        });
 
+        let events = [];
+        if (this.currentBlock - fromBlock > MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH) {
+            let iteration = 1;
+
+            while (fromBlock - MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH > this.currentBlock) {
+                events.concat(
+                    await contract.getPastEvents('allEvents', {
+                        fromBlock,
+                        toBlock: fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH * iteration,
+                    }),
+                );
+                fromBlock += MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH * iteration;
+                iteration += 1;
+            }
+        } else {
+            events = await contract.getPastEvents('allEvents', {
+                fromBlock,
+                toBlock: this.currentBlock,
+            });
+        }
+
+        await updateLastCheckedBlock(blockchainId, this.currentBlock, Date.now(), contractName);
         if (events.length > 0) {
             await onEventsReceived(
                 events.map((event) => ({
@@ -328,6 +417,12 @@ class Web3Service {
                 })),
             );
         }
+    }
+
+    isOlderThan(timestamp, olderThanInMills) {
+        if (!timestamp) return true;
+        const timestampThirtyDaysInPast = new Date().getTime() - olderThanInMills;
+        return timestamp < timestampThirtyDaysInPast;
     }
 
     async deployContract(contract, args) {
@@ -356,8 +451,8 @@ class Web3Service {
                 const tx = {
                     from: this.getPublicKey(),
                     data: encodedABI,
-                    gasPrice: gasPrice || this.web3.utils.toWei('20', 'Gwei'),
-                    gas: gasLimit || this.web3.utils.toWei('900', 'Kwei'),
+                    gasPrice: gasPrice ?? this.web3.utils.toWei('20', 'Gwei'),
+                    gas: gasLimit ?? this.web3.utils.toWei('900', 'Kwei'),
                 };
 
                 const createdTransaction = await this.web3.eth.accounts.signTransaction(
@@ -433,6 +528,24 @@ class Web3Service {
     async getPeer(peerId) {
         try {
             return await this.callContractFunction(this.ShardingTableContract, 'getPeer', [peerId]);
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async getShardingTableHead() {
+        try {
+            return await this.callContractFunction(this.ShardingTableContract, 'head', []);
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async getShardingTableLength() {
+        try {
+            return await this.callContractFunction(this.ShardingTableContract, 'nodesCount', []);
         } catch (e) {
             this.logger.error(`Error on calling contract function. ${e}`);
             return false;
