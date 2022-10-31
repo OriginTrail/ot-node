@@ -52,7 +52,7 @@ class BaseModuleManager {
                 const ModuleClass = require(implementationConfig.package);
                 const module = new ModuleClass();
                 // eslint-disable-next-line no-await-in-loop
-                await module.initialize(implementationConfig.config, this.logger);
+                await module.initialize(implementationConfig.config, this.logger, this.config);
                 this.logger.info(
                     `${this.getName()} module initialized with implementation: ${implementationName}`,
                 );

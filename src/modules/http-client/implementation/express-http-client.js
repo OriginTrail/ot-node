@@ -10,8 +10,11 @@ const authorizationMiddleware = require('./middleware/authorization-middleware')
 const { MAX_FILE_SIZE } = require('../../../constants/constants');
 
 class ExpressHttpClient {
-    async initialize(config, logger) {
-        this.config = config;
+    async initialize(config, logger, customConfig) {
+        this.config = {
+            auth: customConfig.auth,
+            ...config,
+        };
         this.logger = logger;
         this.app = express();
     }
@@ -71,7 +74,13 @@ class ExpressHttpClient {
             }),
         );
 
-        this.app.use(cors());
+        const corsOptions = {};
+
+        if (this.config.auth?.cors?.allowedOrigin) {
+            corsOptions.origin = this.config.auth.cors.allowedOrigin;
+        }
+
+        this.app.use(cors(corsOptions));
         this.app.use(express.json({ limit: `${MAX_FILE_SIZE / (1024 * 1024)}mb` }));
         this.app.use((req, res, next) => {
             this.logger.api(`${req.method}: ${req.url} request received`);
