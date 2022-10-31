@@ -58,6 +58,7 @@ class ExpressHttpClient {
     }
 
     async initializeBeforeMiddlewares(authService) {
+        this._initializeCorsMiddleware();
         this.app.use(authenticationMiddleware(authService));
         this.app.use(authorizationMiddleware(authService));
         this._initializeBaseMiddlewares();
@@ -67,13 +68,7 @@ class ExpressHttpClient {
         // placeholder method for after middlewares
     }
 
-    _initializeBaseMiddlewares() {
-        this.app.use(
-            fileUpload({
-                createParentPath: true,
-            }),
-        );
-
+    _initializeCorsMiddleware() {
         const corsOptions = {};
 
         if (this.config.auth?.cors?.allowedOrigin) {
@@ -81,6 +76,15 @@ class ExpressHttpClient {
         }
 
         this.app.use(cors(corsOptions));
+    }
+
+    _initializeBaseMiddlewares() {
+        this.app.use(
+            fileUpload({
+                createParentPath: true,
+            }),
+        );
+
         this.app.use(express.json({ limit: `${MAX_FILE_SIZE / (1024 * 1024)}mb` }));
         this.app.use((req, res, next) => {
             this.logger.api(`${req.method}: ${req.url} request received`);
