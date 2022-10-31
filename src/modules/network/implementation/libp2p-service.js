@@ -76,9 +76,7 @@ class Libp2pService {
             if (!this.config.privateKey) {
                 id = await _create({ bits: 1024, keyType: 'RSA' });
                 this.config.privateKey = id.toJSON().privKey;
-                if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
-                    await this.savePrivateKeyInFile(this.config.privateKey);
-                }
+                await this.savePrivateKeyInFile(this.config.privateKey);
             } else {
                 id = await createFromPrivKey(this.config.privateKey);
             }

@@ -4,7 +4,7 @@ import EventEmitter from 'events';
 import { createRequire } from 'module';
 import DependencyInjection from './src/service/dependency-injection.js';
 import Logger from './src/logger/logger.js';
-import { MIN_NODE_VERSION } from './src/constants/constants.js';
+import { CONTRACTS, MIN_NODE_VERSION } from './src/constants/constants.js';
 import FileService from './src/service/file-service.js';
 import NetworkPrivateKeyMigration from './src/migration/network-private-key-migration.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
@@ -179,7 +179,7 @@ class OTNode {
                     );
                 } catch (error) {
                     this.logger.warn(
-                        `Unable to create ${blockchain} blockchain profile. Removing implementation.`,
+                        `Unable to create ${blockchain} blockchain profile. Removing implementation. Error: ${error.message}`,
                     );
                     blockchainModuleManager.removeImplementation(blockchain);
                 }
@@ -254,9 +254,16 @@ class OTNode {
             }
         };
 
-        const getLastEvent = async (contractName, blockchainId) => {
-            await repositoryModuleManager.getLastEvent(contractName, blockchainId);
-        };
+        const getLastCheckedBlock = async (blockchainId, contract) =>
+            repositoryModuleManager.getLastCheckedBlock(blockchainId, contract);
+
+        const updateLastCheckedBlock = async (blockchainId, currentBlock, timestamp, contract) =>
+            repositoryModuleManager.updateLastCheckedBlock(
+                blockchainId,
+                currentBlock,
+                timestamp,
+                contract,
+            );
 
         let working = false;
 
@@ -265,14 +272,10 @@ class OTNode {
                 try {
                     working = true;
                     await blockchainModuleManager.getAllPastEvents(
-                        'ShardingTableContract',
+                        CONTRACTS.SHARDING_TABLE_CONTRACT,
                         onEventsReceived,
-                        getLastEvent,
-                    );
-                    await blockchainModuleManager.getAllPastEvents(
-                        'AssetRegistryContract',
-                        onEventsReceived,
-                        getLastEvent,
+                        getLastCheckedBlock,
+                        updateLastCheckedBlock,
                     );
                 } catch (e) {
                     this.logger.error(`Failed to get blockchain events. Error: ${e}`);
@@ -280,7 +283,7 @@ class OTNode {
                     working = false;
                 }
             }
-        }, 5000);
+        }, 10 * 1000);
     }
 
     async initializeTelemetryInjectionService() {

@@ -8,6 +8,10 @@ export const BLOCKCHAIN_IDENTITY_DIRECTORY = 'blockchain';
 
 export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 
+export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000;
+
+export const MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH = 500;
+
 export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
 
 export const MAX_FILE_SIZE = 2621440;
@@ -44,7 +48,7 @@ export const MIN_NODE_VERSION = 16;
 
 export const INIT_ASK_AMOUNT = 5; // TODO: Change value
 
-export const INIT_STAKE_AMOUNT = 50000;
+export const INIT_STAKE_AMOUNT = 3000; // TODO: Change value
 
 export const NETWORK_API_RATE_LIMIT = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
@@ -272,4 +276,12 @@ export const OPERATION_REQUEST_STATUS = {
 export const QUERY_TYPES = {
     SELECT: 'SELECT',
     CONSTRUCT: 'CONSTRUCT',
+};
+
+/**
+ * Contract names
+ * @type {{SHARDING_TABLE_CONTRACT: string}}
+ */
+export const CONTRACTS = {
+    SHARDING_TABLE_CONTRACT: 'ShardingTableContract',
 };

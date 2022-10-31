@@ -348,6 +348,23 @@ class SequelizeRepository {
         );
     }
 
+    async getLastCheckedBlock(blockchainId, contract) {
+        return this.models.blockchain.findOne({
+            attributes: ['last_checked_block', 'last_checked_timestamp'],
+            where: { blockchain_id: blockchainId, contract },
+            raw: true,
+        });
+    }
+
+    async updateLastCheckedBlock(blockchainId, currentBlock, timestamp, contract) {
+        return this.models.blockchain.upsert({
+            blockchain_id: blockchainId,
+            contract,
+            last_checked_block: currentBlock,
+            last_checked_timestamp: timestamp,
+        });
+    }
+
     // EVENT
     async createEventRecord(operationId, name, timestamp, value1, value2, value3) {
         return this.models.event.create({
