@@ -25,7 +25,7 @@ In order to run the local network you fist need to clone the "ot-node" repositor
 ## 1. CLONE OT-NODE REPOSITORY & INSTALL DEPENDENCIES
 After cloning the **ot-node** repository, please checkout to "v6/implementation/ontochain" branch and install dependencies by running:
 ```bash
-git clone https://github.com/OriginTrail/ot-node.git && git checkout v6/implementation/ontochain && cd ot-node/ && npm install
+git clone https://github.com/OriginTrail/ot-node.git && cd ot-node/ && git checkout v6/implementation/ontochain && npm install
 ```
 <br/>
 
