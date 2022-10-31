@@ -21,7 +21,7 @@ class DialPeersCommand extends Command {
         );
 
         if (peersToDial.length) {
-            this.logger.debug(`Dialing ${peersToDial.length} remote peers`);
+            this.logger.trace(`Dialing ${peersToDial.length} remote peers`);
             await Promise.all(
                 peersToDial.map(({ peer_id: peerId }) => this.shardingTableService.dial(peerId)),
             );

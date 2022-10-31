@@ -91,7 +91,7 @@ class ShardingTableService {
                 eventData.nodeId,
             );
 
-            this.logger.debug(
+            this.logger.trace(
                 `${blockchainId}-NodeObjCreated event caught, adding peer id: ${nodeId} to sharding table.`,
             );
 
@@ -113,7 +113,7 @@ class ShardingTableService {
                 event.blockchain_id,
                 eventData.nodeId,
             );
-            this.logger.debug(
+            this.logger.trace(
                 `${blockchainId}-StakeUpdated event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
             );
             this.repositoryModuleManager.updatePeerStake(nodeId, eventData.stake);
@@ -127,7 +127,7 @@ class ShardingTableService {
                 event.blockchain_id,
                 eventData.nodeId,
             );
-            this.logger.debug(
+            this.logger.trace(
                 `${blockchainId}-NodeRemoved event caught, removing peer id: ${nodeId} from sharding table.`,
             );
             this.repositoryModuleManager.removePeerRecord(nodeId);
@@ -173,7 +173,7 @@ class ShardingTableService {
                 try {
                     await this.networkModuleManager.dial(peerId);
                 } catch (error) {
-                    this.logger.warn(`Unable to dial peer ${peerId}. Error: ${error.message}`);
+                    this.logger.trace(`Unable to dial peer ${peerId}. Error: ${error.message}`);
                 }
             }
 
@@ -195,7 +195,7 @@ class ShardingTableService {
                 await this.networkModuleManager.findPeer(peerId);
                 peerInfo = await this.networkModuleManager.getPeerInfo(peerId);
             } catch (error) {
-                this.logger.warn(`Unable to find peer ${peerId}. Error: ${error.message}`);
+                this.logger.trace(`Unable to find peer ${peerId}. Error: ${error.message}`);
             }
         }
 

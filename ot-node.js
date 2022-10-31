@@ -179,7 +179,7 @@ class OTNode {
                     );
                 } catch (error) {
                     this.logger.warn(
-                        `Unable to create ${blockchain} blockchain profile. Removing implementation.`,
+                        `Unable to create ${blockchain} blockchain profile. Removing implementation. Error: ${error.message}`,
                     );
                     blockchainModuleManager.removeImplementation(blockchain);
                 }
@@ -283,7 +283,7 @@ class OTNode {
                     working = false;
                 }
             }
-        }, 5000);
+        }, 10 * 1000);
     }
 
     async initializeTelemetryInjectionService() {
