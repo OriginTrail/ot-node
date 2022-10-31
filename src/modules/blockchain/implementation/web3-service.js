@@ -138,7 +138,7 @@ class Web3Service {
     }
 
     async readIdentity() {
-        this.config.indentity = await this.getIdentityFromFile();
+        this.config.identity = await this.getIdentityFromFile();
     }
 
     getKeyPath() {

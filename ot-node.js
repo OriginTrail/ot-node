@@ -168,9 +168,9 @@ class OTNode {
                         const networkModuleManager = this.container.resolve('networkModuleManager');
                         const peerId = networkModuleManager.getPeerId().toB58String();
                         await blockchainModuleManager.deployIdentity(blockchain);
-                        await blockchainModuleManager.saveIdentityInFile();
                         this.logger.info(`Creating profile on network: ${blockchain}`);
                         await blockchainModuleManager.createProfile(blockchain, peerId);
+                        await blockchainModuleManager.saveIdentityInFile();
                     }
                     this.logger.info(
                         `${blockchain} blockchain identity is ${blockchainModuleManager.getIdentity(
