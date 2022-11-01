@@ -93,6 +93,13 @@ class CommandExecutor {
         }
 
         const handler = this.commandResolver.resolve(command.name);
+        if (!handler) {
+            this.logger.warn(`Command '${command.name}' will not be executed.`);
+            await this._update(command, {
+                status: COMMAND_STATUS.UNKNOWN,
+            });
+            return;
+        }
         if (command.deadline_at && now > command.deadline_at) {
             this.logger.warn(`Command ${command.name} and ID ${command.id} is too late...`);
             await this._update(command, {
@@ -231,6 +238,10 @@ class CommandExecutor {
     async _startDefaultCommand(name) {
         await this._delete(name);
         const handler = this.commandResolver.resolve(name);
+        if (!handler) {
+            this.logger.warn(`Command '${name}' will not be executed.`);
+            return;
+        }
         await this.add(handler.default(), DEFAULT_COMMAND_DELAY_IN_MILLS, true);
         if (this.verboseLoggingEnabled) {
             this.logger.trace(`Permanent command ${name} created.`);
@@ -347,7 +358,9 @@ class CommandExecutor {
         }
         if (!command.data) {
             const commandInstance = this.commandResolver.resolve(command.name);
-            command.data = commandInstance.pack(command.data);
+            if (commandInstance) {
+                command.data = commandInstance.pack(command.data);
+            }
         }
         command.status = COMMAND_STATUS.PENDING;
         const opts = {};
