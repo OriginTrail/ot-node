@@ -272,6 +272,9 @@ class SequelizeRepository {
                 blockchain_id: {
                     [Sequelize.Op.eq]: blockchain,
                 },
+                last_seen: {
+                    [Sequelize.Op.gte]: Sequelize.col('last_dialed'),
+                },
             },
             raw: true,
         });
@@ -325,10 +328,11 @@ class SequelizeRepository {
     }
 
     async updatePeerRecordLastSeenAndLastDialed(peerId) {
+        const now = new Date();
         await this.models.shard.update(
             {
-                last_dialed: new Date(),
-                last_seen: new Date(),
+                last_dialed: now,
+                last_seen: now,
             },
             {
                 where: { peer_id: peerId },
