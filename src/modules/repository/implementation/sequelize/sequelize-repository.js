@@ -277,9 +277,14 @@ class SequelizeRepository {
         });
     }
 
-    async getPeersToDial(limit) {
+    async getPeersToDial(limit, dialFrequencyMillis) {
         return this.models.shard.findAll({
             attributes: ['peer_id'],
+            where: {
+                last_dialed: {
+                    [Sequelize.Op.lt]: new Date(Date.now() - dialFrequencyMillis),
+                },
+            },
             order: [['last_dialed', 'asc']],
             limit,
             raw: true,

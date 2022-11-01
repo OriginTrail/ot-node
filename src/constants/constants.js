@@ -76,6 +76,8 @@ export const DIAL_PEERS_COMMAND_FREQUENCY_MILLS = 30 * 1000;
 
 export const DIAL_PEERS_CONCURRENCY = 10;
 
+export const MIN_DIAL_FREQUENCY_MILLIS = 60 * 60 * 1000;
+
 export const PERMANENT_COMMANDS = [
     'otnodeUpdateCommand',
     'sendTelemetryCommand',
