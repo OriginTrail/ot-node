@@ -47,6 +47,12 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
+    async saveIdentityInFile(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.saveIdentityInFile();
+        }
+    }
+
     async getEpochs(blockchain, UAI) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getEpochs(UAI);
@@ -104,6 +110,102 @@ class BlockchainModuleManager extends BaseModuleManager {
     async restartService(blockchain) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.restartService();
+        }
+    }
+
+    async getAssertionIssuer(blockchain, assertionId) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getAssertionIssuer(assertionId);
+        }
+    }
+
+    async getPeer(blockchain, peerId) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getPeer(peerId);
+        }
+    }
+
+    async getShardingTableHead(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getShardingTableHead();
+        }
+    }
+
+    async getShardingTableLength(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getShardingTableLength();
+        }
+    }
+
+    async getShardingTablePage(blockchain, startingPeerId, nodesNum) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getShardingTablePage(
+                startingPeerId,
+                nodesNum,
+            );
+        }
+    }
+
+    async getShardingTableFull(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getShardingTableFull();
+        }
+    }
+
+    async pushPeerBack(blockchain, peerId, ask, stake) {
+        if (this.getImplementation(blockchain)) {
+            await this.getImplementation(blockchain).module.pushPeerBack(peerId, ask, stake);
+        }
+    }
+
+    async pushPeerFront(blockchain, peerId, ask, stake) {
+        if (this.getImplementation(blockchain)) {
+            await this.getImplementation(blockchain).module.pushPeerFront(peerId, ask, stake);
+        }
+    }
+
+    async updatePeerParams(blockchain, peerId, ask, stake) {
+        if (this.getImplementation(blockchain)) {
+            await this.getImplementation(blockchain).module.updatePeerParams(peerId, ask, stake);
+        }
+    }
+
+    async removePeer(blockchain, peerId) {
+        if (this.getImplementation(blockchain)) {
+            await this.getImplementation(blockchain).module.removePeer(peerId);
+        }
+    }
+
+    async getAllPastEvents(
+        contractName,
+        onEventsReceived,
+        getLastCheckedBlock,
+        updateLastCheckedBlock,
+    ) {
+        const blockchainIds = this.getImplementationNames();
+        const getEventsPromises = [];
+        for (const blockchainId of blockchainIds) {
+            getEventsPromises.push(
+                this.getImplementation(blockchainId).module.getAllPastEvents(
+                    contractName,
+                    onEventsReceived,
+                    getLastCheckedBlock,
+                    updateLastCheckedBlock,
+                ),
+            );
+        }
+        return Promise.all(getEventsPromises);
+    }
+
+    convertAsciiToHex(blockchain, peerId) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.convertAsciiToHex(peerId);
+        }
+    }
+
+    convertHexToAscii(blockchain, peerIdHex) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.convertHexToAscii(peerIdHex);
         }
     }
 }

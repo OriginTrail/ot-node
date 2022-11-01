@@ -1,5 +1,5 @@
 import { OPERATION_ID_STATUS } from '../../constants/constants.js';
-import BaseController from './base-controller.js';
+import BaseController from './base-http-api-controller.js';
 
 const availableOperations = ['publish', 'get', 'assertions:search', 'entities:search', 'query'];
 
@@ -10,7 +10,7 @@ class ResultController extends BaseController {
         this.operationIdService = ctx.operationIdService;
     }
 
-    async handleHttpApiOperationResultRequest(req, res) {
+    async handleOperationResultRequest(req, res) {
         if (!availableOperations.includes(req.params.operation)) {
             return this.returnResponse(res, 400, {
                 code: 400,

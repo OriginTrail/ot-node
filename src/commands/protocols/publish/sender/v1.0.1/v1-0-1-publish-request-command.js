@@ -1,5 +1,5 @@
-import ProtocolRequestCommand from '../../common/protocol-request-command.js';
-import { ERROR_TYPE, PUBLISH_TYPES } from '../../../../constants/constants.js';
+import ProtocolRequestCommand from '../../../common/protocol-request-command.js';
+import { ERROR_TYPE, PUBLISH_TYPES } from '../../../../../constants/constants.js';
 
 class PublishRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
@@ -40,7 +40,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
      */
     default(map) {
         const command = {
-            name: 'publishRequestCommand',
+            name: 'v1_0_1PublishRequestCommand',
             delay: 0,
             transactional: false,
         };

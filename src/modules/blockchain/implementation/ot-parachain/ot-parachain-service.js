@@ -15,10 +15,9 @@ class OtParachainService extends Web3Service {
         this.config = config;
         this.logger = logger;
         this.rpcNumber = 0;
-
-        await Promise.all([this.initializeWeb3(), this.initializeParachainProvider()]);
+        await this.initializeParachainProvider();
         await this.checkEvmAccountsMapping();
-        await this.initializeContracts();
+        await super.initialize(config, logger);
     }
 
     async checkEvmAccountsMapping() {
@@ -101,7 +100,7 @@ class OtParachainService extends Web3Service {
         if (this.config.gasPriceOracleLink) return super.getGasPrice();
 
         try {
-            return this.web3.eth.getGasPrice();
+            return (await this.web3.eth.getGasPrice()) * 1000000;
         } catch (error) {
             return undefined;
         }
@@ -136,6 +135,10 @@ class OtParachainService extends Web3Service {
     async getNativeTokenBalance() {
         const nativeBalance = await this.web3.eth.getBalance(this.getPublicKey());
         return nativeBalance / 10 ** NATIVE_TOKEN_DECIMALS;
+    }
+
+    getBlockchainId() {
+        return 'otp';
     }
 }
 

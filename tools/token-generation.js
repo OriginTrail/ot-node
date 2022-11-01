@@ -6,9 +6,9 @@ import rc from 'rc';
 import fs from 'fs-extra';
 import { v4 as uuid } from 'uuid';
 import { createRequire } from 'module';
-import Logger from '../src/logger/logger';
-import RepositoryModuleManager from '../src/modules/repository/repository-module-manager';
-import jwtUtil from '../src/service/util/jwt-util';
+import Logger from '../src/logger/logger.js';
+import RepositoryModuleManager from '../src/modules/repository/repository-module-manager.js';
+import jwtUtil from '../src/service/util/jwt-util.js';
 
 const require = createRequire(import.meta.url);
 const configjson = require('../config/config.json');

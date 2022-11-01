@@ -3,11 +3,11 @@ class HttpApiRouter {
         this.config = ctx.config;
         this.httpClientModuleManager = ctx.httpClientModuleManager;
 
-        this.getController = ctx.getController;
-        this.publishController = ctx.publishController;
-        this.searchController = ctx.searchController;
-        this.resultController = ctx.resultController;
-        this.infoController = ctx.infoController;
+        this.getHttpApiController = ctx.getHttpApiController;
+        this.publishHttpApiController = ctx.publishHttpApiController;
+        this.searchHttpApiController = ctx.searchHttpApiController;
+        this.resultHttpApiController = ctx.resultHttpApiController;
+        this.infoHttpApiController = ctx.infoHttpApiController;
 
         this.jsonSchemaService = ctx.jsonSchemaService;
     }
@@ -23,7 +23,7 @@ class HttpApiRouter {
         this.httpClientModuleManager.post(
             '/publish',
             (req, res) => {
-                this.publishController.handleHttpApiPublishRequest(req, res);
+                this.publishHttpApiController.handlePublishRequest(req, res);
             },
             { rateLimit: true, requestSchema: this.jsonSchemaService.publishSchema() },
         );
@@ -31,7 +31,7 @@ class HttpApiRouter {
         this.httpClientModuleManager.post(
             '/query',
             (req, res) => {
-                this.searchController.handleHttpApiQueryRequest(req, res);
+                this.searchHttpApiController.handleQueryRequest(req, res);
             },
             { requestSchema: this.jsonSchemaService.querySchema() },
         );
@@ -39,17 +39,17 @@ class HttpApiRouter {
         this.httpClientModuleManager.post(
             '/get',
             (req, res) => {
-                this.getController.handleHttpApiGetRequest(req, res);
+                this.getHttpApiController.handleGetRequest(req, res);
             },
             { rateLimit: true, requestSchema: this.jsonSchemaService.getSchema() },
         );
 
         this.httpClientModuleManager.get('/:operation/:operationId', (req, res) => {
-            this.resultController.handleHttpApiOperationResultRequest(req, res);
+            this.resultHttpApiController.handleOperationResultRequest(req, res);
         });
 
         this.httpClientModuleManager.get('/info', (req, res) => {
-            this.infoController.handleHttpApiInfoRequest(req, res);
+            this.infoHttpApiController.handleInfoRequest(req, res);
         });
     }
 

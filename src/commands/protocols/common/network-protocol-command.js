@@ -27,7 +27,7 @@ class NetworkProtocolCommand extends Command {
                     keyword,
                     minimumAckResponses: this.operationService.getMinimumAckResponses(),
                     errorType: this.errorType,
-                    networkProtocol: this.operationService.getNetworkProtocol(),
+                    networkProtocols: this.operationService.getNetworkProtocols(),
                 },
                 transactional: false,
             }),
@@ -41,10 +41,6 @@ class NetworkProtocolCommand extends Command {
     getKeywords() {
         // overridden by subclasses
         return [];
-    }
-
-    getNextCommandData() {
-        // overridden by subclasses
     }
 
     /**

@@ -1,5 +1,5 @@
-import ProtocolRequestCommand from '../../common/protocol-request-command.js';
-import { ERROR_TYPE } from '../../../../constants/constants.js';
+import ProtocolRequestCommand from '../../../common/protocol-request-command.js';
+import { ERROR_TYPE } from '../../../../../constants/constants.js';
 
 class GetRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
@@ -10,9 +10,7 @@ class GetRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { assertionId } = command.data;
-
-        return { assertionId };
+        return { assertionId: command.data.assertionId };
     }
 
     /**
@@ -22,7 +20,7 @@ class GetRequestCommand extends ProtocolRequestCommand {
      */
     default(map) {
         const command = {
-            name: 'getRequestCommand',
+            name: 'v1_0_0GetRequestCommand',
             delay: 0,
             retries: 0,
             transactional: false,

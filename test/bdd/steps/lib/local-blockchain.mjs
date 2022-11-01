@@ -1,20 +1,37 @@
 /* eslint-disable max-len */
 import Ganache from 'ganache';
 import Web3 from 'web3';
-import { createRequire } from 'module';
+import { readFile } from 'fs/promises';
 
-const require = createRequire(import.meta.url);
-const hub = require('dkg-evm-module/build/contracts/Hub.json');
-const uaiRegistry = require('dkg-evm-module/build/contracts/UAIRegistry.json');
-const assertionRegistry = require('dkg-evm-module/build/contracts/AssertionRegistry.json');
-const assetRegistry = require('dkg-evm-module/build/contracts/AssetRegistry.json');
-const erc20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
-const profile = require('dkg-evm-module/build/contracts/Profile.json');
-const profileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
-const accountPrivateKeys = require('../api/datasets/privateKeys.json');
+const hub = JSON.parse(await readFile('node_modules/dkg-evm-module/build/contracts/Hub.json'));
+const shardingTable = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/ShardingTable.json'),
+);
+const uaiRegistry = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/UAIRegistry.json'),
+);
+const assertionRegistry = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/AssertionRegistry.json'),
+);
+const assetRegistry = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/AssetRegistry.json'),
+);
+const erc20Token = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/ERC20Token.json'),
+);
+const profile = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/Profile.json'),
+);
+const profileStorage = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/ProfileStorage.json'),
+);
+const accountPrivateKeys = JSON.parse(
+    await readFile('test/bdd/steps/api/datasets/privateKeys.json'),
+);
 
 const sources = {
     hub,
+    shardingTable,
     uaiRegistry,
     assertionRegistry,
     assetRegistry,
@@ -53,9 +70,9 @@ const wallets = accountPrivateKeys.map((privateKey) => ({
  */
 class LocalBlockchain {
     constructor(options = {}) {
-        this.logger = options.logger || console;
-        this.port = options.port || 7545;
-        this.name = options.name || 'ganache';
+        this.logger = options.logger ?? console;
+        this.port = options.port ?? 7545;
+        this.name = options.name ?? 'ganache';
         this.server = Ganache.server({
             logging: {
                 logger: {
@@ -89,6 +106,9 @@ class LocalBlockchain {
                 this.logger.info('Contracts have been deployed!');
                 this.logger.info(
                     `\t Hub contract address: \t\t\t\t\t${this.contracts.hub.instance._address}`,
+                );
+                this.logger.info(
+                    `\t Sharding table contract address: \t\t\t${this.contracts.shardingTable.instance._address}`,
                 );
                 this.logger.info(
                     `\t AssertionRegistry contract address: \t\t\t${this.contracts.assertionRegistry.instance._address}`,
@@ -131,10 +151,17 @@ class LocalBlockchain {
     }
 
     async deployContracts() {
-        const deployingWallet = this.getWallets()[7];
+        const deployingWallet = this.getWallets()[0];
 
         await this.deploy('hub', deployingWallet, []);
         await this.setContractAddress('Owner', deployingWallet.address, deployingWallet);
+
+        await this.deploy('shardingTable', deployingWallet, [this.contracts.hub.instance._address]);
+        await this.setContractAddress(
+            'ShardingTable',
+            this.contracts.shardingTable.instance._address,
+            deployingWallet,
+        );
 
         await this.deploy('uaiRegistry', deployingWallet, [this.contracts.hub.instance._address]);
         await this.setContractAddress(
@@ -146,7 +173,6 @@ class LocalBlockchain {
         await this.deploy('assertionRegistry', deployingWallet, [
             this.contracts.hub.instance._address,
         ]);
-
         await this.setContractAddress(
             'AssertionRegistry',
             this.contracts.assertionRegistry.instance._address,
@@ -154,19 +180,16 @@ class LocalBlockchain {
         );
 
         await this.deploy('assetRegistry', deployingWallet, [this.contracts.hub.instance._address]);
-
         await this.setContractAddress(
             'AssetRegistry',
             this.contracts.assetRegistry.instance._address,
             deployingWallet,
         );
-
         await this.setupRole(
             this.contracts.uaiRegistry,
             this.contracts.assetRegistry.instance._address,
         );
 
-        // this.logger.log('Deploying profileStorageContract');
         await this.deploy('profileStorage', deployingWallet, [
             this.contracts.hub.instance._address,
         ]);
@@ -177,7 +200,6 @@ class LocalBlockchain {
         );
 
         await this.deploy('erc20Token', deployingWallet, [this.contracts.hub.instance._address]);
-
         await this.setContractAddress(
             'Token',
             this.contracts.erc20Token.instance._address,
@@ -186,7 +208,6 @@ class LocalBlockchain {
         await this.setupRole(this.contracts.erc20Token, deployingWallet.address);
 
         await this.deploy('profile', deployingWallet, [this.contracts.hub.instance._address]);
-
         await this.setContractAddress(
             'Profile',
             this.contracts.profile.instance._address,
@@ -256,14 +277,14 @@ class LocalBlockchain {
         // this.logger.info(`Attempting to get ${contractName} contract address from Hub contract`);
         return hubContract.methods
             .getContractAddress(contractName)
-            .call({ from: this.getWallets()[7].address });
+            .call({ from: this.getWallets()[0].address });
     }
 
     async setupRole(contract, contractAddress) {
         // this.logger.info(`Setting role for address: ${contract.instance._address}`);
         contract.instance.methods
             .setupRole(contractAddress)
-            .send({ from: this.getWallets()[7].address, gas: 3000000 })
+            .send({ from: this.getWallets()[0].address, gas: 3000000 })
             .on('error', (error) => this.logger.error('Unable to setup role. Error: ', error));
     }
 

@@ -1,14 +1,15 @@
 import DeepExtend from 'deep-extend';
 import rc from 'rc';
-import fs from 'fs';
-import appRootPath from 'app-root-path';
-import path from 'path';
 import EventEmitter from 'events';
 import { createRequire } from 'module';
 import DependencyInjection from './src/service/dependency-injection.js';
 import Logger from './src/logger/logger.js';
-import { MIN_NODE_VERSION } from './src/constants/constants.js';
+import { CONTRACTS, MIN_NODE_VERSION } from './src/constants/constants.js';
 import FileService from './src/service/file-service.js';
+import NetworkPrivateKeyMigration from './src/migration/network-private-key-migration.js';
+import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
+import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
+import BlockchainIdentityMigration from './src/migration/blockchain-identity-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -17,12 +18,16 @@ const configjson = require('./config/config.json');
 class OTNode {
     constructor(config) {
         this.initializeConfiguration(config);
-        this.logger = new Logger(this.config.logLevel, this.config.telemetry.enabled);
+        this.initializeLogger();
+        this.initializeFileService();
+        this.initializeAutoUpdaterModule();
         this.checkNodeVersion();
     }
 
     async start() {
+        await this.checkForUpdate();
         await this.removeUpdateFile();
+        await this.executeMigrations();
 
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
@@ -40,13 +45,14 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
-        await this.saveNetworkModulePeerIdAndPrivKey();
         await this.createProfiles();
 
-        await this.initializeControllers();
         await this.initializeCommandExecutor();
+        await this.initializeShardingTableService();
         await this.initializeTelemetryInjectionService();
 
+        await this.initializeRouters();
+        await this.startListeningOnBlockchainEvents();
         this.logger.info('Node is up and running!');
     }
 
@@ -62,6 +68,22 @@ class OTNode {
         this.logger.warn('======================================================');
     }
 
+    initializeLogger() {
+        this.logger = new Logger(this.config.logLevel, this.config.telemetry.enabled);
+    }
+
+    initializeFileService() {
+        this.fileService = new FileService({ config: this.config, logger: this.logger });
+    }
+
+    initializeAutoUpdaterModule() {
+        this.autoUpdaterModuleManager = new OtAutoUpdater();
+        this.autoUpdaterModuleManager.initialize(
+            this.config.modules.autoUpdater.implementation['ot-auto-updater'].config,
+            this.logger,
+        );
+    }
+
     initializeConfiguration(userConfig) {
         const defaultConfig = JSON.parse(JSON.stringify(configjson[process.env.NODE_ENV]));
 
@@ -73,14 +95,6 @@ class OTNode {
         if (!this.config.configFilename) {
             // set default user configuration filename
             this.config.configFilename = '.origintrail_noderc';
-        }
-        const fileService = new FileService({ config: this.config });
-        const updateFilePath = fileService.getUpdateFilePath();
-        if (fs.existsSync(updateFilePath)) {
-            this.config.otNodeUpdated = true;
-            fileService.removeFile(updateFilePath).catch((error) => {
-                this.logger.warn(`Unable to remove update file. Error: ${error}`);
-            });
         }
     }
 
@@ -105,7 +119,7 @@ class OTNode {
             this.logger.info(`All modules initialized!`);
         } catch (e) {
             this.logger.error(`Module initialization failed. Error message: ${e.message}`);
-            process.exit(1);
+            this.stop(1);
         }
     }
 
@@ -116,50 +130,47 @@ class OTNode {
         this.logger.info('Event emitter initialized');
     }
 
-    async initializeControllers() {
+    async initializeRouters() {
         try {
-            this.logger.info('Initializing http api router');
+            this.logger.info('Initializing http api and rpc router');
             const httpApiRouter = this.container.resolve('httpApiRouter');
-            await httpApiRouter.initialize();
-        } catch (e) {
-            this.logger.error(
-                `Http api router initialization failed. Error message: ${e.message}, ${e.stackTrace}`,
-            );
-        }
-
-        try {
-            this.logger.info('Initializing rpc router');
             const rpcRouter = this.container.resolve('rpcRouter');
-            await rpcRouter.initialize();
+
+            await Promise.all([
+                httpApiRouter.initialize().catch((err) => {
+                    this.logger.error(
+                        `Http api router initialization failed. Error message: ${err.message}, ${err.stackTrace}`,
+                    );
+                    this.stop(1);
+                }),
+                rpcRouter.initialize().catch((err) => {
+                    this.logger.error(
+                        `RPC router initialization failed. Error message: ${err.message}, ${err.stackTrace}`,
+                    );
+                    this.stop(1);
+                }),
+            ]);
+            this.logger.info('Routers initialized successfully');
         } catch (e) {
-            this.logger.error(
-                `RPC router initialization failed. Error message: ${e.message}, ${e.stackTrace}`,
-            );
+            this.logger.error(`Failed to initialize routers: ${e.message}, ${e.stackTrace}`);
+            this.stop(1);
         }
     }
 
     async createProfiles() {
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const createProfilesPromises = blockchainModuleManager
-            .getImplementationsNames()
+            .getImplementationNames()
             .map(async (blockchain) => {
                 try {
                     if (!blockchainModuleManager.identityExists(blockchain)) {
                         this.logger.info(`Creating blockchain identity on network: ${blockchain}`);
                         const networkModuleManager = this.container.resolve('networkModuleManager');
-                        const peerId = networkModuleManager.getPeerId();
+                        const peerId = networkModuleManager.getPeerId().toB58String();
                         await blockchainModuleManager.deployIdentity(blockchain);
                         this.logger.info(`Creating profile on network: ${blockchain}`);
                         await blockchainModuleManager.createProfile(blockchain, peerId);
-                        if (
-                            process.env.NODE_ENV !== 'development' &&
-                            process.env.NODE_ENV !== 'test'
-                        ) {
-                            await this.saveIdentityInUserConfigurationFile(
-                                blockchainModuleManager.getIdentity(blockchain),
-                                blockchain,
-                            );
-                        }
+                        await blockchainModuleManager.saveIdentityInFile();
                     }
                     this.logger.info(
                         `${blockchain} blockchain identity is ${blockchainModuleManager.getIdentity(
@@ -168,7 +179,7 @@ class OTNode {
                     );
                 } catch (error) {
                     this.logger.warn(
-                        `Unable to create ${blockchain} blockchain profile. Removing implementation.`,
+                        `Unable to create ${blockchain} blockchain profile. Removing implementation. Error: ${error.message}`,
                     );
                     blockchainModuleManager.removeImplementation(blockchain);
                 }
@@ -176,18 +187,9 @@ class OTNode {
 
         await Promise.all(createProfilesPromises);
 
-        if (!blockchainModuleManager.getImplementationsNames().length) {
-            this.logger.info(`Unable to create blockchain profiles. OT-node shutting down...`);
-            process.exit(1);
-        }
-    }
-
-    async saveNetworkModulePeerIdAndPrivKey() {
-        const networkModuleManager = this.container.resolve('networkModuleManager');
-        const privateKey = networkModuleManager.getPrivateKey();
-
-        if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
-            await this.savePrivateKeyAndPeerIdInUserConfigurationFile(privateKey);
+        if (!blockchainModuleManager.getImplementationNames().length) {
+            this.logger.error(`Unable to create blockchain profiles. OT-node shutting down...`);
+            this.stop(1);
         }
     }
 
@@ -201,7 +203,87 @@ class OTNode {
             this.logger.error(
                 `Command executor initialization failed. Error message: ${e.message}`,
             );
+            this.stop(1);
         }
+    }
+
+    async initializeShardingTableService() {
+        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        const initShardingServices = blockchainModuleManager
+            .getImplementationNames()
+            .map(async (blockchain) => {
+                try {
+                    const shardingTableService = this.container.resolve('shardingTableService');
+                    shardingTableService.initialize(blockchain);
+                    this.logger.info(
+                        `Sharding Table Service initialized successfully for '${blockchain}' blockchain`,
+                    );
+                } catch (e) {
+                    this.logger.error(
+                        `Sharding table service initialization for '${blockchain}' blockchain failed.
+                        Error message: ${e.message}`,
+                    );
+                    blockchainModuleManager.removeImplementation(blockchain);
+                }
+            });
+        await Promise.all(initShardingServices);
+
+        if (!blockchainModuleManager.getImplementationNames().length) {
+            this.logger.error(
+                `Unable to initialize sharding table service. OT-node shutting down...`,
+            );
+            this.stop(1);
+        }
+    }
+
+    async startListeningOnBlockchainEvents() {
+        this.logger.info('Starting blockchain event listener');
+        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
+        const eventEmitter = this.container.resolve('eventEmitter');
+
+        const onEventsReceived = async (events) => {
+            if (events.length > 0) {
+                const insertedEvents = await repositoryModuleManager.insertBlockchainEvents(events);
+                insertedEvents.forEach((event) => {
+                    if (event) {
+                        const eventName = `${event.blockchain_id}-${event.event}`;
+                        eventEmitter.emit(eventName, event);
+                    }
+                });
+            }
+        };
+
+        const getLastCheckedBlock = async (blockchainId, contract) =>
+            repositoryModuleManager.getLastCheckedBlock(blockchainId, contract);
+
+        const updateLastCheckedBlock = async (blockchainId, currentBlock, timestamp, contract) =>
+            repositoryModuleManager.updateLastCheckedBlock(
+                blockchainId,
+                currentBlock,
+                timestamp,
+                contract,
+            );
+
+        let working = false;
+
+        setInterval(async () => {
+            if (!working) {
+                try {
+                    working = true;
+                    await blockchainModuleManager.getAllPastEvents(
+                        CONTRACTS.SHARDING_TABLE_CONTRACT,
+                        onEventsReceived,
+                        getLastCheckedBlock,
+                        updateLastCheckedBlock,
+                    );
+                } catch (e) {
+                    this.logger.error(`Failed to get blockchain events. Error: ${e}`);
+                } finally {
+                    working = false;
+                }
+            }
+        }, 10 * 1000);
     }
 
     async initializeTelemetryInjectionService() {
@@ -220,69 +302,48 @@ class OTNode {
         }
     }
 
-    async savePrivateKeyAndPeerIdInUserConfigurationFile(privateKey) {
-        const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
-        const configFile = JSON.parse(await fs.promises.readFile(configurationFilePath));
-
-        if (!configFile.modules.network) {
-            configFile.modules.network = {
-                implementation: {
-                    'libp2p-service': {
-                        config: {},
-                    },
-                },
-            };
-        } else if (!configFile.modules.network.implementation) {
-            configFile.modules.network.implementation = {
-                'libp2p-service': {
-                    config: {},
-                },
-            };
-        } else if (!configFile.modules.network.implementation['libp2p-service']) {
-            configFile.modules.network.implementation['libp2p-service'] = {
-                config: {},
-            };
-        }
-        if (!configFile.modules.network.implementation['libp2p-service'].config.privateKey) {
-            configFile.modules.network.implementation['libp2p-service'].config.privateKey =
-                privateKey;
-            await fs.promises.writeFile(configurationFilePath, JSON.stringify(configFile, null, 2));
-        }
-    }
-
-    async saveIdentityInUserConfigurationFile(identity, blockchain) {
-        const configurationFilePath = path.join(appRootPath.path, '..', this.config.configFilename);
-        const configFile = JSON.parse(await fs.promises.readFile(configurationFilePath));
-        if (
-            configFile.modules.blockchain &&
-            configFile.modules.blockchain.implementation &&
-            configFile.modules.blockchain.implementation[blockchain] &&
-            configFile.modules.blockchain.implementation[blockchain].config
-        ) {
-            if (!configFile.modules.blockchain.implementation[blockchain].config.identity) {
-                configFile.modules.blockchain.implementation[blockchain].config.identity = identity;
-                await fs.promises.writeFile(
-                    configurationFilePath,
-                    JSON.stringify(configFile, null, 2),
-                );
-            }
-        }
-    }
-
     async removeUpdateFile() {
-        const fileService = new FileService({ config: this.config, logger: this.logger });
-        const updateFilePath = fileService.getUpdateFilePath();
-        if (await fileService.fileExists(updateFilePath)) {
-            this.config.otNodeUpdated = true;
-            await fileService.removeFile(updateFilePath).catch((error) => {
-                this.logger.warn(`Unable to remove update file. Error: ${error}`);
-            });
+        const updateFilePath = this.fileService.getUpdateFilePath();
+        await this.fileService.removeFile(updateFilePath).catch((error) => {
+            this.logger.warn(`Unable to remove update file. Error: ${error}`);
+        });
+        this.config.otNodeUpdated = true;
+    }
+
+    async executeMigrations() {
+        const networkPrivateKeyMigration = new NetworkPrivateKeyMigration(
+            'NetworkPrivateKeyMigration',
+            this.logger,
+            this.config,
+        );
+        if (!(await networkPrivateKeyMigration.migrationAlreadyExecuted())) {
+            await networkPrivateKeyMigration.migrate();
+        }
+
+        const blockchainIdentityMigration = new BlockchainIdentityMigration(
+            'BlockchainIdentityMigration',
+            this.logger,
+            this.config,
+        );
+        if (!(await blockchainIdentityMigration.migrationAlreadyExecuted())) {
+            await blockchainIdentityMigration.migrate();
         }
     }
 
-    stop() {
+    async checkForUpdate() {
+        const autoUpdaterCommand = new OtnodeUpdateCommand({
+            logger: this.logger,
+            config: this.config,
+            fileService: this.fileService,
+            autoUpdaterModuleManager: this.autoUpdaterModuleManager,
+        });
+
+        await autoUpdaterCommand.execute();
+    }
+
+    stop(code = 0) {
         this.logger.info('Stopping node...');
-        process.exit(0);
+        process.exit(code);
     }
 }
 

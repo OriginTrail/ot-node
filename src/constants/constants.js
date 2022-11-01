@@ -1,12 +1,26 @@
 export const SCHEMA_CONTEXT = 'http://schema.org/';
 
+export const LIBP2P_KEY_DIRECTORY = 'libp2p';
+
+export const LIBP2P_KEY_FILENAME = 'privateKey';
+
+export const BLOCKCHAIN_IDENTITY_DIRECTORY = 'blockchain';
+
 export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
+
+export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000;
+
+export const MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH = 500;
 
 export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
 
 export const MAX_FILE_SIZE = 2621440;
 
 export const PUBLISH_TYPES = { ASSERTION: 'assertion', ASSET: 'asset', INDEX: 'index' };
+
+export const DHT_TYPES = { DUAL: 'dual', WAN: 'wan', LAN: 'lan' };
+
+export const PEER_OFFLINE_LIMIT = 24 * 60 * 60 * 1000;
 
 /**
  * Triple store media types
@@ -32,7 +46,9 @@ export const XML_DATA_TYPES = {
 
 export const MIN_NODE_VERSION = 16;
 
-export const INIT_STAKE_AMOUNT = 3000;
+export const INIT_ASK_AMOUNT = 5; // TODO: Change value
+
+export const INIT_STAKE_AMOUNT = 3000; // TODO: Change value
 
 export const NETWORK_API_RATE_LIMIT = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
@@ -56,11 +72,16 @@ export const REMOVE_SESSION_COMMAND_DELAY = 2 * 60 * 1000;
 
 export const OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
+export const DIAL_PEERS_COMMAND_FREQUENCY_MILLS = 30 * 1000;
+
+export const DIAL_PEERS_CONCURRENCY = 10;
+
 export const PERMANENT_COMMANDS = [
     'otnodeUpdateCommand',
     'sendTelemetryCommand',
     'operationIdCleanerCommand',
     'commandsCleanerCommand',
+    'dialPeersCommand',
 ];
 
 export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
@@ -102,6 +123,7 @@ export const NETWORK_MESSAGE_TYPES = {
 export const MAX_OPEN_SESSIONS = 10;
 
 export const ERROR_TYPE = {
+    DIAL_PROTOCOL_ERROR: 'DialProtocolError',
     PUBLISH: {
         PUBLISH_START_ERROR: 'PublishStartError',
         PUBLISH_ROUTE_ERROR: 'PublishRouteError',
@@ -136,6 +158,16 @@ export const OPERATION_ID_STATUS = {
     COMPLETED: 'COMPLETED',
     FIND_NODES_START: 'FIND_NODES_START',
     FIND_NODES_END: 'FIND_NODES_END',
+    FIND_NODES_LOCAL_START: 'FIND_NODES_LOCAL_START',
+    FIND_NODES_LOCAL_END: 'FIND_NODES_LOCAL_END',
+    FIND_NODES_OPEN_CONNECTION_START: 'FIND_NODES_OPEN_CONNECTION_START',
+    FIND_NODES_OPEN_CONNECTION_END: 'FIND_NODES_OPEN_CONNECTION_END',
+    FIND_NODES_CREATE_STREAM_START: 'FIND_NODES_CREATE_STREAM_START',
+    FIND_NODES_CREATE_STREAM_END: 'FIND_NODES_CREATE_STREAM_END',
+    FIND_NODES_SEND_MESSAGE_START: 'FIND_NODES_SEND_MESSAGE_START',
+    FIND_NODES_SEND_MESSAGE_END: 'FIND_NODES_SEND_MESSAGE_END',
+    DIAL_PROTOCOL_START: 'DIAL_PROTOCOL_START',
+    DIAL_PROTOCOL_END: 'DIAL_PROTOCOL_END',
     PUBLISH: {
         VALIDATING_ASSERTION_START: 'VALIDATING_ASSERTION_START',
         VALIDATING_ASSERTION_END: 'VALIDATING_ASSERTION_END',
@@ -163,7 +195,7 @@ export const OPERATION_ID_STATUS = {
         GET_REMOTE_START: 'GET_REMOTE_START',
         GET_REMOTE_END: 'GET_REMOTE_END',
         GET_FETCH_FROM_NODES_START: 'GET_FETCH_FROM_NODES_START',
-        GET_FETCH_FROM_NODES_END: 'GET_FETCH_FROM_NODES_START',
+        GET_FETCH_FROM_NODES_END: 'GET_FETCH_FROM_NODES_END',
         GET_END: 'GET_END',
     },
     SEARCH_ASSERTIONS: {
@@ -210,6 +242,7 @@ export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 export const COMMAND_STATUS = {
     FAILED: 'FAILED',
     EXPIRED: 'EXPIRED',
+    UNKNOWN: 'UNKNOWN',
     STARTED: 'STARTED',
     PENDING: 'PENDING',
     COMPLETED: 'COMPLETED',
@@ -221,29 +254,17 @@ export const COMMAND_STATUS = {
  *  Network protocols
  */
 export const NETWORK_PROTOCOLS = {
-    STORE: '/store/1.0.0',
-    GET: '/get/1.0.0',
-    SEARCH: '/search/1.0.0',
+    STORE: ['/store/1.0.1', '/store/1.0.0'],
+    GET: ['/get/1.0.0'],
 };
 
-export const PUBLISH_STATUS = {
+export const OPERATION_STATUS = {
     IN_PROGRESS: 'IN_PROGRESS',
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
 };
 
-export const GET_STATUS = {
-    IN_PROGRESS: 'IN_PROGRESS',
-    FAILED: 'FAILED',
-    COMPLETED: 'COMPLETED',
-};
-
-export const PUBLISH_REQUEST_STATUS = {
-    FAILED: 'FAILED',
-    COMPLETED: 'COMPLETED',
-};
-
-export const GET_REQUEST_STATUS = {
+export const OPERATION_REQUEST_STATUS = {
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
 };
@@ -255,4 +276,12 @@ export const GET_REQUEST_STATUS = {
 export const QUERY_TYPES = {
     SELECT: 'SELECT',
     CONSTRUCT: 'CONSTRUCT',
+};
+
+/**
+ * Contract names
+ * @type {{SHARDING_TABLE_CONTRACT: string}}
+ */
+export const CONTRACTS = {
+    SHARDING_TABLE_CONTRACT: 'ShardingTableContract',
 };

@@ -11,10 +11,9 @@ class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     }
 
     getNextCommandData(command) {
-        const { ual, assertionId } = command.data;
         return {
-            ual,
-            assertionId,
+            ual: command.data.ual,
+            assertionId: command.data.assertionId,
         };
     }
 

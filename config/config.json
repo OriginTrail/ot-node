@@ -36,6 +36,22 @@
                     "libp2p-service": {
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
+                            "dht": {
+                                "kBucketSize": 20,
+                                "type": "dual"
+                            },
+                            "connectionManager": {
+                                "autoDial": true,
+                                "autoDialInterval": 10e3,
+                                "dialTimeout": 2e3
+                            },
+                            "peerRouting": {
+                                "refreshManager": {
+                                    "enabled": true,
+                                    "interval": 6e5,
+                                    "bootDelay": 2e3
+                                }
+                            },
                             "port": 9000,
                             "bootstrap": []
                         }
@@ -109,7 +125,8 @@
                         "config": {
                             "blockchainTitle": "ganache",
                             "networkId": "ganache::testnet",
-                            "hubContractAddress": "0xF21dD87cFC5cF5D073398833AFe5EFC543b78a00",
+                            "identityFileName": "ganache",
+                            "hubContractAddress": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
                             "rpcEndpoints": ["http://localhost:7545"],
                             "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
                         }
@@ -118,7 +135,8 @@
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "otp::testnet",
-                            "hubContractAddress": "0x256736AEb3f19AC6738E9F4D10C9B61da71CEB9F",
+                            "identityFileName": "otp",
+                            "hubContractAddress": "0x707233a55bD035C6Bc732196CA4dbffa63CbA169",
                             "rpcEndpoints": ["wss://lofar.origin-trail.network"]
                         }
                     },
@@ -126,6 +144,7 @@
                         "package": "./blockchain/implementation/polygon/polygon-service.js",
                         "config": {
                             "networkId": "polygon::testnet",
+                            "identityFileName": "polygon",
                             "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
                             "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
                             "rpcEndpoints": [
@@ -140,10 +159,10 @@
                         "package": "./blockchain/implementation/polygon/eth-service.js",
                         "config": {
                             "networkId": "eth::rinkeby",
+                            "identityFileName": "rinkeby",
                             "hubContractAddress": "",
                             "gasPriceOracleLink": "",
-                            "rpcEndpoints": [
-                            ]
+                            "rpcEndpoints": []
                         }
                     }
                 }
@@ -191,6 +210,36 @@
                     }
                 }
             },
+            "network": {
+                "enabled": true,
+                "implementation": {
+                    "libp2p-service": {
+                        "package": "./network/implementation/libp2p-service.js",
+                        "config": {
+                            "dht": {
+                                "kBucketSize": 20,
+                                "type": "lan"
+                            },
+                            "connectionManager": {
+                                "autoDial": true,
+                                "autoDialInterval": 10e3,
+                                "dialTimeout": 2e3
+                            },
+                            "peerRouting": {
+                                "refreshManager": {
+                                    "enabled": true,
+                                    "interval": 6e5,
+                                    "bootDelay": 2e3
+                                }
+                            },
+                            "port": 9000,
+                            "bootstrap": [
+                                "/ip4/0.0.0.0/tcp/9000/p2p/QmWyf3dtqJnhuCpzEDTNmNFYc5tjxTrXhGcUUmGHdg2gtj"
+                            ]
+                        }
+                    }
+                }
+            },
             "repository": {
                 "enabled": true,
                 "implementation": {
@@ -216,8 +265,9 @@
                         "package": "./blockchain/implementation/ganache/ganache-service.js",
                         "config": {
                             "blockchainTitle": "ganache",
+                            "identityFileName": "ganache",
                             "networkId": "ganache::testnet",
-                            "hubContractAddress": "0xF21dD87cFC5cF5D073398833AFe5EFC543b78a00",
+                            "hubContractAddress": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
                             "rpcEndpoints": ["http://localhost:7545"]
                         }
                     }
@@ -296,13 +346,26 @@
                     "libp2p-service": {
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
+                            "dht": {
+                                "kBucketSize": 20,
+                                "type": "wan"
+                            },
+                            "connectionManager": {
+                                "autoDial": true,
+                                "autoDialInterval": 10e3,
+                                "dialTimeout": 2e3
+                            },
+                            "peerRouting": {
+                                "refreshManager": {
+                                    "enabled": true,
+                                    "interval": 6e5,
+                                    "bootDelay": 2e3
+                                }
+                            },
                             "port": 9000,
                             "bootstrap": [
-                                "/ip4/139.59.174.24/tcp/9000/p2p/QmU7p61f8qgzCtfTEUynJaqnsLRN4QExjtWfsMRQ7oiMuS",
-                                "/ip4/142.93.166.214/tcp/9000/p2p/QmXPcjsvURvyC4hEbwgirRue7KzcvpvYgsaPUharRMJAcP",
-                                "/ip4/178.128.117.211/tcp/9000/p2p/QmVdXs1PhoXcXYWGEH6Q4BnGN9uNNUcm4ctMt2Pttq8Dgc",
-                                "/ip4/3.125.64.137/tcp/9000/p2p/QmQWvBBAJKTwPTzHr47LZaLWFwCESE97iwJwmYb7spZuHt",
-                                "/ip4/3.126.112.75/tcp/9000/p2p/QmeB5srsgkwwhkVieHXunjsVsGkV9MyL4EqV122u1wZHoj"
+                                "/ip4/164.92.138.30/tcp/9000/p2p/QmbiZQm18JefDizrQwbRhPgkaLykTLyrUEpeMWuKJHXuUM",
+                                "/ip4/139.59.145.152/tcp/9000/p2p/Qme2oF6afixBjLYjF5CYeC73d5dygsTq8P7BPQp31NVkye"
                             ]
                         }
                     }
@@ -351,7 +414,8 @@
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "parachain::testnet",
-                            "hubContractAddress": "0x256736AEb3f19AC6738E9F4D10C9B61da71CEB9F",
+                            "hubContractAddress": "0x707233a55bD035C6Bc732196CA4dbffa63CbA169",
+                            "identityFileName": "otp",
                             "rpcEndpoints": ["wss://lofar.origin-trail.network"]
                         }
                     },
@@ -359,6 +423,7 @@
                         "package": "./blockchain/implementation/polygon/polygon-service.js",
                         "config": {
                             "networkId": "polygon::testnet",
+                            "identityFileName": "polygon",
                             "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
                             "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
                             "rpcEndpoints": [
@@ -530,6 +595,7 @@
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "otp::mainnet",
+                            "identityFileName": "otp",
                             "hubContractAddress": "",
                             "rpcEndpoints": []
                         }
@@ -538,6 +604,7 @@
                         "package": "./blockchain/implementation/polygon/polygon-service.js",
                         "config": {
                             "networkId": "polygon::mainnet",
+                            "identityFileName": "polygon",
                             "hubContractAddress": "",
                             "gasPriceOracleLink": "",
                             "rpcEndpoints": []
@@ -550,7 +617,6 @@
             "publish": 5,
             "get": 1
         },
-        "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",

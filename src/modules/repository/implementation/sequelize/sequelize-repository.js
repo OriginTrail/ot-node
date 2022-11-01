@@ -243,6 +243,128 @@ class SequelizeRepository {
         });
     }
 
+    // Sharding Table
+    async createManyPeerRecords(peers) {
+        return this.models.shard.bulkCreate(peers, {
+            ignoreDuplicates: true,
+        });
+    }
+
+    async createPeerRecord(peerId, blockchain, ask, stake, lastSeen, sha256) {
+        return this.models.shard.create(
+            {
+                peer_id: peerId,
+                blockchain_id: blockchain,
+                ask,
+                stake,
+                last_seen: lastSeen,
+                sha256,
+            },
+            {
+                ignoreDuplicates: true,
+            },
+        );
+    }
+
+    async getAllPeerRecords(blockchain) {
+        return this.models.shard.findAll({
+            where: {
+                blockchain_id: {
+                    [Sequelize.Op.eq]: blockchain,
+                },
+            },
+            raw: true,
+        });
+    }
+
+    async getPeersToDial(limit) {
+        return this.models.shard.findAll({
+            attributes: ['peer_id'],
+            order: [['last_dialed', 'asc']],
+            limit,
+            raw: true,
+        });
+    }
+
+    async updatePeerAsk(peerId, ask) {
+        await this.models.shard.update(
+            {
+                ask,
+            },
+            {
+                where: { peer_id: peerId },
+            },
+        );
+    }
+
+    async updatePeerStake(peerId, stake) {
+        await this.models.shard.update(
+            {
+                stake,
+            },
+            {
+                where: { peer_id: peerId },
+            },
+        );
+    }
+
+    async updatePeerRecordLastDialed(peerId) {
+        await this.models.shard.update(
+            {
+                last_dialed: new Date(),
+            },
+            {
+                where: { peer_id: peerId },
+            },
+        );
+    }
+
+    async updatePeerRecordLastSeenAndLastDialed(peerId) {
+        await this.models.shard.update(
+            {
+                last_dialed: new Date(),
+                last_seen: new Date(),
+            },
+            {
+                where: { peer_id: peerId },
+            },
+        );
+    }
+
+    async removePeerRecord(peerId) {
+        await this.models.shard.destroy({
+            where: {
+                peer_id: peerId,
+            },
+        });
+    }
+
+    async updatePeerLastSeen(peerId, lastSeen) {
+        await this.models.shard.update(
+            { last_seen: lastSeen },
+            {
+                where: { peer_id: peerId },
+            },
+        );
+    }
+
+    async getLastCheckedBlock(blockchainId, contract) {
+        return this.models.blockchain.findOne({
+            attributes: ['last_checked_block', 'last_checked_timestamp'],
+            where: { blockchain_id: blockchainId, contract },
+            raw: true,
+        });
+    }
+
+    async updateLastCheckedBlock(blockchainId, currentBlock, timestamp, contract) {
+        return this.models.blockchain.upsert({
+            blockchain_id: blockchainId,
+            contract,
+            last_checked_block: currentBlock,
+            last_checked_timestamp: timestamp,
+        });
+    }
+
     // EVENT
     async createEventRecord(operationId, name, timestamp, value1, value2, value3) {
         return this.models.event.create({
@@ -281,7 +403,7 @@ class SequelizeRepository {
                     },
                 },
             },
-            order: [['timestamp', 'ASC']],
+            order: [['timestamp', 'asc']],
             limit:
                 Math.floor(HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR / 60) *
                 SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES,
@@ -309,7 +431,7 @@ class SequelizeRepository {
     }
 
     async getUser(username) {
-        return this.models.User.findOne({
+        return this.models.user.findOne({
             where: {
                 name: username,
             },
@@ -317,16 +439,16 @@ class SequelizeRepository {
     }
 
     async saveToken(tokenId, userId, tokenName, expiresAt) {
-        return this.models.Token.create({
+        return this.models.token.create({
             id: tokenId,
-            userId,
-            expiresAt,
+            user_id: userId,
+            expires_at: expiresAt,
             name: tokenName,
         });
     }
 
     async isTokenRevoked(tokenId) {
-        const token = await this.models.Token.findByPk(tokenId);
+        const token = await this.models.token.findByPk(tokenId);
 
         return token && token.revoked;
     }
@@ -343,6 +465,94 @@ class SequelizeRepository {
         );
 
         return abilities.map((e) => e.name);
+    }
+
+    async insertBlockchainEvents(blockchainEvents) {
+        const insertPromises = [];
+        for (const event of blockchainEvents) {
+            insertPromises.push(
+                new Promise((resolve, reject) => {
+                    this.blockchainEventExists(
+                        event.contract,
+                        event.event,
+                        event.data,
+                        event.block,
+                        event.blockchainId,
+                    )
+                        .then(async (exists) => {
+                            if (!exists) {
+                                await this.models.blockchain_event
+                                    .create({
+                                        contract: event.contract,
+                                        event: event.event,
+                                        data: event.data,
+                                        block: event.block,
+                                        blockchain_id: event.blockchainId,
+                                        processed: 0,
+                                    })
+                                    .then((result) => resolve(result));
+                            }
+                            resolve(null);
+                        })
+                        .catch((error) => {
+                            reject(error);
+                        });
+                }),
+            );
+        }
+        return Promise.all(insertPromises);
+    }
+
+    async blockchainEventExists(contract, event, data, block, blockchainId) {
+        const dbEvent = await this.models.blockchain_event.findOne({
+            where: {
+                contract,
+                event,
+                data,
+                block,
+                blockchain_id: blockchainId,
+            },
+        });
+        return !!dbEvent;
+    }
+
+    async markBlockchainEventAsProcessed(
+        id,
+        contract = null,
+        event = null,
+        data = null,
+        block = null,
+        blockchainId = null,
+    ) {
+        let condition;
+        if (id) {
+            condition = {
+                where: {
+                    id,
+                },
+            };
+        } else {
+            condition = {
+                where: {
+                    contract,
+                    event,
+                    data,
+                    block,
+                    blockchain_id: blockchainId,
+                },
+            };
+        }
+        return this.models.blockchain_event.update({ processed: true }, condition);
+    }
+
+    async getLastEvent(contractName, blockchainId) {
+        return this.models.blockchain_event.findOne({
+            where: {
+                contract: contractName,
+                blockchain_id: blockchainId,
+            },
+            order: [['block', 'DESC']],
+        });
     }
 }
 
