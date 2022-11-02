@@ -119,12 +119,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getPeer(blockchain, peerId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getPeer(peerId);
-        }
-    }
-
     async getShardingTableHead(blockchain) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getShardingTableHead();
