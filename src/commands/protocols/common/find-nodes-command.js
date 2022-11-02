@@ -34,6 +34,13 @@ class FindNodesCommand extends Command {
         }
 
         this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${keyword}`);
+        this.logger.trace(
+            `Found neighbourhood: ${JSON.stringify(
+                closestNodes.map((node) => node.id),
+                null,
+                2,
+            )}`,
+        );
 
         const batchSize = 2 * minimumAckResponses;
         if (closestNodes.length < batchSize) {

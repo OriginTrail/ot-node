@@ -525,15 +525,6 @@ class Web3Service {
         ]);
     }
 
-    async getPeer(peerId) {
-        try {
-            return await this.callContractFunction(this.ShardingTableContract, 'getPeer', [peerId]);
-        } catch (e) {
-            this.logger.error(`Error on calling contract function. ${e}`);
-            return false;
-        }
-    }
-
     async getShardingTableHead() {
         try {
             return await this.callContractFunction(this.ShardingTableContract, 'head', []);
