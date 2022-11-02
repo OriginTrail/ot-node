@@ -239,16 +239,17 @@ class Web3Service {
     }
 
     async createProfile(peerId) {
+        const stakeAmount = Web3.utils.toWei(INIT_STAKE_AMOUNT, 'ether');
         await this.executeContractFunction(this.TokenContract, 'increaseAllowance', [
             this.ProfileContract.options.address,
-            INIT_STAKE_AMOUNT,
+            stakeAmount,
         ]);
 
         await this.executeContractFunction(this.ProfileContract, 'createProfile', [
             this.getManagementKey(),
             this.convertAsciiToHex(peerId),
             INIT_ASK_AMOUNT,
-            INIT_STAKE_AMOUNT,
+            stakeAmount,
             this.getIdentity(),
         ]);
     }
@@ -308,7 +309,7 @@ class Web3Service {
 
     async callContractFunction(contractInstance, functionName, args) {
         let result;
-        while (!result) {
+        while (result === undefined) {
             try {
                 // eslint-disable-next-line no-await-in-loop
                 result = await contractInstance.methods[functionName](...args).call();
@@ -323,7 +324,7 @@ class Web3Service {
 
     async executeContractFunction(contractInstance, functionName, args) {
         let result;
-        while (!result) {
+        while (result === undefined) {
             try {
                 /* eslint-disable no-await-in-loop */
                 const gasPrice = await this.getGasPrice();
