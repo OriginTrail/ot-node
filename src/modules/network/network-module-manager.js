@@ -5,15 +5,9 @@ class NetworkModuleManager extends BaseModuleManager {
         return 'network';
     }
 
-    serializePeers(peer) {
+    async onPeerConnected(listener) {
         if (this.initialized) {
-            return this.getImplementation().module.serializePeers(peer);
-        }
-    }
-
-    deserializePeers(serializedPeers) {
-        if (this.initialized) {
-            return this.getImplementation().module.deserializePeers(serializedPeers);
+            return this.getImplementation().module.onPeerConnected(listener);
         }
     }
 
@@ -23,45 +17,15 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    async findNodes(key) {
-        if (this.initialized) {
-            return this.getImplementation().module.findNodes(key);
-        }
-    }
-
-    async findNodesLocal(key) {
-        if (this.initialized) {
-            return this.getImplementation().module.findNodesLocal(key);
-        }
-    }
-
     getMultiaddrs() {
         if (this.initialized) {
             return this.getImplementation().module.getMultiaddrs();
         }
     }
 
-    getRoutingTableSize() {
-        if (this.initialized) {
-            return this.getImplementation().module.getRoutingTableSize();
-        }
-    }
-
     getPeers() {
         if (this.initialized) {
             return this.getImplementation().module.getPeers();
-        }
-    }
-
-    async getProtocols(peerId) {
-        if (this.initialized) {
-            return this.getImplementation().module.getProtocols(peerId);
-        }
-    }
-
-    async getAddresses(peerId) {
-        if (this.initialized) {
-            return this.getImplementation().module.getAddresses(peerId);
         }
     }
 
@@ -109,15 +73,33 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    getPrivateKey() {
-        if (this.initialized) {
-            return this.getImplementation().module.getPrivateKey();
-        }
-    }
-
     async healthCheck() {
         if (this.initialized) {
             return this.getImplementation().module.healthCheck();
+        }
+    }
+
+    async findPeer(peerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.findPeer(peerId);
+        }
+    }
+
+    async dial(peerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.dial(peerId);
+        }
+    }
+
+    async getPeerInfo(peerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getPeerInfo(peerId);
+        }
+    }
+
+    async toHash(key) {
+        if (this.initialized) {
+            return this.getImplementation().module.toHash(key);
         }
     }
 }

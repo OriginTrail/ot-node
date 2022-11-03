@@ -92,7 +92,7 @@ class BaseModuleManager {
         return this.handlers[name];
     }
 
-    getImplementationsNames() {
+    getImplementationNames() {
         return Object.keys(this.handlers);
     }
 

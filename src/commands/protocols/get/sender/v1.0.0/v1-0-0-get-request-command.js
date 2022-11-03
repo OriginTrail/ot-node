@@ -10,9 +10,7 @@ class GetRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { assertionId } = command.data;
-
-        return { assertionId };
+        return { assertionId: command.data.assertionId };
     }
 
     /**

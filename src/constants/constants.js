@@ -4,7 +4,13 @@ export const LIBP2P_KEY_DIRECTORY = 'libp2p';
 
 export const LIBP2P_KEY_FILENAME = 'privateKey';
 
+export const BLOCKCHAIN_IDENTITY_DIRECTORY = 'blockchain';
+
 export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
+
+export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000;
+
+export const MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH = 500;
 
 export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
 
@@ -13,6 +19,8 @@ export const MAX_FILE_SIZE = 2621440;
 export const PUBLISH_TYPES = { ASSERTION: 'assertion', ASSET: 'asset', INDEX: 'index' };
 
 export const DHT_TYPES = { DUAL: 'dual', WAN: 'wan', LAN: 'lan' };
+
+export const PEER_OFFLINE_LIMIT = 24 * 60 * 60 * 1000;
 
 /**
  * Triple store media types
@@ -38,7 +46,9 @@ export const XML_DATA_TYPES = {
 
 export const MIN_NODE_VERSION = 16;
 
-export const INIT_STAKE_AMOUNT = 3000;
+export const INIT_ASK_AMOUNT = 5; // TODO: Change value
+
+export const INIT_STAKE_AMOUNT = '50000';
 
 export const NETWORK_API_RATE_LIMIT = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
@@ -62,11 +72,16 @@ export const REMOVE_SESSION_COMMAND_DELAY = 2 * 60 * 1000;
 
 export const OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
+export const DIAL_PEERS_COMMAND_FREQUENCY_MILLS = 30 * 1000;
+
+export const DIAL_PEERS_CONCURRENCY = 10;
+
 export const PERMANENT_COMMANDS = [
     'otnodeUpdateCommand',
     'sendTelemetryCommand',
     'operationIdCleanerCommand',
     'commandsCleanerCommand',
+    'dialPeersCommand',
 ];
 
 export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
@@ -261,4 +276,12 @@ export const OPERATION_REQUEST_STATUS = {
 export const QUERY_TYPES = {
     SELECT: 'SELECT',
     CONSTRUCT: 'CONSTRUCT',
+};
+
+/**
+ * Contract names
+ * @type {{SHARDING_TABLE_CONTRACT: string}}
+ */
+export const CONTRACTS = {
+    SHARDING_TABLE_CONTRACT: 'ShardingTableContract',
 };

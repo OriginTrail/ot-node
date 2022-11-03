@@ -60,7 +60,28 @@ class GetLatestAssertionIdCommand extends Command {
             }
         }
 
-        return this.continueSequence({ ...command.data, assertionId }, command.sequence);
+        // TODO: move this after local get
+        let blockchain;
+        try {
+            blockchain = await Promise.any(
+                this.blockchainModuleManager
+                    .getImplementationNames()
+                    .map((blockchainId) =>
+                        this.blockchainModuleManager
+                            .getAssertionIssuer(blockchain, assertionId)
+                            .then(() => blockchainId),
+                    ),
+            );
+        } catch (error) {
+            this.logger.warn(
+                `Assertion id ${assertionId} not found on any of the supported blockchains.`,
+            );
+        }
+
+        return this.continueSequence(
+            { ...command.data, assertionId, blockchain },
+            command.sequence,
+        );
     }
 
     /**

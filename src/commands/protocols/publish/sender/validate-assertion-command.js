@@ -27,17 +27,12 @@ class ValidateAssertionCommand extends Command {
             const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
             this.logger.info(`Validating assertion with ual: ${ual}`);
 
-            let blockchainAssertionId;
-            try {
-                blockchainAssertionId = await this.operationService.getAssertion(
-                    blockchain,
-                    contract,
-                    tokenId,
-                );
-            } catch (error) {
-                this.logger.warn(
-                    `Unable to validate blockchain data for ual: ${ual}. Received error: ${error.message}, retrying.`,
-                );
+            const blockchainAssertionId = await this.operationService.getAssertion(
+                blockchain,
+                contract,
+                tokenId,
+            );
+            if (!blockchainAssertionId) {
                 return Command.retry();
             }
             if (blockchainAssertionId !== assertionId) {
