@@ -364,8 +364,8 @@
                             },
                             "port": 9000,
                             "bootstrap": [
-                                "/ip4/64.225.99.151/tcp/9000/p2p/QmawsTRqaLPyLQ5PfStpFcpQW4bvNQ59zV1by2G5aJHuVn",
-                                "/ip4/18.157.122.121/tcp/9000/p2p/QmfDebvsKNwCggBBmEWB43cAZtTa2umMsnRvBnMV4sY5th"
+                                "/ip4/164.92.138.30/tcp/9000/p2p/QmbiZQm18JefDizrQwbRhPgkaLykTLyrUEpeMWuKJHXuUM",
+                                "/ip4/139.59.145.152/tcp/9000/p2p/Qme2oF6afixBjLYjF5CYeC73d5dygsTq8P7BPQp31NVkye"
                             ]
                         }
                     }
