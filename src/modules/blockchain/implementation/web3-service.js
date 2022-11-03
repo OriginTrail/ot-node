@@ -238,6 +238,13 @@ class Web3Service {
         }
     }
 
+    async profileExists(identity) {
+        const nodeId = await this.callContractFunction(this.ProfileStorageContract, 'getNodeId', [
+            identity,
+        ]);
+        return nodeId != null;
+    }
+
     async createProfile(peerId) {
         const stakeAmount = Web3.utils.toWei(INIT_STAKE_AMOUNT, 'ether');
         await this.executeContractFunction(this.TokenContract, 'increaseAllowance', [
