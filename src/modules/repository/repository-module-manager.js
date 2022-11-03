@@ -145,6 +145,80 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    // Sharding Table
+    async createManyPeerRecords(peers) {
+        if (this.initialized) {
+            return this.getImplementation().module.createManyPeerRecords(peers);
+        }
+    }
+
+    async createPeerRecord(peerId, blockchain, ask, stake, lastSeen, sha256) {
+        if (this.initialized) {
+            return this.getImplementation().module.createPeerRecord(
+                peerId,
+                blockchain,
+                ask,
+                stake,
+                lastSeen,
+                sha256,
+            );
+        }
+    }
+
+    async getAllPeerRecords(blockchain) {
+        if (this.initialized) {
+            return this.getImplementation().module.getAllPeerRecords(blockchain);
+        }
+    }
+
+    async getPeersToDial(limit) {
+        if (this.initialized) {
+            return this.getImplementation().module.getPeersToDial(limit);
+        }
+    }
+
+    async removePeerRecord(peerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.removePeerRecord(peerId);
+        }
+    }
+
+    async updatePeerRecordLastDialed(peerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.updatePeerRecordLastDialed(peerId);
+        }
+    }
+
+    async updatePeerRecordLastSeenAndLastDialed(peerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.updatePeerRecordLastSeenAndLastDialed(peerId);
+        }
+    }
+
+    async updatePeerAsk(peerId, ask) {
+        if (this.initialized) {
+            return this.getImplementation().module.updatePeerAsk(peerId, ask);
+        }
+    }
+
+    async updatePeerStake(peerId, stake) {
+        if (this.initialized) {
+            return this.getImplementation().module.updatePeerStake(peerId, stake);
+        }
+    }
+
+    async getNeighbourhood(assertionId, r2) {
+        if (this.initialized) {
+            return this.getImplementation().module.getNeighbourhood(assertionId, r2);
+        }
+    }
+
+    async updatePeerLastSeen(peerId, lastSeen) {
+        if (this.initialized) {
+            return this.getImplementation().module.updatePeerLastSeen(peerId, lastSeen);
+        }
+    }
+
     // EVENT
     async createEventRecord(
         operationId,
@@ -199,6 +273,41 @@ class RepositoryModuleManager extends BaseModuleManager {
     async getTokenAbilities(tokenId) {
         if (this.initialized) {
             return this.getImplementation().module.getTokenAbilities(tokenId);
+        }
+    }
+
+    async insertBlockchainEvents(events) {
+        if (this.initialized) {
+            return this.getImplementation().module.insertBlockchainEvents(events);
+        }
+    }
+
+    async getLastEvent(contractName, blockchainId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getLastEvent(contractName, blockchainId);
+        }
+    }
+
+    async markBlockchainEventAsProcessed() {
+        if (this.initialized) {
+            return this.getImplementation().module.markBlockchainEventAsProcessed();
+        }
+    }
+
+    async getLastCheckedBlock(blockchainId, contract) {
+        if (this.initialized) {
+            return this.getImplementation().module.getLastCheckedBlock(blockchainId, contract);
+        }
+    }
+
+    async updateLastCheckedBlock(blockchainId, currentBlock, timestamp, contract) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateLastCheckedBlock(
+                blockchainId,
+                currentBlock,
+                timestamp,
+                contract,
+            );
         }
     }
 }

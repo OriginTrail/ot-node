@@ -14,17 +14,6 @@ class NetworkGetCommand extends NetworkProtocolCommand {
         return [assertionId];
     }
 
-    getNextCommandData(command) {
-        const { assertionId } = command.data;
-        return {
-            assertionId,
-        };
-    }
-
-    getFindNodesCommand() {
-        return 'findNodesLocalCommand';
-    }
-
     /**
      * Builds default networkGetCommand
      * @param map
