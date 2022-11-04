@@ -171,9 +171,9 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async getPeersToDial(limit) {
+    async getPeersToDial(limit, dialFrequencyMillis) {
         if (this.initialized) {
-            return this.getImplementation().module.getPeersToDial(limit);
+            return this.getImplementation().module.getPeersToDial(limit, dialFrequencyMillis);
         }
     }
 

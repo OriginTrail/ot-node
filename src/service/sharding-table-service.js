@@ -168,16 +168,16 @@ class ShardingTableService {
     async dial(peerId) {
         const { addresses } = await this.findPeerAddressAndProtocols(peerId);
         if (addresses.length) {
-            if (peerId !== this.networkModuleManager.getPeerId().toB58String()) {
-                this.logger.trace(`Dialing peer ${peerId}.`);
-                try {
+            try {
+                if (peerId !== this.networkModuleManager.getPeerId().toB58String()) {
+                    this.logger.trace(`Dialing peer ${peerId}.`);
                     await this.networkModuleManager.dial(peerId);
-                } catch (error) {
-                    this.logger.trace(`Unable to dial peer ${peerId}. Error: ${error.message}`);
                 }
+                await this.repositoryModuleManager.updatePeerRecordLastSeenAndLastDialed(peerId);
+            } catch (error) {
+                this.logger.trace(`Unable to dial peer ${peerId}. Error: ${error.message}`);
+                await this.repositoryModuleManager.updatePeerRecordLastDialed(peerId);
             }
-
-            await this.repositoryModuleManager.updatePeerRecordLastSeenAndLastDialed(peerId);
         } else {
             await this.repositoryModuleManager.updatePeerRecordLastDialed(peerId);
         }
