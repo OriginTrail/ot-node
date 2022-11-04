@@ -102,6 +102,12 @@ class NetworkModuleManager extends BaseModuleManager {
             return this.getImplementation().module.toHash(key);
         }
     }
+
+    async identify(connection) {
+        if (this.initialized) {
+            return this.getImplementation().module.identify(connection);
+        }
+    }
 }
 
 export default NetworkModuleManager;

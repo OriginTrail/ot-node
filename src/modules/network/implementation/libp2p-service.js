@@ -662,6 +662,10 @@ class Libp2pService {
     async getPeerInfo(peerId) {
         return this.node.peerStore.get(createFromB58String(peerId));
     }
+
+    async identify(connection) {
+        return this.node.identifyService.identify(connection);
+    }
 }
 
 export default Libp2pService;

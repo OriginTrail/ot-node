@@ -171,7 +171,8 @@ class ShardingTableService {
             try {
                 if (peerId !== this.networkModuleManager.getPeerId().toB58String()) {
                     this.logger.trace(`Dialing peer ${peerId}.`);
-                    await this.networkModuleManager.dial(peerId);
+                    const connection = await this.networkModuleManager.dial(peerId);
+                    await this.networkModuleManager.identify(connection);
                 }
                 await this.repositoryModuleManager.updatePeerRecordLastSeenAndLastDialed(peerId);
             } catch (error) {
