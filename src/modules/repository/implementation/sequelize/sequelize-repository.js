@@ -272,14 +272,22 @@ class SequelizeRepository {
                 blockchain_id: {
                     [Sequelize.Op.eq]: blockchain,
                 },
+                last_seen: {
+                    [Sequelize.Op.gte]: Sequelize.col('last_dialed'),
+                },
             },
             raw: true,
         });
     }
 
-    async getPeersToDial(limit) {
+    async getPeersToDial(limit, dialFrequencyMillis) {
         return this.models.shard.findAll({
             attributes: ['peer_id'],
+            where: {
+                last_dialed: {
+                    [Sequelize.Op.lt]: new Date(Date.now() - dialFrequencyMillis),
+                },
+            },
             order: [['last_dialed', 'asc']],
             limit,
             raw: true,
@@ -320,10 +328,11 @@ class SequelizeRepository {
     }
 
     async updatePeerRecordLastSeenAndLastDialed(peerId) {
+        const now = new Date();
         await this.models.shard.update(
             {
-                last_dialed: new Date(),
-                last_seen: new Date(),
+                last_dialed: now,
+                last_seen: now,
             },
             {
                 where: { peer_id: peerId },
