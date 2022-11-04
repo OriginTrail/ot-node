@@ -47,6 +47,12 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
+    async profileExists(blockchain, identity) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.profileExists(identity);
+        }
+    }
+
     async saveIdentityInFile(blockchain) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.saveIdentityInFile();
