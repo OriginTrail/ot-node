@@ -165,18 +165,18 @@ class OTNode {
                 try {
                     if (!blockchainModuleManager.identityExists(blockchain)) {
                         this.logger.info(`Creating blockchain identity on network: ${blockchain}`);
-                        const networkModuleManager = this.container.resolve('networkModuleManager');
-                        const peerId = networkModuleManager.getPeerId().toB58String();
                         await blockchainModuleManager.deployIdentity(blockchain);
-                        this.logger.info(`Creating profile on network: ${blockchain}`);
-                        await blockchainModuleManager.createProfile(blockchain, peerId);
                         await blockchainModuleManager.saveIdentityInFile();
                     }
-                    this.logger.info(
-                        `${blockchain} blockchain identity is ${blockchainModuleManager.getIdentity(
-                            blockchain,
-                        )}`,
-                    );
+                    const identity = blockchainModuleManager.getIdentity(blockchain);
+                    this.logger.info(`${blockchain} blockchain identity is ${identity}`);
+
+                    if (!(await blockchainModuleManager.profileExists(blockchain, identity))) {
+                        this.logger.info(`Creating profile on network: ${blockchain}`);
+                        const networkModuleManager = this.container.resolve('networkModuleManager');
+                        const peerId = networkModuleManager.getPeerId().toB58String();
+                        await blockchainModuleManager.createProfile(blockchain, peerId);
+                    }
                 } catch (error) {
                     this.logger.warn(
                         `Unable to create ${blockchain} blockchain profile. Removing implementation. Error: ${error.message}`,
