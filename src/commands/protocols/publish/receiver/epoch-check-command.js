@@ -8,14 +8,32 @@ class EpochCheckCommand extends Command {
     }
 
     async execute(command) {
-        const { blockchain, uai, epoch } = command.data;
+        const { blockchain, agreementId, epoch } = command.data;
 
-        // todo check if this is the end of the liftime for the asset
+        let { serviceAgreement } = command.data;
+        if (!serviceAgreement) {
+            serviceAgreement = await this.blockchainModuleManager.getServiceAgreement(
+                blockchain,
+                agreementId,
+            );
+        }
 
-        const commitOpen = this.blockchainModuleManager.isCommitWindowOpen(blockchain, uai, epoch);
+        if (this.assetLifetimeExpired(serviceAgreement, epoch)) {
+            return Command.empty();
+        }
+
+        const commitOpen = await this.blockchainModuleManager.isCommitWindowOpen(
+            blockchain,
+            agreementId,
+            epoch,
+        );
 
         if (commitOpen) {
-            const commits = await this.blockchainModuleManager.getCommits(blockchain, uai, epoch);
+            const commits = await this.blockchainModuleManager.getCommitSubmissions(
+                blockchain,
+                agreementId,
+                epoch,
+            );
 
             const myIdentity = this.blockchainModuleManager.getIdentity(blockchain);
 
@@ -26,26 +44,26 @@ class EpochCheckCommand extends Command {
                     name: 'calculateProofsCommand',
                     sequence: [],
                     delay: 0,
-                    data: command.data,
+                    data: { ...command.data, serviceAgreement },
                     transactional: false,
                 });
                 return Command.empty();
             }
             const myScore = await this.calculateScore();
-
-            if (this.iCanWin(commits, myScore)) {
+            const previousIdentityId = this.previousIdentityId(commits, myScore);
+            if (previousIdentityId) {
                 await this.commandExecutor.add({
                     name: 'submitCommitCommand',
                     sequence: [],
                     delay: 0,
-                    data: command.data,
+                    data: { ...command.data, previousIdentityId, serviceAgreement },
                     transactional: false,
                 });
                 return Command.empty();
             }
         }
 
-        await this.scheduleNextEpochCheck(blockchain, uai, epoch);
+        await this.scheduleNextEpochCheck(blockchain, agreementId, epoch, serviceAgreement);
 
         return Command.empty();
     }
@@ -55,16 +73,12 @@ class EpochCheckCommand extends Command {
         return 10;
     }
 
-    iCanWin(commits, myScore) {
-        if (commits.length < 3) {
-            return true;
-        }
+    previousIdentityId(commits, myScore) {
         commits.forEach((commit) => {
             if (commit.score < myScore) {
-                return true;
+                return commit.identityId;
             }
         });
-        return false;
     }
 
     alreadyCommitted(commits, myIdentity) {
@@ -76,17 +90,15 @@ class EpochCheckCommand extends Command {
         return false;
     }
 
-    async recover(command, err) {
-        await super.recover(command, err);
-    }
-
-    async scheduleNextEpochCheck(blockchain, uai, currentEpoch) {
-        // todo calculate next epoch check delay
-        const epochCheckCommandDelay = 10;
+    async scheduleNextEpochCheck(blockchain, agreementId, currentEpoch, serviceAgreement) {
+        const nextEpochStartTime =
+            serviceAgreement.startTime + serviceAgreement.epochLength * currentEpoch;
+        const epochCheckCommandDelay = nextEpochStartTime - Date.now();
         const commandData = {
             blockchain,
-            uai,
+            agreementId,
             epoch: currentEpoch + 1,
+            serviceAgreement,
         };
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
@@ -95,6 +107,10 @@ class EpochCheckCommand extends Command {
             data: commandData,
             transactional: false,
         });
+    }
+
+    assetLifetimeExpired(serviceAgreement, currentEpoch) {
+        return serviceAgreement.epochsNum < currentEpoch;
     }
 
     /**

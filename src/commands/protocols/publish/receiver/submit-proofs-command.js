@@ -8,28 +8,29 @@ class SubmitProofsCommand extends Command {
     }
 
     async execute(command) {
-        const { proofs } = command.data;
+        const { blockchain, proofs, serviceAgreement, epoch, agreementId } = command.data;
 
         // submit proofs
-        await this.blockchainModuleManager.submitProof(proofs);
-        const assetLifetimeEnds = true;
+        await this.blockchainModuleManager.submitProof(blockchain, proofs);
 
-        if (!assetLifetimeEnds) {
-            const nextEpochDelay = 10;
-            const commandData = {};
-            await this.commandExecutor.add({
-                name: 'epochCheckCommand',
-                delay: nextEpochDelay,
-                data: commandData,
-                transactional: false,
-            });
-        }
+        const nextEpochStartTime =
+            serviceAgreement.startTime + serviceAgreement.epochLength * epoch;
+        const epochCheckCommandDelay = nextEpochStartTime - Date.now();
+        const commandData = {
+            blockchain,
+            agreementId,
+            epoch: epoch + 1,
+            serviceAgreement,
+        };
+        await this.commandExecutor.add({
+            name: 'epochCheckCommand',
+            sequence: [],
+            delay: epochCheckCommandDelay,
+            data: commandData,
+            transactional: false,
+        });
 
         return Command.empty();
-    }
-
-    async recover(command, err) {
-        await super.recover(command, err);
     }
 
     /**

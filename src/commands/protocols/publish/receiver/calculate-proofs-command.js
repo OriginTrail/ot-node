@@ -18,10 +18,6 @@ class CalculateProofsCommand extends Command {
         });
     }
 
-    async recover(command, err) {
-        await super.recover(command, err);
-    }
-
     /**
      * Builds default handleStoreInitCommand
      * @param map

@@ -7,19 +7,22 @@ class SubmitCommitCommand extends Command {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
     }
 
-    async execute() {
-        const commandData = {};
+    async execute(command) {
+        const { agreementId, epoch, blockchain, prevIdentityId } = command.data;
+        await this.blockchainModuleManager.submitCommit(
+            blockchain,
+            agreementId,
+            epoch,
+            prevIdentityId,
+        );
+
         await this.commandExecutor.add({
             name: 'calculateProofsCommand',
             delay: 0,
-            data: commandData,
+            data: command.data,
             transactional: false,
         });
         return Command.empty();
-    }
-
-    async recover(command, err) {
-        await super.recover(command, err);
     }
 
     /**
