@@ -208,6 +208,18 @@ class BlockchainModuleManager extends BaseModuleManager {
             return this.getImplementation(blockchain).module.convertHexToAscii(peerIdHex);
         }
     }
+
+    isCommitWindowOpen(blockchain, uai, epoch) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.isCommitWindowOpen(uai, epoch);
+        }
+    }
+
+    getCommits(blockchain, uai, epoch) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getCommits(uai, epoch);
+        }
+    }
 }
 
 export default BlockchainModuleManager;
