@@ -224,19 +224,27 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    getServiceAgreement(blockchain, agreementId, epoch) {
+    getServiceAgreement(blockchain, agreementId) {
         if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getServiceAgreement(
-                agreementId,
-                epoch,
-            );
+            return this.getImplementation(blockchain).module.getServiceAgreement(agreementId);
         }
     }
 
-    submitCommit(blockchain, agreementId, epoch, prevIdentityId) {
+    submitCommit(
+        blockchain,
+        assetContractAddress,
+        tokenId,
+        keyword,
+        hashingAlgorithm,
+        epoch,
+        prevIdentityId,
+    ) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.submitCommit(
-                agreementId,
+                assetContractAddress,
+                tokenId,
+                keyword,
+                hashingAlgorithm,
                 epoch,
                 prevIdentityId,
             );

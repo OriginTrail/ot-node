@@ -1,25 +1,45 @@
 import Command from '../../../command.js';
 
 class CalculateProofsCommand extends Command {
-    async execute() {
-        // calculate proofs
-        const proofs = {};
+    constructor(ctx) {
+        super(ctx);
+        this.commandExecutor = ctx.commandExecutor;
+        this.validationModuleManager = ctx.validationModuleManager;
+    }
 
-        const submitProofsCommadDelay = 10;
+    async execute(command) {
+        const { proofPhaseStartTime, blockchain, contract, tokenId, keyword, hashingAlgorithm } =
+            command.data;
 
-        const commandData = {
-            proofs,
-        };
+        const [challenge, assertionId] = await Promise.all([
+            this.blockchainModuleManager.getChallenge(
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+                hashingAlgorithm,
+            ),
+            this.blockchainModuleManager.getLatestCommitHash(contract, tokenId),
+        ]);
+
+        const { leaf, proof } = await this.validationModuleManager.getMerkleProof(
+            await this.tripleStoreModuleManager.get(assertionId),
+            challenge,
+        );
+
         await this.commandExecutor.add({
             name: 'submitProofsCommand',
-            delay: submitProofsCommadDelay,
-            data: commandData,
+            delay: proofPhaseStartTime - Date.now(),
+            data: {
+                leaf,
+                proof,
+            },
             transactional: false,
         });
     }
 
     /**
-     * Builds default handleStoreInitCommand
+     * Builds default calculateProofsCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

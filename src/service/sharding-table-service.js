@@ -5,7 +5,6 @@ import {
 
 class ShardingTableService {
     constructor(ctx) {
-        this.config = ctx.config;
         this.logger = ctx.logger;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
@@ -136,10 +135,10 @@ class ShardingTableService {
         });
     }
 
-    async findNeighbourhood(key, blockchainId, r2) {
+    async findNeighbourhood(key, blockchainId, r2, hashingAlgorithm) {
         const peers = await this.repositoryModuleManager.getAllPeerRecords(blockchainId);
 
-        return this.networkModuleManager.sortPeers(key, peers, r2);
+        return this.networkModuleManager.sortPeers(key, peers, r2, hashingAlgorithm);
     }
 
     async getBidSuggestion(neighbourhood, r0, higherPercentile) {

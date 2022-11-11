@@ -180,7 +180,7 @@ class Libp2pService {
         return this.node.peerStore.addressBook.get(peerId);
     }
 
-    async sortPeers(key, peers, count = this.config.dht.kBucketSize) {
+    async sortPeers(key, peers, count, hashingAlgorithm) {
         const textEncoder = new TextEncoder();
         const keyHash = await this.toHash(textEncoder.encode(key));
         const sorted = pipe(
@@ -188,7 +188,10 @@ class Libp2pService {
             (source) =>
                 map(source, async (peer) => ({
                     peer,
-                    distance: uint8ArrayXor(keyHash, Buffer.from(peer.sha256.slice(2), 'hex')),
+                    distance: uint8ArrayXor(
+                        keyHash,
+                        Buffer.from(peer[hashingAlgorithm].slice(2), 'hex'),
+                    ),
                 })),
             (source) => sort(source, (a, b) => uint8ArrayCompare(a.distance, b.distance)),
             (source) => take(source, count),

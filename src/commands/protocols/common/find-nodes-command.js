@@ -20,6 +20,7 @@ class FindNodesCommand extends Command {
             minimumAckResponses,
             errorType,
             networkProtocols,
+            hashingAlgorithm,
         } = command.data;
 
         this.errorType = errorType;
@@ -27,7 +28,8 @@ class FindNodesCommand extends Command {
 
         // TODO: protocol selection
         const closestNodes = [];
-        for (const node of await this.findNodes(keyword, operationId, blockchain)) {
+        const foundNodes = await this.findNodes(keyword, operationId, blockchain, hashingAlgorithm);
+        for (const node of foundNodes) {
             if (node.id !== this.networkModuleManager.getPeerId().toB58String()) {
                 closestNodes.push({ id: node.id, protocol: networkProtocols[0] });
             }
@@ -64,7 +66,7 @@ class FindNodesCommand extends Command {
         );
     }
 
-    async findNodes(keyword, operationId, blockchainId) {
+    async findNodes(keyword, operationId, blockchainId, hashingAlgorithm) {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.FIND_NODES_START,
@@ -75,6 +77,7 @@ class FindNodesCommand extends Command {
             keyword,
             blockchainId,
             20,
+            hashingAlgorithm,
         );
 
         const nodesFound = await Promise.all(

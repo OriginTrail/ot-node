@@ -1,5 +1,5 @@
 import NetworkProtocolCommand from '../../common/network-protocol-command.js';
-import { ERROR_TYPE, PUBLISH_TYPES } from '../../../../constants/constants.js';
+import { ERROR_TYPE } from '../../../../constants/constants.js';
 
 class NetworkPublishCommand extends NetworkProtocolCommand {
     constructor(ctx) {
@@ -10,10 +10,6 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
     }
 
     getKeywords(command) {
-        const { publishType } = command.data;
-
-        if (publishType === PUBLISH_TYPES.INDEX) return [...command.data.keywords];
-
         return [command.data.assertionId];
     }
 

@@ -489,47 +489,47 @@ class Web3Service {
         }
     }
 
-    async healthCheck() {
-        try {
-            const gasPrice = await this.web3.eth.getGasPrice();
-            if (gasPrice) return true;
-        } catch (e) {
-            this.logger.error(`Error on checking blockchain. ${e}`);
-            return false;
-        }
-        return false;
-    }
-
-    async handleError(error, functionName) {
-        let isRpcError = false;
-        try {
-            await this.web3.eth.net.isListening();
-        } catch (rpcError) {
-            isRpcError = true;
-            this.logger.warn(
-                `Unable to execute smart contract function ${functionName} using blockchain rpc : ${
-                    this.config.rpcEndpoints[this.rpcNumber]
-                }.`,
-            );
-            await this.restartService();
-        }
-        if (!isRpcError) throw error;
-    }
-
-    async restartService() {
-        this.rpcNumber = (this.rpcNumber + 1) % this.config.rpcEndpoints.length;
-        this.logger.warn(
-            `There was an issue with current blockchain rpc. Connecting to ${
-                this.config.rpcEndpoints[this.rpcNumber]
-            }`,
-        );
-        await this.initializeWeb3();
-        await this.initializeContracts();
-    }
-
     async getAssertionIssuer(assertionId) {
         return this.callContractFunction(this.AssertionRegistryContract, 'getIssuer', [
             assertionId,
+        ]);
+    }
+
+    async getServiceAgreement(agreementId) {
+        return this.callContractFunction(this.ServiceAgreementContract, 'serviceAgreements', [
+            agreementId,
+        ]);
+    }
+
+    async isCommitWindowOpen(agreementId, epoch) {
+        return this.callContractFunction(this.ServiceAgreementContract, 'isCommitWindowOpen', [
+            agreementId,
+            epoch,
+        ]);
+    }
+
+    async getCommitSubmissions(agreementId, epoch) {
+        return this.callContractFunction(this.ServiceAgreementContract, 'getCommitSubmissions', [
+            agreementId,
+            epoch,
+        ]);
+    }
+
+    async submitCommit(
+        assetContractAddress,
+        tokenId,
+        keyword,
+        hashingAlgorithm,
+        epoch,
+        prevIdentityId,
+    ) {
+        return this.callContractFunction(this.ServiceAgreementContract, 'submitCommit', [
+            assetContractAddress,
+            tokenId,
+            keyword,
+            hashingAlgorithm,
+            epoch,
+            prevIdentityId,
         ]);
     }
 
@@ -634,6 +634,44 @@ class Web3Service {
 
     convertHexToAscii(peerIdHex) {
         return Web3.utils.hexToAscii(peerIdHex);
+    }
+
+    async healthCheck() {
+        try {
+            const gasPrice = await this.web3.eth.getGasPrice();
+            if (gasPrice) return true;
+        } catch (e) {
+            this.logger.error(`Error on checking blockchain. ${e}`);
+            return false;
+        }
+        return false;
+    }
+
+    async restartService() {
+        this.rpcNumber = (this.rpcNumber + 1) % this.config.rpcEndpoints.length;
+        this.logger.warn(
+            `There was an issue with current blockchain rpc. Connecting to ${
+                this.config.rpcEndpoints[this.rpcNumber]
+            }`,
+        );
+        await this.initializeWeb3();
+        await this.initializeContracts();
+    }
+
+    async handleError(error, functionName) {
+        let isRpcError = false;
+        try {
+            await this.web3.eth.net.isListening();
+        } catch (rpcError) {
+            isRpcError = true;
+            this.logger.warn(
+                `Unable to execute smart contract function ${functionName} using blockchain rpc : ${
+                    this.config.rpcEndpoints[this.rpcNumber]
+                }.`,
+            );
+            await this.restartService();
+        }
+        if (!isRpcError) throw error;
     }
 }
 

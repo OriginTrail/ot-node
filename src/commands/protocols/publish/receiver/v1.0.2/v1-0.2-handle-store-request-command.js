@@ -4,7 +4,6 @@ import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
-    PUBLISH_TYPES,
 } from '../../../../../constants/constants.js';
 
 class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
@@ -12,12 +11,21 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         super(ctx);
         this.operationService = ctx.publishService;
         this.serviceAgreementService = ctx.serviceAgreementService;
+        this.commandExecutor = ctx.commandExecutor;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR;
     }
 
     async prepareMessage(commandData) {
-        const { publishType, operationId, assertionId } = commandData;
+        const {
+            blockchain,
+            keyword,
+            hashingAlgorithm,
+            contract,
+            tokenId,
+            operationId,
+            assertionId,
+        } = commandData;
 
         const { assertionId: storeInitAssertionId } =
             await this.operationIdService.getCachedOperationIdData(operationId);
@@ -44,37 +52,35 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
 
-        switch (publishType) {
-            case PUBLISH_TYPES.ASSERTION:
-                await this.operationService.localStoreAssertion(assertionId, operationId);
-                break;
-            case PUBLISH_TYPES.ASSET:
-                await this.operationService.localStoreAsset(
-                    assertionId,
-                    commandData.blockchain,
-                    commandData.contract,
-                    commandData.tokenId,
-                    operationId,
-                );
-                break;
-            case PUBLISH_TYPES.INDEX:
-                await this.operationService.localStoreIndex(
-                    assertionId,
-                    commandData.blockchain,
-                    commandData.contract,
-                    commandData.tokenId,
-                    commandData.keyword,
-                    operationId,
-                );
-                break;
-            default:
-                throw Error(`Unknown publish type ${publishType}`);
-        }
+        await this.operationService.localStoreAsset(
+            assertionId,
+            blockchain,
+            contract,
+            tokenId,
+            operationId,
+        );
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
         );
+
+        await this.commandExecutor.add({
+            name: 'epochCheckCommand',
+            sequence: [],
+            delay: 0,
+            data: {
+                blockchain,
+                agreementId: await this.serviceAgreementService.generateId(
+                    contract,
+                    tokenId,
+                    keyword,
+                    hashingAlgorithm,
+                ),
+                epoch: 0,
+            },
+            transactional: false,
+        });
 
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
     }
@@ -86,7 +92,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
      */
     default(map) {
         const command = {
-            name: 'v1_0_1HandleStoreRequestCommand',
+            name: 'v1_0_2HandleStoreRequestCommand',
             delay: 0,
             transactional: false,
         };

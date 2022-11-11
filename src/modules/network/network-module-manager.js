@@ -11,9 +11,9 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    async sortPeers(key, peerIds, count) {
+    async sortPeers(key, peerIds, count, hashingAlgorithm) {
         if (this.initialized) {
-            return this.getImplementation().module.sortPeers(key, peerIds, count);
+            return this.getImplementation().module.sortPeers(key, peerIds, count, hashingAlgorithm);
         }
     }
 

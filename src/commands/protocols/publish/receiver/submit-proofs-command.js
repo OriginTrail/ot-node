@@ -8,25 +8,44 @@ class SubmitProofsCommand extends Command {
     }
 
     async execute(command) {
-        const { blockchain, proofs, serviceAgreement, epoch, agreementId } = command.data;
+        const {
+            blockchain,
+            leaf,
+            proof,
+            serviceAgreement,
+            epoch,
+            agreementId,
+            contract,
+            tokenId,
+            keyword,
+            hashingAlgorithm,
+        } = command.data;
 
         // submit proofs
-        await this.blockchainModuleManager.submitProof(blockchain, proofs);
+        await this.blockchainModuleManager.submitProof(
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+            hashingAlgorithm,
+            epoch,
+            proof,
+            leaf,
+        );
 
         const nextEpochStartTime =
             serviceAgreement.startTime + serviceAgreement.epochLength * epoch;
-        const epochCheckCommandDelay = nextEpochStartTime - Date.now();
-        const commandData = {
-            blockchain,
-            agreementId,
-            epoch: epoch + 1,
-            serviceAgreement,
-        };
+
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
             sequence: [],
-            delay: epochCheckCommandDelay,
-            data: commandData,
+            delay: nextEpochStartTime - Date.now(),
+            data: {
+                blockchain,
+                agreementId,
+                epoch: epoch + 1,
+                serviceAgreement,
+            },
             transactional: false,
         });
 

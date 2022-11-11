@@ -5,13 +5,18 @@ class SubmitCommitCommand extends Command {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.serviceAgreementService = ctx.serviceAgreementService;
     }
 
     async execute(command) {
-        const { agreementId, epoch, blockchain, prevIdentityId } = command.data;
-        await this.blockchainModuleManager.submitCommit(
+        const { epoch, blockchain, prevIdentityId, tokenId, contract, hashingAlgorithm } =
+            command.data;
+
+        const proofPhaseStartTime = await this.blockchainModuleManager.submitCommit(
             blockchain,
-            agreementId,
+            tokenId,
+            contract,
+            hashingAlgorithm,
             epoch,
             prevIdentityId,
         );
@@ -19,7 +24,7 @@ class SubmitCommitCommand extends Command {
         await this.commandExecutor.add({
             name: 'calculateProofsCommand',
             delay: 0,
-            data: command.data,
+            data: { ...command.data, proofPhaseStartTime },
             transactional: false,
         });
         return Command.empty();

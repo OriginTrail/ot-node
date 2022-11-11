@@ -21,64 +21,62 @@ class EpochCheckCommand extends Command {
         if (this.assetLifetimeExpired(serviceAgreement, epoch)) {
             return Command.empty();
         }
-
-        const commitOpen = await this.blockchainModuleManager.isCommitWindowOpen(
+        const commitWindowOpen = await this.blockchainModuleManager.isCommitWindowOpen(
             blockchain,
             agreementId,
             epoch,
         );
 
-        if (commitOpen) {
-            const commits = await this.blockchainModuleManager.getCommitSubmissions(
-                blockchain,
-                agreementId,
-                epoch,
-            );
-
-            const myIdentity = this.blockchainModuleManager.getIdentity(blockchain);
-
-            const alreadyCommitted = this.alreadyCommitted(commits, myIdentity);
-
-            if (alreadyCommitted) {
-                await this.commandExecutor.add({
-                    name: 'calculateProofsCommand',
-                    sequence: [],
-                    delay: 0,
-                    data: { ...command.data, serviceAgreement },
-                    transactional: false,
-                });
-                return Command.empty();
-            }
-            const myScore = await this.calculateScore();
-            const previousIdentityId = this.previousIdentityId(commits, myScore);
-            if (previousIdentityId) {
-                await this.commandExecutor.add({
-                    name: 'submitCommitCommand',
-                    sequence: [],
-                    delay: 0,
-                    data: { ...command.data, previousIdentityId, serviceAgreement },
-                    transactional: false,
-                });
-                return Command.empty();
-            }
+        if (!commitWindowOpen) {
+            await this.scheduleNextEpochCheck(blockchain, agreementId, epoch, serviceAgreement);
+            return Command.empty();
         }
 
-        await this.scheduleNextEpochCheck(blockchain, agreementId, epoch, serviceAgreement);
+        const commits = await this.blockchainModuleManager.getCommitSubmissions(
+            blockchain,
+            agreementId,
+            epoch,
+        );
 
+        const myIdentity = this.blockchainModuleManager.getIdentity(blockchain);
+
+        // calculate proofs -> schedule proof submission -> schedule next epoch
+        if (this.alreadyCommitted(commits, myIdentity)) {
+            await this.commandExecutor.add({
+                name: 'calculateProofsCommand',
+                sequence: [],
+                delay: 0,
+                data: { ...command.data, serviceAgreement },
+                transactional: false,
+            });
+            return Command.empty();
+        }
+
+        // submit commit -> calculate proofs -> schedule proof submission -> schedule next epoch
+        const { prevId, rank } = this.previousIdentityId(commits);
+
+        // todo get r1 from chain
+        if (rank < 5) {
+            await this.commandExecutor.add({
+                name: 'submitCommitCommand',
+                sequence: [],
+                delay: 0,
+                data: { ...command.data, prevId, serviceAgreement },
+                transactional: false,
+            });
+        }
         return Command.empty();
     }
 
-    async calculateScore() {
-        // todo calculate score
-        return 10;
-    }
+    previousIdentityId(commits) {
+        const score = this.serviceAgreementService.calculateScore();
 
-    previousIdentityId(commits, myScore) {
-        commits.forEach((commit) => {
-            if (commit.score < myScore) {
-                return commit.identityId;
+        [...commits].reverse().forEach((commit, index) => {
+            if (commit.score > score) {
+                return { prevId: commit.identityId, rank: commits.length - index - 1 };
             }
         });
+        return { prevId: '', rank: 0 };
     }
 
     alreadyCommitted(commits, myIdentity) {
@@ -93,18 +91,16 @@ class EpochCheckCommand extends Command {
     async scheduleNextEpochCheck(blockchain, agreementId, currentEpoch, serviceAgreement) {
         const nextEpochStartTime =
             serviceAgreement.startTime + serviceAgreement.epochLength * currentEpoch;
-        const epochCheckCommandDelay = nextEpochStartTime - Date.now();
-        const commandData = {
-            blockchain,
-            agreementId,
-            epoch: currentEpoch + 1,
-            serviceAgreement,
-        };
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
             sequence: [],
-            delay: epochCheckCommandDelay,
-            data: commandData,
+            delay: nextEpochStartTime - Date.now(),
+            data: {
+                blockchain,
+                agreementId,
+                epoch: currentEpoch + 1,
+                serviceAgreement,
+            },
             transactional: false,
         });
     }
@@ -120,7 +116,7 @@ class EpochCheckCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'v1_0_1HandleStoreInitCommand',
+            name: 'epochCheckCommand',
             delay: 0,
             transactional: false,
         };
