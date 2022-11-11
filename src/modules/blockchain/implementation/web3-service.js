@@ -22,6 +22,7 @@ const Identity = require('dkg-evm-module/build/contracts/Identity.json');
 const Profile = require('dkg-evm-module/build/contracts/Profile.json');
 const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
 const ShardingTable = require('dkg-evm-module/build/contracts/ShardingTable.json');
+const ServiceAgreement = require('dkg-evm-module/build/contracts/ShardingTable.json');
 
 class Web3Service {
     async initialize(config, logger) {
@@ -124,6 +125,16 @@ class Web3Service {
         this.ProfileStorageContract = new this.web3.eth.Contract(
             ProfileStorage.abi,
             profileStorageAddress,
+        );
+
+        const serviceAgreementAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['ServiceAgreement'],
+        );
+        this.ServiceAgreementContract = new this.web3.eth.Contract(
+            ServiceAgreement.abi,
+            serviceAgreementAddress,
         );
 
         if (this.identityExists()) {
