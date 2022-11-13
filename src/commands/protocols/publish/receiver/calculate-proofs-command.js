@@ -11,7 +11,7 @@ class CalculateProofsCommand extends Command {
         const { proofPhaseStartTime, blockchain, contract, tokenId, keyword, hashingAlgorithm } =
             command.data;
 
-        const [challenge, assertionId] = await Promise.all([
+        const { assertionId, challenge } = await Promise.all([
             this.blockchainModuleManager.getChallenge(
                 blockchain,
                 contract,

@@ -23,45 +23,27 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async deployIdentity(blockchain) {
+    async getIdentityId(blockchain) {
         if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.deployIdentity();
+            return this.getImplementation(blockchain).module.getIdentityId();
         }
     }
 
-    identityExists(blockchain) {
+    async getIdentityContractAddress(blockchain) {
         if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.identityExists();
+            return this.getImplementation(blockchain).module.getIdentityContractAddress();
         }
     }
 
-    getIdentity(blockchain) {
+    async profileExists(blockchain) {
         if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getIdentity();
+            return this.getImplementation(blockchain).module.profileExists();
         }
     }
 
     async createProfile(blockchain, peerId) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.createProfile(peerId);
-        }
-    }
-
-    async profileExists(blockchain, identity) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.profileExists(identity);
-        }
-    }
-
-    async saveIdentityInFile(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.saveIdentityInFile();
-        }
-    }
-
-    async getEpochs(blockchain, UAI) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getEpochs(UAI);
         }
     }
 
@@ -74,36 +56,6 @@ class BlockchainModuleManager extends BaseModuleManager {
     getBlockTime(blockchain) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getBlockTime();
-        }
-    }
-
-    async getChallenge(blockchain, UAI, epoch) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getChallenge(UAI, epoch);
-        }
-    }
-
-    async answerChallenge(blockchain, UAI, epoch, proof, leaf, price) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.answerChallenge(
-                UAI,
-                epoch,
-                proof,
-                leaf,
-                price,
-            );
-        }
-    }
-
-    async getReward(blockchain, UAI, epoch) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getReward(UAI, epoch);
-        }
-    }
-
-    async getLatestCommitHash(blockchain, contract, tokenId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getLatestCommitHash(contract, tokenId);
         }
     }
 
@@ -152,30 +104,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async pushPeerBack(blockchain, peerId, ask, stake) {
-        if (this.getImplementation(blockchain)) {
-            await this.getImplementation(blockchain).module.pushPeerBack(peerId, ask, stake);
-        }
-    }
-
-    async pushPeerFront(blockchain, peerId, ask, stake) {
-        if (this.getImplementation(blockchain)) {
-            await this.getImplementation(blockchain).module.pushPeerFront(peerId, ask, stake);
-        }
-    }
-
-    async updatePeerParams(blockchain, peerId, ask, stake) {
-        if (this.getImplementation(blockchain)) {
-            await this.getImplementation(blockchain).module.updatePeerParams(peerId, ask, stake);
-        }
-    }
-
-    async removePeer(blockchain, peerId) {
-        if (this.getImplementation(blockchain)) {
-            await this.getImplementation(blockchain).module.removePeer(peerId);
-        }
-    }
-
     async getAllPastEvents(
         contractName,
         onEventsReceived,
@@ -209,13 +137,13 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    isCommitWindowOpen(blockchain, agreementId, epoch) {
+    async isCommitWindowOpen(blockchain, agreementId, epoch) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.isCommitWindowOpen(agreementId, epoch);
         }
     }
 
-    getCommitSubmissions(blockchain, agreementId, epoch) {
+    async getCommitSubmissions(blockchain, agreementId, epoch) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getCommitSubmissions(
                 agreementId,
@@ -224,13 +152,13 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    getServiceAgreement(blockchain, agreementId) {
+    async getServiceAgreement(blockchain, agreementId) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getServiceAgreement(agreementId);
         }
     }
 
-    submitCommit(
+    async submitCommit(
         blockchain,
         assetContractAddress,
         tokenId,
@@ -247,6 +175,46 @@ class BlockchainModuleManager extends BaseModuleManager {
                 hashingAlgorithm,
                 epoch,
                 prevIdentityId,
+            );
+        }
+    }
+
+    async isProofWindowOpen(blockchain, agreementId, epoch) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.isProofWindowOpen(agreementId, epoch);
+        }
+    }
+
+    async getChallenge(blockchain, assetContractAddress, tokenId, keyword, hashingAlgorithm) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getChallenge(
+                assetContractAddress,
+                tokenId,
+                keyword,
+                hashingAlgorithm,
+            );
+        }
+    }
+
+    async sendProof(
+        blockchain,
+        assetContractAddress,
+        tokenId,
+        keyword,
+        hashingAlgorithm,
+        epoch,
+        proof,
+        chunkHash,
+    ) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.sendProof(
+                assetContractAddress,
+                tokenId,
+                keyword,
+                hashingAlgorithm,
+                epoch,
+                proof,
+                chunkHash,
             );
         }
     }

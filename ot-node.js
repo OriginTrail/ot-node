@@ -163,15 +163,7 @@ class OTNode {
             .getImplementationNames()
             .map(async (blockchain) => {
                 try {
-                    if (!blockchainModuleManager.identityExists(blockchain)) {
-                        this.logger.info(`Creating blockchain identity on network: ${blockchain}`);
-                        await blockchainModuleManager.deployIdentity(blockchain);
-                        await blockchainModuleManager.saveIdentityInFile();
-                    }
-                    const identity = blockchainModuleManager.getIdentity(blockchain);
-                    this.logger.info(`${blockchain} blockchain identity is ${identity}`);
-
-                    if (!(await blockchainModuleManager.profileExists(blockchain, identity))) {
+                    if (!(await blockchainModuleManager.profileExists(blockchain))) {
                         this.logger.info(`Creating profile on network: ${blockchain}`);
                         const networkModuleManager = this.container.resolve('networkModuleManager');
                         const peerId = networkModuleManager.getPeerId().toB58String();
