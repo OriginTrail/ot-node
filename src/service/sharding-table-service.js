@@ -114,20 +114,6 @@ class ShardingTableService {
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
 
-        this.eventEmitter.on(`${blockchainId}-StakeUpdated`, (event) => {
-            const eventData = JSON.parse(event.data);
-            const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                event.blockchain_id,
-                eventData.nodeId,
-            );
-            this.logger.trace(
-                `${blockchainId}-StakeUpdated event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
-            );
-            this.repositoryModuleManager.updatePeerStake(nodeId, eventData.stake);
-
-            this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
-        });
-
         this.eventEmitter.on(`${blockchainId}-NodeRemoved`, (event) => {
             const eventData = JSON.parse(event.data);
             const nodeId = this.blockchainModuleManager.convertHexToAscii(
@@ -139,6 +125,32 @@ class ShardingTableService {
             );
             this.repositoryModuleManager.removePeerRecord(nodeId);
 
+            this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
+        });
+
+        this.eventEmitter.on(`${blockchainId}-StakeIncreased`, (event) => {
+            const eventData = JSON.parse(event.data);
+            const nodeId = this.blockchainModuleManager.convertHexToAscii(
+                event.blockchain_id,
+                eventData.nodeId,
+            );
+            this.logger.trace(
+                `${blockchainId}-StakeIncreased event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
+            );
+            this.repositoryModuleManager.updatePeerStake(nodeId, eventData.newStake);
+            this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
+        });
+
+        this.eventEmitter.on(`${blockchainId}-StakeWithdrawalInitiated`, (event) => {
+            const eventData = JSON.parse(event.data);
+            const nodeId = this.blockchainModuleManager.convertHexToAscii(
+                event.blockchain_id,
+                eventData.nodeId,
+            );
+            this.logger.trace(
+                `${blockchainId}-StakeWithdrawalInitiated event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
+            );
+            this.repositoryModuleManager.updatePeerStake(nodeId, eventData.newStake);
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
     }

@@ -269,6 +269,12 @@ class OTNode {
                         getLastCheckedBlock,
                         updateLastCheckedBlock,
                     );
+                    await blockchainModuleManager.getAllPastEvents(
+                        CONTRACTS.PROFILE_CONTRACT,
+                        onEventsReceived,
+                        getLastCheckedBlock,
+                        updateLastCheckedBlock,
+                    );
                 } catch (e) {
                     this.logger.error(`Failed to get blockchain events. Error: ${e}`);
                 } finally {
