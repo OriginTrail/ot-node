@@ -17,12 +17,25 @@ class ServiceAgreementService {
         );
     }
 
-    async calculateScore() {
-        /* const keyHash = await this.networkModuleManager.toHash(keyword);
-        const peerHash = await this.repositoryModuleManager.getPeerRecord(this.networkModuleManager.getPeerId, blockchain);
-        const distance = this.networkModuleManager.calculateDistance(keyHash, peerHash);
+    async calculateScore(keyword, blockchain, hashingAlgorithm) {
+        const [peerRecord, keyHash] = await Promise.all([
+            this.repositoryModuleManager.getPeerRecord(
+                this.networkModuleManager.getPeerId().toB58String(),
+                blockchain,
+            ),
+            this.networkModuleManager.toHash(keyword),
+        ]);
 
-        return 10; */
+        const distance = this.networkModuleManager.calculateDistance(
+            keyHash,
+            peerRecord[hashingAlgorithm],
+        );
+
+        // todo update a and b once defined
+        const a = 1;
+        const b = 1;
+
+        return (a * peerRecord.stake) / (b * distance);
     }
 }
 
