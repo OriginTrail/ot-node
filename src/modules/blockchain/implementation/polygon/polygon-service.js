@@ -7,10 +7,6 @@ class PolygonService extends Web3Service {
         this.baseTokenTicker = 'MATIC';
         this.tracTicker = 'mTRAC';
     }
-
-    getBlockchainId() {
-        return 'polygon';
-    }
 }
 
 export default PolygonService;

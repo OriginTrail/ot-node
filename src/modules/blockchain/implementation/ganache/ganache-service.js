@@ -7,10 +7,6 @@ class GanacheService extends Web3Service {
         this.baseTokenTicker = 'GANACHE_TOKENS';
         this.tracTicker = 'gTRAC';
     }
-
-    getBlockchainId() {
-        return 'ganache';
-    }
 }
 
 export default GanacheService;

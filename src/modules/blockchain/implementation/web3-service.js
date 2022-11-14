@@ -194,7 +194,7 @@ class Web3Service {
         return this.config.blockTime;
     }
 
-    async profileExists() {
+    async identiyIdExists() {
         const identityId = await this.callContractFunction(
             this.ProfileStorageContract,
             'getIdentityId',
@@ -525,7 +525,7 @@ class Web3Service {
     }
 
     getBlockchainId() {
-        throw Error('Get blockchain id not implemented');
+        return this.getImplementationName();
     }
 
     convertAsciiToHex(peerId) {
