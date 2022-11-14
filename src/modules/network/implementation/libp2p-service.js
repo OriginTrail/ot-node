@@ -7,18 +7,12 @@ import { NOISE } from 'libp2p-noise';
 import MPLEX from 'libp2p-mplex';
 import TCP from 'libp2p-tcp';
 import pipe from 'it-pipe';
-import { encode, decode } from 'it-length-prefixed';
-import { sha256 } from 'multiformats/hashes/sha2';
 import map from 'it-map';
+import { encode, decode } from 'it-length-prefixed';
 import { create as _create, createFromPrivKey, createFromB58String } from 'peer-id';
 import { InMemoryRateLimiter } from 'rolling-rate-limiter';
 import toobusy from 'toobusy-js';
 import { v5 as uuidv5 } from 'uuid';
-import { xor as uint8ArrayXor } from 'uint8arrays/xor';
-import { compare as uint8ArrayCompare } from 'uint8arrays/compare';
-import sort from 'it-sort';
-import take from 'it-take';
-import all from 'it-all';
 import { mkdir, writeFile, readFile, stat } from 'fs/promises';
 import ip from 'ip';
 import {
@@ -178,31 +172,6 @@ class Libp2pService {
 
     getAddresses(peerId) {
         return this.node.peerStore.addressBook.get(peerId);
-    }
-
-    async sortPeers(key, peers, count, hashingAlgorithm) {
-        const keyHash = await this.toHash(key);
-        const sorted = pipe(
-            peers,
-            (source) =>
-                map(source, async (peer) => ({
-                    peer,
-                    distance: this.calculateDistance(keyHash, peer[hashingAlgorithm]),
-                })),
-            (source) => sort(source, (a, b) => uint8ArrayCompare(a.distance, b.distance)),
-            (source) => take(source, count),
-            (source) => map(source, (pd) => pd.peer),
-        );
-
-        return all(sorted);
-    }
-
-    calculateDistance(keyHash, peerHash) {
-        return uint8ArrayXor(keyHash, Buffer.from(peerHash.slice(2), 'hex'));
-    }
-
-    async toHash(key) {
-        return Buffer.from((await sha256.digest(new TextEncoder().encode(key))).digest);
     }
 
     getPeers() {

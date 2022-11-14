@@ -1,3 +1,11 @@
+import { xor as uint8ArrayXor } from 'uint8arrays/xor';
+import { compare as uint8ArrayCompare } from 'uint8arrays/compare';
+import pipe from 'it-pipe';
+import map from 'it-map';
+import sort from 'it-sort';
+import take from 'it-take';
+import all from 'it-all';
+
 import {
     CONTRACTS,
     DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
@@ -137,8 +145,32 @@ class ShardingTableService {
 
     async findNeighbourhood(key, blockchainId, r2, hashingAlgorithm) {
         const peers = await this.repositoryModuleManager.getAllPeerRecords(blockchainId);
+        const keyHash = await this.validationModuleManager.callHashFunction(
+            hashingAlgorithm,
+            new TextEncoder().encode(key),
+        );
 
-        return this.networkModuleManager.sortPeers(key, peers, r2, hashingAlgorithm);
+        return this.sortPeers(keyHash, peers, r2, hashingAlgorithm);
+    }
+
+    async sortPeers(keyHash, peers, count, hashingAlgorithm) {
+        const sorted = pipe(
+            peers,
+            (source) =>
+                map(source, async (peer) => ({
+                    peer,
+                    distance: this.calculateDistance(keyHash, peer[hashingAlgorithm]),
+                })),
+            (source) => sort(source, (a, b) => uint8ArrayCompare(a.distance, b.distance)),
+            (source) => take(source, count),
+            (source) => map(source, (pd) => pd.peer),
+        );
+
+        return all(sorted);
+    }
+
+    calculateDistance(keyHash, peerHash) {
+        return uint8ArrayXor(keyHash, Buffer.from(peerHash.slice(2), 'hex'));
     }
 
     async getBidSuggestion(neighbourhood, r0, higherPercentile) {

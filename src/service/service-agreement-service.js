@@ -7,7 +7,7 @@ class ServiceAgreementService {
         this.validationModuleManager = ctx.validationModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.networkModuleManager = ctx.networkModuleManager;
+        this.validationModuleManager = ctx.validationModuleManager;
     }
 
     async generateId(assetTypeContract, tokenId, keyword, hashingAlgorithm) {
@@ -23,10 +23,13 @@ class ServiceAgreementService {
                 this.networkModuleManager.getPeerId().toB58String(),
                 blockchain,
             ),
-            this.networkModuleManager.toHash(keyword),
+            this.validationModuleManager.callHashFunction(
+                hashingAlgorithm,
+                new TextEncoder().encode(keyword),
+            ),
         ]);
 
-        const distance = this.networkModuleManager.calculateDistance(
+        const distance = this.shardingTableService.calculateDistance(
             keyHash,
             peerRecord[hashingAlgorithm],
         );
