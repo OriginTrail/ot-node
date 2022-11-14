@@ -16,7 +16,7 @@ class ServiceAgreementService {
     }
 
     calculateScore() {
-        // todo calculate score
+        // todo calculate score - use the same method as for calculating distance
         return 10;
     }
 }

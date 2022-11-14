@@ -11,22 +11,22 @@ class CalculateProofsCommand extends Command {
         const { proofPhaseStartTime, blockchain, contract, tokenId, keyword, hashingAlgorithm } =
             command.data;
 
-        const [challenge, assertionId] = await Promise.all([
-            this.blockchainModuleManager.getChallenge(
-                blockchain,
-                contract,
-                tokenId,
-                keyword,
-                hashingAlgorithm,
-            ),
-            this.blockchainModuleManager.getLatestCommitHash(contract, tokenId),
-        ]);
+        // todo add check did i won - if not next epoch check command, yes - calculate and send proof
+        // todo check proof window is open? retry couple of times with delay 5s
+        const { assertionId, challenge } = await this.blockchainModuleManager.getChallenge(
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+            hashingAlgorithm,
+        );
 
         const { leaf, proof } = await this.validationModuleManager.getMerkleProof(
             await this.tripleStoreModuleManager.get(assertionId),
             challenge,
         );
 
+        // todo remove delay
         await this.commandExecutor.add({
             name: 'submitProofsCommand',
             delay: proofPhaseStartTime - Date.now(),
