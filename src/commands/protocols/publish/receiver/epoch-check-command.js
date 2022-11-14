@@ -40,10 +40,10 @@ class EpochCheckCommand extends Command {
             epoch,
         );
 
-        const myIdentity = this.blockchainModuleManager.getIdentity(blockchain);
+        const myIdentityId = this.blockchainModuleManager.getIdentityId(blockchain);
 
         // calculate proofs -> schedule proof submission -> schedule next epoch
-        if (this.alreadyCommitted(commits, myIdentity)) {
+        if (this.alreadyCommitted(commits, myIdentityId)) {
             await this.commandExecutor.add({
                 name: 'calculateProofsCommand',
                 sequence: [],
