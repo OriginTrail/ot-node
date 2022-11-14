@@ -17,6 +17,10 @@ class ServiceAgreementService {
         );
     }
 
+    randomIntFromInterval(min, max) {
+        return Math.floor(Math.random() * (max - min + 1) + min);
+    }
+
     async calculateScore(keyword, blockchain, hashingAlgorithm) {
         const [peerRecord, keyHash] = await Promise.all([
             this.repositoryModuleManager.getPeerRecord(
