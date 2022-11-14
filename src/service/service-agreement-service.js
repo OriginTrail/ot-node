@@ -6,6 +6,8 @@ class ServiceAgreementService {
 
         this.validationModuleManager = ctx.validationModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.networkModuleManager = ctx.networkModuleManager;
     }
 
     async generateId(assetTypeContract, tokenId, keyword, hashingAlgorithm) {
@@ -15,9 +17,12 @@ class ServiceAgreementService {
         );
     }
 
-    calculateScore() {
-        // todo calculate score - use the same method as for calculating distance
-        return 10;
+    async calculateScore() {
+        /* const keyHash = await this.networkModuleManager.toHash(keyword);
+        const peerHash = await this.repositoryModuleManager.getPeerRecord(this.networkModuleManager.getPeerId, blockchain);
+        const distance = this.networkModuleManager.calculateDistance(keyHash, peerHash);
+
+        return 10; */
     }
 }
 

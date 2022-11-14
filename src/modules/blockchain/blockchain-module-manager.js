@@ -218,6 +218,24 @@ class BlockchainModuleManager extends BaseModuleManager {
             );
         }
     }
+
+    async getR2(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getR2();
+        }
+    }
+
+    async getR1(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getR1();
+        }
+    }
+
+    async getR0(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getR0();
+        }
+    }
 }
 
 export default BlockchainModuleManager;

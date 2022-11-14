@@ -427,6 +427,18 @@ class Web3Service {
         ]);
     }
 
+    async getR2() {
+        return this.callContractFunction(this.ParametersStorageContract, 'R2', []);
+    }
+
+    async getR1() {
+        return this.callContractFunction(this.ParametersStorageContract, 'R1', []);
+    }
+
+    async getR0() {
+        return this.callContractFunction(this.ParametersStorageContract, 'R0', []);
+    }
+
     async submitCommit(
         assetContractAddress,
         tokenId,

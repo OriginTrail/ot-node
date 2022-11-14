@@ -181,17 +181,13 @@ class Libp2pService {
     }
 
     async sortPeers(key, peers, count, hashingAlgorithm) {
-        const textEncoder = new TextEncoder();
-        const keyHash = await this.toHash(textEncoder.encode(key));
+        const keyHash = await this.toHash(key);
         const sorted = pipe(
             peers,
             (source) =>
                 map(source, async (peer) => ({
                     peer,
-                    distance: uint8ArrayXor(
-                        keyHash,
-                        Buffer.from(peer[hashingAlgorithm].slice(2), 'hex'),
-                    ),
+                    distance: this.calculateDistance(keyHash, peer[hashingAlgorithm]),
                 })),
             (source) => sort(source, (a, b) => uint8ArrayCompare(a.distance, b.distance)),
             (source) => take(source, count),
@@ -201,8 +197,12 @@ class Libp2pService {
         return all(sorted);
     }
 
-    async toHash(encodedKey) {
-        return Buffer.from((await sha256.digest(encodedKey)).digest);
+    calculateDistance(keyHash, peerHash) {
+        return uint8ArrayXor(keyHash, Buffer.from(peerHash.slice(2), 'hex'));
+    }
+
+    async toHash(key) {
+        return Buffer.from((await sha256.digest(new TextEncoder().encode(key))).digest);
     }
 
     getPeers() {

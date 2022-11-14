@@ -17,6 +17,12 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
+    async calculateDistance(keyHash, peerHash) {
+        if (this.initialized) {
+            return this.getImplementation().module.sortPeers(keyHash, peerHash);
+        }
+    }
+
     getMultiaddrs() {
         if (this.initialized) {
             return this.getImplementation().module.getMultiaddrs();

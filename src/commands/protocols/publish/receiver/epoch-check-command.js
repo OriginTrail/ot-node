@@ -40,15 +40,17 @@ class EpochCheckCommand extends Command {
             epoch,
         );
 
-        const myIdentityId = this.blockchainModuleManager.getIdentityId(blockchain);
+        const identityId =
+            command.data.identityId ??
+            (await this.blockchainModuleManager.getIdentityId(blockchain));
 
         // calculate proofs -> schedule proof submission -> schedule next epoch
-        if (this.alreadyCommitted(commits, myIdentityId)) {
+        if (this.alreadyCommitted(commits, identityId)) {
             await this.commandExecutor.add({
                 name: 'calculateProofsCommand',
                 sequence: [],
                 delay: 0,
-                data: { ...command.data, serviceAgreement },
+                data: { ...command.data, serviceAgreement, identityId },
                 transactional: false,
             });
             return Command.empty();
@@ -57,13 +59,12 @@ class EpochCheckCommand extends Command {
         // submit commit -> calculate proofs -> schedule proof submission -> schedule next epoch
         const { prevId, rank } = this.getPreviousIdentityIdAndRank(commits);
 
-        // todo get r1 from chain - call ParametersStorage.R1() on-chan once implemented;
-        if (rank < 5) {
+        if (rank < (await this.blockchainModuleManager.getR1(blockchain))) {
             await this.commandExecutor.add({
                 name: 'submitCommitCommand',
                 sequence: [],
                 delay: 0,
-                data: { ...command.data, prevId, serviceAgreement },
+                data: { ...command.data, prevId, serviceAgreement, identityId },
                 transactional: false,
             });
         }
@@ -90,9 +91,9 @@ class EpochCheckCommand extends Command {
         return false;
     }
 
-    async scheduleNextEpochCheck(blockchain, agreementId, currentEpoch, serviceAgreement) {
+    async scheduleNextEpochCheck(blockchain, agreementId, epoch, serviceAgreement) {
         const nextEpochStartTime =
-            serviceAgreement.startTime + serviceAgreement.epochLength * currentEpoch;
+            serviceAgreement.startTime + serviceAgreement.epochLength * epoch;
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
             sequence: [],
@@ -100,15 +101,15 @@ class EpochCheckCommand extends Command {
             data: {
                 blockchain,
                 agreementId,
-                epoch: currentEpoch + 1,
+                epoch: epoch + 1,
                 serviceAgreement,
             },
             transactional: false,
         });
     }
 
-    assetLifetimeExpired(serviceAgreement, currentEpoch) {
-        return serviceAgreement.epochsNum < currentEpoch;
+    assetLifetimeExpired(serviceAgreement, epoch) {
+        return serviceAgreement.epochsNum < epoch;
     }
 
     /**

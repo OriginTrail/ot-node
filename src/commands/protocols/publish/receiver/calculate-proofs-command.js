@@ -5,34 +5,82 @@ class CalculateProofsCommand extends Command {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.validationModuleManager = ctx.validationModuleManager;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
     }
 
     async execute(command) {
-        const { proofPhaseStartTime, blockchain, contract, tokenId, keyword, hashingAlgorithm } =
-            command.data;
-
-        // todo add check did i won - if not next epoch check command, yes - calculate and send proof
-        // todo check proof window is open? retry couple of times with delay 5s
-        const { assertionId, challenge } = await this.blockchainModuleManager.getChallenge(
+        const {
             blockchain,
             contract,
             tokenId,
             keyword,
             hashingAlgorithm,
+            serviceAgreement,
+            epoch,
+            agreementId,
+            identityId,
+        } = command.data;
+
+        if (
+            (await this.isEligibleForRewards(blockchain, agreementId, epoch, identityId)) ||
+            !(await this.blockchainModuleManager.isProofWindowOpen(agreementId, epoch))
+        ) {
+            await this.scheduleNextEpochCheck(blockchain, agreementId, epoch, serviceAgreement);
+        } else {
+            const { assertionId, challenge } = await this.blockchainModuleManager.getChallenge(
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+                hashingAlgorithm,
+            );
+
+            const { leaf, proof } = await this.validationModuleManager.getMerkleProof(
+                await this.tripleStoreModuleManager.get(assertionId),
+                challenge,
+            );
+
+            await this.commandExecutor.add({
+                name: 'submitProofsCommand',
+                delay: 0,
+                data: {
+                    leaf,
+                    proof,
+                },
+                transactional: false,
+            });
+        }
+    }
+
+    async isEligibleForRewards(blockchain, agreementId, epoch, identityId) {
+        const commits = await this.blockchainModuleManager.getCommitSubmissions(
+            blockchain,
+            agreementId,
+            epoch,
         );
 
-        const { leaf, proof } = await this.validationModuleManager.getMerkleProof(
-            await this.tripleStoreModuleManager.get(assertionId),
-            challenge,
-        );
+        const r0 = await this.blockchainModuleManager.getR0(blockchain);
+        commits.slice(0, r0).forEach((commit) => {
+            if (commit.identityId === identityId) {
+                return true;
+            }
+        });
 
-        // todo remove delay
+        return false;
+    }
+
+    async scheduleNextEpochCheck(blockchain, agreementId, epoch, serviceAgreement) {
+        const nextEpochStartTime =
+            serviceAgreement.startTime + serviceAgreement.epochLength * epoch;
         await this.commandExecutor.add({
-            name: 'submitProofsCommand',
-            delay: proofPhaseStartTime - Date.now(),
+            name: 'epochCheckCommand',
+            sequence: [],
+            delay: nextEpochStartTime - Date.now(),
             data: {
-                leaf,
-                proof,
+                blockchain,
+                agreementId,
+                epoch: epoch + 1,
+                serviceAgreement,
             },
             transactional: false,
         });

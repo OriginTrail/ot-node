@@ -21,12 +21,10 @@ class SubmitCommitCommand extends Command {
             prevIdentityId,
         );
 
-        // todo add delay for calculating proofs proofPhaseStartTime
-
         await this.commandExecutor.add({
             name: 'calculateProofsCommand',
-            delay: 0,
-            data: { ...command.data, proofPhaseStartTime },
+            delay: proofPhaseStartTime - Date.now(),
+            data: command.data,
             transactional: false,
         });
         return Command.empty();
