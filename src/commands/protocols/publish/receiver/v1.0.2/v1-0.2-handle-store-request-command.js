@@ -4,6 +4,7 @@ import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
+    AGREEMENT_STATUS,
 } from '../../../../../constants/constants.js';
 
 class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
@@ -12,7 +13,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         this.operationService = ctx.publishService;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.commandExecutor = ctx.commandExecutor;
-
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR;
     }
 
@@ -65,18 +66,27 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
         );
 
+        const agreementId = await this.serviceAgreementService.generateId(
+            contract,
+            tokenId,
+            keyword,
+            hashingAlgorithm,
+        );
+
+        await this.repositoryModuleManager.updateOperationAgreementStatus(
+            operationId,
+            agreementId,
+            AGREEMENT_STATUS.ACTIVE,
+        );
+
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
             sequence: [],
             delay: 0,
             data: {
                 blockchain,
-                agreementId: await this.serviceAgreementService.generateId(
-                    contract,
-                    tokenId,
-                    keyword,
-                    hashingAlgorithm,
-                ),
+                agreementId,
+                operationId,
                 epoch: 0,
             },
             transactional: false,

@@ -1,14 +1,16 @@
 import Command from '../../../command.js';
+import { AGREEMENT_STATUS } from '../../../../constants/constants.js';
 
 class EpochCheckCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
     async execute(command) {
-        const { blockchain, agreementId, epoch } = command.data;
+        const { blockchain, agreementId, epoch, operationId } = command.data;
 
         let { serviceAgreement } = command.data;
         if (!serviceAgreement) {
@@ -19,7 +21,11 @@ class EpochCheckCommand extends Command {
         }
 
         if (this.assetLifetimeExpired(serviceAgreement, epoch)) {
-            // TODO update assert agreement status
+            await this.repositoryModuleManager.updateOperationAgreementStatus(
+                operationId,
+                agreementId,
+                AGREEMENT_STATUS.EXPIRED,
+            );
             return Command.empty();
         }
         const commitWindowOpen = await this.blockchainModuleManager.isCommitWindowOpen(

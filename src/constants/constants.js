@@ -264,6 +264,11 @@ export const OPERATION_STATUS = {
     COMPLETED: 'COMPLETED',
 };
 
+export const AGREEMENT_STATUS = {
+    ACTIVE: 'ACTIVE',
+    EXPIRED: 'EXPIRED',
+};
+
 export const OPERATION_REQUEST_STATUS = {
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
