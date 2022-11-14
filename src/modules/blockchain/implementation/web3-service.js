@@ -585,6 +585,19 @@ class Web3Service {
         }
         if (!isRpcError) throw error;
     }
+
+    async getCommitWindowDuration() {
+        try {
+            return await this.callContractFunction(
+                this.ParametersStorageContract,
+                'commitWindowDuration',
+                [],
+            );
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
 }
 
 export default Web3Service;

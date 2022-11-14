@@ -1,5 +1,6 @@
 import Command from '../../../command.js';
 import { AGREEMENT_STATUS } from '../../../../constants/constants.js';
+import blockchainModuleManager from '../../../../modules/blockchain/blockchain-module-manager';
 
 class EpochCheckCommand extends Command {
     constructor(ctx) {
@@ -34,7 +35,6 @@ class EpochCheckCommand extends Command {
             epoch,
         );
 
-        // todo move start time for commits something random between 2 min and 13min, for proofs 1% of epoch also random from proofstartime, proofendtime
         if (!commitWindowOpen) {
             await this.scheduleNextEpochCheck(blockchain, agreementId, epoch, serviceAgreement);
             return Command.empty();
@@ -66,15 +66,33 @@ class EpochCheckCommand extends Command {
         const { prevId, rank } = this.getPreviousIdentityIdAndRank(commits);
 
         if (rank < (await this.blockchainModuleManager.getR1(blockchain))) {
+            const commitWindowDuration = await blockchainModuleManager.getCommitWindowDuration(
+                blockchain,
+            );
+            const currentEpochStartTime =
+                serviceAgreement.startTime + serviceAgreement.epochLength * (epoch - 1);
+
+            const startEndOffset = 60000; // 1 min
+
+            const commitCommandDelay =
+                this.randomIntFromInterval(
+                    currentEpochStartTime + startEndOffset,
+                    commitWindowDuration - startEndOffset,
+                ) - Date.now();
+
             await this.commandExecutor.add({
                 name: 'submitCommitCommand',
                 sequence: [],
-                delay: 0,
+                delay: commitCommandDelay,
                 data: { ...command.data, prevId, serviceAgreement, identityId },
                 transactional: false,
             });
         }
         return Command.empty();
+    }
+
+    randomIntFromInterval(min, max) {
+        return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
     getPreviousIdentityIdAndRank(commits) {
