@@ -18,7 +18,8 @@ const ParametersStorage = require('dkg-evm-module/build/contracts/ParametersStor
 const Profile = require('dkg-evm-module/build/contracts/Profile.json');
 const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
 const ShardingTable = require('dkg-evm-module/build/contracts/ShardingTable.json');
-const ServiceAgreement = require('dkg-evm-module/build/contracts/ShardingTable.json');
+// eslint-disable-next-line import/no-unresolved
+const ServiceAgreement = require('dkg-evm-module/build/contracts/ServiceAgreement.json');
 
 class Web3Service {
     async initialize(config, logger) {

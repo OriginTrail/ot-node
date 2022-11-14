@@ -8,6 +8,7 @@ class ServiceAgreementService {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.validationModuleManager = ctx.validationModuleManager;
+        this.shardingTableService = ctx.this.shardingTableService;
     }
 
     async generateId(assetTypeContract, tokenId, keyword, hashingAlgorithm) {
