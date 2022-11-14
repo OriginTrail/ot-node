@@ -8,6 +8,7 @@ class EpochCheckCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.serviceAgreementService = ctx.serviceAgreementService;
     }
 
     async execute(command) {
@@ -74,8 +75,8 @@ class EpochCheckCommand extends Command {
 
             const startEndOffset = 60000; // 1 min
 
-            const commitCommandDelay =
-                this.randomIntFromInterval(
+            const delay =
+                this.serviceAgreementService.randomIntFromInterval(
                     currentEpochStartTime + startEndOffset,
                     commitWindowDuration - startEndOffset,
                 ) - Date.now();
@@ -83,16 +84,12 @@ class EpochCheckCommand extends Command {
             await this.commandExecutor.add({
                 name: 'submitCommitCommand',
                 sequence: [],
-                delay: commitCommandDelay,
+                delay,
                 data: { ...command.data, prevId, serviceAgreement, identityId },
                 transactional: false,
             });
         }
         return Command.empty();
-    }
-
-    randomIntFromInterval(min, max) {
-        return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
     getPreviousIdentityIdAndRank(commits) {

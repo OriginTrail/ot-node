@@ -599,6 +599,19 @@ class Web3Service {
             return false;
         }
     }
+
+    async getProofWindowDurationPerc() {
+        try {
+            return await this.callContractFunction(
+                this.ParametersStorageContract,
+                'proofWindowDurationPerc',
+                [],
+            );
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
 }
 
 export default Web3Service;

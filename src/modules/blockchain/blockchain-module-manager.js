@@ -242,6 +242,12 @@ class BlockchainModuleManager extends BaseModuleManager {
             return this.getImplementation(blockchain).module.getCommitWindowDuration();
         }
     }
+
+    async getProofWindowDurationPerc(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getProofWindowDurationPerc();
+        }
+    }
 }
 
 export default BlockchainModuleManager;
