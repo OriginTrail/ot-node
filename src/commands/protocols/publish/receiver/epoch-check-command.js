@@ -19,6 +19,7 @@ class EpochCheckCommand extends Command {
         }
 
         if (this.assetLifetimeExpired(serviceAgreement, epoch)) {
+            // TODO update assert agreement status
             return Command.empty();
         }
         const commitWindowOpen = await this.blockchainModuleManager.isCommitWindowOpen(
@@ -27,6 +28,7 @@ class EpochCheckCommand extends Command {
             epoch,
         );
 
+        // todo move start time for commits something random between 2 min and 13min, for proofs 1% of epoch also random from proofstartime, proofendtime
         if (!commitWindowOpen) {
             await this.scheduleNextEpochCheck(blockchain, agreementId, epoch, serviceAgreement);
             return Command.empty();
@@ -53,9 +55,9 @@ class EpochCheckCommand extends Command {
         }
 
         // submit commit -> calculate proofs -> schedule proof submission -> schedule next epoch
-        const { prevId, rank } = this.previousIdentityId(commits);
+        const { prevId, rank } = this.getPreviousIdentityIdAndRank(commits);
 
-        // todo get r1 from chain
+        // todo get r1 from chain - call ParametersStorage.R1() on-chan once implemented;
         if (rank < 5) {
             await this.commandExecutor.add({
                 name: 'submitCommitCommand',
@@ -68,7 +70,7 @@ class EpochCheckCommand extends Command {
         return Command.empty();
     }
 
-    previousIdentityId(commits) {
+    getPreviousIdentityIdAndRank(commits) {
         const score = this.serviceAgreementService.calculateScore();
 
         [...commits].reverse().forEach((commit, index) => {

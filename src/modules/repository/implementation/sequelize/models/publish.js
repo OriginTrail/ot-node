@@ -11,6 +11,9 @@ export default (sequelize, DataTypes) => {
             status: DataTypes.STRING,
             created_at: DataTypes.DATE,
             updated_at: DataTypes.DATE,
+
+            // agreementId
+            // agreementStatus: ACTIVE, EXPIRED
         },
         {},
     );

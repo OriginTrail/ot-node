@@ -21,8 +21,8 @@ class SubmitProofsCommand extends Command {
             hashingAlgorithm,
         } = command.data;
 
-        // submit proofs
-        await this.blockchainModuleManager.submitProof(
+        // todo this method will return next epoch start time - once updated in dkg-evm-module, update sendProof method in blockchain module
+        await this.blockchainModuleManager.sendProof(
             blockchain,
             contract,
             tokenId,
@@ -33,6 +33,7 @@ class SubmitProofsCommand extends Command {
             leaf,
         );
 
+        // todo get start time from blockchain
         const nextEpochStartTime =
             serviceAgreement.startTime + serviceAgreement.epochLength * epoch;
 
