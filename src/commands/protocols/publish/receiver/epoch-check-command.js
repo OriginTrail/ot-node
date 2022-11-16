@@ -1,6 +1,5 @@
-import Command from '../../../command.js';
 import { AGREEMENT_STATUS } from '../../../../constants/constants.js';
-import blockchainModuleManager from '../../../../modules/blockchain/blockchain-module-manager';
+import Command from '../../../command.js';
 
 class EpochCheckCommand extends Command {
     constructor(ctx) {
@@ -67,7 +66,7 @@ class EpochCheckCommand extends Command {
         const { prevId, rank } = this.getPreviousIdentityIdAndRank(commits);
 
         if (rank < (await this.blockchainModuleManager.getR1(blockchain))) {
-            const commitWindowDuration = await blockchainModuleManager.getCommitWindowDuration(
+            const commitWindowDuration = await this.blockchainModuleManager.getCommitWindowDuration(
                 blockchain,
             );
             const currentEpochStartTime =

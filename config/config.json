@@ -168,7 +168,7 @@
             "publish": 2,
             "get": 1
         },
-        "commandExecutorVerboseLoggingEnabled": false,
+        "commandExecutorVerboseLoggingEnabled": true,
         "appDataPath": "data",
         "logLevel": "info",
         "telemetry": {

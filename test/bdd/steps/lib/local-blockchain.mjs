@@ -7,14 +7,32 @@ const hub = JSON.parse(await readFile('node_modules/dkg-evm-module/build/contrac
 const shardingTable = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/ShardingTable.json'),
 );
-const uaiRegistry = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/UAIRegistry.json'),
-);
 const assertionRegistry = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/AssertionRegistry.json'),
 );
-const assetRegistry = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/AssetRegistry.json'),
+const contentAsset = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/ContentAsset.json')
+);
+const hashingProxy = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/HashingProxy.json')
+);
+const identityStorage = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/IdentityStorage.json')
+);
+const parametersStorage = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/ParametersStorage.json')
+)
+const scoringProxy = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/ScoringProxy.json')
+);
+const serviceAgreementStorage = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/ServiceAgreementStorage.json')
+);
+const sha256Contract = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/SHA256.json')
+);
+const pldsfContract = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/PLDSF.json')
 );
 const erc20Token = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/ERC20Token.json'),
@@ -32,12 +50,18 @@ const accountPrivateKeys = JSON.parse(
 const sources = {
     hub,
     shardingTable,
-    uaiRegistry,
     assertionRegistry,
-    assetRegistry,
     erc20Token,
     profileStorage,
     profile,
+    contentAsset,
+    hashingProxy,
+    identityStorage,
+    parametersStorage,
+    scoringProxy,
+    serviceAgreementStorage,
+    sha256Contract,
+    pldsfContract
 };
 const web3 = new Web3();
 const wallets = accountPrivateKeys.map((privateKey) => ({
@@ -114,12 +138,23 @@ class LocalBlockchain {
                     `\t AssertionRegistry contract address: \t\t\t${this.contracts.assertionRegistry.instance._address}`,
                 );
                 this.logger.info(
-                    `\t UAIRegistry contract address: \t\t\t\t${this.contracts.uaiRegistry.instance._address}`,
+                    `\t Content Asset contract address: \t\t\t\t${this.contracts.contentAsset.instance._address}`,
                 );
                 this.logger.info(
-                    `\t AssetRegistry contract address: \t\t\t${this.contracts.assetRegistry.instance._address}`,
+                    `\t Hashing Proxy contract address: \t\t\t\t${this.contracts.hashingProxy.instance._address}`,
                 );
-
+                this.logger.info(
+                    `\t Identity Storage contract address: \t\t\t\t${this.contracts.identityStorage.instance._address}`,
+                );
+                this.logger.info(
+                    `\t Parameters Storage contract address: \t\t\t\t${this.contracts.parametersStorage.instance._address}`,
+                );
+                this.logger.info(
+                    `\t Scoring Proxy contract address: \t\t\t\t${this.contracts.scoringProxy.instance._address}`,
+                );
+                this.logger.info(
+                    `\t Service Agreement Storage contract address: \t\t\t\t${this.contracts.serviceAgreementStorage.instance._address}`,
+                );
                 this.logger.info(
                     `\t Token contract address: \t\t\t\t${this.contracts.erc20Token.instance._address}`,
                 );
@@ -156,17 +191,45 @@ class LocalBlockchain {
         await this.deploy('hub', deployingWallet, []);
         await this.setContractAddress('Owner', deployingWallet.address, deployingWallet);
 
+        await this.deploy('parametersStorage', deployingWallet, []);
+        await this.setContractAddress(
+            'ParametersStorage',
+            this.contracts.parametersStorage.instance._address,
+            deployingWallet
+        );
+
+        await this.deploy('hashingProxy', deployingWallet, []);
+        await this.setContractAddress(
+            'HashingProxy',
+            this.contracts.hashingProxy.instance._address,
+            deployingWallet
+        );
+
+        await this.deploy('sha256Contract', deployingWallet, []);
+        await this.setHashingFunctionContractAddress(
+            0,
+            this.contracts.sha256Contract.instance._address,
+            deployingWallet
+        );
+
+        await this.deploy('scoringProxy', deployingWallet, []);
+        await this.setContractAddress(
+            'ScoringProxy',
+            this.contracts.scoringProxy.instance._address,
+            deployingWallet
+        );
+
+        await this.deploy('pldsfContract', deployingWallet, [this.contracts.hub.instance._address]);
+        await this.setScoringFunctionContractAddress(
+            0,
+            this.contracts.pldsfContract.instance._address,
+            deployingWallet
+        );
+
         await this.deploy('shardingTable', deployingWallet, [this.contracts.hub.instance._address]);
         await this.setContractAddress(
             'ShardingTable',
             this.contracts.shardingTable.instance._address,
-            deployingWallet,
-        );
-
-        await this.deploy('uaiRegistry', deployingWallet, [this.contracts.hub.instance._address]);
-        await this.setContractAddress(
-            'UAIRegistry',
-            this.contracts.uaiRegistry.instance._address,
             deployingWallet,
         );
 
@@ -179,15 +242,27 @@ class LocalBlockchain {
             deployingWallet,
         );
 
-        await this.deploy('assetRegistry', deployingWallet, [this.contracts.hub.instance._address]);
+        await this.deploy('serviceAgreementStorage', deployingWallet, [
+            this.contracts.hub.instance._address,
+        ]);
         await this.setContractAddress(
-            'AssetRegistry',
-            this.contracts.assetRegistry.instance._address,
+            'ServiceAgreementStorage',
+            this.contracts.serviceAgreementStorage.instance._address,
             deployingWallet,
         );
-        await this.setupRole(
-            this.contracts.uaiRegistry,
-            this.contracts.assetRegistry.instance._address,
+
+        await this.deploy('contentAsset', deployingWallet, [this.contracts.hub.instance._address]);
+        await this.setAssetContractAddress(
+            'ContentAsset',
+            this.contracts.contentAsset.instance._address,
+            deployingWallet
+        );
+
+        await this.deploy('identityStorage', deployingWallet, [this.contracts.hub.instance._address]);
+        await this.setContractAddress(
+            'IdentityStorage',
+            this.contracts.identityStorage.instance._address,
+            deployingWallet
         );
 
         await this.deploy('profileStorage', deployingWallet, [
@@ -236,7 +311,7 @@ class LocalBlockchain {
             );
     }
 
-    async _deployContract(web3, contract, contractData, constructorArguments, deployerAddress) {
+    async _deployContract(web3_, contract, contractData, constructorArguments, deployerAddress) {
         let deploymentReceipt;
         let contractInstance;
         return new Promise((accept, reject) => {
@@ -253,7 +328,7 @@ class LocalBlockchain {
                 .then((instance) => {
                     // TODO: ugly workaround - not sure why this is necessary.
                     if (!instance._requestManager.provider) {
-                        instance._requestManager.setProvider(web3.eth._provider);
+                        instance._requestManager.setProvider(web3_.eth._provider);
                     }
                     contractInstance = instance;
                     accept([deploymentReceipt, contractInstance]);
@@ -273,10 +348,64 @@ class LocalBlockchain {
             );
     }
 
+    async setAssetContractAddress(contractName, contractAddress, sendingWallet) {
+        return this.contracts.hub.instance.methods
+            .setAssetContractAddress(contractName, contractAddress)
+            .send({ from: sendingWallet.address, gas: 3000000 })
+            .on('error', (error) =>
+                this.logger.error(
+                    `Unable to set asset contract ${contractName} address in HUB. Error: `,
+                    error,
+                ),
+            );
+    }
+
+    async setHashingFunctionContractAddress(hashingFunctionId, contractAddress, sendingWallet) {
+        return this.contracts.hashingProxy.instance.methods
+            .setContractAddress(hashingFunctionId, contractAddress)
+            .send({ from: sendingWallet.address, gas: 3000000 })
+            .on('error', (error) =>
+                this.logger.error(
+                    `Unable to set hashing function contract ${hashingFunctionId} address in HashingProxy contract. Error: `,
+                    error,
+                ),
+            );
+    }
+
+    async setScoringFunctionContractAddress(scoringFunctionId, contractAddress, sendingWallet) {
+        return this.contracts.scoringProxy.instance.methods
+            .setContractAddress(scoringFunctionId, contractAddress)
+            .send({ from: sendingWallet.address, gas: 3000000 })
+            .on('error', (error) =>
+                this.logger.error(
+                    `Unable to set scoring function contract ${scoringFunctionId} address in ScoringProxy contract. Error: `,
+                    error,
+                ),
+            );
+    }
+
     async getContractAddress(hubContract, contractName) {
         // this.logger.info(`Attempting to get ${contractName} contract address from Hub contract`);
         return hubContract.methods
             .getContractAddress(contractName)
+            .call({ from: this.getWallets()[0].address });
+    }
+
+    async getAssetContractAddress(hubContract, contractName) {
+        return hubContract.methods
+            .getContractAddress(contractName)
+            .call({ from: this.getWallets()[0].address });
+    }
+
+    async getHashingFunctionContractAddress(hashingProxyContract, hashingFunctionId) {
+        return hashingProxyContract.methods
+            .functions(hashingFunctionId)
+            .call({ from: this.getWallets()[0].address });
+    }
+
+    async getScoringFunctionContractAddress(scoringProxyContract, scoringFunctionId) {
+        return scoringProxyContract.methods
+            .functions(scoringFunctionId)
             .call({ from: this.getWallets()[0].address });
     }
 
@@ -290,6 +419,14 @@ class LocalBlockchain {
 
     getHubAddress() {
         return this.contracts.hub.instance._address;
+    }
+
+    getHashingProxyAddress() {
+        return this.contracts.hashingProxy.instance._address;
+    }
+
+    getScoringProxyAddress() {
+        return this.contracts.scoringProxy.instance._address;
     }
 
     isInitialized() {
