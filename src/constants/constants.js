@@ -44,7 +44,7 @@ export const XML_DATA_TYPES = {
 
 export const MIN_NODE_VERSION = 16;
 
-export const INIT_ASK_AMOUNT = 5; // TODO: Change value
+export const INIT_ASK_AMOUNT = '5'; // TODO: Change value
 
 export const INIT_STAKE_AMOUNT = '50000';
 
@@ -254,7 +254,7 @@ export const COMMAND_STATUS = {
  *  Network protocols
  */
 export const NETWORK_PROTOCOLS = {
-    STORE: ['/store/1.0.1', '/store/1.0.0'],
+    STORE: ['/store/1.0.2', '/store/1.0.1', '/store/1.0.0'],
     GET: ['/get/1.0.0'],
 };
 

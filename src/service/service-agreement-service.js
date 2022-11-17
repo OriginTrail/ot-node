@@ -11,9 +11,9 @@ class ServiceAgreementService {
         this.shardingTableService = ctx.this.shardingTableService;
     }
 
-    async generateId(assetTypeContract, tokenId, keyword, hashingAlgorithm) {
+    async generateId(assetTypeContract, tokenId, keyword, hashFunctionId) {
         return this.validationModuleManager.callHashFunction(
-            hashingAlgorithm,
+            hashFunctionId,
             Web3.utils.encodePacked(assetTypeContract, tokenId, keyword),
         );
     }
@@ -22,21 +22,18 @@ class ServiceAgreementService {
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
-    async calculateScore(keyword, blockchain, hashingAlgorithm) {
+    async calculateScore(keyword, blockchain, hashFunctionId) {
         const [peerRecord, keyHash] = await Promise.all([
             this.repositoryModuleManager.getPeerRecord(
                 this.networkModuleManager.getPeerId().toB58String(),
                 blockchain,
             ),
-            this.validationModuleManager.callHashFunction(
-                hashingAlgorithm,
-                new TextEncoder().encode(keyword),
-            ),
+            this.validationModuleManager.callHashFunction(hashFunctionId, keyword),
         ]);
 
         const distance = this.shardingTableService.calculateDistance(
             keyHash,
-            peerRecord[hashingAlgorithm],
+            peerRecord[hashFunctionId],
         );
 
         // todo update a and b once defined

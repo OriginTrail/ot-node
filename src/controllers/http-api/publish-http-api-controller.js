@@ -29,14 +29,7 @@ class PublishController extends BaseController {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
         );
 
-        const {
-            assertion,
-            assertionId,
-            blockchain,
-            contract,
-            tokenId,
-            hashingAlgorithm = 'sha256',
-        } = req.body;
+        const { assertion, assertionId, blockchain, contract, tokenId, hashFunctionId } = req.body;
         try {
             await Promise.all([
                 this.repositoryModuleManager.createOperationRecord(
@@ -66,7 +59,7 @@ class PublishController extends BaseController {
                     blockchain,
                     contract,
                     tokenId,
-                    hashingAlgorithm,
+                    hashFunctionId,
                     operationId,
                 },
                 transactional: false,

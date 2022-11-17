@@ -11,20 +11,15 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
         this.operationService = ctx.publishService;
         this.ualService = ctx.ualService;
         this.shardingTableService = ctx.shardingTableService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.serviceAgreementService = ctx.serviceAgreementService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_REMOTE_ERROR;
     }
 
     async prepareMessage(commandData) {
-        const {
-            operationId,
-            assertionId,
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-            hashingAlgorithm,
-        } = commandData;
+        const { operationId, assertionId, blockchain, contract, tokenId, keyword, hashFunctionId } =
+            commandData;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -32,7 +27,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
         );
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
-        if (!(await this.validateNeighborhood(keyword, blockchain, hashingAlgorithm, ual))) {
+        if (!(await this.validateNeighborhood(blockchain, keyword, hashFunctionId, ual))) {
             return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK, messageData: {} };
         }
 
@@ -42,7 +37,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
                 contract,
                 tokenId,
                 keyword,
-                hashingAlgorithm,
+                hashFunctionId,
                 blockchain,
                 ual,
             ))
@@ -61,13 +56,13 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
     }
 
-    async validateNeighborhood(keyword, blockchain, hashingAlgorithm, ual) {
+    async validateNeighborhood(blockchain, keyword, hashFunctionId, ual) {
         this.logger.trace(`Validating neighborhood for ual: ${ual}`);
         const closestNodes = await this.shardingTableService.findNeighbourhood(
-            keyword,
             blockchain,
-            20,
-            hashingAlgorithm,
+            keyword,
+            this.blockchainModuleManager.getR2(blockchain),
+            hashFunctionId,
         );
         for (const { peer_id } of closestNodes) {
             if (peer_id === this.networkModuleManager.getPeerId().toB58String()) {
@@ -82,7 +77,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
     async validateAssertionId(blockchain, contract, tokenId, assertionId, ual) {
         this.logger.trace(`Validating assertion with ual: ${ual}`);
 
-        const blockchainAssertionId = await this.operationService.getAssertion(
+        const blockchainAssertionId = await this.operationService.getLatestAssertion(
             blockchain,
             contract,
             tokenId,
@@ -94,12 +89,12 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
         }
     }
 
-    async validateServiceAgreement(contract, tokenId, keyword, hashingAlgorithm, blockchain, ual) {
+    async validateServiceAgreement(contract, tokenId, keyword, hashFunctionId, blockchain, ual) {
         const agreementId = await this.serviceAgreementService.generateId(
             contract,
             tokenId,
             keyword,
-            hashingAlgorithm,
+            hashFunctionId,
         );
         const serviceAgreement = await this.blockchainModuleManager.getServiceAgreement(
             blockchain,

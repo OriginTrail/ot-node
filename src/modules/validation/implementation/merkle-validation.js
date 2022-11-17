@@ -6,8 +6,9 @@ class MerkleValidation {
         this.config = config;
         this.logger = logger;
 
-        this.hashingAlgorithms = {
-            sha256,
+        this.hashFunctions = {
+            // TODO: Change this nonsense
+            0: 'sha256',
         };
     }
 
@@ -19,12 +20,13 @@ class MerkleValidation {
         return getMerkleProof(nquadsArray, challenge);
     }
 
-    async callHashFunction(hashingAlgorithm, data) {
-        return this.hashingAlgorithms[hashingAlgorithm](data);
+    async callHashFunction(hashFunctionId, data) {
+        return this[this.hashFunctions[hashFunctionId]](data); // TODO: Change this nonsense
     }
 
     async sha256(data) {
-        return `0x${Buffer.from((await sha256.digest(data)).digest)}`;
+        const bytes = new TextEncoder().encode(data);
+        return `0x${Buffer.from(sha256.digest(bytes).digest).toString('hex')}`;
     }
 }
 

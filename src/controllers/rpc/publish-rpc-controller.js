@@ -102,15 +102,8 @@ class PublishController extends BaseController {
 
     async v1_0_2HandleRequest(message, remotePeerId, protocol) {
         const { operationId, keywordUuid, messageType } = message.header;
-        const {
-            publishType,
-            assertionId,
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-            hashingAlgorithm,
-        } = message.data;
+        const { publishType, assertionId, blockchain, contract, tokenId, keyword, hashFunctionId } =
+            message.data;
         const command = {
             sequence: [],
             delay: 0,
@@ -125,7 +118,7 @@ class PublishController extends BaseController {
                 protocol,
                 tokenId,
                 keyword,
-                hashingAlgorithm,
+                hashFunctionId,
             },
             transactional: false,
         };

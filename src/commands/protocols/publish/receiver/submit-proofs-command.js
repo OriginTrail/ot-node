@@ -18,7 +18,7 @@ class SubmitProofsCommand extends Command {
             contract,
             tokenId,
             keyword,
-            hashingAlgorithm,
+            hashFunctionId,
         } = command.data;
 
         const nextEpochStartTime = await this.blockchainModuleManager.sendProof(
@@ -26,7 +26,7 @@ class SubmitProofsCommand extends Command {
             contract,
             tokenId,
             keyword,
-            hashingAlgorithm,
+            hashFunctionId,
             epoch,
             proof,
             leaf,

@@ -71,6 +71,34 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
+    async getAssertionsLength(blockchain, assetContractAddress, tokenId) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getAssertionsLength(
+                assetContractAddress,
+                tokenId,
+            );
+        }
+    }
+
+    async getAssertionByIndex(blockchain, assetContractAddress, tokenId, index) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getAssertionByIndex(
+                assetContractAddress,
+                tokenId,
+                index,
+            );
+        }
+    }
+
+    async getLatestAssertion(blockchain, assetContractAddress, tokenId) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getLatestAssertion(
+                assetContractAddress,
+                tokenId,
+            );
+        }
+    }
+
     async getAssertionIssuer(blockchain, assertionId) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getAssertionIssuer(assertionId);
@@ -152,9 +180,43 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getServiceAgreement(blockchain, agreementId) {
+    async getAgreementStartTime(blockchain, agreementId) {
         if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getServiceAgreement(agreementId);
+            return this.getImplementation(blockchain).module.getAgreementStartTime(agreementId);
+        }
+    }
+
+    async getAgreementEpochsNumber(blockchain, agreementId) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getAgreementEpochsNumber(agreementId);
+        }
+    }
+
+    async getAgreementEpochLength(blockchain, agreementId) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getAgreementEpochLength(agreementId);
+        }
+    }
+
+    async getAgreementTokenAmount(blockchain, agreementId) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getAgreementTokenAmount(agreementId);
+        }
+    }
+
+    async getAgreementScoringFunctionId(blockchain, agreementId) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getAgreementScoringFunctionId(
+                agreementId,
+            );
+        }
+    }
+
+    async getAgreementProofWindowOffsetPerc(blockchain, agreementId) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getAgreementProofWindowOffsetPerc(
+                agreementId,
+            );
         }
     }
 
@@ -163,7 +225,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         assetContractAddress,
         tokenId,
         keyword,
-        hashingAlgorithm,
+        hashFunctionId,
         epoch,
         prevIdentityId,
     ) {
@@ -172,7 +234,7 @@ class BlockchainModuleManager extends BaseModuleManager {
                 assetContractAddress,
                 tokenId,
                 keyword,
-                hashingAlgorithm,
+                hashFunctionId,
                 epoch,
                 prevIdentityId,
             );
@@ -185,13 +247,13 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getChallenge(blockchain, assetContractAddress, tokenId, keyword, hashingAlgorithm) {
+    async getChallenge(blockchain, assetContractAddress, tokenId, keyword, hashFunctionId) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getChallenge(
                 assetContractAddress,
                 tokenId,
                 keyword,
-                hashingAlgorithm,
+                hashFunctionId,
             );
         }
     }
@@ -201,7 +263,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         assetContractAddress,
         tokenId,
         keyword,
-        hashingAlgorithm,
+        hashFunctionId,
         epoch,
         proof,
         chunkHash,
@@ -211,11 +273,23 @@ class BlockchainModuleManager extends BaseModuleManager {
                 assetContractAddress,
                 tokenId,
                 keyword,
-                hashingAlgorithm,
+                hashFunctionId,
                 epoch,
                 proof,
                 chunkHash,
             );
+        }
+    }
+
+    async getHashFunctionName(blockchain, hashFunctionId) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getHashFunctionName(hashFunctionId);
+        }
+    }
+
+    async callHashFunction(blockchain, hashFunctionId, data) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.callHashFunction(hashFunctionId, data);
         }
     }
 

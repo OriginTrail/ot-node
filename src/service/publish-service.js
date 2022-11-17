@@ -83,8 +83,8 @@ class PublishService extends OperationService {
         }
     }
 
-    async getAssertion(blockchain, contract, tokenId) {
-        return this.blockchainModuleManager.getLatestCommitHash(blockchain, contract, tokenId);
+    async getLatestAssertion(blockchain, contract, tokenId) {
+        return this.blockchainModuleManager.getLatestAssertion(blockchain, contract, tokenId);
     }
 
     async validateAssertion(assertionId, operationId) {
