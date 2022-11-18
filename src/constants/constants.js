@@ -44,7 +44,7 @@ export const XML_DATA_TYPES = {
 
 export const MIN_NODE_VERSION = 16;
 
-export const INIT_ASK_AMOUNT = '5'; // TODO: Change value
+export const INIT_ASK_AMOUNT = '2';
 
 export const INIT_STAKE_AMOUNT = '50000';
 
