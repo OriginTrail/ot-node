@@ -236,7 +236,7 @@ class Web3Service {
     async identityIdExists() {
         const identityId = await this.getIdentityId();
 
-        return identityId !== 0;
+        return identityId !== '0';
     }
 
     async createProfile(peerId) {
@@ -256,11 +256,15 @@ class Web3Service {
                 initialStake,
             ]);
         } catch (error) {
-            this.logger.error(`Error on executing contract function. ${error}`);
             await this.executeContractFunction(this.TokenContract, 'decreaseAllowance', [
                 this.ProfileContract.options.address,
                 initialStake,
             ]);
+            if (!error.message.includes('Profile already exists')) {
+                throw error;
+            } else {
+                this.logger.info(`Skipping profile creation, already exists on blockchain.`);
+            }
         }
     }
 
