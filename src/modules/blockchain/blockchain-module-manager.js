@@ -29,12 +29,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getIdentityContractAddress(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getIdentityContractAddress();
-        }
-    }
-
     async identityIdExists(blockchain) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.identityIdExists();

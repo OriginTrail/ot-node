@@ -1,5 +1,5 @@
-import Command from '../../../command.js';
 import { AGREEMENT_STATUS } from '../../../../constants/constants.js';
+import Command from '../../../command.js';
 
 class EpochCheckCommand extends Command {
     constructor(ctx) {

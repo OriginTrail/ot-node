@@ -236,11 +236,7 @@ class Web3Service {
     async identityIdExists() {
         const identityId = await this.getIdentityId();
 
-        // console.log(`IdentityID: ${identityId}`);
-        // console.log(identityId != 0);
-
-        // eslint-disable-next-line eqeqeq
-        return identityId != 0;
+        return identityId !== 0;
     }
 
     async createProfile(peerId) {

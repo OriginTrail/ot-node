@@ -206,6 +206,7 @@ class LocalBlockchain {
         );
 
         await this.deploy('sha256Contract', deployingWallet, []);
+
         await this.setHashFunctionContractAddress(
             0,
             this.contracts.sha256Contract.instance._address,
