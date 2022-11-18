@@ -17,12 +17,13 @@ class ShardingTableService {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.networkModuleManager = ctx.networkModuleManager;
+        this.validationModuleManager = ctx.validationModuleManager;
         this.eventEmitter = ctx.eventEmitter;
     }
 
     async initialize(blockchainId) {
         await this.pullBlockchainShardingTable(blockchainId);
-        this.listenOnEvents(blockchainId);
+        await this.listenOnEvents(blockchainId);
         const that = this;
         await this.networkModuleManager.onPeerConnected((connection) => {
             this.logger.trace(
@@ -80,22 +81,37 @@ class ShardingTableService {
         );
 
         await this.repositoryModuleManager.createManyPeerRecords(
-            shardingTable.map((peer) => ({
-                peer_id: this.blockchainModuleManager.convertHexToAscii(blockchainId, peer.id),
-                blockchain_id: blockchainId,
-                ask: peer.ask,
-                stake: peer.stake,
-                sha256: peer.idSha256,
-            })),
+            await Promise.all(
+                shardingTable.map(async (peer) => {
+                    const nodeId = this.blockchainModuleManager.convertHexToAscii(
+                        blockchainId,
+                        peer.id,
+                    );
+
+                    return {
+                        peer_id: nodeId,
+                        blockchain_id: blockchainId,
+                        ask: peer.ask / 10 ** 18,
+                        stake: peer.stake / 10 ** 18,
+                        sha256: await this.validationModuleManager.callHashFunction(0, nodeId),
+                    };
+                }),
+            ),
         );
     }
 
-    listenOnEvents(blockchainId) {
-        this.eventEmitter.on(`${blockchainId}-NodeObjCreated`, (event) => {
+    async listenOnEvents(blockchainId) {
+        this.eventEmitter.on(`${blockchainId}-NodeObjCreated`, async (event) => {
             const eventData = JSON.parse(event.data);
             const nodeId = this.blockchainModuleManager.convertHexToAscii(
                 event.blockchain_id,
                 eventData.nodeId,
+            );
+
+            const nodeIdSha256 = await this.validationModuleManager.callHashFunction(
+                // TODO: How to add more hashes?
+                0,
+                nodeId,
             );
 
             this.logger.trace(
@@ -105,10 +121,10 @@ class ShardingTableService {
             this.repositoryModuleManager.createPeerRecord(
                 nodeId,
                 event.blockchain_id,
-                eventData.ask,
-                eventData.stake,
+                eventData.ask / 10 ** 18,
+                eventData.stake / 10 ** 18,
                 new Date(0),
-                eventData.nodeIdSha256,
+                nodeIdSha256,
             );
 
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
@@ -142,23 +158,25 @@ class ShardingTableService {
         });
     }
 
-    async findNeighbourhood(key, blockchainId, r2, hashingAlgorithm) {
+    async findNeighbourhood(blockchainId, key, r2, hashFunctionId) {
         const peers = await this.repositoryModuleManager.getAllPeerRecords(blockchainId);
-        const keyHash = await this.validationModuleManager.callHashFunction(
-            hashingAlgorithm,
-            new TextEncoder().encode(key),
-        );
+        const keyHash = await this.validationModuleManager.callHashFunction(hashFunctionId, key);
 
-        return this.sortPeers(keyHash, peers, r2, hashingAlgorithm);
+        return this.sortPeers(blockchainId, keyHash, peers, r2, hashFunctionId);
     }
 
-    async sortPeers(keyHash, peers, count, hashingAlgorithm) {
+    async sortPeers(blockchainId, keyHash, peers, count, hashFunctionId) {
+        const hashFunctionName = await this.blockchainModuleManager.getHashFunctionName(
+            blockchainId,
+            hashFunctionId,
+        );
+
         const sorted = pipe(
             peers,
             (source) =>
                 map(source, async (peer) => ({
                     peer,
-                    distance: this.calculateDistance(keyHash, peer[hashingAlgorithm]),
+                    distance: this.calculateDistance(keyHash, peer[hashFunctionName]),
                 })),
             (source) => sort(source, (a, b) => uint8ArrayCompare(a.distance, b.distance)),
             (source) => take(source, count),
@@ -169,7 +187,10 @@ class ShardingTableService {
     }
 
     calculateDistance(keyHash, peerHash) {
-        return uint8ArrayXor(keyHash, Buffer.from(peerHash.slice(2), 'hex'));
+        return uint8ArrayXor(
+            Buffer.from(keyHash.slice(2), 'hex'),
+            Buffer.from(peerHash.slice(2), 'hex'),
+        );
     }
 
     async getBidSuggestion(neighbourhood, r0, higherPercentile) {

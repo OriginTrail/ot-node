@@ -15,7 +15,7 @@ class SubmitCommitCommand extends Command {
             prevIdentityId,
             tokenId,
             contract,
-            hashingAlgorithm,
+            hashFunctionId,
             serviceAgreement,
         } = command.data;
 
@@ -23,7 +23,7 @@ class SubmitCommitCommand extends Command {
             blockchain,
             tokenId,
             contract,
-            hashingAlgorithm,
+            hashFunctionId,
             epoch,
             prevIdentityId,
         );

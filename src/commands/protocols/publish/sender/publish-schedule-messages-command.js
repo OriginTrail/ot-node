@@ -11,8 +11,9 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     }
 
     getNextCommandData(command) {
-        const { publishType, assertionId, blockchain, tokenId, contract } = command.data;
-        return { publishType, assertionId, blockchain, contract, tokenId };
+        const { publishType, assertionId, blockchain, tokenId, contract, hashFunctionId } =
+            command.data;
+        return { publishType, assertionId, blockchain, contract, tokenId, hashFunctionId };
     }
 
     /**

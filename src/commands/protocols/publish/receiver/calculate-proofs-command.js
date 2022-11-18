@@ -14,7 +14,7 @@ class CalculateProofsCommand extends Command {
             contract,
             tokenId,
             keyword,
-            hashingAlgorithm,
+            hashFunctionId,
             serviceAgreement,
             epoch,
             agreementId,
@@ -32,7 +32,7 @@ class CalculateProofsCommand extends Command {
                 contract,
                 tokenId,
                 keyword,
-                hashingAlgorithm,
+                hashFunctionId,
             );
 
             const { leaf, proof } = await this.validationModuleManager.getMerkleProof(

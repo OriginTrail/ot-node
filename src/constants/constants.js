@@ -254,7 +254,7 @@ export const COMMAND_STATUS = {
  *  Network protocols
  */
 export const NETWORK_PROTOCOLS = {
-    STORE: ['/store/1.0.1', '/store/1.0.0'],
+    STORE: ['/store/1.0.2', '/store/1.0.1', '/store/1.0.0'],
     GET: ['/get/1.0.0'],
 };
 

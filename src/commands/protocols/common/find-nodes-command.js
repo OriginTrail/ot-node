@@ -5,6 +5,7 @@ class FindNodesCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.networkModuleManager = ctx.networkModuleManager;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.shardingTableService = ctx.shardingTableService;
     }
 
@@ -20,7 +21,7 @@ class FindNodesCommand extends Command {
             minimumAckResponses,
             errorType,
             networkProtocols,
-            hashingAlgorithm,
+            hashFunctionId,
         } = command.data;
 
         this.errorType = errorType;
@@ -28,7 +29,7 @@ class FindNodesCommand extends Command {
 
         // TODO: protocol selection
         const closestNodes = [];
-        const foundNodes = await this.findNodes(keyword, operationId, blockchain, hashingAlgorithm);
+        const foundNodes = await this.findNodes(blockchain, keyword, operationId, hashFunctionId);
         for (const node of foundNodes) {
             if (node.id !== this.networkModuleManager.getPeerId().toB58String()) {
                 closestNodes.push({ id: node.id, protocol: networkProtocols[0] });
@@ -66,16 +67,16 @@ class FindNodesCommand extends Command {
         );
     }
 
-    async findNodes(keyword, operationId, blockchainId, hashingAlgorithm) {
+    async findNodes(blockchainId, keyword, operationId, hashFunctionId) {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.FIND_NODES_START,
         );
         const closestNodes = await this.shardingTableService.findNeighbourhood(
-            keyword,
             blockchainId,
+            keyword,
             await this.blockchainModuleManager.getR2(blockchainId),
-            hashingAlgorithm,
+            hashFunctionId,
         );
 
         const nodesFound = await Promise.all(

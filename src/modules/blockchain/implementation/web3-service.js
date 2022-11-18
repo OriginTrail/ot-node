@@ -13,6 +13,8 @@ import {
 const require = createRequire(import.meta.url);
 const Hub = require('dkg-evm-module/build/contracts/Hub.json');
 const AssertionRegistry = require('dkg-evm-module/build/contracts/AssertionRegistry.json');
+const ContentAsset = require('dkg-evm-module/build/contracts/ContentAsset.json');
+const HashingProxy = require('dkg-evm-module/build/contracts/HashingProxy.json');
 const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
 const ParametersStorage = require('dkg-evm-module/build/contracts/ParametersStorage.json');
 const Profile = require('dkg-evm-module/build/contracts/Profile.json');
@@ -79,6 +81,16 @@ class Web3Service {
             parametersStorageAddress,
         );
 
+        const hashingProxyAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['HashingProxy'],
+        );
+        this.HashingProxyContract = new this.web3.eth.Contract(
+            HashingProxy.abi,
+            hashingProxyAddress,
+        );
+
         const shardingTableAddress = await this.callContractFunction(
             this.hubContract,
             'getContractAddress',
@@ -97,6 +109,16 @@ class Web3Service {
         this.AssertionRegistryContract = new this.web3.eth.Contract(
             AssertionRegistry.abi,
             assertionRegistryAddress,
+        );
+
+        const contentAssetAddress = await this.callContractFunction(
+            this.hubContract,
+            'getAssetContractAddress',
+            ['ContentAsset'],
+        );
+        this.ContentAssetContract = new this.web3.eth.Contract(
+            ContentAsset.abi,
+            contentAssetAddress,
         );
 
         const tokenAddress = await this.callContractFunction(
@@ -142,6 +164,11 @@ class Web3Service {
             ServiceAgreementStorage.abi,
             serviceAgreementStorageAddress,
         );
+
+        // TODO: Change this nonsense
+        this.assetContracts = {
+            [contentAssetAddress.toLowerCase()]: this.ContentAssetContract,
+        };
 
         this.logger.debug(
             `Connected to blockchain rpc : ${this.config.rpcEndpoints[this.rpcNumber]}.`,
@@ -410,6 +437,37 @@ class Web3Service {
         return result;
     }
 
+    async getAssertionsLength(assetContractAddress, tokenId) {
+        try {
+            return this.callContractFunction(
+                this.assetContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
+                'getAssertionsLength',
+                [tokenId],
+            );
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async getAssertionByIndex(assetContractAddress, tokenId, index) {
+        try {
+            return this.callContractFunction(
+                this.assetContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
+                'getAssertionByIndex',
+                [tokenId, index],
+            );
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async getLatestAssertion(assetContractAddress, tokenId) {
+        const assertionsLength = await this.getAssertionsLength(assetContractAddress, tokenId);
+        return this.getAssertionByIndex(assetContractAddress, tokenId, assertionsLength - 1);
+    }
+
     async getAssertionIssuer(assertionId) {
         try {
             return this.callContractFunction(this.AssertionRegistryContract, 'getIssuer', [
@@ -421,11 +479,76 @@ class Web3Service {
         }
     }
 
-    async getServiceAgreement(agreementId) {
+    async getAgreementStartTime(agreementId) {
         try {
             return this.callContractFunction(
                 this.ServiceAgreementStorageContract,
-                'serviceAgreements',
+                'getAgreementStartTime',
+                [agreementId],
+            );
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async getAgreementEpochsNumber(agreementId) {
+        try {
+            return this.callContractFunction(
+                this.ServiceAgreementStorageContract,
+                'getAgreementEpochsNumber',
+                [agreementId],
+            );
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async getAgreementEpochLength(agreementId) {
+        try {
+            return this.callContractFunction(
+                this.ServiceAgreementStorageContract,
+                'getAgreementEpochLength',
+                [agreementId],
+            );
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async getAgreementTokenAmount(agreementId) {
+        try {
+            return this.callContractFunction(
+                this.ServiceAgreementStorageContract,
+                'getAgreementTokenAmount',
+                [agreementId],
+            );
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async getAgreementScoringFunctionId(agreementId) {
+        try {
+            return this.callContractFunction(
+                this.ServiceAgreementStorageContract,
+                'getAgreementScoringFunctionId',
+                [agreementId],
+            );
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async getAgreementProofWindowOffsetPerc(agreementId) {
+        try {
+            return this.callContractFunction(
+                this.ServiceAgreementStorageContract,
+                'getAgreementProofWindowOffsetPerc',
                 [agreementId],
             );
         } catch (e) {
@@ -460,9 +583,35 @@ class Web3Service {
         }
     }
 
+    async getHashFunctionName(hashFunctionId) {
+        try {
+            return await this.callContractFunction(
+                this.HashingProxyContract,
+                'getHashingFunctionName',
+                [hashFunctionId],
+            );
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async callHashFunction(hashFunctionId, data) {
+        try {
+            return await this.callContractFunction(
+                this.HashingProxyContract,
+                'callHashingFunction',
+                [hashFunctionId, data],
+            );
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
     async getR2() {
         try {
-            return this.callContractFunction(this.ParametersStorageContract, 'R2', []);
+            return await this.callContractFunction(this.ParametersStorageContract, 'R2', []);
         } catch (e) {
             this.logger.error(`Error on calling contract function. ${e}`);
             return false;
@@ -471,7 +620,7 @@ class Web3Service {
 
     async getR1() {
         try {
-            return this.callContractFunction(this.ParametersStorageContract, 'R1', []);
+            return await this.callContractFunction(this.ParametersStorageContract, 'R1', []);
         } catch (e) {
             this.logger.error(`Error on calling contract function. ${e}`);
             return false;
@@ -480,7 +629,7 @@ class Web3Service {
 
     async getR0() {
         try {
-            return this.callContractFunction(this.ParametersStorageContract, 'R0', []);
+            return await this.callContractFunction(this.ParametersStorageContract, 'R0', []);
         } catch (e) {
             this.logger.error(`Error on calling contract function. ${e}`);
             return false;
@@ -491,7 +640,7 @@ class Web3Service {
         assetContractAddress,
         tokenId,
         keyword,
-        hashingAlgorithm,
+        hashFunctionId,
         epoch,
         prevIdentityId,
     ) {
@@ -499,7 +648,7 @@ class Web3Service {
             assetContractAddress,
             tokenId,
             keyword,
-            hashingAlgorithm,
+            hashFunctionId,
             epoch,
             prevIdentityId,
         ]);
@@ -518,13 +667,13 @@ class Web3Service {
         }
     }
 
-    async getChallenge(assetContractAddress, tokenId, keyword, hashingAlgorithm) {
+    async getChallenge(assetContractAddress, tokenId, keyword, hashFunctionId) {
         try {
             return this.callContractFunction(this.ServiceAgreementStorageContract, 'getChallenge', [
                 assetContractAddress,
                 tokenId,
                 keyword,
-                hashingAlgorithm,
+                hashFunctionId,
             ]);
         } catch (e) {
             this.logger.error(`Error on calling contract function. ${e}`);
@@ -536,7 +685,7 @@ class Web3Service {
         assetContractAddress,
         tokenId,
         keyword,
-        hashingAlgorithm,
+        hashFunctionId,
         epoch,
         proof,
         chunkHash,
@@ -546,7 +695,7 @@ class Web3Service {
                 assetContractAddress,
                 tokenId,
                 keyword,
-                hashingAlgorithm,
+                hashFunctionId,
                 epoch,
                 proof,
                 chunkHash,

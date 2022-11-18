@@ -206,7 +206,8 @@ class LocalBlockchain {
         );
 
         await this.deploy('sha256Contract', deployingWallet, []);
-        await this.setHashingFunctionContractAddress(
+
+        await this.setHashFunctionContractAddress(
             0,
             this.contracts.sha256Contract.instance._address,
             deployingWallet
@@ -360,13 +361,13 @@ class LocalBlockchain {
             );
     }
 
-    async setHashingFunctionContractAddress(hashingFunctionId, contractAddress, sendingWallet) {
+    async setHashFunctionContractAddress(hashFunctionId, contractAddress, sendingWallet) {
         return this.contracts.hashingProxy.instance.methods
-            .setContractAddress(hashingFunctionId, contractAddress)
+            .setContractAddress(hashFunctionId, contractAddress)
             .send({ from: sendingWallet.address, gas: 3000000 })
             .on('error', (error) =>
                 this.logger.error(
-                    `Unable to set hashing function contract ${hashingFunctionId} address in HashingProxy contract. Error: `,
+                    `Unable to set hashing function contract ${hashFunctionId} address in HashingProxy contract. Error: `,
                     error,
                 ),
             );
@@ -397,9 +398,9 @@ class LocalBlockchain {
             .call({ from: this.getWallets()[0].address });
     }
 
-    async getHashingFunctionContractAddress(hashingProxyContract, hashingFunctionId) {
+    async getHashFunctionContractAddress(hashingProxyContract, hashFunctionId) {
         return hashingProxyContract.methods
-            .functions(hashingFunctionId)
+            .functions(hashFunctionId)
             .call({ from: this.getWallets()[0].address });
     }
 
