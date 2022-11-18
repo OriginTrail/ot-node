@@ -14,7 +14,6 @@ class CommandResolver {
      */
     resolve(name) {
         try {
-            this.logger.info(`Handling command: ${name}`);
             return this.ctx[`${name}`];
         } catch (e) {
             this.logger.warn(`No handler defined for command '${name}'`);
