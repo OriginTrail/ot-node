@@ -1,5 +1,5 @@
 export async function up({ context: { queryInterface, Sequelize } }) {
-    await queryInterface.addColumn('publish', 'attributeId', {
+    await queryInterface.addColumn('publish', 'agreementId', {
         type: Sequelize.STRING,
     });
     await queryInterface.addColumn('publish', 'agreementStatus', {

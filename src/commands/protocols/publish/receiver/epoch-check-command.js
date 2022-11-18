@@ -15,7 +15,7 @@ class EpochCheckCommand extends Command {
 
         let { serviceAgreement } = command.data;
         if (!serviceAgreement) {
-            serviceAgreement = await this.blockchainModuleManager.getServiceAgreement(
+            serviceAgreement = await this.serviceAgreementService.getServiceAgreementData(
                 blockchain,
                 agreementId,
             );
@@ -129,7 +129,7 @@ class EpochCheckCommand extends Command {
     }
 
     assetLifetimeExpired(serviceAgreement, epoch) {
-        return serviceAgreement.epochsNum < epoch;
+        return serviceAgreement.epochsNumber < epoch;
     }
 
     /**

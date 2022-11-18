@@ -1,3 +1,4 @@
+import Web3 from 'web3';
 import NetworkProtocolCommand from '../../common/network-protocol-command.js';
 import { ERROR_TYPE } from '../../../../constants/constants.js';
 
@@ -10,7 +11,8 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
     }
 
     getKeywords(command) {
-        return [command.data.assertionId];
+        const { contract, tokenId } = command.data;
+        return [Web3.utils.encodePacked(contract, tokenId)];
     }
 
     /**

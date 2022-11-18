@@ -8,7 +8,7 @@ import {
 class HandleStoreInitCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.publishService;
+        this.publishService = ctx.publishService;
         this.ualService = ctx.ualService;
         this.shardingTableService = ctx.shardingTableService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
@@ -77,7 +77,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
     async validateAssertionId(blockchain, contract, tokenId, assertionId, ual) {
         this.logger.trace(`Validating assertion with ual: ${ual}`);
 
-        const blockchainAssertionId = await this.operationService.getLatestAssertion(
+        const blockchainAssertionId = await this.publishService.getLatestAssertion(
             blockchain,
             contract,
             tokenId,
@@ -96,11 +96,11 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
             keyword,
             hashFunctionId,
         );
-        const serviceAgreement = await this.blockchainModuleManager.getServiceAgreement(
+        const tokenAmount = await this.blockchainModuleManager.getAgreementTokenAmount(
             blockchain,
             agreementId,
         );
-        if (!serviceAgreement?.tokenAmount) {
+        if (!tokenAmount) {
             this.logger.warn(`Invalid service agreement for ual: ${ual}`);
             return false;
         }

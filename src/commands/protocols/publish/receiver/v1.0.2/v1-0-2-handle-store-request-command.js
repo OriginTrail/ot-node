@@ -65,7 +65,9 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             keyword,
             hashFunctionId,
         );
-
+        this.logger.info(
+            `Calculated agreement id: ${agreementId} for contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}`,
+        );
         await this.repositoryModuleManager.updateOperationAgreementStatus(
             operationId,
             agreementId,

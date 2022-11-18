@@ -10,8 +10,16 @@ class PublishRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { publishType, operationId, assertionId, blockchain, contract, tokenId, keyword } =
-            command.data;
+        const {
+            publishType,
+            operationId,
+            assertionId,
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+            hashFunctionId,
+        } = command.data;
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
 
         return {
@@ -22,6 +30,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
             assertion,
             tokenId,
             keyword,
+            hashFunctionId,
         };
     }
 

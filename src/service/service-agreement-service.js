@@ -7,15 +7,46 @@ class ServiceAgreementService {
         this.validationModuleManager = ctx.validationModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.validationModuleManager = ctx.validationModuleManager;
-        this.shardingTableService = ctx.this.shardingTableService;
+        this.shardingTableService = ctx.shardingTableService;
     }
 
     async generateId(assetTypeContract, tokenId, keyword, hashFunctionId) {
         return this.validationModuleManager.callHashFunction(
             hashFunctionId,
-            Web3.utils.encodePacked(assetTypeContract, tokenId, keyword),
+            this.blockchainModuleManager.convertHexToAscii(
+                Web3.utils.encodePacked(assetTypeContract, tokenId, keyword),
+            ),
         );
+    }
+
+    async getServiceAgreementData(blockchain, agreementId) {
+        return {
+            epochsNumber: await this.blockchainModuleManager.getAgreementEpochsNumber(
+                blockchain,
+                agreementId,
+            ),
+            startTime: await this.blockchainModuleManager.getAgreementStartTime(
+                blockchain,
+                agreementId,
+            ),
+            epochLength: await this.blockchainModuleManager.getAgreementEpochLength(
+                blockchain,
+                agreementId,
+            ),
+            tokenAmount: await this.blockchainModuleManager.getAgreementTokenAmount(
+                blockchain,
+                agreementId,
+            ),
+            proofWindowOffsetPerc:
+                await this.blockchainModuleManager.getAgreementProofWindowOffsetPerc(
+                    blockchain,
+                    agreementId,
+                ),
+            scoringFunctionId: await this.blockchainModuleManager.getAgreementScoringFunctionId(
+                blockchain,
+                agreementId,
+            ),
+        };
     }
 
     randomIntFromInterval(min, max) {
@@ -23,12 +54,13 @@ class ServiceAgreementService {
     }
 
     async calculateScore(keyword, blockchain, hashFunctionId) {
+        const encodedKeyword = new TextEncoder().encode(keyword);
         const [peerRecord, keyHash] = await Promise.all([
             this.repositoryModuleManager.getPeerRecord(
                 this.networkModuleManager.getPeerId().toB58String(),
                 blockchain,
             ),
-            this.validationModuleManager.callHashFunction(hashFunctionId, keyword),
+            this.validationModuleManager.callHashFunction(hashFunctionId, encodedKeyword),
         ]);
 
         const distance = this.shardingTableService.calculateDistance(
