@@ -21,6 +21,10 @@ class SubmitProofsCommand extends Command {
             hashFunctionId,
         } = command.data;
 
+        this.logger.trace(
+            `Started submit proofs command for agreement id: ${agreementId} contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}`,
+        );
+
         const nextEpochStartTime = await this.blockchainModuleManager.sendProof(
             blockchain,
             contract,

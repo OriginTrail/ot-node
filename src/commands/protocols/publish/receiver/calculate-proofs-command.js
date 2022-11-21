@@ -21,8 +21,12 @@ class CalculateProofsCommand extends Command {
             identityId,
         } = command.data;
 
+        this.logger.trace(
+            `Started calculate proofs command for agreement id: ${agreementId} contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}`,
+        );
+
         if (
-            (await this.isEligibleForRewards(blockchain, agreementId, epoch, identityId)) ||
+            !(await this.isEligibleForRewards(blockchain, agreementId, epoch, identityId)) ||
             !(await this.blockchainModuleManager.isProofWindowOpen(agreementId, epoch))
         ) {
             await this.scheduleNextEpochCheck(
@@ -34,6 +38,9 @@ class CalculateProofsCommand extends Command {
                 serviceAgreement,
             );
         } else {
+            this.logger.trace(
+                `Proof window is open and node is eligible for rewards. Calculating proofs for agreement id : ${agreementId}`,
+            );
             const { assertionId, challenge } = await this.blockchainModuleManager.getChallenge(
                 blockchain,
                 contract,
@@ -69,9 +76,12 @@ class CalculateProofsCommand extends Command {
         const r0 = await this.blockchainModuleManager.getR0(blockchain);
         commits.slice(0, r0).forEach((commit) => {
             if (commit.identityId === identityId) {
+                this.logger.trace(`Node is eligible for rewards for agreement id: ${agreementId}`);
                 return true;
             }
         });
+
+        this.logger.trace(`Node is not eligible for rewards for agreement id: ${agreementId}`);
 
         return false;
     }
