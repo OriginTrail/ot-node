@@ -221,7 +221,7 @@ class LocalBlockchain {
         );
 
         await this.deploy('pldsfContract', deployingWallet, [this.contracts.hub.instance._address]);
-        await this.setScoringFunctionContractAddress(
+        await this.setScoreFunctionContractAddress(
             0,
             this.contracts.pldsfContract.instance._address,
             deployingWallet
@@ -367,19 +367,19 @@ class LocalBlockchain {
             .send({ from: sendingWallet.address, gas: 3000000 })
             .on('error', (error) =>
                 this.logger.error(
-                    `Unable to set hashing function contract ${hashFunctionId} address in HashingProxy contract. Error: `,
+                    `Unable to set hash function contract ${hashFunctionId} address in HashingProxy contract. Error: `,
                     error,
                 ),
             );
     }
 
-    async setScoringFunctionContractAddress(scoringFunctionId, contractAddress, sendingWallet) {
+    async setScoreFunctionContractAddress(scoreFunctionId, contractAddress, sendingWallet) {
         return this.contracts.scoringProxy.instance.methods
-            .setContractAddress(scoringFunctionId, contractAddress)
+            .setContractAddress(scoreFunctionId, contractAddress)
             .send({ from: sendingWallet.address, gas: 3000000 })
             .on('error', (error) =>
                 this.logger.error(
-                    `Unable to set scoring function contract ${scoringFunctionId} address in ScoringProxy contract. Error: `,
+                    `Unable to set score function contract ${scoreFunctionId} address in ScoringProxy contract. Error: `,
                     error,
                 ),
             );
@@ -404,9 +404,9 @@ class LocalBlockchain {
             .call({ from: this.getWallets()[0].address });
     }
 
-    async getScoringFunctionContractAddress(scoringProxyContract, scoringFunctionId) {
+    async getScoreFunctionContractAddress(scoringProxyContract, scoreFunctionId) {
         return scoringProxyContract.methods
-            .functions(scoringFunctionId)
+            .functions(scoreFunctionId)
             .call({ from: this.getWallets()[0].address });
     }
 

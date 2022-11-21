@@ -25,7 +25,14 @@ class CalculateProofsCommand extends Command {
             (await this.isEligibleForRewards(blockchain, agreementId, epoch, identityId)) ||
             !(await this.blockchainModuleManager.isProofWindowOpen(agreementId, epoch))
         ) {
-            await this.scheduleNextEpochCheck(blockchain, agreementId, epoch, serviceAgreement);
+            await this.scheduleNextEpochCheck(
+                blockchain,
+                agreementId,
+                contract,
+                tokenId,
+                epoch,
+                serviceAgreement,
+            );
         } else {
             const { assertionId, challenge } = await this.blockchainModuleManager.getChallenge(
                 blockchain,
@@ -69,17 +76,30 @@ class CalculateProofsCommand extends Command {
         return false;
     }
 
-    async scheduleNextEpochCheck(blockchain, agreementId, epoch, serviceAgreement) {
+    async scheduleNextEpochCheck(
+        blockchain,
+        agreementId,
+        contract,
+        tokenId,
+        keyword,
+        epoch,
+        hashFunctionId,
+        serviceAgreement,
+    ) {
         const nextEpochStartTime =
             serviceAgreement.startTime + serviceAgreement.epochLength * epoch;
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
             sequence: [],
-            delay: nextEpochStartTime - Date.now(),
+            delay: nextEpochStartTime - Math.floor(Date.now() / 1000),
             data: {
                 blockchain,
                 agreementId,
+                contract,
+                tokenId,
+                keyword,
                 epoch: epoch + 1,
+                hashFunctionId,
                 serviceAgreement,
             },
             transactional: false,

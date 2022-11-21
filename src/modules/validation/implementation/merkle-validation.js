@@ -1,4 +1,4 @@
-import { sha256 } from 'multiformats/hashes/sha2';
+import { ethers } from 'ethers';
 import { calculateRoot, getMerkleProof } from 'assertion-tools';
 
 class MerkleValidation {
@@ -25,8 +25,11 @@ class MerkleValidation {
     }
 
     async sha256(data) {
-        const bytes = new TextEncoder().encode(data);
-        return `0x${Buffer.from(sha256.digest(bytes).digest).toString('hex')}`;
+        if (!ethers.utils.isBytesLike(data)) {
+            const bytesLikeData = ethers.utils.toUtf8Bytes(data);
+            return ethers.utils.sha256(bytesLikeData);
+        }
+        return ethers.utils.sha256(data);
     }
 }
 

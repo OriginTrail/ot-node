@@ -1,3 +1,4 @@
+import { ethers } from 'ethers';
 import { xor as uint8ArrayXor } from 'uint8arrays/xor';
 import { compare as uint8ArrayCompare } from 'uint8arrays/compare';
 import pipe from 'it-pipe';
@@ -91,8 +92,8 @@ class ShardingTableService {
                     return {
                         peer_id: nodeId,
                         blockchain_id: blockchainId,
-                        ask: peer.ask / 10 ** 18,
-                        stake: peer.stake / 10 ** 18,
+                        ask: ethers.utils.formatUnits(peer.ask, 'ether'),
+                        stake: ethers.utils.formatUnits(peer.stake, 'ether'),
                         sha256: await this.validationModuleManager.callHashFunction(0, nodeId),
                     };
                 }),
@@ -121,8 +122,8 @@ class ShardingTableService {
             this.repositoryModuleManager.createPeerRecord(
                 nodeId,
                 event.blockchain_id,
-                eventData.ask / 10 ** 18,
-                eventData.stake / 10 ** 18,
+                ethers.utils.formatUnits(eventData.ask, 'ether'),
+                ethers.utils.formatUnits(eventData.stake, 'ether'),
                 new Date(0),
                 nodeIdSha256,
             );
@@ -186,11 +187,8 @@ class ShardingTableService {
         return all(sorted);
     }
 
-    calculateDistance(keyHash, peerHash) {
-        return uint8ArrayXor(
-            Buffer.from(keyHash.slice(2), 'hex'),
-            Buffer.from(peerHash.slice(2), 'hex'),
-        );
+    calculateDistance(peerHash, keyHash) {
+        return uint8ArrayXor(ethers.utils.arrayify(peerHash), ethers.utils.arrayify(keyHash));
     }
 
     async getBidSuggestion(neighbourhood, r0, higherPercentile) {

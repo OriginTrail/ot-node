@@ -39,7 +39,11 @@ class SubmitProofsCommand extends Command {
             data: {
                 blockchain,
                 agreementId,
+                contract,
+                tokenId,
+                keyword,
                 epoch: epoch + 1,
+                hashFunctionId,
                 serviceAgreement,
             },
             transactional: false,
