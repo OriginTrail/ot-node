@@ -1,5 +1,6 @@
 import Web3 from 'web3';
 import axios from 'axios';
+import { setTimeout as sleep } from 'timers/promises';
 import { createRequire } from 'module';
 
 import {
@@ -249,22 +250,44 @@ class Web3Service {
             initialStake,
         ]);
 
-        try {
-            await this.executeContractFunction(this.ProfileContract, 'createProfile', [
-                this.getManagementKey(),
-                this.convertAsciiToHex(peerId),
-                initialAsk,
-                initialStake,
-            ]);
-        } catch (error) {
-            await this.executeContractFunction(this.TokenContract, 'decreaseAllowance', [
-                this.ProfileContract.options.address,
-                initialStake,
-            ]);
-            if (!error.message.includes('Profile already exists')) {
-                throw error;
-            } else {
-                this.logger.info(`Skipping profile creation, already exists on blockchain.`);
+        const maxNumberOfRetries = 3;
+        let retryCount = 0;
+        let profileCreated = false;
+        const retryDelayInSec = 5;
+        while (retryCount + 1 <= maxNumberOfRetries || profileCreated) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                await this.executeContractFunction(this.ProfileContract, 'createProfile', [
+                    this.getManagementKey(),
+                    this.convertAsciiToHex(peerId),
+                    initialAsk,
+                    initialStake,
+                ]);
+                profileCreated = true;
+            } catch (error) {
+                if (!error.message.includes('Profile already exists')) {
+                    if (retryCount + 1 <= maxNumberOfRetries) {
+                        retryCount += 1;
+                        this.logger.warn(
+                            `Unable to create profile. Will retry in ${retryDelayInSec}s. Retries left: ${
+                                maxNumberOfRetries - retryCount
+                            }`,
+                        );
+                        // eslint-disable-next-line no-await-in-loop
+                        await sleep(retryDelayInSec * 1000);
+                    } else {
+                        // eslint-disable-next-line no-await-in-loop
+                        await this.executeContractFunction(
+                            this.TokenContract,
+                            'decreaseAllowance',
+                            [this.ProfileContract.options.address, initialStake],
+                        );
+                        throw error;
+                    }
+                } else {
+                    this.logger.info(`Skipping profile creation, already exists on blockchain.`);
+                    profileCreated = true;
+                }
             }
         }
     }
