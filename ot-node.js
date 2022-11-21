@@ -169,6 +169,8 @@ class OTNode {
                         const peerId = networkModuleManager.getPeerId().toB58String();
                         await blockchainModuleManager.createProfile(blockchain, peerId);
                     }
+                    const identityId = await blockchainModuleManager.getIdentityId(blockchain);
+                    this.logger.info(`Identity ID: ${identityId}`);
                 } catch (error) {
                     this.logger.warn(
                         `Unable to create ${blockchain} blockchain profile. Removing implementation. Error: ${error.message}`,

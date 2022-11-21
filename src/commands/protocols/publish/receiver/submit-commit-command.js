@@ -10,35 +10,38 @@ class SubmitCommitCommand extends Command {
 
     async execute(command) {
         const {
-            epoch,
             blockchain,
-            prevIdentityId,
-            tokenId,
             contract,
+            tokenId,
+            keyword,
             hashFunctionId,
+            epoch,
+            prevIdentityId,
             serviceAgreement,
         } = command.data;
 
         const proofPhaseStartTime = await this.blockchainModuleManager.submitCommit(
             blockchain,
-            tokenId,
             contract,
+            tokenId,
+            keyword,
             hashFunctionId,
             epoch,
             prevIdentityId,
         );
-        const startEndOffset = 60000; // 1 min
+
+        const endOffset = 30; // 30 sec
 
         const proofWindowDurationPerc =
             await this.blockchainModuleManager.getProofWindowDurationPerc();
         const proofWindowDuration = Math.floor(
             (serviceAgreement.epochLength * proofWindowDurationPerc) / 100,
         );
-        const delay =
-            this.serviceAgreementService.randomIntFromInterval(
-                proofPhaseStartTime + startEndOffset,
-                proofWindowDuration - startEndOffset,
-            ) - Date.now();
+        const timeNow = Math.floor(Date.now() / 1000);
+        const delay = this.serviceAgreementService.randomIntFromInterval(
+            0,
+            proofWindowDuration - (timeNow - proofPhaseStartTime) - endOffset,
+        );
 
         await this.commandExecutor.add({
             name: 'calculateProofsCommand',

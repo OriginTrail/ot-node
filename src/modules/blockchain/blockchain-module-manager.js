@@ -5,6 +5,12 @@ class BlockchainModuleManager extends BaseModuleManager {
         return 'blockchain';
     }
 
+    async increaseGanacheTime(blockchain, seconds) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.increaseGanacheTime(seconds);
+        }
+    }
+
     getPrivateKey(blockchain) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getPrivateKey();
@@ -198,9 +204,9 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getAgreementScoringFunctionId(blockchain, agreementId) {
+    async getAgreementScoreFunctionId(blockchain, agreementId) {
         if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAgreementScoringFunctionId(
+            return this.getImplementation(blockchain).module.getAgreementScoreFunctionId(
                 agreementId,
             );
         }

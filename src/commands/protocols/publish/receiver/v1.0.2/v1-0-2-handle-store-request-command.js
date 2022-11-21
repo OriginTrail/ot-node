@@ -77,12 +77,16 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
             sequence: [],
-            delay: 0,
+            delay: this.serviceAgreementService.randomIntFromInterval(30, 90), // TODO: Change to random in some range (can't be 0, because of block.timestamp)
             data: {
                 blockchain,
                 agreementId,
-                operationId,
+                contract,
+                tokenId,
+                keyword,
                 epoch: 0,
+                hashFunctionId,
+                operationId,
             },
             transactional: false,
         });
