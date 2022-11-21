@@ -22,6 +22,10 @@ class EpochCheckCommand extends Command {
             operationId,
         } = command.data;
 
+        this.logger.trace(
+            `Started epoch check command for agreement id: ${agreementId} contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}`,
+        );
+
         let { serviceAgreement } = command.data;
         if (!serviceAgreement) {
             serviceAgreement = await this.serviceAgreementService.getServiceAgreementData(
@@ -31,6 +35,7 @@ class EpochCheckCommand extends Command {
         }
 
         if (this.assetLifetimeExpired(serviceAgreement, epoch)) {
+            this.logger.trace(`Asset life time for agreement id: ${agreementId} expired.`);
             await this.repositoryModuleManager.updateOperationAgreementStatus(
                 operationId,
                 agreementId,
@@ -50,6 +55,9 @@ class EpochCheckCommand extends Command {
         );
 
         if (!commitWindowOpen) {
+            this.logger.trace(
+                `Commit window for for agreement id: ${agreementId} not open. Scheduling next epoch check.`,
+            );
             await this.scheduleNextEpochCheck(
                 blockchain,
                 agreementId,
@@ -73,6 +81,9 @@ class EpochCheckCommand extends Command {
 
         // calculate proofs -> schedule proof submission -> schedule next epoch
         if (this.alreadyCommitted(commits, identityId)) {
+            this.logger.trace(
+                `Current epoch's commit has already been submitted for for agreement id: ${agreementId}.`,
+            );
             await this.commandExecutor.add({
                 name: 'calculateProofsCommand',
                 sequence: [],
@@ -91,7 +102,11 @@ class EpochCheckCommand extends Command {
             hashFunctionId,
         );
 
-        if (rank < (await this.blockchainModuleManager.getR1(blockchain))) {
+        const r1 = await this.blockchainModuleManager.getR1(blockchain);
+        if (rank < r1) {
+            this.logger.trace(
+                `Calculated rank: ${rank} lower than R1: ${r1}. Agreement id: ${agreementId}`,
+            );
             await this.commandExecutor.add({
                 name: 'submitCommitCommand',
                 sequence: [],
@@ -100,6 +115,7 @@ class EpochCheckCommand extends Command {
                 transactional: false,
             });
         }
+
         return Command.empty();
     }
 
