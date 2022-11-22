@@ -20,21 +20,14 @@ class EpochCheckCommand extends Command {
             epoch,
             hashFunctionId,
             operationId,
+            serviceAgreement,
         } = command.data;
 
         this.logger.trace(
-            `Started epoch check command for agreement id: ${agreementId} ` +
+            `Started ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
                 `hash function id: ${hashFunctionId}`,
         );
-
-        let { serviceAgreement } = command.data;
-        if (!serviceAgreement) {
-            serviceAgreement = await this.blockchainModuleManager.getAgreementData(
-                blockchain,
-                agreementId,
-            );
-        }
 
         if (this.assetLifetimeExpired(serviceAgreement, epoch)) {
             this.logger.trace(`Asset lifetime for agreement id: ${agreementId} has expired.`);
@@ -71,60 +64,20 @@ class EpochCheckCommand extends Command {
             return Command.empty();
         }
 
-        const commits = await this.blockchainModuleManager.getCommitSubmissions(
-            blockchain,
-            agreementId,
-            epoch,
-        );
-
-        this.logger.trace('Commit submissions:');
-        this.logger.trace(JSON.stringify(commits, null, 1));
-
         const identityId =
             command.data.identityId ??
             (await this.blockchainModuleManager.getIdentityId(blockchain));
 
-        // calculate proofs -> schedule proof submission -> schedule next epoch
-        if (this.alreadyCommitted(commits, identityId)) {
-            // How this even possible?
-            this.logger.trace(
-                `Current epoch's commit has already been submitted for agreement id: ${agreementId}.`,
-            );
-            await this.commandExecutor.add({
-                name: 'calculateProofsCommand',
-                sequence: [],
-                delay: 0, // We should calculate proofs after commit phase end + only for winning nodes.
-                data: { ...command.data, serviceAgreement, identityId },
-                transactional: false,
-            });
-            return Command.empty();
-        }
+        const r0 = await this.blockchainModuleManager.getR0(blockchain);
 
-        this.logger.trace(
-            `Calculating commit submission score for agreement id: ${agreementId}...`,
-        );
-
-        // submit commit -> calculate proofs -> schedule proof submission -> schedule next epoch
-        const { prevIdentityId, rank } = await this.getPreviousIdentityIdAndRank(
-            blockchain,
-            commits,
-            keyword,
-            hashFunctionId,
-        );
-
-        const r1 = await this.blockchainModuleManager.getR1(blockchain);
-        if (rank < r1) {
-            this.logger.trace(
-                `Calculated rank: ${rank} lower than R1: ${r1}. Agreement id: ${agreementId}`,
-            );
-            await this.commandExecutor.add({
-                name: 'submitCommitCommand',
-                sequence: [],
-                delay: 0,
-                data: { ...command.data, prevIdentityId, serviceAgreement, identityId },
-                transactional: false,
-            });
-        }
+        await this.commandExecutor.add({
+            name: 'submitCommitCommand',
+            sequence: [],
+            delay: 0,
+            retries: r0,
+            data: { ...command.data, serviceAgreement, identityId },
+            transactional: false,
+        });
 
         return Command.empty();
     }
@@ -148,15 +101,6 @@ class EpochCheckCommand extends Command {
         }
 
         return { prevIdentityId: 0, rank: 0 };
-    }
-
-    alreadyCommitted(commits, myIdentity) {
-        commits.forEach((commit) => {
-            if (commit.identityId === myIdentity) {
-                return true;
-            }
-        });
-        return false;
     }
 
     async scheduleNextEpochCheck(
@@ -191,6 +135,28 @@ class EpochCheckCommand extends Command {
 
     assetLifetimeExpired(serviceAgreement, epoch) {
         return serviceAgreement.epochsNumber < epoch;
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param error
+     */
+    async recover(command, error) {
+        this.logger.warn(`Failed to execute epoch check command: error: ${error.message}`);
+
+        await this.scheduleNextEpochCheck(
+            command.data.blockchain,
+            command.data.agreementId,
+            command.data.contract,
+            command.data.tokenId,
+            command.data.keyword,
+            command.data.epoch,
+            command.data.hashFunctionId,
+            command.data.serviceAgreement,
+        );
+
+        return Command.empty();
     }
 
     /**

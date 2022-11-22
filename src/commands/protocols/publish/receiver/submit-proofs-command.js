@@ -22,7 +22,7 @@ class SubmitProofsCommand extends Command {
         } = command.data;
 
         this.logger.trace(
-            `Started submit proofs command for agreement id: ${agreementId} ` +
+            `Started ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
                 `hash function id: ${hashFunctionId}`,
         );

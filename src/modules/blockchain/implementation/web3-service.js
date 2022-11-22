@@ -265,28 +265,25 @@ class Web3Service {
                 ]);
                 profileCreated = true;
             } catch (error) {
-                if (!error.message.includes('Profile already exists')) {
-                    if (retryCount + 1 <= maxNumberOfRetries) {
-                        retryCount += 1;
-                        this.logger.warn(
-                            `Unable to create profile. Will retry in ${retryDelayInSec}s. Retries left: ${
-                                maxNumberOfRetries - retryCount
-                            }`,
-                        );
-                        // eslint-disable-next-line no-await-in-loop
-                        await sleep(retryDelayInSec * 1000);
-                    } else {
-                        // eslint-disable-next-line no-await-in-loop
-                        await this.executeContractFunction(
-                            this.TokenContract,
-                            'decreaseAllowance',
-                            [this.ProfileContract.options.address, initialStake],
-                        );
-                        throw error;
-                    }
-                } else {
+                if (error.message.includes('Profile already exists')) {
                     this.logger.info(`Skipping profile creation, already exists on blockchain.`);
                     profileCreated = true;
+                } else if (retryCount + 1 <= maxNumberOfRetries) {
+                    retryCount += 1;
+                    this.logger.warn(
+                        `Unable to create profile. Will retry in ${retryDelayInSec}s. Retries left: ${
+                            maxNumberOfRetries - retryCount
+                        }`,
+                    );
+                    // eslint-disable-next-line no-await-in-loop
+                    await sleep(retryDelayInSec * 1000);
+                } else {
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.executeContractFunction(this.TokenContract, 'decreaseAllowance', [
+                        this.ProfileContract.options.address,
+                        initialStake,
+                    ]);
+                    throw error;
                 }
             }
         }

@@ -24,14 +24,14 @@ class CalculateProofsCommand extends Command {
         } = command.data;
 
         this.logger.trace(
-            `Started calculate proofs command for agreement id: ${agreementId} ` +
+            `Started ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
                 `hash function id: ${hashFunctionId}`,
         );
 
         if (
             !(await this.isEligibleForRewards(blockchain, agreementId, epoch, identityId)) ||
-            (await this.blockchainModuleManager.isProofWindowOpen(blockchain, agreementId, epoch))
+            !(await this.blockchainModuleManager.isProofWindowOpen(agreementId, epoch))
         ) {
             this.logger.trace(
                 `Either not eligible for reward or proof phase has ` +
@@ -145,6 +145,28 @@ class CalculateProofsCommand extends Command {
             },
             transactional: false,
         });
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param error
+     */
+    async recover(command, error) {
+        this.logger.warn(`Failed to execute calculate proofs command: error: ${error.message}`);
+
+        await this.scheduleNextEpochCheck(
+            command.data.blockchain,
+            command.data.agreementId,
+            command.data.contract,
+            command.data.tokenId,
+            command.data.keyword,
+            command.data.epoch,
+            command.data.hashFunctionId,
+            command.data.serviceAgreement,
+        );
+
+        return Command.empty();
     }
 
     /**

@@ -75,6 +75,11 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             AGREEMENT_STATUS.ACTIVE,
         );
 
+        const serviceAgreement = await this.serviceAgreementService.getServiceAgreementData(
+            blockchain,
+            agreementId,
+        );
+
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
             sequence: [],
@@ -88,6 +93,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
                 epoch: 0,
                 hashFunctionId,
                 operationId,
+                serviceAgreement,
             },
             transactional: false,
         });
