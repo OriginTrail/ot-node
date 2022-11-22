@@ -20,7 +20,13 @@ class SubmitCommitCommand extends Command {
             serviceAgreement,
         } = command.data;
 
-        const proofPhaseStartTime = await this.blockchainModuleManager.submitCommit(
+        this.logger.trace(
+            `Started submit commit command for agreement id: ${command.data.agreementId} ` +
+                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
+                `hash function id: ${hashFunctionId}`,
+        );
+
+        await this.blockchainModuleManager.submitCommit(
             blockchain,
             contract,
             tokenId,
@@ -32,21 +38,29 @@ class SubmitCommitCommand extends Command {
 
         const endOffset = 30; // 30 sec
 
-        const proofWindowDurationPerc =
-            await this.blockchainModuleManager.getProofWindowDurationPerc();
-        const proofWindowDuration = Math.floor(
-            (serviceAgreement.epochLength * proofWindowDurationPerc) / 100,
+        const currentEpochStartTime =
+            serviceAgreement.startTime + serviceAgreement.epochLength * epoch;
+
+        const commitWindowDuration = await this.blockchainModuleManager.getCommitWindowDuration(
+            blockchain,
         );
+
+        const proofWindowStartTime =
+            currentEpochStartTime +
+            Math.floor(
+                (serviceAgreement.epochLength * serviceAgreement.proofWindowOffsetPerc) / 100,
+            );
+
         const timeNow = Math.floor(Date.now() / 1000);
         const delay = this.serviceAgreementService.randomIntFromInterval(
-            0,
-            proofWindowDuration - (timeNow - proofPhaseStartTime) - endOffset,
+            currentEpochStartTime + commitWindowDuration - timeNow,
+            proofWindowStartTime - endOffset - timeNow,
         );
 
         await this.commandExecutor.add({
             name: 'calculateProofsCommand',
             delay,
-            data: command.data,
+            data: { ...command.data, proofWindowStartTime },
             transactional: false,
         });
         return Command.empty();

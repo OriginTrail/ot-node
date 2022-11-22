@@ -22,10 +22,12 @@ class SubmitProofsCommand extends Command {
         } = command.data;
 
         this.logger.trace(
-            `Started submit proofs command for agreement id: ${agreementId} contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}`,
+            `Started submit proofs command for agreement id: ${agreementId} ` +
+                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
+                `hash function id: ${hashFunctionId}`,
         );
 
-        const nextEpochStartTime = await this.blockchainModuleManager.sendProof(
+        await this.blockchainModuleManager.sendProof(
             blockchain,
             contract,
             tokenId,
@@ -35,6 +37,9 @@ class SubmitProofsCommand extends Command {
             proof,
             leaf,
         );
+
+        const nextEpochStartTime =
+            serviceAgreement.startTime + serviceAgreement.epochLength * (epoch + 1);
 
         await this.commandExecutor.add({
             name: 'epochCheckCommand',

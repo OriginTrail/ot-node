@@ -23,19 +23,21 @@ class EpochCheckCommand extends Command {
         } = command.data;
 
         this.logger.trace(
-            `Started epoch check command for agreement id: ${agreementId} contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}`,
+            `Started epoch check command for agreement id: ${agreementId} ` +
+                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
+                `hash function id: ${hashFunctionId}`,
         );
 
         let { serviceAgreement } = command.data;
         if (!serviceAgreement) {
-            serviceAgreement = await this.serviceAgreementService.getServiceAgreementData(
+            serviceAgreement = await this.blockchainModuleManager.getAgreementData(
                 blockchain,
                 agreementId,
             );
         }
 
         if (this.assetLifetimeExpired(serviceAgreement, epoch)) {
-            this.logger.trace(`Asset life time for agreement id: ${agreementId} expired.`);
+            this.logger.trace(`Asset lifetime for agreement id: ${agreementId} has expired.`);
             await this.repositoryModuleManager.updateOperationAgreementStatus(
                 operationId,
                 agreementId,
@@ -56,7 +58,7 @@ class EpochCheckCommand extends Command {
 
         if (!commitWindowOpen) {
             this.logger.trace(
-                `Commit window for for agreement id: ${agreementId} not open. Scheduling next epoch check.`,
+                `Commit window for for agreement id: ${agreementId} is closed. Scheduling next epoch check.`,
             );
             await this.scheduleNextEpochCheck(
                 blockchain,
@@ -75,24 +77,32 @@ class EpochCheckCommand extends Command {
             epoch,
         );
 
+        this.logger.trace('Commit submissions:');
+        this.logger.trace(JSON.stringify(commits, null, 1));
+
         const identityId =
             command.data.identityId ??
             (await this.blockchainModuleManager.getIdentityId(blockchain));
 
         // calculate proofs -> schedule proof submission -> schedule next epoch
         if (this.alreadyCommitted(commits, identityId)) {
+            // How this even possible?
             this.logger.trace(
-                `Current epoch's commit has already been submitted for for agreement id: ${agreementId}.`,
+                `Current epoch's commit has already been submitted for agreement id: ${agreementId}.`,
             );
             await this.commandExecutor.add({
                 name: 'calculateProofsCommand',
                 sequence: [],
-                delay: 0,
+                delay: 0, // We should calculate proofs after commit phase end + only for winning nodes.
                 data: { ...command.data, serviceAgreement, identityId },
                 transactional: false,
             });
             return Command.empty();
         }
+
+        this.logger.trace(
+            `Calculating commit submission score for agreement id: ${agreementId}...`,
+        );
 
         // submit commit -> calculate proofs -> schedule proof submission -> schedule next epoch
         const { prevIdentityId, rank } = await this.getPreviousIdentityIdAndRank(
@@ -126,14 +136,17 @@ class EpochCheckCommand extends Command {
             hashFunctionId,
         );
 
-        [...commits].reverse().forEach((commit, index) => {
-            if (Number(commit.score) > score) {
+        this.logger.trace(`Commit submissions score: ${score}`);
+
+        for (let i = commits.length - 1; i >= 0; i -= 1) {
+            if (commits[i].score > score) {
                 return {
-                    prevIdentityId: Number(commit.identityId),
-                    rank: commits.length - index - 1,
+                    prevIdentityId: commits[i].identityId,
+                    rank: i + 1,
                 };
             }
-        });
+        }
+
         return { prevIdentityId: 0, rank: 0 };
     }
 
@@ -161,7 +174,7 @@ class EpochCheckCommand extends Command {
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
             sequence: [],
-            delay: nextEpochStartTime - Math.floor(Date.now() / 1000),
+            delay: nextEpochStartTime - Math.floor(Date.now() / 1000), // Add randomness?
             data: {
                 blockchain,
                 agreementId,

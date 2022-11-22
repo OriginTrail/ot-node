@@ -254,7 +254,7 @@ class Web3Service {
         let retryCount = 0;
         let profileCreated = false;
         const retryDelayInSec = 5;
-        while (retryCount + 1 <= maxNumberOfRetries || profileCreated) {
+        while (retryCount + 1 <= maxNumberOfRetries && !profileCreated) {
             try {
                 // eslint-disable-next-line no-await-in-loop
                 await this.executeContractFunction(this.ProfileContract, 'createProfile', [
@@ -481,7 +481,7 @@ class Web3Service {
 
     async getAssertionByIndex(assetContractAddress, tokenId, index) {
         try {
-            return this.callContractFunction(
+            return await this.callContractFunction(
                 this.assetContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
                 'getAssertionByIndex',
                 [tokenId, index],
@@ -493,15 +493,52 @@ class Web3Service {
     }
 
     async getLatestAssertion(assetContractAddress, tokenId) {
-        const assertionsLength = await this.getAssertionsLength(assetContractAddress, tokenId);
-        return this.getAssertionByIndex(assetContractAddress, tokenId, assertionsLength - 1);
+        try {
+            return await this.callContractFunction(
+                this.assetContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
+                'getLatestAssertion',
+                [tokenId],
+            );
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
     }
 
     async getAssertionIssuer(assertionId) {
         try {
-            return this.callContractFunction(this.AssertionRegistryContract, 'getIssuer', [
+            return await this.callContractFunction(this.AssertionRegistryContract, 'getIssuer', [
                 assertionId,
             ]);
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async getAgreementData(agreementId) {
+        try {
+            const agreementData = await this.callContractFunction(
+                this.ServiceAgreementStorageContract,
+                'getAgreementData',
+                [agreementId],
+            );
+
+            agreementData.startTime = Number(agreementData['0']);
+            agreementData.epochsNumber = Number(agreementData['1']);
+            agreementData.epochLength = Number(agreementData['2']);
+            agreementData.tokenAmount = Number(agreementData['3']);
+            agreementData.scoreFunctionId = Number(agreementData['4']);
+            agreementData.proofWindowOffsetPerc = Number(agreementData['5']);
+
+            delete agreementData['0'];
+            delete agreementData['1'];
+            delete agreementData['2'];
+            delete agreementData['3'];
+            delete agreementData['4'];
+            delete agreementData['5'];
+
+            return agreementData;
         } catch (e) {
             this.logger.error(`Error on calling contract function. ${e}`);
             return false;
@@ -594,7 +631,7 @@ class Web3Service {
 
     async isCommitWindowOpen(agreementId, epoch) {
         try {
-            return this.callContractFunction(
+            return await this.callContractFunction(
                 this.ServiceAgreementStorageContract,
                 'isCommitWindowOpen',
                 [agreementId, epoch],
@@ -607,11 +644,19 @@ class Web3Service {
 
     async getCommitSubmissions(agreementId, epoch) {
         try {
-            return this.callContractFunction(
+            const commits = await this.callContractFunction(
                 this.ServiceAgreementStorageContract,
                 'getCommitSubmissions',
                 [agreementId, epoch],
             );
+
+            return commits
+                .filter((commit) => commit.identityId !== '0')
+                .map((commit) => ({
+                    identityId: Number(commit.identityId),
+                    nextIdentityId: Number(commit.nextIdentityId),
+                    score: Number(commit.score),
+                }));
         } catch (e) {
             this.logger.error(`Error on calling contract function. ${e}`);
             return false;
@@ -681,18 +726,21 @@ class Web3Service {
         epoch,
         prevIdentityId,
     ) {
-        const proofPhaseStartTime = await this.executeContractFunction(
-            this.ServiceAgreementStorageContract,
-            'submitCommit',
-            [assetContractAddress, tokenId, keyword, hashFunctionId, epoch, prevIdentityId],
-        );
-
-        return Number(proofPhaseStartTime);
+        try {
+            return await this.executeContractFunction(
+                this.ServiceAgreementStorageContract,
+                'submitCommit',
+                [assetContractAddress, tokenId, keyword, hashFunctionId, epoch, prevIdentityId],
+            );
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
     }
 
     async isProofWindowOpen(agreementId, epoch) {
         try {
-            return this.callContractFunction(
+            return await this.callContractFunction(
                 this.ServiceAgreementStorageContract,
                 'isProofWindowOpen',
                 [agreementId, epoch],
@@ -703,14 +751,21 @@ class Web3Service {
         }
     }
 
-    async getChallenge(assetContractAddress, tokenId, keyword, hashFunctionId) {
+    async getChallenge(assetContractAddress, tokenId, epoch) {
         try {
-            return this.callContractFunction(this.ServiceAgreementStorageContract, 'getChallenge', [
-                assetContractAddress,
-                tokenId,
-                keyword,
-                hashFunctionId,
-            ]);
+            const challengeDict = await this.callContractFunction(
+                this.ServiceAgreementStorageContract,
+                'getChallenge',
+                [assetContractAddress, tokenId, epoch],
+            );
+
+            challengeDict.assertionId = challengeDict['0'];
+            challengeDict.challenge = Number(challengeDict['1']);
+
+            delete challengeDict['0'];
+            delete challengeDict['1'];
+
+            return challengeDict;
         } catch (e) {
             this.logger.error(`Error on calling contract function. ${e}`);
             return false;
@@ -727,12 +782,11 @@ class Web3Service {
         chunkHash,
     ) {
         try {
-            const nextCommitPhaseStartTime = await this.executeContractFunction(
+            return await this.executeContractFunction(
                 this.ServiceAgreementStorageContract,
                 'sendProof',
                 [assetContractAddress, tokenId, keyword, hashFunctionId, epoch, proof, chunkHash],
             );
-            return Number(nextCommitPhaseStartTime);
         } catch (e) {
             this.logger.error(`Error on calling contract function. ${e}`);
             return false;

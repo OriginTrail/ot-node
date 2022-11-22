@@ -14,6 +14,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.commandExecutor = ctx.commandExecutor;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR;
     }
 
@@ -77,7 +78,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
             sequence: [],
-            delay: this.serviceAgreementService.randomIntFromInterval(30, 90), // TODO: Change to random in some range (can't be 0, because of block.timestamp)
+            delay: this.serviceAgreementService.randomIntFromInterval(20, 40), // TODO: Change to random in some range (can't be 0, because of block.timestamp)
             data: {
                 blockchain,
                 agreementId,

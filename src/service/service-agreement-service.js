@@ -1,5 +1,4 @@
-import { BigNumber } from 'ethers';
-import Web3 from 'web3';
+import { ethers, BigNumber } from 'ethers';
 
 import {
     // STAKE_UINT256_MULTIPLIER_BN,
@@ -21,38 +20,11 @@ class ServiceAgreementService {
     async generateId(assetTypeContract, tokenId, keyword, hashFunctionId) {
         return this.validationModuleManager.callHashFunction(
             hashFunctionId,
-            Web3.utils.encodePacked(assetTypeContract, tokenId, keyword),
+            ethers.utils.solidityPack(
+                ['address', 'uint256', 'bytes'],
+                [assetTypeContract, tokenId, keyword],
+            ),
         );
-    }
-
-    async getServiceAgreementData(blockchain, agreementId) {
-        return {
-            epochsNumber: await this.blockchainModuleManager.getAgreementEpochsNumber(
-                blockchain,
-                agreementId,
-            ),
-            startTime: await this.blockchainModuleManager.getAgreementStartTime(
-                blockchain,
-                agreementId,
-            ),
-            epochLength: await this.blockchainModuleManager.getAgreementEpochLength(
-                blockchain,
-                agreementId,
-            ),
-            tokenAmount: await this.blockchainModuleManager.getAgreementTokenAmount(
-                blockchain,
-                agreementId,
-            ),
-            proofWindowOffsetPerc:
-                await this.blockchainModuleManager.getAgreementProofWindowOffsetPerc(
-                    blockchain,
-                    agreementId,
-                ),
-            scoreFunctionId: await this.blockchainModuleManager.getAgreementScoreFunctionId(
-                blockchain,
-                agreementId,
-            ),
-        };
     }
 
     randomIntFromInterval(min, max) {
