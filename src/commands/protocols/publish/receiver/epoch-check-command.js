@@ -1,7 +1,7 @@
 import { AGREEMENT_STATUS } from '../../../../constants/constants.js';
-import Command from '../../../command.js';
+import EpochCommand from '../../common/epoch-command';
 
-class EpochCheckCommand extends Command {
+class EpochCheckCommand extends EpochCommand {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
@@ -36,7 +36,7 @@ class EpochCheckCommand extends Command {
                 agreementId,
                 AGREEMENT_STATUS.EXPIRED,
             );
-            return Command.empty();
+            return command.empty();
         }
 
         // Time on ganache isn't increasing without txs,
@@ -61,7 +61,7 @@ class EpochCheckCommand extends Command {
                 epoch,
                 serviceAgreement,
             );
-            return Command.empty();
+            return command.empty();
         }
 
         const identityId =
@@ -79,7 +79,7 @@ class EpochCheckCommand extends Command {
             transactional: false,
         });
 
-        return Command.empty();
+        return command.empty();
     }
 
     async getPreviousIdentityIdAndRank(blockchain, commits, keyword, hashFunctionId) {
@@ -103,60 +103,8 @@ class EpochCheckCommand extends Command {
         return { prevIdentityId: 0, rank: 0 };
     }
 
-    async scheduleNextEpochCheck(
-        blockchain,
-        agreementId,
-        contract,
-        tokenId,
-        keyword,
-        epoch,
-        hashFunctionId,
-        serviceAgreement,
-    ) {
-        const nextEpochStartTime =
-            serviceAgreement.startTime + serviceAgreement.epochLength * (epoch + 1);
-        await this.commandExecutor.add({
-            name: 'epochCheckCommand',
-            sequence: [],
-            delay: nextEpochStartTime - Math.floor(Date.now() / 1000), // Add randomness?
-            data: {
-                blockchain,
-                agreementId,
-                contract,
-                tokenId,
-                keyword,
-                epoch: epoch + 1,
-                hashFunctionId,
-                serviceAgreement,
-            },
-            transactional: false,
-        });
-    }
-
     assetLifetimeExpired(serviceAgreement, epoch) {
         return serviceAgreement.epochsNumber < epoch;
-    }
-
-    /**
-     * Recover system from failure
-     * @param command
-     * @param error
-     */
-    async recover(command, error) {
-        this.logger.warn(`Failed to execute epoch check command: error: ${error.message}`);
-
-        await this.scheduleNextEpochCheck(
-            command.data.blockchain,
-            command.data.agreementId,
-            command.data.contract,
-            command.data.tokenId,
-            command.data.keyword,
-            command.data.epoch,
-            command.data.hashFunctionId,
-            command.data.serviceAgreement,
-        );
-
-        return Command.empty();
     }
 
     /**

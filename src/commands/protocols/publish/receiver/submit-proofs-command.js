@@ -1,6 +1,6 @@
-import Command from '../../../command.js';
+import EpochCommand from '../../common/epoch-command';
 
-class SubmitProofsCommand extends Command {
+class SubmitProofsCommand extends EpochCommand {
     constructor(ctx) {
         super(ctx);
 
@@ -38,27 +38,18 @@ class SubmitProofsCommand extends Command {
             leaf,
         );
 
-        const nextEpochStartTime =
-            serviceAgreement.startTime + serviceAgreement.epochLength * (epoch + 1);
+        this.scheduleNextEpochCheck(
+            blockchain,
+            agreementId,
+            contract,
+            tokenId,
+            keyword,
+            epoch,
+            hashFunctionId,
+            serviceAgreement,
+        );
 
-        await this.commandExecutor.add({
-            name: 'epochCheckCommand',
-            sequence: [],
-            delay: nextEpochStartTime - Date.now(),
-            data: {
-                blockchain,
-                agreementId,
-                contract,
-                tokenId,
-                keyword,
-                epoch: epoch + 1,
-                hashFunctionId,
-                serviceAgreement,
-            },
-            transactional: false,
-        });
-
-        return Command.empty();
+        return command.empty();
     }
 
     /**

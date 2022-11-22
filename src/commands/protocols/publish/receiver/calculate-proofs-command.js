@@ -1,6 +1,6 @@
-import Command from '../../../command.js';
+import EpochCommand from '../../common/epoch-command';
 
-class CalculateProofsCommand extends Command {
+class CalculateProofsCommand extends EpochCommand {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
@@ -50,7 +50,7 @@ class CalculateProofsCommand extends Command {
                 serviceAgreement,
             );
 
-            return Command.empty();
+            return command.empty();
         }
 
         this.logger.trace(
@@ -90,18 +90,19 @@ class CalculateProofsCommand extends Command {
                 leaf,
                 proof,
             },
+            retries: 3,
             transactional: false,
         });
     }
 
     async isEligibleForRewards(blockchain, agreementId, epoch, identityId) {
+        const r0 = await this.blockchainModuleManager.getR0(blockchain);
+
         const commits = await this.blockchainModuleManager.getCommitSubmissions(
             blockchain,
             agreementId,
             epoch,
         );
-
-        const r0 = await this.blockchainModuleManager.getR0(blockchain);
 
         for (let i = 0; i < r0; i += 1) {
             if (commits[i].identityId === identityId) {
@@ -114,59 +115,6 @@ class CalculateProofsCommand extends Command {
         this.logger.trace(`Node is not eligible for rewards for agreement id: ${agreementId}`);
 
         return false;
-    }
-
-    async scheduleNextEpochCheck(
-        blockchain,
-        agreementId,
-        contract,
-        tokenId,
-        keyword,
-        epoch,
-        hashFunctionId,
-        serviceAgreement,
-    ) {
-        const nextEpochStartTime =
-            serviceAgreement.startTime + serviceAgreement.epochLength * (epoch + 1);
-
-        await this.commandExecutor.add({
-            name: 'epochCheckCommand',
-            sequence: [],
-            delay: nextEpochStartTime - Math.floor(Date.now() / 1000),
-            data: {
-                blockchain,
-                agreementId,
-                contract,
-                tokenId,
-                keyword,
-                epoch: epoch + 1,
-                hashFunctionId,
-                serviceAgreement,
-            },
-            transactional: false,
-        });
-    }
-
-    /**
-     * Recover system from failure
-     * @param command
-     * @param error
-     */
-    async recover(command, error) {
-        this.logger.warn(`Failed to execute calculate proofs command: error: ${error.message}`);
-
-        await this.scheduleNextEpochCheck(
-            command.data.blockchain,
-            command.data.agreementId,
-            command.data.contract,
-            command.data.tokenId,
-            command.data.keyword,
-            command.data.epoch,
-            command.data.hashFunctionId,
-            command.data.serviceAgreement,
-        );
-
-        return Command.empty();
     }
 
     /**

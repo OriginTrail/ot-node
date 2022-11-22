@@ -1,6 +1,6 @@
-import Command from '../../../command.js';
+import EpochCommand from '../../common/epoch-command';
 
-class SubmitCommitCommand extends Command {
+class SubmitCommitCommand extends EpochCommand {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
@@ -49,7 +49,7 @@ class SubmitCommitCommand extends Command {
                 data: { ...command.data, serviceAgreement, identityId },
                 transactional: false,
             });
-            return Command.empty();
+            return command.empty();
         }
 
         this.logger.trace(
@@ -93,11 +93,8 @@ class SubmitCommitCommand extends Command {
                 prevIdentityId,
             );
         } catch (error) {
-            if (command.retries) {
-                this.logger.warn(error.message);
-                return Command.retry();
-            }
-            await this.handleError(error.message, command);
+            this.logger.warn(error.message);
+            return command.retry();
         }
 
         const endOffset = 30; // 30 sec
@@ -127,7 +124,7 @@ class SubmitCommitCommand extends Command {
             data: { ...command.data, proofWindowStartTime },
             transactional: false,
         });
-        return Command.empty();
+        return command.empty();
     }
 
     alreadyCommitted(commits, myIdentity) {
@@ -137,32 +134,6 @@ class SubmitCommitCommand extends Command {
             }
         });
         return false;
-    }
-
-    /**
-     * Recover system from failure
-     * @param command
-     * @param error
-     */
-    async recover(command, error) {
-        this.logger.warn(`Failed to execute epoch check command: error: ${error.message}`);
-
-        await this.scheduleNextEpochCheck(
-            command.data.blockchain,
-            command.data.agreementId,
-            command.data.contract,
-            command.data.tokenId,
-            command.data.keyword,
-            command.data.epoch,
-            command.data.hashFunctionId,
-            command.data.serviceAgreement,
-        );
-
-        return Command.empty();
-    }
-
-    async retryFinished(command) {
-        this.recover(command, `Max retry count for command: ${command.name} reached!`);
     }
 
     /**
