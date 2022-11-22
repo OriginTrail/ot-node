@@ -1,6 +1,6 @@
-import Command from '../../../command.js';
+import EpochCommand from '../../common/epoch-command';
 
-class CalculateProofsCommand extends Command {
+class CalculateProofsCommand extends EpochCommand {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
@@ -25,7 +25,7 @@ class CalculateProofsCommand extends Command {
         } = command.data;
 
         this.logger.trace(
-            `Started calculate proofs command for agreement id: ${agreementId} ` +
+            `Started ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
                 `hash function id: ${hashFunctionId}`,
         );
@@ -44,7 +44,7 @@ class CalculateProofsCommand extends Command {
                 serviceAgreement,
             );
 
-            return Command.empty();
+            return command.empty();
         }
 
         this.logger.trace(`Calculating proofs for agreement id : ${agreementId}`);
@@ -84,20 +84,21 @@ class CalculateProofsCommand extends Command {
                 leaf,
                 proof,
             },
+            retries: 3,
             transactional: false,
         });
 
-        return Command.empty();
+        return command.empty();
     }
 
     async isEligibleForRewards(blockchain, agreementId, epoch, identityId) {
+        const r0 = await this.blockchainModuleManager.getR0(blockchain);
+
         const commits = await this.blockchainModuleManager.getCommitSubmissions(
             blockchain,
             agreementId,
             epoch,
         );
-
-        const r0 = await this.blockchainModuleManager.getR0(blockchain);
 
         for (let i = 0; i < r0; i += 1) {
             if (commits[i].identityId === identityId) {
@@ -110,37 +111,6 @@ class CalculateProofsCommand extends Command {
         this.logger.trace(`Node is not eligible for rewards for agreement id: ${agreementId}`);
 
         return false;
-    }
-
-    async scheduleNextEpochCheck(
-        blockchain,
-        agreementId,
-        contract,
-        tokenId,
-        keyword,
-        epoch,
-        hashFunctionId,
-        serviceAgreement,
-    ) {
-        const nextEpochStartTime =
-            serviceAgreement.startTime + serviceAgreement.epochLength * (epoch + 1);
-
-        await this.commandExecutor.add({
-            name: 'epochCheckCommand',
-            sequence: [],
-            delay: nextEpochStartTime - Math.floor(Date.now() / 1000),
-            data: {
-                blockchain,
-                agreementId,
-                contract,
-                tokenId,
-                keyword,
-                epoch: epoch + 1,
-                hashFunctionId,
-                serviceAgreement,
-            },
-            transactional: false,
-        });
     }
 
     /**

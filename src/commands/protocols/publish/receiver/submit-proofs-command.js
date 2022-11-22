@@ -1,6 +1,6 @@
-import Command from '../../../command.js';
+import EpochCommand from '../../common/epoch-command';
 
-class SubmitProofsCommand extends Command {
+class SubmitProofsCommand extends EpochCommand {
     constructor(ctx) {
         super(ctx);
 
@@ -22,7 +22,7 @@ class SubmitProofsCommand extends Command {
         } = command.data;
 
         this.logger.trace(
-            `Started submit proofs command for agreement id: ${agreementId} ` +
+            `Started ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
                 `hash function id: ${hashFunctionId}`,
         );
@@ -38,29 +38,18 @@ class SubmitProofsCommand extends Command {
             leaf,
         );
 
-        this.logger.trace(`Scheduling next epoch check for agreement id: ${agreementId}`);
+        this.scheduleNextEpochCheck(
+            blockchain,
+            agreementId,
+            contract,
+            tokenId,
+            keyword,
+            epoch,
+            hashFunctionId,
+            serviceAgreement,
+        );
 
-        const nextEpochStartTime =
-            serviceAgreement.startTime + serviceAgreement.epochLength * (epoch + 1);
-
-        await this.commandExecutor.add({
-            name: 'epochCheckCommand',
-            sequence: [],
-            delay: nextEpochStartTime - Date.now(), // TODO: Add scheduling
-            data: {
-                blockchain,
-                agreementId,
-                contract,
-                tokenId,
-                keyword,
-                epoch: epoch + 1,
-                hashFunctionId,
-                serviceAgreement,
-            },
-            transactional: false,
-        });
-
-        return Command.empty();
+        return command.empty();
     }
 
     /**
