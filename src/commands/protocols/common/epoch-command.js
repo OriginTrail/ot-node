@@ -18,10 +18,15 @@ class EpochCommand extends Command {
     ) {
         const nextEpochStartTime =
             serviceAgreement.startTime + serviceAgreement.epochLength * (epoch + 1);
+        const delay = nextEpochStartTime - Math.floor(Date.now() / 1000);
+
+        this.logger.trace(
+            `Scheduling next epoch check for agreement id: ${agreementId} in ${delay} seconds`,
+        );
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
             sequence: [],
-            delay: nextEpochStartTime - Math.floor(Date.now() / 1000), // Add randomness?
+            delay, // Add randomness?
             data: {
                 blockchain,
                 agreementId,

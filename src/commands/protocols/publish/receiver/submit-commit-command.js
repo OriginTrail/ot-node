@@ -102,9 +102,10 @@ class SubmitCommitCommand extends EpochCommand {
         const currentEpochStartTime =
             serviceAgreement.startTime + serviceAgreement.epochLength * epoch;
 
-        const commitWindowDuration = await this.blockchainModuleManager.getCommitWindowDuration(
-            blockchain,
-        );
+        const proofWindowDurationPerc =
+            await this.blockchainModuleManager.getProofWindowDurationPerc(blockchain);
+
+        const proofWindowDuration = (proofWindowDurationPerc / 100) * serviceAgreement.epochLength;
 
         const proofWindowStartTime =
             currentEpochStartTime +
@@ -114,8 +115,12 @@ class SubmitCommitCommand extends EpochCommand {
 
         const timeNow = Math.floor(Date.now() / 1000);
         const delay = this.serviceAgreementService.randomIntFromInterval(
-            currentEpochStartTime + commitWindowDuration - timeNow,
-            proofWindowStartTime - endOffset - timeNow,
+            proofWindowStartTime - timeNow,
+            proofWindowStartTime + proofWindowDuration - timeNow - endOffset,
+        );
+
+        this.logger.trace(
+            `Scheduling calculateProofsCommand for agreement id: ${agreementId} in ${delay} seconds`,
         );
 
         await this.commandExecutor.add({

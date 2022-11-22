@@ -21,7 +21,6 @@ class CalculateProofsCommand extends EpochCommand {
             epoch,
             agreementId,
             identityId,
-            proofWindowStartTime,
         } = command.data;
 
         this.logger.trace(
@@ -31,8 +30,6 @@ class CalculateProofsCommand extends EpochCommand {
         );
 
         if (!(await this.isEligibleForRewards(blockchain, agreementId, epoch, identityId))) {
-            this.logger.trace('Scheduling next epoch check...');
-
             await this.scheduleNextEpochCheck(
                 blockchain,
                 agreementId,
@@ -61,24 +58,10 @@ class CalculateProofsCommand extends EpochCommand {
 
         const { leaf, proof } = this.validationModuleManager.getMerkleProof(nQuads, challenge);
 
-        const proofWindowDurationPerc =
-            await this.blockchainModuleManager.getProofWindowDurationPerc();
-        const proofWindowDuration = Math.floor(
-            (serviceAgreement.epochLength * proofWindowDurationPerc) / 100,
-        );
-
-        const endOffset = 30; // 30 sec
-
-        const timeNow = Math.floor(Date.now() / 1000);
-        const delay = this.serviceAgreementService.randomIntFromInterval(
-            proofWindowStartTime - timeNow,
-            proofWindowStartTime + proofWindowDuration - timeNow - endOffset,
-        );
-
         await this.commandExecutor.add({
             name: 'submitProofsCommand',
             sequence: [],
-            delay,
+            delay: 0,
             data: {
                 ...command.data,
                 leaf,
