@@ -88,7 +88,7 @@ class CalculateProofsCommand extends EpochCommand {
             transactional: false,
         });
 
-        return Command.empty();
+        return command.empty();
     }
 
     async isEligibleForRewards(blockchain, agreementId, epoch, identityId) {
