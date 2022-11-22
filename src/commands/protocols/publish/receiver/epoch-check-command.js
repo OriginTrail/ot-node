@@ -97,6 +97,7 @@ class EpochCheckCommand extends Command {
                 data: { ...command.data, serviceAgreement, identityId },
                 transactional: false,
             });
+
             return Command.empty();
         }
 

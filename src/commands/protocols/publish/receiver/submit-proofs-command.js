@@ -38,13 +38,15 @@ class SubmitProofsCommand extends Command {
             leaf,
         );
 
+        this.logger.trace(`Scheduling next epoch check for agreement id: ${agreementId}`);
+
         const nextEpochStartTime =
             serviceAgreement.startTime + serviceAgreement.epochLength * (epoch + 1);
 
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
             sequence: [],
-            delay: nextEpochStartTime - Date.now(),
+            delay: nextEpochStartTime - Date.now(), // TODO: Add scheduling
             data: {
                 blockchain,
                 agreementId,

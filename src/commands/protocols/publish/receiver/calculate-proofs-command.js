@@ -7,6 +7,7 @@ class CalculateProofsCommand extends Command {
         this.validationModuleManager = ctx.validationModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+        this.serviceAgreementService = ctx.serviceAgreementService;
     }
 
     async execute(command) {
@@ -29,15 +30,8 @@ class CalculateProofsCommand extends Command {
                 `hash function id: ${hashFunctionId}`,
         );
 
-        if (
-            !(await this.isEligibleForRewards(blockchain, agreementId, epoch, identityId)) ||
-            (await this.blockchainModuleManager.isProofWindowOpen(blockchain, agreementId, epoch))
-        ) {
-            this.logger.trace(
-                `Either not eligible for reward or proof phase has ` +
-                    `already started (agreementId: ${agreementId}). Scheduling ` +
-                    `next epoch check...`,
-            );
+        if (!(await this.isEligibleForRewards(blockchain, agreementId, epoch, identityId))) {
+            this.logger.trace('Scheduling next epoch check...');
 
             await this.scheduleNextEpochCheck(
                 blockchain,
@@ -53,10 +47,7 @@ class CalculateProofsCommand extends Command {
             return Command.empty();
         }
 
-        this.logger.trace(
-            `Proof window hasn't been opened yet and node is eligible for rewards. ` +
-                `Calculating proofs for agreement id : ${agreementId}`,
-        );
+        this.logger.trace(`Calculating proofs for agreement id : ${agreementId}`);
         const { assertionId, challenge } = await this.blockchainModuleManager.getChallenge(
             blockchain,
             contract,
@@ -64,7 +55,9 @@ class CalculateProofsCommand extends Command {
             epoch,
         );
 
-        const nQuads = (await this.tripleStoreModuleManager.get(assertionId)).split('\n');
+        const nQuads = (await this.tripleStoreModuleManager.get(assertionId))
+            .split('\n')
+            .filter(Boolean);
 
         const { leaf, proof } = this.validationModuleManager.getMerkleProof(nQuads, challenge);
 
@@ -84,6 +77,7 @@ class CalculateProofsCommand extends Command {
 
         await this.commandExecutor.add({
             name: 'submitProofsCommand',
+            sequence: [],
             delay,
             data: {
                 ...command.data,
@@ -92,6 +86,8 @@ class CalculateProofsCommand extends Command {
             },
             transactional: false,
         });
+
+        return Command.empty();
     }
 
     async isEligibleForRewards(blockchain, agreementId, epoch, identityId) {
