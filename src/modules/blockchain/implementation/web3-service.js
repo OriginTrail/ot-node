@@ -747,7 +747,7 @@ class Web3Service {
             const challengeDict = await this.callContractFunction(
                 this.ServiceAgreementStorageContract,
                 'getChallenge',
-                [assetContractAddress, tokenId, epoch],
+                [this.getPublicKey(), assetContractAddress, tokenId, epoch],
             );
 
             challengeDict.assertionId = challengeDict['0'];
