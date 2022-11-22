@@ -1,4 +1,4 @@
-import EpochCommand from '../../common/epoch-command';
+import EpochCommand from '../../common/epoch-command.js';
 
 class CalculateProofsCommand extends EpochCommand {
     constructor(ctx) {
@@ -44,7 +44,7 @@ class CalculateProofsCommand extends EpochCommand {
                 serviceAgreement,
             );
 
-            return command.empty();
+            return EpochCommand.empty();
         }
 
         this.logger.trace(`Calculating proofs for agreement id : ${agreementId}`);
@@ -88,7 +88,7 @@ class CalculateProofsCommand extends EpochCommand {
             transactional: false,
         });
 
-        return command.empty();
+        return EpochCommand.empty();
     }
 
     async isEligibleForRewards(blockchain, agreementId, epoch, identityId) {

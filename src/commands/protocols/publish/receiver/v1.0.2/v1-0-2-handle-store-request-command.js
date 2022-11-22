@@ -14,6 +14,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.commandExecutor = ctx.commandExecutor;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR;
     }
@@ -75,7 +76,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             AGREEMENT_STATUS.ACTIVE,
         );
 
-        const serviceAgreement = await this.serviceAgreementService.getServiceAgreementData(
+        const serviceAgreement = await this.blockchainModuleManager.getAgreementData(
             blockchain,
             agreementId,
         );

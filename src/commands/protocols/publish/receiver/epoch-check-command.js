@@ -1,5 +1,5 @@
 import { AGREEMENT_STATUS } from '../../../../constants/constants.js';
-import EpochCommand from '../../common/epoch-command';
+import EpochCommand from '../../common/epoch-command.js';
 
 class EpochCheckCommand extends EpochCommand {
     constructor(ctx) {
@@ -36,7 +36,7 @@ class EpochCheckCommand extends EpochCommand {
                 agreementId,
                 AGREEMENT_STATUS.EXPIRED,
             );
-            return command.empty();
+            return EpochCommand.empty();
         }
 
         // Time on ganache isn't increasing without txs,
@@ -61,7 +61,7 @@ class EpochCheckCommand extends EpochCommand {
                 epoch,
                 serviceAgreement,
             );
-            return command.empty();
+            return EpochCommand.empty();
         }
 
         const identityId =
@@ -79,28 +79,7 @@ class EpochCheckCommand extends EpochCommand {
             transactional: false,
         });
 
-        return command.empty();
-    }
-
-    async getPreviousIdentityIdAndRank(blockchain, commits, keyword, hashFunctionId) {
-        const score = await this.serviceAgreementService.calculateScore(
-            blockchain,
-            keyword,
-            hashFunctionId,
-        );
-
-        this.logger.trace(`Commit submissions score: ${score}`);
-
-        for (let i = commits.length - 1; i >= 0; i -= 1) {
-            if (commits[i].score > score) {
-                return {
-                    prevIdentityId: commits[i].identityId,
-                    rank: i + 1,
-                };
-            }
-        }
-
-        return { prevIdentityId: 0, rank: 0 };
+        return EpochCommand.empty();
     }
 
     assetLifetimeExpired(serviceAgreement, epoch) {

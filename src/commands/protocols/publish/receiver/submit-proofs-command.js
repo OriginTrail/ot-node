@@ -1,4 +1,4 @@
-import EpochCommand from '../../common/epoch-command';
+import EpochCommand from '../../common/epoch-command.js';
 
 class SubmitProofsCommand extends EpochCommand {
     constructor(ctx) {
@@ -49,7 +49,7 @@ class SubmitProofsCommand extends EpochCommand {
             serviceAgreement,
         );
 
-        return command.empty();
+        return EpochCommand.empty();
     }
 
     /**

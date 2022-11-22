@@ -1,4 +1,4 @@
-import EpochCommand from '../../common/epoch-command';
+import EpochCommand from '../../common/epoch-command.js';
 
 class SubmitCommitCommand extends EpochCommand {
     constructor(ctx) {
@@ -49,7 +49,7 @@ class SubmitCommitCommand extends EpochCommand {
                 data: { ...command.data, serviceAgreement, identityId },
                 transactional: false,
             });
-            return command.empty();
+            return EpochCommand.empty();
         }
 
         this.logger.trace(
@@ -94,7 +94,7 @@ class SubmitCommitCommand extends EpochCommand {
             );
         } catch (error) {
             this.logger.warn(error.message);
-            return command.retry();
+            return EpochCommand.retry();
         }
 
         const endOffset = 30; // 30 sec
@@ -124,7 +124,28 @@ class SubmitCommitCommand extends EpochCommand {
             data: { ...command.data, proofWindowStartTime },
             transactional: false,
         });
-        return command.empty();
+        return EpochCommand.empty();
+    }
+
+    async getPreviousIdentityIdAndRank(blockchain, commits, keyword, hashFunctionId) {
+        const score = await this.serviceAgreementService.calculateScore(
+            blockchain,
+            keyword,
+            hashFunctionId,
+        );
+
+        this.logger.trace(`Commit submissions score: ${score}`);
+
+        for (let i = commits.length - 1; i >= 0; i -= 1) {
+            if (commits[i].score > score) {
+                return {
+                    prevIdentityId: commits[i].identityId,
+                    rank: i + 1,
+                };
+            }
+        }
+
+        return { prevIdentityId: 0, rank: 0 };
     }
 
     alreadyCommitted(commits, myIdentity) {

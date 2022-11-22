@@ -515,25 +515,19 @@ class Web3Service {
 
     async getAgreementData(agreementId) {
         try {
-            const agreementData = await this.callContractFunction(
+            const result = await this.callContractFunction(
                 this.ServiceAgreementStorageContract,
                 'getAgreementData',
                 [agreementId],
             );
 
-            agreementData.startTime = Number(agreementData['0']);
-            agreementData.epochsNumber = Number(agreementData['1']);
-            agreementData.epochLength = Number(agreementData['2']);
-            agreementData.tokenAmount = Number(agreementData['3']);
-            agreementData.scoreFunctionId = Number(agreementData['4']);
-            agreementData.proofWindowOffsetPerc = Number(agreementData['5']);
-
-            delete agreementData['0'];
-            delete agreementData['1'];
-            delete agreementData['2'];
-            delete agreementData['3'];
-            delete agreementData['4'];
-            delete agreementData['5'];
+            const agreementData = {};
+            agreementData.startTime = Number(result['0']);
+            agreementData.epochsNumber = Number(result['1']);
+            agreementData.epochLength = Number(result['2']);
+            agreementData.tokenAmount = Number(result['3']);
+            agreementData.scoreFunctionId = Number(result['4']);
+            agreementData.proofWindowOffsetPerc = Number(result['5']);
 
             return agreementData;
         } catch (e) {
