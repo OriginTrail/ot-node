@@ -19,6 +19,7 @@ class SubmitProofsCommand extends EpochCommand {
             tokenId,
             keyword,
             hashFunctionId,
+            operationId,
         } = command.data;
 
         this.logger.trace(
@@ -47,6 +48,7 @@ class SubmitProofsCommand extends EpochCommand {
             epoch,
             hashFunctionId,
             serviceAgreement,
+            operationId,
         );
 
         return EpochCommand.empty();

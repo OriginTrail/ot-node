@@ -19,6 +19,7 @@ class SubmitCommitCommand extends EpochCommand {
             serviceAgreement,
             agreementId,
             identityId,
+            operationId,
         } = command.data;
 
         this.logger.trace(
@@ -79,6 +80,7 @@ class SubmitCommitCommand extends EpochCommand {
                 epoch,
                 hashFunctionId,
                 serviceAgreement,
+                operationId,
             );
         }
 

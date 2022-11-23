@@ -39,10 +39,6 @@ class EpochCheckCommand extends EpochCommand {
             return EpochCommand.empty();
         }
 
-        // Time on ganache isn't increasing without txs,
-        // needed for commit-proof phase to work using local blockchain
-        await this.blockchainModuleManager.increaseGanacheTime(30);
-
         const commitWindowOpen = await this.blockchainModuleManager.isCommitWindowOpen(
             blockchain,
             agreementId,
@@ -62,6 +58,7 @@ class EpochCheckCommand extends EpochCommand {
                 epoch,
                 hashFunctionId,
                 serviceAgreement,
+                operationId,
             );
             return EpochCommand.empty();
         }

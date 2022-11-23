@@ -212,7 +212,7 @@ class Web3Service {
         return Number(this.web3.utils.fromWei(tokenBalance));
     }
 
-    getBlockNumber() {
+    async getBlockNumber() {
         return this.web3.eth.getBlockNumber();
     }
 

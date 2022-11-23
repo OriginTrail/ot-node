@@ -98,6 +98,9 @@ class LocalBlockchain {
         this.port = options.port ?? 7545;
         this.name = options.name ?? 'ganache';
         this.server = Ganache.server({
+            /* miner: {
+                blockTime: 1,
+            }, */
             logging: {
                 logger: {
                     log: () => {},

@@ -21,6 +21,7 @@ class CalculateProofsCommand extends EpochCommand {
             epoch,
             agreementId,
             identityId,
+            operationId,
         } = command.data;
 
         this.logger.trace(
@@ -39,6 +40,7 @@ class CalculateProofsCommand extends EpochCommand {
                 epoch,
                 hashFunctionId,
                 serviceAgreement,
+                operationId,
             );
 
             return EpochCommand.empty();
