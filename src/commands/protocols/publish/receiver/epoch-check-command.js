@@ -51,14 +51,16 @@ class EpochCheckCommand extends EpochCommand {
 
         if (!commitWindowOpen) {
             this.logger.trace(
-                `Commit window for for agreement id: ${agreementId} is closed. Scheduling next epoch check.`,
+                `Commit window for agreement id: ${agreementId} is closed. Scheduling next epoch check.`,
             );
             await this.scheduleNextEpochCheck(
                 blockchain,
                 agreementId,
                 contract,
                 tokenId,
+                keyword,
                 epoch,
+                hashFunctionId,
                 serviceAgreement,
             );
             return EpochCommand.empty();

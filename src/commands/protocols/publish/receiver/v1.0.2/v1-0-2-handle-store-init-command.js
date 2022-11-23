@@ -61,7 +61,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
         const closestNodes = await this.shardingTableService.findNeighbourhood(
             blockchain,
             keyword,
-            this.blockchainModuleManager.getR2(blockchain),
+            await this.blockchainModuleManager.getR2(blockchain),
             hashFunctionId,
         );
         for (const { peer_id } of closestNodes) {
