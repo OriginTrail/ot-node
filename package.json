@@ -5,6 +5,7 @@
     "main": "index.js",
     "type": "module",
     "scripts": {
+        "compile-contracts": "cd ./node_modules/dkg-evm-module && truffle compile",
         "bootstrap-node": "node index.js tools/local-network-setup/.bootstrap_origintrail_noderc",
         "start": "node index.js",
         "prepare": "husky install",
