@@ -1,11 +1,5 @@
 import { ethers, BigNumber } from 'ethers';
 
-import {
-    // STAKE_UINT256_MULTIPLIER_BN,
-    UINT256_UINT32_DIVISOR_BN,
-    UINT32_MAX_BN,
-} from '../constants/constants.js';
-
 class ServiceAgreementService {
     constructor(ctx) {
         this.logger = ctx.logger;
@@ -52,21 +46,28 @@ class ServiceAgreementService {
         );
         const distanceUint256BN = BigNumber.from(distanceUint8Array);
 
-        // todo update parameters once defined
-        // const a = 1;
-        // const b = 0;
-        // const stakeExponent = 1;
-        // const c = 1;
-        // const d = 0;
-        // const distanceExponent = 1;
+        const {
+            distanceMappingCoefficient,
+            stakeMappingCoefficient,
+            multiplier,
+            logArgumentConstant,
+            a,
+            stakeExponent,
+            b,
+            c,
+            distanceExponent,
+            d,
+        } = await this.blockchainModuleManager.getLog2PLDSFParams(blockchainId);
 
-        // const mappedStake = BigNumber.from(peerRecord.stake).mul(STAKE_UINT256_MULTIPLIER_BN);
+        const mappedStake = BigNumber.from(peerRecord.stake).div(stakeMappingCoefficient);
+        const mappedDistance = distanceUint256BN.div(distanceMappingCoefficient);
 
-        // const dividend = mappedStake.pow(stakeExponent).mul(a).add(b);
-        // const divisor = distanceUint256BN.pow(distanceExponent).mul(c).add(d);
+        const dividend = mappedStake.pow(stakeExponent).mul(a).add(b);
+        const divisor = mappedDistance.pow(distanceExponent).mul(c).add(d);
 
-        // return dividend.div(divisor).div(UINT256_UINT32_DIVISOR_BN).toNumber();
-        return UINT32_MAX_BN.sub(distanceUint256BN.div(UINT256_UINT32_DIVISOR_BN)).toNumber();
+        return Math.floor(
+            multiplier * Math.log2(logArgumentConstant + dividend.toNumber() / divisor.toNumber()),
+        );
     }
 }
 

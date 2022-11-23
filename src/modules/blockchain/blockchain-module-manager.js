@@ -327,6 +327,12 @@ class BlockchainModuleManager extends BaseModuleManager {
             return this.getImplementation(blockchain).module.getProofWindowDurationPerc();
         }
     }
+
+    async getLog2PLDSFParams(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getLog2PLDSFParams();
+        }
+    }
 }
 
 export default BlockchainModuleManager;

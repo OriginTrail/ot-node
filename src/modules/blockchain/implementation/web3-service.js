@@ -1,3 +1,4 @@
+import { ethers, BigNumber } from 'ethers';
 import Web3 from 'web3';
 import axios from 'axios';
 import { setTimeout as sleep } from 'timers/promises';
@@ -12,17 +13,19 @@ import {
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
-const Hub = require('dkg-evm-module/build/contracts/Hub.json');
 const AssertionRegistry = require('dkg-evm-module/build/contracts/AssertionRegistry.json');
 const ContentAsset = require('dkg-evm-module/build/contracts/ContentAsset.json');
-const HashingProxy = require('dkg-evm-module/build/contracts/HashingProxy.json');
 const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
+const HashingProxy = require('dkg-evm-module/build/contracts/HashingProxy.json');
+const Hub = require('dkg-evm-module/build/contracts/Hub.json');
+const IdentityStorage = require('dkg-evm-module/build/contracts/IdentityStorage.json');
+const Log2PLDSF = require('dkg-evm-module/build/contracts/Log2PLDSF.json');
 const ParametersStorage = require('dkg-evm-module/build/contracts/ParametersStorage.json');
 const Profile = require('dkg-evm-module/build/contracts/Profile.json');
 const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
-const ShardingTable = require('dkg-evm-module/build/contracts/ShardingTable.json');
+const ScoringProxy = require('dkg-evm-module/build/contracts/ScoringProxy.json');
 const ServiceAgreementStorage = require('dkg-evm-module/build/contracts/ServiceAgreementStorage.json');
-const IdentityStorage = require('dkg-evm-module/build/contracts/IdentityStorage.json');
+const ShardingTable = require('dkg-evm-module/build/contracts/ShardingTable.json');
 
 class Web3Service {
     async initialize(config, logger) {
@@ -165,6 +168,23 @@ class Web3Service {
             ServiceAgreementStorage.abi,
             serviceAgreementStorageAddress,
         );
+
+        const scoringProxyAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['ScoringProxy'],
+        );
+        this.ScoringProxyContract = new this.web3.eth.Contract(
+            ScoringProxy.abi,
+            scoringProxyAddress,
+        );
+
+        const log2PLDSFAddress = await this.callContractFunction(
+            this.ScoringProxyContract,
+            'functions',
+            [0],
+        );
+        this.Log2PLDSFContract = new this.web3.eth.Contract(Log2PLDSF.abi, log2PLDSFAddress);
 
         // TODO: Change this nonsense
         this.assetContracts = {
@@ -764,6 +784,36 @@ class Web3Service {
             [],
         );
         return Number(proofWindowDurationPerc);
+    }
+
+    async getLog2PLDSFParams() {
+        const log2pldsfParams = await this.callContractFunction(
+            this.Log2PLDSFContract,
+            'getParameters',
+            [],
+        );
+
+        const params = {};
+        params.distanceMappingCoefficient = BigNumber.from(log2pldsfParams['0']);
+        params.stakeMappingCoefficient = Number(
+            ethers.utils.formatUnits(log2pldsfParams['1'], 'ether'),
+        );
+
+        const paramNames = [
+            'multiplier',
+            'logArgumentConstant',
+            'a',
+            'stakeExponent',
+            'b',
+            'c',
+            'distanceExponent',
+            'd',
+        ];
+        log2pldsfParams['2'].forEach((val, index) => {
+            params[paramNames[index]] = Number(val);
+        });
+
+        return params;
     }
 }
 

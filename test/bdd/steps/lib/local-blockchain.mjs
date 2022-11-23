@@ -31,8 +31,8 @@ const serviceAgreementStorage = JSON.parse(
 const sha256Contract = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/SHA256.json')
 );
-const pldsfContract = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/PLDSF.json')
+const log2pldsfContract = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/Log2PLDSF.json')
 );
 const erc20Token = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/ERC20Token.json'),
@@ -61,7 +61,7 @@ const sources = {
     scoringProxy,
     serviceAgreementStorage,
     sha256Contract,
-    pldsfContract
+    log2pldsfContract
 };
 const web3 = new Web3();
 const wallets = accountPrivateKeys.map((privateKey) => ({
@@ -223,10 +223,10 @@ class LocalBlockchain {
             deployingWallet
         );
 
-        await this.deploy('pldsfContract', deployingWallet, [this.contracts.hub.instance._address]);
+        await this.deploy('log2pldsfContract', deployingWallet, [this.contracts.hub.instance._address]);
         await this.setScoreFunctionContractAddress(
             0,
-            this.contracts.pldsfContract.instance._address,
+            this.contracts.log2pldsfContract.instance._address,
             deployingWallet
         );
 
