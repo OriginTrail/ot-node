@@ -37,7 +37,7 @@ class HandleProtocolMessageCommand extends Command {
     }
 
     async prepareMessage() {
-        // overridden by subclasses
+        throw Error('prepareMessage not implemented');
     }
 
     async handleError(errorMessage, command) {

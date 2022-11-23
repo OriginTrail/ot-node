@@ -16,12 +16,12 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
         return [Web3.utils.encodePacked(contract, tokenId)];
     }
 
-    async getBatchSize() {
-        return this.blockchainModuleManager.getR2();
+    async getBatchSize(blockchainId) {
+        return this.blockchainModuleManager.getR2(blockchainId);
     }
 
-    async getMinAckResponses() {
-        return this.blockchainModuleManager.getR1();
+    async getMinAckResponses(blockchainId) {
+        return this.blockchainModuleManager.getR1(blockchainId);
     }
 
     /**
