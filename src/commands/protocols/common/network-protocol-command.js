@@ -12,6 +12,9 @@ class NetworkProtocolCommand extends Command {
      */
     async execute(command) {
         const keywords = this.getKeywords(command);
+        const batchSize = await this.getBatchSize();
+        const minAckResponses = await this.getMinAckResponses();
+
         const commandSequence = [
             'findNodesCommand',
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
@@ -25,7 +28,8 @@ class NetworkProtocolCommand extends Command {
                 data: {
                     ...command.data,
                     keyword,
-                    minimumAckResponses: this.operationService.getMinimumAckResponses(),
+                    batchSize,
+                    minAckResponses,
                     errorType: this.errorType,
                     networkProtocols: this.operationService.getNetworkProtocols(),
                 },
@@ -41,6 +45,16 @@ class NetworkProtocolCommand extends Command {
     getKeywords() {
         // overridden by subclasses
         return [];
+    }
+
+    async getBatchSize() {
+        // overridden by subclasses
+        return 0;
+    }
+
+    async getMinAckResponses() {
+        // overridden by subclasses
+        return 0;
     }
 
     /**

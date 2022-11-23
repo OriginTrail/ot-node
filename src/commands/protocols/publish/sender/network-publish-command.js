@@ -6,6 +6,7 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR;
     }
@@ -13,6 +14,14 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
     getKeywords(command) {
         const { contract, tokenId } = command.data;
         return [Web3.utils.encodePacked(contract, tokenId)];
+    }
+
+    async getBatchSize() {
+        return this.blockchainModuleManager.getR2();
+    }
+
+    async getMinAckResponses() {
+        return this.blockchainModuleManager.getR1();
     }
 
     /**
