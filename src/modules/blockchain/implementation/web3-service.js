@@ -508,6 +508,39 @@ class Web3Service {
         }
     }
 
+    async getAssertionSize(assertionId) {
+        try {
+            return this.callContractFunction(this.AssertionRegistryContract, 'getSize', [
+                assertionId,
+            ]);
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async getAssertionTriplesNumber(assertionId) {
+        try {
+            return this.callContractFunction(this.AssertionRegistryContract, 'getTriplesNumber', [
+                assertionId,
+            ]);
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
+    async getAssertionChunksNumber(assertionId) {
+        try {
+            return this.callContractFunction(this.AssertionRegistryContract, 'getChunksNumber', [
+                assertionId,
+            ]);
+        } catch (e) {
+            this.logger.error(`Error on calling contract function. ${e}`);
+            return false;
+        }
+    }
+
     async getAgreementStartTime(agreementId) {
         try {
             const startTime = await this.callContractFunction(
