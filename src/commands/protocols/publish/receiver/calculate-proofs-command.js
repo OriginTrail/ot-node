@@ -1,4 +1,5 @@
 import Command from '../../../command.js';
+import { OPERATION_ID_STATUS } from '../../../../constants/constants.js';
 
 class CalculateProofsCommand extends Command {
     constructor(ctx) {
@@ -6,6 +7,7 @@ class CalculateProofsCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.validationModuleManager = ctx.validationModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.operationIdService = ctx.operationIdService;
     }
 
     async execute(command) {
@@ -19,12 +21,18 @@ class CalculateProofsCommand extends Command {
             epoch,
             agreementId,
             identityId,
+            operationId,
         } = command.data;
 
         this.logger.trace(
             `Started calculate proofs command for agreement id: ${agreementId} contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}`,
         );
-
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.CALCULATE_PROOFS_START,
+            operationId,
+            agreementId,
+            epoch,
+        );
         if (
             !(await this.isEligibleForRewards(blockchain, agreementId, epoch, identityId)) ||
             !(await this.blockchainModuleManager.isProofWindowOpen(agreementId, epoch))
@@ -64,6 +72,13 @@ class CalculateProofsCommand extends Command {
                 transactional: false,
             });
         }
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.CALCULATE_PROOFS_END,
+            operationId,
+            agreementId,
+            epoch,
+        );
+        return Command.empty();
     }
 
     async isEligibleForRewards(blockchain, agreementId, epoch, identityId) {

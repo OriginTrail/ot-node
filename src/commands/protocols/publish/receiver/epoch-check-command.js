@@ -1,4 +1,4 @@
-import { AGREEMENT_STATUS } from '../../../../constants/constants.js';
+import { AGREEMENT_STATUS, OPERATION_ID_STATUS } from '../../../../constants/constants.js';
 import Command from '../../../command.js';
 
 class EpochCheckCommand extends Command {
@@ -8,6 +8,7 @@ class EpochCheckCommand extends Command {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
+        this.operationIdService = ctx.operationIdService;
     }
 
     async execute(command) {
@@ -25,7 +26,12 @@ class EpochCheckCommand extends Command {
         this.logger.trace(
             `Started epoch check command for agreement id: ${agreementId} contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}`,
         );
-
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_START,
+            operationId,
+            agreementId,
+            epoch,
+        );
         let { serviceAgreement } = command.data;
         if (!serviceAgreement) {
             serviceAgreement = await this.serviceAgreementService.getServiceAgreementData(
@@ -41,7 +47,7 @@ class EpochCheckCommand extends Command {
                 agreementId,
                 AGREEMENT_STATUS.EXPIRED,
             );
-            return Command.empty();
+            this.finishEpochCheckCommand(operationId, agreementId, epoch);
         }
 
         // Time on ganache isn't increasing without txs,
@@ -66,7 +72,7 @@ class EpochCheckCommand extends Command {
                 epoch,
                 serviceAgreement,
             );
-            return Command.empty();
+            return this.finishEpochCheckCommand(operationId, agreementId, epoch);
         }
 
         const commits = await this.blockchainModuleManager.getCommitSubmissions(
@@ -91,7 +97,7 @@ class EpochCheckCommand extends Command {
                 data: { ...command.data, serviceAgreement, identityId },
                 transactional: false,
             });
-            return Command.empty();
+            return this.finishEpochCheckCommand(operationId, agreementId, epoch);
         }
 
         // submit commit -> calculate proofs -> schedule proof submission -> schedule next epoch
@@ -116,6 +122,16 @@ class EpochCheckCommand extends Command {
             });
         }
 
+        return this.finishEpochCheckCommand(operationId, agreementId, epoch);
+    }
+
+    finishEpochCheckCommand(operationId, agreementId, epoch) {
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_END,
+            operationId,
+            agreementId,
+            epoch,
+        );
         return Command.empty();
     }
 

@@ -1,4 +1,5 @@
 import Command from '../../../command.js';
+import { OPERATION_ID_STATUS } from '../../../../constants/constants.js';
 
 class SubmitCommitCommand extends Command {
     constructor(ctx) {
@@ -6,6 +7,7 @@ class SubmitCommitCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
+        this.operationIdService = ctx.operationIdService;
     }
 
     async execute(command) {
@@ -18,8 +20,15 @@ class SubmitCommitCommand extends Command {
             epoch,
             prevIdentityId,
             serviceAgreement,
+            operationId,
+            agreementId,
         } = command.data;
-
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_START,
+            operationId,
+            agreementId,
+            epoch,
+        );
         const proofPhaseStartTime = await this.blockchainModuleManager.submitCommit(
             blockchain,
             contract,
@@ -49,6 +58,14 @@ class SubmitCommitCommand extends Command {
             data: command.data,
             transactional: false,
         });
+
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
+            operationId,
+            agreementId,
+            epoch,
+        );
+
         return Command.empty();
     }
 

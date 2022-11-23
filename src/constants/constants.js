@@ -208,6 +208,16 @@ export const OPERATION_ID_STATUS = {
         GET_FETCH_FROM_NODES_END: 'GET_FETCH_FROM_NODES_END',
         GET_END: 'GET_END',
     },
+    COMMIT_PROOF: {
+        EPOCH_CHECK_START: 'EpochCheckStart',
+        EPOCH_CHECK_END: 'EpochCheckEnd',
+        SUBMIT_COMMIT_START: 'SubmitCommitStart',
+        SUBMIT_COMMIT_END: 'SubmitCommitEnd',
+        CALCULATE_PROOFS_START: 'CalculateProofsStart',
+        CALCULATE_PROOFS_END: 'CalculateProofsEnd',
+        SUBMIT_PROOFS_START: 'SubmitProofsStart',
+        SUBMIT_PROOFS_END: 'SubmitProofsEnd',
+    },
     SEARCH_ASSERTIONS: {
         VALIDATING_QUERY: 'VALIDATING_QUERY',
         SEARCHING_ASSERTIONS: 'SEARCHING_ASSERTIONS',
