@@ -1,8 +1,11 @@
 /* eslint-disable no-restricted-globals */
 class UALService {
-    constructor(config, logger) {
-        this.config = config;
-        this.logger = logger;
+    constructor(ctx) {
+        this.config = ctx.config;
+        this.logger = ctx.logger;
+
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.validationModuleManager = ctx.validationModuleManager;
     }
 
     deriveUAL(blockchain, contract, tokenId) {
@@ -38,6 +41,18 @@ class UALService {
             tokenId: blockchainSegments[1],
             assertionId: blockchainSegments.length > 2 ? blockchainSegments[2] : null,
         };
+    }
+
+    // TODO: discuss if we want to change to Hash(contract/tokenId/aId1) for the locationHash
+    async calculateLocationHash(blockchain, contract, tokenId) {
+        const ual = this.deriveUAL(blockchain, contract, tokenId);
+        const firstAssertionId = await this.blockchainModuleManager.getAssertionByIndex(
+            blockchain,
+            contract,
+            tokenId,
+            0,
+        );
+        return this.validationModuleManager.callHashFunction(0, `${ual}/${firstAssertionId}`);
     }
 }
 
