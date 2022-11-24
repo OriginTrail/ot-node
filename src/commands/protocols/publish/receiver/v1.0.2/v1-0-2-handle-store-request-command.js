@@ -14,6 +14,8 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.commandExecutor = ctx.commandExecutor;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
+
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR;
     }
 
@@ -74,10 +76,15 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             AGREEMENT_STATUS.ACTIVE,
         );
 
+        const serviceAgreement = await this.blockchainModuleManager.getAgreementData(
+            blockchain,
+            agreementId,
+        );
+
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
             sequence: [],
-            delay: this.serviceAgreementService.randomIntFromInterval(30, 90), // TODO: Change to random in some range (can't be 0, because of block.timestamp)
+            delay: 0,
             data: {
                 blockchain,
                 agreementId,
@@ -87,6 +94,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
                 epoch: 0,
                 hashFunctionId,
                 operationId,
+                serviceAgreement,
             },
             transactional: false,
         });

@@ -1,7 +1,7 @@
-import Command from '../../../command.js';
+import EpochCommand from '../../common/epoch-command.js';
 import { OPERATION_ID_STATUS } from '../../../../constants/constants.js';
 
-class SubmitProofsCommand extends Command {
+class SubmitProofsCommand extends EpochCommand {
     constructor(ctx) {
         super(ctx);
 
@@ -25,7 +25,9 @@ class SubmitProofsCommand extends Command {
         } = command.data;
 
         this.logger.trace(
-            `Started submit proofs command for agreement id: ${agreementId} contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}`,
+            `Started ${command.name} for agreement id: ${agreementId} ` +
+                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
+                `hash function id: ${hashFunctionId}`,
         );
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_START,
@@ -33,7 +35,7 @@ class SubmitProofsCommand extends Command {
             agreementId,
             epoch,
         );
-        const nextEpochStartTime = await this.blockchainModuleManager.sendProof(
+        await this.blockchainModuleManager.sendProof(
             blockchain,
             contract,
             tokenId,
@@ -44,29 +46,26 @@ class SubmitProofsCommand extends Command {
             leaf,
         );
 
-        await this.commandExecutor.add({
-            name: 'epochCheckCommand',
-            sequence: [],
-            delay: nextEpochStartTime - Date.now(),
-            data: {
-                blockchain,
-                agreementId,
-                contract,
-                tokenId,
-                keyword,
-                epoch: epoch + 1,
-                hashFunctionId,
-                serviceAgreement,
-            },
-            transactional: false,
-        });
+        this.scheduleNextEpochCheck(
+            blockchain,
+            agreementId,
+            contract,
+            tokenId,
+            keyword,
+            epoch,
+            hashFunctionId,
+            serviceAgreement,
+            operationId,
+        );
+        
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
             operationId,
             agreementId,
             epoch,
         );
-        return Command.empty();
+
+        return EpochCommand.empty();
     }
 
     /**

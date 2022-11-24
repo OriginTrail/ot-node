@@ -18,10 +18,10 @@ class FindNodesCommand extends Command {
             keyword,
             operationId,
             blockchain,
-            minimumAckResponses,
             errorType,
             networkProtocols,
             hashFunctionId,
+            minAckResponses,
         } = command.data;
 
         this.errorType = errorType;
@@ -45,11 +45,10 @@ class FindNodesCommand extends Command {
             )}`,
         );
 
-        const batchSize = 2 * minimumAckResponses;
-        if (closestNodes.length < batchSize) {
+        if (closestNodes.length < minAckResponses) {
             this.handleError(
                 operationId,
-                `Unable to find enough nodes for ${operationId}. Minimum number of nodes required: ${batchSize}`,
+                `Unable to find enough nodes for ${operationId}. Minimum number of nodes required: ${minAckResponses}`,
                 this.errorType,
                 true,
             );
@@ -59,7 +58,6 @@ class FindNodesCommand extends Command {
         return this.continueSequence(
             {
                 ...command.data,
-                batchSize,
                 leftoverNodes: closestNodes,
                 numberOfFoundNodes: closestNodes.length,
             },

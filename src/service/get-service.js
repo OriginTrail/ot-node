@@ -28,7 +28,14 @@ class GetService extends OperationService {
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
-        const { operationId, numberOfFoundNodes, leftoverNodes, keyword, batchSize } = command.data;
+        const {
+            operationId,
+            numberOfFoundNodes,
+            leftoverNodes,
+            keyword,
+            batchSize,
+            minAckResponses,
+        } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
@@ -45,7 +52,7 @@ class GetService extends OperationService {
 
         if (
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
-            completedNumber === this.getMinimumAckResponses()
+            completedNumber === minAckResponses
         ) {
             await this.markOperationAsCompleted(
                 operationId,
@@ -56,7 +63,7 @@ class GetService extends OperationService {
         }
 
         if (
-            completedNumber < this.getMinimumAckResponses() &&
+            completedNumber < minAckResponses &&
             (numberOfFoundNodes === failedNumber || failedNumber % batchSize === 0)
         ) {
             if (leftoverNodes.length === 0) {

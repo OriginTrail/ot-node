@@ -1,11 +1,4 @@
-import { BigNumber } from 'ethers';
-import Web3 from 'web3';
-
-import {
-    // STAKE_UINT256_MULTIPLIER_BN,
-    UINT256_UINT32_DIVISOR_BN,
-    UINT32_MAX_BN,
-} from '../constants/constants.js';
+import { ethers, BigNumber } from 'ethers';
 
 class ServiceAgreementService {
     constructor(ctx) {
@@ -21,38 +14,11 @@ class ServiceAgreementService {
     async generateId(assetTypeContract, tokenId, keyword, hashFunctionId) {
         return this.validationModuleManager.callHashFunction(
             hashFunctionId,
-            Web3.utils.encodePacked(assetTypeContract, tokenId, keyword),
+            ethers.utils.solidityPack(
+                ['address', 'uint256', 'bytes'],
+                [assetTypeContract, tokenId, keyword],
+            ),
         );
-    }
-
-    async getServiceAgreementData(blockchain, agreementId) {
-        return {
-            epochsNumber: await this.blockchainModuleManager.getAgreementEpochsNumber(
-                blockchain,
-                agreementId,
-            ),
-            startTime: await this.blockchainModuleManager.getAgreementStartTime(
-                blockchain,
-                agreementId,
-            ),
-            epochLength: await this.blockchainModuleManager.getAgreementEpochLength(
-                blockchain,
-                agreementId,
-            ),
-            tokenAmount: await this.blockchainModuleManager.getAgreementTokenAmount(
-                blockchain,
-                agreementId,
-            ),
-            proofWindowOffsetPerc:
-                await this.blockchainModuleManager.getAgreementProofWindowOffsetPerc(
-                    blockchain,
-                    agreementId,
-                ),
-            scoreFunctionId: await this.blockchainModuleManager.getAgreementScoreFunctionId(
-                blockchain,
-                agreementId,
-            ),
-        };
     }
 
     randomIntFromInterval(min, max) {
@@ -80,21 +46,28 @@ class ServiceAgreementService {
         );
         const distanceUint256BN = BigNumber.from(distanceUint8Array);
 
-        // todo update parameters once defined
-        // const a = 1;
-        // const b = 0;
-        // const stakeExponent = 1;
-        // const c = 1;
-        // const d = 0;
-        // const distanceExponent = 1;
+        const {
+            distanceMappingCoefficient,
+            stakeMappingCoefficient,
+            multiplier,
+            logArgumentConstant,
+            a,
+            stakeExponent,
+            b,
+            c,
+            distanceExponent,
+            d,
+        } = await this.blockchainModuleManager.getLog2PLDSFParams(blockchainId);
 
-        // const mappedStake = BigNumber.from(peerRecord.stake).mul(STAKE_UINT256_MULTIPLIER_BN);
+        const mappedStake = BigNumber.from(peerRecord.stake).div(stakeMappingCoefficient);
+        const mappedDistance = distanceUint256BN.div(distanceMappingCoefficient);
 
-        // const dividend = mappedStake.pow(stakeExponent).mul(a).add(b);
-        // const divisor = distanceUint256BN.pow(distanceExponent).mul(c).add(d);
+        const dividend = mappedStake.pow(stakeExponent).mul(a).add(b);
+        const divisor = mappedDistance.pow(distanceExponent).mul(c).add(d);
 
-        // return dividend.div(divisor).div(UINT256_UINT32_DIVISOR_BN).toNumber();
-        return UINT32_MAX_BN.sub(distanceUint256BN.div(UINT256_UINT32_DIVISOR_BN)).toNumber();
+        return Math.floor(
+            multiplier * Math.log2(logArgumentConstant + dividend.toNumber() / divisor.toNumber()),
+        );
     }
 }
 

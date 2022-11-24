@@ -1,12 +1,14 @@
-import Command from '../../../command.js';
+import EpochCommand from '../../common/epoch-command.js';
 import { OPERATION_ID_STATUS } from '../../../../constants/constants.js';
 
-class CalculateProofsCommand extends Command {
+class CalculateProofsCommand extends EpochCommand {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.validationModuleManager = ctx.validationModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+        this.serviceAgreementService = ctx.serviceAgreementService;
         this.operationIdService = ctx.operationIdService;
     }
 
@@ -25,110 +27,90 @@ class CalculateProofsCommand extends Command {
         } = command.data;
 
         this.logger.trace(
-            `Started calculate proofs command for agreement id: ${agreementId} contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}`,
+            `Started ${command.name} for agreement id: ${agreementId} ` +
+                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
+                `hash function id: ${hashFunctionId}`,
         );
+        
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.CALCULATE_PROOFS_START,
             operationId,
             agreementId,
             epoch,
         );
-        if (
-            !(await this.isEligibleForRewards(blockchain, agreementId, epoch, identityId)) ||
-            !(await this.blockchainModuleManager.isProofWindowOpen(agreementId, epoch))
-        ) {
+
+        if (!(await this.isEligibleForRewards(blockchain, agreementId, epoch, identityId))) {
             await this.scheduleNextEpochCheck(
                 blockchain,
                 agreementId,
                 contract,
                 tokenId,
-                epoch,
-                serviceAgreement,
-            );
-        } else {
-            this.logger.trace(
-                `Proof window is open and node is eligible for rewards. Calculating proofs for agreement id : ${agreementId}`,
-            );
-            const { assertionId, challenge } = await this.blockchainModuleManager.getChallenge(
-                blockchain,
-                contract,
-                tokenId,
                 keyword,
+                epoch,
                 hashFunctionId,
+                serviceAgreement,
+                operationId,
             );
 
-            const { leaf, proof } = await this.validationModuleManager.getMerkleProof(
-                await this.tripleStoreModuleManager.get(assertionId),
-                challenge,
-            );
-
-            await this.commandExecutor.add({
-                name: 'submitProofsCommand',
-                delay: 0,
-                data: {
-                    leaf,
-                    proof,
-                },
-                transactional: false,
-            });
+            return EpochCommand.empty();
         }
+
+        this.logger.trace(`Calculating proofs for agreement id : ${agreementId}`);
+        const { assertionId, challenge } = await this.blockchainModuleManager.getChallenge(
+            blockchain,
+            contract,
+            tokenId,
+            epoch,
+        );
+
+        const nQuads = (await this.tripleStoreModuleManager.get(assertionId))
+            .split('\n')
+            .filter(Boolean);
+
+        const { leaf, proof } = this.validationModuleManager.getMerkleProof(nQuads, challenge);
+
+        await this.commandExecutor.add({
+            name: 'submitProofsCommand',
+            sequence: [],
+            delay: 0,
+            data: {
+                ...command.data,
+                leaf,
+                proof,
+            },
+            retries: 3,
+            transactional: false,
+        });
+
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.CALCULATE_PROOFS_END,
             operationId,
             agreementId,
             epoch,
         );
-        return Command.empty();
+        return EpochCommand.empty();
     }
 
     async isEligibleForRewards(blockchain, agreementId, epoch, identityId) {
+        const r0 = await this.blockchainModuleManager.getR0(blockchain);
+
         const commits = await this.blockchainModuleManager.getCommitSubmissions(
             blockchain,
             agreementId,
             epoch,
         );
 
-        const r0 = await this.blockchainModuleManager.getR0(blockchain);
-        commits.slice(0, r0).forEach((commit) => {
-            if (commit.identityId === identityId) {
+        for (let i = 0; i < r0; i += 1) {
+            if (commits[i].identityId === identityId) {
                 this.logger.trace(`Node is eligible for rewards for agreement id: ${agreementId}`);
+
                 return true;
             }
-        });
+        }
 
         this.logger.trace(`Node is not eligible for rewards for agreement id: ${agreementId}`);
 
         return false;
-    }
-
-    async scheduleNextEpochCheck(
-        blockchain,
-        agreementId,
-        contract,
-        tokenId,
-        keyword,
-        epoch,
-        hashFunctionId,
-        serviceAgreement,
-    ) {
-        const nextEpochStartTime =
-            serviceAgreement.startTime + serviceAgreement.epochLength * epoch;
-        await this.commandExecutor.add({
-            name: 'epochCheckCommand',
-            sequence: [],
-            delay: nextEpochStartTime - Math.floor(Date.now() / 1000),
-            data: {
-                blockchain,
-                agreementId,
-                contract,
-                tokenId,
-                keyword,
-                epoch: epoch + 1,
-                hashFunctionId,
-                serviceAgreement,
-            },
-            transactional: false,
-        });
     }
 
     /**
