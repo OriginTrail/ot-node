@@ -1,4 +1,5 @@
 import EpochCommand from '../../common/epoch-command.js';
+import { OPERATION_ID_STATUS } from '../../../../constants/constants.js';
 
 class CalculateProofsCommand extends EpochCommand {
     constructor(ctx) {
@@ -8,6 +9,7 @@ class CalculateProofsCommand extends EpochCommand {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
+        this.operationIdService = ctx.operationIdService;
     }
 
     async execute(command) {
@@ -28,6 +30,13 @@ class CalculateProofsCommand extends EpochCommand {
             `Started ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
                 `hash function id: ${hashFunctionId}`,
+        );
+        
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.CALCULATE_PROOFS_START,
+            operationId,
+            agreementId,
+            epoch,
         );
 
         if (!(await this.isEligibleForRewards(blockchain, agreementId, epoch, identityId))) {
@@ -73,6 +82,12 @@ class CalculateProofsCommand extends EpochCommand {
             transactional: false,
         });
 
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.CALCULATE_PROOFS_END,
+            operationId,
+            agreementId,
+            epoch,
+        );
         return EpochCommand.empty();
     }
 

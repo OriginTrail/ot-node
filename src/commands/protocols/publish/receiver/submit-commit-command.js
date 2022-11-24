@@ -1,4 +1,5 @@
 import EpochCommand from '../../common/epoch-command.js';
+import { OPERATION_ID_STATUS } from '../../../../constants/constants.js';
 
 class SubmitCommitCommand extends EpochCommand {
     constructor(ctx) {
@@ -6,6 +7,7 @@ class SubmitCommitCommand extends EpochCommand {
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
+        this.operationIdService = ctx.operationIdService;
     }
 
     async execute(command) {
@@ -21,6 +23,13 @@ class SubmitCommitCommand extends EpochCommand {
             identityId,
             operationId,
         } = command.data;
+        
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_START,
+            operationId,
+            agreementId,
+            epoch,
+        );
 
         this.logger.trace(
             `Started ${command.name} for agreement id: ${command.data.agreementId} ` +
@@ -131,6 +140,12 @@ class SubmitCommitCommand extends EpochCommand {
             data: { ...command.data, proofWindowStartTime },
             transactional: false,
         });
+this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
+            operationId,
+            agreementId,
+            epoch,
+        );
         return EpochCommand.empty();
     }
 

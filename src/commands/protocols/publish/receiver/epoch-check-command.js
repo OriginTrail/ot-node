@@ -1,5 +1,6 @@
-import { AGREEMENT_STATUS } from '../../../../constants/constants.js';
+
 import EpochCommand from '../../common/epoch-command.js';
+import { AGREEMENT_STATUS, OPERATION_ID_STATUS } from '../../../../constants/constants.js';
 
 class EpochCheckCommand extends EpochCommand {
     constructor(ctx) {
@@ -8,6 +9,7 @@ class EpochCheckCommand extends EpochCommand {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
+        this.operationIdService = ctx.operationIdService;
     }
 
     async execute(command) {
@@ -28,6 +30,12 @@ class EpochCheckCommand extends EpochCommand {
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
                 `hash function id: ${hashFunctionId}`,
         );
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_START,
+            operationId,
+            agreementId,
+            epoch,
+        );
 
         if (this.assetLifetimeExpired(serviceAgreement, epoch)) {
             this.logger.trace(`Asset lifetime for agreement id: ${agreementId} has expired.`);
@@ -36,7 +44,7 @@ class EpochCheckCommand extends EpochCommand {
                 agreementId,
                 AGREEMENT_STATUS.EXPIRED,
             );
-            return EpochCommand.empty();
+            this.finishEpochCheckCommand(operationId, agreementId, epoch);
         }
 
         const commitWindowOpen = await this.blockchainModuleManager.isCommitWindowOpen(
@@ -60,7 +68,7 @@ class EpochCheckCommand extends EpochCommand {
                 serviceAgreement,
                 operationId,
             );
-            return EpochCommand.empty();
+            return this.finishEpochCheckCommand(operationId, agreementId, epoch);
         }
 
         const identityId =
@@ -78,6 +86,16 @@ class EpochCheckCommand extends EpochCommand {
             transactional: false,
         });
 
+        return this.finishEpochCheckCommand(operationId, agreementId, epoch);
+    }
+    
+    finishEpochCheckCommand(operationId, agreementId, epoch) {
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_END,
+            operationId,
+            agreementId,
+            epoch,
+        );
         return EpochCommand.empty();
     }
 
