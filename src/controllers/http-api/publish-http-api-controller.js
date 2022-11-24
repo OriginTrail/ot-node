@@ -1,10 +1,5 @@
 import BaseController from './base-http-api-controller.js';
-import {
-    ERROR_TYPE,
-    OPERATION_ID_STATUS,
-    OPERATION_STATUS,
-    PUBLISH_TYPES,
-} from '../../constants/constants.js';
+import { ERROR_TYPE, OPERATION_ID_STATUS, OPERATION_STATUS } from '../../constants/constants.js';
 
 class PublishController extends BaseController {
     constructor(ctx) {
@@ -34,7 +29,7 @@ class PublishController extends BaseController {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
         );
 
-        const { assertion } = req.body;
+        const { assertion, assertionId, blockchain, contract, tokenId, hashFunctionId } = req.body;
         try {
             await Promise.all([
                 this.repositoryModuleManager.createOperationRecord(
@@ -45,12 +40,9 @@ class PublishController extends BaseController {
                 this.operationIdService.cacheOperationIdData(operationId, { assertion }),
             ]);
 
-            this.logReceivedAssertionMessage(req.body);
-
-            const commandData = {
-                ...req.body,
-                operationId,
-            };
+            this.logger.info(
+                `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
+            );
 
             const commandSequence = req.body.localStore ? ['localStoreCommand'] : [];
             commandSequence.push('networkPublishCommand');
@@ -61,7 +53,15 @@ class PublishController extends BaseController {
                 delay: 0,
                 period: 5000,
                 retries: 3,
-                data: commandData,
+                data: {
+                    assertion,
+                    assertionId,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    hashFunctionId,
+                    operationId,
+                },
                 transactional: false,
             });
         } catch (error) {
@@ -75,24 +75,6 @@ class PublishController extends BaseController {
                 ERROR_TYPE.PUBLISH.PUBLISH_ROUTE_ERROR,
             );
         }
-    }
-
-    logReceivedAssertionMessage(requestBody) {
-        const { publishType, assertionId, blockchain, contract } = requestBody;
-        let receivedAssertionMessage = `Received ${publishType} with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}`;
-        switch (publishType) {
-            case PUBLISH_TYPES.ASSERTION:
-                break;
-            case PUBLISH_TYPES.ASSET:
-                receivedAssertionMessage += `, token id: ${requestBody.tokenId}`;
-                break;
-            case PUBLISH_TYPES.INDEX:
-                receivedAssertionMessage += `, token id: ${requestBody.tokenId}, keywords: ${requestBody.keywords}`;
-                break;
-            default:
-                throw Error(`Unknown publish type ${publishType}`);
-        }
-        this.logger.info(receivedAssertionMessage);
     }
 }
 

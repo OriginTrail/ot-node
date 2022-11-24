@@ -1,3 +1,12 @@
+import { ethers } from 'ethers';
+import { xor as uint8ArrayXor } from 'uint8arrays/xor';
+import { compare as uint8ArrayCompare } from 'uint8arrays/compare';
+import pipe from 'it-pipe';
+import map from 'it-map';
+import sort from 'it-sort';
+import take from 'it-take';
+import all from 'it-all';
+
 import {
     CONTRACTS,
     DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
@@ -5,17 +14,17 @@ import {
 
 class ShardingTableService {
     constructor(ctx) {
-        this.config = ctx.config;
         this.logger = ctx.logger;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.networkModuleManager = ctx.networkModuleManager;
+        this.validationModuleManager = ctx.validationModuleManager;
         this.eventEmitter = ctx.eventEmitter;
     }
 
     async initialize(blockchainId) {
         await this.pullBlockchainShardingTable(blockchainId);
-        this.listenOnEvents(blockchainId);
+        await this.listenOnEvents(blockchainId);
         const that = this;
         await this.networkModuleManager.onPeerConnected((connection) => {
             this.logger.trace(
@@ -73,22 +82,37 @@ class ShardingTableService {
         );
 
         await this.repositoryModuleManager.createManyPeerRecords(
-            shardingTable.map((peer) => ({
-                peer_id: this.blockchainModuleManager.convertHexToAscii(blockchainId, peer.id),
-                blockchain_id: blockchainId,
-                ask: peer.ask,
-                stake: peer.stake,
-                sha256: peer.idSha256,
-            })),
+            await Promise.all(
+                shardingTable.map(async (peer) => {
+                    const nodeId = this.blockchainModuleManager.convertHexToAscii(
+                        blockchainId,
+                        peer.id,
+                    );
+
+                    return {
+                        peer_id: nodeId,
+                        blockchain_id: blockchainId,
+                        ask: ethers.utils.formatUnits(peer.ask, 'ether'),
+                        stake: ethers.utils.formatUnits(peer.stake, 'ether'),
+                        sha256: await this.validationModuleManager.callHashFunction(0, nodeId),
+                    };
+                }),
+            ),
         );
     }
 
-    listenOnEvents(blockchainId) {
-        this.eventEmitter.on(`${blockchainId}-NodeObjCreated`, (event) => {
+    async listenOnEvents(blockchainId) {
+        this.eventEmitter.on(`${blockchainId}-NodeObjCreated`, async (event) => {
             const eventData = JSON.parse(event.data);
             const nodeId = this.blockchainModuleManager.convertHexToAscii(
                 event.blockchain_id,
                 eventData.nodeId,
+            );
+
+            const nodeIdSha256 = await this.validationModuleManager.callHashFunction(
+                // TODO: How to add more hashes?
+                0,
+                nodeId,
             );
 
             this.logger.trace(
@@ -98,25 +122,11 @@ class ShardingTableService {
             this.repositoryModuleManager.createPeerRecord(
                 nodeId,
                 event.blockchain_id,
-                eventData.ask,
-                eventData.stake,
+                ethers.utils.formatUnits(eventData.ask, 'ether'),
+                ethers.utils.formatUnits(eventData.stake, 'ether'),
                 new Date(0),
-                eventData.nodeIdSha256,
+                nodeIdSha256,
             );
-
-            this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
-        });
-
-        this.eventEmitter.on(`${blockchainId}-StakeUpdated`, (event) => {
-            const eventData = JSON.parse(event.data);
-            const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                event.blockchain_id,
-                eventData.nodeId,
-            );
-            this.logger.trace(
-                `${blockchainId}-StakeUpdated event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
-            );
-            this.repositoryModuleManager.updatePeerStake(nodeId, eventData.stake);
 
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
@@ -134,12 +144,51 @@ class ShardingTableService {
 
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
+
+        this.eventEmitter.on(`${blockchainId}-StakeUpdated`, (event) => {
+            const eventData = JSON.parse(event.data);
+            const nodeId = this.blockchainModuleManager.convertHexToAscii(
+                event.blockchain_id,
+                eventData.nodeId,
+            );
+            this.logger.trace(
+                `${blockchainId}-StakeUpdated event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
+            );
+            this.repositoryModuleManager.updatePeerStake(nodeId, eventData.stake);
+            this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
+        });
     }
 
-    async findNeighbourhood(key, blockchainId, r2) {
+    async findNeighbourhood(blockchainId, key, r2, hashFunctionId) {
         const peers = await this.repositoryModuleManager.getAllPeerRecords(blockchainId);
+        const keyHash = await this.validationModuleManager.callHashFunction(hashFunctionId, key);
 
-        return this.networkModuleManager.sortPeers(key, peers, r2);
+        return this.sortPeers(blockchainId, keyHash, peers, r2, hashFunctionId);
+    }
+
+    async sortPeers(blockchainId, keyHash, peers, count, hashFunctionId) {
+        const hashFunctionName = await this.blockchainModuleManager.getHashFunctionName(
+            blockchainId,
+            hashFunctionId,
+        );
+
+        const sorted = pipe(
+            peers,
+            (source) =>
+                map(source, async (peer) => ({
+                    peer,
+                    distance: this.calculateDistance(keyHash, peer[hashFunctionName]),
+                })),
+            (source) => sort(source, (a, b) => uint8ArrayCompare(a.distance, b.distance)),
+            (source) => take(source, count),
+            (source) => map(source, (pd) => pd.peer),
+        );
+
+        return all(sorted);
+    }
+
+    calculateDistance(peerHash, keyHash) {
+        return uint8ArrayXor(ethers.utils.arrayify(peerHash), ethers.utils.arrayify(keyHash));
     }
 
     async getBidSuggestion(neighbourhood, r0, higherPercentile) {

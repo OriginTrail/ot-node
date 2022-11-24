@@ -280,6 +280,20 @@ class SequelizeRepository {
         });
     }
 
+    async getPeerRecord(peerId, blockchain) {
+        return this.models.shard.findOne({
+            where: {
+                blockchain_id: {
+                    [Sequelize.Op.eq]: blockchain,
+                },
+                peer_id: {
+                    [Sequelize.Op.eq]: peerId,
+                },
+            },
+            raw: true,
+        });
+    }
+
     async getPeersToDial(limit, dialFrequencyMillis) {
         return this.models.shard.findAll({
             attributes: ['peer_id'],
@@ -427,6 +441,17 @@ class SequelizeRepository {
                 },
             },
         });
+    }
+
+    async updateOperationAgreementStatus(operationId, agreementId, agreementStatus) {
+        await this.models.publish.update(
+            { agreementId, agreementStatus },
+            {
+                where: {
+                    operation_id: operationId,
+                },
+            },
+        );
     }
 
     async destroyEvents(ids) {

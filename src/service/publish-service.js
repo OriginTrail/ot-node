@@ -31,7 +31,14 @@ class PublishService extends OperationService {
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
-        const { operationId, numberOfFoundNodes, leftoverNodes, keyword, batchSize } = command.data;
+        const {
+            operationId,
+            numberOfFoundNodes,
+            leftoverNodes,
+            keyword,
+            batchSize,
+            minAckResponses,
+        } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
@@ -45,18 +52,21 @@ class PublishService extends OperationService {
         this.logger.debug(
             `Processing ${
                 this.operationName
-            } response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${batchSize} number of leftover nodes: ${
+            } response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
+                numberOfFoundNodes,
+                batchSize,
+            )} number of leftover nodes: ${
                 leftoverNodes.length
-            }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${this.getMinimumAckResponses()}`,
+            }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${minAckResponses}`,
         );
 
         if (
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
-            completedNumber === this.getMinimumAckResponses()
+            completedNumber === minAckResponses
         ) {
             let allCompleted = true;
             for (const key in keywordsStatuses) {
-                if (keywordsStatuses[key].completedNumber < this.getMinimumAckResponses()) {
+                if (keywordsStatuses[key].completedNumber < minAckResponses) {
                     allCompleted = false;
                     break;
                 }
@@ -71,7 +81,7 @@ class PublishService extends OperationService {
                 );
             }
         } else if (
-            completedNumber < this.getMinimumAckResponses() &&
+            completedNumber < minAckResponses &&
             (numberOfFoundNodes === numberOfResponses || numberOfResponses % batchSize === 0)
         ) {
             if (leftoverNodes.length === 0) {
@@ -83,8 +93,8 @@ class PublishService extends OperationService {
         }
     }
 
-    async getAssertion(blockchain, contract, tokenId) {
-        return this.blockchainModuleManager.getLatestCommitHash(blockchain, contract, tokenId);
+    async getLatestAssertion(blockchain, contract, tokenId) {
+        return this.blockchainModuleManager.getLatestAssertion(blockchain, contract, tokenId);
     }
 
     async validateAssertion(assertionId, operationId) {

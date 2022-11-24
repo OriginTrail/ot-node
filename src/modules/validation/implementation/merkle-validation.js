@@ -1,30 +1,35 @@
-import keccak256 from 'keccak256';
-import web3 from 'web3';
-import { MerkleTree } from 'merkletreejs';
-import { calculateRoot } from 'assertion-tools';
+import { ethers } from 'ethers';
+import { calculateRoot, getMerkleProof } from 'assertion-tools';
 
 class MerkleValidation {
     async initialize(config, logger) {
         this.config = config;
         this.logger = logger;
+
+        this.hashFunctions = {
+            // TODO: Change this nonsense
+            0: 'sha256',
+        };
     }
 
     calculateRoot(assertion) {
         return calculateRoot(assertion);
     }
 
-    // TODO move to assertion-tools
     getMerkleProof(nquadsArray, challenge) {
-        nquadsArray.sort();
+        return getMerkleProof(nquadsArray, challenge);
+    }
 
-        const leaves = nquadsArray.map((element, index) =>
-            keccak256(web3.utils.encodePacked(keccak256(element), index)),
-        );
-        const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+    async callHashFunction(hashFunctionId, data) {
+        return this[this.hashFunctions[hashFunctionId]](data); // TODO: Change this nonsense
+    }
 
-        const proof = tree.getProof(leaves[parseInt(challenge, 10)]);
-
-        return { leaf: leaves[parseInt(challenge, 10)], proof: proof.map((x) => x.data) };
+    async sha256(data) {
+        if (!ethers.utils.isBytesLike(data)) {
+            const bytesLikeData = ethers.utils.toUtf8Bytes(data);
+            return ethers.utils.sha256(bytesLikeData);
+        }
+        return ethers.utils.sha256(data);
     }
 }
 

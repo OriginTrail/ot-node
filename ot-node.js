@@ -163,20 +163,14 @@ class OTNode {
             .getImplementationNames()
             .map(async (blockchain) => {
                 try {
-                    if (!blockchainModuleManager.identityExists(blockchain)) {
-                        this.logger.info(`Creating blockchain identity on network: ${blockchain}`);
-                        await blockchainModuleManager.deployIdentity(blockchain);
-                        await blockchainModuleManager.saveIdentityInFile();
-                    }
-                    const identity = blockchainModuleManager.getIdentity(blockchain);
-                    this.logger.info(`${blockchain} blockchain identity is ${identity}`);
-
-                    if (!(await blockchainModuleManager.profileExists(blockchain, identity))) {
+                    if (!(await blockchainModuleManager.identityIdExists(blockchain))) {
                         this.logger.info(`Creating profile on network: ${blockchain}`);
                         const networkModuleManager = this.container.resolve('networkModuleManager');
                         const peerId = networkModuleManager.getPeerId().toB58String();
                         await blockchainModuleManager.createProfile(blockchain, peerId);
                     }
+                    const identityId = await blockchainModuleManager.getIdentityId(blockchain);
+                    this.logger.info(`Identity ID: ${identityId}`);
                 } catch (error) {
                     this.logger.warn(
                         `Unable to create ${blockchain} blockchain profile. Removing implementation. Error: ${error.message}`,
@@ -273,6 +267,12 @@ class OTNode {
                     working = true;
                     await blockchainModuleManager.getAllPastEvents(
                         CONTRACTS.SHARDING_TABLE_CONTRACT,
+                        onEventsReceived,
+                        getLastCheckedBlock,
+                        updateLastCheckedBlock,
+                    );
+                    await blockchainModuleManager.getAllPastEvents(
+                        CONTRACTS.PROFILE_CONTRACT,
                         onEventsReceived,
                         getLastCheckedBlock,
                         updateLastCheckedBlock,

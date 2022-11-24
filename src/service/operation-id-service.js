@@ -44,7 +44,7 @@ class OperationIdService {
             timestamp,
         };
 
-        this.emitChangeEvent(status, operationId, value1, value2, timestamp);
+        this.emitChangeEvent(status, operationId, value1, value2, null, timestamp);
 
         await this.repositoryModuleManager.updateOperationIdRecord(response, operationId);
     }
@@ -68,8 +68,9 @@ class OperationIdService {
     emitChangeEvent(
         status,
         operationId,
-        errorMessage = null,
-        errorType = null,
+        value1 = null,
+        value2 = null,
+        value3 = null,
         timestamp = Date.now(),
     ) {
         const eventName = 'operation_status_changed';
@@ -78,8 +79,9 @@ class OperationIdService {
             lastEvent: status,
             operationId,
             timestamp,
-            value1: errorMessage,
-            value2: errorType,
+            value1,
+            value2,
+            value3,
         };
 
         this.eventEmitter.emit(eventName, eventData);

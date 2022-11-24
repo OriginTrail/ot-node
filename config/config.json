@@ -125,7 +125,6 @@
                         "config": {
                             "blockchainTitle": "ganache",
                             "networkId": "ganache::testnet",
-                            "identityFileName": "ganache",
                             "hubContractAddress": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
                             "rpcEndpoints": ["http://localhost:7545"],
                             "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
@@ -135,7 +134,6 @@
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "otp::testnet",
-                            "identityFileName": "otp",
                             "hubContractAddress": "0x707233a55bD035C6Bc732196CA4dbffa63CbA169",
                             "rpcEndpoints": ["wss://lofar.origin-trail.network"]
                         }
@@ -144,7 +142,6 @@
                         "package": "./blockchain/implementation/polygon/polygon-service.js",
                         "config": {
                             "networkId": "polygon::testnet",
-                            "identityFileName": "polygon",
                             "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
                             "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
                             "rpcEndpoints": [
@@ -159,7 +156,6 @@
                         "package": "./blockchain/implementation/polygon/eth-service.js",
                         "config": {
                             "networkId": "eth::rinkeby",
-                            "identityFileName": "rinkeby",
                             "hubContractAddress": "",
                             "gasPriceOracleLink": "",
                             "rpcEndpoints": []
@@ -167,10 +163,6 @@
                     }
                 }
             }
-        },
-        "minimumAckResponses": {
-            "publish": 2,
-            "get": 1
         },
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
@@ -265,7 +257,6 @@
                         "package": "./blockchain/implementation/ganache/ganache-service.js",
                         "config": {
                             "blockchainTitle": "ganache",
-                            "identityFileName": "ganache",
                             "networkId": "ganache::testnet",
                             "hubContractAddress": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
                             "rpcEndpoints": ["http://localhost:7545"]
@@ -306,10 +297,6 @@
                     }
                 }
             }
-        },
-        "minimumAckResponses": {
-            "publish": 2,
-            "get": 1
         },
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
@@ -415,7 +402,6 @@
                         "config": {
                             "networkId": "parachain::testnet",
                             "hubContractAddress": "0xc9184C1A0CE150a882DC3151Def25075bdAf069C",
-                            "identityFileName": "otp",
                             "rpcEndpoints": ["wss://lofar.origin-trail.network"]
                         }
                     },
@@ -423,7 +409,6 @@
                         "package": "./blockchain/implementation/polygon/polygon-service.js",
                         "config": {
                             "networkId": "polygon::testnet",
-                            "identityFileName": "polygon",
                             "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
                             "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
                             "rpcEndpoints": [
@@ -477,10 +462,6 @@
                     }
                 }
             }
-        },
-        "minimumAckResponses": {
-            "publish": 5,
-            "get": 1
         },
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
@@ -595,7 +576,6 @@
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "otp::mainnet",
-                            "identityFileName": "otp",
                             "hubContractAddress": "",
                             "rpcEndpoints": []
                         }
@@ -604,7 +584,6 @@
                         "package": "./blockchain/implementation/polygon/polygon-service.js",
                         "config": {
                             "networkId": "polygon::mainnet",
-                            "identityFileName": "polygon",
                             "hubContractAddress": "",
                             "gasPriceOracleLink": "",
                             "rpcEndpoints": []
@@ -612,10 +591,6 @@
                     }
                 }
             }
-        },
-        "minimumAckResponses": {
-            "publish": 5,
-            "get": 1
         },
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",

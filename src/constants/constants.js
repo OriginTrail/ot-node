@@ -1,10 +1,18 @@
+import { BigNumber } from 'ethers';
+
+export const UINT256_MAX_BN = BigNumber.from(2).pow(256).sub(1);
+
+export const UINT32_MAX_BN = BigNumber.from(2).pow(32).sub(1);
+
+export const STAKE_UINT256_MULTIPLIER_BN = UINT256_MAX_BN.div(500000000);
+
+export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN.div(UINT32_MAX_BN);
+
 export const SCHEMA_CONTEXT = 'http://schema.org/';
 
 export const LIBP2P_KEY_DIRECTORY = 'libp2p';
 
 export const LIBP2P_KEY_FILENAME = 'privateKey';
-
-export const BLOCKCHAIN_IDENTITY_DIRECTORY = 'blockchain';
 
 export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 
@@ -46,7 +54,7 @@ export const XML_DATA_TYPES = {
 
 export const MIN_NODE_VERSION = 16;
 
-export const INIT_ASK_AMOUNT = 5; // TODO: Change value
+export const INIT_ASK_AMOUNT = '2';
 
 export const INIT_STAKE_AMOUNT = '50000';
 
@@ -200,6 +208,16 @@ export const OPERATION_ID_STATUS = {
         GET_FETCH_FROM_NODES_END: 'GET_FETCH_FROM_NODES_END',
         GET_END: 'GET_END',
     },
+    COMMIT_PROOF: {
+        EPOCH_CHECK_START: 'EpochCheckStart',
+        EPOCH_CHECK_END: 'EpochCheckEnd',
+        SUBMIT_COMMIT_START: 'SubmitCommitStart',
+        SUBMIT_COMMIT_END: 'SubmitCommitEnd',
+        CALCULATE_PROOFS_START: 'CalculateProofsStart',
+        CALCULATE_PROOFS_END: 'CalculateProofsEnd',
+        SUBMIT_PROOFS_START: 'SubmitProofsStart',
+        SUBMIT_PROOFS_END: 'SubmitProofsEnd',
+    },
     SEARCH_ASSERTIONS: {
         VALIDATING_QUERY: 'VALIDATING_QUERY',
         SEARCHING_ASSERTIONS: 'SEARCHING_ASSERTIONS',
@@ -256,7 +274,7 @@ export const COMMAND_STATUS = {
  *  Network protocols
  */
 export const NETWORK_PROTOCOLS = {
-    STORE: ['/store/1.0.1', '/store/1.0.0'],
+    STORE: ['/store/1.0.2', '/store/1.0.1', '/store/1.0.0'],
     GET: ['/get/1.0.0'],
 };
 
@@ -264,6 +282,11 @@ export const OPERATION_STATUS = {
     IN_PROGRESS: 'IN_PROGRESS',
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
+};
+
+export const AGREEMENT_STATUS = {
+    ACTIVE: 'ACTIVE',
+    EXPIRED: 'EXPIRED',
 };
 
 export const OPERATION_REQUEST_STATUS = {
@@ -286,4 +309,5 @@ export const QUERY_TYPES = {
  */
 export const CONTRACTS = {
     SHARDING_TABLE_CONTRACT: 'ShardingTableContract',
+    PROFILE_CONTRACT: 'ProfileContract',
 };
