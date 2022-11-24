@@ -13,13 +13,13 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
 
     async getKeywords(command) {
         const { blockchain, contract, tokenId } = command.data;
-        const locationHash = await this.ualService.calculateLocationHash(
+        const locationKeyword = await this.ualService.calculateLocationKeyword(
             blockchain,
             contract,
             tokenId,
         );
 
-        return [locationHash];
+        return [locationKeyword];
     }
 
     async getBatchSize(blockchainId) {

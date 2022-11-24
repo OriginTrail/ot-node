@@ -1,4 +1,6 @@
 /* eslint-disable no-restricted-globals */
+import { ethers } from 'ethers';
+
 class UALService {
     constructor(ctx) {
         this.config = ctx.config;
@@ -43,16 +45,17 @@ class UALService {
         };
     }
 
-    // TODO: discuss if we want to change to Hash(contract/tokenId/aId1) for the locationHash
-    async calculateLocationHash(blockchain, contract, tokenId) {
-        const ual = this.deriveUAL(blockchain, contract, tokenId);
+    async calculateLocationKeyword(blockchain, contract, tokenId) {
         const firstAssertionId = await this.blockchainModuleManager.getAssertionByIndex(
             blockchain,
             contract,
             tokenId,
             0,
         );
-        return this.validationModuleManager.callHashFunction(0, `${ual}/${firstAssertionId}`);
+        return ethers.utils.solidityPack(
+            ['address', 'uint256', 'bytes32'],
+            [contract, tokenId, firstAssertionId],
+        );
     }
 }
 
