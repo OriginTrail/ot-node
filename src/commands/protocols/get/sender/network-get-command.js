@@ -11,6 +11,7 @@ class NetworkGetCommand extends NetworkProtocolCommand {
         this.errorType = ERROR_TYPE.GET.GET_NETWORK_ERROR;
     }
 
+    // TODO: discuss if we want to change to Hash(contract/tokenId/aId1) for the locationHash
     async getKeywords(command) {
         const { blockchain, contract, tokenId } = command.data;
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
