@@ -9,17 +9,19 @@ class DkgClientHelper {
         return this.client.node.info();
     }
 
-    async publish(data, wallet, hubContract) {
+    async publish(data, wallet) {
         const options = {
             visibility: 'public',
-            holdingTimeInYears: 1,
+            triplesNumber: 3,
+            chunksNumber: 3,
+            epochsNum: 5,
             tokenAmount: 10,
             maxNumberOfRetries: 5,
+            hashFunctionId: 0,
             blockchain: {
                 name: 'ganache',
                 publicKey: wallet.evmOperationalWalletPublicKey,
                 privateKey: wallet.evmOperationalWalletPrivateKey,
-                hubContract,
             },
         };
         return this.client.asset.create(data, options);
