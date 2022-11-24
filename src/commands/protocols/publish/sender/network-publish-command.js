@@ -7,7 +7,6 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
         this.operationService = ctx.publishService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.ualService = ctx.ualService;
-        this.validationModuleManager = ctx.validationModuleManager;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR;
     }

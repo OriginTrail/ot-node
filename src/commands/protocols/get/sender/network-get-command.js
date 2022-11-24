@@ -6,8 +6,6 @@ class NetworkGetCommand extends NetworkProtocolCommand {
         super(ctx);
         this.operationService = ctx.getService;
         this.ualService = ctx.ualService;
-        this.validationModuleManager = ctx.validationModuleManager;
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
 
         this.errorType = ERROR_TYPE.GET.GET_NETWORK_ERROR;
     }
