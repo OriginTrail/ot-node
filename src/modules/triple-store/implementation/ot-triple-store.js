@@ -58,8 +58,7 @@ class OtTripleStore {
     }
 
     initializeSparqlEndpoints() {
-        // overridden by subclasses
-        return true;
+        throw Error('initializeSparqlEndpoints not implemented');
     }
 
     async assetExists(ual, assertionId) {

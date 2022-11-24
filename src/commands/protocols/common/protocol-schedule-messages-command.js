@@ -12,8 +12,15 @@ class ProtocolScheduleMessagesCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, keyword, batchSize, leftoverNodes, numberOfFoundNodes, blockchain } =
-            command.data;
+        const {
+            operationId,
+            keyword,
+            batchSize,
+            leftoverNodes,
+            numberOfFoundNodes,
+            blockchain,
+            minAckResponses,
+        } = command.data;
 
         const currentBatchNodes = leftoverNodes.slice(0, batchSize);
         const currentBatchLeftoverNodes =
@@ -43,6 +50,7 @@ class ProtocolScheduleMessagesCommand extends Command {
                     node,
                     numberOfFoundNodes,
                     batchSize,
+                    minAckResponses,
                     leftoverNodes: currentBatchLeftoverNodes,
                 },
                 period: 5000,

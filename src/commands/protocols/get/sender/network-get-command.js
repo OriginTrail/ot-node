@@ -14,6 +14,14 @@ class NetworkGetCommand extends NetworkProtocolCommand {
         return [assertionId];
     }
 
+    async getBatchSize() {
+        return 2;
+    }
+
+    async getMinAckResponses() {
+        return 1;
+    }
+
     /**
      * Builds default networkGetCommand
      * @param map

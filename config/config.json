@@ -164,10 +164,6 @@
                 }
             }
         },
-        "minimumAckResponses": {
-            "publish": 2,
-            "get": 1
-        },
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "info",
@@ -301,10 +297,6 @@
                     }
                 }
             }
-        },
-        "minimumAckResponses": {
-            "publish": 2,
-            "get": 1
         },
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
@@ -471,10 +463,6 @@
                 }
             }
         },
-        "minimumAckResponses": {
-            "publish": 5,
-            "get": 1
-        },
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
@@ -603,10 +591,6 @@
                     }
                 }
             }
-        },
-        "minimumAckResponses": {
-            "publish": 5,
-            "get": 1
         },
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
