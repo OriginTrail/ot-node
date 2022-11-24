@@ -19,11 +19,12 @@ class EpochCommand extends Command {
     ) {
         const nextEpochStartTime =
             serviceAgreement.startTime + serviceAgreement.epochLength * (epoch + 1);
-        const delay = nextEpochStartTime - Math.floor(Date.now() / 1000);
 
         // delay by 10% of commit window length
         const offset =
             (await this.blockchainModuleManager.getCommitWindowDuration(blockchain)) * 0.1;
+
+        const delay = nextEpochStartTime - Math.floor(Date.now() / 1000) + offset;
 
         this.logger.trace(
             `Scheduling next epoch check for agreement id: ${agreementId} in ${delay} seconds`,
@@ -31,7 +32,7 @@ class EpochCommand extends Command {
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
             sequence: [],
-            delay: delay + offset,
+            delay,
             data: {
                 blockchain,
                 agreementId,

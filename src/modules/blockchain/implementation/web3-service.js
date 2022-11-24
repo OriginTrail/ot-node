@@ -632,21 +632,13 @@ class Web3Service {
         return Number(R0);
     }
 
-    async submitCommit(
-        assetContractAddress,
-        tokenId,
-        keyword,
-        hashFunctionId,
-        epoch,
-        prevIdentityId,
-    ) {
+    async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch) {
         return this.executeContractFunction(this.ServiceAgreementStorageContract, 'submitCommit', [
             assetContractAddress,
             tokenId,
             keyword,
             hashFunctionId,
             epoch,
-            prevIdentityId,
         ]);
     }
 

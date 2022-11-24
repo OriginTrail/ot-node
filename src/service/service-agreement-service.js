@@ -25,11 +25,8 @@ class ServiceAgreementService {
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
-    async calculateScore(blockchainId, keyword, hashFunctionId) {
-        const peerRecord = await this.repositoryModuleManager.getPeerRecord(
-            this.networkModuleManager.getPeerId().toB58String(),
-            blockchainId,
-        );
+    async calculateScore(peerId, blockchainId, keyword, hashFunctionId) {
+        const peerRecord = await this.repositoryModuleManager.getPeerRecord(peerId, blockchainId);
         const keyHash = await this.validationModuleManager.callHashFunction(
             hashFunctionId,
             keyword,

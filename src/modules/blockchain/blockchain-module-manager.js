@@ -226,15 +226,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async submitCommit(
-        blockchain,
-        assetContractAddress,
-        tokenId,
-        keyword,
-        hashFunctionId,
-        epoch,
-        prevIdentityId,
-    ) {
+    async submitCommit(blockchain, assetContractAddress, tokenId, keyword, hashFunctionId, epoch) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.submitCommit(
                 assetContractAddress,
@@ -242,7 +234,6 @@ class BlockchainModuleManager extends BaseModuleManager {
                 keyword,
                 hashFunctionId,
                 epoch,
-                prevIdentityId,
             );
         }
     }

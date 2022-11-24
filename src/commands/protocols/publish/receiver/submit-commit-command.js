@@ -8,6 +8,8 @@ class SubmitCommitCommand extends EpochCommand {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.operationIdService = ctx.operationIdService;
+        this.shardingTableService = ctx.shardingTableService;
+        this.networkModuleManager = ctx.networkModuleManager;
     }
 
     async execute(command) {
@@ -23,7 +25,7 @@ class SubmitCommitCommand extends EpochCommand {
             identityId,
             operationId,
         } = command.data;
-        
+
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_START,
             operationId,
@@ -67,18 +69,13 @@ class SubmitCommitCommand extends EpochCommand {
         );
 
         // submit commit -> calculate proofs -> schedule proof submission -> schedule next epoch
-        const { prevIdentityId, rank } = await this.getPreviousIdentityIdAndRank(
-            blockchain,
-            commits,
-            keyword,
-            hashFunctionId,
-        );
+        const rank = await this.calculateRank(blockchain, commits, keyword, hashFunctionId);
 
-        const r1 = await this.blockchainModuleManager.getR1(blockchain);
+        const r0 = await this.blockchainModuleManager.getR0(blockchain);
 
-        if (rank >= r1) {
+        if (rank >= r0) {
             this.logger.trace(
-                `Calculated rank: ${rank} higher than R1: ${r1}. Scheduling next epoch check for agreement id: ${agreementId}`,
+                `Calculated rank: ${rank} higher than R0: ${r0}. Scheduling next epoch check for agreement id: ${agreementId}`,
             );
             await this.scheduleNextEpochCheck(
                 blockchain,
@@ -91,6 +88,7 @@ class SubmitCommitCommand extends EpochCommand {
                 serviceAgreement,
                 operationId,
             );
+            return EpochCommand.empty();
         }
 
         try {
@@ -101,7 +99,6 @@ class SubmitCommitCommand extends EpochCommand {
                 keyword,
                 hashFunctionId,
                 epoch,
-                prevIdentityId,
             );
         } catch (error) {
             this.logger.warn(error.message);
@@ -140,7 +137,7 @@ class SubmitCommitCommand extends EpochCommand {
             data: { ...command.data, proofWindowStartTime },
             transactional: false,
         });
-this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
             operationId,
             agreementId,
@@ -149,25 +146,32 @@ this.operationIdService.emitChangeEvent(
         return EpochCommand.empty();
     }
 
-    async getPreviousIdentityIdAndRank(blockchain, commits, keyword, hashFunctionId) {
-        const score = await this.serviceAgreementService.calculateScore(
+    async calculateRank(blockchain, commits, keyword, hashFunctionId) {
+        const r2 = await this.blockchainModuleManager.getR2(blockchain);
+        const neighbourhood = await this.shardingTableService.findNeighbourhood(
             blockchain,
             keyword,
+            r2,
             hashFunctionId,
         );
 
-        this.logger.trace(`Commit submissions score: ${score}`);
+        const scores = await Promise.all(
+            neighbourhood.map(async (node) => ({
+                score: await this.serviceAgreementService.calculateScore(
+                    node.peer_id,
+                    blockchain,
+                    keyword,
+                    hashFunctionId,
+                ),
+                peerId: node.peer_id,
+            })),
+        );
 
-        for (let i = commits.length - 1; i >= 0; i -= 1) {
-            if (commits[i].score > score) {
-                return {
-                    prevIdentityId: commits[i].identityId,
-                    rank: i + 1,
-                };
-            }
-        }
+        scores.sort((a, b) => b.score - a.score);
 
-        return { prevIdentityId: 0, rank: 0 };
+        return scores.findIndex(
+            (node) => node.peerId === this.networkModuleManager.getPeerId().toB58String(),
+        );
     }
 
     alreadyCommitted(commits, myIdentity) {
