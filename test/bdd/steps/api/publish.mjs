@@ -21,13 +21,11 @@ When(
         const { evmOperationalWalletPublicKey, evmOperationalWalletPrivateKey } =
             this.state.nodes[node - 1].configuration.modules.blockchain.implementation.ganache
                 .config;
-        const hubContract = this.state.localBlockchain.getHubAddress();
         const assertion = assertions[assertionName];
         const result = await this.state.nodes[node - 1].client
             .publish(
                 assertion,
-                { evmOperationalWalletPublicKey, evmOperationalWalletPrivateKey },
-                hubContract,
+                { evmOperationalWalletPublicKey, evmOperationalWalletPrivateKey }
             )
             .catch((error) => {
                 assert.fail(`Error while trying to publish assertion. ${error}`);

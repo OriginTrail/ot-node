@@ -68,7 +68,7 @@ const wallets = accountPrivateKeys.map((privateKey) => ({
     address: web3.eth.accounts.privateKeyToAccount(privateKey).address,
     privateKey,
 }));
-
+const deployingWallet = wallets[0];
 /**
  * LocalBlockchain represent small wrapper around the Ganache.
  *
@@ -189,7 +189,6 @@ class LocalBlockchain {
     }
 
     async deployContracts() {
-        const deployingWallet = this.getWallets()[0];
 
         await this.deploy('hub', deployingWallet, []);
         await this.setContractAddress('Owner', deployingWallet.address, deployingWallet);
@@ -359,6 +358,28 @@ class LocalBlockchain {
             .on('error', (error) =>
                 this.logger.error(
                     `Unable to set asset contract ${contractName} address in HUB. Error: `,
+                    error,
+                ),
+            );
+    }
+
+    async setR1(r1) {
+        return this.contracts.parametersStorage.instance.methods.setR1(r1)
+            .send({ from: deployingWallet.address, gas: 3000000})
+            .on('error', (error) =>
+            this.logger.error(
+                `Unable to set R1 in parameters storage. Error: `,
+                error,
+            ),
+        );
+    }
+
+    async setR2(r2) {
+        return this.contracts.parametersStorage.methods.setR2(r2)
+            .send({ from: deployingWallet, gas: 3000000})
+            .on('error', (error) =>
+                this.logger.error(
+                    `Unable to set R2 in parameters storage. Error: `,
                     error,
                 ),
             );
