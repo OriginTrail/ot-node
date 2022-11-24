@@ -5,13 +5,16 @@ class NetworkGetCommand extends NetworkProtocolCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.getService;
+        this.ualService = ctx.ualService;
+        this.validationModuleManager = ctx.validationModuleManager;
 
         this.errorType = ERROR_TYPE.GET.GET_NETWORK_ERROR;
     }
 
-    getKeywords(command) {
-        const { assertionId } = command.data;
-        return [assertionId];
+    async getKeywords(command) {
+        const { blockchain, contract, tokenId } = command.data;
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+        return [await this.validationModuleManager.callHashFunction(0, ual)];
     }
 
     async getBatchSize() {
