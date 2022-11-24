@@ -15,7 +15,18 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
     async getKeywords(command) {
         const { blockchain, contract, tokenId } = command.data;
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-        return [await this.validationModuleManager.callHashFunction(0, ual)];
+        const firstAssertionId = await this.blockchainModuleManager.getAssertionByIndex(
+            blockchain,
+            contract,
+            tokenId,
+            0,
+        );
+        const locationHash = await this.validationModuleManager.callHashFunction(
+            0,
+            `${ual}/${firstAssertionId}`,
+        );
+
+        return [locationHash];
     }
 
     async getBatchSize(blockchainId) {
