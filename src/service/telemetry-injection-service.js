@@ -18,6 +18,7 @@ class TelemetryInjectionService {
                 eventData.timestamp,
                 eventData.value1,
                 eventData.value2,
+                eventData.value3,
             );
         });
     }

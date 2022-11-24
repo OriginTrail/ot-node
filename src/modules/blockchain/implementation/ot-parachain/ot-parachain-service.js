@@ -1,4 +1,4 @@
-import { ApiPromise, WsProvider } from '@polkadot/api';
+import { ApiPromise, WsProvider, HttpProvider } from '@polkadot/api';
 import Web3Service from '../web3-service.js';
 
 const NATIVE_TOKEN_DECIMALS = 12;
@@ -79,9 +79,12 @@ class OtParachainService extends Web3Service {
             }
 
             try {
-                // Initialise the provider to connect to the local node
-                const provider = new WsProvider(this.config.rpcEndpoints[this.rpcNumber]);
-
+                let provider;
+                if (this.config.rpcEndpoints[this.rpcNumber].startsWith('ws')) {
+                    provider = new WsProvider(this.config.rpcEndpoints[this.rpcNumber]);
+                } else {
+                    provider = new HttpProvider(this.config.rpcEndpoints[this.rpcNumber]);
+                }
                 // eslint-disable-next-line no-await-in-loop
                 this.parachainProvider = await new ApiPromise({ provider }).isReady;
                 isRpcConnected = true;
@@ -101,7 +104,7 @@ class OtParachainService extends Web3Service {
         if (this.config.gasPriceOracleLink) return super.getGasPrice();
 
         try {
-            return (await this.web3.eth.getGasPrice()) * 1000000;
+            return this.web3.eth.getGasPrice();
         } catch (error) {
             return undefined;
         }
@@ -136,10 +139,6 @@ class OtParachainService extends Web3Service {
     async getNativeTokenBalance() {
         const nativeBalance = await this.web3.eth.getBalance(this.getPublicKey());
         return nativeBalance / 10 ** NATIVE_TOKEN_DECIMALS;
-    }
-
-    getBlockchainId() {
-        return 'otp';
     }
 }
 

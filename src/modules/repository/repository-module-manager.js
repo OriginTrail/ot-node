@@ -165,6 +165,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async getPeerRecord(peerId, blockchain) {
+        if (this.initialized) {
+            return this.getImplementation().module.getPeerRecord(peerId, blockchain);
+        }
+    }
+
     async getAllPeerRecords(blockchain) {
         if (this.initialized) {
             return this.getImplementation().module.getAllPeerRecords(blockchain);
@@ -243,6 +249,16 @@ class RepositoryModuleManager extends BaseModuleManager {
     async getUnpublishedEvents() {
         if (this.initialized) {
             return this.getImplementation().module.getUnpublishedEvents();
+        }
+    }
+
+    async updateOperationAgreementStatus(operationId, agreementId, agreementStatus) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateOperationAgreementStatus(
+                operationId,
+                agreementId,
+                agreementStatus,
+            );
         }
     }
 

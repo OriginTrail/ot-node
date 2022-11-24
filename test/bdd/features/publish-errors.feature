@@ -13,17 +13,14 @@ Feature: Publish errors test
 
   @publish-errors
   Scenario: Publish on a node with minimum replication factor greater than the number of nodes
-    Given I setup 3 nodes
-    And I setup node 4 with minimumAckResponses.publish set to 10
-    And I wait for 10 seconds
-    And I call publish on node 4 with validAssertion
+    Given I setup 1 nodes
+    And I call publish on node 1 with validAssertion
     Then Last PUBLISH operation finished with status: PublishStartError
 
   @publish-errors
   Scenario: Publish an asset directly on the node
-    Given I setup 4 nodes
-    And I wait for 10 seconds
-    And I call publish on ot-node 4 directly with validPublishRequestBody
+    Given I setup 1 nodes
+    And I call publish on ot-node 1 directly with validPublishRequestBody
     And I wait for last publish to finalize
     Then Last PUBLISH operation finished with status: PublishValidateAssertionError
 #

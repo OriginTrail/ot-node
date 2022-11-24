@@ -1,26 +1,30 @@
+import { ethers, BigNumber } from 'ethers';
 import Web3 from 'web3';
 import axios from 'axios';
+import { setTimeout as sleep } from 'timers/promises';
 import { createRequire } from 'module';
-import { join } from 'path';
-import appRootPath from 'app-root-path';
-import { mkdir, readFile, stat, writeFile } from 'fs/promises';
+
 import {
+    DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
     INIT_ASK_AMOUNT,
     INIT_STAKE_AMOUNT,
-    BLOCKCHAIN_IDENTITY_DIRECTORY,
-    WEBSOCKET_PROVIDER_OPTIONS,
-    DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
+    WEBSOCKET_PROVIDER_OPTIONS,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
-const Hub = require('dkg-evm-module/build/contracts/Hub.json');
 const AssertionRegistry = require('dkg-evm-module/build/contracts/AssertionRegistry.json');
-const AssetRegistry = require('dkg-evm-module/build/contracts/AssetRegistry.json');
+const ContentAsset = require('dkg-evm-module/build/contracts/ContentAsset.json');
 const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
-const Identity = require('dkg-evm-module/build/contracts/Identity.json');
+const HashingProxy = require('dkg-evm-module/build/contracts/HashingProxy.json');
+const Hub = require('dkg-evm-module/build/contracts/Hub.json');
+const IdentityStorage = require('dkg-evm-module/build/contracts/IdentityStorage.json');
+const Log2PLDSF = require('dkg-evm-module/build/contracts/Log2PLDSF.json');
+const ParametersStorage = require('dkg-evm-module/build/contracts/ParametersStorage.json');
 const Profile = require('dkg-evm-module/build/contracts/Profile.json');
 const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
+const ScoringProxy = require('dkg-evm-module/build/contracts/ScoringProxy.json');
+const ServiceAgreementStorage = require('dkg-evm-module/build/contracts/ServiceAgreementStorage.json');
 const ShardingTable = require('dkg-evm-module/build/contracts/ShardingTable.json');
 
 class Web3Service {
@@ -29,7 +33,6 @@ class Web3Service {
         this.logger = logger;
 
         this.rpcNumber = 0;
-        await this.readIdentity();
         await this.initializeWeb3();
         this.currentBlock = await this.web3.eth.getBlockNumber();
         await this.initializeContracts();
@@ -40,7 +43,7 @@ class Web3Service {
         let isRpcConnected = false;
         while (!isRpcConnected) {
             if (tries >= this.config.rpcEndpoints.length) {
-                throw Error('Blockchain initialisation failed');
+                throw Error('RPC initialization failed');
             }
 
             try {
@@ -72,6 +75,26 @@ class Web3Service {
         this.logger.info(`Hub contract address is ${this.config.hubContractAddress}`);
         this.hubContract = new this.web3.eth.Contract(Hub.abi, this.config.hubContractAddress);
 
+        const parametersStorageAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['ParametersStorage'],
+        );
+        this.ParametersStorageContract = new this.web3.eth.Contract(
+            ParametersStorage.abi,
+            parametersStorageAddress,
+        );
+
+        const hashingProxyAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['HashingProxy'],
+        );
+        this.HashingProxyContract = new this.web3.eth.Contract(
+            HashingProxy.abi,
+            hashingProxyAddress,
+        );
+
         const shardingTableAddress = await this.callContractFunction(
             this.hubContract,
             'getContractAddress',
@@ -92,14 +115,14 @@ class Web3Service {
             assertionRegistryAddress,
         );
 
-        const assetRegistryAddress = await this.callContractFunction(
+        const contentAssetAddress = await this.callContractFunction(
             this.hubContract,
-            'getContractAddress',
-            ['AssetRegistry'],
+            'getAssetContractAddress',
+            ['ContentAsset'],
         );
-        this.AssetRegistryContract = new this.web3.eth.Contract(
-            AssetRegistry.abi,
-            assetRegistryAddress,
+        this.ContentAssetContract = new this.web3.eth.Contract(
+            ContentAsset.abi,
+            contentAssetAddress,
         );
 
         const tokenAddress = await this.callContractFunction(
@@ -108,6 +131,16 @@ class Web3Service {
             ['Token'],
         );
         this.TokenContract = new this.web3.eth.Contract(ERC20Token.abi, tokenAddress);
+
+        const identityStorageAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['IdentityStorage'],
+        );
+        this.IdentityStorageContract = new this.web3.eth.Contract(
+            IdentityStorage.abi,
+            identityStorageAddress,
+        );
 
         const profileAddress = await this.callContractFunction(
             this.hubContract,
@@ -126,9 +159,37 @@ class Web3Service {
             profileStorageAddress,
         );
 
-        if (this.identityExists()) {
-            this.identityContract = new this.web3.eth.Contract(Identity.abi, this.getIdentity());
-        }
+        const serviceAgreementStorageAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['ServiceAgreementStorage'],
+        );
+        this.ServiceAgreementStorageContract = new this.web3.eth.Contract(
+            ServiceAgreementStorage.abi,
+            serviceAgreementStorageAddress,
+        );
+
+        const scoringProxyAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['ScoringProxy'],
+        );
+        this.ScoringProxyContract = new this.web3.eth.Contract(
+            ScoringProxy.abi,
+            scoringProxyAddress,
+        );
+
+        const log2PLDSFAddress = await this.callContractFunction(
+            this.ScoringProxyContract,
+            'functions',
+            [0],
+        );
+        this.Log2PLDSFContract = new this.web3.eth.Contract(Log2PLDSF.abi, log2PLDSFAddress);
+
+        // TODO: Change this nonsense
+        this.assetContracts = {
+            [contentAssetAddress.toLowerCase()]: this.ContentAssetContract,
+        };
 
         this.logger.debug(
             `Connected to blockchain rpc : ${this.config.rpcEndpoints[this.rpcNumber]}.`,
@@ -137,54 +198,16 @@ class Web3Service {
         await this.logBalances();
     }
 
-    async readIdentity() {
-        this.config.identity = await this.getIdentityFromFile();
+    getPrivateKey() {
+        return this.config.evmOperationalWalletPrivateKey;
     }
 
-    getKeyPath() {
-        let directoryPath;
-        if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
-            directoryPath = join(
-                appRootPath.path,
-                '..',
-                this.config.appDataPath,
-                BLOCKCHAIN_IDENTITY_DIRECTORY,
-            );
-        } else {
-            directoryPath = join(
-                appRootPath.path,
-                this.config.appDataPath,
-                BLOCKCHAIN_IDENTITY_DIRECTORY,
-            );
-        }
-
-        const fullPath = join(directoryPath, this.config.identityFileName);
-        return { fullPath, directoryPath };
+    getPublicKey() {
+        return this.config.evmOperationalWalletPublicKey;
     }
 
-    async getIdentityFromFile() {
-        const keyPath = this.getKeyPath();
-        if (await this.fileExists(keyPath.fullPath)) {
-            const key = (await readFile(keyPath.fullPath)).toString();
-            return key;
-        }
-    }
-
-    async fileExists(filePath) {
-        try {
-            await stat(filePath);
-            return true;
-        } catch (e) {
-            return false;
-        }
-    }
-
-    async saveIdentityInFile() {
-        if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
-            const { fullPath, directoryPath } = this.getKeyPath();
-            await mkdir(directoryPath, { recursive: true });
-            await writeFile(fullPath, this.config.identity);
-        }
+    getManagementKey() {
+        return this.config.evmManagementWalletPublicKey;
     }
 
     async logBalances() {
@@ -199,25 +222,17 @@ class Web3Service {
 
     async getNativeTokenBalance() {
         const nativeBalance = await this.web3.eth.getBalance(this.getPublicKey());
-        return this.web3.utils.fromWei(nativeBalance);
+        return Number(this.web3.utils.fromWei(nativeBalance));
     }
 
     async getTokenBalance() {
         const tokenBalance = await this.callContractFunction(this.TokenContract, 'balanceOf', [
             this.getPublicKey(),
         ]);
-        return this.web3.utils.fromWei(tokenBalance);
+        return Number(this.web3.utils.fromWei(tokenBalance));
     }
 
-    identityExists() {
-        return this.config.identity != null;
-    }
-
-    getIdentity() {
-        return this.config.identity;
-    }
-
-    getBlockNumber() {
+    async getBlockNumber() {
         return this.web3.eth.getBlockNumber();
     }
 
@@ -226,82 +241,67 @@ class Web3Service {
         return this.config.blockTime;
     }
 
-    async deployIdentity() {
-        if (!this.config.identity) {
-            const transactionReceipt = await this.deployContract(Identity, [
-                this.getPublicKey(),
-                this.getManagementKey(),
-            ]);
-            this.config.identity = transactionReceipt.contractAddress;
-        } else {
-            this.logger.info(`Using existing identity: ${this.config.identity}`);
-        }
+    async getIdentityId() {
+        const identityId = await this.callContractFunction(
+            this.IdentityStorageContract,
+            'getIdentityId',
+            [this.getPublicKey()],
+        );
+        return Number(identityId);
     }
 
-    async profileExists(identity) {
-        const nodeId = await this.callContractFunction(this.ProfileStorageContract, 'getNodeId', [
-            identity,
-        ]);
-        return nodeId != null;
+    async identityIdExists() {
+        const identityId = await this.getIdentityId();
+
+        return identityId != null && identityId !== 0;
     }
 
     async createProfile(peerId) {
-        const stakeAmount = Web3.utils.toWei(INIT_STAKE_AMOUNT, 'ether');
+        const initialAsk = Web3.utils.toWei(INIT_ASK_AMOUNT, 'ether');
+        const initialStake = Web3.utils.toWei(INIT_STAKE_AMOUNT, 'ether');
+
         await this.executeContractFunction(this.TokenContract, 'increaseAllowance', [
             this.ProfileContract.options.address,
-            stakeAmount,
+            initialStake,
         ]);
 
-        await this.executeContractFunction(this.ProfileContract, 'createProfile', [
-            this.getManagementKey(),
-            this.convertAsciiToHex(peerId),
-            INIT_ASK_AMOUNT,
-            stakeAmount,
-            this.getIdentity(),
-        ]);
-    }
-
-    getEpochs(UAI) {
-        return this.callContractFunction(this.AssetRegistryContract, 'getEpochs', [UAI]);
-    }
-
-    async getChallenge(UAI, epoch) {
-        return this.callContractFunction(this.AssetRegistryContract, 'getChallenge', [
-            UAI,
-            epoch,
-            this.getIdentity(),
-        ]);
-    }
-
-    async answerChallenge(UAI, epoch, proof, leaf, price) {
-        return this.executeContractFunction(this.AssetRegistryContract, 'answerChallenge', [
-            UAI,
-            epoch,
-            proof,
-            leaf,
-            price,
-            this.getIdentity(),
-        ]);
-    }
-
-    async getReward(UAI, epoch) {
-        return this.executeContractFunction(this.AssetRegistryContract, 'getReward', [
-            UAI,
-            epoch,
-            this.getIdentity(),
-        ]);
-    }
-
-    getPrivateKey() {
-        return this.config.evmOperationalWalletPrivateKey;
-    }
-
-    getPublicKey() {
-        return this.config.evmOperationalWalletPublicKey;
-    }
-
-    getManagementKey() {
-        return this.config.evmManagementWalletPublicKey;
+        const maxNumberOfRetries = 3;
+        let retryCount = 0;
+        let profileCreated = false;
+        const retryDelayInSec = 5;
+        while (retryCount + 1 <= maxNumberOfRetries && !profileCreated) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                await this.executeContractFunction(this.ProfileContract, 'createProfile', [
+                    this.getManagementKey(),
+                    this.convertAsciiToHex(peerId),
+                    initialAsk,
+                    initialStake,
+                ]);
+                profileCreated = true;
+            } catch (error) {
+                if (error.message.includes('Profile already exists')) {
+                    this.logger.info(`Skipping profile creation, already exists on blockchain.`);
+                    profileCreated = true;
+                } else if (retryCount + 1 <= maxNumberOfRetries) {
+                    retryCount += 1;
+                    this.logger.warn(
+                        `Unable to create profile. Will retry in ${retryDelayInSec}s. Retries left: ${
+                            maxNumberOfRetries - retryCount
+                        }`,
+                    );
+                    // eslint-disable-next-line no-await-in-loop
+                    await sleep(retryDelayInSec * 1000);
+                } else {
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.executeContractFunction(this.TokenContract, 'decreaseAllowance', [
+                        this.ProfileContract.options.address,
+                        initialStake,
+                    ]);
+                    throw error;
+                }
+            }
+        }
     }
 
     async getGasPrice() {
@@ -477,16 +477,249 @@ class Web3Service {
         return result;
     }
 
-    async getLatestCommitHash(contract, tokenId) {
-        try {
-            return await this.callContractFunction(this.AssetRegistryContract, 'getCommitHash', [
-                tokenId,
-                0,
-            ]);
-        } catch (e) {
-            this.logger.error(`Error on calling contract function. ${e}`);
-            return false;
-        }
+    async getAssertionsLength(assetContractAddress, tokenId) {
+        const assertionsLength = await this.callContractFunction(
+            this.assetContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
+            'getAssertionsLength',
+            [tokenId],
+        );
+        return Number(assertionsLength);
+    }
+
+    async getAssertionByIndex(assetContractAddress, tokenId, index) {
+        return this.callContractFunction(
+            this.assetContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
+            'getAssertionByIndex',
+            [tokenId, index],
+        );
+    }
+
+    async getLatestAssertion(assetContractAddress, tokenId) {
+        return this.callContractFunction(
+            this.assetContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
+            'getLatestAssertion',
+            [tokenId],
+        );
+    }
+
+    async getAssertionIssuer(assertionId) {
+        return this.callContractFunction(this.AssertionRegistryContract, 'getIssuer', [
+            assertionId,
+        ]);
+    }
+
+    async getAgreementData(agreementId) {
+        const result = await this.callContractFunction(
+            this.ServiceAgreementStorageContract,
+            'getAgreementData',
+            [agreementId],
+        );
+
+        const agreementData = {};
+        agreementData.startTime = Number(result['0']);
+        agreementData.epochsNumber = Number(result['1']);
+        agreementData.epochLength = Number(result['2']);
+        agreementData.tokenAmount = Number(result['3']);
+        agreementData.scoreFunctionId = Number(result['4']);
+        agreementData.proofWindowOffsetPerc = Number(result['5']);
+
+        return agreementData;
+    }
+
+    async getAgreementStartTime(agreementId) {
+        const startTime = await this.callContractFunction(
+            this.ServiceAgreementStorageContract,
+            'getAgreementStartTime',
+            [agreementId],
+        );
+        return Number(startTime);
+    }
+
+    async getAgreementEpochsNumber(agreementId) {
+        const epochsNumber = await this.callContractFunction(
+            this.ServiceAgreementStorageContract,
+            'getAgreementEpochsNumber',
+            [agreementId],
+        );
+        return Number(epochsNumber);
+    }
+
+    async getAgreementEpochLength(agreementId) {
+        const epochLength = await this.callContractFunction(
+            this.ServiceAgreementStorageContract,
+            'getAgreementEpochLength',
+            [agreementId],
+        );
+        return Number(epochLength);
+    }
+
+    async getAgreementTokenAmount(agreementId) {
+        const tokenAmount = await this.callContractFunction(
+            this.ServiceAgreementStorageContract,
+            'getAgreementTokenAmount',
+            [agreementId],
+        );
+        return Number(tokenAmount);
+    }
+
+    async getAgreementScoreFunctionId(agreementId) {
+        const scoreFunctionId = await this.callContractFunction(
+            this.ServiceAgreementStorageContract,
+            'getAgreementScoreFunctionId',
+            [agreementId],
+        );
+        return Number(scoreFunctionId);
+    }
+
+    async getAgreementProofWindowOffsetPerc(agreementId) {
+        const proofWindowOffsetPerc = await this.callContractFunction(
+            this.ServiceAgreementStorageContract,
+            'getAgreementProofWindowOffsetPerc',
+            [agreementId],
+        );
+        return Number(proofWindowOffsetPerc);
+    }
+
+    async isCommitWindowOpen(agreementId, epoch) {
+        return this.callContractFunction(
+            this.ServiceAgreementStorageContract,
+            'isCommitWindowOpen',
+            [agreementId, epoch],
+        );
+    }
+
+    async getCommitSubmissions(agreementId, epoch) {
+        const commits = await this.callContractFunction(
+            this.ServiceAgreementStorageContract,
+            'getCommitSubmissions',
+            [agreementId, epoch],
+        );
+
+        return commits
+            .filter((commit) => commit.identityId !== '0')
+            .map((commit) => ({
+                identityId: Number(commit.identityId),
+                nextIdentityId: Number(commit.nextIdentityId),
+                score: Number(commit.score),
+            }));
+    }
+
+    async getHashFunctionName(hashFunctionId) {
+        return this.callContractFunction(this.HashingProxyContract, 'getHashFunctionName', [
+            hashFunctionId,
+        ]);
+    }
+
+    async callHashFunction(hashFunctionId, data) {
+        return this.callContractFunction(this.HashingProxyContract, 'callHashFunction', [
+            hashFunctionId,
+            data,
+        ]);
+    }
+
+    async getR2() {
+        const R2 = await this.callContractFunction(this.ParametersStorageContract, 'R2', []);
+        return Number(R2);
+    }
+
+    async getR1() {
+        const R1 = await this.callContractFunction(this.ParametersStorageContract, 'R1', []);
+        return Number(R1);
+    }
+
+    async getR0() {
+        const R0 = await this.callContractFunction(this.ParametersStorageContract, 'R0', []);
+        return Number(R0);
+    }
+
+    async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch) {
+        return this.executeContractFunction(this.ServiceAgreementStorageContract, 'submitCommit', [
+            assetContractAddress,
+            tokenId,
+            keyword,
+            hashFunctionId,
+            epoch,
+        ]);
+    }
+
+    async isProofWindowOpen(agreementId, epoch) {
+        return this.callContractFunction(
+            this.ServiceAgreementStorageContract,
+            'isProofWindowOpen',
+            [agreementId, epoch],
+        );
+    }
+
+    async getChallenge(assetContractAddress, tokenId, epoch) {
+        const challengeDict = await this.callContractFunction(
+            this.ServiceAgreementStorageContract,
+            'getChallenge',
+            [this.getPublicKey(), assetContractAddress, tokenId, epoch],
+        );
+
+        challengeDict.assertionId = challengeDict['0'];
+        challengeDict.challenge = Number(challengeDict['1']);
+
+        delete challengeDict['0'];
+        delete challengeDict['1'];
+
+        return challengeDict;
+    }
+
+    async sendProof(
+        assetContractAddress,
+        tokenId,
+        keyword,
+        hashFunctionId,
+        epoch,
+        proof,
+        chunkHash,
+    ) {
+        return this.executeContractFunction(this.ServiceAgreementStorageContract, 'sendProof', [
+            assetContractAddress,
+            tokenId,
+            keyword,
+            hashFunctionId,
+            epoch,
+            proof,
+            chunkHash,
+        ]);
+    }
+
+    async getShardingTableHead() {
+        return this.callContractFunction(this.ShardingTableContract, 'head', []);
+    }
+
+    async getShardingTableLength() {
+        const nodesCount = await this.callContractFunction(
+            this.ShardingTableContract,
+            'nodesCount',
+            [],
+        );
+        return Number(nodesCount);
+    }
+
+    async getShardingTablePage(startingPeerId, nodesNum) {
+        return this.callContractFunction(this.ShardingTableContract, 'getShardingTable', [
+            startingPeerId,
+            nodesNum,
+        ]);
+    }
+
+    async getShardingTableFull() {
+        return this.callContractFunction(this.ShardingTableContract, 'getShardingTable', []);
+    }
+
+    getBlockchainId() {
+        return this.getImplementationName();
+    }
+
+    convertAsciiToHex(peerId) {
+        return Web3.utils.asciiToHex(peerId);
+    }
+
+    convertHexToAscii(peerIdHex) {
+        return Web3.utils.hexToAscii(peerIdHex);
     }
 
     async healthCheck() {
@@ -498,6 +731,17 @@ class Web3Service {
             return false;
         }
         return false;
+    }
+
+    async restartService() {
+        this.rpcNumber = (this.rpcNumber + 1) % this.config.rpcEndpoints.length;
+        this.logger.warn(
+            `There was an issue with current blockchain rpc. Connecting to ${
+                this.config.rpcEndpoints[this.rpcNumber]
+            }`,
+        );
+        await this.initializeWeb3();
+        await this.initializeContracts();
     }
 
     async handleError(error, functionName) {
@@ -516,124 +760,52 @@ class Web3Service {
         if (!isRpcError) throw error;
     }
 
-    async restartService() {
-        this.rpcNumber = (this.rpcNumber + 1) % this.config.rpcEndpoints.length;
-        this.logger.warn(
-            `There was an issue with current blockchain rpc. Connecting to ${
-                this.config.rpcEndpoints[this.rpcNumber]
-            }`,
+    async getCommitWindowDuration() {
+        const commitWindowDuration = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'commitWindowDuration',
+            [],
         );
-        await this.initializeWeb3();
-        await this.initializeContracts();
+        return Number(commitWindowDuration);
     }
 
-    async getAssertionIssuer(assertionId) {
-        return this.callContractFunction(this.AssertionRegistryContract, 'getIssuer', [
-            assertionId,
-        ]);
+    async getProofWindowDurationPerc() {
+        const proofWindowDurationPerc = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'proofWindowDurationPerc',
+            [],
+        );
+        return Number(proofWindowDurationPerc);
     }
 
-    async getShardingTableHead() {
-        try {
-            return await this.callContractFunction(this.ShardingTableContract, 'head', []);
-        } catch (e) {
-            this.logger.error(`Error on calling contract function. ${e}`);
-            return false;
-        }
-    }
+    async getLog2PLDSFParams() {
+        const log2pldsfParams = await this.callContractFunction(
+            this.Log2PLDSFContract,
+            'getParameters',
+            [],
+        );
 
-    async getShardingTableLength() {
-        try {
-            return await this.callContractFunction(this.ShardingTableContract, 'nodesCount', []);
-        } catch (e) {
-            this.logger.error(`Error on calling contract function. ${e}`);
-            return false;
-        }
-    }
+        const params = {};
+        params.distanceMappingCoefficient = BigNumber.from(log2pldsfParams['0']);
+        params.stakeMappingCoefficient = Number(
+            ethers.utils.formatUnits(log2pldsfParams['1'], 'ether'),
+        );
 
-    async getShardingTablePage(startingPeerId, nodesNum) {
-        try {
-            return await this.callContractFunction(this.ShardingTableContract, 'getShardingTable', [
-                startingPeerId,
-                nodesNum,
-            ]);
-        } catch (e) {
-            this.logger.error(`Error on calling contract function. ${e}`);
-            return false;
-        }
-    }
+        const paramNames = [
+            'multiplier',
+            'logArgumentConstant',
+            'a',
+            'stakeExponent',
+            'b',
+            'c',
+            'distanceExponent',
+            'd',
+        ];
+        log2pldsfParams['2'].forEach((val, index) => {
+            params[paramNames[index]] = Number(val);
+        });
 
-    async getShardingTableFull() {
-        try {
-            return await this.callContractFunction(
-                this.ShardingTableContract,
-                'getShardingTable',
-                [],
-            );
-        } catch (e) {
-            this.logger.error(`Error on calling contract function. ${e}`);
-            return false;
-        }
-    }
-
-    async pushPeerBack(peerId, ask, stake) {
-        try {
-            return this.executeContractFunction(this.ShardingTableContract, 'pushBack', [
-                peerId,
-                ask,
-                stake,
-            ]);
-        } catch (e) {
-            this.logger.error(`Error on executing contract function. ${e}`);
-            return false;
-        }
-    }
-
-    async pushPeerFront(peerId, ask, stake) {
-        try {
-            return this.executeContractFunction(this.ShardingTableContract, 'pushFront', [
-                peerId,
-                ask,
-                stake,
-            ]);
-        } catch (e) {
-            this.logger.error(`Error on executing contract function. ${e}`);
-            return false;
-        }
-    }
-
-    async updatePeerParams(peerId, ask, stake) {
-        try {
-            return this.executeContractFunction(this.ShardingTableContract, 'updateParams', [
-                peerId,
-                ask,
-                stake,
-            ]);
-        } catch (e) {
-            this.logger.error(`Error on executing contract function. ${e}`);
-            return false;
-        }
-    }
-
-    async removePeer(peerId) {
-        try {
-            return this.executeContractFunction(this.ShardingTableContract, 'removePeer', [peerId]);
-        } catch (e) {
-            this.logger.error(`Error on executing contract function. ${e}`);
-            return false;
-        }
-    }
-
-    getBlockchainId() {
-        throw Error('Get blockchain id not implemented');
-    }
-
-    convertAsciiToHex(peerId) {
-        return Web3.utils.asciiToHex(peerId);
-    }
-
-    convertHexToAscii(peerIdHex) {
-        return Web3.utils.hexToAscii(peerIdHex);
+        return params;
     }
 }
 

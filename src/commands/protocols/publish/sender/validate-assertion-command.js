@@ -1,5 +1,5 @@
 import Command from '../../../command.js';
-import { ERROR_TYPE, PUBLISH_TYPES, OPERATION_ID_STATUS } from '../../../../constants/constants.js';
+import { ERROR_TYPE, OPERATION_ID_STATUS } from '../../../../constants/constants.js';
 
 class ValidateAssertionCommand extends Command {
     constructor(ctx) {
@@ -15,35 +15,32 @@ class ValidateAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { publishType, assertionId, operationId } = command.data;
+        const { assertionId, operationId, blockchain, contract, tokenId } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_START,
         );
 
-        if (publishType === PUBLISH_TYPES.ASSET) {
-            const { blockchain, contract, tokenId } = command.data;
-            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-            this.logger.info(`Validating assertion with ual: ${ual}`);
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+        this.logger.info(`Validating assertion with ual: ${ual}`);
 
-            const blockchainAssertionId = await this.operationService.getAssertion(
-                blockchain,
-                contract,
-                tokenId,
+        const blockchainAssertionId = await this.operationService.getLatestAssertion(
+            blockchain,
+            contract,
+            tokenId,
+        );
+        if (!blockchainAssertionId) {
+            return Command.retry();
+        }
+        if (blockchainAssertionId !== assertionId) {
+            await this.handleError(
+                operationId,
+                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${assertionId}`,
+                this.errorType,
+                true,
             );
-            if (!blockchainAssertionId) {
-                return Command.retry();
-            }
-            if (blockchainAssertionId !== assertionId) {
-                await this.handleError(
-                    operationId,
-                    `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${assertionId}`,
-                    this.errorType,
-                    true,
-                );
-                return Command.empty();
-            }
+            return Command.empty();
         }
 
         await this.operationService.validateAssertion(assertionId, operationId);

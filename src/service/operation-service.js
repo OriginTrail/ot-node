@@ -21,10 +21,6 @@ class OperationService {
         return this.networkProtocols;
     }
 
-    getMinimumAckResponses() {
-        return this.config.minimumAckResponses[this.operationName];
-    }
-
     async getOperationStatus(operationId) {
         return this.repositoryModuleManager.getOperationStatus(this.operationName, operationId);
     }

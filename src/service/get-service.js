@@ -28,7 +28,14 @@ class GetService extends OperationService {
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
-        const { operationId, numberOfFoundNodes, leftoverNodes, keyword, batchSize } = command.data;
+        const {
+            operationId,
+            numberOfFoundNodes,
+            leftoverNodes,
+            keyword,
+            batchSize,
+            minAckResponses,
+        } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
@@ -40,12 +47,19 @@ class GetService extends OperationService {
         const { completedNumber, failedNumber } = keywordsStatuses[keyword];
         const numberOfResponses = completedNumber + failedNumber;
         this.logger.debug(
-            `Processing ${this.operationName} response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${batchSize} number of leftover nodes: ${leftoverNodes.length}, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
+            `Processing ${
+                this.operationName
+            } response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
+                numberOfFoundNodes,
+                batchSize,
+            )} number of leftover nodes: ${
+                leftoverNodes.length
+            }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
         );
 
         if (
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
-            completedNumber === this.getMinimumAckResponses()
+            completedNumber === minAckResponses
         ) {
             await this.markOperationAsCompleted(
                 operationId,
@@ -56,7 +70,7 @@ class GetService extends OperationService {
         }
 
         if (
-            completedNumber < this.getMinimumAckResponses() &&
+            completedNumber < minAckResponses &&
             (numberOfFoundNodes === failedNumber || failedNumber % batchSize === 0)
         ) {
             if (leftoverNodes.length === 0) {
