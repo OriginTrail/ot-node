@@ -13,7 +13,7 @@ class NetworkProtocolCommand extends Command {
     async execute(command) {
         const { blockchain } = command.data;
 
-        const keywords = this.getKeywords(command);
+        const keywords = await this.getKeywords(command);
         const batchSize = await this.getBatchSize(blockchain);
         const minAckResponses = await this.getMinAckResponses(blockchain);
 
@@ -44,7 +44,7 @@ class NetworkProtocolCommand extends Command {
         return Command.empty();
     }
 
-    getKeywords() {
+    async getKeywords() {
         throw Error('getKeywords not implemented');
     }
 

@@ -1,8 +1,13 @@
 /* eslint-disable no-restricted-globals */
+import { ethers } from 'ethers';
+
 class UALService {
-    constructor(config, logger) {
-        this.config = config;
-        this.logger = logger;
+    constructor(ctx) {
+        this.config = ctx.config;
+        this.logger = ctx.logger;
+
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.validationModuleManager = ctx.validationModuleManager;
     }
 
     deriveUAL(blockchain, contract, tokenId) {
@@ -38,6 +43,19 @@ class UALService {
             tokenId: blockchainSegments[1],
             assertionId: blockchainSegments.length > 2 ? blockchainSegments[2] : null,
         };
+    }
+
+    async calculateLocationKeyword(blockchain, contract, tokenId) {
+        const firstAssertionId = await this.blockchainModuleManager.getAssertionByIndex(
+            blockchain,
+            contract,
+            tokenId,
+            0,
+        );
+        return ethers.utils.solidityPack(
+            ['address', 'uint256', 'bytes32'],
+            [contract, tokenId, firstAssertionId],
+        );
     }
 }
 
