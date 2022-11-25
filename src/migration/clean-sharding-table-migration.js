@@ -14,6 +14,9 @@ class CleanShardingTableMigration extends BaseMigration {
             await this.repositoryModuleManager.removeBlockchainEvents(
                 CONTRACTS.SHARDING_TABLE_CONTRACT,
             );
+            await this.repositoryModuleManager.removeLastCheckedBlockForContract(
+                CONTRACTS.SHARDING_TABLE_CONTRACT,
+            );
         }
     }
 }
