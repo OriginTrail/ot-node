@@ -383,6 +383,14 @@ class SequelizeRepository {
         });
     }
 
+    async removeLastCheckedBlockForContract(contract) {
+        return this.models.blockchain.destroy({
+            where: {
+                contract,
+            },
+        });
+    }
+
     async updateLastCheckedBlock(blockchainId, currentBlock, timestamp, contract) {
         return this.models.blockchain.upsert({
             blockchain_id: blockchainId,
