@@ -75,6 +75,7 @@ class FindNodesCommand extends Command {
             keyword,
             await this.blockchainModuleManager.getR2(blockchainId),
             hashFunctionId,
+            true,
         );
 
         const nodesFound = await Promise.all(
