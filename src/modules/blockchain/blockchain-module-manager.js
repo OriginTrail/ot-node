@@ -5,6 +5,12 @@ class BlockchainModuleManager extends BaseModuleManager {
         return 'blockchain';
     }
 
+    async initializeContracts(blockchain) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.initializeContracts();
+        }
+    }
+
     async increaseGanacheTime(blockchain, seconds) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.increaseGanacheTime(seconds);
