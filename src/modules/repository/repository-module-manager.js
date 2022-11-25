@@ -316,6 +316,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async removeBlockchainEvents(contract) {
+        if (this.initialized) {
+            return this.getImplementation().module.removeBlockchainEvents(contract);
+        }
+    }
+
     async getLastCheckedBlock(blockchainId, contract) {
         if (this.initialized) {
             return this.getImplementation().module.getLastCheckedBlock(blockchainId, contract);

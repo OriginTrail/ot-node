@@ -583,6 +583,14 @@ class SequelizeRepository {
         return this.models.blockchain_event.update({ processed: true }, condition);
     }
 
+    async removeBlockchainEvents(contractName) {
+        return this.models.blockchain_event.destroy({
+            where: {
+                contract: contractName,
+            },
+        });
+    }
+
     async getLastEvent(contractName, blockchainId) {
         return this.models.blockchain_event.findOne({
             where: {
