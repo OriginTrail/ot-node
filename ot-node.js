@@ -375,20 +375,34 @@ class OTNode {
         const eventEmitter = this.container.resolve('eventEmitter');
         const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        const that = this;
         blockchainModuleManager.getImplementationNames().map(async (blockchain) => {
             eventEmitter.on(`${blockchain}-ContractChanged`, async (event) => {
-                await blockchainModuleManager.initializeContracts();
+                await that.reinitializeContracts(blockchainModuleManager, blockchain);
                 if (event.contractName === 'ShardingTable') {
                     await repositoryModuleManager.cleanShardingTable();
                 }
             });
             eventEmitter.on(`${blockchain}-NewAssetContract`, async () => {
-                await blockchainModuleManager.initializeContracts();
+                await that.reinitializeContracts(blockchainModuleManager, blockchain);
             });
             eventEmitter.on(`${blockchain}-AssetContractChanged`, async () => {
-                await blockchainModuleManager.initializeContracts();
+                await that.reinitializeContracts(blockchainModuleManager, blockchain);
             });
         });
+    }
+
+    async reinitializeContracts(blockchainModuleManager, blockchain) {
+        try {
+            await blockchainModuleManager.initializeContracts(blockchain);
+        } catch (error) {
+            this.logger.warn(`Unable to reinitialize contracts. Error: ${error.message}`);
+            blockchainModuleManager.removeImplementation(blockchain);
+            if (!blockchainModuleManager.getImplementationNames().length) {
+                this.logger.error(`Unable to initialize contracts. OT-node shutting down...`);
+                process.exit(1);
+            }
+        }
     }
 }
 

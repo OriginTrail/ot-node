@@ -72,7 +72,9 @@ class Web3Service {
 
     async initializeContracts() {
         // TODO encapsulate in a generic function
-        this.logger.info(`Hub contract address is ${this.config.hubContractAddress}`);
+        this.logger.info(
+            `Initializing contracts with hub contract address: ${this.config.hubContractAddress}`,
+        );
         this.hubContract = new this.web3.eth.Contract(Hub.abi, this.config.hubContractAddress);
 
         const parametersStorageAddress = await this.callContractFunction(
@@ -190,7 +192,7 @@ class Web3Service {
         this.assetContracts = {
             [contentAssetAddress.toLowerCase()]: this.ContentAssetContract,
         };
-
+        this.logger.info(`Contracts initialized`);
         this.logger.debug(
             `Connected to blockchain rpc : ${this.config.rpcEndpoints[this.rpcNumber]}.`,
         );
@@ -287,7 +289,7 @@ class Web3Service {
                 if (error.message.includes('Profile already exists')) {
                     this.logger.info(`Skipping profile creation, already exists on blockchain.`);
                     profileCreated = true;
-                } else if (retryCount + 1 <= maxNumberOfRetries) {
+                } else if (retryCount + 1 < maxNumberOfRetries) {
                     retryCount += 1;
                     this.logger.warn(
                         `Unable to create profile. Will retry in ${retryDelayInSec}s. Retries left: ${
