@@ -371,6 +371,10 @@ class SequelizeRepository {
         );
     }
 
+    async cleanShardingTable() {
+        await this.models.shard.destroy({ where: {} });
+    }
+
     async getLastCheckedBlock(blockchainId, contract) {
         return this.models.blockchain.findOne({
             attributes: ['last_checked_block', 'last_checked_timestamp'],
