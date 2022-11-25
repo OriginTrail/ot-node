@@ -10,6 +10,7 @@ import NetworkPrivateKeyMigration from './src/migration/network-private-key-migr
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
 import BlockchainIdentityMigration from './src/migration/blockchain-identity-migration.js';
+import CleanShardingTableMigration from './src/migration/clean-sharding-table-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -45,6 +46,11 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
+
+        await this.executeCleanShardingTableMigration();
+
+        await this.listenOnHubContractChanges();
+
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
@@ -277,6 +283,12 @@ class OTNode {
                         getLastCheckedBlock,
                         updateLastCheckedBlock,
                     );
+                    await blockchainModuleManager.getAllPastEvents(
+                        CONTRACTS.HUB_CONTRACT,
+                        onEventsReceived,
+                        getLastCheckedBlock,
+                        updateLastCheckedBlock,
+                    );
                 } catch (e) {
                     this.logger.error(`Failed to get blockchain events. Error: ${e}`);
                 } finally {
@@ -344,6 +356,39 @@ class OTNode {
     stop(code = 0) {
         this.logger.info('Stopping node...');
         process.exit(code);
+    }
+
+    async executeCleanShardingTableMigration() {
+        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
+        const cleanShardingTableMigration = new CleanShardingTableMigration(
+            'CleanShardingTableMigration',
+            this.logger,
+            this.config,
+            repositoryModuleManager,
+        );
+        if (!(await cleanShardingTableMigration.migrationAlreadyExecuted())) {
+            await cleanShardingTableMigration.migrate();
+        }
+    }
+
+    async listenOnHubContractChanges() {
+        const eventEmitter = this.container.resolve('eventEmitter');
+        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
+        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        blockchainModuleManager.getImplementationNames().map(async (blockchain) => {
+            eventEmitter.on(`${blockchain}-ContractChanged`, async (event) => {
+                await blockchainModuleManager.initializeContracts();
+                if (event.contractName === 'ShardingTable') {
+                    await repositoryModuleManager.cleanShardingTable();
+                }
+            });
+            eventEmitter.on(`${blockchain}-NewAssetContract`, async () => {
+                await blockchainModuleManager.initializeContracts();
+            });
+            eventEmitter.on(`${blockchain}-AssetContractChanged`, async () => {
+                await blockchainModuleManager.initializeContracts();
+            });
+        });
     }
 }
 

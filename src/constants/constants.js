@@ -310,4 +310,5 @@ export const QUERY_TYPES = {
 export const CONTRACTS = {
     SHARDING_TABLE_CONTRACT: 'ShardingTableContract',
     PROFILE_CONTRACT: 'ProfileContract',
+    HUB_CONTRACT: 'hubContract',
 };

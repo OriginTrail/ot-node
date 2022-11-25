@@ -242,12 +242,16 @@ class Web3Service {
     }
 
     async getIdentityId() {
+        if (this.config.identityId) {
+            return this.config.identityId;
+        }
         const identityId = await this.callContractFunction(
             this.IdentityStorageContract,
             'getIdentityId',
             [this.getPublicKey()],
         );
-        return Number(identityId);
+        this.config.identityId = Number(identityId);
+        return this.config.identityId;
     }
 
     async identityIdExists() {

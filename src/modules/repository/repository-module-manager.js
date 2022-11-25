@@ -225,6 +225,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async cleanShardingTable() {
+        if (this.initialized) {
+            return this.getImplementation().module.cleanShardingTable();
+        }
+    }
+
     // EVENT
     async createEventRecord(
         operationId,
