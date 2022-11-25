@@ -69,7 +69,7 @@ class SubmitCommitCommand extends EpochCommand {
         );
 
         // submit commit -> calculate proofs -> schedule proof submission -> schedule next epoch
-        const rank = await this.calculateRank(blockchain, commits, keyword, hashFunctionId);
+        const rank = await this.calculateRank(blockchain, keyword, hashFunctionId);
 
         const r0 = await this.blockchainModuleManager.getR0(blockchain);
 
@@ -146,13 +146,14 @@ class SubmitCommitCommand extends EpochCommand {
         return EpochCommand.empty();
     }
 
-    async calculateRank(blockchain, commits, keyword, hashFunctionId) {
+    async calculateRank(blockchain, keyword, hashFunctionId) {
         const r2 = await this.blockchainModuleManager.getR2(blockchain);
         const neighbourhood = await this.shardingTableService.findNeighbourhood(
             blockchain,
             keyword,
             r2,
             hashFunctionId,
+            false,
         );
 
         const scores = await Promise.all(
