@@ -171,9 +171,9 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async getAllPeerRecords(blockchain) {
+    async getAllPeerRecords(blockchain, filterLastSeen) {
         if (this.initialized) {
-            return this.getImplementation().module.getAllPeerRecords(blockchain);
+            return this.getImplementation().module.getAllPeerRecords(blockchain, filterLastSeen);
         }
     }
 

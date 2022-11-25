@@ -266,15 +266,17 @@ class SequelizeRepository {
         );
     }
 
-    async getAllPeerRecords(blockchain) {
+    async getAllPeerRecords(blockchain, filterLastSeen) {
         return this.models.shard.findAll({
             where: {
                 blockchain_id: {
                     [Sequelize.Op.eq]: blockchain,
                 },
-                last_seen: {
-                    [Sequelize.Op.gte]: Sequelize.col('last_dialed'),
-                },
+                last_seen: filterLastSeen
+                    ? {
+                          [Sequelize.Op.gte]: Sequelize.col('last_dialed'),
+                      }
+                    : undefined,
             },
             raw: true,
         });

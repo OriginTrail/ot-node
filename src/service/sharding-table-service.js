@@ -159,8 +159,11 @@ class ShardingTableService {
         });
     }
 
-    async findNeighbourhood(blockchainId, key, r2, hashFunctionId) {
-        const peers = await this.repositoryModuleManager.getAllPeerRecords(blockchainId);
+    async findNeighbourhood(blockchainId, key, r2, hashFunctionId, filterLastSeen) {
+        const peers = await this.repositoryModuleManager.getAllPeerRecords(
+            blockchainId,
+            filterLastSeen,
+        );
         const keyHash = await this.validationModuleManager.callHashFunction(hashFunctionId, key);
 
         return this.sortPeers(blockchainId, keyHash, peers, r2, hashFunctionId);
