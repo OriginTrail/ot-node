@@ -1,5 +1,5 @@
 import EpochCommand from '../../common/epoch-command.js';
-import { OPERATION_ID_STATUS } from '../../../../constants/constants.js';
+import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
 
 class CalculateProofsCommand extends EpochCommand {
     constructor(ctx) {
@@ -10,6 +10,8 @@ class CalculateProofsCommand extends EpochCommand {
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.operationIdService = ctx.operationIdService;
+
+        this.errorType = ERROR_TYPE.CALCULATE_PROOFS_ERROR;
     }
 
     async execute(command) {
@@ -31,7 +33,7 @@ class CalculateProofsCommand extends EpochCommand {
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
                 `hash function id: ${hashFunctionId}`,
         );
-        
+
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.CALCULATE_PROOFS_START,
             operationId,
@@ -78,6 +80,7 @@ class CalculateProofsCommand extends EpochCommand {
                 leaf,
                 proof,
             },
+            period: 12 * 1000, // todo: get from blockchain / oracle
             retries: 3,
             transactional: false,
         });

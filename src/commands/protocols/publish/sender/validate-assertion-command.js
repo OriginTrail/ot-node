@@ -43,7 +43,7 @@ class ValidateAssertionCommand extends Command {
             return Command.empty();
         }
 
-        await this.operationService.validateAssertion(assertionId, operationId);
+        await this.operationService.validateAssertion(assertionId, operationId, blockchain);
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_END,

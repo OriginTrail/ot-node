@@ -13,6 +13,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
         this.shardingTableService = ctx.shardingTableService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_REMOTE_ERROR;
     }
@@ -27,19 +28,22 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
         );
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
+        this.logger.trace(`Validating neighborhood for ual: ${ual}`);
         if (!(await this.validateNeighborhood(blockchain, keyword, hashFunctionId, ual))) {
             return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK, messageData: {} };
         }
 
+        this.logger.trace(`Validating assertion with ual: ${ual}`);
         await this.validateAssertionId(blockchain, contract, tokenId, assertionId, ual);
+        this.logger.trace(`Validating bid for asset with ual: ${ual}`);
         if (
-            !(await this.validateServiceAgreement(
+            !(await this.validateBid(
                 contract,
                 tokenId,
                 keyword,
                 hashFunctionId,
                 blockchain,
-                ual,
+                assertionId,
             ))
         ) {
             return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK, messageData: {} };
@@ -57,7 +61,6 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
     }
 
     async validateNeighborhood(blockchain, keyword, hashFunctionId, ual) {
-        this.logger.trace(`Validating neighborhood for ual: ${ual}`);
         const closestNodes = await this.shardingTableService.findNeighbourhood(
             blockchain,
             keyword,
@@ -76,8 +79,6 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
     }
 
     async validateAssertionId(blockchain, contract, tokenId, assertionId, ual) {
-        this.logger.trace(`Validating assertion with ual: ${ual}`);
-
         const blockchainAssertionId = await this.publishService.getLatestAssertion(
             blockchain,
             contract,
@@ -90,22 +91,30 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
         }
     }
 
-    async validateServiceAgreement(contract, tokenId, keyword, hashFunctionId, blockchain, ual) {
-        const agreementId = await this.serviceAgreementService.generateId(
-            contract,
-            tokenId,
-            keyword,
-            hashFunctionId,
+    async validateBid(contract, tokenId, keyword, hashFunctionId, blockchain, assertionId) {
+        const [agreementData, blockchainAssertionSize, r0, ask] = await Promise.all([
+            this.serviceAgreementService
+                .generateId(contract, tokenId, keyword, hashFunctionId)
+                .then((agreementId) =>
+                    this.blockchainModuleManager.getAgreementData(blockchain, agreementId),
+                ),
+            this.blockchainModuleManager.getAssertionSize(blockchain, assertionId),
+            this.blockchainModuleManager.getR0(blockchain),
+            this.repositoryModuleManager
+                .getPeerRecord(this.networkModuleManager.getPeerId().toB58String(), blockchain)
+                .then((node) => this.blockchainModuleManager.convertToWei(blockchain, node.ask)),
+        ]);
+
+        // ask: trace token amount / (epochs * Kb)
+        const serviceAgreementBid =
+            agreementData.tokenAmount /
+            (agreementData.epochsNumber * (blockchainAssertionSize / 1024) * r0);
+
+        this.logger.trace(
+            `Calculated bid from service agreement: ${serviceAgreementBid}, node ask: ${ask}`,
         );
-        const tokenAmount = await this.blockchainModuleManager.getAgreementTokenAmount(
-            blockchain,
-            agreementId,
-        );
-        if (!tokenAmount) {
-            this.logger.warn(`Invalid service agreement for ual: ${ual}`);
-            return false;
-        }
-        return true;
+
+        return serviceAgreementBid >= ask;
     }
 
     async retryFinished(command) {

@@ -6,7 +6,7 @@ class LocalStoreCommand extends Command {
         super(ctx);
         this.operationService = ctx.publishService;
 
-        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR;
+        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_ERROR;
     }
 
     async execute(command) {
@@ -17,12 +17,11 @@ class LocalStoreCommand extends Command {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
 
-        await this.operationService.localStoreIndex(
+        await this.operationService.localStoreAsset(
             assertionId,
             command.data.blockchain,
             command.data.contract,
             command.data.tokenId,
-            command.data.keyword,
             operationId,
         );
 

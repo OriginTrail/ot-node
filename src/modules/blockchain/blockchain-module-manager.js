@@ -59,12 +59,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    getBlockTime(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getBlockTime();
-        }
-    }
-
     async healthCheck(blockchain) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.healthCheck();
@@ -171,6 +165,12 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
+    convertToWei(blockchain, ether, fromUnit) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.convertToWei(ether, fromUnit);
+        }
+    }
+
     async isCommitWindowOpen(blockchain, agreementId, epoch) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.isCommitWindowOpen(agreementId, epoch);
@@ -189,6 +189,24 @@ class BlockchainModuleManager extends BaseModuleManager {
     async getAgreementData(blockchain, agreementId) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getAgreementData(agreementId);
+        }
+    }
+
+    async getAssertionSize(blockchain, assertionid) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getAssertionSize(assertionid);
+        }
+    }
+
+    async getAssertionTriplesNumber(blockchain, assertionid) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getAssertionTriplesNumber(assertionid);
+        }
+    }
+
+    async getAssertionChunksNumber(blockchain, assertionid) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getAssertionChunksNumber(assertionid);
         }
     }
 

@@ -1,6 +1,9 @@
-
 import EpochCommand from '../../common/epoch-command.js';
-import { AGREEMENT_STATUS, OPERATION_ID_STATUS } from '../../../../constants/constants.js';
+import {
+    AGREEMENT_STATUS,
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+} from '../../../../constants/constants.js';
 
 class EpochCheckCommand extends EpochCommand {
     constructor(ctx) {
@@ -10,6 +13,8 @@ class EpochCheckCommand extends EpochCommand {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.operationIdService = ctx.operationIdService;
+
+        this.errorType = ERROR_TYPE.EPOCH_CHECK_ERROR;
     }
 
     async execute(command) {
@@ -44,7 +49,7 @@ class EpochCheckCommand extends EpochCommand {
                 agreementId,
                 AGREEMENT_STATUS.EXPIRED,
             );
-            this.finishEpochCheckCommand(operationId, agreementId, epoch);
+            return this.finishEpochCheckCommand(operationId, agreementId, epoch);
         }
 
         const commitWindowOpen = await this.blockchainModuleManager.isCommitWindowOpen(
@@ -75,20 +80,19 @@ class EpochCheckCommand extends EpochCommand {
             command.data.identityId ??
             (await this.blockchainModuleManager.getIdentityId(blockchain));
 
-        const r0 = await this.blockchainModuleManager.getR0(blockchain);
-
         await this.commandExecutor.add({
             name: 'submitCommitCommand',
             sequence: [],
             delay: 0,
-            retries: r0,
+            period: 12 * 1000, // todo: get from blockchain / oracle
+            retries: await this.blockchainModuleManager.getR0(blockchain),
             data: { ...command.data, serviceAgreement, identityId },
             transactional: false,
         });
 
         return this.finishEpochCheckCommand(operationId, agreementId, epoch);
     }
-    
+
     finishEpochCheckCommand(operationId, agreementId, epoch) {
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_END,

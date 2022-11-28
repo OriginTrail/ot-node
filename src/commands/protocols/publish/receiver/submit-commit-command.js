@@ -1,5 +1,5 @@
 import EpochCommand from '../../common/epoch-command.js';
-import { OPERATION_ID_STATUS } from '../../../../constants/constants.js';
+import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
 
 class SubmitCommitCommand extends EpochCommand {
     constructor(ctx) {
@@ -10,6 +10,8 @@ class SubmitCommitCommand extends EpochCommand {
         this.operationIdService = ctx.operationIdService;
         this.shardingTableService = ctx.shardingTableService;
         this.networkModuleManager = ctx.networkModuleManager;
+
+        this.errorType = ERROR_TYPE.SUBMIT_COMMIT_ERROR;
     }
 
     async execute(command) {
