@@ -258,8 +258,8 @@ class Web3Service {
     }
 
     async createProfile(peerId) {
-        const initialAsk = Web3.utils.toWei(INIT_ASK_AMOUNT, 'ether');
-        const initialStake = Web3.utils.toWei(INIT_STAKE_AMOUNT, 'ether');
+        const initialAsk = Web3.utils.toWei(INIT_ASK_AMOUNT.toString(), 'ether');
+        const initialStake = Web3.utils.toWei(INIT_STAKE_AMOUNT.toString(), 'ether');
 
         await this.executeContractFunction(this.TokenContract, 'increaseAllowance', [
             this.ProfileContract.options.address,
