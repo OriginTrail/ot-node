@@ -1,5 +1,5 @@
 import EpochCommand from '../../common/epoch-command.js';
-import { OPERATION_ID_STATUS } from '../../../../constants/constants.js';
+import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
 
 class SubmitProofsCommand extends EpochCommand {
     constructor(ctx) {
@@ -7,6 +7,8 @@ class SubmitProofsCommand extends EpochCommand {
 
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.operationIdService = ctx.operationIdService;
+
+        this.errorType = ERROR_TYPE.SUBMIT_PROOFS_ERROR;
     }
 
     async execute(command) {
@@ -57,7 +59,7 @@ class SubmitProofsCommand extends EpochCommand {
             serviceAgreement,
             operationId,
         );
-        
+
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
             operationId,

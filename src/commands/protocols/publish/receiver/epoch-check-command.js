@@ -1,6 +1,9 @@
-
 import EpochCommand from '../../common/epoch-command.js';
-import { AGREEMENT_STATUS, OPERATION_ID_STATUS } from '../../../../constants/constants.js';
+import {
+    AGREEMENT_STATUS,
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+} from '../../../../constants/constants.js';
 
 class EpochCheckCommand extends EpochCommand {
     constructor(ctx) {
@@ -10,6 +13,8 @@ class EpochCheckCommand extends EpochCommand {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.operationIdService = ctx.operationIdService;
+
+        this.errorType = ERROR_TYPE.EPOCH_CHECK_ERROR;
     }
 
     async execute(command) {
@@ -88,7 +93,7 @@ class EpochCheckCommand extends EpochCommand {
 
         return this.finishEpochCheckCommand(operationId, agreementId, epoch);
     }
-    
+
     finishEpochCheckCommand(operationId, agreementId, epoch) {
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_END,
