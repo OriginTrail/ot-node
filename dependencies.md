@@ -392,8 +392,3 @@
 
 -   **version**: ^6.2.1
 -   **description**: offload cpu intensive work
-
-##### [better-queue](https://www.npmjs.com/package/better-queue)
-
--   **version**: ^3.8.12
--   **description**: asynchronous function queue with adjustable concurrency.

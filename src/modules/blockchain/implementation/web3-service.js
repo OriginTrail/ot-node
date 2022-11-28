@@ -1,7 +1,7 @@
 import { ethers, BigNumber } from 'ethers';
 import Web3 from 'web3';
 import axios from 'axios';
-import Queue from 'better-queue';
+import async from 'async';
 import { setTimeout as sleep } from 'timers/promises';
 import { createRequire } from 'module';
 
@@ -41,25 +41,21 @@ class Web3Service {
         await this.initializeContracts();
     }
 
-    initializeTransactionQueue(concurrent) {
-        this.transactionQueue = new Queue(
-            async (args, cb) => {
-                const { contractInstance, functionName, transactionArgs, future } = args;
-                try {
-                    const result = this._executeContractFunction(
-                        contractInstance,
-                        functionName,
-                        transactionArgs,
-                    );
-                    cb();
-                    future.resolve(result);
-                } catch (error) {
-                    cb();
-                    future.revert(error);
-                }
-            },
-            { concurrent },
-        );
+    initializeTransactionQueue(concurrency) {
+        this.transactionQueue = async.queue(async (args, cb) => {
+            const { contractInstance, functionName, transactionArgs, future } = args;
+            try {
+                const result = this._executeContractFunction(
+                    contractInstance,
+                    functionName,
+                    transactionArgs,
+                );
+                future.resolve(result);
+            } catch (error) {
+                future.revert(error);
+            }
+            cb();
+        }, concurrency);
     }
 
     async queueTransaction(contractInstance, functionName, transactionArgs) {
