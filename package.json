@@ -70,6 +70,7 @@
         "async-mutex": "^0.3.2",
         "awilix": "^7.0.3",
         "axios": "^0.27.2",
+        "better-queue": "^3.8.12",
         "cors": "^2.8.5",
         "deep-extend": "^0.6.0",
         "dkg-evm-module": "^2.1.1",
