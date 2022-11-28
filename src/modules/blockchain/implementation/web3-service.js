@@ -1,6 +1,7 @@
 import { ethers, BigNumber } from 'ethers';
 import Web3 from 'web3';
 import axios from 'axios';
+import async from 'async';
 import { setTimeout as sleep } from 'timers/promises';
 import { createRequire } from 'module';
 
@@ -9,6 +10,7 @@ import {
     INIT_ASK_AMOUNT,
     INIT_STAKE_AMOUNT,
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
+    TRANSACTION_QUEUE_CONCURRENCY,
     WEBSOCKET_PROVIDER_OPTIONS,
 } from '../../../constants/constants.js';
 
@@ -33,9 +35,41 @@ class Web3Service {
         this.logger = logger;
 
         this.rpcNumber = 0;
+        this.initializeTransactionQueue(TRANSACTION_QUEUE_CONCURRENCY);
         await this.initializeWeb3();
         this.currentBlock = await this.web3.eth.getBlockNumber();
         await this.initializeContracts();
+    }
+
+    initializeTransactionQueue(concurrency) {
+        this.transactionQueue = async.queue(async (args, cb) => {
+            const { contractInstance, functionName, transactionArgs, future } = args;
+            try {
+                const result = this._executeContractFunction(
+                    contractInstance,
+                    functionName,
+                    transactionArgs,
+                );
+                future.resolve(result);
+            } catch (error) {
+                future.revert(error);
+            }
+            cb();
+        }, concurrency);
+    }
+
+    async queueTransaction(contractInstance, functionName, transactionArgs) {
+        return new Promise((resolve, reject) => {
+            this.transactionQueue.push({
+                contractInstance,
+                functionName,
+                transactionArgs,
+                future: {
+                    resolve,
+                    reject,
+                },
+            });
+        });
     }
 
     async initializeWeb3() {
@@ -266,7 +300,7 @@ class Web3Service {
         const initialAsk = Web3.utils.toWei(INIT_ASK_AMOUNT, 'ether');
         const initialStake = Web3.utils.toWei(INIT_STAKE_AMOUNT, 'ether');
 
-        await this.executeContractFunction(this.TokenContract, 'increaseAllowance', [
+        await this.queueTransaction(this.TokenContract, 'increaseAllowance', [
             this.ProfileContract.options.address,
             initialStake,
         ]);
@@ -278,7 +312,7 @@ class Web3Service {
         while (retryCount + 1 <= maxNumberOfRetries && !profileCreated) {
             try {
                 // eslint-disable-next-line no-await-in-loop
-                await this.executeContractFunction(this.ProfileContract, 'createProfile', [
+                await this.queueTransaction(this.ProfileContract, 'createProfile', [
                     this.getManagementKey(),
                     this.convertAsciiToHex(peerId),
                     initialAsk,
@@ -300,7 +334,7 @@ class Web3Service {
                     await sleep(retryDelayInSec * 1000);
                 } else {
                     // eslint-disable-next-line no-await-in-loop
-                    await this.executeContractFunction(this.TokenContract, 'decreaseAllowance', [
+                    await this.queueTransaction(this.TokenContract, 'decreaseAllowance', [
                         this.ProfileContract.options.address,
                         initialStake,
                     ]);
@@ -335,7 +369,7 @@ class Web3Service {
         return result;
     }
 
-    async executeContractFunction(contractInstance, functionName, args) {
+    async _executeContractFunction(contractInstance, functionName, args) {
         let result;
         while (result === undefined) {
             try {
@@ -639,7 +673,7 @@ class Web3Service {
     }
 
     async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch) {
-        return this.executeContractFunction(this.ServiceAgreementStorageContract, 'submitCommit', [
+        return this.queueTransaction(this.ServiceAgreementStorageContract, 'submitCommit', [
             assetContractAddress,
             tokenId,
             keyword,
@@ -681,7 +715,7 @@ class Web3Service {
         proof,
         chunkHash,
     ) {
-        return this.executeContractFunction(this.ServiceAgreementStorageContract, 'sendProof', [
+        return this.queueTransaction(this.ServiceAgreementStorageContract, 'sendProof', [
             assetContractAddress,
             tokenId,
             keyword,
