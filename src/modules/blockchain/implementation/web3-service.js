@@ -532,6 +532,34 @@ class Web3Service {
         return agreementData;
     }
 
+    async getAssertionSize(assertionId) {
+        const size = await this.callContractFunction(this.AssertionRegistryContract, 'getSize', [
+            assertionId,
+        ]);
+
+        return Number(size);
+    }
+
+    async getAssertionTriplesNumber(assertionId) {
+        const triplesNumber = await this.callContractFunction(
+            this.AssertionRegistryContract,
+            'getTriplesNumber',
+            [assertionId],
+        );
+
+        return Number(triplesNumber);
+    }
+
+    async getAssertionChunksNumber(assertionId) {
+        const chunksNumber = await this.callContractFunction(
+            this.AssertionRegistryContract,
+            'getChunksNumber',
+            [assertionId],
+        );
+
+        return Number(chunksNumber);
+    }
+
     async getAgreementStartTime(agreementId) {
         const startTime = await this.callContractFunction(
             this.ServiceAgreementStorageContract,

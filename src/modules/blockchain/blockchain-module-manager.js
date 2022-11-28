@@ -192,6 +192,24 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
+    async getAssertionSize(blockchain, assertionid) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getAssertionSize(assertionid);
+        }
+    }
+
+    async getAssertionTriplesNumber(blockchain, assertionid) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getAssertionTriplesNumber(assertionid);
+        }
+    }
+
+    async getAssertionChunksNumber(blockchain, assertionid) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.getAssertionChunksNumber(assertionid);
+        }
+    }
+
     async getAgreementStartTime(blockchain, agreementId) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getAgreementStartTime(agreementId);
