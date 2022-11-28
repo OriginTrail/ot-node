@@ -56,9 +56,9 @@ export const XML_DATA_TYPES = {
 
 export const MIN_NODE_VERSION = 16;
 
-export const INIT_ASK_AMOUNT = '2';
+export const INIT_ASK_AMOUNT = 2;
 
-export const INIT_STAKE_AMOUNT = '50000';
+export const INIT_STAKE_AMOUNT = 50000;
 
 export const NETWORK_API_RATE_LIMIT = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
@@ -163,6 +163,12 @@ export const ERROR_TYPE = {
     QUERY: {
         LOCAL_QUERY_ERROR: 'LocalQueryError',
     },
+    COMMIT_PROOF: {
+        CALCULATE_PROOFS_ERROR: 'CalculateProofsError',
+        EPOCH_CHECK_ERROR: 'EpochCheckError',
+        SUBMIT_COMMIT_ERROR: 'SubmitCommitError',
+        SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
+    },
 };
 export const OPERATION_ID_STATUS = {
     PENDING: 'PENDING',
@@ -211,14 +217,14 @@ export const OPERATION_ID_STATUS = {
         GET_END: 'GET_END',
     },
     COMMIT_PROOF: {
-        EPOCH_CHECK_START: 'EpochCheckStart',
-        EPOCH_CHECK_END: 'EpochCheckEnd',
-        SUBMIT_COMMIT_START: 'SubmitCommitStart',
-        SUBMIT_COMMIT_END: 'SubmitCommitEnd',
-        CALCULATE_PROOFS_START: 'CalculateProofsStart',
-        CALCULATE_PROOFS_END: 'CalculateProofsEnd',
-        SUBMIT_PROOFS_START: 'SubmitProofsStart',
-        SUBMIT_PROOFS_END: 'SubmitProofsEnd',
+        EPOCH_CHECK_START: 'EPOCH_CHECK_START',
+        EPOCH_CHECK_END: 'EPOCH_CHECK_END',
+        SUBMIT_COMMIT_START: 'SUBMIT_COMMIT_START',
+        SUBMIT_COMMIT_END: 'SUBMIT_COMMIT_END',
+        CALCULATE_PROOFS_START: 'CALCULATE_PROOFS_START',
+        CALCULATE_PROOFS_END: 'CALCULATE_PROOFS_END',
+        SUBMIT_PROOFS_START: 'SUBMIT_PROOFS_START',
+        SUBMIT_PROOFS_END: 'SUBMIT_PROOFS_END',
     },
     SEARCH_ASSERTIONS: {
         VALIDATING_QUERY: 'VALIDATING_QUERY',

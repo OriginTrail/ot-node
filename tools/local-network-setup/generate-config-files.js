@@ -37,15 +37,19 @@ fs.writeFileSync(bootstrapTemplatePath, JSON.stringify(bootstrapTemplate, null, 
 
 console.log(`Generating ${numberOfNodes} total nodes`);
 
+let repositoryPassword = process.env.REPOSITORY_PASSWORD;
+
 for (let i = 0; i < numberOfNodes; i += 1) {
     let nodeName;
     if (i === 0) {
         console.log('Using the preexisting identity for the first node (bootstrap)');
         nodeName = 'bootstrap';
+        dropDatabase(`operationaldb`, repositoryPassword);
         continue;
     } else {
         nodeName = `DH${i}`;
     }
+    dropDatabase(`operationaldb${i}`, repositoryPassword);
     console.log(`Configuring node ${nodeName}`);
 
     const configPath = path.join(`./tools/local-network-setup/.dh${i}_origintrail_noderc`);
@@ -67,7 +71,7 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     ];
 
     parsedTemplate.modules.httpClient.implementation['express-http-client'].config.port = 8900 + i;
-    parsedTemplate.modules.network.implementation['libp2p-service'].config.port = 9000 + i;
+    parsedTemplate.modules.network.implementation['libp2p-service'].config.port = 9100 + i;
     parsedTemplate.modules.repository.implementation[
         'sequelize-repository'
     ].config.database = `operationaldb${i}`;
@@ -81,4 +85,9 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     }
 
     fs.writeFileSync(`${configPath}`, JSON.stringify(parsedTemplate, null, 2));
+}
+
+function dropDatabase(name, password) {
+    console.log('Dropping database');
+    execSync(`mysql -u root ${password ? `-p${password}` : ''} -e "DROP DATABASE ${name}"`);
 }

@@ -194,23 +194,18 @@ class ShardingTableService {
         return uint8ArrayXor(ethers.utils.arrayify(peerHash), ethers.utils.arrayify(keyHash));
     }
 
-    async getBidSuggestion(neighbourhood, r0, higherPercentile) {
-        const neighbourhoodSortedByAsk = neighbourhood.sort(
-            (node_one, node_two) => node_one.ask < node_two.ask,
-        );
+    async getBidSuggestion(blockchainId, epochsNumber, assertionSize) {
+        const peers = await this.repositoryModuleManager.getAllPeerRecords(blockchainId, true);
 
-        const eligibleNodes = neighbourhoodSortedByAsk.slice(
-            0,
-            Math.ceil((higherPercentile / 100) * neighbourhood.length),
-        );
+        let sum = 0;
+        for (const node of peers) {
+            sum += node.ask;
+        }
 
-        const eligibleNodesSortedByStake = eligibleNodes.sort(
-            (node_one, node_two) => node_one.stake > node_two.stake,
-        );
+        const averageAsk = sum / peers.length;
+        const r0 = await this.blockchainModuleManager.getR0(blockchainId);
 
-        const awardedNodes = eligibleNodesSortedByStake.slice(0, r0);
-
-        return Math.max(...awardedNodes.map((node) => node.ask)) * r0;
+        return averageAsk * (epochsNumber * (assertionSize / 1024) * r0);
     }
 
     async findEligibleNodes(neighbourhood, bid, r1, r0) {
