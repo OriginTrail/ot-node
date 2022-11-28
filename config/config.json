@@ -52,7 +52,7 @@
                                     "bootDelay": 2e3
                                 }
                             },
-                            "port": 9000,
+                            "port": 9100,
                             "bootstrap": []
                         }
                     }

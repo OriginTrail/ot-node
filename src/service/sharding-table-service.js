@@ -194,21 +194,18 @@ class ShardingTableService {
         return uint8ArrayXor(ethers.utils.arrayify(peerHash), ethers.utils.arrayify(keyHash));
     }
 
-    async getBidSuggestion(blockchainId, key, r2, hashFunctionId) {
-        const neighbourhood = await this.findNeighbourhood(
-            blockchainId,
-            key,
-            r2,
-            hashFunctionId,
-            true,
-        );
+    async getBidSuggestion(blockchainId, epochsNumber, assertionSize) {
+        const peers = await this.repositoryModuleManager.getAllPeerRecords(blockchainId, true);
 
         let sum = 0;
-        for (const node of neighbourhood) {
+        for (const node of peers) {
             sum += node.ask;
         }
 
-        return sum / neighbourhood.length;
+        const averageAsk = sum / peers.length;
+        const r0 = await this.blockchainModuleManager.getR0(blockchainId);
+
+        return averageAsk * (epochsNumber * (assertionSize / 1024) * r0);
     }
 
     async findEligibleNodes(neighbourhood, bid, r1, r0) {

@@ -258,8 +258,8 @@ class Web3Service {
     }
 
     async createProfile(peerId) {
-        const initialAsk = Web3.utils.toWei(INIT_ASK_AMOUNT.toString(), 'ether');
-        const initialStake = Web3.utils.toWei(INIT_STAKE_AMOUNT.toString(), 'ether');
+        const initialAsk = this.convertToWei(INIT_ASK_AMOUNT);
+        const initialStake = this.convertToWei(INIT_STAKE_AMOUNT);
 
         await this.executeContractFunction(this.TokenContract, 'increaseAllowance', [
             this.ProfileContract.options.address,
@@ -346,8 +346,8 @@ class Web3Service {
                     from: this.getPublicKey(),
                     to: contractInstance.options.address,
                     data: encodedABI,
-                    gasPrice: gasPrice || this.web3.utils.toWei('20', 'Gwei'),
-                    gas: gasLimit || this.web3.utils.toWei('900', 'Kwei'),
+                    gasPrice: gasPrice || this.convertToWei(20, 'Gwei'),
+                    gas: gasLimit || this.convertToWei(900, 'Kwei'),
                 };
 
                 const createdTransaction = await this.web3.eth.accounts.signTransaction(
@@ -460,8 +460,8 @@ class Web3Service {
                 const tx = {
                     from: this.getPublicKey(),
                     data: encodedABI,
-                    gasPrice: gasPrice ?? this.web3.utils.toWei('20', 'Gwei'),
-                    gas: gasLimit ?? this.web3.utils.toWei('900', 'Kwei'),
+                    gasPrice: gasPrice ?? this.convertToWei(20, 'Gwei'),
+                    gas: gasLimit ?? this.convertToWei(900, 'Kwei'),
                 };
 
                 const createdTransaction = await this.web3.eth.accounts.signTransaction(
@@ -749,6 +749,10 @@ class Web3Service {
 
     convertHexToAscii(peerIdHex) {
         return Web3.utils.hexToAscii(peerIdHex);
+    }
+
+    convertToWei(ether, fromUnit = 'ether') {
+        return Web3.utils.toWei(ether.toString(), fromUnit);
     }
 
     async healthCheck() {

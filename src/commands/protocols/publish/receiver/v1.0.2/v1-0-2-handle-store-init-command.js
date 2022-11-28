@@ -100,16 +100,19 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
                 ),
             this.blockchainModuleManager.getAssertionSize(blockchain, assertionId),
             this.blockchainModuleManager.getR0(blockchain),
-            this.repositoryModuleManager.getPeerRecord(
-                this.networkModuleManager.getPeerId().toB58String(),
-                blockchain,
-            ),
+            this.repositoryModuleManager
+                .getPeerRecord(this.networkModuleManager.getPeerId().toB58String(), blockchain)
+                .then((node) => this.blockchainModuleManager.convertToWei(blockchain, node.ask)),
         ]);
 
         // ask: trace token amount / (epochs * Kb)
         const serviceAgreementBid =
             agreementData.tokenAmount /
             (agreementData.epochsNumber * (blockchainAssertionSize / 1024) * r0);
+
+        this.logger.trace(
+            `Calculated bid from service agreement: ${serviceAgreementBid}, node ask: ${ask}`,
+        );
 
         return serviceAgreementBid >= ask;
     }

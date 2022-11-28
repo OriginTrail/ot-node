@@ -8,7 +8,7 @@ class HttpApiRouter {
         this.searchHttpApiController = ctx.searchHttpApiController;
         this.resultHttpApiController = ctx.resultHttpApiController;
         this.infoHttpApiController = ctx.infoHttpApiController;
-        this.bidSuggestionController = ctx.bidSuggestionController;
+        this.bidSuggestionHttpApiController = ctx.bidSuggestionHttpApiController;
 
         this.jsonSchemaService = ctx.jsonSchemaService;
     }
@@ -54,7 +54,7 @@ class HttpApiRouter {
         });
 
         this.httpClientModuleManager.get('/bid-suggestion', (req, res) => {
-            this.bidSuggestionController.handleBidSuggestionRequest(req, res);
+            this.bidSuggestionHttpApiController.handleBidSuggestionRequest(req, res);
         });
     }
 

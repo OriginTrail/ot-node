@@ -165,6 +165,12 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
+    convertToWei(blockchain, ether, fromUnit) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.convertToWei(ether, fromUnit);
+        }
+    }
+
     async isCommitWindowOpen(blockchain, agreementId, epoch) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.isCommitWindowOpen(agreementId, epoch);
