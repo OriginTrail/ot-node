@@ -238,11 +238,6 @@ class Web3Service {
         return this.web3.eth.getBlockNumber();
     }
 
-    // TODO get from blockchain
-    getBlockTime() {
-        return this.config.blockTime;
-    }
-
     async getIdentityId() {
         if (this.config.identityId) {
             return this.config.identityId;

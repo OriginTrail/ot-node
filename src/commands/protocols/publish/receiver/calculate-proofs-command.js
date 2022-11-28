@@ -80,6 +80,7 @@ class CalculateProofsCommand extends EpochCommand {
                 leaf,
                 proof,
             },
+            period: 12 * 1000, // todo: get from blockchain / oracle
             retries: 3,
             transactional: false,
         });

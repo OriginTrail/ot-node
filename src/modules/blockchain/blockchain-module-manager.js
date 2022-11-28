@@ -59,12 +59,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    getBlockTime(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getBlockTime();
-        }
-    }
-
     async healthCheck(blockchain) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.healthCheck();

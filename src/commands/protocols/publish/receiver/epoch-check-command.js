@@ -80,13 +80,12 @@ class EpochCheckCommand extends EpochCommand {
             command.data.identityId ??
             (await this.blockchainModuleManager.getIdentityId(blockchain));
 
-        const r0 = await this.blockchainModuleManager.getR0(blockchain);
-
         await this.commandExecutor.add({
             name: 'submitCommitCommand',
             sequence: [],
             delay: 0,
-            retries: r0,
+            period: 12 * 1000, // todo: get from blockchain / oracle
+            retries: await this.blockchainModuleManager.getR0(blockchain),
             data: { ...command.data, serviceAgreement, identityId },
             transactional: false,
         });
