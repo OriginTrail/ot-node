@@ -49,7 +49,7 @@ class EpochCheckCommand extends EpochCommand {
                 agreementId,
                 AGREEMENT_STATUS.EXPIRED,
             );
-            this.finishEpochCheckCommand(operationId, agreementId, epoch);
+            return this.finishEpochCheckCommand(operationId, agreementId, epoch);
         }
 
         const commitWindowOpen = await this.blockchainModuleManager.isCommitWindowOpen(
