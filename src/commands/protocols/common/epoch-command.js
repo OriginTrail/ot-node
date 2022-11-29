@@ -18,11 +18,11 @@ class EpochCommand extends Command {
         operationId,
     ) {
         const nextEpochStartTime =
-            serviceAgreement.startTime + serviceAgreement.epochLength * (epoch + 1);
+            Number(serviceAgreement.startTime) + Number(serviceAgreement.epochLength) * (epoch + 1);
 
         // delay by 10% of commit window length
         const offset =
-            (await this.blockchainModuleManager.getCommitWindowDuration(blockchain)) * 0.1;
+            Number(await this.blockchainModuleManager.getCommitWindowDuration(blockchain)) * 0.1;
 
         const delay = nextEpochStartTime - Math.floor(Date.now() / 1000) + offset;
 

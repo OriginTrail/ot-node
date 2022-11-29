@@ -1,3 +1,4 @@
+import { BigNumber } from 'ethers';
 import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
 import {
     NETWORK_MESSAGE_TYPES,
@@ -106,15 +107,17 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
         ]);
 
         // ask: trace token amount / (epochs * Kb)
-        const serviceAgreementBid =
-            agreementData.tokenAmount /
-            (agreementData.epochsNumber * (blockchainAssertionSize / 1024) * r0);
+        const serviceAgreementBid = BigNumber.from(agreementData.tokenAmount).mul(
+            BigNumber.from(agreementData.epochsNumber)
+                .mul(BigNumber.from(blockchainAssertionSize).div(BigNumber.from(1024)))
+                .mul(BigNumber.from(r0)),
+        );
 
         this.logger.trace(
             `Calculated bid from service agreement: ${serviceAgreementBid}, node ask: ${ask}`,
         );
 
-        return serviceAgreementBid >= ask;
+        return BigNumber.from(ask).lte(serviceAgreementBid);
     }
 
     async retryFinished(command) {

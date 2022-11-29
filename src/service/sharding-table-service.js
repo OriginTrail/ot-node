@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { ethers, BigNumber } from 'ethers';
 import { xor as uint8ArrayXor } from 'uint8arrays/xor';
 import { compare as uint8ArrayCompare } from 'uint8arrays/compare';
 import pipe from 'it-pipe';
@@ -52,8 +52,8 @@ class ShardingTableService {
             return;
         }
 
-        const shardingTableLength = await this.blockchainModuleManager.getShardingTableLength(
-            blockchainId,
+        const shardingTableLength = Number(
+            await this.blockchainModuleManager.getShardingTableLength(blockchainId),
         );
         let startingPeerId = await this.blockchainModuleManager.getShardingTableHead(blockchainId);
         const pageSize = 10;
@@ -202,10 +202,16 @@ class ShardingTableService {
             sum += node.ask;
         }
 
-        const averageAsk = sum / peers.length;
-        const r0 = await this.blockchainModuleManager.getR0(blockchainId);
+        const averageAsk = BigNumber.from(sum).div(BigNumber.from(peers.length));
+        const r0 = BigNumber.from(await this.blockchainModuleManager.getR0(blockchainId));
 
-        return averageAsk * (epochsNumber * (assertionSize / 1024) * r0);
+        return averageAsk
+            .mul(
+                BigNumber.from(epochsNumber)
+                    .mul(BigNumber.from(assertionSize).div(BigNumber.from(1024)))
+                    .mul(r0),
+            )
+            .toString();
     }
 
     async findEligibleNodes(neighbourhood, bid, r1, r0) {

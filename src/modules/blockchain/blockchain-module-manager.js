@@ -53,12 +53,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getBlockNumber(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getBlockNumber();
-        }
-    }
-
     async healthCheck(blockchain) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.healthCheck();
@@ -68,15 +62,6 @@ class BlockchainModuleManager extends BaseModuleManager {
     async restartService(blockchain) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.restartService();
-        }
-    }
-
-    async getAssertionsLength(blockchain, assetContractAddress, tokenId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAssertionsLength(
-                assetContractAddress,
-                tokenId,
-            );
         }
     }
 
@@ -123,12 +108,6 @@ class BlockchainModuleManager extends BaseModuleManager {
                 startingPeerId,
                 nodesNum,
             );
-        }
-    }
-
-    async getShardingTableFull(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getShardingTableFull();
         }
     }
 
@@ -207,46 +186,6 @@ class BlockchainModuleManager extends BaseModuleManager {
     async getAssertionChunksNumber(blockchain, assertionid) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getAssertionChunksNumber(assertionid);
-        }
-    }
-
-    async getAgreementStartTime(blockchain, agreementId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAgreementStartTime(agreementId);
-        }
-    }
-
-    async getAgreementEpochsNumber(blockchain, agreementId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAgreementEpochsNumber(agreementId);
-        }
-    }
-
-    async getAgreementEpochLength(blockchain, agreementId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAgreementEpochLength(agreementId);
-        }
-    }
-
-    async getAgreementTokenAmount(blockchain, agreementId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAgreementTokenAmount(agreementId);
-        }
-    }
-
-    async getAgreementScoreFunctionId(blockchain, agreementId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAgreementScoreFunctionId(
-                agreementId,
-            );
-        }
-    }
-
-    async getAgreementProofWindowOffsetPerc(blockchain, agreementId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAgreementProofWindowOffsetPerc(
-                agreementId,
-            );
         }
     }
 
