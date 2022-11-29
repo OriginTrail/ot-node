@@ -1,4 +1,5 @@
-import { ethers, BigNumber } from 'ethers';
+import { ethers } from 'ethers';
+import { BigNumber } from 'bignumber.js';
 import { xor as uint8ArrayXor } from 'uint8arrays/xor';
 import { compare as uint8ArrayCompare } from 'uint8arrays/compare';
 import pipe from 'it-pipe';
@@ -202,15 +203,14 @@ class ShardingTableService {
             sum += node.ask;
         }
 
-        const averageAsk = BigNumber.from(sum).div(BigNumber.from(peers.length));
-        const r0 = BigNumber.from(await this.blockchainModuleManager.getR0(blockchainId));
+        const r0 = await this.blockchainModuleManager.getR0(blockchainId);
 
-        return averageAsk
-            .mul(
-                BigNumber.from(epochsNumber)
-                    .mul(BigNumber.from(assertionSize).div(BigNumber.from(1024)))
-                    .mul(r0),
-            )
+        return new BigNumber(assertionSize)
+            .dividedBy(peers.length)
+            .dividedBy(1024)
+            .multipliedBy(sum)
+            .multipliedBy(epochsNumber)
+            .multipliedBy(r0)
             .toString();
     }
 

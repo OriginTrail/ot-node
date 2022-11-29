@@ -380,8 +380,8 @@ class Web3Service {
                     from: this.getPublicKey(),
                     to: contractInstance.options.address,
                     data: encodedABI,
-                    gasPrice: gasPrice || this.convertToWei(20, 'Gwei'),
-                    gas: gasLimit || this.convertToWei(900, 'Kwei'),
+                    gasPrice: gasPrice ?? this.convertToWei(20, 'gwei'),
+                    gas: gasLimit ?? this.convertToWei(900, 'kwei'),
                 };
 
                 const createdTransaction = await this.web3.eth.accounts.signTransaction(
@@ -494,8 +494,8 @@ class Web3Service {
                 const tx = {
                     from: this.getPublicKey(),
                     data: encodedABI,
-                    gasPrice: gasPrice ?? this.convertToWei(20, 'Gwei'),
-                    gas: gasLimit ?? this.convertToWei(900, 'Kwei'),
+                    gasPrice: gasPrice ?? this.convertToWei(20, 'gwei'),
+                    gas: gasLimit ?? this.convertToWei(900, 'kwei'),
                 };
 
                 const createdTransaction = await this.web3.eth.accounts.signTransaction(
@@ -697,7 +697,11 @@ class Web3Service {
     }
 
     convertToWei(ether, fromUnit = 'ether') {
-        return Web3.utils.toWei(ether.toString(), fromUnit);
+        return ethers.utils.parseUnits(ether.toString(), fromUnit).toString();
+    }
+
+    convertFromWei(ether, toUnit = 'ether') {
+        return ethers.utils.formatUnits(ether.toString(), toUnit).toString();
     }
 
     async healthCheck() {
