@@ -29,6 +29,10 @@ const ScoringProxy = require('dkg-evm-module/build/contracts/ScoringProxy.json')
 const ServiceAgreementStorage = require('dkg-evm-module/build/contracts/ServiceAgreementStorage.json');
 const ShardingTable = require('dkg-evm-module/build/contracts/ShardingTable.json');
 
+const FIXED_GAS_LIMIT_METHODS = ['submitCommit', 'sendProof'];
+
+const COMMIT_PROOF_GAS_LIMIT = 300000;
+
 class Web3Service {
     async initialize(config, logger) {
         this.config = config;
@@ -52,6 +56,7 @@ class Web3Service {
                 );
                 future.resolve(result);
             } catch (error) {
+                // if not mined send same transaction with bigger gas price
                 future.revert(error);
             }
             cb();
@@ -371,9 +376,15 @@ class Web3Service {
                 /* eslint-disable no-await-in-loop */
                 const gasPrice = await this.getGasPrice();
 
-                const gasLimit = await contractInstance.methods[functionName](...args).estimateGas({
-                    from: this.getPublicKey(),
-                });
+                let gasLimit;
+
+                if (FIXED_GAS_LIMIT_METHODS.includes(functionName)) {
+                    gasLimit = COMMIT_PROOF_GAS_LIMIT;
+                } else {
+                    gasLimit = await contractInstance.methods[functionName](...args).estimateGas({
+                        from: this.getPublicKey(),
+                    });
+                }
 
                 const encodedABI = contractInstance.methods[functionName](...args).encodeABI();
                 const tx = {
