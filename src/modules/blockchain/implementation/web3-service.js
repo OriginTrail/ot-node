@@ -410,9 +410,7 @@ class Web3Service {
             } catch (error) {
                 if (
                     !transactionRetried &&
-                    error.message.includes(
-                        `Transaction was not mined within ${TRANSACTION_POLLING_TIMEOUT} seconds`,
-                    )
+                    error.message.includes(`Transaction was not mined within`)
                 ) {
                     this.logger.warn(
                         `Transaction was not mined within ${TRANSACTION_POLLING_TIMEOUT} seconds. Retrying transaction with new gas price`,
