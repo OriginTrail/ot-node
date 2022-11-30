@@ -22,6 +22,8 @@ class GetRequestCommand extends ProtocolRequestCommand {
                     responseData.nquads,
                 );
             } catch (e) {
+                this.logger.trace(`Discarding received assertion: ${e.message}`);
+
                 return this.handleNack(command);
             }
 
