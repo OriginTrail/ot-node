@@ -1,5 +1,5 @@
 import ProtocolRequestCommand from '../../../common/protocol-request-command.js';
-import { ERROR_TYPE } from '../../../../../constants/constants.js';
+import { ERROR_TYPE, OPERATION_REQUEST_STATUS } from '../../../../../constants/constants.js';
 
 class GetRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
@@ -11,6 +11,30 @@ class GetRequestCommand extends ProtocolRequestCommand {
 
     async prepareMessage(command) {
         return { assertionId: command.data.assertionId };
+    }
+
+    async handleAck(command, responseData) {
+        if (responseData?.nquads) {
+            try {
+                await this.operationService.validateAssertion(
+                    command.data.assertionId,
+                    command.data.blockchain,
+                    responseData.nquads,
+                );
+            } catch (e) {
+                return this.handleNack(command);
+            }
+
+            await this.operationService.processResponse(
+                command,
+                OPERATION_REQUEST_STATUS.COMPLETED,
+                responseData,
+            );
+
+            return ProtocolRequestCommand.empty();
+        }
+
+        return this.handleNack(command);
     }
 
     /**
