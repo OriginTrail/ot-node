@@ -10,6 +10,7 @@ import {
     INIT_ASK_AMOUNT,
     INIT_STAKE_AMOUNT,
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
+    TRANSACTION_POLLING_TIMEOUT,
     TRANSACTION_QUEUE_CONCURRENCY,
     WEBSOCKET_PROVIDER_OPTIONS,
 } from '../../../constants/constants.js';
@@ -93,6 +94,7 @@ class Web3Service {
                     this.web3 = new Web3(provider);
                 } else {
                     this.web3 = new Web3(this.config.rpcEndpoints[this.rpcNumber]);
+                    this.web3.eth.transactionPollingTimeout = TRANSACTION_POLLING_TIMEOUT;
                 }
                 // eslint-disable-next-line no-await-in-loop
                 isRpcConnected = await this.web3.eth.net.isListening();
@@ -408,10 +410,12 @@ class Web3Service {
             } catch (error) {
                 if (
                     !transactionRetried &&
-                    error.message.includes('Transaction was not mined within 750 seconds')
+                    error.message.includes(
+                        `Transaction was not mined within ${TRANSACTION_POLLING_TIMEOUT} seconds`,
+                    )
                 ) {
                     this.logger.warn(
-                        `Transaction was not mined within 750 seconds. Retrying transaction with new gas price`,
+                        `Transaction was not mined within ${TRANSACTION_POLLING_TIMEOUT} seconds. Retrying transaction with new gas price`,
                     );
                     gasPrice *= 1.2;
                     transactionRetried = true;
