@@ -56,7 +56,6 @@ class Web3Service {
                 );
                 future.resolve(result);
             } catch (error) {
-                // if not mined send same transaction with bigger gas price
                 future.revert(error);
             }
             cb();
@@ -371,11 +370,11 @@ class Web3Service {
 
     async _executeContractFunction(contractInstance, functionName, args) {
         let result;
+        let gasPrice = (await this.getGasPrice()) || this.convertToWei(20, 'Gwei');
+        let transactionRetried = false;
         while (result === undefined) {
             try {
                 /* eslint-disable no-await-in-loop */
-                const gasPrice = await this.getGasPrice();
-
                 let gasLimit;
 
                 if (FIXED_GAS_LIMIT_METHODS.includes(functionName)) {
@@ -387,23 +386,38 @@ class Web3Service {
                 }
 
                 const encodedABI = contractInstance.methods[functionName](...args).encodeABI();
+                const gas = gasLimit || this.convertToWei(900, 'Kwei');
                 const tx = {
                     from: this.getPublicKey(),
                     to: contractInstance.options.address,
                     data: encodedABI,
-                    gasPrice: gasPrice || this.convertToWei(20, 'Gwei'),
-                    gas: gasLimit || this.convertToWei(900, 'Kwei'),
+                    gasPrice,
+                    gas,
                 };
 
                 const createdTransaction = await this.web3.eth.accounts.signTransaction(
                     tx,
                     this.getPrivateKey(),
                 );
+                this.logger.info(
+                    `Sending transaction to blockchain, calling method: ${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}`,
+                );
                 result = await this.web3.eth.sendSignedTransaction(
                     createdTransaction.rawTransaction,
                 );
             } catch (error) {
-                await this.handleError(error, functionName);
+                if (
+                    !transactionRetried &&
+                    error.message.includes('Transaction was not mined within 750 seconds')
+                ) {
+                    this.logger.warn(
+                        `Transaction was not mined within 750 seconds. Retrying transaction with new gas price`,
+                    );
+                    gasPrice *= 1.2;
+                    transactionRetried = true;
+                } else {
+                    await this.handleError(error, functionName);
+                }
             }
         }
 
