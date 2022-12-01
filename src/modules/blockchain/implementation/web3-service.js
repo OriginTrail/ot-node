@@ -7,8 +7,6 @@ import { createRequire } from 'module';
 
 import {
     DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
-    INIT_ASK_AMOUNT,
-    INIT_STAKE_AMOUNT,
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
     TRANSACTION_QUEUE_CONCURRENCY,
     WEBSOCKET_PROVIDER_OPTIONS,
@@ -297,8 +295,8 @@ class Web3Service {
     }
 
     async createProfile(peerId) {
-        const initialAsk = this.convertToWei(INIT_ASK_AMOUNT);
-        const initialStake = this.convertToWei(INIT_STAKE_AMOUNT);
+        const initialAsk = this.convertToWei(this.config.initialAskAmount);
+        const initialStake = this.convertToWei(this.config.initialStakeAmount);
 
         await this.queueTransaction(this.TokenContract, 'increaseAllowance', [
             this.ProfileContract.options.address,
