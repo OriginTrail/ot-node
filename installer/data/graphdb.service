@@ -8,8 +8,8 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/root/graphdb-free/bin/
-ExecStart=/root/graphdb-free/bin/graphdb
+WorkingDirectory=/root/ot-node/graphdb-free/bin/
+ExecStart=/root/ot-node/graphdb-free/bin/graphdb
 Restart=on-failure
 
 [Install]

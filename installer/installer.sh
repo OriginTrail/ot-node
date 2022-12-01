@@ -80,10 +80,10 @@ install_fuseki() {
     unzip $FUSEKI_VER.zip
 
     rm /root/$FUSEKI_VER.zip
-    mkdir /root/fuseki
-    mkdir /root/fuseki/tdb
-    cp /root/$FUSEKI_VER/fuseki-server.jar /root/fuseki/
-    cp -r /root/$FUSEKI_VER/webapp/ /root/fuseki/
+    mkdir /root/ot-node/fuseki
+    mkdir /root/ot-node/fuseki/tdb
+    cp /root/$FUSEKI_VER/fuseki-server.jar /root/ot-node/fuseki/
+    cp -r /root/$FUSEKI_VER/webapp/ /root/ot-node/fuseki/
     rm -r /root/$FUSEKI_VER
 
     perform_step cp $OTNODE_DIR/installer/data/fuseki.service /lib/systemd/system/
@@ -96,6 +96,7 @@ install_fuseki() {
 
 install_blazegraph() {
     wget https://github.com/blazegraph/database/releases/latest/download/blazegraph.jar
+    mv blazegraph.jar $OTNODE_DIR/../blazegraph.jar
     cp $OTNODE_DIR/installer/data/blazegraph.service /lib/systemd/system/
 
     systemctl daemon-reload
