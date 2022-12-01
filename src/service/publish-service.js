@@ -115,7 +115,7 @@ class PublishService extends OperationService {
             assertionId,
         );
         const assertionSize = assertionMetadata.getAssertionSizeInBytes(assertion);
-        if (blockchainAssertionSize !== assertionSize) {
+        if (Number(blockchainAssertionSize) !== assertionSize) {
             throw Error(
                 `Invalid assertion size, value read from blockchain: ${blockchainAssertionSize}, calculated: ${assertionSize}`,
             );
@@ -124,7 +124,7 @@ class PublishService extends OperationService {
         const blockchainTriplesNumber =
             await this.blockchainModuleManager.getAssertionTriplesNumber(blockchain, assertionId);
         const triplesNumber = assertionMetadata.getAssertionTriplesNumber(assertion);
-        if (blockchainTriplesNumber !== triplesNumber) {
+        if (Number(blockchainTriplesNumber) !== triplesNumber) {
             throw Error(
                 `Invalid triples number, value read from blockchain: ${blockchainTriplesNumber}, calculated: ${triplesNumber}`,
             );
@@ -135,7 +135,7 @@ class PublishService extends OperationService {
             assertionId,
         );
         const chunksNumber = assertionMetadata.getAssertionChunksNumber(assertion);
-        if (blockchainChunksNumber !== chunksNumber) {
+        if (Number(blockchainChunksNumber) !== chunksNumber) {
             throw Error(
                 `Invalid chunks number, value read from blockchain: ${blockchainChunksNumber}, calculated size: ${chunksNumber}`,
             );
