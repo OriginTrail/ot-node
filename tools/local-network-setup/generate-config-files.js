@@ -1,4 +1,5 @@
 /* eslint-disable */
+import mysql from 'mysql2';
 import path from 'path';
 import fs from 'fs';
 import { execSync } from 'child_process';
@@ -10,6 +11,7 @@ const hubContractAddress = process.argv[4];
 const templatePath = './tools/local-network-setup/.dh_origintrail_noderc';
 const bootstrapTemplatePath = './tools/local-network-setup/.bootstrap_origintrail_noderc';
 
+const generalConfig = JSON.parse(fs.readFileSync('./config/config.json'));
 const template = JSON.parse(fs.readFileSync(templatePath));
 const bootstrapTemplate = JSON.parse(fs.readFileSync(bootstrapTemplatePath));
 const keys = JSON.parse(fs.readFileSync('./tools/local-network-setup/keys.json'));
@@ -37,19 +39,24 @@ fs.writeFileSync(bootstrapTemplatePath, JSON.stringify(bootstrapTemplate, null, 
 
 console.log(`Generating ${numberOfNodes} total nodes`);
 
-let repositoryPassword = process.env.REPOSITORY_PASSWORD;
-
 for (let i = 0; i < numberOfNodes; i += 1) {
     let nodeName;
     if (i === 0) {
         console.log('Using the preexisting identity for the first node (bootstrap)');
         nodeName = 'bootstrap';
-        dropDatabase(`operationaldb`, repositoryPassword);
+        await dropDatabase(
+            `operationaldb`,
+            generalConfig.development.modules.repository.implementation['sequelize-repository']
+                .config,
+        );
         continue;
     } else {
         nodeName = `DH${i}`;
     }
-    dropDatabase(`operationaldb${i}`, repositoryPassword);
+    await dropDatabase(
+        `operationaldb${i}`,
+        generalConfig.development.modules.repository.implementation['sequelize-repository'].config,
+    );
     console.log(`Configuring node ${nodeName}`);
 
     const configPath = path.join(`./tools/local-network-setup/.dh${i}_origintrail_noderc`);
@@ -87,7 +94,16 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     fs.writeFileSync(`${configPath}`, JSON.stringify(parsedTemplate, null, 2));
 }
 
-function dropDatabase(name, password) {
-    console.log('Dropping database');
-    execSync(`mysql -u root ${password ? `-p${password}` : ''} -e "DROP DATABASE ${name}"`);
+async function dropDatabase(name, config) {
+    console.log(`Dropping database: ${name}`);
+    const connection = mysql.createConnection({
+        database: name,
+        user: config.user,
+        host: config.host,
+        password: config.password,
+    });
+    try {
+        await connection.promise().query(`DROP DATABASE IF EXISTS ${name};`);
+    } catch (e) {}
+    connection.destroy();
 }
