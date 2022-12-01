@@ -51,7 +51,15 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
         }
 
         await Promise.all([
-            this.operationIdService.cacheOperationIdData(operationId, { assertionId }),
+            this.operationIdService.cacheOperationIdData(operationId, {
+                operationId,
+                assertionId,
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+                hashFunctionId,
+            }),
             this.operationIdService.updateOperationIdStatus(
                 operationId,
                 OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_END,

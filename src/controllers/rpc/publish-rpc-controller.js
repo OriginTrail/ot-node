@@ -102,29 +102,13 @@ class PublishController extends BaseController {
 
     async v1_0_2HandleRequest(message, remotePeerId, protocol) {
         const { operationId, keywordUuid, messageType } = message.header;
-        const { publishType, assertionId, blockchain, contract, tokenId, keyword, hashFunctionId } =
-            message.data;
-        const command = {
-            sequence: [],
-            delay: 0,
-            data: {
-                remotePeerId,
-                operationId,
-                keywordUuid,
-                publishType,
-                assertionId,
-                blockchain,
-                contract,
-                protocol,
-                tokenId,
-                keyword,
-                hashFunctionId,
-            },
-            transactional: false,
-        };
+
+        const command = { sequence: [], delay: 0, transactional: false, data: {} };
+        let dataSource;
         const [handleInitCommand, handleRequestCommand] = this.getCommandSequence(protocol);
         switch (messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
+                dataSource = message.data;
                 command.name = handleInitCommand;
                 command.period = 5000;
                 command.retries = 3;
@@ -132,10 +116,8 @@ class PublishController extends BaseController {
                 break;
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
                 // eslint-disable-next-line no-case-declarations
-                const { assertionId: cachedAssertionId } =
-                    await this.operationIdService.getCachedOperationIdData(operationId);
+                dataSource = await this.operationIdService.getCachedOperationIdData(operationId);
                 await this.operationIdService.cacheOperationIdData(operationId, {
-                    assertionId: cachedAssertionId,
                     assertion: message.data.assertion,
                 });
                 command.name = handleRequestCommand;
@@ -145,6 +127,19 @@ class PublishController extends BaseController {
             default:
                 throw Error('unknown message type');
         }
+
+        command.data = {
+            remotePeerId,
+            operationId,
+            keywordUuid,
+            protocol,
+            assertionId: dataSource.assertionId,
+            blockchain: dataSource.blockchain,
+            contract: dataSource.contract,
+            tokenId: dataSource.tokenId,
+            keyword: dataSource.keyword,
+            hashFunctionId: dataSource.hashFunctionId,
+        };
 
         await this.commandExecutor.add(command);
     }

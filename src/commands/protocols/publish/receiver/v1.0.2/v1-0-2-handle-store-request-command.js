@@ -23,15 +23,6 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         const { blockchain, keyword, hashFunctionId, contract, tokenId, operationId, assertionId } =
             commandData;
 
-        const { assertionId: storeInitAssertionId } =
-            await this.operationIdService.getCachedOperationIdData(operationId);
-
-        if (storeInitAssertionId !== assertionId) {
-            throw Error(
-                `Store request assertion id ${assertionId} does not match store init assertion id ${storeInitAssertionId}`,
-            );
-        }
-
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_START,

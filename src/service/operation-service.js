@@ -123,9 +123,8 @@ class OperationService {
         }
 
         // validate size
-        const blockchainAssertionSize = await this.blockchainModuleManager.getAssertionSize(
-            blockchain,
-            assertionId,
+        const blockchainAssertionSize = Number(
+            await this.blockchainModuleManager.getAssertionSize(blockchain, assertionId),
         );
         const assertionSize = assertionMetadata.getAssertionSizeInBytes(assertion);
         if (blockchainAssertionSize !== assertionSize) {
@@ -134,8 +133,9 @@ class OperationService {
             );
         }
         // validate triples number
-        const blockchainTriplesNumber =
-            await this.blockchainModuleManager.getAssertionTriplesNumber(blockchain, assertionId);
+        const blockchainTriplesNumber = Number(
+            await this.blockchainModuleManager.getAssertionTriplesNumber(blockchain, assertionId),
+        );
         const triplesNumber = assertionMetadata.getAssertionTriplesNumber(assertion);
         if (blockchainTriplesNumber !== triplesNumber) {
             throw Error(
@@ -143,9 +143,8 @@ class OperationService {
             );
         }
         // validate chunk size
-        const blockchainChunksNumber = await this.blockchainModuleManager.getAssertionChunksNumber(
-            blockchain,
-            assertionId,
+        const blockchainChunksNumber = Number(
+            await this.blockchainModuleManager.getAssertionChunksNumber(blockchain, assertionId),
         );
         const chunksNumber = assertionMetadata.getAssertionChunksNumber(assertion);
         if (blockchainChunksNumber !== chunksNumber) {
