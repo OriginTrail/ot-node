@@ -1,4 +1,5 @@
-import { ethers, BigNumber } from 'ethers';
+import { ethers } from 'ethers';
+import { BigNumber } from 'bignumber.js';
 
 class ServiceAgreementService {
     constructor(ctx) {
@@ -41,7 +42,6 @@ class ServiceAgreementService {
             peerRecord[hashFunctionName],
             keyHash,
         );
-        const distanceUint256BN = BigNumber.from(distanceUint8Array);
 
         const {
             distanceMappingCoefficient,
@@ -56,14 +56,16 @@ class ServiceAgreementService {
             d,
         } = await this.blockchainModuleManager.getLog2PLDSFParams(blockchainId);
 
-        const mappedStake = BigNumber.from(peerRecord.stake).div(stakeMappingCoefficient);
-        const mappedDistance = distanceUint256BN.div(distanceMappingCoefficient);
+        const mappedStake = new BigNumber(peerRecord.stake).dividedBy(stakeMappingCoefficient);
+        const mappedDistance = new BigNumber(distanceUint8Array).dividedBy(
+            distanceMappingCoefficient,
+        );
 
-        const dividend = mappedStake.pow(stakeExponent).mul(a).add(b);
-        const divisor = mappedDistance.pow(distanceExponent).mul(c).add(d);
+        const dividend = mappedStake.pow(stakeExponent).multipliedBy(a).plus(b);
+        const divisor = mappedDistance.pow(distanceExponent).multipliedBy(c).plus(d);
 
         return Math.floor(
-            multiplier * Math.log2(logArgumentConstant + dividend.toNumber() / divisor.toNumber()),
+            multiplier * Math.log2(logArgumentConstant + dividend.dividedBy(divisor)),
         );
     }
 }
