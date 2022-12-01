@@ -23,11 +23,11 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
     }
 
     async getBatchSize(blockchainId) {
-        return this.blockchainModuleManager.getR2(blockchainId);
+        return Number(await this.blockchainModuleManager.getR2(blockchainId));
     }
 
     async getMinAckResponses(blockchainId) {
-        return this.blockchainModuleManager.getR1(blockchainId);
+        return Number(await this.blockchainModuleManager.getR1(blockchainId));
     }
 
     /**

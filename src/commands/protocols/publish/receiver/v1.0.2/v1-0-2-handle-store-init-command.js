@@ -1,3 +1,4 @@
+import { BigNumber } from 'bignumber.js';
 import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
 import {
     NETWORK_MESSAGE_TYPES,
@@ -105,16 +106,15 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
                 .then((node) => this.blockchainModuleManager.convertToWei(blockchain, node.ask)),
         ]);
 
-        // ask: trace token amount / (epochs * Kb)
-        const serviceAgreementBid =
-            agreementData.tokenAmount /
-            (agreementData.epochsNumber * (blockchainAssertionSize / 1024) * r0);
+        const serviceAgreementBid = new BigNumber(agreementData.tokenAmount)
+            .dividedBy(r0)
+            .dividedBy(agreementData.epochsNumber)
+            .dividedBy(blockchainAssertionSize)
+            .multipliedBy(1024);
 
-        this.logger.trace(
-            `Calculated bid from service agreement: ${serviceAgreementBid}, node ask: ${ask}`,
-        );
+        this.logger.trace(`Service agreement bid: ${serviceAgreementBid}, ask: ${ask}`);
 
-        return serviceAgreementBid >= ask;
+        return new BigNumber(ask).lte(serviceAgreementBid);
     }
 
     async retryFinished(command) {

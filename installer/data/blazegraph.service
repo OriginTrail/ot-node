@@ -8,8 +8,8 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/root/
-ExecStart=/usr/bin/java -jar /root/blazegraph.jar
+WorkingDirectory=/root/ot-node/
+ExecStart=/usr/bin/java -jar /root/ot-node/blazegraph.jar
 Restart=on-failure
 
 [Install]

@@ -1,14 +1,16 @@
-import { BigNumber } from 'ethers';
+import { BigNumber } from 'bignumber.js';
 
-export const UINT256_MAX_BN = BigNumber.from(2).pow(256).sub(1);
+export const UINT256_MAX_BN = new BigNumber(2).pow(256).minus(1);
 
-export const UINT32_MAX_BN = BigNumber.from(2).pow(32).sub(1);
+export const UINT32_MAX_BN = new BigNumber(2).pow(32).minus(1);
 
-export const STAKE_UINT256_MULTIPLIER_BN = UINT256_MAX_BN.div(500000000);
+export const STAKE_UINT256_MULTIPLIER_BN = UINT256_MAX_BN.dividedBy(500000000);
 
-export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN.div(UINT32_MAX_BN);
+export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN.dividedBy(UINT32_MAX_BN);
 
 export const SCHEMA_CONTEXT = 'http://schema.org/';
+
+export const TRANSACTION_POLLING_TIMEOUT = 100;
 
 export const LIBP2P_KEY_DIRECTORY = 'libp2p';
 
@@ -55,10 +57,6 @@ export const XML_DATA_TYPES = {
 };
 
 export const MIN_NODE_VERSION = 16;
-
-export const INIT_ASK_AMOUNT = 2;
-
-export const INIT_STAKE_AMOUNT = 50000;
 
 export const NETWORK_API_RATE_LIMIT = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,

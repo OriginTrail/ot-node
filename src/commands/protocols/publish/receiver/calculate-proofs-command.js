@@ -69,7 +69,10 @@ class CalculateProofsCommand extends EpochCommand {
             .split('\n')
             .filter(Boolean);
 
-        const { leaf, proof } = this.validationModuleManager.getMerkleProof(nQuads, challenge);
+        const { leaf, proof } = this.validationModuleManager.getMerkleProof(
+            nQuads,
+            Number(challenge),
+        );
 
         await this.commandExecutor.add({
             name: 'submitProofsCommand',
@@ -95,7 +98,7 @@ class CalculateProofsCommand extends EpochCommand {
     }
 
     async isEligibleForRewards(blockchain, agreementId, epoch, identityId) {
-        const r0 = await this.blockchainModuleManager.getR0(blockchain);
+        const r0 = Number(await this.blockchainModuleManager.getR0(blockchain));
 
         const commits = await this.blockchainModuleManager.getCommitSubmissions(
             blockchain,
@@ -104,7 +107,7 @@ class CalculateProofsCommand extends EpochCommand {
         );
 
         for (let i = 0; i < r0; i += 1) {
-            if (commits[i].identityId === identityId) {
+            if (Number(commits[i].identityId) === identityId) {
                 this.logger.trace(`Node is eligible for rewards for agreement id: ${agreementId}`);
 
                 return true;

@@ -1,4 +1,4 @@
-import { ethers, BigNumber } from 'ethers';
+import { ethers } from 'ethers';
 import Web3 from 'web3';
 import axios from 'axios';
 import async from 'async';
@@ -7,9 +7,8 @@ import { createRequire } from 'module';
 
 import {
     DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
-    INIT_ASK_AMOUNT,
-    INIT_STAKE_AMOUNT,
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
+    TRANSACTION_POLLING_TIMEOUT,
     TRANSACTION_QUEUE_CONCURRENCY,
     WEBSOCKET_PROVIDER_OPTIONS,
 } from '../../../constants/constants.js';
@@ -56,7 +55,6 @@ class Web3Service {
                 );
                 future.resolve(result);
             } catch (error) {
-                // if not mined send same transaction with bigger gas price
                 future.revert(error);
             }
             cb();
@@ -94,6 +92,7 @@ class Web3Service {
                     this.web3 = new Web3(provider);
                 } else {
                     this.web3 = new Web3(this.config.rpcEndpoints[this.rpcNumber]);
+                    this.web3.eth.transactionPollingTimeout = TRANSACTION_POLLING_TIMEOUT;
                 }
                 // eslint-disable-next-line no-await-in-loop
                 isRpcConnected = await this.web3.eth.net.isListening();
@@ -297,8 +296,8 @@ class Web3Service {
     }
 
     async createProfile(peerId) {
-        const initialAsk = this.convertToWei(INIT_ASK_AMOUNT);
-        const initialStake = this.convertToWei(INIT_STAKE_AMOUNT);
+        const initialAsk = this.convertToWei(this.config.initialAskAmount);
+        const initialStake = this.convertToWei(this.config.initialStakeAmount);
 
         await this.queueTransaction(this.TokenContract, 'increaseAllowance', [
             this.ProfileContract.options.address,
@@ -371,11 +370,11 @@ class Web3Service {
 
     async _executeContractFunction(contractInstance, functionName, args) {
         let result;
+        let gasPrice = (await this.getGasPrice()) || this.convertToWei(20, 'gwei');
+        let transactionRetried = false;
         while (result === undefined) {
             try {
                 /* eslint-disable no-await-in-loop */
-                const gasPrice = await this.getGasPrice();
-
                 let gasLimit;
 
                 if (FIXED_GAS_LIMIT_METHODS.includes(functionName)) {
@@ -387,23 +386,38 @@ class Web3Service {
                 }
 
                 const encodedABI = contractInstance.methods[functionName](...args).encodeABI();
+                const gas = gasLimit || this.convertToWei(900, 'kwei');
                 const tx = {
                     from: this.getPublicKey(),
                     to: contractInstance.options.address,
                     data: encodedABI,
-                    gasPrice: gasPrice || this.convertToWei(20, 'Gwei'),
-                    gas: gasLimit || this.convertToWei(900, 'Kwei'),
+                    gasPrice,
+                    gas,
                 };
 
                 const createdTransaction = await this.web3.eth.accounts.signTransaction(
                     tx,
                     this.getPrivateKey(),
                 );
+                this.logger.info(
+                    `Sending transaction to blockchain, calling method: ${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}`,
+                );
                 result = await this.web3.eth.sendSignedTransaction(
                     createdTransaction.rawTransaction,
                 );
             } catch (error) {
-                await this.handleError(error, functionName);
+                if (
+                    !transactionRetried &&
+                    error.message.includes(`Transaction was not mined within`)
+                ) {
+                    this.logger.warn(
+                        `Transaction was not mined within ${TRANSACTION_POLLING_TIMEOUT} seconds. Retrying transaction with new gas price`,
+                    );
+                    gasPrice *= 1.2;
+                    transactionRetried = true;
+                } else {
+                    await this.handleError(error, functionName);
+                }
             }
         }
 
@@ -505,8 +519,8 @@ class Web3Service {
                 const tx = {
                     from: this.getPublicKey(),
                     data: encodedABI,
-                    gasPrice: gasPrice ?? this.convertToWei(20, 'Gwei'),
-                    gas: gasLimit ?? this.convertToWei(900, 'Kwei'),
+                    gasPrice: gasPrice ?? this.convertToWei(20, 'gwei'),
+                    gas: gasLimit ?? this.convertToWei(900, 'kwei'),
                 };
 
                 const createdTransaction = await this.web3.eth.accounts.signTransaction(
@@ -521,15 +535,6 @@ class Web3Service {
         }
 
         return result;
-    }
-
-    async getAssertionsLength(assetContractAddress, tokenId) {
-        const assertionsLength = await this.callContractFunction(
-            this.assetContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
-            'getAssertionsLength',
-            [tokenId],
-        );
-        return Number(assertionsLength);
     }
 
     async getAssertionByIndex(assetContractAddress, tokenId, index) {
@@ -561,97 +566,30 @@ class Web3Service {
             [agreementId],
         );
 
-        const agreementData = {};
-        agreementData.startTime = Number(result['0']);
-        agreementData.epochsNumber = Number(result['1']);
-        agreementData.epochLength = Number(result['2']);
-        agreementData.tokenAmount = Number(result['3']);
-        agreementData.scoreFunctionId = Number(result['4']);
-        agreementData.proofWindowOffsetPerc = Number(result['5']);
-
-        return agreementData;
+        return {
+            startTime: result['0'],
+            epochsNumber: result['1'],
+            epochLength: result['2'],
+            tokenAmount: result['3'],
+            scoreFunctionId: result['4'],
+            proofWindowOffsetPerc: result['5'],
+        };
     }
 
     async getAssertionSize(assertionId) {
-        const size = await this.callContractFunction(this.AssertionRegistryContract, 'getSize', [
-            assertionId,
-        ]);
-
-        return Number(size);
+        return this.callContractFunction(this.AssertionRegistryContract, 'getSize', [assertionId]);
     }
 
     async getAssertionTriplesNumber(assertionId) {
-        const triplesNumber = await this.callContractFunction(
-            this.AssertionRegistryContract,
-            'getTriplesNumber',
-            [assertionId],
-        );
-
-        return Number(triplesNumber);
+        return this.callContractFunction(this.AssertionRegistryContract, 'getTriplesNumber', [
+            assertionId,
+        ]);
     }
 
     async getAssertionChunksNumber(assertionId) {
-        const chunksNumber = await this.callContractFunction(
-            this.AssertionRegistryContract,
-            'getChunksNumber',
-            [assertionId],
-        );
-
-        return Number(chunksNumber);
-    }
-
-    async getAgreementStartTime(agreementId) {
-        const startTime = await this.callContractFunction(
-            this.ServiceAgreementStorageContract,
-            'getAgreementStartTime',
-            [agreementId],
-        );
-        return Number(startTime);
-    }
-
-    async getAgreementEpochsNumber(agreementId) {
-        const epochsNumber = await this.callContractFunction(
-            this.ServiceAgreementStorageContract,
-            'getAgreementEpochsNumber',
-            [agreementId],
-        );
-        return Number(epochsNumber);
-    }
-
-    async getAgreementEpochLength(agreementId) {
-        const epochLength = await this.callContractFunction(
-            this.ServiceAgreementStorageContract,
-            'getAgreementEpochLength',
-            [agreementId],
-        );
-        return Number(epochLength);
-    }
-
-    async getAgreementTokenAmount(agreementId) {
-        const tokenAmount = await this.callContractFunction(
-            this.ServiceAgreementStorageContract,
-            'getAgreementTokenAmount',
-            [agreementId],
-        );
-        return Number(tokenAmount);
-    }
-
-    async getAgreementScoreFunctionId(agreementId) {
-        const scoreFunctionId = await this.callContractFunction(
-            this.ServiceAgreementStorageContract,
-            'getAgreementScoreFunctionId',
-            [agreementId],
-        );
-        return Number(scoreFunctionId);
-    }
-
-    async getAgreementProofWindowOffsetPerc(agreementId) {
-        const proofWindowOffsetPerc = await this.callContractFunction(
-            this.ServiceAgreementStorageContract,
-            'getAgreementProofWindowOffsetPerc',
-            [agreementId],
-        );
-        return Number(proofWindowOffsetPerc);
+        return this.callContractFunction(this.AssertionRegistryContract, 'getChunksNumber', [
+            assertionId,
+        ]);
     }
 
     async isCommitWindowOpen(agreementId, epoch) {
@@ -672,9 +610,9 @@ class Web3Service {
         return commits
             .filter((commit) => commit.identityId !== '0')
             .map((commit) => ({
-                identityId: Number(commit.identityId),
-                nextIdentityId: Number(commit.nextIdentityId),
-                score: Number(commit.score),
+                identityId: commit.identityId,
+                nextIdentityId: commit.nextIdentityId,
+                score: commit.score,
             }));
     }
 
@@ -692,18 +630,15 @@ class Web3Service {
     }
 
     async getR2() {
-        const R2 = await this.callContractFunction(this.ParametersStorageContract, 'R2', []);
-        return Number(R2);
+        return this.callContractFunction(this.ParametersStorageContract, 'R2', []);
     }
 
     async getR1() {
-        const R1 = await this.callContractFunction(this.ParametersStorageContract, 'R1', []);
-        return Number(R1);
+        return this.callContractFunction(this.ParametersStorageContract, 'R1', []);
     }
 
     async getR0() {
-        const R0 = await this.callContractFunction(this.ParametersStorageContract, 'R0', []);
-        return Number(R0);
+        return this.callContractFunction(this.ParametersStorageContract, 'R0', []);
     }
 
     async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch) {
@@ -725,19 +660,13 @@ class Web3Service {
     }
 
     async getChallenge(assetContractAddress, tokenId, epoch) {
-        const challengeDict = await this.callContractFunction(
+        const result = await this.callContractFunction(
             this.ServiceAgreementStorageContract,
             'getChallenge',
             [this.getPublicKey(), assetContractAddress, tokenId, epoch],
         );
 
-        challengeDict.assertionId = challengeDict['0'];
-        challengeDict.challenge = Number(challengeDict['1']);
-
-        delete challengeDict['0'];
-        delete challengeDict['1'];
-
-        return challengeDict;
+        return { assertionId: result['0'], challenge: result['1'] };
     }
 
     async sendProof(
@@ -770,7 +699,7 @@ class Web3Service {
             'nodesCount',
             [],
         );
-        return Number(nodesCount);
+        return nodesCount;
     }
 
     async getShardingTablePage(startingPeerId, nodesNum) {
@@ -778,10 +707,6 @@ class Web3Service {
             startingPeerId,
             nodesNum,
         ]);
-    }
-
-    async getShardingTableFull() {
-        return this.callContractFunction(this.ShardingTableContract, 'getShardingTable', []);
     }
 
     getBlockchainId() {
@@ -797,7 +722,11 @@ class Web3Service {
     }
 
     convertToWei(ether, fromUnit = 'ether') {
-        return Web3.utils.toWei(ether.toString(), fromUnit);
+        return ethers.utils.parseUnits(ether.toString(), fromUnit).toString();
+    }
+
+    convertFromWei(ether, toUnit = 'ether') {
+        return ethers.utils.formatUnits(ether.toString(), toUnit).toString();
     }
 
     async healthCheck() {
@@ -844,7 +773,7 @@ class Web3Service {
             'commitWindowDuration',
             [],
         );
-        return Number(commitWindowDuration);
+        return commitWindowDuration;
     }
 
     async getProofWindowDurationPerc() {
@@ -853,7 +782,7 @@ class Web3Service {
             'proofWindowDurationPerc',
             [],
         );
-        return Number(proofWindowDurationPerc);
+        return proofWindowDurationPerc;
     }
 
     async getLog2PLDSFParams() {
@@ -864,10 +793,8 @@ class Web3Service {
         );
 
         const params = {};
-        params.distanceMappingCoefficient = BigNumber.from(log2pldsfParams['0']);
-        params.stakeMappingCoefficient = Number(
-            ethers.utils.formatUnits(log2pldsfParams['1'], 'ether'),
-        );
+        params.distanceMappingCoefficient = log2pldsfParams['0'];
+        params.stakeMappingCoefficient = ethers.utils.formatUnits(log2pldsfParams['1'], 'ether');
 
         const paramNames = [
             'multiplier',
@@ -880,7 +807,7 @@ class Web3Service {
             'd',
         ];
         log2pldsfParams['2'].forEach((val, index) => {
-            params[paramNames[index]] = Number(val);
+            params[paramNames[index]] = val;
         });
 
         return params;
