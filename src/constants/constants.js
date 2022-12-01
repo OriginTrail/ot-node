@@ -58,10 +58,6 @@ export const XML_DATA_TYPES = {
 
 export const MIN_NODE_VERSION = 16;
 
-export const INIT_ASK_AMOUNT = 2;
-
-export const INIT_STAKE_AMOUNT = 50000;
-
 export const NETWORK_API_RATE_LIMIT = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
     MAX_NUMBER: 20,
