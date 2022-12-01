@@ -36,7 +36,8 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             operationId,
             OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_START,
         );
-        await this.operationService.validateAssertion(assertionId, operationId, blockchain);
+        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
+        await this.operationService.validateAssertion(assertionId, blockchain, assertion);
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
