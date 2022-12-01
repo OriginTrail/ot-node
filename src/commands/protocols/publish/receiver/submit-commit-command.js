@@ -22,7 +22,7 @@ class SubmitCommitCommand extends EpochCommand {
             keyword,
             hashFunctionId,
             epoch,
-            serviceAgreement,
+            agreementData,
             agreementId,
             identityId,
             operationId,
@@ -60,7 +60,7 @@ class SubmitCommitCommand extends EpochCommand {
                 name: 'calculateProofsCommand',
                 sequence: [],
                 delay: 0, // We should calculate proofs after commit phase end + only for winning nodes.
-                data: { ...command.data, serviceAgreement, identityId },
+                data: { ...command.data, agreementData, identityId },
                 transactional: false,
             });
             return EpochCommand.empty();
@@ -87,7 +87,7 @@ class SubmitCommitCommand extends EpochCommand {
                 keyword,
                 epoch,
                 hashFunctionId,
-                serviceAgreement,
+                agreementData,
                 operationId,
             );
             return EpochCommand.empty();
@@ -110,20 +110,19 @@ class SubmitCommitCommand extends EpochCommand {
         const endOffset = 30; // 30 sec
 
         const currentEpochStartTime =
-            Number(serviceAgreement.startTime) + Number(serviceAgreement.epochLength) * epoch;
+            Number(agreementData.startTime) + Number(agreementData.epochLength) * epoch;
 
         const proofWindowDurationPerc = Number(
             await this.blockchainModuleManager.getProofWindowDurationPerc(blockchain),
         );
 
         const proofWindowDuration =
-            (proofWindowDurationPerc / 100) * Number(serviceAgreement.epochLength);
+            (proofWindowDurationPerc / 100) * Number(agreementData.epochLength);
 
         const proofWindowStartTime =
             currentEpochStartTime +
             Math.floor(
-                (Number(serviceAgreement.epochLength) *
-                    Number(serviceAgreement.proofWindowOffsetPerc)) /
+                (Number(agreementData.epochLength) * Number(agreementData.proofWindowOffsetPerc)) /
                     100,
             );
 

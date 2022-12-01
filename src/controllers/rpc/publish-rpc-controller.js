@@ -122,13 +122,15 @@ class PublishController extends BaseController {
                 });
                 command.name = handleRequestCommand;
                 command.data.keyword = message.data.keyword;
-
+                command.data.agreementId = dataSource.agreementId;
+                command.data.agreementData = dataSource.agreementData;
                 break;
             default:
                 throw Error('unknown message type');
         }
 
         command.data = {
+            ...command.data,
             remotePeerId,
             operationId,
             keywordUuid,

@@ -20,8 +20,17 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { blockchain, keyword, hashFunctionId, contract, tokenId, operationId, assertionId } =
-            commandData;
+        const {
+            blockchain,
+            keyword,
+            hashFunctionId,
+            contract,
+            tokenId,
+            operationId,
+            assertionId,
+            agreementId,
+            agreementData,
+        } = commandData;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -53,24 +62,10 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
         );
 
-        const agreementId = await this.serviceAgreementService.generateId(
-            contract,
-            tokenId,
-            keyword,
-            hashFunctionId,
-        );
-        this.logger.info(
-            `Calculated agreement id: ${agreementId} for contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}`,
-        );
         await this.repositoryModuleManager.updateOperationAgreementStatus(
             operationId,
             agreementId,
             AGREEMENT_STATUS.ACTIVE,
-        );
-
-        const serviceAgreement = await this.blockchainModuleManager.getAgreementData(
-            blockchain,
-            agreementId,
         );
 
         await this.commandExecutor.add({
@@ -79,14 +74,14 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             delay: 0,
             data: {
                 blockchain,
-                agreementId,
                 contract,
                 tokenId,
                 keyword,
                 epoch: 0,
                 hashFunctionId,
                 operationId,
-                serviceAgreement,
+                agreementId,
+                agreementData,
             },
             transactional: false,
         });

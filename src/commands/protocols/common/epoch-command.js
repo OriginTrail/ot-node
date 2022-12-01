@@ -14,11 +14,11 @@ class EpochCommand extends Command {
         keyword,
         epoch,
         hashFunctionId,
-        serviceAgreement,
+        agreementData,
         operationId,
     ) {
         const nextEpochStartTime =
-            Number(serviceAgreement.startTime) + Number(serviceAgreement.epochLength) * (epoch + 1);
+            Number(agreementData.startTime) + Number(agreementData.epochLength) * (epoch + 1);
 
         // delay by 10% of commit window length
         const offset =
@@ -41,7 +41,7 @@ class EpochCommand extends Command {
                 keyword,
                 epoch: epoch + 1,
                 hashFunctionId,
-                serviceAgreement,
+                agreementData,
                 operationId,
             },
             transactional: false,
@@ -64,7 +64,7 @@ class EpochCommand extends Command {
             command.data.keyword,
             command.data.epoch,
             command.data.hashFunctionId,
-            command.data.serviceAgreement,
+            command.data.agreementData,
             command.data.operationId,
         );
 
