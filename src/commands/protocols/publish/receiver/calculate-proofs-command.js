@@ -100,7 +100,7 @@ class CalculateProofsCommand extends EpochCommand {
     async isEligibleForRewards(blockchain, agreementId, epoch, identityId) {
         const r0 = Number(await this.blockchainModuleManager.getR0(blockchain));
 
-        const commits = await this.blockchainModuleManager.getCommitSubmissions(
+        const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
             blockchain,
             agreementId,
             epoch,

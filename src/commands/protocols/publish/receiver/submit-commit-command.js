@@ -41,7 +41,7 @@ class SubmitCommitCommand extends EpochCommand {
                 `hash function id: ${hashFunctionId}`,
         );
 
-        const commits = await this.blockchainModuleManager.getCommitSubmissions(
+        const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
             blockchain,
             agreementId,
             epoch,

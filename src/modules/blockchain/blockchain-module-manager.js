@@ -65,9 +65,9 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getAssertionByIndex(blockchain, assetContractAddress, tokenId, index) {
+    async getAssertionIdByIndex(blockchain, assetContractAddress, tokenId, index) {
         if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAssertionByIndex(
+            return this.getImplementation(blockchain).module.getAssertionIdByIndex(
                 assetContractAddress,
                 tokenId,
                 index,
@@ -75,9 +75,9 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getLatestAssertion(blockchain, assetContractAddress, tokenId) {
+    async getLatestAssertionId(blockchain, assetContractAddress, tokenId) {
         if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getLatestAssertion(
+            return this.getImplementation(blockchain).module.getLatestAssertionId(
                 assetContractAddress,
                 tokenId,
             );
@@ -102,10 +102,10 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getShardingTablePage(blockchain, startingPeerId, nodesNum) {
+    async getShardingTablePage(blockchain, startingIdentityId, nodesNum) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getShardingTablePage(
-                startingPeerId,
+                startingIdentityId,
                 nodesNum,
             );
         }
@@ -162,9 +162,9 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getCommitSubmissions(blockchain, agreementId, epoch) {
+    async getTopCommitSubmissions(blockchain, agreementId, epoch) {
         if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getCommitSubmissions(
+            return this.getImplementation(blockchain).module.getTopCommitSubmissions(
                 agreementId,
                 epoch,
             );
@@ -249,12 +249,6 @@ class BlockchainModuleManager extends BaseModuleManager {
     async getHashFunctionName(blockchain, hashFunctionId) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getHashFunctionName(hashFunctionId);
-        }
-    }
-
-    async callHashFunction(blockchain, hashFunctionId, data) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.callHashFunction(hashFunctionId, data);
         }
     }
 
