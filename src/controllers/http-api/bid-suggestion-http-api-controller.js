@@ -7,7 +7,7 @@ class BidSuggestionController extends BaseController {
     }
 
     async handleBidSuggestionRequest(req, res) {
-        const { blockchain, epochsNumber, assertionSize } = req.body;
+        const { blockchain, epochsNumber, assertionSize } = req.query;
 
         this.returnResponse(res, 200, {
             bidSuggestion: await this.shardingTableService.getBidSuggestion(

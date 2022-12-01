@@ -110,17 +110,21 @@ class SubmitCommitCommand extends EpochCommand {
         const endOffset = 30; // 30 sec
 
         const currentEpochStartTime =
-            serviceAgreement.startTime + serviceAgreement.epochLength * epoch;
+            Number(serviceAgreement.startTime) + Number(serviceAgreement.epochLength) * epoch;
 
-        const proofWindowDurationPerc =
-            await this.blockchainModuleManager.getProofWindowDurationPerc(blockchain);
+        const proofWindowDurationPerc = Number(
+            await this.blockchainModuleManager.getProofWindowDurationPerc(blockchain),
+        );
 
-        const proofWindowDuration = (proofWindowDurationPerc / 100) * serviceAgreement.epochLength;
+        const proofWindowDuration =
+            (proofWindowDurationPerc / 100) * Number(serviceAgreement.epochLength);
 
         const proofWindowStartTime =
             currentEpochStartTime +
             Math.floor(
-                (serviceAgreement.epochLength * serviceAgreement.proofWindowOffsetPerc) / 100,
+                (Number(serviceAgreement.epochLength) *
+                    Number(serviceAgreement.proofWindowOffsetPerc)) /
+                    100,
             );
 
         const timeNow = Math.floor(Date.now() / 1000);
@@ -149,7 +153,7 @@ class SubmitCommitCommand extends EpochCommand {
     }
 
     async calculateRank(blockchain, keyword, hashFunctionId) {
-        const r2 = await this.blockchainModuleManager.getR2(blockchain);
+        const r2 = Number(await this.blockchainModuleManager.getR2(blockchain));
         const neighbourhood = await this.shardingTableService.findNeighbourhood(
             blockchain,
             keyword,
@@ -179,7 +183,7 @@ class SubmitCommitCommand extends EpochCommand {
 
     alreadyCommitted(commits, myIdentity) {
         commits.forEach((commit) => {
-            if (commit.identityId === myIdentity) {
+            if (Number(commit.identityId) === myIdentity) {
                 return true;
             }
         });

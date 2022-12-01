@@ -85,7 +85,7 @@ class EpochCheckCommand extends EpochCommand {
             sequence: [],
             delay: 0,
             period: 12 * 1000, // todo: get from blockchain / oracle
-            retries: await this.blockchainModuleManager.getR0(blockchain),
+            retries: Number(await this.blockchainModuleManager.getR0(blockchain)),
             data: { ...command.data, serviceAgreement, identityId },
             transactional: false,
         });
@@ -104,7 +104,7 @@ class EpochCheckCommand extends EpochCommand {
     }
 
     assetLifetimeExpired(serviceAgreement, epoch) {
-        return serviceAgreement.epochsNumber < epoch;
+        return Number(serviceAgreement.epochsNumber) < epoch;
     }
 
     /**
