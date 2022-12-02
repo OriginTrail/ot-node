@@ -11,6 +11,7 @@ import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js'
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
 import BlockchainIdentityMigration from './src/migration/blockchain-identity-migration.js';
 import CleanShardingTableMigration from './src/migration/clean-sharding-table-migration.js';
+import CleanOperationalDatabaseMigration from './src/migration/clean-operational-database-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -47,6 +48,7 @@ class OTNode {
 
         await this.initializeModules();
 
+        await this.executeCleanOperationalDatabaseMigration();
         await this.executeCleanShardingTableMigration();
 
         await this.listenOnHubContractChanges();
@@ -368,6 +370,21 @@ class OTNode {
         );
         if (!(await cleanShardingTableMigration.migrationAlreadyExecuted())) {
             await cleanShardingTableMigration.migrate();
+        }
+    }
+
+    async executeCleanOperationalDatabaseMigration() {
+        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
+        const cleanShardingTableMigration = new CleanOperationalDatabaseMigration(
+            'CleanOperationalDatabaseMigration',
+            this.logger,
+            this.config,
+            repositoryModuleManager,
+        );
+        if (!(await cleanShardingTableMigration.migrationAlreadyExecuted())) {
+            await cleanShardingTableMigration.migrate();
+            this.logger.info('Operational database cleanup completed. Node will now restart!');
+            this.stop();
         }
     }
 
