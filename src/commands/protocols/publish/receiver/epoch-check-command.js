@@ -27,7 +27,6 @@ class EpochCheckCommand extends EpochCommand {
             epoch,
             hashFunctionId,
             operationId,
-            agreementData,
         } = command.data;
 
         this.logger.trace(
@@ -41,6 +40,11 @@ class EpochCheckCommand extends EpochCommand {
             agreementId,
             epoch,
         );
+
+        const agreementData =
+            epoch === 0
+                ? command.data.agreementData
+                : await this.blockchainModuleManager.getAgreementData(blockchain, agreementId);
 
         if (this.assetLifetimeExpired(agreementData, epoch)) {
             this.logger.trace(`Asset lifetime for agreement id: ${agreementId} has expired.`);

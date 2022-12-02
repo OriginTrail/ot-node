@@ -8,7 +8,7 @@ class MerkleValidation {
 
         this.hashFunctions = {
             // TODO: Change this nonsense
-            0: 'sha256',
+            1: 'sha256',
         };
     }
 

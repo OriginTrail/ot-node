@@ -8,7 +8,6 @@ class CalculateProofsCommand extends EpochCommand {
         this.validationModuleManager = ctx.validationModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
-        this.serviceAgreementService = ctx.serviceAgreementService;
         this.operationIdService = ctx.operationIdService;
 
         this.errorType = ERROR_TYPE.CALCULATE_PROOFS_ERROR;
@@ -21,7 +20,7 @@ class CalculateProofsCommand extends EpochCommand {
             tokenId,
             keyword,
             hashFunctionId,
-            serviceAgreement,
+            agreementData,
             epoch,
             agreementId,
             identityId,
@@ -50,7 +49,7 @@ class CalculateProofsCommand extends EpochCommand {
                 keyword,
                 epoch,
                 hashFunctionId,
-                serviceAgreement,
+                agreementData,
                 operationId,
             );
 

@@ -7,32 +7,44 @@ const hub = JSON.parse(await readFile('node_modules/dkg-evm-module/build/contrac
 const shardingTable = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/ShardingTable.json'),
 );
-const assertionRegistry = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/AssertionRegistry.json'),
+const staking = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/Staking.json'),
+);
+const shardingTableStorage = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/ShardingTableStorage.json'),
+);
+const assertionStorage = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/AssertionStorage.json'),
 );
 const contentAsset = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/ContentAsset.json')
+    await readFile('node_modules/dkg-evm-module/build/contracts/ContentAsset.json'),
 );
 const hashingProxy = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/HashingProxy.json')
+    await readFile('node_modules/dkg-evm-module/build/contracts/HashingProxy.json'),
+);
+const identity = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/Identity.json'),
 );
 const identityStorage = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/IdentityStorage.json')
+    await readFile('node_modules/dkg-evm-module/build/contracts/IdentityStorage.json'),
 );
 const parametersStorage = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/ParametersStorage.json')
-)
+    await readFile('node_modules/dkg-evm-module/build/contracts/ParametersStorage.json'),
+);
 const scoringProxy = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/ScoringProxy.json')
+    await readFile('node_modules/dkg-evm-module/build/contracts/ScoringProxy.json'),
 );
 const serviceAgreementStorage = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/ServiceAgreementStorage.json')
+    await readFile('node_modules/dkg-evm-module/build/contracts/ServiceAgreementStorageV1.json'),
+);
+const serviceAgreement = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/ServiceAgreementV1.json'),
 );
 const sha256Contract = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/SHA256.json')
+    await readFile('node_modules/dkg-evm-module/build/contracts/SHA256.json'),
 );
 const log2pldsfContract = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/Log2PLDSF.json')
+    await readFile('node_modules/dkg-evm-module/build/contracts/Log2PLDSF.json'),
 );
 const erc20Token = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/ERC20Token.json'),
@@ -43,14 +55,25 @@ const profile = JSON.parse(
 const profileStorage = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/ProfileStorage.json'),
 );
+const assertion = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/Assertion.json'),
+);
+const stakingStorage = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/StakingStorage.json'),
+);
+
 const accountPrivateKeys = JSON.parse(
     await readFile('test/bdd/steps/api/datasets/privateKeys.json'),
 );
 
 const sources = {
     hub,
+    assertion,
+    stakingStorage,
     shardingTable,
-    assertionRegistry,
+    assertionStorage,
+    shardingTableStorage,
+    serviceAgreement,
     erc20Token,
     profileStorage,
     profile,
@@ -61,7 +84,9 @@ const sources = {
     scoringProxy,
     serviceAgreementStorage,
     sha256Contract,
-    log2pldsfContract
+    log2pldsfContract,
+    staking,
+    identity,
 };
 const web3 = new Web3();
 const wallets = accountPrivateKeys.map((privateKey) => ({
@@ -135,16 +160,31 @@ class LocalBlockchain {
                     `\t Hub contract address: \t\t\t\t\t${this.contracts.hub.instance._address}`,
                 );
                 this.logger.info(
+                    `\t Staking contract address: \t\t\t\t\t${this.contracts.staking.instance._address}`,
+                );
+                this.logger.info(
+                    `\t StakingStorage contract address: \t\t\t\t\t${this.contracts.stakingStorage.instance._address}`,
+                );
+                this.logger.info(
                     `\t Sharding table contract address: \t\t\t${this.contracts.shardingTable.instance._address}`,
                 );
                 this.logger.info(
-                    `\t AssertionRegistry contract address: \t\t\t${this.contracts.assertionRegistry.instance._address}`,
+                    `\t ShardingTableStorage contract address: \t\t\t${this.contracts.shardingTableStorage.instance._address}`,
+                );
+                this.logger.info(
+                    `\t Assertion contract address: \t\t\t${this.contracts.assertion.instance._address}`,
+                );
+                this.logger.info(
+                    `\t AssertionStorage contract address: \t\t\t${this.contracts.assertionStorage.instance._address}`,
                 );
                 this.logger.info(
                     `\t Content Asset contract address: \t\t\t\t${this.contracts.contentAsset.instance._address}`,
                 );
                 this.logger.info(
                     `\t Hashing Proxy contract address: \t\t\t\t${this.contracts.hashingProxy.instance._address}`,
+                );
+                this.logger.info(
+                    `\t Identity contract address: \t\t\t\t${this.contracts.identity.instance._address}`,
                 );
                 this.logger.info(
                     `\t Identity Storage contract address: \t\t\t\t${this.contracts.identityStorage.instance._address}`,
@@ -157,6 +197,9 @@ class LocalBlockchain {
                 );
                 this.logger.info(
                     `\t Service Agreement Storage contract address: \t\t\t\t${this.contracts.serviceAgreementStorage.instance._address}`,
+                );
+                this.logger.info(
+                    `\t Service Agreement contract address: \t\t\t\t${this.contracts.serviceAgreement.instance._address}`,
                 );
                 this.logger.info(
                     `\t Token contract address: \t\t\t\t${this.contracts.erc20Token.instance._address}`,
@@ -189,59 +232,79 @@ class LocalBlockchain {
     }
 
     async deployContracts() {
-
         await this.deploy('hub', deployingWallet, []);
         await this.setContractAddress('Owner', deployingWallet.address, deployingWallet);
+
+        await this.deploy('erc20Token', deployingWallet, [this.contracts.hub.instance._address]);
+        await this.setContractAddress(
+            'Token',
+            this.contracts.erc20Token.instance._address,
+            deployingWallet,
+        );
+        await this.setupRole(this.contracts.erc20Token, deployingWallet.address);
 
         await this.deploy('parametersStorage', deployingWallet, []);
         await this.setContractAddress(
             'ParametersStorage',
             this.contracts.parametersStorage.instance._address,
-            deployingWallet
+            deployingWallet,
         );
 
         await this.deploy('hashingProxy', deployingWallet, []);
         await this.setContractAddress(
             'HashingProxy',
             this.contracts.hashingProxy.instance._address,
-            deployingWallet
-        );
-
-        await this.deploy('sha256Contract', deployingWallet, []);
-
-        await this.setHashFunctionContractAddress(
-            0,
-            this.contracts.sha256Contract.instance._address,
-            deployingWallet
+            deployingWallet,
         );
 
         await this.deploy('scoringProxy', deployingWallet, []);
         await this.setContractAddress(
             'ScoringProxy',
             this.contracts.scoringProxy.instance._address,
-            deployingWallet
-        );
-
-        await this.deploy('log2pldsfContract', deployingWallet, [this.contracts.hub.instance._address]);
-        await this.setScoreFunctionContractAddress(
-            0,
-            this.contracts.log2pldsfContract.instance._address,
-            deployingWallet
-        );
-
-        await this.deploy('shardingTable', deployingWallet, [this.contracts.hub.instance._address]);
-        await this.setContractAddress(
-            'ShardingTable',
-            this.contracts.shardingTable.instance._address,
             deployingWallet,
         );
 
-        await this.deploy('assertionRegistry', deployingWallet, [
+        await this.deploy('sha256Contract', deployingWallet, []);
+
+        await this.setHashFunctionContractAddress(
+            1,
+            this.contracts.sha256Contract.instance._address,
+            deployingWallet,
+        );
+
+        await this.deploy('log2pldsfContract', deployingWallet, [
+            this.contracts.hub.instance._address,
+        ]);
+        await this.setScoreFunctionContractAddress(
+            1,
+            this.contracts.log2pldsfContract.instance._address,
+            deployingWallet,
+        );
+
+        await this.deploy('stakingStorage', deployingWallet, [
             this.contracts.hub.instance._address,
         ]);
         await this.setContractAddress(
-            'AssertionRegistry',
-            this.contracts.assertionRegistry.instance._address,
+            'StakingStorage',
+            this.contracts.stakingStorage.instance._address,
+            deployingWallet,
+        );
+
+        await this.deploy('shardingTableStorage', deployingWallet, [
+            this.contracts.hub.instance._address,
+        ]);
+        await this.setContractAddress(
+            'ShardingTableStorage',
+            this.contracts.shardingTableStorage.instance._address,
+            deployingWallet,
+        );
+
+        await this.deploy('assertionStorage', deployingWallet, [
+            this.contracts.hub.instance._address,
+        ]);
+        await this.setContractAddress(
+            'AssertionStorage',
+            this.contracts.assertionStorage.instance._address,
             deployingWallet,
         );
 
@@ -254,18 +317,13 @@ class LocalBlockchain {
             deployingWallet,
         );
 
-        await this.deploy('contentAsset', deployingWallet, [this.contracts.hub.instance._address]);
-        await this.setAssetContractAddress(
-            'ContentAsset',
-            this.contracts.contentAsset.instance._address,
-            deployingWallet
-        );
-
-        await this.deploy('identityStorage', deployingWallet, [this.contracts.hub.instance._address]);
+        await this.deploy('identityStorage', deployingWallet, [
+            this.contracts.hub.instance._address,
+        ]);
         await this.setContractAddress(
             'IdentityStorage',
             this.contracts.identityStorage.instance._address,
-            deployingWallet
+            deployingWallet,
         );
 
         await this.deploy('profileStorage', deployingWallet, [
@@ -277,18 +335,54 @@ class LocalBlockchain {
             deployingWallet,
         );
 
-        await this.deploy('erc20Token', deployingWallet, [this.contracts.hub.instance._address]);
+        await this.deploy('assertion', deployingWallet, [this.contracts.hub.instance._address]);
         await this.setContractAddress(
-            'Token',
-            this.contracts.erc20Token.instance._address,
+            'Assertion',
+            this.contracts.assertion.instance._address,
             deployingWallet,
         );
-        await this.setupRole(this.contracts.erc20Token, deployingWallet.address);
+
+        await this.deploy('identity', deployingWallet, [this.contracts.hub.instance._address]);
+        await this.setContractAddress(
+            'Identity',
+            this.contracts.identity.instance._address,
+            deployingWallet,
+        );
+
+        await this.deploy('shardingTable', deployingWallet, [this.contracts.hub.instance._address]);
+        await this.setContractAddress(
+            'ShardingTable',
+            this.contracts.shardingTable.instance._address,
+            deployingWallet,
+        );
+
+        await this.deploy('staking', deployingWallet, [this.contracts.hub.instance._address]);
+        await this.setContractAddress(
+            'Staking',
+            this.contracts.staking.instance._address,
+            deployingWallet,
+        );
 
         await this.deploy('profile', deployingWallet, [this.contracts.hub.instance._address]);
         await this.setContractAddress(
             'Profile',
             this.contracts.profile.instance._address,
+            deployingWallet,
+        );
+
+        await this.deploy('serviceAgreement', deployingWallet, [
+            this.contracts.hub.instance._address,
+        ]);
+        await this.setContractAddress(
+            'ServiceAgreement',
+            this.contracts.serviceAgreement.instance._address,
+            deployingWallet,
+        );
+
+        await this.deploy('contentAsset', deployingWallet, [this.contracts.hub.instance._address]);
+        await this.setAssetContractAddress(
+            'ContentAsset',
+            this.contracts.contentAsset.instance._address,
             deployingWallet,
         );
 
@@ -364,24 +458,20 @@ class LocalBlockchain {
     }
 
     async setR1(r1) {
-        return this.contracts.parametersStorage.instance.methods.setR1(r1)
-            .send({ from: deployingWallet.address, gas: 3000000})
+        return this.contracts.parametersStorage.instance.methods
+            .setR1(r1)
+            .send({ from: deployingWallet.address, gas: 3000000 })
             .on('error', (error) =>
-            this.logger.error(
-                `Unable to set R1 in parameters storage. Error: `,
-                error,
-            ),
-        );
+                this.logger.error(`Unable to set R1 in parameters storage. Error: `, error),
+            );
     }
 
     async setR2(r2) {
-        return this.contracts.parametersStorage.methods.setR2(r2)
-            .send({ from: deployingWallet, gas: 3000000})
+        return this.contracts.parametersStorage.methods
+            .setR2(r2)
+            .send({ from: deployingWallet, gas: 3000000 })
             .on('error', (error) =>
-                this.logger.error(
-                    `Unable to set R2 in parameters storage. Error: `,
-                    error,
-                ),
+                this.logger.error(`Unable to set R2 in parameters storage. Error: `, error),
             );
     }
 

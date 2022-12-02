@@ -14,8 +14,8 @@ import {
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
-// eslint-disable-next-line import/no-unresolved
 const AssertionStorage = require('dkg-evm-module/build/contracts/AssertionStorage.json');
+const Staking = require('dkg-evm-module/build/contracts/Staking.json');
 const ContentAsset = require('dkg-evm-module/build/contracts/ContentAsset.json');
 const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
 const HashingProxy = require('dkg-evm-module/build/contracts/HashingProxy.json');
@@ -26,11 +26,9 @@ const ParametersStorage = require('dkg-evm-module/build/contracts/ParametersStor
 const Profile = require('dkg-evm-module/build/contracts/Profile.json');
 const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
 const ScoringProxy = require('dkg-evm-module/build/contracts/ScoringProxy.json');
-const ServiceAgreementStorage = require('dkg-evm-module/build/contracts/ServiceAgreementStorage.json');
-// eslint-disable-next-line import/no-unresolved
-const ServiceAgreement = require('dkg-evm-module/build/contracts/ServiceAgreement.json');
+const ServiceAgreementStorage = require('dkg-evm-module/build/contracts/ServiceAgreementStorageV1.json');
+const ServiceAgreement = require('dkg-evm-module/build/contracts/ServiceAgreementV1.json');
 const ShardingTable = require('dkg-evm-module/build/contracts/ShardingTable.json');
-// eslint-disable-next-line import/no-unresolved
 const ShardingTableStorage = require('dkg-evm-module/build/contracts/ShardingTableStorage.json');
 
 const FIXED_GAS_LIMIT_METHODS = ['submitCommit', 'sendProof'];
@@ -129,6 +127,13 @@ class Web3Service {
             ParametersStorage.abi,
             parametersStorageAddress,
         );
+
+        const stakingContractAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['Staking'],
+        );
+        this.StakingContract = new this.web3.eth.Contract(Staking.abi, stakingContractAddress);
 
         const hashingProxyAddress = await this.callContractFunction(
             this.hubContract,
@@ -246,8 +251,8 @@ class Web3Service {
 
         const log2PLDSFAddress = await this.callContractFunction(
             this.ScoringProxyContract,
-            'functions',
-            [0],
+            'getScoreFunctionContractAddress',
+            [1],
         );
         this.Log2PLDSFContract = new this.web3.eth.Contract(Log2PLDSF.abi, log2PLDSFAddress);
 
@@ -325,7 +330,7 @@ class Web3Service {
         const initialStake = this.convertToWei(this.config.initialStakeAmount);
 
         await this.queueTransaction(this.TokenContract, 'increaseAllowance', [
-            this.ProfileContract.options.address,
+            this.StakingContract.options.address,
             initialStake,
         ]);
 
@@ -335,12 +340,20 @@ class Web3Service {
         const retryDelayInSec = 5;
         while (retryCount + 1 <= maxNumberOfRetries && !profileCreated) {
             try {
+                console.log([
+                    this.getManagementKey(),
+                    this.convertAsciiToHex(peerId),
+                    initialAsk,
+                    initialStake,
+                    0,
+                ]);
                 // eslint-disable-next-line no-await-in-loop
                 await this.queueTransaction(this.ProfileContract, 'createProfile', [
                     this.getManagementKey(),
                     this.convertAsciiToHex(peerId),
                     initialAsk,
                     initialStake,
+                    0,
                 ]);
                 profileCreated = true;
             } catch (error) {
@@ -359,7 +372,7 @@ class Web3Service {
                 } else {
                     // eslint-disable-next-line no-await-in-loop
                     await this.queueTransaction(this.TokenContract, 'decreaseAllowance', [
-                        this.ProfileContract.options.address,
+                        this.StakingContract.options.address,
                         initialStake,
                     ]);
                     throw error;
@@ -382,6 +395,7 @@ class Web3Service {
         let result;
         while (result === undefined) {
             try {
+                console.log('calling contract function with name ', functionName);
                 // eslint-disable-next-line no-await-in-loop
                 result = await contractInstance.methods[functionName](...args).call();
             } catch (error) {
@@ -399,6 +413,7 @@ class Web3Service {
         let transactionRetried = false;
         while (result === undefined) {
             try {
+                console.log('executing contract function with name ', functionName);
                 /* eslint-disable no-await-in-loop */
                 let gasLimit;
 

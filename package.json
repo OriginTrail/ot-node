@@ -73,7 +73,7 @@
         "bignumber.js": "^9.1.0",
         "cors": "^2.8.5",
         "deep-extend": "^0.6.0",
-        "dkg-evm-module": "^2.1.1",
+        "dkg-evm-module": "git://github.com/OriginTrail/dkg-evm-module.git#v6/updated-contracts-test",
         "dotenv": "^16.0.1",
         "ethers": "^5.7.2",
         "express": "^4.18.1",
