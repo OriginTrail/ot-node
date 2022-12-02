@@ -27,7 +27,7 @@ class EpochCheckCommand extends EpochCommand {
             epoch,
             hashFunctionId,
             operationId,
-            serviceAgreement,
+            agreementData,
         } = command.data;
 
         this.logger.trace(
@@ -42,7 +42,7 @@ class EpochCheckCommand extends EpochCommand {
             epoch,
         );
 
-        if (this.assetLifetimeExpired(serviceAgreement, epoch)) {
+        if (this.assetLifetimeExpired(agreementData, epoch)) {
             this.logger.trace(`Asset lifetime for agreement id: ${agreementId} has expired.`);
             await this.repositoryModuleManager.updateOperationAgreementStatus(
                 operationId,
@@ -70,7 +70,7 @@ class EpochCheckCommand extends EpochCommand {
                 keyword,
                 epoch,
                 hashFunctionId,
-                serviceAgreement,
+                agreementData,
                 operationId,
             );
             return this.finishEpochCheckCommand(operationId, agreementId, epoch);
@@ -86,7 +86,7 @@ class EpochCheckCommand extends EpochCommand {
             delay: 0,
             period: 12 * 1000, // todo: get from blockchain / oracle
             retries: Number(await this.blockchainModuleManager.getR0(blockchain)),
-            data: { ...command.data, serviceAgreement, identityId },
+            data: { ...command.data, agreementData, identityId },
             transactional: false,
         });
 
@@ -103,8 +103,8 @@ class EpochCheckCommand extends EpochCommand {
         return EpochCommand.empty();
     }
 
-    assetLifetimeExpired(serviceAgreement, epoch) {
-        return Number(serviceAgreement.epochsNumber) < epoch;
+    assetLifetimeExpired(agreementData, epoch) {
+        return Number(agreementData.epochsNumber) < epoch;
     }
 
     /**
