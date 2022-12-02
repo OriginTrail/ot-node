@@ -623,11 +623,7 @@ class Web3Service {
 
     async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch) {
         return this.queueTransaction(this.ServiceAgreementContract, 'submitCommit', [
-            assetContractAddress,
-            tokenId,
-            keyword,
-            hashFunctionId,
-            epoch,
+            [assetContractAddress, tokenId, keyword, hashFunctionId, epoch],
         ]);
     }
 
@@ -658,13 +654,7 @@ class Web3Service {
         chunkHash,
     ) {
         return this.queueTransaction(this.ServiceAgreementContract, 'sendProof', [
-            assetContractAddress,
-            tokenId,
-            keyword,
-            hashFunctionId,
-            epoch,
-            proof,
-            chunkHash,
+            [assetContractAddress, tokenId, keyword, hashFunctionId, epoch, proof, chunkHash],
         ]);
     }
 
