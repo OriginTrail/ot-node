@@ -56,7 +56,9 @@ class ShardingTableService {
         const shardingTableLength = Number(
             await this.blockchainModuleManager.getShardingTableLength(blockchainId),
         );
-        let startingPeerId = await this.blockchainModuleManager.getShardingTableHead(blockchainId);
+        let startingIdentityId = await this.blockchainModuleManager.getShardingTableHead(
+            blockchainId,
+        );
         const pageSize = 10;
         const shardingTable = [];
 
@@ -70,12 +72,12 @@ class ShardingTableService {
             // eslint-disable-next-line no-await-in-loop
             const nodes = await this.blockchainModuleManager.getShardingTablePage(
                 blockchainId,
-                startingPeerId,
+                startingIdentityId,
                 pageSize,
             );
             shardingTable.push(...nodes.slice(sliceIndex).filter((node) => node.id !== '0x'));
             sliceIndex = 1;
-            startingPeerId = nodes[nodes.length - 1].id;
+            startingIdentityId = nodes[nodes.length - 1].id;
         }
 
         this.logger.debug(

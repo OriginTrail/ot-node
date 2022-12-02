@@ -14,7 +14,8 @@ import {
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
-const AssertionRegistry = require('dkg-evm-module/build/contracts/AssertionRegistry.json');
+// eslint-disable-next-line import/no-unresolved
+const AssertionStorage = require('dkg-evm-module/build/contracts/AssertionStorage.json');
 const ContentAsset = require('dkg-evm-module/build/contracts/ContentAsset.json');
 const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
 const HashingProxy = require('dkg-evm-module/build/contracts/HashingProxy.json');
@@ -26,7 +27,11 @@ const Profile = require('dkg-evm-module/build/contracts/Profile.json');
 const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
 const ScoringProxy = require('dkg-evm-module/build/contracts/ScoringProxy.json');
 const ServiceAgreementStorage = require('dkg-evm-module/build/contracts/ServiceAgreementStorage.json');
+// eslint-disable-next-line import/no-unresolved
+const ServiceAgreement = require('dkg-evm-module/build/contracts/ServiceAgreement.json');
 const ShardingTable = require('dkg-evm-module/build/contracts/ShardingTable.json');
+// eslint-disable-next-line import/no-unresolved
+const ShardingTableStorage = require('dkg-evm-module/build/contracts/ShardingTableStorage.json');
 
 const FIXED_GAS_LIMIT_METHODS = ['submitCommit', 'sendProof'];
 
@@ -145,14 +150,24 @@ class Web3Service {
             shardingTableAddress,
         );
 
-        const assertionRegistryAddress = await this.callContractFunction(
+        const shardingTableStorageAddress = await this.callContractFunction(
             this.hubContract,
             'getContractAddress',
-            ['AssertionRegistry'],
+            ['ShardingTableStorage'],
         );
-        this.AssertionRegistryContract = new this.web3.eth.Contract(
-            AssertionRegistry.abi,
-            assertionRegistryAddress,
+        this.ShardingTableStorageContract = new this.web3.eth.Contract(
+            ShardingTableStorage.abi,
+            shardingTableStorageAddress,
+        );
+
+        const assertionStorageAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['AssertionStorage'],
+        );
+        this.AssertionStorageContract = new this.web3.eth.Contract(
+            AssertionStorage.abi,
+            assertionStorageAddress,
         );
 
         const contentAssetAddress = await this.callContractFunction(
@@ -197,6 +212,16 @@ class Web3Service {
         this.ProfileStorageContract = new this.web3.eth.Contract(
             ProfileStorage.abi,
             profileStorageAddress,
+        );
+
+        const serviceAgreementAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['ServiceAgreement'],
+        );
+        this.ServiceAgreementContract = new this.web3.eth.Contract(
+            ServiceAgreement.abi,
+            serviceAgreementAddress,
         );
 
         const serviceAgreementStorageAddress = await this.callContractFunction(
@@ -370,7 +395,7 @@ class Web3Service {
 
     async _executeContractFunction(contractInstance, functionName, args) {
         let result;
-        let gasPrice = (await this.getGasPrice()) || this.convertToWei(20, 'gwei');
+        let gasPrice = (await this.getGasPrice()) ?? this.convertToWei(20, 'gwei');
         let transactionRetried = false;
         while (result === undefined) {
             try {
@@ -386,7 +411,7 @@ class Web3Service {
                 }
 
                 const encodedABI = contractInstance.methods[functionName](...args).encodeABI();
-                const gas = gasLimit || this.convertToWei(900, 'kwei');
+                const gas = gasLimit ?? this.convertToWei(900, 'kwei');
                 const tx = {
                     from: this.getPublicKey(),
                     to: contractInstance.options.address,
@@ -493,68 +518,24 @@ class Web3Service {
         return timestamp < timestampThirtyDaysInPast;
     }
 
-    async deployContract(contract, args) {
-        let result;
-        while (!result) {
-            try {
-                const contractInstance = new this.web3.eth.Contract(contract.abi);
-                const gasPrice = await this.getGasPrice();
-
-                const gasLimit = await contractInstance
-                    .deploy({
-                        data: contract.bytecode,
-                        arguments: args,
-                    })
-                    .estimateGas({
-                        from: this.getPublicKey(),
-                    });
-
-                const encodedABI = contractInstance
-                    .deploy({
-                        data: contract.bytecode,
-                        arguments: args,
-                    })
-                    .encodeABI();
-
-                const tx = {
-                    from: this.getPublicKey(),
-                    data: encodedABI,
-                    gasPrice: gasPrice ?? this.convertToWei(20, 'gwei'),
-                    gas: gasLimit ?? this.convertToWei(900, 'kwei'),
-                };
-
-                const createdTransaction = await this.web3.eth.accounts.signTransaction(
-                    tx,
-                    this.getPrivateKey(),
-                );
-
-                return this.web3.eth.sendSignedTransaction(createdTransaction.rawTransaction);
-            } catch (error) {
-                await this.handleError(error, 'deploy');
-            }
-        }
-
-        return result;
-    }
-
-    async getAssertionByIndex(assetContractAddress, tokenId, index) {
+    async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
         return this.callContractFunction(
             this.assetContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
-            'getAssertionByIndex',
+            'getAssertionIdByIndex',
             [tokenId, index],
         );
     }
 
-    async getLatestAssertion(assetContractAddress, tokenId) {
+    async getLatestAssertionId(assetContractAddress, tokenId) {
         return this.callContractFunction(
             this.assetContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
-            'getLatestAssertion',
+            'getLatestAssertionId',
             [tokenId],
         );
     }
 
     async getAssertionIssuer(assertionId) {
-        return this.callContractFunction(this.AssertionRegistryContract, 'getIssuer', [
+        return this.callContractFunction(this.AssertionStorageContract, 'getAssertionIssuer', [
             assertionId,
         ]);
     }
@@ -571,45 +552,51 @@ class Web3Service {
             epochsNumber: result['1'],
             epochLength: result['2'],
             tokenAmount: result['3'],
-            scoreFunctionId: result['4'],
-            proofWindowOffsetPerc: result['5'],
+            scoreFunctionId: result['4'][0],
+            proofWindowOffsetPerc: result['4'][1],
         };
     }
 
     async getAssertionSize(assertionId) {
-        return this.callContractFunction(this.AssertionRegistryContract, 'getSize', [assertionId]);
+        return this.callContractFunction(this.AssertionStorageContract, 'getAssertionSize', [
+            assertionId,
+        ]);
     }
 
     async getAssertionTriplesNumber(assertionId) {
-        return this.callContractFunction(this.AssertionRegistryContract, 'getTriplesNumber', [
-            assertionId,
-        ]);
-    }
-
-    async getAssertionChunksNumber(assertionId) {
-        return this.callContractFunction(this.AssertionRegistryContract, 'getChunksNumber', [
-            assertionId,
-        ]);
-    }
-
-    async isCommitWindowOpen(agreementId, epoch) {
         return this.callContractFunction(
-            this.ServiceAgreementStorageContract,
-            'isCommitWindowOpen',
-            [agreementId, epoch],
+            this.AssertionStorageContract,
+            'getAssertionTriplesNumber',
+            [assertionId],
         );
     }
 
-    async getCommitSubmissions(agreementId, epoch) {
+    async getAssertionChunksNumber(assertionId) {
+        return this.callContractFunction(
+            this.AssertionStorageContract,
+            'getAssertionChunksNumber',
+            [assertionId],
+        );
+    }
+
+    async isCommitWindowOpen(agreementId, epoch) {
+        return this.callContractFunction(this.ServiceAgreementContract, 'isCommitWindowOpen', [
+            agreementId,
+            epoch,
+        ]);
+    }
+
+    async getTopCommitSubmissions(agreementId, epoch) {
         const commits = await this.callContractFunction(
-            this.ServiceAgreementStorageContract,
-            'getCommitSubmissions',
+            this.ServiceAgreementContract,
+            'getTopCommitSubmissions',
             [agreementId, epoch],
         );
 
         return commits
             .filter((commit) => commit.identityId !== '0')
             .map((commit) => ({
+                prevIdentityId: commit.prevIdentityId,
                 identityId: commit.identityId,
                 nextIdentityId: commit.nextIdentityId,
                 score: commit.score,
@@ -619,13 +606,6 @@ class Web3Service {
     async getHashFunctionName(hashFunctionId) {
         return this.callContractFunction(this.HashingProxyContract, 'getHashFunctionName', [
             hashFunctionId,
-        ]);
-    }
-
-    async callHashFunction(hashFunctionId, data) {
-        return this.callContractFunction(this.HashingProxyContract, 'callHashFunction', [
-            hashFunctionId,
-            data,
         ]);
     }
 
@@ -642,7 +622,7 @@ class Web3Service {
     }
 
     async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch) {
-        return this.queueTransaction(this.ServiceAgreementStorageContract, 'submitCommit', [
+        return this.queueTransaction(this.ServiceAgreementContract, 'submitCommit', [
             assetContractAddress,
             tokenId,
             keyword,
@@ -652,16 +632,15 @@ class Web3Service {
     }
 
     async isProofWindowOpen(agreementId, epoch) {
-        return this.callContractFunction(
-            this.ServiceAgreementStorageContract,
-            'isProofWindowOpen',
-            [agreementId, epoch],
-        );
+        return this.callContractFunction(this.ServiceAgreementContract, 'isProofWindowOpen', [
+            agreementId,
+            epoch,
+        ]);
     }
 
     async getChallenge(assetContractAddress, tokenId, epoch) {
         const result = await this.callContractFunction(
-            this.ServiceAgreementStorageContract,
+            this.ServiceAgreementContract,
             'getChallenge',
             [this.getPublicKey(), assetContractAddress, tokenId, epoch],
         );
@@ -678,7 +657,7 @@ class Web3Service {
         proof,
         chunkHash,
     ) {
-        return this.queueTransaction(this.ServiceAgreementStorageContract, 'sendProof', [
+        return this.queueTransaction(this.ServiceAgreementContract, 'sendProof', [
             assetContractAddress,
             tokenId,
             keyword,
@@ -690,21 +669,21 @@ class Web3Service {
     }
 
     async getShardingTableHead() {
-        return this.callContractFunction(this.ShardingTableContract, 'head', []);
+        return this.callContractFunction(this.ShardingTableStorageContract, 'head', []);
     }
 
     async getShardingTableLength() {
         const nodesCount = await this.callContractFunction(
-            this.ShardingTableContract,
+            this.ShardingTableStorageContract,
             'nodesCount',
             [],
         );
         return nodesCount;
     }
 
-    async getShardingTablePage(startingPeerId, nodesNum) {
+    async getShardingTablePage(startingIdentityId, nodesNum) {
         return this.callContractFunction(this.ShardingTableContract, 'getShardingTable', [
-            startingPeerId,
+            startingIdentityId,
             nodesNum,
         ]);
     }
@@ -768,21 +747,19 @@ class Web3Service {
     }
 
     async getCommitWindowDuration() {
-        const commitWindowDuration = await this.callContractFunction(
+        return this.callContractFunction(
             this.ParametersStorageContract,
             'commitWindowDuration',
             [],
         );
-        return commitWindowDuration;
     }
 
     async getProofWindowDurationPerc() {
-        const proofWindowDurationPerc = await this.callContractFunction(
+        return this.callContractFunction(
             this.ParametersStorageContract,
             'proofWindowDurationPerc',
             [],
         );
-        return proofWindowDurationPerc;
     }
 
     async getLog2PLDSFParams() {

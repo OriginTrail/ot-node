@@ -80,7 +80,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
     }
 
     async validateAssertionId(blockchain, contract, tokenId, assertionId, ual) {
-        const blockchainAssertionId = await this.publishService.getLatestAssertion(
+        const blockchainAssertionId = await this.publishService.getLatestAssertionId(
             blockchain,
             contract,
             tokenId,

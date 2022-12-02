@@ -46,7 +46,7 @@ class UALService {
     }
 
     async calculateLocationKeyword(blockchain, contract, tokenId) {
-        const firstAssertionId = await this.blockchainModuleManager.getAssertionByIndex(
+        const firstAssertionId = await this.blockchainModuleManager.getAssertionIdByIndex(
             blockchain,
             contract,
             tokenId,
