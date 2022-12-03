@@ -105,7 +105,7 @@ class CalculateProofsCommand extends EpochCommand {
             epoch,
         );
 
-        for (let i = 0; i < r0; i += 1) {
+        for (let i = 0; i < Math.min(r0, commits.length); i += 1) {
             if (Number(commits[i].identityId) === identityId) {
                 this.logger.trace(`Node is eligible for rewards for agreement id: ${agreementId}`);
 

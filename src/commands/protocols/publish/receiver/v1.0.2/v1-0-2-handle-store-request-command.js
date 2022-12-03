@@ -51,6 +51,14 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
 
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+        const assetExists = await this.tripleStoreModuleManager.assetExists(
+            ual,
+            blockchain,
+            contract,
+            tokenId,
+        );
+
         await this.operationService.localStoreAsset(
             assertionId,
             blockchain,
@@ -70,15 +78,10 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             AGREEMENT_STATUS.ACTIVE,
         );
 
-        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-        const assetExists = await this.tripleStoreModuleManager.assetExists(
-            ual,
-            blockchain,
-            contract,
-            tokenId,
-        );
-
         if (!assetExists) {
+            this.logger.trace(
+                `Asset with ${ual} not previously present in triple store. Scheduling epoch check command.`,
+            );
             await this.commandExecutor.add({
                 name: 'epochCheckCommand',
                 sequence: [],
@@ -96,6 +99,10 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
                 },
                 transactional: false,
             });
+        } else {
+            this.logger.trace(
+                `Asset with ${ual} previously present in triple store. Not scheduling epoch check command.`,
+            );
         }
 
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
