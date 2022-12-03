@@ -11,6 +11,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async dropDatabase() {
+        if (this.initialized) {
+            return this.getImplementation().module.dropDatabase();
+        }
+    }
+
     // COMMANDS
     async updateCommand(update, opts) {
         if (this.initialized) {
@@ -183,9 +189,9 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async removePeerRecord(peerId) {
+    async removePeerRecord(blockchainId, peerId) {
         if (this.initialized) {
-            return this.getImplementation().module.removePeerRecord(peerId);
+            return this.getImplementation().module.removePeerRecord(blockchainId, peerId);
         }
     }
 

@@ -17,6 +17,12 @@ class ValidationModuleManager extends BaseModuleManager {
         }
     }
 
+    getHashFunctionName(hashFunctionId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getHashFunctionName(hashFunctionId);
+        }
+    }
+
     async callHashFunction(hashFunctionId, data) {
         if (this.initialized) {
             return this.getImplementation().module.callHashFunction(hashFunctionId, data);

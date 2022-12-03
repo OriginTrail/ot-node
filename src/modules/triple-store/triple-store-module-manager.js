@@ -11,6 +11,12 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
+    async assetExists(ual, blockchain, contract, tokenId) {
+        if (this.initialized) {
+            return this.getImplementation().module.assetExists(ual, blockchain, contract, tokenId);
+        }
+    }
+
     async insertAssertion(assertionId, assertionNquads) {
         if (this.initialized) {
             return this.getImplementation().module.insertAssertion(assertionId, assertionNquads);

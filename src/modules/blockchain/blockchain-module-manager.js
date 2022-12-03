@@ -53,12 +53,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getBlockNumber(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getBlockNumber();
-        }
-    }
-
     async healthCheck(blockchain) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.healthCheck();
@@ -71,18 +65,9 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getAssertionsLength(blockchain, assetContractAddress, tokenId) {
+    async getAssertionIdByIndex(blockchain, assetContractAddress, tokenId, index) {
         if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAssertionsLength(
-                assetContractAddress,
-                tokenId,
-            );
-        }
-    }
-
-    async getAssertionByIndex(blockchain, assetContractAddress, tokenId, index) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAssertionByIndex(
+            return this.getImplementation(blockchain).module.getAssertionIdByIndex(
                 assetContractAddress,
                 tokenId,
                 index,
@@ -90,9 +75,9 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getLatestAssertion(blockchain, assetContractAddress, tokenId) {
+    async getLatestAssertionId(blockchain, assetContractAddress, tokenId) {
         if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getLatestAssertion(
+            return this.getImplementation(blockchain).module.getLatestAssertionId(
                 assetContractAddress,
                 tokenId,
             );
@@ -117,18 +102,12 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getShardingTablePage(blockchain, startingPeerId, nodesNum) {
+    async getShardingTablePage(blockchain, startingIdentityId, nodesNum) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getShardingTablePage(
-                startingPeerId,
+                startingIdentityId,
                 nodesNum,
             );
-        }
-    }
-
-    async getShardingTableFull(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getShardingTableFull();
         }
     }
 
@@ -171,15 +150,21 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
+    convertFromWei(blockchain, ether, toUnit) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.convertFromWei(ether, toUnit);
+        }
+    }
+
     async isCommitWindowOpen(blockchain, agreementId, epoch) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.isCommitWindowOpen(agreementId, epoch);
         }
     }
 
-    async getCommitSubmissions(blockchain, agreementId, epoch) {
+    async getTopCommitSubmissions(blockchain, agreementId, epoch) {
         if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getCommitSubmissions(
+            return this.getImplementation(blockchain).module.getTopCommitSubmissions(
                 agreementId,
                 epoch,
             );
@@ -207,46 +192,6 @@ class BlockchainModuleManager extends BaseModuleManager {
     async getAssertionChunksNumber(blockchain, assertionid) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getAssertionChunksNumber(assertionid);
-        }
-    }
-
-    async getAgreementStartTime(blockchain, agreementId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAgreementStartTime(agreementId);
-        }
-    }
-
-    async getAgreementEpochsNumber(blockchain, agreementId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAgreementEpochsNumber(agreementId);
-        }
-    }
-
-    async getAgreementEpochLength(blockchain, agreementId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAgreementEpochLength(agreementId);
-        }
-    }
-
-    async getAgreementTokenAmount(blockchain, agreementId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAgreementTokenAmount(agreementId);
-        }
-    }
-
-    async getAgreementScoreFunctionId(blockchain, agreementId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAgreementScoreFunctionId(
-                agreementId,
-            );
-        }
-    }
-
-    async getAgreementProofWindowOffsetPerc(blockchain, agreementId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAgreementProofWindowOffsetPerc(
-                agreementId,
-            );
         }
     }
 
@@ -301,18 +246,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getHashFunctionName(blockchain, hashFunctionId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getHashFunctionName(hashFunctionId);
-        }
-    }
-
-    async callHashFunction(blockchain, hashFunctionId, data) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.callHashFunction(hashFunctionId, data);
-        }
-    }
-
     async getR2(blockchain) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getR2();
@@ -340,6 +273,18 @@ class BlockchainModuleManager extends BaseModuleManager {
     async getProofWindowDurationPerc(blockchain) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getProofWindowDurationPerc();
+        }
+    }
+
+    async callScoreFunction(blockchain, scoreFunctionId, hashFunctionId, peerId, keyword, stake) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.callScoreFunction(
+                scoreFunctionId,
+                hashFunctionId,
+                peerId,
+                keyword,
+                stake,
+            );
         }
     }
 

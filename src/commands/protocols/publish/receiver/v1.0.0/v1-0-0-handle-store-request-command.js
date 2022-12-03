@@ -32,7 +32,8 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_START,
         );
         const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
-        await this.operationService.validateAssertion(assertionId, operationId, blockchain);
+        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
+        await this.operationService.validateAssertion(assertionId, blockchain, assertion);
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

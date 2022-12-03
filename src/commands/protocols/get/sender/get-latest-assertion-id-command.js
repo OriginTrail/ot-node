@@ -41,11 +41,12 @@ class GetLatestAssertionIdCommand extends Command {
                 this.logger.debug(
                     `Searching for assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
                 );
-                const blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertion(
-                    blockchain,
-                    contract,
-                    tokenId,
-                );
+                const blockchainAssertionId =
+                    await this.blockchainModuleManager.getLatestAssertionId(
+                        blockchain,
+                        contract,
+                        tokenId,
+                    );
                 if (!blockchainAssertionId) {
                     this.handleError(
                         operationId,

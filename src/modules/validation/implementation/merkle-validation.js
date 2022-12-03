@@ -8,7 +8,7 @@ class MerkleValidation {
 
         this.hashFunctions = {
             // TODO: Change this nonsense
-            0: 'sha256',
+            1: 'sha256',
         };
     }
 
@@ -21,7 +21,12 @@ class MerkleValidation {
     }
 
     async callHashFunction(hashFunctionId, data) {
-        return this[this.hashFunctions[hashFunctionId]](data); // TODO: Change this nonsense
+        const hashFunctionName = this.getHashFunctionName(hashFunctionId);
+        return this[hashFunctionName](data); // TODO: Change this nonsense
+    }
+
+    getHashFunctionName(hashFunctionId) {
+        return this.hashFunctions[hashFunctionId];
     }
 
     async sha256(data) {

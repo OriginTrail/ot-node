@@ -1,3 +1,4 @@
+import { BigNumber } from 'bignumber.js';
 import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
 import {
     NETWORK_MESSAGE_TYPES,
@@ -36,21 +37,31 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
         this.logger.trace(`Validating assertion with ual: ${ual}`);
         await this.validateAssertionId(blockchain, contract, tokenId, assertionId, ual);
         this.logger.trace(`Validating bid for asset with ual: ${ual}`);
-        if (
-            !(await this.validateBid(
-                contract,
-                tokenId,
-                keyword,
-                hashFunctionId,
-                blockchain,
-                assertionId,
-            ))
-        ) {
+        const { validBid, agreementId, agreementData } = await this.validateBid(
+            contract,
+            tokenId,
+            keyword,
+            hashFunctionId,
+            blockchain,
+            assertionId,
+        );
+
+        if (!validBid) {
             return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK, messageData: {} };
         }
 
         await Promise.all([
-            this.operationIdService.cacheOperationIdData(operationId, { assertionId }),
+            this.operationIdService.cacheOperationIdData(operationId, {
+                assertionId,
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+                hashFunctionId,
+                agreementId,
+                agreementData,
+            }),
+
             this.operationIdService.updateOperationIdStatus(
                 operationId,
                 OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_REMOTE_END,
@@ -79,7 +90,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
     }
 
     async validateAssertionId(blockchain, contract, tokenId, assertionId, ual) {
-        const blockchainAssertionId = await this.publishService.getLatestAssertion(
+        const blockchainAssertionId = await this.publishService.getLatestAssertionId(
             blockchain,
             contract,
             tokenId,
@@ -92,29 +103,58 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
     }
 
     async validateBid(contract, tokenId, keyword, hashFunctionId, blockchain, assertionId) {
-        const [agreementData, blockchainAssertionSize, r0, ask] = await Promise.all([
-            this.serviceAgreementService
-                .generateId(contract, tokenId, keyword, hashFunctionId)
-                .then((agreementId) =>
-                    this.blockchainModuleManager.getAgreementData(blockchain, agreementId),
+        const geAgreementData = async () => {
+            const agreementId = await this.serviceAgreementService.generateId(
+                contract,
+                tokenId,
+                keyword,
+                hashFunctionId,
+            );
+            this.logger.info(
+                `Calculated agreement id: ${agreementId} for contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}`,
+            );
+
+            return {
+                agreementId,
+                agreementData: await this.blockchainModuleManager.getAgreementData(
+                    blockchain,
+                    agreementId,
                 ),
-            this.blockchainModuleManager.getAssertionSize(blockchain, assertionId),
-            this.blockchainModuleManager.getR0(blockchain),
-            this.repositoryModuleManager
-                .getPeerRecord(this.networkModuleManager.getPeerId().toB58String(), blockchain)
-                .then((node) => this.blockchainModuleManager.convertToWei(blockchain, node.ask)),
-        ]);
+            };
+        };
 
-        // ask: trace token amount / (epochs * Kb)
-        const serviceAgreementBid =
-            agreementData.tokenAmount /
-            (agreementData.epochsNumber * (blockchainAssertionSize / 1024) * r0);
+        const getAsk = async () => {
+            const peerRecord = await this.repositoryModuleManager.getPeerRecord(
+                this.networkModuleManager.getPeerId().toB58String(),
+                blockchain,
+            );
 
-        this.logger.trace(
-            `Calculated bid from service agreement: ${serviceAgreementBid}, node ask: ${ask}`,
-        );
+            const ask = this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
 
-        return serviceAgreementBid >= ask;
+            return new BigNumber(ask);
+        };
+
+        const [{ agreementId, agreementData }, blockchainAssertionSize, r0, ask] =
+            await Promise.all([
+                geAgreementData(),
+                this.blockchainModuleManager.getAssertionSize(blockchain, assertionId),
+                this.blockchainModuleManager.getR0(blockchain),
+                getAsk(),
+            ]);
+
+        const serviceAgreementBid = new BigNumber(agreementData.tokenAmount)
+            .dividedBy(r0)
+            .dividedBy(agreementData.epochsNumber)
+            .dividedBy(blockchainAssertionSize)
+            .multipliedBy(1024);
+
+        this.logger.trace(`Service agreement bid: ${serviceAgreementBid}, ask: ${ask}`);
+
+        return {
+            validBid: ask.lte(serviceAgreementBid),
+            agreementId,
+            agreementData,
+        };
     }
 
     async retryFinished(command) {

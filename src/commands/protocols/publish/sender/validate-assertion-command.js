@@ -25,7 +25,7 @@ class ValidateAssertionCommand extends Command {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         this.logger.info(`Validating assertion with ual: ${ual}`);
 
-        const blockchainAssertionId = await this.operationService.getLatestAssertion(
+        const blockchainAssertionId = await this.operationService.getLatestAssertionId(
             blockchain,
             contract,
             tokenId,
@@ -42,8 +42,9 @@ class ValidateAssertionCommand extends Command {
             );
             return Command.empty();
         }
+        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
+        await this.operationService.validateAssertion(assertionId, blockchain, assertion);
 
-        await this.operationService.validateAssertion(assertionId, operationId, blockchain);
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_END,

@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { BigNumber } from 'bignumber.js';
 import { xor as uint8ArrayXor } from 'uint8arrays/xor';
 import { compare as uint8ArrayCompare } from 'uint8arrays/compare';
 import pipe from 'it-pipe';
@@ -52,10 +53,12 @@ class ShardingTableService {
             return;
         }
 
-        const shardingTableLength = await this.blockchainModuleManager.getShardingTableLength(
+        const shardingTableLength = Number(
+            await this.blockchainModuleManager.getShardingTableLength(blockchainId),
+        );
+        let startingIdentityId = await this.blockchainModuleManager.getShardingTableHead(
             blockchainId,
         );
-        let startingPeerId = await this.blockchainModuleManager.getShardingTableHead(blockchainId);
         const pageSize = 10;
         const shardingTable = [];
 
@@ -69,12 +72,12 @@ class ShardingTableService {
             // eslint-disable-next-line no-await-in-loop
             const nodes = await this.blockchainModuleManager.getShardingTablePage(
                 blockchainId,
-                startingPeerId,
+                startingIdentityId,
                 pageSize,
             );
             shardingTable.push(...nodes.slice(sliceIndex).filter((node) => node.id !== '0x'));
             sliceIndex = 1;
-            startingPeerId = nodes[nodes.length - 1].id;
+            startingIdentityId = nodes[nodes.length - 1].id;
         }
 
         this.logger.debug(
@@ -94,7 +97,7 @@ class ShardingTableService {
                         blockchain_id: blockchainId,
                         ask: ethers.utils.formatUnits(peer.ask, 'ether'),
                         stake: ethers.utils.formatUnits(peer.stake, 'ether'),
-                        sha256: await this.validationModuleManager.callHashFunction(0, nodeId),
+                        sha256: await this.validationModuleManager.callHashFunction(1, nodeId),
                     };
                 }),
             ),
@@ -102,7 +105,7 @@ class ShardingTableService {
     }
 
     async listenOnEvents(blockchainId) {
-        this.eventEmitter.on(`${blockchainId}-NodeObjCreated`, async (event) => {
+        this.eventEmitter.on(`${blockchainId}-NodeAdded`, async (event) => {
             const eventData = JSON.parse(event.data);
             const nodeId = this.blockchainModuleManager.convertHexToAscii(
                 event.blockchain_id,
@@ -111,12 +114,12 @@ class ShardingTableService {
 
             const nodeIdSha256 = await this.validationModuleManager.callHashFunction(
                 // TODO: How to add more hashes?
-                0,
+                1,
                 nodeId,
             );
 
             this.logger.trace(
-                `${blockchainId}-NodeObjCreated event caught, adding peer id: ${nodeId} to sharding table.`,
+                `${blockchainId}-NodeAdded event caught, adding peer id: ${nodeId} to sharding table.`,
             );
 
             this.repositoryModuleManager.createPeerRecord(
@@ -140,7 +143,7 @@ class ShardingTableService {
             this.logger.trace(
                 `${blockchainId}-NodeRemoved event caught, removing peer id: ${nodeId} from sharding table.`,
             );
-            this.repositoryModuleManager.removePeerRecord(nodeId);
+            this.repositoryModuleManager.removePeerRecord(blockchainId, nodeId);
 
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
@@ -170,10 +173,7 @@ class ShardingTableService {
     }
 
     async sortPeers(blockchainId, keyHash, peers, count, hashFunctionId) {
-        const hashFunctionName = await this.blockchainModuleManager.getHashFunctionName(
-            blockchainId,
-            hashFunctionId,
-        );
+        const hashFunctionName = this.validationModuleManager.getHashFunctionName(hashFunctionId);
 
         const sorted = pipe(
             peers,
@@ -202,10 +202,15 @@ class ShardingTableService {
             sum += node.ask;
         }
 
-        const averageAsk = sum / peers.length;
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);
 
-        return averageAsk * (epochsNumber * (assertionSize / 1024) * r0);
+        return new BigNumber(assertionSize)
+            .dividedBy(peers.length)
+            .dividedBy(1024)
+            .multipliedBy(sum)
+            .multipliedBy(epochsNumber)
+            .multipliedBy(r0)
+            .toString();
     }
 
     async findEligibleNodes(neighbourhood, bid, r1, r0) {

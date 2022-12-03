@@ -8,7 +8,6 @@ class CalculateProofsCommand extends EpochCommand {
         this.validationModuleManager = ctx.validationModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
-        this.serviceAgreementService = ctx.serviceAgreementService;
         this.operationIdService = ctx.operationIdService;
 
         this.errorType = ERROR_TYPE.CALCULATE_PROOFS_ERROR;
@@ -21,7 +20,7 @@ class CalculateProofsCommand extends EpochCommand {
             tokenId,
             keyword,
             hashFunctionId,
-            serviceAgreement,
+            agreementData,
             epoch,
             agreementId,
             identityId,
@@ -50,7 +49,7 @@ class CalculateProofsCommand extends EpochCommand {
                 keyword,
                 epoch,
                 hashFunctionId,
-                serviceAgreement,
+                agreementData,
                 operationId,
             );
 
@@ -69,7 +68,10 @@ class CalculateProofsCommand extends EpochCommand {
             .split('\n')
             .filter(Boolean);
 
-        const { leaf, proof } = this.validationModuleManager.getMerkleProof(nQuads, challenge);
+        const { leaf, proof } = this.validationModuleManager.getMerkleProof(
+            nQuads,
+            Number(challenge),
+        );
 
         await this.commandExecutor.add({
             name: 'submitProofsCommand',
@@ -95,16 +97,16 @@ class CalculateProofsCommand extends EpochCommand {
     }
 
     async isEligibleForRewards(blockchain, agreementId, epoch, identityId) {
-        const r0 = await this.blockchainModuleManager.getR0(blockchain);
+        const r0 = Number(await this.blockchainModuleManager.getR0(blockchain));
 
-        const commits = await this.blockchainModuleManager.getCommitSubmissions(
+        const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
             blockchain,
             agreementId,
             epoch,
         );
 
-        for (let i = 0; i < r0; i += 1) {
-            if (commits[i].identityId === identityId) {
+        for (let i = 0; i < Math.min(r0, commits.length); i += 1) {
+            if (Number(commits[i].identityId) === identityId) {
                 this.logger.trace(`Node is eligible for rewards for agreement id: ${agreementId}`);
 
                 return true;
