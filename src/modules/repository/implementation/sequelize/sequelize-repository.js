@@ -60,6 +60,16 @@ class SequelizeRepository {
             .query(`CREATE DATABASE IF NOT EXISTS \`${this.config.database}\`;`);
     }
 
+    async dropDatabase() {
+        const connection = await mysql.createConnection({
+            host: process.env.SEQUELIZE_REPOSITORY_HOST,
+            port: process.env.SEQUELIZE_REPOSITORY_PORT,
+            user: process.env.SEQUELIZE_REPOSITORY_USER,
+            password: process.env.SEQUELIZE_REPOSITORY_PASSWORD,
+        });
+        await connection.promise().query(`DROP DATABASE IF EXISTS \`${this.config.database}\`;`);
+    }
+
     async runMigrations() {
         const migrator = createMigrator(this.models.sequelize, this.config);
         await migrator.up();

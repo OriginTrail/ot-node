@@ -11,6 +11,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async dropDatabase() {
+        if (this.initialized) {
+            return this.getImplementation().module.dropDatabase();
+        }
+    }
+
     // COMMANDS
     async updateCommand(update, opts) {
         if (this.initialized) {
