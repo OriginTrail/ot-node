@@ -388,7 +388,6 @@ class Web3Service {
         let result;
         while (result === undefined) {
             try {
-                console.log('calling contract function with name ', functionName);
                 // eslint-disable-next-line no-await-in-loop
                 result = await contractInstance.methods[functionName](...args).call();
             } catch (error) {
@@ -406,7 +405,6 @@ class Web3Service {
         let transactionRetried = false;
         while (result === undefined) {
             try {
-                console.log('executing contract function with name ', functionName);
                 /* eslint-disable no-await-in-loop */
                 let gasLimit;
 
