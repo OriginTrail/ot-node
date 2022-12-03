@@ -10,7 +10,6 @@ import NetworkPrivateKeyMigration from './src/migration/network-private-key-migr
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
 import BlockchainIdentityMigration from './src/migration/blockchain-identity-migration.js';
-import CleanShardingTableMigration from './src/migration/clean-sharding-table-migration.js';
 import CleanOperationalDatabaseMigration from './src/migration/clean-operational-database-migration.js';
 
 const require = createRequire(import.meta.url);
@@ -29,7 +28,6 @@ class OTNode {
     async start() {
         await this.checkForUpdate();
         await this.removeUpdateFile();
-        await this.executeMigrations();
 
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
@@ -44,12 +42,10 @@ class OTNode {
         this.logger.info(`Node is running in ${process.env.NODE_ENV} environment`);
 
         await this.initializeDependencyContainer();
+        await this.executeMigrations();
         this.initializeEventEmitter();
 
         await this.initializeModules();
-
-        await this.executeCleanOperationalDatabaseMigration();
-        await this.executeCleanShardingTableMigration();
 
         await this.listenOnHubContractChanges();
 
@@ -342,6 +338,19 @@ class OTNode {
         if (!(await blockchainIdentityMigration.migrationAlreadyExecuted())) {
             await blockchainIdentityMigration.migrate();
         }
+
+        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
+        const cleanShardingTableMigration = new CleanOperationalDatabaseMigration(
+            'CleanOperationalDatabaseMigration',
+            this.logger,
+            this.config,
+            repositoryModuleManager,
+        );
+        if (!(await cleanShardingTableMigration.migrationAlreadyExecuted())) {
+            await cleanShardingTableMigration.migrate();
+            this.logger.info('Operational database cleanup completed. Node will now restart!');
+            this.stop();
+        }
     }
 
     async checkForUpdate() {
@@ -358,34 +367,6 @@ class OTNode {
     stop(code = 0) {
         this.logger.info('Stopping node...');
         process.exit(code);
-    }
-
-    async executeCleanShardingTableMigration() {
-        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
-        const cleanShardingTableMigration = new CleanShardingTableMigration(
-            'CleanShardingTableMigration',
-            this.logger,
-            this.config,
-            repositoryModuleManager,
-        );
-        if (!(await cleanShardingTableMigration.migrationAlreadyExecuted())) {
-            await cleanShardingTableMigration.migrate();
-        }
-    }
-
-    async executeCleanOperationalDatabaseMigration() {
-        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
-        const cleanShardingTableMigration = new CleanOperationalDatabaseMigration(
-            'CleanOperationalDatabaseMigration',
-            this.logger,
-            this.config,
-            repositoryModuleManager,
-        );
-        if (!(await cleanShardingTableMigration.migrationAlreadyExecuted())) {
-            await cleanShardingTableMigration.migrate();
-            this.logger.info('Operational database cleanup completed. Node will now restart!');
-            this.stop();
-        }
     }
 
     async listenOnHubContractChanges() {
