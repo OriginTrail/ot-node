@@ -75,7 +75,7 @@ class ShardingTableService {
                 startingIdentityId,
                 pageSize,
             );
-            shardingTable.push(...nodes.slice(sliceIndex).filter((node) => node.id !== '0x'));
+            shardingTable.push(...nodes.slice(sliceIndex).filter((node) => node.nodeId !== '0x'));
             sliceIndex = 1;
             startingIdentityId = nodes[nodes.length - 1].identityId;
         }
@@ -89,7 +89,7 @@ class ShardingTableService {
                 shardingTable.map(async (peer) => {
                     const nodeId = this.blockchainModuleManager.convertHexToAscii(
                         blockchainId,
-                        peer.id,
+                        peer.nodeId,
                     );
 
                     return {
