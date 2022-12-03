@@ -61,11 +61,13 @@ class OtTripleStore {
         throw Error('initializeSparqlEndpoints not implemented');
     }
 
-    async assetExists(ual, assertionId) {
+    async assetExists(ual, blockchain, contract, tokenId) {
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
                         ASK WHERE {
                             GRAPH <assets:graph> {
-                                <${ual}> schema:assertion <assertion:${assertionId}>
+                                <${ual}> schema:blockchain "${blockchain}";
+                                         schema:contract   "${contract}";
+                                         schema:tokenId    ${tokenId};
                             }
                         }`;
 

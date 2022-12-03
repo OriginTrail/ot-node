@@ -15,6 +15,8 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         this.commandExecutor = ctx.commandExecutor;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+        this.ualService = ctx.ualService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR;
     }
@@ -68,23 +70,33 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             AGREEMENT_STATUS.ACTIVE,
         );
 
-        await this.commandExecutor.add({
-            name: 'epochCheckCommand',
-            sequence: [],
-            delay: 0,
-            data: {
-                blockchain,
-                contract,
-                tokenId,
-                keyword,
-                epoch: 0,
-                hashFunctionId,
-                operationId,
-                agreementId,
-                agreementData,
-            },
-            transactional: false,
-        });
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+        const assetExists = await this.tripleStoreModuleManager.assetExists(
+            ual,
+            blockchain,
+            contract,
+            tokenId,
+        );
+
+        if (!assetExists) {
+            await this.commandExecutor.add({
+                name: 'epochCheckCommand',
+                sequence: [],
+                delay: 0,
+                data: {
+                    blockchain,
+                    contract,
+                    tokenId,
+                    keyword,
+                    epoch: 0,
+                    hashFunctionId,
+                    operationId,
+                    agreementId,
+                    agreementData,
+                },
+                transactional: false,
+            });
+        }
 
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
     }
