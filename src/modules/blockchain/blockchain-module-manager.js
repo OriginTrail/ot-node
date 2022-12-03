@@ -276,6 +276,18 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
+    async callScoreFunction(blockchain, scoreFunctionId, hashFunctionId, peerId, keyword, stake) {
+        if (this.getImplementation(blockchain)) {
+            return this.getImplementation(blockchain).module.callScoreFunction(
+                scoreFunctionId,
+                hashFunctionId,
+                peerId,
+                keyword,
+                stake,
+            );
+        }
+    }
+
     async getLog2PLDSFParams(blockchain) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getLog2PLDSFParams();

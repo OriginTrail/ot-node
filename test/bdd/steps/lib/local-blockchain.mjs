@@ -34,10 +34,10 @@ const parametersStorage = JSON.parse(
 const scoringProxy = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/ScoringProxy.json'),
 );
-const serviceAgreementStorage = JSON.parse(
+const serviceAgreementStorageV1 = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/ServiceAgreementStorageV1.json'),
 );
-const serviceAgreement = JSON.parse(
+const serviceAgreementV1 = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/ServiceAgreementV1.json'),
 );
 const sha256Contract = JSON.parse(
@@ -73,7 +73,7 @@ const sources = {
     shardingTable,
     assertionStorage,
     shardingTableStorage,
-    serviceAgreement,
+    serviceAgreementV1,
     erc20Token,
     profileStorage,
     profile,
@@ -82,7 +82,7 @@ const sources = {
     identityStorage,
     parametersStorage,
     scoringProxy,
-    serviceAgreementStorage,
+    serviceAgreementStorageV1,
     sha256Contract,
     log2pldsfContract,
     staking,
@@ -196,10 +196,10 @@ class LocalBlockchain {
                     `\t Scoring Proxy contract address: \t\t\t\t${this.contracts.scoringProxy.instance._address}`,
                 );
                 this.logger.info(
-                    `\t Service Agreement Storage contract address: \t\t\t\t${this.contracts.serviceAgreementStorage.instance._address}`,
+                    `\t Service Agreement Storage V1 contract address: \t\t\t\t${this.contracts.serviceAgreementStorageV1.instance._address}`,
                 );
                 this.logger.info(
-                    `\t Service Agreement contract address: \t\t\t\t${this.contracts.serviceAgreement.instance._address}`,
+                    `\t Service Agreement V1 contract address: \t\t\t\t${this.contracts.serviceAgreementV1.instance._address}`,
                 );
                 this.logger.info(
                     `\t Token contract address: \t\t\t\t${this.contracts.erc20Token.instance._address}`,
@@ -308,12 +308,12 @@ class LocalBlockchain {
             deployingWallet,
         );
 
-        await this.deploy('serviceAgreementStorage', deployingWallet, [
+        await this.deploy('serviceAgreementStorageV1', deployingWallet, [
             this.contracts.hub.instance._address,
         ]);
         await this.setContractAddress(
-            'ServiceAgreementStorage',
-            this.contracts.serviceAgreementStorage.instance._address,
+            'ServiceAgreementStorageV1',
+            this.contracts.serviceAgreementStorageV1.instance._address,
             deployingWallet,
         );
 
@@ -370,12 +370,12 @@ class LocalBlockchain {
             deployingWallet,
         );
 
-        await this.deploy('serviceAgreement', deployingWallet, [
+        await this.deploy('serviceAgreementV1', deployingWallet, [
             this.contracts.hub.instance._address,
         ]);
         await this.setContractAddress(
-            'ServiceAgreement',
-            this.contracts.serviceAgreement.instance._address,
+            'ServiceAgreementV1',
+            this.contracts.serviceAgreementV1.instance._address,
             deployingWallet,
         );
 

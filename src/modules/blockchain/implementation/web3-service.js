@@ -26,8 +26,8 @@ const ParametersStorage = require('dkg-evm-module/build/contracts/ParametersStor
 const Profile = require('dkg-evm-module/build/contracts/Profile.json');
 const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
 const ScoringProxy = require('dkg-evm-module/build/contracts/ScoringProxy.json');
-const ServiceAgreementStorage = require('dkg-evm-module/build/contracts/ServiceAgreementStorageV1.json');
-const ServiceAgreement = require('dkg-evm-module/build/contracts/ServiceAgreementV1.json');
+const ServiceAgreementStorageV1 = require('dkg-evm-module/build/contracts/ServiceAgreementStorageV1.json');
+const ServiceAgreementV1 = require('dkg-evm-module/build/contracts/ServiceAgreementV1.json');
 const ShardingTable = require('dkg-evm-module/build/contracts/ShardingTable.json');
 const ShardingTableStorage = require('dkg-evm-module/build/contracts/ShardingTableStorage.json');
 
@@ -219,24 +219,24 @@ class Web3Service {
             profileStorageAddress,
         );
 
-        const serviceAgreementAddress = await this.callContractFunction(
+        const serviceAgreementV1Address = await this.callContractFunction(
             this.hubContract,
             'getContractAddress',
-            ['ServiceAgreement'],
+            ['ServiceAgreementV1'],
         );
-        this.ServiceAgreementContract = new this.web3.eth.Contract(
-            ServiceAgreement.abi,
-            serviceAgreementAddress,
+        this.ServiceAgreementV1Contract = new this.web3.eth.Contract(
+            ServiceAgreementV1.abi,
+            serviceAgreementV1Address,
         );
 
-        const serviceAgreementStorageAddress = await this.callContractFunction(
+        const serviceAgreementStorageV1Address = await this.callContractFunction(
             this.hubContract,
             'getContractAddress',
-            ['ServiceAgreementStorage'],
+            ['ServiceAgreementStorageV1'],
         );
-        this.ServiceAgreementStorageContract = new this.web3.eth.Contract(
-            ServiceAgreementStorage.abi,
-            serviceAgreementStorageAddress,
+        this.ServiceAgreementStorageV1Contract = new this.web3.eth.Contract(
+            ServiceAgreementStorageV1.abi,
+            serviceAgreementStorageV1Address,
         );
 
         const scoringProxyAddress = await this.callContractFunction(
@@ -548,7 +548,7 @@ class Web3Service {
 
     async getAgreementData(agreementId) {
         const result = await this.callContractFunction(
-            this.ServiceAgreementStorageContract,
+            this.ServiceAgreementStorageV1Contract,
             'getAgreementData',
             [agreementId],
         );
@@ -586,7 +586,7 @@ class Web3Service {
     }
 
     async isCommitWindowOpen(agreementId, epoch) {
-        return this.callContractFunction(this.ServiceAgreementContract, 'isCommitWindowOpen', [
+        return this.callContractFunction(this.ServiceAgreementV1Contract, 'isCommitWindowOpen', [
             agreementId,
             epoch,
         ]);
@@ -594,7 +594,7 @@ class Web3Service {
 
     async getTopCommitSubmissions(agreementId, epoch) {
         const commits = await this.callContractFunction(
-            this.ServiceAgreementContract,
+            this.ServiceAgreementV1Contract,
             'getTopCommitSubmissions',
             [agreementId, epoch],
         );
@@ -622,13 +622,13 @@ class Web3Service {
     }
 
     async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch) {
-        return this.queueTransaction(this.ServiceAgreementContract, 'submitCommit', [
+        return this.queueTransaction(this.ServiceAgreementV1Contract, 'submitCommit', [
             [assetContractAddress, tokenId, keyword, hashFunctionId, epoch],
         ]);
     }
 
     async isProofWindowOpen(agreementId, epoch) {
-        return this.callContractFunction(this.ServiceAgreementContract, 'isProofWindowOpen', [
+        return this.callContractFunction(this.ServiceAgreementV1Contract, 'isProofWindowOpen', [
             agreementId,
             epoch,
         ]);
@@ -636,7 +636,7 @@ class Web3Service {
 
     async getChallenge(assetContractAddress, tokenId, epoch) {
         const result = await this.callContractFunction(
-            this.ServiceAgreementContract,
+            this.ServiceAgreementV1Contract,
             'getChallenge',
             [this.getPublicKey(), assetContractAddress, tokenId, epoch],
         );
@@ -653,7 +653,7 @@ class Web3Service {
         proof,
         chunkHash,
     ) {
-        return this.queueTransaction(this.ServiceAgreementContract, 'sendProof', [
+        return this.queueTransaction(this.ServiceAgreementV1Contract, 'sendProof', [
             [assetContractAddress, tokenId, keyword, hashFunctionId, epoch, proof, chunkHash],
         ]);
     }
@@ -752,6 +752,16 @@ class Web3Service {
         );
     }
 
+    async callScoreFunction(scoreFunctionId, hashFunctionId, peerId, keyword, stake) {
+        return this.callContractFunction(this.ScoringProxyContract, 'callScoreFunction', [
+            scoreFunctionId,
+            hashFunctionId,
+            this.convertAsciiToHex(peerId),
+            keyword,
+            stake,
+        ]);
+    }
+
     async getLog2PLDSFParams() {
         const log2pldsfParams = await this.callContractFunction(
             this.Log2PLDSFContract,
@@ -761,7 +771,7 @@ class Web3Service {
 
         const params = {};
         params.distanceMappingCoefficient = log2pldsfParams['0'];
-        params.stakeMappingCoefficient = ethers.utils.formatUnits(log2pldsfParams['1'], 'ether');
+        params.stakeMappingCoefficient = log2pldsfParams['1'];
 
         const paramNames = [
             'multiplier',
