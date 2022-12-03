@@ -17,7 +17,7 @@ class DkgClientHelper {
             epochsNum: 5,
             tokenAmount: 10,
             maxNumberOfRetries: 5,
-            hashFunctionId: 0,
+            hashFunctionId: 1,
             blockchain: {
                 name: 'ganache',
                 publicKey: wallet.evmOperationalWalletPublicKey,

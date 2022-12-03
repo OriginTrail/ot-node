@@ -16,7 +16,7 @@ class SubmitProofsCommand extends EpochCommand {
             blockchain,
             leaf,
             proof,
-            serviceAgreement,
+            agreementData,
             epoch,
             agreementId,
             contract,
@@ -56,7 +56,7 @@ class SubmitProofsCommand extends EpochCommand {
             keyword,
             epoch,
             hashFunctionId,
-            serviceAgreement,
+            agreementData,
             operationId,
         );
 

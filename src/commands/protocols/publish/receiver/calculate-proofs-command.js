@@ -8,7 +8,6 @@ class CalculateProofsCommand extends EpochCommand {
         this.validationModuleManager = ctx.validationModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
-        this.serviceAgreementService = ctx.serviceAgreementService;
         this.operationIdService = ctx.operationIdService;
 
         this.errorType = ERROR_TYPE.CALCULATE_PROOFS_ERROR;
@@ -21,7 +20,7 @@ class CalculateProofsCommand extends EpochCommand {
             tokenId,
             keyword,
             hashFunctionId,
-            serviceAgreement,
+            agreementData,
             epoch,
             agreementId,
             identityId,
@@ -50,7 +49,7 @@ class CalculateProofsCommand extends EpochCommand {
                 keyword,
                 epoch,
                 hashFunctionId,
-                serviceAgreement,
+                agreementData,
                 operationId,
             );
 
@@ -106,7 +105,7 @@ class CalculateProofsCommand extends EpochCommand {
             epoch,
         );
 
-        for (let i = 0; i < r0; i += 1) {
+        for (let i = 0; i < Math.min(r0, commits.length); i += 1) {
             if (Number(commits[i].identityId) === identityId) {
                 this.logger.trace(`Node is eligible for rewards for agreement id: ${agreementId}`);
 

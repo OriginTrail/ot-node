@@ -33,15 +33,19 @@ class ServiceAgreementService {
             keyword,
         );
 
-        const hashFunctionName = await this.blockchainModuleManager.getHashFunctionName(
-            blockchainId,
-            hashFunctionId,
-        );
+        const hashFunctionName = this.validationModuleManager.getHashFunctionName(hashFunctionId);
 
         const distanceUint8Array = this.shardingTableService.calculateDistance(
             peerRecord[hashFunctionName],
             keyHash,
         );
+
+        // todo: store this in a more appropriate way
+        if (!this.log2PLDSFParams) {
+            this.log2PLDSFParams = await this.blockchainModuleManager.getLog2PLDSFParams(
+                blockchainId,
+            );
+        }
 
         const {
             distanceMappingCoefficient,
@@ -54,7 +58,7 @@ class ServiceAgreementService {
             c,
             distanceExponent,
             d,
-        } = await this.blockchainModuleManager.getLog2PLDSFParams(blockchainId);
+        } = this.log2PLDSFParams;
 
         const mappedStake = new BigNumber(peerRecord.stake).dividedBy(stakeMappingCoefficient);
         const mappedDistance = new BigNumber(distanceUint8Array).dividedBy(

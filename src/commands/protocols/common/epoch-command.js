@@ -41,7 +41,6 @@ class EpochCommand extends Command {
                 keyword,
                 epoch: epoch + 1,
                 hashFunctionId,
-                agreementData,
                 operationId,
             },
             transactional: false,

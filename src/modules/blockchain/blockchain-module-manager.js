@@ -246,12 +246,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         }
     }
 
-    async getHashFunctionName(blockchain, hashFunctionId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getHashFunctionName(hashFunctionId);
-        }
-    }
-
     async getR2(blockchain) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.getR2();

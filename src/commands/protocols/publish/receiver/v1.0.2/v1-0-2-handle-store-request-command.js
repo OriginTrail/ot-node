@@ -15,6 +15,8 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         this.commandExecutor = ctx.commandExecutor;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+        this.ualService = ctx.ualService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR;
     }
@@ -49,6 +51,14 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
 
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+        const assetExists = await this.tripleStoreModuleManager.assetExists(
+            ual,
+            blockchain,
+            contract,
+            tokenId,
+        );
+
         await this.operationService.localStoreAsset(
             assertionId,
             blockchain,
@@ -68,23 +78,32 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             AGREEMENT_STATUS.ACTIVE,
         );
 
-        await this.commandExecutor.add({
-            name: 'epochCheckCommand',
-            sequence: [],
-            delay: 0,
-            data: {
-                blockchain,
-                contract,
-                tokenId,
-                keyword,
-                epoch: 0,
-                hashFunctionId,
-                operationId,
-                agreementId,
-                agreementData,
-            },
-            transactional: false,
-        });
+        if (!assetExists) {
+            this.logger.trace(
+                `Asset with ${ual} not previously present in triple store. Scheduling epoch check command.`,
+            );
+            await this.commandExecutor.add({
+                name: 'epochCheckCommand',
+                sequence: [],
+                delay: 0,
+                data: {
+                    blockchain,
+                    contract,
+                    tokenId,
+                    keyword,
+                    epoch: 0,
+                    hashFunctionId,
+                    operationId,
+                    agreementId,
+                    agreementData,
+                },
+                transactional: false,
+            });
+        } else {
+            this.logger.trace(
+                `Asset with ${ual} previously present in triple store. Not scheduling epoch check command.`,
+            );
+        }
 
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
     }
