@@ -357,10 +357,11 @@ class SequelizeRepository {
         );
     }
 
-    async removePeerRecord(peerId) {
+    async removePeerRecord(blockchainId, peerId) {
         await this.models.shard.destroy({
             where: {
                 peer_id: peerId,
+                blockchain_id: blockchainId,
             },
         });
     }

@@ -340,13 +340,6 @@ class Web3Service {
         const retryDelayInSec = 5;
         while (retryCount + 1 <= maxNumberOfRetries && !profileCreated) {
             try {
-                console.log([
-                    this.getManagementKey(),
-                    this.convertAsciiToHex(peerId),
-                    initialAsk,
-                    initialStake,
-                    0,
-                ]);
                 // eslint-disable-next-line no-await-in-loop
                 await this.queueTransaction(this.ProfileContract, 'createProfile', [
                     this.getManagementKey(),
@@ -616,12 +609,6 @@ class Web3Service {
                 nextIdentityId: commit.nextIdentityId,
                 score: commit.score,
             }));
-    }
-
-    async getHashFunctionName(hashFunctionId) {
-        return this.callContractFunction(this.HashingProxyContract, 'getHashFunctionName', [
-            hashFunctionId,
-        ]);
     }
 
     async getR2() {
