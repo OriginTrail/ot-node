@@ -752,6 +752,16 @@ class Web3Service {
         );
     }
 
+    async callScoreFunction(scoreFunctionId, hashFunctionId, peerId, keyword, stake) {
+        return this.callContractFunction(this.ScoringProxyContract, 'callScoreFunction', [
+            scoreFunctionId,
+            hashFunctionId,
+            this.convertAsciiToHex(peerId),
+            keyword,
+            stake,
+        ]);
+    }
+
     async getLog2PLDSFParams() {
         const log2pldsfParams = await this.callContractFunction(
             this.Log2PLDSFContract,
@@ -761,7 +771,7 @@ class Web3Service {
 
         const params = {};
         params.distanceMappingCoefficient = log2pldsfParams['0'];
-        params.stakeMappingCoefficient = ethers.utils.formatUnits(log2pldsfParams['1'], 'ether');
+        params.stakeMappingCoefficient = log2pldsfParams['1'];
 
         const paramNames = [
             'multiplier',
