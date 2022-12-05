@@ -1,3 +1,5 @@
+import { ethers } from 'ethers';
+
 export async function executeContractFunction(
     web3,
     contractInstance,
@@ -6,15 +8,13 @@ export async function executeContractFunction(
     publicKey,
     privateKey,
 ) {
-    const gas = await contractInstance.methods[functionName](...args).estimateGas({
-        from: publicKey,
-    });
+    const gas = 1000000;
     const encodedABI = contractInstance.methods[functionName](...args).encodeABI();
     const tx = {
         from: publicKey,
         to: contractInstance.options.address,
         data: encodedABI,
-        gasPrice: 20,
+        gasPrice: ethers.utils.parseUnits('20', 'gwei').toString(),
         gas,
     };
 

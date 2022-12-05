@@ -5,6 +5,7 @@ import { callContractFunction, executeContractFunction, validateArguments } from
 const require = createRequire(import.meta.url);
 const Staking = require('dkg-evm-module/build/contracts/Staking.json');
 const IdentityStorage = require('dkg-evm-module/build/contracts/IdentityStorage.json');
+const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
 const Hub = require('dkg-evm-module/build/contracts/Hub.json');
 const argv = require('minimist')(process.argv.slice(2), {
     string: ['hubContractAddress', 'managementWalletPrivateKey', 'operationalWalletPrivateKey'],
@@ -41,6 +42,20 @@ async function setStake(
         operationalWalletPublicKey,
     ]);
 
+    const tokenContractAddress = await callContractFunction(hubContract, 'getContractAddress', [
+        'Token',
+    ]);
+
+    const tokenContract = new web3.eth.Contract(ERC20Token.abi, tokenContractAddress);
+
+    await executeContractFunction(
+        web3,
+        tokenContract,
+        'increaseAllowance',
+        [stakingContractAddress, stake],
+        managementWalletPublicKey,
+        managementWalletPrivateKey,
+    );
     await executeContractFunction(
         web3,
         stakingContract,
