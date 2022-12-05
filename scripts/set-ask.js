@@ -15,12 +15,14 @@ async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
     const profileStorageAddress = await callContractFunction(hubContract, 'getContractAddress', [
         'ProfileStorage',
     ]);
+    console.log('profile storage ', profileStorageAddress);
 
     const profileStorage = new web3.eth.Contract(ProfileStorage.abi, profileStorageAddress);
 
     const identityStorageAddress = await callContractFunction(hubContract, 'getContractAddress', [
         'IdentityStorage',
     ]);
+    console.log('identity storage ', identityStorageAddress);
 
     const identityStorage = new web3.eth.Contract(IdentityStorage.abi, identityStorageAddress);
 

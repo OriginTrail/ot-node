@@ -31,7 +31,9 @@ bootstrapTemplate.modules.blockchain.implementation[network].config.evmOperation
 bootstrapTemplate.modules.blockchain.implementation[network].config.evmOperationalWalletPrivateKey =
     keys.privateKey[0];
 bootstrapTemplate.modules.blockchain.implementation[network].config.evmManagementWalletPublicKey =
-    keys.publicKey[keys.publicKey.length - 1];
+    keys.managementWalletPublicKey;
+bootstrapTemplate.modules.blockchain.implementation[network].config.evmManagementWalletPrivateKey =
+    keys.managementWalletPrivateKey;
 bootstrapTemplate.modules.blockchain.implementation[network].config.hubContractAddress =
     hubContractAddress;
 bootstrapTemplate.modules.blockchain.implementation[network].config.rpcEndpoints = [
