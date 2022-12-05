@@ -27,9 +27,7 @@ export async function callContractFunction(contractInstance, functionName, args)
 }
 
 export function validateArguments(received, expected) {
-    console.log(received);
-    console.log(expected);
-    for (const arg in expected) {
+    for (const arg of expected) {
         if (!received[arg]) {
             return false;
         }

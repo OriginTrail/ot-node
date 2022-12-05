@@ -51,6 +51,12 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     };
     let nodeName;
     if (i === 0) {
+        bootstrapTemplate.modules.blockchain.implementation[
+            network
+        ].config.evmManagementWalletPublicKey = keys.publicKey[keys.publicKey.length - 1];
+        bootstrapTemplate.modules.blockchain.implementation[
+            network
+        ].config.evmManagementWalletPrivateKey = keys.privateKey[keys.publicKey.length - 1];
         console.log('Using the preexisting identity for the first node (bootstrap)');
         nodeName = 'bootstrap';
         await dropDatabase(
@@ -82,6 +88,8 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     ].config.evmOperationalWalletPrivateKey = keys.privateKey[i + 1];
     parsedTemplate.modules.blockchain.implementation[network].config.evmManagementWalletPublicKey =
         keys.publicKey[keys.publicKey.length - 1];
+    parsedTemplate.modules.blockchain.implementation[network].config.evmManagementWalletPrivateKey =
+        keys.privateKey[keys.publicKey.length - 1];
     parsedTemplate.modules.blockchain.implementation[network].config.hubContractAddress =
         hubContractAddress;
     parsedTemplate.modules.blockchain.implementation[network].config.rpcEndpoints = [

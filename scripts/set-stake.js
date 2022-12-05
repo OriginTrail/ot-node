@@ -17,7 +17,7 @@ async function setStake(
     managementWalletPrivateKey,
     hubContractAddress,
 ) {
-    const web3 = new Web3(this.config.rpcEndpoints[rpcEndpoint]);
+    const web3 = new Web3(rpcEndpoint);
     const operationalWalletPublicKey = web3.eth.accounts.privateKeyToAccount(
         operationalWalletPrivateKey,
     ).address;
@@ -42,6 +42,7 @@ async function setStake(
     ]);
 
     await executeContractFunction(
+        web3,
         stakingContract,
         'addStake',
         [identityId, stake],
