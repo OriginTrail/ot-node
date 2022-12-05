@@ -62,7 +62,7 @@ class BaseModuleManager {
                 );
                 this.handlers[implementationName] = {
                     module,
-                    config: implementationConfig,
+                    config: implementationConfig.config,
                 };
             }
             if (Object.keys(this.handlers).length === 0) {
