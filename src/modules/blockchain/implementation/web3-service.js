@@ -31,9 +31,10 @@ const ServiceAgreementV1 = require('dkg-evm-module/build/contracts/ServiceAgreem
 const ShardingTable = require('dkg-evm-module/build/contracts/ShardingTable.json');
 const ShardingTableStorage = require('dkg-evm-module/build/contracts/ShardingTableStorage.json');
 
-const FIXED_GAS_LIMIT_METHODS = ['submitCommit', 'sendProof'];
-
-const COMMIT_PROOF_GAS_LIMIT = 300000;
+const FIXED_GAS_LIMIT_METHODS = {
+    submitCommit: 300000,
+    sendProof: 400000,
+};
 
 class Web3Service {
     async initialize(config, logger) {
@@ -392,8 +393,8 @@ class Web3Service {
                 /* eslint-disable no-await-in-loop */
                 let gasLimit;
 
-                if (FIXED_GAS_LIMIT_METHODS.includes(functionName)) {
-                    gasLimit = COMMIT_PROOF_GAS_LIMIT;
+                if (FIXED_GAS_LIMIT_METHODS[functionName]) {
+                    gasLimit = FIXED_GAS_LIMIT_METHODS[functionName];
                 } else {
                     gasLimit = await contractInstance.methods[functionName](...args).estimateGas({
                         from: this.getPublicKey(),
