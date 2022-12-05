@@ -267,9 +267,7 @@
                             "blockchainTitle": "ganache",
                             "networkId": "ganache::testnet",
                             "hubContractAddress": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
-                            "rpcEndpoints": ["http://localhost:7545"],
-                            "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            "rpcEndpoints": ["http://localhost:7545"]
                         }
                     }
                 }
@@ -412,9 +410,7 @@
                         "config": {
                             "networkId": "parachain::testnet",
                             "hubContractAddress": "0xc9184C1A0CE150a882DC3151Def25075bdAf069C",
-                            "rpcEndpoints": ["wss://lofar.origin-trail.network"],
-                            "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            "rpcEndpoints": ["wss://lofar.origin-trail.network"]
                         }
                     },
                     "polygon": {
@@ -427,9 +423,7 @@
                                 "https://matic-mumbai.chainstacklabs.com",
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
-                            ],
-                            "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            ]
                         }
                     }
                 }
@@ -591,9 +585,7 @@
                         "config": {
                             "networkId": "otp::mainnet",
                             "hubContractAddress": "",
-                            "rpcEndpoints": [],
-                            "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            "rpcEndpoints": []
                         }
                     },
                     "polygon": {
@@ -602,9 +594,7 @@
                             "networkId": "polygon::mainnet",
                             "hubContractAddress": "",
                             "gasPriceOracleLink": "",
-                            "rpcEndpoints": [],
-                            "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            "rpcEndpoints": []
                         }
                     }
                 }

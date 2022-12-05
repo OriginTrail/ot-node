@@ -45,16 +45,15 @@ class UALService {
         };
     }
 
-    async calculateLocationKeyword(blockchain, contract, tokenId) {
+    async calculateLocationKeyword(blockchain, contract) {
         const firstAssertionId = await this.blockchainModuleManager.getAssertionIdByIndex(
             blockchain,
             contract,
-            tokenId,
             0,
         );
         return ethers.utils.solidityPack(
             ['address', 'uint256', 'bytes32'],
-            [contract, tokenId, firstAssertionId],
+            [contract, firstAssertionId],
         );
     }
 }
