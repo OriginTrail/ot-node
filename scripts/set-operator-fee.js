@@ -50,6 +50,6 @@ if (validateArguments(argv, expectedArguments)) {
 } else {
     console.log('Wrong arguments sent in script.');
     console.log(
-        'Example: npm run set-ask -- --rpcEndpoint=<rpc_enpoint> --operatorFee=<ask> --privateKey=<ask> --hubContractAddress=<hub_contract_address>',
+        'Example: npm run set-operator-fee -- --rpcEndpoint=<rpc_enpoint> --operatorFee=<ask> --privateKey=<ask> --hubContractAddress=<hub_contract_address>',
     );
 }

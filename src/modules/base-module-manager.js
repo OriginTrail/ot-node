@@ -106,6 +106,10 @@ class BaseModuleManager {
         }
         delete this.handlers[name];
     }
+
+    getModuleConfiguration(name) {
+        return this.getImplementation(name).config;
+    }
 }
 
 export default BaseModuleManager;

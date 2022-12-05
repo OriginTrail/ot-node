@@ -8,9 +8,20 @@ const IdentityStorage = require('dkg-evm-module/build/contracts/IdentityStorage.
 const Hub = require('dkg-evm-module/build/contracts/Hub.json');
 const argv = require('minimist')(process.argv.slice(2));
 
-async function setStake(rpcEndpoint, stake, walletPrivateKey, hubContractAddress) {
+async function setStake(
+    rpcEndpoint,
+    stake,
+    operationalWalletPrivateKey,
+    managementWalletPrivateKey,
+    hubContractAddress,
+) {
     const web3 = new Web3(this.config.rpcEndpoints[rpcEndpoint]);
-    const walletPublicKey = web3.eth.accounts.privateKeyToAccount(walletPrivateKey).address;
+    const operationalWalletPublicKey = web3.eth.accounts.privateKeyToAccount(
+        operationalWalletPrivateKey,
+    ).address;
+    const managementWalletPublicKey = web3.eth.accounts.privateKeyToAccount(
+        managementWalletPrivateKey,
+    ).address;
     const hubContract = new web3.eth.Contract(Hub.abi, hubContractAddress);
     const stakingContractAddress = await callContractFunction(hubContract, 'getContractAddress', [
         'Staking',
@@ -25,31 +36,45 @@ async function setStake(rpcEndpoint, stake, walletPrivateKey, hubContractAddress
     const identityStorage = new web3.eth.Contract(IdentityStorage.abi, identityStorageAddress);
 
     const identityId = await callContractFunction(identityStorage, 'getIdentityId', [
-        walletPublicKey,
+        operationalWalletPublicKey,
     ]);
 
     await executeContractFunction(
         stakingContract,
         'addStake',
         [identityId, stake],
-        walletPublicKey,
-        walletPrivateKey,
+        managementWalletPublicKey,
+        managementWalletPrivateKey,
     );
 }
 
-const expectedArguments = ['rpcEndpoint', 'stake', 'privateKey', 'hubContractAddress'];
+const expectedArguments = [
+    'rpcEndpoint',
+    'stake',
+    'operationalWalletPrivateKey',
+    'managementWalletPrivateKey',
+    'hubContractAddress',
+];
 
 if (validateArguments(argv, expectedArguments)) {
-    setStake(argv.rpcEndpoint, argv.stake, argv.privateKey, argv.hubContractAddress)
+    setStake(
+        argv.rpcEndpoint,
+        argv.stake,
+        argv.operationalWalletPrivateKey,
+        argv.managementWalletPrivateKey,
+        argv.hubContractAddress,
+    )
         .then(() => {
             console.log('Set stake completed');
+            process.exit(0);
         })
         .catch((error) => {
             console.log('Error while setting stake. Error: ', error);
+            process.exit(1);
         });
 } else {
     console.log('Wrong arguments sent in script.');
     console.log(
-        'Example: npm run set-ask -- --rpcEndpoint=<rpc_enpoint> --stake=<ask> --privateKey=<ask> --hubContractAddress=<hub_contract_address>',
+        'Example: npm run set-stake -- --rpcEndpoint=<rpc_enpoint> --stake=<stake> --operationalWalletPrivateKey=<private_key> --managementWalletPrivateKey=<private_key> --hubContractAddress=<hub_contract_address>',
     );
 }

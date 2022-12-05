@@ -2,6 +2,7 @@ import DeepExtend from 'deep-extend';
 import rc from 'rc';
 import EventEmitter from 'events';
 import { createRequire } from 'module';
+import { execSync } from 'child_process';
 import DependencyInjection from './src/service/dependency-injection.js';
 import Logger from './src/logger/logger.js';
 import { CONTRACTS, MIN_NODE_VERSION } from './src/constants/constants.js';
@@ -177,6 +178,16 @@ class OTNode {
                     }
                     const identityId = await blockchainModuleManager.getIdentityId(blockchain);
                     this.logger.info(`Identity ID: ${identityId}`);
+                    const blockchainConfig =
+                        blockchainModuleManager.getModuleConfiguration(blockchain);
+                    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+                        execSync(
+                            `npm run set-stake -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --stake=${blockchainConfig.initialStakeAmount} --operationalWalletPrivateKey=${blockchainConfig.evmOperationalWalletPrivateKey} --managementWalletPrivateKey=${blockchainConfig.evmManagementWalletPrivateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
+                        );
+                        execSync(
+                            `npm run set-ask -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --ask=${blockchainConfig.initialAskAmount} --privateKey=${blockchainConfig.evmOperationalWalletPrivateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
+                        );
+                    }
                 } catch (error) {
                     this.logger.warn(
                         `Unable to create ${blockchain} blockchain profile. Removing implementation. Error: ${error.message}`,

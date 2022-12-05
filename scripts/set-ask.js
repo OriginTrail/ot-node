@@ -43,9 +43,11 @@ if (validateArguments(argv, expectedArguments)) {
     setAsk(argv.rpcEndpoint, argv.ask, argv.privateKey, argv.hubContractAddress)
         .then(() => {
             console.log('Set ask completed');
+            process.exit(0);
         })
         .catch((error) => {
             console.log('Error while setting ask. Error: ', error);
+            process.exit(1);
         });
 } else {
     console.log('Wrong arguments sent in script.');

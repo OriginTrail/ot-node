@@ -19,7 +19,8 @@
         "test:bdd:get-errors": "cucumber-js --tags=@get-errors --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/",
         "lint": "eslint .",
         "set-ask": "node scripts/set-ask.js",
-        "set-stake": "node scripts/set-stake.js"
+        "set-stake": "node scripts/set-stake.js",
+        "set-operator-fee": "node scripts/set-operator-fee.js"
     },
     "repository": {
         "type": "git",
