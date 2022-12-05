@@ -379,8 +379,6 @@ class OTNode {
         );
         if (!(await cleanOperationalDatabaseMigration.migrationAlreadyExecuted())) {
             await cleanOperationalDatabaseMigration.migrate();
-            this.logger.info('Operational database cleanup completed. Node will now restart!');
-            this.stop();
         }
     }
 
