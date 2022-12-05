@@ -1,11 +1,11 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-console */
-require('dotenv').config();
+require('dotenv').config({ path: `${__dirname}/../../.env` });
 const { setTimeout } = require('timers/promises');
 const appRootPath = require('app-root-path');
 const path = require('path');
 const fs = require('fs');
-const { WsProvider, ApiPromise } = require('@polkadot/api');
+const { ApiPromise, HttpProvider } = require('@polkadot/api');
 const { Keyring } = require('@polkadot/keyring');
 const { mnemonicGenerate, mnemonicToMiniSecret, decodeAddress } = require('@polkadot/util-crypto');
 const { u8aToHex } = require('@polkadot/util');
@@ -15,9 +15,9 @@ const { joinSignature } = require('@ethersproject/bytes');
 const { _TypedDataEncoder } = require('@ethersproject/hash');
 const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
 
-const tokenAddress = '0x137e321166522A60CBF649Beb7a65989b9e1518e';
-const endpoint = 'wss://lofar.origin-trail.network';
-const transferValue = 1000 * 1e12;
+const tokenAddress = '0xffffffff00000000000000000000000000000001';
+const endpoint = 'https://lofar-testnet.origin-trail.network';
+const transferValue = 5000 * 1e12;
 const otpAccountWithTokens = {
     accountPublicKey: process.env.SUBSTRATE_ACCOUNT_PUBLIC_KEY,
     accountPrivateKey: process.env.SUBSTRATE_ACCOUNT_PRIVATE_KEY,
@@ -28,12 +28,12 @@ const evmAccountWithTokens = {
 };
 
 const walletsPath = path.join(appRootPath.path, 'tools/substrate-accounts-mapping/wallets.json');
-const numberOfAccounts = 1;
+const numberOfAccounts = 10;
 
 class AccountsMapping {
     async initialize() {
         // Initialise the provider to connect to the local node
-        const provider = new WsProvider(endpoint);
+        const provider = new HttpProvider(endpoint);
 
         // eslint-disable-next-line no-await-in-loop
         this.parachainProvider = await new ApiPromise({ provider }).isReady;
@@ -135,6 +135,8 @@ class AccountsMapping {
         if (result.toHex() === '0x') throw Error('Unable to create account mapping for otp');
         console.log(result.toString());
         console.log(`Account mapped for evm public key: ${evmPublicKey}`);
+        console.log(`Account ${account.substratePublicKey} claimed sleeping for 40 seconds`);
+        await this.sleepForMilliseconds(40 * 1000);
         return account;
     }
 
@@ -167,11 +169,11 @@ class AccountsMapping {
     }
 
     async fundAccountsWithTrac(evmWallet) {
-        const val = this.web3.utils.toWei('100000', 'ether');
+        const val = this.web3.utils.toWei('10000000', 'ether');
         // console.log(val);
-        const gasLimit = await this.tokenContract.methods.transfer(evmWallet, val).estimateGas({
-            from: evmAccountWithTokens.publicKey,
-        });
+        // const gasLimit = await this.tokenContract.methods.transfer(evmWallet, val).estimateGas({
+        //     from: evmAccountWithTokens.publicKey,
+        // });
 
         const encodedABI = this.tokenContract.methods.transfer(evmWallet, val).encodeABI();
         const createTransaction = await this.web3.eth.accounts.signTransaction(
@@ -180,7 +182,7 @@ class AccountsMapping {
                 to: tokenAddress,
                 data: encodedABI,
                 gasPrice: 1000,
-                gas: gasLimit,
+                gas: 10000000,
             },
             evmAccountWithTokens.privateKey,
         );
@@ -247,8 +249,8 @@ class AccountsMapping {
             domain: {
                 name: 'OTP EVM claim',
                 version: '1',
-                chainId: '2160',
-                salt: '0x0542e99b538e30d713d3e020f18fa6717eb2c5452bd358e0dd791628260a36f0',
+                chainId: '20430',
+                salt: '0xf2b8faefcf9c370872d0b4d2eee31d46b4de4a8688153d23d82a39e2d6bc8bbc',
             },
             message: {
                 substrateAddress: hexPubKey,
