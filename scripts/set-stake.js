@@ -40,7 +40,13 @@ async function setStake(rpcEndpoint, stake, walletPrivateKey, hubContractAddress
 const expectedArguments = ['rpcEndpoint', 'stake', 'privateKey', 'hubContractAddress'];
 
 if (validateArguments(argv, expectedArguments)) {
-    setStake(argv.rpcEndpoint, argv.stake, argv.privateKey, argv.hubContractAddress);
+    setStake(argv.rpcEndpoint, argv.stake, argv.privateKey, argv.hubContractAddress)
+        .then(() => {
+            console.log('Set stake completed');
+        })
+        .catch((error) => {
+            console.log('Error while setting stake. Error: ', error);
+        });
 } else {
     console.log('Wrong arguments sent in script.');
     console.log(

@@ -40,7 +40,13 @@ async function setOperatorFee(rpcEndpoint, operatorFee, walletPrivateKey, hubCon
 const expectedArguments = ['rpcEndpoint', 'operatorFee', 'privateKey', 'hubContractAddress'];
 
 if (validateArguments(argv, expectedArguments)) {
-    setOperatorFee(argv.rpcEndpoint, argv.operatorFee, argv.privateKey, argv.hubContractAddress);
+    setOperatorFee(argv.rpcEndpoint, argv.operatorFee, argv.privateKey, argv.hubContractAddress)
+        .then(() => {
+            console.log('Set operator fee completed');
+        })
+        .catch((error) => {
+            console.log('Error while setting operator fee. Error: ', error);
+        });
 } else {
     console.log('Wrong arguments sent in script.');
     console.log(
