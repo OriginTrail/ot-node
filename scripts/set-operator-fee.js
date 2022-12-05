@@ -6,7 +6,9 @@ const require = createRequire(import.meta.url);
 const Staking = require('dkg-evm-module/build/contracts/Staking.json');
 const IdentityStorage = require('dkg-evm-module/build/contracts/IdentityStorage.json');
 const Hub = require('dkg-evm-module/build/contracts/Hub.json');
-const argv = require('minimist')(process.argv.slice(2));
+const argv = require('minimist')(process.argv.slice(2), {
+    string: ['privateKey', 'hubContractAddress'],
+});
 
 async function setOperatorFee(rpcEndpoint, operatorFee, walletPrivateKey, hubContractAddress) {
     const web3 = new Web3(this.config.rpcEndpoints[rpcEndpoint]);
