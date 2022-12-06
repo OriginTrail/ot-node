@@ -237,7 +237,7 @@ class ShardingTableService {
 
         let sum = 0;
         for (const node of peers) {
-            sum += node.ask;
+            sum += +node.ask;
         }
 
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);
