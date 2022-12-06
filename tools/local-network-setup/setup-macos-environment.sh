@@ -68,9 +68,6 @@ echo ================================
 
 node $pathToOtNode/tools/local-network-setup/generate-config-files.js $numberOfNodes $network $hubContractAddress
 
-echo Sleeping for 5 sec, waiting for contracts to be deployed
-sleep 5
-
 echo ================================
 echo ======== Starting nodes ========
 echo ================================

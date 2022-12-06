@@ -3,7 +3,7 @@ import { createRequire } from 'module';
 import validateArguments from './utils.js';
 
 const require = createRequire(import.meta.url);
-const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
+const Profile = require('dkg-evm-module/build/contracts/Profile.json');
 const IdentityStorage = require('dkg-evm-module/build/contracts/IdentityStorage.json');
 const Hub = require('dkg-evm-module/build/contracts/Hub.json');
 const argv = require('minimist')(process.argv.slice(1), {
@@ -16,8 +16,8 @@ async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
 
     const hubContract = new ethers.Contract(hubContractAddress, Hub.abi, provider);
 
-    const profileStorageAddress = await hubContract.getContractAddress('ProfileStorage');
-    const profileStorage = new ethers.Contract(profileStorageAddress, ProfileStorage.abi, provider);
+    const profileAddress = await hubContract.getContractAddress('Profile');
+    const profile = new ethers.Contract(profileAddress, Profile.abi, provider);
 
     const identityStorageAddress = await hubContract.getContractAddress('IdentityStorage');
     const identityStorage = new ethers.Contract(
@@ -31,7 +31,7 @@ async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
     const askWei = ethers.utils.parseEther(ask);
 
     const walletSigner = wallet.connect(provider);
-    profileStorage.connect(walletSigner).setAsk(identityId, askWei, { gasLimit: 1_000_000 });
+    await profile.connect(walletSigner).setAsk(identityId, askWei, { gasLimit: 1_000_000 });
 }
 
 const expectedArguments = ['rpcEndpoint', 'ask', 'privateKey', 'hubContractAddress'];
