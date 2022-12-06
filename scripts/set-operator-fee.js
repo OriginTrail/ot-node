@@ -31,7 +31,7 @@ async function setOperatorFee(rpcEndpoint, operatorFee, walletPrivateKey, hubCon
     const walletSigner = wallet.connect(provider);
     stakingContract
         .connect(walletSigner)
-        .setOperatorFee(identityId, operatorFee, { gasPrice: 1_000, gasLimit: 1_000_000 });
+        .setOperatorFee(identityId, operatorFee, { gasLimit: 1_000_000 });
 }
 
 const expectedArguments = ['rpcEndpoint', 'operatorFee', 'privateKey', 'hubContractAddress'];
