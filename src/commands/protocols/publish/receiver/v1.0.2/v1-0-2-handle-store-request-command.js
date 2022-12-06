@@ -59,12 +59,21 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             tokenId,
         );
 
+        console.log('agreementData ', agreementData);
+
+        const agreementEndTime =
+            Number(agreementData.startTime) +
+            Number(agreementData.epochsNumber) * Number(agreementData.epochsLength);
+
         await this.operationService.localStoreAsset(
             assertionId,
             blockchain,
             contract,
             tokenId,
             operationId,
+            agreementData.startTime,
+            agreementEndTime,
+            keyword,
         );
 
         await this.operationIdService.updateOperationIdStatus(
