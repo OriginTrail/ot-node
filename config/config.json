@@ -129,7 +129,7 @@
                             "rpcEndpoints": ["http://localhost:7545"],
                             "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
                             "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            "initialAskAmount" : 0.2
                         }
                     },
                     "otp": {

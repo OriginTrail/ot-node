@@ -1,44 +1,37 @@
-import Web3 from 'web3';
+import { ethers } from 'ethers';
 import { createRequire } from 'module';
-import { callContractFunction, executeContractFunction, validateArguments } from './utils.js';
+import validateArguments from './utils.js';
 
 const require = createRequire(import.meta.url);
 const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
 const IdentityStorage = require('dkg-evm-module/build/contracts/IdentityStorage.json');
 const Hub = require('dkg-evm-module/build/contracts/Hub.json');
-const argv = require('minimist')(process.argv.slice(2), {
-    string: ['privateKey', 'hubContractAddress'],
+const argv = require('minimist')(process.argv.slice(1), {
+    string: ['ask', 'privateKey', 'hubContractAddress'],
 });
 
 async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
-    const web3 = new Web3(this.config.rpcEndpoints[rpcEndpoint]);
-    const walletPublicKey = web3.eth.accounts.privateKeyToAccount(walletPrivateKey).address;
-    const hubContract = new web3.eth.Contract(Hub.abi, hubContractAddress);
-    const profileStorageAddress = await callContractFunction(hubContract, 'getContractAddress', [
-        'ProfileStorage',
-    ]);
-    console.log('profile storage ', profileStorageAddress);
+    const provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);
+    const wallet = new ethers.Wallet(walletPrivateKey);
 
-    const profileStorage = new web3.eth.Contract(ProfileStorage.abi, profileStorageAddress);
+    const hubContract = new ethers.Contract(hubContractAddress, Hub.abi, provider);
 
-    const identityStorageAddress = await callContractFunction(hubContract, 'getContractAddress', [
-        'IdentityStorage',
-    ]);
-    console.log('identity storage ', identityStorageAddress);
+    const profileStorageAddress = await hubContract.getContractAddress('ProfileStorage');
+    const profileStorage = new ethers.Contract(profileStorageAddress, ProfileStorage.abi, provider);
 
-    const identityStorage = new web3.eth.Contract(IdentityStorage.abi, identityStorageAddress);
-
-    const identityId = await callContractFunction(identityStorage, 'getIdentityId', [
-        walletPublicKey,
-    ]);
-
-    await executeContractFunction(
-        profileStorage,
-        'setAsk',
-        [identityId, ask],
-        walletPublicKey,
-        walletPrivateKey,
+    const identityStorageAddress = await hubContract.getContractAddress('IdentityStorage');
+    const identityStorage = new ethers.Contract(
+        identityStorageAddress,
+        IdentityStorage.abi,
+        provider,
     );
+
+    const identityId = await identityStorage.getIdentityId(wallet.address);
+
+    const askWei = ethers.utils.parseEther(ask);
+
+    const walletSigner = wallet.connect(provider);
+    profileStorage.connect(walletSigner).setAsk(identityId, askWei, { gasLimit: 1_000_000 });
 }
 
 const expectedArguments = ['rpcEndpoint', 'ask', 'privateKey', 'hubContractAddress'];

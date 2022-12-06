@@ -1,14 +1,19 @@
-import Web3 from 'web3';
+import { ethers } from 'ethers';
 import { createRequire } from 'module';
-import { callContractFunction, executeContractFunction, validateArguments } from './utils.js';
+import validateArguments from './utils.js';
 
 const require = createRequire(import.meta.url);
 const Staking = require('dkg-evm-module/build/contracts/Staking.json');
 const IdentityStorage = require('dkg-evm-module/build/contracts/IdentityStorage.json');
 const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
 const Hub = require('dkg-evm-module/build/contracts/Hub.json');
-const argv = require('minimist')(process.argv.slice(2), {
-    string: ['hubContractAddress', 'managementWalletPrivateKey', 'operationalWalletPrivateKey'],
+const argv = require('minimist')(process.argv.slice(1), {
+    string: [
+        'stake',
+        'operationalWalletPrivateKey',
+        'managementWalletPrivateKey',
+        'hubContractAddress',
+    ],
 });
 
 async function setStake(
@@ -18,52 +23,37 @@ async function setStake(
     managementWalletPrivateKey,
     hubContractAddress,
 ) {
-    const web3 = new Web3(rpcEndpoint);
-    const operationalWalletPublicKey = web3.eth.accounts.privateKeyToAccount(
-        operationalWalletPrivateKey,
-    ).address;
-    const managementWalletPublicKey = web3.eth.accounts.privateKeyToAccount(
-        managementWalletPrivateKey,
-    ).address;
-    const hubContract = new web3.eth.Contract(Hub.abi, hubContractAddress);
-    const stakingContractAddress = await callContractFunction(hubContract, 'getContractAddress', [
-        'Staking',
-    ]);
+    const provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);
+    const operationalWallet = new ethers.Wallet(operationalWalletPrivateKey);
+    const managementWallet = new ethers.Wallet(managementWalletPrivateKey);
 
-    const stakingContract = new web3.eth.Contract(Staking.abi, stakingContractAddress);
+    const hubContract = new ethers.Contract(hubContractAddress, Hub.abi, provider);
 
-    const identityStorageAddress = await callContractFunction(hubContract, 'getContractAddress', [
-        'IdentityStorage',
-    ]);
+    const stakingContractAddress = await hubContract.getContractAddress('Staking');
+    const stakingContract = new ethers.Contract(stakingContractAddress, Staking.abi, provider);
 
-    const identityStorage = new web3.eth.Contract(IdentityStorage.abi, identityStorageAddress);
-
-    const identityId = await callContractFunction(identityStorage, 'getIdentityId', [
-        operationalWalletPublicKey,
-    ]);
-
-    const tokenContractAddress = await callContractFunction(hubContract, 'getContractAddress', [
-        'Token',
-    ]);
-
-    const tokenContract = new web3.eth.Contract(ERC20Token.abi, tokenContractAddress);
-
-    await executeContractFunction(
-        web3,
-        tokenContract,
-        'increaseAllowance',
-        [stakingContractAddress, stake],
-        managementWalletPublicKey,
-        managementWalletPrivateKey,
+    const identityStorageAddress = await hubContract.getContractAddress('IdentityStorage');
+    const identityStorage = new ethers.Contract(
+        identityStorageAddress,
+        IdentityStorage.abi,
+        provider,
     );
-    await executeContractFunction(
-        web3,
-        stakingContract,
-        'addStake',
-        [identityId, stake],
-        managementWalletPublicKey,
-        managementWalletPrivateKey,
-    );
+
+    const identityId = await identityStorage.getIdentityId(operationalWallet.address);
+
+    const tokenContractAddress = await hubContract.getContractAddress('Token');
+    const tokenContract = new ethers.Contract(tokenContractAddress, ERC20Token.abi, provider);
+
+    const stakeWei = ethers.utils.parseEther(stake);
+
+    const managementWalletSigner = managementWallet.connect(provider);
+    await tokenContract
+        .connect(managementWalletSigner)
+        .increaseAllowance(stakingContractAddress, stakeWei, { gasLimit: 1_000_000 });
+    // TODO: Add ABI instead of hard-coded function definition
+    await stakingContract
+        .connect(managementWalletSigner)
+        ['addStake(uint72,uint96)'](identityId, stakeWei, { gasLimit: 1_000_000 });
 }
 
 const expectedArguments = [
