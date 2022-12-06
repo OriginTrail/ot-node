@@ -2,6 +2,7 @@ import DeepExtend from 'deep-extend';
 import rc from 'rc';
 import EventEmitter from 'events';
 import { createRequire } from 'module';
+import { execSync } from 'child_process';
 import DependencyInjection from './src/service/dependency-injection.js';
 import Logger from './src/logger/logger.js';
 import { CONTRACTS, MIN_NODE_VERSION } from './src/constants/constants.js';
@@ -10,6 +11,7 @@ import NetworkPrivateKeyMigration from './src/migration/network-private-key-migr
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
 import BlockchainIdentityMigration from './src/migration/blockchain-identity-migration.js';
+import CleanOperationalDatabaseMigration from './src/migration/clean-operational-database-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -45,6 +47,11 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
+
+        await this.executeCleanOperationalDatabaseMigration();
+
+        await this.listenOnHubContractChanges();
+
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
@@ -163,19 +170,25 @@ class OTNode {
             .getImplementationNames()
             .map(async (blockchain) => {
                 try {
-                    if (!blockchainModuleManager.identityExists(blockchain)) {
-                        this.logger.info(`Creating blockchain identity on network: ${blockchain}`);
-                        await blockchainModuleManager.deployIdentity(blockchain);
-                        await blockchainModuleManager.saveIdentityInFile();
-                    }
-                    const identity = blockchainModuleManager.getIdentity(blockchain);
-                    this.logger.info(`${blockchain} blockchain identity is ${identity}`);
-
-                    if (!(await blockchainModuleManager.profileExists(blockchain, identity))) {
+                    if (!(await blockchainModuleManager.identityIdExists(blockchain))) {
                         this.logger.info(`Creating profile on network: ${blockchain}`);
                         const networkModuleManager = this.container.resolve('networkModuleManager');
                         const peerId = networkModuleManager.getPeerId().toB58String();
                         await blockchainModuleManager.createProfile(blockchain, peerId);
+                    }
+                    const identityId = await blockchainModuleManager.getIdentityId(blockchain);
+                    this.logger.info(`Identity ID: ${identityId}`);
+                    const blockchainConfig =
+                        blockchainModuleManager.getModuleConfiguration(blockchain);
+                    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+                        execSync(
+                            `npm run set-stake -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --stake=${blockchainConfig.initialStakeAmount} --operationalWalletPrivateKey=${blockchainConfig.evmOperationalWalletPrivateKey} --managementWalletPrivateKey=${blockchainConfig.evmManagementWalletPrivateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
+                            { stdio: 'inherit' },
+                        );
+                        execSync(
+                            `npm run set-ask -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --ask=${blockchainConfig.initialAskAmount} --privateKey=${blockchainConfig.evmOperationalWalletPrivateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
+                            { stdio: 'inherit' },
+                        );
                     }
                 } catch (error) {
                     this.logger.warn(
@@ -277,6 +290,18 @@ class OTNode {
                         getLastCheckedBlock,
                         updateLastCheckedBlock,
                     );
+                    await blockchainModuleManager.getAllPastEvents(
+                        CONTRACTS.PROFILE_CONTRACT,
+                        onEventsReceived,
+                        getLastCheckedBlock,
+                        updateLastCheckedBlock,
+                    );
+                    await blockchainModuleManager.getAllPastEvents(
+                        CONTRACTS.HUB_CONTRACT,
+                        onEventsReceived,
+                        getLastCheckedBlock,
+                        updateLastCheckedBlock,
+                    );
                 } catch (e) {
                     this.logger.error(`Failed to get blockchain events. Error: ${e}`);
                 } finally {
@@ -344,6 +369,53 @@ class OTNode {
     stop(code = 0) {
         this.logger.info('Stopping node...');
         process.exit(code);
+    }
+
+    async executeCleanOperationalDatabaseMigration() {
+        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
+        const cleanOperationalDatabaseMigration = new CleanOperationalDatabaseMigration(
+            'CleanOperationalDatabaseMigration',
+            this.logger,
+            this.config,
+            repositoryModuleManager,
+        );
+        if (!(await cleanOperationalDatabaseMigration.migrationAlreadyExecuted())) {
+            await cleanOperationalDatabaseMigration.migrate();
+        }
+    }
+
+    async listenOnHubContractChanges() {
+        const eventEmitter = this.container.resolve('eventEmitter');
+        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
+        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        const that = this;
+        blockchainModuleManager.getImplementationNames().map(async (blockchain) => {
+            eventEmitter.on(`${blockchain}-ContractChanged`, async (event) => {
+                await that.reinitializeContracts(blockchainModuleManager, blockchain);
+                if (event.contractName === 'ShardingTable') {
+                    await repositoryModuleManager.cleanShardingTable();
+                }
+            });
+            eventEmitter.on(`${blockchain}-NewAssetContract`, async () => {
+                await that.reinitializeContracts(blockchainModuleManager, blockchain);
+            });
+            eventEmitter.on(`${blockchain}-AssetContractChanged`, async () => {
+                await that.reinitializeContracts(blockchainModuleManager, blockchain);
+            });
+        });
+    }
+
+    async reinitializeContracts(blockchainModuleManager, blockchain) {
+        try {
+            await blockchainModuleManager.initializeContracts(blockchain);
+        } catch (error) {
+            this.logger.warn(`Unable to reinitialize contracts. Error: ${error.message}`);
+            blockchainModuleManager.removeImplementation(blockchain);
+            if (!blockchainModuleManager.getImplementationNames().length) {
+                this.logger.error(`Unable to initialize contracts. OT-node shutting down...`);
+                process.exit(1);
+            }
+        }
     }
 }
 

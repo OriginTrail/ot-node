@@ -2,6 +2,7 @@ import Command from '../command.js';
 import {
     DIAL_PEERS_COMMAND_FREQUENCY_MILLS,
     DIAL_PEERS_CONCURRENCY,
+    MIN_DIAL_FREQUENCY_MILLIS,
 } from '../../constants/constants.js';
 
 class DialPeersCommand extends Command {
@@ -18,6 +19,7 @@ class DialPeersCommand extends Command {
     async execute() {
         const peersToDial = await this.repositoryModuleManager.getPeersToDial(
             DIAL_PEERS_CONCURRENCY,
+            MIN_DIAL_FREQUENCY_MILLIS,
         );
 
         if (peersToDial.length) {

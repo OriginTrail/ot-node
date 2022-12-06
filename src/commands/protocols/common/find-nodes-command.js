@@ -5,6 +5,7 @@ class FindNodesCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.networkModuleManager = ctx.networkModuleManager;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.shardingTableService = ctx.shardingTableService;
     }
 
@@ -17,9 +18,10 @@ class FindNodesCommand extends Command {
             keyword,
             operationId,
             blockchain,
-            minimumAckResponses,
             errorType,
             networkProtocols,
+            hashFunctionId,
+            minAckResponses,
         } = command.data;
 
         this.errorType = errorType;
@@ -27,7 +29,8 @@ class FindNodesCommand extends Command {
 
         // TODO: protocol selection
         const closestNodes = [];
-        for (const node of await this.findNodes(keyword, operationId, blockchain)) {
+        const foundNodes = await this.findNodes(blockchain, keyword, operationId, hashFunctionId);
+        for (const node of foundNodes) {
             if (node.id !== this.networkModuleManager.getPeerId().toB58String()) {
                 closestNodes.push({ id: node.id, protocol: networkProtocols[0] });
             }
@@ -42,11 +45,10 @@ class FindNodesCommand extends Command {
             )}`,
         );
 
-        const batchSize = 2 * minimumAckResponses;
-        if (closestNodes.length < batchSize) {
+        if (closestNodes.length < minAckResponses) {
             this.handleError(
                 operationId,
-                `Unable to find enough nodes for ${operationId}. Minimum number of nodes required: ${batchSize}`,
+                `Unable to find enough nodes for ${operationId}. Minimum number of nodes required: ${minAckResponses}`,
                 this.errorType,
                 true,
             );
@@ -56,7 +58,6 @@ class FindNodesCommand extends Command {
         return this.continueSequence(
             {
                 ...command.data,
-                batchSize,
                 leftoverNodes: closestNodes,
                 numberOfFoundNodes: closestNodes.length,
             },
@@ -64,17 +65,17 @@ class FindNodesCommand extends Command {
         );
     }
 
-    async findNodes(keyword, operationId, blockchainId) {
+    async findNodes(blockchainId, keyword, operationId, hashFunctionId) {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.FIND_NODES_START,
         );
-
-        // todo r2 hardcoded to 20,
         const closestNodes = await this.shardingTableService.findNeighbourhood(
-            keyword,
             blockchainId,
-            20,
+            keyword,
+            Number(await this.blockchainModuleManager.getR2(blockchainId)),
+            hashFunctionId,
+            true,
         );
 
         const nodesFound = await Promise.all(

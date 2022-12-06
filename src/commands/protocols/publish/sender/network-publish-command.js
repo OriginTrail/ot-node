@@ -1,20 +1,34 @@
 import NetworkProtocolCommand from '../../common/network-protocol-command.js';
-import { ERROR_TYPE, PUBLISH_TYPES } from '../../../../constants/constants.js';
+import { ERROR_TYPE } from '../../../../constants/constants.js';
 
 class NetworkPublishCommand extends NetworkProtocolCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.ualService = ctx.ualService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR;
     }
 
-    getKeywords(command) {
-        const { publishType } = command.data;
+    async getKeywords(command) {
+        const { blockchain, contract, tokenId } = command.data;
+        const locationKeyword = await this.ualService.calculateLocationKeyword(
+            blockchain,
+            contract,
+            tokenId,
+            0,
+        );
 
-        if (publishType === PUBLISH_TYPES.INDEX) return [...command.data.keywords];
+        return [locationKeyword];
+    }
 
-        return [command.data.assertionId];
+    async getBatchSize(blockchainId) {
+        return Number(await this.blockchainModuleManager.getR2(blockchainId));
+    }
+
+    async getMinAckResponses(blockchainId) {
+        return Number(await this.blockchainModuleManager.getR1(blockchainId));
     }
 
     /**
