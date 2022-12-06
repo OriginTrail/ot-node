@@ -31,7 +31,9 @@ async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
     const askWei = ethers.utils.parseEther(ask);
 
     const walletSigner = wallet.connect(provider);
-    await profile.connect(walletSigner).setAsk(identityId, askWei, { gasLimit: 1_000_000 });
+    await profile
+        .connect(walletSigner)
+        .setAsk(identityId, askWei, { gasPrice: 1_000, gasLimit: 1_000_000 });
 }
 
 const expectedArguments = ['rpcEndpoint', 'ask', 'privateKey', 'hubContractAddress'];
