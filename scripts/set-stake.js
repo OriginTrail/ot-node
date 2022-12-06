@@ -49,14 +49,11 @@ async function setStake(
     const managementWalletSigner = managementWallet.connect(provider);
     await tokenContract
         .connect(managementWalletSigner)
-        .increaseAllowance(stakingContractAddress, stakeWei, {
-            gasPrice: 1_000,
-            gasLimit: 1_000_000,
-        });
+        .increaseAllowance(stakingContractAddress, stakeWei, { gasLimit: 1_000_000 });
     // TODO: Add ABI instead of hard-coded function definition
     await stakingContract
         .connect(managementWalletSigner)
-        ['addStake(uint72,uint96)'](identityId, stakeWei, { gasPrice: 1_000, gasLimit: 1_000_000 });
+        ['addStake(uint72,uint96)'](identityId, stakeWei, { gasLimit: 1_000_000 });
 }
 
 const expectedArguments = [
