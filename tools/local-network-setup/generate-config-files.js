@@ -39,6 +39,10 @@ bootstrapTemplate.modules.blockchain.implementation[network].config.hubContractA
 bootstrapTemplate.modules.blockchain.implementation[network].config.rpcEndpoints = [
     process.env.RPC_ENDPOINT,
 ];
+bootstrapTemplate.modules.blockchain.implementation[network].config.evmManagementWalletPublicKey =
+    keys.publicKey[keys.publicKey.length - 1];
+bootstrapTemplate.modules.blockchain.implementation[network].config.evmManagementWalletPrivateKey =
+    keys.privateKey[keys.publicKey.length - 1];
 
 fs.writeFileSync(bootstrapTemplatePath, JSON.stringify(bootstrapTemplate, null, 2));
 
@@ -51,12 +55,6 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     };
     let nodeName;
     if (i === 0) {
-        bootstrapTemplate.modules.blockchain.implementation[
-            network
-        ].config.evmManagementWalletPublicKey = keys.publicKey[keys.publicKey.length - 1];
-        bootstrapTemplate.modules.blockchain.implementation[
-            network
-        ].config.evmManagementWalletPrivateKey = keys.privateKey[keys.publicKey.length - 1];
         console.log('Using the preexisting identity for the first node (bootstrap)');
         nodeName = 'bootstrap';
         await dropDatabase(
