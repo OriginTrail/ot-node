@@ -1,5 +1,9 @@
 import EpochCommand from '../../common/epoch-command.js';
-import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+    TRIPLE_STORE_REPOSITORIES,
+} from '../../../../constants/constants.js';
 
 class CalculateProofsCommand extends EpochCommand {
     constructor(ctx) {
@@ -64,7 +68,12 @@ class CalculateProofsCommand extends EpochCommand {
             epoch,
         );
 
-        const nQuads = (await this.tripleStoreModuleManager.get(assertionId))
+        const nQuads = (
+            await this.tripleStoreModuleManager.getAssertion(
+                TRIPLE_STORE_REPOSITORIES.CURRENT,
+                assertionId,
+            )
+        )
             .split('\n')
             .filter(Boolean);
 

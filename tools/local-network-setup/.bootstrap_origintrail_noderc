@@ -11,10 +11,32 @@
     },
     "tripleStore": {
       "enabled": true,
-      "defaultImplementation": "ot-graphdb",
       "implementation": {
         "ot-graphdb": {
-          "config": {}
+          "enabled": true,
+          "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
+          "config": {
+            "repositories": {
+              "current": {
+                "url": "http://localhost:7200",
+                "name": "current0",
+                "username": "admin",
+                "password": ""
+              },
+              "historical": {
+                "url": "http://localhost:7200",
+                "name": "historical0",
+                "username": "admin",
+                "password": ""
+              },
+              "private": {
+                "url": "http://localhost:7200",
+                "name": "private0",
+                "username": "admin",
+                "password": ""
+              }
+            }
+          }
         }
       }
     },
@@ -31,7 +53,6 @@
       }
     },
     "blockchain": {
-      "defaultImplementation": "ganache",
       "implementation": {
         "ganache": {
           "config": {
@@ -79,7 +100,8 @@
             "evmManagementWalletPublicKey": "0xBaF76aC0d0ef9a2FFF76884d54C9D3e270290a43"
           }
         }
-      }
+      },
+      "defaultImplementation": "ganache"
     }
   },
   "auth": {

@@ -34,6 +34,21 @@ export const DHT_TYPES = { DUAL: 'dual', WAN: 'wan', LAN: 'lan' };
 
 export const PEER_OFFLINE_LIMIT = 24 * 60 * 60 * 1000;
 
+export const TRIPLE_STORE_REPOSITORIES = {
+    CURRENT: 'current',
+    HISTORICAL: 'historical',
+    PRIVATE: 'private',
+};
+
+export const REQUIRED_MODULES = [
+    'repository',
+    'httpClient',
+    'network',
+    'validation',
+    'blockchain',
+    'tripleStore',
+];
+
 /**
  * Triple store media types
  * @type {{APPLICATION_JSON: string, N_QUADS: string, SPARQL_RESULTS_JSON: string, LD_JSON: string}}

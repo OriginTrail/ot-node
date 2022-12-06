@@ -1,36 +1,22 @@
-const requiredModules = [
-    'repository',
-    'httpClient',
-    'network',
-    'validation',
-    'blockchain',
-    'tripleStore',
-];
+import ModuleConfigValidation from './module-config-validation.js';
+import { REQUIRED_MODULES } from '../constants/constants.js';
 
 class BaseModuleManager {
     constructor(ctx) {
         this.config = ctx.config;
         this.logger = ctx.logger;
+
+        this.moduleConfigValidation = new ModuleConfigValidation(ctx);
     }
 
     async initialize() {
         try {
             const moduleConfig = this.config.modules[this.getName()];
-            if (!moduleConfig || !moduleConfig.enabled) {
-                const message = `${this.getName()} module not defined or enabled in configuration`;
-                if (requiredModules.includes(this.getName())) {
-                    throw new Error(`${message} but it's required!`);
-                }
-                this.logger.warn(message);
-                return false;
-            }
+            this.moduleConfigValidation.validateModule(this.getName(), moduleConfig);
 
             this.handlers = {};
             for (const implementationName in moduleConfig.implementation) {
-                if (
-                    moduleConfig.defaultImplementation &&
-                    implementationName !== moduleConfig.defaultImplementation
-                ) {
+                if (!moduleConfig.implementation[implementationName].enabled) {
                     // eslint-disable-next-line no-continue
                     continue;
                 }
@@ -54,7 +40,6 @@ class BaseModuleManager {
                 const module = new ModuleClass();
                 // eslint-disable-next-line no-await-in-loop
                 await module.initialize(implementationConfig.config, this.logger);
-
                 module.getImplementationName = () => implementationName;
 
                 this.logger.info(
@@ -71,7 +56,7 @@ class BaseModuleManager {
             this.initialized = true;
             return true;
         } catch (error) {
-            if (requiredModules.includes(this.getName())) {
+            if (REQUIRED_MODULES.includes(this.getName())) {
                 throw new Error(
                     `${this.getName()} module is required but got error during initialization - ${
                         error.message

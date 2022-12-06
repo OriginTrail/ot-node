@@ -1,9 +1,9 @@
 import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
-
 import {
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
+    TRIPLE_STORE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
 class HandleGetInitCommand extends HandleProtocolMessageCommand {
@@ -22,7 +22,16 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.GET.ASSERTION_EXISTS_LOCAL_START,
         );
 
-        const assertionExists = await this.tripleStoreModuleManager.assertionExists(assertionId);
+        const assertionExists = await Promise.all([
+            this.tripleStoreModuleManager.assertionExists(
+                TRIPLE_STORE_REPOSITORIES.CURRENT,
+                assertionId,
+            ),
+            this.tripleStoreModuleManager.assertionExists(
+                TRIPLE_STORE_REPOSITORIES.HISTORICAL,
+                assertionId,
+            ),
+        ]);
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

@@ -1,5 +1,9 @@
 import Command from '../../../command.js';
-import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+    TRIPLE_STORE_REPOSITORIES,
+} from '../../../../constants/constants.js';
 
 class LocalGetCommand extends Command {
     constructor(ctx) {
@@ -22,7 +26,18 @@ class LocalGetCommand extends Command {
             operationId,
             OPERATION_ID_STATUS.GET.GET_LOCAL_START,
         );
-        const assertionExists = await this.tripleStoreModuleManager.assertionExists(assertionId);
+
+        const assertionExists = await Promise.all([
+            this.tripleStoreModuleManager.assertionExists(
+                TRIPLE_STORE_REPOSITORIES.CURRENT,
+                assertionId,
+            ),
+            this.tripleStoreModuleManager.assertionExists(
+                TRIPLE_STORE_REPOSITORIES.HISTORICAL,
+                assertionId,
+            ),
+        ]);
+
         if (assertionExists) {
             const assertion = await this.getService.localGet(assertionId, operationId);
 

@@ -3,61 +3,70 @@ import axios from 'axios';
 import { execSync } from 'child_process';
 import OtTripleStore from '../ot-triple-store.js';
 
-const { server, repository, http } = graphdb;
+const { server, repository: repo, http } = graphdb;
 
 class OtGraphdb extends OtTripleStore {
     async initialize(config, logger) {
         await super.initialize(config, logger);
-        const serverConfig = new server.ServerClientConfig(this.config.url)
-            .setTimeout(40000)
-            .setHeaders({
-                Accept: http.RDFMimeType.N_QUADS,
-            })
-            .setKeepAlive(true);
-        const s = new server.GraphDBServerClient(serverConfig);
 
-        const exists = await s.hasRepository(this.config.repository);
-        if (!exists) {
-            try {
-                await s.createRepository(
-                    new repository.RepositoryConfig(
-                        this.config.repository,
-                        '',
-                        new Map(),
-                        '',
-                        'Repo title',
-                        repository.RepositoryType.FREE,
-                    ),
-                );
-            } catch (e) {
-                await s.createRepository(
-                    new repository.RepositoryConfig(
-                        this.config.repository,
-                        '',
-                        {},
-                        'graphdb:SailRepository',
-                        'Repo title',
-                        'graphdb',
-                    ),
-                );
+        for (const repository of Object.keys(this.config.repositories)) {
+            const serverConfig = new server.ServerClientConfig(
+                this.config.repositories[repository].url,
+            )
+                .setTimeout(40000)
+                .setHeaders({
+                    Accept: http.RDFMimeType.N_QUADS,
+                })
+                .setKeepAlive(true);
+            const s = new server.GraphDBServerClient(serverConfig);
+            // eslint-disable-next-line no-await-in-loop
+            const exists = await s.hasRepository(this.config.repositories[repository].name);
+            if (!exists) {
+                try {
+                    // eslint-disable-next-line no-await-in-loop
+                    await s.createRepository(
+                        new repo.RepositoryConfig(
+                            this.config.repositories[repository].name,
+                            '',
+                            new Map(),
+                            '',
+                            'Repo title',
+                            repo.RepositoryType.FREE,
+                        ),
+                    );
+                } catch (e) {
+                    // eslint-disable-next-line no-await-in-loop
+                    await s.createRepository(
+                        new repo.RepositoryConfig(
+                            this.config.repositories[repository].name,
+                            '',
+                            {},
+                            'graphdb:SailRepository',
+                            'Repo title',
+                            'graphdb',
+                        ),
+                    );
+                }
             }
         }
     }
 
-    initializeSparqlEndpoints(url, repo) {
-        this.sparqlEndpoint = `${url}/repositories/${repo}`;
-        this.sparqlEndpointUpdate = `${url}/repositories/${repo}/statements`;
+    initializeSparqlEndpoints(repository, config) {
+        this.repositories[repository].sparqlEndpoint = `${config.url}/repositories/${config.name}`;
+        this.repositories[
+            repository
+        ].sparqlEndpointUpdate = `${config.url}/repositories/${config.name}/statements`;
     }
 
-    async healthCheck() {
+    async healthCheck(repository, config) {
         try {
             const response = await axios.get(
-                `${this.config.url}/repositories/${this.config.repository}/health`,
+                `${config.url}/repositories/${repository}/health`,
                 {},
                 {
                     auth: {
-                        username: this.config.username,
-                        password: this.config.password,
+                        username: config.username,
+                        password: config.password,
                     },
                 },
             );

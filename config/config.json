@@ -5,6 +5,7 @@
                 "enabled": false,
                 "implementation": {
                     "ot-auto-updater": {
+                        "enabled": true,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
                             "branch": "v6/develop"
@@ -16,6 +17,7 @@
                 "enabled": true,
                 "implementation": {
                     "express-http-client": {
+                        "enabled": true,
                         "package": "./http-client/implementation/express-http-client.js",
                         "config": {
                             "useSsl": false,
@@ -34,6 +36,7 @@
                 "enabled": true,
                 "implementation": {
                     "libp2p-service": {
+                        "enabled": true,
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
                             "dht": {
@@ -62,6 +65,7 @@
                 "enabled": true,
                 "implementation": {
                     "sequelize-repository": {
+                        "enabled": true,
                         "package": "./repository/implementation/sequelize/sequelize-repository.js",
                         "config": {
                             "database": "operationaldb",
@@ -77,33 +81,83 @@
             },
             "tripleStore": {
                 "enabled": true,
-                "defaultImplementation": "ot-graphdb",
                 "implementation": {
                     "ot-blazegraph": {
+                        "enabled": false,
                         "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
                         "config": {
-                            "url": "http://localhost:9999/blazegraph",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
+                            "repositories": {
+                                "current": {
+                                    "url": "http://localhost:9999/blazegraph",
+                                    "name": "current",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "historical": {
+                                    "url": "http://localhost:9999/blazegraph",
+                                    "name": "historical",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "private": {
+                                    "url": "http://localhost:9999/blazegraph",
+                                    "name": "private",
+                                    "username": "admin",
+                                    "password": ""
+                                }
+                            }
                         }
                     },
                     "ot-fuseki": {
+                        "enabled": false,
                         "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
                         "config": {
-                            "url": "http://localhost:3030",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
+                            "repositories": {
+                                "current": {
+                                    "url": "http://localhost:3030",
+                                    "name": "current",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "historical": {
+                                    "url": "http://localhost:3030",
+                                    "name": "historical",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "private": {
+                                    "url": "http://localhost:3030",
+                                    "name": "private",
+                                    "username": "admin",
+                                    "password": ""
+                                }
+                            }
                         }
                     },
                     "ot-graphdb": {
+                        "enabled": true,
                         "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
                         "config": {
-                            "url": "http://localhost:7200",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
+                            "repositories": {
+                                "current": {
+                                    "url": "http://localhost:7200",
+                                    "name": "current",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "historical": {
+                                    "url": "http://localhost:7200",
+                                    "name": "historical",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "private": {
+                                    "url": "http://localhost:7200",
+                                    "name": "private",
+                                    "username": "admin",
+                                    "password": ""
+                                }
+                            }
                         }
                     }
                 }
@@ -112,6 +166,7 @@
                 "enabled": true,
                 "implementation": {
                     "merkle-validation": {
+                        "enabled": true,
                         "package": "./validation/implementation/merkle-validation.js",
                         "config": {}
                     }
@@ -121,6 +176,7 @@
                 "enabled": true,
                 "implementation": {
                     "ganache": {
+                        "enabled": true,
                         "package": "./blockchain/implementation/ganache/ganache-service.js",
                         "config": {
                             "blockchainTitle": "ganache",
@@ -129,20 +185,22 @@
                             "rpcEndpoints": ["http://localhost:7545"],
                             "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
                             "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            "initialAskAmount": 2
                         }
                     },
                     "otp": {
+                        "enabled": false,
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "otp::testnet",
                             "hubContractAddress": "0x707233a55bD035C6Bc732196CA4dbffa63CbA169",
                             "rpcEndpoints": ["wss://lofar.origin-trail.network"],
                             "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            "initialAskAmount": 2
                         }
                     },
                     "polygon": {
+                        "enabled": false,
                         "package": "./blockchain/implementation/polygon/polygon-service.js",
                         "config": {
                             "networkId": "polygon::testnet",
@@ -155,10 +213,11 @@
                             ],
                             "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
                             "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            "initialAskAmount": 2
                         }
                     },
                     "rinkeby": {
+                        "enabled": false,
                         "package": "./blockchain/implementation/polygon/eth-service.js",
                         "config": {
                             "networkId": "eth::rinkeby",
@@ -166,7 +225,7 @@
                             "gasPriceOracleLink": "",
                             "rpcEndpoints": [],
                             "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            "initialAskAmount": 2
                         }
                     }
                 }
@@ -194,6 +253,7 @@
                 "enabled": false,
                 "implementation": {
                     "ot-auto-updater": {
+                        "enabled": false,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
                             "branch": "v6/develop"
@@ -205,6 +265,7 @@
                 "enabled": true,
                 "implementation": {
                     "express-http-client": {
+                        "enabled": true,
                         "package": "./http-client/implementation/express-http-client.js",
                         "config": {}
                     }
@@ -214,6 +275,7 @@
                 "enabled": true,
                 "implementation": {
                     "libp2p-service": {
+                        "enabled": true,
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
                             "dht": {
@@ -244,6 +306,7 @@
                 "enabled": true,
                 "implementation": {
                     "sequelize-repository": {
+                        "enabled": true,
                         "package": "./repository/implementation/sequelize/sequelize-repository.js",
                         "config": {
                             "database": "operationaldb",
@@ -259,9 +322,9 @@
             },
             "blockchain": {
                 "enabled": true,
-                "defaultImplementation": "ganache",
                 "implementation": {
                     "ganache": {
+                        "enabled": true,
                         "package": "./blockchain/implementation/ganache/ganache-service.js",
                         "config": {
                             "blockchainTitle": "ganache",
@@ -269,40 +332,90 @@
                             "hubContractAddress": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
                             "rpcEndpoints": ["http://localhost:7545"],
                             "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            "initialAskAmount": 2
                         }
                     }
                 }
             },
             "tripleStore": {
                 "enabled": true,
-                "defaultImplementation": "ot-graphdb",
                 "implementation": {
                     "ot-blazegraph": {
+                        "enabled": false,
                         "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
                         "config": {
-                            "url": "http://localhost:9999/blazegraph",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
+                            "repositories": {
+                                "current": {
+                                    "url": "http://localhost:9999/blazegraph",
+                                    "name": "current",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "historical": {
+                                    "url": "http://localhost:9999/blazegraph",
+                                    "name": "historical",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "private": {
+                                    "url": "http://localhost:9999/blazegraph",
+                                    "name": "private",
+                                    "username": "admin",
+                                    "password": ""
+                                }
+                            }
                         }
                     },
                     "ot-fuseki": {
+                        "enabled": false,
                         "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
                         "config": {
-                            "url": "http://localhost:3030",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
+                            "repositories": {
+                                "current": {
+                                    "url": "http://localhost:3030",
+                                    "name": "current",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "historical": {
+                                    "url": "http://localhost:3030",
+                                    "name": "historical",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "private": {
+                                    "url": "http://localhost:3030",
+                                    "name": "private",
+                                    "username": "admin",
+                                    "password": ""
+                                }
+                            }
                         }
                     },
                     "ot-graphdb": {
+                        "enabled": true,
                         "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
                         "config": {
-                            "url": "http://localhost:7200",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
+                            "repositories": {
+                                "current": {
+                                    "url": "http://localhost:7200",
+                                    "name": "current",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "historical": {
+                                    "url": "http://localhost:7200",
+                                    "name": "historical",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "private": {
+                                    "url": "http://localhost:7200",
+                                    "name": "private",
+                                    "username": "admin",
+                                    "password": ""
+                                }
+                            }
                         }
                     }
                 }
@@ -330,6 +443,7 @@
                 "enabled": true,
                 "implementation": {
                     "ot-auto-updater": {
+                        "enabled": true,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
                             "branch": "v6/release/testnet"
@@ -341,6 +455,7 @@
                 "enabled": true,
                 "implementation": {
                     "libp2p-service": {
+                        "enabled": true,
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
                             "dht": {
@@ -372,6 +487,7 @@
                 "enabled": true,
                 "implementation": {
                     "express-http-client": {
+                        "enabled": true,
                         "package": "./http-client/implementation/express-http-client.js",
                         "config": {
                             "useSsl": false,
@@ -390,6 +506,7 @@
                 "enabled": true,
                 "implementation": {
                     "sequelize-repository": {
+                        "enabled": true,
                         "package": "./repository/implementation/sequelize/sequelize-repository.js",
                         "config": {
                             "database": "operationaldb",
@@ -405,19 +522,20 @@
             },
             "blockchain": {
                 "enabled": true,
-                "defaultImplementation": "otp",
                 "implementation": {
                     "otp": {
+                        "enabled": true,
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "parachain::testnet",
                             "hubContractAddress": "0xc9184C1A0CE150a882DC3151Def25075bdAf069C",
                             "rpcEndpoints": ["wss://lofar.origin-trail.network"],
                             "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            "initialAskAmount": 2
                         }
                     },
                     "polygon": {
+                        "enabled": false,
                         "package": "./blockchain/implementation/polygon/polygon-service.js",
                         "config": {
                             "networkId": "polygon::testnet",
@@ -429,7 +547,7 @@
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
                             ],
                             "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            "initialAskAmount": 2
                         }
                     }
                 }
@@ -438,6 +556,7 @@
                 "enabled": true,
                 "implementation": {
                     "merkle-validation": {
+                        "enabled": true,
                         "package": "./validation/implementation/merkle-validation.js",
                         "config": {}
                     }
@@ -445,33 +564,83 @@
             },
             "tripleStore": {
                 "enabled": true,
-                "defaultImplementation": "ot-blazegraph",
                 "implementation": {
                     "ot-blazegraph": {
+                        "enabled": false,
                         "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
                         "config": {
-                            "url": "http://localhost:9999/blazegraph",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
+                            "repositories": {
+                                "current": {
+                                    "url": "http://localhost:9999/blazegraph",
+                                    "name": "current",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "historical": {
+                                    "url": "http://localhost:9999/blazegraph",
+                                    "name": "historical",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "private": {
+                                    "url": "http://localhost:9999/blazegraph",
+                                    "name": "private",
+                                    "username": "admin",
+                                    "password": ""
+                                }
+                            }
                         }
                     },
                     "ot-fuseki": {
+                        "enabled": false,
                         "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
                         "config": {
-                            "url": "http://localhost:3030",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
+                            "repositories": {
+                                "current": {
+                                    "url": "http://localhost:3030",
+                                    "name": "current",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "historical": {
+                                    "url": "http://localhost:3030",
+                                    "name": "historical",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "private": {
+                                    "url": "http://localhost:3030",
+                                    "name": "private",
+                                    "username": "admin",
+                                    "password": ""
+                                }
+                            }
                         }
                     },
                     "ot-graphdb": {
+                        "enabled": false,
                         "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
                         "config": {
-                            "url": "http://localhost:7200",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
+                            "repositories": {
+                                "current": {
+                                    "url": "http://localhost:7200",
+                                    "name": "current",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "historical": {
+                                    "url": "http://localhost:7200",
+                                    "name": "historical",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "private": {
+                                    "url": "http://localhost:7200",
+                                    "name": "private",
+                                    "username": "admin",
+                                    "password": ""
+                                }
+                            }
                         }
                     }
                 }
@@ -528,6 +697,7 @@
                 "enabled": true,
                 "implementation": {
                     "sequelize-repository": {
+                        "enabled": true,
                         "package": "./repository/implementation/sequelize/sequelize-repository.js",
                         "config": {
                             "database": "operationaldb",
@@ -552,31 +722,33 @@
             },
             "tripleStore": {
                 "enabled": true,
-                "defaultImplementation": "ot-blazegraph",
                 "implementation": {
                     "ot-blazegraph": {
+                        "enabled": false,
                         "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
                         "config": {
                             "url": "http://localhost:9999/blazegraph",
-                            "repository": "node0",
+                            "name": "node0",
                             "username": "admin",
                             "password": ""
                         }
                     },
                     "ot-fuseki": {
+                        "enabled": false,
                         "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
                         "config": {
                             "url": "http://localhost:3030",
-                            "repository": "node0",
+                            "name": "node0",
                             "username": "admin",
                             "password": ""
                         }
                     },
                     "ot-graphdb": {
+                        "enabled": false,
                         "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
                         "config": {
                             "url": "http://localhost:7200",
-                            "repository": "node0",
+                            "name": "node0",
                             "username": "admin",
                             "password": ""
                         }
@@ -587,16 +759,18 @@
                 "enabled": true,
                 "implementation": {
                     "otp": {
+                        "enabled": true,
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "otp::mainnet",
                             "hubContractAddress": "",
                             "rpcEndpoints": [],
                             "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            "initialAskAmount": 2
                         }
                     },
                     "polygon": {
+                        "enabled": false,
                         "package": "./blockchain/implementation/polygon/polygon-service.js",
                         "config": {
                             "networkId": "polygon::mainnet",
@@ -604,7 +778,7 @@
                             "gasPriceOracleLink": "",
                             "rpcEndpoints": [],
                             "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            "initialAskAmount": 2
                         }
                     }
                 }

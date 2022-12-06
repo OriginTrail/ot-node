@@ -25,6 +25,9 @@ if (!keys) {
     console.log('Missing blockchain keys');
     process.exit(1);
 }
+const tripleStoreImplementation = {
+    ...generalConfig.development.modules.tripleStore.implementation,
+};
 bootstrapTemplate.modules.blockchain.defaultImplementation = network;
 bootstrapTemplate.modules.blockchain.implementation[network].config.evmOperationalWalletPublicKey =
     keys.publicKey[0];
@@ -44,15 +47,21 @@ bootstrapTemplate.modules.blockchain.implementation[network].config.evmManagemen
 bootstrapTemplate.modules.blockchain.implementation[network].config.evmManagementWalletPrivateKey =
     keys.privateKey[keys.publicKey.length - 1];
 
+for (const [repository, config] of Object.entries(
+    tripleStoreImplementation['ot-graphdb'].config.repositories,
+)) {
+    tripleStoreImplementation['ot-graphdb'].config.repositories[repository].name = `${repository}0`;
+}
+
+bootstrapTemplate.modules.tripleStore.implementation = {
+    ['ot-graphdb']: tripleStoreImplementation['ot-graphdb'],
+};
+
 fs.writeFileSync(bootstrapTemplatePath, JSON.stringify(bootstrapTemplate, null, 2));
 
 console.log(`Generating ${numberOfNodes} total nodes`);
 
 for (let i = 0; i < numberOfNodes; i += 1) {
-    const tripleStoreConfig = {
-        ...generalConfig.development.modules.tripleStore.implementation['ot-graphdb'].config,
-        repository: `repository${i}`,
-    };
     let nodeName;
     if (i === 0) {
         console.log('Using the preexisting identity for the first node (bootstrap)');
@@ -62,7 +71,13 @@ for (let i = 0; i < numberOfNodes; i += 1) {
             generalConfig.development.modules.repository.implementation['sequelize-repository']
                 .config,
         );
-        await deleteTripleStoreRepository(tripleStoreConfig);
+
+        for (const [repository, config] of Object.entries(
+            bootstrapTemplate.modules.tripleStore.implementation['ot-graphdb'].config.repositories,
+        )) {
+            await deleteTripleStoreRepository(repository, config);
+        }
+
         continue;
     } else {
         nodeName = `DH${i}`;
@@ -71,7 +86,6 @@ for (let i = 0; i < numberOfNodes; i += 1) {
         `operationaldb${i}`,
         generalConfig.development.modules.repository.implementation['sequelize-repository'].config,
     );
-    await deleteTripleStoreRepository(tripleStoreConfig);
     console.log(`Configuring node ${nodeName}`);
 
     const configPath = path.join(`./tools/local-network-setup/.dh${i}_origintrail_noderc`);
@@ -99,7 +113,25 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     parsedTemplate.modules.repository.implementation[
         'sequelize-repository'
     ].config.database = `operationaldb${i}`;
-    parsedTemplate.modules.tripleStore.implementation['ot-graphdb'].config = tripleStoreConfig;
+
+    for (const [repository, config] of Object.entries(
+        tripleStoreImplementation['ot-graphdb'].config.repositories,
+    )) {
+        tripleStoreImplementation['ot-graphdb'].config.repositories[
+            repository
+        ].name = `${repository}${i}`;
+    }
+
+    parsedTemplate.modules.tripleStore.implementation = {
+        ['ot-graphdb']: tripleStoreImplementation['ot-graphdb'],
+    };
+
+    for (const [repository, config] of Object.entries(
+        parsedTemplate.modules.tripleStore.implementation['ot-graphdb'].config.repositories,
+    )) {
+        await deleteTripleStoreRepository(repository, config);
+    }
+
     parsedTemplate.appDataPath = `data${i}`;
 
     if (process.env.LOG_LEVEL) {
@@ -123,8 +155,8 @@ async function dropDatabase(name, config) {
     connection.destroy();
 }
 
-async function deleteTripleStoreRepository(config) {
-    console.log(`Deleting triple store: ${config.repository}`);
+async function deleteTripleStoreRepository(repository, config) {
+    console.log(`Deleting triple store repository: ${repository} with name: ${config.name}`);
 
     const serverConfig = new server.ServerClientConfig(config.url)
         .setTimeout(40000)
@@ -133,5 +165,5 @@ async function deleteTripleStoreRepository(config) {
         })
         .setKeepAlive(true);
     const s = new server.GraphDBServerClient(serverConfig);
-    s.deleteRepository(config.repository);
+    s.deleteRepository(config.name);
 }

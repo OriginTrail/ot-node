@@ -5,6 +5,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     AGREEMENT_STATUS,
+    TRIPLE_STORE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
 class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
@@ -53,17 +54,16 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
 
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         const assetExists = await this.tripleStoreModuleManager.assetExists(
+            TRIPLE_STORE_REPOSITORIES.CURRENT,
             ual,
             blockchain,
             contract,
             tokenId,
         );
 
-        console.log('agreementData ', agreementData);
-
         const agreementEndTime =
             Number(agreementData.startTime) +
-            Number(agreementData.epochsNumber) * Number(agreementData.epochsLength);
+            Number(agreementData.epochsNumber) * Number(agreementData.epochLength);
 
         await this.operationService.localStoreAsset(
             assertionId,

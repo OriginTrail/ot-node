@@ -11,57 +11,75 @@ class OtTripleStore {
     async initialize(config, logger) {
         this.config = config;
         this.logger = logger;
-        this.initializeSparqlEndpoints(this.config.url, this.config.repository);
-
-        let ready = await this.healthCheck();
-        let retries = 0;
-        while (!ready && retries < TRIPLE_STORE_CONNECT_MAX_RETRIES) {
-            retries += 1;
-            this.logger.warn(
-                `Cannot connect to Triple store (${this.getName()}), retry number: ${retries}/${TRIPLE_STORE_CONNECT_MAX_RETRIES}. Retrying in ${TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`,
-            );
-            /* eslint-disable no-await-in-loop */
-            await setTimeout(TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000);
-            ready = await this.healthCheck();
-        }
-        if (retries === TRIPLE_STORE_CONNECT_MAX_RETRIES) {
-            this.logger.error(
-                `Triple Store (${this.getName()}) not available, max retries reached.`,
-            );
-            process.exit(1);
-        }
-
+        this.initializeRepositories();
+        this.initializeContexts();
+        await this.ensureConnections();
         this.queryEngine = new Engine();
-        this.filtertype = {
-            KEYWORD: 'keyword',
-            KEYWORDPREFIX: 'keywordPrefix',
-            TYPES: 'types',
-            ISSUERS: 'issuers',
-        };
-        const sources = [
-            {
-                type: 'sparql',
-                value: `${this.sparqlEndpoint}`,
-            },
-        ];
+    }
 
-        this.insertContext = {
-            sources,
-            destination: {
-                type: 'sparql',
-                value: `${this.sparqlEndpointUpdate}`,
-            },
-        };
-        this.queryContext = {
-            sources,
-        };
+    initializeRepositories() {
+        this.repositories = {};
+        for (const [repository, config] of Object.entries(this.config.repositories)) {
+            this.repositories[repository] = {};
+            this.initializeSparqlEndpoints(repository, config);
+        }
     }
 
     initializeSparqlEndpoints() {
         throw Error('initializeSparqlEndpoints not implemented');
     }
 
-    async assetExists(ual, blockchain, contract, tokenId) {
+    initializeContexts() {
+        for (const repository of Object.keys(this.config.repositories)) {
+            const sources = [
+                {
+                    type: 'sparql',
+                    value: this.repositories[repository].sparqlEndpoint,
+                },
+            ];
+
+            this.repositories[repository].insertContext = {
+                sources,
+                destination: {
+                    type: 'sparql',
+                    value: this.repositories[repository].sparqlEndpointUpdate,
+                },
+            };
+            this.repositories[repository].queryContext = {
+                sources,
+            };
+        }
+    }
+
+    async ensureConnections() {
+        const ensureConnectionPromises = Object.entries(this.config.repositories).map(
+            async ([repository, config]) => {
+                let ready = await this.healthCheck(repository, config);
+                let retries = 0;
+                while (!ready && retries < TRIPLE_STORE_CONNECT_MAX_RETRIES) {
+                    retries += 1;
+                    this.logger.warn(
+                        `Cannot connect to Triple store (${this.getName()}), repository: ${repository}, located at: ${
+                            this.config.repositories[repository].url
+                        }  retry number: ${retries}/${TRIPLE_STORE_CONNECT_MAX_RETRIES}. Retrying in ${TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`,
+                    );
+                    /* eslint-disable no-await-in-loop */
+                    await setTimeout(TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000);
+                    ready = await this.healthCheck(repository, config);
+                }
+                if (retries === TRIPLE_STORE_CONNECT_MAX_RETRIES) {
+                    this.logger.error(
+                        `Triple Store (${this.getName()})  not available, max retries reached.`,
+                    );
+                    process.exit(1);
+                }
+            },
+        );
+
+        await Promise.all(ensureConnectionPromises);
+    }
+
+    async assetExists(repository, ual, blockchain, contract, tokenId) {
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
                         ASK WHERE {
                             GRAPH <assets:graph> {
@@ -71,10 +89,10 @@ class OtTripleStore {
                             }
                         }`;
 
-        return this.ask(query);
+        return this.ask(repository, query);
     }
 
-    async insertAsset(ual, assertionId, assetNquads) {
+    async insertAsset(repository, ual, assertionId, assetNquads) {
         // const exists = await this.assetExists(ual, assertionId)
 
         // if(!exists) {
@@ -96,26 +114,12 @@ class OtTripleStore {
                     ${assetNquads} 
                 }
             }`;
-        await this.queryEngine.queryVoid(insertion, this.insertContext);
+        await this.queryEngine.queryVoid(insertion, this.repositories[repository].insertContext);
         // }
     }
 
-    async insertIndex(keyword, indexNquads, assetNquads) {
-        const insertion = `
-            PREFIX schema: <${SCHEMA_CONTEXT}>
-            INSERT DATA {
-                GRAPH <assets:graph> { 
-                    ${assetNquads} 
-                }
-                GRAPH <keyword:${keyword}> {
-                    ${indexNquads}
-                }
-            }`;
-        await this.queryEngine.queryVoid(insertion, this.insertContext);
-    }
-
-    async insertAssertion(assertionId, assertionNquads) {
-        const exists = await this.assertionExists(assertionId);
+    async insertAssertion(repository, assertionId, assertionNquads) {
+        const exists = await this.assertionExists(repository, assertionId);
 
         if (!exists) {
             const insertion = `
@@ -125,36 +129,38 @@ class OtTripleStore {
                     ${assertionNquads} 
                 } 
             }`;
-            await this.queryEngine.queryVoid(insertion, this.insertContext);
+            await this.queryEngine.queryVoid(
+                insertion,
+                this.repositories[repository].insertContext,
+            );
         }
     }
 
-    async construct(query) {
-        const result = await this._executeQuery(query, MEDIA_TYPES.N_QUADS);
+    async construct(repository, query) {
+        const result = await this._executeQuery(repository, query, MEDIA_TYPES.N_QUADS);
         return result;
     }
 
-    async select(query) {
+    async select(repository, query) {
         // todo: add media type once bug is fixed
         // no media type is passed because of comunica bug
         // https://github.com/comunica/comunica/issues/1034
-        const result = await this._executeQuery(query);
+        const result = await this._executeQuery(repository, query);
         return JSON.parse(result);
     }
 
-    async ask(query) {
-        const result = await this.queryEngine.queryBoolean(query, this.queryContext);
-        return result;
+    async ask(repository, query) {
+        return this.queryEngine.queryBoolean(query, this.repositories[repository].queryContext);
     }
 
-    async assertionExists(graphName) {
+    async assertionExists(repository, graphName) {
         const escapedGraphName = this.cleanEscapeCharacter(graphName);
         const query = `ASK WHERE { GRAPH <assertion:${escapedGraphName}> { ?s ?p ?o } }`;
 
-        return this.ask(query);
+        return this.ask(repository, query);
     }
 
-    async get(graphName) {
+    async getAssertion(repository, graphName) {
         const escapedGraphName = this.cleanEscapeCharacter(graphName);
 
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
@@ -167,15 +173,18 @@ class OtTripleStore {
                             }
                         }
                     }`;
-        return this.construct(query);
+        return this.construct(repository, query);
     }
 
     async healthCheck() {
         return true;
     }
 
-    async _executeQuery(query, mediaType) {
-        const result = await this.queryEngine.query(query, this.queryContext);
+    async _executeQuery(repository, query, mediaType) {
+        const result = await this.queryEngine.query(
+            query,
+            this.repositories[repository].queryContext,
+        );
         const { data } = await this.queryEngine.resultToString(result, mediaType);
 
         let response = '';
@@ -189,23 +198,6 @@ class OtTripleStore {
 
     cleanEscapeCharacter(query) {
         return query.replace(/['|[\]\\]/g, '\\$&');
-    }
-
-    createFilterParameter(queryParameter, type) {
-        const queryParam = this.cleanEscapeCharacter(queryParameter);
-
-        switch (type) {
-            case this.filtertype.KEYWORD:
-                return `FILTER (lcase(?keyword) = '${queryParam}')`;
-            case this.filtertype.KEYWORDPREFIX:
-                return `FILTER contains(lcase(?keyword),'${queryParam}')`;
-            case this.filtertype.ISSUERS:
-                return `FILTER (?issuer IN (${JSON.stringify(queryParam).slice(1, -1)}))`;
-            case this.filtertype.TYPES:
-                return `FILTER (?type IN (${JSON.stringify(queryParam).slice(1, -1)}))`;
-            default:
-                return '';
-        }
     }
 
     createLimitQuery(options) {

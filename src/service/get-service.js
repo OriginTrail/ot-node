@@ -6,6 +6,7 @@ import {
     ERROR_TYPE,
     OPERATIONS,
     OPERATION_REQUEST_STATUS,
+    TRIPLE_STORE_REPOSITORIES,
 } from '../constants/constants.js';
 
 class GetService extends OperationService {
@@ -94,7 +95,16 @@ class GetService extends OperationService {
     async localGet(assertionId, operationId) {
         this.logger.debug(`Getting assertion: ${assertionId} for operationId: ${operationId}`);
 
-        let nquads = await this.tripleStoreModuleManager.get(assertionId);
+        let nquads = await this.tripleStoreModuleManager.getAssertion(
+            TRIPLE_STORE_REPOSITORIES.CURRENT,
+            assertionId,
+        );
+        if (!nquads?.length) {
+            nquads = await this.tripleStoreModuleManager.getAssertion(
+                TRIPLE_STORE_REPOSITORIES.HISTORICAL,
+                assertionId,
+            );
+        }
         nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
 
         this.logger.debug(

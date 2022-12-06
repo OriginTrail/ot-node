@@ -1,4 +1,4 @@
-import { QUERY_TYPES } from '../constants/constants.js';
+import { QUERY_TYPES, TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
 
 class QueryService {
     constructor(ctx) {
@@ -18,11 +18,14 @@ class QueryService {
     }
 
     constructQuery(query) {
-        return this.tripleStoreModuleManager.construct(query);
+        return this.tripleStoreModuleManager.construct(TRIPLE_STORE_REPOSITORIES.CURRENT, query);
     }
 
     async selectQuery(query) {
-        const bindings = await this.tripleStoreModuleManager.select(query);
+        const bindings = await this.tripleStoreModuleManager.select(
+            TRIPLE_STORE_REPOSITORIES.CURRENT,
+            query,
+        );
         return this.dataService.parseBindings(bindings);
     }
 }
