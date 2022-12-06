@@ -80,11 +80,15 @@ class OtTripleStore {
         // if(!exists) {
         const insertion = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
-            DELETE {<${ual}> schema:latestAssertion ?o}
+            DELETE {
+                <${ual}> schema:latestAssertion ?o . 
+                <${ual}> schema:agreementEndTime ?agreementEndTime
+            }
             WHERE {
                 GRAPH <assets:graph> {
                     ?s ?p ?o .
-                    <${ual}> schema:latestAssertion ?o .
+                    <${ual}> schema:agreementEndTime ?agreementEndTime .
+                    <${ual}> schema:latestAssertion ?latestAssertion .
                 }
             };
             INSERT DATA {

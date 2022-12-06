@@ -17,6 +17,7 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
             blockchain,
             contract,
             tokenId,
+            0,
         );
 
         return [locationKeyword];

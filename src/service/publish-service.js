@@ -144,7 +144,16 @@ class PublishService extends OperationService {
         this.logger.info(`Assertion with id ${assertionId} has been successfully inserted!`);
     }
 
-    async localStoreAsset(assertionId, blockchain, contract, tokenId, operationId) {
+    async localStoreAsset(
+        assertionId,
+        blockchain,
+        contract,
+        tokenId,
+        operationId,
+        agreementStartTime,
+        agreementEndTime,
+        keyword,
+    ) {
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
@@ -156,6 +165,9 @@ class PublishService extends OperationService {
             tokenId,
             assertion: { '@id': `assertion:${assertionId}` },
             latestAssertion: { '@id': `assertion:${assertionId}` },
+            agreementStartTime,
+            agreementEndTime,
+            keyword,
         });
 
         this.logger.info(

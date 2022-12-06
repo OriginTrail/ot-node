@@ -73,6 +73,8 @@ echo ======== Starting nodes ========
 echo ================================
 
 startNode() {
+  echo Sleeping for 5 sec, starting the nodes one by one
+  sleep 5
   echo Starting node $1
   osascript -e "tell app \"Terminal\"
       do script \"cd $pathToOtNode
