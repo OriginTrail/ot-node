@@ -148,16 +148,54 @@ class ShardingTableService {
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
 
-        this.eventEmitter.on(`${blockchainId}-StakeUpdated`, (event) => {
+        this.eventEmitter.on(`${blockchainId}-StakeIncreased`, (event) => {
             const eventData = JSON.parse(event.data);
             const nodeId = this.blockchainModuleManager.convertHexToAscii(
                 event.blockchain_id,
                 eventData.nodeId,
             );
             this.logger.trace(
-                `${blockchainId}-StakeUpdated event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
+                `${blockchainId}-StakeIncreased event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
             );
-            this.repositoryModuleManager.updatePeerStake(nodeId, eventData.stake);
+            this.repositoryModuleManager.updatePeerStake(
+                blockchainId,
+                nodeId,
+                ethers.utils.formatUnits(eventData.ask, 'ether'),
+            );
+            this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
+        });
+
+        this.eventEmitter.on(`${blockchainId}-StakeWithdrawalStarted`, (event) => {
+            const eventData = JSON.parse(event.data);
+            const nodeId = this.blockchainModuleManager.convertHexToAscii(
+                event.blockchain_id,
+                eventData.nodeId,
+            );
+            this.logger.trace(
+                `${blockchainId}-StakeWithdrawalStarted event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
+            );
+            this.repositoryModuleManager.updatePeerStake(
+                blockchainId,
+                nodeId,
+                ethers.utils.formatUnits(eventData.ask, 'ether'),
+            );
+            this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
+        });
+
+        this.eventEmitter.on(`${blockchainId}-AskUpdated`, (event) => {
+            const eventData = JSON.parse(event.data);
+            const nodeId = this.blockchainModuleManager.convertHexToAscii(
+                event.blockchain_id,
+                eventData.nodeId,
+            );
+            this.logger.trace(
+                `${blockchainId}-AskUpdated event caught, updating ask value for peer id: ${nodeId} in sharding table.`,
+            );
+            this.repositoryModuleManager.updatePeerAsk(
+                blockchainId,
+                nodeId,
+                ethers.utils.formatUnits(eventData.ask, 'ether'),
+            );
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
     }
@@ -199,7 +237,7 @@ class ShardingTableService {
 
         let sum = 0;
         for (const node of peers) {
-            sum += node.ask;
+            sum += +node.ask;
         }
 
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);

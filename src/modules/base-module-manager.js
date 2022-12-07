@@ -47,7 +47,7 @@ class BaseModuleManager {
                 );
                 this.handlers[implementationName] = {
                     module,
-                    config: implementationConfig,
+                    config: implementationConfig.config,
                 };
             }
             if (Object.keys(this.handlers).length === 0) {
@@ -90,6 +90,10 @@ class BaseModuleManager {
             delete this.handlers[keys[0]];
         }
         delete this.handlers[name];
+    }
+
+    getModuleConfiguration(name) {
+        return this.getImplementation(name).config;
     }
 }
 

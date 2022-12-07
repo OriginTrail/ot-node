@@ -61,6 +61,9 @@ const assertion = JSON.parse(
 const stakingStorage = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/StakingStorage.json'),
 );
+const whitelistStorage = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/WhitelistStorage.json'),
+);
 
 const accountPrivateKeys = JSON.parse(
     await readFile('test/bdd/steps/api/datasets/privateKeys.json'),
@@ -87,6 +90,7 @@ const sources = {
     log2pldsfContract,
     staking,
     identity,
+    whitelistStorage,
 };
 const web3 = new Web3();
 const wallets = accountPrivateKeys.map((privateKey) => ({
@@ -128,10 +132,10 @@ class LocalBlockchain {
             }, */
             logging: {
                 logger: {
-                    log: () => {},
+                    log: console.log,
                 },
             },
-            gasLimit: 7000000,
+            gas: 20000000,
             time: new Date(),
             accounts: accountPrivateKeys.map((account) => ({
                 secretKey: `0x${account}`,
@@ -193,6 +197,9 @@ class LocalBlockchain {
                     `\t Parameters Storage contract address: \t\t\t\t${this.contracts.parametersStorage.instance._address}`,
                 );
                 this.logger.info(
+                    `\t Whitelist Storage contract address: \t\t\t\t${this.contracts.whitelistStorage.instance._address}`,
+                );
+                this.logger.info(
                     `\t Scoring Proxy contract address: \t\t\t\t${this.contracts.scoringProxy.instance._address}`,
                 );
                 this.logger.info(
@@ -247,6 +254,15 @@ class LocalBlockchain {
         await this.setContractAddress(
             'ParametersStorage',
             this.contracts.parametersStorage.instance._address,
+            deployingWallet,
+        );
+
+        await this.deploy('whitelistStorage', deployingWallet, [
+            this.contracts.hub.instance._address,
+        ]);
+        await this.setContractAddress(
+            'WhitelistStorage',
+            this.contracts.whitelistStorage.instance._address,
             deployingWallet,
         );
 

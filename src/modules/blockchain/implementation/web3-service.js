@@ -31,9 +31,10 @@ const ServiceAgreementV1 = require('dkg-evm-module/build/contracts/ServiceAgreem
 const ShardingTable = require('dkg-evm-module/build/contracts/ShardingTable.json');
 const ShardingTableStorage = require('dkg-evm-module/build/contracts/ShardingTableStorage.json');
 
-const FIXED_GAS_LIMIT_METHODS = ['submitCommit', 'sendProof'];
-
-const COMMIT_PROOF_GAS_LIMIT = 300000;
+const FIXED_GAS_LIMIT_METHODS = {
+    submitCommit: 300000,
+    sendProof: 400000,
+};
 
 class Web3Service {
     async initialize(config, logger) {
@@ -326,27 +327,16 @@ class Web3Service {
     }
 
     async createProfile(peerId) {
-        const initialAsk = this.convertToWei(this.config.initialAskAmount);
-        const initialStake = this.convertToWei(this.config.initialStakeAmount);
-
-        await this.queueTransaction(this.TokenContract, 'increaseAllowance', [
-            this.StakingContract.options.address,
-            initialStake,
-        ]);
-
         const maxNumberOfRetries = 3;
         let retryCount = 0;
         let profileCreated = false;
-        const retryDelayInSec = 5;
+        const retryDelayInSec = 12;
         while (retryCount + 1 <= maxNumberOfRetries && !profileCreated) {
             try {
                 // eslint-disable-next-line no-await-in-loop
                 await this.queueTransaction(this.ProfileContract, 'createProfile', [
                     this.getManagementKey(),
                     this.convertAsciiToHex(peerId),
-                    initialAsk,
-                    initialStake,
-                    0,
                 ]);
                 profileCreated = true;
             } catch (error) {
@@ -363,11 +353,6 @@ class Web3Service {
                     // eslint-disable-next-line no-await-in-loop
                     await sleep(retryDelayInSec * 1000);
                 } else {
-                    // eslint-disable-next-line no-await-in-loop
-                    await this.queueTransaction(this.TokenContract, 'decreaseAllowance', [
-                        this.StakingContract.options.address,
-                        initialStake,
-                    ]);
                     throw error;
                 }
             }
@@ -408,8 +393,8 @@ class Web3Service {
                 /* eslint-disable no-await-in-loop */
                 let gasLimit;
 
-                if (FIXED_GAS_LIMIT_METHODS.includes(functionName)) {
-                    gasLimit = COMMIT_PROOF_GAS_LIMIT;
+                if (FIXED_GAS_LIMIT_METHODS[functionName]) {
+                    gasLimit = FIXED_GAS_LIMIT_METHODS[functionName];
                 } else {
                     gasLimit = await contractInstance.methods[functionName](...args).estimateGas({
                         from: this.getPublicKey(),

@@ -107,8 +107,6 @@ class SubmitCommitCommand extends EpochCommand {
             return EpochCommand.retry();
         }
 
-        const endOffset = 30; // 30 sec
-
         const currentEpochStartTime =
             Number(agreementData.startTime) + Number(agreementData.epochLength) * epoch;
 
@@ -128,8 +126,8 @@ class SubmitCommitCommand extends EpochCommand {
 
         const timeNow = Math.floor(Date.now() / 1000);
         const delay = this.serviceAgreementService.randomIntFromInterval(
-            proofWindowStartTime - timeNow,
-            proofWindowStartTime + proofWindowDuration - timeNow - endOffset,
+            proofWindowStartTime - timeNow + 0.1 * proofWindowDuration,
+            proofWindowStartTime + proofWindowDuration - timeNow - 0.1 * proofWindowDuration,
         );
 
         this.logger.trace(
