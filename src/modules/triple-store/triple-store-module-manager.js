@@ -13,14 +13,14 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async insertAsset(repository, ual, assertionId, assetNquads) {
+    async insertAsset(repository, ual, assetNquads, deleteAssetTriples) {
         const implementationName = this.repositoryImplementations[repository];
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.insertAsset(
                 repository,
                 ual,
-                assertionId,
                 assetNquads,
+                deleteAssetTriples,
             );
         }
     }
@@ -29,6 +29,19 @@ class TripleStoreModuleManager extends BaseModuleManager {
         const implementationName = this.repositoryImplementations[repository];
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.assetExists(
+                repository,
+                ual,
+                blockchain,
+                contract,
+                tokenId,
+            );
+        }
+    }
+
+    async assetAgreementExists(repository, ual, blockchain, contract, tokenId) {
+        const implementationName = this.repositoryImplementations[repository];
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.assetAgreementExists(
                 repository,
                 ual,
                 blockchain,
@@ -59,10 +72,43 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async getAssertion(repository, uri) {
+    async isAssertionIdShared(repository, assertionId) {
         const implementationName = this.repositoryImplementations[repository];
         if (this.getImplementation(implementationName)) {
-            return this.getImplementation(implementationName).module.getAssertion(repository, uri);
+            return this.getImplementation(implementationName).module.isAssertionIdShared(
+                repository,
+                assertionId,
+            );
+        }
+    }
+
+    async getAssetAssertionIds(repository, ual) {
+        const implementationName = this.repositoryImplementations[repository];
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.getAssetAssertionIds(
+                repository,
+                ual,
+            );
+        }
+    }
+
+    async getAssertion(repository, assertionId) {
+        const implementationName = this.repositoryImplementations[repository];
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.getAssertion(
+                repository,
+                assertionId,
+            );
+        }
+    }
+
+    async deleteAssertion(repository, assertionId) {
+        const implementationName = this.repositoryImplementations[repository];
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.deleteAssertion(
+                repository,
+                assertionId,
+            );
         }
     }
 

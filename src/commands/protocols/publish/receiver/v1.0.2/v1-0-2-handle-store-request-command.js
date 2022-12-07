@@ -53,14 +53,16 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         );
 
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-        const assetExists = await this.tripleStoreModuleManager.assetExists(
+        const assetAgreementExists = await this.tripleStoreModuleManager.assetAgreementExists(
             TRIPLE_STORE_REPOSITORIES.CURRENT,
             ual,
             blockchain,
             contract,
             tokenId,
         );
+        console.log('agreement exists ', assetAgreementExists);
 
+        const agreementStartTime = Number(agreementData.startTime);
         const agreementEndTime =
             Number(agreementData.startTime) +
             Number(agreementData.epochsNumber) * Number(agreementData.epochLength);
@@ -71,7 +73,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             contract,
             tokenId,
             operationId,
-            agreementData.startTime,
+            agreementStartTime,
             agreementEndTime,
             keyword,
         );
@@ -87,7 +89,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             AGREEMENT_STATUS.ACTIVE,
         );
 
-        if (!assetExists) {
+        if (!assetAgreementExists) {
             this.logger.trace(
                 `Asset with ${ual} not previously present in triple store. Scheduling epoch check command.`,
             );

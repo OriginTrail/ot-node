@@ -38,21 +38,15 @@ const tripleStoreImplementation = {
     ].config.evmOperationalWalletPrivateKey = keys.privateKey[0];
     bootstrapTemplate.modules.blockchain.implementation[
         network
-    ].config.evmManagementWalletPublicKey = keys.managementWalletPublicKey;
+    ].config.evmManagementWalletPublicKey = keys.publicKey[keys.publicKey.length - 1];
     bootstrapTemplate.modules.blockchain.implementation[
         network
-    ].config.evmManagementWalletPrivateKey = keys.managementWalletPrivateKey;
+    ].config.evmManagementWalletPrivateKey = keys.privateKey[keys.privateKey.length - 1];
     bootstrapTemplate.modules.blockchain.implementation[network].config.hubContractAddress =
         hubContractAddress;
     bootstrapTemplate.modules.blockchain.implementation[network].config.rpcEndpoints = [
         process.env.RPC_ENDPOINT,
     ];
-    bootstrapTemplate.modules.blockchain.implementation[
-        network
-    ].config.evmManagementWalletPublicKey = keys.publicKey[keys.publicKey.length - 1];
-    bootstrapTemplate.modules.blockchain.implementation[
-        network
-    ].config.evmManagementWalletPrivateKey = keys.privateKey[keys.publicKey.length - 1];
 
     for (const [repository, config] of Object.entries(
         tripleStoreImplementation['ot-graphdb'].config.repositories,
@@ -71,10 +65,6 @@ const tripleStoreImplementation = {
     console.log(`Generating ${numberOfNodes} total nodes`);
 
     for (let i = 0; i < numberOfNodes; i += 1) {
-        const tripleStoreConfig = {
-            ...generalConfig.development.modules.tripleStore.implementation['ot-graphdb'].config,
-            repository: `repository${i}`,
-        };
         let nodeName;
         if (i === 0) {
             console.log('Using the preexisting identity for the first node (bootstrap)');
@@ -101,7 +91,6 @@ const tripleStoreImplementation = {
             generalConfig.development.modules.repository.implementation['sequelize-repository']
                 .config,
         );
-        await deleteTripleStoreRepository(tripleStoreConfig);
         console.log(`Configuring node ${nodeName}`);
 
         const configPath = path.join(`./tools/local-network-setup/.dh${i}_origintrail_noderc`);
@@ -117,10 +106,10 @@ const tripleStoreImplementation = {
         ].config.evmOperationalWalletPrivateKey = keys.privateKey[i + 1];
         parsedTemplate.modules.blockchain.implementation[
             network
-        ].config.evmManagementWalletPublicKey = keys.publicKey[keys.publicKey.length - 1];
+        ].config.evmManagementWalletPublicKey = keys.publicKey[keys.publicKey.length - i - 1];
         parsedTemplate.modules.blockchain.implementation[
             network
-        ].config.evmManagementWalletPrivateKey = keys.privateKey[keys.publicKey.length - 1];
+        ].config.evmManagementWalletPrivateKey = keys.privateKey[keys.publicKey.length - i - 1];
         parsedTemplate.modules.blockchain.implementation[network].config.hubContractAddress =
             hubContractAddress;
         parsedTemplate.modules.blockchain.implementation[network].config.rpcEndpoints = [

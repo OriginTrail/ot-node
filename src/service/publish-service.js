@@ -96,20 +96,6 @@ class PublishService extends OperationService {
         return this.blockchainModuleManager.getLatestAssertionId(blockchain, contract, tokenId);
     }
 
-    async localStoreAssertion(assertionId, operationId) {
-        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
-
-        this.logger.info(`Inserting assertion with id: ${assertionId} in triple store.`);
-
-        await this.tripleStoreModuleManager.insertAssertion(
-            TRIPLE_STORE_REPOSITORIES.CURRENT,
-            assertionId,
-            assertion.join('\n'),
-        );
-
-        this.logger.info(`Assertion with id ${assertionId} has been successfully inserted!`);
-    }
-
     async localStoreAsset(
         assertionId,
         blockchain,
@@ -120,32 +106,79 @@ class PublishService extends OperationService {
         agreementEndTime,
         keyword,
     ) {
-        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
-        const assetNquads = await formatAssertion({
+        this.logger.info(
+            `Inserting asset with assertion id: ${assertionId}, ual: ${ual} in triple store.`,
+        );
+
+        // get current assertion, store current assertion in historical repository, add triple UAL -> assertionId
+        const assertionIds = await this.tripleStoreModuleManager.getAssetAssertionIds(
+            TRIPLE_STORE_REPOSITORIES.CURRENT,
+            ual,
+        );
+        if (assertionIds?.length) {
+            const currentAssertionId = assertionIds[0];
+            let nquads = await this.tripleStoreModuleManager.getAssertion(
+                TRIPLE_STORE_REPOSITORIES.CURRENT,
+                currentAssertionId,
+            );
+            nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
+
+            const historicalAssetNquads = await formatAssertion({
+                '@context': SCHEMA_CONTEXT,
+                '@id': ual,
+                blockchain,
+                contract,
+                tokenId,
+                assertion: { '@id': `assertion:${assertionId}` },
+            });
+            await Promise.all([
+                this.tripleStoreModuleManager.insertAsset(
+                    TRIPLE_STORE_REPOSITORIES.CURRENT,
+                    ual,
+                    historicalAssetNquads.join('\n'),
+                    false,
+                ),
+                this.tripleStoreModuleManager.insertAssertion(
+                    TRIPLE_STORE_REPOSITORIES.CURRENT,
+                    assertionId,
+                    nquads,
+                ),
+            ]);
+
+            const isAssertionIdShared = await this.tripleStoreModuleManager.isAssertionIdShared(
+                TRIPLE_STORE_REPOSITORIES.CURRENT,
+                currentAssertionId,
+            );
+            if (!isAssertionIdShared) {
+                // delete old assertion from current repository
+                this.tripleStoreModuleManager.deleteAssertion(
+                    TRIPLE_STORE_REPOSITORIES.CURRENT,
+                    assertionId,
+                );
+            }
+        }
+
+        // store new assertion in current repository, update triple UAL -> assertionId
+        const currentAssetNquads = await formatAssertion({
             '@context': SCHEMA_CONTEXT,
             '@id': ual,
             blockchain,
             contract,
             tokenId,
             assertion: { '@id': `assertion:${assertionId}` },
-            latestAssertion: { '@id': `assertion:${assertionId}` },
             agreementStartTime,
             agreementEndTime,
             keyword,
         });
-
-        this.logger.info(
-            `Inserting asset with assertion id: ${assertionId}, ual: ${ual} in triple store.`,
-        );
+        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
 
         await Promise.all([
             this.tripleStoreModuleManager.insertAsset(
                 TRIPLE_STORE_REPOSITORIES.CURRENT,
                 ual,
-                assertionId,
-                assetNquads.join('\n'),
+                currentAssetNquads.join('\n'),
             ),
             this.tripleStoreModuleManager.insertAssertion(
                 TRIPLE_STORE_REPOSITORIES.CURRENT,

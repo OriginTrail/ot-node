@@ -92,30 +92,69 @@ class OtTripleStore {
         return this.ask(repository, query);
     }
 
-    async insertAsset(repository, ual, assertionId, assetNquads) {
-        // const exists = await this.assetExists(ual, assertionId)
+    async isAssertionIdShared(repository, assertionId) {
+        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
+                    SELECT (COUNT(DISTINCT ?ual) as ?count)
+                    WHERE {
+                        GRAPH <assets:graph> {
+                                ?ual schema:assertion <assertion:${assertionId}>
+                        }
+                    }`;
+        const count = await this.select(repository, query);
+        return count > 1;
+    }
 
-        // if(!exists) {
-        const insertion = `
-            PREFIX schema: <${SCHEMA_CONTEXT}>
-            DELETE {
-                <${ual}> schema:latestAssertion ?o . 
+    async getAssetAssertionIds(repository, ual) {
+        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
+                    SELECT DISTINCT ?assertionId
+                    WHERE {
+                        GRAPH <assets:graph> {
+                                <${ual}> schema:assertion ?assertionId .
+                        }
+                    }`;
+        const result = await this.select(repository, query);
+        console.log('assertion ids ', result);
+        return result;
+    }
+
+    async assetAgreementExists(repository, ual, blockchain, contract, tokenId) {
+        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
+                        ASK WHERE {
+                            GRAPH <assets:graph> {
+                                <${ual}> schema:blockchain "${blockchain}";
+                                         schema:contract   "${contract}";
+                                         schema:tokenId    ${tokenId};
+                                         schema:assertion ?assertion;
+                                         schema:agreementStartTime ?agreementStartTime;
+                                         schema:agreementEndTime ?agreementEndTime;
+                                         schema:keyword ?keyword;
+                            }
+                        }`;
+
+        return this.ask(repository, query);
+    }
+
+    async insertAsset(repository, ual, assetNquads, deleteAssetTriples = true) {
+        const deleteAssetTriplesQuery = `DELETE {
+                <${ual}> schema:assertion ?assertion . 
                 <${ual}> schema:agreementEndTime ?agreementEndTime
             }
             WHERE {
                 GRAPH <assets:graph> {
                     ?s ?p ?o .
                     <${ual}> schema:agreementEndTime ?agreementEndTime .
-                    <${ual}> schema:latestAssertion ?latestAssertion .
+                    <${ual}> schema:assertion ?assertion .
                 }
-            };
+            };`;
+        const insertion = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            ${deleteAssetTriples ? deleteAssetTriplesQuery : ''}
             INSERT DATA {
                 GRAPH <assets:graph> { 
                     ${assetNquads} 
                 }
             }`;
         await this.queryEngine.queryVoid(insertion, this.repositories[repository].insertContext);
-        // }
     }
 
     async insertAssertion(repository, assertionId, assertionNquads) {
@@ -137,8 +176,7 @@ class OtTripleStore {
     }
 
     async construct(repository, query) {
-        const result = await this._executeQuery(repository, query, MEDIA_TYPES.N_QUADS);
-        return result;
+        return this._executeQuery(repository, query, MEDIA_TYPES.N_QUADS);
     }
 
     async select(repository, query) {
@@ -153,11 +191,17 @@ class OtTripleStore {
         return this.queryEngine.queryBoolean(query, this.repositories[repository].queryContext);
     }
 
-    async assertionExists(repository, graphName) {
-        const escapedGraphName = this.cleanEscapeCharacter(graphName);
-        const query = `ASK WHERE { GRAPH <assertion:${escapedGraphName}> { ?s ?p ?o } }`;
+    async assertionExists(repository, assertionId) {
+        const escapedAssertionId = this.cleanEscapeCharacter(assertionId);
+        const query = `ASK WHERE { GRAPH <assertion:${escapedAssertionId}> { ?s ?p ?o } }`;
 
         return this.ask(repository, query);
+    }
+
+    async deleteAssertion(repository, assertionId) {
+        const query = `DROP GRAPH <assertion:${assertionId}>`;
+
+        await this.queryEngine.queryVoid(query, this.repositories[repository].insertContext);
     }
 
     async getAssertion(repository, graphName) {
