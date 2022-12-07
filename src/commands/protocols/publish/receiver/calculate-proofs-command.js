@@ -68,17 +68,15 @@ class CalculateProofsCommand extends EpochCommand {
             epoch,
         );
 
-        const nQuads = (
-            await this.tripleStoreModuleManager.getAssertion(
-                TRIPLE_STORE_REPOSITORIES.CURRENT,
-                assertionId,
-            )
-        )
-            .split('\n')
-            .filter(Boolean);
+        let nquads = await this.tripleStoreModuleManager.getAssertion(
+            TRIPLE_STORE_REPOSITORIES.CURRENT,
+            assertionId,
+        );
+
+        nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
 
         const { leaf, proof } = this.validationModuleManager.getMerkleProof(
-            nQuads,
+            nquads.split('\n'),
             Number(challenge),
         );
 
