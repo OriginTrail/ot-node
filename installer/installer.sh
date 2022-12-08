@@ -217,11 +217,11 @@ install_node() {
     touch $CONFIG_DIR/.origintrail_noderc
     jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}, "modules": {"tripleStore":{"defaultImplementation": $tripleStore}}}' > $CONFIG_DIR/.origintrail_noderc
 
-    jq --arg blockchain "otp" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" '.modules.blockchain.implementation[$blockchain].config |= { "evmOperationalWalletPublicKey": $evmOperationalWallet, "evmOperationalWalletPrivateKey": $evmOperationalWalletPrivateKey, "evmManagementWalletPublicKey": $evmManagementWallet} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
+    jq --arg blockchain "otp" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" --arg evmManagementWallet "$SHARES_TOKEN_NAME" --arg evmManagementWallet "$SHARES_TOKEN_SYMBOL" '.modules.blockchain.implementation[$blockchain].config |= { "evmOperationalWalletPublicKey": $evmOperationalWallet, "evmOperationalWalletPrivateKey": $evmOperationalWalletPrivateKey, "evmManagementWalletPublicKey": $evmManagementWallet, "sharesTokenName": $sharesTokenName, "sharesTokenSymbol": $sharesTokenSymbol} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
     mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc
 
     cp $OTNODE_DIR/installer/data/otnode.service /lib/systemd/system/
-    
+
     systemctl daemon-reload
     systemctl enable otnode
     systemctl start otnode
@@ -310,8 +310,11 @@ CONFIG_DIR=$OTNODE_DIR/..
             read -p "Enter your EVM management wallet address: " EVM_MANAGEMENT_WALLET
             text_color $GREEN "EVM management wallet address: $EVM_MANAGEMENT_WALLET"
 
-#            read -p "Enter your EVM management wallet private key: " EVM_MANAGEMENT_PRIVATE_KEY
-#            echo "EVM management wallet private key: $EVM_MANAGEMENT_PRIVATE_KEY"
+            read -p "Enter your profile shares token name: " SHARES_TOKEN_NAME
+            text_color $GREEN "Profile shares token name: $SHARES_TOKEN_NAME"
+
+            read -p "Enter your profile shares token symbol: " SHARES_TOKEN_SYMBOL
+            text_color $GREEN "Profile shares token name: $SHARES_TOKEN_SYMBOL"
             # ;;
 #      [Nn]* ) ;;
 #     [Ee]* ) echo "Installer stopped by user"; exit;;

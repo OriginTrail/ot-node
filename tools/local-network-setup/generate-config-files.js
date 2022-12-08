@@ -40,6 +40,8 @@ for (let i = 0; i < numberOfNodes; i += 1) {
         evmOperationalWalletPrivateKey: keys.privateKey[i],
         evmManagementWalletPublicKey: keys.publicKey[keys.publicKey.length - 1 - i],
         evmManagementWalletPrivateKey: keys.privateKey[keys.privateKey.length - 1 - i],
+        sharesTokenName: `LocalNode${i}`,
+        sharesTokenSymbol: `LN${i}`,
     };
     let nodeName;
     let template;
@@ -71,7 +73,7 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     template.appDataPath = `data${i}`;
 
     if (process.env.LOG_LEVEL) {
-        parsedTemplate.logLevel = process.env.LOG_LEVEL;
+        template.logLevel = process.env.LOG_LEVEL;
     }
 
     await dropDatabase(

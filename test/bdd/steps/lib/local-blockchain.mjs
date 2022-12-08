@@ -61,6 +61,12 @@ const stakingStorage = JSON.parse(
 const whitelistStorage = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/WhitelistStorage.json'),
 );
+const contentAsset = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/ContentAsset.json')
+)
+const contentAssetStorage = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/contentAssetStorage.json')
+)
 
 const accountPrivateKeys = JSON.parse(
     await readFile('test/bdd/steps/api/datasets/privateKeys.json'),
@@ -87,6 +93,8 @@ const sources = {
     staking,
     identity,
     whitelistStorage,
+    contentAsset,
+    contentAssetStorage
 };
 const web3 = new Web3();
 const wallets = accountPrivateKeys.map((privateKey) => ({
@@ -332,6 +340,16 @@ class LocalBlockchain {
             deployingWallet,
         );
 
+        await this.deploy('contentAssetStorage', deployingWallet, [
+            this.contracts.hub.instance._address,
+        ]);
+
+        await this.setAssetStorageContractAddress(
+            'ContentAssetStorage',
+            this.contracts.contentAssetStorage.instance._address,
+            deployingWallet
+        )
+
         await this.deploy('identityStorage', deployingWallet, [
             this.contracts.hub.instance._address,
         ]);
@@ -394,6 +412,13 @@ class LocalBlockchain {
             deployingWallet,
         );
 
+        await this.deploy('contentAsset', deployingWallet, [this.contracts.hub.instance._address]);
+        await this.setContractAddress(
+            'ContentAsset',
+            this.contracts.contentAsset.instance._address,
+            deployingWallet,
+        );
+
         // // Deploy tokens.
         const amountToMint = '50000000000000000000000000'; // 5e25
         for (let i = 0; i < this.getWallets().length; i += 1) {
@@ -453,13 +478,13 @@ class LocalBlockchain {
             );
     }
 
-    async setAssetContractAddress(contractName, contractAddress, sendingWallet) {
+    async setAssetStorageContractAddress(contractName, contractAddress, sendingWallet) {
         return this.contracts.hub.instance.methods
-            .setAssetContractAddress(contractName, contractAddress)
+            .setAssetStorageAddress(contractName, contractAddress)
             .send({ from: sendingWallet.address, gas: 3000000 })
             .on('error', (error) =>
                 this.logger.error(
-                    `Unable to set asset contract ${contractName} address in HUB. Error: `,
+                    `Unable to set asset storage contract ${contractName} address in HUB. Error: `,
                     error,
                 ),
             );

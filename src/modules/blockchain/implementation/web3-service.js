@@ -253,10 +253,11 @@ class Web3Service {
             'getAllAssetStorages',
             [],
         );
-
         assetStoragesArray.forEach((assetStorage) => {
-            this.assetStorageContracts[assetStorage.addr.toLowerCase()] =
-                new this.web3.eth.Contract(AbstractAsset.abi, assetStorage.addr);
+            this.assetStorageContracts[assetStorage[1].toLowerCase()] = new this.web3.eth.Contract(
+                AbstractAsset.abi,
+                assetStorage[1],
+            );
         });
 
         this.logger.info(`Contracts initialized`);
@@ -325,6 +326,12 @@ class Web3Service {
     }
 
     async createProfile(peerId) {
+        if (!this.config.sharesTokenName || !this.config.sharesTokenSymbol) {
+            throw Error(
+                'Missing sharesTokenName and sharesTokenSymbol in blockchain configuration. Please add it and start the node again.',
+            );
+        }
+
         const maxNumberOfRetries = 3;
         let retryCount = 0;
         let profileCreated = false;
@@ -335,7 +342,12 @@ class Web3Service {
                 await this.queueTransaction(this.ProfileContract, 'createProfile', [
                     this.getManagementKey(),
                     this.convertAsciiToHex(peerId),
+                    this.config.sharesTokenName,
+                    this.config.sharesTokenSymbol,
                 ]);
+                this.logger.info(
+                    `Profile created with name: ${this.config.sharesTokenName} and symbol: ${this.config.sharesTokenSymbol}`,
+                );
                 profileCreated = true;
             } catch (error) {
                 if (error.message.includes('Profile already exists')) {
