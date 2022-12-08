@@ -11,11 +11,11 @@ const numberOfNodes = parseInt(process.argv[2], 10);
 const network = process.argv[3];
 const hubContractAddress = process.argv[4];
 
-const templatePath = './tools/local-network-setup/.dh_origintrail_noderc';
+const dhTemplatePath = './tools/local-network-setup/.dh_origintrail_noderc';
 const bootstrapTemplatePath = './tools/local-network-setup/.bootstrap_origintrail_noderc';
 
 const generalConfig = JSON.parse(fs.readFileSync('./config/config.json'));
-const template = JSON.parse(fs.readFileSync(templatePath));
+const dhTemplate = JSON.parse(fs.readFileSync(dhTemplatePath));
 const bootstrapTemplate = JSON.parse(fs.readFileSync(bootstrapTemplatePath));
 const keys = JSON.parse(fs.readFileSync('./tools/local-network-setup/keys.json'));
 
@@ -25,26 +25,6 @@ if (!keys) {
     console.log('Missing blockchain keys');
     process.exit(1);
 }
-bootstrapTemplate.modules.blockchain.defaultImplementation = network;
-bootstrapTemplate.modules.blockchain.implementation[network].config.evmOperationalWalletPublicKey =
-    keys.publicKey[0];
-bootstrapTemplate.modules.blockchain.implementation[network].config.evmOperationalWalletPrivateKey =
-    keys.privateKey[0];
-bootstrapTemplate.modules.blockchain.implementation[network].config.evmManagementWalletPublicKey =
-    keys.managementWalletPublicKey;
-bootstrapTemplate.modules.blockchain.implementation[network].config.evmManagementWalletPrivateKey =
-    keys.managementWalletPrivateKey;
-bootstrapTemplate.modules.blockchain.implementation[network].config.hubContractAddress =
-    hubContractAddress;
-bootstrapTemplate.modules.blockchain.implementation[network].config.rpcEndpoints = [
-    process.env.RPC_ENDPOINT,
-];
-bootstrapTemplate.modules.blockchain.implementation[network].config.evmManagementWalletPublicKey =
-    keys.publicKey[keys.publicKey.length - 1];
-bootstrapTemplate.modules.blockchain.implementation[network].config.evmManagementWalletPrivateKey =
-    keys.privateKey[keys.publicKey.length - 1];
-
-fs.writeFileSync(bootstrapTemplatePath, JSON.stringify(bootstrapTemplate, null, 2));
 
 console.log(`Generating ${numberOfNodes} total nodes`);
 
@@ -53,20 +33,49 @@ for (let i = 0; i < numberOfNodes; i += 1) {
         ...generalConfig.development.modules.tripleStore.implementation['ot-graphdb'].config,
         repository: `repository${i}`,
     };
+    const blockchainConfig = {
+        hubContractAddress,
+        rpcEndpoints: [process.env.RPC_ENDPOINT],
+        evmOperationalWalletPublicKey: keys.publicKey[i],
+        evmOperationalWalletPrivateKey: keys.privateKey[i],
+        evmManagementWalletPublicKey: keys.publicKey[keys.publicKey.length - 1 - i],
+        evmManagementWalletPrivateKey: keys.privateKey[keys.privateKey.length - 1 - i],
+        sharesTokenName: `LocalNode${i}`,
+        sharesTokenSymbol: `LN${i}`,
+    };
     let nodeName;
+    let template;
+    let templatePath;
     if (i === 0) {
+        template = bootstrapTemplate;
+        templatePath = bootstrapTemplatePath;
         console.log('Using the preexisting identity for the first node (bootstrap)');
         nodeName = 'bootstrap';
-        await dropDatabase(
-            `operationaldb`,
-            generalConfig.development.modules.repository.implementation['sequelize-repository']
-                .config,
-        );
-        await deleteTripleStoreRepository(tripleStoreConfig);
-        continue;
     } else {
+        template = dhTemplate;
+        templatePath = path.join(`./tools/local-network-setup/.dh${i}_origintrail_noderc`);
         nodeName = `DH${i}`;
     }
+    template = JSON.parse(JSON.stringify(template));
+
+    template.modules.blockchain.defaultImplementation = network;
+    template.modules.blockchain.implementation[network].config = {
+        ...template.modules.blockchain.implementation[network].config,
+        ...blockchainConfig,
+    };
+
+    template.modules.httpClient.implementation['express-http-client'].config.port = 8900 + i;
+    template.modules.network.implementation['libp2p-service'].config.port = 9100 + i;
+    template.modules.repository.implementation[
+        'sequelize-repository'
+    ].config.database = `operationaldb${i}`;
+    template.modules.tripleStore.implementation['ot-graphdb'].config = tripleStoreConfig;
+    template.appDataPath = `data${i}`;
+
+    if (process.env.LOG_LEVEL) {
+        template.logLevel = process.env.LOG_LEVEL;
+    }
+
     await dropDatabase(
         `operationaldb${i}`,
         generalConfig.development.modules.repository.implementation['sequelize-repository'].config,
@@ -74,39 +83,7 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     await deleteTripleStoreRepository(tripleStoreConfig);
     console.log(`Configuring node ${nodeName}`);
 
-    const configPath = path.join(`./tools/local-network-setup/.dh${i}_origintrail_noderc`);
-    execSync(`touch ${configPath}`);
-
-    const parsedTemplate = JSON.parse(JSON.stringify(template));
-
-    parsedTemplate.modules.blockchain.implementation[network].config.evmOperationalWalletPublicKey =
-        keys.publicKey[i + 1];
-    parsedTemplate.modules.blockchain.implementation[
-        network
-    ].config.evmOperationalWalletPrivateKey = keys.privateKey[i + 1];
-    parsedTemplate.modules.blockchain.implementation[network].config.evmManagementWalletPublicKey =
-        keys.publicKey[keys.publicKey.length - 1];
-    parsedTemplate.modules.blockchain.implementation[network].config.evmManagementWalletPrivateKey =
-        keys.privateKey[keys.publicKey.length - 1];
-    parsedTemplate.modules.blockchain.implementation[network].config.hubContractAddress =
-        hubContractAddress;
-    parsedTemplate.modules.blockchain.implementation[network].config.rpcEndpoints = [
-        process.env.RPC_ENDPOINT,
-    ];
-
-    parsedTemplate.modules.httpClient.implementation['express-http-client'].config.port = 8900 + i;
-    parsedTemplate.modules.network.implementation['libp2p-service'].config.port = 9100 + i;
-    parsedTemplate.modules.repository.implementation[
-        'sequelize-repository'
-    ].config.database = `operationaldb${i}`;
-    parsedTemplate.modules.tripleStore.implementation['ot-graphdb'].config = tripleStoreConfig;
-    parsedTemplate.appDataPath = `data${i}`;
-
-    if (process.env.LOG_LEVEL) {
-        parsedTemplate.logLevel = process.env.LOG_LEVEL;
-    }
-
-    fs.writeFileSync(`${configPath}`, JSON.stringify(parsedTemplate, null, 2));
+    fs.writeFileSync(templatePath, JSON.stringify(template, null, 2));
 }
 
 async function dropDatabase(name, config) {

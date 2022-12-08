@@ -129,7 +129,7 @@
                             "rpcEndpoints": ["http://localhost:7545"],
                             "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
                             "initialStakeAmount": 50000,
-                            "initialAskAmount" : 0.2
+                            "initialAskAmount": 0.2
                         }
                     },
                     "otp": {
@@ -139,7 +139,7 @@
                             "hubContractAddress": "0x707233a55bD035C6Bc732196CA4dbffa63CbA169",
                             "rpcEndpoints": ["wss://lofar.origin-trail.network"],
                             "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            "initialAskAmount": 2
                         }
                     },
                     "polygon": {
@@ -155,7 +155,7 @@
                             ],
                             "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
                             "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            "initialAskAmount": 2
                         }
                     },
                     "rinkeby": {
@@ -166,7 +166,7 @@
                             "gasPriceOracleLink": "",
                             "rpcEndpoints": [],
                             "initialStakeAmount": 50000,
-                            "initialAskAmount" : 2
+                            "initialAskAmount": 2
                         }
                     }
                 }
@@ -409,10 +409,10 @@
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "parachain::testnet",
-                            "hubContractAddress": "0x8c6B1947983c8a06343aa3A4b60BAd6Aad083BB9",
+                            "hubContractAddress": "0x2588eF1D66570c2B97ea1bE3313437aF0caC8BC2",
                             "rpcEndpoints": [
-                                "wss://parachain-testnet-rpc.origin-trail.network",
-                                "https://lofar-testnet.origin-trail.network"
+                                "https://lofar-testnet.origin-trail.network",
+                                "wss://parachain-testnet-rpc.origin-trail.network"
                             ]
                         }
                     },

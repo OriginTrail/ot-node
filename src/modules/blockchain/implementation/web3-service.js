@@ -14,9 +14,9 @@ import {
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
+const AbstractAsset = require('dkg-evm-module/build/contracts/AbstractAsset.json');
 const AssertionStorage = require('dkg-evm-module/build/contracts/AssertionStorage.json');
 const Staking = require('dkg-evm-module/build/contracts/Staking.json');
-const ContentAsset = require('dkg-evm-module/build/contracts/ContentAsset.json');
 const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
 const HashingProxy = require('dkg-evm-module/build/contracts/HashingProxy.json');
 const Hub = require('dkg-evm-module/build/contracts/Hub.json');
@@ -247,17 +247,16 @@ class Web3Service {
         );
         this.Log2PLDSFContract = new this.web3.eth.Contract(Log2PLDSF.abi, log2PLDSFAddress);
 
-        this.assetContracts = {};
-        const contentAssets = await this.callContractFunction(
+        this.assetStorageContracts = {};
+        const assetStoragesArray = await this.callContractFunction(
             this.hubContract,
-            'getAllAssetContracts',
+            'getAllAssetStorages',
             [],
         );
-
-        contentAssets.forEach((contentAsset) => {
-            this.assetContracts[contentAsset[1].toLowerCase()] = new this.web3.eth.Contract(
-                ContentAsset.abi,
-                contentAsset[1],
+        assetStoragesArray.forEach((assetStorage) => {
+            this.assetStorageContracts[assetStorage[1].toLowerCase()] = new this.web3.eth.Contract(
+                AbstractAsset.abi,
+                assetStorage[1],
             );
         });
 
@@ -323,10 +322,16 @@ class Web3Service {
     async identityIdExists() {
         const identityId = await this.getIdentityId();
 
-        return identityId != null && identityId !== 0;
+        return !!identityId;
     }
 
     async createProfile(peerId) {
+        if (!this.config.sharesTokenName || !this.config.sharesTokenSymbol) {
+            throw Error(
+                'Missing sharesTokenName and sharesTokenSymbol in blockchain configuration. Please add it and start the node again.',
+            );
+        }
+
         const maxNumberOfRetries = 3;
         let retryCount = 0;
         let profileCreated = false;
@@ -337,7 +342,12 @@ class Web3Service {
                 await this.queueTransaction(this.ProfileContract, 'createProfile', [
                     this.getManagementKey(),
                     this.convertAsciiToHex(peerId),
+                    this.config.sharesTokenName,
+                    this.config.sharesTokenSymbol,
                 ]);
+                this.logger.info(
+                    `Profile created with name: ${this.config.sharesTokenName} and symbol: ${this.config.sharesTokenSymbol}`,
+                );
                 profileCreated = true;
             } catch (error) {
                 if (error.message.includes('Profile already exists')) {
@@ -511,7 +521,7 @@ class Web3Service {
 
     async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
         return this.callContractFunction(
-            this.assetContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
+            this.assetStorageContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
             'getAssertionIdByIndex',
             [tokenId, index],
         );
@@ -519,7 +529,7 @@ class Web3Service {
 
     async getLatestAssertionId(assetContractAddress, tokenId) {
         return this.callContractFunction(
-            this.assetContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
+            this.assetStorageContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
             'getLatestAssertionId',
             [tokenId],
         );
