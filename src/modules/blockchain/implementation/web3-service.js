@@ -14,9 +14,9 @@ import {
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
+const AbstractAsset = require('dkg-evm-module/build/contracts/AbstractAsset.json');
 const AssertionStorage = require('dkg-evm-module/build/contracts/AssertionStorage.json');
 const Staking = require('dkg-evm-module/build/contracts/Staking.json');
-const ContentAsset = require('dkg-evm-module/build/contracts/ContentAsset.json');
 const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
 const HashingProxy = require('dkg-evm-module/build/contracts/HashingProxy.json');
 const Hub = require('dkg-evm-module/build/contracts/Hub.json');
@@ -247,18 +247,16 @@ class Web3Service {
         );
         this.Log2PLDSFContract = new this.web3.eth.Contract(Log2PLDSF.abi, log2PLDSFAddress);
 
-        this.assetContracts = {};
-        const contentAssets = await this.callContractFunction(
+        this.assetStorageContracts = {};
+        const assetStoragesArray = await this.callContractFunction(
             this.hubContract,
-            'getAllAssetContracts',
+            'getAllAssetStorages',
             [],
         );
 
-        contentAssets.forEach((contentAsset) => {
-            this.assetContracts[contentAsset[1].toLowerCase()] = new this.web3.eth.Contract(
-                ContentAsset.abi,
-                contentAsset[1],
-            );
+        assetStoragesArray.forEach((assetStorage) => {
+            this.assetStorageContracts[assetStorage.addr.toLowerCase()] =
+                new this.web3.eth.Contract(AbstractAsset.abi, assetStorage.addr);
         });
 
         this.logger.info(`Contracts initialized`);
@@ -511,7 +509,7 @@ class Web3Service {
 
     async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
         return this.callContractFunction(
-            this.assetContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
+            this.assetStorageContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
             'getAssertionIdByIndex',
             [tokenId, index],
         );
@@ -519,7 +517,7 @@ class Web3Service {
 
     async getLatestAssertionId(assetContractAddress, tokenId) {
         return this.callContractFunction(
-            this.assetContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
+            this.assetStorageContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
             'getLatestAssertionId',
             [tokenId],
         );
