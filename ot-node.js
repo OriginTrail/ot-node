@@ -374,15 +374,17 @@ class OTNode {
     async executeCleanOperationalDatabaseMigration() {
         const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
         const cleanOperationalDatabaseMigration = new CleanOperationalDatabaseMigration(
-            'CleanOperationalDatabaseMigration',
+            'CleanOperationalDatabaseMigration1',
             this.logger,
             this.config,
             repositoryModuleManager,
         );
         if (!(await cleanOperationalDatabaseMigration.migrationAlreadyExecuted())) {
             await cleanOperationalDatabaseMigration.migrate();
-            this.logger.info('Operational database cleanup completed. Node will now restart!');
-            process.exit(1);
+            if (process.env !== 'development' && process.env !== 'test') {
+                this.logger.info('Operational database cleanup completed. Node will now restart!');
+                process.exit(1);
+            }
         }
     }
 
