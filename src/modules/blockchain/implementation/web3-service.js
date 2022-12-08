@@ -321,7 +321,7 @@ class Web3Service {
     async identityIdExists() {
         const identityId = await this.getIdentityId();
 
-        return identityId != null && identityId !== 0;
+        return !!identityId;
     }
 
     async createProfile(peerId) {

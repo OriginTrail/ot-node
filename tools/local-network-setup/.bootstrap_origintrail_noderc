@@ -5,7 +5,9 @@
       "enabled": true,
       "implementation": {
         "sequelize-repository": {
-          "config": {}
+          "config": {
+            "database": "operationaldb0"
+          }
         }
       }
     },
@@ -14,7 +16,23 @@
       "defaultImplementation": "ot-graphdb",
       "implementation": {
         "ot-graphdb": {
-          "config": {}
+          "config": {
+            "url": "http://localhost:7200",
+            "repository": "repository0",
+            "username": "admin",
+            "password": ""
+          }
+        }
+      }
+    },
+    "httpClient": {
+      "enabled": true,
+      "implementation": {
+        "express-http-client": {
+          "package": "./http-client/implementation/express-http-client.js",
+          "config": {
+            "port": 8900
+          }
         }
       }
     },
@@ -87,5 +105,6 @@
       "::1",
       "127.0.0.1"
     ]
-  }
+  },
+  "appDataPath": "data0"
 }

@@ -11,37 +11,31 @@ class UALService {
     }
 
     deriveUAL(blockchain, contract, tokenId) {
-        return `did:${blockchain.toLowerCase()}:${contract.toLowerCase()}/${tokenId}`;
+        return `did:dkg:${blockchain.toLowerCase()}/${contract.toLowerCase()}/${tokenId}`;
     }
 
+    // did:dkg:otp:2043/0x123231/5
     isUAL(ual) {
         const segments = ual.split(':');
-        if (!segments || !segments.length || segments.length !== 3) return false;
+        const argsString = segments.length === 3 ? segments[2] : segments[2] + segments[3];
+        const args = argsString.split('/');
 
-        const blockchainSegments = segments[2].split('/');
-        if (!blockchainSegments || !blockchainSegments.length || blockchainSegments.length < 2)
-            return false;
-
-        return !isNaN(blockchainSegments[1]);
+        return args?.length === 3;
     }
 
     resolveUAL(ual) {
         const segments = ual.split(':');
-        const blockchainSegments = segments[2].split('/');
+        const argsString = segments.length === 3 ? segments[2] : segments[2] + segments[3];
+        const args = argsString.split('/');
 
-        if (
-            segments.length !== 3 ||
-            blockchainSegments.length < 2 ||
-            isNaN(blockchainSegments[1])
-        ) {
+        if (args?.length !== 3) {
             throw new Error(`UAL doesn't have correct format: ${ual}`);
         }
 
         return {
-            blockchain: segments[1],
-            contract: blockchainSegments[0],
-            tokenId: blockchainSegments[1],
-            assertionId: blockchainSegments.length > 2 ? blockchainSegments[2] : null,
+            blockchain: args[0],
+            contract: args[1],
+            tokenId: args[2],
         };
     }
 
