@@ -17,21 +17,18 @@ class UALService {
     // did:dkg:otp:2043/0x123231/5
     isUAL(ual) {
         const segments = ual.split(':');
-        if (segments?.length !== 4) return false;
-
-        const argsString = segments[2] + segments[3];
+        const argsString = segments.length === 3 ? segments[2] : segments[2] + segments[3];
         const args = argsString.split('/');
-        if (args?.length !== 3) return false;
 
-        return !isNaN(argsString[2]);
+        return args?.length === 3;
     }
 
     resolveUAL(ual) {
         const segments = ual.split(':');
-        const argsString = segments[2] + segments[3];
+        const argsString = segments.length === 3 ? segments[2] : segments[2] + segments[3];
         const args = argsString.split('/');
 
-        if (segments.length !== 4 || args.length !== 3 || isNaN(args[2])) {
+        if (args?.length !== 3) {
             throw new Error(`UAL doesn't have correct format: ${ual}`);
         }
 

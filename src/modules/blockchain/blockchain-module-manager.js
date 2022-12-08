@@ -100,10 +100,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         return Promise.all(getEventsPromises);
     }
 
-    convertAsciiToHex(blockchain, peerId) {
-        return this.callImplementationFunction(blockchain, 'convertAsciiToHex', [peerId]);
-    }
-
     convertHexToAscii(blockchain, peerIdHex) {
         return this.callImplementationFunction(blockchain, 'convertHexToAscii', [peerIdHex]);
     }
@@ -233,13 +229,11 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'getLog2PLDSFParams');
     }
 
-    async callImplementationFunction(blockchain, functionName, args = []) {
+    callImplementationFunction(blockchain, functionName, args = []) {
         const split = blockchain.split(':');
-        if (split?.length === 2) {
-            const [name] = split;
-            if (this.getImplementation(name)) {
-                return this.getImplementation(name).module[functionName](...args);
-            }
+        const [name] = split;
+        if (this.getImplementation(name)) {
+            return this.getImplementation(name).module[functionName](...args);
         }
     }
 }

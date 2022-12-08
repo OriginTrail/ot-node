@@ -23,6 +23,7 @@ class GetLatestAssertionIdCommand extends Command {
 
         const commandData = {};
         if (!this.ualService.isUAL(id)) {
+            console.log(id);
             this.handleError(operationId, `Requested id is not a UAL`, this.errorType, true);
         } else {
             const {
