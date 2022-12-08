@@ -216,7 +216,6 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     async callScoreFunction(blockchain, scoreFunctionId, hashFunctionId, peerId, keyword, stake) {
         return this.callImplementationFunction(blockchain, 'callScoreFunction', [
-            blockchain,
             scoreFunctionId,
             hashFunctionId,
             peerId,
