@@ -9,7 +9,7 @@ class CalculateProofsCommand extends EpochCommand {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.operationIdService = ctx.operationIdService;
-
+        this.dataService = ctx.dataService;
         this.errorType = ERROR_TYPE.CALCULATE_PROOFS_ERROR;
     }
 
