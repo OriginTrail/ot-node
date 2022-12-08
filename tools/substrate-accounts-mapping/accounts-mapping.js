@@ -1,5 +1,7 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-console */
+/* eslint-disable object-shorthand */
+/* eslint-disable lines-between-class-members */
 require('dotenv').config({ path: `${__dirname}/../../.env` });
 const { setTimeout } = require('timers/promises');
 const appRootPath = require('app-root-path');
@@ -15,9 +17,8 @@ const { joinSignature } = require('@ethersproject/bytes');
 const { _TypedDataEncoder } = require('@ethersproject/hash');
 const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
 
-const tokenAddress = '0xffffffff00000000000000000000000000000001';
-const endpoint = 'https://lofar-testnet.origin-trail.network';
-const transferValue = 5000 * 1e12;
+const WALLETS_PATH = path.join(appRootPath.path, 'tools/substrate-accounts-mapping/wallets.json');
+
 const otpAccountWithTokens = {
     accountPublicKey: process.env.SUBSTRATE_ACCOUNT_PUBLIC_KEY,
     accountPrivateKey: process.env.SUBSTRATE_ACCOUNT_PRIVATE_KEY,
@@ -27,19 +28,29 @@ const evmAccountWithTokens = {
     privateKey: process.env.EVM_ACCOUNT_PRIVATE_KEY,
 };
 
-const walletsPath = path.join(appRootPath.path, 'tools/substrate-accounts-mapping/wallets.json');
-const numberOfAccounts = 10;
+const TOKEN_ADDRESS = '0xffffffff00000000000000000000000000000001';
+const HTTPS_ENDPOINT = 'https://astrosat-parachain-rpc.origin-trail.network';
+
+const NUMBER_OF_ACCOUNTS = 32;
+
+const OTP_AMOUNT = 50 * 1e12; // 50 OTP <--- Check this!
+const OTP_CHAIN_ID = '2043';
+const OTP_GENESIS_HASH = '0xe7e0962324a3b86c83404dbea483f25fb5dab4c224791c81b756cfc948006174';
+
+const GAS_PRICE = 20;
+const GAS_LIMIT = 60000; // Estimation is 45260
+const TRACE_AMOUNT = '0.000000001'; // <--- Check this!
 
 class AccountsMapping {
     async initialize() {
         // Initialise the provider to connect to the local node
-        const provider = new HttpProvider(endpoint);
+        const provider = new HttpProvider(HTTPS_ENDPOINT);
 
         // eslint-disable-next-line no-await-in-loop
         this.parachainProvider = await new ApiPromise({ provider }).isReady;
-        this.web3 = new Web3(endpoint);
+        this.web3 = new Web3(HTTPS_ENDPOINT);
         this.initialized = true;
-        this.tokenContract = new this.web3.eth.Contract(ERC20Token.abi, tokenAddress);
+        this.tokenContract = new this.web3.eth.Contract(ERC20Token.abi, TOKEN_ADDRESS);
     }
 
     async mapAccounts() {
@@ -47,26 +58,35 @@ class AccountsMapping {
             await this.initialize();
         }
 
-        console.log(`generating, mapping and funding management wallet`);
+        const currentWallets = [];
+
+        console.log(`Generating, mapping and funding management wallet`);
         const {
             evmPublicKey: evmManagementWalletPublicKey,
             evmPrivateKey: evmManagementWalletPrivateKey,
             substratePublicKey: substrateManagementWalletPublicKey,
             substratePrivateKey: substrateManagementWalletPrivateKey,
-        } = await this.generateMapAndFund();
+        } = await this.generateWallets();
 
-        for (let i = 0; i < numberOfAccounts; i += 1) {
-            console.log(`generating, mapping and funding operational wallet number ${i + 1}`);
-            const currentWallets =
-                i === 0 ? [] : JSON.parse(await fs.promises.readFile(walletsPath));
+        // Fund management wallet
+        await this.fundAccountsWithOtp(substrateManagementWalletPublicKey);
+
+        // Generate and fund all other wallets
+        for (let i = 0; i < NUMBER_OF_ACCOUNTS; i += 1) {
+            console.log(`Generating and funding with OTP wallet #${i + 1}`);
+            // currentWallets =
+            //     i === 0 ? [] : JSON.parse(await fs.promises.readFile(WALLETS_PATH));
 
             const {
                 evmPublicKey: evmOperationalWalletPublicKey,
                 evmPrivateKey: evmOperationalWalletPrivateKey,
                 substratePublicKey: substrateOperationalWalletPublicKey,
                 substratePrivateKey: substrateOperationalWalletPrivateKey,
-            } = await this.generateMapAndFund();
+            } = await this.generateWallets();
 
+            await this.fundAccountsWithOtp(substrateOperationalWalletPublicKey);
+
+            // Store new wallets
             currentWallets.push({
                 evmOperationalWalletPublicKey,
                 evmOperationalWalletPrivateKey,
@@ -77,20 +97,64 @@ class AccountsMapping {
                 substrateManagementWalletPublicKey,
                 substrateManagementWalletPrivateKey,
             });
-            await fs.promises.writeFile(walletsPath, JSON.stringify(currentWallets, null, 4));
+            await fs.promises.writeFile(WALLETS_PATH, JSON.stringify(currentWallets, null, 4));
         }
-        console.log(`generated, mapped and funded all ${numberOfAccounts} wallets`);
+        console.log('Waiting 35s for funding TXs to get into block!');
+        await this.sleepForMilliseconds(35 * 1000);
+        console.log(`${NUMBER_OF_ACCOUNTS} wallets are generated and funded with OTP!`);
+
+        console.log(`Executing mapping!`);
+        // Map the management wallet
+        await this.mapWallet(
+            evmManagementWalletPublicKey,
+            evmManagementWalletPrivateKey,
+            substrateManagementWalletPublicKey,
+            substrateManagementWalletPrivateKey,
+        );
+        // Map all operational wallets
+        for (const wallet of currentWallets) {
+            await this.mapWallet(
+                wallet.evmOperationalWalletPublicKey,
+                wallet.evmOperationalWalletPrivateKey,
+                wallet.substrateOperationalWalletPublicKey,
+                wallet.substrateOperationalWalletPrivateKey,
+            );
+        }
+        console.log('Waiting 35s for mapping TXs to get into block!');
+        await this.sleepForMilliseconds(35 * 1000);
+        console.log(`${NUMBER_OF_ACCOUNTS} wallets mapped!`);
+
+        console.log(`Funding wallets with TRAC!`);
+        let nonce = await this.web3.eth.getTransactionCount(evmAccountWithTokens.publicKey);
+        // Fund management wallet with TRACE
+        this.fundAccountsWithTrac(evmManagementWalletPublicKey, nonce);
+        // Fund rest of wallets
+        for (const wallet of currentWallets) {
+            if (await this.accountMapped(wallet.evmOperationalWalletPublicKey)) {
+                nonce += 1;
+                this.fundAccountsWithTrac(wallet.evmOperationalWalletPublicKey, nonce);
+            } else {
+                console.log(`Mapping failed or not finished for account: ${wallet}`);
+            }
+        }
+        console.log('Waiting for Trac TXs to get into block!');
+        await this.sleepForMilliseconds(35 * 1000);
+        console.log(`${NUMBER_OF_ACCOUNTS} wallets funded with TRAC!`);
+
+        // Check the balance of new accounts
+        for (const wallet of currentWallets) {
+            const tokenBalance = await this.tokenContract.methods
+                .balanceOf(wallet.evmOperationalWalletPublicKey)
+                .call();
+            console.log(
+                `New balance of ${wallet.evmOperationalWalletPublicKey} is ${tokenBalance} TRAC`,
+            );
+        }
     }
 
-    async generateMapAndFund() {
+    async generateWallets() {
         const { evmPublicKey, evmPrivateKey } = await this.generateEVMAccount();
-
-        const { substratePublicKey, substratePrivateKey } = await this.mapEVMAccount(
-            evmPublicKey,
-            evmPrivateKey,
-        );
-        await this.fundAccountsWithTrac(evmPublicKey);
-
+        const { substratePublicKey, substratePrivateKey } = await this.generateSubstrateAccount();
         return {
             evmPublicKey,
             evmPrivateKey,
@@ -98,51 +162,10 @@ class AccountsMapping {
             substratePrivateKey,
         };
     }
-
-    async mapEVMAccount(evmPublicKey, evmPrivateKey) {
-        if (!(await this.accountMapped(evmPublicKey))) {
-            console.log(`Mapping evm account: ${evmPublicKey}`);
-            const { substratePublicKey, substratePrivateKey } = await this.mapWallet(
-                evmPublicKey,
-                evmPrivateKey,
-            );
-            return { substratePublicKey, substratePrivateKey };
-        }
-        console.log(`Evm account: ${evmPublicKey} already mapped`);
-
-        return { substratePublicKey: '', substratePrivateKey: '' };
-    }
-
-    async mapWallet(evmPublicKey, evmPrivateKey, substratePrivateKey) {
-        let account = {};
-        if (!substratePrivateKey) {
-            account = await this.generateSubstrateAccount();
-            await this.fundAccountsWithOtp(account);
-            console.log(`Account ${account.substratePublicKey} funded sleeping for 40 seconds`);
-            await this.sleepForMilliseconds(40 * 1000);
-        } else {
-            account.substratePrivateKey = substratePrivateKey;
-        }
-        const signature = await this.sign(account.substratePublicKey, evmPrivateKey);
-        const keyring = new Keyring({ type: 'sr25519' });
-        keyring.setSS58Format(101);
-        const result = await this.callParachainExtrinsic(
-            keyring.addFromSeed(account.substratePrivateKey),
-            'evmAccounts',
-            'claimAccount',
-            [evmPublicKey, signature],
-        );
-        if (result.toHex() === '0x') throw Error('Unable to create account mapping for otp');
-        console.log(result.toString());
-        console.log(`Account mapped for evm public key: ${evmPublicKey}`);
-        console.log(`Account ${account.substratePublicKey} claimed sleeping for 40 seconds`);
-        await this.sleepForMilliseconds(40 * 1000);
-        return account;
-    }
-
     async generateSubstrateAccount() {
         const keyring = new Keyring({ type: 'sr25519' });
         keyring.setSS58Format(101);
+
         const mnemonic = mnemonicGenerate();
         const mnemonicMini = mnemonicToMiniSecret(mnemonic);
         const substratePrivateKey = u8aToHex(mnemonicMini);
@@ -158,39 +181,48 @@ class AccountsMapping {
         return { evmPublicKey: address, evmPrivateKey: privateKey };
     }
 
-    async fundAccountsWithOtp(account) {
+    async mapWallet(evmPublicKey, evmPrivateKey, substratePublicKey, substratePrivateKey) {
+        const signature = await this.sign(substratePublicKey, evmPrivateKey);
+        const keyring = new Keyring({ type: 'sr25519' });
+        keyring.setSS58Format(101);
+        const result = await this.callParachainExtrinsic(
+            keyring.addFromSeed(substratePrivateKey),
+            'evmAccounts',
+            'claimAccount',
+            [evmPublicKey, signature],
+        );
+        if (result.toHex() === '0x') throw Error('Unable to create account mapping for otp');
+        console.log(result.toString());
+        console.log(`Account mapped for evm public key: ${evmPublicKey}`);
+    }
+
+    async fundAccountsWithOtp(substratePublicKey) {
         const keyring = new Keyring({ type: 'sr25519' });
         keyring.setSS58Format(101);
         const uriKeyring = keyring.addFromSeed(otpAccountWithTokens.accountPrivateKey);
         return this.callParachainExtrinsic(uriKeyring, 'balances', 'transfer', [
-            account.substratePublicKey,
-            transferValue,
+            substratePublicKey,
+            OTP_AMOUNT,
         ]);
     }
 
-    async fundAccountsWithTrac(evmWallet) {
-        const val = this.web3.utils.toWei('10000000', 'ether');
-        // console.log(val);
-        // const gasLimit = await this.tokenContract.methods.transfer(evmWallet, val).estimateGas({
-        //     from: evmAccountWithTokens.publicKey,
-        // });
+    async fundAccountsWithTrac(evmWallet, nonce) {
+        const val = this.web3.utils.toWei(TRACE_AMOUNT, 'ether');
 
         const encodedABI = this.tokenContract.methods.transfer(evmWallet, val).encodeABI();
+
         const createTransaction = await this.web3.eth.accounts.signTransaction(
             {
                 from: evmAccountWithTokens.publicKey,
-                to: tokenAddress,
+                to: TOKEN_ADDRESS,
                 data: encodedABI,
-                gasPrice: 1000,
-                gas: 10000000,
+                gasPrice: GAS_PRICE,
+                gas: GAS_LIMIT,
+                nonce: nonce,
             },
             evmAccountWithTokens.privateKey,
         );
-
-        await this.web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
-
-        const tokenBalance = await this.tokenContract.methods.balanceOf(evmWallet).call();
-        console.log(`New balance of ${evmWallet} is ${tokenBalance} TRAC`);
+        this.web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
     }
 
     async accountMapped(wallet) {
@@ -199,7 +231,7 @@ class AccountsMapping {
     }
 
     async callParachainExtrinsic(keyring, extrinsic, method, args) {
-        console.log(`Calling parachain extrinsic : ${extrinsic}, method: ${method}`);
+        // console.log(`Calling parachain extrinsic : ${extrinsic}, method: ${method}`);
         return this.parachainProvider.tx[extrinsic][method](...args).signAndSend(keyring, {
             nonce: -1,
         });
@@ -214,8 +246,6 @@ class AccountsMapping {
     }
 
     async sign(publicAccountKey, privateEthKey) {
-        // const utf8Encode = new TextEncoder();
-        // const publicAccountBytes = utf8Encode.encode(publicAccountKey);
         const hexPubKey = u8aToHex(decodeAddress(publicAccountKey));
         console.log(`Hex account pub: ${hexPubKey}`);
         const payload = {
@@ -249,8 +279,8 @@ class AccountsMapping {
             domain: {
                 name: 'OTP EVM claim',
                 version: '1',
-                chainId: '20430',
-                salt: '0xf2b8faefcf9c370872d0b4d2eee31d46b4de4a8688153d23d82a39e2d6bc8bbc',
+                chainId: OTP_CHAIN_ID,
+                salt: OTP_GENESIS_HASH,
             },
             message: {
                 substrateAddress: hexPubKey,
