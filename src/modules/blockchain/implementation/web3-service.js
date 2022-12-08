@@ -176,16 +176,6 @@ class Web3Service {
             assertionStorageAddress,
         );
 
-        const contentAssetAddress = await this.callContractFunction(
-            this.hubContract,
-            'getAssetContractAddress',
-            ['ContentAsset'],
-        );
-        this.ContentAssetContract = new this.web3.eth.Contract(
-            ContentAsset.abi,
-            contentAssetAddress,
-        );
-
         const tokenAddress = await this.callContractFunction(
             this.hubContract,
             'getContractAddress',
@@ -257,10 +247,20 @@ class Web3Service {
         );
         this.Log2PLDSFContract = new this.web3.eth.Contract(Log2PLDSF.abi, log2PLDSFAddress);
 
-        // TODO: Change this nonsense
-        this.assetContracts = {
-            [contentAssetAddress.toLowerCase()]: this.ContentAssetContract,
-        };
+        this.assetContracts = {};
+        const contentAssets = await this.callContractFunction(
+            this.hubContract,
+            'getAllAssetContracts',
+            [],
+        );
+
+        contentAssets.forEach((contentAsset) => {
+            this.assetContracts[contentAsset[1].toLowerCase()] = new this.web3.eth.Contract(
+                ContentAsset.abi,
+                contentAsset[1],
+            );
+        });
+
         this.logger.info(`Contracts initialized`);
         this.logger.debug(
             `Connected to blockchain rpc : ${this.config.rpcEndpoints[this.rpcNumber]}.`,
