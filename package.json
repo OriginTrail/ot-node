@@ -96,7 +96,7 @@
         "jsonschema": "^1.4.1",
         "jsonwebtoken": "^8.5.1",
         "keccak256": "^1.0.6",
-        "libp2p": "^0.32.4",
+        "libp2p": "^0.38.0",
         "libp2p-bootstrap": "^0.13.0",
         "libp2p-kad-dht": "^0.24.2",
         "libp2p-mplex": "^0.10.7",
