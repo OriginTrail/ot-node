@@ -426,20 +426,26 @@ class Web3Service {
                     this.getPrivateKey(),
                 );
                 this.logger.info(
-                    `Sending transaction to blockchain, calling method: ${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}`,
+                    `Sending signed transaction to blockchain with transaction hash: ${
+                        createdTransaction.transactionHash
+                    }, calling method: ${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}`,
                 );
                 result = await this.web3.eth.sendSignedTransaction(
                     createdTransaction.rawTransaction,
                 );
             } catch (error) {
+                this.logger.warn(
+                    `Failed executing smart contract function ${functionName}. Error: ${error.message}`,
+                );
                 if (
                     !transactionRetried &&
-                    error.message.includes(`Transaction was not mined within`)
+                    (error.message.includes(`Transaction was not mined within`) ||
+                        error.message.includes(`Pool(TooLowPriority { old: 0, new: 0 })`))
                 ) {
+                    gasPrice *= Math.ceil(1.2);
                     this.logger.warn(
-                        `Transaction was not mined within ${TRANSACTION_POLLING_TIMEOUT} seconds. Retrying transaction with new gas price`,
+                        `Retrying to execute smart contract function ${functionName} with gasPrice: ${gasPrice}`,
                     );
-                    gasPrice *= 1.2;
                     transactionRetried = true;
                 } else {
                     await this.handleError(error, functionName);

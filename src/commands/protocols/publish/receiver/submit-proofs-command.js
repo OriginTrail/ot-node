@@ -48,6 +48,12 @@ class SubmitProofsCommand extends EpochCommand {
             leaf,
         );
 
+        this.logger.trace(
+            `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
+                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
+                `hash function id: ${hashFunctionId}`,
+        );
+
         this.scheduleNextEpochCheck(
             blockchain,
             agreementId,
