@@ -28,7 +28,6 @@ class SubmitProofsCommand extends EpochCommand {
             keyword,
             hashFunctionId,
             operationId,
-            identityId,
         } = command.data;
 
         this.logger.trace(
@@ -39,29 +38,29 @@ class SubmitProofsCommand extends EpochCommand {
                 }`,
         );
 
-        const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
-            blockchain,
-            agreementId,
-            epoch,
-        );
-
-        if (this.proofAlreadySubmitted(commits, identityId)) {
-            this.logger.trace(
-                `Proofs already submitted for agreement id: ${agreementId} and epoch: ${epoch}`,
-            );
-            await this.scheduleNextEpochCheck(
-                blockchain,
-                agreementId,
-                contract,
-                tokenId,
-                keyword,
-                epoch,
-                hashFunctionId,
-                agreementData,
-                operationId,
-            );
-            return EpochCommand.empty();
-        }
+        // const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
+        //     blockchain,
+        //     agreementId,
+        //     epoch,
+        // );
+        //
+        // if (this.proofAlreadySubmitted(commits, identityId)) {
+        //     this.logger.trace(
+        //         `Proofs already submitted for agreement id: ${agreementId} and epoch: ${epoch}`,
+        //     );
+        //     await this.scheduleNextEpochCheck(
+        //         blockchain,
+        //         agreementId,
+        //         contract,
+        //         tokenId,
+        //         keyword,
+        //         epoch,
+        //         hashFunctionId,
+        //         agreementData,
+        //         operationId,
+        //     );
+        //     return EpochCommand.empty();
+        // }
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_START,
             operationId,
