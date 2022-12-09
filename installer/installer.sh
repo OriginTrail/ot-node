@@ -125,105 +125,84 @@ install_blazegraph() {
     perform_step systemctl status blazegraph "Blazegraph status"
 }
 
-install_mysql() {
-    if [ -d "/var/lib/mysql/operationaldb/" ]; then
-    #check if operationaldb already exists
-        text_color $YELLOW "Old sql database detected. Please enter your sql password to overwrite it."
-        for x in {1..5}; do
-            read -p "Enter your sql repository password (leave blank if none): " password
-            echo -n "Deleting old sql database: "
-            OUTPUT=$(MYSQL_PWD=$password mysql -u root -e "DROP DATABASE IF EXISTS operationaldb;" 2>&1)     
+install_sql() {
+    #check which sql to install/update
+    text_color $YELLOW"IMPORTANT NOTE: to avoid potential migration issues from one SQL to another, please select the one you are currently using. If this is your first installation, both choices are valid. If you don't know the answer, select [1].
+    "
+    while true; do
+        read -p "Please select the SQL you would like to use: (Default: MySQL) [1]MySQL [2]MariaDB [E]xit " choice
+        case "$choice" in
+            [2]* )  text_color $GREEN"MariaDB selected. Proceeding with installation."
+                    sql=mariadb
+                    perform_step apt-get install curl software-properties-common dirmngr ca-certificates apt-transport-https -y "Installing mariadb dependencies"
+                    curl -LsS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version=10.8
+                    perform_step apt-get install mariadb-server -y "Installing mariadb-server"
+                    break;;
+            [Ee]* ) text_color $RED"Installer stopped by user"; exit;;
+            * )     text_color $GREEN"MySQL selected. Proceeding with installation."
+                    sql=mysql
+                    mysql_native_password=" WITH mysql_native_password"
+                    perform_step apt-get install tcllib mysql-server -y "Installing mysql-server"
+                    break;;
+        esac
+    done
+
+    #check old sql password
+    OUTPUT=$($sql -u root -e "status;" 2>&1)
+    if [[ $? -ne 0 ]]; then
+        while true; do
+            read -s -p "Enter your old sql password: " oldpassword
+            echo
+            echo -n "Password check: "
+            OUTPUT=$(MYSQL_PWD=$oldpassword $sql -u root -e "status;" 2>&1)
             if [[ $? -ne 0 ]]; then
-                text_color $RED "FAILED"
-                echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
-                text_color $YELLOW "Wrong password entered. Try again ($x/5)"
+                text_color $YELLOW"ERROR - The sql repository password provided does not match your sql password. Please try again."
             else
                 text_color $GREEN "OK"
-                if [ -z "$password" ]; then
-                    for z in {1..2}; do
-                        read -p "Enter a new sql repository password if you wish (do not leave blank): " password
-                        if [ -n "$password" ]; then
-                            echo -n "Configuring new sql password: "
-                            OUTPUT=$(mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$password';" 2>&1)
-                            if [[ $? -ne 0 ]]; then
-                                text_color $RED "FAILED"
-                                echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
-                                exit 1
-                            else
-                                text_color $GREEN "OK"
-                                break
-                            fi
-                        else
-                            text_color $YELLOW "You must enter a sql repository password. Please try again." 
-                        fi
-                    done
-                fi
                 break
             fi
-            if [ $x == 5 ]; then
-                text_color $RED "FAILED. If you forgot your sql password, you must reset it before attempting this installer again."
-                exit 1
-            fi
         done
-    else
-        OUTPUT=$(mysql -u root -e "status;" 2>&1)
-        #check if sql is password protected
-        if [[ $? -ne 0 ]]; then
-            for y in {1..5}; do
-                read -p "Enter your sql repository password: " password
-                echo -n "Password check: "
-                OUTPUT=$(MYSQL_PWD=$password mysql -u root -e "status;" 2>&1)
-                #check whether entered password matches current sql password
-                if [[ $? -ne 0 ]]; then
-                    text_color $YELLOW "ERROR - The sql password provided does not match your current sql password. Please try again ($y/5)"
-                else
-                    text_color $GREEN "OK"
-                    break
-                fi
-                if [ $y == 5 ]; then
-                    text_color $RED "FAILED. If you forgot your sql password, you must reset it before attempting this installer again."
-                    exit 1
-                fi
-            done
-        else
-            text_color $YELLOW "No sql repository password detected."
-            for y in {1..2}; do
-                read -p "Enter a new sql repository password (do not leave blank): " password
-                if [ -n "$password" ]; then
-                #if password isn't blank
-                    echo -n "Configuring new sql password: "
-                    OUTPUT=$(mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$password';" 2>&1)
-                    if [[ $? -ne 0 ]]; then
-                        text_color $RED "FAILED"
-                        echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
-                        exit 1
-                    else
-                        text_color $GREEN "OK"
-                        break
-                    fi
-                else
-                    text_color $YELLOW "You must enter a sql repository password. Please try again." 
-                fi
-            done
-        fi
     fi
 
-    echo "REPOSITORY_PASSWORD=$password" > $OTNODE_DIR/.env
-    echo -n "Creating new sql database: "
-    OUTPUT=$(MYSQL_PWD=$password mysql -u root -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;" 2>&1)
-    if [[ $? -ne 0 ]]; then
-        text_color $RED "FAILED"
-        echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
-        exit 1
-    else
-        text_color $GREEN "OK"
+    #check operationaldb
+    if [[ -d "/var/lib/mysql/operationaldb/" ]]; then
+        read -p "Old operationaldb repository detected. Would you like to overwrite it ? (Default: No) [Y]es [N]o [E]xit " choice
+        case "$choice" in
+            [yY]* ) perform_step $(MYSQL_PWD=$oldpassword $sql -u root -e "DROP DATABASE IF EXISTS operationaldb;") "Overwritting slq repository";;
+            [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+            * )     text_color $GREEN"Keeping previous sql repository"; NEW_DB=FALSE;;
+        esac
     fi
-    perform_step sed -i 's|max_binlog_size|#max_binlog_size|' /etc/mysql/mysql.conf.d/mysqld.cnf "Setting max log size"
-    echo "disable_log_bin" >> /etc/mysql/mysql.conf.d/mysqld.cnf
-    perform_step sed -i '/disable_log_bin/a\wait_timeout=31536000' /etc/mysql/mysql.conf.d/mysqld.cnf "Setting wait timeout"
-    perform_step sed -i '/disable_log_bin/a\interactive_timeout=31536000' /etc/mysql/mysql.conf.d/mysqld.cnf "Setting interactive timeout"
 
-    systemctl restart mysql
+    #check sql new password
+    read -p "Would you like to change your sql password or add one ? (Default: Yes) [Y]es [N]o [E]xit " choice
+    case "$choice" in
+        [nN]* ) text_color $GREEN"Keeping previous sql password"; password=$oldpassword;;
+        [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+        * )     while true; do
+                    read -s -p "Enter your new sql password: " password
+                    echo
+                    read -s -p "Please confirm your new sql password: " password2
+                    echo
+                    [[ $password = $password2 ]] && break
+                    text_color $YELLOW "Password entered do not match. Please try again."
+                done
+                perform_step $(MYSQL_PWD=$oldpassword $sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED$mysql_native_password BY '$password';") "Changing sql password";;
+    esac
+
+    perform_step $(echo "REPOSITORY_PASSWORD=$password" > $OTNODE_DIR/.env) "Adding sql password to .env"
+    if [[ $NEW_DB != FALSE ]]; then
+        perform_step $(MYSQL_PWD=$password $sql -u root -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;") "Creating new sql repository"
+    fi
+    if [[ $sql = mysql ]]; then
+        perform_step sed -i 's|max_binlog_size|#max_binlog_size|' /etc/mysql/mysql.conf.d/mysqld.cnf "Setting max log size"
+        perform_step $(echo -e "disable_log_bin\nwait_timeout = 31536000\ninteractive_timeout = 31536000" >> /etc/mysql/mysql.conf.d/mysqld.cnf) "Adding disable_log_bin, wait_timeout, interactive_timeout to sql config"
+    fi
+    if [[ $sql = mariadb ]]; then
+        perform_step sed -i 's|max_binlog_size|#max_binlog_size|' /etc/mysql/mariadb.conf.d/50-server.cnf "Setting max log size"
+        perform_step $(echo -e "disable_log_bin\nwait_timeout = 31536000\ninteractive_timeout = 31536000" >> /etc/mysql/mariadb.conf.d/50-server.cnf) "Adding disable_log_bin, wait_timeout, interactive_timeout to sql config"
+    fi
+    perform_step systemctl restart $sql "Restarting $sql"
 }
 
 install_node() {
