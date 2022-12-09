@@ -58,7 +58,7 @@ async function setStake(
         .connect(managementWalletSigner)
         ['addStake(uint72,uint96)'](identityId, stakeWei, {
             gasPrice: process.env.NODE_ENV === 'development' ? undefined : 1_000,
-            gasLimit: 100_000,
+            gasLimit: 500_000,
         });
 }
 
