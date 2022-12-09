@@ -6,7 +6,6 @@ BRANCH_DIR="/root/ot-node-6-release-testnet"
 OTNODE_DIR="/root/ot-node"
 FUSEKI_VER="apache-jena-fuseki-4.5.0"
 NODEJS_VER="16"
-FILE=/root/.bashrc
 
 text_color() {
     GREEN='\033[0;32m'
@@ -39,8 +38,8 @@ perform_step() {
 }
 
 install_aliases() {
-    if [ -f "$FILE" ]; then
-        if grep -Fxq "alias otnode-restart='systemctl restart otnode.service'" $FILE; then
+    if [[ -f "/root/.bashrc" ]]; then
+        if grep -Fxq "alias otnode-restart='systemctl restart otnode.service'" ~/.bashrc; then
             echo "Aliases found, skipping."
         else
             echo "alias otnode-restart='systemctl restart otnode.service'" >> ~/.bashrc
@@ -48,11 +47,9 @@ install_aliases() {
             echo "alias otnode-start='systemctl start otnode.service'" >> ~/.bashrc
             echo "alias otnode-logs='journalctl -u otnode --output cat -f'" >> ~/.bashrc
             echo "alias otnode-config='nano ~/ot-node/.origintrail_noderc'" >> ~/.bashrc
-            source ~/.bashrc
-            text_color $GREEN OK
         fi
     else
-        echo "$FILE does not exist. Proceeding with OriginTrail node installation."
+        echo "bashrc does not exist. Proceeding with OriginTrail node installation."
     fi
 }
 
