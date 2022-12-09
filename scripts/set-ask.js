@@ -32,8 +32,8 @@ async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
 
     const walletSigner = wallet.connect(provider);
     await profile.connect(walletSigner).setAsk(identityId, askWei, {
-        gasPrice: process.env.NODE_ENV === 'development' ? undefined : 1_000,
-        gasLimit: 1_000_000,
+        gasPrice: process.env.NODE_ENV === 'development' ? undefined : 8,
+        gasLimit: 500_000,
     });
 }
 
