@@ -52,7 +52,7 @@ class Web3Service {
         this.transactionQueue = async.queue(async (args, cb) => {
             const { contractInstance, functionName, transactionArgs, future } = args;
             try {
-                const result = this._executeContractFunction(
+                const result = await this._executeContractFunction(
                     contractInstance,
                     functionName,
                     transactionArgs,
@@ -440,7 +440,7 @@ class Web3Service {
                 if (
                     !transactionRetried &&
                     (error.message.includes(`Transaction was not mined within`) ||
-                        error.message.includes(`Pool(TooLowPriority { old: 0, new: 0 })`))
+                        error.message.includes(`Pool(TooLowPriority`))
                 ) {
                     gasPrice *= Math.ceil(1.2);
                     this.logger.warn(
