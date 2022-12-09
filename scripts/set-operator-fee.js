@@ -30,8 +30,8 @@ async function setOperatorFee(rpcEndpoint, operatorFee, walletPrivateKey, hubCon
 
     const walletSigner = wallet.connect(provider);
     stakingContract.connect(walletSigner).setOperatorFee(identityId, operatorFee, {
-        gasPrice: process.env.NODE_ENV === 'development' ? undefined : 1_000,
-        gasLimit: 1_000_000,
+        gasPrice: process.env.NODE_ENV === 'development' ? undefined : 8,
+        gasLimit: 100_000,
     });
 }
 
