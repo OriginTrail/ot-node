@@ -51,7 +51,7 @@ async function setStake(
         .connect(managementWalletSigner)
         .increaseAllowance(stakingContractAddress, stakeWei, {
             gasPrice: process.env.NODE_ENV === 'development' ? undefined : 8,
-            gasLimit: 100_000,
+            gasLimit: 500_000,
         });
     // TODO: Add ABI instead of hard-coded function definition
     await stakingContract
