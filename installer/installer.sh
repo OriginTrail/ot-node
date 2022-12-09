@@ -2,7 +2,6 @@
 
 OTNODE_DIR="/root/ot-node"
 FUSEKI_VER="apache-jena-fuseki-4.5.0"
-NODEJS_VER="16"
 
 text_color() {
     GREEN='\033[0;32m'
@@ -70,6 +69,28 @@ install_directory() {
 install_firewall() {
     ufw allow 22/tcp && ufw allow 8900 && ufw allow 9000
     yes | ufw enable
+}
+
+install_prereqs() {
+    export DEBIAN_FRONTEND=noninteractive
+    NODEJS_VER="16"
+
+    perform_step install_aliases "Updating .bashrc file with OriginTrail node aliases"
+    perform_step rm -rf /var/lib/dpkg/lock-frontend "Removing any frontend locks"
+    perform_step apt update "Updating Ubuntu package repository"
+    perform_step apt upgrade -y "Updating Ubuntu to latest version"
+    perform_step apt install unzip jq -y "Installing unzip, jq"
+    perform_step apt install default-jre -y "Installing default-jre"
+    perform_step apt install build-essential -y "Installing build-essential"
+    perform_step wget https://deb.nodesource.com/setup_$NODEJS_VER.x "Downloading Node.js v$NODEJS_VER"
+    chmod +x setup_$NODEJS_VER.x
+    perform_step ./setup_$NODEJS_VER.x "Installing Node.js v$NODEJS_VER"
+    rm -rf setup_$NODEJS_VER.x
+    perform_step apt update "Updating Ubuntu package repository"
+    perform_step apt-get install nodejs -y "Installing node.js"
+    perform_step npm install -g npm "Installing npm"
+    perform_step install_firewall "Configuring firewall"
+    perform_step apt remove unattended-upgrades -y "Remove unattended upgrades"
 }
 
 install_fuseki() {
@@ -232,25 +253,6 @@ cd /root
 header_color $BGREEN "Welcome to the OriginTrail Installer. Please sit back while the installer runs. "
 
 header_color $BGREEN "Installing OriginTrail node pre-requisites..."
-
-perform_step install_aliases "Updating .bashrc file with OriginTrail node aliases"
-perform_step rm /var/lib/dpkg/lock-frontend "Removing any frontend locks"
-perform_step apt update "Updating Ubuntu package repository"
-perform_step export DEBIAN_FRONTEND=noninteractive "Updating Ubuntu to latest version 1/2"
-perform_step apt upgrade -y "Updating Ubuntu to latest version 2/2"
-perform_step apt install default-jre unzip jq -y "Installing default-jre, unzip, jq"
-perform_step apt install build-essential -y "Installing build-essential"
-perform_step wget https://deb.nodesource.com/setup_$NODEJS_VER.x "Downloading Node.js v$NODEJS_VER"
-chmod +x setup_$NODEJS_VER.x
-perform_step ./setup_$NODEJS_VER.x "Installing Node.js v$NODEJS_VER"
-rm -rf setup_$NODEJS_VER.x
-perform_step apt update "Updating the Ubuntu repo"
-perform_step apt-get install nodejs -y "Installing node.js"
-perform_step npm install -g npm "Installing npm"
-perform_step apt-get install tcllib mysql-server -y "Installing tcllib and mysql-server"
-perform_step apt remove unattended-upgrades -y "Remove unattended upgrades"
-perform_step install_directory "Assembling ot-node directory"
-perform_step install_firewall "Configuring firewall"
 
 OTNODE_DIR=$OTNODE_DIR/current
 
