@@ -281,23 +281,35 @@ clear
 
 cd /root
 
-header_color $BGREEN "Welcome to the OriginTrail Installer. Please sit back while the installer runs. "
+header_color $BGREEN"Welcome to the OriginTrail Installer. Please sit back while the installer runs. "
 
-header_color $BGREEN "Installing OriginTrail node pre-requisites..."
+header_color $BGREEN"Installing OriginTrail node pre-requisites..."
+
+install_prereqs
+
+header_color $BGREEN"Preparing OriginTrail node directory..."
+
+if [[ -d "$OTNODE_DIR" ]]; then
+    read -p "Previous ot-node directory detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
+    case "$choice" in
+        [nN]* ) text_color $GREEN"Keeping previous ot-node directory.";;
+        [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+        * ) text_color $GREEN"Reconfiguring ot-node directory."; systemctl is-active --quiet otnode && systemctl stop otnode; perform_step rm -rf $OTNODE_DIR "Deleting $OTNODE_DIR"; install_directory;;
+    esac
+else
+    install_directory
+fi
 
 OTNODE_DIR=$OTNODE_DIR/current
 
-header_color $BGREEN "Installing Triplestore (Graph Database)..."
+header_color $BGREEN"Installing Triplestore (Graph Database)..."
 
-while true; do
-    read -p "Please select the database you would like to use: [1]Fuseki [2]Blazegraph [E]xit: " choice
-    case "$choice" in
-        [1gG]* ) echo -e "Fuseki selected. Proceeding with installation."; tripleStore=ot-fuseki; perform_step install_fuseki "Installing Fuseki"; break;;
-        [2bB]* ) echo -e "Blazegraph selected. Proceeding with installation."; tripleStore=ot-blazegraph; perform_step install_blazegraph "Installing Blazegraph"; break;;
-        [Ee]* ) echo "Installer stopped by user"; exit;;
-        * ) echo "Please make a valid choice and try again.";;
-    esac
-done
+read -p "Please select the database you would like to use: (Default: Blazegraph) [1]Blazegraph [2]Fuseki [E]xit: " choice
+case "$choice" in
+    [2fF] ) text_color $GREEN"Fuseki selected. Proceeding with installation."; tripleStore=ot-fuseki;;
+    [Ee] )  text_color $RED"Installer stopped by user"; exit;;
+    * )     text_color $GREEN"Blazegraph selected. Proceeding with installation."; tripleStore=ot-blazegraph;;
+esac
 
 header_color $BGREEN "Installing MySQL..."
 
