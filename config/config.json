@@ -217,8 +217,7 @@
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
                             "dht": {
-                                "kBucketSize": 20,
-                                "type": "lan"
+                                "kBucketSize": 20
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -342,8 +341,7 @@
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
                             "dht": {
-                                "kBucketSize": 20,
-                                "type": "wan"
+                                "kBucketSize": 20
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -497,8 +495,7 @@
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
                             "dht": {
-                                "kBucketSize": 20,
-                                "type": "wan"
+                                "kBucketSize": 20
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -513,10 +510,7 @@
                                 }
                             },
                             "port": 9000,
-                            "bootstrap": [
-                                "/ip4/164.92.138.30/tcp/9000/p2p/QmbiZQm18JefDizrQwbRhPgkaLykTLyrUEpeMWuKJHXuUM",
-                                "/ip4/139.59.145.152/tcp/9000/p2p/Qme2oF6afixBjLYjF5CYeC73d5dygsTq8P7BPQp31NVkye"
-                            ]
+                            "bootstrap": []
                         }
                     }
                 }
