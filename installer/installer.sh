@@ -116,14 +116,13 @@ install_fuseki() {
 }
 
 install_blazegraph() {
-    wget https://github.com/blazegraph/database/releases/latest/download/blazegraph.jar
+    perform_step wget https://github.com/blazegraph/database/releases/latest/download/blazegraph.jar "Downloading Blazegraph"
+    perform_step cp $OTNODE_DIR/installer/data/blazegraph.service /lib/systemd/system/ "Copying Blazegraph service file"
     mv blazegraph.jar $OTNODE_DIR/../blazegraph.jar
-    cp $OTNODE_DIR/installer/data/blazegraph.service /lib/systemd/system/
-
     systemctl daemon-reload
-    systemctl enable blazegraph
-    systemctl start blazegraph
-    systemctl status blazegraph
+    perform_step systemctl enable blazegraph "Enabling Blazegrpah"
+    perform_step systemctl start blazegraph "Starting Blazegraph"
+    perform_step systemctl status blazegraph "Blazegraph status"
 }
 
 install_mysql() {
