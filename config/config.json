@@ -564,7 +564,7 @@
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "otp::mainnet",
-                            "hubContractAddress": "",
+                            "hubContractAddress": "0x485Cbd3A5BCE1a9c1e5cD37AA02039D7C23fD0c3",
                             "rpcEndpoints": [
                                 "https://astrosat-parachain-rpc.origin-trail.network",
                                 "https://astrosat.origintrail.network/",
