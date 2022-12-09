@@ -619,7 +619,7 @@
         },
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
-        "logLevel": "debug",
+        "logLevel": "trace",
         "telemetry": {
             "enabled": true,
             "sendTelemetryData": true,
