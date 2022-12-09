@@ -337,20 +337,32 @@ if [[ $tripleStore = "ot-blazegraph" ]]; then
     fi
 fi
 
-header_color $BGREEN "Installing MySQL..."
+header_color $BGREEN"Installing SQL..."
 
-install_mysql
+install_sql
 
-header_color $BGREEN "Configuring OriginTrail node..."
+header_color $BGREEN"Configuring OriginTrail node..."
 
+install_node
 
+header_color $BGREEN"INSTALLATION COMPLETE !"
 
-perform_step install_node "Configuring ot-node"
+text_color $GREEN "
+New aliases added:
+otnode-restart
+otnode-stop
+otnode-start
+otnode-logs
+otnode-config
 
-text_color $GREEN "Logs will be displayed. Press ctrl+c to exit the logs. The node WILL stay running after you return to the command prompt."
-echo ""
-text_color $GREEN "If the logs do not show and the screen hangs, press ctrl+c to exit the installation and reboot your server."
-echo ""
+To start using aliases, run:
+source ~/.bashrc
+"
+text_color $YELLOW"Logs will be displayed. Press ctrl+c to exit the logs. The node WILL stay running after you return to the command prompt.
+
+If the logs do not show and the screen hangs, press ctrl+c to exit the installation and reboot your server.
+
+"
 read -p "Press enter to continue..."
 
-journalctl -u otnode --output cat -fn 100
+journalctl -u otnode --output cat -fn 200
