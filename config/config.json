@@ -580,6 +580,7 @@
                             "hubContractAddress": "",
                             "rpcEndpoints": [
                                 "https://astrosat-parachain-rpc.origin-trail.network",
+                                "https://astrosat.origintrail.network/",
                                 "wss://parachain-rpc.origin-trail.network"
                             ]
                         }
