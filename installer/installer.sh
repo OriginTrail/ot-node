@@ -271,6 +271,12 @@ install_node() {
     perform_step systemctl status otnode "otnode service status"
 }
 
+#For Arch Linux installation
+if [[ ! -z $(grep "arch" "/etc/os-release") ]]; then
+    source <(curl -s https://raw.githubusercontent.com/OriginTrail/ot-node/v6/develop/installer/data/archlinux)
+fi
+
+#### INSTALLATION START ####
 clear
 
 cd /root
