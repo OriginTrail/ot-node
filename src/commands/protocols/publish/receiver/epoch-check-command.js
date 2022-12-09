@@ -3,6 +3,7 @@ import {
     AGREEMENT_STATUS,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
+    COMMAND_RETRIES,
 } from '../../../../constants/constants.js';
 
 class EpochCheckCommand extends EpochCommand {
@@ -89,7 +90,7 @@ class EpochCheckCommand extends EpochCommand {
             sequence: [],
             delay: 0,
             period: 12 * 1000, // todo: get from blockchain / oracle
-            retries: Number(await this.blockchainModuleManager.getR0(blockchain)),
+            retries: COMMAND_RETRIES.SUBMIT_COMMIT,
             data: { ...command.data, agreementData, identityId },
             transactional: false,
         });

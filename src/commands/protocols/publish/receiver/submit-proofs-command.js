@@ -1,5 +1,9 @@
 import EpochCommand from '../../common/epoch-command.js';
-import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+    COMMAND_RETRIES,
+} from '../../../../constants/constants.js';
 
 class SubmitProofsCommand extends EpochCommand {
     constructor(ctx) {
@@ -30,7 +34,9 @@ class SubmitProofsCommand extends EpochCommand {
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}`,
+                `hash function id: ${hashFunctionId}. Retry number ${
+                    COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
+                }`,
         );
 
         const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
@@ -81,7 +87,9 @@ class SubmitProofsCommand extends EpochCommand {
         this.logger.trace(
             `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}`,
+                `hash function id: ${hashFunctionId}. Retry number ${
+                    COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
+                }`,
         );
 
         await this.scheduleNextEpochCheck(
