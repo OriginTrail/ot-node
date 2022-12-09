@@ -1,8 +1,5 @@
 #!/bin/bash
 
-ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive"
-BRANCH="v6/release/testnet"
-BRANCH_DIR="/root/ot-node-6-release-testnet"
 OTNODE_DIR="/root/ot-node"
 FUSEKI_VER="apache-jena-fuseki-4.5.0"
 NODEJS_VER="16"
@@ -54,17 +51,20 @@ install_aliases() {
 }
 
 install_directory() {
+    ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive"
+    BRANCH="v6/release/testnet"
+    BRANCH_DIR="/root/ot-node-6-release-testnet"
+
+    perform_step wget https://$ARCHIVE_REPOSITORY_URL/$BRANCH.zip "Downloading node files"
+    perform_step unzip *.zip "Unzipping node files"
+    perform_step rm *.zip "Removing zip file"
     OTNODE_VERSION=$(jq -r '.version' $BRANCH_DIR/package.json)
-
-    mkdir $OTNODE_DIR
-    mkdir $OTNODE_DIR/$OTNODE_VERSION
-
-    mv $BRANCH_DIR/* $OTNODE_DIR/$OTNODE_VERSION/
-    mv $BRANCH_DIR/.* $OTNODE_DIR/$OTNODE_VERSION/
-
-    rm -r $BRANCH_DIR
-
-    ln -sfn $OTNODE_DIR/$OTNODE_VERSION $OTNODE_DIR/current
+    perform_step mkdir $OTNODE_DIR "Creating new ot-node directory"
+    perform_step mkdir $OTNODE_DIR/$OTNODE_VERSION "Creating new ot-node version directory"
+    perform_step mv $BRANCH_DIR/* $OTNODE_DIR/$OTNODE_VERSION/ "Moving downloaded node files to ot-node version directory"
+    OUTPUT=$(mv $BRANCH_DIR/.* $OTNODE_DIR/$OTNODE_VERSION/ 2>&1)
+    perform_step rm -rf $BRANCH_DIR "Removing old directories"
+    perform_step ln -sfn $OTNODE_DIR/$OTNODE_VERSION $OTNODE_DIR/current "Creating symlink from $OTNODE_DIR/$OTNODE_VERSION to $OTNODE_DIR/current"
 }
 
 install_firewall() {
@@ -240,11 +240,6 @@ perform_step export DEBIAN_FRONTEND=noninteractive "Updating Ubuntu to latest ve
 perform_step apt upgrade -y "Updating Ubuntu to latest version 2/2"
 perform_step apt install default-jre unzip jq -y "Installing default-jre, unzip, jq"
 perform_step apt install build-essential -y "Installing build-essential"
-perform_step wget https://$ARCHIVE_REPOSITORY_URL/$BRANCH.zip "Downloading ot-node"
-perform_step unzip *.zip "Unzipping ot-node"
-perform_step rm *.zip "Removing zip file"
-#Download new version .zip file
-#Unpack to init folder
 perform_step wget https://deb.nodesource.com/setup_$NODEJS_VER.x "Downloading Node.js v$NODEJS_VER"
 chmod +x setup_$NODEJS_VER.x
 perform_step ./setup_$NODEJS_VER.x "Installing Node.js v$NODEJS_VER"
