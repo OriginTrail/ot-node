@@ -52,7 +52,7 @@ class Web3Service {
         this.transactionQueue = async.queue(async (args, cb) => {
             const { contractInstance, functionName, transactionArgs, future } = args;
             try {
-                const result = await this._executeContractFunction(
+                const result = this._executeContractFunction(
                     contractInstance,
                     functionName,
                     transactionArgs,
