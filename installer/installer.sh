@@ -1,7 +1,6 @@
 #!/bin/bash
 
 OTNODE_DIR="/root/ot-node"
-FUSEKI_VER="apache-jena-fuseki-4.5.0"
 
 text_color() {
     GREEN='\033[0;32m'
@@ -94,22 +93,26 @@ install_prereqs() {
 }
 
 install_fuseki() {
-    wget https://dlcdn.apache.org/jena/binaries/$FUSEKI_VER.zip
-    unzip $FUSEKI_VER.zip
+    FUSEKI_VER="apache-jena-fuseki-$(git ls-remote --tags https://github.com/apache/jena | grep -o 'refs/tags/jena-[0-9]*\.[0-9]*\.[0-9]*' | sort -r | head -n 1 | grep -o '[^\/-]*$')"
+    FUSEKI_PREV_VER="apache-jena-fuseki-$(git ls-remote --tags https://github.com/apache/jena | grep -o 'refs/tags/jena-[0-9]*\.[0-9]*\.[0-9]*' | sort -r | head -n 3 | tail -n 1 | grep -o '[^\/-]*$')"
+    wget -q --spider https://dlcdn.apache.org/jena/binaries/$FUSEKI_VER.zip
+    if [[ $? -ne 0 ]]; then
+        FUSEKI_VER=$FUSEKI_PREV_VER
+    fi
 
-    rm /root/$FUSEKI_VER.zip
-    mkdir /root/ot-node/fuseki
-    mkdir /root/ot-node/fuseki/tdb
-    cp /root/$FUSEKI_VER/fuseki-server.jar /root/ot-node/fuseki/
-    cp -r /root/$FUSEKI_VER/webapp/ /root/ot-node/fuseki/
-    rm -r /root/$FUSEKI_VER
-
-    perform_step cp $OTNODE_DIR/installer/data/fuseki.service /lib/systemd/system/
-
+    perform_step wget https://dlcdn.apache.org/jena/binaries/$FUSEKI_VER.zip "Downloading Fuseki"
+    perform_step unzip $FUSEKI_VER.zip "Unzipping Fuseki"
+    perform_step rm /root/$FUSEKI_VER.zip /root/ot-node/$FUSEKI_VER.zip "Removing Fuseki zip file"
+    perform_step mkdir /root/ot-node/fuseki "Making /root/ot-node/fuseki directory"
+    perform_step mkdir /root/ot-node/fuseki/tdb "Making /root/ot-node/fuseki/tdb directory"
+    perform_step cp /root/$FUSEKI_VER/fuseki-server.jar /root/ot-node/fuseki/ "Copying Fuseki files to $OTNODE_DIR/fuseki/ 1/2"
+    perform_step cp -r /root/$FUSEKI_VER/webapp/ /root/ot-node/fuseki/ "Copying Fuseki files to $OTNODE_DIR/fuseki/ 1/2"
+    perform_step rm -r /root/$FUSEKI_VER "Removing the remaining /root/$FUSEKI_VER directory"
+    perform_step cp $OTNODE_DIR/installer/data/fuseki.service /lib/systemd/system/ "Copying Fuseki service file"
     systemctl daemon-reload
-    systemctl enable fuseki
-    systemctl start fuseki
-    systemctl status fuseki
+    perform_step systemctl enable fuseki "Enabling Fuseki"
+    perform_step systemctl start fuseki "Starting Fuseki"
+    perform_step systemctl status fuseki "Fuseki status"
 }
 
 install_blazegraph() {
