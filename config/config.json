@@ -409,23 +409,10 @@
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "parachain::testnet",
-                            "hubContractAddress": "0x2588eF1D66570c2B97ea1bE3313437aF0caC8BC2",
+                            "hubContractAddress": "0xEF9FeCb85d03d6e624C434dF8298692d13853033",
                             "rpcEndpoints": [
                                 "https://lofar-testnet.origin-trail.network",
                                 "wss://parachain-testnet-rpc.origin-trail.network"
-                            ]
-                        }
-                    },
-                    "polygon": {
-                        "package": "./blockchain/implementation/polygon/polygon-service.js",
-                        "config": {
-                            "networkId": "polygon::testnet",
-                            "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
-                            "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
-                            "rpcEndpoints": [
-                                "https://matic-mumbai.chainstacklabs.com",
-                                "https://rpc-mumbai.matic.today",
-                                "https://matic-testnet-archive-rpc.bwarelabs.com"
                             ]
                         }
                     }
