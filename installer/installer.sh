@@ -311,6 +311,32 @@ case "$choice" in
     * )     text_color $GREEN"Blazegraph selected. Proceeding with installation."; tripleStore=ot-blazegraph;;
 esac
 
+if [[ $tripleStore = "ot-fuseki" ]]; then
+    if [[ -d "/root/fuseki" ]]; then
+        read -p "Previously installed Fuseki triplestore detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
+        case "$choice" in
+            [nN]* ) text_color $GREEN"Keeping previous Fuseki installation.";;
+            [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+            * )     text_color $GREEN"Reinstalling Fuseki."; perform_step rm -rf fuseki* "Removing previous Fuseki installation"; install_fuseki;;
+        esac
+    else
+        install_fuseki
+    fi
+fi
+
+if [[ $tripleStore = "ot-blazegraph" ]]; then
+    if [[ -f "blazegraph.jar" ]]; then
+        read -p "Previously installed Blazegraph triplestore detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
+        case "$choice" in
+            [nN]* ) text_color $GREEN"Keeping old Blazegraph Installation.";;
+            [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+            * )     text_color $GREEN"Reinstalling Blazegraph."; perform_step rm -rf blazegraph* "Removing previous Blazegraph installation"; install_blazegraph;;
+        esac
+    else
+        install_blazegraph
+    fi
+fi
+
 header_color $BGREEN "Installing MySQL..."
 
 install_mysql
