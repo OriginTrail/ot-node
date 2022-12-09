@@ -32,7 +32,7 @@ class SendTelemetryCommand extends Command {
                         version: pjson.version,
                         identity: this.networkModuleManager.getPeerId().toB58String(),
                         hostname: this.config.hostname,
-                        operational_wallet: this.blockchainModuleManager.getPublicKey('otp'), // TODO: send list of wallets for each implementation
+                        operational_wallet: this.blockchainModuleManager.getPublicKey(),
                         management_wallet: this.blockchainModuleManager.getManagementKey(),
                         triple_store: this.config.modules.tripleStore.defaultImplementation,
                         auto_update_enabled: this.config.modules.autoUpdater.enabled,

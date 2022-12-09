@@ -1,5 +1,9 @@
 import EpochCommand from '../../common/epoch-command.js';
-import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+    COMMAND_RETRIES,
+} from '../../../../constants/constants.js';
 
 class SubmitProofsCommand extends EpochCommand {
     constructor(ctx) {
@@ -24,37 +28,71 @@ class SubmitProofsCommand extends EpochCommand {
             keyword,
             hashFunctionId,
             operationId,
+            identityId,
         } = command.data;
 
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}`,
+                `hash function id: ${hashFunctionId}. Retry number ${
+                    COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
+                }`,
         );
+
+        const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
+            blockchain,
+            agreementId,
+            epoch,
+        );
+
+        if (this.proofAlreadySubmitted(commits, identityId)) {
+            this.logger.trace(
+                `Proofs already submitted for agreement id: ${agreementId} and epoch: ${epoch}`,
+            );
+            await this.scheduleNextEpochCheck(
+                blockchain,
+                agreementId,
+                contract,
+                tokenId,
+                keyword,
+                epoch,
+                hashFunctionId,
+                agreementData,
+                operationId,
+            );
+            return EpochCommand.empty();
+        }
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_START,
             operationId,
             agreementId,
             epoch,
         );
-        await this.blockchainModuleManager.sendProof(
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-            hashFunctionId,
-            epoch,
-            proof,
-            leaf,
-        );
+        try {
+            await this.blockchainModuleManager.sendProof(
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+                hashFunctionId,
+                epoch,
+                proof,
+                leaf,
+            );
+        } catch (error) {
+            this.logger.warn(error.message);
+            return EpochCommand.retry();
+        }
 
         this.logger.trace(
             `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}`,
+                `hash function id: ${hashFunctionId}. Retry number ${
+                    COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
+                }`,
         );
 
-        this.scheduleNextEpochCheck(
+        await this.scheduleNextEpochCheck(
             blockchain,
             agreementId,
             contract,
@@ -74,6 +112,15 @@ class SubmitProofsCommand extends EpochCommand {
         );
 
         return EpochCommand.empty();
+    }
+
+    proofAlreadySubmitted(commits, myIdentity) {
+        commits.forEach((commit) => {
+            if (Number(commit.identityId) === myIdentity && Number(commit.score) === 0) {
+                return true;
+            }
+        });
+        return false;
     }
 
     /**

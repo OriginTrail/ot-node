@@ -1,5 +1,9 @@
 import EpochCommand from '../../common/epoch-command.js';
-import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+    COMMAND_RETRIES,
+} from '../../../../constants/constants.js';
 
 class CalculateProofsCommand extends EpochCommand {
     constructor(ctx) {
@@ -83,7 +87,7 @@ class CalculateProofsCommand extends EpochCommand {
                 proof,
             },
             period: 12 * 1000, // todo: get from blockchain / oracle
-            retries: 3,
+            retries: COMMAND_RETRIES.SUBMIT_PROOFS,
             transactional: false,
         });
 

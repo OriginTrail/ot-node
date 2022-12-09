@@ -17,6 +17,7 @@ class EpochCommand extends Command {
         agreementData,
         operationId,
     ) {
+        // todo check epoch number and make sure that delay is not in past
         const nextEpochStartTime =
             Number(agreementData.startTime) + Number(agreementData.epochLength) * (epoch + 1);
 
@@ -27,7 +28,7 @@ class EpochCommand extends Command {
         const delay = nextEpochStartTime - Math.floor(Date.now() / 1000) + offset;
 
         this.logger.trace(
-            `Scheduling next epoch check for agreement id: ${agreementId} in ${delay} seconds`,
+            `Scheduling next epoch check for agreement id: ${agreementId} in ${delay} seconds.`,
         );
         await this.commandExecutor.add({
             name: 'epochCheckCommand',

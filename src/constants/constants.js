@@ -10,7 +10,7 @@ export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN.dividedBy(UINT32_MAX_BN)
 
 export const SCHEMA_CONTEXT = 'http://schema.org/';
 
-export const TRANSACTION_POLLING_TIMEOUT = 100;
+export const TRANSACTION_POLLING_TIMEOUT = 50;
 
 export const LIBP2P_KEY_DIRECTORY = 'libp2p';
 
@@ -99,6 +99,11 @@ export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
 export const DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 
 export const DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
+
+export const COMMAND_RETRIES = {
+    SUBMIT_COMMIT: 3,
+    SUBMIT_PROOFS: 3,
+};
 
 export const WEBSOCKET_PROVIDER_OPTIONS = {
     reconnect: {
