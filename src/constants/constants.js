@@ -10,7 +10,7 @@ export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN.dividedBy(UINT32_MAX_BN)
 
 export const SCHEMA_CONTEXT = 'http://schema.org/';
 
-export const TRANSACTION_POLLING_TIMEOUT = 100;
+export const TRANSACTION_POLLING_TIMEOUT = 50;
 
 export const LIBP2P_KEY_DIRECTORY = 'libp2p';
 

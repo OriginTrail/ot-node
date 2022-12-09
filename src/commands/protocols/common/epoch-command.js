@@ -17,6 +17,7 @@ class EpochCommand extends Command {
         agreementData,
         operationId,
     ) {
+        // todo check epoch number and make sure that delay is not in past
         const nextEpochStartTime =
             Number(agreementData.startTime) + Number(agreementData.epochLength) * (epoch + 1);
 

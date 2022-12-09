@@ -24,6 +24,7 @@ class SubmitProofsCommand extends EpochCommand {
             keyword,
             hashFunctionId,
             operationId,
+            identityId,
         } = command.data;
 
         this.logger.trace(
@@ -31,22 +32,51 @@ class SubmitProofsCommand extends EpochCommand {
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
                 `hash function id: ${hashFunctionId}`,
         );
+
+        const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
+            blockchain,
+            agreementId,
+            epoch,
+        );
+
+        if (this.proofAlreadySubmitted(commits, identityId)) {
+            this.logger.trace(
+                `Proofs already submitted for agreement id: ${agreementId} and epoch: ${epoch}`,
+            );
+            await this.scheduleNextEpochCheck(
+                blockchain,
+                agreementId,
+                contract,
+                tokenId,
+                keyword,
+                epoch,
+                hashFunctionId,
+                agreementData,
+                operationId,
+            );
+            return EpochCommand.empty();
+        }
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_START,
             operationId,
             agreementId,
             epoch,
         );
-        await this.blockchainModuleManager.sendProof(
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-            hashFunctionId,
-            epoch,
-            proof,
-            leaf,
-        );
+        try {
+            await this.blockchainModuleManager.sendProof(
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+                hashFunctionId,
+                epoch,
+                proof,
+                leaf,
+            );
+        } catch (error) {
+            this.logger.warn(error.message);
+            return EpochCommand.retry();
+        }
 
         this.logger.trace(
             `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
@@ -54,7 +84,7 @@ class SubmitProofsCommand extends EpochCommand {
                 `hash function id: ${hashFunctionId}`,
         );
 
-        this.scheduleNextEpochCheck(
+        await this.scheduleNextEpochCheck(
             blockchain,
             agreementId,
             contract,
@@ -74,6 +104,15 @@ class SubmitProofsCommand extends EpochCommand {
         );
 
         return EpochCommand.empty();
+    }
+
+    proofAlreadySubmitted(commits, myIdentity) {
+        commits.forEach((commit) => {
+            if (Number(commit.identityId) === myIdentity && Number(commit.score) === 0) {
+                return true;
+            }
+        });
+        return false;
     }
 
     /**
