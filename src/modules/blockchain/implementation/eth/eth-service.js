@@ -7,10 +7,6 @@ class EthService extends Web3Service {
         this.baseTokenTicker = 'ETH';
         this.tracTicker = 'TRAC';
     }
-
-    getBlockchainId() {
-        return 'eth';
-    }
 }
 
 export default EthService;

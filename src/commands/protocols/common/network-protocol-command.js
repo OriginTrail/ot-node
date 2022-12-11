@@ -11,7 +11,12 @@ class NetworkProtocolCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const keywords = this.getKeywords(command);
+        const { blockchain } = command.data;
+
+        const keywords = await this.getKeywords(command);
+        const batchSize = await this.getBatchSize(blockchain);
+        const minAckResponses = await this.getMinAckResponses(blockchain);
+
         const commandSequence = [
             'findNodesCommand',
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
@@ -25,7 +30,8 @@ class NetworkProtocolCommand extends Command {
                 data: {
                     ...command.data,
                     keyword,
-                    minimumAckResponses: this.operationService.getMinimumAckResponses(),
+                    batchSize,
+                    minAckResponses,
                     errorType: this.errorType,
                     networkProtocols: this.operationService.getNetworkProtocols(),
                 },
@@ -38,9 +44,16 @@ class NetworkProtocolCommand extends Command {
         return Command.empty();
     }
 
-    getKeywords() {
-        // overridden by subclasses
-        return [];
+    async getKeywords() {
+        throw Error('getKeywords not implemented');
+    }
+
+    async getBatchSize() {
+        throw Error('getBatchSize not implemented');
+    }
+
+    async getMinAckResponses() {
+        throw Error('getMinAckResponses not implemented');
     }
 
     /**

@@ -55,11 +55,19 @@ class SequelizeRepository {
             user: process.env.SEQUELIZE_REPOSITORY_USER,
             password: process.env.SEQUELIZE_REPOSITORY_PASSWORD,
         });
-        // todo remove drop!!!
-        // await connection.promise().query(`DROP DATABASE IF EXISTS \`${this.config.database}\`;`);
         await connection
             .promise()
             .query(`CREATE DATABASE IF NOT EXISTS \`${this.config.database}\`;`);
+    }
+
+    async dropDatabase() {
+        const connection = await mysql.createConnection({
+            host: process.env.SEQUELIZE_REPOSITORY_HOST,
+            port: process.env.SEQUELIZE_REPOSITORY_PORT,
+            user: process.env.SEQUELIZE_REPOSITORY_USER,
+            password: process.env.SEQUELIZE_REPOSITORY_PASSWORD,
+        });
+        await connection.promise().query(`DROP DATABASE IF EXISTS \`${this.config.database}\`;`);
     }
 
     async runMigrations() {
@@ -266,14 +274,33 @@ class SequelizeRepository {
         );
     }
 
-    async getAllPeerRecords(blockchain) {
-        return this.models.shard.findAll({
+    async getAllPeerRecords(blockchain, filterLastSeen) {
+        const query = {
             where: {
                 blockchain_id: {
                     [Sequelize.Op.eq]: blockchain,
                 },
-                last_seen: {
-                    [Sequelize.Op.gte]: Sequelize.col('last_dialed'),
+            },
+            raw: true,
+        };
+
+        if (filterLastSeen) {
+            query.where.last_seen = {
+                [Sequelize.Op.gte]: Sequelize.col('last_dialed'),
+            };
+        }
+
+        return this.models.shard.findAll(query);
+    }
+
+    async getPeerRecord(peerId, blockchain) {
+        return this.models.shard.findOne({
+            where: {
+                blockchain_id: {
+                    [Sequelize.Op.eq]: blockchain,
+                },
+                peer_id: {
+                    [Sequelize.Op.eq]: peerId,
                 },
             },
             raw: true,
@@ -294,24 +321,24 @@ class SequelizeRepository {
         });
     }
 
-    async updatePeerAsk(peerId, ask) {
+    async updatePeerAsk(blockchainId, peerId, ask) {
         await this.models.shard.update(
             {
                 ask,
             },
             {
-                where: { peer_id: peerId },
+                where: { peer_id: peerId, blockchain_id: blockchainId },
             },
         );
     }
 
-    async updatePeerStake(peerId, stake) {
+    async updatePeerStake(blockchainId, peerId, stake) {
         await this.models.shard.update(
             {
                 stake,
             },
             {
-                where: { peer_id: peerId },
+                where: { peer_id: peerId, blockchain_id: blockchainId },
             },
         );
     }
@@ -340,10 +367,11 @@ class SequelizeRepository {
         );
     }
 
-    async removePeerRecord(peerId) {
+    async removePeerRecord(blockchainId, peerId) {
         await this.models.shard.destroy({
             where: {
                 peer_id: peerId,
+                blockchain_id: blockchainId,
             },
         });
     }
@@ -357,11 +385,23 @@ class SequelizeRepository {
         );
     }
 
+    async cleanShardingTable() {
+        await this.models.shard.destroy({ where: {} });
+    }
+
     async getLastCheckedBlock(blockchainId, contract) {
         return this.models.blockchain.findOne({
             attributes: ['last_checked_block', 'last_checked_timestamp'],
             where: { blockchain_id: blockchainId, contract },
             raw: true,
+        });
+    }
+
+    async removeLastCheckedBlockForContract(contract) {
+        return this.models.blockchain.destroy({
+            where: {
+                contract,
+            },
         });
     }
 
@@ -427,6 +467,17 @@ class SequelizeRepository {
                 },
             },
         });
+    }
+
+    async updateOperationAgreementStatus(operationId, agreementId, agreementStatus) {
+        await this.models.publish.update(
+            { agreementId, agreementStatus },
+            {
+                where: {
+                    operation_id: operationId,
+                },
+            },
+        );
     }
 
     async destroyEvents(ids) {
@@ -552,6 +603,14 @@ class SequelizeRepository {
             };
         }
         return this.models.blockchain_event.update({ processed: true }, condition);
+    }
+
+    async removeBlockchainEvents(contractName) {
+        return this.models.blockchain_event.destroy({
+            where: {
+                contract: contractName,
+            },
+        });
     }
 
     async getLastEvent(contractName, blockchainId) {

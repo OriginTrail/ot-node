@@ -9,8 +9,8 @@ After=network.target
 Environment=JVM_ARGS=-Xmx4G
 Type=simple
 User=root
-WorkingDirectory=/root/fuseki
-ExecStart=/usr/bin/java -jar /root/fuseki/fuseki-server.jar --update --set tdb:unionDefaultGraph=true --loc /root/fuseki/tdb /node0
+WorkingDirectory=/root/ot-node/fuseki
+ExecStart=/usr/bin/java -jar /root/ot-node/fuseki/fuseki-server.jar --update --set tdb:unionDefaultGraph=true --loc /root/ot-node/fuseki/tdb /node0
 Restart=on-failure
 
 [Install]

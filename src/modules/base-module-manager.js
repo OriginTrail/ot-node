@@ -54,12 +54,15 @@ class BaseModuleManager {
                 const module = new ModuleClass();
                 // eslint-disable-next-line no-await-in-loop
                 await module.initialize(implementationConfig.config, this.logger);
+
+                module.getImplementationName = () => implementationName;
+
                 this.logger.info(
                     `${this.getName()} module initialized with implementation: ${implementationName}`,
                 );
                 this.handlers[implementationName] = {
                     module,
-                    config: implementationConfig,
+                    config: implementationConfig.config,
                 };
             }
             if (Object.keys(this.handlers).length === 0) {
@@ -102,6 +105,10 @@ class BaseModuleManager {
             delete this.handlers[keys[0]];
         }
         delete this.handlers[name];
+    }
+
+    getModuleConfiguration(name) {
+        return this.getImplementation(name).config;
     }
 }
 

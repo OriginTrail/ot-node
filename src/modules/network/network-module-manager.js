@@ -11,12 +11,6 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    async sortPeers(key, peerIds, count) {
-        if (this.initialized) {
-            return this.getImplementation().module.sortPeers(key, peerIds, count);
-        }
-    }
-
     getMultiaddrs() {
         if (this.initialized) {
             return this.getImplementation().module.getMultiaddrs();
@@ -94,12 +88,6 @@ class NetworkModuleManager extends BaseModuleManager {
     async getPeerInfo(peerId) {
         if (this.initialized) {
             return this.getImplementation().module.getPeerInfo(peerId);
-        }
-    }
-
-    async toHash(key) {
-        if (this.initialized) {
-            return this.getImplementation().module.toHash(key);
         }
     }
 

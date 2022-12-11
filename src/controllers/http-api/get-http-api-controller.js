@@ -30,13 +30,14 @@ class GetController extends BaseController {
             OPERATION_STATUS.IN_PROGRESS,
         );
 
-        const { id } = req.body;
+        const { id, hashFunctionId } = req.body;
 
         this.logger.info(`Get for ${id} with operation id ${operationId} initiated.`);
 
         const commandData = {
             operationId,
             id,
+            hashFunctionId,
         };
 
         const commandSequence = [
