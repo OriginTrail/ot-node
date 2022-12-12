@@ -208,7 +208,7 @@ class Libp2pService {
                     NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
                     message.header.operationId,
                     message.header.keywordUuid,
-                    {},
+                    { errorMessage: 'Invalid request message' },
                 );
             } else if (busy) {
                 await this.sendMessageResponse(
@@ -307,14 +307,13 @@ class Libp2pService {
             dialEnd = Date.now();
         } catch (error) {
             dialEnd = Date.now();
-            this.logger.warn(
-                `Unable to dial peer: ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, dial execution time: ${
-                    dialEnd - dialStart
-                } ms. Error: ${error.message}`,
-            );
             return {
                 header: { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK },
-                data: {},
+                data: {
+                    errorMessage: `Unable to dial peer: ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, dial execution time: ${
+                        dialEnd - dialStart
+                    } ms. Error: ${error.message}`,
+                },
             };
         }
         this.logger.trace(
@@ -345,14 +344,13 @@ class Libp2pService {
             sendMessageEnd = Date.now();
         } catch (error) {
             sendMessageEnd = Date.now();
-            this.logger.warn(
-                `Unable to send message to peer: ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType}, operationId: ${operationId}, execution time: ${
-                    sendMessageEnd - sendMessageStart
-                } ms. Error: ${error.message}`,
-            );
             return {
                 header: { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK },
-                data: {},
+                data: {
+                    errorMessage: `Unable to send message to peer: ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType}, operationId: ${operationId}, execution time: ${
+                        sendMessageEnd - sendMessageStart
+                    } ms. Error: ${error.message}`,
+                },
             };
         }
 
@@ -383,18 +381,19 @@ class Libp2pService {
             readResponseEnd = Date.now();
         } catch (error) {
             readResponseEnd = Date.now();
-            this.logger.warn(
-                `Unable to read response from peer ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, execution time: ${
-                    readResponseEnd - readResponseStart
-                } ms. Error: ${error.message}`,
-            );
             return {
                 header: { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK },
-                data: {},
+                data: {
+                    errorMessage: `Unable to read response from peer ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, execution time: ${
+                        readResponseEnd - readResponseStart
+                    } ms. Error: ${error.message}`,
+                },
             };
         }
         this.logger.trace(
-            `Receiving response from ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, execution time: ${
+            `Receiving response from ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${
+                response.message?.header?.messageType
+            }, operationId: ${operationId}, execution time: ${
                 readResponseEnd - readResponseStart
             } ms.`,
         );
