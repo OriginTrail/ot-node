@@ -510,7 +510,10 @@
                                 }
                             },
                             "port": 9000,
-                            "bootstrap": []
+                            "bootstrap": [
+                                "/ip4/157.230.96.194/tcp/9000/p2p/QmZFcns6eGUosD96beHyevKu1jGJ1bA56Reg2f1J4q59Jt",
+                                "/ip4/18.132.135.102/tcp/9000/p2p/QmemqyXyvrTAm7PwrcTcFiEEFx69efdR92GSZ1oQprbdja"
+                            ]
                         }
                     }
                 }

@@ -43,7 +43,6 @@ class SubmitProofsCommand extends EpochCommand {
         //     agreementId,
         //     epoch,
         // );
-
         // if (this.proofAlreadySubmitted(commits, identityId)) {
         //     this.logger.trace(
         //         `Proofs already submitted for agreement id: ${agreementId} and epoch: ${epoch}`,
