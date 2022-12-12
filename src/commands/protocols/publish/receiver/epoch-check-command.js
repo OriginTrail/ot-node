@@ -1,6 +1,5 @@
 import EpochCommand from '../../common/epoch-command.js';
 import {
-    AGREEMENT_STATUS,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
@@ -48,13 +47,8 @@ class EpochCheckCommand extends EpochCommand {
                 : await this.blockchainModuleManager.getAgreementData(blockchain, agreementId);
 
         if (this.assetLifetimeExpired(agreementData, epoch)) {
-            this.logger.trace(`Asset lifetime for agreement id: ${agreementId} has expired.`);
-            await this.repositoryModuleManager.updateOperationAgreementStatus(
-                operationId,
-                agreementId,
-                AGREEMENT_STATUS.EXPIRED,
-            );
-            return this.finishEpochCheckCommand(operationId, agreementId, epoch);
+            await this.handleExpiredAsset(agreementId, operationId, epoch);
+            return EpochCommand.empty();
         }
 
         const commitWindowOpen = await this.blockchainModuleManager.isCommitWindowOpen(
