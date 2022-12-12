@@ -31,13 +31,16 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
 
         this.logger.trace(`Validating neighborhood for ual: ${ual}`);
         if (!(await this.validateNeighborhood(blockchain, keyword, hashFunctionId, ual))) {
-            return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK, messageData: {} };
+            return {
+                messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                messageData: { errorMessage: 'Invalid neighbourhood' },
+            };
         }
 
         this.logger.trace(`Validating assertion with ual: ${ual}`);
         await this.validateAssertionId(blockchain, contract, tokenId, assertionId, ual);
         this.logger.trace(`Validating bid for asset with ual: ${ual}`);
-        const { validBid, agreementId, agreementData } = await this.validateBid(
+        const { errorMessage, agreementId, agreementData } = await this.validateBid(
             contract,
             tokenId,
             keyword,
@@ -46,8 +49,11 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
             assertionId,
         );
 
-        if (!validBid) {
-            return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK, messageData: {} };
+        if (errorMessage) {
+            return {
+                messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                messageData: { errorMessage },
+            };
         }
 
         await Promise.all([
@@ -148,10 +154,11 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
             .dividedBy(blockchainAssertionSize)
             .multipliedBy(1024);
 
-        this.logger.trace(`Service agreement bid: ${serviceAgreementBid}, ask: ${ask}`);
+        const bidAskLog = `Service agreement bid: ${serviceAgreementBid}, ask: ${ask}`;
+        this.logger.trace(bidAskLog);
 
         return {
-            validBid: ask.lte(serviceAgreementBid),
+            errorMessage: ask.lte(serviceAgreementBid) ? bidAskLog : null,
             agreementId,
             agreementData,
         };
