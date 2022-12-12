@@ -1,4 +1,5 @@
 import Command from '../../command.js';
+import { AGREEMENT_STATUS, OPERATION_ID_STATUS } from '../../../constants/constants.js';
 
 class EpochCommand extends Command {
     constructor(ctx) {
@@ -46,6 +47,23 @@ class EpochCommand extends Command {
             },
             transactional: false,
         });
+    }
+
+    async handleExpiredAsset(agreementId, operationId, epoch) {
+        this.logger.trace(
+            `Asset lifetime for agreement id: ${agreementId} has expired. Operation id: ${operationId}`,
+        );
+        await this.repositoryModuleManager.updateOperationAgreementStatus(
+            operationId,
+            agreementId,
+            AGREEMENT_STATUS.EXPIRED,
+        );
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_END,
+            operationId,
+            agreementId,
+            epoch,
+        );
     }
 
     /**

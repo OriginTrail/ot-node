@@ -22,9 +22,9 @@ class GetRequestCommand extends ProtocolRequestCommand {
                     responseData.nquads,
                 );
             } catch (e) {
-                this.logger.trace(`Discarding received assertion: ${e.message}`);
-
-                return this.handleNack(command);
+                return this.handleNack(command, {
+                    errorMessage: e.message,
+                });
             }
 
             await this.operationService.processResponse(
@@ -36,7 +36,7 @@ class GetRequestCommand extends ProtocolRequestCommand {
             return ProtocolRequestCommand.empty();
         }
 
-        return this.handleNack(command);
+        return this.handleNack(command, responseData);
     }
 
     /**
