@@ -18,25 +18,18 @@ class EpochCommand extends Command {
         agreementData,
         operationId,
     ) {
-        const currentEpochNumber =
-            Number(Date.now() - agreementData.startTime) / Number(agreementData.epochLength);
-        const nextEpochNumber = currentEpochNumber + 1;
+        // todo check epoch number and make sure that delay is not in past
+        const nextEpochStartTime =
+            Number(agreementData.startTime) + Number(agreementData.epochLength) * (epoch + 1);
 
-        if (nextEpochNumber > Number(agreementData.epochsNumber)) {
-            await this.handleExpiredAsset(agreementId, operationId, epoch);
-            return Command.empty();
-        }
-
-        const commitWindowDurationOffset =
+        // delay by 10% of commit window length
+        const offset =
             Number(await this.blockchainModuleManager.getCommitWindowDuration(blockchain)) * 0.1;
 
-        const nextEpochStartTime =
-            Number(agreementData.startTime) + Number(agreementData.epochLength) * nextEpochNumber;
-        const delay =
-            nextEpochStartTime - Math.floor(Date.now() / 1000) + commitWindowDurationOffset;
+        const delay = nextEpochStartTime - Math.floor(Date.now() / 1000) + offset;
 
         this.logger.trace(
-            `Scheduling next epoch check for agreement id: ${agreementId} in ${delay} seconds. Previous epoch: ${epoch}, new: ${nextEpochNumber}`,
+            `Scheduling next epoch check for agreement id: ${agreementId} in ${delay} seconds.`,
         );
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
@@ -48,7 +41,7 @@ class EpochCommand extends Command {
                 contract,
                 tokenId,
                 keyword,
-                epoch: nextEpochNumber,
+                epoch: epoch + 1,
                 hashFunctionId,
                 operationId,
             },
