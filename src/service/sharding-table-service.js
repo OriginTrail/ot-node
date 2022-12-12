@@ -231,9 +231,22 @@ class ShardingTableService {
         return uint8ArrayXor(ethers.utils.arrayify(peerHash), ethers.utils.arrayify(keyHash));
     }
 
-    async getBidSuggestion(blockchainId, epochsNumber, assertionSize) {
-        const peerRecords = await this.repositoryModuleManager.getAllPeerRecords(
+    async getBidSuggestion(
+        blockchainId,
+        epochsNumber,
+        assertionSize,
+        contentAssetStorageAddress,
+        firstAssertionId,
+        hashFunctionId,
+    ) {
+        const peerRecords = await this.findNeighbourhood(
             blockchainId,
+            ethers.utils.solidityPack(
+                ['address', 'bytes32'],
+                [contentAssetStorageAddress, firstAssertionId],
+            ),
+            Number(await this.blockchainModuleManager.getR2(blockchainId)),
+            hashFunctionId,
             true,
         );
 
