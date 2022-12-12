@@ -1,5 +1,4 @@
-import { ethers } from 'ethers';
-import { BigNumber } from 'bignumber.js';
+import { ethers, BigNumber } from 'ethers';
 import { xor as uint8ArrayXor } from 'uint8arrays/xor';
 import { compare as uint8ArrayCompare } from 'uint8arrays/compare';
 import pipe from 'it-pipe';
@@ -233,21 +232,23 @@ class ShardingTableService {
     }
 
     async getBidSuggestion(blockchainId, epochsNumber, assertionSize) {
-        const peers = await this.repositoryModuleManager.getAllPeerRecords(blockchainId, true);
+        const peerRecords = await this.repositoryModuleManager.getAllPeerRecords(
+            blockchainId,
+            true,
+        );
 
-        let sum = 0;
-        for (const node of peers) {
-            sum += +node.ask;
+        let sum = BigNumber.from(0);
+        for (const peerRecord of peerRecords) {
+            sum = sum.add(this.blockchainModuleManager.convertToWei(blockchainId, peerRecord.ask));
         }
 
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);
 
-        return new BigNumber(assertionSize)
-            .dividedBy(peers.length)
-            .dividedBy(1024)
-            .multipliedBy(sum)
-            .multipliedBy(epochsNumber)
-            .multipliedBy(r0)
+        return sum
+            .mul(assertionSize)
+            .mul(epochsNumber)
+            .mul(r0)
+            .div(peerRecords.length * 1024)
             .toString();
     }
 
