@@ -762,6 +762,34 @@ class Web3Service {
             stake,
         ]);
     }
+
+    async getLog2PLDSFParams() {
+        const log2pldsfParams = await this.callContractFunction(
+            this.Log2PLDSFContract,
+            'getParameters',
+            [],
+        );
+
+        const params = {};
+        params.distanceMappingCoefficient = log2pldsfParams['0'];
+        params.stakeMappingCoefficient = log2pldsfParams['1'];
+
+        const paramNames = [
+            'multiplier',
+            'logArgumentConstant',
+            'a',
+            'stakeExponent',
+            'b',
+            'c',
+            'distanceExponent',
+            'd',
+        ];
+        log2pldsfParams['2'].forEach((val, index) => {
+            params[paramNames[index]] = val;
+        });
+
+        return params;
+    }
 }
 
 export default Web3Service;

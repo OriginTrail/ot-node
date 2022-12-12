@@ -1,4 +1,5 @@
 import Command from '../../command.js';
+import { AGREEMENT_STATUS, OPERATION_ID_STATUS } from '../../../constants/constants.js';
 
 class EpochCommand extends Command {
     constructor(ctx) {
@@ -17,20 +18,25 @@ class EpochCommand extends Command {
         agreementData,
         operationId,
     ) {
-        let newEpochNumber = epoch;
-        let delay = -1;
-        const commitWindowDurationOffset =
-            Number(await this.blockchainModuleManager.getCommitWindowDuration(blockchain)) * 0.1;
-        while (delay < 0) {
-            const nextEpochStartTime =
-                Number(agreementData.startTime) +
-                Number(agreementData.epochLength) * (newEpochNumber + 1);
-            newEpochNumber += 1;
-            delay = nextEpochStartTime - Math.floor(Date.now() / 1000) + commitWindowDurationOffset;
+        const currentEpochNumber =
+            Number(Date.now() - agreementData.startTime) / Number(agreementData.epochLength);
+        const nextEpochNumber = currentEpochNumber + 1;
+
+        if (nextEpochNumber > Number(agreementData.epochsNumber)) {
+            await this.handleExpiredAsset(agreementId, operationId, epoch);
+            return Command.empty();
         }
 
+        const commitWindowDurationOffset =
+            Number(await this.blockchainModuleManager.getCommitWindowDuration(blockchain)) * 0.1;
+
+        const nextEpochStartTime =
+            Number(agreementData.startTime) + Number(agreementData.epochLength) * nextEpochNumber;
+        const delay =
+            nextEpochStartTime - Math.floor(Date.now() / 1000) + commitWindowDurationOffset;
+
         this.logger.trace(
-            `Scheduling next epoch check for agreement id: ${agreementId} in ${delay} seconds. Previous epoch: ${epoch}, new: ${newEpochNumber}`,
+            `Scheduling next epoch check for agreement id: ${agreementId} in ${delay} seconds. Previous epoch: ${epoch}, new: ${nextEpochNumber}`,
         );
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
@@ -42,12 +48,29 @@ class EpochCommand extends Command {
                 contract,
                 tokenId,
                 keyword,
-                epoch: newEpochNumber,
+                epoch: nextEpochNumber,
                 hashFunctionId,
                 operationId,
             },
             transactional: false,
         });
+    }
+
+    async handleExpiredAsset(agreementId, operationId, epoch) {
+        this.logger.trace(
+            `Asset lifetime for agreement id: ${agreementId} has expired. Operation id: ${operationId}`,
+        );
+        await this.repositoryModuleManager.updateOperationAgreementStatus(
+            operationId,
+            agreementId,
+            AGREEMENT_STATUS.EXPIRED,
+        );
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_END,
+            operationId,
+            agreementId,
+            epoch,
+        );
     }
 
     /**
