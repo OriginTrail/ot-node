@@ -68,7 +68,7 @@
         "assertion-tools": "^2.0.2",
         "@polkadot/api": "^9.3.2",
         "app-root-path": "^3.1.0",
-        "@comunica/query-sparql": "^2.2.1",
+        "@comunica/query-sparql": "^2.4.3",
         "@ethersproject/bytes": "^5.6.1",
         "@ethersproject/hash": "^5.6.1",
         "@ethersproject/wallet": "^5.6.2",
