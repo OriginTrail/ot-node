@@ -5,7 +5,7 @@
                 "enabled": false,
                 "implementation": {
                     "ot-auto-updater": {
-                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
                             "branch": "v6/develop"
                         }
@@ -16,7 +16,7 @@
                 "enabled": true,
                 "implementation": {
                     "express-http-client": {
-                        "package": "./http-client/implementation/express-http-client",
+                        "package": "./http-client/implementation/express-http-client.js",
                         "config": {
                             "useSsl": false,
                             "port": 8900,
@@ -34,9 +34,25 @@
                 "enabled": true,
                 "implementation": {
                     "libp2p-service": {
-                        "package": "./network/implementation/libp2p-service",
+                        "package": "./network/implementation/libp2p-service.js",
                         "config": {
-                            "port": 9000,
+                            "dht": {
+                                "kBucketSize": 20,
+                                "type": "dual"
+                            },
+                            "connectionManager": {
+                                "autoDial": true,
+                                "autoDialInterval": 10e3,
+                                "dialTimeout": 2e3
+                            },
+                            "peerRouting": {
+                                "refreshManager": {
+                                    "enabled": true,
+                                    "interval": 6e5,
+                                    "bootDelay": 2e3
+                                }
+                            },
+                            "port": 9100,
                             "bootstrap": []
                         }
                     }
@@ -46,7 +62,7 @@
                 "enabled": true,
                 "implementation": {
                     "sequelize-repository": {
-                        "package": "./repository/implementation/sequelize/sequelize-repository",
+                        "package": "./repository/implementation/sequelize/sequelize-repository.js",
                         "config": {
                             "database": "operationaldb",
                             "user": "root",
@@ -64,7 +80,7 @@
                 "defaultImplementation": "ot-graphdb",
                 "implementation": {
                     "ot-blazegraph": {
-                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph",
+                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
                         "config": {
                             "url": "http://localhost:9999/blazegraph",
                             "repository": "node0",
@@ -73,7 +89,7 @@
                         }
                     },
                     "ot-fuseki": {
-                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki",
+                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
                         "config": {
                             "url": "http://localhost:3030",
                             "repository": "node0",
@@ -82,7 +98,7 @@
                         }
                     },
                     "ot-graphdb": {
-                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb",
+                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
                         "config": {
                             "url": "http://localhost:7200",
                             "repository": "node0",
@@ -96,7 +112,7 @@
                 "enabled": true,
                 "implementation": {
                     "merkle-validation": {
-                        "package": "./validation/implementation/merkle-validation",
+                        "package": "./validation/implementation/merkle-validation.js",
                         "config": {}
                     }
                 }
@@ -105,26 +121,29 @@
                 "enabled": true,
                 "implementation": {
                     "ganache": {
-                        "package": "./blockchain/implementation/ganache/ganache-service",
+                        "package": "./blockchain/implementation/ganache/ganache-service.js",
                         "config": {
                             "blockchainTitle": "ganache",
                             "networkId": "ganache::testnet",
-                            "hubContractAddress": "0xF21dD87cFC5cF5D073398833AFe5EFC543b78a00",
+                            "hubContractAddress": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
                             "rpcEndpoints": ["http://localhost:7545"],
-                            "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                            "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
+                            "initialStakeAmount": 50000,
+                            "initialAskAmount": 0.2
                         }
                     },
                     "otp": {
-                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
+                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "otp::testnet",
-                            "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
-                            "rpcEndpoints": ["wss://parachain-tempnet-01.origin-trail.network"],
-                            "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                            "hubContractAddress": "0x707233a55bD035C6Bc732196CA4dbffa63CbA169",
+                            "rpcEndpoints": ["wss://lofar.origin-trail.network"],
+                            "initialStakeAmount": 50000,
+                            "initialAskAmount": 2
                         }
                     },
                     "polygon": {
-                        "package": "./blockchain/implementation/polygon/polygon-service",
+                        "package": "./blockchain/implementation/polygon/polygon-service.js",
                         "config": {
                             "networkId": "polygon::testnet",
                             "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
@@ -134,15 +153,26 @@
                                 "https://rpc-mumbai.matic.today",
                                 "https://matic-testnet-archive-rpc.bwarelabs.com"
                             ],
-                            "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A"
+                            "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
+                            "initialStakeAmount": 50000,
+                            "initialAskAmount": 2
+                        }
+                    },
+                    "rinkeby": {
+                        "package": "./blockchain/implementation/polygon/eth-service.js",
+                        "config": {
+                            "networkId": "eth::rinkeby",
+                            "hubContractAddress": "",
+                            "gasPriceOracleLink": "",
+                            "rpcEndpoints": [],
+                            "initialStakeAmount": 50000,
+                            "initialAskAmount": 2
                         }
                     }
                 }
             }
         },
         "commandExecutorVerboseLoggingEnabled": false,
-        "minimumReplicationFactor": 5,
-        "publishFindNodesCount": 20,
         "appDataPath": "data",
         "logLevel": "info",
         "telemetry": {
@@ -164,7 +194,7 @@
                 "enabled": false,
                 "implementation": {
                     "ot-auto-updater": {
-                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
                             "branch": "v6/develop"
                         }
@@ -175,8 +205,37 @@
                 "enabled": true,
                 "implementation": {
                     "express-http-client": {
-                        "package": "./http-client/implementation/express-http-client",
+                        "package": "./http-client/implementation/express-http-client.js",
                         "config": {}
+                    }
+                }
+            },
+            "network": {
+                "enabled": true,
+                "implementation": {
+                    "libp2p-service": {
+                        "package": "./network/implementation/libp2p-service.js",
+                        "config": {
+                            "dht": {
+                                "kBucketSize": 20
+                            },
+                            "connectionManager": {
+                                "autoDial": true,
+                                "autoDialInterval": 10e3,
+                                "dialTimeout": 2e3
+                            },
+                            "peerRouting": {
+                                "refreshManager": {
+                                    "enabled": true,
+                                    "interval": 6e5,
+                                    "bootDelay": 2e3
+                                }
+                            },
+                            "port": 9000,
+                            "bootstrap": [
+                                "/ip4/0.0.0.0/tcp/9000/p2p/QmWyf3dtqJnhuCpzEDTNmNFYc5tjxTrXhGcUUmGHdg2gtj"
+                            ]
+                        }
                     }
                 }
             },
@@ -184,7 +243,7 @@
                 "enabled": true,
                 "implementation": {
                     "sequelize-repository": {
-                        "package": "./repository/implementation/sequelize/sequelize-repository",
+                        "package": "./repository/implementation/sequelize/sequelize-repository.js",
                         "config": {
                             "database": "operationaldb",
                             "user": "root",
@@ -202,11 +261,11 @@
                 "defaultImplementation": "ganache",
                 "implementation": {
                     "ganache": {
-                        "package": "./blockchain/implementation/ganache/ganache-service",
+                        "package": "./blockchain/implementation/ganache/ganache-service.js",
                         "config": {
                             "blockchainTitle": "ganache",
                             "networkId": "ganache::testnet",
-                            "hubContractAddress": "0xF21dD87cFC5cF5D073398833AFe5EFC543b78a00",
+                            "hubContractAddress": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
                             "rpcEndpoints": ["http://localhost:7545"]
                         }
                     }
@@ -217,7 +276,7 @@
                 "defaultImplementation": "ot-graphdb",
                 "implementation": {
                     "ot-blazegraph": {
-                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph",
+                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
                         "config": {
                             "url": "http://localhost:9999/blazegraph",
                             "repository": "node0",
@@ -226,7 +285,7 @@
                         }
                     },
                     "ot-fuseki": {
-                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki",
+                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
                         "config": {
                             "url": "http://localhost:3030",
                             "repository": "node0",
@@ -235,7 +294,7 @@
                         }
                     },
                     "ot-graphdb": {
-                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb",
+                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
                         "config": {
                             "url": "http://localhost:7200",
                             "repository": "node0",
@@ -247,8 +306,6 @@
             }
         },
         "commandExecutorVerboseLoggingEnabled": false,
-        "minimumReplicationFactor": 5,
-        "publishFindNodesCount": 20,
         "appDataPath": "data",
         "logLevel": "trace",
         "telemetry": {
@@ -270,7 +327,7 @@
                 "enabled": true,
                 "implementation": {
                     "ot-auto-updater": {
-                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
                             "branch": "v6/release/testnet"
                         }
@@ -281,13 +338,27 @@
                 "enabled": true,
                 "implementation": {
                     "libp2p-service": {
-                        "package": "./network/implementation/libp2p-service",
+                        "package": "./network/implementation/libp2p-service.js",
                         "config": {
+                            "dht": {
+                                "kBucketSize": 20
+                            },
+                            "connectionManager": {
+                                "autoDial": true,
+                                "autoDialInterval": 10e3,
+                                "dialTimeout": 2e3
+                            },
+                            "peerRouting": {
+                                "refreshManager": {
+                                    "enabled": true,
+                                    "interval": 6e5,
+                                    "bootDelay": 2e3
+                                }
+                            },
                             "port": 9000,
                             "bootstrap": [
-                                "/ip4/165.232.122.94/tcp/9000/p2p/QmQ2zigjQikYnyYUSXZydNXrDRhBut2mubwJBaLXobMt3A",
-                                "/ip4/46.101.111.223/tcp/9000/p2p/QmdTKEP4DDSwYzX2CHEsBfpEAKAVyE4mPq9ouh4ehZZbg5",
-                                "/ip4/46.101.153.21/tcp/9000/p2p/QmXzmTqVT3TPUtTz4dBDN5NWSABqnX9rKXCG9WCLXMfEaM"
+                                "/ip4/164.92.138.30/tcp/9000/p2p/QmbiZQm18JefDizrQwbRhPgkaLykTLyrUEpeMWuKJHXuUM",
+                                "/ip4/139.59.145.152/tcp/9000/p2p/Qme2oF6afixBjLYjF5CYeC73d5dygsTq8P7BPQp31NVkye"
                             ]
                         }
                     }
@@ -297,9 +368,9 @@
                 "enabled": true,
                 "implementation": {
                     "express-http-client": {
-                        "package": "./http-client/implementation/express-http-client",
+                        "package": "./http-client/implementation/express-http-client.js",
                         "config": {
-                            "useSsl": true,
+                            "useSsl": false,
                             "port": 8900,
                             "sslKeyPath": "/root/certs/privkey.pem",
                             "sslCertificatePath": "/root/certs/fullchain.pem",
@@ -315,7 +386,7 @@
                 "enabled": true,
                 "implementation": {
                     "sequelize-repository": {
-                        "package": "./repository/implementation/sequelize/sequelize-repository",
+                        "package": "./repository/implementation/sequelize/sequelize-repository.js",
                         "config": {
                             "database": "operationaldb",
                             "user": "root",
@@ -333,25 +404,13 @@
                 "defaultImplementation": "otp",
                 "implementation": {
                     "otp": {
-                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
+                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "parachain::testnet",
-                            "hubContractAddress": "0x6e002616ADf12D4Cc908976eB16a7646B6cD6596",
+                            "hubContractAddress": "0xEF9FeCb85d03d6e624C434dF8298692d13853033",
                             "rpcEndpoints": [
-                                "wss://parachain-tempnet-01.origin-trail.network"
-                            ]
-                        }
-                    },
-                    "polygon": {
-                        "package": "./blockchain/implementation/polygon/polygon-service",
-                        "config": {
-                            "networkId": "polygon::testnet",
-                            "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
-                            "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
-                            "rpcEndpoints": [
-                                "https://matic-mumbai.chainstacklabs.com",
-                                "https://rpc-mumbai.matic.today",
-                                "https://matic-testnet-archive-rpc.bwarelabs.com"
+                                "https://lofar-testnet.origin-trail.network",
+                                "wss://parachain-testnet-rpc.origin-trail.network"
                             ]
                         }
                     }
@@ -361,7 +420,7 @@
                 "enabled": true,
                 "implementation": {
                     "merkle-validation": {
-                        "package": "./validation/implementation/merkle-validation",
+                        "package": "./validation/implementation/merkle-validation.js",
                         "config": {}
                     }
                 }
@@ -371,7 +430,7 @@
                 "defaultImplementation": "ot-blazegraph",
                 "implementation": {
                     "ot-blazegraph": {
-                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph",
+                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
                         "config": {
                             "url": "http://localhost:9999/blazegraph",
                             "repository": "node0",
@@ -380,7 +439,7 @@
                         }
                     },
                     "ot-fuseki": {
-                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki",
+                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
                         "config": {
                             "url": "http://localhost:3030",
                             "repository": "node0",
@@ -389,7 +448,7 @@
                         }
                     },
                     "ot-graphdb": {
-                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb",
+                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
                         "config": {
                             "url": "http://localhost:7200",
                             "repository": "node0",
@@ -401,14 +460,12 @@
             }
         },
         "commandExecutorVerboseLoggingEnabled": false,
-        "minimumReplicationFactor": 5,
-        "publishFindNodesCount": 20,
         "appDataPath": "data",
         "logLevel": "trace",
         "telemetry": {
             "enabled": true,
             "sendTelemetryData": true,
-            "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal"
+            "signalingServerUrl": "https://testnet-signaling.origin-trail.network/signal"
         },
         "auth": {
             "ipBasedAuthEnabled": true,
@@ -424,9 +481,39 @@
                 "enabled": true,
                 "implementation": {
                     "ot-auto-updater": {
-                        "package": "./auto-updater/implementation/ot-auto-updater",
+                        "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
                             "branch": "v6/release/mainnet"
+                        }
+                    }
+                }
+            },
+            "network": {
+                "enabled": true,
+                "implementation": {
+                    "libp2p-service": {
+                        "package": "./network/implementation/libp2p-service.js",
+                        "config": {
+                            "dht": {
+                                "kBucketSize": 20
+                            },
+                            "connectionManager": {
+                                "autoDial": true,
+                                "autoDialInterval": 10e3,
+                                "dialTimeout": 2e3
+                            },
+                            "peerRouting": {
+                                "refreshManager": {
+                                    "enabled": true,
+                                    "interval": 6e5,
+                                    "bootDelay": 2e3
+                                }
+                            },
+                            "port": 9000,
+                            "bootstrap": [
+                                "/ip4/157.230.96.194/tcp/9000/p2p/QmZFcns6eGUosD96beHyevKu1jGJ1bA56Reg2f1J4q59Jt",
+                                "/ip4/18.132.135.102/tcp/9000/p2p/QmemqyXyvrTAm7PwrcTcFiEEFx69efdR92GSZ1oQprbdja"
+                            ]
                         }
                     }
                 }
@@ -435,9 +522,9 @@
                 "enabled": true,
                 "implementation": {
                     "express-http-client": {
-                        "package": "./http-client/implementation/express-http-client",
+                        "package": "./http-client/implementation/express-http-client.js",
                         "config": {
-                            "useSsl": true,
+                            "useSsl": false,
                             "port": 8900,
                             "sslKeyPath": "/root/certs/privkey.pem",
                             "sslCertificatePath": "/root/certs/fullchain.pem",
@@ -453,7 +540,7 @@
                 "enabled": true,
                 "implementation": {
                     "sequelize-repository": {
-                        "package": "./repository/implementation/sequelize/sequelize-repository",
+                        "package": "./repository/implementation/sequelize/sequelize-repository.js",
                         "config": {
                             "database": "operationaldb",
                             "user": "root",
@@ -466,11 +553,29 @@
                     }
                 }
             },
+            "blockchain": {
+                "enabled": true,
+                "defaultImplementation": "otp",
+                "implementation": {
+                    "otp": {
+                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
+                        "config": {
+                            "networkId": "otp::mainnet",
+                            "hubContractAddress": "0x485Cbd3A5BCE1a9c1e5cD37AA02039D7C23fD0c3",
+                            "rpcEndpoints": [
+                                "https://astrosat-parachain-rpc.origin-trail.network",
+                                "https://astrosat.origintrail.network/",
+                                "wss://parachain-rpc.origin-trail.network"
+                            ]
+                        }
+                    }
+                }
+            },
             "validation": {
                 "enabled": true,
                 "implementation": {
                     "merkle-validation": {
-                        "package": "./validation/implementation/merkle-validation",
+                        "package": "./validation/implementation/merkle-validation.js",
                         "config": {}
                     }
                 }
@@ -480,7 +585,7 @@
                 "defaultImplementation": "ot-blazegraph",
                 "implementation": {
                     "ot-blazegraph": {
-                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph",
+                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
                         "config": {
                             "url": "http://localhost:9999/blazegraph",
                             "repository": "node0",
@@ -489,7 +594,7 @@
                         }
                     },
                     "ot-fuseki": {
-                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki",
+                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
                         "config": {
                             "url": "http://localhost:3030",
                             "repository": "node0",
@@ -498,7 +603,7 @@
                         }
                     },
                     "ot-graphdb": {
-                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb",
+                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
                         "config": {
                             "url": "http://localhost:7200",
                             "repository": "node0",
@@ -507,40 +612,15 @@
                         }
                     }
                 }
-            },
-            "blockchain": {
-                "enabled": true,
-                "implementation": {
-                    "otp": {
-                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service",
-                        "config": {
-                            "networkId": "otp::mainnet",
-                            "hubContractAddress": "",
-                            "rpcEndpoints": []
-                        }
-                    },
-                    "polygon": {
-                        "package": "./blockchain/implementation/polygon/polygon-service",
-                        "config": {
-                            "networkId": "polygon::mainnet",
-                            "hubContractAddress": "",
-                            "gasPriceOracleLink": "",
-                            "rpcEndpoints": []
-                        }
-                    }
-                }
             }
         },
-        "minimumReplicationFactor": 5,
-        "publishFindNodesCount": 20,
-        "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal",
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
         "telemetry": {
-            "enabled": false,
-            "sendTelemetryData": false,
-            "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal"
+            "enabled": true,
+            "sendTelemetryData": true,
+            "signalingServerUrl": "https://mainnet-signaling.origin-trail.network/signal"
         },
         "auth": {
             "ipBasedAuthEnabled": true,

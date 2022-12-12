@@ -48,17 +48,21 @@ class BaseModuleManager {
                     return false;
                 }
 
-                // eslint-disable-next-line global-require,import/no-dynamic-require
-                const ModuleClass = require(implementationConfig.package);
+                implementationConfig.config.appDataPath = this.config.appDataPath;
+                // eslint-disable-next-line no-await-in-loop
+                const ModuleClass = (await import(implementationConfig.package)).default;
                 const module = new ModuleClass();
                 // eslint-disable-next-line no-await-in-loop
                 await module.initialize(implementationConfig.config, this.logger);
+
+                module.getImplementationName = () => implementationName;
+
                 this.logger.info(
                     `${this.getName()} module initialized with implementation: ${implementationName}`,
                 );
                 this.handlers[implementationName] = {
                     module,
-                    config: implementationConfig,
+                    config: implementationConfig.config,
                 };
             }
             if (Object.keys(this.handlers).length === 0) {
@@ -69,7 +73,9 @@ class BaseModuleManager {
         } catch (error) {
             if (requiredModules.includes(this.getName())) {
                 throw new Error(
-                    `Module is required but got error during initialization - ${error.message}`,
+                    `${this.getName()} module is required but got error during initialization - ${
+                        error.message
+                    }`,
                 );
             }
             this.logger.error(error.message);
@@ -89,7 +95,7 @@ class BaseModuleManager {
         return this.handlers[name];
     }
 
-    getImplementationsNames() {
+    getImplementationNames() {
         return Object.keys(this.handlers);
     }
 
@@ -100,6 +106,10 @@ class BaseModuleManager {
         }
         delete this.handlers[name];
     }
+
+    getModuleConfiguration(name) {
+        return this.getImplementation(name).config;
+    }
 }
 
-module.exports = BaseModuleManager;
+export default BaseModuleManager;

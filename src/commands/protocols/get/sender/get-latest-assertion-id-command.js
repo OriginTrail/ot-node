@@ -1,11 +1,9 @@
-const Command = require('../../../command');
-const { ERROR_TYPE } = require('../../../../constants/constants');
+import Command from '../../../command.js';
+import { ERROR_TYPE } from '../../../../constants/constants.js';
 
 class GetLatestAssertionIdCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.logger = ctx.logger;
-        this.config = ctx.config;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.ualService = ctx.ualService;
 
@@ -22,11 +20,10 @@ class GetLatestAssertionIdCommand extends Command {
         // id options :
         // did:otp:0x174714134abcd13431413413/987654321/41eaa20f35f709d9c22281f46d895b2f7a83c54587e4339456e0d9f4e5bd9b8f
         // did:otp:0x174714134abcd13431413413/987654321/latest
-        // 41eaa20f35f709d9c22281f46d895b2f7a83c54587e4339456e0d9f4e5bd9b8f
 
-        let assertionId = '';
+        const commandData = {};
         if (!this.ualService.isUAL(id)) {
-            assertionId = id;
+            this.handleError(operationId, `Requested id is not a UAL`, this.errorType, true);
         } else {
             const {
                 blockchain,
@@ -34,15 +31,18 @@ class GetLatestAssertionIdCommand extends Command {
                 tokenId,
                 assertionId: ualAssertionId,
             } = this.ualService.resolveUAL(id);
+            commandData.blockchain = blockchain;
+            commandData.tokenId = tokenId;
+            commandData.contract = contract;
 
             if (ualAssertionId && ualAssertionId !== 'latest') {
-                assertionId = ualAssertionId;
+                commandData.assertionId = ualAssertionId;
             } else {
                 this.logger.debug(
                     `Searching for assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
                 );
                 const blockchainAssertionId =
-                    await this.blockchainModuleManager.getLatestCommitHash(
+                    await this.blockchainModuleManager.getLatestAssertionId(
                         blockchain,
                         contract,
                         tokenId,
@@ -56,11 +56,11 @@ class GetLatestAssertionIdCommand extends Command {
                     );
                     return Command.empty();
                 }
-                assertionId = blockchainAssertionId;
+                commandData.assertionId = blockchainAssertionId;
             }
         }
 
-        return this.continueSequence({ ...command.data, assertionId }, command.sequence);
+        return this.continueSequence({ ...command.data, ...commandData }, command.sequence);
     }
 
     /**
@@ -79,4 +79,4 @@ class GetLatestAssertionIdCommand extends Command {
     }
 }
 
-module.exports = GetLatestAssertionIdCommand;
+export default GetLatestAssertionIdCommand;

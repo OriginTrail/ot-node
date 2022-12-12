@@ -1,5 +1,6 @@
-const jwt = require('jsonwebtoken');
-const { validate } = require('uuid');
+import 'dotenv/config';
+import jwt from 'jsonwebtoken';
+import { validate } from 'uuid';
 
 class JwtUtil {
     constructor() {
@@ -64,4 +65,4 @@ class JwtUtil {
 
 const jwtUtil = new JwtUtil();
 
-module.exports = jwtUtil;
+export default jwtUtil;

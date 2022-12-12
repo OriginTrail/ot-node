@@ -1,11 +1,14 @@
-const Command = require('../../command');
-const { NETWORK_MESSAGE_TYPES } = require('../../../constants/constants');
+import Command from '../../command.js';
+import {
+    NETWORK_MESSAGE_TYPES,
+    OPERATION_REQUEST_STATUS,
+    OPERATION_STATUS,
+} from '../../../constants/constants.js';
 
 class ProtocolMessageCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.networkModuleManager = ctx.networkModuleManager;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
     async executeProtocolMessageCommand(command, messageType) {
@@ -20,38 +23,34 @@ class ProtocolMessageCommand extends Command {
     async shouldSendMessage(command) {
         const { operationId } = command.data;
 
-        const operation = await this.repositoryModuleManager.getOperationStatus(
-            this.operationService.getOperationName(),
-            operationId,
-        );
+        const { status } = await this.operationService.getOperationStatus(operationId);
 
-        if (operation.status === this.operationService.getOperationStatus().IN_PROGRESS) {
+        if (status === OPERATION_STATUS.IN_PROGRESS) {
             return true;
         }
         this.logger.trace(
-            `${command.name} skipped for operationId: ${operationId} with status ${operation.status}`,
+            `${command.name} skipped for operationId: ${operationId} with status ${status}`,
         );
 
         return false;
     }
 
-    // eslint-disable-next-line no-unused-vars
-    async prepareMessage(command) {
-        // overridden by store-init-command, get-init-command, search-init-command,
-        //               store-request-command, get-request-command, search-request-command
+    async prepareMessage() {
+        throw Error('prepareMessage not implemented');
     }
 
     async sendProtocolMessage(command, message, messageType) {
         const { node, operationId, keyword } = command.data;
 
         const response = await this.networkModuleManager.sendMessage(
-            this.operationService.getNetworkProtocol(),
-            node,
+            node.protocol,
+            node.id,
             messageType,
             operationId,
             keyword,
             message,
         );
+
         switch (response.header.messageType) {
             case NETWORK_MESSAGE_TYPES.RESPONSES.BUSY:
                 return this.handleBusy(command, response.data);
@@ -76,10 +75,10 @@ class ProtocolMessageCommand extends Command {
         return Command.retry();
     }
 
-    async handleNack(command) {
+    async handleNack(command, responseData) {
         await this.markResponseAsFailed(
             command,
-            `Received NACK response from node during ${command.name}`,
+            `Received NACK response from node during ${command.name}. Error message: ${responseData.errorMessage}`,
         );
         return Command.empty();
     }
@@ -90,12 +89,9 @@ class ProtocolMessageCommand extends Command {
     }
 
     async markResponseAsFailed(command, errorMessage) {
-        await this.operationService.processResponse(
-            command,
-            this.operationService.getOperationRequestStatus().FAILED,
-            null,
+        await this.operationService.processResponse(command, OPERATION_REQUEST_STATUS.FAILED, {
             errorMessage,
-        );
+        });
     }
 
     async retryFinished(command) {
@@ -106,4 +102,4 @@ class ProtocolMessageCommand extends Command {
     }
 }
 
-module.exports = ProtocolMessageCommand;
+export default ProtocolMessageCommand;

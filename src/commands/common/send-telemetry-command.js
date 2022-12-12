@@ -1,5 +1,9 @@
-const axios = require('axios');
-const Command = require('../command');
+import axios from 'axios';
+import { createRequire } from 'module';
+import Command from '../command.js';
+import { SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES } from '../../constants/constants.js';
+
+const require = createRequire(import.meta.url);
 const pjson = require('../../../package.json');
 
 class SendTelemetryCommand extends Command {
@@ -9,6 +13,7 @@ class SendTelemetryCommand extends Command {
         this.config = ctx.config;
         this.telemetryInjectionService = ctx.telemetryInjectionService;
         this.networkModuleManager = ctx.networkModuleManager;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
     }
 
     /**
@@ -16,7 +21,7 @@ class SendTelemetryCommand extends Command {
      * @param command
      */
     async execute() {
-        if (this.config.telemetry.enabled && this.config.telemetry.sendTelemetryData) {
+        if (!this.config.telemetry.enabled || !this.config.telemetry.sendTelemetryData) {
             return Command.empty();
         }
         try {
@@ -25,8 +30,13 @@ class SendTelemetryCommand extends Command {
                 const signalingMessage = {
                     nodeData: {
                         version: pjson.version,
-                        identity: this.networkModuleManager.getPeerId()._idB58String,
+                        identity: this.networkModuleManager.getPeerId().toB58String(),
                         hostname: this.config.hostname,
+                        operational_wallet: this.blockchainModuleManager.getPublicKey(),
+                        management_wallet: this.blockchainModuleManager.getManagementKey(),
+                        triple_store: this.config.modules.tripleStore.defaultImplementation,
+                        auto_update_enabled: this.config.modules.autoUpdater.enabled,
+                        multiaddresses: this.networkModuleManager.getMultiaddrs(),
                     },
                     events,
                 };
@@ -69,7 +79,7 @@ class SendTelemetryCommand extends Command {
             name: 'sendTelemetryCommand',
             delay: 0,
             data: {},
-            period: 15 * 60 * 1000,
+            period: SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES * 60 * 1000,
             transactional: false,
         };
         Object.assign(command, map);
@@ -77,4 +87,4 @@ class SendTelemetryCommand extends Command {
     }
 }
 
-module.exports = SendTelemetryCommand;
+export default SendTelemetryCommand;

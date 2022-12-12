@@ -1,11 +1,11 @@
-const path = require('path');
-const fs = require('fs-extra');
-const { exec } = require('child_process');
-const https = require('https');
-const appRootPath = require('app-root-path');
-const semver = require('semver');
-const axios = require('axios');
-const unzipper = require('unzipper');
+import path from 'path';
+import fs from 'fs-extra';
+import { exec } from 'child_process';
+import https from 'https';
+import appRootPath from 'app-root-path';
+import semver from 'semver';
+import axios from 'axios';
+import unzipper from 'unzipper';
 
 const REPOSITORY_URL = 'https://github.com/OriginTrail/ot-node';
 const ARCHIVE_REPOSITORY_URL = 'github.com/OriginTrail/ot-node/archive/';
@@ -223,7 +223,7 @@ class OTAutoUpdater {
             throw Error('Extracted archive for new ot-node version is not valid');
         }
         const sourcePath = path.join(extractedDataPath, destinationDirFiles[0]);
-
+        await fs.remove(destinationPath);
         await fs.move(sourcePath, destinationPath);
 
         await fs.remove(extractedDataPath);
@@ -240,27 +240,33 @@ class OTAutoUpdater {
 
             const command = `cd ${destination} && npm ci --omit=dev --ignore-scripts`;
             const child = exec(command);
-
+            let rejected = false;
             child.stdout.on('data', (data) => {
                 this.logger.trace(`AutoUpdater - npm ci - ${data.replace(/\r?\n|\r/g, '')}`);
             });
 
             child.stderr.on('data', (data) => {
-                if (data.toLowerCase().includes('error')) {
+                if (data.includes('ERROR')) {
+                    this.logger.trace(`Error message: ${data}`);
                     // npm passes warnings as errors, only reject if "error" is included
                     const errorData = data.replace(/\r?\n|\r/g, '');
                     this.logger.error(
                         `AutoUpdater - Error installing dependencies. Error message: ${errorData}`,
                     );
-                    reject(errorData);
+                    if (!rejected) {
+                        rejected = true;
+                        reject(errorData);
+                    }
                 }
             });
             child.stdout.on('end', () => {
-                this.logger.debug(`AutoUpdater - Dependencies installed successfully`);
-                resolve();
+                if (!rejected) {
+                    this.logger.debug(`AutoUpdater - Dependencies installed successfully`);
+                    resolve();
+                }
             });
         });
     }
 }
 
-module.exports = OTAutoUpdater;
+export default OTAutoUpdater;

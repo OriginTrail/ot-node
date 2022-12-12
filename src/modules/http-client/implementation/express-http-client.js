@@ -1,12 +1,13 @@
-const express = require('express');
-const https = require('https');
-const fs = require('fs-extra');
-const fileUpload = require('express-fileupload');
-const cors = require('cors');
-const requestValidationMiddleware = require('./middleware/request-validation-middleware');
-const rateLimiterMiddleware = require('./middleware/rate-limiter-middleware');
-const authenticationMiddleware = require('./middleware/authentication-middleware');
-const authorizationMiddleware = require('./middleware/authorization-middleware');
+import express from 'express';
+import https from 'https';
+import fs from 'fs-extra';
+import fileUpload from 'express-fileupload';
+import cors from 'cors';
+import requestValidationMiddleware from './middleware/request-validation-middleware.js';
+import rateLimiterMiddleware from './middleware/rate-limiter-middleware.js';
+import authenticationMiddleware from './middleware/authentication-middleware.js';
+import authorizationMiddleware from './middleware/authorization-middleware.js';
+import { MAX_FILE_SIZE } from '../../../constants/constants.js';
 
 class ExpressHttpClient {
     async initialize(config, logger) {
@@ -54,6 +55,7 @@ class ExpressHttpClient {
     }
 
     async initializeBeforeMiddlewares(authService) {
+        this._initializeCorsMiddleware();
         this.app.use(authenticationMiddleware(authService));
         this.app.use(authorizationMiddleware(authService));
         this._initializeBaseMiddlewares();
@@ -63,6 +65,16 @@ class ExpressHttpClient {
         // placeholder method for after middlewares
     }
 
+    _initializeCorsMiddleware() {
+        const corsOptions = {};
+
+        if (this.config.auth?.cors?.allowedOrigin) {
+            corsOptions.origin = this.config.auth.cors.allowedOrigin;
+        }
+
+        this.app.use(cors(corsOptions));
+    }
+
     _initializeBaseMiddlewares() {
         this.app.use(
             fileUpload({
@@ -70,8 +82,7 @@ class ExpressHttpClient {
             }),
         );
 
-        this.app.use(cors());
-        this.app.use(express.json());
+        this.app.use(express.json({ limit: `${MAX_FILE_SIZE / (1024 * 1024)}mb` }));
         this.app.use((req, res, next) => {
             this.logger.api(`${req.method}: ${req.url} request received`);
             return next();
@@ -79,4 +90,4 @@ class ExpressHttpClient {
     }
 }
 
-module.exports = ExpressHttpClient;
+export default ExpressHttpClient;

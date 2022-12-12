@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
     const publish = sequelize.define(
         'publish',
         {
@@ -9,6 +9,8 @@ module.exports = (sequelize, DataTypes) => {
             },
             operation_id: DataTypes.UUID,
             status: DataTypes.STRING,
+            agreementId: DataTypes.STRING,
+            agreementStatus: DataTypes.STRING,
             created_at: DataTypes.DATE,
             updated_at: DataTypes.DATE,
         },

@@ -1,4 +1,9 @@
-const { OPERATION_ID_STATUS } = require('../constants/constants');
+import { assertionMetadata } from 'assertion-tools';
+import {
+    OPERATION_ID_STATUS,
+    OPERATION_REQUEST_STATUS,
+    OPERATION_STATUS,
+} from '../constants/constants.js';
 
 class OperationService {
     constructor(ctx) {
@@ -7,22 +12,20 @@ class OperationService {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.operationIdService = ctx.operationIdService;
         this.commandExecutor = ctx.commandExecutor;
+        this.validationModuleManager = ctx.validationModuleManager;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
     }
 
     getOperationName() {
         return this.operationName;
     }
 
-    getNetworkProtocol() {
-        return this.networkProtocol;
+    getNetworkProtocols() {
+        return this.networkProtocols;
     }
 
-    getOperationRequestStatus() {
-        return this.operationRequestStatus;
-    }
-
-    getOperationStatus() {
-        return this.operationStatus;
+    async getOperationStatus(operationId) {
+        return this.repositoryModuleManager.getOperationStatus(this.operationName, operationId);
     }
 
     async getResponsesStatuses(responseStatus, errorMessage, operationId, keyword) {
@@ -47,7 +50,7 @@ class OperationService {
             if (!keywordsStatuses[response.keyword])
                 keywordsStatuses[response.keyword] = { failedNumber: 0, completedNumber: 0 };
 
-            if (response.status === this.operationRequestStatus.FAILED) {
+            if (response.status === OPERATION_REQUEST_STATUS.FAILED) {
                 keywordsStatuses[response.keyword].failedNumber += 1;
             } else {
                 keywordsStatuses[response.keyword].completedNumber += 1;
@@ -58,12 +61,12 @@ class OperationService {
     }
 
     async markOperationAsCompleted(operationId, responseData, endStatuses) {
-        this.logger.info(`Finalizing ${this.networkProtocol} for operationId: ${operationId}`);
+        this.logger.info(`Finalizing ${this.operationName} for operationId: ${operationId}`);
 
         await this.repositoryModuleManager.updateOperationStatus(
             this.operationName,
             operationId,
-            this.operationStatus.COMPLETED,
+            OPERATION_STATUS.COMPLETED,
         );
 
         await this.operationIdService.cacheOperationIdData(operationId, responseData);
@@ -75,12 +78,12 @@ class OperationService {
     }
 
     async markOperationAsFailed(operationId, message) {
-        this.logger.info(`${this.networkProtocol} for operationId: ${operationId} failed.`);
+        this.logger.info(`${this.operationName} for operationId: ${operationId} failed.`);
 
         await this.repositoryModuleManager.updateOperationStatus(
             this.operationName,
             operationId,
-            this.operationStatus.FAILED,
+            OPERATION_STATUS.FAILED,
         );
 
         await this.operationIdService.updateOperationIdStatus(
@@ -107,6 +110,50 @@ class OperationService {
             }, failed: ${failedNumber}, completed: ${completedNumber}`,
         );
     }
+
+    async validateAssertion(assertionId, blockchain, assertion) {
+        this.logger.info(`Validating assertionId: ${assertionId}`);
+
+        const calculatedAssertionId = this.validationModuleManager.calculateRoot(assertion);
+
+        if (assertionId !== calculatedAssertionId) {
+            throw Error(
+                `Invalid assertion id. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`,
+            );
+        }
+
+        // validate size
+        const blockchainAssertionSize = Number(
+            await this.blockchainModuleManager.getAssertionSize(blockchain, assertionId),
+        );
+        const assertionSize = assertionMetadata.getAssertionSizeInBytes(assertion);
+        if (blockchainAssertionSize !== assertionSize) {
+            throw Error(
+                `Invalid assertion size, value read from blockchain: ${blockchainAssertionSize}, calculated: ${assertionSize}`,
+            );
+        }
+        // validate triples number
+        const blockchainTriplesNumber = Number(
+            await this.blockchainModuleManager.getAssertionTriplesNumber(blockchain, assertionId),
+        );
+        const triplesNumber = assertionMetadata.getAssertionTriplesNumber(assertion);
+        if (blockchainTriplesNumber !== triplesNumber) {
+            throw Error(
+                `Invalid triples number, value read from blockchain: ${blockchainTriplesNumber}, calculated: ${triplesNumber}`,
+            );
+        }
+        // validate chunk size
+        const blockchainChunksNumber = Number(
+            await this.blockchainModuleManager.getAssertionChunksNumber(blockchain, assertionId),
+        );
+        const chunksNumber = assertionMetadata.getAssertionChunksNumber(assertion);
+        if (blockchainChunksNumber !== chunksNumber) {
+            throw Error(
+                `Invalid chunks number, value read from blockchain: ${blockchainChunksNumber}, calculated size: ${chunksNumber}`,
+            );
+        }
+        this.logger.info(`Assertion integrity validated!`);
+    }
 }
 
-module.exports = OperationService;
+export default OperationService;

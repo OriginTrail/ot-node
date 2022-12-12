@@ -1,43 +1,51 @@
-const { ServerClientConfig, GraphDBServerClient } = require('graphdb').server;
-const { RepositoryConfig, RepositoryType } = require('graphdb').repository;
-const { RDFMimeType } = require('graphdb').http;
-const axios = require('axios');
-const { execSync } = require('child_process');
-const OtTripleStore = require('../ot-triple-store');
+import graphdb from 'graphdb';
+import axios from 'axios';
+import OtTripleStore from '../ot-triple-store.js';
+
+const { server, repository, http } = graphdb;
 
 class OtGraphdb extends OtTripleStore {
     async initialize(config, logger) {
         await super.initialize(config, logger);
-        const serverConfig = new ServerClientConfig(this.config.url)
+        const serverConfig = new server.ServerClientConfig(this.config.url)
             .setTimeout(40000)
             .setHeaders({
-                Accept: RDFMimeType.N_QUADS,
+                Accept: http.RDFMimeType.N_QUADS,
             })
             .setKeepAlive(true);
-        const server = new GraphDBServerClient(serverConfig);
+        const s = new server.GraphDBServerClient(serverConfig);
 
-        const exists = await server.hasRepository(this.config.repository);
+        const exists = await s.hasRepository(this.config.repository);
         if (!exists) {
-            const newConfig = new RepositoryConfig(
-                this.config.repository,
-                '',
-                {},
-                'graphdb:SailRepository',
-                'title',
-                'graphdb',
-            );
             try {
-                await server.createRepository(newConfig);
+                await s.createRepository(
+                    new repository.RepositoryConfig(
+                        this.config.repository,
+                        '',
+                        new Map(),
+                        '',
+                        'Repo title',
+                        repository.RepositoryType.FREE,
+                    ),
+                );
             } catch (e) {
-                newConfig.type = RepositoryType.FREE;
-                await server.createRepository(newConfig);
+                await s.createRepository(
+                    new repository.RepositoryConfig(
+                        this.config.repository,
+                        '',
+                        {},
+                        'graphdb:SailRepository',
+                        'Repo title',
+                        'graphdb',
+                    ),
+                );
             }
         }
     }
 
-    initializeSparqlEndpoints(url, repository) {
-        this.sparqlEndpoint = `${url}/repositories/${repository}`;
-        this.sparqlEndpointUpdate = `${url}/repositories/${repository}/statements`;
+    initializeSparqlEndpoints(url, repo) {
+        this.sparqlEndpoint = `${url}/repositories/${repo}`;
+        this.sparqlEndpointUpdate = `${url}/repositories/${repo}/statements`;
     }
 
     async healthCheck() {
@@ -66,18 +74,9 @@ class OtGraphdb extends OtTripleStore {
         }
     }
 
-    async restartService() {
-        // TODO: check env if development or production
-        const port = execSync("ps -aux | grep graphdb | cut -d' ' -f7 | head -n 1").toString();
-        if (port) {
-            execSync(`kill -9 ${port}`);
-        }
-        execSync('nohup ../graphdb-free-9.9.0/bin/graphdb &');
-    }
-
     getName() {
         return 'GraphDB';
     }
 }
 
-module.exports = OtGraphdb;
+export default OtGraphdb;

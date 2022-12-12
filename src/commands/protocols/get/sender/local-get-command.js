@@ -1,5 +1,5 @@
-const Command = require('../../../command');
-const { OPERATION_ID_STATUS, ERROR_TYPE } = require('../../../../constants/constants');
+import Command from '../../../command.js';
+import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
 
 class LocalGetCommand extends Command {
     constructor(ctx) {
@@ -24,10 +24,12 @@ class LocalGetCommand extends Command {
         );
         const assertionExists = await this.tripleStoreModuleManager.assertionExists(assertionId);
         if (assertionExists) {
-            const nquads = await this.getService.localGet(assertionId, operationId);
+            const assertion = await this.getService.localGet(assertionId, operationId);
 
-            if (nquads.length) {
-                await this.operationIdService.cacheOperationIdData(operationId, nquads);
+            if (assertion.length) {
+                await this.operationIdService.cacheOperationIdData(operationId, {
+                    assertion,
+                });
                 await this.operationIdService.updateOperationIdStatus(
                     operationId,
                     OPERATION_ID_STATUS.GET.GET_LOCAL_END,
@@ -69,4 +71,4 @@ class LocalGetCommand extends Command {
     }
 }
 
-module.exports = LocalGetCommand;
+export default LocalGetCommand;

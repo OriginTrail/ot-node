@@ -1,6 +1,6 @@
-const path = require('path');
-const { mkdir, writeFile, readFile, unlink, stat } = require('fs/promises');
-const appRootPath = require('app-root-path');
+import path from 'path';
+import { mkdir, writeFile, readFile, unlink, stat, readdir } from 'fs/promises';
+import appRootPath from 'app-root-path';
 
 const MIGRATION_FOLDER_NAME = 'migrations';
 
@@ -33,6 +33,14 @@ class FileService {
         return this._readFile(filePath, false);
     }
 
+    async readDirectory(dirPath) {
+        return readdir(dirPath);
+    }
+
+    async stat(filePath) {
+        return stat(filePath);
+    }
+
     /**
      * Loads JSON data from file
      * @returns {Promise<JSON object>}
@@ -59,14 +67,18 @@ class FileService {
             const data = await readFile(filePath);
             return convertToJSON ? JSON.parse(data) : data.toString();
         } catch (e) {
-            throw Error(`File doesn't exist on file path: ${filePath}`);
+            throw Error(`File not found on path: ${filePath}`);
         }
     }
 
     async removeFile(filePath) {
-        this.logger.debug(`Removing file on path: ${filePath}`);
-        await unlink(filePath);
-        return true;
+        if (await this.fileExists(filePath)) {
+            this.logger.trace(`Removing file on path: ${filePath}`);
+            await unlink(filePath);
+            return true;
+        }
+        this.logger.debug(`File not found on path: ${filePath}`);
+        return false;
     }
 
     getDataFolderPath() {
@@ -93,4 +105,4 @@ class FileService {
     }
 }
 
-module.exports = FileService;
+export default FileService;

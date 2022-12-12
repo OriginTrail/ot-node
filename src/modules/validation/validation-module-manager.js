@@ -1,4 +1,4 @@
-const BaseModuleManager = require('../base-module-manager');
+import BaseModuleManager from '../base-module-manager.js';
 
 class ValidationModuleManager extends BaseModuleManager {
     getName() {
@@ -16,6 +16,18 @@ class ValidationModuleManager extends BaseModuleManager {
             return this.getImplementation().module.getMerkleProof(assertion, index);
         }
     }
+
+    getHashFunctionName(hashFunctionId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getHashFunctionName(hashFunctionId);
+        }
+    }
+
+    async callHashFunction(hashFunctionId, data) {
+        if (this.initialized) {
+            return this.getImplementation().module.callHashFunction(hashFunctionId, data);
+        }
+    }
 }
 
-module.exports = ValidationModuleManager;
+export default ValidationModuleManager;

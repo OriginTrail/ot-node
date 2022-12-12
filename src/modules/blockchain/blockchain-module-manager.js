@@ -1,111 +1,244 @@
-const BaseModuleManager = require('../base-module-manager');
+import BaseModuleManager from '../base-module-manager.js';
 
 class BlockchainModuleManager extends BaseModuleManager {
     getName() {
         return 'blockchain';
     }
 
+    async initializeContracts(blockchain) {
+        return this.callImplementationFunction(blockchain, 'initializeContracts');
+    }
+
+    async increaseGanacheTime(blockchain, seconds) {
+        return this.callImplementationFunction(blockchain, 'increaseGanacheTime', [seconds]);
+    }
+
     getPrivateKey(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getPrivateKey();
-        }
+        return this.callImplementationFunction(blockchain, 'getPrivateKey');
     }
 
     getPublicKey(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getPublicKey();
-        }
+        return this.callImplementationFunction(blockchain, 'getPublicKey');
     }
 
     getManagementKey(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getManagementKey();
-        }
+        return this.callImplementationFunction(blockchain, 'getManagementKey');
     }
 
-    async deployIdentity(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.deployIdentity();
-        }
+    async getIdentityId(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getIdentityId');
     }
 
-    identityExists(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.identityExists();
-        }
-    }
-
-    getIdentity(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getIdentity();
-        }
+    async identityIdExists(blockchain) {
+        return this.callImplementationFunction(blockchain, 'identityIdExists');
     }
 
     async createProfile(blockchain, peerId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.createProfile(peerId);
-        }
+        return this.callImplementationFunction(blockchain, 'createProfile', [peerId]);
     }
 
-    async getEpochs(blockchain, UAI) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getEpochs(UAI);
-        }
+    async healthCheck(blockchain) {
+        return this.callImplementationFunction(blockchain, 'healthCheck');
     }
 
-    async getBlockNumber(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getBlockNumber();
-        }
+    async restartService(blockchain) {
+        return this.callImplementationFunction(blockchain, 'restartService');
     }
 
-    getBlockTime(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getBlockTime();
-        }
+    async getAssertionIdByIndex(blockchain, assetContractAddress, tokenId, index) {
+        return this.callImplementationFunction(blockchain, 'getAssertionIdByIndex', [
+            assetContractAddress,
+            tokenId,
+            index,
+        ]);
     }
 
-    async getChallenge(blockchain, UAI, epoch) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getChallenge(UAI, epoch);
-        }
+    async getLatestAssertionId(blockchain, assetContractAddress, tokenId) {
+        return this.callImplementationFunction(blockchain, 'getLatestAssertionId', [
+            assetContractAddress,
+            tokenId,
+        ]);
     }
 
-    async answerChallenge(blockchain, UAI, epoch, proof, leaf, price) {
+    async getAssertionIssuer(blockchain, assertionId) {
+        return this.callImplementationFunction(blockchain, 'getAssertionIssuer', [assertionId]);
+    }
+
+    async getShardingTableHead(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getShardingTableHead');
+    }
+
+    async getShardingTableLength(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getShardingTableLength');
+    }
+
+    async getShardingTablePage(blockchain, startingIdentityId, nodesNum) {
+        return this.callImplementationFunction(blockchain, 'getShardingTablePage', [
+            startingIdentityId,
+            nodesNum,
+        ]);
+    }
+
+    async getAllPastEvents(
+        contractName,
+        onEventsReceived,
+        getLastCheckedBlock,
+        updateLastCheckedBlock,
+    ) {
+        const blockchainIds = this.getImplementationNames();
+        const getEventsPromises = [];
+        for (const blockchainId of blockchainIds) {
+            getEventsPromises.push(
+                this.getImplementation(blockchainId).module.getAllPastEvents(
+                    contractName,
+                    onEventsReceived,
+                    getLastCheckedBlock,
+                    updateLastCheckedBlock,
+                ),
+            );
+        }
+        return Promise.all(getEventsPromises);
+    }
+
+    convertHexToAscii(blockchain, peerIdHex) {
+        return this.callImplementationFunction(blockchain, 'convertHexToAscii', [peerIdHex]);
+    }
+
+    convertToWei(blockchain, ether, fromUnit) {
+        return this.callImplementationFunction(blockchain, 'convertToWei', [ether, fromUnit]);
+    }
+
+    convertFromWei(blockchain, ether, toUnit) {
+        return this.callImplementationFunction(blockchain, 'convertFromWei', [ether, toUnit]);
+    }
+
+    async isCommitWindowOpen(blockchain, agreementId, epoch) {
+        return this.callImplementationFunction(blockchain, 'isCommitWindowOpen', [
+            agreementId,
+            epoch,
+        ]);
+    }
+
+    async getTopCommitSubmissions(blockchain, agreementId, epoch) {
+        return this.callImplementationFunction(blockchain, 'getTopCommitSubmissions', [
+            agreementId,
+            epoch,
+        ]);
+    }
+
+    async getAgreementData(blockchain, agreementId) {
+        return this.callImplementationFunction(blockchain, 'getAgreementData', [agreementId]);
+    }
+
+    async getAssertionSize(blockchain, assertionid) {
+        return this.callImplementationFunction(blockchain, 'getAssertionSize', [assertionid]);
+    }
+
+    async getAssertionTriplesNumber(blockchain, assertionid) {
+        return this.callImplementationFunction(blockchain, 'getAssertionTriplesNumber', [
+            assertionid,
+        ]);
+    }
+
+    async getAssertionChunksNumber(blockchain, assertionid) {
+        return this.callImplementationFunction(blockchain, 'getAssertionChunksNumber', [
+            assertionid,
+        ]);
+    }
+
+    async submitCommit(blockchain, assetContractAddress, tokenId, keyword, hashFunctionId, epoch) {
+        return this.callImplementationFunction(blockchain, 'submitCommit', [
+            assetContractAddress,
+            tokenId,
+            keyword,
+            hashFunctionId,
+            epoch,
+        ]);
+    }
+
+    async isProofWindowOpen(blockchain, agreementId, epoch) {
+        return this.callImplementationFunction(blockchain, 'isProofWindowOpen', [
+            agreementId,
+            epoch,
+        ]);
+    }
+
+    async getChallenge(blockchain, assetContractAddress, tokenId, epoch) {
+        return this.callImplementationFunction(blockchain, 'getChallenge', [
+            assetContractAddress,
+            tokenId,
+            epoch,
+        ]);
+    }
+
+    async sendProof(
+        blockchain,
+        assetContractAddress,
+        tokenId,
+        keyword,
+        hashFunctionId,
+        epoch,
+        proof,
+        chunkHash,
+    ) {
         if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.answerChallenge(
-                UAI,
+            return this.getImplementation(blockchain).module.sendProof(
+                assetContractAddress,
+                tokenId,
+                keyword,
+                hashFunctionId,
                 epoch,
                 proof,
-                leaf,
-                price,
+                chunkHash,
             );
         }
     }
 
-    async getReward(blockchain, UAI, epoch) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getReward(UAI, epoch);
-        }
+    async getR2(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getR2');
     }
 
-    async getLatestCommitHash(blockchain, contract, tokenId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getLatestCommitHash(contract, tokenId);
-        }
+    async getR1(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getR1');
     }
 
-    async healthCheck(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.healthCheck();
-        }
+    async getR0(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getR0');
     }
 
-    async restartService(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.restartService();
+    async getCommitWindowDuration(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getCommitWindowDuration');
+    }
+
+    async getProofWindowDurationPerc(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getProofWindowDurationPerc');
+    }
+
+    async callScoreFunction(blockchain, scoreFunctionId, hashFunctionId, peerId, keyword, stake) {
+        return this.callImplementationFunction(blockchain, 'callScoreFunction', [
+            scoreFunctionId,
+            hashFunctionId,
+            peerId,
+            keyword,
+            stake,
+        ]);
+    }
+
+    async getLog2PLDSFParams(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getLog2PLDSFParams');
+    }
+
+    callImplementationFunction(blockchain, functionName, args = []) {
+        if (blockchain) {
+            const split = blockchain.split(':');
+            const [name] = split;
+            if (this.getImplementation(name)) {
+                return this.getImplementation(name).module[functionName](...args);
+            }
+        } else {
+            return this.getImplementation().module[functionName](...args);
         }
     }
 }
 
-module.exports = BlockchainModuleManager;
+export default BlockchainModuleManager;

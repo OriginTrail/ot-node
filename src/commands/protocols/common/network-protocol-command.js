@@ -1,12 +1,9 @@
-const Command = require('../../command');
+import Command from '../../command.js';
 
 class NetworkProtocolCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.config = ctx.config;
-        this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
-        this.operationService = ctx.publishService;
     }
 
     /**
@@ -14,8 +11,12 @@ class NetworkProtocolCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId } = command.data;
-        const keywords = this.getKeywords(command);
+        const { blockchain } = command.data;
+
+        const keywords = await this.getKeywords(command);
+        const batchSize = await this.getBatchSize(blockchain);
+        const minAckResponses = await this.getMinAckResponses(blockchain);
+
         const commandSequence = [
             'findNodesCommand',
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
@@ -27,11 +28,12 @@ class NetworkProtocolCommand extends Command {
                 sequence: commandSequence.slice(1),
                 delay: 0,
                 data: {
-                    ...this.getNextCommandData(command),
+                    ...command.data,
                     keyword,
-                    operationId,
+                    batchSize,
+                    minAckResponses,
                     errorType: this.errorType,
-                    networkProtocol: this.operationService.getNetworkProtocol(),
+                    networkProtocols: this.operationService.getNetworkProtocols(),
                 },
                 transactional: false,
             }),
@@ -42,13 +44,16 @@ class NetworkProtocolCommand extends Command {
         return Command.empty();
     }
 
-    getKeywords() {
-        // overridden by subclasses
-        return [];
+    async getKeywords() {
+        throw Error('getKeywords not implemented');
     }
 
-    getNextCommandData() {
-        // overridden by subclasses
+    async getBatchSize() {
+        throw Error('getBatchSize not implemented');
+    }
+
+    async getMinAckResponses() {
+        throw Error('getMinAckResponses not implemented');
     }
 
     /**
@@ -67,4 +72,4 @@ class NetworkProtocolCommand extends Command {
     }
 }
 
-module.exports = NetworkProtocolCommand;
+export default NetworkProtocolCommand;

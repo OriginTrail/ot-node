@@ -18,6 +18,7 @@ class TelemetryInjectionService {
                 eventData.timestamp,
                 eventData.value1,
                 eventData.value2,
+                eventData.value3,
             );
         });
     }
@@ -33,4 +34,4 @@ class TelemetryInjectionService {
     }
 }
 
-module.exports = TelemetryInjectionService;
+export default TelemetryInjectionService;

@@ -1,32 +1,25 @@
-const BaseModuleManager = require('../base-module-manager');
+import BaseModuleManager from '../base-module-manager.js';
 
 class NetworkModuleManager extends BaseModuleManager {
     getName() {
         return 'network';
     }
 
-    async findNodes(key, protocol) {
+    async onPeerConnected(listener) {
         if (this.initialized) {
-            return this.getImplementation().module.findNodes(key, protocol);
+            return this.getImplementation().module.onPeerConnected(listener);
+        }
+    }
+
+    getMultiaddrs() {
+        if (this.initialized) {
+            return this.getImplementation().module.getMultiaddrs();
         }
     }
 
     getPeers() {
         if (this.initialized) {
             return this.getImplementation().module.getPeers();
-        }
-    }
-
-    /**
-     * Store the given key/value pair at the peer `target`.
-     *
-     * @param {String} key
-     * @param {Object} object - value to be stored
-     * @param {PeerId} target
-     */
-    store(peer, key, object) {
-        if (this.initialized) {
-            return this.getImplementation().module.store(peer, key, object);
         }
     }
 
@@ -74,17 +67,29 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    getPrivateKey() {
-        if (this.initialized) {
-            return this.getImplementation().module.getPrivateKey();
-        }
-    }
-
     async healthCheck() {
         if (this.initialized) {
             return this.getImplementation().module.healthCheck();
         }
     }
+
+    async findPeer(peerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.findPeer(peerId);
+        }
+    }
+
+    async dial(peerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.dial(peerId);
+        }
+    }
+
+    async getPeerInfo(peerId) {
+        if (this.initialized) {
+            return this.getImplementation().module.getPeerInfo(peerId);
+        }
+    }
 }
 
-module.exports = NetworkModuleManager;
+export default NetworkModuleManager;

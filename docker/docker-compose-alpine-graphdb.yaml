@@ -30,7 +30,7 @@ services:
     command:
       - '/bin/sh'
       - '-c'
-      - '/bin/sleep 25 && npx sequelize --config=./config/sequelizeConfig.js db:migrate && forever index.js'
+      - '/bin/sleep 25 && forever index.js'
                    
         
     volumes:

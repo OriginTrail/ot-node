@@ -4,6 +4,7 @@
 class CommandResolver {
     constructor(ctx) {
         this.ctx = ctx;
+        this.logger = ctx.logger;
     }
 
     /**
@@ -15,9 +16,9 @@ class CommandResolver {
         try {
             return this.ctx[`${name}`];
         } catch (e) {
-            throw new Error(`No handler defined for command '${name}'`);
+            this.logger.warn(`No handler defined for command '${name}'`);
         }
     }
 }
 
-module.exports = CommandResolver;
+export default CommandResolver;

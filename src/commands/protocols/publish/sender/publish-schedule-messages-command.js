@@ -1,5 +1,5 @@
-const ProtocolScheduleMessagesCommand = require('../../common/protocol-schedule-messages-command');
-const { OPERATION_ID_STATUS, ERROR_TYPE } = require('../../../../constants/constants');
+import ProtocolScheduleMessagesCommand from '../../common/protocol-schedule-messages-command.js';
+import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
 
 class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     constructor(ctx) {
@@ -7,16 +7,13 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         this.operationService = ctx.publishService;
 
         this.startEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_START;
-
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR;
     }
 
     getNextCommandData(command) {
-        const { assertionId, ual } = command.data;
-        return {
-            assertionId,
-            ual,
-        };
+        const { publishType, assertionId, blockchain, tokenId, contract, hashFunctionId } =
+            command.data;
+        return { publishType, assertionId, blockchain, contract, tokenId, hashFunctionId };
     }
 
     /**
@@ -35,4 +32,4 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     }
 }
 
-module.exports = PublishScheduleMessagesCommand;
+export default PublishScheduleMessagesCommand;

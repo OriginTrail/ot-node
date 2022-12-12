@@ -1,23 +1,24 @@
-const { ApiPromise, WsProvider } = require('@polkadot/api');
-const { Keyring } = require('@polkadot/keyring');
-const Web3Service = require('../web3-service');
+import { ApiPromise, WsProvider, HttpProvider } from '@polkadot/api';
+import Web3Service from '../web3-service.js';
+
+const NATIVE_TOKEN_DECIMALS = 12;
 
 class OtParachainService extends Web3Service {
     constructor(ctx) {
         super(ctx);
 
         this.baseTokenTicker = 'OTP';
-        this.tracTicker = 'pTRAC';
+        this.tracTicker = 'TRAC';
     }
 
     async initialize(config, logger) {
         this.config = config;
         this.logger = logger;
         this.rpcNumber = 0;
-
-        await Promise.all([this.initializeWeb3(), this.initializeParachainProvider()]);
+        await this.initializeParachainProvider();
         await this.checkEvmAccountsMapping();
-        await this.initializeContracts();
+        await this.parachainProvider.disconnect();
+        await super.initialize(config, logger);
     }
 
     async checkEvmAccountsMapping() {
@@ -35,49 +36,6 @@ class OtParachainService extends Web3Service {
         if (!managementAccount || managementAccount.toHex() === '0x') {
             throw Error('Missing account mapping for management wallet');
         }
-    }
-
-    async initializeEvmAccounts() {
-        const {
-            substrateOperationalWalletPrivateKey,
-            substrateManagementWalletPrivateKey,
-            evmOperationalWalletPublicKey,
-            evmOperationalWalletPrivateKey,
-            evmManagementWalletPublicKey,
-            evmManagementWalletPrivateKey,
-        } = this.config;
-
-        await Promise.all([
-            this.bindEvmAccount(
-                evmOperationalWalletPublicKey,
-                evmOperationalWalletPrivateKey,
-                substrateOperationalWalletPrivateKey,
-            ),
-            this.bindEvmAccount(
-                evmManagementWalletPublicKey,
-                evmManagementWalletPrivateKey,
-                substrateManagementWalletPrivateKey,
-            ),
-        ]);
-    }
-
-    async bindEvmAccount(evmPublicKey, evmPrivateKey, substratePrivateKey) {
-        let account = await this.queryParachainState('evmAccounts', 'accounts', [evmPublicKey]);
-
-        if (account.toHex() === '0x') {
-            const { signature } = await this.web3.eth.accounts.sign(evmPublicKey, evmPrivateKey);
-            const keyring = new Keyring({ type: 'sr25519' });
-            account = await this.callParachainExtrinsic(
-                keyring.createFromUri(substratePrivateKey),
-                'evmAccounts',
-                'claimAccount',
-                [evmPublicKey, signature],
-            );
-        }
-
-        if (account.toHex() === '0x') throw Error('Unable to create account mapping for otp');
-
-        return account;
     }
 
     async callParachainExtrinsic(keyring, extrinsic, method, args) {
@@ -121,9 +79,12 @@ class OtParachainService extends Web3Service {
             }
 
             try {
-                // Initialise the provider to connect to the local node
-                const provider = new WsProvider(this.config.rpcEndpoints[this.rpcNumber]);
-
+                let provider;
+                if (this.config.rpcEndpoints[this.rpcNumber].startsWith('ws')) {
+                    provider = new WsProvider(this.config.rpcEndpoints[this.rpcNumber]);
+                } else {
+                    provider = new HttpProvider(this.config.rpcEndpoints[this.rpcNumber]);
+                }
                 // eslint-disable-next-line no-await-in-loop
                 this.parachainProvider = await new ApiPromise({ provider }).isReady;
                 isRpcConnected = true;
@@ -174,6 +135,11 @@ class OtParachainService extends Web3Service {
         );
         await this.initializeParachainProvider();
     }
+
+    async getNativeTokenBalance() {
+        const nativeBalance = await this.web3.eth.getBalance(this.getPublicKey());
+        return nativeBalance / 10 ** NATIVE_TOKEN_DECIMALS;
+    }
 }
 
-module.exports = OtParachainService;
+export default OtParachainService;
