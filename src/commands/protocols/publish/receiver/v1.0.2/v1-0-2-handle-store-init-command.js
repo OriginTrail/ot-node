@@ -47,6 +47,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
             hashFunctionId,
             blockchain,
             assertionId,
+            operationId,
         );
 
         if (errorMessage) {
@@ -108,7 +109,15 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
         }
     }
 
-    async validateBid(contract, tokenId, keyword, hashFunctionId, blockchain, assertionId) {
+    async validateBid(
+        contract,
+        tokenId,
+        keyword,
+        hashFunctionId,
+        blockchain,
+        assertionId,
+        operationId,
+    ) {
         const geAgreementData = async () => {
             const agreementId = await this.serviceAgreementService.generateId(
                 contract,
@@ -117,7 +126,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
                 hashFunctionId,
             );
             this.logger.info(
-                `Calculated agreement id: ${agreementId} for contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}`,
+                `Calculated agreement id: ${agreementId} for contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}, operationId: ${operationId}`,
             );
 
             return {
@@ -154,7 +163,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
             .dividedBy(blockchainAssertionSize)
             .multipliedBy(1024);
 
-        const bidAskLog = `Service agreement bid: ${serviceAgreementBid}, ask: ${ask}`;
+        const bidAskLog = `Service agreement bid: ${serviceAgreementBid}, ask: ${ask}, operationId: ${operationId}`;
         this.logger.trace(bidAskLog);
 
         return {
