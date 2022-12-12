@@ -527,7 +527,7 @@ class Web3Service {
 
     async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
         return this.callContractFunction(
-            this.assetStorageContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
+            this.assetStorageContracts[assetContractAddress.toLowerCase()],
             'getAssertionIdByIndex',
             [tokenId, index],
         );
@@ -535,7 +535,7 @@ class Web3Service {
 
     async getLatestAssertionId(assetContractAddress, tokenId) {
         return this.callContractFunction(
-            this.assetStorageContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
+            this.assetStorageContracts[assetContractAddress.toLowerCase()],
             'getLatestAssertionId',
             [tokenId],
         );
@@ -761,34 +761,6 @@ class Web3Service {
             keyword,
             stake,
         ]);
-    }
-
-    async getLog2PLDSFParams() {
-        const log2pldsfParams = await this.callContractFunction(
-            this.Log2PLDSFContract,
-            'getParameters',
-            [],
-        );
-
-        const params = {};
-        params.distanceMappingCoefficient = log2pldsfParams['0'];
-        params.stakeMappingCoefficient = log2pldsfParams['1'];
-
-        const paramNames = [
-            'multiplier',
-            'logArgumentConstant',
-            'a',
-            'stakeExponent',
-            'b',
-            'c',
-            'distanceExponent',
-            'd',
-        ];
-        log2pldsfParams['2'].forEach((val, index) => {
-            params[paramNames[index]] = val;
-        });
-
-        return params;
     }
 }
 

@@ -17,18 +17,20 @@ class EpochCommand extends Command {
         agreementData,
         operationId,
     ) {
-        // todo check epoch number and make sure that delay is not in past
-        const nextEpochStartTime =
-            Number(agreementData.startTime) + Number(agreementData.epochLength) * (epoch + 1);
-
-        // delay by 10% of commit window length
-        const offset =
+        let newEpochNumber = epoch;
+        let delay = -1;
+        const commitWindowDurationOffset =
             Number(await this.blockchainModuleManager.getCommitWindowDuration(blockchain)) * 0.1;
-
-        const delay = nextEpochStartTime - Math.floor(Date.now() / 1000) + offset;
+        while (delay < 0) {
+            const nextEpochStartTime =
+                Number(agreementData.startTime) +
+                Number(agreementData.epochLength) * (newEpochNumber + 1);
+            newEpochNumber += 1;
+            delay = nextEpochStartTime - Math.floor(Date.now() / 1000) + commitWindowDurationOffset;
+        }
 
         this.logger.trace(
-            `Scheduling next epoch check for agreement id: ${agreementId} in ${delay} seconds.`,
+            `Scheduling next epoch check for agreement id: ${agreementId} in ${delay} seconds. Previous epoch: ${epoch}, new: ${newEpochNumber}`,
         );
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
@@ -40,7 +42,7 @@ class EpochCommand extends Command {
                 contract,
                 tokenId,
                 keyword,
-                epoch: epoch + 1,
+                epoch: newEpochNumber,
                 hashFunctionId,
                 operationId,
             },

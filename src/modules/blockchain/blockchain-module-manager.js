@@ -224,10 +224,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async getLog2PLDSFParams(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getLog2PLDSFParams');
-    }
-
     callImplementationFunction(blockchain, functionName, args = []) {
         if (blockchain) {
             const split = blockchain.split(':');
