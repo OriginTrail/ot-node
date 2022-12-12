@@ -74,8 +74,6 @@ class AccountsMapping {
         // Generate and fund all other wallets
         for (let i = 0; i < NUMBER_OF_ACCOUNTS; i += 1) {
             console.log(`Generating and funding with OTP wallet #${i + 1}`);
-            // currentWallets =
-            //     i === 0 ? [] : JSON.parse(await fs.promises.readFile(WALLETS_PATH));
 
             const {
                 evmPublicKey: evmOperationalWalletPublicKey,
