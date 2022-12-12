@@ -158,7 +158,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
         this.logger.trace(bidAskLog);
 
         return {
-            errorMessage: ask.lte(serviceAgreementBid) ? bidAskLog : null,
+            errorMessage: ask.lte(serviceAgreementBid) ? null : bidAskLog,
             agreementId,
             agreementData,
         };
