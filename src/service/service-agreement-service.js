@@ -28,50 +28,49 @@ class ServiceAgreementService {
     async calculateScore(peerId, blockchainId, keyword, hashFunctionId) {
         const peerRecord = await this.repositoryModuleManager.getPeerRecord(peerId, blockchainId);
         /* const keyHash = await this.validationModuleManager.callHashFunction(
-            hashFunctionId,
-            keyword,
-        ); 
+                    hashFunctionId,
+                    keyword,
+                );
 
-         const hashFunctionName = this.validationModuleManager.getHashFunctionName(hashFunctionId);
+                 const hashFunctionName = this.validationModuleManager.getHashFunctionName(hashFunctionId);
 
-        const distanceUint8Array = this.shardingTableService.calculateDistance(
-            peerRecord[hashFunctionName],
-            keyHash,
-        );
+                const distanceUint8Array = this.shardingTableService.calculateDistance(
+                    peerRecord[hashFunctionName],
+                    keyHash,
+                );
 
-        // todo: store this in a more appropriate way
-        if (!this.log2PLDSFParams) {
-            this.log2PLDSFParams = await this.blockchainModuleManager.getLog2PLDSFParams(
-                blockchainId,
-            );
-        }
+                // todo: store this in a more appropriate way
+                if (!this.log2PLDSFParams) {
+                    this.log2PLDSFParams = await this.blockchainModuleManager.getLog2PLDSFParams(
+                        blockchainId,
+                    );
+                }
 
-        const {
-            distanceMappingCoefficient,
-            stakeMappingCoefficient,
-            multiplier,
-            logArgumentConstant,
-            a,
-            stakeExponent,
-            b,
-            c,
-            distanceExponent,
-            d,
-        } = this.log2PLDSFParams;
+                const {
+                    distanceMappingCoefficient,
+                    stakeMappingCoefficient,
+                    multiplier,
+                    logArgumentConstant,
+                    a,
+                    stakeExponent,
+                    b,
+                    c,
+                    distanceExponent,
+                    d,
+                } = this.log2PLDSFParams;
 
-        const distanceUint256BN = BigNumber.from(distanceUint8Array);
+                const distanceUint256BN = BigNumber.from(distanceUint8Array);
 
-        const mappedStake = BigNumber.from(this.blockchainModuleManager.convertToWei(blockchainId, peerRecord.stake)).div(
-            stakeMappingCoefficient,
-        );
-        const mappedDistance = distanceUint256BN.div(distanceMappingCoefficient);
+                const mappedStake = BigNumber.from(this.blockchainModuleManager.convertToWei(blockchainId, peerRecord.stake)).div(
+                    stakeMappingCoefficient,
+                );
+                const mappedDistance = distanceUint256BN.div(distanceMappingCoefficient);
 
-        const dividend = mappedStake.pow(stakeExponent).mul(a).add(b);
-        const divisor = mappedDistance.pow(distanceExponent).mul(c).add(d);
-        const score = Math.floor(
-            multiplier * Math.log2(logArgumentConstant + dividend.toNumber() / divisor.toNumber()),
-        );  */
-
+                const dividend = mappedStake.pow(stakeExponent).mul(a).add(b);
+                const divisor = mappedDistance.pow(distanceExponent).mul(c).add(d);
+                const score = Math.floor(
+                    multiplier * Math.log2(logArgumentConstant + dividend.toNumber() / divisor.toNumber()),
+                );  */
         return this.blockchainModuleManager.callScoreFunction(
             blockchainId,
             1,
