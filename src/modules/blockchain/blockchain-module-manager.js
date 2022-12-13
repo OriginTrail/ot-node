@@ -146,13 +146,22 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async submitCommit(blockchain, assetContractAddress, tokenId, keyword, hashFunctionId, epoch) {
+    async submitCommit(
+        blockchain,
+        assetContractAddress,
+        tokenId,
+        keyword,
+        hashFunctionId,
+        epoch,
+        callback,
+    ) {
         return this.callImplementationFunction(blockchain, 'submitCommit', [
             assetContractAddress,
             tokenId,
             keyword,
             hashFunctionId,
             epoch,
+            callback,
         ]);
     }
 
@@ -180,6 +189,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         epoch,
         proof,
         chunkHash,
+        callback,
     ) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.sendProof(
@@ -190,6 +200,7 @@ class BlockchainModuleManager extends BaseModuleManager {
                 epoch,
                 proof,
                 chunkHash,
+                callback,
             );
         }
     }
