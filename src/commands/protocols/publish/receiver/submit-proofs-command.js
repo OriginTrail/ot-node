@@ -87,7 +87,7 @@ class SubmitProofsCommand extends EpochCommand {
                             }`,
                     );
                 } else {
-                    this.logger.warn(result.error.message);
+                    that.logger.warn(result.error.message);
                 }
                 await that.scheduleNextEpochCheck(
                     blockchain,
