@@ -198,7 +198,14 @@ class OTNode {
                             { stdio: 'inherit' },
                         );
                         execSync(
-                            `npm run set-ask -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --ask=${blockchainConfig.initialAskAmount} --privateKey=${blockchainConfig.evmOperationalWalletPrivateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
+                            `npm run set-ask -- --rpcEndpoint=${
+                                blockchainConfig.rpcEndpoints[0]
+                            } --ask=${
+                                blockchainConfig.initialAskAmount +
+                                (Math.random() - 0.5) * blockchainConfig.initialAskAmount
+                            } --privateKey=${
+                                blockchainConfig.evmOperationalWalletPrivateKey
+                            } --hubContractAddress=${blockchainConfig.hubContractAddress}`,
                             { stdio: 'inherit' },
                         );
                     }
