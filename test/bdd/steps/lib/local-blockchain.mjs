@@ -102,6 +102,11 @@ const wallets = accountPrivateKeys.map((privateKey) => ({
     privateKey,
 }));
 const deployingWallet = wallets[0];
+
+const testParametersStorageParams = {
+    epochLength: 8*60, // 8 minutes
+    commitWindowDuration: 6*60 // 6 minutes
+}
 /**
  * LocalBlockchain represent small wrapper around the Ganache.
  *
@@ -259,6 +264,8 @@ class LocalBlockchain {
             this.contracts.parametersStorage.instance._address,
             deployingWallet,
         );
+
+        await this.setParametersStorageParams(testParametersStorageParams, deployingWallet.address);
 
         await this.deploy('whitelistStorage', deployingWallet, [
             this.contracts.hub.instance._address,
@@ -476,6 +483,15 @@ class LocalBlockchain {
                     error,
                 ),
             );
+    }
+
+    async setParametersStorageParams(params, fromAddress) {
+        for (const parameter of Object.keys(params)) {
+            const blockchainMethodName = `set${parameter.charAt(0).toUpperCase() + parameter.slice(1)}`;
+            this.logger.info(`Setting ${parameter} in parameters storage to: ${params[parameter]}`)
+            await this.contracts.parametersStorage.instance.methods[blockchainMethodName](params[parameter])
+                .send({from: fromAddress, gas: 50000});
+        }
     }
 
     async setAssetStorageContractAddress(contractName, contractAddress, sendingWallet) {

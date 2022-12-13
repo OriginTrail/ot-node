@@ -275,7 +275,7 @@ class CommandExecutor {
                 (timeoutCommand) => {
                     this.queue.push(timeoutCommand);
                 },
-                delay,
+                delay * 1000,
                 command,
             );
         } else {
