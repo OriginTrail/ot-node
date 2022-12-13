@@ -250,14 +250,13 @@ class ShardingTableService {
             true,
         );
 
-        let sum = BigNumber.from(0);
-        for (const peerRecord of peerRecords) {
-            sum = sum.add(this.blockchainModuleManager.convertToWei(blockchainId, peerRecord.ask));
-        }
+        const sorted = peerRecords.sort((a, b) => a.ask - b.ask);
+
+        const { ask } = sorted[Math.floor(sorted.length * 0.75)];
 
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);
 
-        return sum
+        return BigNumber.from(this.blockchainModuleManager.convertToWei(blockchainId, ask))
             .mul(assertionSize)
             .mul(epochsNumber)
             .mul(r0)
