@@ -142,7 +142,7 @@ class SubmitCommitCommand extends EpochCommand {
 
                     await that.commandExecutor.add({
                         name: 'calculateProofsCommand',
-                        delay,
+                        delay: delay * 1000,
                         data: { ...command.data, proofWindowStartTime },
                         transactional: false,
                     });
