@@ -95,7 +95,7 @@ for (let i = 0; i < numberOfNodes; i += 1) {
 
 async function dropDatabase(name, config) {
     console.log(`Dropping database: ${name}`);
-    const password = process.env.REPOSITORY_PASSWORD ?? this.config.password;
+    const password = process.env.REPOSITORY_PASSWORD ?? config.password;
     const connection = mysql.createConnection({
         database: name,
         user: config.user,
