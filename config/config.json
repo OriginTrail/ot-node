@@ -407,7 +407,7 @@
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "parachain::testnet",
-                            "hubContractAddress": "0xEF9FeCb85d03d6e624C434dF8298692d13853033",
+                            "hubContractAddress": "0xBbfF7Ea6b2Addc1f38A0798329e12C08f03750A6",
                             "rpcEndpoints": [
                                 "https://lofar-testnet.origin-trail.network",
                                 "wss://parachain-testnet-rpc.origin-trail.network"
