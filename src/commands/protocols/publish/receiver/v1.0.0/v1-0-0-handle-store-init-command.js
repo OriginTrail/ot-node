@@ -1,4 +1,4 @@
-import { BigNumber } from 'bignumber.js';
+import { BigNumber } from 'ethers';
 import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
 import {
     NETWORK_MESSAGE_TYPES,
@@ -146,7 +146,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
 
             const ask = this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
 
-            return new BigNumber(ask);
+            return BigNumber.from(ask);
         };
 
         const [{ agreementId, agreementData }, blockchainAssertionSize, r0, ask] =
@@ -157,11 +157,14 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
                 getAsk(),
             ]);
 
-        const serviceAgreementBid = new BigNumber(agreementData.tokenAmount)
-            .dividedBy(r0)
-            .dividedBy(agreementData.epochsNumber)
-            .dividedBy(blockchainAssertionSize)
-            .multipliedBy(1024);
+        const divisor = BigNumber.from(r0)
+            .mul(agreementData.epochsNumber)
+            .mul(blockchainAssertionSize);
+
+        const serviceAgreementBid = BigNumber.from(agreementData.tokenAmount)
+            .mul(1024)
+            .div(divisor)
+            .add(1); // add 1 wei because of the precision loss
 
         const bidAskLog = `Service agreement bid: ${serviceAgreementBid}, ask: ${ask}, operationId: ${operationId}`;
         this.logger.trace(bidAskLog);
