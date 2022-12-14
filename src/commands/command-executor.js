@@ -3,10 +3,10 @@ import { setTimeout as sleep } from 'timers/promises';
 import Command from './command.js';
 import {
     PERMANENT_COMMANDS,
-    DEFAULT_COMMAND_DELAY_IN_MILLS,
     MAX_COMMAND_DELAY_IN_MILLS,
     DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS,
     COMMAND_STATUS,
+    DEFAULT_COMMAND_DELAY_IN_SECONDS,
 } from '../constants/constants.js';
 
 /**
@@ -242,7 +242,7 @@ class CommandExecutor {
             this.logger.warn(`Command '${name}' will not be executed.`);
             return;
         }
-        await this.add(handler.default(), DEFAULT_COMMAND_DELAY_IN_MILLS, true);
+        await this.add(handler.default(), DEFAULT_COMMAND_DELAY_IN_SECONDS, true);
         if (this.verboseLoggingEnabled) {
             this.logger.trace(`Permanent command ${name} created.`);
         }
@@ -259,12 +259,12 @@ class CommandExecutor {
         let delay = addDelay;
         const now = new Date().getTime() / 1000;
 
-        if (delay != null && delay > MAX_COMMAND_DELAY_IN_MILLS) {
+        if (delay != null && delay > DEFAULT_COMMAND_DELAY_IN_SECONDS) {
             if (command.ready_at == null) {
                 command.ready_at = now;
             }
             command.ready_at += delay;
-            delay = MAX_COMMAND_DELAY_IN_MILLS;
+            delay = DEFAULT_COMMAND_DELAY_IN_SECONDS;
         }
 
         if (insert) {
