@@ -3,10 +3,10 @@ import { setTimeout as sleep } from 'timers/promises';
 import Command from './command.js';
 import {
     PERMANENT_COMMANDS,
+    DEFAULT_COMMAND_DELAY_IN_MILLS,
     MAX_COMMAND_DELAY_IN_MILLS,
     DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS,
     COMMAND_STATUS,
-    DEFAULT_COMMAND_DELAY_IN_MILLS,
 } from '../constants/constants.js';
 
 /**
@@ -83,7 +83,7 @@ class CommandExecutor {
      */
     async _execute(executeCommand) {
         const command = executeCommand;
-        const now = Date.now();
+        const now = new Date().getTime() / 1000;
         await this._update(command, {
             started_at: now,
         });
@@ -257,14 +257,14 @@ class CommandExecutor {
     async add(addCommand, addDelay = 0, insert = true) {
         let command = addCommand;
         let delay = addDelay;
-        const now = Date.now();
+        const now = new Date().getTime() / 1000;
 
-        if (delay != null && delay > DEFAULT_COMMAND_DELAY_IN_MILLS) {
+        if (delay != null && delay > MAX_COMMAND_DELAY_IN_MILLS) {
             if (command.ready_at == null) {
                 command.ready_at = now;
             }
             command.ready_at += delay;
-            delay = DEFAULT_COMMAND_DELAY_IN_MILLS;
+            delay = MAX_COMMAND_DELAY_IN_MILLS;
         }
 
         if (insert) {
@@ -350,7 +350,7 @@ class CommandExecutor {
             command.sequence = command.sequence.slice(1);
         }
         if (!command.ready_at) {
-            command.ready_at = Date.now(); // take current time
+            command.ready_at = new Date().getTime() / 1000; // take current time
         }
         if (command.delay == null) {
             command.delay = 0;
