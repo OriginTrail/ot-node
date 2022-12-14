@@ -260,7 +260,7 @@ class ShardingTableService {
             .mul(assertionSize)
             .mul(epochsNumber)
             .mul(r0)
-            .div(peerRecords.length * 1024)
+            .div(1024)
             .toString();
     }
 
