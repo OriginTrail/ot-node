@@ -34,7 +34,7 @@ class EpochCommand extends Command {
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
             sequence: [],
-            delay,
+            delay: delay * 1000,
             data: {
                 blockchain,
                 agreementId,

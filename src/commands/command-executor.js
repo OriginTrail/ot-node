@@ -6,7 +6,7 @@ import {
     MAX_COMMAND_DELAY_IN_MILLS,
     DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS,
     COMMAND_STATUS,
-    DEFAULT_COMMAND_DELAY_IN_SECONDS,
+    DEFAULT_COMMAND_DELAY_IN_MILLS,
 } from '../constants/constants.js';
 
 /**
@@ -83,7 +83,7 @@ class CommandExecutor {
      */
     async _execute(executeCommand) {
         const command = executeCommand;
-        const now = new Date().getTime() / 1000;
+        const now = Date.now();
         await this._update(command, {
             started_at: now,
         });
@@ -242,7 +242,7 @@ class CommandExecutor {
             this.logger.warn(`Command '${name}' will not be executed.`);
             return;
         }
-        await this.add(handler.default(), DEFAULT_COMMAND_DELAY_IN_SECONDS, true);
+        await this.add(handler.default(), DEFAULT_COMMAND_DELAY_IN_MILLS, true);
         if (this.verboseLoggingEnabled) {
             this.logger.trace(`Permanent command ${name} created.`);
         }
@@ -257,14 +257,14 @@ class CommandExecutor {
     async add(addCommand, addDelay = 0, insert = true) {
         let command = addCommand;
         let delay = addDelay;
-        const now = new Date().getTime() / 1000;
+        const now = Date.now();
 
-        if (delay != null && delay > DEFAULT_COMMAND_DELAY_IN_SECONDS) {
+        if (delay != null && delay > DEFAULT_COMMAND_DELAY_IN_MILLS) {
             if (command.ready_at == null) {
                 command.ready_at = now;
             }
             command.ready_at += delay;
-            delay = DEFAULT_COMMAND_DELAY_IN_SECONDS;
+            delay = DEFAULT_COMMAND_DELAY_IN_MILLS;
         }
 
         if (insert) {
@@ -275,7 +275,7 @@ class CommandExecutor {
                 (timeoutCommand) => {
                     this.queue.push(timeoutCommand);
                 },
-                delay * 1000,
+                delay,
                 command,
             );
         } else {
@@ -350,7 +350,7 @@ class CommandExecutor {
             command.sequence = command.sequence.slice(1);
         }
         if (!command.ready_at) {
-            command.ready_at = new Date().getTime() / 1000; // take current time
+            command.ready_at = Date.now(); // take current time
         }
         if (command.delay == null) {
             command.delay = 0;
