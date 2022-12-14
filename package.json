@@ -79,7 +79,6 @@
         "async-mutex": "^0.3.2",
         "awilix": "^7.0.3",
         "axios": "^0.27.2",
-        "bignumber.js": "^9.1.0",
         "cors": "^2.8.5",
         "deep-extend": "^0.6.0",
         "dkg-evm-module": "^3.2.0",
