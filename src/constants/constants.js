@@ -1,12 +1,12 @@
-import { BigNumber } from 'bignumber.js';
+import { BigNumber } from 'ethers';
 
-export const UINT256_MAX_BN = new BigNumber(2).pow(256).minus(1);
+export const UINT256_MAX_BN = BigNumber.from(2).pow(256).sub(1);
 
-export const UINT32_MAX_BN = new BigNumber(2).pow(32).minus(1);
+export const UINT32_MAX_BN = BigNumber.from(2).pow(32).sub(1);
 
-export const STAKE_UINT256_MULTIPLIER_BN = UINT256_MAX_BN.dividedBy(500000000);
+export const STAKE_UINT256_MULTIPLIER_BN = UINT256_MAX_BN.div(500000000);
 
-export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN.dividedBy(UINT32_MAX_BN);
+export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN.div(UINT32_MAX_BN);
 
 export const SCHEMA_CONTEXT = 'http://schema.org/';
 
