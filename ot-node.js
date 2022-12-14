@@ -128,7 +128,7 @@ class OTNode {
     async executeCleanOperationalDatabaseMigration() {
         const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
         const cleanOperationalDatabaseMigration = new CleanOperationalDatabaseMigration(
-            'CleanOperationalDatabaseMigration4',
+            'CleanOperationalDatabaseMigration5',
             this.logger,
             this.config,
             repositoryModuleManager,

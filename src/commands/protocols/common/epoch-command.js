@@ -24,7 +24,12 @@ class EpochCommand extends Command {
 
         // delay by 10% of commit window length
         const offset =
-            Number(await this.blockchainModuleManager.getCommitWindowDuration(blockchain)) * 0.1;
+            ((Number(agreementData.epochLength) *
+                Number(
+                    await this.blockchainModuleManager.getCommitWindowDurationPerc(blockchain),
+                )) /
+                100) *
+            0.1;
 
         const delay = nextEpochStartTime - Math.floor(Date.now() / 1000) + offset;
 
@@ -34,7 +39,7 @@ class EpochCommand extends Command {
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
             sequence: [],
-            delay,
+            delay: delay * 1000,
             data: {
                 blockchain,
                 agreementId,
