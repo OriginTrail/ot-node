@@ -104,8 +104,11 @@ const wallets = accountPrivateKeys.map((privateKey) => ({
 const deployingWallet = wallets[0];
 
 const testParametersStorageParams = {
-    epochLength: 8*60, // 8 minutes
-    commitWindowDuration: 6*60 // 6 minutes
+    epochLength: 6*60, // 6 minutes
+    commitWindowDurationPerc: 33, // 2 minutes
+    minProofWindowOffsetPerc: 66, // 4 minutes
+    maxProofWindowOffsetPerc: 66, // 4 minutes
+    proofWindowDurationPerc: 33, // 2 minutes
 }
 /**
  * LocalBlockchain represent small wrapper around the Ganache.
