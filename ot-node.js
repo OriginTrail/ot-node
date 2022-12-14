@@ -9,7 +9,6 @@ import { CONTRACTS, MIN_NODE_VERSION } from './src/constants/constants.js';
 import FileService from './src/service/file-service.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
-import CleanOperationalDatabaseMigration from './src/migration/clean-operational-database-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -44,7 +43,6 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
-        await this.executeCleanOperationalDatabaseMigration();
         await this.listenOnHubContractChanges();
 
         await this.createProfiles();
@@ -122,23 +120,6 @@ class OTNode {
         } catch (e) {
             this.logger.error(`Module initialization failed. Error message: ${e.message}`);
             this.stop(1);
-        }
-    }
-
-    async executeCleanOperationalDatabaseMigration() {
-        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
-        const cleanOperationalDatabaseMigration = new CleanOperationalDatabaseMigration(
-            'CleanOperationalDatabaseMigration4',
-            this.logger,
-            this.config,
-            repositoryModuleManager,
-        );
-        if (!(await cleanOperationalDatabaseMigration.migrationAlreadyExecuted())) {
-            await cleanOperationalDatabaseMigration.migrate();
-            if (process.env !== 'development' && process.env !== 'test') {
-                this.logger.info('Operational database cleanup completed. Node will now restart!');
-                process.exit(1);
-            }
         }
     }
 
