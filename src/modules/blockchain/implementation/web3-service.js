@@ -606,15 +606,15 @@ class Web3Service {
     }
 
     async getR2() {
-        return this.callContractFunction(this.ParametersStorageContract, 'R2', []);
+        return this.callContractFunction(this.ParametersStorageContract, 'r2', []);
     }
 
     async getR1() {
-        return this.callContractFunction(this.ParametersStorageContract, 'R1', []);
+        return this.callContractFunction(this.ParametersStorageContract, 'r1', []);
     }
 
     async getR0() {
-        return this.callContractFunction(this.ParametersStorageContract, 'R0', []);
+        return this.callContractFunction(this.ParametersStorageContract, 'r0', []);
     }
 
     async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch, callback) {
@@ -739,10 +739,10 @@ class Web3Service {
         if (!isRpcError) throw error;
     }
 
-    async getCommitWindowDuration() {
+    async getCommitWindowDurationPerc() {
         return this.callContractFunction(
             this.ParametersStorageContract,
-            'commitWindowDuration',
+            'commitWindowDurationPerc',
             [],
         );
     }

@@ -217,8 +217,8 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'getR0');
     }
 
-    async getCommitWindowDuration(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getCommitWindowDuration');
+    async getCommitWindowDurationPerc(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getCommitWindowDurationPerc');
     }
 
     async getProofWindowDurationPerc(blockchain) {
