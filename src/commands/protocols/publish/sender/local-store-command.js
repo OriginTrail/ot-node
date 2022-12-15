@@ -33,6 +33,7 @@ class LocalStoreCommand extends Command {
         if (this.config.privateNode) {
             await this.publishService.markOperationAsCompleted(operationId, {}, [
                 OPERATION_ID_STATUS.PUBLISH.PUBLISH_END,
+                OPERATION_ID_STATUS.COMPLETED,
             ]);
             return Command.empty();
         }
