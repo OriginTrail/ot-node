@@ -50,8 +50,8 @@ install_aliases() {
 
 install_directory() {
     ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive"
-    BRANCH="v6/release/testnet"
-    BRANCH_DIR="/root/ot-node-6-release-testnet"
+    BRANCH="v6/release/mainnet"
+    BRANCH_DIR="/root/ot-node-6-release-mainnet"
 
     perform_step wget https://$ARCHIVE_REPOSITORY_URL/$BRANCH.zip "Downloading node files"
     perform_step unzip *.zip "Unzipping node files"
@@ -254,7 +254,7 @@ install_node() {
 
     perform_step npm ci --omit=dev --ignore-scripts "Executing npm install"
 
-    echo "NODE_ENV=testnet" >> $OTNODE_DIR/.env
+    echo "NODE_ENV=mainnet" >> $OTNODE_DIR/.env
 
     perform_step touch $CONFIG_DIR/.origintrail_noderc "Configuring node config file"
     perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}, "modules": {"tripleStore":{"defaultImplementation": $tripleStore}}}' > $CONFIG_DIR/.origintrail_noderc) "Adding tripleStore $tripleStore to node config file"
