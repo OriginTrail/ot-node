@@ -4,7 +4,7 @@ import Command from '../../../command.js';
 class LocalStoreCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.publishService;
+        this.publishService = ctx.publishService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_ERROR;
     }
@@ -17,7 +17,7 @@ class LocalStoreCommand extends Command {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
 
-        await this.operationService.localStoreAsset(
+        await this.publishService.localStoreAsset(
             assertionId,
             command.data.blockchain,
             command.data.contract,
@@ -30,6 +30,12 @@ class LocalStoreCommand extends Command {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
         );
 
+        if (this.config.privateNode) {
+            await this.publishService.markOperationAsCompleted(operationId, {}, [
+                OPERATION_ID_STATUS.PUBLISH.PUBLISH_END,
+            ]);
+            return Command.empty();
+        }
         return this.continueSequence(command.data, command.sequence);
     }
 

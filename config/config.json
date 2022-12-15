@@ -180,6 +180,7 @@
             "sendTelemetryData": false,
             "signalingServerUrl": "null"
         },
+        "privateNode": false,
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
@@ -313,6 +314,7 @@
             "sendTelemetryData": false,
             "signalingServerUrl": "null"
         },
+        "privateNode": false,
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
@@ -467,6 +469,7 @@
             "sendTelemetryData": true,
             "signalingServerUrl": "https://testnet-signaling.origin-trail.network/signal"
         },
+        "privateNode": false,
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
@@ -622,6 +625,7 @@
             "sendTelemetryData": true,
             "signalingServerUrl": "https://mainnet-signaling.origin-trail.network/signal"
         },
+        "privateNode": false,
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,

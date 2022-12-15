@@ -44,8 +44,11 @@ class PublishController extends BaseController {
                 `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
             );
 
-            const commandSequence = req.body.localStore ? ['localStoreCommand'] : [];
-            commandSequence.push('networkPublishCommand');
+            const commandSequence =
+                req.body.localStore || this.config.privateNode ? ['localStoreCommand'] : [];
+            if (!this.config.privateNode) {
+                commandSequence.push('networkPublishCommand');
+            }
 
             await this.commandExecutor.add({
                 name: 'validateAssertionCommand',
