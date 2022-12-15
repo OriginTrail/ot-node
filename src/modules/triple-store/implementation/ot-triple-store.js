@@ -139,7 +139,7 @@ class OtTripleStore {
         // no media type is passed because of comunica bug
         // https://github.com/comunica/comunica/issues/1034
         const result = await this._executeQuery(query);
-        return JSON.parse(result);
+        return result ? JSON.parse(result) : [];
     }
 
     async ask(query) {
