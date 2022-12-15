@@ -69,7 +69,7 @@ class ProtocolMessageCommand extends Command {
     }
 
     messageTimeout() {
-        throw Error('getTimeout not implemented');
+        throw Error('messageTimeout not implemented');
     }
 
     async handleAck(command) {
