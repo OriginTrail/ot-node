@@ -146,13 +146,22 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async submitCommit(blockchain, assetContractAddress, tokenId, keyword, hashFunctionId, epoch) {
+    async submitCommit(
+        blockchain,
+        assetContractAddress,
+        tokenId,
+        keyword,
+        hashFunctionId,
+        epoch,
+        callback,
+    ) {
         return this.callImplementationFunction(blockchain, 'submitCommit', [
             assetContractAddress,
             tokenId,
             keyword,
             hashFunctionId,
             epoch,
+            callback,
         ]);
     }
 
@@ -180,6 +189,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         epoch,
         proof,
         chunkHash,
+        callback,
     ) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.sendProof(
@@ -190,6 +200,7 @@ class BlockchainModuleManager extends BaseModuleManager {
                 epoch,
                 proof,
                 chunkHash,
+                callback,
             );
         }
     }
@@ -206,8 +217,8 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'getR0');
     }
 
-    async getCommitWindowDuration(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getCommitWindowDuration');
+    async getCommitWindowDurationPerc(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getCommitWindowDurationPerc');
     }
 
     async getProofWindowDurationPerc(blockchain) {
@@ -229,10 +240,14 @@ class BlockchainModuleManager extends BaseModuleManager {
     }
 
     callImplementationFunction(blockchain, functionName, args = []) {
-        const split = blockchain.split(':');
-        const [name] = split;
-        if (this.getImplementation(name)) {
-            return this.getImplementation(name).module[functionName](...args);
+        if (blockchain) {
+            const split = blockchain.split(':');
+            const [name] = split;
+            if (this.getImplementation(name)) {
+                return this.getImplementation(name).module[functionName](...args);
+            }
+        } else {
+            return this.getImplementation().module[functionName](...args);
         }
     }
 }

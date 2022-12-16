@@ -21,19 +21,19 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.GET.GET_REMOTE_START,
         );
 
-        // TODO: validate assertionId / ual
-
         const nquads = await this.operationService.localGet(assertionId, operationId);
 
-        const messageType = nquads.length
-            ? NETWORK_MESSAGE_TYPES.RESPONSES.ACK
-            : NETWORK_MESSAGE_TYPES.RESPONSES.NACK;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.GET.GET_REMOTE_END,
         );
 
-        return { messageType, messageData: { nquads } };
+        return nquads.length
+            ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: { nquads } }
+            : {
+                  messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                  messageData: { errorMessage: `Invalid number of nquads: ${nquads.length}` },
+              };
     }
 
     /**
