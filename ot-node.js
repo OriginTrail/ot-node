@@ -53,7 +53,11 @@ class OTNode {
 
         await this.initializeRouters();
         await this.startListeningOnBlockchainEvents();
-        this.logger.info('Node is up and running!');
+        if (this.config.privateNode) {
+            this.logger.info('Node is up and running in private mode!');
+        } else {
+            this.logger.info('Node is up and running!');
+        }
     }
 
     checkNodeVersion() {

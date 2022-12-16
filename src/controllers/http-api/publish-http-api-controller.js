@@ -8,6 +8,7 @@ class PublishController extends BaseController {
         this.commandExecutor = ctx.commandExecutor;
         this.operationIdService = ctx.operationIdService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.config = ctx.config;
     }
 
     async handlePublishRequest(req, res) {

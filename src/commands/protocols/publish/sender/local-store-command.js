@@ -35,6 +35,8 @@ class LocalStoreCommand extends Command {
                 OPERATION_ID_STATUS.PUBLISH.PUBLISH_END,
                 OPERATION_ID_STATUS.COMPLETED,
             ]);
+            this.logger.info('Network publish skipped node is running in private mode');
+            this.logger.info(`Publish with operation id: ${operationId} completed!`);
             return Command.empty();
         }
         return this.continueSequence(command.data, command.sequence);
