@@ -11,8 +11,8 @@ class BidSuggestionController extends BaseController {
         // Uncomment when switch to ethers.js
         // if (
         //     !(await this.blockchainModuleManager.isAssetStorageContract(
-        //         req.body.blockchain,
-        //         req.body.contentAssetStorageAddress,
+        //         req.query.blockchain,
+        //         req.query.contentAssetStorageAddress,
         //     ))
         // )
         //     this.returnResponse(res, 400, {
@@ -21,8 +21,8 @@ class BidSuggestionController extends BaseController {
         //     });
         // if (
         //     !(await this.blockchainModuleManager.isHashFunction(
-        //         req.body.blockchain,
-        //         req.body.hashFunctionId,
+        //         req.query.blockchain,
+        //         req.query.hashFunctionId,
         //     ))
         // )
         //     this.returnResponse(res, 400, {
@@ -37,7 +37,7 @@ class BidSuggestionController extends BaseController {
             contentAssetStorageAddress,
             firstAssertionId,
             hashFunctionId,
-        } = req.body;
+        } = req.query;
 
         this.returnResponse(res, 200, {
             bidSuggestion: await this.shardingTableService.getBidSuggestion(

@@ -13,11 +13,11 @@ export default (blockchainImplementationNames) => ({
             enum: blockchainImplementationNames,
         },
         epochsNumber: {
-            type: 'integer',
+            type: 'number',
             minimum: 1,
         },
         assertionSize: {
-            type: 'integer',
+            type: 'number',
             minimum: 1,
         },
         contentAssetStorageAddress: {
@@ -31,7 +31,7 @@ export default (blockchainImplementationNames) => ({
             maxLength: 66,
         },
         hashFunctionId: {
-            type: 'integer',
+            type: 'number',
             minimum: 1,
         },
     },
