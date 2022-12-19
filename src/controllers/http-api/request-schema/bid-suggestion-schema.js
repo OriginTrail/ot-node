@@ -1,6 +1,13 @@
 export default (blockchainImplementationNames) => ({
     type: 'object',
-    required: ['blockchain', 'epochsNumber', 'assertionSize'],
+    required: [
+        'blockchain',
+        'epochsNumber',
+        'assertionSize',
+        'contentAssetStorageAddress',
+        'firstAssertionId',
+        'hashFunctionId',
+    ],
     properties: {
         blockchain: {
             enum: blockchainImplementationNames,
@@ -15,11 +22,13 @@ export default (blockchainImplementationNames) => ({
         },
         contentAssetStorageAddress: {
             type: 'string',
-            length: 42,
+            minLength: 42,
+            maxLength: 42,
         },
         firstAssertionId: {
             type: 'string',
-            length: 66,
+            minLength: 66,
+            maxLength: 66,
         },
         hashFunctionId: {
             type: 'integer',
