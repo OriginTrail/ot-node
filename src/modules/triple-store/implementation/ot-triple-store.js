@@ -1,4 +1,5 @@
 import { QueryEngine as Engine } from '@comunica/query-sparql';
+import axios from 'axios';
 import { setTimeout } from 'timers/promises';
 import {
     SCHEMA_CONTEXT,
@@ -118,14 +119,16 @@ class OtTripleStore {
         const exists = await this.assertionExists(assertionId);
 
         if (!exists) {
-            const insertion = `
-            PREFIX schema: <${SCHEMA_CONTEXT}>
-            INSERT DATA {
-                GRAPH <assertion:${assertionId}> { 
-                    ${assertionNquads} 
-                } 
-            }`;
-            await this.queryEngine.queryVoid(insertion, this.insertContext);
+            this.config.axios = {
+                method: 'post',
+                url: `${this.config.url}/sparql?context-uri=assertion:${assertionId}`,
+                headers: {
+                    'Content-Type': 'text/x-nquads',
+                },
+                data: assertionNquads,
+            };
+
+            return axios(this.config.axios);
         }
     }
 
