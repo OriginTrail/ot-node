@@ -7,11 +7,23 @@ export default (blockchainImplementationNames) => ({
         },
         epochsNumber: {
             type: 'integer',
-            minimum: 0,
+            minimum: 1,
         },
         assertionSize: {
             type: 'integer',
-            minimum: 0,
+            minimum: 1,
+        },
+        contentAssetStorageAddress: {
+            type: 'string',
+            length: 42,
+        },
+        firstAssertionId: {
+            type: 'string',
+            length: 66,
+        },
+        hashFunctionId: {
+            type: 'integer',
+            minimum: 1,
         },
     },
 });

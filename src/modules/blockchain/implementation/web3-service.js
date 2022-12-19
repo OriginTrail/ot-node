@@ -520,6 +520,14 @@ class Web3Service {
         return timestamp < timestampThirtyDaysInPast;
     }
 
+    async isHubContract(contractAddress) {
+        return this.callContractFunction(this.hubContract, 'isContract', [contractAddress]);
+    }
+
+    async isAssetStorageContract(contractAddress) {
+        return this.callContractFunction(this.hubContract, 'isAssetStorage', [contractAddress]);
+    }
+
     async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
         return this.callContractFunction(
             this.assetStorageContracts[assetContractAddress.toLowerCase()],
@@ -753,6 +761,18 @@ class Web3Service {
             'proofWindowDurationPerc',
             [],
         );
+    }
+
+    async isHashFunction(hashFunctionId) {
+        return this.callContractFunction(this.HashingProxyContract, 'isHashFunction', [
+            hashFunctionId,
+        ]);
+    }
+
+    async isScoreFunction(scoreFunctionId) {
+        return this.callContractFunction(this.ScoringProxyContract, 'isScoreFunction', [
+            scoreFunctionId,
+        ]);
     }
 
     async callScoreFunction(scoreFunctionId, hashFunctionId, peerId, keyword, stake) {

@@ -3,10 +3,26 @@ import BaseController from './base-http-api-controller.js';
 class BidSuggestionController extends BaseController {
     constructor(ctx) {
         super(ctx);
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.shardingTableService = ctx.shardingTableService;
     }
 
     async handleBidSuggestionRequest(req, res) {
+        if (
+            !(await this.blockchainModuleManager.isAssetStorageContract(
+                req.query.contentAssetStorageAddress,
+            ))
+        )
+            this.returnResponse(res, 400, {
+                code: 400,
+                message: `Invalid Content Asset Storage Contract Address`,
+            });
+        if (!(await this.blockchainModuleManager.isHashFunction(req.query.hashFunctionId)))
+            this.returnResponse(res, 400, {
+                code: 400,
+                message: `Invalid Hash Function ID`,
+            });
+
         const {
             blockchain,
             epochsNumber,

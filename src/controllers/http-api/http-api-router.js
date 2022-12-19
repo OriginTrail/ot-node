@@ -53,9 +53,13 @@ class HttpApiRouter {
             this.infoHttpApiController.handleInfoRequest(req, res);
         });
 
-        this.httpClientModuleManager.get('/bid-suggestion', (req, res) => {
-            this.bidSuggestionHttpApiController.handleBidSuggestionRequest(req, res);
-        });
+        this.httpClientModuleManager.get(
+            '/bid-suggestion',
+            (req, res) => {
+                this.bidSuggestionHttpApiController.handleBidSuggestionRequest(req, res);
+            },
+            { requestSchema: this.jsonSchemaService.bidSuggestionSchema() },
+        );
     }
 
     async initializeBeforeMiddlewares() {
