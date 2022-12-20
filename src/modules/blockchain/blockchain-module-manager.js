@@ -110,6 +110,10 @@ class BlockchainModuleManager extends BaseModuleManager {
         return Promise.all(getEventsPromises);
     }
 
+    toBigNumber(blockchain, value) {
+        return this.callImplementationFunction(blockchain, 'toBigNumber', [value]);
+    }
+
     keccak256(blockchain, bytesLikeData) {
         return this.callImplementationFunction(blockchain, 'keccak256', [bytesLikeData]);
     }
@@ -130,12 +134,18 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'convertHexToAscii', [hexString]);
     }
 
-    convertToWei(blockchain, ether, fromUnit) {
-        return this.callImplementationFunction(blockchain, 'convertToWei', [ether, fromUnit]);
+    convertBytesToUint8Array(blockchain, bytesLikeData) {
+        return this.callImplementationFunction(blockchain, 'convertBytesToUint8Array', [
+            bytesLikeData,
+        ]);
     }
 
-    convertFromWei(blockchain, ether, toUnit) {
-        return this.callImplementationFunction(blockchain, 'convertFromWei', [ether, toUnit]);
+    convertToWei(blockchain, value, fromUnit) {
+        return this.callImplementationFunction(blockchain, 'convertToWei', [value, fromUnit]);
+    }
+
+    convertFromWei(blockchain, value, toUnit) {
+        return this.callImplementationFunction(blockchain, 'convertFromWei', [value, toUnit]);
     }
 
     async isCommitWindowOpen(blockchain, agreementId, epoch) {

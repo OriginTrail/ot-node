@@ -708,6 +708,10 @@ class Web3Service {
         return this.getImplementationName();
     }
 
+    toBigNumber(value) {
+        return ethers.BigNumber.from(value);
+    }
+
     keccak256(bytesLikeData) {
         return ethers.keccak256(bytesLikeData);
     }
@@ -728,12 +732,16 @@ class Web3Service {
         return ethers.utils.toUtf8String(hexString);
     }
 
-    convertToWei(ether, fromUnit = 'ether') {
-        return ethers.utils.parseUnits(ether.toString(), fromUnit).toString();
+    convertBytesToUint8Array(bytesLikeData) {
+        return ethers.utils.arrayify(bytesLikeData);
     }
 
-    convertFromWei(ether, toUnit = 'ether') {
-        return ethers.utils.formatUnits(ether.toString(), toUnit).toString();
+    convertToWei(value, fromUnit = 'ether') {
+        return ethers.utils.parseUnits(value.toString(), fromUnit).toString();
+    }
+
+    convertFromWei(value, toUnit = 'ether') {
+        return ethers.utils.formatUnits(value, toUnit);
     }
 
     async healthCheck() {

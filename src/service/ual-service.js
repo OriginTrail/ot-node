@@ -1,6 +1,3 @@
-/* eslint-disable no-restricted-globals */
-import { ethers } from 'ethers';
-
 class UALService {
     constructor(ctx) {
         this.config = ctx.config;
@@ -46,7 +43,11 @@ class UALService {
             tokenId,
             index,
         );
-        return ethers.utils.solidityPack(['address', 'bytes32'], [contract, firstAssertionId]);
+        return this.blockchainModuleManager.encodePacked(
+            blockchain,
+            ['address', 'bytes32'],
+            [contract, firstAssertionId],
+        );
     }
 }
 
