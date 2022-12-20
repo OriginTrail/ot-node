@@ -24,13 +24,17 @@ async function setStake(
     hubContractAddress,
 ) {
     const provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);
-    const operationalWallet = new ethers.Wallet(operationalWalletPrivateKey);
-    const managementWallet = new ethers.Wallet(managementWalletPrivateKey);
+    const operationalWallet = new ethers.Wallet(operationalWalletPrivateKey, provider);
+    const managementWallet = new ethers.Wallet(managementWalletPrivateKey, provider);
 
     const hubContract = new ethers.Contract(hubContractAddress, Hub.abi, provider);
 
     const stakingContractAddress = await hubContract.getContractAddress('Staking');
-    const stakingContract = new ethers.Contract(stakingContractAddress, Staking.abi, provider);
+    const stakingContract = new ethers.Contract(
+        stakingContractAddress,
+        Staking.abi,
+        managementWallet,
+    );
 
     const identityStorageAddress = await hubContract.getContractAddress('IdentityStorage');
     const identityStorage = new ethers.Contract(
@@ -42,24 +46,23 @@ async function setStake(
     const identityId = await identityStorage.getIdentityId(operationalWallet.address);
 
     const tokenContractAddress = await hubContract.getContractAddress('Token');
-    const tokenContract = new ethers.Contract(tokenContractAddress, ERC20Token.abi, provider);
+    const tokenContract = new ethers.Contract(
+        tokenContractAddress,
+        ERC20Token.abi,
+        managementWallet,
+    );
 
     const stakeWei = ethers.utils.parseEther(stake);
 
-    const managementWalletSigner = managementWallet.connect(provider);
-    await tokenContract
-        .connect(managementWalletSigner)
-        .increaseAllowance(stakingContractAddress, stakeWei, {
-            gasPrice: process.env.NODE_ENV === 'development' ? undefined : 8,
-            gasLimit: 500_000,
-        });
+    await tokenContract.increaseAllowance(stakingContractAddress, stakeWei, {
+        gasPrice: process.env.NODE_ENV === 'development' ? undefined : 8,
+        gasLimit: 500_000,
+    });
     // TODO: Add ABI instead of hard-coded function definition
-    await stakingContract
-        .connect(managementWalletSigner)
-        ['addStake(uint72,uint96)'](identityId, stakeWei, {
-            gasPrice: process.env.NODE_ENV === 'development' ? undefined : 1_000,
-            gasLimit: 500_000,
-        });
+    await stakingContract['addStake(uint72,uint96)'](identityId, stakeWei, {
+        gasPrice: process.env.NODE_ENV === 'development' ? undefined : 1_000,
+        gasLimit: 500_000,
+    });
 }
 
 const expectedArguments = [

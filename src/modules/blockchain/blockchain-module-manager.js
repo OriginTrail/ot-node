@@ -110,8 +110,24 @@ class BlockchainModuleManager extends BaseModuleManager {
         return Promise.all(getEventsPromises);
     }
 
-    convertHexToAscii(blockchain, peerIdHex) {
-        return this.callImplementationFunction(blockchain, 'convertHexToAscii', [peerIdHex]);
+    keccak256(blockchain, bytesLikeData) {
+        return this.callImplementationFunction(blockchain, 'keccak256', [bytesLikeData]);
+    }
+
+    sha256(blockchain, bytesLikeData) {
+        return this.callImplementationFunction(blockchain, 'sha256', [bytesLikeData]);
+    }
+
+    encodePacked(blockchain, types, values) {
+        return this.callImplementationFunction(blockchain, 'encodePacked', [types, values]);
+    }
+
+    convertAsciiToHex(blockchain, string) {
+        return this.callImplementationFunction(blockchain, 'convertAsciiToHex', [string]);
+    }
+
+    convertHexToAscii(blockchain, hexString) {
+        return this.callImplementationFunction(blockchain, 'convertHexToAscii', [hexString]);
     }
 
     convertToWei(blockchain, ether, fromUnit) {
