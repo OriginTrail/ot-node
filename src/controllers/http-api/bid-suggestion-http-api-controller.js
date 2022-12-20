@@ -3,11 +3,18 @@ import BaseController from './base-http-api-controller.js';
 class BidSuggestionController extends BaseController {
     constructor(ctx) {
         super(ctx);
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.shardingTableService = ctx.shardingTableService;
     }
 
     async handleBidSuggestionRequest(req, res) {
+        if ((await this.repositoryModuleManager.getPeersCount(req.query.blockchain)) === 0)
+            this.returnResponse(res, 400, {
+                code: 400,
+                message: 'Empty Sharding Table',
+            });
+
         // Uncomment when switch to ethers.js
         // if (
         //     !(await this.blockchainModuleManager.isAssetStorageContract(
