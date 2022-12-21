@@ -50,33 +50,29 @@ class Web3Service {
 
     initializeTransactionQueue(concurrency) {
         this.transactionQueue = async.queue(async (args, cb) => {
-            const { contractInstance, functionName, transactionArgs, future } = args;
+            const { contractInstance, functionName, transactionArgs } = args;
             try {
-                const result = this._executeContractFunction(
+                const result = await this._executeContractFunction(
                     contractInstance,
                     functionName,
                     transactionArgs,
                 );
-                future.resolve(result);
+                cb({ result });
             } catch (error) {
-                future.revert(error);
+                cb({ error });
             }
-            cb();
         }, concurrency);
     }
 
-    async queueTransaction(contractInstance, functionName, transactionArgs) {
-        return new Promise((resolve, reject) => {
-            this.transactionQueue.push({
+    async queueTransaction(contractInstance, functionName, transactionArgs, callback) {
+        this.transactionQueue.push(
+            {
                 contractInstance,
                 functionName,
                 transactionArgs,
-                future: {
-                    resolve,
-                    reject,
-                },
-            });
-        });
+            },
+            callback,
+        );
     }
 
     async initializeWeb3() {
@@ -339,7 +335,7 @@ class Web3Service {
         while (retryCount + 1 <= maxNumberOfRetries && !profileCreated) {
             try {
                 // eslint-disable-next-line no-await-in-loop
-                await this.queueTransaction(this.ProfileContract, 'createProfile', [
+                await this._executeContractFunction(this.ProfileContract, 'createProfile', [
                     this.getManagementKey(),
                     this.convertAsciiToHex(peerId),
                     this.config.sharesTokenName,
@@ -440,7 +436,7 @@ class Web3Service {
                 if (
                     !transactionRetried &&
                     (error.message.includes(`Transaction was not mined within`) ||
-                        error.message.includes(`Pool(TooLowPriority { old: 0, new: 0 })`))
+                        error.message.includes(`Pool(TooLowPriority`))
                 ) {
                     gasPrice *= Math.ceil(1.2);
                     this.logger.warn(
@@ -452,7 +448,6 @@ class Web3Service {
                 }
             }
         }
-
         return result;
     }
 
@@ -527,7 +522,7 @@ class Web3Service {
 
     async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
         return this.callContractFunction(
-            this.assetStorageContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
+            this.assetStorageContracts[assetContractAddress.toLowerCase()],
             'getAssertionIdByIndex',
             [tokenId, index],
         );
@@ -535,7 +530,7 @@ class Web3Service {
 
     async getLatestAssertionId(assetContractAddress, tokenId) {
         return this.callContractFunction(
-            this.assetStorageContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
+            this.assetStorageContracts[assetContractAddress.toLowerCase()],
             'getLatestAssertionId',
             [tokenId],
         );
@@ -611,21 +606,24 @@ class Web3Service {
     }
 
     async getR2() {
-        return this.callContractFunction(this.ParametersStorageContract, 'R2', []);
+        return this.callContractFunction(this.ParametersStorageContract, 'r2', []);
     }
 
     async getR1() {
-        return this.callContractFunction(this.ParametersStorageContract, 'R1', []);
+        return this.callContractFunction(this.ParametersStorageContract, 'r1', []);
     }
 
     async getR0() {
-        return this.callContractFunction(this.ParametersStorageContract, 'R0', []);
+        return this.callContractFunction(this.ParametersStorageContract, 'r0', []);
     }
 
-    async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch) {
-        return this.queueTransaction(this.ServiceAgreementV1Contract, 'submitCommit', [
-            [assetContractAddress, tokenId, keyword, hashFunctionId, epoch],
-        ]);
+    async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch, callback) {
+        return this.queueTransaction(
+            this.ServiceAgreementV1Contract,
+            'submitCommit',
+            [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch]],
+            callback,
+        );
     }
 
     async isProofWindowOpen(agreementId, epoch) {
@@ -653,10 +651,14 @@ class Web3Service {
         epoch,
         proof,
         chunkHash,
+        callback,
     ) {
-        return this.queueTransaction(this.ServiceAgreementV1Contract, 'sendProof', [
-            [assetContractAddress, tokenId, keyword, hashFunctionId, epoch, proof, chunkHash],
-        ]);
+        return this.queueTransaction(
+            this.ServiceAgreementV1Contract,
+            'sendProof',
+            [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch, proof, chunkHash]],
+            callback,
+        );
     }
 
     async getShardingTableHead() {
@@ -737,10 +739,10 @@ class Web3Service {
         if (!isRpcError) throw error;
     }
 
-    async getCommitWindowDuration() {
+    async getCommitWindowDurationPerc() {
         return this.callContractFunction(
             this.ParametersStorageContract,
-            'commitWindowDuration',
+            'commitWindowDurationPerc',
             [],
         );
     }

@@ -50,7 +50,7 @@ class HandleProtocolMessageCommand extends Command {
             NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
             operationId,
             keywordUuid,
-            {},
+            { errorMessage },
         );
     }
 }

@@ -1,9 +1,11 @@
 /* eslint-disable */
+import 'dotenv/config';
 import mysql from 'mysql2';
 import path from 'path';
 import fs from 'fs';
-import { execSync } from 'child_process';
 import graphdb from 'graphdb';
+import appRootPath from 'app-root-path';
+import { LIBP2P_KEY_DIRECTORY, LIBP2P_KEY_FILENAME } from '../../src/constants/constants.js';
 
 const { server, http } = graphdb;
 
@@ -43,12 +45,17 @@ for (let i = 0; i < numberOfNodes; i += 1) {
         sharesTokenName: `LocalNode${i}`,
         sharesTokenSymbol: `LN${i}`,
     };
+    let appDataPath = `data${i}`;
     let nodeName;
     let template;
     let templatePath;
     if (i === 0) {
         template = bootstrapTemplate;
         templatePath = bootstrapTemplatePath;
+        fs.writeFileSync(
+            path.join(appRootPath.path, appDataPath, LIBP2P_KEY_DIRECTORY, LIBP2P_KEY_FILENAME),
+            bootstrapTemplate.modules.network.implementation['libp2p-service'].config.privateKey,
+        );
         console.log('Using the preexisting identity for the first node (bootstrap)');
         nodeName = 'bootstrap';
     } else {
@@ -70,7 +77,7 @@ for (let i = 0; i < numberOfNodes; i += 1) {
         'sequelize-repository'
     ].config.database = `operationaldb${i}`;
     template.modules.tripleStore.implementation['ot-graphdb'].config = tripleStoreConfig;
-    template.appDataPath = `data${i}`;
+    template.appDataPath = appDataPath;
 
     if (process.env.LOG_LEVEL) {
         template.logLevel = process.env.LOG_LEVEL;
@@ -88,15 +95,18 @@ for (let i = 0; i < numberOfNodes; i += 1) {
 
 async function dropDatabase(name, config) {
     console.log(`Dropping database: ${name}`);
+    const password = process.env.REPOSITORY_PASSWORD ?? config.password;
     const connection = mysql.createConnection({
         database: name,
         user: config.user,
         host: config.host,
-        password: config.password,
+        password,
     });
     try {
         await connection.promise().query(`DROP DATABASE IF EXISTS ${name};`);
-    } catch (e) {}
+    } catch (e) {
+        console.log(`Error while dropping database. Error: ${e}`);
+    }
     connection.destroy();
 }
 

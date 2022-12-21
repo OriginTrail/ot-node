@@ -78,7 +78,7 @@ class OperationService {
     }
 
     async markOperationAsFailed(operationId, message) {
-        this.logger.info(`${this.networkProtocol} for operationId: ${operationId} failed.`);
+        this.logger.info(`${this.operationName} for operationId: ${operationId} failed.`);
 
         await this.repositoryModuleManager.updateOperationStatus(
             this.operationName,
