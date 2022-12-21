@@ -47,7 +47,7 @@ class DataService {
      * @param bindings
      * @returns {*[]}
      */
-    parseBindings(bindings) {
+    parseBindings(bindings = []) {
         const result = [];
 
         for (const row of bindings) {

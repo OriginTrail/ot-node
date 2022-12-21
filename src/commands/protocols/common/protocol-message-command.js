@@ -49,6 +49,7 @@ class ProtocolMessageCommand extends Command {
             operationId,
             keyword,
             message,
+            this.messageTimeout(),
         );
 
         switch (response.header.messageType) {
@@ -65,6 +66,10 @@ class ProtocolMessageCommand extends Command {
                 );
                 return Command.empty();
         }
+    }
+
+    messageTimeout() {
+        throw Error('messageTimeout not implemented');
     }
 
     async handleAck(command) {

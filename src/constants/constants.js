@@ -135,6 +135,17 @@ export const NETWORK_MESSAGE_TYPES = {
     },
 };
 
+export const NETWORK_MESSAGE_TIMEOUT_MILLS = {
+    PUBLISH: {
+        INIT: 5 * 1000,
+        REQUEST: 10 * 1000,
+    },
+    GET: {
+        INIT: 5 * 1000,
+        REQUEST: 5 * 1000,
+    },
+};
+
 export const MAX_OPEN_SESSIONS = 10;
 
 export const ERROR_TYPE = {
