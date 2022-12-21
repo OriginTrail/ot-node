@@ -9,11 +9,11 @@ export default () => ({
             uniqueItems: true,
         },
         limit: {
-            type: 'integer',
+            type: 'number',
             minimum: 1,
         },
         offset: {
-            type: 'integer',
+            type: 'number',
             minimum: 0,
         },
     },

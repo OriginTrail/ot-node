@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { ethers } from 'ethers';
 import { createRequire } from 'module';
 import validateArguments from './utils.js';
