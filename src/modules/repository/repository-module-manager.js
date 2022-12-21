@@ -183,6 +183,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async getPeersCount(blockchain) {
+        if (this.initialized) {
+            return this.getImplementation().module.getPeersCount(blockchain);
+        }
+    }
+
     async getPeersToDial(limit, dialFrequencyMillis) {
         if (this.initialized) {
             return this.getImplementation().module.getPeersToDial(limit, dialFrequencyMillis);
