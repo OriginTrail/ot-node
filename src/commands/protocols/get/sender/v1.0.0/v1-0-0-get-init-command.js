@@ -1,5 +1,5 @@
 import ProtocolInitCommand from '../../../common/protocol-init-command.js';
-import { ERROR_TYPE } from '../../../../../constants/constants.js';
+import { NETWORK_MESSAGE_TIMEOUT_MILLS, ERROR_TYPE } from '../../../../../constants/constants.js';
 
 class GetInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
@@ -11,6 +11,10 @@ class GetInitCommand extends ProtocolInitCommand {
 
     async prepareMessage(command) {
         return { assertionId: command.data.assertionId };
+    }
+
+    messageTimeout() {
+        return NETWORK_MESSAGE_TIMEOUT_MILLS.GET.INIT;
     }
 
     /**

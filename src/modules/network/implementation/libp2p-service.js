@@ -15,6 +15,7 @@ import toobusy from 'toobusy-js';
 import { v5 as uuidv5 } from 'uuid';
 import { mkdir, writeFile, readFile, stat } from 'fs/promises';
 import ip from 'ip';
+import { TimeoutController } from 'timeout-abort-controller';
 import {
     NETWORK_API_RATE_LIMIT,
     NETWORK_API_SPAM_DETECTION,
@@ -278,7 +279,7 @@ class Libp2pService {
         };
     }
 
-    async sendMessage(protocol, peerId, messageType, operationId, keyword, message) {
+    async sendMessage(protocol, peerId, messageType, operationId, keyword, message, timeout) {
         const nackMessage = {
             header: { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK },
             data: {
@@ -371,15 +372,37 @@ class Libp2pService {
         let readResponseStart;
         let readResponseEnd;
         let response;
+        const timeoutController = new TimeoutController(timeout);
         try {
             readResponseStart = Date.now();
+
+            timeoutController.signal.addEventListener(
+                'abort',
+                async () => {
+                    stream.abort();
+                    response = null;
+                },
+                { once: true },
+            );
+
             response = await this._readMessageFromStream(
                 stream,
                 this.isResponseValid.bind(this),
                 remotePeerId.toB58String(),
             );
+
+            if (timeoutController.signal.aborted) {
+                throw Error('Message timed out!');
+            }
+
+            timeoutController.signal.removeEventListener('abort');
+            timeoutController.clear();
+
             readResponseEnd = Date.now();
         } catch (error) {
+            timeoutController.signal.removeEventListener('abort');
+            timeoutController.clear();
+
             readResponseEnd = Date.now();
             nackMessage.data.errorMessage = `Unable to read response from peer ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, execution time: ${
                 readResponseEnd - readResponseStart
@@ -387,6 +410,7 @@ class Libp2pService {
 
             return nackMessage;
         }
+
         this.logger.trace(
             `Receiving response from ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${
                 response.message?.header?.messageType

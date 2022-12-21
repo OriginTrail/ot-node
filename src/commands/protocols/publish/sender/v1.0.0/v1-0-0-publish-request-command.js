@@ -1,5 +1,5 @@
 import ProtocolRequestCommand from '../../../common/protocol-request-command.js';
-import { ERROR_TYPE } from '../../../../../constants/constants.js';
+import { NETWORK_MESSAGE_TIMEOUT_MILLS, ERROR_TYPE } from '../../../../../constants/constants.js';
 
 class PublishRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
@@ -17,6 +17,10 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         return {
             assertion,
         };
+    }
+
+    messageTimeout() {
+        return NETWORK_MESSAGE_TIMEOUT_MILLS.PUBLISH.REQUEST;
     }
 
     /**
