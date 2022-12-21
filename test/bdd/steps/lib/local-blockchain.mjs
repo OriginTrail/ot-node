@@ -65,7 +65,7 @@ const contentAsset = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/ContentAsset.json')
 )
 const contentAssetStorage = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/contentAssetStorage.json')
+    await readFile('node_modules/dkg-evm-module/build/contracts/ContentAssetStorage.json')
 )
 
 const accountPrivateKeys = JSON.parse(
