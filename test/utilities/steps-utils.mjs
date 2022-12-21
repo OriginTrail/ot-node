@@ -9,7 +9,7 @@ class StepsUtils {
     }
 
 
-    createNodeConfiguration(blockchain, wallet, managementWallet, nodeIndex, nodeName, rpcPort) {
+    createNodeConfiguration(blockchain, wallet, managementWallet, nodeIndex, nodeName, rpcPort, sharesTokenName, sharesTokenSymbol) {
         return {
             modules: {
                 blockchain:
@@ -26,6 +26,8 @@ class StepsUtils {
                                     evmOperationalWalletPrivateKey: wallet.privateKey,
                                     evmManagementWalletPublicKey: managementWallet.address,
                                     evmManagementPublicKey: managementWallet.address,
+                                    sharesTokenName,
+                                    sharesTokenSymbol
                                 },
                             },
                         },
