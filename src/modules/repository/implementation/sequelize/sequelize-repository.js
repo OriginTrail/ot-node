@@ -307,6 +307,14 @@ class SequelizeRepository {
         });
     }
 
+    async getPeersCount(blockchain) {
+        return this.models.shard.count({
+            where: {
+                blockchain_id: blockchain,
+            },
+        });
+    }
+
     async getPeersToDial(limit, dialFrequencyMillis) {
         return this.models.shard.findAll({
             attributes: ['peer_id'],
