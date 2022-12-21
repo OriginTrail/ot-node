@@ -3,6 +3,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     TRIPLE_STORE_REPOSITORIES,
+    COMMAND_RETRIES,
 } from '../../../../constants/constants.js';
 
 class CalculateProofsCommand extends EpochCommand {
@@ -13,7 +14,7 @@ class CalculateProofsCommand extends EpochCommand {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.operationIdService = ctx.operationIdService;
-
+        this.dataService = ctx.dataService;
         this.errorType = ERROR_TYPE.CALCULATE_PROOFS_ERROR;
     }
 
@@ -90,7 +91,7 @@ class CalculateProofsCommand extends EpochCommand {
                 proof,
             },
             period: 12 * 1000, // todo: get from blockchain / oracle
-            retries: 3,
+            retries: COMMAND_RETRIES.SUBMIT_PROOFS,
             transactional: false,
         });
 

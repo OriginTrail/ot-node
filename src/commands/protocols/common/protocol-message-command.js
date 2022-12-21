@@ -49,6 +49,7 @@ class ProtocolMessageCommand extends Command {
             operationId,
             keyword,
             message,
+            this.messageTimeout(),
         );
 
         switch (response.header.messageType) {
@@ -67,6 +68,10 @@ class ProtocolMessageCommand extends Command {
         }
     }
 
+    messageTimeout() {
+        throw Error('messageTimeout not implemented');
+    }
+
     async handleAck(command) {
         return this.continueSequence(command.data, command.sequence);
     }
@@ -75,10 +80,10 @@ class ProtocolMessageCommand extends Command {
         return Command.retry();
     }
 
-    async handleNack(command) {
+    async handleNack(command, responseData) {
         await this.markResponseAsFailed(
             command,
-            `Received NACK response from node during ${command.name}`,
+            `Received NACK response from node during ${command.name}. Error message: ${responseData.errorMessage}`,
         );
         return Command.empty();
     }
@@ -89,12 +94,9 @@ class ProtocolMessageCommand extends Command {
     }
 
     async markResponseAsFailed(command, errorMessage) {
-        await this.operationService.processResponse(
-            command,
-            OPERATION_REQUEST_STATUS.FAILED,
-            null,
+        await this.operationService.processResponse(command, OPERATION_REQUEST_STATUS.FAILED, {
             errorMessage,
-        );
+        });
     }
 
     async retryFinished(command) {

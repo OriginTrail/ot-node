@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { ethers } from 'ethers';
 import { createRequire } from 'module';
 import validateArguments from './utils.js';
@@ -31,7 +32,10 @@ async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
     const askWei = ethers.utils.parseEther(ask);
 
     const walletSigner = wallet.connect(provider);
-    await profile.connect(walletSigner).setAsk(identityId, askWei, { gasLimit: 1_000_000 });
+    await profile.connect(walletSigner).setAsk(identityId, askWei, {
+        gasPrice: process.env.NODE_ENV === 'development' ? undefined : 8,
+        gasLimit: 500_000,
+    });
 }
 
 const expectedArguments = ['rpcEndpoint', 'ask', 'privateKey', 'hubContractAddress'];

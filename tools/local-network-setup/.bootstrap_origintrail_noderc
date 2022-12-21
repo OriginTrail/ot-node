@@ -1,113 +1,129 @@
 {
-  "logLevel": "trace",
-  "modules": {
-    "repository": {
-      "enabled": true,
-      "implementation": {
-        "sequelize-repository": {
-          "config": {}
-        }
-      }
-    },
-    "tripleStore": {
-      "enabled": true,
-      "implementation": {
-        "ot-graphdb": {
-          "enabled": true,
-          "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
-          "config": {
-            "repositories": {
-              "current": {
-                "url": "http://localhost:7200",
-                "name": "current0",
-                "username": "admin",
-                "password": ""
-              },
-              "historical": {
-                "url": "http://localhost:7200",
-                "name": "historical0",
-                "username": "admin",
-                "password": ""
-              },
-              "private": {
-                "url": "http://localhost:7200",
-                "name": "private0",
-                "username": "admin",
-                "password": ""
-              }
+    "logLevel": "trace",
+    "modules": {
+        "repository": {
+            "enabled": true,
+            "implementation": {
+                "sequelize-repository": {
+                    "config": {
+                        "database": "operationaldb0"
+                    }
+                }
             }
-          }
+        },
+        "tripleStore": {
+            "enabled": true,
+            "implementation": {
+                "ot-graphdb": {
+                    "enabled": true,
+                    "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
+                    "config": {
+                        "repositories": {
+                            "current": {
+                                "url": "http://localhost:7200",
+                                "name": "current0",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "historical": {
+                                "url": "http://localhost:7200",
+                                "name": "historical0",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "private": {
+                                "url": "http://localhost:7200",
+                                "name": "private0",
+                                "username": "admin",
+                                "password": ""
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "httpClient": {
+            "enabled": true,
+            "implementation": {
+                "express-http-client": {
+                    "package": "./http-client/implementation/express-http-client.js",
+                    "config": {
+                        "port": 8900
+                    }
+                }
+            }
+        },
+        "network": {
+            "enabled": true,
+            "implementation": {
+                "libp2p-service": {
+                    "config": {
+                        "port": 9100,
+                        "privateKey": "CAAS4QQwggJdAgEAAoGBALOYSCZsmINMpFdH8ydA9CL46fB08F3ELfb9qiIq+z4RhsFwi7lByysRnYT/NLm8jZ4RvlsSqOn2ZORJwBywYD5MCvU1TbEWGKxl5LriW85ZGepUwiTZJgZdDmoLIawkpSdmUOc1Fbnflhmj/XzAxlnl30yaa/YvKgnWtZI1/IwfAgMBAAECgYEAiZq2PWqbeI6ypIVmUr87z8f0Rt7yhIWZylMVllRkaGw5WeGHzQwSRQ+cJ5j6pw1HXMOvnEwxzAGT0C6J2fFx60C6R90TPos9W0zSU+XXLHA7AtazjlSnp6vHD+RxcoUhm1RUPeKU6OuUNcQVJu1ZOx6cAcP/I8cqL38JUOOS7XECQQDex9WUKtDnpHEHU/fl7SvCt0y2FbGgGdhq6k8nrWtBladP5SoRUFuQhCY8a20fszyiAIfxQrtpQw1iFPBpzoq1AkEAzl/s3XPGi5vFSNGLsLqbVKbvoW9RUaGN8o4rU9oZmPFL31Jo9FLA744YRer6dYE7jJMel7h9VVWsqa9oLGS8AwJALYwfv45Nbb6yGTRyr4Cg/MtrFKM00K3YEGvdSRhsoFkPfwc0ZZvPTKmoA5xXEC8eC2UeZhYlqOy7lL0BNjCzLQJBAMpvcgtwa8u6SvU5B0ueYIvTDLBQX3YxgOny5zFjeUR7PS+cyPMQ0cyql8jNzEzDLcSg85tkDx1L4wi31Pnm/j0CQFH/6MYn3r9benPm2bYSe9aoJp7y6ht2DmXmoveNbjlEbb8f7jAvYoTklJxmJCcrdbNx/iCj2BuAinPPgEmUzfQ=",
+                        "bootstrap": []
+                    }
+                }
+            }
+        },
+        "blockchain": {
+            "implementation": {
+                "ganache": {
+                    "config": {
+                        "blockchainTitle": "ganache",
+                        "networkId": "ganache::testnet",
+                        "rpcEndpoints": [
+                            "http://127.0.0.1:7545"
+                        ],
+                        "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
+                        "evmOperationalWalletPrivateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
+                        "evmManagementWalletPublicKey": "0xf68B2609F1E240e501D78c78276D7314ba298025",
+                        "evmManagementWalletPrivateKey": "0x50409e18b20ba522c909a296b3c378af1c31fb458aa6478988c260b78956ab3d",
+                        "sharesTokenName": "LocalNode0",
+                        "sharesTokenSymbol": "LN0"
+                    }
+                },
+                "otp": {
+                    "config": {
+                        "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
+                        "evmOperationalWalletPrivateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
+                        "evmManagementWalletPublicKey": "0xBaF76aC0d0ef9a2FFF76884d54C9D3e270290a43"
+                    }
+                },
+                "polygon": {
+                    "config": {
+                        "rpcEndpoints": [
+                            "wss://polygon-mumbai.g.alchemy.com/v2/bkYqCNrIC0TX3nZHuwo_cx7xqP4pYQ9s",
+                            "https://matic-mumbai.chainstacklabs.com",
+                            "https://rpc-mumbai.matic.today",
+                            "https://matic-testnet-archive-rpc.bwarelabs.com"
+                        ],
+                        "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
+                        "evmOperationalWalletPrivateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
+                        "evmManagementWalletPublicKey": "0xBaF76aC0d0ef9a2FFF76884d54C9D3e270290a43"
+                    }
+                },
+                "rinkeby": {
+                    "package": "./blockchain/implementation/polygon/eth-service.js",
+                    "config": {
+                        "networkId": "eth::rinkeby",
+                        "gasPriceOracleLink": "",
+                        "rpcEndpoints": [
+                            "http://127.0.0.1:7545"
+                        ],
+                        "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
+                        "evmOperationalWalletPrivateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
+                        "evmManagementWalletPublicKey": "0xBaF76aC0d0ef9a2FFF76884d54C9D3e270290a43"
+                    }
+                }
+            },
+            "defaultImplementation": "ganache"
         }
-      }
     },
-    "network": {
-      "enabled": true,
-      "implementation": {
-        "libp2p-service": {
-          "config": {
-            "port": 9100,
-            "privateKey": "CAAS4QQwggJdAgEAAoGBALOYSCZsmINMpFdH8ydA9CL46fB08F3ELfb9qiIq+z4RhsFwi7lByysRnYT/NLm8jZ4RvlsSqOn2ZORJwBywYD5MCvU1TbEWGKxl5LriW85ZGepUwiTZJgZdDmoLIawkpSdmUOc1Fbnflhmj/XzAxlnl30yaa/YvKgnWtZI1/IwfAgMBAAECgYEAiZq2PWqbeI6ypIVmUr87z8f0Rt7yhIWZylMVllRkaGw5WeGHzQwSRQ+cJ5j6pw1HXMOvnEwxzAGT0C6J2fFx60C6R90TPos9W0zSU+XXLHA7AtazjlSnp6vHD+RxcoUhm1RUPeKU6OuUNcQVJu1ZOx6cAcP/I8cqL38JUOOS7XECQQDex9WUKtDnpHEHU/fl7SvCt0y2FbGgGdhq6k8nrWtBladP5SoRUFuQhCY8a20fszyiAIfxQrtpQw1iFPBpzoq1AkEAzl/s3XPGi5vFSNGLsLqbVKbvoW9RUaGN8o4rU9oZmPFL31Jo9FLA744YRer6dYE7jJMel7h9VVWsqa9oLGS8AwJALYwfv45Nbb6yGTRyr4Cg/MtrFKM00K3YEGvdSRhsoFkPfwc0ZZvPTKmoA5xXEC8eC2UeZhYlqOy7lL0BNjCzLQJBAMpvcgtwa8u6SvU5B0ueYIvTDLBQX3YxgOny5zFjeUR7PS+cyPMQ0cyql8jNzEzDLcSg85tkDx1L4wi31Pnm/j0CQFH/6MYn3r9benPm2bYSe9aoJp7y6ht2DmXmoveNbjlEbb8f7jAvYoTklJxmJCcrdbNx/iCj2BuAinPPgEmUzfQ=",
-            "bootstrap": []
-          }
-        }
-      }
+    "auth": {
+        "ipWhitelist": [
+            "::1",
+            "127.0.0.1"
+        ]
     },
-    "blockchain": {
-      "implementation": {
-        "ganache": {
-          "config": {
-            "blockchainTitle": "ganache",
-            "networkId": "ganache::testnet",
-            "rpcEndpoints": [
-              "http://127.0.0.1:7545"
-            ],
-            "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
-            "evmOperationalWalletPrivateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
-            "evmManagementWalletPublicKey": "0xf68B2609F1E240e501D78c78276D7314ba298025",
-            "evmManagementWalletPrivateKey": "0x50409e18b20ba522c909a296b3c378af1c31fb458aa6478988c260b78956ab3d"
-          }
-        },
-        "otp": {
-          "config": {
-            "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
-            "evmOperationalWalletPrivateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
-            "evmManagementWalletPublicKey": "0xBaF76aC0d0ef9a2FFF76884d54C9D3e270290a43"
-          }
-        },
-        "polygon": {
-          "config": {
-            "rpcEndpoints": [
-              "wss://polygon-mumbai.g.alchemy.com/v2/bkYqCNrIC0TX3nZHuwo_cx7xqP4pYQ9s",
-              "https://matic-mumbai.chainstacklabs.com",
-              "https://rpc-mumbai.matic.today",
-              "https://matic-testnet-archive-rpc.bwarelabs.com"
-            ],
-            "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
-            "evmOperationalWalletPrivateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
-            "evmManagementWalletPublicKey": "0xBaF76aC0d0ef9a2FFF76884d54C9D3e270290a43"
-          }
-        },
-        "rinkeby": {
-          "package": "./blockchain/implementation/polygon/eth-service.js",
-          "config": {
-            "networkId": "eth::rinkeby",
-            "gasPriceOracleLink": "",
-            "rpcEndpoints": [
-              "http://127.0.0.1:7545"
-            ],
-            "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
-            "evmOperationalWalletPrivateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
-            "evmManagementWalletPublicKey": "0xBaF76aC0d0ef9a2FFF76884d54C9D3e270290a43"
-          }
-        }
-      },
-      "defaultImplementation": "ganache"
-    }
-  },
-  "auth": {
-    "ipWhitelist": [
-      "::1",
-      "127.0.0.1"
-    ]
-  }
+    "appDataPath": "data0"
 }

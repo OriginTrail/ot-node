@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { ethers } from 'ethers';
 import { createRequire } from 'module';
 import validateArguments from './utils.js';
@@ -50,12 +51,16 @@ async function setStake(
     await tokenContract
         .connect(managementWalletSigner)
         .increaseAllowance(stakingContractAddress, stakeWei, {
-            gasLimit: 1_000_000,
+            gasPrice: process.env.NODE_ENV === 'development' ? undefined : 8,
+            gasLimit: 500_000,
         });
     // TODO: Add ABI instead of hard-coded function definition
     await stakingContract
         .connect(managementWalletSigner)
-        ['addStake(uint72,uint96)'](identityId, stakeWei, { gasLimit: 1_000_000 });
+        ['addStake(uint72,uint96)'](identityId, stakeWei, {
+            gasPrice: process.env.NODE_ENV === 'development' ? undefined : 1_000,
+            gasLimit: 500_000,
+        });
 }
 
 const expectedArguments = [

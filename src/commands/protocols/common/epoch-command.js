@@ -1,4 +1,5 @@
 import Command from '../../command.js';
+import { AGREEMENT_STATUS, OPERATION_ID_STATUS } from '../../../constants/constants.js';
 
 class EpochCommand extends Command {
     constructor(ctx) {
@@ -17,22 +18,28 @@ class EpochCommand extends Command {
         agreementData,
         operationId,
     ) {
+        // todo check epoch number and make sure that delay is not in past
         const nextEpochStartTime =
             Number(agreementData.startTime) + Number(agreementData.epochLength) * (epoch + 1);
 
         // delay by 10% of commit window length
         const offset =
-            Number(await this.blockchainModuleManager.getCommitWindowDuration(blockchain)) * 0.1;
+            ((Number(agreementData.epochLength) *
+                Number(
+                    await this.blockchainModuleManager.getCommitWindowDurationPerc(blockchain),
+                )) /
+                100) *
+            0.1;
 
         const delay = nextEpochStartTime - Math.floor(Date.now() / 1000) + offset;
 
         this.logger.trace(
-            `Scheduling next epoch check for agreement id: ${agreementId} in ${delay} seconds`,
+            `Scheduling next epoch check for agreement id: ${agreementId} in ${delay} seconds.`,
         );
         await this.commandExecutor.add({
             name: 'epochCheckCommand',
             sequence: [],
-            delay,
+            delay: delay * 1000,
             data: {
                 blockchain,
                 agreementId,
@@ -45,6 +52,23 @@ class EpochCommand extends Command {
             },
             transactional: false,
         });
+    }
+
+    async handleExpiredAsset(agreementId, operationId, epoch) {
+        this.logger.trace(
+            `Asset lifetime for agreement id: ${agreementId} has expired. Operation id: ${operationId}`,
+        );
+        await this.repositoryModuleManager.updateOperationAgreementStatus(
+            operationId,
+            agreementId,
+            AGREEMENT_STATUS.EXPIRED,
+        );
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_END,
+            operationId,
+            agreementId,
+            epoch,
+        );
     }
 
     /**

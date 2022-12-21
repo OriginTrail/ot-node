@@ -1,6 +1,5 @@
 import graphdb from 'graphdb';
 import axios from 'axios';
-import { execSync } from 'child_process';
 import OtTripleStore from '../ot-triple-store.js';
 
 const { server, repository: repo, http } = graphdb;
@@ -82,15 +81,6 @@ class OtGraphdb extends OtTripleStore {
             }
             return false;
         }
-    }
-
-    async restartService() {
-        // TODO: check env if development or production
-        const port = execSync("ps -aux | grep graphdb | cut -d' ' -f7 | head -n 1").toString();
-        if (port) {
-            execSync(`kill -9 ${port}`);
-        }
-        execSync('nohup ../graphdb-free-9.9.0/bin/graphdb &');
     }
 
     getName() {

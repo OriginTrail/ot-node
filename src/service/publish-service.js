@@ -58,6 +58,11 @@ class PublishService extends OperationService {
                 leftoverNodes.length
             }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${minAckResponses}`,
         );
+        if (responseData.errorMessage) {
+            this.logger.trace(
+                `Error message for operation id: ${operationId}, keyword: ${keyword} : ${responseData.errorMessage}`,
+            );
+        }
 
         if (
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&

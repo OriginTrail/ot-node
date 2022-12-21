@@ -1,19 +1,23 @@
 import ProtocolInitCommand from '../../../common/protocol-init-command.js';
-import { ERROR_TYPE } from '../../../../../constants/constants.js';
+import { NETWORK_MESSAGE_TIMEOUT_MILLS, ERROR_TYPE } from '../../../../../constants/constants.js';
 
 class PublishInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
-        this.ualService = ctx.ualService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_INIT_ERROR;
     }
 
     async prepareMessage(command) {
-        const { assertionId, blockchain, contract, tokenId } = command.data;
+        const { assertionId, blockchain, contract, tokenId, keyword, hashFunctionId } =
+            command.data;
 
-        return { assertionId, ual: this.ualService.deriveUAL(blockchain, contract, tokenId) };
+        return { assertionId, blockchain, contract, tokenId, keyword, hashFunctionId };
+    }
+
+    messageTimeout() {
+        return NETWORK_MESSAGE_TIMEOUT_MILLS.PUBLISH.INIT;
     }
 
     /**

@@ -185,7 +185,7 @@
                             "rpcEndpoints": ["http://localhost:7545"],
                             "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
                             "initialStakeAmount": 50000,
-                            "initialAskAmount" : 0.2
+                            "initialAskAmount": 0.2
                         }
                     },
                     "otp": {
@@ -279,8 +279,7 @@
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
                             "dht": {
-                                "kBucketSize": 20,
-                                "type": "lan"
+                                "kBucketSize": 20
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -457,8 +456,7 @@
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
                             "dht": {
-                                "kBucketSize": 20,
-                                "type": "wan"
+                                "kBucketSize": 20
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -526,24 +524,10 @@
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "parachain::testnet",
-                            "hubContractAddress": "0x8c6B1947983c8a06343aa3A4b60BAd6Aad083BB9",
+                            "hubContractAddress": "0xBbfF7Ea6b2Addc1f38A0798329e12C08f03750A6",
                             "rpcEndpoints": [
-                                "wss://parachain-testnet-rpc.origin-trail.network",
-                                "https://lofar-testnet.origin-trail.network"
-                            ]
-                        }
-                    },
-                    "polygon": {
-                        "enabled": false,
-                        "package": "./blockchain/implementation/polygon/polygon-service.js",
-                        "config": {
-                            "networkId": "polygon::testnet",
-                            "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
-                            "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
-                            "rpcEndpoints": [
-                                "https://matic-mumbai.chainstacklabs.com",
-                                "https://rpc-mumbai.matic.today",
-                                "https://matic-testnet-archive-rpc.bwarelabs.com"
+                                "https://lofar-testnet.origin-trail.network",
+                                "wss://parachain-testnet-rpc.origin-trail.network"
                             ]
                         }
                     }
@@ -672,6 +656,36 @@
                     }
                 }
             },
+            "network": {
+                "enabled": true,
+                "implementation": {
+                    "libp2p-service": {
+                        "package": "./network/implementation/libp2p-service.js",
+                        "config": {
+                            "dht": {
+                                "kBucketSize": 20
+                            },
+                            "connectionManager": {
+                                "autoDial": true,
+                                "autoDialInterval": 10e3,
+                                "dialTimeout": 2e3
+                            },
+                            "peerRouting": {
+                                "refreshManager": {
+                                    "enabled": true,
+                                    "interval": 6e5,
+                                    "bootDelay": 2e3
+                                }
+                            },
+                            "port": 9000,
+                            "bootstrap": [
+                                "/ip4/157.230.96.194/tcp/9000/p2p/QmZFcns6eGUosD96beHyevKu1jGJ1bA56Reg2f1J4q59Jt",
+                                "/ip4/18.132.135.102/tcp/9000/p2p/QmemqyXyvrTAm7PwrcTcFiEEFx69efdR92GSZ1oQprbdja"
+                            ]
+                        }
+                    }
+                }
+            },
             "httpClient": {
                 "enabled": true,
                 "implementation": {
@@ -704,6 +718,24 @@
                             "host": "localhost",
                             "dialect": "mysql",
                             "logging": false
+                        }
+                    }
+                }
+            },
+            "blockchain": {
+                "enabled": true,
+                "defaultImplementation": "otp",
+                "implementation": {
+                    "otp": {
+                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
+                        "config": {
+                            "networkId": "otp::mainnet",
+                            "hubContractAddress": "0x5fA7916c48Fe6D5F1738d12Ad234b78c90B4cAdA",
+                            "rpcEndpoints": [
+                                "https://astrosat-parachain-rpc.origin-trail.network",
+                                "https://astrosat.origintrail.network/",
+                                "wss://parachain-rpc.origin-trail.network"
+                            ]
                         }
                     }
                 }
@@ -751,39 +783,15 @@
                         }
                     }
                 }
-            },
-            "blockchain": {
-                "enabled": true,
-                "implementation": {
-                    "otp": {
-                        "enabled": true,
-                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
-                        "config": {
-                            "networkId": "otp::mainnet",
-                            "hubContractAddress": "",
-                            "rpcEndpoints": []
-                        }
-                    },
-                    "polygon": {
-                        "enabled": false,
-                        "package": "./blockchain/implementation/polygon/polygon-service.js",
-                        "config": {
-                            "networkId": "polygon::mainnet",
-                            "hubContractAddress": "",
-                            "gasPriceOracleLink": "",
-                            "rpcEndpoints": []
-                        }
-                    }
-                }
             }
         },
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
         "telemetry": {
-            "enabled": false,
-            "sendTelemetryData": false,
-            "signalingServerUrl": "http://devnet-signaling.origin-trail.network:3000/signal"
+            "enabled": true,
+            "sendTelemetryData": true,
+            "signalingServerUrl": "https://mainnet-signaling.origin-trail.network/signal"
         },
         "auth": {
             "ipBasedAuthEnabled": true,

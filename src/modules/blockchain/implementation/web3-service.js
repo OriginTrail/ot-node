@@ -14,9 +14,9 @@ import {
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
+const AbstractAsset = require('dkg-evm-module/build/contracts/AbstractAsset.json');
 const AssertionStorage = require('dkg-evm-module/build/contracts/AssertionStorage.json');
 const Staking = require('dkg-evm-module/build/contracts/Staking.json');
-const ContentAsset = require('dkg-evm-module/build/contracts/ContentAsset.json');
 const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
 const HashingProxy = require('dkg-evm-module/build/contracts/HashingProxy.json');
 const Hub = require('dkg-evm-module/build/contracts/Hub.json');
@@ -50,33 +50,29 @@ class Web3Service {
 
     initializeTransactionQueue(concurrency) {
         this.transactionQueue = async.queue(async (args, cb) => {
-            const { contractInstance, functionName, transactionArgs, future } = args;
+            const { contractInstance, functionName, transactionArgs } = args;
             try {
-                const result = this._executeContractFunction(
+                const result = await this._executeContractFunction(
                     contractInstance,
                     functionName,
                     transactionArgs,
                 );
-                future.resolve(result);
+                cb({ result });
             } catch (error) {
-                future.revert(error);
+                cb({ error });
             }
-            cb();
         }, concurrency);
     }
 
-    async queueTransaction(contractInstance, functionName, transactionArgs) {
-        return new Promise((resolve, reject) => {
-            this.transactionQueue.push({
+    async queueTransaction(contractInstance, functionName, transactionArgs, callback) {
+        this.transactionQueue.push(
+            {
                 contractInstance,
                 functionName,
                 transactionArgs,
-                future: {
-                    resolve,
-                    reject,
-                },
-            });
-        });
+            },
+            callback,
+        );
     }
 
     async initializeWeb3() {
@@ -176,16 +172,6 @@ class Web3Service {
             assertionStorageAddress,
         );
 
-        const contentAssetAddress = await this.callContractFunction(
-            this.hubContract,
-            'getAssetContractAddress',
-            ['ContentAsset'],
-        );
-        this.ContentAssetContract = new this.web3.eth.Contract(
-            ContentAsset.abi,
-            contentAssetAddress,
-        );
-
         const tokenAddress = await this.callContractFunction(
             this.hubContract,
             'getContractAddress',
@@ -257,10 +243,19 @@ class Web3Service {
         );
         this.Log2PLDSFContract = new this.web3.eth.Contract(Log2PLDSF.abi, log2PLDSFAddress);
 
-        // TODO: Change this nonsense
-        this.assetContracts = {
-            [contentAssetAddress.toLowerCase()]: this.ContentAssetContract,
-        };
+        this.assetStorageContracts = {};
+        const assetStoragesArray = await this.callContractFunction(
+            this.hubContract,
+            'getAllAssetStorages',
+            [],
+        );
+        assetStoragesArray.forEach((assetStorage) => {
+            this.assetStorageContracts[assetStorage[1].toLowerCase()] = new this.web3.eth.Contract(
+                AbstractAsset.abi,
+                assetStorage[1],
+            );
+        });
+
         this.logger.info(`Contracts initialized`);
         this.logger.debug(
             `Connected to blockchain rpc : ${this.config.rpcEndpoints[this.rpcNumber]}.`,
@@ -323,10 +318,16 @@ class Web3Service {
     async identityIdExists() {
         const identityId = await this.getIdentityId();
 
-        return identityId != null && identityId !== 0;
+        return !!identityId;
     }
 
     async createProfile(peerId) {
+        if (!this.config.sharesTokenName || !this.config.sharesTokenSymbol) {
+            throw Error(
+                'Missing sharesTokenName and sharesTokenSymbol in blockchain configuration. Please add it and start the node again.',
+            );
+        }
+
         const maxNumberOfRetries = 3;
         let retryCount = 0;
         let profileCreated = false;
@@ -334,10 +335,15 @@ class Web3Service {
         while (retryCount + 1 <= maxNumberOfRetries && !profileCreated) {
             try {
                 // eslint-disable-next-line no-await-in-loop
-                await this.queueTransaction(this.ProfileContract, 'createProfile', [
+                await this._executeContractFunction(this.ProfileContract, 'createProfile', [
                     this.getManagementKey(),
                     this.convertAsciiToHex(peerId),
+                    this.config.sharesTokenName,
+                    this.config.sharesTokenSymbol,
                 ]);
+                this.logger.info(
+                    `Profile created with name: ${this.config.sharesTokenName} and symbol: ${this.config.sharesTokenSymbol}`,
+                );
                 profileCreated = true;
             } catch (error) {
                 if (error.message.includes('Profile already exists')) {
@@ -416,27 +422,32 @@ class Web3Service {
                     this.getPrivateKey(),
                 );
                 this.logger.info(
-                    `Sending transaction to blockchain, calling method: ${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}`,
+                    `Sending signed transaction to blockchain with transaction hash: ${
+                        createdTransaction.transactionHash
+                    }, calling method: ${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}`,
                 );
                 result = await this.web3.eth.sendSignedTransaction(
                     createdTransaction.rawTransaction,
                 );
             } catch (error) {
+                this.logger.warn(
+                    `Failed executing smart contract function ${functionName}. Error: ${error.message}`,
+                );
                 if (
                     !transactionRetried &&
-                    error.message.includes(`Transaction was not mined within`)
+                    (error.message.includes(`Transaction was not mined within`) ||
+                        error.message.includes(`Pool(TooLowPriority`))
                 ) {
+                    gasPrice *= Math.ceil(1.2);
                     this.logger.warn(
-                        `Transaction was not mined within ${TRANSACTION_POLLING_TIMEOUT} seconds. Retrying transaction with new gas price`,
+                        `Retrying to execute smart contract function ${functionName} with gasPrice: ${gasPrice}`,
                     );
-                    gasPrice *= 1.2;
                     transactionRetried = true;
                 } else {
                     await this.handleError(error, functionName);
                 }
             }
         }
-
         return result;
     }
 
@@ -509,9 +520,17 @@ class Web3Service {
         return timestamp < timestampThirtyDaysInPast;
     }
 
+    async isHubContract(contractAddress) {
+        return this.callContractFunction(this.hubContract, 'isContract', [contractAddress]);
+    }
+
+    async isAssetStorageContract(contractAddress) {
+        return this.callContractFunction(this.hubContract, 'isAssetStorage', [contractAddress]);
+    }
+
     async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
         return this.callContractFunction(
-            this.assetContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
+            this.assetStorageContracts[assetContractAddress.toLowerCase()],
             'getAssertionIdByIndex',
             [tokenId, index],
         );
@@ -519,7 +538,7 @@ class Web3Service {
 
     async getLatestAssertionId(assetContractAddress, tokenId) {
         return this.callContractFunction(
-            this.assetContracts[assetContractAddress.toLowerCase()], // TODO: Change this nonsense
+            this.assetStorageContracts[assetContractAddress.toLowerCase()],
             'getLatestAssertionId',
             [tokenId],
         );
@@ -595,21 +614,24 @@ class Web3Service {
     }
 
     async getR2() {
-        return this.callContractFunction(this.ParametersStorageContract, 'R2', []);
+        return this.callContractFunction(this.ParametersStorageContract, 'r2', []);
     }
 
     async getR1() {
-        return this.callContractFunction(this.ParametersStorageContract, 'R1', []);
+        return this.callContractFunction(this.ParametersStorageContract, 'r1', []);
     }
 
     async getR0() {
-        return this.callContractFunction(this.ParametersStorageContract, 'R0', []);
+        return this.callContractFunction(this.ParametersStorageContract, 'r0', []);
     }
 
-    async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch) {
-        return this.queueTransaction(this.ServiceAgreementV1Contract, 'submitCommit', [
-            [assetContractAddress, tokenId, keyword, hashFunctionId, epoch],
-        ]);
+    async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch, callback) {
+        return this.queueTransaction(
+            this.ServiceAgreementV1Contract,
+            'submitCommit',
+            [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch]],
+            callback,
+        );
     }
 
     async isProofWindowOpen(agreementId, epoch) {
@@ -637,10 +659,14 @@ class Web3Service {
         epoch,
         proof,
         chunkHash,
+        callback,
     ) {
-        return this.queueTransaction(this.ServiceAgreementV1Contract, 'sendProof', [
-            [assetContractAddress, tokenId, keyword, hashFunctionId, epoch, proof, chunkHash],
-        ]);
+        return this.queueTransaction(
+            this.ServiceAgreementV1Contract,
+            'sendProof',
+            [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch, proof, chunkHash]],
+            callback,
+        );
     }
 
     async getShardingTableHead() {
@@ -721,10 +747,10 @@ class Web3Service {
         if (!isRpcError) throw error;
     }
 
-    async getCommitWindowDuration() {
+    async getCommitWindowDurationPerc() {
         return this.callContractFunction(
             this.ParametersStorageContract,
-            'commitWindowDuration',
+            'commitWindowDurationPerc',
             [],
         );
     }
@@ -735,6 +761,18 @@ class Web3Service {
             'proofWindowDurationPerc',
             [],
         );
+    }
+
+    async isHashFunction(hashFunctionId) {
+        return this.callContractFunction(this.HashingProxyContract, 'isHashFunction', [
+            hashFunctionId,
+        ]);
+    }
+
+    async isScoreFunction(scoreFunctionId) {
+        return this.callContractFunction(this.ScoringProxyContract, 'isScoreFunction', [
+            scoreFunctionId,
+        ]);
     }
 
     async callScoreFunction(scoreFunctionId, hashFunctionId, peerId, keyword, stake) {

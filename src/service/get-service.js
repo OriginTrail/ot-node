@@ -28,7 +28,7 @@ class GetService extends OperationService {
         this.operationMutex = new Mutex();
     }
 
-    async processResponse(command, responseStatus, responseData, errorMessage = null) {
+    async processResponse(command, responseStatus, responseData) {
         const {
             operationId,
             numberOfFoundNodes,
@@ -40,7 +40,7 @@ class GetService extends OperationService {
 
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
-            errorMessage,
+            responseData.errorMessage,
             operationId,
             keyword,
         );
@@ -57,6 +57,11 @@ class GetService extends OperationService {
                 leftoverNodes.length
             }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
         );
+        if (responseData.errorMessage) {
+            this.logger.trace(
+                `Error message for operation id: ${operationId}, keyword: ${keyword} : ${responseData.errorMessage}`,
+            );
+        }
 
         if (
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&

@@ -1,28 +1,30 @@
 import ProtocolRequestCommand from '../../../common/protocol-request-command.js';
-import { ERROR_TYPE } from '../../../../../constants/constants.js';
+import { NETWORK_MESSAGE_TIMEOUT_MILLS, ERROR_TYPE } from '../../../../../constants/constants.js';
 
 class PublishRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
-        this.ualService = ctx.ualService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_REQUEST_ERROR;
     }
 
     async prepareMessage(command) {
-        const { operationId, assertionId, blockchain, contract, tokenId } = command.data;
-        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
+        const { assertion } = await this.operationIdService.getCachedOperationIdData(
+            command.data.operationId,
+        );
 
         return {
-            assertionId,
-            ual: this.ualService.deriveUAL(blockchain, contract, tokenId),
             assertion,
         };
     }
 
+    messageTimeout() {
+        return NETWORK_MESSAGE_TIMEOUT_MILLS.PUBLISH.REQUEST;
+    }
+
     /**
-     * Builds default storeRequestCommand
+     * Builds default publishRequestCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

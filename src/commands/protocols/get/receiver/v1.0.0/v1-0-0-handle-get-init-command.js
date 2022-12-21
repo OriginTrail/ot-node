@@ -38,12 +38,15 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.GET.ASSERTION_EXISTS_LOCAL_END,
         );
 
-        return {
-            messageType: assertionExists
-                ? NETWORK_MESSAGE_TYPES.RESPONSES.ACK
-                : NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-            messageData: {},
-        };
+        return assertionExists
+            ? {
+                  messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
+                  messageData: {},
+              }
+            : {
+                  messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                  messageData: { errorMessage: 'Assertion not found' },
+              };
     }
 
     /**

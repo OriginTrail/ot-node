@@ -1,9 +1,11 @@
 /* eslint-disable */
+import 'dotenv/config';
 import mysql from 'mysql2';
 import path from 'path';
 import fs from 'fs';
-import { execSync } from 'child_process';
 import graphdb from 'graphdb';
+import appRootPath from 'app-root-path';
+import { LIBP2P_KEY_DIRECTORY, LIBP2P_KEY_FILENAME } from '../../src/constants/constants.js';
 
 const { server, http } = graphdb;
 
@@ -11,11 +13,11 @@ const numberOfNodes = parseInt(process.argv[2], 10);
 const network = process.argv[3];
 const hubContractAddress = process.argv[4];
 
-const templatePath = './tools/local-network-setup/.dh_origintrail_noderc';
+const dhTemplatePath = './tools/local-network-setup/.dh_origintrail_noderc';
 const bootstrapTemplatePath = './tools/local-network-setup/.bootstrap_origintrail_noderc';
 
 const generalConfig = JSON.parse(fs.readFileSync('./config/config.json'));
-const template = JSON.parse(fs.readFileSync(templatePath));
+const dhTemplate = JSON.parse(fs.readFileSync(dhTemplatePath));
 const bootstrapTemplate = JSON.parse(fs.readFileSync(bootstrapTemplatePath));
 const keys = JSON.parse(fs.readFileSync('./tools/local-network-setup/keys.json'));
 
@@ -25,143 +27,86 @@ if (!keys) {
     console.log('Missing blockchain keys');
     process.exit(1);
 }
-const tripleStoreImplementation = {
-    ...generalConfig.development.modules.tripleStore.implementation,
-};
-(async () => {
-    bootstrapTemplate.modules.blockchain.defaultImplementation = network;
-    bootstrapTemplate.modules.blockchain.implementation[
-        network
-    ].config.evmOperationalWalletPublicKey = keys.publicKey[0];
-    bootstrapTemplate.modules.blockchain.implementation[
-        network
-    ].config.evmOperationalWalletPrivateKey = keys.privateKey[0];
-    bootstrapTemplate.modules.blockchain.implementation[
-        network
-    ].config.evmManagementWalletPublicKey = keys.publicKey[keys.publicKey.length - 1];
-    bootstrapTemplate.modules.blockchain.implementation[
-        network
-    ].config.evmManagementWalletPrivateKey = keys.privateKey[keys.privateKey.length - 1];
-    bootstrapTemplate.modules.blockchain.implementation[network].config.hubContractAddress =
-        hubContractAddress;
-    bootstrapTemplate.modules.blockchain.implementation[network].config.rpcEndpoints = [
-        process.env.RPC_ENDPOINT,
-    ];
 
-    for (const [repository, config] of Object.entries(
-        tripleStoreImplementation['ot-graphdb'].config.repositories,
-    )) {
-        tripleStoreImplementation['ot-graphdb'].config.repositories[
-            repository
-        ].name = `${repository}0`;
+console.log(`Generating ${numberOfNodes} total nodes`);
+
+for (let i = 0; i < numberOfNodes; i += 1) {
+    const tripleStoreConfig = {
+        ...generalConfig.development.modules.tripleStore.implementation['ot-graphdb'].config,
+        repository: `repository${i}`,
+    };
+    const blockchainConfig = {
+        hubContractAddress,
+        rpcEndpoints: [process.env.RPC_ENDPOINT],
+        evmOperationalWalletPublicKey: keys.publicKey[i],
+        evmOperationalWalletPrivateKey: keys.privateKey[i],
+        evmManagementWalletPublicKey: keys.publicKey[keys.publicKey.length - 1 - i],
+        evmManagementWalletPrivateKey: keys.privateKey[keys.privateKey.length - 1 - i],
+        sharesTokenName: `LocalNode${i}`,
+        sharesTokenSymbol: `LN${i}`,
+    };
+    let appDataPath = `data${i}`;
+    let nodeName;
+    let template;
+    let templatePath;
+    if (i === 0) {
+        template = bootstrapTemplate;
+        templatePath = bootstrapTemplatePath;
+        fs.writeFileSync(
+            path.join(appRootPath.path, appDataPath, LIBP2P_KEY_DIRECTORY, LIBP2P_KEY_FILENAME),
+            bootstrapTemplate.modules.network.implementation['libp2p-service'].config.privateKey,
+        );
+        console.log('Using the preexisting identity for the first node (bootstrap)');
+        nodeName = 'bootstrap';
+    } else {
+        template = dhTemplate;
+        templatePath = path.join(`./tools/local-network-setup/.dh${i}_origintrail_noderc`);
+        nodeName = `DH${i}`;
     }
+    template = JSON.parse(JSON.stringify(template));
 
-    bootstrapTemplate.modules.tripleStore.implementation = {
-        ['ot-graphdb']: tripleStoreImplementation['ot-graphdb'],
+    template.modules.blockchain.defaultImplementation = network;
+    template.modules.blockchain.implementation[network].config = {
+        ...template.modules.blockchain.implementation[network].config,
+        ...blockchainConfig,
     };
 
-    fs.writeFileSync(bootstrapTemplatePath, JSON.stringify(bootstrapTemplate, null, 2));
+    template.modules.httpClient.implementation['express-http-client'].config.port = 8900 + i;
+    template.modules.network.implementation['libp2p-service'].config.port = 9100 + i;
+    template.modules.repository.implementation[
+        'sequelize-repository'
+    ].config.database = `operationaldb${i}`;
+    template.modules.tripleStore.implementation['ot-graphdb'].config = tripleStoreConfig;
+    template.appDataPath = appDataPath;
 
-    console.log(`Generating ${numberOfNodes} total nodes`);
-
-    for (let i = 0; i < numberOfNodes; i += 1) {
-        let nodeName;
-        if (i === 0) {
-            console.log('Using the preexisting identity for the first node (bootstrap)');
-            nodeName = 'bootstrap';
-            await dropDatabase(
-                `operationaldb`,
-                generalConfig.development.modules.repository.implementation['sequelize-repository']
-                    .config,
-            );
-
-            for (const [repository, config] of Object.entries(
-                bootstrapTemplate.modules.tripleStore.implementation['ot-graphdb'].config
-                    .repositories,
-            )) {
-                await deleteTripleStoreRepository(repository, config);
-            }
-
-            continue;
-        } else {
-            nodeName = `DH${i}`;
-        }
-        await dropDatabase(
-            `operationaldb${i}`,
-            generalConfig.development.modules.repository.implementation['sequelize-repository']
-                .config,
-        );
-        console.log(`Configuring node ${nodeName}`);
-
-        const configPath = path.join(`./tools/local-network-setup/.dh${i}_origintrail_noderc`);
-        execSync(`touch ${configPath}`);
-
-        const parsedTemplate = JSON.parse(JSON.stringify(template));
-
-        parsedTemplate.modules.blockchain.implementation[
-            network
-        ].config.evmOperationalWalletPublicKey = keys.publicKey[i + 1];
-        parsedTemplate.modules.blockchain.implementation[
-            network
-        ].config.evmOperationalWalletPrivateKey = keys.privateKey[i + 1];
-        parsedTemplate.modules.blockchain.implementation[
-            network
-        ].config.evmManagementWalletPublicKey = keys.publicKey[keys.publicKey.length - i - 1];
-        parsedTemplate.modules.blockchain.implementation[
-            network
-        ].config.evmManagementWalletPrivateKey = keys.privateKey[keys.publicKey.length - i - 1];
-        parsedTemplate.modules.blockchain.implementation[network].config.hubContractAddress =
-            hubContractAddress;
-        parsedTemplate.modules.blockchain.implementation[network].config.rpcEndpoints = [
-            process.env.RPC_ENDPOINT,
-        ];
-
-        parsedTemplate.modules.httpClient.implementation['express-http-client'].config.port =
-            8900 + i;
-        parsedTemplate.modules.network.implementation['libp2p-service'].config.port = 9100 + i;
-        parsedTemplate.modules.repository.implementation[
-            'sequelize-repository'
-        ].config.database = `operationaldb${i}`;
-
-        for (const [repository, config] of Object.entries(
-            tripleStoreImplementation['ot-graphdb'].config.repositories,
-        )) {
-            tripleStoreImplementation['ot-graphdb'].config.repositories[
-                repository
-            ].name = `${repository}${i}`;
-        }
-
-        parsedTemplate.modules.tripleStore.implementation = {
-            ['ot-graphdb']: tripleStoreImplementation['ot-graphdb'],
-        };
-
-        for (const [repository, config] of Object.entries(
-            parsedTemplate.modules.tripleStore.implementation['ot-graphdb'].config.repositories,
-        )) {
-            await deleteTripleStoreRepository(repository, config);
-        }
-
-        parsedTemplate.appDataPath = `data${i}`;
-
-        if (process.env.LOG_LEVEL) {
-            parsedTemplate.logLevel = process.env.LOG_LEVEL;
-        }
-
-        fs.writeFileSync(`${configPath}`, JSON.stringify(parsedTemplate, null, 2));
+    if (process.env.LOG_LEVEL) {
+        template.logLevel = process.env.LOG_LEVEL;
     }
-})();
+
+    await dropDatabase(
+        `operationaldb${i}`,
+        generalConfig.development.modules.repository.implementation['sequelize-repository'].config,
+    );
+    await deleteTripleStoreRepository(tripleStoreConfig);
+    console.log(`Configuring node ${nodeName}`);
+
+    fs.writeFileSync(templatePath, JSON.stringify(template, null, 2));
+}
 
 async function dropDatabase(name, config) {
     console.log(`Dropping database: ${name}`);
+    const password = process.env.REPOSITORY_PASSWORD ?? config.password;
     const connection = mysql.createConnection({
         database: name,
         user: config.user,
         host: config.host,
-        password: config.password,
+        password,
     });
     try {
         await connection.promise().query(`DROP DATABASE IF EXISTS ${name};`);
-    } catch (e) {}
+    } catch (e) {
+        console.log(`Error while dropping database. Error: ${e}`);
+    }
     connection.destroy();
 }
 
