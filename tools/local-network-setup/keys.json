@@ -27,8 +27,7 @@
         "0x4e6c7afa684B54980aE15aEA191911E3D9B47aba",
         "0x4a68eD404bBd120a3bdab1748dc36EE43a5AE42d",
         "0xDdbc8EA86Ec762AA4a7aC985fF3c7E7087be9e3B",
-        "0xf68B2609F1E240e501D78c78276D7314ba298025",
-        "0xBaF76aC0d0ef9a2FFF76884d54C9D3e270290a43"
+        "0xf68B2609F1E240e501D78c78276D7314ba298025"
     ],
     "privateKey": [
         "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
@@ -58,10 +57,10 @@
         "0x69d771fd096a6ff182954d19dc7f9be68de624648d816ec8ef1b718a0277f882",
         "0x411841f090a0cc9f2404f24d7d2db707652e76fd1819446149f2c8b0b44124e2",
         "0x7329d841a68f2f25a57f34195ce63eca4b477dd587f3a78554181a588dcd9002",
-        "0x50409e18b20ba522c909a296b3c378af1c31fb458aa6478988c260b78956ab3d",
-        "0x9b9af041edc816692276ac3c8f1d5565e3c01ddff80ec982943a29bd8d1d8863"
+        "0x50409e18b20ba522c909a296b3c378af1c31fb458aa6478988c260b78956ab3d"
     ],
-    "managementKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
+    "managementWalletPublicKey": "0xBaF76aC0d0ef9a2FFF76884d54C9D3e270290a43",
+    "managementWalletPrivateKey": "0x9b9af041edc816692276ac3c8f1d5565e3c01ddff80ec982943a29bd8d1d8863",
     "substratePublicKey": [
         "5GTXoyMDJ19dVo7N1c6V7QfWppCxYntqnNioSyv4KLcHoMsv",
         "5FYpM6pLvdaJrKkaqT6HJzCReLuQEmLWvtCpFy7VrbE1azMf",

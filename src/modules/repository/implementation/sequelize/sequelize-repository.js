@@ -321,24 +321,24 @@ class SequelizeRepository {
         });
     }
 
-    async updatePeerAsk(peerId, ask) {
+    async updatePeerAsk(blockchainId, peerId, ask) {
         await this.models.shard.update(
             {
                 ask,
             },
             {
-                where: { peer_id: peerId },
+                where: { peer_id: peerId, blockchain_id: blockchainId },
             },
         );
     }
 
-    async updatePeerStake(peerId, stake) {
+    async updatePeerStake(blockchainId, peerId, stake) {
         await this.models.shard.update(
             {
                 stake,
             },
             {
-                where: { peer_id: peerId },
+                where: { peer_id: peerId, blockchain_id: blockchainId },
             },
         );
     }

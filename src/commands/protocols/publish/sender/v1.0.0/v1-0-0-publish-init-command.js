@@ -5,15 +5,15 @@ class PublishInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
-        this.ualService = ctx.ualService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_INIT_ERROR;
     }
 
     async prepareMessage(command) {
-        const { assertionId, blockchain, contract, tokenId } = command.data;
+        const { assertionId, blockchain, contract, tokenId, keyword, hashFunctionId } =
+            command.data;
 
-        return { assertionId, ual: this.ualService.deriveUAL(blockchain, contract, tokenId) };
+        return { assertionId, blockchain, contract, tokenId, keyword, hashFunctionId };
     }
 
     /**

@@ -1,5 +1,9 @@
 import EpochCommand from '../../common/epoch-command.js';
-import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+    COMMAND_RETRIES,
+} from '../../../../constants/constants.js';
 
 class SubmitCommitCommand extends EpochCommand {
     constructor(ctx) {
@@ -38,7 +42,9 @@ class SubmitCommitCommand extends EpochCommand {
         this.logger.trace(
             `Started ${command.name} for agreement id: ${command.data.agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}`,
+                `hash function id: ${hashFunctionId}. Retry number ${
+                    COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1
+                }`,
         );
 
         const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
@@ -93,61 +99,75 @@ class SubmitCommitCommand extends EpochCommand {
             return EpochCommand.empty();
         }
 
-        try {
-            await this.blockchainModuleManager.submitCommit(
-                blockchain,
-                contract,
-                tokenId,
-                keyword,
-                hashFunctionId,
-                epoch,
-            );
-        } catch (error) {
-            this.logger.warn(error.message);
-            return EpochCommand.retry();
-        }
-
-        const endOffset = 30; // 30 sec
-
-        const currentEpochStartTime =
-            Number(agreementData.startTime) + Number(agreementData.epochLength) * epoch;
-
-        const proofWindowDurationPerc = Number(
-            await this.blockchainModuleManager.getProofWindowDurationPerc(blockchain),
-        );
-
-        const proofWindowDuration =
-            (proofWindowDurationPerc / 100) * Number(agreementData.epochLength);
-
-        const proofWindowStartTime =
-            currentEpochStartTime +
-            Math.floor(
-                (Number(agreementData.epochLength) * Number(agreementData.proofWindowOffsetPerc)) /
-                    100,
-            );
-
-        const timeNow = Math.floor(Date.now() / 1000);
-        const delay = this.serviceAgreementService.randomIntFromInterval(
-            proofWindowStartTime - timeNow,
-            proofWindowStartTime + proofWindowDuration - timeNow - endOffset,
-        );
-
-        this.logger.trace(
-            `Scheduling calculateProofsCommand for agreement id: ${agreementId} in ${delay} seconds`,
-        );
-
-        await this.commandExecutor.add({
-            name: 'calculateProofsCommand',
-            delay,
-            data: { ...command.data, proofWindowStartTime },
-            transactional: false,
-        });
-        this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
-            operationId,
-            agreementId,
+        const that = this;
+        await this.blockchainModuleManager.submitCommit(
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+            hashFunctionId,
             epoch,
+            async (result) => {
+                if (!result.error) {
+                    const currentEpochStartTime =
+                        Number(agreementData.startTime) + Number(agreementData.epochLength) * epoch;
+
+                    const proofWindowDurationPerc = Number(
+                        await that.blockchainModuleManager.getProofWindowDurationPerc(blockchain),
+                    );
+
+                    const proofWindowDuration =
+                        (proofWindowDurationPerc / 100) * Number(agreementData.epochLength);
+
+                    const proofWindowStartTime =
+                        currentEpochStartTime +
+                        Math.floor(
+                            (Number(agreementData.epochLength) *
+                                Number(agreementData.proofWindowOffsetPerc)) /
+                                100,
+                        );
+
+                    const timeNow = Math.floor(Date.now() / 1000);
+                    const delay = that.serviceAgreementService.randomIntFromInterval(
+                        proofWindowStartTime - timeNow + 0.1 * proofWindowDuration,
+                        proofWindowStartTime +
+                            proofWindowDuration -
+                            timeNow -
+                            0.1 * proofWindowDuration,
+                    );
+
+                    that.logger.trace(
+                        `Scheduling calculateProofsCommand for agreement id: ${agreementId} in ${delay} seconds`,
+                    );
+
+                    await that.commandExecutor.add({
+                        name: 'calculateProofsCommand',
+                        delay: delay * 1000,
+                        data: { ...command.data, proofWindowStartTime },
+                        transactional: false,
+                    });
+                    that.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
+                        operationId,
+                        agreementId,
+                        epoch,
+                    );
+                } else {
+                    await that.scheduleNextEpochCheck(
+                        blockchain,
+                        agreementId,
+                        contract,
+                        tokenId,
+                        keyword,
+                        epoch,
+                        hashFunctionId,
+                        agreementData,
+                        operationId,
+                    );
+                }
+            },
         );
+
         return EpochCommand.empty();
     }
 

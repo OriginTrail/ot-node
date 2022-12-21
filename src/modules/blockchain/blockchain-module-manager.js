@@ -6,109 +6,77 @@ class BlockchainModuleManager extends BaseModuleManager {
     }
 
     async initializeContracts(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.initializeContracts();
-        }
+        return this.callImplementationFunction(blockchain, 'initializeContracts');
     }
 
     async increaseGanacheTime(blockchain, seconds) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.increaseGanacheTime(seconds);
-        }
+        return this.callImplementationFunction(blockchain, 'increaseGanacheTime', [seconds]);
     }
 
     getPrivateKey(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getPrivateKey();
-        }
+        return this.callImplementationFunction(blockchain, 'getPrivateKey');
     }
 
     getPublicKey(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getPublicKey();
-        }
+        return this.callImplementationFunction(blockchain, 'getPublicKey');
     }
 
     getManagementKey(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getManagementKey();
-        }
+        return this.callImplementationFunction(blockchain, 'getManagementKey');
     }
 
     async getIdentityId(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getIdentityId();
-        }
+        return this.callImplementationFunction(blockchain, 'getIdentityId');
     }
 
     async identityIdExists(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.identityIdExists();
-        }
+        return this.callImplementationFunction(blockchain, 'identityIdExists');
     }
 
     async createProfile(blockchain, peerId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.createProfile(peerId);
-        }
+        return this.callImplementationFunction(blockchain, 'createProfile', [peerId]);
     }
 
     async healthCheck(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.healthCheck();
-        }
+        return this.callImplementationFunction(blockchain, 'healthCheck');
     }
 
     async restartService(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.restartService();
-        }
+        return this.callImplementationFunction(blockchain, 'restartService');
     }
 
     async getAssertionIdByIndex(blockchain, assetContractAddress, tokenId, index) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAssertionIdByIndex(
-                assetContractAddress,
-                tokenId,
-                index,
-            );
-        }
+        return this.callImplementationFunction(blockchain, 'getAssertionIdByIndex', [
+            assetContractAddress,
+            tokenId,
+            index,
+        ]);
     }
 
     async getLatestAssertionId(blockchain, assetContractAddress, tokenId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getLatestAssertionId(
-                assetContractAddress,
-                tokenId,
-            );
-        }
+        return this.callImplementationFunction(blockchain, 'getLatestAssertionId', [
+            assetContractAddress,
+            tokenId,
+        ]);
     }
 
     async getAssertionIssuer(blockchain, assertionId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAssertionIssuer(assertionId);
-        }
+        return this.callImplementationFunction(blockchain, 'getAssertionIssuer', [assertionId]);
     }
 
     async getShardingTableHead(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getShardingTableHead();
-        }
+        return this.callImplementationFunction(blockchain, 'getShardingTableHead');
     }
 
     async getShardingTableLength(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getShardingTableLength();
-        }
+        return this.callImplementationFunction(blockchain, 'getShardingTableLength');
     }
 
     async getShardingTablePage(blockchain, startingIdentityId, nodesNum) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getShardingTablePage(
-                startingIdentityId,
-                nodesNum,
-            );
-        }
+        return this.callImplementationFunction(blockchain, 'getShardingTablePage', [
+            startingIdentityId,
+            nodesNum,
+        ]);
     }
 
     async getAllPastEvents(
@@ -132,95 +100,84 @@ class BlockchainModuleManager extends BaseModuleManager {
         return Promise.all(getEventsPromises);
     }
 
-    convertAsciiToHex(blockchain, peerId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.convertAsciiToHex(peerId);
-        }
-    }
-
     convertHexToAscii(blockchain, peerIdHex) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.convertHexToAscii(peerIdHex);
-        }
+        return this.callImplementationFunction(blockchain, 'convertHexToAscii', [peerIdHex]);
     }
 
     convertToWei(blockchain, ether, fromUnit) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.convertToWei(ether, fromUnit);
-        }
+        return this.callImplementationFunction(blockchain, 'convertToWei', [ether, fromUnit]);
     }
 
     convertFromWei(blockchain, ether, toUnit) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.convertFromWei(ether, toUnit);
-        }
+        return this.callImplementationFunction(blockchain, 'convertFromWei', [ether, toUnit]);
     }
 
     async isCommitWindowOpen(blockchain, agreementId, epoch) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.isCommitWindowOpen(agreementId, epoch);
-        }
+        return this.callImplementationFunction(blockchain, 'isCommitWindowOpen', [
+            agreementId,
+            epoch,
+        ]);
     }
 
     async getTopCommitSubmissions(blockchain, agreementId, epoch) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getTopCommitSubmissions(
-                agreementId,
-                epoch,
-            );
-        }
+        return this.callImplementationFunction(blockchain, 'getTopCommitSubmissions', [
+            agreementId,
+            epoch,
+        ]);
     }
 
     async getAgreementData(blockchain, agreementId) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAgreementData(agreementId);
-        }
+        return this.callImplementationFunction(blockchain, 'getAgreementData', [agreementId]);
     }
 
     async getAssertionSize(blockchain, assertionid) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAssertionSize(assertionid);
-        }
+        return this.callImplementationFunction(blockchain, 'getAssertionSize', [assertionid]);
     }
 
     async getAssertionTriplesNumber(blockchain, assertionid) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAssertionTriplesNumber(assertionid);
-        }
+        return this.callImplementationFunction(blockchain, 'getAssertionTriplesNumber', [
+            assertionid,
+        ]);
     }
 
     async getAssertionChunksNumber(blockchain, assertionid) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getAssertionChunksNumber(assertionid);
-        }
+        return this.callImplementationFunction(blockchain, 'getAssertionChunksNumber', [
+            assertionid,
+        ]);
     }
 
-    async submitCommit(blockchain, assetContractAddress, tokenId, keyword, hashFunctionId, epoch) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.submitCommit(
-                assetContractAddress,
-                tokenId,
-                keyword,
-                hashFunctionId,
-                epoch,
-            );
-        }
+    async submitCommit(
+        blockchain,
+        assetContractAddress,
+        tokenId,
+        keyword,
+        hashFunctionId,
+        epoch,
+        callback,
+    ) {
+        return this.callImplementationFunction(blockchain, 'submitCommit', [
+            assetContractAddress,
+            tokenId,
+            keyword,
+            hashFunctionId,
+            epoch,
+            callback,
+        ]);
     }
 
     async isProofWindowOpen(blockchain, agreementId, epoch) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.isProofWindowOpen(agreementId, epoch);
-        }
+        return this.callImplementationFunction(blockchain, 'isProofWindowOpen', [
+            agreementId,
+            epoch,
+        ]);
     }
 
     async getChallenge(blockchain, assetContractAddress, tokenId, epoch) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getChallenge(
-                assetContractAddress,
-                tokenId,
-                epoch,
-            );
-        }
+        return this.callImplementationFunction(blockchain, 'getChallenge', [
+            assetContractAddress,
+            tokenId,
+            epoch,
+        ]);
     }
 
     async sendProof(
@@ -232,6 +189,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         epoch,
         proof,
         chunkHash,
+        callback,
     ) {
         if (this.getImplementation(blockchain)) {
             return this.getImplementation(blockchain).module.sendProof(
@@ -242,55 +200,54 @@ class BlockchainModuleManager extends BaseModuleManager {
                 epoch,
                 proof,
                 chunkHash,
+                callback,
             );
         }
     }
 
     async getR2(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getR2();
-        }
+        return this.callImplementationFunction(blockchain, 'getR2');
     }
 
     async getR1(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getR1();
-        }
+        return this.callImplementationFunction(blockchain, 'getR1');
     }
 
     async getR0(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getR0();
-        }
+        return this.callImplementationFunction(blockchain, 'getR0');
     }
 
-    async getCommitWindowDuration(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getCommitWindowDuration();
-        }
+    async getCommitWindowDurationPerc(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getCommitWindowDurationPerc');
     }
 
     async getProofWindowDurationPerc(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getProofWindowDurationPerc();
-        }
+        return this.callImplementationFunction(blockchain, 'getProofWindowDurationPerc');
     }
 
     async callScoreFunction(blockchain, scoreFunctionId, hashFunctionId, peerId, keyword, stake) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.callScoreFunction(
-                scoreFunctionId,
-                hashFunctionId,
-                peerId,
-                keyword,
-                stake,
-            );
-        }
+        return this.callImplementationFunction(blockchain, 'callScoreFunction', [
+            scoreFunctionId,
+            hashFunctionId,
+            peerId,
+            keyword,
+            stake,
+        ]);
     }
 
     async getLog2PLDSFParams(blockchain) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.getLog2PLDSFParams();
+        return this.callImplementationFunction(blockchain, 'getLog2PLDSFParams');
+    }
+
+    callImplementationFunction(blockchain, functionName, args = []) {
+        if (blockchain) {
+            const split = blockchain.split(':');
+            const [name] = split;
+            if (this.getImplementation(name)) {
+                return this.getImplementation(name).module[functionName](...args);
+            }
+        } else {
+            return this.getImplementation().module[functionName](...args);
         }
     }
 }

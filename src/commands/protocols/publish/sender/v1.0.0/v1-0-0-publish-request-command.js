@@ -5,24 +5,22 @@ class PublishRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
-        this.ualService = ctx.ualService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_REQUEST_ERROR;
     }
 
     async prepareMessage(command) {
-        const { operationId, assertionId, blockchain, contract, tokenId } = command.data;
-        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
+        const { assertion } = await this.operationIdService.getCachedOperationIdData(
+            command.data.operationId,
+        );
 
         return {
-            assertionId,
-            ual: this.ualService.deriveUAL(blockchain, contract, tokenId),
             assertion,
         };
     }
 
     /**
-     * Builds default storeRequestCommand
+     * Builds default publishRequestCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

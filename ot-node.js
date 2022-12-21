@@ -2,15 +2,13 @@ import DeepExtend from 'deep-extend';
 import rc from 'rc';
 import EventEmitter from 'events';
 import { createRequire } from 'module';
+import { execSync } from 'child_process';
 import DependencyInjection from './src/service/dependency-injection.js';
 import Logger from './src/logger/logger.js';
 import { CONTRACTS, MIN_NODE_VERSION } from './src/constants/constants.js';
 import FileService from './src/service/file-service.js';
-import NetworkPrivateKeyMigration from './src/migration/network-private-key-migration.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
-import BlockchainIdentityMigration from './src/migration/blockchain-identity-migration.js';
-import CleanOperationalDatabaseMigration from './src/migration/clean-operational-database-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -28,7 +26,6 @@ class OTNode {
     async start() {
         await this.checkForUpdate();
         await this.removeUpdateFile();
-        await this.executeMigrations();
 
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
@@ -46,9 +43,6 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
-
-        await this.executeCleanOperationalDatabaseMigration();
-
         await this.listenOnHubContractChanges();
 
         await this.createProfiles();
@@ -177,6 +171,25 @@ class OTNode {
                     }
                     const identityId = await blockchainModuleManager.getIdentityId(blockchain);
                     this.logger.info(`Identity ID: ${identityId}`);
+                    const blockchainConfig =
+                        blockchainModuleManager.getModuleConfiguration(blockchain);
+                    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+                        execSync(
+                            `npm run set-stake -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --stake=${blockchainConfig.initialStakeAmount} --operationalWalletPrivateKey=${blockchainConfig.evmOperationalWalletPrivateKey} --managementWalletPrivateKey=${blockchainConfig.evmManagementWalletPrivateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
+                            { stdio: 'inherit' },
+                        );
+                        execSync(
+                            `npm run set-ask -- --rpcEndpoint=${
+                                blockchainConfig.rpcEndpoints[0]
+                            } --ask=${
+                                blockchainConfig.initialAskAmount +
+                                (Math.random() - 0.5) * blockchainConfig.initialAskAmount
+                            } --privateKey=${
+                                blockchainConfig.evmOperationalWalletPrivateKey
+                            } --hubContractAddress=${blockchainConfig.hubContractAddress}`,
+                            { stdio: 'inherit' },
+                        );
+                    }
                 } catch (error) {
                     this.logger.warn(
                         `Unable to create ${blockchain} blockchain profile. Removing implementation. Error: ${error.message}`,
@@ -322,26 +335,6 @@ class OTNode {
         this.config.otNodeUpdated = true;
     }
 
-    async executeMigrations() {
-        const networkPrivateKeyMigration = new NetworkPrivateKeyMigration(
-            'NetworkPrivateKeyMigration',
-            this.logger,
-            this.config,
-        );
-        if (!(await networkPrivateKeyMigration.migrationAlreadyExecuted())) {
-            await networkPrivateKeyMigration.migrate();
-        }
-
-        const blockchainIdentityMigration = new BlockchainIdentityMigration(
-            'BlockchainIdentityMigration',
-            this.logger,
-            this.config,
-        );
-        if (!(await blockchainIdentityMigration.migrationAlreadyExecuted())) {
-            await blockchainIdentityMigration.migrate();
-        }
-    }
-
     async checkForUpdate() {
         const autoUpdaterCommand = new OtnodeUpdateCommand({
             logger: this.logger,
@@ -356,21 +349,6 @@ class OTNode {
     stop(code = 0) {
         this.logger.info('Stopping node...');
         process.exit(code);
-    }
-
-    async executeCleanOperationalDatabaseMigration() {
-        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
-        const cleanOperationalDatabaseMigration = new CleanOperationalDatabaseMigration(
-            'CleanOperationalDatabaseMigration',
-            this.logger,
-            this.config,
-            repositoryModuleManager,
-        );
-        if (!(await cleanOperationalDatabaseMigration.migrationAlreadyExecuted())) {
-            await cleanOperationalDatabaseMigration.migrate();
-            this.logger.info('Operational database cleanup completed. Node will now restart!');
-            this.stop();
-        }
     }
 
     async listenOnHubContractChanges() {

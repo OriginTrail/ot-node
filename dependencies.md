@@ -179,11 +179,6 @@
 -   **version**: ^0.27.2
 -   **description**: http client used to make http requests
 
-##### [bignumber](https://www.npmjs.com/package/bignumber)
-
--   **version**: ^9.1.0
--   **description**: big numbers
-
 ##### [cors](https://www.npmjs.com/package/cors)
 
 -   **version**: ^2.8.5

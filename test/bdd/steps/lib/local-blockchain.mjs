@@ -16,9 +16,6 @@ const shardingTableStorage = JSON.parse(
 const assertionStorage = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/AssertionStorage.json'),
 );
-const contentAsset = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/ContentAsset.json'),
-);
 const hashingProxy = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/HashingProxy.json'),
 );
@@ -61,6 +58,15 @@ const assertion = JSON.parse(
 const stakingStorage = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/StakingStorage.json'),
 );
+const whitelistStorage = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/WhitelistStorage.json'),
+);
+const contentAsset = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/ContentAsset.json')
+)
+const contentAssetStorage = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/build/contracts/contentAssetStorage.json')
+)
 
 const accountPrivateKeys = JSON.parse(
     await readFile('test/bdd/steps/api/datasets/privateKeys.json'),
@@ -77,7 +83,6 @@ const sources = {
     erc20Token,
     profileStorage,
     profile,
-    contentAsset,
     hashingProxy,
     identityStorage,
     parametersStorage,
@@ -87,6 +92,9 @@ const sources = {
     log2pldsfContract,
     staking,
     identity,
+    whitelistStorage,
+    contentAsset,
+    contentAssetStorage
 };
 const web3 = new Web3();
 const wallets = accountPrivateKeys.map((privateKey) => ({
@@ -94,6 +102,14 @@ const wallets = accountPrivateKeys.map((privateKey) => ({
     privateKey,
 }));
 const deployingWallet = wallets[0];
+
+const testParametersStorageParams = {
+    epochLength: 6*60, // 6 minutes
+    commitWindowDurationPerc: 33, // 2 minutes
+    minProofWindowOffsetPerc: 66, // 4 minutes
+    maxProofWindowOffsetPerc: 66, // 4 minutes
+    proofWindowDurationPerc: 33, // 2 minutes
+}
 /**
  * LocalBlockchain represent small wrapper around the Ganache.
  *
@@ -128,10 +144,10 @@ class LocalBlockchain {
             }, */
             logging: {
                 logger: {
-                    log: () => {},
+                    log: console.log,
                 },
             },
-            gasLimit: 7000000,
+            gas: 20000000,
             time: new Date(),
             accounts: accountPrivateKeys.map((account) => ({
                 secretKey: `0x${account}`,
@@ -178,9 +194,6 @@ class LocalBlockchain {
                     `\t AssertionStorage contract address: \t\t\t${this.contracts.assertionStorage.instance._address}`,
                 );
                 this.logger.info(
-                    `\t Content Asset contract address: \t\t\t\t${this.contracts.contentAsset.instance._address}`,
-                );
-                this.logger.info(
                     `\t Hashing Proxy contract address: \t\t\t\t${this.contracts.hashingProxy.instance._address}`,
                 );
                 this.logger.info(
@@ -191,6 +204,9 @@ class LocalBlockchain {
                 );
                 this.logger.info(
                     `\t Parameters Storage contract address: \t\t\t\t${this.contracts.parametersStorage.instance._address}`,
+                );
+                this.logger.info(
+                    `\t Whitelist Storage contract address: \t\t\t\t${this.contracts.whitelistStorage.instance._address}`,
                 );
                 this.logger.info(
                     `\t Scoring Proxy contract address: \t\t\t\t${this.contracts.scoringProxy.instance._address}`,
@@ -243,21 +259,38 @@ class LocalBlockchain {
         );
         await this.setupRole(this.contracts.erc20Token, deployingWallet.address);
 
-        await this.deploy('parametersStorage', deployingWallet, []);
+        await this.deploy('parametersStorage', deployingWallet, [
+            this.contracts.hub.instance._address,
+        ]);
         await this.setContractAddress(
             'ParametersStorage',
             this.contracts.parametersStorage.instance._address,
             deployingWallet,
         );
 
-        await this.deploy('hashingProxy', deployingWallet, []);
+        await this.setParametersStorageParams(testParametersStorageParams, deployingWallet.address);
+
+        await this.deploy('whitelistStorage', deployingWallet, [
+            this.contracts.hub.instance._address,
+        ]);
+        await this.setContractAddress(
+            'WhitelistStorage',
+            this.contracts.whitelistStorage.instance._address,
+            deployingWallet,
+        );
+
+        await this.deploy('hashingProxy', deployingWallet, [
+            this.contracts.hub.instance._address,
+        ]);
         await this.setContractAddress(
             'HashingProxy',
             this.contracts.hashingProxy.instance._address,
             deployingWallet,
         );
 
-        await this.deploy('scoringProxy', deployingWallet, []);
+        await this.deploy('scoringProxy', deployingWallet, [
+            this.contracts.hub.instance._address,
+        ]);
         await this.setContractAddress(
             'ScoringProxy',
             this.contracts.scoringProxy.instance._address,
@@ -316,6 +349,16 @@ class LocalBlockchain {
             this.contracts.serviceAgreementStorageV1.instance._address,
             deployingWallet,
         );
+
+        await this.deploy('contentAssetStorage', deployingWallet, [
+            this.contracts.hub.instance._address,
+        ]);
+
+        await this.setAssetStorageContractAddress(
+            'ContentAssetStorage',
+            this.contracts.contentAssetStorage.instance._address,
+            deployingWallet
+        )
 
         await this.deploy('identityStorage', deployingWallet, [
             this.contracts.hub.instance._address,
@@ -380,7 +423,7 @@ class LocalBlockchain {
         );
 
         await this.deploy('contentAsset', deployingWallet, [this.contracts.hub.instance._address]);
-        await this.setAssetContractAddress(
+        await this.setContractAddress(
             'ContentAsset',
             this.contracts.contentAsset.instance._address,
             deployingWallet,
@@ -445,13 +488,22 @@ class LocalBlockchain {
             );
     }
 
-    async setAssetContractAddress(contractName, contractAddress, sendingWallet) {
+    async setParametersStorageParams(params, fromAddress) {
+        for (const parameter of Object.keys(params)) {
+            const blockchainMethodName = `set${parameter.charAt(0).toUpperCase() + parameter.slice(1)}`;
+            this.logger.info(`Setting ${parameter} in parameters storage to: ${params[parameter]}`)
+            await this.contracts.parametersStorage.instance.methods[blockchainMethodName](params[parameter])
+                .send({from: fromAddress, gas: 50000});
+        }
+    }
+
+    async setAssetStorageContractAddress(contractName, contractAddress, sendingWallet) {
         return this.contracts.hub.instance.methods
-            .setAssetContractAddress(contractName, contractAddress)
+            .setAssetStorageAddress(contractName, contractAddress)
             .send({ from: sendingWallet.address, gas: 3000000 })
             .on('error', (error) =>
                 this.logger.error(
-                    `Unable to set asset contract ${contractName} address in HUB. Error: `,
+                    `Unable to set asset storage contract ${contractName} address in HUB. Error: `,
                     error,
                 ),
             );

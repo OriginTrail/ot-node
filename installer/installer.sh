@@ -1,12 +1,6 @@
 #!/bin/bash
 
-ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive"
-BRANCH="v6/release/testnet"
-BRANCH_DIR="/root/ot-node-6-release-testnet"
 OTNODE_DIR="/root/ot-node"
-FUSEKI_VER="apache-jena-fuseki-4.5.0"
-NODEJS_VER="16"
-FILE=/root/.bashrc
 
 text_color() {
     GREEN='\033[0;32m'
@@ -39,8 +33,8 @@ perform_step() {
 }
 
 install_aliases() {
-    if [ -f "$FILE" ]; then
-        if grep -Fxq "alias otnode-restart='systemctl restart otnode.service'" $FILE; then
+    if [[ -f "/root/.bashrc" ]]; then
+        if grep -Fxq "alias otnode-restart='systemctl restart otnode.service'" ~/.bashrc; then
             echo "Aliases found, skipping."
         else
             echo "alias otnode-restart='systemctl restart otnode.service'" >> ~/.bashrc
@@ -48,26 +42,27 @@ install_aliases() {
             echo "alias otnode-start='systemctl start otnode.service'" >> ~/.bashrc
             echo "alias otnode-logs='journalctl -u otnode --output cat -f'" >> ~/.bashrc
             echo "alias otnode-config='nano ~/ot-node/.origintrail_noderc'" >> ~/.bashrc
-            source ~/.bashrc
-            text_color $GREEN OK
         fi
     else
-        echo "$FILE does not exist. Proceeding with OriginTrail node installation."
+        echo "bashrc does not exist. Proceeding with OriginTrail node installation."
     fi
 }
 
 install_directory() {
+    ARCHIVE_REPOSITORY_URL="github.com/OriginTrail/ot-node/archive"
+    BRANCH="v6/release/testnet"
+    BRANCH_DIR="/root/ot-node-6-release-testnet"
+
+    perform_step wget https://$ARCHIVE_REPOSITORY_URL/$BRANCH.zip "Downloading node files"
+    perform_step unzip *.zip "Unzipping node files"
+    perform_step rm *.zip "Removing zip file"
     OTNODE_VERSION=$(jq -r '.version' $BRANCH_DIR/package.json)
-
-    mkdir $OTNODE_DIR
-    mkdir $OTNODE_DIR/$OTNODE_VERSION
-
-    mv $BRANCH_DIR/* $OTNODE_DIR/$OTNODE_VERSION/
-    mv $BRANCH_DIR/.* $OTNODE_DIR/$OTNODE_VERSION/
-
-    rm -r $BRANCH_DIR
-
-    ln -sfn $OTNODE_DIR/$OTNODE_VERSION $OTNODE_DIR/current
+    perform_step mkdir $OTNODE_DIR "Creating new ot-node directory"
+    perform_step mkdir $OTNODE_DIR/$OTNODE_VERSION "Creating new ot-node version directory"
+    perform_step mv $BRANCH_DIR/* $OTNODE_DIR/$OTNODE_VERSION/ "Moving downloaded node files to ot-node version directory"
+    OUTPUT=$(mv $BRANCH_DIR/.* $OTNODE_DIR/$OTNODE_VERSION/ 2>&1)
+    perform_step rm -rf $BRANCH_DIR "Removing old directories"
+    perform_step ln -sfn $OTNODE_DIR/$OTNODE_VERSION $OTNODE_DIR/current "Creating symlink from $OTNODE_DIR/$OTNODE_VERSION to $OTNODE_DIR/current"
 }
 
 install_firewall() {
@@ -75,256 +70,299 @@ install_firewall() {
     yes | ufw enable
 }
 
+install_prereqs() {
+    export DEBIAN_FRONTEND=noninteractive
+    NODEJS_VER="16"
+
+    perform_step install_aliases "Updating .bashrc file with OriginTrail node aliases"
+    perform_step rm -rf /var/lib/dpkg/lock-frontend "Removing any frontend locks"
+    perform_step apt update "Updating Ubuntu package repository"
+    perform_step apt upgrade -y "Updating Ubuntu to latest version"
+    perform_step apt install unzip jq -y "Installing unzip, jq"
+    perform_step apt install default-jre -y "Installing default-jre"
+    perform_step apt install build-essential -y "Installing build-essential"
+    perform_step wget https://deb.nodesource.com/setup_$NODEJS_VER.x "Downloading Node.js v$NODEJS_VER"
+    chmod +x setup_$NODEJS_VER.x
+    perform_step ./setup_$NODEJS_VER.x "Installing Node.js v$NODEJS_VER"
+    rm -rf setup_$NODEJS_VER.x
+    perform_step apt update "Updating Ubuntu package repository"
+    perform_step apt-get install nodejs -y "Installing node.js"
+    perform_step npm install -g npm "Installing npm"
+    perform_step install_firewall "Configuring firewall"
+    perform_step apt remove unattended-upgrades -y "Remove unattended upgrades"
+}
+
 install_fuseki() {
-    wget https://dlcdn.apache.org/jena/binaries/$FUSEKI_VER.zip
-    unzip $FUSEKI_VER.zip
+    FUSEKI_VER="apache-jena-fuseki-$(git ls-remote --tags https://github.com/apache/jena | grep -o 'refs/tags/jena-[0-9]*\.[0-9]*\.[0-9]*' | sort -r | head -n 1 | grep -o '[^\/-]*$')"
+    FUSEKI_PREV_VER="apache-jena-fuseki-$(git ls-remote --tags https://github.com/apache/jena | grep -o 'refs/tags/jena-[0-9]*\.[0-9]*\.[0-9]*' | sort -r | head -n 3 | tail -n 1 | grep -o '[^\/-]*$')"
+    wget -q --spider https://dlcdn.apache.org/jena/binaries/$FUSEKI_VER.zip
+    if [[ $? -ne 0 ]]; then
+        FUSEKI_VER=$FUSEKI_PREV_VER
+    fi
 
-    rm /root/$FUSEKI_VER.zip
-    mkdir /root/ot-node/fuseki
-    mkdir /root/ot-node/fuseki/tdb
-    cp /root/$FUSEKI_VER/fuseki-server.jar /root/ot-node/fuseki/
-    cp -r /root/$FUSEKI_VER/webapp/ /root/ot-node/fuseki/
-    rm -r /root/$FUSEKI_VER
-
-    perform_step cp $OTNODE_DIR/installer/data/fuseki.service /lib/systemd/system/
-
+    perform_step wget https://dlcdn.apache.org/jena/binaries/$FUSEKI_VER.zip "Downloading Fuseki"
+    perform_step unzip $FUSEKI_VER.zip "Unzipping Fuseki"
+    perform_step rm /root/$FUSEKI_VER.zip /root/ot-node/$FUSEKI_VER.zip "Removing Fuseki zip file"
+    perform_step mkdir /root/ot-node/fuseki "Making /root/ot-node/fuseki directory"
+    perform_step mkdir /root/ot-node/fuseki/tdb "Making /root/ot-node/fuseki/tdb directory"
+    perform_step cp /root/$FUSEKI_VER/fuseki-server.jar /root/ot-node/fuseki/ "Copying Fuseki files to $OTNODE_DIR/fuseki/ 1/2"
+    perform_step cp -r /root/$FUSEKI_VER/webapp/ /root/ot-node/fuseki/ "Copying Fuseki files to $OTNODE_DIR/fuseki/ 1/2"
+    perform_step rm -r /root/$FUSEKI_VER "Removing the remaining /root/$FUSEKI_VER directory"
+    perform_step cp $OTNODE_DIR/installer/data/fuseki.service /lib/systemd/system/ "Copying Fuseki service file"
     systemctl daemon-reload
-    systemctl enable fuseki
-    systemctl start fuseki
-    systemctl status fuseki
+    perform_step systemctl enable fuseki "Enabling Fuseki"
+    perform_step systemctl start fuseki "Starting Fuseki"
+    perform_step systemctl status fuseki "Fuseki status"
 }
 
 install_blazegraph() {
-    wget https://github.com/blazegraph/database/releases/latest/download/blazegraph.jar
+    perform_step wget https://github.com/blazegraph/database/releases/latest/download/blazegraph.jar "Downloading Blazegraph"
+    perform_step cp $OTNODE_DIR/installer/data/blazegraph.service /lib/systemd/system/ "Copying Blazegraph service file"
     mv blazegraph.jar $OTNODE_DIR/../blazegraph.jar
-    cp $OTNODE_DIR/installer/data/blazegraph.service /lib/systemd/system/
-
     systemctl daemon-reload
-    systemctl enable blazegraph
-    systemctl start blazegraph
-    systemctl status blazegraph
+    perform_step systemctl enable blazegraph "Enabling Blazegrpah"
+    perform_step systemctl start blazegraph "Starting Blazegraph"
+    perform_step systemctl status blazegraph "Blazegraph status"
 }
 
-install_mysql() {
-    if [ -d "/var/lib/mysql/operationaldb/" ]; then
-    #check if operationaldb already exists
-        text_color $YELLOW "Old sql database detected. Please enter your sql password to overwrite it."
-        for x in {1..5}; do
-            read -p "Enter your sql repository password (leave blank if none): " password
-            echo -n "Deleting old sql database: "
-            OUTPUT=$(MYSQL_PWD=$password mysql -u root -e "DROP DATABASE IF EXISTS operationaldb;" 2>&1)     
+install_sql() {
+    #check which sql to install/update
+    text_color $YELLOW"IMPORTANT NOTE: to avoid potential migration issues from one SQL to another, please select the one you are currently using. If this is your first installation, both choices are valid. If you don't know the answer, select [1].
+    "
+    while true; do
+        read -p "Please select the SQL you would like to use: (Default: MySQL) [1]MySQL [2]MariaDB [E]xit " choice
+        case "$choice" in
+            [2]* )  text_color $GREEN"MariaDB selected. Proceeding with installation."
+                    sql=mariadb
+                    perform_step apt-get install curl software-properties-common dirmngr ca-certificates apt-transport-https -y "Installing mariadb dependencies"
+                    curl -LsS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version=10.8
+                    perform_step apt-get install mariadb-server -y "Installing mariadb-server"
+                    break;;
+            [Ee]* ) text_color $RED"Installer stopped by user"; exit;;
+            * )     text_color $GREEN"MySQL selected. Proceeding with installation."
+                    sql=mysql
+                    mysql_native_password=" WITH mysql_native_password"
+                    perform_step apt-get install tcllib mysql-server -y "Installing mysql-server"
+                    break;;
+        esac
+    done
+
+    #check old sql password
+    OUTPUT=$($sql -u root -e "status;" 2>&1)
+    if [[ $? -ne 0 ]]; then
+        while true; do
+            read -s -p "Enter your old sql password: " oldpassword
+            echo
+            echo -n "Password check: "
+            OUTPUT=$(MYSQL_PWD=$oldpassword $sql -u root -e "status;" 2>&1)
             if [[ $? -ne 0 ]]; then
-                text_color $RED "FAILED"
-                echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
-                text_color $YELLOW "Wrong password entered. Try again ($x/5)"
+                text_color $YELLOW"ERROR - The sql repository password provided does not match your sql password. Please try again."
             else
                 text_color $GREEN "OK"
-                if [ -z "$password" ]; then
-                    for z in {1..2}; do
-                        read -p "Enter a new sql repository password if you wish (do not leave blank): " password
-                        if [ -n "$password" ]; then
-                            echo -n "Configuring new sql password: "
-                            OUTPUT=$(mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$password';" 2>&1)
-                            if [[ $? -ne 0 ]]; then
-                                text_color $RED "FAILED"
-                                echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
-                                exit 1
-                            else
-                                text_color $GREEN "OK"
-                                break
-                            fi
-                        else
-                            text_color $YELLOW "You must enter a sql repository password. Please try again." 
-                        fi
-                    done
-                fi
                 break
             fi
-            if [ $x == 5 ]; then
-                text_color $RED "FAILED. If you forgot your sql password, you must reset it before attempting this installer again."
-                exit 1
-            fi
         done
-    else
-        OUTPUT=$(mysql -u root -e "status;" 2>&1)
-        #check if sql is password protected
-        if [[ $? -ne 0 ]]; then
-            for y in {1..5}; do
-                read -p "Enter your sql repository password: " password
-                echo -n "Password check: "
-                OUTPUT=$(MYSQL_PWD=$password mysql -u root -e "status;" 2>&1)
-                #check whether entered password matches current sql password
-                if [[ $? -ne 0 ]]; then
-                    text_color $YELLOW "ERROR - The sql password provided does not match your current sql password. Please try again ($y/5)"
-                else
-                    text_color $GREEN "OK"
-                    break
-                fi
-                if [ $y == 5 ]; then
-                    text_color $RED "FAILED. If you forgot your sql password, you must reset it before attempting this installer again."
-                    exit 1
-                fi
-            done
-        else
-            text_color $YELLOW "No sql repository password detected."
-            for y in {1..2}; do
-                read -p "Enter a new sql repository password (do not leave blank): " password
-                if [ -n "$password" ]; then
-                #if password isn't blank
-                    echo -n "Configuring new sql password: "
-                    OUTPUT=$(mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$password';" 2>&1)
-                    if [[ $? -ne 0 ]]; then
-                        text_color $RED "FAILED"
-                        echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
-                        exit 1
-                    else
-                        text_color $GREEN "OK"
-                        break
-                    fi
-                else
-                    text_color $YELLOW "You must enter a sql repository password. Please try again." 
-                fi
-            done
-        fi
     fi
 
-    echo "REPOSITORY_PASSWORD=$password" > $OTNODE_DIR/.env
-    echo -n "Creating new sql database: "
-    OUTPUT=$(MYSQL_PWD=$password mysql -u root -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;" 2>&1)
-    if [[ $? -ne 0 ]]; then
-        text_color $RED "FAILED"
-        echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
-        exit 1
-    else
-        text_color $GREEN "OK"
+    #check operationaldb
+    if [[ -d "/var/lib/mysql/operationaldb/" ]]; then
+        read -p "Old operationaldb repository detected. Would you like to overwrite it ? (Default: No) [Y]es [N]o [E]xit " choice
+        case "$choice" in
+            [yY]* ) perform_step $(MYSQL_PWD=$oldpassword $sql -u root -e "DROP DATABASE IF EXISTS operationaldb;") "Overwritting slq repository";;
+            [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+            * )     text_color $GREEN"Keeping previous sql repository"; NEW_DB=FALSE;;
+        esac
     fi
-    perform_step sed -i 's|max_binlog_size|#max_binlog_size|' /etc/mysql/mysql.conf.d/mysqld.cnf "Setting max log size"
-    echo "disable_log_bin" >> /etc/mysql/mysql.conf.d/mysqld.cnf
-    perform_step sed -i '/disable_log_bin/a\wait_timeout=31536000' /etc/mysql/mysql.conf.d/mysqld.cnf "Setting wait timeout"
-    perform_step sed -i '/disable_log_bin/a\interactive_timeout=31536000' /etc/mysql/mysql.conf.d/mysqld.cnf "Setting interactive timeout"
 
-    systemctl restart mysql
+    #check sql new password
+    read -p "Would you like to change your sql password or add one ? (Default: Yes) [Y]es [N]o [E]xit " choice
+    case "$choice" in
+        [nN]* ) text_color $GREEN"Keeping previous sql password"; password=$oldpassword;;
+        [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+        * )     while true; do
+                    read -s -p "Enter your new sql password: " password
+                    echo
+                    read -s -p "Please confirm your new sql password: " password2
+                    echo
+                    [[ $password = $password2 ]] && break
+                    text_color $YELLOW "Password entered do not match. Please try again."
+                done
+                perform_step $(MYSQL_PWD=$oldpassword $sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED$mysql_native_password BY '$password';") "Changing sql password";;
+    esac
+
+    perform_step $(echo "REPOSITORY_PASSWORD=$password" > $OTNODE_DIR/.env) "Adding sql password to .env"
+    if [[ $NEW_DB != FALSE ]]; then
+        perform_step $(MYSQL_PWD=$password $sql -u root -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;") "Creating new sql repository"
+    fi
+    if [[ $sql = mysql ]]; then
+        perform_step sed -i 's|max_binlog_size|#max_binlog_size|' /etc/mysql/mysql.conf.d/mysqld.cnf "Setting max log size"
+        perform_step $(echo -e "disable_log_bin\nwait_timeout = 31536000\ninteractive_timeout = 31536000" >> /etc/mysql/mysql.conf.d/mysqld.cnf) "Adding disable_log_bin, wait_timeout, interactive_timeout to sql config"
+    fi
+    if [[ $sql = mariadb ]]; then
+        perform_step sed -i 's|max_binlog_size|#max_binlog_size|' /etc/mysql/mariadb.conf.d/50-server.cnf "Setting max log size"
+        perform_step $(echo -e "disable_log_bin\nwait_timeout = 31536000\ninteractive_timeout = 31536000" >> /etc/mysql/mariadb.conf.d/50-server.cnf) "Adding disable_log_bin, wait_timeout, interactive_timeout to sql config"
+    fi
+    perform_step systemctl restart $sql "Restarting $sql"
 }
 
 install_node() {
+
+    CONFIG_DIR=$OTNODE_DIR/..
+
+    #blockchains=("otp" "polygon")
+    #for ((i = 0; i < ${#blockchains[@]}; ++i));
+    #do
+    #   read -p "Do you want to connect your node to blockchain: ${blockchains[$i]} ? [Y]Yes [N]No [E]Exit: " choice
+    #	case "$choice" in
+    #       [Yy]* )
+
+    #            read -p "Enter your substrate operational wallet address: " SUBSTRATE_OPERATIONAL_WALLET
+    #            echo "Substrate operational wallet address: $SUBSTRATE_OPERATIONAL_WALLET"
+
+    #            read -p "Enter your substrate operational wallet private key: " SUBSTRATE_OPERATIONAL_PRIVATE_KEY
+    #            echo "Substrate operational wallet private key: $SUBSTRATE_OPERATIONAL_PRIVATE_KEY"
+
+                read -p "Enter your EVM operational wallet address: " EVM_OPERATIONAL_WALLET
+                text_color $GREEN "EVM operational wallet address: $EVM_OPERATIONAL_WALLET"
+
+                read -p "Enter your EVM operational wallet private key: " EVM_OPERATIONAL_PRIVATE_KEY
+                text_color $GREEN "EVM operational wallet private key: $EVM_OPERATIONAL_PRIVATE_KEY"
+
+    #            read -p "Enter your substrate management wallet address: " SUBSTRATE_MANAGEMENT_WALLET
+    #            echo "Substrate management wallet address: $SUBSTRATE_MANAGEMENT_WALLET"
+
+    #            read -p "Enter your substrate management wallet private key: " SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY
+    #            echo "Substrate management wallet private key: $SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY"
+
+                read -p "Enter your EVM management wallet address: " EVM_MANAGEMENT_WALLET
+                text_color $GREEN "EVM management wallet address: $EVM_MANAGEMENT_WALLET"
+
+                read -p "Enter your profile shares token name: " SHARES_TOKEN_NAME
+                text_color $GREEN "Profile shares token name: $SHARES_TOKEN_NAME"
+
+                read -p "Enter your profile shares token symbol: " SHARES_TOKEN_SYMBOL
+                text_color $GREEN "Profile shares token name: $SHARES_TOKEN_SYMBOL"
+                # ;;
+    #      [Nn]* ) ;;
+    #     [Ee]* ) echo "Installer stopped by user"; exit;;
+        #    * ) ((--i));echo "Please make a valid choice and try again.";;
+        #esac
+    #done
+    
     # Change directory to ot-node/current
     cd $OTNODE_DIR
 
-    npm ci --omit=dev --ignore-scripts "Executing npm ci --omit=dev --ignore-scripts"
+    perform_step npm ci --omit=dev --ignore-scripts "Executing npm install"
 
     echo "NODE_ENV=testnet" >> $OTNODE_DIR/.env
 
-    touch $CONFIG_DIR/.origintrail_noderc
-    jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}, "modules": {"tripleStore":{"defaultImplementation": $tripleStore}}}' > $CONFIG_DIR/.origintrail_noderc
+    perform_step touch $CONFIG_DIR/.origintrail_noderc "Configuring node config file"
+    perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}, "modules": {"tripleStore":{"defaultImplementation": $tripleStore}}}' > $CONFIG_DIR/.origintrail_noderc) "Adding tripleStore $tripleStore to node config file"
 
-    jq --arg blockchain "otp" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" '.modules.blockchain.implementation[$blockchain].config |= { "evmOperationalWalletPublicKey": $evmOperationalWallet, "evmOperationalWalletPrivateKey": $evmOperationalWalletPrivateKey, "evmManagementWalletPublicKey": $evmManagementWallet} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
-    mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc
+    perform_step $(jq --arg blockchain "otp" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" --arg evmManagementWallet "$SHARES_TOKEN_NAME" --arg evmManagementWallet "$SHARES_TOKEN_SYMBOL" --arg sharesTokenName "$SHARES_TOKEN_NAME" --arg sharesTokenSymbol "$SHARES_TOKEN_SYMBOL" '.modules.blockchain.implementation[$blockchain].config |= { "evmOperationalWalletPublicKey": $evmOperationalWallet, "evmOperationalWalletPrivateKey": $evmOperationalWalletPrivateKey, "evmManagementWalletPublicKey": $evmManagementWallet, "sharesTokenName": $sharesTokenName, "sharesTokenSymbol": $sharesTokenSymbol} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2"
+    
+    perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
 
-    cp $OTNODE_DIR/installer/data/otnode.service /lib/systemd/system/
+    perform_step cp $OTNODE_DIR/installer/data/otnode.service /lib/systemd/system/ "Copying otnode service file"
     
     systemctl daemon-reload
-    systemctl enable otnode
-    systemctl start otnode
-    systemctl status otnode
+    perform_step systemctl enable otnode "Enabling otnode"
+    perform_step systemctl start otnode "Starting otnode"
+    perform_step systemctl status otnode "otnode service status"
 }
 
+#For Arch Linux installation
+if [[ ! -z $(grep "arch" "/etc/os-release") ]]; then
+    source <(curl -s https://raw.githubusercontent.com/OriginTrail/ot-node/v6/develop/installer/data/archlinux)
+fi
+
+#### INSTALLATION START ####
 clear
 
 cd /root
 
-header_color $BGREEN "Welcome to the OriginTrail Installer. Please sit back while the installer runs. "
+header_color $BGREEN"Welcome to the OriginTrail Installer. Please sit back while the installer runs. "
 
-header_color $BGREEN "Installing OriginTrail node pre-requisites..."
+header_color $BGREEN"Installing OriginTrail node pre-requisites..."
 
-perform_step install_aliases "Updating .bashrc file with OriginTrail node aliases"
-perform_step rm /var/lib/dpkg/lock-frontend "Removing any frontend locks"
-perform_step apt update "Updating Ubuntu package repository"
-perform_step export DEBIAN_FRONTEND=noninteractive "Updating Ubuntu to latest version 1/2"
-perform_step apt upgrade -y "Updating Ubuntu to latest version 2/2"
-perform_step apt install default-jre unzip jq -y "Installing default-jre, unzip, jq"
-perform_step apt install build-essential -y "Installing build-essential"
-perform_step wget https://$ARCHIVE_REPOSITORY_URL/$BRANCH.zip "Downloading ot-node"
-perform_step unzip *.zip "Unzipping ot-node"
-perform_step rm *.zip "Removing zip file"
-#Download new version .zip file
-#Unpack to init folder
-perform_step wget https://deb.nodesource.com/setup_$NODEJS_VER.x "Downloading Node.js v$NODEJS_VER"
-chmod +x setup_$NODEJS_VER.x
-perform_step ./setup_$NODEJS_VER.x "Installing Node.js v$NODEJS_VER"
-rm -rf setup_$NODEJS_VER.x
-perform_step apt update "Updating the Ubuntu repo"
-perform_step apt-get install nodejs -y "Installing node.js"
-perform_step npm install -g npm "Installing npm"
-perform_step apt-get install tcllib mysql-server -y "Installing tcllib and mysql-server"
-perform_step apt remove unattended-upgrades -y "Remove unattended upgrades"
-perform_step install_directory "Assembling ot-node directory"
-perform_step install_firewall "Configuring firewall"
+install_prereqs
+
+header_color $BGREEN"Preparing OriginTrail node directory..."
+
+if [[ -d "$OTNODE_DIR" ]]; then
+    read -p "Previous ot-node directory detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
+    case "$choice" in
+        [nN]* ) text_color $GREEN"Keeping previous ot-node directory.";;
+        [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+        * ) text_color $GREEN"Reconfiguring ot-node directory."; systemctl is-active --quiet otnode && systemctl stop otnode; perform_step rm -rf $OTNODE_DIR "Deleting $OTNODE_DIR"; install_directory;;
+    esac
+else
+    install_directory
+fi
 
 OTNODE_DIR=$OTNODE_DIR/current
 
-header_color $BGREEN "Installing Triplestore (Graph Database)..."
+header_color $BGREEN"Installing Triplestore (Graph Database)..."
 
-while true; do
-    read -p "Please select the database you would like to use: [1]Fuseki [2]Blazegraph [E]xit: " choice
-    case "$choice" in
-        [1gG]* ) echo -e "Fuseki selected. Proceeding with installation."; tripleStore=ot-fuseki; perform_step install_fuseki "Installing Fuseki"; break;;
-        [2bB]* ) echo -e "Blazegraph selected. Proceeding with installation."; tripleStore=ot-blazegraph; perform_step install_blazegraph "Installing Blazegraph"; break;;
-        [Ee]* ) echo "Installer stopped by user"; exit;;
-        * ) echo "Please make a valid choice and try again.";;
-    esac
-done
+read -p "Please select the database you would like to use: (Default: Blazegraph) [1]Blazegraph [2]Fuseki [E]xit: " choice
+case "$choice" in
+    [2fF] ) text_color $GREEN"Fuseki selected. Proceeding with installation."; tripleStore=ot-fuseki;;
+    [Ee] )  text_color $RED"Installer stopped by user"; exit;;
+    * )     text_color $GREEN"Blazegraph selected. Proceeding with installation."; tripleStore=ot-blazegraph;;
+esac
 
-header_color $BGREEN "Installing MySQL..."
+if [[ $tripleStore = "ot-fuseki" ]]; then
+    if [[ -d "/root/fuseki" ]]; then
+        read -p "Previously installed Fuseki triplestore detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
+        case "$choice" in
+            [nN]* ) text_color $GREEN"Keeping previous Fuseki installation.";;
+            [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+            * )     text_color $GREEN"Reinstalling Fuseki."; perform_step rm -rf fuseki* "Removing previous Fuseki installation"; install_fuseki;;
+        esac
+    else
+        install_fuseki
+    fi
+fi
 
-install_mysql
+if [[ $tripleStore = "ot-blazegraph" ]]; then
+    if [[ -f "blazegraph.jar" ]]; then
+        read -p "Previously installed Blazegraph triplestore detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
+        case "$choice" in
+            [nN]* ) text_color $GREEN"Keeping old Blazegraph Installation.";;
+            [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+            * )     text_color $GREEN"Reinstalling Blazegraph."; perform_step rm -rf blazegraph* "Removing previous Blazegraph installation"; install_blazegraph;;
+        esac
+    else
+        install_blazegraph
+    fi
+fi
 
-header_color $BGREEN "Configuring OriginTrail node..."
+header_color $BGREEN"Installing SQL..."
 
-CONFIG_DIR=$OTNODE_DIR/..
+install_sql
 
-#blockchains=("otp" "polygon")
-#for ((i = 0; i < ${#blockchains[@]}; ++i));
-#do
-#   read -p "Do you want to connect your node to blockchain: ${blockchains[$i]} ? [Y]Yes [N]No [E]Exit: " choice
-#	case "$choice" in
-#       [Yy]* )
+header_color $BGREEN"Configuring OriginTrail node..."
 
-#            read -p "Enter your substrate operational wallet address: " SUBSTRATE_OPERATIONAL_WALLET
-#            echo "Substrate operational wallet address: $SUBSTRATE_OPERATIONAL_WALLET"
+install_node
 
-#            read -p "Enter your substrate operational wallet private key: " SUBSTRATE_OPERATIONAL_PRIVATE_KEY
-#            echo "Substrate operational wallet private key: $SUBSTRATE_OPERATIONAL_PRIVATE_KEY"
+header_color $BGREEN"INSTALLATION COMPLETE !"
 
-            read -p "Enter your EVM operational wallet address: " EVM_OPERATIONAL_WALLET
-            text_color $GREEN "EVM operational wallet address: $EVM_OPERATIONAL_WALLET"
+text_color $GREEN "
+New aliases added:
+otnode-restart
+otnode-stop
+otnode-start
+otnode-logs
+otnode-config
 
-            read -p "Enter your EVM operational wallet private key: " EVM_OPERATIONAL_PRIVATE_KEY
-            text_color $GREEN "EVM operational wallet private key: $EVM_OPERATIONAL_PRIVATE_KEY"
+To start using aliases, run:
+source ~/.bashrc
+"
+text_color $YELLOW"Logs will be displayed. Press ctrl+c to exit the logs. The node WILL stay running after you return to the command prompt.
 
-#            read -p "Enter your substrate management wallet address: " SUBSTRATE_MANAGEMENT_WALLET
-#            echo "Substrate management wallet address: $SUBSTRATE_MANAGEMENT_WALLET"
+If the logs do not show and the screen hangs, press ctrl+c to exit the installation and reboot your server.
 
-#            read -p "Enter your substrate management wallet private key: " SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY
-#            echo "Substrate management wallet private key: $SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY"
-
-            read -p "Enter your EVM management wallet address: " EVM_MANAGEMENT_WALLET
-            text_color $GREEN "EVM management wallet address: $EVM_MANAGEMENT_WALLET"
-
-#            read -p "Enter your EVM management wallet private key: " EVM_MANAGEMENT_PRIVATE_KEY
-#            echo "EVM management wallet private key: $EVM_MANAGEMENT_PRIVATE_KEY"
-            # ;;
-#      [Nn]* ) ;;
-#     [Ee]* ) echo "Installer stopped by user"; exit;;
-    #    * ) ((--i));echo "Please make a valid choice and try again.";;
-    #esac
-#done
-
-perform_step install_node "Configuring ot-node"
-
-text_color $GREEN "Logs will be displayed. Press ctrl+c to exit the logs. The node WILL stay running after you return to the command prompt."
-echo ""
-text_color $GREEN "If the logs do not show and the screen hangs, press ctrl+c to exit the installation and reboot your server."
-echo ""
+"
 read -p "Press enter to continue..."
 
-journalctl -u otnode --output cat -fn 100
+journalctl -u otnode --output cat -fn 200
