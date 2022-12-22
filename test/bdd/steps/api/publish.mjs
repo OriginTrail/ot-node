@@ -22,21 +22,10 @@ When(
             this.state.nodes[node - 1].configuration.modules.blockchain.implementation.ganache
                 .config;
         const assertion = assertions[assertionName];
-        const blockchain = {
-            name: "ganache",
-            publicKey: evmOperationalWalletPublicKey,
-            privateKey: evmOperationalWalletPrivateKey,
-        };
-        let publishOptions = {
-            epochsNum: 2,
-            maxNumberOfRetries: 30,
-            frequency: 1,
-            blockchain,
-        };
         const result = await this.state.nodes[node - 1].client
-            .asset.create(
+            .publish(
                 assertion,
-                publishOptions
+                { evmOperationalWalletPublicKey, evmOperationalWalletPrivateKey }
             )
             .catch((error) => {
                 assert.fail(`Error while trying to publish assertion. ${error}`);
