@@ -137,12 +137,12 @@ export const NETWORK_MESSAGE_TYPES = {
 
 export const NETWORK_MESSAGE_TIMEOUT_MILLS = {
     PUBLISH: {
-        INIT: 180 * 1000,
-        REQUEST: 180 * 1000,
+        INIT: 60 * 1000,
+        REQUEST: 60 * 1000,
     },
     GET: {
-        INIT: 180 * 1000,
-        REQUEST: 180 * 1000,
+        INIT: 60 * 1000,
+        REQUEST: 60 * 1000,
     },
 };
 
