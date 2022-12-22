@@ -15,6 +15,7 @@ import toobusy from 'toobusy-js';
 import { v5 as uuidv5 } from 'uuid';
 import { mkdir, writeFile, readFile, stat } from 'fs/promises';
 import ip from 'ip';
+import { TimeoutController } from 'timeout-abort-controller';
 import {
     NETWORK_API_RATE_LIMIT,
     NETWORK_API_SPAM_DETECTION,
@@ -278,7 +279,13 @@ class Libp2pService {
         };
     }
 
-    async sendMessage(protocol, peerId, messageType, operationId, keyword, message) {
+    async sendMessage(protocol, peerId, messageType, operationId, keyword, message, timeout) {
+        const nackMessage = {
+            header: { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK },
+            data: {
+                errorMessage: '',
+            },
+        };
         const keywordUuid = uuidv5(keyword, uuidv5.URL);
 
         // const sessionStream = this.getSessionStream(operationId, remotePeerId.toB58String());
@@ -307,14 +314,11 @@ class Libp2pService {
             dialEnd = Date.now();
         } catch (error) {
             dialEnd = Date.now();
-            return {
-                header: { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK },
-                data: {
-                    errorMessage: `Unable to dial peer: ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, dial execution time: ${
-                        dialEnd - dialStart
-                    } ms. Error: ${error.message}`,
-                },
-            };
+            nackMessage.data.errorMessage = `Unable to dial peer: ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, dial execution time: ${
+                dialEnd - dialStart
+            } ms. Error: ${error.message}`;
+
+            return nackMessage;
         }
         this.logger.trace(
             `Created stream for peer: ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, dial execution time: ${
@@ -344,14 +348,11 @@ class Libp2pService {
             sendMessageEnd = Date.now();
         } catch (error) {
             sendMessageEnd = Date.now();
-            return {
-                header: { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK },
-                data: {
-                    errorMessage: `Unable to send message to peer: ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType}, operationId: ${operationId}, execution time: ${
-                        sendMessageEnd - sendMessageStart
-                    } ms. Error: ${error.message}`,
-                },
-            };
+            nackMessage.data.errorMessage = `Unable to send message to peer: ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType}, operationId: ${operationId}, execution time: ${
+                sendMessageEnd - sendMessageStart
+            } ms. Error: ${error.message}`;
+
+            return nackMessage;
         }
 
         // if (!this.sessions[remotePeerId.toB58String()]) {
@@ -371,25 +372,45 @@ class Libp2pService {
         let readResponseStart;
         let readResponseEnd;
         let response;
+        const timeoutController = new TimeoutController(timeout);
         try {
             readResponseStart = Date.now();
+
+            timeoutController.signal.addEventListener(
+                'abort',
+                async () => {
+                    stream.abort();
+                    response = null;
+                },
+                { once: true },
+            );
+
             response = await this._readMessageFromStream(
                 stream,
                 this.isResponseValid.bind(this),
                 remotePeerId.toB58String(),
             );
+
+            if (timeoutController.signal.aborted) {
+                throw Error('Message timed out!');
+            }
+
+            timeoutController.signal.removeEventListener('abort');
+            timeoutController.clear();
+
             readResponseEnd = Date.now();
         } catch (error) {
+            timeoutController.signal.removeEventListener('abort');
+            timeoutController.clear();
+
             readResponseEnd = Date.now();
-            return {
-                header: { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK },
-                data: {
-                    errorMessage: `Unable to read response from peer ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, execution time: ${
-                        readResponseEnd - readResponseStart
-                    } ms. Error: ${error.message}`,
-                },
-            };
+            nackMessage.data.errorMessage = `Unable to read response from peer ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, execution time: ${
+                readResponseEnd - readResponseStart
+            } ms. Error: ${error.message}`;
+
+            return nackMessage;
         }
+
         this.logger.trace(
             `Receiving response from ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${
                 response.message?.header?.messageType
@@ -398,7 +419,13 @@ class Libp2pService {
             } ms.`,
         );
 
-        return response.valid ? response.message : null;
+        if (!response.valid) {
+            nackMessage.data.errorMessage = 'Invalid response';
+
+            return nackMessage;
+        }
+
+        return response.message;
     }
 
     async sendMessageResponse(
@@ -489,10 +516,14 @@ class Libp2pService {
     }
 
     async readMessageSink(source, isMessageValid, remotePeerId) {
-        const message = {};
-        let stringifiedData = '';
+        const message = { header: { operationId: '', keywordUuid: '' }, data: {} };
         // we expect first buffer to be header
         const stringifiedHeader = (await source.next()).value;
+
+        if (!stringifiedHeader?.length) {
+            return { message, valid: false, busy: false };
+        }
+
         message.header = JSON.parse(stringifiedHeader);
 
         // validate request / response
@@ -508,6 +539,7 @@ class Libp2pService {
             return { message, valid: true, busy: true };
         }
 
+        let stringifiedData = '';
         // read data the data
         for await (const chunk of source) {
             stringifiedData += chunk;
