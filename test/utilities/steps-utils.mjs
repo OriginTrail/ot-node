@@ -25,7 +25,7 @@ class StepsUtils {
                                     evmOperationalWalletPublicKey: wallet.address,
                                     evmOperationalWalletPrivateKey: wallet.privateKey,
                                     evmManagementWalletPublicKey: managementWallet.address,
-                                    evmManagementPublicKey: managementWallet.address,
+                                    evmManagementWalletPrivateKey: managementWallet.privateKey,
                                     sharesTokenName,
                                     sharesTokenSymbol
                                 },
