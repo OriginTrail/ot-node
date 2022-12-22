@@ -11,7 +11,7 @@
               "hubContractAddress": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
               "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
               "evmOperationalWalletPrivateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
-              "evmManagementWalletPublicKey": "0xBaF76aC0d0ef9a2FFF76884d54C9D3e270290a43",
+              "evmManagementWalletPrivateKey": "0x9b9af041edc816692276ac3c8f1d5565e3c01ddff80ec982943a29bd8d1d8863",
               "sharesTokenName": "LocalNode0",
               "sharesTokenSymbol": "LN0"
           }
