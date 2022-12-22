@@ -144,7 +144,7 @@ class LocalBlockchain {
             }, */
             logging: {
                 logger: {
-                    log: console.log,
+                    log: this.logger.log,
                 },
             },
             gas: 20000000,
