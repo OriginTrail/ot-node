@@ -17,6 +17,8 @@ const argv = require('minimist')(process.argv.slice(1), {
     ],
 });
 
+const devEnvironment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+
 async function setStake(
     rpcEndpoint,
     stake,
@@ -51,14 +53,14 @@ async function setStake(
     await tokenContract
         .connect(managementWalletSigner)
         .increaseAllowance(stakingContractAddress, stakeWei, {
-            gasPrice: process.env.NODE_ENV === 'development' ? undefined : 8,
+            gasPrice: devEnvironment ? undefined : 8,
             gasLimit: 500_000,
         });
     // TODO: Add ABI instead of hard-coded function definition
     await stakingContract
         .connect(managementWalletSigner)
         ['addStake(uint72,uint96)'](identityId, stakeWei, {
-            gasPrice: process.env.NODE_ENV === 'development' ? undefined : 1_000,
+            gasPrice: devEnvironment ? undefined : 1_000,
             gasLimit: 500_000,
         });
 }
