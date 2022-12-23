@@ -1,7 +1,7 @@
 {
     "name": "origintrail_node",
-    "version": "6.0.0",
-    "description": "OTNode v6 Beta 2",
+    "version": "6.0.1",
+    "description": "OTNode V6",
     "main": "index.js",
     "type": "module",
     "scripts": {
@@ -50,7 +50,7 @@
         "@polkadot/util-crypto": "^10.1.7",
         "@truffle/hdwallet-provider": "^2.0.16",
         "chai": "^4.3.6",
-        "dkg.js": "^6.0.0-beta.3.1.2",
+        "dkg.js": "^6.0.0-beta.3.5.1",
         "eslint": "^8.23.0",
         "eslint-config-airbnb": "^19.0.4",
         "eslint-config-prettier": "^8.5.0",

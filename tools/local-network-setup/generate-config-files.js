@@ -54,12 +54,6 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     if (i === 0) {
         template = bootstrapTemplate;
         templatePath = bootstrapTemplatePath;
-        fs.ensureDirSync(path.join(appRootPath.path, appDataPath, LIBP2P_KEY_DIRECTORY));
-        fs.writeFileSync(
-            path.join(appRootPath.path, appDataPath, LIBP2P_KEY_DIRECTORY, LIBP2P_KEY_FILENAME),
-            bootstrapTemplate.modules.network.implementation['libp2p-service'].config.privateKey,
-        );
-        console.log('Using the preexisting identity for the first node (bootstrap)');
         nodeName = 'bootstrap';
     } else {
         template = dhTemplate;

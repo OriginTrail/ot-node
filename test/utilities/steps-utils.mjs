@@ -9,7 +9,7 @@ class StepsUtils {
     }
 
 
-    createNodeConfiguration(blockchain, wallet, managementWallet, nodeIndex, nodeName, rpcPort) {
+    createNodeConfiguration(blockchain, wallet, managementWallet, nodeIndex, nodeName, rpcPort, sharesTokenName, sharesTokenSymbol) {
         return {
             modules: {
                 blockchain:
@@ -25,7 +25,9 @@ class StepsUtils {
                                     evmOperationalWalletPublicKey: wallet.address,
                                     evmOperationalWalletPrivateKey: wallet.privateKey,
                                     evmManagementWalletPublicKey: managementWallet.address,
-                                    evmManagementPublicKey: managementWallet.address,
+                                    evmManagementWalletPrivateKey: managementWallet.privateKey,
+                                    sharesTokenName,
+                                    sharesTokenSymbol
                                 },
                             },
                         },
@@ -71,7 +73,7 @@ class StepsUtils {
                 databaseName: `operationaldbnode${nodeIndex}`,
             },
             rpcPort,
-            appDataPath: `data${nodeIndex}`,
+            appDataPath: `test-data${nodeIndex}`,
             graphDatabase: {
                 name: nodeName,
             },
