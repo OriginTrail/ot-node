@@ -67,7 +67,10 @@ class Libp2pService {
         };
         let id;
         if (!this.config.peerId) {
-            if (process.env.NODE_ENV !== 'test' || !this.config.privateKey) {
+            if (
+                (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'development') ||
+                !this.config.privateKey
+            ) {
                 this.config.privateKey = await this.readPrivateKeyFromFile();
             }
 
