@@ -1,7 +1,7 @@
 import { OPERATION_ID_STATUS } from '../../constants/constants.js';
 import BaseController from './base-http-api-controller.js';
 
-const availableOperations = ['publish', 'get', 'assertions:search', 'entities:search', 'query'];
+const availableOperations = ['publish', 'get', 'query'];
 
 class ResultController extends BaseController {
     constructor(ctx) {
@@ -38,8 +38,6 @@ class ResultController extends BaseController {
                 }
 
                 switch (operation) {
-                    case 'assertions:search':
-                    case 'entities:search':
                     case 'get':
                     case 'publish':
                     case 'query':

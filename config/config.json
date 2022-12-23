@@ -87,21 +87,27 @@
                         "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
                         "config": {
                             "repositories": {
-                                "current": {
+                                "privateCurrent": {
                                     "url": "http://localhost:9999/blazegraph",
-                                    "name": "current",
+                                    "name": "private-current",
                                     "username": "admin",
                                     "password": ""
                                 },
-                                "historical": {
+                                "privateHistory": {
                                     "url": "http://localhost:9999/blazegraph",
-                                    "name": "historical",
+                                    "name": "private-history",
                                     "username": "admin",
                                     "password": ""
                                 },
-                                "private": {
+                                "publicCurrent": {
                                     "url": "http://localhost:9999/blazegraph",
-                                    "name": "private",
+                                    "name": "public-current",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "publicHistory": {
+                                    "url": "http://localhost:9999/blazegraph",
+                                    "name": "public-history",
                                     "username": "admin",
                                     "password": ""
                                 }
@@ -113,21 +119,27 @@
                         "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
                         "config": {
                             "repositories": {
-                                "current": {
+                                "privateCurrent": {
                                     "url": "http://localhost:3030",
-                                    "name": "current",
+                                    "name": "private-current",
                                     "username": "admin",
                                     "password": ""
                                 },
-                                "historical": {
+                                "privateHistory": {
                                     "url": "http://localhost:3030",
-                                    "name": "historical",
+                                    "name": "private-history",
                                     "username": "admin",
                                     "password": ""
                                 },
-                                "private": {
+                                "publicCurrent": {
                                     "url": "http://localhost:3030",
-                                    "name": "private",
+                                    "name": "public-current",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "publicHistory": {
+                                    "url": "http://localhost:3030",
+                                    "name": "public-history",
                                     "username": "admin",
                                     "password": ""
                                 }
@@ -139,21 +151,27 @@
                         "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
                         "config": {
                             "repositories": {
-                                "current": {
+                                "privateCurrent": {
                                     "url": "http://localhost:7200",
-                                    "name": "current",
+                                    "name": "private-current",
                                     "username": "admin",
                                     "password": ""
                                 },
-                                "historical": {
+                                "privateHistory": {
                                     "url": "http://localhost:7200",
-                                    "name": "historical",
+                                    "name": "private-history",
                                     "username": "admin",
                                     "password": ""
                                 },
-                                "private": {
+                                "publicCurrent": {
                                     "url": "http://localhost:7200",
-                                    "name": "private",
+                                    "name": "public-current",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "publicHistory": {
+                                    "url": "http://localhost:7200",
+                                    "name": "public-history",
                                     "username": "admin",
                                     "password": ""
                                 }
@@ -337,78 +355,32 @@
             "tripleStore": {
                 "enabled": true,
                 "implementation": {
-                    "ot-blazegraph": {
-                        "enabled": false,
-                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
-                        "config": {
-                            "repositories": {
-                                "current": {
-                                    "url": "http://localhost:9999/blazegraph",
-                                    "name": "current",
-                                    "username": "admin",
-                                    "password": ""
-                                },
-                                "historical": {
-                                    "url": "http://localhost:9999/blazegraph",
-                                    "name": "historical",
-                                    "username": "admin",
-                                    "password": ""
-                                },
-                                "private": {
-                                    "url": "http://localhost:9999/blazegraph",
-                                    "name": "private",
-                                    "username": "admin",
-                                    "password": ""
-                                }
-                            }
-                        }
-                    },
-                    "ot-fuseki": {
-                        "enabled": false,
-                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
-                        "config": {
-                            "repositories": {
-                                "current": {
-                                    "url": "http://localhost:3030",
-                                    "name": "current",
-                                    "username": "admin",
-                                    "password": ""
-                                },
-                                "historical": {
-                                    "url": "http://localhost:3030",
-                                    "name": "historical",
-                                    "username": "admin",
-                                    "password": ""
-                                },
-                                "private": {
-                                    "url": "http://localhost:3030",
-                                    "name": "private",
-                                    "username": "admin",
-                                    "password": ""
-                                }
-                            }
-                        }
-                    },
                     "ot-graphdb": {
                         "enabled": true,
                         "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
                         "config": {
                             "repositories": {
-                                "current": {
+                                "privateCurrent": {
                                     "url": "http://localhost:7200",
-                                    "name": "current",
+                                    "name": "private-current",
                                     "username": "admin",
                                     "password": ""
                                 },
-                                "historical": {
+                                "privateHistory": {
                                     "url": "http://localhost:7200",
-                                    "name": "historical",
+                                    "name": "private-history",
                                     "username": "admin",
                                     "password": ""
                                 },
-                                "private": {
+                                "publicCurrent": {
                                     "url": "http://localhost:7200",
-                                    "name": "private",
+                                    "name": "public-current",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "publicHistory": {
+                                    "url": "http://localhost:7200",
+                                    "name": "public-history",
                                     "username": "admin",
                                     "password": ""
                                 }
@@ -551,21 +523,27 @@
                         "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
                         "config": {
                             "repositories": {
-                                "current": {
+                                "privateCurrent": {
                                     "url": "http://localhost:9999/blazegraph",
-                                    "name": "current",
+                                    "name": "private-current",
                                     "username": "admin",
                                     "password": ""
                                 },
-                                "historical": {
+                                "privateHistory": {
                                     "url": "http://localhost:9999/blazegraph",
-                                    "name": "historical",
+                                    "name": "private-history",
                                     "username": "admin",
                                     "password": ""
                                 },
-                                "private": {
+                                "publicCurrent": {
                                     "url": "http://localhost:9999/blazegraph",
-                                    "name": "private",
+                                    "name": "public-current",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "publicHistory": {
+                                    "url": "http://localhost:9999/blazegraph",
+                                    "name": "public-history",
                                     "username": "admin",
                                     "password": ""
                                 }
@@ -577,21 +555,27 @@
                         "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
                         "config": {
                             "repositories": {
-                                "current": {
+                                "privateCurrent": {
                                     "url": "http://localhost:3030",
-                                    "name": "current",
+                                    "name": "private-current",
                                     "username": "admin",
                                     "password": ""
                                 },
-                                "historical": {
+                                "privateHistory": {
                                     "url": "http://localhost:3030",
-                                    "name": "historical",
+                                    "name": "private-history",
                                     "username": "admin",
                                     "password": ""
                                 },
-                                "private": {
+                                "publicCurrent": {
                                     "url": "http://localhost:3030",
-                                    "name": "private",
+                                    "name": "public-current",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "publicHistory": {
+                                    "url": "http://localhost:3030",
+                                    "name": "public-history",
                                     "username": "admin",
                                     "password": ""
                                 }
@@ -603,21 +587,27 @@
                         "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
                         "config": {
                             "repositories": {
-                                "current": {
+                                "privateCurrent": {
                                     "url": "http://localhost:7200",
-                                    "name": "current",
+                                    "name": "private-current",
                                     "username": "admin",
                                     "password": ""
                                 },
-                                "historical": {
+                                "privateHistory": {
                                     "url": "http://localhost:7200",
-                                    "name": "historical",
+                                    "name": "private-history",
                                     "username": "admin",
                                     "password": ""
                                 },
-                                "private": {
+                                "publicCurrent": {
                                     "url": "http://localhost:7200",
-                                    "name": "private",
+                                    "name": "public-current",
+                                    "username": "admin",
+                                    "password": ""
+                                },
+                                "publicHistory": {
+                                    "url": "http://localhost:7200",
+                                    "name": "public-history",
                                     "username": "admin",
                                     "password": ""
                                 }
@@ -749,37 +739,100 @@
                     }
                 }
             },
-            "tripleStore": {
-                "enabled": true,
-                "implementation": {
-                    "ot-blazegraph": {
-                        "enabled": false,
-                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
-                        "config": {
-                            "url": "http://localhost:9999/blazegraph",
-                            "name": "node0",
-                            "username": "admin",
-                            "password": ""
+            "implementation": {
+                "ot-blazegraph": {
+                    "enabled": false,
+                    "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
+                    "config": {
+                        "repositories": {
+                            "privateCurrent": {
+                                "url": "http://localhost:9999/blazegraph",
+                                "name": "private-current",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "privateHistory": {
+                                "url": "http://localhost:9999/blazegraph",
+                                "name": "private-history",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "publicCurrent": {
+                                "url": "http://localhost:9999/blazegraph",
+                                "name": "public-current",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "publicHistory": {
+                                "url": "http://localhost:9999/blazegraph",
+                                "name": "public-history",
+                                "username": "admin",
+                                "password": ""
+                            }
                         }
-                    },
-                    "ot-fuseki": {
-                        "enabled": false,
-                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
-                        "config": {
-                            "url": "http://localhost:3030",
-                            "name": "node0",
-                            "username": "admin",
-                            "password": ""
+                    }
+                },
+                "ot-fuseki": {
+                    "enabled": false,
+                    "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
+                    "config": {
+                        "repositories": {
+                            "privateCurrent": {
+                                "url": "http://localhost:3030",
+                                "name": "private-current",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "privateHistory": {
+                                "url": "http://localhost:3030",
+                                "name": "private-history",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "publicCurrent": {
+                                "url": "http://localhost:3030",
+                                "name": "public-current",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "publicHistory": {
+                                "url": "http://localhost:3030",
+                                "name": "public-history",
+                                "username": "admin",
+                                "password": ""
+                            }
                         }
-                    },
-                    "ot-graphdb": {
-                        "enabled": false,
-                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
-                        "config": {
-                            "url": "http://localhost:7200",
-                            "name": "node0",
-                            "username": "admin",
-                            "password": ""
+                    }
+                },
+                "ot-graphdb": {
+                    "enabled": false,
+                    "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
+                    "config": {
+                        "repositories": {
+                            "privateCurrent": {
+                                "url": "http://localhost:7200",
+                                "name": "private-current",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "privateHistory": {
+                                "url": "http://localhost:7200",
+                                "name": "private-history",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "publicCurrent": {
+                                "url": "http://localhost:7200",
+                                "name": "public-current",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "publicHistory": {
+                                "url": "http://localhost:7200",
+                                "name": "public-history",
+                                "username": "admin",
+                                "password": ""
+                            }
                         }
                     }
                 }

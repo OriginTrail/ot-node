@@ -12,7 +12,7 @@ class CalculateProofsCommand extends EpochCommand {
         this.commandExecutor = ctx.commandExecutor;
         this.validationModuleManager = ctx.validationModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+        this.tripleStoreService = ctx.tripleStoreService;
         this.operationIdService = ctx.operationIdService;
         this.dataService = ctx.dataService;
         this.errorType = ERROR_TYPE.CALCULATE_PROOFS_ERROR;
@@ -69,15 +69,14 @@ class CalculateProofsCommand extends EpochCommand {
             epoch,
         );
 
-        let nquads = await this.tripleStoreModuleManager.getAssertion(
-            TRIPLE_STORE_REPOSITORIES.CURRENT,
+        const nquads = await this.tripleStoreService.localGet(
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
             assertionId,
+            operationId,
         );
 
-        nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
-
         const { leaf, proof } = this.validationModuleManager.getMerkleProof(
-            nquads.split('\n'),
+            nquads,
             Number(challenge),
         );
 

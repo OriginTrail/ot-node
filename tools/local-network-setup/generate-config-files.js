@@ -2,7 +2,7 @@
 import 'dotenv/config';
 import mysql from 'mysql2';
 import path from 'path';
-import fs from 'fs';
+import fs from 'fs-extra';
 import graphdb from 'graphdb';
 import appRootPath from 'app-root-path';
 import { LIBP2P_KEY_DIRECTORY, LIBP2P_KEY_FILENAME } from '../../src/constants/constants.js';
@@ -33,8 +33,10 @@ console.log(`Generating ${numberOfNodes} total nodes`);
 for (let i = 0; i < numberOfNodes; i += 1) {
     const tripleStoreConfig = {
         ...generalConfig.development.modules.tripleStore.implementation['ot-graphdb'].config,
-        repository: `repository${i}`,
     };
+    for (const [repository, config] of Object.entries(tripleStoreConfig.repositories)) {
+        tripleStoreConfig.repositories[repository].name = `${config.name}-${i}`;
+    }
     const blockchainConfig = {
         hubContractAddress,
         rpcEndpoints: [process.env.RPC_ENDPOINT],
@@ -52,6 +54,7 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     if (i === 0) {
         template = bootstrapTemplate;
         templatePath = bootstrapTemplatePath;
+        fs.ensureDirSync(path.join(appRootPath.path, appDataPath, LIBP2P_KEY_DIRECTORY));
         fs.writeFileSync(
             path.join(appRootPath.path, appDataPath, LIBP2P_KEY_DIRECTORY, LIBP2P_KEY_FILENAME),
             bootstrapTemplate.modules.network.implementation['libp2p-service'].config.privateKey,
@@ -87,7 +90,7 @@ for (let i = 0; i < numberOfNodes; i += 1) {
         `operationaldb${i}`,
         generalConfig.development.modules.repository.implementation['sequelize-repository'].config,
     );
-    await deleteTripleStoreRepository(tripleStoreConfig);
+    await deleteTripleStoreRepositories(tripleStoreConfig);
     console.log(`Configuring node ${nodeName}`);
 
     fs.writeFileSync(templatePath, JSON.stringify(template, null, 2));
@@ -110,15 +113,18 @@ async function dropDatabase(name, config) {
     connection.destroy();
 }
 
-async function deleteTripleStoreRepository(repository, config) {
-    console.log(`Deleting triple store repository: ${repository} with name: ${config.name}`);
+async function deleteTripleStoreRepositories(config) {
+    for (const [repository, repositoryConfig] of Object.entries(config.repositories)) {
+        const { url, name } = repositoryConfig;
+        console.log(`Deleting triple store repository: ${repository} with name: ${name}`);
 
-    const serverConfig = new server.ServerClientConfig(config.url)
-        .setTimeout(40000)
-        .setHeaders({
-            Accept: http.RDFMimeType.N_QUADS,
-        })
-        .setKeepAlive(true);
-    const s = new server.GraphDBServerClient(serverConfig);
-    s.deleteRepository(config.name);
+        const serverConfig = new server.ServerClientConfig(url)
+            .setTimeout(40000)
+            .setHeaders({
+                Accept: http.RDFMimeType.N_QUADS,
+            })
+            .setKeepAlive(true);
+        const s = new server.GraphDBServerClient(serverConfig);
+        s.deleteRepository(name);
+    }
 }

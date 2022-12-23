@@ -9,7 +9,7 @@ import {
 class HandleGetInitCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
-        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+        this.tripleStoreService = ctx.tripleStoreService;
         this.operationService = ctx.getService;
 
         this.errorType = ERROR_TYPE.GET.GET_INIT_REMOTE_ERROR;
@@ -22,16 +22,10 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.GET.ASSERTION_EXISTS_LOCAL_START,
         );
 
-        const assertionExists = await Promise.all([
-            this.tripleStoreModuleManager.assertionExists(
-                TRIPLE_STORE_REPOSITORIES.CURRENT,
-                assertionId,
-            ),
-            this.tripleStoreModuleManager.assertionExists(
-                TRIPLE_STORE_REPOSITORIES.HISTORICAL,
-                assertionId,
-            ),
-        ]);
+        const assertionExists = await this.tripleStoreService.assertionExists(
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+            assertionId,
+        );
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

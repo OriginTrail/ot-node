@@ -1,20 +1,7 @@
 import BaseModuleManager from '../base-module-manager.js';
 
 class TripleStoreModuleManager extends BaseModuleManager {
-    async initialize() {
-        await super.initialize();
-        this.repositoryImplementations = {};
-        for (const name of this.getImplementationNames()) {
-            for (const repository of Object.keys(
-                this.getImplementation(name).module.config.repositories,
-            )) {
-                this.repositoryImplementations[repository] = name;
-            }
-        }
-    }
-
-    async insertAsset(repository, ual, assetNquads, deleteAssetTriples) {
-        const implementationName = this.repositoryImplementations[repository];
+    async insertAsset(implementationName, repository, ual, assetNquads, deleteAssetTriples) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.insertAsset(
                 repository,
@@ -25,8 +12,7 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async assetExists(repository, ual, blockchain, contract, tokenId) {
-        const implementationName = this.repositoryImplementations[repository];
+    async assetExists(implementationName, repository, ual, blockchain, contract, tokenId) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.assetExists(
                 repository,
@@ -38,8 +24,7 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async assetAgreementExists(repository, ual, blockchain, contract, tokenId) {
-        const implementationName = this.repositoryImplementations[repository];
+    async assetAgreementExists(implementationName, repository, ual, blockchain, contract, tokenId) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.assetAgreementExists(
                 repository,
@@ -51,8 +36,7 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async insertAssertion(repository, assertionId, assertionNquads) {
-        const implementationName = this.repositoryImplementations[repository];
+    async insertAssertion(implementationName, repository, assertionId, assertionNquads) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.insertAssertion(
                 repository,
@@ -62,8 +46,7 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async assertionExists(repository, uri) {
-        const implementationName = this.repositoryImplementations[repository];
+    async assertionExists(implementationName, repository, uri) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.assertionExists(
                 repository,
@@ -72,8 +55,7 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async isAssertionIdShared(repository, assertionId) {
-        const implementationName = this.repositoryImplementations[repository];
+    async isAssertionIdShared(implementationName, repository, assertionId) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.isAssertionIdShared(
                 repository,
@@ -82,8 +64,7 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async getAssetAssertionIds(repository, ual) {
-        const implementationName = this.repositoryImplementations[repository];
+    async getAssetAssertionIds(implementationName, repository, ual) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.getAssetAssertionIds(
                 repository,
@@ -92,8 +73,7 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async getAssertion(repository, assertionId) {
-        const implementationName = this.repositoryImplementations[repository];
+    async getAssertion(implementationName, repository, assertionId) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.getAssertion(
                 repository,
@@ -102,8 +82,7 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async deleteAssertion(repository, assertionId) {
-        const implementationName = this.repositoryImplementations[repository];
+    async deleteAssertion(implementationName, repository, assertionId) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.deleteAssertion(
                 repository,
@@ -112,15 +91,13 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async construct(repository, query) {
-        const implementationName = this.repositoryImplementations[repository];
+    async construct(implementationName, repository, query) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.construct(repository, query);
         }
     }
 
-    async select(repository, query) {
-        const implementationName = this.repositoryImplementations[repository];
+    async select(implementationName, repository, query) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.select(repository, query);
         }

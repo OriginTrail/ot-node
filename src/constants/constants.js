@@ -35,9 +35,10 @@ export const DHT_TYPES = { DUAL: 'dual', WAN: 'wan', LAN: 'lan' };
 export const PEER_OFFLINE_LIMIT = 24 * 60 * 60 * 1000;
 
 export const TRIPLE_STORE_REPOSITORIES = {
-    CURRENT: 'current',
-    HISTORICAL: 'historical',
-    PRIVATE: 'private',
+    PUBLIC_CURRENT: 'publicCurrent',
+    PUBLIC_HISTORY: 'publicHistory',
+    PRIVATE_CURRENT: 'privateCurrent',
+    PRIVATE_HISTORY: 'privateHistory',
 };
 
 export const REQUIRED_MODULES = [
@@ -279,7 +280,6 @@ export const OPERATION_ID_STATUS = {
 export const OPERATIONS = {
     PUBLISH: 'publish',
     GET: 'get',
-    SEARCH: 'search',
 };
 
 /**

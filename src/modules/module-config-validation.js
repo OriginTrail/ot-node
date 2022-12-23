@@ -40,7 +40,7 @@ class ModuleConfigValidation {
             // eslint-disable-next-line no-continue
             if (!implementation.enabled) continue;
 
-            for (const repository of Object.keys(implementation.config.repositories)) {
+            for (const repository in implementation.config.repositories) {
                 if (!occurences[repository]) occurences[repository] = 0;
                 occurences[repository] += 1;
             }

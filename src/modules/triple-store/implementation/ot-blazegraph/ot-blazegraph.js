@@ -2,14 +2,15 @@ import axios from 'axios';
 import OtTripleStore from '../ot-triple-store.js';
 
 class OtBlazegraph extends OtTripleStore {
-    initializeSparqlEndpoints(repository, config) {
-        this.repositories[repository].sparqlEndpoint = `${config.url}/sparql`;
-        this.repositories[repository].sparqlEndpointUpdate = `${config.url}/sparql`;
+    initializeSparqlEndpoints(repository) {
+        const { url } = this.repositories[repository];
+        this.repositories[repository].sparqlEndpoint = `${url}/sparql`;
+        this.repositories[repository].sparqlEndpointUpdate = `${url}/sparql`;
     }
 
-    async healthCheck(repository, config) {
+    async healthCheck(repository) {
         try {
-            const response = await axios.get(`${config.url}/status`, {});
+            const response = await axios.get(`${this.repositories[repository].url}/status`, {});
             if (response.data !== null) {
                 return true;
             }

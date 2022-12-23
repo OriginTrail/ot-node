@@ -43,13 +43,6 @@ class DkgClientHelper {
         });
     }
 
-    async search(resultType, query) {
-        return this.client._searchRequest({
-            resultType,
-            query,
-        });
-    }
-
     async query(query) {
         return this.client._queryRequest({
             query,

@@ -8,64 +8,67 @@ class OtGraphdb extends OtTripleStore {
     async initialize(config, logger) {
         await super.initialize(config, logger);
 
-        for (const repository of Object.keys(this.config.repositories)) {
-            const serverConfig = new server.ServerClientConfig(
-                this.config.repositories[repository].url,
-            )
-                .setTimeout(40000)
-                .setHeaders({
-                    Accept: http.RDFMimeType.N_QUADS,
-                })
-                .setKeepAlive(true);
-            const s = new server.GraphDBServerClient(serverConfig);
-            // eslint-disable-next-line no-await-in-loop
-            const exists = await s.hasRepository(this.config.repositories[repository].name);
-            if (!exists) {
-                try {
-                    // eslint-disable-next-line no-await-in-loop
-                    await s.createRepository(
-                        new repo.RepositoryConfig(
-                            this.config.repositories[repository].name,
-                            '',
-                            new Map(),
-                            '',
-                            'Repo title',
-                            repo.RepositoryType.FREE,
-                        ),
-                    );
-                } catch (e) {
-                    // eslint-disable-next-line no-await-in-loop
-                    await s.createRepository(
-                        new repo.RepositoryConfig(
-                            this.config.repositories[repository].name,
-                            '',
-                            {},
-                            'graphdb:SailRepository',
-                            'Repo title',
-                            'graphdb',
-                        ),
-                    );
+        await Promise.all(
+            Object.keys(this.repositories).map(async (repository) => {
+                const { url, name } = this.repositories[repository];
+                const serverConfig = new server.ServerClientConfig(url)
+                    .setTimeout(40000)
+                    .setHeaders({
+                        Accept: http.RDFMimeType.N_QUADS,
+                    })
+                    .setKeepAlive(true);
+                const s = new server.GraphDBServerClient(serverConfig);
+                // eslint-disable-next-line no-await-in-loop
+                const exists = await s.hasRepository(name);
+                if (!exists) {
+                    try {
+                        // eslint-disable-next-line no-await-in-loop
+                        await s.createRepository(
+                            new repo.RepositoryConfig(
+                                name,
+                                '',
+                                new Map(),
+                                '',
+                                'Repo title',
+                                repo.RepositoryType.FREE,
+                            ),
+                        );
+                    } catch (e) {
+                        // eslint-disable-next-line no-await-in-loop
+                        await s.createRepository(
+                            new repo.RepositoryConfig(
+                                name,
+                                '',
+                                {},
+                                'graphdb:SailRepository',
+                                'Repo title',
+                                'graphdb',
+                            ),
+                        );
+                    }
                 }
-            }
-        }
+            }),
+        );
     }
 
-    initializeSparqlEndpoints(repository, config) {
-        this.repositories[repository].sparqlEndpoint = `${config.url}/repositories/${config.name}`;
+    initializeSparqlEndpoints(repository) {
+        const { url, name } = this.repositories[repository];
+        this.repositories[repository].sparqlEndpoint = `${url}/repositories/${name}`;
         this.repositories[
             repository
-        ].sparqlEndpointUpdate = `${config.url}/repositories/${config.name}/statements`;
+        ].sparqlEndpointUpdate = `${url}/repositories/${name}/statements`;
     }
 
-    async healthCheck(repository, config) {
+    async healthCheck(repository) {
+        const { url, username, password } = this.repositories[repository];
         try {
             const response = await axios.get(
-                `${config.url}/repositories/${repository}/health`,
+                `${url}/repositories/${repository}/health`,
                 {},
                 {
                     auth: {
-                        username: config.username,
-                        password: config.password,
+                        username,
+                        password,
                     },
                 },
             );

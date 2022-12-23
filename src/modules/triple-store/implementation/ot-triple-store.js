@@ -9,8 +9,8 @@ import {
 
 class OtTripleStore {
     async initialize(config, logger) {
-        this.config = config;
         this.logger = logger;
+        this.repositories = config.repositories;
         this.initializeRepositories();
         this.initializeContexts();
         await this.ensureConnections();
@@ -18,10 +18,8 @@ class OtTripleStore {
     }
 
     initializeRepositories() {
-        this.repositories = {};
-        for (const [repository, config] of Object.entries(this.config.repositories)) {
-            this.repositories[repository] = {};
-            this.initializeSparqlEndpoints(repository, config);
+        for (const repository of Object.keys(this.repositories)) {
+            this.initializeSparqlEndpoints(repository);
         }
     }
 
@@ -30,7 +28,7 @@ class OtTripleStore {
     }
 
     initializeContexts() {
-        for (const repository of Object.keys(this.config.repositories)) {
+        for (const repository in this.repositories) {
             const sources = [
                 {
                     type: 'sparql',
@@ -52,29 +50,27 @@ class OtTripleStore {
     }
 
     async ensureConnections() {
-        const ensureConnectionPromises = Object.entries(this.config.repositories).map(
-            async ([repository, config]) => {
-                let ready = await this.healthCheck(repository, config);
-                let retries = 0;
-                while (!ready && retries < TRIPLE_STORE_CONNECT_MAX_RETRIES) {
-                    retries += 1;
-                    this.logger.warn(
-                        `Cannot connect to Triple store (${this.getName()}), repository: ${repository}, located at: ${
-                            this.config.repositories[repository].url
-                        }  retry number: ${retries}/${TRIPLE_STORE_CONNECT_MAX_RETRIES}. Retrying in ${TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`,
-                    );
-                    /* eslint-disable no-await-in-loop */
-                    await setTimeout(TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000);
-                    ready = await this.healthCheck(repository, config);
-                }
-                if (retries === TRIPLE_STORE_CONNECT_MAX_RETRIES) {
-                    this.logger.error(
-                        `Triple Store (${this.getName()})  not available, max retries reached.`,
-                    );
-                    process.exit(1);
-                }
-            },
-        );
+        const ensureConnectionPromises = Object.keys(this.repositories).map(async (repository) => {
+            let ready = await this.healthCheck(repository);
+            let retries = 0;
+            while (!ready && retries < TRIPLE_STORE_CONNECT_MAX_RETRIES) {
+                retries += 1;
+                this.logger.warn(
+                    `Cannot connect to Triple store (${this.getName()}), repository: ${repository}, located at: ${
+                        this.repositories[repository].url
+                    }  retry number: ${retries}/${TRIPLE_STORE_CONNECT_MAX_RETRIES}. Retrying in ${TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`,
+                );
+                /* eslint-disable no-await-in-loop */
+                await setTimeout(TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000);
+                ready = await this.healthCheck(repository);
+            }
+            if (retries === TRIPLE_STORE_CONNECT_MAX_RETRIES) {
+                this.logger.error(
+                    `Triple Store (${this.getName()})  not available, max retries reached.`,
+                );
+                process.exit(1);
+            }
+        });
 
         await Promise.all(ensureConnectionPromises);
     }
@@ -112,9 +108,7 @@ class OtTripleStore {
                                 <${ual}> schema:assertion ?assertionId .
                         }
                     }`;
-        const result = await this.select(repository, query);
-        console.log('assertion ids ', result);
-        return result;
+        return this.select(repository, query);
     }
 
     async assetAgreementExists(repository, ual, blockchain, contract, tokenId) {
@@ -242,25 +236,6 @@ class OtTripleStore {
 
     cleanEscapeCharacter(query) {
         return query.replace(/['|[\]\\]/g, '\\$&');
-    }
-
-    createLimitQuery(options) {
-        if (!options.limit) {
-            return '';
-        }
-        const queryLimit = Number(options.limit);
-        if (Number.isNaN(queryLimit) || !Number.isInteger(queryLimit)) {
-            this.logger.error(`Failed creating Limit query: ${options.limit} is not a number`);
-            throw new Error('Limit is not a number');
-        } else if (Number.isInteger(options.limit) && options.limit < 0) {
-            this.logger.error(`Failed creating Limit query: ${options.limit} is negative number`);
-            throw new Error('Limit is not a number');
-        }
-        return `LIMIT ${queryLimit}`;
-    }
-
-    isBoolean(param) {
-        return typeof param === 'boolean' || ['true', 'false'].includes(param);
     }
 
     async reinitialize() {

@@ -2,7 +2,7 @@ import { QUERY_TYPES, TRIPLE_STORE_REPOSITORIES } from '../constants/constants.j
 
 class QueryService {
     constructor(ctx) {
-        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+        this.tripleStoreService = ctx.tripleStoreService;
         this.dataService = ctx.dataService;
     }
 
@@ -18,11 +18,11 @@ class QueryService {
     }
 
     constructQuery(query) {
-        return this.tripleStoreModuleManager.construct(TRIPLE_STORE_REPOSITORIES.CURRENT, query);
+        return this.tripleStoreService.construct(TRIPLE_STORE_REPOSITORIES.CURRENT, query);
     }
 
     async selectQuery(query) {
-        const bindings = await this.tripleStoreModuleManager.select(
+        const bindings = await this.tripleStoreService.select(
             TRIPLE_STORE_REPOSITORIES.CURRENT,
             query,
         );

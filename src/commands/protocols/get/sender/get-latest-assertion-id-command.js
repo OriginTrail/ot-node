@@ -17,10 +17,6 @@ class GetLatestAssertionIdCommand extends Command {
     async execute(command) {
         const { id, operationId } = command.data;
 
-        // id options :
-        // did:otp:0x174714134abcd13431413413/987654321/41eaa20f35f709d9c22281f46d895b2f7a83c54587e4339456e0d9f4e5bd9b8f
-        // did:otp:0x174714134abcd13431413413/987654321/latest
-
         const commandData = {};
         if (!this.ualService.isUAL(id)) {
             this.handleError(operationId, `Requested id is not a UAL`, this.errorType, true);
