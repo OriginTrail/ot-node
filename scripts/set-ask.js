@@ -11,6 +11,8 @@ const argv = require('minimist')(process.argv.slice(1), {
     string: ['ask', 'privateKey', 'hubContractAddress'],
 });
 
+const devEnvironment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+
 async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
     const provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);
     const wallet = new ethers.Wallet(walletPrivateKey);
@@ -33,7 +35,7 @@ async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
 
     const walletSigner = wallet.connect(provider);
     await profile.connect(walletSigner).setAsk(identityId, askWei, {
-        gasPrice: process.env.NODE_ENV === 'development' ? undefined : 8,
+        gasPrice: devEnvironment ? undefined : 8,
         gasLimit: 500_000,
     });
 }
