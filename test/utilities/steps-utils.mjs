@@ -73,7 +73,7 @@ class StepsUtils {
                 databaseName: `operationaldbnode${nodeIndex}`,
             },
             rpcPort,
-            appDataPath: `data${nodeIndex}`,
+            appDataPath: `test-data${nodeIndex}`,
             graphDatabase: {
                 name: nodeName,
             },

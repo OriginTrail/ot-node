@@ -136,17 +136,20 @@ const testParametersStorageParams = {
 class LocalBlockchain {
     constructor(options = {}) {
         this.logger = options.logger ?? console;
+        const logging = options.logger ? {
+            logger: {
+                log: this.logger.log,
+            }
+        } : {
+            quiet: true,
+        };
         this.port = options.port ?? 7545;
         this.name = options.name ?? 'ganache';
         this.server = Ganache.server({
             /* miner: {
                 blockTime: 1,
             }, */
-            logging: {
-                logger: {
-                    log: this.logger.log,
-                },
-            },
+            logging,
             gas: 20000000,
             time: new Date(),
             accounts: accountPrivateKeys.map((account) => ({
