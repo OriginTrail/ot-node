@@ -25,6 +25,16 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'getManagementKey');
     }
 
+    async isHubContract(blockchain, contractAddress) {
+        return this.callImplementationFunction(blockchain, 'isHubContract', [contractAddress]);
+    }
+
+    async isAssetStorageContract(blockchain, contractAddress) {
+        return this.callImplementationFunction(blockchain, 'isAssetStorageContract', [
+            contractAddress,
+        ]);
+    }
+
     async getIdentityId(blockchain) {
         return this.callImplementationFunction(blockchain, 'getIdentityId');
     }
@@ -223,6 +233,14 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     async getProofWindowDurationPerc(blockchain) {
         return this.callImplementationFunction(blockchain, 'getProofWindowDurationPerc');
+    }
+
+    async isHashFunction(blockchain, hashFunctionId) {
+        return this.callImplementationFunction(blockchain, 'isHashFunction', [hashFunctionId]);
+    }
+
+    async isScoreFunction(blockchain, scoreFunctionId) {
+        return this.callImplementationFunction(blockchain, 'isScoreFunction', [scoreFunctionId]);
     }
 
     async callScoreFunction(blockchain, scoreFunctionId, hashFunctionId, peerId, keyword, stake) {
