@@ -29,7 +29,7 @@ const assertionSchemaRequired = ['assertionId', 'assertion', 'blockchain', 'cont
 const assetSchemaProperties = (blockchainImplementationNames) => ({
     ...assertionSchemaProperties(blockchainImplementationNames),
     tokenId: {
-        type: 'integer',
+        type: 'number',
         minimum: 0,
     },
 });
