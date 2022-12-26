@@ -7,18 +7,12 @@ import { NOISE } from 'libp2p-noise';
 import MPLEX from 'libp2p-mplex';
 import TCP from 'libp2p-tcp';
 import pipe from 'it-pipe';
-import { encode, decode } from 'it-length-prefixed';
-import { sha256 } from 'multiformats/hashes/sha2';
 import map from 'it-map';
+import { encode, decode } from 'it-length-prefixed';
 import { create as _create, createFromPrivKey, createFromB58String } from 'peer-id';
 import { InMemoryRateLimiter } from 'rolling-rate-limiter';
 import toobusy from 'toobusy-js';
 import { v5 as uuidv5 } from 'uuid';
-import { xor as uint8ArrayXor } from 'uint8arrays/xor';
-import { compare as uint8ArrayCompare } from 'uint8arrays/compare';
-import sort from 'it-sort';
-import take from 'it-take';
-import all from 'it-all';
 import { mkdir, writeFile, readFile, stat } from 'fs/promises';
 import ip from 'ip';
 import {
@@ -180,28 +174,6 @@ class Libp2pService {
         return this.node.peerStore.addressBook.get(peerId);
     }
 
-    async sortPeers(key, peers, count = this.config.dht.kBucketSize) {
-        const textEncoder = new TextEncoder();
-        const keyHash = await this.toHash(textEncoder.encode(key));
-        const sorted = pipe(
-            peers,
-            (source) =>
-                map(source, async (peer) => ({
-                    peer,
-                    distance: uint8ArrayXor(keyHash, Buffer.from(peer.sha256.slice(2), 'hex')),
-                })),
-            (source) => sort(source, (a, b) => uint8ArrayCompare(a.distance, b.distance)),
-            (source) => take(source, count),
-            (source) => map(source, (pd) => pd.peer),
-        );
-
-        return all(sorted);
-    }
-
-    async toHash(encodedKey) {
-        return Buffer.from((await sha256.digest(encodedKey)).digest);
-    }
-
     getPeers() {
         return this.node.connectionManager.connections;
     }
@@ -236,7 +208,7 @@ class Libp2pService {
                     NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
                     message.header.operationId,
                     message.header.keywordUuid,
-                    {},
+                    { errorMessage: 'Invalid request message' },
                 );
             } else if (busy) {
                 await this.sendMessageResponse(
@@ -335,14 +307,13 @@ class Libp2pService {
             dialEnd = Date.now();
         } catch (error) {
             dialEnd = Date.now();
-            this.logger.warn(
-                `Unable to dial peer: ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, dial execution time: ${
-                    dialEnd - dialStart
-                } ms. Error: ${error.message}`,
-            );
             return {
                 header: { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK },
-                data: {},
+                data: {
+                    errorMessage: `Unable to dial peer: ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, dial execution time: ${
+                        dialEnd - dialStart
+                    } ms. Error: ${error.message}`,
+                },
             };
         }
         this.logger.trace(
@@ -373,14 +344,13 @@ class Libp2pService {
             sendMessageEnd = Date.now();
         } catch (error) {
             sendMessageEnd = Date.now();
-            this.logger.warn(
-                `Unable to send message to peer: ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType}, operationId: ${operationId}, execution time: ${
-                    sendMessageEnd - sendMessageStart
-                } ms. Error: ${error.message}`,
-            );
             return {
                 header: { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK },
-                data: {},
+                data: {
+                    errorMessage: `Unable to send message to peer: ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType}, operationId: ${operationId}, execution time: ${
+                        sendMessageEnd - sendMessageStart
+                    } ms. Error: ${error.message}`,
+                },
             };
         }
 
@@ -411,18 +381,19 @@ class Libp2pService {
             readResponseEnd = Date.now();
         } catch (error) {
             readResponseEnd = Date.now();
-            this.logger.warn(
-                `Unable to read response from peer ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, execution time: ${
-                    readResponseEnd - readResponseStart
-                } ms. Error: ${error.message}`,
-            );
             return {
                 header: { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK },
-                data: {},
+                data: {
+                    errorMessage: `Unable to read response from peer ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, execution time: ${
+                        readResponseEnd - readResponseStart
+                    } ms. Error: ${error.message}`,
+                },
             };
         }
         this.logger.trace(
-            `Receiving response from ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, execution time: ${
+            `Receiving response from ${remotePeerId.toB58String()}. protocol: ${protocol}, messageType: ${
+                response.message?.header?.messageType
+            }, operationId: ${operationId}, execution time: ${
                 readResponseEnd - readResponseStart
             } ms.`,
         );

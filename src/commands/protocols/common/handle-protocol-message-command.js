@@ -37,7 +37,7 @@ class HandleProtocolMessageCommand extends Command {
     }
 
     async prepareMessage() {
-        // overridden by subclasses
+        throw Error('prepareMessage not implemented');
     }
 
     async handleError(errorMessage, command) {
@@ -50,7 +50,7 @@ class HandleProtocolMessageCommand extends Command {
             NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
             operationId,
             keywordUuid,
-            {},
+            { errorMessage },
         );
     }
 }

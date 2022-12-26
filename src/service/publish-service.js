@@ -15,9 +15,7 @@ class PublishService extends OperationService {
     constructor(ctx) {
         super(ctx);
         this.ualService = ctx.ualService;
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
-        this.validationModuleManager = ctx.validationModuleManager;
 
         this.operationName = OPERATIONS.PUBLISH;
         this.networkProtocols = NETWORK_PROTOCOLS.STORE;
@@ -31,7 +29,14 @@ class PublishService extends OperationService {
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
-        const { operationId, numberOfFoundNodes, leftoverNodes, keyword, batchSize } = command.data;
+        const {
+            operationId,
+            numberOfFoundNodes,
+            leftoverNodes,
+            keyword,
+            batchSize,
+            minAckResponses,
+        } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
@@ -45,18 +50,26 @@ class PublishService extends OperationService {
         this.logger.debug(
             `Processing ${
                 this.operationName
-            } response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${batchSize} number of leftover nodes: ${
+            } response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
+                numberOfFoundNodes,
+                batchSize,
+            )} number of leftover nodes: ${
                 leftoverNodes.length
-            }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${this.getMinimumAckResponses()}`,
+            }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${minAckResponses}`,
         );
+        if (responseData.errorMessage) {
+            this.logger.trace(
+                `Error message for operation id: ${operationId}, keyword: ${keyword} : ${responseData.errorMessage}`,
+            );
+        }
 
         if (
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
-            completedNumber === this.getMinimumAckResponses()
+            completedNumber === minAckResponses
         ) {
             let allCompleted = true;
             for (const key in keywordsStatuses) {
-                if (keywordsStatuses[key].completedNumber < this.getMinimumAckResponses()) {
+                if (keywordsStatuses[key].completedNumber < minAckResponses) {
                     allCompleted = false;
                     break;
                 }
@@ -71,7 +84,7 @@ class PublishService extends OperationService {
                 );
             }
         } else if (
-            completedNumber < this.getMinimumAckResponses() &&
+            completedNumber < minAckResponses &&
             (numberOfFoundNodes === numberOfResponses || numberOfResponses % batchSize === 0)
         ) {
             if (leftoverNodes.length === 0) {
@@ -83,23 +96,8 @@ class PublishService extends OperationService {
         }
     }
 
-    async getAssertion(blockchain, contract, tokenId) {
-        return this.blockchainModuleManager.getLatestCommitHash(blockchain, contract, tokenId);
-    }
-
-    async validateAssertion(assertionId, operationId) {
-        this.logger.info(`Validating assertionId: ${assertionId}`);
-
-        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
-        const calculatedAssertionId = this.validationModuleManager.calculateRoot(assertion);
-
-        if (assertionId !== calculatedAssertionId) {
-            throw Error(
-                `Invalid assertion id. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`,
-            );
-        }
-
-        this.logger.info(`Assertion integrity validated!`);
+    async getLatestAssertionId(blockchain, contract, tokenId) {
+        return this.blockchainModuleManager.getLatestAssertionId(blockchain, contract, tokenId);
     }
 
     async localStoreIndex(assertionId, blockchain, contract, tokenId, keyword, operationId) {
@@ -151,7 +149,16 @@ class PublishService extends OperationService {
         this.logger.info(`Assertion with id ${assertionId} has been successfully inserted!`);
     }
 
-    async localStoreAsset(assertionId, blockchain, contract, tokenId, operationId) {
+    async localStoreAsset(
+        assertionId,
+        blockchain,
+        contract,
+        tokenId,
+        operationId,
+        agreementStartTime,
+        agreementEndTime,
+        keyword,
+    ) {
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
@@ -163,6 +170,9 @@ class PublishService extends OperationService {
             tokenId,
             assertion: { '@id': `assertion:${assertionId}` },
             latestAssertion: { '@id': `assertion:${assertionId}` },
+            agreementStartTime,
+            agreementEndTime,
+            keyword,
         });
 
         this.logger.info(

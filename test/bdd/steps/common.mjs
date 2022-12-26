@@ -222,3 +222,8 @@ Given(/^I wait for (\d+) seconds$/,{ timeout: 100000}, async function waitFor(se
     this.logger.log(`I wait for ${seconds} seconds for nodes to connect to each other`);
     await sleep(seconds * 1000);
 })
+
+Given(/^I set R1 to be (\d+)$/,{ timeout: 100000}, async function waitFor(r1) {
+    this.logger.log(`I set R1 to be ${r1}`);
+    await this.state.localBlockchain.setR1(r1);
+})

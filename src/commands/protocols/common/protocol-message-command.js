@@ -35,10 +35,8 @@ class ProtocolMessageCommand extends Command {
         return false;
     }
 
-    // eslint-disable-next-line no-unused-vars
-    async prepareMessage(command) {
-        // overridden by store-init-command, get-init-command, search-init-command,
-        //               store-request-command, get-request-command, search-request-command
+    async prepareMessage() {
+        throw Error('prepareMessage not implemented');
     }
 
     async sendProtocolMessage(command, message, messageType) {
@@ -77,10 +75,10 @@ class ProtocolMessageCommand extends Command {
         return Command.retry();
     }
 
-    async handleNack(command) {
+    async handleNack(command, responseData) {
         await this.markResponseAsFailed(
             command,
-            `Received NACK response from node during ${command.name}`,
+            `Received NACK response from node during ${command.name}. Error message: ${responseData.errorMessage}`,
         );
         return Command.empty();
     }
@@ -91,12 +89,9 @@ class ProtocolMessageCommand extends Command {
     }
 
     async markResponseAsFailed(command, errorMessage) {
-        await this.operationService.processResponse(
-            command,
-            OPERATION_REQUEST_STATUS.FAILED,
-            null,
+        await this.operationService.processResponse(command, OPERATION_REQUEST_STATUS.FAILED, {
             errorMessage,
-        );
+        });
     }
 
     async retryFinished(command) {

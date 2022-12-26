@@ -58,15 +58,16 @@ class OtTripleStore {
     }
 
     initializeSparqlEndpoints() {
-        // overridden by subclasses
-        return true;
+        throw Error('initializeSparqlEndpoints not implemented');
     }
 
-    async assetExists(ual, assertionId) {
+    async assetExists(ual, blockchain, contract, tokenId) {
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
                         ASK WHERE {
                             GRAPH <assets:graph> {
-                                <${ual}> schema:assertion <assertion:${assertionId}>
+                                <${ual}> schema:blockchain "${blockchain}";
+                                         schema:contract   "${contract}";
+                                         schema:tokenId    ${tokenId};
                             }
                         }`;
 
@@ -79,11 +80,15 @@ class OtTripleStore {
         // if(!exists) {
         const insertion = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
-            DELETE {<${ual}> schema:latestAssertion ?o}
+            DELETE {
+                <${ual}> schema:latestAssertion ?o . 
+                <${ual}> schema:agreementEndTime ?agreementEndTime
+            }
             WHERE {
                 GRAPH <assets:graph> {
                     ?s ?p ?o .
-                    <${ual}> schema:latestAssertion ?o .
+                    <${ual}> schema:agreementEndTime ?agreementEndTime .
+                    <${ual}> schema:latestAssertion ?latestAssertion .
                 }
             };
             INSERT DATA {

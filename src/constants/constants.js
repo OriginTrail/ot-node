@@ -1,16 +1,28 @@
+import { BigNumber } from 'ethers';
+
+export const UINT256_MAX_BN = BigNumber.from(2).pow(256).sub(1);
+
+export const UINT32_MAX_BN = BigNumber.from(2).pow(32).sub(1);
+
+export const STAKE_UINT256_MULTIPLIER_BN = UINT256_MAX_BN.div(500000000);
+
+export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN.div(UINT32_MAX_BN);
+
 export const SCHEMA_CONTEXT = 'http://schema.org/';
+
+export const TRANSACTION_POLLING_TIMEOUT = 50;
 
 export const LIBP2P_KEY_DIRECTORY = 'libp2p';
 
 export const LIBP2P_KEY_FILENAME = 'privateKey';
-
-export const BLOCKCHAIN_IDENTITY_DIRECTORY = 'blockchain';
 
 export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 
 export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000;
 
 export const MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH = 500;
+
+export const TRANSACTION_QUEUE_CONCURRENCY = 1;
 
 export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
 
@@ -46,10 +58,6 @@ export const XML_DATA_TYPES = {
 
 export const MIN_NODE_VERSION = 16;
 
-export const INIT_ASK_AMOUNT = 5; // TODO: Change value
-
-export const INIT_STAKE_AMOUNT = '50000';
-
 export const NETWORK_API_RATE_LIMIT = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
     MAX_NUMBER: 20,
@@ -76,6 +84,8 @@ export const DIAL_PEERS_COMMAND_FREQUENCY_MILLS = 30 * 1000;
 
 export const DIAL_PEERS_CONCURRENCY = 10;
 
+export const MIN_DIAL_FREQUENCY_MILLIS = 60 * 60 * 1000;
+
 export const PERMANENT_COMMANDS = [
     'otnodeUpdateCommand',
     'sendTelemetryCommand',
@@ -89,6 +99,11 @@ export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
 export const DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 
 export const DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
+
+export const COMMAND_RETRIES = {
+    SUBMIT_COMMIT: 3,
+    SUBMIT_PROOFS: 3,
+};
 
 export const WEBSOCKET_PROVIDER_OPTIONS = {
     reconnect: {
@@ -151,6 +166,12 @@ export const ERROR_TYPE = {
     QUERY: {
         LOCAL_QUERY_ERROR: 'LocalQueryError',
     },
+    COMMIT_PROOF: {
+        CALCULATE_PROOFS_ERROR: 'CalculateProofsError',
+        EPOCH_CHECK_ERROR: 'EpochCheckError',
+        SUBMIT_COMMIT_ERROR: 'SubmitCommitError',
+        SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
+    },
 };
 export const OPERATION_ID_STATUS = {
     PENDING: 'PENDING',
@@ -197,6 +218,16 @@ export const OPERATION_ID_STATUS = {
         GET_FETCH_FROM_NODES_START: 'GET_FETCH_FROM_NODES_START',
         GET_FETCH_FROM_NODES_END: 'GET_FETCH_FROM_NODES_END',
         GET_END: 'GET_END',
+    },
+    COMMIT_PROOF: {
+        EPOCH_CHECK_START: 'EPOCH_CHECK_START',
+        EPOCH_CHECK_END: 'EPOCH_CHECK_END',
+        SUBMIT_COMMIT_START: 'SUBMIT_COMMIT_START',
+        SUBMIT_COMMIT_END: 'SUBMIT_COMMIT_END',
+        CALCULATE_PROOFS_START: 'CALCULATE_PROOFS_START',
+        CALCULATE_PROOFS_END: 'CALCULATE_PROOFS_END',
+        SUBMIT_PROOFS_START: 'SUBMIT_PROOFS_START',
+        SUBMIT_PROOFS_END: 'SUBMIT_PROOFS_END',
     },
     SEARCH_ASSERTIONS: {
         VALIDATING_QUERY: 'VALIDATING_QUERY',
@@ -254,7 +285,7 @@ export const COMMAND_STATUS = {
  *  Network protocols
  */
 export const NETWORK_PROTOCOLS = {
-    STORE: ['/store/1.0.1', '/store/1.0.0'],
+    STORE: ['/store/1.0.0'],
     GET: ['/get/1.0.0'],
 };
 
@@ -262,6 +293,11 @@ export const OPERATION_STATUS = {
     IN_PROGRESS: 'IN_PROGRESS',
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
+};
+
+export const AGREEMENT_STATUS = {
+    ACTIVE: 'ACTIVE',
+    EXPIRED: 'EXPIRED',
 };
 
 export const OPERATION_REQUEST_STATUS = {
@@ -284,4 +320,6 @@ export const QUERY_TYPES = {
  */
 export const CONTRACTS = {
     SHARDING_TABLE_CONTRACT: 'ShardingTableContract',
+    PROFILE_CONTRACT: 'ProfileContract',
+    HUB_CONTRACT: 'hubContract',
 };

@@ -1,9 +1,8 @@
 import { NETWORK_PROTOCOLS } from '../constants/constants.js';
 
 class ProtocolService {
-    constructor(config, logger) {
-        this.config = config;
-        this.logger = logger;
+    constructor(ctx) {
+        this.logger = ctx.logger;
     }
 
     toAwilixVersion(protocol) {
