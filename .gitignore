@@ -107,5 +107,11 @@ dist
 
 .DS_Store
 
+# Test data folders
+test-data*
+
+# Data folders
 data*
+
+# VS code files
 .vscode/launch.json
