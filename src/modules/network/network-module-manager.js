@@ -23,7 +23,7 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    async sendMessage(protocol, remotePeerId, messageType, operationId, keyword, message) {
+    async sendMessage(protocol, remotePeerId, messageType, operationId, keyword, message, timeout) {
         if (this.initialized) {
             return this.getImplementation().module.sendMessage(
                 protocol,
@@ -32,6 +32,7 @@ class NetworkModuleManager extends BaseModuleManager {
                 operationId,
                 keyword,
                 message,
+                timeout,
             );
         }
     }

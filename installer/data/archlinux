@@ -1,0 +1,65 @@
+install_prereqs() {
+perform_step install_aliases "Updating .bashrc file with OriginTrail node aliases"
+perform_step pacman -Syu --noconfirm "Updating server"
+perform_step pacman -S unzip wget jq --noconfirm "Installing unzip, wget, jq"
+perform_step pacman -S jre-openjdk --noconfirm "Installing default-jre"
+perform_step pacman -S npm nodejs-lts-gallium tcl --noconfirm "Installing npm, nodejs and tcl"
+}
+
+install_sql() {
+    sql=mariadb
+    perform_step pacman -S mariadb --noconfirm "Downloading mariadb"
+    perform_step mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql "Installing mariadb"
+    perform_step systemctl enable mariadb "Enabling mariadb"
+    perform_step systemctl start mariadb "Starting mariadb"
+
+    #check old sql password
+    OUTPUT=$($sql -u root -e "status;" 2>&1)
+    if [[ $? -ne 0 ]]; then
+        while true; do
+            read -s -p "Enter your old sql password: " oldpassword
+            echo
+            echo -n "Password check: "
+            OUTPUT=$(MYSQL_PWD=$oldpassword $sql -u root -e "status;" 2>&1)
+            if [[ $? -ne 0 ]]; then
+                text_color $YELLOW "ERROR - The sql repository password provided does not match your sql password. Please try again."
+            else
+                text_color $GREEN "OK"
+                break
+            fi
+        done
+    fi
+
+    #check operationaldb
+    if [[ -d "/var/lib/mysql/operationaldb/" ]]; then
+        read -p "Old operationaldb repository detected. Would you like to overwrite it ? (Default: No) [Y]es [N]o [E]xit " choice
+        case "$choice" in
+            [yY]* ) perform_step $(MYSQL_PWD=$oldpassword $sql -u root -e "DROP DATABASE IF EXISTS operationaldb;") "Overwritting slq repository";;
+            [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+            * )     text_color $GREEN"Keeping previous sql repository"; NEW_DB=FALSE;;
+        esac
+    fi
+
+    #check sql new password
+    read -p "Would you like to change your sql password or add one ? (Default: Yes) [Y]es [N]o [E]xit " choice
+    case "$choice" in
+        [nN]* ) text_color $GREEN"Keeping previous sql password"; password=$oldpassword;;
+        [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+        * )     while true; do
+                    read -s -p "Enter your new sql password: " password
+                    echo
+                    read -s -p "Please confirm your new sql password: " password2
+                    echo
+                    [[ $password = $password2 ]] && break
+                    text_color $YELLOW "Password entered do not match. Please try again."
+                done
+                perform_step $(MYSQL_PWD=$oldpassword $sql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$password';") "Changing sql password";;
+    esac
+
+    perform_step $(echo "REPOSITORY_PASSWORD=$password" > $OTNODE_DIR/.env) "Adding sql password to .env"
+    if [[ $NEW_DB != FALSE ]]; then
+        perform_step $(MYSQL_PWD=$password $sql -u root -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;") "Creating new sql repository"
+    fi
+    perform_step $(echo -e "disable_log_bin\nwait_timeout = 31536000\ninteractive_timeout = 31536000" >>  /etc/my.cnf.d/server.cnf) "Adding disable_log_bin, wait_timeout, interactive_timeout variables to $sql config"
+    perform_step systemctl restart $sql "Restarting $sql"
+}

@@ -102,7 +102,7 @@ install_fuseki() {
 
     perform_step wget https://dlcdn.apache.org/jena/binaries/$FUSEKI_VER.zip "Downloading Fuseki"
     perform_step unzip $FUSEKI_VER.zip "Unzipping Fuseki"
-    perform_step rm /root/$FUSEKI_VER.zip /root/ot-node/$FUSEKI_VER.zip "Removing Fuseki zip file"
+    perform_step rm /root/$FUSEKI_VER.zip "Removing Fuseki zip file"
     perform_step mkdir /root/ot-node/fuseki "Making /root/ot-node/fuseki directory"
     perform_step mkdir /root/ot-node/fuseki/tdb "Making /root/ot-node/fuseki/tdb directory"
     perform_step cp /root/$FUSEKI_VER/fuseki-server.jar /root/ot-node/fuseki/ "Copying Fuseki files to $OTNODE_DIR/fuseki/ 1/2"
@@ -312,12 +312,12 @@ case "$choice" in
 esac
 
 if [[ $tripleStore = "ot-fuseki" ]]; then
-    if [[ -d "/root/fuseki" ]]; then
+    if [[ -d "$OTNODE_DIR/../fuseki" ]]; then
         read -p "Previously installed Fuseki triplestore detected. Would you like to overwrite it? (Default: Yes) [Y]es [N]o [E]xit " choice
         case "$choice" in
             [nN]* ) text_color $GREEN"Keeping previous Fuseki installation.";;
             [eE]* ) text_color $RED"Installer stopped by user"; exit;;
-            * )     text_color $GREEN"Reinstalling Fuseki."; perform_step rm -rf fuseki* "Removing previous Fuseki installation"; install_fuseki;;
+            * )     text_color $GREEN"Reinstalling Fuseki."; perform_step rm -rf $OTNODE_DIR/../fuseki "Removing previous Fuseki installation"; install_fuseki;;
         esac
     else
         install_fuseki

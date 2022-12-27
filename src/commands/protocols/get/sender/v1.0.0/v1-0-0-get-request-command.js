@@ -1,5 +1,9 @@
 import ProtocolRequestCommand from '../../../common/protocol-request-command.js';
-import { ERROR_TYPE, OPERATION_REQUEST_STATUS } from '../../../../../constants/constants.js';
+import {
+    NETWORK_MESSAGE_TIMEOUT_MILLS,
+    ERROR_TYPE,
+    OPERATION_REQUEST_STATUS,
+} from '../../../../../constants/constants.js';
 
 class GetRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
@@ -37,6 +41,10 @@ class GetRequestCommand extends ProtocolRequestCommand {
         }
 
         return this.handleNack(command, responseData);
+    }
+
+    messageTimeout() {
+        return NETWORK_MESSAGE_TIMEOUT_MILLS.GET.REQUEST;
     }
 
     /**
