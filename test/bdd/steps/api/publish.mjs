@@ -1,11 +1,11 @@
 import { When, Given } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
 import { setTimeout } from 'timers/promises';
-import HttpApiHelper from "../../../utilities/http-api-helper.mjs";
-import {readFile} from "fs/promises";
+import { readFile } from 'fs/promises';
+import HttpApiHelper from '../../../utilities/http-api-helper.mjs';
 
-const assertions = JSON.parse(await readFile("test/bdd/steps/api/datasets/assertions.json"));
-const requests = JSON.parse(await readFile("test/bdd/steps/api/datasets/requests.json"));
+const assertions = JSON.parse(await readFile('test/bdd/steps/api/datasets/assertions.json'));
+const requests = JSON.parse(await readFile('test/bdd/steps/api/datasets/requests.json'));
 
 const httpApiHelper = new HttpApiHelper();
 
@@ -23,10 +23,7 @@ When(
                 .config;
         const assertion = assertions[assertionName];
         const result = await this.state.nodes[node - 1].client
-            .publish(
-                assertion,
-                { evmOperationalWalletPublicKey, evmOperationalWalletPrivateKey }
-            )
+            .publish(assertion, { evmOperationalWalletPublicKey, evmOperationalWalletPrivateKey })
             .catch((error) => {
                 assert.fail(`Error while trying to publish assertion. ${error}`);
             });
