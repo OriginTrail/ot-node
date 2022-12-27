@@ -20,40 +20,42 @@ class GetLatestAssertionIdCommand extends Command {
         const commandData = {};
         if (!this.ualService.isUAL(id)) {
             this.handleError(operationId, `Requested id is not a UAL`, this.errorType, true);
+
+            return Command.empty();
+        }
+
+        const {
+            blockchain,
+            contract,
+            tokenId,
+            assertionId: ualAssertionId,
+        } = this.ualService.resolveUAL(id);
+        commandData.blockchain = blockchain;
+        commandData.tokenId = tokenId;
+        commandData.contract = contract;
+
+        if (ualAssertionId && ualAssertionId !== 'latest') {
+            commandData.assertionId = ualAssertionId;
         } else {
-            const {
+            this.logger.debug(
+                `Searching for assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
+            );
+            const blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertionId(
                 blockchain,
                 contract,
                 tokenId,
-                assertionId: ualAssertionId,
-            } = this.ualService.resolveUAL(id);
-            commandData.blockchain = blockchain;
-            commandData.tokenId = tokenId;
-            commandData.contract = contract;
-
-            if (ualAssertionId && ualAssertionId !== 'latest') {
-                commandData.assertionId = ualAssertionId;
-            } else {
-                this.logger.debug(
-                    `Searching for assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
+            );
+            if (!blockchainAssertionId) {
+                this.handleError(
+                    operationId,
+                    `Unable to find assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
+                    this.errorType,
+                    true,
                 );
-                const blockchainAssertionId =
-                    await this.blockchainModuleManager.getLatestAssertionId(
-                        blockchain,
-                        contract,
-                        tokenId,
-                    );
-                if (!blockchainAssertionId) {
-                    this.handleError(
-                        operationId,
-                        `Unable to find assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
-                        this.errorType,
-                        true,
-                    );
-                    return Command.empty();
-                }
-                commandData.assertionId = blockchainAssertionId;
+
+                return Command.empty();
             }
+            commandData.assertionId = blockchainAssertionId;
         }
 
         return this.continueSequence({ ...command.data, ...commandData }, command.sequence);

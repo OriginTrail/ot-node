@@ -7,7 +7,7 @@ Feature: Publish errors test
   #Scenario: Publish on a node with invalid data path
     #Given I setup 3 nodes
     #And I setup node 4 with appDataPath set to \0
-    #And I wait for 10 seconds
+    #And I wait for 2 seconds
     #And I call publish on node 4 with validAssertion
     #Then Last PUBLISH operation finished with status: PublishRouteError
 

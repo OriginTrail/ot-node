@@ -31,9 +31,11 @@ if (!keys) {
 console.log(`Generating ${numberOfNodes} total nodes`);
 
 for (let i = 0; i < numberOfNodes; i += 1) {
-    const tripleStoreConfig = {
-        ...generalConfig.development.modules.tripleStore.implementation['ot-graphdb'].config,
-    };
+    const tripleStoreConfig = JSON.parse(
+        JSON.stringify(
+            generalConfig.development.modules.tripleStore.implementation['ot-graphdb'].config,
+        ),
+    );
     for (const [repository, config] of Object.entries(tripleStoreConfig.repositories)) {
         tripleStoreConfig.repositories[repository].name = `${config.name}-${i}`;
     }

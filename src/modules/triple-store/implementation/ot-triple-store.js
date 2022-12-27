@@ -198,8 +198,8 @@ class OtTripleStore {
         await this.queryEngine.queryVoid(query, this.repositories[repository].insertContext);
     }
 
-    async getAssertion(repository, graphName) {
-        const escapedGraphName = this.cleanEscapeCharacter(graphName);
+    async getAssertion(repository, assertionId) {
+        const escapedGraphName = this.cleanEscapeCharacter(assertionId);
 
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
                     CONSTRUCT { ?s ?p ?o }

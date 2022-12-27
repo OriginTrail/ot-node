@@ -38,7 +38,7 @@ class TripleStoreService {
             `Inserting asset with assertion id: ${assertionId}, ual: ${ual} in triple store.`,
         );
 
-        // get current assertion, store current assertion in history repository, add triple UAL -> assertionId
+        /* // get current assertion, store current assertion in history repository, add triple UAL -> assertionId
         const assertionIds = await this.tripleStoreModuleManager.getAssetAssertionIds(
             this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
             TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
@@ -90,7 +90,7 @@ class TripleStoreService {
                     assertionId,
                 );
             }
-        }
+        } */
 
         // store new assertion in current repository, update triple UAL -> assertionId
         const currentAssetNquads = await formatAssertion({
