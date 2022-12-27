@@ -1,7 +1,7 @@
 {
     "name": "origintrail_node",
-    "version": "6.0.0",
-    "description": "OTNode v6 Beta 2",
+    "version": "6.0.1",
+    "description": "OTNode V6",
     "main": "index.js",
     "type": "module",
     "scripts": {
@@ -50,7 +50,7 @@
         "@polkadot/util-crypto": "^10.1.7",
         "@truffle/hdwallet-provider": "^2.0.16",
         "chai": "^4.3.6",
-        "dkg.js": "^6.0.0-beta.3.1.2",
+        "dkg.js": "^6.0.0-beta.3.5.1",
         "eslint": "^8.23.0",
         "eslint-config-airbnb": "^19.0.4",
         "eslint-config-prettier": "^8.5.0",
@@ -120,6 +120,7 @@
         "rolling-rate-limiter": "^0.2.13",
         "semver": "^7.3.7",
         "sequelize": "^6.21.4",
+        "timeout-abort-controller": "^3.0.0",
         "toobusy-js": "^0.5.1",
         "uint8arrays": "^3.1.0",
         "umzug": "^3.2.1",

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { ethers } from 'ethers';
 import { createRequire } from 'module';
 import validateArguments from './utils.js';
@@ -9,6 +10,8 @@ const Hub = require('dkg-evm-module/build/contracts/Hub.json');
 const argv = require('minimist')(process.argv.slice(1), {
     string: ['ask', 'privateKey', 'hubContractAddress'],
 });
+
+const devEnvironment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
 
 async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
     const provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);

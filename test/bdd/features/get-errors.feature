@@ -9,7 +9,7 @@ Feature: Get errors test
     And I wait for 10 seconds
     And I call get directly to ot-node 1 with nonExistentUAL
     And I wait for last resolve to finalize
-    Then Last GET operation finished with status: GetAssertionIdError
+    Then Last GET operation finished with status: GetLocalError
 
   #@get-errors
   #Scenario: GET operation result on a node with minimum replication factor greater than the number of nodes

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { ethers } from 'ethers';
 import { createRequire } from 'module';
 import validateArguments from './utils.js';
@@ -15,6 +16,8 @@ const argv = require('minimist')(process.argv.slice(1), {
         'hubContractAddress',
     ],
 });
+
+const devEnvironment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
 
 async function setStake(
     rpcEndpoint,

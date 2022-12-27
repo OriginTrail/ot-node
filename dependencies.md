@@ -354,6 +354,12 @@
 -   **version**: ^6.21.4
 -   **description**: used to communicate with sql repository
 
+##### [timeout-abort-controller](https://www.npmjs.com/package/timeout-abort-controller)
+
+-   **version**: ^3.0.0
+-   **description**: timeout network messages
+
+
 ##### [multiformats](https://www.npmjs.com/package/multiformats)
 
 -   **version**: ^9.8.1
