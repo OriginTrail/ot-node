@@ -12,11 +12,13 @@ class BaseModuleManager {
     async initialize() {
         try {
             const moduleConfig = this.config.modules[this.getName()];
-            this.moduleConfigValidation.validateModule(this.getName(), moduleConfig);
+            const valid = this.moduleConfigValidation.validateModule(this.getName(), moduleConfig);
+            if (!valid) return false;
 
             this.handlers = {};
             for (const implementationName in moduleConfig.implementation) {
                 if (!moduleConfig.implementation[implementationName].enabled) {
+                    console.log('not initializing implementation ', implementationName);
                     // eslint-disable-next-line no-continue
                     continue;
                 }

@@ -7,11 +7,11 @@ class ModuleConfigValidation {
     }
 
     validateModule(name, config) {
-        this.validateRequiredModule(name, config);
-        if (!config.enabled) return;
+        const valid = this.validateRequiredModule(name, config);
+        if (!valid) return false;
 
         const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
-        this[`validate${capitalizedName}`](config);
+        return this[`validate${capitalizedName}`](config);
     }
 
     validateAutoUpdater() {
@@ -64,6 +64,8 @@ class ModuleConfigValidation {
             this.logger.warn(message);
             return false;
         }
+
+        return true;
     }
 }
 

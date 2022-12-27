@@ -285,7 +285,15 @@
                     "express-http-client": {
                         "enabled": true,
                         "package": "./http-client/implementation/express-http-client.js",
-                        "config": {}
+                        "config": {
+                            "useSsl": false,
+                            "sslKeyPath": "/root/certs/privkey.pem",
+                            "sslCertificatePath": "/root/certs/fullchain.pem",
+                            "rateLimiter": {
+                                "timeWindowSeconds": 60,
+                                "maxRequests": 10
+                            }
+                        }
                     }
                 }
             },
@@ -319,6 +327,16 @@
                     }
                 }
             },
+            "validation": {
+                "enabled": true,
+                "implementation": {
+                    "enabled": true,
+                    "merkle-validation": {
+                        "package": "./validation/implementation/merkle-validation.js",
+                        "config": {}
+                    }
+                }
+            },
             "repository": {
                 "enabled": true,
                 "implementation": {
@@ -328,7 +346,7 @@
                         "config": {
                             "database": "operationaldb",
                             "user": "root",
-                            "password": "password",
+                            "password": "",
                             "port": "3306",
                             "host": "localhost",
                             "dialect": "mysql",
@@ -641,6 +659,7 @@
                 "enabled": true,
                 "implementation": {
                     "ot-auto-updater": {
+                        "enabled":true,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
                             "branch": "v6/release/mainnet"
@@ -652,6 +671,7 @@
                 "enabled": true,
                 "implementation": {
                     "libp2p-service": {
+                        "enabled":true,
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
                             "dht": {
@@ -682,6 +702,7 @@
                 "enabled": true,
                 "implementation": {
                     "express-http-client": {
+                        "enabled":true,
                         "package": "./http-client/implementation/express-http-client.js",
                         "config": {
                             "useSsl": false,
@@ -719,6 +740,7 @@
                 "defaultImplementation": "otp",
                 "implementation": {
                     "otp": {
+                        "enabled": true,
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "otp::mainnet",
@@ -736,6 +758,7 @@
                 "enabled": true,
                 "implementation": {
                     "merkle-validation": {
+                        "enabled":true,
                         "package": "./validation/implementation/merkle-validation.js",
                         "config": {}
                     }
