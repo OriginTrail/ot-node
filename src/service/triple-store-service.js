@@ -10,6 +10,7 @@ class TripleStoreService {
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.ualService = ctx.ualService;
         this.dataService = ctx.dataService;
+        this.operationIdService = ctx.operationIdService;
 
         this.repositoryImplementations = {};
         for (const implementationName of this.tripleStoreModuleManager.getImplementationNames()) {

@@ -18,7 +18,6 @@ class BaseModuleManager {
             this.handlers = {};
             for (const implementationName in moduleConfig.implementation) {
                 if (!moduleConfig.implementation[implementationName].enabled) {
-                    console.log('not initializing implementation ', implementationName);
                     // eslint-disable-next-line no-continue
                     continue;
                 }
