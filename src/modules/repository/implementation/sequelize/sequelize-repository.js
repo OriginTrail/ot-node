@@ -258,6 +258,12 @@ class SequelizeRepository {
         });
     }
 
+    async removeShardingTablePeerRecords(blockchain) {
+        return this.models.shard.destroy({
+            where: { blockchain_id: blockchain },
+        });
+    }
+
     async createPeerRecord(peerId, blockchain, ask, stake, lastSeen, sha256) {
         return this.models.shard.create(
             {

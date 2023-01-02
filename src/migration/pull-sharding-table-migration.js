@@ -12,6 +12,11 @@ class PullBlockchainShardingTableMigration extends BaseMigration {
         const promises = this.blockchainModuleManager
             .getImplementationNames()
             .map(async (blockchainId) => {
+                this.logger.debug(
+                    `Removing nodes from local sharding table for blockchain ${blockchainId}.`,
+                );
+                await this.repositoryModuleManager.removeShardingTablePeerRecords(blockchainId);
+
                 const shardingTableLength = Number(
                     await this.blockchainModuleManager.getShardingTableLength(blockchainId),
                 );
