@@ -223,6 +223,8 @@ class OTNode {
     }
 
     async executePullShardingTableMigration() {
+        if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') return;
+
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
 
