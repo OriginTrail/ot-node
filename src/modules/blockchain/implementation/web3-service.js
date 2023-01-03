@@ -540,7 +540,7 @@ class Web3Service {
     }
 
     async getNodeStake(identityId) {
-        return this.callContractFunction(this.StakingStorage, 'totalStakes', [identityId]);
+        return this.callContractFunction(this.StakingStorageContract, 'totalStakes', [identityId]);
     }
 
     async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
