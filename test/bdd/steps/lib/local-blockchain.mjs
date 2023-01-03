@@ -65,7 +65,7 @@ const contentAsset = JSON.parse(
     await readFile('node_modules/dkg-evm-module/build/contracts/ContentAsset.json')
 )
 const contentAssetStorage = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/contentAssetStorage.json')
+    await readFile('node_modules/dkg-evm-module/build/contracts/ContentAssetStorage.json')
 )
 
 const accountPrivateKeys = JSON.parse(
@@ -136,17 +136,20 @@ const testParametersStorageParams = {
 class LocalBlockchain {
     constructor(options = {}) {
         this.logger = options.logger ?? console;
+        const logging = options.logger ? {
+            logger: {
+                log: this.logger.log,
+            }
+        } : {
+            quiet: true,
+        };
         this.port = options.port ?? 7545;
         this.name = options.name ?? 'ganache';
         this.server = Ganache.server({
             /* miner: {
                 blockTime: 1,
             }, */
-            logging: {
-                logger: {
-                    log: console.log,
-                },
-            },
+            logging,
             gas: 20000000,
             time: new Date(),
             accounts: accountPrivateKeys.map((account) => ({

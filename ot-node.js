@@ -9,6 +9,7 @@ import { CONTRACTS, MIN_NODE_VERSION } from './src/constants/constants.js';
 import FileService from './src/service/file-service.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
+import PullBlockchainShardingTableMigration from './src/migration/pull-sharding-table-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -43,6 +44,7 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
+        await this.executePullShardingTableMigration();
         await this.listenOnHubContractChanges();
 
         await this.createProfiles();
@@ -220,6 +222,24 @@ class OTNode {
         }
     }
 
+    async executePullShardingTableMigration() {
+        if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') return;
+
+        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
+
+        const migration = new PullBlockchainShardingTableMigration(
+            'pullShardingTableMigration',
+            this.logger,
+            this.config,
+            repositoryModuleManager,
+            blockchainModuleManager,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            await migration.migrate();
+        }
+    }
+
     async initializeShardingTableService() {
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const initShardingServices = blockchainModuleManager
@@ -291,6 +311,12 @@ class OTNode {
                         updateLastCheckedBlock,
                     );
                     await blockchainModuleManager.getAllPastEvents(
+                        CONTRACTS.STAKING_CONTRACT,
+                        onEventsReceived,
+                        getLastCheckedBlock,
+                        updateLastCheckedBlock,
+                    );
+                    await blockchainModuleManager.getAllPastEvents(
                         CONTRACTS.PROFILE_CONTRACT,
                         onEventsReceived,
                         getLastCheckedBlock,
@@ -357,6 +383,9 @@ class OTNode {
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const that = this;
         blockchainModuleManager.getImplementationNames().map(async (blockchain) => {
+            eventEmitter.on(`${blockchain}-NewContract`, async () => {
+                await that.reinitializeContracts(blockchainModuleManager, blockchain);
+            });
             eventEmitter.on(`${blockchain}-ContractChanged`, async (event) => {
                 await that.reinitializeContracts(blockchainModuleManager, blockchain);
                 if (event.contractName === 'ShardingTable') {
