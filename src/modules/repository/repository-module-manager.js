@@ -158,6 +158,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async removeShardingTablePeerRecords(blockchain) {
+        if (this.initialized) {
+            return this.getImplementation().module.removeShardingTablePeerRecords(blockchain);
+        }
+    }
+
     async createPeerRecord(peerId, blockchain, ask, stake, lastSeen, sha256) {
         if (this.initialized) {
             return this.getImplementation().module.createPeerRecord(
