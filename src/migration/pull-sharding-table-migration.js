@@ -2,10 +2,18 @@ import { ethers } from 'ethers';
 import BaseMigration from './base-migration.js';
 
 class PullBlockchainShardingTableMigration extends BaseMigration {
-    constructor(migrationName, logger, config, repositoryModuleManager, blockchainModuleManager) {
+    constructor(
+        migrationName,
+        logger,
+        config,
+        repositoryModuleManager,
+        blockchainModuleManager,
+        validationModuleManager,
+    ) {
         super(migrationName, logger, config);
         this.repositoryModuleManager = repositoryModuleManager;
         this.blockchainModuleManager = blockchainModuleManager;
+        this.validationModuleManager = validationModuleManager;
     }
 
     async executeMigration() {
