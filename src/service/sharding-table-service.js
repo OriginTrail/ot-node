@@ -152,7 +152,7 @@ class ShardingTableService {
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
 
-        this.eventEmitter.on(`${blockchainId}-StakeIncreased`, (event) => {
+        this.eventEmitter.on(`${blockchainId}-StakeIncreased`, async (event) => {
             const eventData = JSON.parse(event.data);
             const nodeId = this.blockchainModuleManager.convertHexToAscii(
                 event.blockchain_id,
@@ -164,12 +164,18 @@ class ShardingTableService {
             this.repositoryModuleManager.updatePeerStake(
                 blockchainId,
                 nodeId,
-                ethers.utils.formatUnits(eventData.ask, 'ether'),
+                ethers.utils.formatUnits(
+                    await this.blockchainModuleManager.getNodeStake(
+                        blockchainId,
+                        eventData.identityId,
+                    ),
+                    'ether',
+                ),
             );
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
 
-        this.eventEmitter.on(`${blockchainId}-StakeWithdrawalStarted`, (event) => {
+        this.eventEmitter.on(`${blockchainId}-StakeWithdrawalStarted`, async (event) => {
             const eventData = JSON.parse(event.data);
             const nodeId = this.blockchainModuleManager.convertHexToAscii(
                 event.blockchain_id,
@@ -181,7 +187,13 @@ class ShardingTableService {
             this.repositoryModuleManager.updatePeerStake(
                 blockchainId,
                 nodeId,
-                ethers.utils.formatUnits(eventData.ask, 'ether'),
+                ethers.utils.formatUnits(
+                    await this.blockchainModuleManager.getNodeStake(
+                        blockchainId,
+                        eventData.identityId,
+                    ),
+                    'ether',
+                ),
             );
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
