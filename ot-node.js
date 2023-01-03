@@ -227,6 +227,7 @@ class OTNode {
 
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
+        const validationModuleManager = this.container.resolve('validationModuleManager');
 
         const migration = new PullBlockchainShardingTableMigration(
             'pullShardingTableMigration',
@@ -234,6 +235,7 @@ class OTNode {
             this.config,
             repositoryModuleManager,
             blockchainModuleManager,
+            validationModuleManager,
         );
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();
