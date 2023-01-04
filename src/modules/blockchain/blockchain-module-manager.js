@@ -35,6 +35,10 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
+    async getNodeStake(blockchain, identityId) {
+        return this.callImplementationFunction(blockchain, 'getNodeStake', [identityId]);
+    }
+
     async getIdentityId(blockchain) {
         return this.callImplementationFunction(blockchain, 'getIdentityId');
     }

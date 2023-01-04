@@ -266,7 +266,9 @@
                             "blockchainTitle": "ganache",
                             "networkId": "ganache::testnet",
                             "hubContractAddress": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
-                            "rpcEndpoints": ["http://localhost:7545"]
+                            "rpcEndpoints": ["http://localhost:7545"],
+                            "initialStakeAmount": 50000,
+                            "initialAskAmount": 0.2
                         }
                     }
                 }
