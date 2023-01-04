@@ -7,6 +7,7 @@ import {readFile} from "fs/promises";
 const requests = JSON.parse(await readFile("test/bdd/steps/api/datasets/requests.json"));
 const httpApiHelper = new HttpApiHelper()
 
+
 When(
     /^I get operation result from node (\d+) for last published assertion/,
     { timeout: 120000 },
