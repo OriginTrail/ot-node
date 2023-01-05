@@ -25,6 +25,8 @@ import {
     LIBP2P_KEY_FILENAME,
 } from '../../../constants/constants.js';
 
+const devEnvironment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+
 const initializationObject = {
     addresses: {
         listen: ['/ip4/0.0.0.0/tcp/9000'],
@@ -67,7 +69,10 @@ class Libp2pService {
         };
         let id;
         if (!this.config.peerId) {
-            this.config.privateKey = await this.readPrivateKeyFromFile();
+            if (!devEnvironment || !this.config.privateKey) {
+                this.config.privateKey = await this.readPrivateKeyFromFile();
+            }
+
             if (!this.config.privateKey) {
                 id = await _create({ bits: 1024, keyType: 'RSA' });
                 this.config.privateKey = id.toJSON().privKey;

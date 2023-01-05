@@ -25,6 +25,8 @@ Given(
             const managementWallet = wallets[nodeIndex + 1 + Math.floor(wallets.length / 2)];
             const rpcPort = 8901 + nodeIndex;
             const nodeName = `origintrail-test-${nodeIndex}`;
+            const sharesTokenName = `origintrail-test-${nodeIndex}`;
+            const sharesTokenSymbol = `OT-T-${nodeIndex}`;
             const nodeConfiguration = DeepExtend(
                 {},
                 defaultConfiguration,
@@ -35,6 +37,8 @@ Given(
                     nodeIndex,
                     nodeName,
                     rpcPort,
+                    sharesTokenName,
+                    sharesTokenSymbol
                 ),
             );
             const forkedNode = stepsUtils.forkNode(nodeConfiguration);
@@ -133,6 +137,8 @@ Given(
             this.state.localBlockchain.getWallets()[nodeIndex + 1 + Math.floor(wallets.length / 2)];
         const rpcPort = 8901 + nodeIndex;
         const nodeName = `origintrail-test-${nodeIndex}`;
+        const sharesTokenName = `origintrail-test-${nodeIndex}`;
+        const sharesTokenSymbol = `OT-T-${nodeIndex}`;
         const nodeConfiguration = DeepExtend(
             {},
             defaultConfiguration,
@@ -143,6 +149,8 @@ Given(
                 nodeIndex,
                 nodeName,
                 rpcPort,
+                sharesTokenName,
+                sharesTokenSymbol
             ),
         );
         const propertyNameSplitLen = propertyNameSplit.length;
