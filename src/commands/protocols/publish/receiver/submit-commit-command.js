@@ -110,21 +110,19 @@ class SubmitCommitCommand extends EpochCommand {
             async (result) => {
                 if (!result.error) {
                     const currentEpochStartTime =
-                        Number(agreementData.startTime) + Number(agreementData.epochLength) * epoch;
+                        agreementData.startTime + agreementData.epochLength * epoch;
 
                     const proofWindowDurationPerc = Number(
                         await that.blockchainModuleManager.getProofWindowDurationPerc(blockchain),
                     );
 
                     const proofWindowDuration =
-                        (proofWindowDurationPerc / 100) * Number(agreementData.epochLength);
+                        (proofWindowDurationPerc / 100) * agreementData.epochLength;
 
                     const proofWindowStartTime =
                         currentEpochStartTime +
                         Math.floor(
-                            (Number(agreementData.epochLength) *
-                                Number(agreementData.proofWindowOffsetPerc)) /
-                                100,
+                            (agreementData.epochLength * agreementData.proofWindowOffsetPerc) / 100,
                         );
 
                     const timeNow = Math.floor(Date.now() / 1000);

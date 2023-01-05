@@ -573,12 +573,12 @@ class Web3Service {
         );
 
         return {
-            startTime: result['0'],
-            epochsNumber: result['1'],
-            epochLength: result['2'],
+            startTime: Number(result['0']),
+            epochsNumber: Number(result['1']),
+            epochLength: Number(result['2']),
             tokenAmount: result['3'],
-            scoreFunctionId: result['4'][0],
-            proofWindowOffsetPerc: result['4'][1],
+            scoreFunctionId: Number(result['4'][0]),
+            proofWindowOffsetPerc: Number(result['4'][1]),
         };
     }
 
