@@ -9,7 +9,7 @@ import { CONTRACTS, MIN_NODE_VERSION } from './src/constants/constants.js';
 import FileService from './src/service/file-service.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
-import PullBlockchainShardingTableMigration from './src/migration/pull-sharding-table-migration.js';
+import UpdateServiceAgreementEndTimeMigration from './src/migration/update-service-agreement-end-time-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -44,7 +44,7 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
-        await this.executePullShardingTableMigration();
+        await this.executeUpdateServiceAgreementEndTimeMigration();
         await this.listenOnHubContractChanges();
 
         await this.createProfiles();
@@ -222,21 +222,22 @@ class OTNode {
         }
     }
 
-    async executePullShardingTableMigration() {
-        if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') return;
-
+    async executeUpdateServiceAgreementEndTimeMigration() {
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
-        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
-        const validationModuleManager = this.container.resolve('validationModuleManager');
+        const tripleStoreModuleManager = this.container.resolve('tripleStoreModuleManager');
+        const serviceAgreementService = this.container.resolve('serviceAgreementService');
+        const ualService = this.container.resolve('ualService');
 
-        const migration = new PullBlockchainShardingTableMigration(
-            'pullShardingTableMigration',
+        const migration = new UpdateServiceAgreementEndTimeMigration(
+            'updateServiceAgreementEndTimeMigration',
             this.logger,
             this.config,
-            repositoryModuleManager,
+            tripleStoreModuleManager,
             blockchainModuleManager,
-            validationModuleManager,
+            serviceAgreementService,
+            ualService,
         );
+
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();
         }

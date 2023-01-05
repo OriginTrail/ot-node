@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-globals */
 import { ethers } from 'ethers';
 
 class UALService {

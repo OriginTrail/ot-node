@@ -142,6 +142,10 @@ class OtTripleStore {
         return result ? JSON.parse(result) : [];
     }
 
+    async update(query) {
+        await this.queryEngine.queryVoid(query, this.insertContext);
+    }
+
     async ask(query) {
         const result = await this.queryEngine.queryBoolean(query, this.queryContext);
         return result;
