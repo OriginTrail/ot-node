@@ -19,7 +19,7 @@ class UpdateServiceAgreementEndTimeMigration extends BaseMigration {
     }
 
     async executeMigration() {
-        // find all Nan assertion ids
+        // find all keywords for assertions with NaN in end timestamp
         const query = `PREFIX schema: <http://schema.org/>
 SELECT ?s ?p ?o WHERE {
     ?s schema:agreementEndTime ?agreementEndTime .
@@ -28,14 +28,16 @@ SELECT ?s ?p ?o WHERE {
     filter (?p=schema:keyword )
 }`;
 
-        const results = await this.tripleStoreModuleManager.select(query);
+        const keywordTriples = await this.tripleStoreModuleManager.select(query);
         let ual;
         let agreementId;
-        this.logger.debug(`Found ${results.length} service agreement with invalid end timestamp.`);
-        for (const result of results) {
+        this.logger.debug(
+            `Found ${keywordTriples.length} service agreement with invalid end timestamp.`,
+        );
+        for (const keywordTriple of keywordTriples) {
             try {
-                ual = result.s;
-                const keyword = result.o.split('"').join('');
+                ual = keywordTriple.s;
+                const keyword = keywordTriple.o.split('"').join('');
                 const hashFunctionId = 1;
                 const resolvedUal = this.ualService.resolveUAL(ual);
 
