@@ -12,7 +12,7 @@ class SubmitProofsCommand extends EpochCommand {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.operationIdService = ctx.operationIdService;
 
-        this.errorType = ERROR_TYPE.SUBMIT_PROOFS_ERROR;
+        this.errorType = ERROR_TYPE.COMMIT_PROOF.SUBMIT_PROOFS_ERROR;
     }
 
     async execute(command) {

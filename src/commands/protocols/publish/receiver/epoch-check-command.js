@@ -14,7 +14,7 @@ class EpochCheckCommand extends EpochCommand {
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.operationIdService = ctx.operationIdService;
 
-        this.errorType = ERROR_TYPE.EPOCH_CHECK_ERROR;
+        this.errorType = ERROR_TYPE.COMMIT_PROOF.EPOCH_CHECK_ERROR;
     }
 
     async execute(command) {
