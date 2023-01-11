@@ -5,7 +5,6 @@ import { OPERATION_ID_STATUS } from '../../constants/constants.js';
 class QueryController extends BaseController {
     constructor(ctx) {
         super(ctx);
-        this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
         this.operationIdService = ctx.operationIdService;
     }

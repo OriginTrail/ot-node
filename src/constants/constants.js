@@ -190,6 +190,9 @@ export const ERROR_TYPE = {
         GET_REQUEST_REMOTE_ERROR: 'GetRequestRemoteError',
         GET_ERROR: 'GetError',
     },
+    LOCAL_STORE: {
+        LOCAL_STORE_ERROR: 'LocalStoreError',
+    },
     QUERY: {
         LOCAL_QUERY_ERROR: 'LocalQueryError',
     },
@@ -268,12 +271,17 @@ export const OPERATION_ID_STATUS = {
         VALIDATING_QUERY: 'VALIDATING_QUERY',
         SEARCHING_ENTITIES: 'SEARCHING_ENTITIES',
     },
-
     QUERY: {
         QUERY_INIT_START: 'QUERY_INIT_START',
         QUERY_INIT_END: 'QUERY_INIT_END',
         QUERY_START: 'QUERY_START',
         QUERY_END: 'QUERY_END',
+    },
+    LOCAL_STORE: {
+        LOCAL_STORE_INIT_START: 'LOCAL_STORE_INIT_START',
+        LOCAL_STORE_INIT_END: 'LOCAL_STORE_INIT_END',
+        LOCAL_STORE_START: 'LOCAL_STORE_START',
+        LOCAL_STORE_END: 'LOCAL_STORE_END',
     },
 };
 

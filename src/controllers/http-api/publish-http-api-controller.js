@@ -44,12 +44,9 @@ class PublishController extends BaseController {
                 `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
             );
 
-            const commandSequence = req.body.localStore ? ['localStoreCommand'] : [];
-            commandSequence.push('networkPublishCommand');
-
             await this.commandExecutor.add({
                 name: 'validateAssertionCommand',
-                sequence: commandSequence,
+                sequence: ['networkPublishCommand'],
                 delay: 0,
                 period: 5000,
                 retries: 3,

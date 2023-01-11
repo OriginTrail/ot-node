@@ -6,7 +6,6 @@ const availableOperations = ['publish', 'get', 'query'];
 class ResultController extends BaseController {
     constructor(ctx) {
         super(ctx);
-        this.logger = ctx.logger;
         this.operationIdService = ctx.operationIdService;
     }
 

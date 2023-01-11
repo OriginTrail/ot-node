@@ -22,6 +22,19 @@ class TripleStoreService {
         }
     }
 
+    async localStoreAssertion(assertionId, operationId) {
+        this.logger.info(`Inserting assertion with id: ${assertionId} in triple store.`);
+
+        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
+
+        await this.tripleStoreModuleManager.insertAssertion(
+            this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT],
+            TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+            assertionId,
+            assertion.join('\n'),
+        );
+    }
+
     async localStoreAsset(
         assertionId,
         blockchain,
