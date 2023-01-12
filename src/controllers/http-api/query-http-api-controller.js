@@ -25,11 +25,9 @@ class QueryController extends BaseController {
             OPERATION_ID_STATUS.QUERY.QUERY_INIT_END,
         );
 
-        const commandSequence = ['queryCommand'];
-
         await this.commandExecutor.add({
-            name: commandSequence[0],
-            sequence: commandSequence.slice(1),
+            name: 'queryCommand',
+            sequence: [],
             delay: 0,
             data: { query, queryType, operationId },
             transactional: false,
