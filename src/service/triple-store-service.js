@@ -10,7 +10,6 @@ class TripleStoreService {
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.ualService = ctx.ualService;
         this.dataService = ctx.dataService;
-        this.operationIdService = ctx.operationIdService;
 
         this.repositoryImplementations = {};
         for (const implementationName of this.tripleStoreModuleManager.getImplementationNames()) {
@@ -22,12 +21,10 @@ class TripleStoreService {
         }
     }
 
-    async localStoreAssertion(assertionId, operationId) {
+    async localStoreAssertion(assertionId, assertion, operationId) {
         this.logger.info(
             `Inserting assertion with id: ${assertionId} in triple store. Operation id: ${operationId}`,
         );
-
-        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
 
         await this.tripleStoreModuleManager.insertAssertion(
             this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT],
@@ -39,6 +36,7 @@ class TripleStoreService {
 
     async localStoreAsset(
         assertionId,
+        assertion,
         blockchain,
         contract,
         tokenId,
@@ -119,7 +117,6 @@ class TripleStoreService {
             agreementEndTime,
             keyword,
         });
-        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
 
         await Promise.all([
             this.tripleStoreModuleManager.insertAsset(

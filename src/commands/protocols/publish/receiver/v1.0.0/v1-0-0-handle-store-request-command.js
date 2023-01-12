@@ -66,6 +66,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
 
         await this.tripleStoreService.localStoreAsset(
             assertionId,
+            assertion,
             blockchain,
             contract,
             tokenId,

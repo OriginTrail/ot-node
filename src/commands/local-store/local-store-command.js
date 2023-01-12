@@ -10,7 +10,7 @@ class LocalStoreCommand extends Command {
     }
 
     async execute(command) {
-        const { operationId, assertionId } = command.data;
+        const { operationId } = command.data;
 
         try {
             await this.operationIdService.updateOperationIdStatus(
@@ -18,7 +18,17 @@ class LocalStoreCommand extends Command {
                 OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_START,
             );
 
-            await this.tripleStoreService.localStoreAssertion(assertionId, operationId);
+            const assertions = await this.operationIdService.getCachedOperationIdData(operationId);
+
+            await Promise.all(
+                assertions.map(({ assertionId, assertion }) =>
+                    this.tripleStoreService.localStoreAssertion(
+                        assertionId,
+                        assertion,
+                        operationId,
+                    ),
+                ),
+            );
 
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
