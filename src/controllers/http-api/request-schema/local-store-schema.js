@@ -1,6 +1,6 @@
 export default () => ({
     type: 'object',
-    required: ['assertionId', 'assertion', 'repositories'],
+    required: ['assertionId', 'assertion'],
     properties: {
         assertionId: {
             type: 'string',

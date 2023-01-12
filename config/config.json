@@ -5,7 +5,7 @@
                 "enabled": false,
                 "implementation": {
                     "ot-auto-updater": {
-                        "enabled": true,
+                        "enabled": false,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
                             "branch": "v6/develop"

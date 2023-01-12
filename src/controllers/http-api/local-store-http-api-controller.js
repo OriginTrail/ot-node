@@ -6,6 +6,7 @@ class LocalStoreController extends BaseController {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
+        this.operationIdService = ctx.operationIdService;
     }
 
     async handleLocalStoreRequest(req, res) {
