@@ -54,7 +54,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
 
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         const assetExists = await this.tripleStoreService.assetExists(
-            TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
             ual,
             blockchain,
             contract,

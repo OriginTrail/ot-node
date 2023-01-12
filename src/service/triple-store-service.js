@@ -138,18 +138,26 @@ class TripleStoreService {
         );
     }
 
-    async localGet(assertionId, operationId) {
-        this.logger.debug(`Getting assertion: ${assertionId} for operationId: ${operationId}`);
+    async localGet(assertionId, operationId, localQuery = false) {
+        let nquads;
+        if (localQuery) {
+            this.logger.debug(
+                `Getting assertion: ${assertionId} for operationId: ${operationId} from private repository`,
+            );
 
-        let nquads = await this.tripleStoreModuleManager.getAssertion(
-            this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-            assertionId,
-        );
-        if (!nquads?.length) {
             nquads = await this.tripleStoreModuleManager.getAssertion(
-                this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY],
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT],
+                TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                assertionId,
+            );
+        }
+        if (!nquads?.length) {
+            this.logger.debug(
+                `Getting assertion: ${assertionId} for operationId: ${operationId} from public repository`,
+            );
+            nquads = await this.tripleStoreModuleManager.getAssertion(
+                this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
+                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
                 assertionId,
             );
         }
