@@ -27,7 +27,9 @@ class LocalStoreController extends BaseController {
 
         await this.operationIdService.cacheOperationIdData(operationId, { assertion });
 
-        this.logger.info(`Received assertion with assertion id: ${assertionId}.`);
+        this.logger.info(
+            `Received assertion with assertion id: ${assertionId}. Operation id: ${operationId}`,
+        );
 
         await this.commandExecutor.add({
             name: 'localStoreCommand',

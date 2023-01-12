@@ -23,7 +23,9 @@ class TripleStoreService {
     }
 
     async localStoreAssertion(assertionId, operationId) {
-        this.logger.info(`Inserting assertion with id: ${assertionId} in triple store.`);
+        this.logger.info(
+            `Inserting assertion with id: ${assertionId} in triple store. Operation id: ${operationId}`,
+        );
 
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
 
@@ -48,7 +50,7 @@ class TripleStoreService {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.info(
-            `Inserting asset with assertion id: ${assertionId}, ual: ${ual} in triple store.`,
+            `Inserting asset with assertion id: ${assertionId}, ual: ${ual} in triple store. Operation id: ${operationId}`,
         );
 
         /* // get current assertion, store current assertion in history repository, add triple UAL -> assertionId
