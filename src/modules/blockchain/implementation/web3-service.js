@@ -14,6 +14,7 @@ const require = createRequire(import.meta.url);
 const AbstractAsset = require('dkg-evm-module/build/contracts/AbstractAsset.json');
 const AssertionStorage = require('dkg-evm-module/build/contracts/AssertionStorage.json');
 const Staking = require('dkg-evm-module/build/contracts/Staking.json');
+const StakingStorage = require('dkg-evm-module/build/contracts/StakingStorage.json');
 const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
 const HashingProxy = require('dkg-evm-module/build/contracts/HashingProxy.json');
 const Hub = require('dkg-evm-module/build/contracts/Hub.json');
@@ -138,6 +139,16 @@ class Web3Service {
             stakingContractAddress,
             Staking.abi,
             this.wallet,
+        );
+
+        const stakingStorageAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['StakingStorage'],
+        );
+        this.StakingStorageContract = new this.web3.eth.Contract(
+            StakingStorage.abi,
+            stakingStorageAddress,
         );
 
         const hashingProxyAddress = await this.callContractFunction(
@@ -540,6 +551,10 @@ class Web3Service {
         return this.callContractFunction(this.hubContract, 'isAssetStorage(address)', [
             contractAddress,
         ]);
+    }
+
+    async getNodeStake(identityId) {
+        return this.callContractFunction(this.StakingStorageContract, 'totalStakes', [identityId]);
     }
 
     async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
