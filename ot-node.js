@@ -10,6 +10,7 @@ import FileService from './src/service/file-service.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
 import PullBlockchainShardingTableMigration from './src/migration/pull-sharding-table-migration.js';
+import TripleStoreUserConfigurationMigration from './src/migration/triple-store-user-configuration-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -27,7 +28,7 @@ class OTNode {
     async start() {
         await this.checkForUpdate();
         await this.removeUpdateFile();
-
+        await this.executeTripleStoreUserConfigurationMigration();
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
         this.logger.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
@@ -220,6 +221,20 @@ class OTNode {
             );
             this.stop(1);
         }
+    }
+
+    async executeTripleStoreUserConfigurationMigration() {
+        if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') return;
+
+        const migration = new TripleStoreUserConfigurationMigration(
+            'tripleStoreUserConfigurationMigration',
+            this.logger,
+            this.config,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            await migration.migrate();
+        }
+        process.exit(1);
     }
 
     async executePullShardingTableMigration() {
