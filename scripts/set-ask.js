@@ -4,14 +4,12 @@ import { createRequire } from 'module';
 import validateArguments from './utils.js';
 
 const require = createRequire(import.meta.url);
-const Profile = require('dkg-evm-module/build/contracts/Profile.json');
-const IdentityStorage = require('dkg-evm-module/build/contracts/IdentityStorage.json');
-const Hub = require('dkg-evm-module/build/contracts/Hub.json');
+const Profile = require('dkg-evm-module/abi/Profile.json');
+const IdentityStorage = require('dkg-evm-module/abi/IdentityStorage.json');
+const Hub = require('dkg-evm-module/abi/Hub.json');
 const argv = require('minimist')(process.argv.slice(1), {
     string: ['ask', 'privateKey', 'hubContractAddress'],
 });
-
-const devEnvironment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
 
 async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
     const provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);

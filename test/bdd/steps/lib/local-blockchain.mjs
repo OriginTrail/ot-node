@@ -3,69 +3,75 @@ import Ganache from 'ganache';
 import { ethers } from "ethers";
 import { readFile } from 'fs/promises';
 
-const hub = JSON.parse(await readFile('node_modules/dkg-evm-module/build/contracts/Hub.json'));
+const hub = JSON.parse(await readFile('node_modules/dkg-evm-module/abi/Hub.json'));
 const shardingTable = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/ShardingTable.json'),
+    await readFile('node_modules/dkg-evm-module/abi/ShardingTable.json'),
 );
 const staking = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/Staking.json'),
+    await readFile('node_modules/dkg-evm-module/abi/Staking.json'),
 );
 const shardingTableStorage = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/ShardingTableStorage.json'),
+    await readFile('node_modules/dkg-evm-module/abi/ShardingTableStorage.json'),
 );
 const assertionStorage = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/AssertionStorage.json'),
+    await readFile('node_modules/dkg-evm-module/abi/AssertionStorage.json'),
 );
 const hashingProxy = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/HashingProxy.json'),
+    await readFile('node_modules/dkg-evm-module/abi/HashingProxy.json'),
 );
 const identity = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/Identity.json'),
+    await readFile('node_modules/dkg-evm-module/abi/Identity.json'),
 );
 const identityStorage = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/IdentityStorage.json'),
+    await readFile('node_modules/dkg-evm-module/abi/IdentityStorage.json'),
 );
 const parametersStorage = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/ParametersStorage.json'),
+    await readFile('node_modules/dkg-evm-module/abi/ParametersStorage.json'),
 );
 const scoringProxy = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/ScoringProxy.json'),
+    await readFile('node_modules/dkg-evm-module/abi/ScoringProxy.json'),
 );
 const serviceAgreementStorageV1 = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/ServiceAgreementStorageV1.json'),
+    await readFile('node_modules/dkg-evm-module/abi/ServiceAgreementStorageV1.json'),
 );
 const serviceAgreementV1 = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/ServiceAgreementV1.json'),
+    await readFile('node_modules/dkg-evm-module/abi/ServiceAgreementV1.json'),
+);
+const CommitManagerV1 = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/abi/CommitManagerV1.json'),
+);
+const ProofManagerV1 = JSON.parse(
+    await readFile('node_modules/dkg-evm-module/abi/ProofManagerV1.json'),
 );
 const sha256Contract = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/SHA256.json'),
+    await readFile('node_modules/dkg-evm-module/abi/SHA256.json'),
 );
 const log2pldsfContract = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/Log2PLDSF.json'),
+    await readFile('node_modules/dkg-evm-module/abi/Log2PLDSF.json'),
 );
 const erc20Token = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/ERC20Token.json'),
+    await readFile('node_modules/dkg-evm-module/abi/ERC20Token.json'),
 );
 const profile = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/Profile.json'),
+    await readFile('node_modules/dkg-evm-module/abi/Profile.json'),
 );
 const profileStorage = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/ProfileStorage.json'),
+    await readFile('node_modules/dkg-evm-module/abi/ProfileStorage.json'),
 );
 const assertion = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/Assertion.json'),
+    await readFile('node_modules/dkg-evm-module/abi/Assertion.json'),
 );
 const stakingStorage = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/StakingStorage.json'),
+    await readFile('node_modules/dkg-evm-module/abi/StakingStorage.json'),
 );
 const whitelistStorage = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/WhitelistStorage.json'),
+    await readFile('node_modules/dkg-evm-module/abi/WhitelistStorage.json'),
 );
 const contentAsset = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/ContentAsset.json')
+    await readFile('node_modules/dkg-evm-module/abi/ContentAsset.json')
 )
 const contentAssetStorage = JSON.parse(
-    await readFile('node_modules/dkg-evm-module/build/contracts/ContentAssetStorage.json')
+    await readFile('node_modules/dkg-evm-module/abi/ContentAssetStorage.json')
 )
 
 const accountPrivateKeys = JSON.parse(
@@ -80,6 +86,8 @@ const sources = {
     assertionStorage,
     shardingTableStorage,
     serviceAgreementV1,
+    commitManagerV1,
+    proofManagerV1,
     erc20Token,
     profileStorage,
     profile,
@@ -219,6 +227,12 @@ class LocalBlockchain {
                     `\t Service Agreement V1 contract address: \t\t\t\t${this.contracts.serviceAgreementV1.instance.address}`,
                 );
                 this.logger.info(
+                    `\t Commit Manager V1 contract address: \t\t\t\t${this.contracts.commitManagerV1.instance.address}`,
+                );
+                this.logger.info(
+                    `\t Proof Manager V1 contract address: \t\t\t\t${this.contracts.proofManagerV1.instance.address}`,
+                );
+                this.logger.info(
                     `\t Token contract address: \t\t\t\t${this.contracts.erc20Token.instance.address}`,
                 );
                 this.logger.info(
@@ -320,6 +334,18 @@ class LocalBlockchain {
         await this.setContractAddress(
             'ServiceAgreementV1',
             this.contracts.serviceAgreementV1.instance.address,
+        );
+
+        await this.deploy('commitManagerV1', [this.contracts.hub.instance.address]);
+        await this.setContractAddress(
+            'CommitManagerV1',
+            this.contracts.commitManagerV1.instance.address,
+        );
+
+        await this.deploy('proofManagerV1', [this.contracts.hub.instance.address]);
+        await this.setContractAddress(
+            'ProofManagerV1',
+            this.contracts.proofManagerV1.instance.address,
         );
 
         await this.deploy('contentAsset', [this.contracts.hub.instance.address]);

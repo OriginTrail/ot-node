@@ -4,10 +4,10 @@ import { createRequire } from 'module';
 import validateArguments from './utils.js';
 
 const require = createRequire(import.meta.url);
-const Staking = require('dkg-evm-module/build/contracts/Staking.json');
-const IdentityStorage = require('dkg-evm-module/build/contracts/IdentityStorage.json');
-const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
-const Hub = require('dkg-evm-module/build/contracts/Hub.json');
+const Staking = require('dkg-evm-module/abi/Staking.json');
+const IdentityStorage = require('dkg-evm-module/abi/IdentityStorage.json');
+const ERC20Token = require('dkg-evm-module/abi/ERC20Token.json');
+const Hub = require('dkg-evm-module/abi/Hub.json');
 const argv = require('minimist')(process.argv.slice(1), {
     string: [
         'stake',
@@ -16,8 +16,6 @@ const argv = require('minimist')(process.argv.slice(1), {
         'hubContractAddress',
     ],
 });
-
-const devEnvironment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
 
 async function setStake(
     rpcEndpoint,

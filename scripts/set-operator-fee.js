@@ -3,9 +3,9 @@ import { createRequire } from 'module';
 import validateArguments from './utils.js';
 
 const require = createRequire(import.meta.url);
-const Staking = require('dkg-evm-module/build/contracts/Staking.json');
-const IdentityStorage = require('dkg-evm-module/build/contracts/IdentityStorage.json');
-const Hub = require('dkg-evm-module/build/contracts/Hub.json');
+const Staking = require('dkg-evm-module/abi/Staking.json');
+const IdentityStorage = require('dkg-evm-module/abi/IdentityStorage.json');
+const Hub = require('dkg-evm-module/abi/Hub.json');
 const argv = require('minimist')(process.argv.slice(1), {
     string: ['operatorFee', 'privateKey', 'hubContractAddress'],
 });

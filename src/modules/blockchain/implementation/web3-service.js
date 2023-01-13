@@ -11,23 +11,24 @@ import {
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
-const AbstractAsset = require('dkg-evm-module/build/contracts/AbstractAsset.json');
-const AssertionStorage = require('dkg-evm-module/build/contracts/AssertionStorage.json');
-const Staking = require('dkg-evm-module/build/contracts/Staking.json');
-const StakingStorage = require('dkg-evm-module/build/contracts/StakingStorage.json');
-const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
-const HashingProxy = require('dkg-evm-module/build/contracts/HashingProxy.json');
-const Hub = require('dkg-evm-module/build/contracts/Hub.json');
-const IdentityStorage = require('dkg-evm-module/build/contracts/IdentityStorage.json');
-const Log2PLDSF = require('dkg-evm-module/build/contracts/Log2PLDSF.json');
-const ParametersStorage = require('dkg-evm-module/build/contracts/ParametersStorage.json');
-const Profile = require('dkg-evm-module/build/contracts/Profile.json');
-const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
-const ScoringProxy = require('dkg-evm-module/build/contracts/ScoringProxy.json');
-const ServiceAgreementStorageV1 = require('dkg-evm-module/build/contracts/ServiceAgreementStorageV1.json');
-const ServiceAgreementV1 = require('dkg-evm-module/build/contracts/ServiceAgreementV1.json');
-const ShardingTable = require('dkg-evm-module/build/contracts/ShardingTable.json');
-const ShardingTableStorage = require('dkg-evm-module/build/contracts/ShardingTableStorage.json');
+const AbstractAsset = require('dkg-evm-module/abi/AbstractAsset.json');
+const AssertionStorage = require('dkg-evm-module/abi/AssertionStorage.json');
+const Staking = require('dkg-evm-module/abi/Staking.json');
+const StakingStorage = require('dkg-evm-module/abi/StakingStorage.json');
+const ERC20Token = require('dkg-evm-module/abi/ERC20Token.json');
+const HashingProxy = require('dkg-evm-module/abi/HashingProxy.json');
+const Hub = require('dkg-evm-module/abi/Hub.json');
+const IdentityStorage = require('dkg-evm-module/abi/IdentityStorage.json');
+const Log2PLDSF = require('dkg-evm-module/abi/Log2PLDSF.json');
+const ParametersStorage = require('dkg-evm-module/abi/ParametersStorage.json');
+const Profile = require('dkg-evm-module/abi/Profile.json');
+const ProfileStorage = require('dkg-evm-module/abi/ProfileStorage.json');
+const ScoringProxy = require('dkg-evm-module/abi/ScoringProxy.json');
+const ServiceAgreementStorageV1 = require('dkg-evm-module/abi/ServiceAgreementStorageV1.json');
+const CommitManagerV1 = require('dkg-evm-module/abi/CommitManagerV1.json');
+const ProofManagerV1 = require('dkg-evm-module/abi/ProofManagerV1.json');
+const ShardingTable = require('dkg-evm-module/abi/ShardingTable.json');
+const ShardingTableStorage = require('dkg-evm-module/abi/ShardingTableStorage.json');
 
 const FIXED_GAS_LIMIT_METHODS = {
     submitCommit: 300000,
@@ -231,14 +232,25 @@ class Web3Service {
             this.wallet,
         );
 
-        const serviceAgreementV1Address = await this.callContractFunction(
+        const commitManagerV1Address = await this.callContractFunction(
             this.hubContract,
             'getContractAddress',
-            ['ServiceAgreementV1'],
+            ['CommitManagerV1'],
         );
-        this.ServiceAgreementV1Contract = new ethers.Contract(
-            serviceAgreementV1Address,
-            ServiceAgreementV1.abi,
+        this.CommitManagerV1Contract = new ethers.Contract(
+            commitManagerV1Address,
+            CommitManagerV1.abi,
+            this.wallet,
+        );
+
+        const proofManagerV1Address = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['ProofManagerV1'],
+        );
+        this.ProofManagerV1Contract = new ethers.Contract(
+            proofManagerV1Address,
+            ProofManagerV1.abi,
             this.wallet,
         );
 
@@ -619,7 +631,7 @@ class Web3Service {
     }
 
     async isCommitWindowOpen(agreementId, epoch) {
-        return this.callContractFunction(this.ServiceAgreementV1Contract, 'isCommitWindowOpen', [
+        return this.callContractFunction(this.CommitManagerV1Contract, 'isCommitWindowOpen', [
             agreementId,
             epoch,
         ]);
@@ -627,7 +639,7 @@ class Web3Service {
 
     async getTopCommitSubmissions(agreementId, epoch) {
         const commits = await this.callContractFunction(
-            this.ServiceAgreementV1Contract,
+            this.CommitManagerV1Contract,
             'getTopCommitSubmissions',
             [agreementId, epoch],
         );
@@ -656,7 +668,7 @@ class Web3Service {
 
     async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch, callback) {
         return this.queueTransaction(
-            this.ServiceAgreementV1Contract,
+            this.CommitManagerV1Contract,
             'submitCommit',
             [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch]],
             callback,
@@ -664,7 +676,7 @@ class Web3Service {
     }
 
     async isProofWindowOpen(agreementId, epoch) {
-        return this.callContractFunction(this.ServiceAgreementV1Contract, 'isProofWindowOpen', [
+        return this.callContractFunction(this.ProofManagerV1Contract, 'isProofWindowOpen', [
             agreementId,
             epoch,
         ]);
@@ -672,7 +684,7 @@ class Web3Service {
 
     async getChallenge(assetContractAddress, tokenId, epoch) {
         const result = await this.callContractFunction(
-            this.ServiceAgreementV1Contract,
+            this.ProofManagerV1Contract,
             'getChallenge',
             [this.getPublicKey(), assetContractAddress, tokenId, epoch],
         );
@@ -691,7 +703,7 @@ class Web3Service {
         callback,
     ) {
         return this.queueTransaction(
-            this.ServiceAgreementV1Contract,
+            this.ProofManagerV1Contract,
             'sendProof',
             [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch, proof, chunkHash]],
             callback,
