@@ -9,6 +9,8 @@ import {
 class QueryCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.dataService = ctx.dataService;
+        this.tripleStoreService = ctx.tripleStoreService;
 
         this.errorType = ERROR_TYPE.QUERY.LOCAL_QUERY_ERROR;
     }
