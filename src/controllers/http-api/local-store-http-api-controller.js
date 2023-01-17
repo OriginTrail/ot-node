@@ -23,19 +23,19 @@ class LocalStoreController extends BaseController {
             OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_INIT_END,
         );
 
-        const { assertion, assertionId } = req.body;
+        this.logger.info(
+            `Received assertion with assertion ids: ${req.body.map(
+                (reqObject) => reqObject.assertionId,
+            )}. Operation id: ${operationId}`,
+        );
 
-        await this.operationIdService.cacheOperationIdData(operationId, { assertion });
-
-        this.logger.info(`Received assertion with assertion id: ${assertionId}.`);
+        await this.operationIdService.cacheOperationIdData(operationId, req.body);
 
         await this.commandExecutor.add({
             name: 'localStoreCommand',
             sequence: [],
             delay: 0,
             data: {
-                assertion,
-                assertionId,
                 operationId,
             },
             transactional: false,

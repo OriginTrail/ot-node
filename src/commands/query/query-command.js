@@ -1,16 +1,27 @@
 import Command from '../command.js';
-import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../constants/constants.js';
+import {
+    TRIPLE_STORE_REPOSITORIES,
+    QUERY_TYPES,
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+} from '../../constants/constants.js';
 
 class QueryCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.queryService = ctx.queryService;
+        this.dataService = ctx.dataService;
+        this.tripleStoreService = ctx.tripleStoreService;
 
         this.errorType = ERROR_TYPE.QUERY.LOCAL_QUERY_ERROR;
     }
 
     async execute(command) {
-        const { query, queryType, operationId } = command.data;
+        const {
+            query,
+            queryType,
+            operationId,
+            repository = TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+        } = command.data;
 
         let data;
 
@@ -19,7 +30,20 @@ class QueryCommand extends Command {
             OPERATION_ID_STATUS.QUERY.QUERY_START,
         );
         try {
-            data = await this.queryService.query(query, queryType);
+            switch (queryType) {
+                case QUERY_TYPES.CONSTRUCT: {
+                    data = await this.tripleStoreService.construct(repository, query);
+                    break;
+                }
+                case QUERY_TYPES.SELECT: {
+                    data = await this.dataService.parseBindings(
+                        await this.tripleStoreService.select(repository, query),
+                    );
+                    break;
+                }
+                default:
+                    throw new Error(`Unknown query type ${queryType}`);
+            }
 
             await this.operationIdService.updateOperationIdStatus(
                 operationId,

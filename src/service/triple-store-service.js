@@ -10,7 +10,6 @@ class TripleStoreService {
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.ualService = ctx.ualService;
         this.dataService = ctx.dataService;
-        this.operationIdService = ctx.operationIdService;
 
         this.repositoryImplementations = {};
         for (const implementationName of this.tripleStoreModuleManager.getImplementationNames()) {
@@ -22,10 +21,10 @@ class TripleStoreService {
         }
     }
 
-    async localStoreAssertion(assertionId, operationId) {
-        this.logger.info(`Inserting assertion with id: ${assertionId} in triple store.`);
-
-        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
+    async localStoreAssertion(assertionId, assertion, operationId) {
+        this.logger.info(
+            `Inserting assertion with id: ${assertionId} in triple store. Operation id: ${operationId}`,
+        );
 
         await this.tripleStoreModuleManager.insertAssertion(
             this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT],
@@ -37,6 +36,7 @@ class TripleStoreService {
 
     async localStoreAsset(
         assertionId,
+        assertion,
         blockchain,
         contract,
         tokenId,
@@ -48,7 +48,7 @@ class TripleStoreService {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.info(
-            `Inserting asset with assertion id: ${assertionId}, ual: ${ual} in triple store.`,
+            `Inserting asset with assertion id: ${assertionId}, ual: ${ual} in triple store. Operation id: ${operationId}`,
         );
 
         /* // get current assertion, store current assertion in history repository, add triple UAL -> assertionId
@@ -117,7 +117,6 @@ class TripleStoreService {
             agreementEndTime,
             keyword,
         });
-        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
 
         await Promise.all([
             this.tripleStoreModuleManager.insertAsset(
@@ -139,18 +138,26 @@ class TripleStoreService {
         );
     }
 
-    async localGet(assertionId, operationId) {
-        this.logger.debug(`Getting assertion: ${assertionId} for operationId: ${operationId}`);
+    async localGet(assertionId, operationId, localQuery = false) {
+        let nquads;
+        if (localQuery) {
+            this.logger.debug(
+                `Getting assertion: ${assertionId} for operationId: ${operationId} from private repository`,
+            );
 
-        let nquads = await this.tripleStoreModuleManager.getAssertion(
-            this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-            assertionId,
-        );
-        if (!nquads?.length) {
             nquads = await this.tripleStoreModuleManager.getAssertion(
-                this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY],
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT],
+                TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                assertionId,
+            );
+        }
+        if (!nquads?.length) {
+            this.logger.debug(
+                `Getting assertion: ${assertionId} for operationId: ${operationId} from public repository`,
+            );
+            nquads = await this.tripleStoreModuleManager.getAssertion(
+                this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
+                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
                 assertionId,
             );
         }
