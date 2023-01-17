@@ -14,9 +14,36 @@
         "tripleStore": {
             "implementation": {
                 "ot-blazegraph": {
-                    "enabled": false,
+                    "enabled": true,
                     "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
-                    "config": {}
+                    "config": {
+                        "repositories": {
+                            "privateCurrent": {
+                                "url": "http://localhost:9999/blazegraph",
+                                "name": "private-current",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "privateHistory": {
+                                "url": "http://localhost:9999/blazegraph",
+                                "name": "private-history",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "publicCurrent": {
+                                "url": "http://localhost:9999/blazegraph",
+                                "name": "public-current",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "publicHistory": {
+                                "url": "http://localhost:9999/blazegraph",
+                                "name": "public-history",
+                                "username": "admin",
+                                "password": ""
+                            }
+                        }
+                    }
                 },
                 "ot-fuseki": {
                     "enabled": false,
@@ -24,7 +51,7 @@
                     "config": {}
                 },
                 "ot-graphdb": {
-                    "enabled": true,
+                    "enabled": false,
                     "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
                     "config": {
                         "repositories": {

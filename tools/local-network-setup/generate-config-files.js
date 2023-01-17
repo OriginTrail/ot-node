@@ -5,8 +5,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import graphdb from 'graphdb';
 import { stat } from 'fs/promises';
-import appRootPath from 'app-root-path';
-import { LIBP2P_KEY_DIRECTORY, LIBP2P_KEY_FILENAME } from '../../src/constants/constants.js';
+import axios from 'axios';
 
 const { server, http } = graphdb;
 
@@ -55,19 +54,17 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     let templatePath;
     let configPath;
     if (i === 0) {
-        templatePath = path.join(
-            './tools/local-network-setup/.bootstrap_origintrail_noderc_template',
-        );
+        templatePath = bootstrapTemplatePath;
         configPath = path.join('./tools/local-network-setup/.bootstrap_origintrail_noderc');
         nodeName = 'bootstrap';
     } else {
-        templatePath = path.join('./tools/local-network-setup/.dh_origintrail_noderc_template');
+        templatePath = dhTemplatePath;
         configPath = path.join(`./tools/local-network-setup/.dh${i}_origintrail_noderc`);
         nodeName = `DH${i}`;
     }
 
     if (await fileExists(configPath)) continue;
-    console.log('file not exists');
+
     const template = JSON.parse(fs.readFileSync(templatePath));
 
     template.modules.blockchain.defaultImplementation = network;
@@ -91,15 +88,24 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     if (process.env.LOG_LEVEL) {
         template.logLevel = process.env.LOG_LEVEL;
     }
+    console.log(`Configuring node ${nodeName}`);
 
+    fs.writeFileSync(configPath, JSON.stringify(template, null, 4));
+}
+
+for (let i = 0; i < numberOfNodes; i += 1) {
+    let configPath;
+    if (i === 0) {
+        configPath = path.join('./tools/local-network-setup/.bootstrap_origintrail_noderc');
+    } else {
+        configPath = path.join(`./tools/local-network-setup/.dh${i}_origintrail_noderc`);
+    }
+    const config = JSON.parse(fs.readFileSync(configPath));
     await dropDatabase(
         `operationaldb${i}`,
         generalConfig.development.modules.repository.implementation['sequelize-repository'].config,
     );
-    //await deleteTripleStoreRepositories(tripleStoreConfig);
-    console.log(`Configuring node ${nodeName}`);
-
-    fs.writeFileSync(configPath, JSON.stringify(template, null, 4));
+    await deleteTripleStoreRepositories(config.modules.tripleStore);
 }
 
 async function dropDatabase(name, config) {
@@ -114,12 +120,31 @@ async function dropDatabase(name, config) {
     try {
         await connection.promise().query(`DROP DATABASE IF EXISTS ${name};`);
     } catch (e) {
-        console.log(`Error while dropping database. Error: ${e}`);
+        console.log(`Error while dropping database. Error: ${e.message}`);
     }
     connection.destroy();
 }
 
-async function deleteTripleStoreRepositories(config) {
+async function deleteTripleStoreRepositories(moduleConfig) {
+    for (const [implementationName, implementationConfig] of Object.entries(
+        moduleConfig.implementation,
+    )) {
+        if (implementationConfig.enabled) {
+            switch (implementationName) {
+                case 'ot-graphdb':
+                    await deleteGraphdbRepositories(implementationConfig.config);
+                    break;
+                case 'ot-blazegraph':
+                    await deleteBlazegraphRepositories(implementationConfig.config);
+                    break;
+                default:
+                    throw Error('unknown triple store implementation name');
+            }
+        }
+    }
+}
+
+async function deleteGraphdbRepositories(config) {
     for (const [repository, repositoryConfig] of Object.entries(config.repositories)) {
         const { url, name } = repositoryConfig;
         console.log(`Deleting triple store repository: ${repository} with name: ${name}`);
@@ -131,7 +156,22 @@ async function deleteTripleStoreRepositories(config) {
             })
             .setKeepAlive(true);
         const s = new server.GraphDBServerClient(serverConfig);
-        s.deleteRepository(name);
+        s.deleteRepository(name).catch((e) =>
+            console.log(`Error while deleting triple store repository. Error: ${e.message}`),
+        );
+    }
+}
+
+async function deleteBlazegraphRepositories(config) {
+    for (const [repository, repositoryConfig] of Object.entries(config.repositories)) {
+        const { url, name } = repositoryConfig;
+        console.log(`Deleting triple store repository: ${repository} with name: ${name}`);
+
+        await axios
+            .delete(`${url}/namespace/${name}`, {})
+            .catch((e) =>
+                console.log(`Error while deleting triple store repository. Error: ${e.message}`),
+            );
     }
 }
 
