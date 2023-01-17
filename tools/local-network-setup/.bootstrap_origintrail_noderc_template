@@ -24,36 +24,9 @@
                     "config": {}
                 },
                 "ot-graphdb": {
-                    "enabled": true,
+                    "enabled": false,
                     "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
-                    "config": {
-                        "repositories": {
-                            "privateCurrent": {
-                                "url": "http://localhost:7200",
-                                "name": "private-current-0",
-                                "username": "admin",
-                                "password": ""
-                            },
-                            "privateHistory": {
-                                "url": "http://localhost:7200",
-                                "name": "private-history-0",
-                                "username": "admin",
-                                "password": ""
-                            },
-                            "publicCurrent": {
-                                "url": "http://localhost:7200",
-                                "name": "public-current-0",
-                                "username": "admin",
-                                "password": ""
-                            },
-                            "publicHistory": {
-                                "url": "http://localhost:7200",
-                                "name": "public-history-0",
-                                "username": "admin",
-                                "password": ""
-                            }
-                        }
-                    }
+                    "config": {}
                 }
             }
         },

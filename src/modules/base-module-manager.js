@@ -12,8 +12,7 @@ class BaseModuleManager {
     async initialize() {
         try {
             const moduleConfig = this.config.modules[this.getName()];
-            const valid = this.moduleConfigValidation.validateModule(this.getName(), moduleConfig);
-            if (!valid) return false;
+            this.moduleConfigValidation.validateModule(this.getName(), moduleConfig);
 
             this.handlers = {};
             for (const implementationName in moduleConfig.implementation) {
@@ -51,10 +50,8 @@ class BaseModuleManager {
                     config: implementationConfig.config,
                 };
             }
-            if (Object.keys(this.handlers).length === 0) {
-                throw new Error(`No implementation initialized for module: ${this.getName()}.`);
-            }
             this.initialized = true;
+
             return true;
         } catch (error) {
             if (REQUIRED_MODULES.includes(this.getName())) {
@@ -65,6 +62,7 @@ class BaseModuleManager {
                 );
             }
             this.logger.error(error.message);
+
             return false;
         }
     }

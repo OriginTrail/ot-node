@@ -147,7 +147,7 @@
                         }
                     },
                     "ot-graphdb": {
-                        "enabled": true,
+                        "enabled": false,
                         "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
                         "config": {
                             "repositories": {

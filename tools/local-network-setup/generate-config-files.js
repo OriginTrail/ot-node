@@ -4,6 +4,7 @@ import mysql from 'mysql2';
 import path from 'path';
 import fs from 'fs-extra';
 import graphdb from 'graphdb';
+import { stat } from 'fs/promises';
 import appRootPath from 'app-root-path';
 import { LIBP2P_KEY_DIRECTORY, LIBP2P_KEY_FILENAME } from '../../src/constants/constants.js';
 
@@ -11,14 +12,13 @@ const { server, http } = graphdb;
 
 const numberOfNodes = parseInt(process.argv[2], 10);
 const network = process.argv[3];
-const hubContractAddress = process.argv[4];
+const tripleStoreImplementation = process.argv[4];
+const hubContractAddress = process.argv[5];
 
-const dhTemplatePath = './tools/local-network-setup/.dh_origintrail_noderc';
-const bootstrapTemplatePath = './tools/local-network-setup/.bootstrap_origintrail_noderc';
+const dhTemplatePath = './tools/local-network-setup/.dh_origintrail_noderc_template';
+const bootstrapTemplatePath = './tools/local-network-setup/.bootstrap_origintrail_noderc_template';
 
 const generalConfig = JSON.parse(fs.readFileSync('./config/config.json'));
-const dhTemplate = JSON.parse(fs.readFileSync(dhTemplatePath));
-const bootstrapTemplate = JSON.parse(fs.readFileSync(bootstrapTemplatePath));
 const keys = JSON.parse(fs.readFileSync('./tools/local-network-setup/keys.json'));
 
 console.log('Preparing keys for blockchain');
@@ -33,7 +33,8 @@ console.log(`Generating ${numberOfNodes} total nodes`);
 for (let i = 0; i < numberOfNodes; i += 1) {
     const tripleStoreConfig = JSON.parse(
         JSON.stringify(
-            generalConfig.development.modules.tripleStore.implementation['ot-graphdb'].config,
+            generalConfig.development.modules.tripleStore.implementation[tripleStoreImplementation]
+                .config,
         ),
     );
     for (const [repository, config] of Object.entries(tripleStoreConfig.repositories)) {
@@ -51,18 +52,23 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     };
     let appDataPath = `data${i}`;
     let nodeName;
-    let template;
     let templatePath;
+    let configPath;
     if (i === 0) {
-        template = bootstrapTemplate;
-        templatePath = bootstrapTemplatePath;
+        templatePath = path.join(
+            './tools/local-network-setup/.bootstrap_origintrail_noderc_template',
+        );
+        configPath = path.join('./tools/local-network-setup/.bootstrap_origintrail_noderc');
         nodeName = 'bootstrap';
     } else {
-        template = dhTemplate;
-        templatePath = path.join(`./tools/local-network-setup/.dh${i}_origintrail_noderc`);
+        templatePath = path.join('./tools/local-network-setup/.dh_origintrail_noderc_template');
+        configPath = path.join(`./tools/local-network-setup/.dh${i}_origintrail_noderc`);
         nodeName = `DH${i}`;
     }
-    template = JSON.parse(JSON.stringify(template));
+
+    if (await fileExists(configPath)) continue;
+    console.log('file not exists');
+    const template = JSON.parse(fs.readFileSync(templatePath));
 
     template.modules.blockchain.defaultImplementation = network;
     template.modules.blockchain.implementation[network].config = {
@@ -75,7 +81,11 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     template.modules.repository.implementation[
         'sequelize-repository'
     ].config.database = `operationaldb${i}`;
-    template.modules.tripleStore.implementation['ot-graphdb'].config = tripleStoreConfig;
+    template.modules.tripleStore.implementation[tripleStoreImplementation] = {
+        ...template.modules.tripleStore.implementation[tripleStoreImplementation],
+        enabled: true,
+        config: tripleStoreConfig,
+    };
     template.appDataPath = appDataPath;
 
     if (process.env.LOG_LEVEL) {
@@ -86,10 +96,10 @@ for (let i = 0; i < numberOfNodes; i += 1) {
         `operationaldb${i}`,
         generalConfig.development.modules.repository.implementation['sequelize-repository'].config,
     );
-    await deleteTripleStoreRepositories(tripleStoreConfig);
+    //await deleteTripleStoreRepositories(tripleStoreConfig);
     console.log(`Configuring node ${nodeName}`);
 
-    fs.writeFileSync(templatePath, JSON.stringify(template, null, 2));
+    fs.writeFileSync(configPath, JSON.stringify(template, null, 4));
 }
 
 async function dropDatabase(name, config) {
@@ -122,5 +132,14 @@ async function deleteTripleStoreRepositories(config) {
             .setKeepAlive(true);
         const s = new server.GraphDBServerClient(serverConfig);
         s.deleteRepository(name);
+    }
+}
+
+async function fileExists(filePath) {
+    try {
+        await stat(filePath);
+        return true;
+    } catch (e) {
+        return false;
     }
 }

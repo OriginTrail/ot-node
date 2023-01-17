@@ -7,11 +7,10 @@ class ModuleConfigValidation {
     }
 
     validateModule(name, config) {
-        const valid = this.validateRequiredModule(name, config);
-        if (!valid) return false;
+        this.validateRequiredModule(name, config);
 
         const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
-        return this[`validate${capitalizedName}`](config);
+        this[`validate${capitalizedName}`](config);
     }
 
     validateAutoUpdater() {
@@ -46,9 +45,9 @@ class ModuleConfigValidation {
             }
         }
         for (const repository of Object.values(TRIPLE_STORE_REPOSITORIES)) {
-            if (occurences[repository] !== 1) return false;
+            if (occurences[repository] !== 1)
+                throw Error(`Exactly one config for repository ${repository} needs to be defined.`);
         }
-        return true;
     }
 
     validateValidation() {
@@ -56,16 +55,18 @@ class ModuleConfigValidation {
     }
 
     validateRequiredModule(moduleName, moduleConfig) {
-        if (!moduleConfig?.enabled) {
+        if (
+            !moduleConfig?.enabled ||
+            !Object.values(moduleConfig.implementation).filter(
+                (implementationConfig) => implementationConfig.enabled,
+            ).length
+        ) {
             const message = `${moduleName} module not defined or enabled in configuration`;
             if (REQUIRED_MODULES.includes(moduleName)) {
                 throw new Error(`${message} but it's required!`);
             }
             this.logger.warn(message);
-            return false;
         }
-
-        return true;
     }
 }
 

@@ -2,6 +2,7 @@
 pathToOtNode=$(pwd)
 numberOfNodes=4
 network="ganache"
+tripleStore="ot-graphdb"
 availableNetworks=("ganache" "rinkeby")
 export $(xargs < $pathToOtNode/.env)
 export ACCESS_KEY=$RPC_ENDPOINT
@@ -30,6 +31,9 @@ while [ $# -gt 0 ]; do
           echo Invalid network parameter. Available networks: ganache, rinkeby
           exit 1
       fi
+      ;;
+    --tripleStore=*)
+      tripleStore="${1#*=}"
       ;;
     *)
       printf "***************************\n"
@@ -66,7 +70,7 @@ echo ================================
 echo ====== Generating configs ======
 echo ================================
 
-node $pathToOtNode/tools/local-network-setup/generate-config-files.js $numberOfNodes $network $hubContractAddress
+node $pathToOtNode/tools/local-network-setup/generate-config-files.js $numberOfNodes $network $tripleStore $hubContractAddress
 
 echo ================================
 echo ======== Starting nodes ========
