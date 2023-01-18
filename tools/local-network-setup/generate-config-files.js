@@ -181,7 +181,7 @@ async function deleteFusekiRepositories(config) {
         console.log(`Deleting triple store repository: ${repository} with name: ${name}`);
 
         await axios
-            .delete(`${url}/$/datasets?dbName=djordje`, {})
+            .delete(`${url}/$/datasets?dbName=${name}`, {})
             .catch((e) =>
                 console.log(`Error while deleting triple store repository. Error: ${e.message}`),
             );
