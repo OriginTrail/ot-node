@@ -8,7 +8,7 @@ class OtFuseki extends OtTripleStore {
             Object.keys(this.repositories).map(async (repository) => {
                 const { url, name } = this.repositories[repository];
 
-                const datasets = await axios.get(`${url}$/datasets`);
+                const datasets = await axios.get(`${url}/$/datasets`);
                 let exists = false;
                 for (const dataset of datasets.data.datasets) {
                     if (dataset['ds.name'] === `/${name}`) {
@@ -18,7 +18,7 @@ class OtFuseki extends OtTripleStore {
                 }
                 if (!exists) {
                     await axios.post(
-                        `${url}$/datasets?dbName=${name}&dbType=tdb`,
+                        `${url}/$/datasets?dbName=${name}&dbType=tdb`,
                         {},
                         {
                             headers: {
@@ -39,7 +39,7 @@ class OtFuseki extends OtTripleStore {
 
     async healthCheck(repository) {
         try {
-            const response = await axios.get(`${this.repositories[repository].url}$/ping`, {});
+            const response = await axios.get(`${this.repositories[repository].url}/$/ping`, {});
             if (response.data !== null) {
                 return true;
             }
@@ -56,7 +56,7 @@ class OtFuseki extends OtTripleStore {
         );
 
         await axios
-            .delete(`${url}/$/datasets?dbName=${name}`, {})
+            .delete(`${url}/$/datasets/${name}`, {})
             .catch((e) =>
                 this.logger.warn(
                     `Error while deleting ${this.getName()} triple store repository: ${repository} with name: ${name}. Error: ${
