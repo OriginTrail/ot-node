@@ -14,7 +14,7 @@
         "tripleStore": {
             "implementation": {
                 "ot-blazegraph": {
-                    "enabled": true,
+                    "enabled": false,
                     "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
                     "config": {
                         "repositories": {
@@ -48,10 +48,37 @@
                 "ot-fuseki": {
                     "enabled": false,
                     "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
-                    "config": {}
+                    "config": {
+                        "repositories": {
+                            "privateCurrent": {
+                                "url": "http://localhost:3030",
+                                "name": "private-current",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "privateHistory": {
+                                "url": "http://localhost:3030",
+                                "name": "private-history",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "publicCurrent": {
+                                "url": "http://localhost:3030",
+                                "name": "public-current",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "publicHistory": {
+                                "url": "http://localhost:3030",
+                                "name": "public-history",
+                                "username": "admin",
+                                "password": ""
+                            }
+                        }
+                    }
                 },
                 "ot-graphdb": {
-                    "enabled": false,
+                    "enabled": true,
                     "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
                     "config": {
                         "repositories": {

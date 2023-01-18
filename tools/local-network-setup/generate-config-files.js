@@ -30,15 +30,6 @@ if (!keys) {
 console.log(`Generating ${numberOfNodes} total nodes`);
 
 for (let i = 0; i < numberOfNodes; i += 1) {
-    const tripleStoreConfig = JSON.parse(
-        JSON.stringify(
-            generalConfig.development.modules.tripleStore.implementation[tripleStoreImplementation]
-                .config,
-        ),
-    );
-    for (const [repository, config] of Object.entries(tripleStoreConfig.repositories)) {
-        tripleStoreConfig.repositories[repository].name = `${config.name}-${i}`;
-    }
     const blockchainConfig = {
         hubContractAddress,
         rpcEndpoints: [process.env.RPC_ENDPOINT],
@@ -67,6 +58,17 @@ for (let i = 0; i < numberOfNodes; i += 1) {
 
     const template = JSON.parse(fs.readFileSync(templatePath));
 
+    const tripleStoreConfig =
+        template.modules.tripleStore.implementation[tripleStoreImplementation].config;
+    for (const [repository, config] of Object.entries(tripleStoreConfig.repositories)) {
+        tripleStoreConfig.repositories[repository].name = `${config.name}-${i}`;
+    }
+    template.modules.tripleStore.implementation[tripleStoreImplementation] = {
+        ...template.modules.tripleStore.implementation[tripleStoreImplementation],
+        enabled: true,
+        config: tripleStoreConfig,
+    };
+
     template.modules.blockchain.defaultImplementation = network;
     template.modules.blockchain.implementation[network].config = {
         ...template.modules.blockchain.implementation[network].config,
@@ -78,11 +80,6 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     template.modules.repository.implementation[
         'sequelize-repository'
     ].config.database = `operationaldb${i}`;
-    template.modules.tripleStore.implementation[tripleStoreImplementation] = {
-        ...template.modules.tripleStore.implementation[tripleStoreImplementation],
-        enabled: true,
-        config: tripleStoreConfig,
-    };
     template.appDataPath = appDataPath;
 
     if (process.env.LOG_LEVEL) {
