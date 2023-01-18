@@ -3,9 +3,9 @@ import OtTripleStore from '../ot-triple-store.js';
 
 class OtFuseki extends OtTripleStore {
     initializeSparqlEndpoints(repository) {
-        const { url } = this.repositories[repository];
-        this.repositories[repository].sparqlEndpoint = `${url}/${repository}/sparql`;
-        this.repositories[repository].sparqlEndpointUpdate = `${url}/${repository}/update`;
+        const { url, name } = this.repositories[repository];
+        this.repositories[repository].sparqlEndpoint = `${url}/${name}/sparql`;
+        this.repositories[repository].sparqlEndpointUpdate = `${url}/${name}/update`;
     }
 
     async healthCheck(repository) {
