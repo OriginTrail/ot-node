@@ -40,6 +40,23 @@ class OtBlazegraph extends OtTripleStore {
         }
     }
 
+    async deleteRepository(repository) {
+        const { url, name } = this.repositories[repository];
+        this.logger.info(
+            `Deleting ${this.getName()} triple store repository: ${repository} with name: ${name}`,
+        );
+
+        await axios
+            .delete(`${url}/namespace/${name}`, {})
+            .catch((e) =>
+                this.logger.warn(
+                    `Error while deleting ${this.getName()} triple store repository: ${repository} with name: ${name}. Error: ${
+                        e.message
+                    }`,
+                ),
+            );
+    }
+
     getName() {
         return 'OtBlazegraph';
     }

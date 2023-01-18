@@ -103,6 +103,12 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
+    async deleteRepository(implementationName, repository) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.deleteRepository(repository);
+        }
+    }
+
     getName() {
         return 'tripleStore';
     }

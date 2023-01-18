@@ -3,11 +3,13 @@ import 'dotenv/config';
 import mysql from 'mysql2';
 import path from 'path';
 import fs from 'fs-extra';
-import graphdb from 'graphdb';
 import { stat } from 'fs/promises';
-import axios from 'axios';
+import TripleStoreModuleManager from '../../src/modules/triple-store/triple-store-module-manager.js';
+import Logger from '../../src/logger/logger.js';
 
-const { server, http } = graphdb;
+const generalConfig = JSON.parse(fs.readFileSync('./config/config.json'));
+
+const logger = new Logger(generalConfig.development.logLevel);
 
 const numberOfNodes = parseInt(process.argv[2], 10);
 const network = process.argv[3];
@@ -16,18 +18,16 @@ const hubContractAddress = process.argv[5];
 
 const dhTemplatePath = './tools/local-network-setup/.dh_origintrail_noderc_template';
 const bootstrapTemplatePath = './tools/local-network-setup/.bootstrap_origintrail_noderc_template';
-
-const generalConfig = JSON.parse(fs.readFileSync('./config/config.json'));
 const keys = JSON.parse(fs.readFileSync('./tools/local-network-setup/keys.json'));
 
-console.log('Preparing keys for blockchain');
+logger.info('Preparing keys for blockchain');
 
 if (!keys) {
-    console.log('Missing blockchain keys');
+    logger.warn('Missing blockchain keys');
     process.exit(1);
 }
 
-console.log(`Generating ${numberOfNodes} total nodes`);
+logger.info(`Generating config for ${numberOfNodes} node(s)`);
 
 for (let i = 0; i < numberOfNodes; i += 1) {
     const blockchainConfig = {
@@ -85,7 +85,7 @@ for (let i = 0; i < numberOfNodes; i += 1) {
     if (process.env.LOG_LEVEL) {
         template.logLevel = process.env.LOG_LEVEL;
     }
-    console.log(`Configuring node ${nodeName}`);
+    logger.info(`Configuring node ${nodeName}`);
 
     fs.writeFileSync(configPath, JSON.stringify(template, null, 4));
 }
@@ -102,11 +102,11 @@ for (let i = 0; i < numberOfNodes; i += 1) {
         `operationaldb${i}`,
         generalConfig.development.modules.repository.implementation['sequelize-repository'].config,
     );
-    await deleteTripleStoreRepositories(config.modules.tripleStore);
+    await deleteTripleStoreRepositories(config);
 }
 
 async function dropDatabase(name, config) {
-    console.log(`Dropping database: ${name}`);
+    logger.info(`Dropping database: ${name}`);
     const password = process.env.REPOSITORY_PASSWORD ?? config.password;
     const connection = mysql.createConnection({
         database: name,
@@ -117,74 +117,22 @@ async function dropDatabase(name, config) {
     try {
         await connection.promise().query(`DROP DATABASE IF EXISTS ${name};`);
     } catch (e) {
-        console.log(`Error while dropping database. Error: ${e.message}`);
+        logger.warn(`Error while dropping database. Error: ${e.message}`);
     }
     connection.destroy();
 }
 
-async function deleteTripleStoreRepositories(moduleConfig) {
-    for (const [implementationName, implementationConfig] of Object.entries(
-        moduleConfig.implementation,
-    )) {
-        if (implementationConfig.enabled) {
-            switch (implementationName) {
-                case 'ot-graphdb':
-                    await deleteGraphdbRepositories(implementationConfig.config);
-                    break;
-                case 'ot-blazegraph':
-                    await deleteBlazegraphRepositories(implementationConfig.config);
-                    break;
-                case 'ot-fuseki':
-                    await deleteFusekiRepositories(implementationConfig.config);
-                    break;
-                default:
-                    throw Error('unknown triple store implementation name');
-            }
-        }
-    }
-}
+async function deleteTripleStoreRepositories(config) {
+    const tripleStoreModuleManager = new TripleStoreModuleManager({ config, logger });
+    await tripleStoreModuleManager.initialize();
 
-async function deleteGraphdbRepositories(config) {
-    for (const [repository, repositoryConfig] of Object.entries(config.repositories)) {
-        const { url, name } = repositoryConfig;
-        console.log(`Deleting triple store repository: ${repository} with name: ${name}`);
-
-        const serverConfig = new server.ServerClientConfig(url)
-            .setTimeout(40000)
-            .setHeaders({
-                Accept: http.RDFMimeType.N_QUADS,
-            })
-            .setKeepAlive(true);
-        const s = new server.GraphDBServerClient(serverConfig);
-        s.deleteRepository(name).catch((e) =>
-            console.log(`Error while deleting triple store repository. Error: ${e.message}`),
+    for (const implementationName of tripleStoreModuleManager.getImplementationNames()) {
+        const { module, config } = tripleStoreModuleManager.getImplementation(implementationName);
+        await Promise.all(
+            Object.keys(config.repositories).map((repository) =>
+                module.deleteRepository(repository),
+            ),
         );
-    }
-}
-
-async function deleteBlazegraphRepositories(config) {
-    for (const [repository, repositoryConfig] of Object.entries(config.repositories)) {
-        const { url, name } = repositoryConfig;
-        console.log(`Deleting triple store repository: ${repository} with name: ${name}`);
-
-        await axios
-            .delete(`${url}/namespace/${name}`, {})
-            .catch((e) =>
-                console.log(`Error while deleting triple store repository. Error: ${e.message}`),
-            );
-    }
-}
-
-async function deleteFusekiRepositories(config) {
-    for (const [repository, repositoryConfig] of Object.entries(config.repositories)) {
-        const { url, name } = repositoryConfig;
-        console.log(`Deleting triple store repository: ${repository} with name: ${name}`);
-
-        await axios
-            .delete(`${url}/$/datasets?dbName=${name}`, {})
-            .catch((e) =>
-                console.log(`Error while deleting triple store repository. Error: ${e.message}`),
-            );
     }
 }
 

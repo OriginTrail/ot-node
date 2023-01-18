@@ -72,7 +72,7 @@ class OTNode {
     }
 
     initializeLogger() {
-        this.logger = new Logger(this.config.logLevel, this.config.telemetry.enabled);
+        this.logger = new Logger(this.config.logLevel);
     }
 
     initializeFileService() {

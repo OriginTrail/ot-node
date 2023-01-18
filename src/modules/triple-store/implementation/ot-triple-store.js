@@ -27,6 +27,10 @@ class OtTripleStore {
         throw Error('initializeSparqlEndpoints not implemented');
     }
 
+    async deleteRepository() {
+        throw Error('deleteRepository not implemented');
+    }
+
     initializeContexts() {
         for (const repository in this.repositories) {
             const sources = [

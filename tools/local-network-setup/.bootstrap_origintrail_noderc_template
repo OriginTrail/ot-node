@@ -12,6 +12,7 @@
             }
         },
         "tripleStore": {
+            "enabled": true,
             "implementation": {
                 "ot-blazegraph": {
                     "enabled": false,
