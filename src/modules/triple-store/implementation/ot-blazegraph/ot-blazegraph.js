@@ -1,4 +1,5 @@
 import axios from 'axios';
+import jsonld from 'jsonld';
 import OtTripleStore from '../ot-triple-store.js';
 
 class OtBlazegraph extends OtTripleStore {
@@ -8,16 +9,18 @@ class OtBlazegraph extends OtTripleStore {
         await Promise.all(
             Object.keys(this.repositories).map(async (repository) => {
                 const { url, name } = this.repositories[repository];
-                // create repository if not exists
-                await axios.post(
-                    `${url}/namespace`,
-                    `com.bigdata.rdf.sail.truthMaintenance=false\ncom.bigdata.namespace.${name}.lex.com.bigdata.btree.BTree.branchingFactor=400\ncom.bigdata.rdf.store.AbstractTripleStore.textIndex=false\ncom.bigdata.rdf.store.AbstractTripleStore.justify=false\ncom.bigdata.namespace.${name}.spo.com.bigdata.btree.BTree.branchingFactor=1024\ncom.bigdata.rdf.store.AbstractTripleStore.statementIdentifiers=false\ncom.bigdata.rdf.store.AbstractTripleStore.axiomsClass=com.bigdata.rdf.axioms.NoAxioms\ncom.bigdata.rdf.sail.namespace=${name}\ncom.bigdata.rdf.store.AbstractTripleStore.quads=true\ncom.bigdata.rdf.store.AbstractTripleStore.geoSpatial=false\ncom.bigdata.journal.Journal.groupCommit=false\ncom.bigdata.rdf.sail.isolatableIndices=false\n`,
-                    {
-                        headers: {
-                            'Content-Type': 'text/plain',
+
+                if (!(await this.nameSpaceExists(repository))) {
+                    await axios.post(
+                        `${url}/namespace`,
+                        `com.bigdata.rdf.sail.truthMaintenance=false\ncom.bigdata.namespace.${name}.lex.com.bigdata.btree.BTree.branchingFactor=400\ncom.bigdata.rdf.store.AbstractTripleStore.textIndex=false\ncom.bigdata.rdf.store.AbstractTripleStore.justify=false\ncom.bigdata.namespace.${name}.spo.com.bigdata.btree.BTree.branchingFactor=1024\ncom.bigdata.rdf.store.AbstractTripleStore.statementIdentifiers=false\ncom.bigdata.rdf.store.AbstractTripleStore.axiomsClass=com.bigdata.rdf.axioms.NoAxioms\ncom.bigdata.rdf.sail.namespace=${name}\ncom.bigdata.rdf.store.AbstractTripleStore.quads=true\ncom.bigdata.rdf.store.AbstractTripleStore.geoSpatial=false\ncom.bigdata.journal.Journal.groupCommit=false\ncom.bigdata.rdf.sail.isolatableIndices=false\n`,
+                        {
+                            headers: {
+                                'Content-Type': 'text/plain',
+                            },
                         },
-                    },
-                );
+                    );
+                }
             }),
         );
     }
@@ -46,15 +49,36 @@ class OtBlazegraph extends OtTripleStore {
             `Deleting ${this.getName()} triple store repository: ${repository} with name: ${name}`,
         );
 
-        await axios
-            .delete(`${url}/namespace/${name}`, {})
-            .catch((e) =>
-                this.logger.warn(
-                    `Error while deleting ${this.getName()} triple store repository: ${repository} with name: ${name}. Error: ${
-                        e.message
-                    }`,
-                ),
-            );
+        if (await this.nameSpaceExists(repository)) {
+            await axios
+                .delete(`${url}/namespace/${name}`, {})
+                .catch((e) =>
+                    this.logger.warn(
+                        `Error while deleting ${this.getName()} triple store repository: ${repository} with name: ${name}. Error: ${
+                            e.message
+                        }`,
+                    ),
+                );
+        }
+    }
+
+    async nameSpaceExists(repository) {
+        const { url, name } = this.repositories[repository];
+
+        const { data: jsonldNamespaces } = await axios.get(`${url}/namespace`, {
+            params: {
+                'describe-each-named-graph': 'false',
+            },
+            headers: {
+                Accept: 'application/ld+json',
+            },
+        });
+
+        const compactedNamespaces = await jsonld.frame(jsonldNamespaces, {});
+
+        return compactedNamespaces['@graph'].filter(
+            (namespace) => namespace['http://www.bigdata.com/rdf#/features/KB/Namespace'] === name,
+        ).length;
     }
 
     getName() {
