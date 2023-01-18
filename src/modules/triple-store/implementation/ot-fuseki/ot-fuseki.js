@@ -8,15 +8,7 @@ class OtFuseki extends OtTripleStore {
             Object.keys(this.repositories).map(async (repository) => {
                 const { url, name } = this.repositories[repository];
 
-                const datasets = await axios.get(`${url}/$/datasets`);
-                let exists = false;
-                for (const dataset of datasets.data.datasets) {
-                    if (dataset['ds.name'] === `/${name}`) {
-                        exists = true;
-                        break;
-                    }
-                }
-                if (!exists) {
+                if (!(await this.repositoryExists(repository))) {
                     await axios.post(
                         `${url}/$/datasets?dbName=${name}&dbType=tdb`,
                         {},
@@ -55,15 +47,33 @@ class OtFuseki extends OtTripleStore {
             `Deleting ${this.getName()} triple store repository: ${repository} with name: ${name}`,
         );
 
-        await axios
-            .delete(`${url}/$/datasets/${name}`, {})
-            .catch((e) =>
-                this.logger.warn(
-                    `Error while deleting ${this.getName()} triple store repository: ${repository} with name: ${name}. Error: ${
-                        e.message
-                    }`,
-                ),
+        if (await this.repositoryExists(repository)) {
+            await axios
+                .delete(`${url}/$/datasets/${name}`, {})
+                .catch((e) =>
+                    this.logger.error(
+                        `Error while deleting ${this.getName()} triple store repository: ${repository} with name: ${name}. Error: ${
+                            e.message
+                        }`,
+                    ),
+                );
+        }
+    }
+
+    async repositoryExists(repository) {
+        const { url, name } = this.repositories[repository];
+        try {
+            const response = await axios.get(`${url}/$/datasets`);
+
+            return response.data.datasets.filter((dataset) => dataset['ds.name'] === `/${name}`)
+                .length;
+        } catch (error) {
+            this.logger.error(
+                `Error while getting ${this.getName()} repositories. Error: ${error.message}`,
             );
+
+            return false;
+        }
     }
 
     getName() {

@@ -10,7 +10,7 @@ class OtBlazegraph extends OtTripleStore {
             Object.keys(this.repositories).map(async (repository) => {
                 const { url, name } = this.repositories[repository];
 
-                if (!(await this.nameSpaceExists(repository))) {
+                if (!(await this.repositoryExists(repository))) {
                     await axios.post(
                         `${url}/namespace`,
                         `com.bigdata.rdf.sail.truthMaintenance=false\ncom.bigdata.namespace.${name}.lex.com.bigdata.btree.BTree.branchingFactor=400\ncom.bigdata.rdf.store.AbstractTripleStore.textIndex=false\ncom.bigdata.rdf.store.AbstractTripleStore.justify=false\ncom.bigdata.namespace.${name}.spo.com.bigdata.btree.BTree.branchingFactor=1024\ncom.bigdata.rdf.store.AbstractTripleStore.statementIdentifiers=false\ncom.bigdata.rdf.store.AbstractTripleStore.axiomsClass=com.bigdata.rdf.axioms.NoAxioms\ncom.bigdata.rdf.sail.namespace=${name}\ncom.bigdata.rdf.store.AbstractTripleStore.quads=true\ncom.bigdata.rdf.store.AbstractTripleStore.geoSpatial=false\ncom.bigdata.journal.Journal.groupCommit=false\ncom.bigdata.rdf.sail.isolatableIndices=false\n`,
@@ -49,11 +49,11 @@ class OtBlazegraph extends OtTripleStore {
             `Deleting ${this.getName()} triple store repository: ${repository} with name: ${name}`,
         );
 
-        if (await this.nameSpaceExists(repository)) {
+        if (await this.repositoryExists(repository)) {
             await axios
                 .delete(`${url}/namespace/${name}`, {})
                 .catch((e) =>
-                    this.logger.warn(
+                    this.logger.error(
                         `Error while deleting ${this.getName()} triple store repository: ${repository} with name: ${name}. Error: ${
                             e.message
                         }`,
@@ -62,23 +62,32 @@ class OtBlazegraph extends OtTripleStore {
         }
     }
 
-    async nameSpaceExists(repository) {
+    async repositoryExists(repository) {
         const { url, name } = this.repositories[repository];
 
-        const { data: jsonldNamespaces } = await axios.get(`${url}/namespace`, {
-            params: {
-                'describe-each-named-graph': 'false',
-            },
-            headers: {
-                Accept: 'application/ld+json',
-            },
-        });
+        try {
+            const { data: jsonldNamespaces } = await axios.get(`${url}/namespace`, {
+                params: {
+                    'describe-each-named-graph': 'false',
+                },
+                headers: {
+                    Accept: 'application/ld+json',
+                },
+            });
 
-        const compactedNamespaces = await jsonld.frame(jsonldNamespaces, {});
+            const compactedNamespaces = await jsonld.frame(jsonldNamespaces, {});
 
-        return compactedNamespaces['@graph'].filter(
-            (namespace) => namespace['http://www.bigdata.com/rdf#/features/KB/Namespace'] === name,
-        ).length;
+            return compactedNamespaces['@graph'].filter(
+                (namespace) =>
+                    namespace['http://www.bigdata.com/rdf#/features/KB/Namespace'] === name,
+            ).length;
+        } catch (error) {
+            this.logger.error(
+                `Error while getting ${this.getName()} repositories. Error: ${error.message}`,
+            );
+
+            return false;
+        }
     }
 
     getName() {
