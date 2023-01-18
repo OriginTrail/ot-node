@@ -8,17 +8,17 @@ import TripleStoreModuleManager from '../../src/modules/triple-store/triple-stor
 import Logger from '../../src/logger/logger.js';
 
 const generalConfig = JSON.parse(fs.readFileSync('./config/config.json'));
+const templatePath = path.join('./tools/local-network-setup/.origintrail_noderc_template.json');
 
 const logger = new Logger(generalConfig.development.logLevel);
 
 const numberOfNodes = parseInt(process.argv[2], 10);
-const network = process.argv[3];
+const blockchain = process.argv[3];
 const tripleStoreImplementation = process.argv[4];
 const hubContractAddress = process.argv[5];
-
-const dhTemplatePath = './tools/local-network-setup/.dh_origintrail_noderc_template';
-const bootstrapTemplatePath = './tools/local-network-setup/.bootstrap_origintrail_noderc_template';
 const keys = JSON.parse(fs.readFileSync('./tools/local-network-setup/keys.json'));
+const libp2pBootstrapPrivateKey =
+    'CAAS4QQwggJdAgEAAoGBALOYSCZsmINMpFdH8ydA9CL46fB08F3ELfb9qiIq+z4RhsFwi7lByysRnYT/NLm8jZ4RvlsSqOn2ZORJwBywYD5MCvU1TbEWGKxl5LriW85ZGepUwiTZJgZdDmoLIawkpSdmUOc1Fbnflhmj/XzAxlnl30yaa/YvKgnWtZI1/IwfAgMBAAECgYEAiZq2PWqbeI6ypIVmUr87z8f0Rt7yhIWZylMVllRkaGw5WeGHzQwSRQ+cJ5j6pw1HXMOvnEwxzAGT0C6J2fFx60C6R90TPos9W0zSU+XXLHA7AtazjlSnp6vHD+RxcoUhm1RUPeKU6OuUNcQVJu1ZOx6cAcP/I8cqL38JUOOS7XECQQDex9WUKtDnpHEHU/fl7SvCt0y2FbGgGdhq6k8nrWtBladP5SoRUFuQhCY8a20fszyiAIfxQrtpQw1iFPBpzoq1AkEAzl/s3XPGi5vFSNGLsLqbVKbvoW9RUaGN8o4rU9oZmPFL31Jo9FLA744YRer6dYE7jJMel7h9VVWsqa9oLGS8AwJALYwfv45Nbb6yGTRyr4Cg/MtrFKM00K3YEGvdSRhsoFkPfwc0ZZvPTKmoA5xXEC8eC2UeZhYlqOy7lL0BNjCzLQJBAMpvcgtwa8u6SvU5B0ueYIvTDLBQX3YxgOny5zFjeUR7PS+cyPMQ0cyql8jNzEzDLcSg85tkDx1L4wi31Pnm/j0CQFH/6MYn3r9benPm2bYSe9aoJp7y6ht2DmXmoveNbjlEbb8f7jAvYoTklJxmJCcrdbNx/iCj2BuAinPPgEmUzfQ=';
 
 logger.info('Preparing keys for blockchain');
 
@@ -30,72 +30,54 @@ if (!keys) {
 logger.info(`Generating config for ${numberOfNodes} node(s)`);
 
 for (let i = 0; i < numberOfNodes; i += 1) {
-    const blockchainConfig = {
-        hubContractAddress,
-        rpcEndpoints: [process.env.RPC_ENDPOINT],
-        evmOperationalWalletPublicKey: keys.publicKey[i],
-        evmOperationalWalletPrivateKey: keys.privateKey[i],
-        evmManagementWalletPublicKey: keys.publicKey[keys.publicKey.length - 1 - i],
-        evmManagementWalletPrivateKey: keys.privateKey[keys.privateKey.length - 1 - i],
-        sharesTokenName: `LocalNode${i}`,
-        sharesTokenSymbol: `LN${i}`,
-    };
-    let appDataPath = `data${i}`;
-    let nodeName;
-    let templatePath;
-    let configPath;
-    if (i === 0) {
-        templatePath = bootstrapTemplatePath;
-        configPath = path.join('./tools/local-network-setup/.bootstrap_origintrail_noderc');
-        nodeName = 'bootstrap';
-    } else {
-        templatePath = dhTemplatePath;
-        configPath = path.join(`./tools/local-network-setup/.dh${i}_origintrail_noderc`);
-        nodeName = `DH${i}`;
-    }
+    const configPath = path.join(`./tools/local-network-setup/.node${i}_origintrail_noderc.json`);
 
-    if (await fileExists(configPath)) continue;
+    if (!(await fileExists(configPath))) {
+        const template = JSON.parse(fs.readFileSync(templatePath));
 
-    const template = JSON.parse(fs.readFileSync(templatePath));
+        const tripleStoreConfig =
+            template.modules.tripleStore.implementation[tripleStoreImplementation].config;
+        for (const [repository, config] of Object.entries(tripleStoreConfig.repositories)) {
+            tripleStoreConfig.repositories[repository].name = `${config.name}-${i}`;
+        }
+        template.modules.tripleStore.implementation[tripleStoreImplementation] = {
+            ...template.modules.tripleStore.implementation[tripleStoreImplementation],
+            enabled: true,
+            config: tripleStoreConfig,
+        };
 
-    const tripleStoreConfig =
-        template.modules.tripleStore.implementation[tripleStoreImplementation].config;
-    for (const [repository, config] of Object.entries(tripleStoreConfig.repositories)) {
-        tripleStoreConfig.repositories[repository].name = `${config.name}-${i}`;
-    }
-    template.modules.tripleStore.implementation[tripleStoreImplementation] = {
-        ...template.modules.tripleStore.implementation[tripleStoreImplementation],
-        enabled: true,
-        config: tripleStoreConfig,
-    };
+        template.modules.blockchain.defaultImplementation = blockchain;
+        template.modules.blockchain.implementation[blockchain].config = {
+            ...template.modules.blockchain.implementation[blockchain].config,
+            ...{
+                hubContractAddress,
+                rpcEndpoints: [process.env.RPC_ENDPOINT],
+                evmOperationalWalletPublicKey: keys.publicKey[i],
+                evmOperationalWalletPrivateKey: keys.privateKey[i],
+                evmManagementWalletPublicKey: keys.publicKey[keys.publicKey.length - 1 - i],
+                evmManagementWalletPrivateKey: keys.privateKey[keys.privateKey.length - 1 - i],
+                sharesTokenName: `LocalNode${i}`,
+                sharesTokenSymbol: `LN${i}`,
+            },
+        };
 
-    template.modules.blockchain.defaultImplementation = network;
-    template.modules.blockchain.implementation[network].config = {
-        ...template.modules.blockchain.implementation[network].config,
-        ...blockchainConfig,
-    };
+        template.modules.httpClient.implementation['express-http-client'].config.port = 8900 + i;
+        template.modules.network.implementation['libp2p-service'].config.port = 9100 + i;
+        if (i == 0) {
+            template.modules.network.implementation['libp2p-service'].config.privateKey =
+                libp2pBootstrapPrivateKey;
+        }
+        template.modules.repository.implementation[
+            'sequelize-repository'
+        ].config.database = `operationaldb${i}`;
+        template.appDataPath = `data${i}`;
 
-    template.modules.httpClient.implementation['express-http-client'].config.port = 8900 + i;
-    template.modules.network.implementation['libp2p-service'].config.port = 9100 + i;
-    template.modules.repository.implementation[
-        'sequelize-repository'
-    ].config.database = `operationaldb${i}`;
-    template.appDataPath = appDataPath;
+        if (process.env.LOG_LEVEL) {
+            template.logLevel = process.env.LOG_LEVEL;
+        }
+        logger.info(`Configuring node ${i}`);
 
-    if (process.env.LOG_LEVEL) {
-        template.logLevel = process.env.LOG_LEVEL;
-    }
-    logger.info(`Configuring node ${nodeName}`);
-
-    fs.writeFileSync(configPath, JSON.stringify(template, null, 4));
-}
-
-for (let i = 0; i < numberOfNodes; i += 1) {
-    let configPath;
-    if (i === 0) {
-        configPath = path.join('./tools/local-network-setup/.bootstrap_origintrail_noderc');
-    } else {
-        configPath = path.join(`./tools/local-network-setup/.dh${i}_origintrail_noderc`);
+        fs.writeFileSync(configPath, JSON.stringify(template, null, 4));
     }
     const config = JSON.parse(fs.readFileSync(configPath));
     await dropDatabase(

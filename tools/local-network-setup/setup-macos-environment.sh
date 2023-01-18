@@ -80,19 +80,13 @@ startNode() {
   echo Starting node $1
   osascript -e "tell app \"Terminal\"
       do script \"cd $pathToOtNode
-  node index.js ./tools/local-network-setup/.$1_origintrail_noderc\"
+  node index.js ./tools/local-network-setup/.node$1_origintrail_noderc.json\"
   end tell"
 }
 
-startNode bootstrap
-
-# Start only DC node and exit
-if [[ $numberOfNodes -ne 1 ]]
-then
-  i=1
-  while [[ $i -lt $numberOfNodes ]]
-  do
-    startNode dh$i
-    ((i = i + 1))
-  done
-fi
+i=0
+while [[ $i -lt $numberOfNodes ]]
+do
+  startNode $i
+  ((i = i + 1))
+done
