@@ -104,7 +104,6 @@ install_fuseki() {
     perform_step unzip $FUSEKI_VER.zip "Unzipping Fuseki"
     perform_step rm /root/$FUSEKI_VER.zip "Removing Fuseki zip file"
     perform_step mkdir /root/ot-node/fuseki "Making /root/ot-node/fuseki directory"
-    perform_step mkdir /root/ot-node/fuseki/tdb "Making /root/ot-node/fuseki/tdb directory"
     perform_step cp /root/$FUSEKI_VER/fuseki-server.jar /root/ot-node/fuseki/ "Copying Fuseki files to $OTNODE_DIR/fuseki/ 1/2"
     perform_step cp -r /root/$FUSEKI_VER/webapp/ /root/ot-node/fuseki/ "Copying Fuseki files to $OTNODE_DIR/fuseki/ 1/2"
     perform_step rm -r /root/$FUSEKI_VER "Removing the remaining /root/$FUSEKI_VER directory"
