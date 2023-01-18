@@ -33,7 +33,9 @@ class TripleStoreUserConfigurationMigration extends BaseMigration {
                         if (implementationName === 'ot-blazegraph') {
                             newImplementationConfig.repositories.publicCurrent.name = 'kb';
                         }
-
+                        if (implementationName === 'ot-fuseki') {
+                            newImplementationConfig.repositories.publicCurrent.name = 'node0';
+                        }
                         userConfiguration.modules.tripleStore.implementation[
                             implementationName
                         ].config = newImplementationConfig;

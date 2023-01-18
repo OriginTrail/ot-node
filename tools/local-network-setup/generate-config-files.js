@@ -134,6 +134,9 @@ async function deleteTripleStoreRepositories(moduleConfig) {
                 case 'ot-blazegraph':
                     await deleteBlazegraphRepositories(implementationConfig.config);
                     break;
+                case 'ot-fuseki':
+                    await deleteFusekiRepositories(implementationConfig.config);
+                    break;
                 default:
                     throw Error('unknown triple store implementation name');
             }
@@ -166,6 +169,19 @@ async function deleteBlazegraphRepositories(config) {
 
         await axios
             .delete(`${url}/namespace/${name}`, {})
+            .catch((e) =>
+                console.log(`Error while deleting triple store repository. Error: ${e.message}`),
+            );
+    }
+}
+
+async function deleteFusekiRepositories(config) {
+    for (const [repository, repositoryConfig] of Object.entries(config.repositories)) {
+        const { url, name } = repositoryConfig;
+        console.log(`Deleting triple store repository: ${repository} with name: ${name}`);
+
+        await axios
+            .delete(`${url}/$/datasets?dbName=djordje`, {})
             .catch((e) =>
                 console.log(`Error while deleting triple store repository. Error: ${e.message}`),
             );
