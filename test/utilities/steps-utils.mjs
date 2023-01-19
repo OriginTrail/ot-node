@@ -63,18 +63,30 @@ class StepsUtils {
                         'ot-graphdb': {
                             config: {
                                 repositories: {
-                                    privateCurrent: {
-                                        name: `private-current-${nodeName}`,
+                                    "privateCurrent": {
+                                        "url": "http://localhost:7200",
+                                        "name": "private-current",
+                                        "username": "admin",
+                                        "password": ""
                                     },
-                                    privateHistory: {
-                                        name: `private-history-${nodeName}`,
+                                    "privateHistory": {
+                                        "url": "http://localhost:7200",
+                                        "name": "private-history",
+                                        "username": "admin",
+                                        "password": ""
                                     },
-                                    publicCurrent: {
-                                        name: `public-current-${nodeName}`,
+                                    "publicCurrent": {
+                                        "url": "http://localhost:7200",
+                                        "name": "public-current",
+                                        "username": "admin",
+                                        "password": ""
                                     },
-                                    publicHistory: {
-                                        name: `public-history-${nodeName}`,
-                                    },
+                                    "publicHistory": {
+                                        "url": "http://localhost:7200",
+                                        "name": "public-history",
+                                        "username": "admin",
+                                        "password": ""
+                                    }
                                 },
                             },
                         },
