@@ -233,8 +233,9 @@ class OTNode {
         );
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();
+            this.logger.info('Node will now restart!');
+            this.stop(0);
         }
-        process.exit(1);
     }
 
     async executePullShardingTableMigration() {
