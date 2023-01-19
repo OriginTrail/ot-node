@@ -544,19 +544,24 @@ class Web3Service {
     }
 
     async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
-        return this.callContractFunction(
-            this.assetStorageContracts[assetContractAddress.toLowerCase()],
-            'getAssertionIdByIndex',
-            [tokenId, index],
-        );
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetContractAddress.toLowerCase()];
+        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+
+        return this.callContractFunction(assetStorageContractInstance, 'getAssertionIdByIndex', [
+            tokenId,
+            index,
+        ]);
     }
 
     async getLatestAssertionId(assetContractAddress, tokenId) {
-        return this.callContractFunction(
-            this.assetStorageContracts[assetContractAddress.toLowerCase()],
-            'getLatestAssertionId',
-            [tokenId],
-        );
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetContractAddress.toLowerCase()];
+        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+
+        return this.callContractFunction(assetStorageContractInstance, 'getLatestAssertionId', [
+            tokenId,
+        ]);
     }
 
     async getAssertionIssuer(assertionId) {

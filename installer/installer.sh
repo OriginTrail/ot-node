@@ -104,7 +104,6 @@ install_fuseki() {
     perform_step unzip $FUSEKI_VER.zip "Unzipping Fuseki"
     perform_step rm /root/$FUSEKI_VER.zip "Removing Fuseki zip file"
     perform_step mkdir /root/ot-node/fuseki "Making /root/ot-node/fuseki directory"
-    perform_step mkdir /root/ot-node/fuseki/tdb "Making /root/ot-node/fuseki/tdb directory"
     perform_step cp /root/$FUSEKI_VER/fuseki-server.jar /root/ot-node/fuseki/ "Copying Fuseki files to $OTNODE_DIR/fuseki/ 1/2"
     perform_step cp -r /root/$FUSEKI_VER/webapp/ /root/ot-node/fuseki/ "Copying Fuseki files to $OTNODE_DIR/fuseki/ 1/2"
     perform_step rm -r /root/$FUSEKI_VER "Removing the remaining /root/$FUSEKI_VER directory"
@@ -206,8 +205,17 @@ install_sql() {
 }
 
 install_node() {
+    # Change directory to ot-node/current
+    cd $OTNODE_DIR
 
-    CONFIG_DIR=$OTNODE_DIR/..
+    #request node env
+    read -p "Please select node environment: (Default: Mainnet) [T]estnet [M]ainnet [E]xit " choice
+        case "$choice" in
+            [tT]* ) nodeEnv="testnet";;
+            [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+            * )     nodeEnv="mainnet";;
+        esac
+    echo "NODE_ENV=$nodeEnv" >> $OTNODE_DIR/.env
 
     #blockchains=("otp" "polygon")
     #for ((i = 0; i < ${#blockchains[@]}; ++i));
@@ -248,18 +256,56 @@ install_node() {
         #    * ) ((--i));echo "Please make a valid choice and try again.";;
         #esac
     #done
-    
-    # Change directory to ot-node/current
-    cd $OTNODE_DIR
 
     perform_step npm ci --omit=dev --ignore-scripts "Executing npm install"
 
-    echo "NODE_ENV=mainnet" >> $OTNODE_DIR/.env
-
+    CONFIG_DIR=$OTNODE_DIR/..
     perform_step touch $CONFIG_DIR/.origintrail_noderc "Configuring node config file"
-    perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}, "modules": {"tripleStore":{"defaultImplementation": $tripleStore}}}' > $CONFIG_DIR/.origintrail_noderc) "Adding tripleStore $tripleStore to node config file"
+    perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}}' > $CONFIG_DIR/.origintrail_noderc) "Adding loglevel and auth values to node config file"
 
-    perform_step $(jq --arg blockchain "otp" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" --arg evmManagementWallet "$SHARES_TOKEN_NAME" --arg evmManagementWallet "$SHARES_TOKEN_SYMBOL" --arg sharesTokenName "$SHARES_TOKEN_NAME" --arg sharesTokenSymbol "$SHARES_TOKEN_SYMBOL" '.modules.blockchain.implementation[$blockchain].config |= { "evmOperationalWalletPublicKey": $evmOperationalWallet, "evmOperationalWalletPrivateKey": $evmOperationalWalletPrivateKey, "evmManagementWalletPublicKey": $evmManagementWallet, "sharesTokenName": $sharesTokenName, "sharesTokenSymbol": $sharesTokenSymbol} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2"
+    perform_step $(jq --arg tripleStore "$tripleStore" --arg tripleStoreUrl "$tripleStoreUrl" '.modules.tripleStore.implementation[$tripleStore] |= 
+        {
+            "enabled": "true", 
+            "config": {
+                "repositories": {
+                    "privateCurrent": {
+                        "url": $tripleStoreUrl,
+                        "name": "private-current",
+                        "username": "admin",
+                        "password": ""
+                    },
+                    "privateHistory": {
+                        "url": $tripleStoreUrl,
+                        "name": "private-history",
+                        "username": "admin",
+                        "password": ""
+                    },
+                    "publicCurrent": {
+                        "url": $tripleStoreUrl,
+                        "name": "public-current",
+                        "username": "admin",
+                        "password": ""
+                    },
+                    "publicHistory": {
+                        "url": $tripleStoreUrl,
+                        "name": "public-history",
+                        "username": "admin",
+                        "password": ""
+                    }
+                }
+            } 
+        } + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2"
+
+    perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
+    
+    perform_step $(jq --arg blockchain "otp" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" --arg evmManagementWallet "$SHARES_TOKEN_NAME" --arg evmManagementWallet "$SHARES_TOKEN_SYMBOL" --arg sharesTokenName "$SHARES_TOKEN_NAME" --arg sharesTokenSymbol "$SHARES_TOKEN_SYMBOL" '.modules.blockchain.implementation[$blockchain].config |= 
+        { 
+            "evmOperationalWalletPublicKey": $evmOperationalWallet, 
+            "evmOperationalWalletPrivateKey": $evmOperationalWalletPrivateKey, 
+            "evmManagementWalletPublicKey": $evmManagementWallet, 
+            "sharesTokenName": $sharesTokenName, 
+            "sharesTokenSymbol": $sharesTokenSymbol
+        } + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2"
     
     perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
 
@@ -306,9 +352,9 @@ header_color $BGREEN"Installing Triplestore (Graph Database)..."
 
 read -p "Please select the database you would like to use: (Default: Blazegraph) [1]Blazegraph [2]Fuseki [E]xit: " choice
 case "$choice" in
-    [2fF] ) text_color $GREEN"Fuseki selected. Proceeding with installation."; tripleStore=ot-fuseki;;
+    [2] ) text_color $GREEN"Fuseki selected. Proceeding with installation."; tripleStore=ot-fuseki; tripleStoreUrl="http://localhost:3030";;
     [Ee] )  text_color $RED"Installer stopped by user"; exit;;
-    * )     text_color $GREEN"Blazegraph selected. Proceeding with installation."; tripleStore=ot-blazegraph;;
+    * )     text_color $GREEN"Blazegraph selected. Proceeding with installation."; tripleStore=ot-blazegraph; tripleStoreUrl="http://localhost:9999";;
 esac
 
 if [[ $tripleStore = "ot-fuseki" ]]; then

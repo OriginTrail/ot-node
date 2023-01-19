@@ -6,8 +6,7 @@ class LocalGetCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.operationIdService = ctx.operationIdService;
-        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
-        this.getService = ctx.getService;
+        this.tripleStoreService = ctx.tripleStoreService;
 
         this.errorType = ERROR_TYPE.GET.GET_LOCAL_ERROR;
     }
@@ -22,29 +21,27 @@ class LocalGetCommand extends Command {
             operationId,
             OPERATION_ID_STATUS.GET.GET_LOCAL_START,
         );
-        const assertionExists = await this.tripleStoreModuleManager.assertionExists(assertionId);
-        if (assertionExists) {
-            const assertion = await this.getService.localGet(assertionId, operationId);
 
-            if (assertion.length) {
-                await this.operationIdService.cacheOperationIdData(operationId, {
-                    assertion,
-                });
-                await this.operationIdService.updateOperationIdStatus(
-                    operationId,
-                    OPERATION_ID_STATUS.GET.GET_LOCAL_END,
-                );
-                await this.operationIdService.updateOperationIdStatus(
-                    operationId,
-                    OPERATION_ID_STATUS.GET.GET_END,
-                );
-                await this.operationIdService.updateOperationIdStatus(
-                    operationId,
-                    OPERATION_ID_STATUS.COMPLETED,
-                );
+        const assertion = await this.tripleStoreService.localGet(assertionId, operationId, true);
 
-                return Command.empty();
-            }
+        if (assertion.length) {
+            await this.operationIdService.cacheOperationIdData(operationId, {
+                assertion,
+            });
+            await this.operationIdService.updateOperationIdStatus(
+                operationId,
+                OPERATION_ID_STATUS.GET.GET_LOCAL_END,
+            );
+            await this.operationIdService.updateOperationIdStatus(
+                operationId,
+                OPERATION_ID_STATUS.GET.GET_END,
+            );
+            await this.operationIdService.updateOperationIdStatus(
+                operationId,
+                OPERATION_ID_STATUS.COMPLETED,
+            );
+
+            return Command.empty();
         }
 
         await this.operationIdService.updateOperationIdStatus(

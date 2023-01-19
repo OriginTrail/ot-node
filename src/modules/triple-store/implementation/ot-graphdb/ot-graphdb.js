@@ -2,61 +2,73 @@ import graphdb from 'graphdb';
 import axios from 'axios';
 import OtTripleStore from '../ot-triple-store.js';
 
-const { server, repository, http } = graphdb;
+const { server, repository: repo, http } = graphdb;
 
 class OtGraphdb extends OtTripleStore {
     async initialize(config, logger) {
         await super.initialize(config, logger);
-        const serverConfig = new server.ServerClientConfig(this.config.url)
-            .setTimeout(40000)
-            .setHeaders({
-                Accept: http.RDFMimeType.N_QUADS,
-            })
-            .setKeepAlive(true);
-        const s = new server.GraphDBServerClient(serverConfig);
 
-        const exists = await s.hasRepository(this.config.repository);
-        if (!exists) {
-            try {
-                await s.createRepository(
-                    new repository.RepositoryConfig(
-                        this.config.repository,
-                        '',
-                        new Map(),
-                        '',
-                        'Repo title',
-                        repository.RepositoryType.FREE,
-                    ),
-                );
-            } catch (e) {
-                await s.createRepository(
-                    new repository.RepositoryConfig(
-                        this.config.repository,
-                        '',
-                        {},
-                        'graphdb:SailRepository',
-                        'Repo title',
-                        'graphdb',
-                    ),
-                );
-            }
-        }
+        await Promise.all(
+            Object.keys(this.repositories).map(async (repository) => {
+                const { url, name } = this.repositories[repository];
+                const serverConfig = new server.ServerClientConfig(url)
+                    .setTimeout(40000)
+                    .setHeaders({
+                        Accept: http.RDFMimeType.N_QUADS,
+                    })
+                    .setKeepAlive(true);
+                const s = new server.GraphDBServerClient(serverConfig);
+                // eslint-disable-next-line no-await-in-loop
+                const exists = await s.hasRepository(name);
+                if (!exists) {
+                    try {
+                        // eslint-disable-next-line no-await-in-loop
+                        await s.createRepository(
+                            new repo.RepositoryConfig(
+                                name,
+                                '',
+                                new Map(),
+                                '',
+                                'Repo title',
+                                repo.RepositoryType.FREE,
+                            ),
+                        );
+                    } catch (e) {
+                        // eslint-disable-next-line no-await-in-loop
+                        await s.createRepository(
+                            new repo.RepositoryConfig(
+                                name,
+                                '',
+                                {},
+                                'graphdb:SailRepository',
+                                'Repo title',
+                                'graphdb',
+                            ),
+                        );
+                    }
+                }
+            }),
+        );
     }
 
-    initializeSparqlEndpoints(url, repo) {
-        this.sparqlEndpoint = `${url}/repositories/${repo}`;
-        this.sparqlEndpointUpdate = `${url}/repositories/${repo}/statements`;
+    initializeSparqlEndpoints(repository) {
+        const { url, name } = this.repositories[repository];
+        this.repositories[repository].sparqlEndpoint = `${url}/repositories/${name}`;
+        this.repositories[
+            repository
+        ].sparqlEndpointUpdate = `${url}/repositories/${name}/statements`;
     }
 
-    async healthCheck() {
+    async healthCheck(repository) {
+        const { url, username, password } = this.repositories[repository];
         try {
             const response = await axios.get(
-                `${this.config.url}/repositories/${this.config.repository}/health`,
+                `${url}/repositories/${repository}/health`,
                 {},
                 {
                     auth: {
-                        username: this.config.username,
-                        password: this.config.password,
+                        username,
+                        password,
                     },
                 },
             );
@@ -72,6 +84,28 @@ class OtGraphdb extends OtTripleStore {
             }
             return false;
         }
+    }
+
+    async deleteRepository(repository) {
+        const { url, name } = this.repositories[repository];
+        this.logger.info(
+            `Deleting ${this.getName()} triple store repository: ${repository} with name: ${name}`,
+        );
+
+        const serverConfig = new server.ServerClientConfig(url)
+            .setTimeout(40000)
+            .setHeaders({
+                Accept: http.RDFMimeType.N_QUADS,
+            })
+            .setKeepAlive(true);
+        const s = new server.GraphDBServerClient(serverConfig);
+        s.deleteRepository(name).catch((e) =>
+            this.logger.warn(
+                `Error while deleting ${this.getName()} triple store repository: ${repository} with name: ${name}. Error: ${
+                    e.message
+                }`,
+            ),
+        );
     }
 
     getName() {
