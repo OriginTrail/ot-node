@@ -1,15 +1,15 @@
 import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
-
 import {
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
+    TRIPLE_STORE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
 class HandleGetInitCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
-        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+        this.tripleStoreService = ctx.tripleStoreService;
         this.operationService = ctx.getService;
 
         this.errorType = ERROR_TYPE.GET.GET_INIT_REMOTE_ERROR;
@@ -22,7 +22,10 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.GET.ASSERTION_EXISTS_LOCAL_START,
         );
 
-        const assertionExists = await this.tripleStoreModuleManager.assertionExists(assertionId);
+        const assertionExists = await this.tripleStoreService.assertionExists(
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+            assertionId,
+        );
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
