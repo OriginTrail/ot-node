@@ -205,8 +205,17 @@ install_sql() {
 }
 
 install_node() {
+    # Change directory to ot-node/current
+    cd $OTNODE_DIR
 
-    CONFIG_DIR=$OTNODE_DIR/..
+    #request node env
+    read -p "Please select node environment: (Default: Mainnet) [T]estnet [M]ainnet [E]xit " choice
+        case "$choice" in
+            [tT]* ) nodeEnv="testnet";;
+            [eE]* ) text_color $RED"Installer stopped by user"; exit;;
+            * )     nodeEnv="mainnet";;
+        esac
+    echo "NODE_ENV=$nodeEnv" >> $OTNODE_DIR/.env
 
     #blockchains=("otp" "polygon")
     #for ((i = 0; i < ${#blockchains[@]}; ++i));
@@ -247,16 +256,12 @@ install_node() {
         #    * ) ((--i));echo "Please make a valid choice and try again.";;
         #esac
     #done
-    
-    # Change directory to ot-node/current
-    cd $OTNODE_DIR
 
     perform_step npm ci --omit=dev --ignore-scripts "Executing npm install"
 
-    echo "NODE_ENV=mainnet" >> $OTNODE_DIR/.env
-
+    CONFIG_DIR=$OTNODE_DIR/..
     perform_step touch $CONFIG_DIR/.origintrail_noderc "Configuring node config file"
-    perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}' > $CONFIG_DIR/.origintrail_noderc) "Adding loglevel and auth values to node config file"
+    perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}}' > $CONFIG_DIR/.origintrail_noderc) "Adding loglevel and auth values to node config file"
 
     perform_step $(jq --arg tripleStore "$tripleStore" --arg tripleStoreUrl "$tripleStoreUrl" '.modules.tripleStore.implementation[$tripleStore].config |= 
         {
