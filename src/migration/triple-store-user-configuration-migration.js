@@ -107,7 +107,7 @@ class TripleStoreUserConfigurationMigration extends BaseMigration {
                         'ot-blazegraph'
                     ].config.repositories.publicCurrent.name = 'kb';
                 } else if (
-                    userConfiguration.modules.tripleStore.defaultConfiguration === 'ot-fuseki'
+                    userConfiguration.modules.tripleStore.defaultImplementation === 'ot-fuseki'
                 ) {
                     userConfiguration.modules.tripleStore.implementation = {
                         'ot-fuseki':
