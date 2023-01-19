@@ -256,9 +256,51 @@ install_node() {
     echo "NODE_ENV=mainnet" >> $OTNODE_DIR/.env
 
     perform_step touch $CONFIG_DIR/.origintrail_noderc "Configuring node config file"
-    perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}, "modules": {"tripleStore":{"defaultImplementation": $tripleStore}}}' > $CONFIG_DIR/.origintrail_noderc) "Adding tripleStore $tripleStore to node config file"
+    perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}' > $CONFIG_DIR/.origintrail_noderc) "Adding loglevel and auth values to node config file"
 
-    perform_step $(jq --arg blockchain "otp" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" --arg evmManagementWallet "$SHARES_TOKEN_NAME" --arg evmManagementWallet "$SHARES_TOKEN_SYMBOL" --arg sharesTokenName "$SHARES_TOKEN_NAME" --arg sharesTokenSymbol "$SHARES_TOKEN_SYMBOL" '.modules.blockchain.implementation[$blockchain].config |= { "evmOperationalWalletPublicKey": $evmOperationalWallet, "evmOperationalWalletPrivateKey": $evmOperationalWalletPrivateKey, "evmManagementWalletPublicKey": $evmManagementWallet, "sharesTokenName": $sharesTokenName, "sharesTokenSymbol": $sharesTokenSymbol} + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2"
+    perform_step $(jq --arg tripleStore "$tripleStore" --arg tripleStoreUrl "$tripleStoreUrl" '.modules.tripleStore.implementation[$tripleStore].config |= 
+        {
+            "enabled": "true", 
+            "config": {
+                "repositories": {
+                    "privateCurrent": {
+                        "url": $tripleStoreUrl,
+                        "name": "private-current",
+                        "username": "admin",
+                        "password": ""
+                    },
+                    "privateHistory": {
+                        "url": $tripleStoreUrl,
+                        "name": "private-history",
+                        "username": "admin",
+                        "password": ""
+                    },
+                    "publicCurrent": {
+                        "url": $tripleStoreUrl,
+                        "name": "public-current",
+                        "username": "admin",
+                        "password": ""
+                    },
+                    "publicHistory": {
+                        "url": $tripleStoreUrl,
+                        "name": "public-history",
+                        "username": "admin",
+                        "password": ""
+                    }
+                }
+            } 
+        } + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2"
+
+    perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
+    
+    perform_step $(jq --arg blockchain "otp" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" --arg evmManagementWallet "$SHARES_TOKEN_NAME" --arg evmManagementWallet "$SHARES_TOKEN_SYMBOL" --arg sharesTokenName "$SHARES_TOKEN_NAME" --arg sharesTokenSymbol "$SHARES_TOKEN_SYMBOL" '.modules.blockchain.implementation[$blockchain].config |= 
+        { 
+            "evmOperationalWalletPublicKey": $evmOperationalWallet, 
+            "evmOperationalWalletPrivateKey": $evmOperationalWalletPrivateKey, 
+            "evmManagementWalletPublicKey": $evmManagementWallet, 
+            "sharesTokenName": $sharesTokenName, 
+            "sharesTokenSymbol": $sharesTokenSymbol
+        } + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2"
     
     perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
 
@@ -305,9 +347,9 @@ header_color $BGREEN"Installing Triplestore (Graph Database)..."
 
 read -p "Please select the database you would like to use: (Default: Blazegraph) [1]Blazegraph [2]Fuseki [E]xit: " choice
 case "$choice" in
-    [2fF] ) text_color $GREEN"Fuseki selected. Proceeding with installation."; tripleStore=ot-fuseki;;
+    [2fF] ) text_color $GREEN"Fuseki selected. Proceeding with installation."; tripleStore=ot-fuseki; tripleStoreUrl="http://localhost:3030";;
     [Ee] )  text_color $RED"Installer stopped by user"; exit;;
-    * )     text_color $GREEN"Blazegraph selected. Proceeding with installation."; tripleStore=ot-blazegraph;;
+    * )     text_color $GREEN"Blazegraph selected. Proceeding with installation."; tripleStore=ot-blazegraph; tripleStoreUrl="http://localhost:9999";;
 esac
 
 if [[ $tripleStore = "ot-fuseki" ]]; then
