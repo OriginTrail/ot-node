@@ -2,7 +2,6 @@ import EpochCommand from '../../common/epoch-command.js';
 import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
-    TRIPLE_STORE_REPOSITORIES,
     COMMAND_RETRIES,
 } from '../../../../constants/constants.js';
 
@@ -69,11 +68,7 @@ class CalculateProofsCommand extends EpochCommand {
             epoch,
         );
 
-        const nquads = await this.tripleStoreService.localGet(
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-            assertionId,
-            operationId,
-        );
+        const nquads = await this.tripleStoreService.localGet(assertionId, operationId);
 
         const { leaf, proof } = this.validationModuleManager.getMerkleProof(
             nquads,
