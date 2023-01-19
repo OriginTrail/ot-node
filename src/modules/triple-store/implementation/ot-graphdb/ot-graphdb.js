@@ -86,6 +86,28 @@ class OtGraphdb extends OtTripleStore {
         }
     }
 
+    async deleteRepository(repository) {
+        const { url, name } = this.repositories[repository];
+        this.logger.info(
+            `Deleting ${this.getName()} triple store repository: ${repository} with name: ${name}`,
+        );
+
+        const serverConfig = new server.ServerClientConfig(url)
+            .setTimeout(40000)
+            .setHeaders({
+                Accept: http.RDFMimeType.N_QUADS,
+            })
+            .setKeepAlive(true);
+        const s = new server.GraphDBServerClient(serverConfig);
+        s.deleteRepository(name).catch((e) =>
+            this.logger.warn(
+                `Error while deleting ${this.getName()} triple store repository: ${repository} with name: ${name}. Error: ${
+                    e.message
+                }`,
+            ),
+        );
+    }
+
     getName() {
         return 'GraphDB';
     }
