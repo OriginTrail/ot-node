@@ -28,25 +28,25 @@
                     "config": {
                         "repositories": {
                             "privateCurrent": {
-                                "url": "http://localhost:9999/blazegraph",
+                                "url": "http://localhost:9999",
                                 "name": "private-current",
                                 "username": "admin",
                                 "password": ""
                             },
                             "privateHistory": {
-                                "url": "http://localhost:9999/blazegraph",
+                                "url": "http://localhost:9999",
                                 "name": "private-history",
                                 "username": "admin",
                                 "password": ""
                             },
                             "publicCurrent": {
-                                "url": "http://localhost:9999/blazegraph",
+                                "url": "http://localhost:9999",
                                 "name": "public-current",
                                 "username": "admin",
                                 "password": ""
                             },
                             "publicHistory": {
-                                "url": "http://localhost:9999/blazegraph",
+                                "url": "http://localhost:9999",
                                 "name": "public-history",
                                 "username": "admin",
                                 "password": ""
