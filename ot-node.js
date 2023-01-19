@@ -317,7 +317,10 @@ class OTNode {
             );
 
         let working = false;
-
+        let eventFetchInterval = 10 * 1000;
+        if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+            eventFetchInterval = 2;
+        }
         setInterval(async () => {
             if (!working) {
                 try {
@@ -352,7 +355,7 @@ class OTNode {
                     working = false;
                 }
             }
-        }, 10 * 1000);
+        }, eventFetchInterval);
     }
 
     async initializeTelemetryInjectionService() {
