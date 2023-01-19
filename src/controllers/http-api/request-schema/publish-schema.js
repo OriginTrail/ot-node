@@ -4,7 +4,8 @@ export default (blockchainImplementationNames) => ({
     properties: {
         assertionId: {
             type: 'string',
-            minLength: '1',
+            minLength: 66,
+            maxLength: 66,
         },
         assertion: {
             type: 'array',
@@ -18,7 +19,8 @@ export default (blockchainImplementationNames) => ({
         },
         contract: {
             type: 'string',
-            minLength: 1,
+            minLength: 42,
+            maxLength: 42,
         },
         tokenId: {
             type: 'number',

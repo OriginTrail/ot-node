@@ -6,7 +6,8 @@ export default () => ({
         properties: {
             assertionId: {
                 type: 'string',
-                minLength: '1',
+                minLength: 66,
+                maxLength: 66,
             },
             assertion: {
                 type: 'array',
