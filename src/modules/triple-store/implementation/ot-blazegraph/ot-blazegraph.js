@@ -12,7 +12,7 @@ class OtBlazegraph extends OtTripleStore {
 
                 if (!(await this.repositoryExists(repository))) {
                     await axios.post(
-                        `${url}/namespace`,
+                        `${url}/blazegraph/namespace`,
                         `com.bigdata.rdf.sail.truthMaintenance=false\ncom.bigdata.namespace.${name}.lex.com.bigdata.btree.BTree.branchingFactor=400\ncom.bigdata.rdf.store.AbstractTripleStore.textIndex=false\ncom.bigdata.rdf.store.AbstractTripleStore.justify=false\ncom.bigdata.namespace.${name}.spo.com.bigdata.btree.BTree.branchingFactor=1024\ncom.bigdata.rdf.store.AbstractTripleStore.statementIdentifiers=false\ncom.bigdata.rdf.store.AbstractTripleStore.axiomsClass=com.bigdata.rdf.axioms.NoAxioms\ncom.bigdata.rdf.sail.namespace=${name}\ncom.bigdata.rdf.store.AbstractTripleStore.quads=true\ncom.bigdata.rdf.store.AbstractTripleStore.geoSpatial=false\ncom.bigdata.journal.Journal.groupCommit=false\ncom.bigdata.rdf.sail.isolatableIndices=false\n`,
                         {
                             headers: {
@@ -27,13 +27,18 @@ class OtBlazegraph extends OtTripleStore {
 
     initializeSparqlEndpoints(repository) {
         const { url, name } = this.repositories[repository];
-        this.repositories[repository].sparqlEndpoint = `${url}/namespace/${name}/sparql`;
-        this.repositories[repository].sparqlEndpointUpdate = `${url}/namespace/${name}/sparql`;
+        this.repositories[repository].sparqlEndpoint = `${url}/blazegraph/namespace/${name}/sparql`;
+        this.repositories[
+            repository
+        ].sparqlEndpointUpdate = `${url}/blazegraph/namespace/${name}/sparql`;
     }
 
     async healthCheck(repository) {
         try {
-            const response = await axios.get(`${this.repositories[repository].url}/status`, {});
+            const response = await axios.get(
+                `${this.repositories[repository].url}/blazegraph/status`,
+                {},
+            );
             if (response.data !== null) {
                 return true;
             }
@@ -51,7 +56,7 @@ class OtBlazegraph extends OtTripleStore {
 
         if (await this.repositoryExists(repository)) {
             await axios
-                .delete(`${url}/namespace/${name}`, {})
+                .delete(`${url}/blazegraph/namespace/${name}`, {})
                 .catch((e) =>
                     this.logger.error(
                         `Error while deleting ${this.getName()} triple store repository: ${repository} with name: ${name}. Error: ${
@@ -66,7 +71,7 @@ class OtBlazegraph extends OtTripleStore {
         const { url, name } = this.repositories[repository];
 
         try {
-            const { data: jsonldNamespaces } = await axios.get(`${url}/namespace`, {
+            const { data: jsonldNamespaces } = await axios.get(`${url}/blazegraph/namespace`, {
                 params: {
                     'describe-each-named-graph': 'false',
                 },

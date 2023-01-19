@@ -15,38 +15,74 @@ class TripleStoreUserConfigurationMigration extends BaseMigration {
                 configurationFilePath,
             );
 
-            if (userConfiguration.modules.tripleStore?.implementation) {
-                for (const implementationName in userConfiguration.modules.tripleStore
-                    .implementation) {
-                    const oldImplementationConfig =
-                        userConfiguration.modules.tripleStore.implementation[implementationName]
-                            .config;
-                    if (oldImplementationConfig && !oldImplementationConfig.repositories) {
-                        const newImplementationConfig = {
-                            repositories: {
-                                publicCurrent: oldImplementationConfig,
-                            },
-                        };
-                        newImplementationConfig.repositories.publicCurrent.name =
-                            newImplementationConfig.repositories.publicCurrent.repository;
-                        delete newImplementationConfig.repositories.publicCurrent.repository;
+            for (const implementationName in userConfiguration.modules.tripleStore.implementation) {
+                const oldImplementationConfig =
+                    userConfiguration.modules.tripleStore.implementation[implementationName].config;
+                if (oldImplementationConfig && !oldImplementationConfig.repositories) {
+                    let { url, username, password, repository } = oldImplementationConfig;
+
+                    if (!url) {
+                        url =
+                            implementationName === 'ot-blazegraph'
+                                ? 'http://localhost:9999'
+                                : 'http://localhost:3030';
+                    }
+
+                    if (!username) {
+                        username = 'admin';
+                    }
+
+                    if (!password) {
+                        password = '';
+                    }
+
+                    if (!repository) {
                         if (implementationName === 'ot-blazegraph') {
-                            newImplementationConfig.repositories.publicCurrent.name = 'kb';
+                            repository = 'kb';
                         }
                         if (implementationName === 'ot-fuseki') {
-                            newImplementationConfig.repositories.publicCurrent.name = 'node0';
+                            repository = 'node0';
                         }
-                        userConfiguration.modules.tripleStore.implementation[
-                            implementationName
-                        ].config = newImplementationConfig;
                     }
+                    const newImplementationConfig = {
+                        repositories: {
+                            publicCurrent: {
+                                url,
+                                name: repository,
+                                username,
+                                password,
+                            },
+                            publicHistory: {
+                                url,
+                                name: 'public-history',
+                                username,
+                                password,
+                            },
+                            privateCurrent: {
+                                url,
+                                name: 'private-current',
+                                username,
+                                password,
+                            },
+                            privateHistory: {
+                                url,
+                                name: 'private-history',
+                                username,
+                                password,
+                            },
+                        },
+                    };
+
+                    userConfiguration.modules.tripleStore.implementation[
+                        implementationName
+                    ].config = newImplementationConfig;
                 }
-                await this.fileService.writeContentsToFile(
-                    configurationFolderPath,
-                    this.config.configFilename,
-                    JSON.stringify(userConfiguration, null, 4),
-                );
             }
+            await this.fileService.writeContentsToFile(
+                configurationFolderPath,
+                this.config.configFilename,
+                JSON.stringify(userConfiguration, null, 4),
+            );
         }
     }
 }
