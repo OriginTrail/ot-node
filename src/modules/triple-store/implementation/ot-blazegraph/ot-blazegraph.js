@@ -33,6 +33,21 @@ class OtBlazegraph extends OtTripleStore {
         ].sparqlEndpointUpdate = `${url}/blazegraph/namespace/${name}/sparql`;
     }
 
+    async insertAssertion(repository, assertionId, assertionNquads) {
+        const exists = await this.assertionExists(repository, assertionId);
+
+        if (!exists) {
+            return axios({
+                method: 'post',
+                url: `${this.repositories[repository].sparqlEndpointUpdate}?context-uri=assertion:${assertionId}`,
+                headers: {
+                    'Content-Type': 'text/x-nquads',
+                },
+                data: assertionNquads,
+            });
+        }
+    }
+
     async healthCheck(repository) {
         try {
             const response = await axios.get(
