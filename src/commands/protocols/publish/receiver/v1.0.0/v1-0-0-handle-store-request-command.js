@@ -5,6 +5,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     AGREEMENT_STATUS,
+    TRIPLE_STORE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
 class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
@@ -15,7 +16,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         this.commandExecutor = ctx.commandExecutor;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
+        this.tripleStoreService = ctx.tripleStoreService;
         this.ualService = ctx.ualService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR;
@@ -52,7 +53,8 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         );
 
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-        const assetExists = await this.tripleStoreModuleManager.assetExists(
+        const assetExists = await this.tripleStoreService.assetExists(
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
             ual,
             blockchain,
             contract,
@@ -62,8 +64,9 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         const agreementEndTime =
             agreementData.startTime + agreementData.epochsNumber * agreementData.epochsLength;
 
-        await this.operationService.localStoreAsset(
+        await this.tripleStoreService.localStoreAsset(
             assertionId,
+            assertion,
             blockchain,
             contract,
             tokenId,

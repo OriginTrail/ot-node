@@ -10,7 +10,7 @@
       "_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://schema.org/Person> ."
     ],
     "blockchain": "ganache",
-    "contract": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
+    "contract": "0x791ee543738B997B7A125bc849005B62aFD35578",
     "tokenId": 0
   },
   "blockchainNotDefinedRequestBody": {
@@ -24,10 +24,10 @@
       "_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://schema.org/Person> ."
     ],
     "blockchain": null,
-    "contract": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
+    "contract": "0x791ee543738B997B7A125bc849005B62aFD35578",
     "tokenId": 0
   },
   "nonExistentUAL": {
-    "id": "did:ganache:0x209679fA3B658Cd0fC74473aF28243bfe78a9b12/1"
+    "id": "did:ganache:0x791ee543738B997B7A125bc849005B62aFD35578/1"
   }
 }

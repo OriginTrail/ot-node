@@ -1,12 +1,10 @@
 import { Mutex } from 'async-mutex';
-import { formatAssertion } from 'assertion-tools';
 import OperationService from './operation-service.js';
 
 import {
     OPERATION_ID_STATUS,
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
-    SCHEMA_CONTEXT,
     OPERATIONS,
     OPERATION_REQUEST_STATUS,
 } from '../constants/constants.js';
@@ -14,8 +12,6 @@ import {
 class PublishService extends OperationService {
     constructor(ctx) {
         super(ctx);
-        this.ualService = ctx.ualService;
-        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
 
         this.operationName = OPERATIONS.PUBLISH;
         this.networkProtocols = NETWORK_PROTOCOLS.STORE;
@@ -94,99 +90,6 @@ class PublishService extends OperationService {
                 await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
             }
         }
-    }
-
-    async getLatestAssertionId(blockchain, contract, tokenId) {
-        return this.blockchainModuleManager.getLatestAssertionId(blockchain, contract, tokenId);
-    }
-
-    async localStoreIndex(assertionId, blockchain, contract, tokenId, keyword, operationId) {
-        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
-        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
-        // TODO get rank from blockchain
-        const rank = 1;
-
-        const indexNquads = await formatAssertion({
-            '@context': SCHEMA_CONTEXT,
-            '@id': ual,
-            rank,
-            metadata: { '@id': `assertion:${assertionId}` },
-        });
-        const assetNquads = await formatAssertion({
-            '@context': SCHEMA_CONTEXT,
-            '@id': ual,
-            blockchain,
-            contract,
-            tokenId,
-        });
-
-        this.logger.info(
-            `Inserting index for asset: ${ual}, keyword: ${keyword}, with assertion id: ${assertionId} in triple store.`,
-        );
-
-        await Promise.all(
-            this.tripleStoreModuleManager.insertIndex(
-                keyword,
-                indexNquads.join('\n'),
-                assetNquads.join('\n'),
-            ),
-            this.tripleStoreModuleManager.insertAssertion(assertionId, assertion.join('\n')),
-        );
-
-        this.logger.info(
-            `Index for asset: ${ual}, keyword: ${keyword}, with assertion id ${assertionId} has been successfully inserted!`,
-        );
-    }
-
-    async localStoreAssertion(assertionId, operationId) {
-        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
-
-        this.logger.info(`Inserting assertion with id: ${assertionId} in triple store.`);
-
-        await this.tripleStoreModuleManager.insertAssertion(assertionId, assertion.join('\n'));
-
-        this.logger.info(`Assertion with id ${assertionId} has been successfully inserted!`);
-    }
-
-    async localStoreAsset(
-        assertionId,
-        blockchain,
-        contract,
-        tokenId,
-        operationId,
-        agreementStartTime,
-        agreementEndTime,
-        keyword,
-    ) {
-        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
-        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
-        const assetNquads = await formatAssertion({
-            '@context': SCHEMA_CONTEXT,
-            '@id': ual,
-            blockchain,
-            contract,
-            tokenId,
-            assertion: { '@id': `assertion:${assertionId}` },
-            latestAssertion: { '@id': `assertion:${assertionId}` },
-            agreementStartTime,
-            agreementEndTime,
-            keyword,
-        });
-
-        this.logger.info(
-            `Inserting asset with assertion id: ${assertionId}, ual: ${ual} in triple store.`,
-        );
-
-        await Promise.all([
-            this.tripleStoreModuleManager.insertAsset(ual, assertionId, assetNquads.join('\n')),
-            this.tripleStoreModuleManager.insertAssertion(assertionId, assertion.join('\n')),
-        ]);
-
-        this.logger.info(
-            `Asset with assertion id: ${assertionId}, ual: ${ual} has been successfully inserted!`,
-        );
     }
 }
 
