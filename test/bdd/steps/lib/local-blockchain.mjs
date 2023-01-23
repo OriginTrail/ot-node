@@ -229,6 +229,12 @@ class LocalBlockchain {
                 this.logger.info(
                     `\t Profile contract address: \t\t\t\t${this.contracts.profile.instance._address}`,
                 );
+                this.logger.info(
+                    `\t ContentAsset contract address: \t\t\t\t${this.contracts.contentAsset.instance._address}`,
+                );
+                this.logger.info(
+                    `\t ContentAsset Storage contract address: \t\t\t\t${this.contracts.contentAssetStorage.instance._address}`,
+                );
                 accept();
             });
         });

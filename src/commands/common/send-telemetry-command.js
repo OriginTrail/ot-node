@@ -26,32 +26,30 @@ class SendTelemetryCommand extends Command {
         }
         try {
             const events = await this.telemetryInjectionService.getUnpublishedEvents();
-            if (events && events.length > 0) {
-                const signalingMessage = {
-                    nodeData: {
-                        version: pjson.version,
-                        identity: this.networkModuleManager.getPeerId().toB58String(),
-                        hostname: this.config.hostname,
-                        operational_wallet: this.blockchainModuleManager.getPublicKey(),
-                        management_wallet: this.blockchainModuleManager.getManagementKey(),
-                        triple_store: this.config.modules.tripleStore.defaultImplementation,
-                        auto_update_enabled: this.config.modules.autoUpdater.enabled,
-                        multiaddresses: this.networkModuleManager.getMultiaddrs(),
-                    },
-                    events,
-                };
-                const config = {
-                    method: 'post',
-                    url: this.config.telemetry.signalingServerUrl,
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    data: JSON.stringify(signalingMessage),
-                };
-                const response = await axios(config);
-                if (response.status === 200) {
-                    await this.telemetryInjectionService.removePublishedEvents(events);
-                }
+            const signalingMessage = {
+                nodeData: {
+                    version: pjson.version,
+                    identity: this.networkModuleManager.getPeerId().toB58String(),
+                    hostname: this.config.hostname,
+                    operational_wallet: this.blockchainModuleManager.getPublicKey(),
+                    management_wallet: this.blockchainModuleManager.getManagementKey(),
+                    triple_store: this.config.modules.tripleStore.defaultImplementation,
+                    auto_update_enabled: this.config.modules.autoUpdater.enabled,
+                    multiaddresses: this.networkModuleManager.getMultiaddrs(),
+                },
+                events: events || [],
+            };
+            const config = {
+                method: 'post',
+                url: this.config.telemetry.signalingServerUrl,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                data: JSON.stringify(signalingMessage),
+            };
+            const response = await axios(config);
+            if (response.status === 200 && events?.length > 0) {
+                await this.telemetryInjectionService.removePublishedEvents(events);
             }
         } catch (e) {
             await this.handleError(e);

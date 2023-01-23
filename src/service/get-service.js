@@ -12,10 +12,6 @@ class GetService extends OperationService {
     constructor(ctx) {
         super(ctx);
 
-        this.dataService = ctx.dataService;
-        this.networkModuleManager = ctx.networkModuleManager;
-        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
-
         this.operationName = OPERATIONS.GET;
         this.networkProtocols = NETWORK_PROTOCOLS.GET;
         this.errorType = ERROR_TYPE.GET.GET_ERROR;
@@ -94,25 +90,6 @@ class GetService extends OperationService {
                 await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
             }
         }
-    }
-
-    async localGet(assertionId, operationId) {
-        this.logger.debug(`Getting assertion: ${assertionId} for operationId: ${operationId}`);
-
-        let nquads = await this.tripleStoreModuleManager.get(assertionId);
-        nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
-
-        this.logger.debug(
-            `Assertion: ${assertionId} for operationId: ${operationId} ${
-                nquads.length ? '' : 'not'
-            } found in local triple store.`,
-        );
-
-        if (nquads.length) {
-            this.logger.debug(`Number of n-quads retrieved from the database : ${nquads.length}`);
-        }
-
-        return nquads;
     }
 }
 
