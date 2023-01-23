@@ -1,8 +1,8 @@
 import publishSchema from '../controllers/http-api/request-schema/publish-schema.js';
 import getSchema from '../controllers/http-api/request-schema/get-schema.js';
-import searchSchema from '../controllers/http-api/request-schema/search-schema.js';
 import querySchema from '../controllers/http-api/request-schema/query-schema.js';
 import bidSuggestionSchema from '../controllers/http-api/request-schema/bid-suggestion-schema.js';
+import localStoreSchema from '../controllers/http-api/request-schema/local-store-schema.js';
 
 class JsonSchemaService {
     constructor(ctx) {
@@ -21,12 +21,12 @@ class JsonSchemaService {
         return getSchema();
     }
 
-    searchSchema() {
-        return searchSchema();
-    }
-
     querySchema() {
         return querySchema();
+    }
+
+    localStoreSchema() {
+        return localStoreSchema();
     }
 }
 

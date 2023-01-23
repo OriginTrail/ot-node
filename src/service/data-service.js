@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import jsonld from 'jsonld';
 import { SCHEMA_CONTEXT, MEDIA_TYPES, XML_DATA_TYPES } from '../constants/constants.js';
 
