@@ -1,3 +1,4 @@
+import { ethers } from 'ethers';
 import { xor as uint8ArrayXor } from 'uint8arrays/xor';
 import { compare as uint8ArrayCompare } from 'uint8arrays/compare';
 import pipe from 'it-pipe';
@@ -56,8 +57,8 @@ class ShardingTableService {
         );
         await this.repositoryModuleManager.removeShardingTablePeerRecords(blockchainId);
 
-        const shardingTableLength = Number(
-            await this.blockchainModuleManager.getShardingTableLength(blockchainId),
+        const shardingTableLength = await this.blockchainModuleManager.getShardingTableLength(
+            blockchainId,
         );
         let startingIdentityId = await this.blockchainModuleManager.getShardingTableHead(
             blockchainId,
@@ -273,7 +274,7 @@ class ShardingTableService {
                 ['address', 'bytes32'],
                 [contentAssetStorageAddress, firstAssertionId],
             ),
-            Number(await this.blockchainModuleManager.getR2(blockchainId)),
+            await this.blockchainModuleManager.getR2(blockchainId),
             hashFunctionId,
             true,
         );

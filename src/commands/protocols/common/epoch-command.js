@@ -20,16 +20,12 @@ class EpochCommand extends Command {
     ) {
         // todo check epoch number and make sure that delay is not in past
         const nextEpochStartTime =
-            Number(agreementData.startTime) + Number(agreementData.epochLength) * (epoch + 1);
+            agreementData.startTime + agreementData.epochLength * (epoch + 1);
 
+        const commitWindowDurationPerc =
+            await this.blockchainModuleManager.getCommitWindowDurationPerc(blockchain);
         // delay by 10% of commit window length
-        const offset =
-            ((Number(agreementData.epochLength) *
-                Number(
-                    await this.blockchainModuleManager.getCommitWindowDurationPerc(blockchain),
-                )) /
-                100) *
-            0.1;
+        const offset = ((agreementData.epochLength * commitWindowDurationPerc) / 100) * 0.1;
 
         const delay = nextEpochStartTime - Math.floor(Date.now() / 1000) + offset;
 

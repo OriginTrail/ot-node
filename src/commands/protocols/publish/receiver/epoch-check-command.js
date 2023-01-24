@@ -103,7 +103,7 @@ class EpochCheckCommand extends EpochCommand {
     }
 
     assetLifetimeExpired(agreementData, epoch) {
-        return epoch >= Number(agreementData.epochsNumber);
+        return epoch >= agreementData.epochsNumber;
     }
 
     /**
