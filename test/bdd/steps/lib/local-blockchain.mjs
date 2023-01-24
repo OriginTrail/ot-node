@@ -2,6 +2,7 @@
 import Ganache from 'ganache';
 import { ethers } from "ethers";
 import { readFile } from 'fs/promises';
+import Web3 from 'web3';
 
 const hub = JSON.parse(await readFile('node_modules/dkg-evm-module/build/contracts/Hub.json'));
 const shardingTable = JSON.parse(
@@ -71,6 +72,11 @@ const contentAssetStorage = JSON.parse(
 const accountPrivateKeys = JSON.parse(
     await readFile('test/bdd/steps/api/datasets/privateKeys.json'),
 );
+const web3 = new Web3();
+const wallets = accountPrivateKeys.map((privateKey) => ({
+    address: web3.eth.accounts.privateKeyToAccount(privateKey).address,
+    privateKey,
+}));
 
 const sources = {
     hub,
@@ -352,7 +358,7 @@ class LocalBlockchain {
             ...constructorArgs,
             { gasLimit: 6900000 }
         );
-        
+
         this.contracts[contractName].deploymentReceipt = contractInstance.deployTransaction;
         this.contracts[contractName].instance = contractInstance;
     }
@@ -449,6 +455,10 @@ class LocalBlockchain {
         await contract.instance
             .setupRole(minter, { gasLimit: 3000000 })
             .catch((error) => this.logger.error('Unable to setup role. Error: ', error));
+    }
+
+    getWallets() {
+        return wallets;
     }
 }
 
