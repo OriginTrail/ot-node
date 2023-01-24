@@ -34,7 +34,7 @@ async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
     const askWei = ethers.utils.parseEther(ask);
 
     await profile.setAsk(identityId, askWei, {
-        gasPrice: process.env.NODE_ENV === 'development' ? undefined : 8,
+        gasPrice: devEnvironment ? undefined : 8,
         gasLimit: 500_000,
     });
 }

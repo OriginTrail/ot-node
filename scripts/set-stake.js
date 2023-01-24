@@ -58,12 +58,12 @@ async function setStake(
     const stakeWei = ethers.utils.parseEther(stake);
 
     await tokenContract.increaseAllowance(stakingContractAddress, stakeWei, {
-        gasPrice: process.env.NODE_ENV === 'development' ? undefined : 8,
+        gasPrice: devEnvironment ? undefined : 8,
         gasLimit: 500_000,
     });
     // TODO: Add ABI instead of hard-coded function definition
     await stakingContract['addStake(uint72,uint96)'](identityId, stakeWei, {
-        gasPrice: process.env.NODE_ENV === 'development' ? undefined : 1_000,
+        gasPrice: devEnvironment ? undefined : 1_000,
         gasLimit: 500_000,
     });
 }
