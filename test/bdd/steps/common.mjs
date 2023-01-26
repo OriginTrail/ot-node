@@ -2,13 +2,10 @@ import { Given } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
 import fs from 'fs';
 import { setTimeout as sleep } from 'timers/promises';
-import { readFile } from 'fs/promises';
-import DeepExtend from 'deep-extend';
-import DkgClientHelper from '../../utilities/dkg-client-helper.mjs';
-import StepsUtils from "../../utilities/steps-utils.mjs";
 
-const defaultConfiguration = JSON.parse(await readFile("test/bdd/steps/config/origintrail-test-node-config.json"));
-const bootstrapNodeConfiguration =  JSON.parse(await readFile("test/bdd/steps/config/origintrail-test-bootstrap-config.json"));
+import DkgClientHelper from '../../utilities/dkg-client-helper.mjs';
+import StepsUtils from '../../utilities/steps-utils.mjs';
+
 const stepsUtils = new StepsUtils();
 
 Given(
@@ -24,22 +21,19 @@ Given(
             const wallet = wallets[nodeIndex + 1];
             const managementWallet = wallets[nodeIndex + 1 + Math.floor(wallets.length / 2)];
             const rpcPort = 8901 + nodeIndex;
+            const networkPort = 9001 + nodeIndex;
             const nodeName = `origintrail-test-${nodeIndex}`;
             const sharesTokenName = `origintrail-test-${nodeIndex}`;
             const sharesTokenSymbol = `OT-T-${nodeIndex}`;
-            const nodeConfiguration = DeepExtend(
-                {},
-                defaultConfiguration,
-                stepsUtils.createNodeConfiguration(
-                    this.state.localBlockchain,
-                    wallet,
-                    managementWallet,
-                    nodeIndex,
-                    nodeName,
-                    rpcPort,
-                    sharesTokenName,
-                    sharesTokenSymbol
-                ),
+            const nodeConfiguration = stepsUtils.createNodeConfiguration(
+                wallet,
+                managementWallet,
+                nodeIndex,
+                nodeName,
+                rpcPort,
+                networkPort,
+                sharesTokenName,
+                sharesTokenSymbol,
             );
             const forkedNode = stepsUtils.forkNode(nodeConfiguration);
             const logFileStream = fs.createWriteStream(
@@ -53,9 +47,7 @@ Given(
             // eslint-disable-next-line no-loop-func
             forkedNode.on('message', (response) => {
                 if (response.error) {
-                    assert.fail(
-                        `Error while initializing node${nodeIndex}: ${response.error}`,
-                    );
+                    assert.fail(`Error while initializing node${nodeIndex}: ${response.error}`);
                 } else {
                     // todo if started
                     const client = new DkgClientHelper({
@@ -88,8 +80,28 @@ Given(
         expect(this.state.bootstraps).to.have.length(0);
         expect(nodeCount).to.be.equal(1); // Currently not supported more.
         this.logger.log('Initializing bootstrap node');
+        const nodeIndex = Object.keys(this.state.nodes).length;
+        const wallets = this.state.localBlockchain.getWallets();
+        const wallet = wallets[nodeIndex];
+        const managementWallet =
+            this.state.localBlockchain.getWallets()[nodeIndex + Math.floor(wallets.length / 2)];
+        const rpcPort = 8900;
+        const networkPort = 9000;
         const nodeName = 'origintrail-test-bootstrap';
-        const forkedNode = stepsUtils.forkNode(bootstrapNodeConfiguration);
+        const sharesTokenName = `${nodeName}-${nodeIndex}`;
+        const sharesTokenSymbol = `OT-B-${nodeIndex}`;
+        const nodeConfiguration = stepsUtils.createNodeConfiguration(
+            wallet,
+            managementWallet,
+            nodeIndex,
+            nodeName,
+            rpcPort,
+            networkPort,
+            sharesTokenName,
+            sharesTokenSymbol,
+            true,
+        );
+        const forkedNode = stepsUtils.forkNode(nodeConfiguration);
 
         const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
         forkedNode.stdout.setEncoding('utf8');
@@ -99,7 +111,7 @@ Given(
         });
         forkedNode.on('message', async (response) => {
             if (response.error) {
-                this.logger.debug(`Error while initializing bootstrap node: ${response.error}`)
+                this.logger.debug(`Error while initializing bootstrap node: ${response.error}`);
             } else {
                 const client = new DkgClientHelper({
                     endpoint: 'http://localhost',
@@ -111,8 +123,8 @@ Given(
                 this.state.bootstraps.push({
                     client,
                     forkedNode,
-                    configuration: bootstrapNodeConfiguration,
-                    nodeRpcUrl: `http://localhost:${bootstrapNodeConfiguration.rpcPort}`,
+                    configuration: nodeConfiguration,
+                    nodeRpcUrl: `http://localhost:${rpcPort}`,
                 });
             }
             done();
@@ -124,43 +136,40 @@ Given(
     /^I setup node (\d+) with ([a-z][\w-]*(?:\.[\w-]+)*) set to ([^"]*)$/,
     { timeout: 120000 },
     function setupPublishNode(nodeNum, propertyName, propertyValue, done) {
-        const propertyNameSplit = propertyName.split('.');
-        this.logger.log(`I setup node ${nodeNum} with ${propertyName} set to ${propertyValue}`);
-        expect(
-            Object.prototype.hasOwnProperty.call(defaultConfiguration, propertyNameSplit[0]),
-            `Property ${propertyName} doesn't exist`,
-        ).to.be.equal(true);
         const nodeIndex = Object.keys(this.state.nodes).length;
         const wallets = this.state.localBlockchain.getWallets();
         const wallet = wallets[nodeIndex + 1];
         const managementWallet =
             this.state.localBlockchain.getWallets()[nodeIndex + 1 + Math.floor(wallets.length / 2)];
         const rpcPort = 8901 + nodeIndex;
+        const networkPort = 9001 + nodeIndex;
         const nodeName = `origintrail-test-${nodeIndex}`;
         const sharesTokenName = `origintrail-test-${nodeIndex}`;
         const sharesTokenSymbol = `OT-T-${nodeIndex}`;
-        const nodeConfiguration = DeepExtend(
-            {},
-            defaultConfiguration,
-            stepsUtils.createNodeConfiguration(
-                this.state.localBlockchain,
-                wallet,
-                managementWallet,
-                nodeIndex,
-                nodeName,
-                rpcPort,
-                sharesTokenName,
-                sharesTokenSymbol
-            ),
+        const nodeConfiguration = stepsUtils.createNodeConfiguration(
+            wallet,
+            managementWallet,
+            nodeIndex,
+            nodeName,
+            rpcPort,
+            networkPort,
+            sharesTokenName,
+            sharesTokenSymbol,
         );
+        const propertyNameSplit = propertyName.split('.');
+        this.logger.log(`I setup node ${nodeNum} with ${propertyName} set to ${propertyValue}`);
+        expect(
+            Object.prototype.hasOwnProperty.call(nodeConfiguration, propertyNameSplit[0]),
+            `Property ${propertyName} doesn't exist`,
+        ).to.be.equal(true);
         const propertyNameSplitLen = propertyNameSplit.length;
         let propName = nodeConfiguration;
         for (let i = 0; i < propertyNameSplitLen - 1; i += 1) {
             propName = propName[propertyNameSplit[i]];
         }
-        if(propName[propertyNameSplit.slice(-1)] !== undefined){
+        if (propName[propertyNameSplit.slice(-1)] !== undefined) {
             propName[propertyNameSplit.slice(-1)] = propertyValue === '\\0' ? '\0' : propertyValue;
-        }else{
+        } else {
             assert.fail(`Property ${propertyName} doesn't exist`);
         }
         const forkedNode = stepsUtils.forkNode(nodeConfiguration);
@@ -175,9 +184,7 @@ Given(
         // eslint-disable-next-line no-loop-func
         forkedNode.on('message', (response) => {
             if (response.error) {
-                assert.fail(
-                    `Error while initializing node${nodeIndex} : ${response.error}`,
-                );
+                assert.fail(`Error while initializing node${nodeIndex} : ${response.error}`);
             } else {
                 const client = new DkgClientHelper({
                     endpoint: 'http://localhost',
@@ -226,12 +233,12 @@ Given(
     },
 );
 
-Given(/^I wait for (\d+) seconds$/,{ timeout: 100000}, async function waitFor(seconds) {
+Given(/^I wait for (\d+) seconds$/, { timeout: 100000 }, async function waitFor(seconds) {
     this.logger.log(`I wait for ${seconds} seconds for nodes to connect to each other`);
     await sleep(seconds * 1000);
-})
+});
 
-Given(/^I set R1 to be (\d+)$/,{ timeout: 100000}, async function waitFor(r1) {
+Given(/^I set R1 to be (\d+)$/, { timeout: 100000 }, async function waitFor(r1) {
     this.logger.log(`I set R1 to be ${r1}`);
     await this.state.localBlockchain.setR1(r1);
-})
+});

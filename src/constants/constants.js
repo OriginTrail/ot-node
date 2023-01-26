@@ -34,6 +34,22 @@ export const DHT_TYPES = { DUAL: 'dual', WAN: 'wan', LAN: 'lan' };
 
 export const PEER_OFFLINE_LIMIT = 24 * 60 * 60 * 1000;
 
+export const TRIPLE_STORE_REPOSITORIES = {
+    PUBLIC_CURRENT: 'publicCurrent',
+    PUBLIC_HISTORY: 'publicHistory',
+    PRIVATE_CURRENT: 'privateCurrent',
+    PRIVATE_HISTORY: 'privateHistory',
+};
+
+export const REQUIRED_MODULES = [
+    'repository',
+    'httpClient',
+    'network',
+    'validation',
+    'blockchain',
+    'tripleStore',
+];
+
 /**
  * Triple store media types
  * @type {{APPLICATION_JSON: string, N_QUADS: string, SPARQL_RESULTS_JSON: string, LD_JSON: string}}
@@ -174,6 +190,9 @@ export const ERROR_TYPE = {
         GET_REQUEST_REMOTE_ERROR: 'GetRequestRemoteError',
         GET_ERROR: 'GetError',
     },
+    LOCAL_STORE: {
+        LOCAL_STORE_ERROR: 'LocalStoreError',
+    },
     QUERY: {
         LOCAL_QUERY_ERROR: 'LocalQueryError',
     },
@@ -252,19 +271,23 @@ export const OPERATION_ID_STATUS = {
         VALIDATING_QUERY: 'VALIDATING_QUERY',
         SEARCHING_ENTITIES: 'SEARCHING_ENTITIES',
     },
-
     QUERY: {
         QUERY_INIT_START: 'QUERY_INIT_START',
         QUERY_INIT_END: 'QUERY_INIT_END',
         QUERY_START: 'QUERY_START',
         QUERY_END: 'QUERY_END',
     },
+    LOCAL_STORE: {
+        LOCAL_STORE_INIT_START: 'LOCAL_STORE_INIT_START',
+        LOCAL_STORE_INIT_END: 'LOCAL_STORE_INIT_END',
+        LOCAL_STORE_START: 'LOCAL_STORE_START',
+        LOCAL_STORE_END: 'LOCAL_STORE_END',
+    },
 };
 
 export const OPERATIONS = {
     PUBLISH: 'publish',
     GET: 'get',
-    SEARCH: 'search',
 };
 
 /**

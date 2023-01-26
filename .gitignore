@@ -6,7 +6,7 @@ yarn-error.log*
 lerna-debug.log*
 .idea
 .origintrail_noderc
-.*_origintrail_noderc
+.*_origintrail_noderc.json
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
@@ -107,5 +107,11 @@ dist
 
 .DS_Store
 
+# Test data folders
+test-data*
+
+# Data folders
 data*
+
+# VS code files
 .vscode/launch.json

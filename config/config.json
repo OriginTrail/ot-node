@@ -5,6 +5,7 @@
                 "enabled": false,
                 "implementation": {
                     "ot-auto-updater": {
+                        "enabled": false,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
                             "branch": "v6/develop"
@@ -16,6 +17,7 @@
                 "enabled": true,
                 "implementation": {
                     "express-http-client": {
+                        "enabled": true,
                         "package": "./http-client/implementation/express-http-client.js",
                         "config": {
                             "useSsl": false,
@@ -34,6 +36,7 @@
                 "enabled": true,
                 "implementation": {
                     "libp2p-service": {
+                        "enabled": true,
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
                             "dht": {
@@ -62,6 +65,7 @@
                 "enabled": true,
                 "implementation": {
                     "sequelize-repository": {
+                        "enabled": true,
                         "package": "./repository/implementation/sequelize/sequelize-repository.js",
                         "config": {
                             "database": "operationaldb",
@@ -77,34 +81,21 @@
             },
             "tripleStore": {
                 "enabled": true,
-                "defaultImplementation": "ot-graphdb",
                 "implementation": {
                     "ot-blazegraph": {
+                        "enabled": false,
                         "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
-                        "config": {
-                            "url": "http://localhost:9999/blazegraph",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
-                        }
+                        "config": {}
                     },
                     "ot-fuseki": {
+                        "enabled": false,
                         "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
-                        "config": {
-                            "url": "http://localhost:3030",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
-                        }
+                        "config": {}
                     },
                     "ot-graphdb": {
+                        "enabled": false,
                         "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
-                        "config": {
-                            "url": "http://localhost:7200",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
-                        }
+                        "config": {}
                     }
                 }
             },
@@ -112,6 +103,7 @@
                 "enabled": true,
                 "implementation": {
                     "merkle-validation": {
+                        "enabled": true,
                         "package": "./validation/implementation/merkle-validation.js",
                         "config": {}
                     }
@@ -121,6 +113,7 @@
                 "enabled": true,
                 "implementation": {
                     "ganache": {
+                        "enabled": true,
                         "package": "./blockchain/implementation/ganache/ganache-service.js",
                         "config": {
                             "blockchainTitle": "ganache",
@@ -133,6 +126,7 @@
                         }
                     },
                     "otp": {
+                        "enabled": false,
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "otp::testnet",
@@ -143,6 +137,7 @@
                         }
                     },
                     "polygon": {
+                        "enabled": false,
                         "package": "./blockchain/implementation/polygon/polygon-service.js",
                         "config": {
                             "networkId": "polygon::testnet",
@@ -159,6 +154,7 @@
                         }
                     },
                     "rinkeby": {
+                        "enabled": false,
                         "package": "./blockchain/implementation/polygon/eth-service.js",
                         "config": {
                             "networkId": "eth::rinkeby",
@@ -194,6 +190,7 @@
                 "enabled": false,
                 "implementation": {
                     "ot-auto-updater": {
+                        "enabled": false,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
                             "branch": "v6/develop"
@@ -205,8 +202,17 @@
                 "enabled": true,
                 "implementation": {
                     "express-http-client": {
+                        "enabled": true,
                         "package": "./http-client/implementation/express-http-client.js",
-                        "config": {}
+                        "config": {
+                            "useSsl": false,
+                            "sslKeyPath": "/root/certs/privkey.pem",
+                            "sslCertificatePath": "/root/certs/fullchain.pem",
+                            "rateLimiter": {
+                                "timeWindowSeconds": 60,
+                                "maxRequests": 10
+                            }
+                        }
                     }
                 }
             },
@@ -214,6 +220,7 @@
                 "enabled": true,
                 "implementation": {
                     "libp2p-service": {
+                        "enabled": true,
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
                             "dht": {
@@ -239,15 +246,26 @@
                     }
                 }
             },
+            "validation": {
+                "enabled": true,
+                "implementation": {
+                    "enabled": true,
+                    "merkle-validation": {
+                        "package": "./validation/implementation/merkle-validation.js",
+                        "config": {}
+                    }
+                }
+            },
             "repository": {
                 "enabled": true,
                 "implementation": {
                     "sequelize-repository": {
+                        "enabled": true,
                         "package": "./repository/implementation/sequelize/sequelize-repository.js",
                         "config": {
                             "database": "operationaldb",
                             "user": "root",
-                            "password": "password",
+                            "password": "",
                             "port": "3306",
                             "host": "localhost",
                             "dialect": "mysql",
@@ -258,9 +276,9 @@
             },
             "blockchain": {
                 "enabled": true,
-                "defaultImplementation": "ganache",
                 "implementation": {
                     "ganache": {
+                        "enabled": true,
                         "package": "./blockchain/implementation/ganache/ganache-service.js",
                         "config": {
                             "blockchainTitle": "ganache",
@@ -275,34 +293,11 @@
             },
             "tripleStore": {
                 "enabled": true,
-                "defaultImplementation": "ot-graphdb",
                 "implementation": {
-                    "ot-blazegraph": {
-                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
-                        "config": {
-                            "url": "http://localhost:9999/blazegraph",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
-                        }
-                    },
-                    "ot-fuseki": {
-                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
-                        "config": {
-                            "url": "http://localhost:3030",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
-                        }
-                    },
                     "ot-graphdb": {
+                        "enabled": true,
                         "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
-                        "config": {
-                            "url": "http://localhost:7200",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
-                        }
+                        "config": {}
                     }
                 }
             }
@@ -329,6 +324,7 @@
                 "enabled": true,
                 "implementation": {
                     "ot-auto-updater": {
+                        "enabled": true,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
                             "branch": "v6/release/testnet"
@@ -340,6 +336,7 @@
                 "enabled": true,
                 "implementation": {
                     "libp2p-service": {
+                        "enabled": true,
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
                             "dht": {
@@ -370,6 +367,7 @@
                 "enabled": true,
                 "implementation": {
                     "express-http-client": {
+                        "enabled": true,
                         "package": "./http-client/implementation/express-http-client.js",
                         "config": {
                             "useSsl": false,
@@ -388,6 +386,7 @@
                 "enabled": true,
                 "implementation": {
                     "sequelize-repository": {
+                        "enabled": true,
                         "package": "./repository/implementation/sequelize/sequelize-repository.js",
                         "config": {
                             "database": "operationaldb",
@@ -403,9 +402,9 @@
             },
             "blockchain": {
                 "enabled": true,
-                "defaultImplementation": "otp",
                 "implementation": {
                     "otp": {
+                        "enabled": true,
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "parachain::testnet",
@@ -422,6 +421,7 @@
                 "enabled": true,
                 "implementation": {
                     "merkle-validation": {
+                        "enabled": true,
                         "package": "./validation/implementation/merkle-validation.js",
                         "config": {}
                     }
@@ -429,34 +429,21 @@
             },
             "tripleStore": {
                 "enabled": true,
-                "defaultImplementation": "ot-blazegraph",
                 "implementation": {
                     "ot-blazegraph": {
+                        "enabled": false,
                         "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
-                        "config": {
-                            "url": "http://localhost:9999/blazegraph",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
-                        }
+                        "config": {}
                     },
                     "ot-fuseki": {
+                        "enabled": false,
                         "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
-                        "config": {
-                            "url": "http://localhost:3030",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
-                        }
+                        "config": {}
                     },
                     "ot-graphdb": {
+                        "enabled": false,
                         "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
-                        "config": {
-                            "url": "http://localhost:7200",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
-                        }
+                        "config": {}
                     }
                 }
             }
@@ -483,6 +470,7 @@
                 "enabled": true,
                 "implementation": {
                     "ot-auto-updater": {
+                        "enabled": true,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
                             "branch": "v6/release/mainnet"
@@ -494,6 +482,7 @@
                 "enabled": true,
                 "implementation": {
                     "libp2p-service": {
+                        "enabled": true,
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
                             "dht": {
@@ -524,6 +513,7 @@
                 "enabled": true,
                 "implementation": {
                     "express-http-client": {
+                        "enabled": true,
                         "package": "./http-client/implementation/express-http-client.js",
                         "config": {
                             "useSsl": false,
@@ -542,6 +532,7 @@
                 "enabled": true,
                 "implementation": {
                     "sequelize-repository": {
+                        "enabled": true,
                         "package": "./repository/implementation/sequelize/sequelize-repository.js",
                         "config": {
                             "database": "operationaldb",
@@ -560,6 +551,7 @@
                 "defaultImplementation": "otp",
                 "implementation": {
                     "otp": {
+                        "enabled": true,
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
                             "networkId": "otp::mainnet",
@@ -573,45 +565,33 @@
                     }
                 }
             },
-            "validation": {
+            "tripleStore": {
                 "enabled": true,
                 "implementation": {
-                    "merkle-validation": {
-                        "package": "./validation/implementation/merkle-validation.js",
+                    "ot-blazegraph": {
+                        "enabled": false,
+                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
+                        "config": {}
+                    },
+                    "ot-fuseki": {
+                        "enabled": false,
+                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
+                        "config": {}
+                    },
+                    "ot-graphdb": {
+                        "enabled": false,
+                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
                         "config": {}
                     }
                 }
             },
-            "tripleStore": {
+            "validation": {
                 "enabled": true,
-                "defaultImplementation": "ot-blazegraph",
                 "implementation": {
-                    "ot-blazegraph": {
-                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
-                        "config": {
-                            "url": "http://localhost:9999/blazegraph",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
-                        }
-                    },
-                    "ot-fuseki": {
-                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
-                        "config": {
-                            "url": "http://localhost:3030",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
-                        }
-                    },
-                    "ot-graphdb": {
-                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
-                        "config": {
-                            "url": "http://localhost:7200",
-                            "repository": "node0",
-                            "username": "admin",
-                            "password": ""
-                        }
+                    "merkle-validation": {
+                        "enabled": true,
+                        "package": "./validation/implementation/merkle-validation.js",
+                        "config": {}
                     }
                 }
             }

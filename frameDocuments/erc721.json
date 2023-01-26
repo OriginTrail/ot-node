@@ -1,9 +1,0 @@
-{
-  "context": {
-    "@context": "https://www.schema.org/"
-  },
-  "frame": {
-    "@context": "https://www.schema.org/",
-    "@type": "ERC721"
-  }
-}

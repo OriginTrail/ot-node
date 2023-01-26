@@ -12,8 +12,6 @@ class DkgClientHelper {
     async publish(data, wallet) {
         const options = {
             visibility: 'public',
-            triplesNumber: 3,
-            chunksNumber: 3,
             epochsNum: 5,
             maxNumberOfRetries: 5,
             hashFunctionId: 1,
@@ -39,13 +37,6 @@ class DkgClientHelper {
     async get(ids) {
         return this.client._getRequest({
             ids,
-        });
-    }
-
-    async search(resultType, query) {
-        return this.client._searchRequest({
-            resultType,
-            query,
         });
     }
 
