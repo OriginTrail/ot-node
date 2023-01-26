@@ -31,22 +31,36 @@ class PublishController extends BaseController {
 
         const { assertion, assertionId, blockchain, contract, tokenId, hashFunctionId } = req.body;
         try {
-            await Promise.all([
-                this.repositoryModuleManager.createOperationRecord(
-                    this.operationService.getOperationName(),
-                    operationId,
-                    OPERATION_STATUS.IN_PROGRESS,
-                ),
-                this.operationIdService.cacheOperationIdData(operationId, { assertion }),
-            ]);
+            await this.repositoryModuleManager.createOperationRecord(
+                this.operationService.getOperationName(),
+                operationId,
+                OPERATION_STATUS.IN_PROGRESS,
+            );
 
             this.logger.info(
                 `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
             );
 
+            let commandSequence = [];
+
+            if (req.body.localStore) {
+                commandSequence.push('localStoreCommand');
+                await this.operationIdService.cacheOperationIdData(operationId, [
+                    { assertion, assertionId },
+                ]);
+            } else {
+                await this.operationIdService.cacheOperationIdData(operationId, { assertion });
+            }
+
+            commandSequence = [
+                ...commandSequence,
+                'validateAssertionCommand',
+                'networkPublishCommand',
+            ];
+
             await this.commandExecutor.add({
-                name: 'validateAssertionCommand',
-                sequence: ['networkPublishCommand'],
+                name: commandSequence[0],
+                sequence: commandSequence.slice(1),
                 delay: 0,
                 period: 5000,
                 retries: 3,

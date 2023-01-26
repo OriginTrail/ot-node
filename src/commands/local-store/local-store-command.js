@@ -5,6 +5,7 @@ class LocalStoreCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.tripleStoreService = ctx.tripleStoreService;
+        this.operationIdService = ctx.operationIdService;
 
         this.errorType = ERROR_TYPE.LOCAL_STORE.LOCAL_STORE_ERROR;
     }
@@ -12,13 +13,14 @@ class LocalStoreCommand extends Command {
     async execute(command) {
         const { operationId } = command.data;
 
+        let assertions = [];
         try {
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_START,
             );
 
-            const assertions = await this.operationIdService.getCachedOperationIdData(operationId);
+            assertions = await this.operationIdService.getCachedOperationIdData(operationId);
 
             await Promise.all(
                 assertions.map(({ assertionId, assertion }) =>
@@ -43,9 +45,16 @@ class LocalStoreCommand extends Command {
             );
         } catch (e) {
             await this.handleError(operationId, e.message, this.errorType, true);
+            return Command.empty();
         }
 
-        return Command.empty();
+        if (command?.sequence?.length) {
+            await this.operationIdService.cacheOperationIdData(operationId, {
+                assertion: assertions[0].assertion,
+            });
+        }
+
+        return this.continueSequence(command.data, command.sequence);
     }
 
     /**
