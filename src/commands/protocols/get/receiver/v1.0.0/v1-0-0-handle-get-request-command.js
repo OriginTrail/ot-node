@@ -10,6 +10,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.getService;
+        this.tripleStoreService = ctx.tripleStoreService;
 
         this.errorType = ERROR_TYPE.GET.GET_REQUEST_REMOTE_ERROR;
     }
@@ -21,7 +22,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.GET.GET_REMOTE_START,
         );
 
-        const nquads = await this.operationService.localGet(assertionId, operationId);
+        const nquads = await this.tripleStoreService.localGet(assertionId, operationId);
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

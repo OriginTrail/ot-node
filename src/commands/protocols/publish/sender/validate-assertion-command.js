@@ -4,6 +4,7 @@ import { ERROR_TYPE, OPERATION_ID_STATUS } from '../../../../constants/constants
 class ValidateAssertionCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.operationService = ctx.publishService;
         this.ualService = ctx.ualService;
 
@@ -25,7 +26,7 @@ class ValidateAssertionCommand extends Command {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         this.logger.info(`Validating assertion with ual: ${ual}`);
 
-        const blockchainAssertionId = await this.operationService.getLatestAssertionId(
+        const blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertionId(
             blockchain,
             contract,
             tokenId,

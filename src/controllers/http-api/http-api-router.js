@@ -5,7 +5,8 @@ class HttpApiRouter {
 
         this.getHttpApiController = ctx.getHttpApiController;
         this.publishHttpApiController = ctx.publishHttpApiController;
-        this.searchHttpApiController = ctx.searchHttpApiController;
+        this.localStoreHttpApiController = ctx.localStoreHttpApiController;
+        this.queryHttpApiController = ctx.queryHttpApiController;
         this.resultHttpApiController = ctx.resultHttpApiController;
         this.infoHttpApiController = ctx.infoHttpApiController;
         this.bidSuggestionHttpApiController = ctx.bidSuggestionHttpApiController;
@@ -32,9 +33,17 @@ class HttpApiRouter {
         this.httpClientModuleManager.post(
             '/query',
             (req, res) => {
-                this.searchHttpApiController.handleQueryRequest(req, res);
+                this.queryHttpApiController.handleQueryRequest(req, res);
             },
             { requestSchema: this.jsonSchemaService.querySchema() },
+        );
+
+        this.httpClientModuleManager.post(
+            '/local-store',
+            (req, res) => {
+                this.localStoreHttpApiController.handleLocalStoreRequest(req, res);
+            },
+            { requestSchema: this.jsonSchemaService.localStoreSchema() },
         );
 
         this.httpClientModuleManager.post(

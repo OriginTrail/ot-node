@@ -9,59 +9,77 @@ import {
 
 class OtTripleStore {
     async initialize(config, logger) {
-        this.config = config;
         this.logger = logger;
-        this.initializeSparqlEndpoints(this.config.url, this.config.repository);
-
-        let ready = await this.healthCheck();
-        let retries = 0;
-        while (!ready && retries < TRIPLE_STORE_CONNECT_MAX_RETRIES) {
-            retries += 1;
-            this.logger.warn(
-                `Cannot connect to Triple store (${this.getName()}), retry number: ${retries}/${TRIPLE_STORE_CONNECT_MAX_RETRIES}. Retrying in ${TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`,
-            );
-            /* eslint-disable no-await-in-loop */
-            await setTimeout(TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000);
-            ready = await this.healthCheck();
-        }
-        if (retries === TRIPLE_STORE_CONNECT_MAX_RETRIES) {
-            this.logger.error(
-                `Triple Store (${this.getName()}) not available, max retries reached.`,
-            );
-            process.exit(1);
-        }
-
+        this.repositories = config.repositories;
+        this.initializeRepositories();
+        this.initializeContexts();
+        await this.ensureConnections();
         this.queryEngine = new Engine();
-        this.filtertype = {
-            KEYWORD: 'keyword',
-            KEYWORDPREFIX: 'keywordPrefix',
-            TYPES: 'types',
-            ISSUERS: 'issuers',
-        };
-        const sources = [
-            {
-                type: 'sparql',
-                value: `${this.sparqlEndpoint}`,
-            },
-        ];
+    }
 
-        this.insertContext = {
-            sources,
-            destination: {
-                type: 'sparql',
-                value: `${this.sparqlEndpointUpdate}`,
-            },
-        };
-        this.queryContext = {
-            sources,
-        };
+    initializeRepositories() {
+        for (const repository of Object.keys(this.repositories)) {
+            this.initializeSparqlEndpoints(repository);
+        }
     }
 
     initializeSparqlEndpoints() {
         throw Error('initializeSparqlEndpoints not implemented');
     }
 
-    async assetExists(ual, blockchain, contract, tokenId) {
+    async deleteRepository() {
+        throw Error('deleteRepository not implemented');
+    }
+
+    initializeContexts() {
+        for (const repository in this.repositories) {
+            const sources = [
+                {
+                    type: 'sparql',
+                    value: this.repositories[repository].sparqlEndpoint,
+                },
+            ];
+
+            this.repositories[repository].insertContext = {
+                sources,
+                destination: {
+                    type: 'sparql',
+                    value: this.repositories[repository].sparqlEndpointUpdate,
+                },
+            };
+            this.repositories[repository].queryContext = {
+                sources,
+            };
+        }
+    }
+
+    async ensureConnections() {
+        const ensureConnectionPromises = Object.keys(this.repositories).map(async (repository) => {
+            let ready = await this.healthCheck(repository);
+            let retries = 0;
+            while (!ready && retries < TRIPLE_STORE_CONNECT_MAX_RETRIES) {
+                retries += 1;
+                this.logger.warn(
+                    `Cannot connect to Triple store (${this.getName()}), repository: ${repository}, located at: ${
+                        this.repositories[repository].url
+                    }  retry number: ${retries}/${TRIPLE_STORE_CONNECT_MAX_RETRIES}. Retrying in ${TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`,
+                );
+                /* eslint-disable no-await-in-loop */
+                await setTimeout(TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000);
+                ready = await this.healthCheck(repository);
+            }
+            if (retries === TRIPLE_STORE_CONNECT_MAX_RETRIES) {
+                this.logger.error(
+                    `Triple Store (${this.getName()})  not available, max retries reached.`,
+                );
+                process.exit(1);
+            }
+        });
+
+        await Promise.all(ensureConnectionPromises);
+    }
+
+    async assetExists(repository, ual, blockchain, contract, tokenId) {
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
                         ASK WHERE {
                             GRAPH <assets:graph> {
@@ -71,51 +89,74 @@ class OtTripleStore {
                             }
                         }`;
 
-        return this.ask(query);
+        return this.ask(repository, query);
     }
 
-    async insertAsset(ual, assertionId, assetNquads) {
-        // const exists = await this.assetExists(ual, assertionId)
+    async isAssertionIdShared(repository, assertionId) {
+        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
+                    SELECT (COUNT(DISTINCT ?ual) as ?count)
+                    WHERE {
+                        GRAPH <assets:graph> {
+                                ?ual schema:assertion <assertion:${assertionId}>
+                        }
+                    }`;
+        const count = await this.select(repository, query);
+        return count > 1;
+    }
 
-        // if(!exists) {
-        const insertion = `
-            PREFIX schema: <${SCHEMA_CONTEXT}>
-            DELETE {
-                <${ual}> schema:latestAssertion ?o . 
+    async getAssetAssertionIds(repository, ual) {
+        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
+                    SELECT DISTINCT ?assertionId
+                    WHERE {
+                        GRAPH <assets:graph> {
+                                <${ual}> schema:assertion ?assertionId .
+                        }
+                    }`;
+        return this.select(repository, query);
+    }
+
+    async assetAgreementExists(repository, ual, blockchain, contract, tokenId) {
+        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
+                        ASK WHERE {
+                            GRAPH <assets:graph> {
+                                <${ual}> schema:blockchain "${blockchain}";
+                                         schema:contract   "${contract}";
+                                         schema:tokenId    ${tokenId};
+                                         schema:assertion ?assertion;
+                                         schema:agreementStartTime ?agreementStartTime;
+                                         schema:agreementEndTime ?agreementEndTime;
+                                         schema:keyword ?keyword;
+                            }
+                        }`;
+
+        return this.ask(repository, query);
+    }
+
+    async insertAsset(repository, ual, assetNquads, deleteAssetTriples = true) {
+        const deleteAssetTriplesQuery = `DELETE {
+                <${ual}> schema:assertion ?assertion . 
                 <${ual}> schema:agreementEndTime ?agreementEndTime
             }
             WHERE {
                 GRAPH <assets:graph> {
                     ?s ?p ?o .
                     <${ual}> schema:agreementEndTime ?agreementEndTime .
-                    <${ual}> schema:latestAssertion ?latestAssertion .
+                    <${ual}> schema:assertion ?assertion .
                 }
-            };
-            INSERT DATA {
-                GRAPH <assets:graph> { 
-                    ${assetNquads} 
-                }
-            }`;
-        await this.queryEngine.queryVoid(insertion, this.insertContext);
-        // }
-    }
-
-    async insertIndex(keyword, indexNquads, assetNquads) {
+            };`;
         const insertion = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
+            ${deleteAssetTriples ? deleteAssetTriplesQuery : ''}
             INSERT DATA {
                 GRAPH <assets:graph> { 
                     ${assetNquads} 
                 }
-                GRAPH <keyword:${keyword}> {
-                    ${indexNquads}
-                }
             }`;
-        await this.queryEngine.queryVoid(insertion, this.insertContext);
+        await this.queryEngine.queryVoid(insertion, this.repositories[repository].insertContext);
     }
 
-    async insertAssertion(assertionId, assertionNquads) {
-        const exists = await this.assertionExists(assertionId);
+    async insertAssertion(repository, assertionId, assertionNquads) {
+        const exists = await this.assertionExists(repository, assertionId);
 
         if (!exists) {
             const insertion = `
@@ -125,41 +166,48 @@ class OtTripleStore {
                     ${assertionNquads} 
                 } 
             }`;
-            await this.queryEngine.queryVoid(insertion, this.insertContext);
+            await this.queryEngine.queryVoid(
+                insertion,
+                this.repositories[repository].insertContext,
+            );
         }
     }
 
-    async construct(query) {
-        const result = await this._executeQuery(query, MEDIA_TYPES.N_QUADS);
-        return result;
+    async construct(repository, query) {
+        return this._executeQuery(repository, query, MEDIA_TYPES.N_QUADS);
     }
 
-    async select(query) {
+    async select(repository, query) {
         // todo: add media type once bug is fixed
         // no media type is passed because of comunica bug
         // https://github.com/comunica/comunica/issues/1034
-        const result = await this._executeQuery(query);
+        const result = await this._executeQuery(repository, query);
         return result ? JSON.parse(result) : [];
     }
 
-    async update(query) {
-        await this.queryEngine.queryVoid(query, this.insertContext);
+    async update(repository, query) {
+        await this.queryEngine.queryVoid(query, this.repositories[repository].insertContext);
     }
 
-    async ask(query) {
-        const result = await this.queryEngine.queryBoolean(query, this.queryContext);
-        return result;
+    async ask(repository, query) {
+        return this.queryEngine.queryBoolean(query, this.repositories[repository].queryContext);
     }
 
-    async assertionExists(graphName) {
-        const escapedGraphName = this.cleanEscapeCharacter(graphName);
-        const query = `ASK WHERE { GRAPH <assertion:${escapedGraphName}> { ?s ?p ?o } }`;
+    async assertionExists(repository, assertionId) {
+        const escapedAssertionId = this.cleanEscapeCharacter(assertionId);
+        const query = `ASK WHERE { GRAPH <assertion:${escapedAssertionId}> { ?s ?p ?o } }`;
 
-        return this.ask(query);
+        return this.ask(repository, query);
     }
 
-    async get(graphName) {
-        const escapedGraphName = this.cleanEscapeCharacter(graphName);
+    async deleteAssertion(repository, assertionId) {
+        const query = `DROP GRAPH <assertion:${assertionId}>`;
+
+        await this.queryEngine.queryVoid(query, this.repositories[repository].insertContext);
+    }
+
+    async getAssertion(repository, assertionId) {
+        const escapedGraphName = this.cleanEscapeCharacter(assertionId);
 
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
                     CONSTRUCT { ?s ?p ?o }
@@ -171,15 +219,18 @@ class OtTripleStore {
                             }
                         }
                     }`;
-        return this.construct(query);
+        return this.construct(repository, query);
     }
 
     async healthCheck() {
         return true;
     }
 
-    async _executeQuery(query, mediaType) {
-        const result = await this.queryEngine.query(query, this.queryContext);
+    async _executeQuery(repository, query, mediaType) {
+        const result = await this.queryEngine.query(
+            query,
+            this.repositories[repository].queryContext,
+        );
         const { data } = await this.queryEngine.resultToString(result, mediaType);
 
         let response = '';
@@ -193,42 +244,6 @@ class OtTripleStore {
 
     cleanEscapeCharacter(query) {
         return query.replace(/['|[\]\\]/g, '\\$&');
-    }
-
-    createFilterParameter(queryParameter, type) {
-        const queryParam = this.cleanEscapeCharacter(queryParameter);
-
-        switch (type) {
-            case this.filtertype.KEYWORD:
-                return `FILTER (lcase(?keyword) = '${queryParam}')`;
-            case this.filtertype.KEYWORDPREFIX:
-                return `FILTER contains(lcase(?keyword),'${queryParam}')`;
-            case this.filtertype.ISSUERS:
-                return `FILTER (?issuer IN (${JSON.stringify(queryParam).slice(1, -1)}))`;
-            case this.filtertype.TYPES:
-                return `FILTER (?type IN (${JSON.stringify(queryParam).slice(1, -1)}))`;
-            default:
-                return '';
-        }
-    }
-
-    createLimitQuery(options) {
-        if (!options.limit) {
-            return '';
-        }
-        const queryLimit = Number(options.limit);
-        if (Number.isNaN(queryLimit) || !Number.isInteger(queryLimit)) {
-            this.logger.error(`Failed creating Limit query: ${options.limit} is not a number`);
-            throw new Error('Limit is not a number');
-        } else if (Number.isInteger(options.limit) && options.limit < 0) {
-            this.logger.error(`Failed creating Limit query: ${options.limit} is negative number`);
-            throw new Error('Limit is not a number');
-        }
-        return `LIMIT ${queryLimit}`;
-    }
-
-    isBoolean(param) {
-        return typeof param === 'boolean' || ['true', 'false'].includes(param);
     }
 
     async reinitialize() {

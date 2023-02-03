@@ -2,6 +2,7 @@
 pathToOtNode=$(pwd)
 numberOfNodes=4
 network="ganache"
+tripleStore="ot-graphdb"
 availableNetworks=("ganache" "rinkeby")
 export $(xargs < $pathToOtNode/.env)
 export ACCESS_KEY=$RPC_ENDPOINT
@@ -30,6 +31,9 @@ while [ $# -gt 0 ]; do
           echo Invalid network parameter. Available networks: ganache, rinkeby
           exit 1
       fi
+      ;;
+    --tripleStore=*)
+      tripleStore="${1#*=}"
       ;;
     *)
       printf "***************************\n"
@@ -66,7 +70,7 @@ echo ================================
 echo ====== Generating configs ======
 echo ================================
 
-node $pathToOtNode/tools/local-network-setup/generate-config-files.js $numberOfNodes $network $hubContractAddress
+node $pathToOtNode/tools/local-network-setup/generate-config-files.js $numberOfNodes $network $tripleStore $hubContractAddress
 
 echo ================================
 echo ======== Starting nodes ========
@@ -76,19 +80,13 @@ startNode() {
   echo Starting node $1
   osascript -e "tell app \"Terminal\"
       do script \"cd $pathToOtNode
-  node index.js ./tools/local-network-setup/.$1_origintrail_noderc\"
+  node index.js ./tools/local-network-setup/.node$1_origintrail_noderc.json\"
   end tell"
 }
 
-startNode bootstrap
-
-# Start only DC node and exit
-if [[ $numberOfNodes -ne 1 ]]
-then
-  i=1
-  while [[ $i -lt $numberOfNodes ]]
-  do
-    startNode dh$i
-    ((i = i + 1))
-  done
-fi
+i=0
+while [[ $i -lt $numberOfNodes ]]
+do
+  startNode $i
+  ((i = i + 1))
+done
