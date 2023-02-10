@@ -104,15 +104,21 @@ SELECT ?s ?o WHERE {
     graph <${assertionId}> 
     {?s ?p ?o . FILTER NOT EXISTS {?object ?predicate ?s .}}}`;
 
-                const resourceId = await this.tripleStoreService.select(
+                const resourceIds = await this.tripleStoreService.select(
                     repository,
                     getResourceIdQuery,
                 );
-                if (resourceId && resourceId[0]?.s) {
+                if (resourceIds && resourceIds[0]?.s) {
+                    let insertData = null;
+
+                    resourceIds.forEach((resourceId) => {
+                        const nquad = `<${ual}>  schema:hasResourceId  <${resourceId[0].s}>`;
+                        insertData = insertData ? `${insertData} . ${nquad}` : nquad;
+                    });
                     const updateQuery = `PREFIX schema: <http://schema.org/>
 delete where { <${ual}> schema:hasResourceId ?anyObject };
 INSERT DATA
-{ GRAPH <assets:graph> { <${ual}>  schema:hasResourceId  <${resourceId[0].s}> } }`;
+{ GRAPH <assets:graph> { ${insertData} } }`;
                     await this.tripleStoreService.update(repository, updateQuery);
                 }
             } catch (error) {

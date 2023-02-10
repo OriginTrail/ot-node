@@ -104,7 +104,11 @@ class TripleStoreService {
                 );
             }
         } */
-        const resourceId = this.findResourceId(assertion);
+        const resourceIds = this.findResourceIds(assertion);
+        const hasResourceId = [];
+        resourceIds.forEach((resourceId) => {
+            hasResourceId.push({ '@id': `${resourceId}` });
+        });
         // store new assertion in current repository, update triple UAL -> assertionId
         const currentAssetNquads = await formatAssertion({
             '@context': SCHEMA_CONTEXT,
@@ -114,7 +118,7 @@ class TripleStoreService {
             tokenId,
             assertion: { '@id': `assertion:${assertionId}` },
             agreementStartTime,
-            hasResourceId: { '@id': `${resourceId}` },
+            hasResourceId,
             agreementEndTime,
             keyword,
         });
@@ -213,8 +217,6 @@ class TripleStoreService {
     }
 
     async update(repository, query) {
-        console.log('repository:', repository);
-        console.log('query:', query);
         return this.tripleStoreModuleManager.update(
             this.repositoryImplementations[repository],
             repository,
@@ -222,7 +224,8 @@ class TripleStoreService {
         );
     }
 
-    findResourceId(assertion) {
+    findResourceIds(assertion) {
+        const resourceIds = [];
         for (const nquad of assertion) {
             const quads = nquad.split(' ');
             const subject = quads[0];
@@ -235,8 +238,9 @@ class TripleStoreService {
                     break;
                 }
             }
-            if (!subjectFoundInObject) {
-                return subject.replace('<', '').replace('>', '');
+            const urlSubject = subject.replace('<', '').replace('>', '');
+            if (!subjectFoundInObject && resourceIds.indexOf(urlSubject) === -1) {
+                resourceIds.push(urlSubject);
             }
         }
     }
