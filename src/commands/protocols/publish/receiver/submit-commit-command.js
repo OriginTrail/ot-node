@@ -110,21 +110,18 @@ class SubmitCommitCommand extends EpochCommand {
             async (result) => {
                 if (!result.error) {
                     const currentEpochStartTime =
-                        Number(agreementData.startTime) + Number(agreementData.epochLength) * epoch;
+                        agreementData.startTime + agreementData.epochLength * epoch;
 
-                    const proofWindowDurationPerc = Number(
-                        await that.blockchainModuleManager.getProofWindowDurationPerc(blockchain),
-                    );
+                    const proofWindowDurationPerc =
+                        await that.blockchainModuleManager.getProofWindowDurationPerc(blockchain);
 
                     const proofWindowDuration =
-                        (proofWindowDurationPerc / 100) * Number(agreementData.epochLength);
+                        (agreementData.epochLength * proofWindowDurationPerc) / 100;
 
                     const proofWindowStartTime =
                         currentEpochStartTime +
                         Math.floor(
-                            (Number(agreementData.epochLength) *
-                                Number(agreementData.proofWindowOffsetPerc)) /
-                                100,
+                            (agreementData.epochLength * agreementData.proofWindowOffsetPerc) / 100,
                         );
 
                     const timeNow = Math.floor(Date.now() / 1000);
@@ -172,7 +169,7 @@ class SubmitCommitCommand extends EpochCommand {
     }
 
     async calculateRank(blockchain, keyword, hashFunctionId) {
-        const r2 = Number(await this.blockchainModuleManager.getR2(blockchain));
+        const r2 = await this.blockchainModuleManager.getR2(blockchain);
         const neighbourhood = await this.shardingTableService.findNeighbourhood(
             blockchain,
             keyword,

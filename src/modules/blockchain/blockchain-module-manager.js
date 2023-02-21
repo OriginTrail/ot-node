@@ -114,16 +114,42 @@ class BlockchainModuleManager extends BaseModuleManager {
         return Promise.all(getEventsPromises);
     }
 
-    convertHexToAscii(blockchain, peerIdHex) {
-        return this.callImplementationFunction(blockchain, 'convertHexToAscii', [peerIdHex]);
+    toBigNumber(blockchain, value) {
+        return this.callImplementationFunction(blockchain, 'toBigNumber', [value]);
     }
 
-    convertToWei(blockchain, ether, fromUnit) {
-        return this.callImplementationFunction(blockchain, 'convertToWei', [ether, fromUnit]);
+    keccak256(blockchain, bytesLikeData) {
+        return this.callImplementationFunction(blockchain, 'keccak256', [bytesLikeData]);
     }
 
-    convertFromWei(blockchain, ether, toUnit) {
-        return this.callImplementationFunction(blockchain, 'convertFromWei', [ether, toUnit]);
+    sha256(blockchain, bytesLikeData) {
+        return this.callImplementationFunction(blockchain, 'sha256', [bytesLikeData]);
+    }
+
+    encodePacked(blockchain, types, values) {
+        return this.callImplementationFunction(blockchain, 'encodePacked', [types, values]);
+    }
+
+    convertAsciiToHex(blockchain, string) {
+        return this.callImplementationFunction(blockchain, 'convertAsciiToHex', [string]);
+    }
+
+    convertHexToAscii(blockchain, hexString) {
+        return this.callImplementationFunction(blockchain, 'convertHexToAscii', [hexString]);
+    }
+
+    convertBytesToUint8Array(blockchain, bytesLikeData) {
+        return this.callImplementationFunction(blockchain, 'convertBytesToUint8Array', [
+            bytesLikeData,
+        ]);
+    }
+
+    convertToWei(blockchain, value, fromUnit) {
+        return this.callImplementationFunction(blockchain, 'convertToWei', [value, fromUnit]);
+    }
+
+    convertFromWei(blockchain, value, toUnit) {
+        return this.callImplementationFunction(blockchain, 'convertFromWei', [value, toUnit]);
     }
 
     async isCommitWindowOpen(blockchain, agreementId, epoch) {

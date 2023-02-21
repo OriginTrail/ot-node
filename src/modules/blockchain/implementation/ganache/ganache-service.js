@@ -9,7 +9,7 @@ class GanacheService extends Web3Service {
     }
 
     async increaseGanacheTime(seconds) {
-        await this.web3.currentProvider.send(
+        await this.provider.send(
             {
                 method: 'evm_increaseTime',
                 params: [seconds],
@@ -17,7 +17,7 @@ class GanacheService extends Web3Service {
             () => {},
         );
 
-        await this.web3.currentProvider.send(
+        await this.provider.send(
             {
                 method: 'evm_mine',
                 params: [],

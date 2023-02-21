@@ -12,12 +12,12 @@ const argv = require('minimist')(process.argv.slice(1), {
 
 async function setOperatorFee(rpcEndpoint, operatorFee, walletPrivateKey, hubContractAddress) {
     const provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);
-    const wallet = new ethers.Wallet(walletPrivateKey);
+    const wallet = new ethers.Wallet(walletPrivateKey, provider);
 
     const hubContract = new ethers.Contract(hubContractAddress, Hub.abi, provider);
 
     const stakingContractAddress = await hubContract.getContractAddress('Staking');
-    const stakingContract = new ethers.Contract(stakingContractAddress, Staking.abi, provider);
+    const stakingContract = new ethers.Contract(stakingContractAddress, Staking.abi, wallet);
 
     const identityStorageAddress = await hubContract.getContractAddress('IdentityStorage');
     const identityStorage = new ethers.Contract(
@@ -28,8 +28,7 @@ async function setOperatorFee(rpcEndpoint, operatorFee, walletPrivateKey, hubCon
 
     const identityId = await identityStorage.getIdentityId(wallet.address);
 
-    const walletSigner = wallet.connect(provider);
-    stakingContract.connect(walletSigner).setOperatorFee(identityId, operatorFee, {
+    stakingContract.setOperatorFee(identityId, operatorFee, {
         gasPrice: process.env.NODE_ENV === 'development' ? undefined : 8,
         gasLimit: 500_000,
     });

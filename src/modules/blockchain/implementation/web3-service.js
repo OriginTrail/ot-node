@@ -1,5 +1,4 @@
 import { ethers } from 'ethers';
-import Web3 from 'web3';
 import axios from 'axios';
 import async from 'async';
 import { setTimeout as sleep } from 'timers/promises';
@@ -8,9 +7,7 @@ import { createRequire } from 'module';
 import {
     DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
-    TRANSACTION_POLLING_TIMEOUT,
     TRANSACTION_QUEUE_CONCURRENCY,
-    WEBSOCKET_PROVIDER_OPTIONS,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -45,7 +42,7 @@ class Web3Service {
         this.rpcNumber = 0;
         this.initializeTransactionQueue(TRANSACTION_QUEUE_CONCURRENCY);
         await this.initializeWeb3();
-        this.currentBlock = await this.web3.eth.getBlockNumber();
+        this.currentBlock = await this.getBlockNumber();
         await this.initializeContracts();
     }
 
@@ -86,17 +83,17 @@ class Web3Service {
 
             try {
                 if (this.config.rpcEndpoints[this.rpcNumber].startsWith('ws')) {
-                    const provider = new Web3.providers.WebsocketProvider(
+                    this.provider = new ethers.providers.WebSocketProvider(
                         this.config.rpcEndpoints[this.rpcNumber],
-                        WEBSOCKET_PROVIDER_OPTIONS,
                     );
-                    this.web3 = new Web3(provider);
                 } else {
-                    this.web3 = new Web3(this.config.rpcEndpoints[this.rpcNumber]);
-                    this.web3.eth.transactionPollingTimeout = TRANSACTION_POLLING_TIMEOUT;
+                    this.provider = new ethers.providers.JsonRpcProvider(
+                        this.config.rpcEndpoints[this.rpcNumber],
+                    );
                 }
                 // eslint-disable-next-line no-await-in-loop
-                isRpcConnected = await this.web3.eth.net.isListening();
+                await this.provider.ready;
+                isRpcConnected = true;
             } catch (e) {
                 this.logger.warn(
                     `Unable to connect to blockchain rpc : ${
@@ -107,6 +104,8 @@ class Web3Service {
                 this.rpcNumber = (this.rpcNumber + 1) % this.config.rpcEndpoints.length;
             }
         }
+
+        this.wallet = new ethers.Wallet(this.getPrivateKey(), this.provider);
     }
 
     async initializeContracts() {
@@ -114,16 +113,21 @@ class Web3Service {
         this.logger.info(
             `Initializing contracts with hub contract address: ${this.config.hubContractAddress}`,
         );
-        this.hubContract = new this.web3.eth.Contract(Hub.abi, this.config.hubContractAddress);
+        this.hubContract = new ethers.Contract(
+            this.config.hubContractAddress,
+            Hub.abi,
+            this.wallet,
+        );
 
         const parametersStorageAddress = await this.callContractFunction(
             this.hubContract,
             'getContractAddress',
             ['ParametersStorage'],
         );
-        this.ParametersStorageContract = new this.web3.eth.Contract(
-            ParametersStorage.abi,
+        this.ParametersStorageContract = new ethers.Contract(
             parametersStorageAddress,
+            ParametersStorage.abi,
+            this.wallet,
         );
 
         const stakingContractAddress = await this.callContractFunction(
@@ -131,16 +135,21 @@ class Web3Service {
             'getContractAddress',
             ['Staking'],
         );
-        this.StakingContract = new this.web3.eth.Contract(Staking.abi, stakingContractAddress);
+        this.StakingContract = new ethers.Contract(
+            stakingContractAddress,
+            Staking.abi,
+            this.wallet,
+        );
 
         const stakingStorageAddress = await this.callContractFunction(
             this.hubContract,
             'getContractAddress',
             ['StakingStorage'],
         );
-        this.StakingStorageContract = new this.web3.eth.Contract(
-            StakingStorage.abi,
+        this.StakingStorageContract = new ethers.Contract(
             stakingStorageAddress,
+            StakingStorage.abi,
+            this.wallet,
         );
 
         const hashingProxyAddress = await this.callContractFunction(
@@ -148,9 +157,10 @@ class Web3Service {
             'getContractAddress',
             ['HashingProxy'],
         );
-        this.HashingProxyContract = new this.web3.eth.Contract(
-            HashingProxy.abi,
+        this.HashingProxyContract = new ethers.Contract(
             hashingProxyAddress,
+            HashingProxy.abi,
+            this.wallet,
         );
 
         const shardingTableAddress = await this.callContractFunction(
@@ -158,9 +168,10 @@ class Web3Service {
             'getContractAddress',
             ['ShardingTable'],
         );
-        this.ShardingTableContract = new this.web3.eth.Contract(
-            ShardingTable.abi,
+        this.ShardingTableContract = new ethers.Contract(
             shardingTableAddress,
+            ShardingTable.abi,
+            this.wallet,
         );
 
         const shardingTableStorageAddress = await this.callContractFunction(
@@ -168,9 +179,10 @@ class Web3Service {
             'getContractAddress',
             ['ShardingTableStorage'],
         );
-        this.ShardingTableStorageContract = new this.web3.eth.Contract(
-            ShardingTableStorage.abi,
+        this.ShardingTableStorageContract = new ethers.Contract(
             shardingTableStorageAddress,
+            ShardingTableStorage.abi,
+            this.wallet,
         );
 
         const assertionStorageAddress = await this.callContractFunction(
@@ -178,9 +190,10 @@ class Web3Service {
             'getContractAddress',
             ['AssertionStorage'],
         );
-        this.AssertionStorageContract = new this.web3.eth.Contract(
-            AssertionStorage.abi,
+        this.AssertionStorageContract = new ethers.Contract(
             assertionStorageAddress,
+            AssertionStorage.abi,
+            this.wallet,
         );
 
         const tokenAddress = await this.callContractFunction(
@@ -188,16 +201,17 @@ class Web3Service {
             'getContractAddress',
             ['Token'],
         );
-        this.TokenContract = new this.web3.eth.Contract(ERC20Token.abi, tokenAddress);
+        this.TokenContract = new ethers.Contract(tokenAddress, ERC20Token.abi, this.wallet);
 
         const identityStorageAddress = await this.callContractFunction(
             this.hubContract,
             'getContractAddress',
             ['IdentityStorage'],
         );
-        this.IdentityStorageContract = new this.web3.eth.Contract(
-            IdentityStorage.abi,
+        this.IdentityStorageContract = new ethers.Contract(
             identityStorageAddress,
+            IdentityStorage.abi,
+            this.wallet,
         );
 
         const profileAddress = await this.callContractFunction(
@@ -205,16 +219,17 @@ class Web3Service {
             'getContractAddress',
             ['Profile'],
         );
-        this.ProfileContract = new this.web3.eth.Contract(Profile.abi, profileAddress);
+        this.ProfileContract = new ethers.Contract(profileAddress, Profile.abi, this.wallet);
 
         const profileStorageAddress = await this.callContractFunction(
             this.hubContract,
             'getContractAddress',
             ['ProfileStorage'],
         );
-        this.ProfileStorageContract = new this.web3.eth.Contract(
-            ProfileStorage.abi,
+        this.ProfileStorageContract = new ethers.Contract(
             profileStorageAddress,
+            ProfileStorage.abi,
+            this.wallet,
         );
 
         const serviceAgreementV1Address = await this.callContractFunction(
@@ -222,9 +237,10 @@ class Web3Service {
             'getContractAddress',
             ['ServiceAgreementV1'],
         );
-        this.ServiceAgreementV1Contract = new this.web3.eth.Contract(
-            ServiceAgreementV1.abi,
+        this.ServiceAgreementV1Contract = new ethers.Contract(
             serviceAgreementV1Address,
+            ServiceAgreementV1.abi,
+            this.wallet,
         );
 
         const serviceAgreementStorageV1Address = await this.callContractFunction(
@@ -232,9 +248,10 @@ class Web3Service {
             'getContractAddress',
             ['ServiceAgreementStorageV1'],
         );
-        this.ServiceAgreementStorageV1Contract = new this.web3.eth.Contract(
-            ServiceAgreementStorageV1.abi,
+        this.ServiceAgreementStorageV1Contract = new ethers.Contract(
             serviceAgreementStorageV1Address,
+            ServiceAgreementStorageV1.abi,
+            this.wallet,
         );
 
         const scoringProxyAddress = await this.callContractFunction(
@@ -242,9 +259,10 @@ class Web3Service {
             'getContractAddress',
             ['ScoringProxy'],
         );
-        this.ScoringProxyContract = new this.web3.eth.Contract(
-            ScoringProxy.abi,
+        this.ScoringProxyContract = new ethers.Contract(
             scoringProxyAddress,
+            ScoringProxy.abi,
+            this.wallet,
         );
 
         const log2PLDSFAddress = await this.callContractFunction(
@@ -252,7 +270,7 @@ class Web3Service {
             'getScoreFunctionContractAddress',
             [1],
         );
-        this.Log2PLDSFContract = new this.web3.eth.Contract(Log2PLDSF.abi, log2PLDSFAddress);
+        this.Log2PLDSFContract = new ethers.Contract(log2PLDSFAddress, Log2PLDSF.abi, this.wallet);
 
         this.assetStorageContracts = {};
         const assetStoragesArray = await this.callContractFunction(
@@ -261,9 +279,10 @@ class Web3Service {
             [],
         );
         assetStoragesArray.forEach((assetStorage) => {
-            this.assetStorageContracts[assetStorage[1].toLowerCase()] = new this.web3.eth.Contract(
-                AbstractAsset.abi,
+            this.assetStorageContracts[assetStorage[1].toLowerCase()] = new ethers.Contract(
                 assetStorage[1],
+                AbstractAsset.abi,
+                this.wallet,
             );
         });
 
@@ -280,7 +299,7 @@ class Web3Service {
     }
 
     getPublicKey() {
-        return this.config.evmOperationalWalletPublicKey;
+        return this.wallet.address;
     }
 
     getManagementKey() {
@@ -298,19 +317,20 @@ class Web3Service {
     }
 
     async getNativeTokenBalance() {
-        const nativeBalance = await this.web3.eth.getBalance(this.getPublicKey());
-        return Number(this.web3.utils.fromWei(nativeBalance));
+        const nativeBalance = await this.wallet.getBalance();
+        return Number(ethers.utils.formatEther(nativeBalance));
     }
 
     async getTokenBalance() {
         const tokenBalance = await this.callContractFunction(this.TokenContract, 'balanceOf', [
             this.getPublicKey(),
         ]);
-        return Number(this.web3.utils.fromWei(tokenBalance));
+        return Number(ethers.utils.formatEther(tokenBalance));
     }
 
     async getBlockNumber() {
-        return this.web3.eth.getBlockNumber();
+        const latestBlock = await this.provider.getBlock('latest');
+        return latestBlock.number;
     }
 
     async getIdentityId() {
@@ -391,7 +411,7 @@ class Web3Service {
         while (result === undefined) {
             try {
                 // eslint-disable-next-line no-await-in-loop
-                result = await contractInstance.methods[functionName](...args).call();
+                result = await contractInstance[functionName](...args);
             } catch (error) {
                 // eslint-disable-next-line no-await-in-loop
                 await this.handleError(error, functionName);
@@ -413,33 +433,19 @@ class Web3Service {
                 if (FIXED_GAS_LIMIT_METHODS[functionName]) {
                     gasLimit = FIXED_GAS_LIMIT_METHODS[functionName];
                 } else {
-                    gasLimit = await contractInstance.methods[functionName](...args).estimateGas({
-                        from: this.getPublicKey(),
-                    });
+                    gasLimit = await contractInstance.estimateGas[functionName](...args);
                 }
 
-                const encodedABI = contractInstance.methods[functionName](...args).encodeABI();
                 const gas = gasLimit ?? this.convertToWei(900, 'kwei');
-                const tx = {
-                    from: this.getPublicKey(),
-                    to: contractInstance.options.address,
-                    data: encodedABI,
-                    gasPrice,
-                    gas,
-                };
 
-                const createdTransaction = await this.web3.eth.accounts.signTransaction(
-                    tx,
-                    this.getPrivateKey(),
-                );
                 this.logger.info(
-                    `Sending signed transaction to blockchain with transaction hash: ${
-                        createdTransaction.transactionHash
-                    }, calling method: ${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}`,
+                    'Sending signed transaction to blockchain, calling method: ' +
+                        `${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}`,
                 );
-                result = await this.web3.eth.sendSignedTransaction(
-                    createdTransaction.rawTransaction,
-                );
+                result = await contractInstance[functionName](...args, {
+                    gasPrice,
+                    gasLimit: gas,
+                });
             } catch (error) {
                 this.logger.warn(
                     `Failed executing smart contract function ${functionName}. Error: ${error.message}`,
@@ -449,7 +455,7 @@ class Web3Service {
                     (error.message.includes(`Transaction was not mined within`) ||
                         error.message.includes(`Pool(TooLowPriority`))
                 ) {
-                    gasPrice *= Math.ceil(1.2);
+                    gasPrice = Math.ceil(gasPrice * 1.2);
                     this.logger.warn(
                         `Retrying to execute smart contract function ${functionName} with gasPrice: ${gasPrice}`,
                     );
@@ -496,19 +502,17 @@ class Web3Service {
 
             while (fromBlock - MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH > this.currentBlock) {
                 events.concat(
-                    await contract.getPastEvents('allEvents', {
+                    await contract.queryFilter(
+                        '*',
                         fromBlock,
-                        toBlock: fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH * iteration,
-                    }),
+                        fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH * iteration,
+                    ),
                 );
                 fromBlock += MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH * iteration;
                 iteration += 1;
             }
         } else {
-            events = await contract.getPastEvents('allEvents', {
-                fromBlock,
-                toBlock: this.currentBlock,
-            });
+            events = await contract.queryFilter('*', fromBlock, this.currentBlock);
         }
 
         await updateLastCheckedBlock(blockchainId, this.currentBlock, Date.now(), contractName);
@@ -517,7 +521,14 @@ class Web3Service {
                 events.map((event) => ({
                     contract: contractName,
                     event: event.event,
-                    data: JSON.stringify(event.returnValues),
+                    data: JSON.stringify(
+                        Object.fromEntries(
+                            Object.entries(event.args).map(([k, v]) => [
+                                k,
+                                ethers.BigNumber.isBigNumber(v) ? v.toString() : v,
+                            ]),
+                        ),
+                    ),
                     block: event.blockNumber,
                     blockchainId,
                 })),
@@ -532,11 +543,15 @@ class Web3Service {
     }
 
     async isHubContract(contractAddress) {
-        return this.callContractFunction(this.hubContract, 'isContract', [contractAddress]);
+        return this.callContractFunction(this.hubContract, 'isContract(address)', [
+            contractAddress,
+        ]);
     }
 
     async isAssetStorageContract(contractAddress) {
-        return this.callContractFunction(this.hubContract, 'isAssetStorage', [contractAddress]);
+        return this.callContractFunction(this.hubContract, 'isAssetStorage(address)', [
+            contractAddress,
+        ]);
     }
 
     async getNodeStake(identityId) {
@@ -578,9 +593,9 @@ class Web3Service {
         );
 
         return {
-            startTime: result['0'],
+            startTime: result['0'].toNumber(),
             epochsNumber: result['1'],
-            epochLength: result['2'],
+            epochLength: result['2'].toNumber(),
             tokenAmount: result['3'],
             scoreFunctionId: result['4'][0],
             proofWindowOffsetPerc: result['4'][1],
@@ -588,25 +603,30 @@ class Web3Service {
     }
 
     async getAssertionSize(assertionId) {
-        return this.callContractFunction(this.AssertionStorageContract, 'getAssertionSize', [
-            assertionId,
-        ]);
+        const assertionSize = await this.callContractFunction(
+            this.AssertionStorageContract,
+            'getAssertionSize',
+            [assertionId],
+        );
+        return Number(assertionSize);
     }
 
     async getAssertionTriplesNumber(assertionId) {
-        return this.callContractFunction(
+        const assertionTriplesNumber = await this.callContractFunction(
             this.AssertionStorageContract,
             'getAssertionTriplesNumber',
             [assertionId],
         );
+        return Number(assertionTriplesNumber);
     }
 
     async getAssertionChunksNumber(assertionId) {
-        return this.callContractFunction(
+        const assertionChunksNumber = await this.callContractFunction(
             this.AssertionStorageContract,
             'getAssertionChunksNumber',
             [assertionId],
         );
+        return Number(assertionChunksNumber);
     }
 
     async isCommitWindowOpen(agreementId, epoch) {
@@ -634,15 +654,18 @@ class Web3Service {
     }
 
     async getR2() {
-        return this.callContractFunction(this.ParametersStorageContract, 'r2', []);
+        const r2 = await this.callContractFunction(this.ParametersStorageContract, 'r2', []);
+        return r2;
     }
 
     async getR1() {
-        return this.callContractFunction(this.ParametersStorageContract, 'r1', []);
+        const r1 = await this.callContractFunction(this.ParametersStorageContract, 'r1', []);
+        return r1;
     }
 
     async getR0() {
-        return this.callContractFunction(this.ParametersStorageContract, 'r0', []);
+        const r0 = await this.callContractFunction(this.ParametersStorageContract, 'r0', []);
+        return r0;
     }
 
     async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch, callback) {
@@ -699,39 +722,60 @@ class Web3Service {
             'nodesCount',
             [],
         );
-        return nodesCount;
+        return Number(nodesCount);
     }
 
     async getShardingTablePage(startingIdentityId, nodesNum) {
-        return this.callContractFunction(this.ShardingTableContract, 'getShardingTable', [
-            startingIdentityId,
-            nodesNum,
-        ]);
+        return this.callContractFunction(
+            this.ShardingTableContract,
+            'getShardingTable(uint72,uint72)',
+            [startingIdentityId, nodesNum],
+        );
     }
 
     getBlockchainId() {
         return this.getImplementationName();
     }
 
-    convertAsciiToHex(peerId) {
-        return Web3.utils.asciiToHex(peerId);
+    toBigNumber(value) {
+        return ethers.BigNumber.from(value);
     }
 
-    convertHexToAscii(peerIdHex) {
-        return Web3.utils.hexToAscii(peerIdHex);
+    keccak256(bytesLikeData) {
+        return ethers.keccak256(bytesLikeData);
     }
 
-    convertToWei(ether, fromUnit = 'ether') {
-        return ethers.utils.parseUnits(ether.toString(), fromUnit).toString();
+    sha256(bytesLikeData) {
+        return ethers.utils.sha256(bytesLikeData);
     }
 
-    convertFromWei(ether, toUnit = 'ether') {
-        return ethers.utils.formatUnits(ether.toString(), toUnit).toString();
+    encodePacked(types, values) {
+        return ethers.utils.solidityPack(types, values);
+    }
+
+    convertAsciiToHex(string) {
+        return ethers.utils.hexlify(ethers.utils.toUtf8Bytes(string));
+    }
+
+    convertHexToAscii(hexString) {
+        return ethers.utils.toUtf8String(hexString);
+    }
+
+    convertBytesToUint8Array(bytesLikeData) {
+        return ethers.utils.arrayify(bytesLikeData);
+    }
+
+    convertToWei(value, fromUnit = 'ether') {
+        return ethers.utils.parseUnits(value.toString(), fromUnit).toString();
+    }
+
+    convertFromWei(value, toUnit = 'ether') {
+        return ethers.utils.formatUnits(value, toUnit);
     }
 
     async healthCheck() {
         try {
-            const gasPrice = await this.web3.eth.getGasPrice();
+            const gasPrice = await this.wallet.getGasPrice();
             if (gasPrice) return true;
         } catch (e) {
             this.logger.error(`Error on checking blockchain. ${e}`);
@@ -754,7 +798,7 @@ class Web3Service {
     async handleError(error, functionName) {
         let isRpcError = false;
         try {
-            await this.web3.eth.net.isListening();
+            await this.provider.ready;
         } catch (rpcError) {
             isRpcError = true;
             this.logger.warn(
@@ -768,11 +812,12 @@ class Web3Service {
     }
 
     async getCommitWindowDurationPerc() {
-        return this.callContractFunction(
+        const commitWindowDurationPerc = await this.callContractFunction(
             this.ParametersStorageContract,
             'commitWindowDurationPerc',
             [],
         );
+        return Number(commitWindowDurationPerc);
     }
 
     async getProofWindowDurationPerc() {
@@ -784,13 +829,13 @@ class Web3Service {
     }
 
     async isHashFunction(hashFunctionId) {
-        return this.callContractFunction(this.HashingProxyContract, 'isHashFunction', [
+        return this.callContractFunction(this.HashingProxyContract, 'isHashFunction(uint8)', [
             hashFunctionId,
         ]);
     }
 
     async isScoreFunction(scoreFunctionId) {
-        return this.callContractFunction(this.ScoringProxyContract, 'isScoreFunction', [
+        return this.callContractFunction(this.ScoringProxyContract, 'isScoreFunction(uint8)', [
             scoreFunctionId,
         ]);
     }

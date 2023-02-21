@@ -62,7 +62,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         );
 
         const agreementEndTime =
-            agreementData.startTime + agreementData.epochsNumber * agreementData.epochsLength;
+            agreementData.startTime + agreementData.epochsNumber * agreementData.epochLength;
 
         await this.tripleStoreService.localStoreAsset(
             assertionId,

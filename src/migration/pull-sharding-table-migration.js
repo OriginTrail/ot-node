@@ -25,9 +25,8 @@ class PullBlockchainShardingTableMigration extends BaseMigration {
                 );
                 await this.repositoryModuleManager.removeShardingTablePeerRecords(blockchainId);
 
-                const shardingTableLength = Number(
-                    await this.blockchainModuleManager.getShardingTableLength(blockchainId),
-                );
+                const shardingTableLength =
+                    await this.blockchainModuleManager.getShardingTableLength(blockchainId);
                 let startingIdentityId = await this.blockchainModuleManager.getShardingTableHead(
                     blockchainId,
                 );

@@ -57,6 +57,11 @@
 -   **version**: ^8.5.0
 -   **description**: linter plugin
 
+##### [ethers](https://www.npmjs.com/package/ethers)
+
+-   **version**: ^5.7.2
+-   **description**: used to interact with evm smart contracts
+
 ##### [ganache](https://www.npmjs.com/package/ganache)
 
 -   **version**: ^7.4.1
@@ -388,11 +393,6 @@
 
 -   **version**: ^8.3.2
 -   **description**: uuid generation
-
-##### [web3](https://www.npmjs.com/package/web3)
-
--   **version**: ^1.7.5
--   **description**: used to interact with evm smart contracts
 
 ##### [workerpool](https://www.npmjs.com/package/workerpool)
 

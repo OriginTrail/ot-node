@@ -1,4 +1,4 @@
-import { ethers, BigNumber } from 'ethers';
+import { ethers } from 'ethers';
 import { xor as uint8ArrayXor } from 'uint8arrays/xor';
 import { compare as uint8ArrayCompare } from 'uint8arrays/compare';
 import pipe from 'it-pipe';
@@ -57,8 +57,8 @@ class ShardingTableService {
         );
         await this.repositoryModuleManager.removeShardingTablePeerRecords(blockchainId);
 
-        const shardingTableLength = Number(
-            await this.blockchainModuleManager.getShardingTableLength(blockchainId),
+        const shardingTableLength = await this.blockchainModuleManager.getShardingTableLength(
+            blockchainId,
         );
         let startingIdentityId = await this.blockchainModuleManager.getShardingTableHead(
             blockchainId,
@@ -99,8 +99,16 @@ class ShardingTableService {
                     return {
                         peer_id: nodeId,
                         blockchain_id: blockchainId,
-                        ask: ethers.utils.formatUnits(peer.ask, 'ether'),
-                        stake: ethers.utils.formatUnits(peer.stake, 'ether'),
+                        ask: this.blockchainModuleManager.convertFromWei(
+                            blockchainId,
+                            peer.ask,
+                            'ether',
+                        ),
+                        stake: this.blockchainModuleManager.convertFromWei(
+                            blockchainId,
+                            peer.stake,
+                            'ether',
+                        ),
                         sha256: await this.validationModuleManager.callHashFunction(1, nodeId),
                     };
                 }),
@@ -129,8 +137,8 @@ class ShardingTableService {
             this.repositoryModuleManager.createPeerRecord(
                 nodeId,
                 event.blockchain_id,
-                ethers.utils.formatUnits(eventData.ask, 'ether'),
-                ethers.utils.formatUnits(eventData.stake, 'ether'),
+                this.blockchainModuleManager.convertFromWei(blockchainId, eventData.ask, 'ether'),
+                this.blockchainModuleManager.convertFromWei(blockchainId, eventData.stake, 'ether'),
                 new Date(0),
                 nodeIdSha256,
             );
@@ -210,7 +218,7 @@ class ShardingTableService {
             this.repositoryModuleManager.updatePeerAsk(
                 blockchainId,
                 nodeId,
-                ethers.utils.formatUnits(eventData.ask, 'ether'),
+                this.blockchainModuleManager.convertFromWei(blockchainId, eventData.ask, 'ether'),
             );
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
@@ -234,7 +242,7 @@ class ShardingTableService {
             (source) =>
                 map(source, async (peer) => ({
                     peer,
-                    distance: this.calculateDistance(keyHash, peer[hashFunctionName]),
+                    distance: this.calculateDistance(blockchainId, keyHash, peer[hashFunctionName]),
                 })),
             (source) => sort(source, (a, b) => uint8ArrayCompare(a.distance, b.distance)),
             (source) => take(source, count),
@@ -244,8 +252,11 @@ class ShardingTableService {
         return all(sorted);
     }
 
-    calculateDistance(peerHash, keyHash) {
-        return uint8ArrayXor(ethers.utils.arrayify(peerHash), ethers.utils.arrayify(keyHash));
+    calculateDistance(blockchain, peerHash, keyHash) {
+        return uint8ArrayXor(
+            this.blockchainModuleManager.convertBytesToUint8Array(blockchain, peerHash),
+            this.blockchainModuleManager.convertBytesToUint8Array(blockchain, keyHash),
+        );
     }
 
     async getBidSuggestion(
@@ -258,11 +269,12 @@ class ShardingTableService {
     ) {
         const peerRecords = await this.findNeighbourhood(
             blockchainId,
-            ethers.utils.solidityPack(
+            this.blockchainModuleManager.encodePacked(
+                blockchainId,
                 ['address', 'bytes32'],
                 [contentAssetStorageAddress, firstAssertionId],
             ),
-            Number(await this.blockchainModuleManager.getR2(blockchainId)),
+            await this.blockchainModuleManager.getR2(blockchainId),
             hashFunctionId,
             true,
         );
@@ -273,7 +285,8 @@ class ShardingTableService {
 
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);
 
-        return BigNumber.from(this.blockchainModuleManager.convertToWei(blockchainId, ask))
+        return this.blockchainModuleManager
+            .toBigNumber(blockchainId, this.blockchainModuleManager.convertToWei(blockchainId, ask))
             .mul(assertionSize)
             .mul(epochsNumber)
             .mul(r0)
