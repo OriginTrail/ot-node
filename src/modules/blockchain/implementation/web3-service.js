@@ -11,23 +11,23 @@ import {
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
-const AbstractAsset = require('dkg-evm-module/build/contracts/AbstractAsset.json');
-const AssertionStorage = require('dkg-evm-module/build/contracts/AssertionStorage.json');
-const Staking = require('dkg-evm-module/build/contracts/Staking.json');
-const StakingStorage = require('dkg-evm-module/build/contracts/StakingStorage.json');
-const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
-const HashingProxy = require('dkg-evm-module/build/contracts/HashingProxy.json');
-const Hub = require('dkg-evm-module/build/contracts/Hub.json');
-const IdentityStorage = require('dkg-evm-module/build/contracts/IdentityStorage.json');
-const Log2PLDSF = require('dkg-evm-module/build/contracts/Log2PLDSF.json');
-const ParametersStorage = require('dkg-evm-module/build/contracts/ParametersStorage.json');
-const Profile = require('dkg-evm-module/build/contracts/Profile.json');
-const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
-const ScoringProxy = require('dkg-evm-module/build/contracts/ScoringProxy.json');
-const ServiceAgreementStorageV1 = require('dkg-evm-module/build/contracts/ServiceAgreementStorageV1.json');
-const ServiceAgreementV1 = require('dkg-evm-module/build/contracts/ServiceAgreementV1.json');
-const ShardingTable = require('dkg-evm-module/build/contracts/ShardingTable.json');
-const ShardingTableStorage = require('dkg-evm-module/build/contracts/ShardingTableStorage.json');
+const AbstractAsset = require('dkg-evm-module/abi/AbstractAsset.json');
+const AssertionStorage = require('dkg-evm-module/abi/AssertionStorage.json');
+const Staking = require('dkg-evm-module/abi/Staking.json');
+const StakingStorage = require('dkg-evm-module/abi/StakingStorage.json');
+const ERC20Token = require('dkg-evm-module/abi/Token.json');
+const HashingProxy = require('dkg-evm-module/abi/HashingProxy.json');
+const Hub = require('dkg-evm-module/abi/Hub.json');
+const IdentityStorage = require('dkg-evm-module/abi/IdentityStorage.json');
+const Log2PLDSF = require('dkg-evm-module/abi/Log2PLDSF.json');
+const ParametersStorage = require('dkg-evm-module/abi/ParametersStorage.json');
+const Profile = require('dkg-evm-module/abi/Profile.json');
+const ProfileStorage = require('dkg-evm-module/abi/ProfileStorage.json');
+const ScoringProxy = require('dkg-evm-module/abi/ScoringProxy.json');
+const ServiceAgreementStorageV1 = require('dkg-evm-module/abi/ServiceAgreementStorageV1.json');
+const ServiceAgreementV1 = require('dkg-evm-module/abi/ServiceAgreementV1.json');
+const ShardingTable = require('dkg-evm-module/abi/ShardingTable.json');
+const ShardingTableStorage = require('dkg-evm-module/abi/ShardingTableStorage.json');
 
 const FIXED_GAS_LIMIT_METHODS = {
     submitCommit: 300000,

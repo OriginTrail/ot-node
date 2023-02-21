@@ -118,8 +118,8 @@
                         "config": {
                             "blockchainTitle": "ganache",
                             "networkId": "ganache::testnet",
-                            "hubContractAddress": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
-                            "rpcEndpoints": ["http://localhost:7545"],
+                            "hubContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+                            "rpcEndpoints": ["http://localhost:8545"],
                             "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
                             "initialStakeAmount": 50000,
                             "initialAskAmount": 0.2
@@ -284,7 +284,7 @@
                             "blockchainTitle": "ganache",
                             "networkId": "ganache::testnet",
                             "hubContractAddress": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
-                            "rpcEndpoints": ["http://localhost:7545"],
+                            "rpcEndpoints": ["http://localhost:8545"],
                             "initialStakeAmount": 50000,
                             "initialAskAmount": 0.2
                         }
