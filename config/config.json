@@ -112,11 +112,11 @@
             "blockchain": {
                 "enabled": true,
                 "implementation": {
-                    "ganache": {
+                    "hardhat": {
                         "enabled": true,
-                        "package": "./blockchain/implementation/ganache/ganache-service.js",
+                        "package": "./blockchain/implementation/hardhat/hardhat-service.js",
                         "config": {
-                            "blockchainTitle": "ganache",
+                            "blockchainTitle": "hardhat",
                             "networkId": "ganache::testnet",
                             "hubContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
                             "rpcEndpoints": ["http://localhost:8545"],
@@ -277,13 +277,13 @@
             "blockchain": {
                 "enabled": true,
                 "implementation": {
-                    "ganache": {
+                    "hardhat": {
                         "enabled": true,
-                        "package": "./blockchain/implementation/ganache/ganache-service.js",
+                        "package": "./blockchain/implementation/hardhat/hardhat-service.js",
                         "config": {
                             "blockchainTitle": "ganache",
                             "networkId": "ganache::testnet",
-                            "hubContractAddress": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
+                            "hubContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
                             "rpcEndpoints": ["http://localhost:8545"],
                             "initialStakeAmount": 50000,
                             "initialAskAmount": 0.2

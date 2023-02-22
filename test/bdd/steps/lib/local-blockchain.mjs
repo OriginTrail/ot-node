@@ -39,9 +39,12 @@ const testParametersStorageParams = {
 class LocalBlockchain {
 
     async initialize() {
-        exec('npm run start:local_blockchain', );
-        console.log('Waiting for 10 seconds for blockchain to start and contracts to be deployed');
-        await new Promise(resolve => setTimeout(resolve, 10000));
+        const startBlockchainProcess = exec('npm run start:local_blockchain', );
+        startBlockchainProcess.stdout.on('data', function(data) {
+            console.log(data);
+        });
+        console.log('Waiting for 5 seconds for blockchain to start and contracts to be deployed');
+        await new Promise(resolve => setTimeout(resolve, 5000));
 
         this.provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
 

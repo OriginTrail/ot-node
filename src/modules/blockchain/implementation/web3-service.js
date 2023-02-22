@@ -113,11 +113,7 @@ class Web3Service {
         this.logger.info(
             `Initializing contracts with hub contract address: ${this.config.hubContractAddress}`,
         );
-        this.hubContract = new ethers.Contract(
-            this.config.hubContractAddress,
-            Hub.abi,
-            this.wallet,
-        );
+        this.hubContract = new ethers.Contract(this.config.hubContractAddress, Hub, this.wallet);
 
         const parametersStorageAddress = await this.callContractFunction(
             this.hubContract,
@@ -126,7 +122,7 @@ class Web3Service {
         );
         this.ParametersStorageContract = new ethers.Contract(
             parametersStorageAddress,
-            ParametersStorage.abi,
+            ParametersStorage,
             this.wallet,
         );
 
@@ -135,11 +131,7 @@ class Web3Service {
             'getContractAddress',
             ['Staking'],
         );
-        this.StakingContract = new ethers.Contract(
-            stakingContractAddress,
-            Staking.abi,
-            this.wallet,
-        );
+        this.StakingContract = new ethers.Contract(stakingContractAddress, Staking, this.wallet);
 
         const stakingStorageAddress = await this.callContractFunction(
             this.hubContract,
@@ -148,7 +140,7 @@ class Web3Service {
         );
         this.StakingStorageContract = new ethers.Contract(
             stakingStorageAddress,
-            StakingStorage.abi,
+            StakingStorage,
             this.wallet,
         );
 
@@ -159,7 +151,7 @@ class Web3Service {
         );
         this.HashingProxyContract = new ethers.Contract(
             hashingProxyAddress,
-            HashingProxy.abi,
+            HashingProxy,
             this.wallet,
         );
 
@@ -170,7 +162,7 @@ class Web3Service {
         );
         this.ShardingTableContract = new ethers.Contract(
             shardingTableAddress,
-            ShardingTable.abi,
+            ShardingTable,
             this.wallet,
         );
 
@@ -181,7 +173,7 @@ class Web3Service {
         );
         this.ShardingTableStorageContract = new ethers.Contract(
             shardingTableStorageAddress,
-            ShardingTableStorage.abi,
+            ShardingTableStorage,
             this.wallet,
         );
 
@@ -192,7 +184,7 @@ class Web3Service {
         );
         this.AssertionStorageContract = new ethers.Contract(
             assertionStorageAddress,
-            AssertionStorage.abi,
+            AssertionStorage,
             this.wallet,
         );
 
@@ -201,7 +193,7 @@ class Web3Service {
             'getContractAddress',
             ['Token'],
         );
-        this.TokenContract = new ethers.Contract(tokenAddress, ERC20Token.abi, this.wallet);
+        this.TokenContract = new ethers.Contract(tokenAddress, ERC20Token, this.wallet);
 
         const identityStorageAddress = await this.callContractFunction(
             this.hubContract,
@@ -210,7 +202,7 @@ class Web3Service {
         );
         this.IdentityStorageContract = new ethers.Contract(
             identityStorageAddress,
-            IdentityStorage.abi,
+            IdentityStorage,
             this.wallet,
         );
 
@@ -219,7 +211,7 @@ class Web3Service {
             'getContractAddress',
             ['Profile'],
         );
-        this.ProfileContract = new ethers.Contract(profileAddress, Profile.abi, this.wallet);
+        this.ProfileContract = new ethers.Contract(profileAddress, Profile, this.wallet);
 
         const profileStorageAddress = await this.callContractFunction(
             this.hubContract,
@@ -228,7 +220,7 @@ class Web3Service {
         );
         this.ProfileStorageContract = new ethers.Contract(
             profileStorageAddress,
-            ProfileStorage.abi,
+            ProfileStorage,
             this.wallet,
         );
 
@@ -239,7 +231,7 @@ class Web3Service {
         );
         this.ServiceAgreementV1Contract = new ethers.Contract(
             serviceAgreementV1Address,
-            ServiceAgreementV1.abi,
+            ServiceAgreementV1,
             this.wallet,
         );
 
@@ -250,7 +242,7 @@ class Web3Service {
         );
         this.ServiceAgreementStorageV1Contract = new ethers.Contract(
             serviceAgreementStorageV1Address,
-            ServiceAgreementStorageV1.abi,
+            ServiceAgreementStorageV1,
             this.wallet,
         );
 
@@ -261,7 +253,7 @@ class Web3Service {
         );
         this.ScoringProxyContract = new ethers.Contract(
             scoringProxyAddress,
-            ScoringProxy.abi,
+            ScoringProxy,
             this.wallet,
         );
 
@@ -270,7 +262,7 @@ class Web3Service {
             'getScoreFunctionContractAddress',
             [1],
         );
-        this.Log2PLDSFContract = new ethers.Contract(log2PLDSFAddress, Log2PLDSF.abi, this.wallet);
+        this.Log2PLDSFContract = new ethers.Contract(log2PLDSFAddress, Log2PLDSF, this.wallet);
 
         this.assetStorageContracts = {};
         const assetStoragesArray = await this.callContractFunction(
@@ -281,7 +273,7 @@ class Web3Service {
         assetStoragesArray.forEach((assetStorage) => {
             this.assetStorageContracts[assetStorage[1].toLowerCase()] = new ethers.Contract(
                 assetStorage[1],
-                AbstractAsset.abi,
+                AbstractAsset,
                 this.wallet,
             );
         });

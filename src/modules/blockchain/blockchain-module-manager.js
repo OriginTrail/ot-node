@@ -9,10 +9,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'initializeContracts');
     }
 
-    async increaseGanacheTime(blockchain, seconds) {
-        return this.callImplementationFunction(blockchain, 'increaseGanacheTime', [seconds]);
-    }
-
     getPrivateKey(blockchain) {
         return this.callImplementationFunction(blockchain, 'getPrivateKey');
     }

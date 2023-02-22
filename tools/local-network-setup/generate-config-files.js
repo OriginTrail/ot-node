@@ -10,7 +10,11 @@ const { readFile, writeFile, stat } = fs;
 
 const generalConfig = JSON.parse(await readFile('./config/config.json'));
 const templatePath = path.join('./tools/local-network-setup/.origintrail_noderc_template.json');
-const keys = JSON.parse(await readFile('./tools/local-network-setup/keys.json'));
+
+const privateKeysFile = await readFile('test/bdd/steps/api/datasets/privateKeys.json');
+const publicKeysFile = await readFile('test/bdd/steps/api/datasets/publicKeys.json');
+const privateKeys = JSON.parse(privateKeysFile.toString());
+const publicKeys = JSON.parse(publicKeysFile.toString());
 
 const logger = new Logger(generalConfig.development.logLevel);
 
@@ -101,10 +105,10 @@ function generateBlockchainConfig(templateBlockchainConfig, nodeIndex) {
         ...blockchainConfig.implementation[blockchain].config,
         hubContractAddress,
         rpcEndpoints: [process.env.RPC_ENDPOINT],
-        evmOperationalWalletPublicKey: keys.publicKey[nodeIndex],
-        evmOperationalWalletPrivateKey: keys.privateKey[nodeIndex],
-        evmManagementWalletPublicKey: keys.publicKey[keys.publicKey.length - 1 - nodeIndex],
-        evmManagementWalletPrivateKey: keys.privateKey[keys.privateKey.length - 1 - nodeIndex],
+        evmOperationalWalletPublicKey: publicKeys[nodeIndex],
+        evmOperationalWalletPrivateKey: privateKeys[nodeIndex],
+        evmManagementWalletPublicKey: publicKeys[publicKeys.length - 1 - nodeIndex],
+        evmManagementWalletPrivateKey: privateKeys[privateKeys.length - 1 - nodeIndex],
         sharesTokenName: `LocalNode${nodeIndex}`,
         sharesTokenSymbol: `LN${nodeIndex}`,
     };

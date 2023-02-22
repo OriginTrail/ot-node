@@ -4,10 +4,10 @@ import { createRequire } from 'module';
 import validateArguments from './utils.js';
 
 const require = createRequire(import.meta.url);
-const Staking = require('dkg-evm-module/build/contracts/Staking.json');
-const IdentityStorage = require('dkg-evm-module/build/contracts/IdentityStorage.json');
-const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
-const Hub = require('dkg-evm-module/build/contracts/Hub.json');
+const Staking = require('dkg-evm-module/abi/Staking.json');
+const IdentityStorage = require('dkg-evm-module/abi/IdentityStorage.json');
+const ERC20Token = require('dkg-evm-module/abi/Token.json');
+const Hub = require('dkg-evm-module/abi/Hub.json');
 const argv = require('minimist')(process.argv.slice(1), {
     string: [
         'stake',
@@ -30,30 +30,18 @@ async function setStake(
     const operationalWallet = new ethers.Wallet(operationalWalletPrivateKey, provider);
     const managementWallet = new ethers.Wallet(managementWalletPrivateKey, provider);
 
-    const hubContract = new ethers.Contract(hubContractAddress, Hub.abi, provider);
+    const hubContract = new ethers.Contract(hubContractAddress, Hub, provider);
 
     const stakingContractAddress = await hubContract.getContractAddress('Staking');
-    const stakingContract = new ethers.Contract(
-        stakingContractAddress,
-        Staking.abi,
-        managementWallet,
-    );
+    const stakingContract = new ethers.Contract(stakingContractAddress, Staking, managementWallet);
 
     const identityStorageAddress = await hubContract.getContractAddress('IdentityStorage');
-    const identityStorage = new ethers.Contract(
-        identityStorageAddress,
-        IdentityStorage.abi,
-        provider,
-    );
+    const identityStorage = new ethers.Contract(identityStorageAddress, IdentityStorage, provider);
 
     const identityId = await identityStorage.getIdentityId(operationalWallet.address);
 
     const tokenContractAddress = await hubContract.getContractAddress('Token');
-    const tokenContract = new ethers.Contract(
-        tokenContractAddress,
-        ERC20Token.abi,
-        managementWallet,
-    );
+    const tokenContract = new ethers.Contract(tokenContractAddress, ERC20Token, managementWallet);
 
     const stakeWei = ethers.utils.parseEther(stake);
 

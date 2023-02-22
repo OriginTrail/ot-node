@@ -62,11 +62,6 @@
 -   **version**: ^5.7.2
 -   **description**: used to interact with evm smart contracts
 
-##### [ganache](https://www.npmjs.com/package/ganache)
-
--   **version**: ^7.4.1
--   **description**: ethereum simulator used in bdd tests
-
 ##### [husky](https://www.npmjs.com/package/husky)
 
 -   **version**: ^8.0.1
