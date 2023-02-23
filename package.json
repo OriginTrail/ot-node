@@ -119,7 +119,7 @@
         "rc": "^1.2.8",
         "rolling-rate-limiter": "^0.2.13",
         "semver": "^7.3.7",
-        "sequelize": "^6.21.4",
+        "sequelize": "^6.28.2",
         "timeout-abort-controller": "^3.0.0",
         "toobusy-js": "^0.5.1",
         "uint8arrays": "^3.1.0",
