@@ -1,18 +1,24 @@
 export default (blockchainImplementationNames) => ({
     type: 'object',
-    required: ['assertionId', 'assertion', 'blockchain', 'contract', 'tokenId'],
+    required: ['assertionData', 'blockchain', 'contract', 'tokenId'],
     properties: {
-        assertionId: {
-            type: 'string',
-            minLength: 66,
-            maxLength: 66,
-        },
-        assertion: {
-            type: 'array',
-            items: {
-                type: 'string',
+        assertionData: {
+            type: 'object',
+            required: ['publicAssertion', 'publicAssertionId'],
+            properties: {
+                publicAssertionId: {
+                    type: 'string',
+                    minLength: 42,
+                    maxLength: 42,
+                },
+                publicAssertion: {
+                    type: 'array',
+                    items: {
+                        type: 'string',
+                    },
+                    minItems: 1,
+                },
             },
-            minItems: 1,
         },
         blockchain: {
             enum: blockchainImplementationNames,
