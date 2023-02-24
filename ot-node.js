@@ -319,7 +319,7 @@ class OTNode {
         let working = false;
         let eventFetchInterval = 10 * 1000;
         if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
-            eventFetchInterval = 2;
+            eventFetchInterval = 2 * 1000;
         }
         setInterval(async () => {
             if (!working) {

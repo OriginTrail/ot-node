@@ -43,8 +43,8 @@ class LocalBlockchain {
         startBlockchainProcess.stdout.on('data', function(data) {
             console.log(data);
         });
-        console.log('Waiting for 5 seconds for blockchain to start and contracts to be deployed');
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        console.log('Waiting for 3 seconds for blockchain to start and contracts to be deployed');
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
         this.provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
 

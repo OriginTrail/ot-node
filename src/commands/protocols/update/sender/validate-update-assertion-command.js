@@ -1,14 +1,14 @@
 import Command from '../../../command.js';
 import { ERROR_TYPE, OPERATION_ID_STATUS } from '../../../../constants/constants.js';
 
-class ValidateAssertionCommand extends Command {
+class ValidateUpdateAssertionCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.operationService = ctx.publishService;
         this.ualService = ctx.ualService;
 
-        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_VALIDATE_ASSERTION_ERROR;
+        this.errorType = ERROR_TYPE.UPDATE.UPDATE_VALIDATE_ASSERTION_ERROR;
     }
 
     /**
@@ -20,35 +20,14 @@ class ValidateAssertionCommand extends Command {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_START,
+            OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_START,
         );
 
-        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-        this.logger.info(`Validating assertion with ual: ${ual}`);
-
-        const blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertionId(
-            blockchain,
-            contract,
-            tokenId,
-        );
-        if (!blockchainAssertionId) {
-            return Command.retry();
-        }
-        if (blockchainAssertionId !== assertionId) {
-            await this.handleError(
-                operationId,
-                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${assertionId}`,
-                this.errorType,
-                true,
-            );
-            return Command.empty();
-        }
-        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
-        await this.operationService.validateAssertion(assertionId, blockchain, assertion);
+        // implement validation
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            OPERATION_ID_STATUS.PUBLISH.VALIDATING_ASSERTION_END,
+            OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_START,
         );
         return this.continueSequence(
             { ...command.data, retry: undefined, period: undefined },
@@ -67,13 +46,13 @@ class ValidateAssertionCommand extends Command {
     }
 
     /**
-     * Builds default prepareAssertionForPublish
+     * Builds default validateUpdateAssertionCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'validateAssertionCommand',
+            name: 'validateUpdateAssertionCommand',
             delay: 0,
             transactional: false,
         };
@@ -82,4 +61,4 @@ class ValidateAssertionCommand extends Command {
     }
 }
 
-export default ValidateAssertionCommand;
+export default ValidateUpdateAssertionCommand;

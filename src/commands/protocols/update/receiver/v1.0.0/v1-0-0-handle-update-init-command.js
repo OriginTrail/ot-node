@@ -1,22 +1,25 @@
 import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
 import { ERROR_TYPE, OPERATION_ID_STATUS } from '../../../../../constants/constants.js';
 
-class HandleStoreInitCommand extends HandleProtocolMessageCommand {
+class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
-        this.publishService = ctx.publishService;
+        this.publishService = ctx.updateService;
         this.ualService = ctx.ualService;
+        this.shardingTableService = ctx.shardingTableService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.serviceAgreementService = ctx.serviceAgreementService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
-        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_REMOTE_ERROR;
+        this.errorType = ERROR_TYPE.UPDATE.UPDATE_REMOTE_ERROR;
     }
 
     async prepareMessage(commandData) {
         const { operationId, assertionId, blockchain, contract, tokenId, keyword, hashFunctionId } =
             commandData;
-
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            OPERATION_ID_STATUS.PUBLISH.VALIDATING_PUBLISH_ASSERTION_REMOTE_START,
+            OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_REMOTE_START,
         );
 
         const validationResult = await this.validateReceivedData(
@@ -29,11 +32,10 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
             hashFunctionId,
         );
 
-        this.operationIdService.updateOperationIdStatus(
+        await this.operationIdService.updateOperationIdStatus(
             operationId,
-            OPERATION_ID_STATUS.PUBLISH.VALIDATING_PUBLISH_ASSERTION_REMOTE_END,
+            OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_REMOTE_END,
         );
-
         return validationResult;
     }
 
@@ -46,13 +48,13 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
     }
 
     /**
-     * Builds default handleStoreInitCommand
+     * Builds default v1_0_0HandleUpdateInitCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'v1_0_0HandleStoreInitCommand',
+            name: 'v1_0_0HandleUpdateInitCommand',
             delay: 0,
             transactional: false,
         };
@@ -61,4 +63,4 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
     }
 }
 
-export default HandleStoreInitCommand;
+export default HandleUpdateInitCommand;

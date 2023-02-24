@@ -1,7 +1,7 @@
 import BaseController from './base-http-api-controller.js';
 import { ERROR_TYPE, OPERATION_ID_STATUS, OPERATION_STATUS } from '../../constants/constants.js';
 
-class PublishController extends BaseController {
+class UpdateController extends BaseController {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
@@ -10,14 +10,14 @@ class PublishController extends BaseController {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
-    async handlePublishRequest(req, res) {
+    async handleUpdateRequest(req, res) {
         const operationId = await this.operationIdService.generateOperationId(
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_START,
+            OPERATION_ID_STATUS.UPDATE.UPDATE_START,
         );
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_START,
+            OPERATION_ID_STATUS.UPDATE.UPDATE_INIT_START,
         );
 
         this.returnResponse(res, 202, {
@@ -26,7 +26,7 @@ class PublishController extends BaseController {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
+            OPERATION_ID_STATUS.PUBLISH.UPDATE_INIT_END,
         );
 
         const { assertion, assertionId, blockchain, contract, tokenId, hashFunctionId } = req.body;
@@ -54,7 +54,7 @@ class PublishController extends BaseController {
 
             commandSequence = [
                 ...commandSequence,
-                'validatePublishAssertionCommand',
+                'validateUpdateAssertionCommand',
                 'networkPublishCommand',
             ];
 
@@ -77,16 +77,16 @@ class PublishController extends BaseController {
             });
         } catch (error) {
             this.logger.error(
-                `Error while initializing publish data: ${error.message}. ${error.stack}`,
+                `Error while initializing update data: ${error.message}. ${error.stack}`,
             );
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 OPERATION_ID_STATUS.FAILED,
-                'Unable to publish data, Failed to process input data!',
-                ERROR_TYPE.PUBLISH.PUBLISH_ROUTE_ERROR,
+                'Unable to update data, Failed to process input data!',
+                ERROR_TYPE.UPDATE.UPDATE_ROUTE_ERROR,
             );
         }
     }
 }
 
-export default PublishController;
+export default UpdateController;

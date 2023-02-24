@@ -54,7 +54,7 @@ then
         node tools/local-network-setup/run-local-blockchain.js\"
     end tell"
   echo Waiting for hardhat to start and contracts deployment
-  sleep 10
+  sleep 3
 fi
 
 if [[ $network == rinkeby ]]
