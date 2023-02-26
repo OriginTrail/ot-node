@@ -8,8 +8,8 @@ export default (blockchainImplementationNames) => ({
             properties: {
                 publicAssertionId: {
                     type: 'string',
-                    minLength: 42,
-                    maxLength: 42,
+                    minLength: 66,
+                    maxLength: 66,
                 },
                 publicAssertion: {
                     type: 'array',
