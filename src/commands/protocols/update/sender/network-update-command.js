@@ -8,7 +8,27 @@ class NetworkUpdateCommand extends NetworkProtocolCommand {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.ualService = ctx.ualService;
 
-        this.errorType = ERROR_TYPE.PUBLISH.UPDATE_START_ERROR;
+        this.errorType = ERROR_TYPE.UPDATE.UPDATE_START_ERROR;
+    }
+
+    async getKeywords(command) {
+        const { blockchain, contract, tokenId } = command.data;
+        const locationKeyword = await this.ualService.calculateLocationKeyword(
+            blockchain,
+            contract,
+            tokenId,
+            0,
+        );
+
+        return [locationKeyword];
+    }
+
+    async getBatchSize(blockchainId) {
+        return this.blockchainModuleManager.getR2(blockchainId);
+    }
+
+    async getMinAckResponses(blockchainId) {
+        return this.blockchainModuleManager.getR1(blockchainId);
     }
 
     /**

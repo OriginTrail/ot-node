@@ -26,7 +26,7 @@ class UpdateController extends BaseController {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            OPERATION_ID_STATUS.PUBLISH.UPDATE_INIT_END,
+            OPERATION_ID_STATUS.UPDATE.UPDATE_INIT_END,
         );
 
         const { assertionData, blockchain, contract, tokenId, hashFunctionId } = req.body;
@@ -55,7 +55,7 @@ class UpdateController extends BaseController {
             commandSequence = [
                 ...commandSequence,
                 'validateUpdateAssertionCommand',
-                'networkPublishCommand',
+                'networkUpdateCommand',
             ];
 
             await this.commandExecutor.add({
