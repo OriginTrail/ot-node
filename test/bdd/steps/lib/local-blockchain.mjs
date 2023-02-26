@@ -1,6 +1,5 @@
 /* eslint-disable max-len */
 
-import Ganache from 'ganache';
 import { ethers } from "ethers";
 import {readFile} from "fs/promises";
 import {exec} from "child_process";
