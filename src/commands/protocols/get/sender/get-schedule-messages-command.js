@@ -10,13 +10,6 @@ class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         this.startEvent = OPERATION_ID_STATUS.GET.GET_FETCH_FROM_NODES_START;
     }
 
-    getNextCommandData(command) {
-        return {
-            ual: command.data.ual,
-            assertionId: command.data.assertionId,
-        };
-    }
-
     /**
      * Builds default getScheduleMessagesCommand
      * @param map

@@ -1,5 +1,10 @@
 import BaseController from './base-http-api-controller.js';
-import { ERROR_TYPE, OPERATION_ID_STATUS, OPERATION_STATUS } from '../../constants/constants.js';
+import {
+    ERROR_TYPE,
+    OPERATION_ID_STATUS,
+    OPERATION_STATUS,
+    CONTENT_ASSET_HASH_FUNCTION_ID,
+} from '../../constants/constants.js';
 
 class PublishController extends BaseController {
     constructor(ctx) {
@@ -29,7 +34,11 @@ class PublishController extends BaseController {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
         );
 
-        const { assertion, assertionId, blockchain, contract, tokenId, hashFunctionId } = req.body;
+        const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
+        const hashFunctionId =
+            req.body.hashFunctionId != null
+                ? req.body.hashFunctionId
+                : CONTENT_ASSET_HASH_FUNCTION_ID;
         try {
             await this.repositoryModuleManager.createOperationRecord(
                 this.operationService.getOperationName(),

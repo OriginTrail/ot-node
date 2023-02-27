@@ -10,12 +10,6 @@ class UpdateScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         this.errorType = ERROR_TYPE.UPDATE.UPDATE_START_ERROR;
     }
 
-    getNextCommandData(command) {
-        const { publishType, assertionId, blockchain, tokenId, contract, hashFunctionId } =
-            command.data;
-        return { publishType, assertionId, blockchain, contract, tokenId, hashFunctionId };
-    }
-
     /**
      * Builds default updateScheduleMessagesCommand
      * @param map

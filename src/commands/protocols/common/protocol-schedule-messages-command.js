@@ -64,6 +64,11 @@ class ProtocolScheduleMessagesCommand extends Command {
         return Command.empty();
     }
 
+    getNextCommandData(command) {
+        const { assertionId, blockchain, contract, tokenId, hashFunctionId } = command.data;
+        return { assertionId, blockchain, contract, tokenId, hashFunctionId };
+    }
+
     /**
      * Builds default protocolScheduleMessagesCommand
      * @param map

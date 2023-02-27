@@ -9,12 +9,6 @@ class UpdateInitCommand extends ProtocolInitCommand {
         this.errorType = ERROR_TYPE.UPDATE.UPDATE_STORE_INIT_ERROR;
     }
 
-    async prepareMessage(command) {
-        const { assertionId, blockchain, contract, tokenId, keyword, hashFunctionId } =
-            command.data;
-        return { assertionId, blockchain, contract, tokenId, keyword, hashFunctionId };
-    }
-
     messageTimeout() {
         return NETWORK_MESSAGE_TIMEOUT_MILLS.UPDATE.INIT;
     }

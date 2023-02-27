@@ -14,7 +14,9 @@ class GetRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        return { assertionId: command.data.assertionId };
+        const { assertionId, blockchain, contract, tokenId, hashFunctionId } = command.data;
+
+        return { assertionId, blockchain, contract, tokenId, hashFunctionId };
     }
 
     async handleAck(command, responseData) {

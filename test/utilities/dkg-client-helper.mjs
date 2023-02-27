@@ -1,4 +1,5 @@
 import DKG from 'dkg.js';
+import { CONTENT_ASSET_HASH_FUNCTION_ID } from '../../src/constants/constants';
 
 class DkgClientHelper {
     constructor(config) {
@@ -14,7 +15,7 @@ class DkgClientHelper {
             visibility: 'public',
             epochsNum: 5,
             maxNumberOfRetries: 5,
-            hashFunctionId: 1,
+            hashFunctionId: CONTENT_ASSET_HASH_FUNCTION_ID,
             blockchain: {
                 name: 'ganache',
                 publicKey: wallet.evmOperationalWalletPublicKey,

@@ -8,6 +8,7 @@ import take from 'it-take';
 import all from 'it-all';
 
 import {
+    CONTENT_ASSET_HASH_FUNCTION_ID,
     CONTRACTS,
     DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
 } from '../constants/constants.js';
@@ -126,7 +127,7 @@ class ShardingTableService {
 
             const nodeIdSha256 = await this.validationModuleManager.callHashFunction(
                 // TODO: How to add more hashes?
-                1,
+                CONTENT_ASSET_HASH_FUNCTION_ID,
                 nodeId,
             );
 

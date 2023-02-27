@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { CONTENT_ASSET_HASH_FUNCTION_ID } from '../constants/constants.js';
 import BaseMigration from './base-migration.js';
 
 class PullBlockchainShardingTableMigration extends BaseMigration {
@@ -71,7 +72,7 @@ class PullBlockchainShardingTableMigration extends BaseMigration {
                                 ask: ethers.utils.formatUnits(peer.ask, 'ether'),
                                 stake: ethers.utils.formatUnits(peer.stake, 'ether'),
                                 sha256: await this.validationModuleManager.callHashFunction(
-                                    1,
+                                    CONTENT_ASSET_HASH_FUNCTION_ID,
                                     nodeId,
                                 ),
                             };

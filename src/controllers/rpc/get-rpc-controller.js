@@ -10,10 +10,8 @@ class GetController extends BaseController {
 
     async v1_0_0HandleRequest(message, remotePeerId, protocol) {
         const { operationId, keywordUuid, messageType } = message.header;
-        const { assertionId } = message.data;
-        let commandName;
-        const commandData = { assertionId, remotePeerId, operationId, keywordUuid, protocol };
         const [handleInitCommand, handleRequestCommand] = this.getCommandSequence(protocol);
+        let commandName;
         switch (messageType) {
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
                 commandName = handleInitCommand;
@@ -29,7 +27,18 @@ class GetController extends BaseController {
             name: commandName,
             sequence: [],
             delay: 0,
-            data: commandData,
+            data: {
+                remotePeerId,
+                operationId,
+                keywordUuid,
+                protocol,
+                assertionId: message.data.assertionId,
+                blockchain: message.data.blockchain,
+                contract: message.data.contract,
+                tokenId: message.data.tokenId,
+                keyword: message.data.keyword,
+                hashFunctionId: message.data.hashFunctionId,
+            },
             transactional: false,
         });
     }

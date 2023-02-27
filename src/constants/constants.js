@@ -34,6 +34,8 @@ export const DHT_TYPES = { DUAL: 'dual', WAN: 'wan', LAN: 'lan' };
 
 export const PEER_OFFLINE_LIMIT = 24 * 60 * 60 * 1000;
 
+export const CONTENT_ASSET_HASH_FUNCTION_ID = 1;
+
 export const TRIPLE_STORE_REPOSITORIES = {
     PUBLIC_CURRENT: 'publicCurrent',
     PUBLIC_HISTORY: 'publicHistory',
