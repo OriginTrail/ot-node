@@ -38,4 +38,29 @@ describe('Sharding table service test', async () => {
         );
         expect(bidSuggestions).to.be.equal('3788323225298705400');
     });
+
+    it('Get bid suggestion, returns same token amount for size 1 Kb and size < 1 Kb', async () => {
+        const epochsNumber = 5;
+        const contentAssetStorageAddress = '0xABd59A9aa71847F499d624c492d3903dA953d67a';
+        const firstAssertionId =
+            '0xb44062de45333119471934bc0340c05ff09c0b463392384bc2030cd0a20c334b';
+        const hashFunctionId = 1;
+        const bidSuggestion1Kb = await shardingTableService.getBidSuggestion(
+            'ganache',
+            epochsNumber,
+            BYTES_IN_KILOBYTE,
+            contentAssetStorageAddress,
+            firstAssertionId,
+            hashFunctionId,
+        );
+        const bidSuggestion1B = await shardingTableService.getBidSuggestion(
+            'ganache',
+            epochsNumber,
+            1,
+            contentAssetStorageAddress,
+            firstAssertionId,
+            hashFunctionId,
+        );
+        expect(bidSuggestion1B).to.be.equal(bidSuggestion1Kb);
+    });
 });
