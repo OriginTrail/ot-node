@@ -25,6 +25,15 @@ class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
             operationId,
             OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_REMOTE_START,
         );
+        // todo once validation is completed remove this cache
+        await this.operationIdService.cacheOperationIdData(operationId, {
+            assertionId,
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+            hashFunctionId,
+        });
 
         // const validationResult = await this.validateReceivedData(
         //     operationId,

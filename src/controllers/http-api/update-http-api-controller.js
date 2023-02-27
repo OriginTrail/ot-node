@@ -68,6 +68,7 @@ class UpdateController extends BaseController {
                     blockchain,
                     contract,
                     tokenId,
+                    assertionId: assertionData.publicAssertionId,
                     hashFunctionId,
                     operationId,
                 },
