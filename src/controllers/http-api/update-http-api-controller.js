@@ -4,7 +4,7 @@ import { ERROR_TYPE, OPERATION_ID_STATUS, OPERATION_STATUS } from '../../constan
 class UpdateController extends BaseController {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.publishService;
+        this.operationService = ctx.updateService;
         this.commandExecutor = ctx.commandExecutor;
         this.operationIdService = ctx.operationIdService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;

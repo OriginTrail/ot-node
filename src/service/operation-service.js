@@ -25,7 +25,10 @@ class OperationService {
     }
 
     async getOperationStatus(operationId) {
-        return this.repositoryModuleManager.getOperationStatus(this.operationName, operationId);
+        return this.repositoryModuleManager.getOperationStatus(
+            this.getOperationName(),
+            operationId,
+        );
     }
 
     async getResponsesStatuses(responseStatus, errorMessage, operationId, keyword) {

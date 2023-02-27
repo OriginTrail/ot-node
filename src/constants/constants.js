@@ -192,6 +192,7 @@ export const ERROR_TYPE = {
         UPDATE_LOCAL_STORE_ERROR: 'UpdateLocalStoreError',
         UPDATE_LOCAL_STORE_REMOTE_ERROR: 'UpdateLocalStoreRemoteError',
         UPDATE_ERROR: 'UpdateError',
+        UPDATE_STORE_INIT_ERROR: 'UpdateStoreInitError',
         UPDATE_REMOTE_ERROR: 'UpdateRemoteError',
     },
     GET: {

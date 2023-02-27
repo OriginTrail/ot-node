@@ -12,7 +12,6 @@ class UpdateInitCommand extends ProtocolInitCommand {
     async prepareMessage(command) {
         const { assertionId, blockchain, contract, tokenId, keyword, hashFunctionId } =
             command.data;
-
         return { assertionId, blockchain, contract, tokenId, keyword, hashFunctionId };
     }
 

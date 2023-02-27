@@ -1,5 +1,9 @@
 import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
-import { ERROR_TYPE, OPERATION_ID_STATUS } from '../../../../../constants/constants.js';
+import {
+    ERROR_TYPE,
+    NETWORK_MESSAGE_TYPES,
+    OPERATION_ID_STATUS,
+} from '../../../../../constants/constants.js';
 
 class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
@@ -22,21 +26,21 @@ class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_REMOTE_START,
         );
 
-        const validationResult = await this.validateReceivedData(
-            operationId,
-            assertionId,
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-            hashFunctionId,
-        );
+        // const validationResult = await this.validateReceivedData(
+        //     operationId,
+        //     assertionId,
+        //     blockchain,
+        //     contract,
+        //     tokenId,
+        //     keyword,
+        //     hashFunctionId,
+        // );
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_REMOTE_END,
         );
-        return validationResult;
+        return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
     }
 
     async retryFinished(command) {

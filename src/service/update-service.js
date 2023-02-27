@@ -6,7 +6,6 @@ import {
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     OPERATIONS,
-    OPERATION_REQUEST_STATUS,
 } from '../constants/constants.js';
 
 class UpdateService extends OperationService {
@@ -25,6 +24,9 @@ class UpdateService extends OperationService {
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
+        console.log(
+            `PROCESSING UPDATE response with status: ${responseStatus} message: ${errorMessage}`,
+        );
         // const {
         //     operationId,
         //     numberOfFoundNodes,
