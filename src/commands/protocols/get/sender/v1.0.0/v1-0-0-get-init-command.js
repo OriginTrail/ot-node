@@ -9,6 +9,10 @@ class GetInitCommand extends ProtocolInitCommand {
         this.errorType = ERROR_TYPE.GET.GET_INIT_ERROR;
     }
 
+    async prepareMessage(command) {
+        return { ...super.prepareMessage(command), state: command.data.state };
+    }
+
     messageTimeout() {
         return NETWORK_MESSAGE_TIMEOUT_MILLS.GET.INIT;
     }

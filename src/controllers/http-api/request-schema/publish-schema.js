@@ -26,5 +26,9 @@ export default (blockchainImplementationNames) => ({
             type: 'number',
             minimum: 0,
         },
+        hashFunctionId: {
+            type: 'number',
+            minimum: 1,
+        },
     },
 });

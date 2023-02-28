@@ -4,6 +4,7 @@ import {
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
+    GET_STATES,
 } from '../../../../../constants/constants.js';
 
 class HandleGetRequestCommand extends HandleProtocolMessageCommand {
@@ -11,16 +12,37 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         super(ctx);
         this.operationService = ctx.getService;
         this.tripleStoreService = ctx.tripleStoreService;
+        this.pendingStorageService = ctx.pendingStorageService;
 
         this.errorType = ERROR_TYPE.GET.GET_REQUEST_REMOTE_ERROR;
     }
 
     async prepareMessage(commandData) {
-        const { assertionId, operationId } = commandData;
+        const { assertionId, operationId, state } = commandData;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.GET.GET_REMOTE_START,
         );
+
+        if (
+            state === GET_STATES.LATEST &&
+            commandData.blockchain != null &&
+            commandData.contract != null &&
+            commandData.tokenId != null
+        ) {
+            const cachedAssertion = await this.pendingStorageService.getCachedAssertion(
+                commandData.blockchain,
+                commandData.contract,
+                commandData.tokenId,
+                operationId,
+            );
+            if (cachedAssertion?.assertion?.length) {
+                return {
+                    messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
+                    messageData: { nquads: cachedAssertion.assertion },
+                };
+            }
+        }
 
         const nquads = await this.tripleStoreService.localGet(assertionId, operationId);
 

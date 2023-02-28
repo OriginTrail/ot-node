@@ -36,9 +36,7 @@ class PublishController extends BaseController {
 
         const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
         const hashFunctionId =
-            req.body.hashFunctionId != null
-                ? req.body.hashFunctionId
-                : CONTENT_ASSET_HASH_FUNCTION_ID;
+            req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
         try {
             await this.repositoryModuleManager.createOperationRecord(
                 this.operationService.getOperationName(),

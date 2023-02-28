@@ -28,9 +28,9 @@ export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
 
 export const MAX_FILE_SIZE = 2621440;
 
-export const PUBLISH_TYPES = { ASSERTION: 'assertion', ASSET: 'asset', INDEX: 'index' };
+export const GET_STATES = { LATEST: 'LATEST', LATEST_FINALIZED: 'LATEST_FINALIZED' };
 
-export const DHT_TYPES = { DUAL: 'dual', WAN: 'wan', LAN: 'lan' };
+export const DEFAULT_GET_STATE = GET_STATES.LATEST;
 
 export const PEER_OFFLINE_LIMIT = 24 * 60 * 60 * 1000;
 

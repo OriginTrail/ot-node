@@ -18,6 +18,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
         this.ualService = ctx.ualService;
+        this.pendingStorageService = ctx.pendingStorageService;
 
         this.errorType = ERROR_TYPE.UPDATE.UPDATE_LOCAL_STORE_REMOTE_ERROR;
     }
@@ -42,7 +43,9 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
 
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
-        // save data in pending storage - it's already stored under operation id, create new cache with ual as filename
+        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
+        await this.pendingStorageService.cacheAssertion(ual, { assertion }, operationId);
+        // schedule removal of file in 15 (commit time limit) minutes
         // schedule commit command
 
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
