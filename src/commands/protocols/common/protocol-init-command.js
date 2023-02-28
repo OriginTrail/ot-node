@@ -3,9 +3,10 @@ import { NETWORK_MESSAGE_TYPES } from '../../../constants/constants.js';
 
 class ProtocolInitCommand extends ProtocolMessageCommand {
     async prepareMessage(command) {
-        const { assertionId, blockchain, contract, tokenId, hashFunctionId } = command.data;
+        const { assertionId, blockchain, contract, tokenId, keyword, hashFunctionId } =
+            command.data;
 
-        return { assertionId, blockchain, contract, tokenId, hashFunctionId };
+        return { assertionId, blockchain, contract, tokenId, keyword, hashFunctionId };
     }
 
     async execute(command) {

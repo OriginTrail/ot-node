@@ -28,6 +28,7 @@ const ServiceAgreementStorageV1 = require('dkg-evm-module/abi/ServiceAgreementSt
 const ServiceAgreementV1 = require('dkg-evm-module/abi/ServiceAgreementV1.json');
 const ShardingTable = require('dkg-evm-module/abi/ShardingTable.json');
 const ShardingTableStorage = require('dkg-evm-module/abi/ShardingTableStorage.json');
+const ServiceAgreementStorageProxy = require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json');
 
 const FIXED_GAS_LIMIT_METHODS = {
     submitCommit: 300000,
@@ -235,14 +236,15 @@ class Web3Service {
             this.wallet,
         );
 
-        const serviceAgreementStorageV1Address = await this.callContractFunction(
+        const serviceAgreementStorageProxyAddress = await this.callContractFunction(
             this.hubContract,
             'getContractAddress',
-            ['ServiceAgreementStorageV1'],
+            ['ServiceAgreementStorageProxy'],
         );
-        this.ServiceAgreementStorageV1Contract = new ethers.Contract(
-            serviceAgreementStorageV1Address,
-            ServiceAgreementStorageV1,
+
+        this.ServiceAgreementStorageProxy = new ethers.Contract(
+            serviceAgreementStorageProxyAddress,
+            ServiceAgreementStorageProxy,
             this.wallet,
         );
 
@@ -579,7 +581,7 @@ class Web3Service {
 
     async getAgreementData(agreementId) {
         const result = await this.callContractFunction(
-            this.ServiceAgreementStorageV1Contract,
+            this.ServiceAgreementStorageProxy,
             'getAgreementData',
             [agreementId],
         );
@@ -588,9 +590,11 @@ class Web3Service {
             startTime: result['0'].toNumber(),
             epochsNumber: result['1'],
             epochLength: result['2'].toNumber(),
-            tokenAmount: result['3'],
+            tokenAmount: result['3'][0],
+            addedTokenAmount: result['3'][1],
             scoreFunctionId: result['4'][0],
             proofWindowOffsetPerc: result['4'][1],
+            latestFinalizedState: result['5'],
         };
     }
 
