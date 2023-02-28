@@ -95,6 +95,7 @@ class SubmitCommitCommand extends EpochCommand {
                 hashFunctionId,
                 agreementData,
                 operationId,
+                assertionId,
             );
             return EpochCommand.empty();
         }
@@ -160,6 +161,7 @@ class SubmitCommitCommand extends EpochCommand {
                         hashFunctionId,
                         agreementData,
                         operationId,
+                        assertionId,
                     );
                 }
             },

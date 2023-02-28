@@ -55,6 +55,7 @@ class CalculateProofsCommand extends EpochCommand {
                 hashFunctionId,
                 agreementData,
                 operationId,
+                assertionId,
             );
 
             return EpochCommand.empty();

@@ -17,6 +17,7 @@ class EpochCommand extends Command {
         hashFunctionId,
         agreementData,
         operationId,
+        assertionId
     ) {
         // todo check epoch number and make sure that delay is not in past
         const nextEpochStartTime =
@@ -45,6 +46,7 @@ class EpochCommand extends Command {
                 epoch: epoch + 1,
                 hashFunctionId,
                 operationId,
+                assertionId
             },
             transactional: false,
         });
@@ -85,6 +87,7 @@ class EpochCommand extends Command {
             command.data.hashFunctionId,
             command.data.agreementData,
             command.data.operationId,
+            command.data.assertionId,
         );
 
         return Command.empty();
