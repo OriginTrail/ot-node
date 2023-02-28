@@ -1,17 +1,17 @@
 /* eslint-disable max-len */
 
-import { ethers } from "ethers";
-import {readFile} from "fs/promises";
-import {exec} from "child_process";
+import { ethers } from 'ethers';
+import { readFile } from 'fs/promises';
+import { exec } from 'child_process';
+import { setTimeout } from 'timers/promises';
 
-
-const testParametersStorageParams = {
+/* const testParametersStorageParams = {
     epochLength: 6*60, // 6 minutes
     commitWindowDurationPerc: 33, // 2 minutes
     minProofWindowOffsetPerc: 66, // 4 minutes
     maxProofWindowOffsetPerc: 66, // 4 minutes
     proofWindowDurationPerc: 33, // 2 minutes
-}
+} */
 /**
  * LocalBlockchain represent small wrapper around the Ganache.
  *
@@ -36,14 +36,13 @@ const testParametersStorageParams = {
  * @param {String} [options.logger] - Logger instance with debug, trace, info and error methods.
  */
 class LocalBlockchain {
-
     async initialize() {
-        const startBlockchainProcess = exec('npm run start:local_blockchain', );
-        startBlockchainProcess.stdout.on('data', function(data) {
+        const startBlockchainProcess = exec('npm run start:local_blockchain');
+        startBlockchainProcess.stdout.on('data', (data) => {
             console.log(data);
         });
         console.log('Waiting for 3 seconds for blockchain to start and contracts to be deployed');
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await setTimeout(3000);
 
         this.provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
 
@@ -56,14 +55,6 @@ class LocalBlockchain {
             address: publicKeys[index],
             privateKey,
         }));
-
-    }
-
-    fetchContracts() {
-        this.contracts = {};
-        for (const [name, source] of Object.entries(sources)) {
-            this.populateContractObject(name, source);
-        }
     }
 
     populateContractObject(contractName, source) {
@@ -74,8 +65,10 @@ class LocalBlockchain {
 
     async setParametersStorageParams(params) {
         for (const parameter of Object.keys(params)) {
-            const blockchainMethodName = `set${parameter.charAt(0).toUpperCase() + parameter.slice(1)}`;
-            this.logger.info(`Setting ${parameter} in parameters storage to: ${params[parameter]}`)
+            const blockchainMethodName = `set${
+                parameter.charAt(0).toUpperCase() + parameter.slice(1)
+            }`;
+            this.logger.info(`Setting ${parameter} in parameters storage to: ${params[parameter]}`);
             // eslint-disable-next-line no-await-in-loop
             await this.contracts.parametersStorage.instance[blockchainMethodName](
                 params[parameter],
@@ -108,10 +101,6 @@ class LocalBlockchain {
         await contract.instance
             .setupRole(minter, { gasLimit: 3000000 })
             .catch((error) => this.logger.error('Unable to setup role. Error: ', error));
-    }
-
-    getWallets() {
-        return wallets;
     }
 }
 

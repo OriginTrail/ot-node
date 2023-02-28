@@ -41,10 +41,8 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_REMOTE_START,
         );
 
-        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
-        await this.pendingStorageService.cacheAssertion(ual, { assertion }, operationId);
+        await this.pendingStorageService.cacheAssertion(blockchain, contract, tokenId, { assertion }, operationId);
 
          await Promise.all([
              this.commandExecutor.add({

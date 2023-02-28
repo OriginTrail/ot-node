@@ -20,6 +20,8 @@ class MovePendingStorageAssertionCommand extends Command {
             tokenId,
             operationId,
         );
+
+        return Command.empty();
     }
 
     /**

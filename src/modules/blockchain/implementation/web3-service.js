@@ -625,10 +625,11 @@ class Web3Service {
         return Number(assertionChunksNumber);
     }
 
-    async isCommitWindowOpen(agreementId, epoch) {
+    async isCommitWindowOpen(agreementId, epoch, assertionId) {
         return this.callContractFunction(this.ServiceAgreementV1Contract, 'isCommitWindowOpen', [
             agreementId,
             epoch,
+            assertionId
         ]);
     }
 

@@ -148,10 +148,11 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'convertFromWei', [value, toUnit]);
     }
 
-    async isCommitWindowOpen(blockchain, agreementId, epoch) {
+    async isCommitWindowOpen(blockchain, agreementId, epoch, assertionId) {
         return this.callImplementationFunction(blockchain, 'isCommitWindowOpen', [
             agreementId,
             epoch,
+            assertionId
         ]);
     }
 

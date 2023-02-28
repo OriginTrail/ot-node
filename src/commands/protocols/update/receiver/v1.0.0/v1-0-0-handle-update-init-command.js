@@ -45,6 +45,15 @@ class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
         //     hashFunctionId,
         // );
 
+        await this.operationIdService.cacheOperationIdData(operationId, {
+            assertionId,
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+            hashFunctionId,
+        });
+
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_REMOTE_END,

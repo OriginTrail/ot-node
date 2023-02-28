@@ -114,7 +114,7 @@ class FileService {
 
     getPendingStorageDocumentPath(blockchain, contract, tokenId) {
         return path.join(
-            this.getOperationIdCachePath(),
+            this.getPendingStorageCachePath(),
             this.getPendingStorageFileName(blockchain, contract, tokenId),
         );
     }
