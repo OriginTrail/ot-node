@@ -45,8 +45,17 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
 
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
         await this.pendingStorageService.cacheAssertion(ual, { assertion }, operationId);
-        // schedule removal of file in 15 (commit time limit) minutes
-        // schedule commit command
+
+         await Promise.all([
+             this.commandExecutor.add({
+                 name: 'movePendingStorageAssertionCommand',
+                 sequence: [],
+                 delay: 0, // todo: get pending state time limit for validation
+                 data: commandData,
+                 transactional: false,
+             }),
+             // todo: schedule commit command
+         ]);
 
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
     }

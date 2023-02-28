@@ -47,6 +47,19 @@ class PendingStorageService {
         return data;
     }
 
+    async removeCachedAssertion(blockchain, contract, tokenId, operationId) {
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+        this.logger.debug(`Removing cached assertion for ual: ${ual} operation id: ${operationId}`);
+
+        const documentPath = this.fileService.getPendingStorageDocumentPath(
+            blockchain,
+            contract,
+            tokenId,
+        );
+        await this.fileService.removeFile(documentPath);
+    }
+
     async assertionExists(blockchain, contract, tokenId) {
         const documentPath = this.fileService.getPendingStorageDocumentPath(
             blockchain,
