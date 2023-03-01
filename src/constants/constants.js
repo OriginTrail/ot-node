@@ -391,3 +391,20 @@ export const CONTRACTS = {
     HUB_CONTRACT: 'hubContract',
     COMMIT_MANAGER_V1_CONTRACT: 'CommitManagerV1Contract',
 };
+
+export const CONTRACT_EVENTS = {
+    SHARDING_TABLE: {
+        NODE_ADDED: 'NodeAdded',
+        NODE_REMOVED: 'NodeRemoved',
+    },
+    STAKING: {
+        STAKE_INCREASED: 'StakeIncreased',
+        STAKE_WITHDRAWAL_STARTED: 'StakeWithdrawalStarted',
+    },
+    PROFILE: {
+        ASK_UPDATED: 'AskUpdated',
+    },
+    COMMIT_MANAGER_V1: {
+        STATE_FINALIZED: 'StateFinalized',
+    },
+};

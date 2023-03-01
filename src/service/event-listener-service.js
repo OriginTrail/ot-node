@@ -1,7 +1,5 @@
 import { ethers } from 'ethers';
-import {
-    CONTENT_ASSET_HASH_FUNCTION_ID,
-} from '../constants/constants.js';
+import { CONTENT_ASSET_HASH_FUNCTION_ID, CONTRACT_EVENTS } from '../constants/constants.js';
 
 class EventListenerService {
     constructor(ctx) {
@@ -21,11 +19,17 @@ class EventListenerService {
 
     listenOnEvents(blockchainId) {
         this.listenOnShardingTableEvents(blockchainId);
+        this.listenOnStakingEvents(blockchainId);
+        this.listenOnProfileEvents(blockchainId);
         this.listenOnCommitManagerEvents(blockchainId);
     }
 
     listenOnShardingTableEvents(blockchainId) {
-        this.eventEmitter.on(`${blockchainId}-NodeAdded`, async (event) => {
+        const nodeAddedEvent = this.getBlockchainEventName(
+            blockchainId,
+            CONTRACT_EVENTS.SHARDING_TABLE.NODE_ADDED,
+        );
+        this.eventEmitter.on(nodeAddedEvent, async (event) => {
             const eventData = JSON.parse(event.data);
             const nodeId = this.blockchainModuleManager.convertHexToAscii(
                 event.blockchain_id,
@@ -39,10 +43,10 @@ class EventListenerService {
             );
 
             this.logger.trace(
-                `${blockchainId}-NodeAdded event caught, adding peer id: ${nodeId} to sharding table.`,
+                `${nodeAddedEvent} event caught, adding peer id: ${nodeId} to sharding table.`,
             );
 
-            this.repositoryModuleManager.createPeerRecord(
+            await this.repositoryModuleManager.createPeerRecord(
                 nodeId,
                 event.blockchain_id,
                 this.blockchainModuleManager.convertFromWei(blockchainId, eventData.ask, 'ether'),
@@ -54,30 +58,40 @@ class EventListenerService {
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
 
-        this.eventEmitter.on(`${blockchainId}-NodeRemoved`, (event) => {
+        const nodeRemovedEvent = this.getBlockchainEventName(
+            blockchainId,
+            CONTRACT_EVENTS.SHARDING_TABLE.NODE_REMOVED,
+        );
+        this.eventEmitter.on(nodeRemovedEvent, async (event) => {
             const eventData = JSON.parse(event.data);
             const nodeId = this.blockchainModuleManager.convertHexToAscii(
                 event.blockchain_id,
                 eventData.nodeId,
             );
             this.logger.trace(
-                `${blockchainId}-NodeRemoved event caught, removing peer id: ${nodeId} from sharding table.`,
+                `${nodeRemovedEvent} event caught, removing peer id: ${nodeId} from sharding table.`,
             );
-            this.repositoryModuleManager.removePeerRecord(blockchainId, nodeId);
+            await this.repositoryModuleManager.removePeerRecord(blockchainId, nodeId);
 
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
+    }
 
-        this.eventEmitter.on(`${blockchainId}-StakeIncreased`, async (event) => {
+    listenOnStakingEvents(blockchainId) {
+        const stakeIncreasedEvent = this.getBlockchainEventName(
+            blockchainId,
+            CONTRACT_EVENTS.STAKING.STAKE_INCREASED,
+        );
+        this.eventEmitter.on(stakeIncreasedEvent, async (event) => {
             const eventData = JSON.parse(event.data);
             const nodeId = this.blockchainModuleManager.convertHexToAscii(
                 event.blockchain_id,
                 eventData.nodeId,
             );
             this.logger.trace(
-                `${blockchainId}-StakeIncreased event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
+                `${stakeIncreasedEvent} event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
             );
-            this.repositoryModuleManager.updatePeerStake(
+            await this.repositoryModuleManager.updatePeerStake(
                 blockchainId,
                 nodeId,
                 ethers.utils.formatUnits(
@@ -91,16 +105,20 @@ class EventListenerService {
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
 
-        this.eventEmitter.on(`${blockchainId}-StakeWithdrawalStarted`, async (event) => {
+        const stakeWithdrawalStartedEvent = this.getBlockchainEventName(
+            blockchainId,
+            CONTRACT_EVENTS.STAKING.STAKE_WITHDRAWAL_STARTED,
+        );
+        this.eventEmitter.on(stakeWithdrawalStartedEvent, async (event) => {
             const eventData = JSON.parse(event.data);
             const nodeId = this.blockchainModuleManager.convertHexToAscii(
                 event.blockchain_id,
                 eventData.nodeId,
             );
             this.logger.trace(
-                `${blockchainId}-StakeWithdrawalStarted event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
+                `${stakeWithdrawalStartedEvent} event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
             );
-            this.repositoryModuleManager.updatePeerStake(
+            await this.repositoryModuleManager.updatePeerStake(
                 blockchainId,
                 nodeId,
                 ethers.utils.formatUnits(
@@ -113,17 +131,23 @@ class EventListenerService {
             );
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
+    }
 
-        this.eventEmitter.on(`${blockchainId}-AskUpdated`, (event) => {
+    listenOnProfileEvents(blockchainId) {
+        const askUpdatedEvent = this.getBlockchainEventName(
+            blockchainId,
+            CONTRACT_EVENTS.PROFILE.ASK_UPDATED,
+        );
+        this.eventEmitter.on(askUpdatedEvent, async (event) => {
             const eventData = JSON.parse(event.data);
             const nodeId = this.blockchainModuleManager.convertHexToAscii(
                 event.blockchain_id,
                 eventData.nodeId,
             );
             this.logger.trace(
-                `${blockchainId}-AskUpdated event caught, updating ask value for peer id: ${nodeId} in sharding table.`,
+                `${askUpdatedEvent} event caught, updating ask value for peer id: ${nodeId} in sharding table.`,
             );
-            this.repositoryModuleManager.updatePeerAsk(
+            await this.repositoryModuleManager.updatePeerAsk(
                 blockchainId,
                 nodeId,
                 this.blockchainModuleManager.convertFromWei(blockchainId, eventData.ask, 'ether'),
@@ -133,9 +157,17 @@ class EventListenerService {
     }
 
     listenOnCommitManagerEvents(blockchainId) {
-        this.eventEmitter.on(`${blockchainId}-StateFinalized`, () => {
-            this.logger.trace(`${blockchainId}-StateFinalized event caught.`);
+        const stateFinalizedEvent = this.getBlockchainEventName(
+            blockchainId,
+            CONTRACT_EVENTS.COMMIT_MANAGER_V1.STATE_FINALIZED,
+        );
+        this.eventEmitter.on(stateFinalizedEvent, () => {
+            this.logger.trace(`${stateFinalizedEvent} event caught.`);
         });
+    }
+
+    getBlockchainEventName(blockchainId, eventName) {
+        return `${blockchainId}-${eventName}`;
     }
 }
 
