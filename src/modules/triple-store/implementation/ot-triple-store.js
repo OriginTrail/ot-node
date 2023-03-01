@@ -92,21 +92,32 @@ class OtTripleStore {
         return this.ask(repository, query);
     }
 
-    async getAssetMetadata(repository, ual, blockchain, contract, tokenId) {
+    async getAssetMetadata(repository, ual) {
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
-                        SELECT ?s ?p ?o  WHERE {
+                        SELECT ?assertion ?agreementStartTime ?agreementEndTime ?keyword  WHERE {
                             GRAPH <assets:graph> {
-                              <${ual}> ?p ?o ;
-                                        schema:blockchain "${blockchain}";
-                                        schema:contract   "${contract}";
-                                        schema:tokenId    ${tokenId};
+                                    <${ual}> schema:assertion ?assertion;
+                                            schema:agreementStartTime ?agreementStartTime;
+                                            schema:agreementEndTime ?agreementEndTime;
+                                            schema:keyword ?keyword;
                             }
                         }`;
 
         return this.select(repository, query);
     }
 
-    async isAssertionIdShared(repository, assertionId) {
+    async deleteAssetMetadata(repository, ual) {
+        const query = `DELETE WHERE {
+                GRAPH <assets:graph> {
+                    ?s ?p ?o .
+                    <${ual}> ?p ?o
+                }
+            };`;
+
+        return this.queryEngine.queryVoid(query, this.repositories[repository].insertContext);
+    }
+
+    async countAssetsWithAssertionId(repository, assertionId) {
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
                     SELECT (COUNT(DISTINCT ?ual) as ?count)
                     WHERE {
@@ -114,8 +125,7 @@ class OtTripleStore {
                                 ?ual schema:assertion <assertion:${assertionId}>
                         }
                     }`;
-        const count = await this.select(repository, query);
-        return count > 1;
+        return this.select(repository, query);
     }
 
     async getAssetAssertionIds(repository, ual) {
@@ -146,7 +156,7 @@ class OtTripleStore {
         return this.ask(repository, query);
     }
 
-    async insertAsset(repository, ual, assetNquads, deleteAssetTriples = true) {
+    async insertAssetMetadata(repository, ual, assetNquads, deleteAssetTriples = true) {
         const deleteAssetTriplesQuery = `DELETE {
                 <${ual}> schema:assertion ?assertion . 
                 <${ual}> schema:agreementEndTime ?agreementEndTime

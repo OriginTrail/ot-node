@@ -230,7 +230,7 @@ class EventListenerService {
         );
         this.eventEmitter.on(stateFinalizedEvent, async (event) => {
             this.logger.trace(`${stateFinalizedEvent} event caught.`);
-            /* const eventData = JSON.parse(event.data);
+            const eventData = JSON.parse(event.data);
 
             const { tokenId, keyword } = eventData;
             const blockchain = event.blockchain_id;
@@ -242,19 +242,16 @@ class EventListenerService {
                 blockchain,
                 contract,
                 tokenId,
-            ); */
-            /* // if asset exists in triple store, 
-                // copy metadata and assertion from public current to historical state, 
-                // delete metadata from public current, 
-                // delete assertion from public current if not linked to other assets,
-            // if ual file exists in pending storage
-                // insert assertion in public current triple store
-                // insert asset metadata in public current triple store
-                // delete ual file from pending storage */
+            );
 
-            /* if (assetMetadata?.length) {
-                const previousAssertion = await this.tripleStoreService.localGet(assertionId);
+            // if asset exists in triple store
+            if (assetMetadata) {
+                const previousAssertionId = assetMetadata.assertion.replace('assertion:', '');
+                const previousAssertion = await this.tripleStoreService.localGet(
+                    previousAssertionId,
+                );
 
+                // copy metadata and assertion from public current to historical state
                 await this.tripleStoreService.localStoreAsset(
                     TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
                     previousAssertionId,
@@ -262,11 +259,39 @@ class EventListenerService {
                     blockchain,
                     contract,
                     tokenId,
-                    agreementStartTime,
-                    agreementEndTime,
+                    assetMetadata.agreementStartTime,
+                    assetMetadata.agreementEndTime,
                     keyword,
                 );
-            } */
+
+                // delete asset metadata from public current
+                await this.tripleStoreService.deleteAssetMetadata(
+                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                    blockchain,
+                    contract,
+                    tokenId,
+                );
+
+                const assetsWithAssertionIdCount =
+                    await this.tripleStoreService.countAssetsWithAssertionId(
+                        TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                        previousAssertionId,
+                    );
+
+                // delete assertion from public current if not linked to other assets
+                if (assetsWithAssertionIdCount === 0) {
+                    await this.tripleStoreService.deleteAssertion(
+                        TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                        previousAssertionId,
+                    );
+                }
+            }
+
+            /* 
+            // if ual file exists in pending storage
+                // insert assertion in public current triple store
+                // insert asset metadata in public current triple store
+                // delete ual file from pending storage */
         });
     }
 
