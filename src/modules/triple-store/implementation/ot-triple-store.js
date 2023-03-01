@@ -92,6 +92,20 @@ class OtTripleStore {
         return this.ask(repository, query);
     }
 
+    async getAssetMetadata(repository, ual, blockchain, contract, tokenId) {
+        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
+                        SELECT ?s ?p ?o  WHERE {
+                            GRAPH <assets:graph> {
+                              <${ual}> ?p ?o ;
+                                        schema:blockchain "${blockchain}";
+                                        schema:contract   "${contract}";
+                                        schema:tokenId    ${tokenId};
+                            }
+                        }`;
+
+        return this.select(repository, query);
+    }
+
     async isAssertionIdShared(repository, assertionId) {
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
                     SELECT (COUNT(DISTINCT ?ual) as ?count)

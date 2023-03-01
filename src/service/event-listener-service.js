@@ -1,4 +1,9 @@
-import { CONTENT_ASSET_HASH_FUNCTION_ID, CONTRACT_EVENTS } from '../constants/constants.js';
+import {
+    CONTENT_ASSET_HASH_FUNCTION_ID,
+    CONTRACTS,
+    CONTRACT_EVENTS,
+    TRIPLE_STORE_REPOSITORIES,
+} from '../constants/constants.js';
 
 class EventListenerService {
     constructor(ctx) {
@@ -6,21 +11,75 @@ class EventListenerService {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.validationModuleManager = ctx.validationModuleManager;
+        this.tripleStoreService = ctx.tripleStoreService;
+        this.dataService = ctx.dataService;
         this.eventEmitter = ctx.eventEmitter;
     }
 
     initialize() {
         for (const blockchainId of this.blockchainModuleManager.getImplementationNames()) {
             this.listenOnEvents(blockchainId);
-            this.logger.info(`Event listener initialized for '${blockchainId}' blockchain`);
+            this.logger.info(`Event listener initialized for blockchain: '${blockchainId}'.`);
         }
     }
 
     listenOnEvents(blockchainId) {
+        this.listenOnHubEvents(blockchainId);
         this.listenOnShardingTableEvents(blockchainId);
         this.listenOnStakingEvents(blockchainId);
         this.listenOnProfileEvents(blockchainId);
         this.listenOnCommitManagerEvents(blockchainId);
+    }
+
+    listenOnHubEvents(blockchainId) {
+        const newContractEvent = this.getBlockchainEventName(
+            blockchainId,
+            CONTRACT_EVENTS.HUB.NEW_CONTRACT,
+        );
+        this.eventEmitter.on(newContractEvent, async () => {
+            this.reinitializeContracts(blockchainId);
+        });
+
+        const contractChangedEvent = this.getBlockchainEventName(
+            blockchainId,
+            CONTRACT_EVENTS.HUB.CONTRACT_CHANGED,
+        );
+        this.eventEmitter.on(contractChangedEvent, async (event) => {
+            await this.reinitializeContracts(blockchainId);
+            if (event.contractName === CONTRACTS.SHARDING_TABLE_CONTRACT) {
+                await this.repositoryModuleManager.cleanShardingTable();
+            }
+        });
+
+        const newAssetStorageEvent = this.getBlockchainEventName(
+            blockchainId,
+            CONTRACT_EVENTS.HUB.NEW_ASSET_STORAGE,
+        );
+        this.eventEmitter.on(newAssetStorageEvent, async () => {
+            await this.reinitializeContracts(blockchainId);
+        });
+
+        const assetStorageChangedEvent = this.getBlockchainEventName(
+            blockchainId,
+            CONTRACT_EVENTS.HUB.ASSET_STORAGE_CHANGED,
+        );
+        this.eventEmitter.on(assetStorageChangedEvent, async () => {
+            await this.reinitializeContracts(blockchainId);
+        });
+    }
+
+    // TODO: review this
+    async reinitializeContracts(blockchainId) {
+        try {
+            await this.blockchainModuleManager.initializeContracts(blockchainId);
+        } catch (error) {
+            this.logger.warn(`Unable to reinitialize contracts. Error: ${error.message}`);
+            this.blockchainModuleManager.removeImplementation(blockchainId);
+            if (!this.blockchainModuleManager.getImplementationNames().length) {
+                this.logger.error(`Unable to initialize contracts. OT-node shutting down...`);
+                process.exit(1);
+            }
+        }
     }
 
     listenOnShardingTableEvents(blockchainId) {
@@ -29,7 +88,9 @@ class EventListenerService {
             CONTRACT_EVENTS.SHARDING_TABLE.NODE_ADDED,
         );
         this.eventEmitter.on(nodeAddedEvent, async (event) => {
+            this.logger.trace(`${nodeAddedEvent} event caught.`);
             const eventData = JSON.parse(event.data);
+
             const nodeId = this.blockchainModuleManager.convertHexToAscii(
                 event.blockchain_id,
                 eventData.nodeId,
@@ -41,9 +102,7 @@ class EventListenerService {
                 nodeId,
             );
 
-            this.logger.trace(
-                `${nodeAddedEvent} event caught, adding peer id: ${nodeId} to sharding table.`,
-            );
+            this.logger.trace(`Adding peer id: ${nodeId} to sharding table.`);
 
             await this.repositoryModuleManager.createPeerRecord(
                 nodeId,
@@ -62,14 +121,16 @@ class EventListenerService {
             CONTRACT_EVENTS.SHARDING_TABLE.NODE_REMOVED,
         );
         this.eventEmitter.on(nodeRemovedEvent, async (event) => {
+            this.logger.trace(`${nodeRemovedEvent} event caught.`);
             const eventData = JSON.parse(event.data);
+
             const nodeId = this.blockchainModuleManager.convertHexToAscii(
                 event.blockchain_id,
                 eventData.nodeId,
             );
-            this.logger.trace(
-                `${nodeRemovedEvent} event caught, removing peer id: ${nodeId} from sharding table.`,
-            );
+
+            this.logger.trace(`Removing peer id: ${nodeId} from sharding table.`);
+
             await this.repositoryModuleManager.removePeerRecord(blockchainId, nodeId);
 
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
@@ -82,14 +143,16 @@ class EventListenerService {
             CONTRACT_EVENTS.STAKING.STAKE_INCREASED,
         );
         this.eventEmitter.on(stakeIncreasedEvent, async (event) => {
+            this.logger.trace(`${stakeIncreasedEvent} event caught.`);
             const eventData = JSON.parse(event.data);
+
             const nodeId = this.blockchainModuleManager.convertHexToAscii(
                 event.blockchain_id,
                 eventData.nodeId,
             );
-            this.logger.trace(
-                `${stakeIncreasedEvent} event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
-            );
+
+            this.logger.trace(`Updating stake value for peer id: ${nodeId} in sharding table.`);
+
             await this.repositoryModuleManager.updatePeerStake(
                 blockchainId,
                 nodeId,
@@ -109,14 +172,16 @@ class EventListenerService {
             CONTRACT_EVENTS.STAKING.STAKE_WITHDRAWAL_STARTED,
         );
         this.eventEmitter.on(stakeWithdrawalStartedEvent, async (event) => {
+            this.logger.trace(`${stakeWithdrawalStartedEvent} event caught.`);
             const eventData = JSON.parse(event.data);
+
             const nodeId = this.blockchainModuleManager.convertHexToAscii(
                 event.blockchain_id,
                 eventData.nodeId,
             );
-            this.logger.trace(
-                `${stakeWithdrawalStartedEvent} event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
-            );
+
+            this.logger.trace(`Updating stake value for peer id: ${nodeId} in sharding table.`);
+
             await this.repositoryModuleManager.updatePeerStake(
                 blockchainId,
                 nodeId,
@@ -125,9 +190,10 @@ class EventListenerService {
                     await this.blockchainModuleManager.getNodeStake(
                         blockchainId,
                         eventData.identityId,
-                    )
+                    ),
                 ),
             );
+
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
     }
@@ -138,14 +204,16 @@ class EventListenerService {
             CONTRACT_EVENTS.PROFILE.ASK_UPDATED,
         );
         this.eventEmitter.on(askUpdatedEvent, async (event) => {
+            this.logger.trace(`${askUpdatedEvent} event caught.`);
             const eventData = JSON.parse(event.data);
+
             const nodeId = this.blockchainModuleManager.convertHexToAscii(
                 event.blockchain_id,
                 eventData.nodeId,
             );
-            this.logger.trace(
-                `${askUpdatedEvent} event caught, updating ask value for peer id: ${nodeId} in sharding table.`,
-            );
+
+            this.logger.trace(`Updating ask value for peer id: ${nodeId} in sharding table.`);
+
             await this.repositoryModuleManager.updatePeerAsk(
                 blockchainId,
                 nodeId,
@@ -160,8 +228,45 @@ class EventListenerService {
             blockchainId,
             CONTRACT_EVENTS.COMMIT_MANAGER_V1.STATE_FINALIZED,
         );
-        this.eventEmitter.on(stateFinalizedEvent, () => {
+        this.eventEmitter.on(stateFinalizedEvent, async (event) => {
             this.logger.trace(`${stateFinalizedEvent} event caught.`);
+            /* const eventData = JSON.parse(event.data);
+
+            const { tokenId, keyword } = eventData;
+            const blockchain = event.blockchain_id;
+            const contract = eventData.assetContract;
+            const assertionId = eventData.state;
+
+            const assetMetadata = await this.tripleStoreService.getAssetMetadata(
+                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                blockchain,
+                contract,
+                tokenId,
+            ); */
+            /* // if asset exists in triple store, 
+                // copy metadata and assertion from public current to historical state, 
+                // delete metadata from public current, 
+                // delete assertion from public current if not linked to other assets,
+            // if ual file exists in pending storage
+                // insert assertion in public current triple store
+                // insert asset metadata in public current triple store
+                // delete ual file from pending storage */
+
+            /* if (assetMetadata?.length) {
+                const previousAssertion = await this.tripleStoreService.localGet(assertionId);
+
+                await this.tripleStoreService.localStoreAsset(
+                    TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                    previousAssertionId,
+                    previousAssertion,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    agreementStartTime,
+                    agreementEndTime,
+                    keyword,
+                );
+            } */
         });
     }
 

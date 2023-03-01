@@ -69,7 +69,7 @@ class CalculateProofsCommand extends EpochCommand {
             epoch,
         );
 
-        const nquads = await this.tripleStoreService.localGet(assertionId, operationId);
+        const nquads = await this.tripleStoreService.localGet(assertionId);
 
         const { leaf, proof } = this.validationModuleManager.getMerkleProof(
             nquads,

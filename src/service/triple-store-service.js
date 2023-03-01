@@ -35,12 +35,12 @@ class TripleStoreService {
     }
 
     async localStoreAsset(
+        repository,
         assertionId,
         assertion,
         blockchain,
         contract,
         tokenId,
-        operationId,
         agreementStartTime,
         agreementEndTime,
         keyword,
@@ -48,7 +48,7 @@ class TripleStoreService {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.info(
-            `Inserting asset with assertion id: ${assertionId}, ual: ${ual} in triple store. Operation id: ${operationId}`,
+            `Inserting asset with assertion id: ${assertionId}, ual: ${ual} in triple store.`,
         );
 
         /* // get current assertion, store current assertion in history repository, add triple UAL -> assertionId
@@ -120,14 +120,14 @@ class TripleStoreService {
 
         await Promise.all([
             this.tripleStoreModuleManager.insertAsset(
-                this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                this.repositoryImplementations[repository],
+                repository,
                 ual,
                 currentAssetNquads.join('\n'),
             ),
             this.tripleStoreModuleManager.insertAssertion(
-                this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                this.repositoryImplementations[repository],
+                repository,
                 assertionId,
                 assertion.join('\n'),
             ),
@@ -138,11 +138,11 @@ class TripleStoreService {
         );
     }
 
-    async localGet(assertionId, operationId, localQuery = false) {
+    async localGet(assertionId, localQuery = false) {
         let nquads;
         if (localQuery) {
             this.logger.debug(
-                `Getting assertion: ${assertionId} for operationId: ${operationId} from private repository`,
+                `Getting assertion: ${assertionId} from private repository`,
             );
 
             nquads = await this.tripleStoreModuleManager.getAssertion(
@@ -153,7 +153,7 @@ class TripleStoreService {
         }
         if (!nquads?.length) {
             this.logger.debug(
-                `Getting assertion: ${assertionId} for operationId: ${operationId} from public repository`,
+                `Getting assertion: ${assertionId} from public repository`,
             );
             nquads = await this.tripleStoreModuleManager.getAssertion(
                 this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
@@ -164,7 +164,7 @@ class TripleStoreService {
         nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
 
         this.logger.debug(
-            `Assertion: ${assertionId} for operationId: ${operationId} ${
+            `Assertion: ${assertionId} ${
                 nquads.length ? '' : 'not'
             } found in local triple store.`,
         );
@@ -176,11 +176,22 @@ class TripleStoreService {
         return nquads;
     }
 
-    async assetExists(repository, ual, blockchain, contract, tokenId) {
+    async assetExists(repository, blockchain, contract, tokenId) {
         return this.tripleStoreModuleManager.assetExists(
             this.repositoryImplementations[repository],
             repository,
-            ual,
+            this.ualService.deriveUAL(blockchain, contract, tokenId),
+            blockchain,
+            contract,
+            tokenId,
+        );
+    }
+
+    async getAssetMetadata(repository, blockchain, contract, tokenId) {
+        return this.tripleStoreModuleManager.getAssetMetadata(
+            this.repositoryImplementations[repository],
+            repository,
+            this.ualService.deriveUAL(blockchain, contract, tokenId),
             blockchain,
             contract,
             tokenId,

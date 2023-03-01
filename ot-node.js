@@ -46,7 +46,6 @@ class OTNode {
 
         await this.initializeModules();
         await this.executePullShardingTableMigration();
-        await this.listenOnHubContractChanges();
 
         await this.createProfiles();
 
@@ -54,7 +53,7 @@ class OTNode {
         await this.initializeShardingTableService();
         await this.initializeTelemetryInjectionService();
 
-        this.initializeEventListener();
+        this.initializeEventListenerService();
         await this.initializeRouters();
         await this.startListeningOnBlockchainEvents();
         this.logger.info('Node is up and running!');
@@ -134,11 +133,11 @@ class OTNode {
         this.logger.info('Event emitter initialized');
     }
 
-    initializeEventListener() {
-        const eventListenerService = this.container.resolve('eventListenerService');
-
+    initializeEventListenerService() {
         try {
+            const eventListenerService = this.container.resolve('eventListenerService');
             eventListenerService.initialize();
+            this.logger.info('Event Listener Service initialized successfully');
         } catch (error) {
             this.logger.error(
                 `Unable to initialize event listener service. Error message: ${error.message} OT-node shutting down...`,
@@ -273,10 +272,10 @@ class OTNode {
     }
 
     async initializeShardingTableService() {
-        const shardingTableService = this.container.resolve('shardingTableService');
-
         try {
+            const shardingTableService = this.container.resolve('shardingTableService');
             await shardingTableService.initialize();
+            this.logger.info('Sharding Table Service initialized successfully');
         } catch (error) {
             this.logger.error(
                 `Unable to initialize sharding table service. Error message: ${error.message} OT-node shutting down...`,
@@ -402,43 +401,6 @@ class OTNode {
     stop(code = 0) {
         this.logger.info('Stopping node...');
         process.exit(code);
-    }
-
-    async listenOnHubContractChanges() {
-        const eventEmitter = this.container.resolve('eventEmitter');
-        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
-        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
-        const that = this;
-        blockchainModuleManager.getImplementationNames().map(async (blockchain) => {
-            eventEmitter.on(`${blockchain}-NewContract`, async () => {
-                await that.reinitializeContracts(blockchainModuleManager, blockchain);
-            });
-            eventEmitter.on(`${blockchain}-ContractChanged`, async (event) => {
-                await that.reinitializeContracts(blockchainModuleManager, blockchain);
-                if (event.contractName === 'ShardingTable') {
-                    await repositoryModuleManager.cleanShardingTable();
-                }
-            });
-            eventEmitter.on(`${blockchain}-NewAssetContract`, async () => {
-                await that.reinitializeContracts(blockchainModuleManager, blockchain);
-            });
-            eventEmitter.on(`${blockchain}-AssetContractChanged`, async () => {
-                await that.reinitializeContracts(blockchainModuleManager, blockchain);
-            });
-        });
-    }
-
-    async reinitializeContracts(blockchainModuleManager, blockchain) {
-        try {
-            await blockchainModuleManager.initializeContracts(blockchain);
-        } catch (error) {
-            this.logger.warn(`Unable to reinitialize contracts. Error: ${error.message}`);
-            blockchainModuleManager.removeImplementation(blockchain);
-            if (!blockchainModuleManager.getImplementationNames().length) {
-                this.logger.error(`Unable to initialize contracts. OT-node shutting down...`);
-                process.exit(1);
-            }
-        }
     }
 }
 

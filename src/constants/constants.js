@@ -393,6 +393,12 @@ export const CONTRACTS = {
 };
 
 export const CONTRACT_EVENTS = {
+    HUB: {
+        NEW_CONTRACT: 'NewContract',
+        CONTRACT_CHANGED: 'ContractChanged',
+        NEW_ASSET_STORAGE: 'NewAssetStorage',
+        ASSET_STORAGE_CHANGED: 'AssetStorageChanged'
+    },
     SHARDING_TABLE: {
         NODE_ADDED: 'NodeAdded',
         NODE_REMOVED: 'NodeRemoved',

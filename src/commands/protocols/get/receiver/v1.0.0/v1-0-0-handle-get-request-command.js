@@ -44,7 +44,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             }
         }
 
-        const nquads = await this.tripleStoreService.localGet(assertionId, operationId);
+        const nquads = await this.tripleStoreService.localGet(assertionId);
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

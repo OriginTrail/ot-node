@@ -52,10 +52,8 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
 
-        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         const assetExists = await this.tripleStoreService.assetExists(
             TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-            ual,
             blockchain,
             contract,
             tokenId,
@@ -65,12 +63,12 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             agreementData.startTime + agreementData.epochsNumber * agreementData.epochLength;
 
         await this.tripleStoreService.localStoreAsset(
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
             assertionId,
             assertion,
             blockchain,
             contract,
             tokenId,
-            operationId,
             agreementData.startTime,
             agreementEndTime,
             keyword,
@@ -87,6 +85,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             AGREEMENT_STATUS.ACTIVE,
         );
 
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         if (!assetExists) {
             this.logger.trace(
                 `Asset with ${ual} not previously present in triple store. Scheduling epoch check command.`,

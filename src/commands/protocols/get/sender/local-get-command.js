@@ -22,7 +22,7 @@ class LocalGetCommand extends Command {
             OPERATION_ID_STATUS.GET.GET_LOCAL_START,
         );
 
-        const assertion = await this.tripleStoreService.localGet(assertionId, operationId, true);
+        const assertion = await this.tripleStoreService.localGet(assertionId, true);
 
         if (assertion.length) {
             await this.operationIdService.cacheOperationIdData(operationId, {
