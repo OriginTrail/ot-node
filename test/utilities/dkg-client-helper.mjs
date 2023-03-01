@@ -1,5 +1,5 @@
 import DKG from 'dkg.js';
-import { CONTENT_ASSET_HASH_FUNCTION_ID } from '../../src/constants/constants';
+import { CONTENT_ASSET_HASH_FUNCTION_ID } from '../../src/constants/constants.js';
 
 class DkgClientHelper {
     constructor(config) {

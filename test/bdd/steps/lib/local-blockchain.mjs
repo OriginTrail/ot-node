@@ -57,6 +57,10 @@ class LocalBlockchain {
         }));
     }
 
+    getWallets() {
+        return this.wallets;
+    }
+
     populateContractObject(contractName, source) {
         this.contracts[contractName] = {};
         this.contracts[contractName].data = source.bytecode;

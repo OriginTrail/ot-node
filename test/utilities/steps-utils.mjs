@@ -23,7 +23,7 @@ class StepsUtils {
             modules: {
                 blockchain: {
                     implementation: {
-                        ganache: {
+                        hardhat: {
                             config: {
                                 evmOperationalWalletPublicKey: wallet.address,
                                 evmOperationalWalletPrivateKey: wallet.privateKey,
