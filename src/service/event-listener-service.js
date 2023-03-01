@@ -1,4 +1,3 @@
-import { ethers } from 'ethers';
 import { CONTENT_ASSET_HASH_FUNCTION_ID, CONTRACT_EVENTS } from '../constants/constants.js';
 
 class EventListenerService {
@@ -49,8 +48,8 @@ class EventListenerService {
             await this.repositoryModuleManager.createPeerRecord(
                 nodeId,
                 event.blockchain_id,
-                this.blockchainModuleManager.convertFromWei(blockchainId, eventData.ask, 'ether'),
-                this.blockchainModuleManager.convertFromWei(blockchainId, eventData.stake, 'ether'),
+                this.blockchainModuleManager.convertFromWei(blockchainId, eventData.ask),
+                this.blockchainModuleManager.convertFromWei(blockchainId, eventData.stake),
                 new Date(0),
                 nodeIdSha256,
             );
@@ -94,12 +93,12 @@ class EventListenerService {
             await this.repositoryModuleManager.updatePeerStake(
                 blockchainId,
                 nodeId,
-                ethers.utils.formatUnits(
+                this.blockchainModuleManager.convertFromWei(
+                    blockchainId,
                     await this.blockchainModuleManager.getNodeStake(
                         blockchainId,
                         eventData.identityId,
                     ),
-                    'ether',
                 ),
             );
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
@@ -121,12 +120,12 @@ class EventListenerService {
             await this.repositoryModuleManager.updatePeerStake(
                 blockchainId,
                 nodeId,
-                ethers.utils.formatUnits(
+                this.blockchainModuleManager.convertFromWei(
+                    blockchainId,
                     await this.blockchainModuleManager.getNodeStake(
                         blockchainId,
                         eventData.identityId,
-                    ),
-                    'ether',
+                    )
                 ),
             );
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
@@ -150,7 +149,7 @@ class EventListenerService {
             await this.repositoryModuleManager.updatePeerAsk(
                 blockchainId,
                 nodeId,
-                this.blockchainModuleManager.convertFromWei(blockchainId, eventData.ask, 'ether'),
+                this.blockchainModuleManager.convertFromWei(blockchainId, eventData.ask),
             );
             this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
         });
