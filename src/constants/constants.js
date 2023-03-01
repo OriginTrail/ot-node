@@ -389,4 +389,5 @@ export const CONTRACTS = {
     STAKING_CONTRACT: 'StakingContract',
     PROFILE_CONTRACT: 'ProfileContract',
     HUB_CONTRACT: 'hubContract',
+    COMMIT_MANAGER_V1_CONTRACT: 'CommitManagerV1Contract',
 };

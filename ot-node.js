@@ -54,6 +54,7 @@ class OTNode {
         await this.initializeShardingTableService();
         await this.initializeTelemetryInjectionService();
 
+        this.initializeEventListener();
         await this.initializeRouters();
         await this.startListeningOnBlockchainEvents();
         this.logger.info('Node is up and running!');
@@ -131,6 +132,19 @@ class OTNode {
         DependencyInjection.registerValue(this.container, 'eventEmitter', eventEmitter);
 
         this.logger.info('Event emitter initialized');
+    }
+
+    initializeEventListener() {
+        const eventListenerService = this.container.resolve('eventListenerService');
+
+        try {
+            eventListenerService.initialize();
+        } catch (error) {
+            this.logger.error(
+                `Unable to initialize event listener service. Error message: ${error.message} OT-node shutting down...`,
+            );
+            this.stop(1);
+        }
     }
 
     async initializeRouters() {
@@ -259,29 +273,13 @@ class OTNode {
     }
 
     async initializeShardingTableService() {
-        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
-        const initShardingServices = blockchainModuleManager
-            .getImplementationNames()
-            .map(async (blockchain) => {
-                try {
-                    const shardingTableService = this.container.resolve('shardingTableService');
-                    shardingTableService.initialize(blockchain);
-                    this.logger.info(
-                        `Sharding Table Service initialized successfully for '${blockchain}' blockchain`,
-                    );
-                } catch (e) {
-                    this.logger.error(
-                        `Sharding table service initialization for '${blockchain}' blockchain failed.
-                        Error message: ${e.message}`,
-                    );
-                    blockchainModuleManager.removeImplementation(blockchain);
-                }
-            });
-        await Promise.all(initShardingServices);
+        const shardingTableService = this.container.resolve('shardingTableService');
 
-        if (!blockchainModuleManager.getImplementationNames().length) {
+        try {
+            await shardingTableService.initialize();
+        } catch (error) {
             this.logger.error(
-                `Unable to initialize sharding table service. OT-node shutting down...`,
+                `Unable to initialize sharding table service. Error message: ${error.message} OT-node shutting down...`,
             );
             this.stop(1);
         }
@@ -339,6 +337,12 @@ class OTNode {
                     );
                     await blockchainModuleManager.getAllPastEvents(
                         CONTRACTS.PROFILE_CONTRACT,
+                        onEventsReceived,
+                        getLastCheckedBlock,
+                        updateLastCheckedBlock,
+                    );
+                    await blockchainModuleManager.getAllPastEvents(
+                        CONTRACTS.COMMIT_MANAGER_V1_CONTRACT,
                         onEventsReceived,
                         getLastCheckedBlock,
                         updateLastCheckedBlock,
