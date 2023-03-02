@@ -104,6 +104,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
                     operationId,
                     agreementId,
                     agreementData,
+                    assertionId,
                 },
                 transactional: false,
             });

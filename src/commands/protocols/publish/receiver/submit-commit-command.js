@@ -30,6 +30,7 @@ class SubmitCommitCommand extends EpochCommand {
             agreementId,
             identityId,
             operationId,
+            assertionId,
         } = command.data;
 
         this.operationIdService.emitChangeEvent(
@@ -51,6 +52,7 @@ class SubmitCommitCommand extends EpochCommand {
             blockchain,
             agreementId,
             epoch,
+            assertionId,
         );
 
         this.logger.trace('Commit submissions:');

@@ -5,13 +5,18 @@ import { readFile } from 'fs/promises';
 import { exec } from 'child_process';
 import { setTimeout } from 'timers/promises';
 
-/* const testParametersStorageParams = {
+const Hub = JSON.parse((await readFile('node_modules/dkg-evm-module/abi/Hub.json')).toString());
+const ParametersStorage = JSON.parse((await readFile('node_modules/dkg-evm-module/abi/ParametersStorage.json')).toString());
+
+const hubContractAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+
+const testParametersStorageParams = {
     epochLength: 6*60, // 6 minutes
     commitWindowDurationPerc: 33, // 2 minutes
     minProofWindowOffsetPerc: 66, // 4 minutes
     maxProofWindowOffsetPerc: 66, // 4 minutes
     proofWindowDurationPerc: 33, // 2 minutes
-} */
+};
 /**
  * LocalBlockchain represent small wrapper around the Ganache.
  *
@@ -41,8 +46,8 @@ class LocalBlockchain {
         startBlockchainProcess.stdout.on('data', (data) => {
             console.log(data);
         });
-        console.log('Waiting for 3 seconds for blockchain to start and contracts to be deployed');
-        await setTimeout(3000);
+        console.log('Waiting for 5 seconds for blockchain to start and contracts to be deployed');
+        await setTimeout(5000);
 
         this.provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
 
@@ -55,16 +60,19 @@ class LocalBlockchain {
             address: publicKeys[index],
             privateKey,
         }));
+        const wallet = new ethers.Wallet(this.wallets[0].privateKey, this.provider);
+        this.hubContract = new ethers.Contract(hubContractAddress, Hub, wallet);
+        const parametersStorageAddress = await this.hubContract.getContractAddress('ParametersStorage');
+        this.ParametersStorageContract = new ethers.Contract(
+            parametersStorageAddress,
+            ParametersStorage,
+            wallet,
+        );
+        await this.setParametersStorageParams(testParametersStorageParams);
     }
 
     getWallets() {
         return this.wallets;
-    }
-
-    populateContractObject(contractName, source) {
-        this.contracts[contractName] = {};
-        this.contracts[contractName].data = source.bytecode;
-        this.contracts[contractName].abi = source.abi;
     }
 
     async setParametersStorageParams(params) {
@@ -72,40 +80,15 @@ class LocalBlockchain {
             const blockchainMethodName = `set${
                 parameter.charAt(0).toUpperCase() + parameter.slice(1)
             }`;
-            this.logger.info(`Setting ${parameter} in parameters storage to: ${params[parameter]}`);
+            console.log(`Setting ${parameter} in parameters storage to: ${params[parameter]}`);
             // eslint-disable-next-line no-await-in-loop
-            await this.contracts.parametersStorage.instance[blockchainMethodName](
+            await this.ParametersStorageContract[blockchainMethodName](
                 params[parameter],
-                { gasLimit: 50000 },
+                { gasLimit: 100000 },
             );
         }
     }
 
-    async setR1(r1) {
-        return this.contracts.parametersStorage.instance
-            .setR1(r1, { gasLimit: 3000000 })
-            .catch((error) =>
-                this.logger.error(`Unable to set R1 in parameters storage. Error: `, error),
-            );
-    }
-
-    async setR2(r2) {
-        return this.contracts.parametersStorage.instance
-            .setR2(r2, { gasLimit: 3000000 })
-            .catch((error) =>
-                this.logger.error(`Unable to set R2 in parameters storage. Error: `, error),
-            );
-    }
-
-    async getContractAddress(hubContract, contractName) {
-        return hubContract.getContractAddress(contractName);
-    }
-
-    async setupRole(contract, minter) {
-        await contract.instance
-            .setupRole(minter, { gasLimit: 3000000 })
-            .catch((error) => this.logger.error('Unable to setup role. Error: ', error));
-    }
 }
 
 export default LocalBlockchain;

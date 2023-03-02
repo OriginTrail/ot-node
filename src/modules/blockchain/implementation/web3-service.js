@@ -24,7 +24,6 @@ const ParametersStorage = require('dkg-evm-module/abi/ParametersStorage.json');
 const Profile = require('dkg-evm-module/abi/Profile.json');
 const ProfileStorage = require('dkg-evm-module/abi/ProfileStorage.json');
 const ScoringProxy = require('dkg-evm-module/abi/ScoringProxy.json');
-const ServiceAgreementStorageV1 = require('dkg-evm-module/abi/ServiceAgreementStorageV1.json');
 const ServiceAgreementV1 = require('dkg-evm-module/abi/ServiceAgreementV1.json');
 const CommitManagerV1 = require('dkg-evm-module/abi/CommitManagerV1.json');
 const ProofManagerV1 = require('dkg-evm-module/abi/ProofManagerV1.json');
@@ -33,7 +32,7 @@ const ShardingTableStorage = require('dkg-evm-module/abi/ShardingTableStorage.js
 const ServiceAgreementStorageProxy = require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json');
 
 const FIXED_GAS_LIMIT_METHODS = {
-    submitCommit: 300000,
+    submitCommit: 400000,
     sendProof: 400000,
 };
 
@@ -239,25 +238,25 @@ class Web3Service {
         );
 
         const commitManagerV1Address = await this.callContractFunction(
-          this.hubContract,
-          'getContractAddress',
-          ['CommitManagerV1'],
+            this.hubContract,
+            'getContractAddress',
+            ['CommitManagerV1'],
         );
         this.CommitManagerV1Contract = new ethers.Contract(
-          commitManagerV1Address,
-          CommitManagerV1,
-          this.wallet,
+            commitManagerV1Address,
+            CommitManagerV1,
+            this.wallet,
         );
 
         const proofManagerV1Address = await this.callContractFunction(
-          this.hubContract,
-          'getContractAddress',
-          ['ProofManagerV1'],
+            this.hubContract,
+            'getContractAddress',
+            ['ProofManagerV1'],
         );
         this.ProofManagerV1Contract = new ethers.Contract(
-          proofManagerV1Address,
-          ProofManagerV1,
-          this.wallet,
+            proofManagerV1Address,
+            ProofManagerV1,
+            this.wallet,
         );
 
         const serviceAgreementStorageProxyAddress = await this.callContractFunction(
@@ -649,19 +648,18 @@ class Web3Service {
         return Number(assertionChunksNumber);
     }
 
-    async isCommitWindowOpen(agreementId, epoch, assertionId) {
+    async isCommitWindowOpen(agreementId, epoch) {
         return this.callContractFunction(this.CommitManagerV1Contract, 'isCommitWindowOpen', [
             agreementId,
             epoch,
-            assertionId
         ]);
     }
 
-    async getTopCommitSubmissions(agreementId, epoch) {
+    async getTopCommitSubmissions(agreementId, epoch, assertionId) {
         const commits = await this.callContractFunction(
             this.CommitManagerV1Contract,
             'getTopCommitSubmissions',
-            [agreementId, epoch],
+            [agreementId, epoch, assertionId],
         );
 
         return commits
@@ -709,7 +707,7 @@ class Web3Service {
         const result = await this.callContractFunction(
             this.ProofManagerV1Contract,
             'getChallenge',
-            [this.getPublicKey(), assetContractAddress, tokenId, epoch],
+            [assetContractAddress, tokenId, epoch],
         );
 
         return { assertionId: result['0'], challenge: result['1'] };

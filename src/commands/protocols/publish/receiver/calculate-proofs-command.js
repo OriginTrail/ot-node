@@ -29,12 +29,13 @@ class CalculateProofsCommand extends EpochCommand {
             agreementId,
             identityId,
             operationId,
+            assertionId,
         } = command.data;
 
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}`,
+                `hash function id: ${hashFunctionId} and assertion id: ${assertionId}`,
         );
 
         this.operationIdService.emitChangeEvent(
@@ -44,7 +45,15 @@ class CalculateProofsCommand extends EpochCommand {
             epoch,
         );
 
-        if (!(await this.isEligibleForRewards(blockchain, agreementId, epoch, identityId))) {
+        if (
+            !(await this.isEligibleForRewards(
+                blockchain,
+                agreementId,
+                epoch,
+                identityId,
+                assertionId,
+            ))
+        ) {
             await this.scheduleNextEpochCheck(
                 blockchain,
                 agreementId,
@@ -62,7 +71,7 @@ class CalculateProofsCommand extends EpochCommand {
         }
 
         this.logger.trace(`Calculating proofs for agreement id : ${agreementId}`);
-        const { assertionId, challenge } = await this.blockchainModuleManager.getChallenge(
+        const { challenge } = await this.blockchainModuleManager.getChallenge(
             blockchain,
             contract,
             tokenId,
@@ -99,13 +108,14 @@ class CalculateProofsCommand extends EpochCommand {
         return EpochCommand.empty();
     }
 
-    async isEligibleForRewards(blockchain, agreementId, epoch, identityId) {
+    async isEligibleForRewards(blockchain, agreementId, epoch, identityId, assertionId) {
         const r0 = await this.blockchainModuleManager.getR0(blockchain);
 
         const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
             blockchain,
             agreementId,
             epoch,
+            assertionId,
         );
 
         for (let i = 0; i < Math.min(r0, commits.length); i += 1) {

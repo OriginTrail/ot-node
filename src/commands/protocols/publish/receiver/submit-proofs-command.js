@@ -29,12 +29,13 @@ class SubmitProofsCommand extends EpochCommand {
             hashFunctionId,
             operationId,
             identityId,
+            assertionId,
         } = command.data;
 
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}. Retry number ${
+                `hash function id: ${hashFunctionId}, assertion id: ${assertionId}. Retry number ${
                     COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
                 }`,
         );
@@ -43,6 +44,7 @@ class SubmitProofsCommand extends EpochCommand {
             blockchain,
             agreementId,
             epoch,
+            assertionId,
         );
         if (this.proofAlreadySubmitted(commits, identityId)) {
             this.logger.trace(
@@ -58,6 +60,7 @@ class SubmitProofsCommand extends EpochCommand {
                 hashFunctionId,
                 agreementData,
                 operationId,
+                assertionId,
             );
             return EpochCommand.empty();
         }
@@ -99,6 +102,7 @@ class SubmitProofsCommand extends EpochCommand {
                     hashFunctionId,
                     agreementData,
                     operationId,
+                    assertionId,
                 );
 
                 that.operationIdService.emitChangeEvent(

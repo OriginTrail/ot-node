@@ -27,7 +27,7 @@ class EpochCheckCommand extends EpochCommand {
             epoch,
             hashFunctionId,
             operationId,
-            assertionId
+            assertionId,
         } = command.data;
 
         this.logger.trace(
@@ -46,19 +46,15 @@ class EpochCheckCommand extends EpochCommand {
             epoch === 0
                 ? command.data.agreementData
                 : await this.blockchainModuleManager.getAgreementData(blockchain, agreementId);
-        console.log('Agreement data returned: ', agreementData);
         if (this.assetLifetimeExpired(agreementData, epoch)) {
             await this.handleExpiredAsset(agreementId, operationId, epoch);
             return EpochCommand.empty();
         }
-        console.log('Checking commit window');
         const commitWindowOpen = await this.blockchainModuleManager.isCommitWindowOpen(
             blockchain,
             agreementId,
             epoch,
-            assertionId
         );
-        console.log('Commit window checked', commitWindowOpen);
         if (!commitWindowOpen) {
             this.logger.trace(
                 `Commit window for agreement id: ${agreementId} is closed. Scheduling next epoch check.`,
