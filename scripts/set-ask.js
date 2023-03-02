@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { ethers } from 'ethers';
 import { createRequire } from 'module';
+import { NODE_ENVIRONMENTS } from '../src/constants/constants.js';
 import validateArguments from './utils.js';
 
 const require = createRequire(import.meta.url);
@@ -11,7 +12,9 @@ const argv = require('minimist')(process.argv.slice(1), {
     string: ['ask', 'privateKey', 'hubContractAddress'],
 });
 
-const devEnvironment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+const devEnvironment =
+    process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+    process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
 
 async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
     const provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);

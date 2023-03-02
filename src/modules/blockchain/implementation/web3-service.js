@@ -44,7 +44,7 @@ class Web3Service {
         this.rpcNumber = 0;
         this.initializeTransactionQueue(TRANSACTION_QUEUE_CONCURRENCY);
         await this.initializeWeb3();
-        this.currentBlock = await this.getBlockNumber();
+        this.startBlock = await this.getBlockNumber();
         await this.initializeContracts();
     }
 
@@ -486,38 +486,34 @@ class Web3Service {
     }
 
     async getAllPastEvents(
+        blockchainId,
         contractName,
-        onEventsReceived,
-        getLastCheckedBlock,
-        updateLastCheckedBlock,
+        lastCheckedBlock,
+        lastCheckedTimestamp,
+        currentBlock
     ) {
         const contract = this[contractName];
         if (!contract) {
             throw Error(`Error while getting all past events. Unknown contract: ${contractName}`);
         }
 
-        const blockchainId = this.getBlockchainId();
-        const lastCheckedBlockObject = await getLastCheckedBlock(blockchainId, contractName);
-
         let fromBlock;
-
         if (
             this.isOlderThan(
-                lastCheckedBlockObject?.last_checked_timestamp,
+                lastCheckedTimestamp,
                 DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
             )
         ) {
-            fromBlock = this.currentBlock - 10;
+            fromBlock = this.startBlock - 10;
         } else {
-            this.currentBlock = await this.getBlockNumber();
-            fromBlock = lastCheckedBlockObject.last_checked_block + 1;
+            fromBlock = lastCheckedBlock + 1;
         }
 
         let events = [];
-        if (this.currentBlock - fromBlock > MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH) {
+        if (currentBlock - fromBlock > MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH) {
             let iteration = 1;
 
-            while (fromBlock - MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH > this.currentBlock) {
+            while (fromBlock - MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH > currentBlock) {
                 events.concat(
                     await contract.queryFilter(
                         '*',
@@ -529,28 +525,25 @@ class Web3Service {
                 iteration += 1;
             }
         } else {
-            events = await contract.queryFilter('*', fromBlock, this.currentBlock);
+            events = await contract.queryFilter('*', fromBlock, currentBlock);
         }
 
-        await updateLastCheckedBlock(blockchainId, this.currentBlock, Date.now(), contractName);
-        if (events.length > 0) {
-            await onEventsReceived(
-                events.map((event) => ({
-                    contract: contractName,
-                    event: event.event,
-                    data: JSON.stringify(
-                        Object.fromEntries(
-                            Object.entries(event.args).map(([k, v]) => [
-                                k,
-                                ethers.BigNumber.isBigNumber(v) ? v.toString() : v,
-                            ]),
-                        ),
-                    ),
-                    block: event.blockNumber,
-                    blockchainId,
-                })),
-            );
-        }
+        return events
+            ? events.map((event) => ({
+                  contract: contractName,
+                  event: event.event,
+                  data: JSON.stringify(
+                      Object.fromEntries(
+                          Object.entries(event.args).map(([k, v]) => [
+                              k,
+                              ethers.BigNumber.isBigNumber(v) ? v.toString() : v,
+                          ]),
+                      ),
+                  ),
+                  block: event.blockNumber,
+                  blockchainId,
+              }))
+            : [];
     }
 
     isOlderThan(timestamp, olderThanInMills) {

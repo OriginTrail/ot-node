@@ -2,7 +2,9 @@ import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
     CONTRACTS,
     CONTRACT_EVENTS,
+    CONTRACT_EVENT_FETCH_INTERVALS,
     TRIPLE_STORE_REPOSITORIES,
+    NODE_ENVIRONMENTS,
 } from '../constants/constants.js';
 
 class EventListenerService {
@@ -29,6 +31,7 @@ class EventListenerService {
         this.listenOnStakingEvents(blockchainId);
         this.listenOnProfileEvents(blockchainId);
         this.listenOnCommitManagerEvents(blockchainId);
+        this.listenOnBlockchainEvents(blockchainId);
     }
 
     listenOnHubEvents(blockchainId) {
@@ -37,6 +40,7 @@ class EventListenerService {
             CONTRACT_EVENTS.HUB.NEW_CONTRACT,
         );
         this.eventEmitter.on(newContractEvent, async () => {
+            this.logger.trace(`${newContractEvent} event caught.`);
             this.reinitializeContracts(blockchainId);
         });
 
@@ -45,6 +49,7 @@ class EventListenerService {
             CONTRACT_EVENTS.HUB.CONTRACT_CHANGED,
         );
         this.eventEmitter.on(contractChangedEvent, async (event) => {
+            this.logger.trace(`${contractChangedEvent} event caught.`);
             await this.reinitializeContracts(blockchainId);
             if (event.contractName === CONTRACTS.SHARDING_TABLE_CONTRACT) {
                 await this.repositoryModuleManager.cleanShardingTable();
@@ -56,6 +61,7 @@ class EventListenerService {
             CONTRACT_EVENTS.HUB.NEW_ASSET_STORAGE,
         );
         this.eventEmitter.on(newAssetStorageEvent, async () => {
+            this.logger.trace(`${newAssetStorageEvent} event caught.`);
             await this.reinitializeContracts(blockchainId);
         });
 
@@ -64,11 +70,11 @@ class EventListenerService {
             CONTRACT_EVENTS.HUB.ASSET_STORAGE_CHANGED,
         );
         this.eventEmitter.on(assetStorageChangedEvent, async () => {
+            this.logger.trace(`${assetStorageChangedEvent} event caught.`);
             await this.reinitializeContracts(blockchainId);
         });
     }
 
-    // TODO: review this
     async reinitializeContracts(blockchainId) {
         try {
             await this.blockchainModuleManager.initializeContracts(blockchainId);
@@ -293,6 +299,89 @@ class EventListenerService {
                 // insert asset metadata in public current triple store
                 // delete ual file from pending storage */
         });
+    }
+
+    listenOnBlockchainEvents(blockchainId) {
+        this.logger.info('Starting blockchain event listener');
+        let working = false;
+        let eventFetchInterval = CONTRACT_EVENT_FETCH_INTERVALS.MAINNET;
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        ) {
+            eventFetchInterval = CONTRACT_EVENT_FETCH_INTERVALS.DEVELOPMENT;
+        }
+        setInterval(async () => {
+            if (working) return;
+            try {
+                working = true;
+                const currentBlock = await this.blockchainModuleManager.getBlockNumber();
+                const syncContractEventsPromises = [
+                    this.getContractEvents(blockchainId, CONTRACTS.SHARDING_TABLE_CONTRACT, currentBlock),
+                    this.getContractEvents(blockchainId, CONTRACTS.STAKING_CONTRACT, currentBlock),
+                    this.getContractEvents(blockchainId, CONTRACTS.PROFILE_CONTRACT, currentBlock),
+                    this.getContractEvents(blockchainId, CONTRACTS.COMMIT_MANAGER_V1_CONTRACT, currentBlock),
+                ];
+
+                if (
+                    process.env.NODE_ENV !== NODE_ENVIRONMENTS.DEVELOPMENT &&
+                    process.env.NODE_ENV !== NODE_ENVIRONMENTS
+                ) {
+                    syncContractEventsPromises.push(
+                        this.getContractEvents(blockchainId, CONTRACTS.HUB_CONTRACT, currentBlock),
+                    );
+                }
+                const contractEvents = await Promise.all(syncContractEventsPromises);
+
+                await this.handleBlockchainEvents(contractEvents.flatMap((events) => events));
+            } catch (e) {
+                this.logger.error(`Failed to get blockchain events. Error: ${e}`);
+            } finally {
+                working = false;
+            }
+        }, eventFetchInterval);
+    }
+
+    async getContractEvents(blockchainId, contractName, currentBlock) {
+        const lastCheckedBlockObject = await this.repositoryModuleManager.getLastCheckedBlock(
+            blockchainId,
+            contractName,
+        );
+        const events = await this.blockchainModuleManager.getAllPastEvents(
+            blockchainId,
+            contractName,
+            lastCheckedBlockObject?.last_checked_block ?? 0,
+            lastCheckedBlockObject?.last_checked_timestamp ?? 0,
+            currentBlock
+        );
+
+        await this.repositoryModuleManager.updateLastCheckedBlock(
+            blockchainId,
+            currentBlock,
+            Date.now(0),
+            contractName,
+        );
+
+        return events;
+    }
+
+    async handleBlockchainEvents(events) {
+        if (events?.length) {
+            const insertedEvents = await this.repositoryModuleManager.insertBlockchainEvents(
+                events,
+            );
+            insertedEvents
+                .sort((event1, event2) => event1.block - event2.block)
+                .forEach((event) => {
+                    if (event) {
+                        const eventName = this.getBlockchainEventName(
+                            event.blockchain_id,
+                            event.event,
+                        );
+                        this.eventEmitter.emit(eventName, event);
+                    }
+                });
+        }
     }
 
     getBlockchainEventName(blockchainId, eventName) {

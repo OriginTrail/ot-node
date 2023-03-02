@@ -5,7 +5,7 @@ import { createRequire } from 'module';
 import { execSync } from 'child_process';
 import DependencyInjection from './src/service/dependency-injection.js';
 import Logger from './src/logger/logger.js';
-import { CONTRACTS, MIN_NODE_VERSION } from './src/constants/constants.js';
+import { MIN_NODE_VERSION, NODE_ENVIRONMENTS } from './src/constants/constants.js';
 import FileService from './src/service/file-service.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
@@ -55,7 +55,6 @@ class OTNode {
 
         this.initializeEventListenerService();
         await this.initializeRouters();
-        await this.startListeningOnBlockchainEvents();
         this.logger.info('Node is up and running!');
     }
 
@@ -241,7 +240,7 @@ class OTNode {
     }
 
     async executeTripleStoreUserConfigurationMigration() {
-        if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') return;
+        if (process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT || process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST) return;
 
         const migration = new TripleStoreUserConfigurationMigration(
             'tripleStoreUserConfigurationMigration',
@@ -256,7 +255,7 @@ class OTNode {
     }
 
     async executePullShardingTableMigration() {
-        if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') return;
+        if (process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT || process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST) return;
 
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
@@ -286,85 +285,6 @@ class OTNode {
             );
             this.stop(1);
         }
-    }
-
-    async startListeningOnBlockchainEvents() {
-        this.logger.info('Starting blockchain event listener');
-        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
-        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
-        const eventEmitter = this.container.resolve('eventEmitter');
-
-        const onEventsReceived = async (events) => {
-            if (events.length > 0) {
-                const insertedEvents = await repositoryModuleManager.insertBlockchainEvents(events);
-                insertedEvents.forEach((event) => {
-                    if (event) {
-                        const eventName = `${event.blockchain_id}-${event.event}`;
-                        eventEmitter.emit(eventName, event);
-                    }
-                });
-            }
-        };
-
-        const getLastCheckedBlock = async (blockchainId, contract) =>
-            repositoryModuleManager.getLastCheckedBlock(blockchainId, contract);
-
-        const updateLastCheckedBlock = async (blockchainId, currentBlock, timestamp, contract) =>
-            repositoryModuleManager.updateLastCheckedBlock(
-                blockchainId,
-                currentBlock,
-                timestamp,
-                contract,
-            );
-
-        let working = false;
-        let eventFetchInterval = 10 * 1000;
-        if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
-            eventFetchInterval = 4 * 1000;
-        }
-        setInterval(async () => {
-            if (!working) {
-                try {
-                    working = true;
-                    await blockchainModuleManager.getAllPastEvents(
-                        CONTRACTS.SHARDING_TABLE_CONTRACT,
-                        onEventsReceived,
-                        getLastCheckedBlock,
-                        updateLastCheckedBlock,
-                    );
-                    await blockchainModuleManager.getAllPastEvents(
-                        CONTRACTS.STAKING_CONTRACT,
-                        onEventsReceived,
-                        getLastCheckedBlock,
-                        updateLastCheckedBlock,
-                    );
-                    await blockchainModuleManager.getAllPastEvents(
-                        CONTRACTS.PROFILE_CONTRACT,
-                        onEventsReceived,
-                        getLastCheckedBlock,
-                        updateLastCheckedBlock,
-                    );
-                    await blockchainModuleManager.getAllPastEvents(
-                        CONTRACTS.COMMIT_MANAGER_V1_CONTRACT,
-                        onEventsReceived,
-                        getLastCheckedBlock,
-                        updateLastCheckedBlock,
-                    );
-                    if (process.env.NODE_ENV !== 'development') {
-                        await blockchainModuleManager.getAllPastEvents(
-                            CONTRACTS.HUB_CONTRACT,
-                            onEventsReceived,
-                            getLastCheckedBlock,
-                            updateLastCheckedBlock,
-                        );
-                    }
-                } catch (e) {
-                    this.logger.error(`Failed to get blockchain events. Error: ${e}`);
-                } finally {
-                    working = false;
-                }
-            }
-        }, eventFetchInterval);
     }
 
     async initializeTelemetryInjectionService() {
