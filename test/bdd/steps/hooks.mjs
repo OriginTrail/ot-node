@@ -4,10 +4,11 @@ import slugify from 'slugify';
 import fs from 'fs';
 import mysql from 'mysql2';
 import graphdb from 'graphdb';
+import { NODE_ENVIRONMENTS } from '../../../src/constants/constants';
 
 const { http, server } = graphdb;
 
-process.env.NODE_ENV = 'test';
+process.env.NODE_ENV = NODE_ENVIRONMENTS.TEST;
 
 BeforeAll(() => {});
 

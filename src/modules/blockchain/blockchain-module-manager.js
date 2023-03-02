@@ -35,6 +35,10 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'getNodeStake', [identityId]);
     }
 
+    async getBlockNumber(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getBlockNumber');
+    }
+
     async getIdentityId(blockchain) {
         return this.callImplementationFunction(blockchain, 'getIdentityId');
     }
@@ -96,24 +100,19 @@ class BlockchainModuleManager extends BaseModuleManager {
     }
 
     async getAllPastEvents(
+        blockchain,
         contractName,
-        onEventsReceived,
-        getLastCheckedBlock,
-        updateLastCheckedBlock,
+        lastCheckedBlock,
+        lastCheckedTimestamp,
+        currentBlock,
     ) {
-        const blockchainIds = this.getImplementationNames();
-        const getEventsPromises = [];
-        for (const blockchainId of blockchainIds) {
-            getEventsPromises.push(
-                this.getImplementation(blockchainId).module.getAllPastEvents(
-                    contractName,
-                    onEventsReceived,
-                    getLastCheckedBlock,
-                    updateLastCheckedBlock,
-                ),
-            );
-        }
-        return Promise.all(getEventsPromises);
+        return this.callImplementationFunction(blockchain, 'getAllPastEvents', [
+            blockchain,
+            contractName,
+            lastCheckedBlock,
+            lastCheckedTimestamp,
+            currentBlock,
+        ]);
     }
 
     toBigNumber(blockchain, value) {

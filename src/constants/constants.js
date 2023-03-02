@@ -414,3 +414,15 @@ export const CONTRACT_EVENTS = {
         STATE_FINALIZED: 'StateFinalized',
     },
 };
+
+export const NODE_ENVIRONMENTS = {
+    DEVELOPMENT: 'development',
+    TEST: 'test',
+    TESTNET: 'testnet',
+    MAINNET: 'mainnet'
+}
+
+export const CONTRACT_EVENT_FETCH_INTERVALS = {
+    MAINNET: 10 * 1000,
+    DEVELOPMENT: 4 * 1000
+}
