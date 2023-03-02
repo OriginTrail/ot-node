@@ -14,12 +14,12 @@ class MovePendingStorageAssertionCommand extends Command {
         // todo: check if new state is finalized on chain.
         // If it's finalized, read assertion from pending storage file and store in triple store PUBLIC_CURRENT repository
 
-        await this.pendingStorageService.removeCachedAssertion(
-            blockchain,
-            contract,
-            tokenId,
-            operationId,
-        );
+        // await this.pendingStorageService.removeCachedAssertion(
+        //     blockchain,
+        //     contract,
+        //     tokenId,
+        //     operationId,
+        // );
 
         return Command.empty();
     }

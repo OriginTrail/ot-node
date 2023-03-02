@@ -70,6 +70,12 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
+    async getUnfinalizedAssertionId(blockchain, tokenId) {
+        return this.callImplementationFunction(blockchain, 'getUnfinalizedState', [
+            tokenId,
+        ]);
+    }
+
     async getAssertionIssuer(blockchain, assertionId) {
         return this.callImplementationFunction(blockchain, 'getAssertionIssuer', [assertionId]);
     }
