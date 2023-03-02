@@ -53,7 +53,7 @@ class OTNode {
         await this.initializeShardingTableService();
         await this.initializeTelemetryInjectionService();
 
-        this.initializeEventListenerService();
+        this.initializeBlockchainEventListenerService();
         await this.initializeRouters();
         this.logger.info('Node is up and running!');
     }
@@ -132,9 +132,9 @@ class OTNode {
         this.logger.info('Event emitter initialized');
     }
 
-    initializeEventListenerService() {
+    initializeBlockchainEventListenerService() {
         try {
-            const eventListenerService = this.container.resolve('eventListenerService');
+            const eventListenerService = this.container.resolve('blockchainEventListenerService');
             eventListenerService.initialize();
             this.logger.info('Event Listener Service initialized successfully');
         } catch (error) {
@@ -240,7 +240,11 @@ class OTNode {
     }
 
     async executeTripleStoreUserConfigurationMigration() {
-        if (process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT || process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST) return;
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
 
         const migration = new TripleStoreUserConfigurationMigration(
             'tripleStoreUserConfigurationMigration',
@@ -255,7 +259,11 @@ class OTNode {
     }
 
     async executePullShardingTableMigration() {
-        if (process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT || process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST) return;
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
 
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
