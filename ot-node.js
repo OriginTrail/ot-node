@@ -184,28 +184,32 @@ class OTNode {
                         const networkModuleManager = this.container.resolve('networkModuleManager');
                         const peerId = networkModuleManager.getPeerId().toB58String();
                         await blockchainModuleManager.createProfile(blockchain, peerId);
+
+                        if (
+                            process.env.NODE_ENV === 'development' ||
+                            process.env.NODE_ENV === 'test'
+                        ) {
+                            const blockchainConfig =
+                                blockchainModuleManager.getModuleConfiguration(blockchain);
+                            execSync(
+                                `npm run set-stake -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --stake=${blockchainConfig.initialStakeAmount} --operationalWalletPrivateKey=${blockchainConfig.evmOperationalWalletPrivateKey} --managementWalletPrivateKey=${blockchainConfig.evmManagementWalletPrivateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
+                                { stdio: 'inherit' },
+                            );
+                            execSync(
+                                `npm run set-ask -- --rpcEndpoint=${
+                                    blockchainConfig.rpcEndpoints[0]
+                                } --ask=${
+                                    blockchainConfig.initialAskAmount +
+                                    (Math.random() - 0.5) * blockchainConfig.initialAskAmount
+                                } --privateKey=${
+                                    blockchainConfig.evmOperationalWalletPrivateKey
+                                } --hubContractAddress=${blockchainConfig.hubContractAddress}`,
+                                { stdio: 'inherit' },
+                            );
+                        }
                     }
                     const identityId = await blockchainModuleManager.getIdentityId(blockchain);
                     this.logger.info(`Identity ID: ${identityId}`);
-                    const blockchainConfig =
-                        blockchainModuleManager.getModuleConfiguration(blockchain);
-                    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
-                        execSync(
-                            `npm run set-stake -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --stake=${blockchainConfig.initialStakeAmount} --operationalWalletPrivateKey=${blockchainConfig.evmOperationalWalletPrivateKey} --managementWalletPrivateKey=${blockchainConfig.evmManagementWalletPrivateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
-                            { stdio: 'inherit' },
-                        );
-                        execSync(
-                            `npm run set-ask -- --rpcEndpoint=${
-                                blockchainConfig.rpcEndpoints[0]
-                            } --ask=${
-                                blockchainConfig.initialAskAmount +
-                                (Math.random() - 0.5) * blockchainConfig.initialAskAmount
-                            } --privateKey=${
-                                blockchainConfig.evmOperationalWalletPrivateKey
-                            } --hubContractAddress=${blockchainConfig.hubContractAddress}`,
-                            { stdio: 'inherit' },
-                        );
-                    }
                 } catch (error) {
                     this.logger.warn(
                         `Unable to create ${blockchain} blockchain profile. Removing implementation. Error: ${error.message}`,
