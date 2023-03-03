@@ -13,6 +13,8 @@ class BlockchainEventListenerService {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.validationModuleManager = ctx.validationModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
+        this.pendingStorageService = ctx.pendingStorageService;
+        this.ualService = ctx.ualService;
     }
 
     initialize() {
@@ -23,13 +25,14 @@ class BlockchainEventListenerService {
     }
 
     listenOnBlockchainEvents(blockchainId) {
-        let eventFetchInterval = CONTRACT_EVENT_FETCH_INTERVALS.MAINNET;
-        if (
+        const devEnvironment =
             process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
-        ) {
-            eventFetchInterval = CONTRACT_EVENT_FETCH_INTERVALS.DEVELOPMENT;
-        }
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
+
+        const eventFetchInterval = devEnvironment
+            ? CONTRACT_EVENT_FETCH_INTERVALS.DEVELOPMENT
+            : CONTRACT_EVENT_FETCH_INTERVALS.MAINNET;
+
         let working = false;
         setInterval(async () => {
             if (working) return;
@@ -51,10 +54,7 @@ class BlockchainEventListenerService {
                     ),
                 ];
 
-                if (
-                    process.env.NODE_ENV !== NODE_ENVIRONMENTS.DEVELOPMENT &&
-                    process.env.NODE_ENV !== NODE_ENVIRONMENTS
-                ) {
+                if (!devEnvironment) {
                     syncContractEventsPromises.push(
                         this.getContractEvents(blockchainId, CONTRACTS.HUB_CONTRACT, currentBlock),
                     );
@@ -117,9 +117,9 @@ class BlockchainEventListenerService {
     }
 
     async handleBlockchainEvent(event) {
-        this.logger.trace(`${event.event} event caught.`);
         const handlerFunctionName = `handle${event.event}Event`;
         if (!this[handlerFunctionName]) return;
+        this.logger.trace(`${event.event} event caught.`);
         await this[handlerFunctionName](event);
         await this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
     }
@@ -251,7 +251,6 @@ class BlockchainEventListenerService {
         const { tokenId, keyword } = eventData;
         const blockchain = event.blockchain_id;
         const contract = eventData.assetContract;
-        const assertionId = eventData.state;
 
         const assetMetadata = await this.tripleStoreService.getAssetMetadata(
             TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
@@ -301,11 +300,29 @@ class BlockchainEventListenerService {
             }
         }
 
-        /* 
-            // if ual file exists in pending storage
-                // insert assertion in public current triple store
-                // insert asset metadata in public current triple store
-                // delete ual file from pending storage */
+        const assertion = await this.pendingStorageService.getCachedAssertion(
+            blockchain,
+            contract,
+            tokenId,
+        );
+
+        // if ual file exists in pending storage
+        if (assertion) {
+            // insert assertion in public current triple store
+            await this.tripleStoreService.localStoreAsset(
+                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                eventData.state,
+                assertion,
+                blockchain,
+                contract,
+                tokenId,
+                assetMetadata.agreementStartTime,
+                assetMetadata.agreementEndTime,
+                keyword,
+            );
+
+            await this.pendingStorageService.removeCachedAssertion(blockchain, contract, tokenId);
+        }
     }
 
     async reinitializeContracts(blockchainId) {
