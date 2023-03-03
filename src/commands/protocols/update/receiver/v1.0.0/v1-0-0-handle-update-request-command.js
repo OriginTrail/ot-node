@@ -48,7 +48,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
              this.commandExecutor.add({
                  name: 'movePendingStorageAssertionCommand',
                  sequence: [],
-                 delay: 0, // todo: get pending state time limit for validation
+                 delay: 15 * 1000, // todo: get pending state time limit for validation
                  data: commandData,
                  transactional: false,
              }),

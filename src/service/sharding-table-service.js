@@ -72,7 +72,6 @@ class ShardingTableService {
         );
 
         let sliceIndex = 0;
-        // TODO: mark starting block and listen to events from that block
         while (shardingTable.length < shardingTableLength) {
             // eslint-disable-next-line no-await-in-loop
             const nodes = await this.blockchainModuleManager.getShardingTablePage(
