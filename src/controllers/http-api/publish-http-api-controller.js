@@ -50,6 +50,7 @@ class PublishController extends BaseController {
 
             let commandSequence = [];
 
+            // Backwards compatibility check - true for older clients
             if (req.body.localStore) {
                 commandSequence.push('localStoreCommand');
                 await this.operationIdService.cacheOperationIdData(operationId, [
