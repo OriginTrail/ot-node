@@ -4,6 +4,7 @@ import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
+    COMMAND_RETRIES,
     AGREEMENT_STATUS,
     TRIPLE_STORE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
@@ -52,7 +53,14 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
                  data: commandData,
                  transactional: false,
              }),
-             // todo: schedule commit command
+             this.commandExecutor.add({
+                 name: 'submitUpdateCommitCommand',
+                 delay: 0,
+                 period: 12 * 1000, // todo: get from blockchain / oracle
+                 retries: COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT,
+                 data: { ...commandData, agreementData, agreementId },
+                 transactional: false,
+             }),
          ]);
 
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };

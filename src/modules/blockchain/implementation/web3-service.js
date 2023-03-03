@@ -8,6 +8,7 @@ import {
     DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
     TRANSACTION_QUEUE_CONCURRENCY,
+    FIXED_GAS_LIMIT_METHODS,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -31,11 +32,6 @@ const ShardingTable = require('dkg-evm-module/abi/ShardingTable.json');
 const ShardingTableStorage = require('dkg-evm-module/abi/ShardingTableStorage.json');
 const ServiceAgreementStorageProxy = require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json');
 const UnfinalizedStateStorage = require('dkg-evm-module/abi/UnfinalizedStateStorage.json');
-
-const FIXED_GAS_LIMIT_METHODS = {
-    submitCommit: 400000,
-    sendProof: 500000,
-};
 
 class Web3Service {
     async initialize(config, logger) {
@@ -273,15 +269,15 @@ class Web3Service {
         );
 
         const unfinalizedStateStorageAddress = await this.callContractFunction(
-          this.hubContract,
-          'getContractAddress',
-          ['UnfinalizedStateStorage'],
+            this.hubContract,
+            'getContractAddress',
+            ['UnfinalizedStateStorage'],
         );
 
         this.UnfinalizedStateStorageContract = new ethers.Contract(
-          unfinalizedStateStorageAddress,
-          UnfinalizedStateStorage,
-          this.wallet,
+            unfinalizedStateStorageAddress,
+            UnfinalizedStateStorage,
+            this.wallet,
         );
 
         const scoringProxyAddress = await this.callContractFunction(
@@ -503,7 +499,7 @@ class Web3Service {
         contractName,
         lastCheckedBlock,
         lastCheckedTimestamp,
-        currentBlock
+        currentBlock,
     ) {
         const contract = this[contractName];
         if (!contract) {
@@ -511,12 +507,7 @@ class Web3Service {
         }
 
         let fromBlock;
-        if (
-            this.isOlderThan(
-                lastCheckedTimestamp,
-                DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
-            )
-        ) {
+        if (this.isOlderThan(lastCheckedTimestamp, DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS)) {
             fromBlock = this.startBlock - 10;
         } else {
             fromBlock = lastCheckedBlock + 1;
@@ -603,9 +594,11 @@ class Web3Service {
     }
 
     async getUnfinalizedState(tokenId) {
-        return this.callContractFunction(this.UnfinalizedStateStorageContract, 'getUnfinalizedState', [
-            tokenId,
-        ]);
+        return this.callContractFunction(
+            this.UnfinalizedStateStorageContract,
+            'getUnfinalizedState',
+            [tokenId],
+        );
     }
 
     async getAssertionIssuer(assertionId) {
@@ -706,6 +699,12 @@ class Web3Service {
             [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch]],
             callback,
         );
+    }
+
+    async submitUpdateCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch) {
+        return this.queueTransaction(this.CommitManagerV1Contract, 'submitUpdateCommit', [
+            [assetContractAddress, tokenId, keyword, hashFunctionId, epoch],
+        ]);
     }
 
     async isProofWindowOpen(agreementId, epoch) {

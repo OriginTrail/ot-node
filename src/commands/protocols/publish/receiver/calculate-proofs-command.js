@@ -25,17 +25,25 @@ class CalculateProofsCommand extends EpochCommand {
             keyword,
             hashFunctionId,
             agreementData,
-            epoch,
             agreementId,
             identityId,
             operationId,
-            assertionId,
         } = command.data;
+
+        const assertionId = await this.blockchainModuleManager.getLatestAssertionId(
+            contract,
+            tokenId,
+        );
 
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +
-                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId} and assertion id: ${assertionId}`,
+                `blockchain:${blockchain}, contract: ${contract}, token id: ${tokenId}, ` +
+                `keyword: ${keyword}, hash function id: ${hashFunctionId} and assertion id: ${assertionId}`,
+        );
+
+        const epoch = this.calculateCurrentEpoch(
+            agreementData.startTime,
+            agreementData.epochLength,
         );
 
         this.operationIdService.emitChangeEvent(
@@ -79,6 +87,13 @@ class CalculateProofsCommand extends EpochCommand {
         );
 
         const nquads = await this.tripleStoreService.localGet(assertionId);
+
+        if (!nquads.length) {
+            this.logger.trace(
+                `Assertion with id: ${assertionId} not found in triple store. Not scheduling next epcoh checks.`,
+            );
+            return EpochCommand.empty();
+        }
 
         const { leaf, proof } = this.validationModuleManager.getMerkleProof(
             nquads,

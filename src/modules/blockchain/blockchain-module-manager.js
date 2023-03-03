@@ -75,9 +75,7 @@ class BlockchainModuleManager extends BaseModuleManager {
     }
 
     async getUnfinalizedAssertionId(blockchain, tokenId) {
-        return this.callImplementationFunction(blockchain, 'getUnfinalizedState', [
-            tokenId,
-        ]);
+        return this.callImplementationFunction(blockchain, 'getUnfinalizedState', [tokenId]);
     }
 
     async getAssertionIssuer(blockchain, assertionId) {
@@ -204,6 +202,23 @@ class BlockchainModuleManager extends BaseModuleManager {
             hashFunctionId,
             epoch,
             callback,
+        ]);
+    }
+
+    async submitUpdateCommit(
+        blockchain,
+        assetContractAddress,
+        tokenId,
+        keyword,
+        hashFunctionId,
+        epoch,
+    ) {
+        return this.callImplementationFunction(blockchain, 'submitUpdateCommit', [
+            assetContractAddress,
+            tokenId,
+            keyword,
+            hashFunctionId,
+            epoch,
         ]);
     }
 

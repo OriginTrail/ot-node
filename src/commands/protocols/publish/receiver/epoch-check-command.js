@@ -3,6 +3,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
+    TRIPLE_STORE_REPOSITORIES,
 } from '../../../../constants/constants.js';
 
 class EpochCheckCommand extends EpochCommand {
@@ -13,27 +14,28 @@ class EpochCheckCommand extends EpochCommand {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.operationIdService = ctx.operationIdService;
+        this.tripleStoreService = ctx.tripleStoreService;
 
         this.errorType = ERROR_TYPE.EPOCH_CHECK_ERROR;
     }
 
     async execute(command) {
-        const {
-            blockchain,
-            agreementId,
-            contract,
-            tokenId,
-            keyword,
-            epoch,
-            hashFunctionId,
-            operationId,
-            assertionId,
-        } = command.data;
+        const { blockchain, agreementId, contract, tokenId, keyword, hashFunctionId, operationId } =
+            command.data;
 
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
                 `hash function id: ${hashFunctionId}`,
+        );
+
+        const agreementData = await this.blockchainModuleManager.getAgreementData(
+            blockchain,
+            agreementId,
+        );
+        const epoch = this.calculateCurrentEpoch(
+            agreementData.startTime,
+            agreementData.epochLength,
         );
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_START,
@@ -42,14 +44,27 @@ class EpochCheckCommand extends EpochCommand {
             epoch,
         );
 
-        const agreementData =
+        const assertionId =
             epoch === 0
-                ? command.data.agreementData
-                : await this.blockchainModuleManager.getAgreementData(blockchain, agreementId);
+                ? command.data.assertionId
+                : await this.blockchainModuleManager.getLatestAssertionId(blockchain, contract, tokenId);
+
         if (this.assetLifetimeExpired(agreementData, epoch)) {
             await this.handleExpiredAsset(agreementId, operationId, epoch);
             return EpochCommand.empty();
         }
+        const assertionExists = await this.tripleStoreService.assertionExists(
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+            assertionId,
+        );
+
+        if (!assertionExists) {
+            this.logger.trace(
+                `Assertion with id: ${assertionId} not found in triple store. Not scheduling next epcoh checks.`,
+            );
+            return EpochCommand.empty();
+        }
+
         const commitWindowOpen = await this.blockchainModuleManager.isCommitWindowOpen(
             blockchain,
             agreementId,

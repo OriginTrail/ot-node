@@ -120,6 +120,7 @@ export const DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
 
 export const COMMAND_RETRIES = {
     SUBMIT_COMMIT: 3,
+    SUBMIT_UPDATE_COMMIT: 3,
     SUBMIT_PROOFS: 3,
 };
 
@@ -220,6 +221,7 @@ export const ERROR_TYPE = {
         EPOCH_CHECK_ERROR: 'EpochCheckError',
         SUBMIT_COMMIT_ERROR: 'SubmitCommitError',
         SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
+        SUBMIT_UPDATE_COMMIT_ERROR: 'SubmitUpdateCommitError',
     },
 };
 export const OPERATION_ID_STATUS = {
@@ -283,6 +285,8 @@ export const OPERATION_ID_STATUS = {
         CALCULATE_PROOFS_END: 'CALCULATE_PROOFS_END',
         SUBMIT_PROOFS_START: 'SUBMIT_PROOFS_START',
         SUBMIT_PROOFS_END: 'SUBMIT_PROOFS_END',
+        SUBMIT_UPDATE_COMMIT_START: 'SUBMIT_UPDATE_COMMIT_START',
+        SUBMIT_UPDATE_COMMIT_END: 'SUBMIT_UPDATE_COMMIT_END',
     },
     QUERY: {
         QUERY_INIT_START: 'QUERY_INIT_START',
@@ -409,3 +413,9 @@ export const CONTRACT_EVENT_FETCH_INTERVALS = {
     MAINNET: 10 * 1000,
     DEVELOPMENT: 4 * 1000
 }
+
+export const FIXED_GAS_LIMIT_METHODS = {
+    submitCommit: 400000,
+    submitUpdateCommit: 400000,
+    sendProof: 500000,
+};

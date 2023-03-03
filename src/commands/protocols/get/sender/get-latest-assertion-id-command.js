@@ -39,9 +39,8 @@ class GetLatestAssertionIdCommand extends Command {
               `Searching for latest assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
             );
             unfinalizedAssertionId = await this.blockchainModuleManager.getUnfinalizedAssertionId(
-              blockchain,
-              contract,
-              tokenId,
+                blockchain,
+                tokenId,
             );
             commandData.assertionId = unfinalizedAssertionId;
         }

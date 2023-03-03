@@ -35,30 +35,33 @@ class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
             hashFunctionId,
         });
 
-        // const validationResult = await this.validateReceivedData(
-        //     operationId,
-        //     assertionId,
-        //     blockchain,
-        //     contract,
-        //     tokenId,
-        //     keyword,
-        //     hashFunctionId,
-        // );
-
-        await this.operationIdService.cacheOperationIdData(operationId, {
+        const validationResult = await this.validateReceivedData(
+            operationId,
             assertionId,
             blockchain,
             contract,
             tokenId,
             keyword,
             hashFunctionId,
-        });
+        );
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_REMOTE_END,
         );
-        return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
+        return validationResult;
+    }
+
+    async validateAssertionId(blockchain, contract, tokenId, assertionId, ual) {
+        const blockchainAssertionId = await this.blockchainModuleManager.getUnfinalizedAssertionId(
+            blockchain,
+            tokenId,
+        );
+        if (blockchainAssertionId !== assertionId) {
+            throw Error(
+                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${assertionId}`,
+            );
+        }
     }
 
     async retryFinished(command) {

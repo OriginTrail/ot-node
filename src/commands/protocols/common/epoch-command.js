@@ -17,7 +17,7 @@ class EpochCommand extends Command {
         hashFunctionId,
         agreementData,
         operationId,
-        assertionId
+        assertionId,
     ) {
         // todo check epoch number and make sure that delay is not in past
         const nextEpochStartTime =
@@ -43,10 +43,9 @@ class EpochCommand extends Command {
                 contract,
                 tokenId,
                 keyword,
-                epoch: epoch + 1,
                 hashFunctionId,
                 operationId,
-                assertionId
+                assertionId,
             },
             transactional: false,
         });
@@ -62,6 +61,10 @@ class EpochCommand extends Command {
             agreementId,
             epoch,
         );
+    }
+
+    calculateCurrentEpoch(startTime, epochLength) {
+        return Math.floor((Math.floor(Date.now() / 1000) - startTime) / epochLength);
     }
 
     /**
