@@ -1,4 +1,3 @@
-import { setTimeout } from 'timers/promises';
 import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
     CONTRACTS,
@@ -96,6 +95,7 @@ class BlockchainEventListenerService {
 
     async handleBlockchainEvents(events) {
         if (events?.length) {
+            this.logger.trace(`${events.length} blockchain events caught.`);
             const insertedEvents = await this.repositoryModuleManager.insertBlockchainEvents(
                 events,
             );
@@ -144,7 +144,6 @@ class BlockchainEventListenerService {
     }
 
     async handleNodeAddedEvent(event) {
-        await setTimeout(5 * 1000);
         const eventData = JSON.parse(event.data);
 
         const nodeId = this.blockchainModuleManager.convertHexToAscii(
