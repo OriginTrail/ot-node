@@ -483,17 +483,6 @@ class SequelizeRepository {
         });
     }
 
-    async updateOperationAgreementStatus(operationId, agreementId, agreementStatus) {
-        await this.models.publish.update(
-            { agreementId, agreementStatus },
-            {
-                where: {
-                    operation_id: operationId,
-                },
-            },
-        );
-    }
-
     async destroyEvents(ids) {
         await this.models.event.destroy({
             where: {

@@ -46,7 +46,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
 
          await Promise.all([
              this.commandExecutor.add({
-                 name: 'movePendingStorageAssertionCommand',
+                 name: 'deletePendingStateCommand',
                  sequence: [],
                  delay: 15 * 1000, // todo: get pending state time limit for validation
                  data: commandData,
