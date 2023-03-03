@@ -6,6 +6,11 @@ class HardhatService extends Web3Service {
         this.baseTokenTicker = 'HARDHAT_TOKENS';
         this.tracTicker = 'gTRAC';
     }
+
+    async getBlockchainTimestamp() {
+        const latestBlock = await super.getLatestBlock();
+        return latestBlock.timestamp;
+    }
 }
 
 export default HardhatService;

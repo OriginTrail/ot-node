@@ -46,8 +46,8 @@ class LocalBlockchain {
         startBlockchainProcess.stdout.on('data', (data) => {
             console.log(data);
         });
-        console.log('Waiting for 3 seconds for blockchain to start and contracts to be deployed');
-        await setTimeout(3000);
+        console.log('Waiting for 10 seconds for blockchain to start and contracts to be deployed');
+        await setTimeout(10000);
 
         this.provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
 
@@ -60,15 +60,15 @@ class LocalBlockchain {
             address: publicKeys[index],
             privateKey,
         }));
-        // const wallet = new ethers.Wallet(this.wallets[0].privateKey, this.provider);
-        // this.hubContract = new ethers.Contract(hubContractAddress, Hub, wallet);
-        // const parametersStorageAddress = await this.hubContract.getContractAddress('ParametersStorage');
-        // this.ParametersStorageContract = new ethers.Contract(
-        //     parametersStorageAddress,
-        //     ParametersStorage,
-        //     wallet,
-        // );
-        // await this.setParametersStorageParams(testParametersStorageParams);
+        const wallet = new ethers.Wallet(this.wallets[0].privateKey, this.provider);
+        this.hubContract = new ethers.Contract(hubContractAddress, Hub, wallet);
+        const parametersStorageAddress = await this.hubContract.getContractAddress('ParametersStorage');
+        this.ParametersStorageContract = new ethers.Contract(
+            parametersStorageAddress,
+            ParametersStorage,
+            wallet,
+        );
+        await this.setParametersStorageParams(testParametersStorageParams);
     }
 
     getWallets() {

@@ -126,15 +126,13 @@ class SubmitCommitCommand extends EpochCommand {
                         Math.floor(
                             (agreementData.epochLength * agreementData.proofWindowOffsetPerc) / 100,
                         );
-
-                    const timeNow = Math.floor(Date.now() / 1000);
-                    const delay = that.serviceAgreementService.randomIntFromInterval(
-                        proofWindowStartTime - timeNow + 0.1 * proofWindowDuration,
-                        proofWindowStartTime +
-                            proofWindowDuration -
-                            timeNow -
-                            0.1 * proofWindowDuration,
-                    );
+                    // we are not using Date.now() here becouse we have an issue with hardhat blockchain time
+                    const timeNow = await that.blockchainModuleManager.getBlockchainTimestamp();
+                    const delay =
+                        that.serviceAgreementService.randomIntFromInterval(
+                            proofWindowStartTime + 0.1 * proofWindowDuration,
+                            proofWindowStartTime + proofWindowDuration - 0.1 * proofWindowDuration,
+                        ) - timeNow;
 
                     that.logger.trace(
                         `Scheduling calculateProofsCommand for agreement id: ${agreementId} in ${delay} seconds`,

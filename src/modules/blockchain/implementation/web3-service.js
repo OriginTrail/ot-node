@@ -34,7 +34,7 @@ const UnfinalizedStateStorage = require('dkg-evm-module/abi/UnfinalizedStateStor
 
 const FIXED_GAS_LIMIT_METHODS = {
     submitCommit: 400000,
-    sendProof: 400000,
+    sendProof: 500000,
 };
 
 class Web3Service {
@@ -907,6 +907,16 @@ class Web3Service {
         });
 
         return params;
+    }
+
+    async getBlockchainTimestamp() {
+        return Math.floor(Date.now() / 1000);
+    }
+
+    async getLatestBlock() {
+        const currentBlock = await this.provider.getBlockNumber();
+        const blockTimestamp = await this.provider.getBlock(currentBlock);
+        return blockTimestamp;
     }
 }
 

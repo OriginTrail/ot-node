@@ -300,6 +300,14 @@ class BlockchainModuleManager extends BaseModuleManager {
             return this.getImplementation().module[functionName](...args);
         }
     }
+
+    async getLatestBlock(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getLatestBlock');
+    }
+
+    async getBlockchainTimestamp(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getBlockchainTimestamp');
+    }
 }
 
 export default BlockchainModuleManager;
