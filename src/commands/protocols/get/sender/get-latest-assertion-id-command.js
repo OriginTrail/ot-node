@@ -1,5 +1,5 @@
 import Command from '../../../command.js';
-import { ERROR_TYPE } from '../../../../constants/constants.js';
+import { ERROR_TYPE, GET_STATES } from '../../../../constants/constants.js';
 
 class GetLatestAssertionIdCommand extends Command {
     constructor(ctx) {
@@ -15,7 +15,7 @@ class GetLatestAssertionIdCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { id, operationId } = command.data;
+        const { id, operationId, state } = command.data;
 
         const commandData = {};
         if (!this.ualService.isUAL(id)) {
@@ -28,29 +28,39 @@ class GetLatestAssertionIdCommand extends Command {
             blockchain,
             contract,
             tokenId,
-            assertionId: ualAssertionId,
         } = this.ualService.resolveUAL(id);
         commandData.blockchain = blockchain;
         commandData.tokenId = tokenId;
         commandData.contract = contract;
 
-        if (ualAssertionId && ualAssertionId !== 'latest') {
-            commandData.assertionId = ualAssertionId;
-        } else {
+        let unfinalizedAssertionId;
+        if (state === GET_STATES.LATEST) {
             this.logger.debug(
-                `Searching for assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
+              `Searching for latest assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
+            );
+            unfinalizedAssertionId = await this.blockchainModuleManager.getUnfinalizedAssertionId(
+              blockchain,
+              contract,
+              tokenId,
+            );
+            commandData.assertionId = unfinalizedAssertionId;
+        }
+
+        if(typeof unfinalizedAssertionId === 'undefined' || !unfinalizedAssertionId || parseInt(unfinalizedAssertionId, 16) == 0) {
+            this.logger.debug(
+              `Searching for latest finalized assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
             );
             const blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertionId(
-                blockchain,
-                contract,
-                tokenId,
+              blockchain,
+              contract,
+              tokenId,
             );
             if (!blockchainAssertionId) {
                 this.handleError(
-                    operationId,
-                    `Unable to find assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
-                    this.errorType,
-                    true,
+                  operationId,
+                  `Unable to find latest finalized assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
+                  this.errorType,
+                  true,
                 );
 
                 return Command.empty();

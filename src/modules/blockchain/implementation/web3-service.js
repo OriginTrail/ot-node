@@ -30,6 +30,7 @@ const ProofManagerV1 = require('dkg-evm-module/abi/ProofManagerV1.json');
 const ShardingTable = require('dkg-evm-module/abi/ShardingTable.json');
 const ShardingTableStorage = require('dkg-evm-module/abi/ShardingTableStorage.json');
 const ServiceAgreementStorageProxy = require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json');
+const UnfinalizedStateStorage = require('dkg-evm-module/abi/UnfinalizedStateStorage.json');
 
 const FIXED_GAS_LIMIT_METHODS = {
     submitCommit: 400000,
@@ -269,6 +270,18 @@ class Web3Service {
             serviceAgreementStorageProxyAddress,
             ServiceAgreementStorageProxy,
             this.wallet,
+        );
+
+        const unfinalizedStateStorageAddress = await this.callContractFunction(
+          this.hubContract,
+          'getContractAddress',
+          ['UnfinalizedStateStorage'],
+        );
+
+        this.UnfinalizedStateStorageContract = new ethers.Contract(
+          unfinalizedStateStorageAddress,
+          UnfinalizedStateStorage,
+          this.wallet,
         );
 
         const scoringProxyAddress = await this.callContractFunction(
@@ -585,6 +598,12 @@ class Web3Service {
         if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
 
         return this.callContractFunction(assetStorageContractInstance, 'getLatestAssertionId', [
+            tokenId,
+        ]);
+    }
+
+    async getUnfinalizedState(tokenId) {
+        return this.callContractFunction(this.UnfinalizedStateStorageContract, 'getUnfinalizedState', [
             tokenId,
         ]);
     }

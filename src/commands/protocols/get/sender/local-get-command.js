@@ -1,5 +1,5 @@
 import Command from '../../../command.js';
-import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
+import { OPERATION_ID_STATUS, ERROR_TYPE, GET_STATES, NETWORK_MESSAGE_TYPES } from "../../../../constants/constants.js";
 
 class LocalGetCommand extends Command {
     constructor(ctx) {
@@ -7,6 +7,7 @@ class LocalGetCommand extends Command {
         this.config = ctx.config;
         this.operationIdService = ctx.operationIdService;
         this.tripleStoreService = ctx.tripleStoreService;
+        this.pendingStorageService = ctx.pendingStorageService;
 
         this.errorType = ERROR_TYPE.GET.GET_LOCAL_ERROR;
     }
@@ -16,13 +17,33 @@ class LocalGetCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, assertionId } = command.data;
+        const { operationId, assertionId, state } = command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.GET.GET_LOCAL_START,
         );
 
-        const assertion = await this.tripleStoreService.localGet(assertionId, true);
+        let assertion;
+        if (
+          state === GET_STATES.LATEST &&
+          command.data.blockchain != null &&
+          command.data.contract != null &&
+          command.data.tokenId != null
+        ) {
+            const cachedAssertion = await this.pendingStorageService.getCachedAssertion(
+              command.data.blockchain,
+              command.data.contract,
+              command.data.tokenId,
+              operationId,
+            );
+            if (cachedAssertion?.assertion?.length) {
+                assertion =  cachedAssertion.assertion;
+            }
+        }
+
+        if (typeof assertion ==='undefined' || !assertion.length) {
+            assertion = await this.tripleStoreService.localGet(assertionId, true);
+        }
 
         if (assertion.length) {
             await this.operationIdService.cacheOperationIdData(operationId, {
