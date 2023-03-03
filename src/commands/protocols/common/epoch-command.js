@@ -56,11 +56,6 @@ class EpochCommand extends Command {
         this.logger.trace(
             `Asset lifetime for agreement id: ${agreementId} has expired. Operation id: ${operationId}`,
         );
-        await this.repositoryModuleManager.updateOperationAgreementStatus(
-            operationId,
-            agreementId,
-            AGREEMENT_STATUS.EXPIRED,
-        );
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_END,
             operationId,

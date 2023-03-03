@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
-    const publish = sequelize.define(
-        'publish',
+    const update_response = sequelize.define(
+        'update_response',
         {
             id: {
                 type: DataTypes.INTEGER,
@@ -8,14 +8,16 @@ export default (sequelize, DataTypes) => {
                 autoIncrement: true,
             },
             operation_id: DataTypes.UUID,
+            keyword: DataTypes.STRING,
             status: DataTypes.STRING,
+            message: DataTypes.TEXT,
             created_at: DataTypes.DATE,
             updated_at: DataTypes.DATE,
         },
         {},
     );
-    publish.associate = () => {
+    update_response.associate = () => {
         // associations can be defined here
     };
-    return publish;
+    return update_response;
 };

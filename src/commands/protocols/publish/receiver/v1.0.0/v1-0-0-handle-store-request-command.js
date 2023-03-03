@@ -79,12 +79,6 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
         );
 
-        await this.repositoryModuleManager.updateOperationAgreementStatus(
-            operationId,
-            agreementId,
-            AGREEMENT_STATUS.ACTIVE,
-        );
-
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         if (!assetExists) {
             this.logger.trace(
