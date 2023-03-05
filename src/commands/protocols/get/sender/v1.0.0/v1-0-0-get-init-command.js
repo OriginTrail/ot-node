@@ -10,7 +10,8 @@ class GetInitCommand extends ProtocolInitCommand {
     }
 
     async prepareMessage(command) {
-        return { ...super.prepareMessage(command), state: command.data.state };
+        const commandData = await super.prepareMessage(command);
+        return { ...commandData, state: command.data.state };
     }
 
     messageTimeout() {
