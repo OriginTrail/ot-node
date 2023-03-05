@@ -14,7 +14,7 @@ class CalculateProofsCommand extends EpochCommand {
         this.tripleStoreService = ctx.tripleStoreService;
         this.operationIdService = ctx.operationIdService;
         this.dataService = ctx.dataService;
-        this.errorType = ERROR_TYPE.CALCULATE_PROOFS_ERROR;
+        this.errorType = ERROR_TYPE.COMMIT_PROOF.CALCULATE_PROOFS_ERROR;
     }
 
     async execute(command) {

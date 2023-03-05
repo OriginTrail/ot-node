@@ -69,7 +69,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             name: 'v1_0_0HandleGetRequestCommand',
             delay: 0,
             transactional: false,
-            errorType: ERROR_TYPE.HANDLE_GET_REQUEST_ERROR,
+            errorType: ERROR_TYPE.GET.GET_REQUEST_REMOTE_ERROR,
         };
         Object.assign(command, map);
         return command;

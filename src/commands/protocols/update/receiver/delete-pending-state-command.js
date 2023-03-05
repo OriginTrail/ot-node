@@ -6,7 +6,7 @@ class DeletePendingStateCommand extends Command {
         super(ctx);
         this.pendingStorageService = ctx.pendingStorageService;
 
-        this.errorType = ERROR_TYPE.UPDATE_DELETE_PENDING_STATE_ERROR;
+        this.errorType = ERROR_TYPE.UPDATE.UPDATE_DELETE_PENDING_STATE_ERROR;
     }
 
     async execute(command) {

@@ -14,7 +14,7 @@ class SubmitUpdateCommitCommand extends EpochCommand {
         this.shardingTableService = ctx.shardingTableService;
         this.networkModuleManager = ctx.networkModuleManager;
 
-        this.errorType = ERROR_TYPE.SUBMIT_UPDATE_COMMIT_ERROR;
+        this.errorType = ERROR_TYPE.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_ERROR;
     }
 
     async execute(command) {
