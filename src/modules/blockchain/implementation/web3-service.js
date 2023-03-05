@@ -622,7 +622,6 @@ class Web3Service {
             addedTokenAmount: result['3'][1],
             scoreFunctionId: result['4'][0],
             proofWindowOffsetPerc: result['4'][1],
-            latestFinalizedState: result['5'],
         };
     }
 
