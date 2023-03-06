@@ -1,6 +1,5 @@
 import BaseController from './base-http-api-controller.js';
-
-import { OPERATION_ID_STATUS } from '../../constants/constants.js';
+import { LOCAL_STORE_TYPES, OPERATION_ID_STATUS } from '../../constants/constants.js';
 
 class LocalStoreController extends BaseController {
     constructor(ctx) {
@@ -13,7 +12,7 @@ class LocalStoreController extends BaseController {
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_INIT_START,
         );
-        const storeType = req.body.storeType;
+        const storeType = req.body.storeType ?? LOCAL_STORE_TYPES.TRIPLE;
 
         this.returnResponse(res, 202, {
             operationId,
