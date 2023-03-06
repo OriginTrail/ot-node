@@ -368,6 +368,15 @@ export const QUERY_TYPES = {
 };
 
 /**
+ * Local store types
+ * @type {{TRIPLE: string, PENDING: string}}
+ */
+export const LOCAL_STORE_TYPES = {
+    TRIPLE: 'TRIPLE',
+    PENDING: 'PENDING',
+};
+
+/**
  * Contract names
  * @type {{SHARDING_TABLE_CONTRACT: string}}
  */

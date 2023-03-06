@@ -8,7 +8,6 @@ import {
 class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
-        this.publishService = ctx.updateService;
         this.ualService = ctx.ualService;
         this.shardingTableService = ctx.shardingTableService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;

@@ -1,6 +1,5 @@
 import BaseController from './base-http-api-controller.js';
-
-import { OPERATION_ID_STATUS } from '../../constants/constants.js';
+import { LOCAL_STORE_TYPES, OPERATION_ID_STATUS } from '../../constants/constants.js';
 
 class LocalStoreController extends BaseController {
     constructor(ctx) {
@@ -13,6 +12,7 @@ class LocalStoreController extends BaseController {
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_INIT_START,
         );
+        const storeType = req.body.storeType ?? LOCAL_STORE_TYPES.TRIPLE;
 
         this.returnResponse(res, 202, {
             operationId,
@@ -24,12 +24,12 @@ class LocalStoreController extends BaseController {
         );
 
         this.logger.info(
-            `Received assertion with assertion ids: ${req.body.map(
+            `Received assertion with assertion ids: ${req.body.assertions.map(
                 (reqObject) => reqObject.assertionId,
             )}. Operation id: ${operationId}`,
         );
 
-        await this.operationIdService.cacheOperationIdData(operationId, req.body);
+        await this.operationIdService.cacheOperationIdData(operationId, req.body.assertions);
 
         await this.commandExecutor.add({
             name: 'localStoreCommand',
@@ -37,6 +37,7 @@ class LocalStoreController extends BaseController {
             delay: 0,
             data: {
                 operationId,
+                storeType
             },
             transactional: false,
         });
