@@ -34,7 +34,7 @@ class UpdateController extends BaseController {
             OPERATION_ID_STATUS.UPDATE.UPDATE_INIT_END,
         );
 
-        const { assertionData, blockchain, contract, tokenId } = req.body;
+        const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
         const hashFunctionId =
             req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
         try {
@@ -45,22 +45,12 @@ class UpdateController extends BaseController {
             );
 
             this.logger.info(
-                `Received asset with assertion id: ${assertionData.publicAssertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
+                `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
             );
 
-            let commandSequence = [];
+            await this.operationIdService.cacheOperationIdData(operationId, { assertion });
 
-            if (req.body.localStore) {
-                commandSequence.push('localStoreCommand');
-                await this.operationIdService.cacheOperationIdData(operationId, [...assertionData]);
-            } else {
-                await this.operationIdService.cacheOperationIdData(operationId, {
-                    ...assertionData,
-                });
-            }
-
-            commandSequence = [
-                ...commandSequence,
+            let commandSequence = [
                 'validateUpdateAssertionCommand',
                 'networkUpdateCommand',
             ];
@@ -75,7 +65,7 @@ class UpdateController extends BaseController {
                     blockchain,
                     contract,
                     tokenId,
-                    assertionId: assertionData.publicAssertionId,
+                    assertionId,
                     hashFunctionId,
                     operationId,
                 },

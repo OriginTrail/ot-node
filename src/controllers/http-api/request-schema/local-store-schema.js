@@ -1,22 +1,31 @@
+import { LOCAL_STORE_TYPES } from '../../../constants/constants.js';
+
 export default () => ({
-    type: 'array',
-    items: {
-        type: 'object',
-        required: ['assertionId', 'assertion'],
-        properties: {
-            assertionId: {
-                type: 'string',
-                minLength: 66,
-                maxLength: 66,
-            },
-            assertion: {
-                type: 'array',
-                items: {
+    type: 'object',
+    required: ['assertions'],
+    properties: {
+        assertions: {
+            type: 'array',
+            items: {
+                assertionId: {
                     type: 'string',
+                    minLength: 66,
+                    maxLength: 66,
                 },
-                minItems: 1,
+                assertion: {
+                    type: 'array',
+                    items: {
+                        type: 'string',
+                    },
+                    minItems: 1,
+                },
+            },
+            minItems: 1,
+        },
+        storeType: {
+            type: {
+                enum: [LOCAL_STORE_TYPES.TRIPLE, LOCAL_STORE_TYPES.PENDING],
             },
         },
     },
-    minItems: 1,
 });
