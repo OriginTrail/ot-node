@@ -5,7 +5,6 @@ import path from 'path';
 import fs from 'fs-extra';
 import TripleStoreModuleManager from '../../src/modules/triple-store/triple-store-module-manager.js';
 import Logger from '../../src/logger/logger.js';
-import { execSync } from 'child_process';
 
 const { readFile, writeFile, stat } = fs;
 
@@ -194,6 +193,6 @@ async function fileExists(filePath) {
 async function deleteDataFolder(config) {
     if (await fileExists(config.appDataPath)) {
         logger.trace(`Removing file on path: ${config.appDataPath}`);
-        execSync(`rm -rf ${config.appDataPath}`);
+        await fs.rm(config.appDataPath, { recursive: true, force: true });
     }
 }
