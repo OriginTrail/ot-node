@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import TripleStoreModuleManager from '../../src/modules/triple-store/triple-store-module-manager.js';
 import Logger from '../../src/logger/logger.js';
+import { execSync } from 'child_process';
 
 const { readFile, writeFile, stat } = fs;
 
@@ -73,11 +74,15 @@ async function generateNodeConfig(nodeIndex) {
         await writeFile(configPath, JSON.stringify(template, null, 4));
     }
     const config = JSON.parse(await readFile(configPath));
-    await dropDatabase(
-        `operationaldb${nodeIndex}`,
-        generalConfig.development.modules.repository.implementation['sequelize-repository'].config,
-    );
-    await deleteTripleStoreRepositories(config);
+    await Promise.all([
+        dropDatabase(
+            `operationaldb${nodeIndex}`,
+            generalConfig.development.modules.repository.implementation['sequelize-repository']
+                .config,
+        ),
+        deleteTripleStoreRepositories(config),
+        deleteDataFolder(config),
+    ]);
 }
 
 function generateTripleStoreConfig(templateTripleStoreConfig, nodeIndex) {
@@ -183,5 +188,12 @@ async function fileExists(filePath) {
         return true;
     } catch (e) {
         return false;
+    }
+}
+
+async function deleteDataFolder(config) {
+    if (await fileExists(config.appDataPath)) {
+        logger.trace(`Removing file on path: ${config.appDataPath}`);
+        execSync(`rm -rf ${config.appDataPath}`);
     }
 }
