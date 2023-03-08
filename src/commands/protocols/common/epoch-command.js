@@ -5,6 +5,7 @@ class EpochCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
     }
 
     async scheduleNextEpochCheck(
@@ -63,8 +64,9 @@ class EpochCommand extends Command {
         );
     }
 
-    calculateCurrentEpoch(startTime, epochLength) {
-        return Math.floor((Math.floor(Date.now() / 1000) - startTime) / epochLength);
+    calculateCurrentEpoch(startTime, epochLength, blockchain) {
+        const now = this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
+        return Math.floor((now - startTime) / epochLength);
     }
 
     /**

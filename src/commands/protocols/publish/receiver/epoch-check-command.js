@@ -36,6 +36,7 @@ class EpochCheckCommand extends EpochCommand {
         const epoch = this.calculateCurrentEpoch(
             agreementData.startTime,
             agreementData.epochLength,
+            blockchain,
         );
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_START,
@@ -47,7 +48,11 @@ class EpochCheckCommand extends EpochCommand {
         const assertionId =
             epoch === 0
                 ? command.data.assertionId
-                : await this.blockchainModuleManager.getLatestAssertionId(blockchain, contract, tokenId);
+                : await this.blockchainModuleManager.getLatestAssertionId(
+                      blockchain,
+                      contract,
+                      tokenId,
+                  );
 
         if (this.assetLifetimeExpired(agreementData, epoch)) {
             await this.handleExpiredAsset(agreementId, operationId, epoch);

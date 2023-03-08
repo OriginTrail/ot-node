@@ -44,6 +44,7 @@ class CalculateProofsCommand extends EpochCommand {
         const epoch = this.calculateCurrentEpoch(
             agreementData.startTime,
             agreementData.epochLength,
+            blockchain,
         );
 
         this.operationIdService.emitChangeEvent(
