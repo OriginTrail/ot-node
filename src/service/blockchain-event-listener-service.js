@@ -6,6 +6,9 @@ import {
     NODE_ENVIRONMENTS,
 } from '../constants/constants.js';
 
+const MAXIMUM_FETCH_EVENTS_FAILED_COUNT = 5;
+const fetchEventsFailedCount = {};
+
 class BlockchainEventListenerService {
     constructor(ctx) {
         this.logger = ctx.logger;
@@ -34,7 +37,8 @@ class BlockchainEventListenerService {
             : CONTRACT_EVENT_FETCH_INTERVALS.MAINNET;
 
         let working = false;
-        setInterval(async () => {
+        fetchEventsFailedCount[blockchainId] = 0;
+        const fetchEventInterval = setInterval(async () => {
             if (working) return;
             try {
                 working = true;
@@ -62,8 +66,25 @@ class BlockchainEventListenerService {
                 const contractEvents = await Promise.all(syncContractEventsPromises);
 
                 await this.handleBlockchainEvents(contractEvents.flatMap((events) => events));
+                fetchEventsFailedCount[blockchainId] = 0;
             } catch (e) {
-                this.logger.error(`Failed to get blockchain events. Error: ${e}`);
+                if (fetchEventsFailedCount[blockchainId] >= MAXIMUM_FETCH_EVENTS_FAILED_COUNT) {
+                    clearInterval(fetchEventInterval);
+                    this.blockchainModuleManager.removeImplementation(blockchainId);
+                    if (!this.blockchainModuleManager.getImplementationNames().length) {
+                        this.logger.error(
+                            `Unable to fetch new events for blockchain: ${blockchainId}. Error message: ${e.message} OT-node shutting down...`,
+                        );
+                        process.exit(1);
+                    }
+                    this.logger.error(
+                        `Unable to fetch new events for blockchain: ${blockchainId}. Error message: ${e.message} blockchain implementation removed.`,
+                    );
+                }
+                this.logger.error(
+                    `Failed to get blockchain events for blockchain: ${blockchainId}. Error: ${e}`,
+                );
+                fetchEventsFailedCount[blockchainId] += 1;
             } finally {
                 working = false;
             }
