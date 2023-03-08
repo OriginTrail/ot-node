@@ -92,7 +92,6 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
                     contract,
                     tokenId,
                     keyword,
-                    epoch: 0,
                     hashFunctionId,
                     operationId,
                     agreementId,

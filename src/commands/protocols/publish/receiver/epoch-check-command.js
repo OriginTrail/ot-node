@@ -38,6 +38,7 @@ class EpochCheckCommand extends EpochCommand {
             agreementData.epochLength,
             blockchain,
         );
+        this.logger.trace(`Epoch number: ${epoch}`);
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_START,
             operationId,
@@ -104,7 +105,7 @@ class EpochCheckCommand extends EpochCommand {
             delay: 0,
             period: 12 * 1000, // todo: get from blockchain / oracle
             retries: COMMAND_RETRIES.SUBMIT_COMMIT,
-            data: { ...command.data, agreementData, identityId },
+            data: { ...command.data, agreementData, identityId, epoch },
             transactional: false,
         });
 

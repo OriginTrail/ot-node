@@ -41,9 +41,9 @@ class SubmitCommitCommand extends EpochCommand {
         );
 
         this.logger.trace(
-            `Started ${command.name} for agreement id: ${command.data.agreementId} ` +
+            `Started ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}. Retry number ${
+                `hash function id: ${hashFunctionId}, epoch: ${epoch}, assertionId: ${assertionId}. Retry number ${
                     COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1
                 }`,
         );
