@@ -1,5 +1,5 @@
 import Command from '../../../command.js';
-import { OPERATION_ID_STATUS, ERROR_TYPE, GET_STATES, NETWORK_MESSAGE_TYPES } from "../../../../constants/constants.js";
+import { OPERATION_ID_STATUS, ERROR_TYPE, GET_STATES } from '../../../../constants/constants.js';
 
 class LocalGetCommand extends Command {
     constructor(ctx) {
@@ -25,23 +25,23 @@ class LocalGetCommand extends Command {
 
         let assertion;
         if (
-          state === GET_STATES.LATEST &&
-          command.data.blockchain != null &&
-          command.data.contract != null &&
-          command.data.tokenId != null
+            state === GET_STATES.LATEST &&
+            command.data.blockchain != null &&
+            command.data.contract != null &&
+            command.data.tokenId != null
         ) {
             const cachedAssertion = await this.pendingStorageService.getCachedAssertion(
-              command.data.blockchain,
-              command.data.contract,
-              command.data.tokenId,
-              operationId,
+                command.data.blockchain,
+                command.data.contract,
+                command.data.tokenId,
+                operationId,
             );
             if (cachedAssertion?.assertion?.length) {
-                assertion =  cachedAssertion.assertion;
+                assertion = cachedAssertion.assertion;
             }
         }
 
-        if (typeof assertion ==='undefined' || !assertion.length) {
+        if (typeof assertion === 'undefined' || !assertion.length) {
             assertion = await this.tripleStoreService.localGet(assertionId, true);
         }
 

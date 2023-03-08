@@ -1,4 +1,4 @@
-import { OPERATION_ID_STATUS, ERROR_TYPE, LOCAL_STORE_TYPES } from "../../constants/constants.js";
+import { OPERATION_ID_STATUS, ERROR_TYPE, LOCAL_STORE_TYPES } from '../../constants/constants.js';
 import Command from '../command.js';
 
 class LocalStoreCommand extends Command {
@@ -24,23 +24,22 @@ class LocalStoreCommand extends Command {
             assertions = await this.operationIdService.getCachedOperationIdData(operationId);
 
             await Promise.all(
-              assertions.map(({ assertionId, assertion, blockchain, contract, tokenId }) => {
-                  if(storeType === LOCAL_STORE_TYPES.TRIPLE) {
-                      this.tripleStoreService.localStoreAssertion(
-                        assertionId,
-                        assertion,
-                        operationId,
-                      );
-                  } else {
-                      this.pendingStorageService.cacheAssertion(
+                assertions.map(({ assertionId, assertion, blockchain, contract, tokenId }) => {
+                    if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
+                        return this.tripleStoreService.localStoreAssertion(
+                            assertionId,
+                            assertion,
+                            operationId,
+                        );
+                    }
+                    return this.pendingStorageService.cacheAssertion(
                         blockchain,
                         contract,
                         tokenId,
                         { assertion },
-                        operationId
-                      );
-                  }
-              }),
+                        operationId,
+                    );
+                }),
             );
 
             await this.operationIdService.updateOperationIdStatus(

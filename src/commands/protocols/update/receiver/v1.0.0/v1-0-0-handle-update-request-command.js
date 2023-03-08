@@ -5,8 +5,6 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
-    AGREEMENT_STATUS,
-    TRIPLE_STORE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
 class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
@@ -25,17 +23,8 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const {
-            blockchain,
-            keyword,
-            hashFunctionId,
-            contract,
-            tokenId,
-            operationId,
-            assertionId,
-            agreementId,
-            agreementData,
-        } = commandData;
+        const { blockchain, contract, tokenId, operationId, agreementId, agreementData } =
+            commandData;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -43,25 +32,31 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         );
 
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
-        await this.pendingStorageService.cacheAssertion(blockchain, contract, tokenId, { assertion }, operationId);
+        await this.pendingStorageService.cacheAssertion(
+            blockchain,
+            contract,
+            tokenId,
+            { assertion },
+            operationId,
+        );
 
-         await Promise.all([
-             this.commandExecutor.add({
-                 name: 'deletePendingStateCommand',
-                 sequence: [],
-                 delay: 15 * 1000, // todo: get pending state time limit for validation
-                 data: commandData,
-                 transactional: false,
-             }),
-             this.commandExecutor.add({
-                 name: 'submitUpdateCommitCommand',
-                 delay: 0,
-                 period: 12 * 1000, // todo: get from blockchain / oracle
-                 retries: COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT,
-                 data: { ...commandData, agreementData, agreementId },
-                 transactional: false,
-             }),
-         ]);
+        await Promise.all([
+            this.commandExecutor.add({
+                name: 'deletePendingStateCommand',
+                sequence: [],
+                delay: 15 * 1000, // todo: get pending state time limit for validation
+                data: commandData,
+                transactional: false,
+            }),
+            this.commandExecutor.add({
+                name: 'submitUpdateCommitCommand',
+                delay: 0,
+                period: 12 * 1000, // todo: get from blockchain / oracle
+                retries: COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT,
+                data: { ...commandData, agreementData, agreementId },
+                transactional: false,
+            }),
+        ]);
 
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
     }

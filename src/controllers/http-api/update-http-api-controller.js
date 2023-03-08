@@ -35,8 +35,7 @@ class UpdateController extends BaseController {
         );
 
         const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
-        const hashFunctionId =
-            req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
+        const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
         try {
             await this.repositoryModuleManager.createOperationRecord(
                 this.operationService.getOperationName(),
@@ -50,10 +49,7 @@ class UpdateController extends BaseController {
 
             await this.operationIdService.cacheOperationIdData(operationId, { assertion });
 
-            let commandSequence = [
-                'validateUpdateAssertionCommand',
-                'networkUpdateCommand',
-            ];
+            const commandSequence = ['validateUpdateAssertionCommand', 'networkUpdateCommand'];
 
             await this.commandExecutor.add({
                 name: commandSequence[0],

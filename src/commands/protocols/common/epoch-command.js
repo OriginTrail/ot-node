@@ -1,5 +1,5 @@
 import Command from '../../command.js';
-import { AGREEMENT_STATUS, OPERATION_ID_STATUS } from '../../../constants/constants.js';
+import { OPERATION_ID_STATUS } from '../../../constants/constants.js';
 
 class EpochCommand extends Command {
     constructor(ctx) {

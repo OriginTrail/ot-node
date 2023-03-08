@@ -16,7 +16,7 @@ class ValidateUpdateAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { assertionId, operationId, blockchain, contract, tokenId } = command.data;
+        const { operationId } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

@@ -4,7 +4,6 @@ import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
-    AGREEMENT_STATUS,
     TRIPLE_STORE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
