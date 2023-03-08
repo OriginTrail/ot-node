@@ -64,8 +64,8 @@ class EpochCommand extends Command {
         );
     }
 
-    calculateCurrentEpoch(startTime, epochLength, blockchain) {
-        const now = this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
+    async calculateCurrentEpoch(startTime, epochLength, blockchain) {
+        const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
         return Math.floor((now - startTime) / epochLength);
     }
 

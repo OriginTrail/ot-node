@@ -33,7 +33,7 @@ class EpochCheckCommand extends EpochCommand {
             blockchain,
             agreementId,
         );
-        const epoch = this.calculateCurrentEpoch(
+        const epoch = await this.calculateCurrentEpoch(
             agreementData.startTime,
             agreementData.epochLength,
             blockchain,

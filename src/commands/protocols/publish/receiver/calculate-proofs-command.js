@@ -41,7 +41,7 @@ class CalculateProofsCommand extends EpochCommand {
                 `keyword: ${keyword}, hash function id: ${hashFunctionId} and assertion id: ${assertionId}`,
         );
 
-        const epoch = this.calculateCurrentEpoch(
+        const epoch = await this.calculateCurrentEpoch(
             agreementData.startTime,
             agreementData.epochLength,
             blockchain,
