@@ -91,7 +91,7 @@ class Web3Service {
                     );
                 }
                 // eslint-disable-next-line no-await-in-loop
-                await this.provider.ready;
+                await this.providerReady();
                 isRpcConnected = true;
             } catch (e) {
                 this.logger.warn(
@@ -318,6 +318,10 @@ class Web3Service {
         );
 
         await this.logBalances();
+    }
+
+    async providerReady() {
+        return this.provider.getNetwork();
     }
 
     getPrivateKey() {
@@ -827,7 +831,7 @@ class Web3Service {
     async handleError(error, functionName) {
         let isRpcError = false;
         try {
-            await this.provider.ready;
+            await this.provider.getNetwork();
         } catch (rpcError) {
             isRpcError = true;
             this.logger.warn(

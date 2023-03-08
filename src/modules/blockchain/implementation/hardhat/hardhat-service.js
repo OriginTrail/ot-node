@@ -11,6 +11,10 @@ class HardhatService extends Web3Service {
         const latestBlock = await super.getLatestBlock();
         return latestBlock.timestamp;
     }
+
+    async providerReady() {
+        return this.provider.ready;
+    }
 }
 
 export default HardhatService;
