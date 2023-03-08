@@ -36,7 +36,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             blockchain,
             contract,
             tokenId,
-            { assertion },
+            { assertion, ...agreementData },
             operationId,
         );
 

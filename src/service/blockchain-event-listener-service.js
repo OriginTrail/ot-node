@@ -273,7 +273,7 @@ class BlockchainEventListenerService {
         const blockchain = event.blockchain_id;
         const contract = eventData.assetContract;
 
-        const assetMetadata = await this.tripleStoreService.getAssetMetadata(
+        const [assetMetadata] = await this.tripleStoreService.getAssetMetadata(
             TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
             blockchain,
             contract,
@@ -281,8 +281,7 @@ class BlockchainEventListenerService {
         );
 
         // if asset exists in triple store
-        if (assetMetadata && assetMetadata.assertion) {
-            this.logger.info('Asset metadata: ', JSON.stringify(assetMetadata, null, 4));
+        if (assetMetadata?.assertion) {
             const previousAssertionId = assetMetadata.assertion.replace('assertion:', '');
             const previousAssertion = await this.tripleStoreService.localGet(previousAssertionId);
 
@@ -307,14 +306,14 @@ class BlockchainEventListenerService {
                 tokenId,
             );
 
-            const assetsWithAssertionIdCount =
+            const [assetsWithAssertionIdCount] =
                 await this.tripleStoreService.countAssetsWithAssertionId(
                     TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
                     previousAssertionId,
                 );
 
             // delete assertion from public current if not linked to other assets
-            if (assetsWithAssertionIdCount === 0) {
+            if (!assetsWithAssertionIdCount?.count) {
                 await this.tripleStoreService.deleteAssertion(
                     TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
                     previousAssertionId,
@@ -322,24 +321,24 @@ class BlockchainEventListenerService {
             }
         }
 
-        const assertion = await this.pendingStorageService.getCachedAssertion(
+        const cachedData = await this.pendingStorageService.getCachedAssertion(
             blockchain,
             contract,
             tokenId,
         );
 
         // if ual file exists in pending storage
-        if (assertion) {
+        if (cachedData?.assertion) {
             // insert assertion in public current triple store
             await this.tripleStoreService.localStoreAsset(
                 TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
                 eventData.state,
-                assertion,
+                cachedData.assertion,
                 blockchain,
                 contract,
                 tokenId,
-                assetMetadata.agreementStartTime,
-                assetMetadata.agreementEndTime,
+                cachedData.agreementStartTime,
+                cachedData.agreementEndTime,
                 keyword,
             );
 
