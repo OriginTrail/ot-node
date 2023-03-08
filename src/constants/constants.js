@@ -393,7 +393,7 @@ export const CONTRACT_EVENTS = {
         NEW_CONTRACT: 'NewContract',
         CONTRACT_CHANGED: 'ContractChanged',
         NEW_ASSET_STORAGE: 'NewAssetStorage',
-        ASSET_STORAGE_CHANGED: 'AssetStorageChanged'
+        ASSET_STORAGE_CHANGED: 'AssetStorageChanged',
     },
     SHARDING_TABLE: {
         NODE_ADDED: 'NodeAdded',
@@ -415,16 +415,16 @@ export const NODE_ENVIRONMENTS = {
     DEVELOPMENT: 'development',
     TEST: 'test',
     TESTNET: 'testnet',
-    MAINNET: 'mainnet'
-}
+    MAINNET: 'mainnet',
+};
 
 export const CONTRACT_EVENT_FETCH_INTERVALS = {
     MAINNET: 10 * 1000,
-    DEVELOPMENT: 4 * 1000
-}
+    DEVELOPMENT: 4 * 1000,
+};
 
 export const FIXED_GAS_LIMIT_METHODS = {
     submitCommit: 400000,
-    submitUpdateCommit: 400000,
+    submitUpdateCommit: 500000,
     sendProof: 500000,
 };

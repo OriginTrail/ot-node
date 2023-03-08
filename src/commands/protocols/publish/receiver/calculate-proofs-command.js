@@ -29,8 +29,8 @@ class CalculateProofsCommand extends EpochCommand {
             identityId,
             operationId,
         } = command.data;
-
         const assertionId = await this.blockchainModuleManager.getLatestAssertionId(
+            blockchain,
             contract,
             tokenId,
         );

@@ -589,7 +589,7 @@ class Web3Service {
 
     async getLatestAssertionId(assetContractAddress, tokenId) {
         const assetStorageContractInstance =
-            this.assetStorageContracts[assetContractAddress.toLowerCase()];
+            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
         if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
 
         return this.callContractFunction(assetStorageContractInstance, 'getLatestAssertionId', [
@@ -919,6 +919,12 @@ class Web3Service {
         const currentBlock = await this.provider.getBlockNumber();
         const blockTimestamp = await this.provider.getBlock(currentBlock);
         return blockTimestamp;
+    }
+
+    async hasPendingUpdate(tokenId) {
+        return this.callContractFunction(this.UnfinalizedStateStorageContract, 'hasPendingUpdate', [
+            tokenId,
+        ]);
     }
 }
 

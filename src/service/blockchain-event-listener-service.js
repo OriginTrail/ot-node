@@ -281,7 +281,8 @@ class BlockchainEventListenerService {
         );
 
         // if asset exists in triple store
-        if (assetMetadata) {
+        if (assetMetadata && assetMetadata.assertion) {
+            this.logger.info('Asset metadata: ', JSON.stringify(assetMetadata, null, 4));
             const previousAssertionId = assetMetadata.assertion.replace('assertion:', '');
             const previousAssertion = await this.tripleStoreService.localGet(previousAssertionId);
 
