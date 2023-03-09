@@ -1,5 +1,11 @@
 import Command from '../../../command.js';
-import { OPERATION_ID_STATUS, ERROR_TYPE, GET_STATES } from '../../../../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+    GET_STATES,
+    TRIPLE_STORE_REPOSITORIES,
+    PENDING_STORAGE_REPOSITORIES,
+} from '../../../../constants/constants.js';
 
 class LocalGetCommand extends Command {
     constructor(ctx) {
@@ -30,22 +36,37 @@ class LocalGetCommand extends Command {
             command.data.contract != null &&
             command.data.tokenId != null
         ) {
-            const cachedAssertion = await this.pendingStorageService.getCachedAssertion(
-                command.data.blockchain,
-                command.data.contract,
-                command.data.tokenId,
-                operationId,
-            );
-            if (cachedAssertion?.assertion?.length) {
-                assertion = cachedAssertion.assertion;
+            for (const repository of [
+                PENDING_STORAGE_REPOSITORIES.PRIVATE,
+                PENDING_STORAGE_REPOSITORIES.PUBLIC,
+            ]) {
+                // eslint-disable-next-line no-await-in-loop
+                const cachedAssertion = await this.pendingStorageService.getCachedAssertion(
+                    repository,
+                    command.data.blockchain,
+                    command.data.contract,
+                    command.data.tokenId,
+                    operationId,
+                );
+                if (cachedAssertion?.assertion?.length) {
+                    assertion = cachedAssertion.assertion;
+                    break;
+                }
             }
         }
 
-        if (typeof assertion === 'undefined' || !assertion.length) {
-            assertion = await this.tripleStoreService.localGet(assertionId, true);
+        if (!assertion?.length) {
+            for (const repository of [
+                TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+            ]) {
+                // eslint-disable-next-line no-await-in-loop
+                assertion = await this.tripleStoreService.getAssertion(repository, assertionId);
+                if (assertion?.length) break;
+            }
         }
 
-        if (assertion.length) {
+        if (assertion?.length) {
             await this.operationIdService.cacheOperationIdData(operationId, {
                 assertion,
             });

@@ -43,6 +43,11 @@ export const TRIPLE_STORE_REPOSITORIES = {
     PRIVATE_HISTORY: 'privateHistory',
 };
 
+export const PENDING_STORAGE_REPOSITORIES = {
+    PUBLIC: 'public',
+    PRIVATE: 'private',
+};
+
 export const REQUIRED_MODULES = [
     'repository',
     'httpClient',

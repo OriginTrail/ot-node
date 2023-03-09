@@ -3,6 +3,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
+    TRIPLE_STORE_REPOSITORIES,
 } from '../../../../constants/constants.js';
 
 class CalculateProofsCommand extends EpochCommand {
@@ -87,9 +88,12 @@ class CalculateProofsCommand extends EpochCommand {
             epoch,
         );
 
-        const nquads = await this.tripleStoreService.localGet(assertionId);
+        const assertion = await this.tripleStoreService.getAssertion(
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+            assertionId,
+        );
 
-        if (!nquads.length) {
+        if (!assertion.length) {
             this.logger.trace(
                 `Assertion with id: ${assertionId} not found in triple store. Not scheduling next epcoh checks.`,
             );
@@ -97,7 +101,7 @@ class CalculateProofsCommand extends EpochCommand {
         }
 
         const { leaf, proof } = this.validationModuleManager.getMerkleProof(
-            nquads,
+            assertion,
             Number(challenge),
         );
 

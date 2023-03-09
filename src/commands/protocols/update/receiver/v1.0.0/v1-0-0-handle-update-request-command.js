@@ -5,6 +5,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
+    PENDING_STORAGE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
 class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
@@ -41,6 +42,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
 
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
         await this.pendingStorageService.cacheAssertion(
+            PENDING_STORAGE_REPOSITORIES.PUBLIC,
             blockchain,
             contract,
             tokenId,
