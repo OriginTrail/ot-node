@@ -83,6 +83,42 @@ class TripleStoreService {
         );
     }
 
+    async insertAssetMetadata(
+        repository,
+        blockchain,
+        contract,
+        tokenId,
+        assertionId,
+        agreementStartTime,
+        agreementEndTime,
+        keyword,
+    ) {
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+        this.logger.info(
+            `Inserting metadata for asset with ual: ${ual}, assertion id: ${assertionId}, in triple store ${repository} repository.`,
+        );
+
+        const currentAssetNquads = await formatAssertion({
+            '@context': SCHEMA_CONTEXT,
+            '@id': ual,
+            blockchain,
+            contract,
+            tokenId,
+            assertion: { '@id': `assertion:${assertionId}` },
+            agreementStartTime,
+            agreementEndTime,
+            keyword,
+        });
+
+        await this.tripleStoreModuleManager.insertAssetMetadata(
+            this.repositoryImplementations[repository],
+            repository,
+            ual,
+            currentAssetNquads.join('\n'),
+        );
+    }
+
     async deleteAssetMetadata(repository, blockchain, contract, tokenId) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         this.logger.info(

@@ -597,6 +597,13 @@ class Web3Service {
         ]);
     }
 
+    async getLatestTokenId(assetContractAddress) {
+        return this.provider.getStorageAt(
+            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()],
+            7,
+        );
+    }
+
     async getAssertionIds(assetContractAddress, tokenId) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
