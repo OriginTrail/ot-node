@@ -74,6 +74,13 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
+    async getAssertionIds(blockchain, assetContractAddress, tokenId) {
+        return this.callImplementationFunction(blockchain, 'getAssertionIds', [
+            assetContractAddress,
+            tokenId,
+        ]);
+    }
+
     async getUnfinalizedAssertionId(blockchain, tokenId) {
         return this.callImplementationFunction(blockchain, 'getUnfinalizedState', [tokenId]);
     }
@@ -158,11 +165,11 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async getTopCommitSubmissions(blockchain, agreementId, epoch, assertionId) {
+    async getTopCommitSubmissions(blockchain, agreementId, epoch, stateIndex) {
         return this.callImplementationFunction(blockchain, 'getTopCommitSubmissions', [
             agreementId,
             epoch,
-            assertionId,
+            stateIndex,
         ]);
     }
 

@@ -597,6 +597,16 @@ class Web3Service {
         ]);
     }
 
+    async getAssertionIds(assetContractAddress, tokenId) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+
+        return this.callContractFunction(assetStorageContractInstance, 'getAssertionIds', [
+            tokenId,
+        ]);
+    }
+
     async getUnfinalizedState(tokenId) {
         return this.callContractFunction(
             this.UnfinalizedStateStorageContract,
@@ -663,11 +673,11 @@ class Web3Service {
         ]);
     }
 
-    async getTopCommitSubmissions(agreementId, epoch, assertionId) {
+    async getTopCommitSubmissions(agreementId, epoch, stateIndex) {
         const commits = await this.callContractFunction(
             this.CommitManagerV1U1Contract,
             'getTopCommitSubmissions',
-            [agreementId, epoch, assertionId],
+            [agreementId, epoch, stateIndex],
         );
 
         return commits
