@@ -695,6 +695,15 @@ class Web3Service {
         return r0;
     }
 
+    async getFinalizationCommitsNumber() {
+        const finalizationCommitsNumber = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'finalizationCommitsNumber',
+            [],
+        );
+        return finalizationCommitsNumber;
+    }
+
     async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch, callback) {
         return this.queueTransaction(
             this.CommitManagerV1Contract,
@@ -842,6 +851,15 @@ class Web3Service {
             await this.restartService();
         }
         if (!isRpcError) throw error;
+    }
+
+    async getUpdateCommitWindowDuration() {
+        const commitWindowDurationPerc = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'updateCommitWindowDuration',
+            [],
+        );
+        return Number(commitWindowDurationPerc);
     }
 
     async getCommitWindowDurationPerc() {
