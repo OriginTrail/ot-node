@@ -52,6 +52,7 @@ class SubmitCommitCommand extends EpochCommand {
             blockchain,
             agreementId,
             epoch,
+            assertionId,
         );
 
         this.logger.trace('Commit submissions:');

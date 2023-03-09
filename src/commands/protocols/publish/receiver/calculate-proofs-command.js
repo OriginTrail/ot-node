@@ -54,7 +54,15 @@ class CalculateProofsCommand extends EpochCommand {
             epoch,
         );
 
-        if (!(await this.isEligibleForRewards(blockchain, agreementId, epoch, identityId))) {
+        if (
+            !(await this.isEligibleForRewards(
+                blockchain,
+                agreementId,
+                epoch,
+                identityId,
+                assertionId,
+            ))
+        ) {
             await this.scheduleNextEpochCheck(
                 blockchain,
                 agreementId,
@@ -116,13 +124,14 @@ class CalculateProofsCommand extends EpochCommand {
         return EpochCommand.empty();
     }
 
-    async isEligibleForRewards(blockchain, agreementId, epoch, identityId) {
+    async isEligibleForRewards(blockchain, agreementId, epoch, identityId, assertionId) {
         const r0 = await this.blockchainModuleManager.getR0(blockchain);
 
         const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
             blockchain,
             agreementId,
             epoch,
+            assertionId,
         );
 
         for (let i = 0; i < Math.min(r0, commits.length); i += 1) {

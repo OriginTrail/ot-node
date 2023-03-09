@@ -53,7 +53,7 @@ class BlockchainEventListenerService {
                     this.getContractEvents(blockchainId, CONTRACTS.PROFILE_CONTRACT, currentBlock),
                     this.getContractEvents(
                         blockchainId,
-                        CONTRACTS.COMMIT_MANAGER_V1_CONTRACT,
+                        CONTRACTS.COMMIT_MANAGER_V1_U1_CONTRACT,
                         currentBlock,
                     ),
                 ];

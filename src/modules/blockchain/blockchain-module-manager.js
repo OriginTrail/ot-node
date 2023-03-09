@@ -158,10 +158,11 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async getTopCommitSubmissions(blockchain, agreementId, epoch) {
+    async getTopCommitSubmissions(blockchain, agreementId, epoch, assertionId) {
         return this.callImplementationFunction(blockchain, 'getTopCommitSubmissions', [
             agreementId,
             epoch,
+            assertionId,
         ]);
     }
 
