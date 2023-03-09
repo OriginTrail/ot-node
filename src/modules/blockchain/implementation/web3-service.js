@@ -663,11 +663,11 @@ class Web3Service {
         ]);
     }
 
-    async getTopCommitSubmissions(agreementId, epoch, assertionId) {
+    async getTopCommitSubmissions(agreementId, epoch) {
         const commits = await this.callContractFunction(
             this.CommitManagerV1Contract,
             'getTopCommitSubmissions',
-            [agreementId, epoch, assertionId],
+            [agreementId, epoch],
         );
 
         return commits

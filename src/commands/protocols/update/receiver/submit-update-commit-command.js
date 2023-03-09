@@ -54,7 +54,7 @@ class SubmitUpdateCommitCommand extends EpochCommand {
             blockchain,
             tokenId,
         );
-        if (hasPendingUpdates) {
+        if (!hasPendingUpdates) {
             this.logger.trace(`Not submitting as state is already finalized for update.`);
             return EpochCommand.empty();
         }

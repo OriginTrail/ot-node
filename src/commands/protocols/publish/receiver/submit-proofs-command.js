@@ -44,7 +44,6 @@ class SubmitProofsCommand extends EpochCommand {
             blockchain,
             agreementId,
             epoch,
-            assertionId,
         );
         if (this.proofAlreadySubmitted(commits, identityId)) {
             this.logger.trace(
