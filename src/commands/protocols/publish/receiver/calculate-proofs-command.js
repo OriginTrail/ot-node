@@ -30,16 +30,18 @@ class CalculateProofsCommand extends EpochCommand {
             identityId,
             operationId,
         } = command.data;
-        const assertionId = await this.blockchainModuleManager.getLatestAssertionId(
+        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
             blockchain,
             contract,
             tokenId,
         );
+        const stateIndex = assertionIds.length - 1;
+        const assertionId = assertionIds[stateIndex];
 
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +
                 `blockchain:${blockchain}, contract: ${contract}, token id: ${tokenId}, ` +
-                `keyword: ${keyword}, hash function id: ${hashFunctionId} and assertion id: ${assertionId}`,
+                `keyword: ${keyword}, hash function id: ${hashFunctionId} and stateIndex: ${stateIndex}`,
         );
 
         const epoch = await this.calculateCurrentEpoch(
@@ -61,7 +63,7 @@ class CalculateProofsCommand extends EpochCommand {
                 agreementId,
                 epoch,
                 identityId,
-                assertionId,
+                stateIndex,
             ))
         ) {
             await this.scheduleNextEpochCheck(
@@ -113,6 +115,7 @@ class CalculateProofsCommand extends EpochCommand {
                 ...command.data,
                 leaf,
                 proof,
+                stateIndex,
             },
             period: 12 * 1000, // todo: get from blockchain / oracle
             retries: COMMAND_RETRIES.SUBMIT_PROOFS,
@@ -128,16 +131,15 @@ class CalculateProofsCommand extends EpochCommand {
         return EpochCommand.empty();
     }
 
-    async isEligibleForRewards(blockchain, agreementId, epoch, identityId, assertionId) {
+    async isEligibleForRewards(blockchain, agreementId, epoch, identityId, stateIndex) {
         const r0 = await this.blockchainModuleManager.getR0(blockchain);
 
         const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
             blockchain,
             agreementId,
             epoch,
-            assertionId,
+            stateIndex,
         );
-
         for (let i = 0; i < Math.min(r0, commits.length); i += 1) {
             if (Number(commits[i].identityId) === identityId) {
                 this.logger.trace(`Node is eligible for rewards for agreement id: ${agreementId}`);

@@ -45,15 +45,13 @@ class EpochCheckCommand extends EpochCommand {
             agreementId,
             epoch,
         );
-
-        const assertionId =
-            epoch === 0
-                ? command.data.assertionId
-                : await this.blockchainModuleManager.getLatestAssertionId(
-                      blockchain,
-                      contract,
-                      tokenId,
-                  );
+        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
+            blockchain,
+            contract,
+            tokenId,
+        );
+        const stateIndex = assertionIds.length - 1;
+        const assertionId = assertionIds[stateIndex];
 
         if (this.assetLifetimeExpired(agreementData, epoch)) {
             await this.handleExpiredAsset(agreementId, operationId, epoch);
@@ -105,7 +103,7 @@ class EpochCheckCommand extends EpochCommand {
             delay: 0,
             period: 12 * 1000, // todo: get from blockchain / oracle
             retries: COMMAND_RETRIES.SUBMIT_COMMIT,
-            data: { ...command.data, agreementData, identityId, epoch },
+            data: { ...command.data, agreementData, identityId, epoch, stateIndex },
             transactional: false,
         });
 

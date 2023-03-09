@@ -31,6 +31,7 @@ class SubmitCommitCommand extends EpochCommand {
             identityId,
             operationId,
             assertionId,
+            stateIndex,
         } = command.data;
 
         this.operationIdService.emitChangeEvent(
@@ -43,7 +44,7 @@ class SubmitCommitCommand extends EpochCommand {
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}, epoch: ${epoch}, assertionId: ${assertionId}. Retry number ${
+                `hash function id: ${hashFunctionId}, epoch: ${epoch}, stateIndex: ${stateIndex}. Retry number ${
                     COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1
                 }`,
         );
@@ -52,7 +53,7 @@ class SubmitCommitCommand extends EpochCommand {
             blockchain,
             agreementId,
             epoch,
-            assertionId,
+            stateIndex,
         );
 
         this.logger.trace('Commit submissions:');
