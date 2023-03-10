@@ -35,6 +35,12 @@ class SubmitUpdateCommitCommand extends EpochCommand {
             blockchain,
         );
 
+        const stateIndex = await this.blockchainModuleManager.getAssertionIdsLength(
+            blockchain,
+            contract,
+            tokenId,
+        );
+
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_START,
             operationId,
@@ -45,14 +51,16 @@ class SubmitUpdateCommitCommand extends EpochCommand {
         this.logger.trace(
             `Started ${command.name} for agreement id: ${command.data.agreementId} ` +
                 `blockchain: ${blockchain} contract: ${contract}, token id: ${tokenId}, ` +
-                `keyword: ${keyword}, hash function id: ${hashFunctionId}. Retry number ${
+                `keyword: ${keyword}, hash function id: ${hashFunctionId}, stateIndex: ${stateIndex}. Retry number ${
                     COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1
                 }`,
         );
 
-        const hasPendingUpdates = await this.blockchainModuleManager.hasPendingUpdate(
+        const hasPendingUpdates = await this.blockchainModuleManager.isUpdateCommitWindowOpen(
             blockchain,
-            tokenId,
+            agreementId,
+            epoch,
+            stateIndex,
         );
         if (!hasPendingUpdates) {
             this.logger.trace(`Not submitting as state is already finalized for update.`);
