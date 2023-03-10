@@ -11,6 +11,7 @@ import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js'
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
 import PullBlockchainShardingTableMigration from './src/migration/pull-sharding-table-migration.js';
 import TripleStoreUserConfigurationMigration from './src/migration/triple-store-user-configuration-migration.js';
+import PrivateAssetsMetadataMigration from './src/migration/private-assets-metadata-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -46,6 +47,7 @@ class OTNode {
 
         await this.initializeModules();
         await this.executePullShardingTableMigration();
+        await this.executePrivateAssetsMetadataMigration();
 
         await this.createProfiles();
 
@@ -235,6 +237,34 @@ class OTNode {
             this.logger.error(
                 `Command executor initialization failed. Error message: ${e.message}`,
             );
+            this.stop(1);
+        }
+    }
+
+    async executePrivateAssetsMetadataMigration() {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        const tripleStoreService = this.container.resolve('tripleStoreService');
+        const serviceAgreementService = this.container.resolve('serviceAgreementService');
+        const ualService = this.container.resolve('ualService');
+
+        const migration = new PrivateAssetsMetadataMigration(
+            'privateAssetsMetadataMigration',
+            this.logger,
+            this.config,
+            tripleStoreService,
+            blockchainModuleManager,
+            serviceAgreementService,
+            ualService,
+        );
+
+        if (!(await migration.migrationAlreadyExecuted())) {
+            await migration.migrate();
+            this.logger.info('Node will now restart!');
             this.stop(1);
         }
     }

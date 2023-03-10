@@ -598,10 +598,11 @@ class Web3Service {
     }
 
     async getLatestTokenId(assetContractAddress) {
-        return this.provider.getStorageAt(
-            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()],
-            7,
-        );
+        return this.provider.getStorageAt(assetContractAddress.toString().toLowerCase(), 7);
+    }
+
+    getAssetStorageContractAddresses() {
+        return Object.keys(this.assetStorageContracts);
     }
 
     async getAssertionIds(assetContractAddress, tokenId) {
