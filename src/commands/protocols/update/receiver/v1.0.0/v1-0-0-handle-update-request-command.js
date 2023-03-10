@@ -103,9 +103,8 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         R0,
         rank,
     ) {
-        // TODO: move to constants
-        const r0OffsetPeriod = 12; // 1 sec for finalizationCommitsNumber nodes to start commiting
         const blockDuration = 12;
+        const r0OffsetPeriod = blockDuration;
         const commitsBlockDuration = blockDuration * 5; // wait for 5 blocks
         const commitBlock = Math.floor(rank / finalizationCommitsNumber);
         const delay = commitsBlockDuration * commitBlock + r0OffsetPeriod;
