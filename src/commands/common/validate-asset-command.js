@@ -8,6 +8,7 @@ class ValidateAssetCommand extends Command {
         this.operationService = ctx.publishService;
         this.ualService = ctx.ualService;
         this.dataService = ctx.dataService;
+        this.validationModuleManager = ctx.validationModuleManager;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_VALIDATE_ASSERTION_ERROR;
     }
