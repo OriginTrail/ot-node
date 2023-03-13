@@ -56,7 +56,7 @@ class LocalStoreController extends BaseController {
         }
 
         this.logger.info(
-            `Received assertion with assertion ids: ${req.body.assertions.map(
+            `Received assertion with assertion ids: ${assertions.map(
                 (reqObject) => reqObject.assertionId,
             )}. Operation id: ${operationId}`,
         );
