@@ -308,34 +308,30 @@ class BlockchainEventListenerService {
         keyword,
         assertionId,
     ) {
-        const [assetMetadata] = await this.tripleStoreService.getAssetMetadata(
+        const assetMetadata = await this.tripleStoreService.getAssetMetadata(
             currentRepository,
             blockchain,
             contract,
             tokenId,
         );
 
-        // if asset exists in current repository
-        if (assetMetadata?.assertion) {
-            const previousAssertionId = assetMetadata.assertion.replace('assertion:', '');
-            const previousAssertion = await this.tripleStoreService.getAssertion(
-                currentRepository,
-                previousAssertionId,
+        if (assetMetadata.length) {
+            // if asset exists in current repository
+            await Promise.all(
+                assetMetadata.map(({ assertion, agreementStartTime, agreementEndTime }) =>
+                    this.tripleStoreService.moveAsset(
+                        currentRepository,
+                        historyRepository,
+                        assertion.replace('assertion:', ''),
+                        blockchain,
+                        contract,
+                        tokenId,
+                        agreementStartTime,
+                        agreementEndTime,
+                        keyword,
+                    ),
+                ),
             );
-
-            // copy metadata and assertion from current to historical repository
-            await this.tripleStoreService.localStoreAsset(
-                historyRepository,
-                previousAssertionId,
-                previousAssertion,
-                blockchain,
-                contract,
-                tokenId,
-                assetMetadata.agreementStartTime,
-                assetMetadata.agreementEndTime,
-                keyword,
-            );
-
             // delete asset metadata from current repository
             await this.tripleStoreService.deleteAssetMetadata(
                 currentRepository,
@@ -343,20 +339,6 @@ class BlockchainEventListenerService {
                 contract,
                 tokenId,
             );
-
-            const [assetsWithAssertionIdCount] =
-                await this.tripleStoreService.countAssetsWithAssertionId(
-                    currentRepository,
-                    previousAssertionId,
-                );
-
-            // delete assertion from current repository if not linked to other assets
-            if (!assetsWithAssertionIdCount?.count) {
-                await this.tripleStoreService.deleteAssertion(
-                    currentRepository,
-                    previousAssertionId,
-                );
-            }
         }
 
         const cachedData = await this.pendingStorageService.getCachedAssertion(
@@ -366,28 +348,50 @@ class BlockchainEventListenerService {
             tokenId,
         );
 
-        // if ual file exists in pending repository
-        if (cachedData?.assertion) {
-            // insert assertion in current repository
-            await this.tripleStoreService.localStoreAsset(
-                currentRepository,
-                assertionId,
-                cachedData.assertion,
-                blockchain,
-                contract,
-                tokenId,
-                cachedData.agreementStartTime,
-                cachedData.agreementEndTime,
-                keyword,
-            );
-
-            await this.pendingStorageService.removeCachedAssertion(
-                pendingRepository,
-                blockchain,
-                contract,
-                tokenId,
+        const storePromises = [];
+        if (cachedData?.public?.assertion) {
+            // insert public assertion in current repository
+            storePromises.push(
+                this.tripleStoreService.localStoreAsset(
+                    currentRepository,
+                    assertionId,
+                    cachedData.public.assertion,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    cachedData.agreementStartTime,
+                    cachedData.agreementEndTime,
+                    keyword,
+                ),
             );
         }
+
+        if (cachedData?.private?.assertion && cachedData?.private?.assertionId) {
+            // insert private assertion in current repository
+            storePromises.push(
+                await this.tripleStoreService.localStoreAsset(
+                    currentRepository,
+                    cachedData.private.assertionId,
+                    cachedData.private.assertion,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    cachedData.agreementStartTime,
+                    cachedData.agreementEndTime,
+                    keyword,
+                ),
+            );
+        }
+
+        await Promise.all(storePromises);
+
+        // remove asset from pending storage
+        await this.pendingStorageService.removeCachedAssertion(
+            pendingRepository,
+            blockchain,
+            contract,
+            tokenId,
+        );
     }
 
     async reinitializeContracts(blockchainId) {

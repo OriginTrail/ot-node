@@ -18,6 +18,7 @@ class LocalStoreCommand extends Command {
         this.ualService = ctx.ualService;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.commandExecutor = ctx.commandExecutor;
 
         this.errorType = ERROR_TYPE.LOCAL_STORE.LOCAL_STORE_ERROR;
     }
@@ -61,12 +62,12 @@ class LocalStoreCommand extends Command {
 
             if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
                 const storePromises = [];
-                if (cachedData.publicAssertion && cachedData.publicAssertionId) {
+                if (cachedData.public.assertion && cachedData.public.assertionId) {
                     storePromises.push(
                         this.tripleStoreService.localStoreAsset(
                             TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-                            cachedData.publicAssertionId,
-                            cachedData.publicAssertion,
+                            cachedData.public.assertionId,
+                            cachedData.public.assertion,
                             blockchain,
                             contract,
                             tokenId,
@@ -76,12 +77,12 @@ class LocalStoreCommand extends Command {
                         ),
                     );
                 }
-                if (cachedData.privateAssertion && cachedData.privateAssertionId) {
+                if (cachedData.private.assertion && cachedData.private.assertionId) {
                     storePromises.push(
                         this.tripleStoreService.localStoreAsset(
                             TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-                            cachedData.privateAssertionId,
-                            cachedData.privateAssertion,
+                            cachedData.private.assertionId,
+                            cachedData.private.assertion,
                             blockchain,
                             contract,
                             tokenId,
@@ -99,21 +100,29 @@ class LocalStoreCommand extends Command {
                     contract,
                     tokenId,
                     {
-                        publicAssertion: cachedData.publicAssertion,
-                        publicAssertionId: cachedData.publicAssertionId,
-                        privateAssertion: cachedData.privateAssertion,
-                        privateAssertionId: cachedData.privateAssertionId,
+                        ...cachedData,
+                        agreementStartTime: agreementData.startTime,
+                        agreementEndTime,
+                        keyword,
                     },
                     operationId,
                 );
+
+                const updateCommitWindowDuration =
+                    await this.blockchainModuleManager.getUpdateCommitWindowDuration(blockchain);
+                await this.commandExecutor.add({
+                    name: 'deletePendingStateCommand',
+                    sequence: [],
+                    delay: updateCommitWindowDuration * 1000,
+                    data: { ...command.data, repository: PENDING_STORAGE_REPOSITORIES.PRIVATE },
+                    transactional: false,
+                });
             }
 
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_END,
             );
-
-            await this.operationIdService.cacheOperationIdData(operationId, {});
 
             await this.operationIdService.updateOperationIdStatus(
                 operationId,

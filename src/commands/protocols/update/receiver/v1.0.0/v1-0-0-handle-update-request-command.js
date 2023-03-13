@@ -49,7 +49,12 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             blockchain,
             contract,
             tokenId,
-            { assertion, ...agreementData },
+            {
+                public: {
+                    assertion,
+                },
+                ...agreementData,
+            },
             operationId,
         );
 
@@ -75,7 +80,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
                 name: 'deletePendingStateCommand',
                 sequence: [],
                 delay: updateCommitWindowDuration * 1000,
-                data: commandData,
+                data: { ...commandData, repository: PENDING_STORAGE_REPOSITORIES.PUBLIC },
                 transactional: false,
             }),
             this.commandExecutor.add({

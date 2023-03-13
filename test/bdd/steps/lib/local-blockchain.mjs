@@ -6,12 +6,14 @@ import { exec } from 'child_process';
 import { setTimeout } from 'timers/promises';
 
 const Hub = JSON.parse((await readFile('node_modules/dkg-evm-module/abi/Hub.json')).toString());
-const ParametersStorage = JSON.parse((await readFile('node_modules/dkg-evm-module/abi/ParametersStorage.json')).toString());
+const ParametersStorage = JSON.parse(
+    (await readFile('node_modules/dkg-evm-module/abi/ParametersStorage.json')).toString(),
+);
 
 const hubContractAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
 
 const testParametersStorageParams = {
-    epochLength: 6*60, // 6 minutes
+    epochLength: 6 * 60, // 6 minutes
     commitWindowDurationPerc: 33, // 2 minutes
     minProofWindowOffsetPerc: 66, // 4 minutes
     maxProofWindowOffsetPerc: 66, // 4 minutes
@@ -46,8 +48,8 @@ class LocalBlockchain {
         startBlockchainProcess.stdout.on('data', (data) => {
             console.log(data);
         });
-        console.log('Waiting for 10 seconds for blockchain to start and contracts to be deployed');
-        await setTimeout(15000);
+        console.log('Waiting for 20 seconds for blockchain to start and contracts to be deployed');
+        await setTimeout(20 * 1000);
 
         this.provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
 
@@ -62,7 +64,9 @@ class LocalBlockchain {
         }));
         const wallet = new ethers.Wallet(this.wallets[0].privateKey, this.provider);
         this.hubContract = new ethers.Contract(hubContractAddress, Hub, wallet);
-        const parametersStorageAddress = await this.hubContract.getContractAddress('ParametersStorage');
+        const parametersStorageAddress = await this.hubContract.getContractAddress(
+            'ParametersStorage',
+        );
         this.ParametersStorageContract = new ethers.Contract(
             parametersStorageAddress,
             ParametersStorage,
@@ -82,13 +86,11 @@ class LocalBlockchain {
             }`;
             console.log(`Setting ${parameter} in parameters storage to: ${params[parameter]}`);
             // eslint-disable-next-line no-await-in-loop
-            await this.ParametersStorageContract[blockchainMethodName](
-                params[parameter],
-                { gasLimit: 100000 },
-            );
+            await this.ParametersStorageContract[blockchainMethodName](params[parameter], {
+                gasLimit: 100000,
+            });
         }
     }
-
 }
 
 export default LocalBlockchain;
