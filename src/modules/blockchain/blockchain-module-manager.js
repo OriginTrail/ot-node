@@ -74,6 +74,30 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
+    async getLatestTokenId(blockchain, assetContractAddress) {
+        return this.callImplementationFunction(blockchain, 'getLatestTokenId', [
+            assetContractAddress,
+        ]);
+    }
+
+    getAssetStorageContractAddresses(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getAssetStorageContractAddresses');
+    }
+
+    async getAssertionIds(blockchain, assetContractAddress, tokenId) {
+        return this.callImplementationFunction(blockchain, 'getAssertionIds', [
+            assetContractAddress,
+            tokenId,
+        ]);
+    }
+
+    async getAssertionIdsLength(blockchain, assetContractAddress, tokenId) {
+        return this.callImplementationFunction(blockchain, 'getAssertionIdsLength', [
+            assetContractAddress,
+            tokenId,
+        ]);
+    }
+
     async getUnfinalizedAssertionId(blockchain, tokenId) {
         return this.callImplementationFunction(blockchain, 'getUnfinalizedState', [tokenId]);
     }
@@ -158,11 +182,19 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async getTopCommitSubmissions(blockchain, agreementId, epoch, assertionId) {
+    async isUpdateCommitWindowOpen(blockchain, agreementId, epoch, stateIndex) {
+        return this.callImplementationFunction(blockchain, 'isUpdateCommitWindowOpen', [
+            agreementId,
+            epoch,
+            stateIndex,
+        ]);
+    }
+
+    async getTopCommitSubmissions(blockchain, agreementId, epoch, stateIndex) {
         return this.callImplementationFunction(blockchain, 'getTopCommitSubmissions', [
             agreementId,
             epoch,
-            assertionId,
+            stateIndex,
         ]);
     }
 

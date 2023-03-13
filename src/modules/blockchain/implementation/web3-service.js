@@ -26,8 +26,8 @@ const Profile = require('dkg-evm-module/abi/Profile.json');
 const ProfileStorage = require('dkg-evm-module/abi/ProfileStorage.json');
 const ScoringProxy = require('dkg-evm-module/abi/ScoringProxy.json');
 const ServiceAgreementV1 = require('dkg-evm-module/abi/ServiceAgreementV1.json');
-const CommitManagerV1 = require('dkg-evm-module/abi/CommitManagerV1.json');
-const ProofManagerV1 = require('dkg-evm-module/abi/ProofManagerV1.json');
+const CommitManagerV1U1 = require('dkg-evm-module/abi/CommitManagerV1U1.json');
+const ProofManagerV1U1 = require('dkg-evm-module/abi/ProofManagerV1U1.json');
 const ShardingTable = require('dkg-evm-module/abi/ShardingTable.json');
 const ShardingTableStorage = require('dkg-evm-module/abi/ShardingTableStorage.json');
 const ServiceAgreementStorageProxy = require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json');
@@ -234,25 +234,25 @@ class Web3Service {
             this.wallet,
         );
 
-        const commitManagerV1Address = await this.callContractFunction(
+        const commitManagerV1U1Address = await this.callContractFunction(
             this.hubContract,
             'getContractAddress',
-            ['CommitManagerV1'],
+            ['CommitManagerV1U1'],
         );
-        this.CommitManagerV1Contract = new ethers.Contract(
-            commitManagerV1Address,
-            CommitManagerV1,
+        this.CommitManagerV1U1Contract = new ethers.Contract(
+            commitManagerV1U1Address,
+            CommitManagerV1U1,
             this.wallet,
         );
 
-        const proofManagerV1Address = await this.callContractFunction(
+        const proofManagerV1U1Address = await this.callContractFunction(
             this.hubContract,
             'getContractAddress',
-            ['ProofManagerV1'],
+            ['ProofManagerV1U1'],
         );
-        this.ProofManagerV1Contract = new ethers.Contract(
-            proofManagerV1Address,
-            ProofManagerV1,
+        this.ProofManagerV1U1Contract = new ethers.Contract(
+            proofManagerV1U1Address,
+            ProofManagerV1U1,
             this.wallet,
         );
 
@@ -597,6 +597,34 @@ class Web3Service {
         ]);
     }
 
+    async getLatestTokenId(assetContractAddress) {
+        return this.provider.getStorageAt(assetContractAddress.toString().toLowerCase(), 7);
+    }
+
+    getAssetStorageContractAddresses() {
+        return Object.keys(this.assetStorageContracts);
+    }
+
+    async getAssertionIds(assetContractAddress, tokenId) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+
+        return this.callContractFunction(assetStorageContractInstance, 'getAssertionIds', [
+            tokenId,
+        ]);
+    }
+
+    async getAssertionIdsLength(assetContractAddress, tokenId) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+
+        return this.callContractFunction(assetStorageContractInstance, 'getAssertionIdsLength', [
+            tokenId,
+        ]);
+    }
+
     async getUnfinalizedState(tokenId) {
         return this.callContractFunction(
             this.UnfinalizedStateStorageContract,
@@ -657,17 +685,25 @@ class Web3Service {
     }
 
     async isCommitWindowOpen(agreementId, epoch) {
-        return this.callContractFunction(this.CommitManagerV1Contract, 'isCommitWindowOpen', [
+        return this.callContractFunction(this.CommitManagerV1U1Contract, 'isCommitWindowOpen', [
             agreementId,
             epoch,
         ]);
     }
 
-    async getTopCommitSubmissions(agreementId, epoch, assertionId) {
+    async isUpdateCommitWindowOpen(agreementId, epoch, stateIndex) {
+        return this.callContractFunction(
+            this.CommitManagerV1U1Contract,
+            'isUpdateCommitWindowOpen',
+            [agreementId, epoch, stateIndex],
+        );
+    }
+
+    async getTopCommitSubmissions(agreementId, epoch, stateIndex) {
         const commits = await this.callContractFunction(
-            this.CommitManagerV1Contract,
+            this.CommitManagerV1U1Contract,
             'getTopCommitSubmissions',
-            [agreementId, epoch, assertionId],
+            [agreementId, epoch, stateIndex],
         );
 
         return commits
@@ -706,7 +742,7 @@ class Web3Service {
 
     async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch, callback) {
         return this.queueTransaction(
-            this.CommitManagerV1Contract,
+            this.CommitManagerV1U1Contract,
             'submitCommit',
             [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch]],
             callback,
@@ -714,13 +750,13 @@ class Web3Service {
     }
 
     async submitUpdateCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch) {
-        return this.queueTransaction(this.CommitManagerV1Contract, 'submitUpdateCommit', [
+        return this.queueTransaction(this.CommitManagerV1U1Contract, 'submitUpdateCommit', [
             [assetContractAddress, tokenId, keyword, hashFunctionId, epoch],
         ]);
     }
 
     async isProofWindowOpen(agreementId, epoch) {
-        return this.callContractFunction(this.ProofManagerV1Contract, 'isProofWindowOpen', [
+        return this.callContractFunction(this.ProofManagerV1U1Contract, 'isProofWindowOpen', [
             agreementId,
             epoch,
         ]);
@@ -728,7 +764,7 @@ class Web3Service {
 
     async getChallenge(assetContractAddress, tokenId, epoch) {
         const result = await this.callContractFunction(
-            this.ProofManagerV1Contract,
+            this.ProofManagerV1U1Contract,
             'getChallenge',
             [assetContractAddress, tokenId, epoch],
         );
@@ -747,7 +783,7 @@ class Web3Service {
         callback,
     ) {
         return this.queueTransaction(
-            this.ProofManagerV1Contract,
+            this.ProofManagerV1U1Contract,
             'sendProof',
             [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch, proof, chunkHash]],
             callback,

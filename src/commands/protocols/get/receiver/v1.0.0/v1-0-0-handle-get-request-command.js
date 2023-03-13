@@ -5,6 +5,8 @@ import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     GET_STATES,
+    TRIPLE_STORE_REPOSITORIES,
+    PENDING_STORAGE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
 class HandleGetRequestCommand extends HandleProtocolMessageCommand {
@@ -31,6 +33,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             commandData.tokenId != null
         ) {
             const cachedAssertion = await this.pendingStorageService.getCachedAssertion(
+                PENDING_STORAGE_REPOSITORIES.PUBLIC,
                 commandData.blockchain,
                 commandData.contract,
                 commandData.tokenId,
@@ -44,7 +47,10 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             }
         }
 
-        const nquads = await this.tripleStoreService.localGet(assertionId);
+        const nquads = await this.tripleStoreService.getAssertion(
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+            assertionId,
+        );
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

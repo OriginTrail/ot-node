@@ -4,6 +4,7 @@ import {
     GET_STATES,
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
+    PENDING_STORAGE_REPOSITORIES,
     TRIPLE_STORE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
@@ -33,6 +34,7 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
             commandData.tokenId != null
         ) {
             assertionExists = await this.pendingStorageService.assertionExists(
+                PENDING_STORAGE_REPOSITORIES.PUBLIC,
                 commandData.blockchain,
                 commandData.contract,
                 commandData.tokenId,

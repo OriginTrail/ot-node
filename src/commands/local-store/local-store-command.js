@@ -1,4 +1,9 @@
-import { OPERATION_ID_STATUS, ERROR_TYPE, LOCAL_STORE_TYPES } from '../../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+    LOCAL_STORE_TYPES,
+    PENDING_STORAGE_REPOSITORIES,
+} from '../../constants/constants.js';
 import Command from '../command.js';
 
 class LocalStoreCommand extends Command {
@@ -33,6 +38,7 @@ class LocalStoreCommand extends Command {
                         );
                     }
                     return this.pendingStorageService.cacheAssertion(
+                        PENDING_STORAGE_REPOSITORIES.PRIVATE,
                         blockchain,
                         contract,
                         tokenId,

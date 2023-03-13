@@ -83,9 +83,47 @@ class TripleStoreService {
         );
     }
 
+    async insertAssetMetadata(
+        repository,
+        blockchain,
+        contract,
+        tokenId,
+        assertionId,
+        agreementStartTime,
+        agreementEndTime,
+        keyword,
+    ) {
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+        this.logger.info(
+            `Inserting metadata for asset with ual: ${ual}, assertion id: ${assertionId}, in triple store ${repository} repository.`,
+        );
+
+        const currentAssetNquads = await formatAssertion({
+            '@context': SCHEMA_CONTEXT,
+            '@id': ual,
+            blockchain,
+            contract,
+            tokenId,
+            assertion: { '@id': `assertion:${assertionId}` },
+            agreementStartTime,
+            agreementEndTime,
+            keyword,
+        });
+
+        await this.tripleStoreModuleManager.insertAssetMetadata(
+            this.repositoryImplementations[repository],
+            repository,
+            ual,
+            currentAssetNquads.join('\n'),
+        );
+    }
+
     async deleteAssetMetadata(repository, blockchain, contract, tokenId) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-        this.logger.info(`Deleting metadata for asset with ual: ${ual} from triple store ${repository} repository.`);
+        this.logger.info(
+            `Deleting metadata for asset with ual: ${ual} from triple store ${repository} repository.`,
+        );
 
         return this.tripleStoreModuleManager.deleteAssetMetadata(
             this.repositoryImplementations[repository],
@@ -115,37 +153,25 @@ class TripleStoreService {
         return this.dataService.parseBindings(bindings);
     }
 
-    async localGet(assertionId, localQuery = false) {
-        let nquads;
-        if (localQuery) {
-            this.logger.debug(
-                `Getting assertion: ${assertionId} from ${TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT} repository`,
-            );
-
-            nquads = await this.tripleStoreModuleManager.getAssertion(
-                this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT],
-                TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-                assertionId,
-            );
-        }
-        if (!nquads?.length) {
-            this.logger.debug(
-                `Getting assertion: ${assertionId} from ${TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT} repository`,
-            );
-            nquads = await this.tripleStoreModuleManager.getAssertion(
-                this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                assertionId,
-            );
-        }
+    async getAssertion(repository, assertionId) {
+        this.logger.debug(`Getting assertion: ${assertionId} from ${repository} repository`);
+        let nquads = await this.tripleStoreModuleManager.getAssertion(
+            this.repositoryImplementations[repository],
+            repository,
+            assertionId,
+        );
         nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
 
         this.logger.debug(
-            `Assertion: ${assertionId} ${nquads.length ? '' : 'not'} found in local triple store.`,
+            `Assertion: ${assertionId} ${
+                nquads.length ? '' : 'not'
+            } found in triple store ${repository} repository.`,
         );
 
         if (nquads.length) {
-            this.logger.debug(`Number of n-quads retrieved from triple store : ${nquads.length}`);
+            this.logger.debug(
+                `Number of n-quads retrieved from triple store ${repository} repository: ${nquads.length}`,
+            );
         }
 
         return nquads;

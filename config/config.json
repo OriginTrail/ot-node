@@ -411,6 +411,7 @@
                             "hubContractAddress": "0xBbfF7Ea6b2Addc1f38A0798329e12C08f03750A6",
                             "rpcEndpoints": [
                                 "https://lofar-testnet.origin-trail.network",
+                                "https://lofar-testnet.origintrail.network",
                                 "wss://parachain-testnet-rpc.origin-trail.network"
                             ]
                         }

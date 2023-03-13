@@ -6,14 +6,14 @@ class PendingStorageService {
         this.ualService = ctx.ualService;
     }
 
-    async cacheAssertion(blockchain, contract, tokenId, assertion, operationId) {
+    async cacheAssertion(repository, blockchain, contract, tokenId, assertion, operationId) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.debug(
-            `Caching assertion for ual: ${ual}, operation id: ${operationId} in file`,
+            `Caching assertion for ual: ${ual}, operation id: ${operationId} in file in ${repository} pending storage`,
         );
 
-        const documentPath = this.fileService.getPendingStorageCachePath();
+        const documentPath = this.fileService.getPendingStorageCachePath(repository);
         const documentName = this.fileService.getPendingStorageFileName(
             blockchain,
             contract,
@@ -27,14 +27,15 @@ class PendingStorageService {
         );
     }
 
-    async getCachedAssertion(blockchain, contract, tokenId, operationId) {
+    async getCachedAssertion(repository, blockchain, contract, tokenId, operationId) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.debug(
-            `Reading cached assertion for ual: ${ual}, operation id: ${operationId} from file`,
+            `Reading cached assertion for ual: ${ual}, operation id: ${operationId} from file in ${repository} pending storage`,
         );
 
         const documentPath = this.fileService.getPendingStorageDocumentPath(
+            repository,
             blockchain,
             contract,
             tokenId,
@@ -47,12 +48,15 @@ class PendingStorageService {
         return data;
     }
 
-    async removeCachedAssertion(blockchain, contract, tokenId, operationId) {
+    async removeCachedAssertion(repository, blockchain, contract, tokenId, operationId) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
-        this.logger.debug(`Removing cached assertion for ual: ${ual} operation id: ${operationId}`);
+        this.logger.debug(
+            `Removing cached assertion for ual: ${ual} operation id: ${operationId} from file in ${repository} pending storage`,
+        );
 
         const documentPath = this.fileService.getPendingStorageDocumentPath(
+            repository,
             blockchain,
             contract,
             tokenId,
@@ -60,8 +64,9 @@ class PendingStorageService {
         await this.fileService.removeFile(documentPath);
     }
 
-    async assertionExists(blockchain, contract, tokenId) {
+    async assertionExists(repository, blockchain, contract, tokenId) {
         const documentPath = this.fileService.getPendingStorageDocumentPath(
+            repository,
             blockchain,
             contract,
             tokenId,

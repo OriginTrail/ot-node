@@ -81,7 +81,7 @@ class TripleStoreModuleManager extends BaseModuleManager {
 
     async countAssetsWithAssertionId(implementationName, repository, assertionId) {
         if (this.getImplementation(implementationName)) {
-            return this.getImplementation(implementationName).module.isAssertionIdShared(
+            return this.getImplementation(implementationName).module.countAssetsWithAssertionId(
                 repository,
                 assertionId,
             );

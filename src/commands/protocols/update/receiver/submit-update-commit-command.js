@@ -35,6 +35,12 @@ class SubmitUpdateCommitCommand extends EpochCommand {
             blockchain,
         );
 
+        const stateIndex = await this.blockchainModuleManager.getAssertionIdsLength(
+            blockchain,
+            contract,
+            tokenId,
+        );
+
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_START,
             operationId,
@@ -45,24 +51,19 @@ class SubmitUpdateCommitCommand extends EpochCommand {
         this.logger.trace(
             `Started ${command.name} for agreement id: ${command.data.agreementId} ` +
                 `blockchain: ${blockchain} contract: ${contract}, token id: ${tokenId}, ` +
-                `keyword: ${keyword}, hash function id: ${hashFunctionId}. Retry number ${
+                `keyword: ${keyword}, hash function id: ${hashFunctionId}, stateIndex: ${stateIndex}. Retry number ${
                     COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1
                 }`,
         );
 
-        this.logger.trace(
-            `Calculating commit submission score for agreement id: ${agreementId}...`,
+        const hasPendingUpdates = await this.blockchainModuleManager.isUpdateCommitWindowOpen(
+            blockchain,
+            agreementId,
+            epoch,
+            stateIndex,
         );
-
-        const rank = await this.calculateRank(blockchain, keyword, hashFunctionId);
-        const r0 = await this.blockchainModuleManager.getR0(blockchain);
-
-        if (rank >= r0) {
-            this.logger.trace(
-                `Calculated rank: ${
-                    rank + 1
-                } higher than R0: ${r0}. Scheduling next epoch check for agreement id: ${agreementId}`,
-            );
+        if (!hasPendingUpdates) {
+            this.logger.trace(`Not submitting as state is already finalized for update.`);
             return EpochCommand.empty();
         }
 
@@ -76,35 +77,6 @@ class SubmitUpdateCommitCommand extends EpochCommand {
         );
 
         return EpochCommand.empty();
-    }
-
-    async calculateRank(blockchain, keyword, hashFunctionId) {
-        const r2 = await this.blockchainModuleManager.getR2(blockchain);
-        const neighbourhood = await this.shardingTableService.findNeighbourhood(
-            blockchain,
-            keyword,
-            r2,
-            hashFunctionId,
-            false,
-        );
-
-        const scores = await Promise.all(
-            neighbourhood.map(async (node) => ({
-                score: await this.serviceAgreementService.calculateScore(
-                    node.peer_id,
-                    blockchain,
-                    keyword,
-                    hashFunctionId,
-                ),
-                peerId: node.peer_id,
-            })),
-        );
-
-        scores.sort((a, b) => b.score - a.score);
-
-        return scores.findIndex(
-            (node) => node.peerId === this.networkModuleManager.getPeerId().toB58String(),
-        );
     }
 
     /**
