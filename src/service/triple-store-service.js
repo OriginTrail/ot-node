@@ -1,6 +1,6 @@
 import { formatAssertion } from 'assertion-tools';
 
-import { SCHEMA_CONTEXT, TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
+import { SCHEMA_CONTEXT } from '../constants/constants.js';
 
 class TripleStoreService {
     constructor(ctx) {
@@ -19,19 +19,6 @@ class TripleStoreService {
                 this.repositoryImplementations[repository] = implementationName;
             }
         }
-    }
-
-    async localStoreAssertion(assertionId, assertion, operationId) {
-        this.logger.info(
-            `Inserting assertion with id: ${assertionId} in triple store. Operation id: ${operationId}`,
-        );
-
-        await this.tripleStoreModuleManager.insertAssertion(
-            this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT],
-            TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-            assertionId,
-            assertion.join('\n'),
-        );
     }
 
     async localStoreAsset(
@@ -79,7 +66,7 @@ class TripleStoreService {
         ]);
 
         this.logger.info(
-            `Asset with assertion id: ${assertionId}, ual: ${ual} has been successfully inserted!`,
+            `Asset with assertion id: ${assertionId}, ual: ${ual} has been successfully inserted in triple store ${repository} repository.`,
         );
     }
 

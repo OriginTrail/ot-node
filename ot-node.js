@@ -251,6 +251,7 @@ class OTNode {
         const tripleStoreService = this.container.resolve('tripleStoreService');
         const serviceAgreementService = this.container.resolve('serviceAgreementService');
         const ualService = this.container.resolve('ualService');
+        const dataService = this.container.resolve('dataService');
 
         const migration = new PrivateAssetsMetadataMigration(
             'privateAssetsMetadataMigration',
@@ -260,6 +261,7 @@ class OTNode {
             blockchainModuleManager,
             serviceAgreementService,
             ualService,
+            dataService,
         );
 
         if (!(await migration.migrationAlreadyExecuted())) {

@@ -5,8 +5,6 @@ import {
     TRIPLE_STORE_REPOSITORIES,
 } from '../constants/constants.js';
 
-const PRIVATE_ASSERTION_PREDICATE = 'https://ontology.origintrail.io/dkg/1.0#privateAssertionID';
-
 class PrivateAssetsMetadataMigration extends BaseMigration {
     constructor(
         migrationName,
@@ -16,12 +14,14 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
         blockchainModuleManager,
         serviceAgreementService,
         ualService,
+        dataService,
     ) {
         super(migrationName, logger, config);
         this.blockchainModuleManager = blockchainModuleManager;
         this.serviceAgreementService = serviceAgreementService;
         this.ualService = ualService;
         this.tripleStoreService = tripleStoreService;
+        this.dataService = dataService;
     }
 
     async executeMigration() {
@@ -94,14 +94,12 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
                         TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
                         assertionId,
                     );
-                    const privateAssertionLinkTriple = assertion.filter((triple) =>
-                        triple.includes(PRIVATE_ASSERTION_PREDICATE),
-                    )[0];
-                    if (!privateAssertionLinkTriple) continue;
 
-                    const privateAssertionId = privateAssertionLinkTriple.match(/"(.*?)"/)[1];
+                    const privateAssertionId = this.dataService.getPrivateAssertionId(assertion);
 
-                    if (!assertionIds.includes(privateAssertionId)) continue;
+                    if (privateAssertionId == null || !assertionIds.includes(privateAssertionId))
+                        continue;
+
                     await this.tripleStoreService.insertAssetMetadata(
                         TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
                         blockchain,

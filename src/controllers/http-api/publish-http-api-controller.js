@@ -4,6 +4,7 @@ import {
     OPERATION_ID_STATUS,
     OPERATION_STATUS,
     CONTENT_ASSET_HASH_FUNCTION_ID,
+    LOCAL_STORE_TYPES,
 } from '../../constants/constants.js';
 
 class PublishController extends BaseController {
@@ -35,8 +36,7 @@ class PublishController extends BaseController {
         );
 
         const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
-        const hashFunctionId =
-            req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
+        const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
         try {
             await this.repositoryModuleManager.createOperationRecord(
                 this.operationService.getOperationName(),
@@ -48,23 +48,24 @@ class PublishController extends BaseController {
                 `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
             );
 
-            let commandSequence = [];
+            const commandSequence = ['validateAssetCommand'];
 
             // Backwards compatibility check - true for older clients
             if (req.body.localStore) {
                 commandSequence.push('localStoreCommand');
-                await this.operationIdService.cacheOperationIdData(operationId, [
-                    { assertion, assertionId },
-                ]);
+                await this.operationIdService.cacheOperationIdData(operationId, {
+                    publicAssertion: assertion,
+                    publicAssertionId: assertionId,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    storeType: LOCAL_STORE_TYPES.TRIPLE,
+                });
             } else {
                 await this.operationIdService.cacheOperationIdData(operationId, { assertion });
             }
 
-            commandSequence = [
-                ...commandSequence,
-                'validatePublishAssertionCommand',
-                'networkPublishCommand',
-            ];
+            commandSequence.push('networkPublishCommand');
 
             await this.commandExecutor.add({
                 name: commandSequence[0],

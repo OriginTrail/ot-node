@@ -121,7 +121,7 @@ class OperationService {
 
         if (assertionId !== calculatedAssertionId) {
             throw Error(
-                `Invalid assertion id. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`,
+                `Invalid assertion id. Received value: ${assertionId}, calculated: ${calculatedAssertionId}`,
             );
         }
 

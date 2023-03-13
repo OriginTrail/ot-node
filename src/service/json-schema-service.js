@@ -31,7 +31,7 @@ class JsonSchemaService {
     }
 
     localStoreSchema() {
-        return localStoreSchema();
+        return localStoreSchema(this.blockchainModuleManager.getImplementationNames());
     }
 }
 
