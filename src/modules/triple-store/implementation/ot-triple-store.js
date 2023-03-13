@@ -158,7 +158,6 @@ class OtTripleStore {
 
     async insertAssetMetadata(repository, ual, assetNquads, deleteAssetTriples = true) {
         const deleteAssetTriplesQuery = `DELETE {
-                <${ual}> schema:assertion ?assertion . 
                 <${ual}> schema:agreementEndTime ?agreementEndTime
             }
             WHERE {
