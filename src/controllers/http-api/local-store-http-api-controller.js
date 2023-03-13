@@ -38,14 +38,11 @@ class LocalStoreController extends BaseController {
                 break;
             }
             case 2: {
-                const publicAssertionData =
-                    this.dataService.getPrivateAssertionId(assertions[0].assertion) != null
-                        ? assertions[0]
-                        : assertions[1];
-                const privateAssertionData =
-                    this.dataService.getPrivateAssertionId(assertions[0].assertion) == null
-                        ? assertions[0]
-                        : assertions[1];
+                const isFirstPublic =
+                    this.dataService.getPrivateAssertionId(assertions[0].assertion) != null;
+
+                const publicAssertionData = isFirstPublic ? assertions[0] : assertions[1];
+                const privateAssertionData = isFirstPublic ? assertions[1] : assertions[0];
 
                 publicAssertion = publicAssertionData.assertion;
                 publicAssertionId = publicAssertionData.assertionId;

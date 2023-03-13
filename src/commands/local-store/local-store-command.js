@@ -3,6 +3,8 @@ import {
     ERROR_TYPE,
     LOCAL_STORE_TYPES,
     PENDING_STORAGE_REPOSITORIES,
+    TRIPLE_STORE_REPOSITORIES,
+    CONTENT_ASSET_HASH_FUNCTION_ID,
 } from '../../constants/constants.js';
 import Command from '../command.js';
 
@@ -13,6 +15,9 @@ class LocalStoreCommand extends Command {
         this.pendingStorageService = ctx.pendingStorageService;
         this.operationIdService = ctx.operationIdService;
         this.dataService = ctx.dataService;
+        this.ualService = ctx.ualService;
+        this.serviceAgreementService = ctx.serviceAgreementService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
 
         this.errorType = ERROR_TYPE.LOCAL_STORE.LOCAL_STORE_ERROR;
     }
@@ -34,23 +39,55 @@ class LocalStoreCommand extends Command {
 
             const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
 
+            const keyword = await this.ualService.calculateLocationKeyword(
+                blockchain,
+                contract,
+                tokenId,
+            );
+            const agreementId = await this.serviceAgreementService.generateId(
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+                CONTENT_ASSET_HASH_FUNCTION_ID,
+            );
+            const agreementData = await this.blockchainModuleManager.getAgreementData(
+                blockchain,
+                agreementId,
+            );
+
+            const agreementEndTime =
+                agreementData.startTime + agreementData.epochsNumber * agreementData.epochLength;
+
             if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
                 const storePromises = [];
                 if (cachedData.publicAssertion && cachedData.publicAssertionId) {
                     storePromises.push(
-                        this.tripleStoreService.localStoreAssertion(
+                        this.tripleStoreService.localStoreAsset(
+                            TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
                             cachedData.publicAssertionId,
                             cachedData.publicAssertion,
-                            operationId,
+                            blockchain,
+                            contract,
+                            tokenId,
+                            agreementData.startTime,
+                            agreementEndTime,
+                            keyword,
                         ),
                     );
                 }
                 if (cachedData.privateAssertion && cachedData.privateAssertionId) {
                     storePromises.push(
-                        this.tripleStoreService.localStoreAssertion(
+                        this.tripleStoreService.localStoreAsset(
+                            TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
                             cachedData.privateAssertionId,
                             cachedData.privateAssertion,
-                            operationId,
+                            blockchain,
+                            contract,
+                            tokenId,
+                            agreementData.startTime,
+                            agreementEndTime,
+                            keyword,
                         ),
                     );
                 }
