@@ -53,17 +53,16 @@ class PublishController extends BaseController {
             // Backwards compatibility check - true for older clients
             if (req.body.localStore) {
                 commandSequence.push('localStoreCommand');
-                await this.operationIdService.cacheOperationIdData(operationId, {
-                    publicAssertion: assertion,
-                    publicAssertionId: assertionId,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    storeType: LOCAL_STORE_TYPES.TRIPLE,
-                });
-            } else {
-                await this.operationIdService.cacheOperationIdData(operationId, { assertion });
             }
+
+            await this.operationIdService.cacheOperationIdData(operationId, {
+                publicAssertion: assertion,
+                publicAssertionId: assertionId,
+                blockchain,
+                contract,
+                tokenId,
+                storeType: LOCAL_STORE_TYPES.TRIPLE,
+            });
 
             commandSequence.push('networkPublishCommand');
 
@@ -74,7 +73,6 @@ class PublishController extends BaseController {
                 period: 5000,
                 retries: 3,
                 data: {
-                    assertion,
                     assertionId,
                     blockchain,
                     contract,
