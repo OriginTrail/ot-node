@@ -83,7 +83,7 @@ class BlockchainEventListenerService {
                     );
                 }
                 this.logger.error(
-                    `Failed to get blockchain events for blockchain: ${blockchainId}. Error: ${e}`,
+                    `Failed to get and process blockchain events for blockchain: ${blockchainId}. Error: ${e}`,
                 );
                 fetchEventsFailedCount[blockchainId] += 1;
             } finally {
