@@ -6,6 +6,9 @@ import {
     ERROR_TYPE,
     COMMAND_RETRIES,
     PENDING_STORAGE_REPOSITORIES,
+    COMMIT_BLOCK_DURATION_IN_BLOCKS,
+    BLOCK_TIME,
+    COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS,
 } from '../../../../../constants/constants.js';
 
 class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
@@ -103,11 +106,18 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         R0,
         rank,
     ) {
-        const blockDuration = 12;
-        const r0OffsetPeriod = blockDuration;
-        const commitsBlockDuration = blockDuration * 5; // wait for 5 blocks
+        const r0OffsetPeriod = BLOCK_TIME;
+        // wait for 5 blocks for first batch to send commits
+        const commitsBlockDuration = BLOCK_TIME * COMMIT_BLOCK_DURATION_IN_BLOCKS;
         const commitBlock = Math.floor(rank / finalizationCommitsNumber);
-        const delay = commitsBlockDuration * commitBlock + r0OffsetPeriod;
+        // put 2 blocks delay between nodes if they are not in first batch
+        const nextNodeDelay =
+            commitBlock === 0
+                ? 0
+                : (rank % finalizationCommitsNumber) *
+                  COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS *
+                  BLOCK_TIME;
+        const delay = commitsBlockDuration * commitBlock + r0OffsetPeriod + nextNodeDelay;
         this.logger.info(
             `Calculated update commit delay: ${delay}, commitsBlockDuration: ${commitsBlockDuration}, commitBlock: ${commitBlock}, r0OffsetPeriod:${r0OffsetPeriod}, updateCommitWindowDuration ${updateCommitWindowDuration}, finalizationCommitsNumber: ${finalizationCommitsNumber}, r0: ${R0}, rank: ${rank}`,
         );

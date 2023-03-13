@@ -13,6 +13,10 @@ export const SCHEMA_CONTEXT = 'http://schema.org/';
 export const PRIVATE_ASSERTION_PREDICATE =
     'https://ontology.origintrail.io/dkg/1.0#privateAssertionID';
 
+export const COMMIT_BLOCK_DURATION_IN_BLOCKS = 5;
+export const BLOCK_TIME = 12;
+export const COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS = 2;
+
 export const TRANSACTION_POLLING_TIMEOUT = 50;
 
 export const LIBP2P_KEY_DIRECTORY = 'libp2p';
