@@ -49,8 +49,10 @@ class PublishController extends BaseController {
             );
 
             await this.operationIdService.cacheOperationIdData(operationId, {
-                publicAssertion: assertion,
-                publicAssertionId: assertionId,
+                public: {
+                    assertion,
+                    assertionId,
+                },
                 blockchain,
                 contract,
                 tokenId,

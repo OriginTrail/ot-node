@@ -25,15 +25,14 @@ class LocalStoreController extends BaseController {
 
         const assertions = req.body;
 
-        let publicAssertion;
-        let publicAssertionId;
-        let privateAssertion;
-        let privateAssertionId;
+        const cachedAssertions = {
+            public: {},
+            private: {},
+        };
         switch (assertions.length) {
             case 1: {
-                const publicAssertionData = assertions[0];
-                publicAssertion = publicAssertionData.assertion;
-                publicAssertionId = publicAssertionData.assertionId;
+                const { assertion, assertionId } = assertions[0];
+                cachedAssertions.public = { assertion, assertionId };
 
                 break;
             }
@@ -44,11 +43,15 @@ class LocalStoreController extends BaseController {
                 const publicAssertionData = isFirstPublic ? assertions[0] : assertions[1];
                 const privateAssertionData = isFirstPublic ? assertions[1] : assertions[0];
 
-                publicAssertion = publicAssertionData.assertion;
-                publicAssertionId = publicAssertionData.assertionId;
+                cachedAssertions.public = {
+                    assertion: publicAssertionData.assertion,
+                    assertionId: publicAssertionData.assertionId,
+                };
+                cachedAssertions.private = {
+                    assertion: privateAssertionData.assertion,
+                    assertionId: privateAssertionData.assertionId,
+                };
 
-                privateAssertion = privateAssertionData.assertion;
-                privateAssertionId = privateAssertionData.assertionId;
                 break;
             }
             default:
@@ -61,12 +64,7 @@ class LocalStoreController extends BaseController {
             )}. Operation id: ${operationId}`,
         );
 
-        await this.operationIdService.cacheOperationIdData(operationId, {
-            publicAssertion,
-            publicAssertionId,
-            privateAssertion,
-            privateAssertionId,
-        });
+        await this.operationIdService.cacheOperationIdData(operationId, cachedAssertions);
 
         const commandSequence = ['validateAssetCommand', 'localStoreCommand'];
 

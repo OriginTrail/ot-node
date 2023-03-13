@@ -50,12 +50,12 @@ class ValidateAssetCommand extends Command {
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         this.logger.info(
-            `Validating asset's public assertion with id: ${cachedData.publicAssertionId} ual: ${ual}`,
+            `Validating asset's public assertion with id: ${cachedData.public.assertionId} ual: ${ual}`,
         );
-        if (blockchainAssertionId !== cachedData.publicAssertionId) {
+        if (blockchainAssertionId !== cachedData.public.assertionId) {
             await this.handleError(
                 operationId,
-                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${cachedData.publicAssertionId}`,
+                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${cachedData.public.assertionId}`,
                 this.errorType,
                 true,
             );
@@ -63,24 +63,24 @@ class ValidateAssetCommand extends Command {
         }
 
         await this.operationService.validateAssertion(
-            cachedData.publicAssertionId,
+            cachedData.public.assertionId,
             blockchain,
-            cachedData.publicAssertion,
+            cachedData.public.assertion,
         );
 
-        if (cachedData.privateAssertionId && cachedData.privateAssertion) {
+        if (cachedData.private?.assertionId && cachedData.private?.assertion) {
             this.logger.info(
-                `Validating asset's private assertion with id: ${cachedData.privateAssertionId} ual: ${ual}`,
+                `Validating asset's private assertion with id: ${cachedData.private.assertionId} ual: ${ual}`,
             );
 
             const calculatedAssertionId = this.validationModuleManager.calculateRoot(
-                cachedData.privateAssertion,
+                cachedData.private.assertion,
             );
 
-            if (cachedData.privateAssertionId !== calculatedAssertionId) {
+            if (cachedData.private.assertionId !== calculatedAssertionId) {
                 await this.handleError(
                     operationId,
-                    `Invalid private assertion id. Received value from request: ${cachedData.privateAssertionId}, calculated: ${calculatedAssertionId}`,
+                    `Invalid private assertion id. Received value from request: ${cachedData.private.assertionId}, calculated: ${calculatedAssertionId}`,
                     this.errorType,
                     true,
                 );

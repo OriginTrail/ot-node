@@ -70,6 +70,43 @@ class TripleStoreService {
         );
     }
 
+    async moveAsset(
+        fromRepository,
+        toRepository,
+        assertionId,
+        blockchain,
+        contract,
+        tokenId,
+        agreementStartTime,
+        agreementEndTime,
+        keyword,
+    ) {
+        const assertion = await this.getAssertion(fromRepository, assertionId);
+
+        // copy metadata and assertion
+        await this.localStoreAsset(
+            toRepository,
+            assertionId,
+            assertion,
+            blockchain,
+            contract,
+            tokenId,
+            agreementStartTime,
+            agreementEndTime,
+            keyword,
+        );
+
+        const [assetsWithAssertionIdCount] = await this.countAssetsWithAssertionId(
+            fromRepository,
+            assertionId,
+        );
+
+        // delete assertion from repository if not linked to other assets
+        if (assetsWithAssertionIdCount?.count <= 1) {
+            await this.deleteAssertion(fromRepository, assertionId);
+        }
+    }
+
     async insertAssetMetadata(
         repository,
         blockchain,
