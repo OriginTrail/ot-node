@@ -16,7 +16,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            OPERATION_ID_STATUS.PUBLISH.VALIDATING_PUBLISH_ASSERTION_REMOTE_START,
+            OPERATION_ID_STATUS.VALIDATE_ASSET_REMOTE_START,
         );
 
         const validationResult = await this.validateReceivedData(
@@ -31,7 +31,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
 
         this.operationIdService.updateOperationIdStatus(
             operationId,
-            OPERATION_ID_STATUS.PUBLISH.VALIDATING_PUBLISH_ASSERTION_REMOTE_END,
+            OPERATION_ID_STATUS.VALIDATE_ASSET_REMOTE_END,
         );
 
         return validationResult;

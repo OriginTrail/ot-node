@@ -10,7 +10,7 @@ class ValidateAssetCommand extends Command {
         this.dataService = ctx.dataService;
         this.validationModuleManager = ctx.validationModuleManager;
 
-        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_VALIDATE_ASSERTION_ERROR;
+        this.errorType = ERROR_TYPE.VALIDATE_ASSET_ERROR;
     }
 
     /**
@@ -28,7 +28,7 @@ class ValidateAssetCommand extends Command {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            OPERATION_ID_STATUS.PUBLISH.VALIDATING_PUBLISH_ASSERTION_START,
+            OPERATION_ID_STATUS.VALIDATE_ASSET_START,
         );
 
         let blockchainAssertionId;
@@ -89,7 +89,7 @@ class ValidateAssetCommand extends Command {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            OPERATION_ID_STATUS.PUBLISH.VALIDATING_PUBLISH_ASSERTION_END,
+            OPERATION_ID_STATUS.VALIDATE_ASSET_END,
         );
         return this.continueSequence(
             { ...command.data, retry: undefined, period: undefined },

@@ -4,6 +4,7 @@ import {
     OPERATION_ID_STATUS,
     OPERATION_STATUS,
     CONTENT_ASSET_HASH_FUNCTION_ID,
+    LOCAL_STORE_TYPES,
 } from '../../constants/constants.js';
 
 class UpdateController extends BaseController {
@@ -47,9 +48,15 @@ class UpdateController extends BaseController {
                 `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
             );
 
-            await this.operationIdService.cacheOperationIdData(operationId, { assertion });
+            await this.operationIdService.cacheOperationIdData(operationId, {
+                publicAssertion: assertion,
+                publicAssertionId: assertionId,
+                blockchain,
+                contract,
+                tokenId,
+            });
 
-            const commandSequence = ['validateUpdateAssertionCommand', 'networkUpdateCommand'];
+            const commandSequence = ['validateAssetCommand', 'networkUpdateCommand'];
 
             await this.commandExecutor.add({
                 name: commandSequence[0],
@@ -64,6 +71,7 @@ class UpdateController extends BaseController {
                     assertionId,
                     hashFunctionId,
                     operationId,
+                    storeType: LOCAL_STORE_TYPES.PENDING,
                 },
                 transactional: false,
             });

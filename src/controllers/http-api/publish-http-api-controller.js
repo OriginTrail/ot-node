@@ -48,21 +48,20 @@ class PublishController extends BaseController {
                 `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
             );
 
-            const commandSequence = ['validateAssetCommand'];
-
-            // Backwards compatibility check - true for older clients
-            if (req.body.localStore) {
-                commandSequence.push('localStoreCommand');
-            }
-
             await this.operationIdService.cacheOperationIdData(operationId, {
                 publicAssertion: assertion,
                 publicAssertionId: assertionId,
                 blockchain,
                 contract,
                 tokenId,
-                storeType: LOCAL_STORE_TYPES.TRIPLE,
             });
+
+            const commandSequence = ['validateAssetCommand'];
+
+            // Backwards compatibility check - true for older clients
+            if (req.body.localStore) {
+                commandSequence.push('localStoreCommand');
+            }
 
             commandSequence.push('networkPublishCommand');
 
@@ -79,6 +78,7 @@ class PublishController extends BaseController {
                     tokenId,
                     hashFunctionId,
                     operationId,
+                    storeType: LOCAL_STORE_TYPES.TRIPLE,
                 },
                 transactional: false,
             });
