@@ -59,9 +59,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         const R2 = await this.blockchainModuleManager.getR2(blockchain);
 
         const rank = await this.calculateRank(blockchain, keyword, hashFunctionId, R2);
-        this.logger.trace(
-            `Calculated rank: ${rank + 1} higher than R0: ${R0} for agreement id:  ${agreementId}`,
-        );
+        this.logger.trace(`Calculated rank: ${rank + 1} for agreement id:  ${agreementId}`);
         const finalizationCommitsNumber =
             await this.blockchainModuleManager.getFinalizationCommitsNumber(blockchain);
 
@@ -106,7 +104,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         R0,
         rank,
     ) {
-        const r0OffsetPeriod = BLOCK_TIME;
+        const r0OffsetPeriod = 0;
         // wait for 5 blocks for first batch to send commits
         const commitsBlockDuration = BLOCK_TIME * COMMIT_BLOCK_DURATION_IN_BLOCKS;
         const commitBlock = Math.floor(rank / finalizationCommitsNumber);

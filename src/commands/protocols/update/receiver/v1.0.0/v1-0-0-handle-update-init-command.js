@@ -18,9 +18,9 @@ class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
             commandData;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_REMOTE_START,
+            OPERATION_ID_STATUS.VALIDATE_ASSET_REMOTE_START,
         );
-        // todo once validation is completed remove this cache
+
         await this.operationIdService.cacheOperationIdData(operationId, {
             assertionId,
             blockchain,
@@ -42,7 +42,7 @@ class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_REMOTE_END,
+            OPERATION_ID_STATUS.VALIDATE_ASSET_REMOTE_END,
         );
         return validationResult;
     }

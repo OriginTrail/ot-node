@@ -1,5 +1,5 @@
 import Command from '../command.js';
-import { ERROR_TYPE, OPERATION_ID_STATUS } from '../../constants/constants.js';
+import { ERROR_TYPE, OPERATION_ID_STATUS, LOCAL_STORE_TYPES } from '../../constants/constants.js';
 
 class ValidateAssetCommand extends Command {
     constructor(ctx) {
@@ -10,7 +10,7 @@ class ValidateAssetCommand extends Command {
         this.dataService = ctx.dataService;
         this.validationModuleManager = ctx.validationModuleManager;
 
-        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_VALIDATE_ASSERTION_ERROR;
+        this.errorType = ERROR_TYPE.VALIDATE_ASSET_ERROR;
     }
 
     /**
@@ -18,18 +18,32 @@ class ValidateAssetCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, contract, tokenId } = command.data;
-
-        await this.operationIdService.updateOperationIdStatus(
+        const {
             operationId,
-            OPERATION_ID_STATUS.PUBLISH.VALIDATING_PUBLISH_ASSERTION_START,
-        );
-
-        const blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertionId(
             blockchain,
             contract,
             tokenId,
+            storeType = LOCAL_STORE_TYPES.TRIPLE,
+        } = command.data;
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.VALIDATE_ASSET_START,
         );
+
+        let blockchainAssertionId;
+        if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
+            blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertionId(
+                blockchain,
+                contract,
+                tokenId,
+            );
+        } else {
+            blockchainAssertionId = await this.blockchainModuleManager.getUnfinalizedAssertionId(
+                blockchain,
+                tokenId,
+            );
+        }
         if (!blockchainAssertionId) {
             return Command.retry();
         }
@@ -75,7 +89,7 @@ class ValidateAssetCommand extends Command {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            OPERATION_ID_STATUS.PUBLISH.VALIDATING_PUBLISH_ASSERTION_END,
+            OPERATION_ID_STATUS.VALIDATE_ASSET_END,
         );
         return this.continueSequence(
             { ...command.data, retry: undefined, period: undefined },
