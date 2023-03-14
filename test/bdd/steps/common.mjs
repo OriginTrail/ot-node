@@ -242,3 +242,8 @@ Given(/^I set R1 to be (\d+)$/, { timeout: 100000 }, async function waitFor(r1) 
     this.logger.log(`I set R1 to be ${r1}`);
     await this.state.localBlockchain.setR1(r1);
 });
+
+Given(/^I set R0 to be (\d+)$/, { timeout: 100000 }, async function waitFor(r0) {
+    this.logger.log(`I set R0 to be ${r0}`);
+    await this.state.localBlockchain.setR0(r0);
+});

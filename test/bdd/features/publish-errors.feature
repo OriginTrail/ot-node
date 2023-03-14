@@ -22,7 +22,7 @@ Feature: Publish errors test
     Given I setup 1 nodes
     And I call publish on ot-node 1 directly with validPublishRequestBody
     And I wait for last publish to finalize
-    Then Last PUBLISH operation finished with status: PublishValidateAssertionError
+    Then Last PUBLISH operation finished with status: ValidateAssetError
 #
 #
 
