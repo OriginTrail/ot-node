@@ -19,7 +19,7 @@ When(
             `Assertion with name: ${assertionName} not found!`,
         ).to.be.equal(true);
         const { evmOperationalWalletPublicKey, evmOperationalWalletPrivateKey } =
-            this.state.nodes[node - 1].configuration.modules.blockchain.implementation.ganache
+            this.state.nodes[node - 1].configuration.modules.blockchain.implementation.hardhat
                 .config;
         const assertion = assertions[assertionName];
         const result = await this.state.nodes[node - 1].client

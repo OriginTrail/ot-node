@@ -43,7 +43,7 @@ const testParametersStorageParams = {
  * @param {String} [options.logger] - Logger instance with debug, trace, info and error methods.
  */
 class LocalBlockchain {
-    async initialize() {
+    async initialize(console = console) {
         const startBlockchainProcess = exec('npm run start:local_blockchain');
         startBlockchainProcess.stdout.on('data', (data) => {
             console.log(data);
@@ -90,6 +90,20 @@ class LocalBlockchain {
                 gasLimit: 100000,
             });
         }
+    }
+
+    async setR1(R1) {
+        console.log(`Setting R1 in parameters storage to: ${R1}`);
+        await this.ParametersStorageContract.setR1(R1, {
+            gasLimit: 100000,
+        });
+    }
+
+    async setR0(R0) {
+        console.log(`Setting R0 in parameters storage to: ${R0}`);
+        await this.ParametersStorageContract.setR0(R0, {
+            gasLimit: 100000,
+        });
     }
 }
 

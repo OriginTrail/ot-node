@@ -17,7 +17,7 @@ class DkgClientHelper {
             maxNumberOfRetries: 5,
             hashFunctionId: CONTENT_ASSET_HASH_FUNCTION_ID,
             blockchain: {
-                name: 'ganache',
+                name: 'hardhat',
                 publicKey: wallet.evmOperationalWalletPublicKey,
                 privateKey: wallet.evmOperationalWalletPrivateKey,
             },
