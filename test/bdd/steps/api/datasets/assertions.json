@@ -15,7 +15,7 @@
     "born": "Born: April 30, 1916, Petoskey, Michigan, United States",
     "died": "Died: February 24, 2001, Medford, Massachusetts, United States"
   },
-  "validPublish_1ForUpdate_1": {
+  "validPublish_1ForValidUpdate_1": {
     "public": {
       "@context": [
         "https://schema.org"
