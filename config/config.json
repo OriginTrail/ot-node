@@ -294,9 +294,9 @@
             "tripleStore": {
                 "enabled": true,
                 "implementation": {
-                    "ot-graphdb": {
+                    "ot-blazegraph": {
                         "enabled": true,
-                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
+                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
                         "config": {}
                     }
                 }
