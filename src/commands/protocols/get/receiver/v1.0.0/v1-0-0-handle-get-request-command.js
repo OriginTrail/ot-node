@@ -39,10 +39,10 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
                 commandData.tokenId,
                 operationId,
             );
-            if (cachedAssertion?.assertion?.length) {
+            if (cachedAssertion?.public?.assertion?.length) {
                 return {
                     messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
-                    messageData: { nquads: cachedAssertion.assertion },
+                    messageData: { nquads: cachedAssertion.public.assertion },
                 };
             }
         }
