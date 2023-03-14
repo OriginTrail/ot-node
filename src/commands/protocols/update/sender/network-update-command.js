@@ -27,7 +27,7 @@ class NetworkUpdateCommand extends NetworkProtocolCommand {
     }
 
     async getMinAckResponses(blockchainId) {
-        return this.blockchainModuleManager.getR1(blockchainId);
+        return this.blockchainModuleManager.getFinalizationCommitsNumber(blockchainId);
     }
 
     /**
