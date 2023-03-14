@@ -4,7 +4,8 @@ import slugify from 'slugify';
 import fs from 'fs';
 import mysql from 'mysql2';
 import graphdb from 'graphdb';
-import { NODE_ENVIRONMENTS } from '../../../src/constants/constants';
+import { NODE_ENVIRONMENTS } from '../../../src/constants/constants.js';
+import axios from "axios";
 
 const { http, server } = graphdb;
 
@@ -65,22 +66,19 @@ After(function afterMethod(testCase, done) {
         promises.push(con.promise().query(sql));
     });
     promises.push(con);
-    const serverConfig = new server.ServerClientConfig('http://localhost:7200')
-        .setTimeout(40000)
-        .setHeaders({
-            Accept: http.RDFMimeType.N_QUADS,
-        })
-        .setKeepAlive(true);
-    const s = new server.GraphDBServerClient(serverConfig);
-    graphRepositoryNames.forEach((element) => {
-        s.hasRepository(element)
-            .then((exists) => {
-                if (exists) {
-                    promises.push(s.deleteRepository(element));
-                }
-            })
-            .catch((err) => this.logger.error(err));
-    });
+
+    // graphRepositoryNames.forEach((element) => {
+    //     promises.push(axios
+    //         .delete(`http://localhost:9999/blazegraph/namespace/${element}`, {})
+    //         .catch((e) =>
+    //             this.logger.error(
+    //                 `Error while deleting ${this.getName()} triple store repository: ${element}. Error: ${
+    //                     e.message
+    //                 }`,
+    //             ),
+    //         ));
+    // });
+
     // delete ot-graphdb repositories
     Promise.all(promises)
         .then(() => {

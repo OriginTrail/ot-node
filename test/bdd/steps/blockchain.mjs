@@ -9,7 +9,7 @@ Given(/^the blockchain is set up$/, { timeout: 60000 }, function blockchainSetup
 
     this.state.localBlockchain = new LocalBlockchain();
     this.state.localBlockchain
-        .initialize()
+        .initialize(blockchainConsole)
         .then(() => {
             done();
         })

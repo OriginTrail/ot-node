@@ -43,7 +43,7 @@ const testParametersStorageParams = {
  * @param {String} [options.logger] - Logger instance with debug, trace, info and error methods.
  */
 class LocalBlockchain {
-    async initialize() {
+    async initialize(console = console) {
         const startBlockchainProcess = exec('npm run start:local_blockchain');
         startBlockchainProcess.stdout.on('data', (data) => {
             console.log(data);
