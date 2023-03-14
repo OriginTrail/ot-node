@@ -15,14 +15,14 @@ Feature: Publish errors test
   Scenario: Publish on a node with minimum replication factor greater than the number of nodes
     Given I setup 1 nodes
     And I call publish on node 1 with validAssertion
-    Then Last PUBLISH operation finished with status: PublishStartError
+    Then Last Publish operation finished with status: PublishStartError
 
   @publish-errors
   Scenario: Publish an asset directly on the node
     Given I setup 1 nodes
     And I call publish on ot-node 1 directly with validPublishRequestBody
     And I wait for last publish to finalize
-    Then Last PUBLISH operation finished with status: ValidateAssetError
+    Then Last Publish operation finished with status: ValidateAssetError
 #
 #
 

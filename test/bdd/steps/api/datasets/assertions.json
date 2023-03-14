@@ -14,5 +14,52 @@
     "description": "Claude Elwood Shannon was an American mathematician, electrical engineer, and cryptographer known as the father of information theory. ",
     "born": "Born: April 30, 1916, Petoskey, Michigan, United States",
     "died": "Died: February 24, 2001, Medford, Massachusetts, United States"
+  },
+  "validPublish_1ForUpdate_1": {
+    "public": {
+      "@context": [
+        "https://schema.org"
+      ],
+      "@id": "uuid:1",
+      "company": "OT",
+      "user": {
+        "@id": "uuid:user:1"
+      },
+      "city": {
+        "@id": "uuid:belgrade"
+      }
+    },
+    "private": {
+      "@context": [
+        "https://schema.org"
+      ],
+      "@graph": [
+        {
+          "@id": "uuid:user:1",
+          "name": "Adam",
+          "lastname": "Smith"
+        },
+        {
+          "@id": "uuid:belgrade",
+          "title": "Belgrade",
+          "postCode": "11000"
+        }
+      ]
+    }
+  },
+  "validUpdate_1": {
+    "public": {
+      "@context": [
+        "https://schema.org"
+      ],
+      "@id": "uuid:2",
+      "company": "TL",
+      "user": {
+        "@id": "uuid:user:2"
+      },
+      "city": {
+        "@id": "uuid:Nis"
+      }
+    }
   }
 }
