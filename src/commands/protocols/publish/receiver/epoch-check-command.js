@@ -64,7 +64,7 @@ class EpochCheckCommand extends EpochCommand {
 
         if (!assertionExists) {
             this.logger.trace(
-                `Assertion with id: ${assertionId} not found in triple store. Not scheduling next epcoh checks.`,
+                `Assertion with id: ${assertionId} not found in triple store. Not scheduling next epoch checks.`,
             );
             return EpochCommand.empty();
         }
