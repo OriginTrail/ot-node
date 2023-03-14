@@ -212,23 +212,23 @@ Given(
     },
 );
 Given(
-    /Last (GET|PUBLISH) operation finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError|PublishStartError|GetAssertionIdError|GetNetworkError|GetLocalError|PublishRouteError]+)$/,
+    /Last (Get|Publish|Update) operation finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError|PublishStartError|GetAssertionIdError|GetNetworkError|GetLocalError|PublishRouteError]+)$/,
     { timeout: 120000 },
     async function lastResolveFinishedCall(operationName, status) {
         this.logger.log(`Last ${operationName} operation finished with status: ${status}`);
-        const operationData = operationName === 'GET' ? 'lastResolveData' : 'lastPublishData';
+        const operationData = `last${operationName}Data`;
         expect(
             !!this.state[operationData],
-            `Last ${operationName} result is undefined. ${operationName} result not started.`,
+            `Last ${operationName} result is undefined. ${operationData} result not started.`,
         ).to.be.equal(true);
         expect(
             !!this.state[operationData].result,
-            `Last ${operationName} result data result is undefined. ${operationName} result is not finished.`,
+            `Last ${operationName} result data result is undefined. ${operationData} result is not finished.`,
         ).to.be.equal(true);
 
         expect(
             this.state[operationData].errorType ?? this.state[operationData].status,
-            `${operationName} result status validation failed`,
+            `${operationData} result status validation failed`,
         ).to.be.equal(status);
     },
 );

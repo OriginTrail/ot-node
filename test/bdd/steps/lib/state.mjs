@@ -26,7 +26,13 @@ const state = {
         assertion: {},
         result: {},
     },
-    lastResolveData: {
+    lastGetData: {
+        nodeId: 1,
+        operationId: '',
+        assertionIds: ['', ''],
+        result: {},
+    },
+    lastUpdateData: {
         nodeId: 1,
         operationId: '',
         assertionIds: ['', ''],

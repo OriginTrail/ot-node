@@ -25,14 +25,16 @@ class DkgClientHelper {
         return this.client.asset.create(data, options);
     }
 
-    async update(data, keywords, ual) {
-        return this.client._publishRequest({
-            ual,
-            data,
-            keywords,
-            method: 'update',
-            visibility: 'public',
-        });
+    async update(ual, assertion, wallet) {
+        const options = {
+            maxNumberOfRetries: 5,
+            blockchain: {
+                name: 'hardhat',
+                publicKey: wallet.evmOperationalWalletPublicKey,
+                privateKey: wallet.evmOperationalWalletPrivateKey,
+            },
+        };
+        return this.client.asset.update(ual, assertion, options);
     }
 
     async get(ids) {
