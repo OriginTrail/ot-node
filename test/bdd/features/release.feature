@@ -11,7 +11,7 @@ Feature: Release related tests
     And I wait for 10 seconds
 
     When I call publish on node 4 with validAssertion
-    Then Last PUBLISH operation finished with status: COMPLETED
+    Then Last Publish operation finished with status: COMPLETED
 
   #@release
   #Scenario: Getting a result of the previously published assertion

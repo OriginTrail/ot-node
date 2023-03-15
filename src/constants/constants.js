@@ -36,6 +36,11 @@ export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
 export const MAX_FILE_SIZE = 2621440;
 
 export const GET_STATES = { LATEST: 'LATEST', LATEST_FINALIZED: 'LATEST_FINALIZED' };
+export const BYTES_IN_KILOBYTE = 1024;
+
+export const BYTES_IN_MEGABYTE = BYTES_IN_KILOBYTE * BYTES_IN_KILOBYTE;
+
+export const PUBLISH_TYPES = { ASSERTION: 'assertion', ASSET: 'asset', INDEX: 'index' };
 
 export const DEFAULT_GET_STATE = GET_STATES.LATEST;
 
@@ -434,7 +439,7 @@ export const CONTRACT_EVENT_FETCH_INTERVALS = {
 };
 
 export const FIXED_GAS_LIMIT_METHODS = {
-    submitCommit: 400000,
-    submitUpdateCommit: 500000,
+    submitCommit: 600000,
+    submitUpdateCommit: 600000,
     sendProof: 500000,
 };
