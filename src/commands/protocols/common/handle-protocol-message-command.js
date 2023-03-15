@@ -63,10 +63,6 @@ class HandleProtocolMessageCommand extends Command {
         return false;
     }
 
-    getBidTokenAmount(agreementData) {
-        return agreementData.tokenAmount;
-    }
-
     async validateAssertionId(blockchain, contract, tokenId, assertionId, ual) {
         const blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertionId(
             blockchain,
@@ -135,7 +131,8 @@ class HandleProtocolMessageCommand extends Command {
             .mul(blockchainAssertionSize);
 
         const serviceAgreementBid = this.blockchainModuleManager
-            .toBigNumber(blockchain, this.getBidTokenAmount(agreementData))
+            .toBigNumber(blockchain, agreementData.tokenAmount)
+            .add(agreementData.updateTokenAmount)
             .mul(1024)
             .div(divisor)
             .add(1); // add 1 wei because of the precision loss

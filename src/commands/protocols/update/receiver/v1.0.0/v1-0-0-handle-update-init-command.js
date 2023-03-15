@@ -59,10 +59,6 @@ class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
         }
     }
 
-    getBidTokenAmount(agreementData) {
-        return agreementData.updateTokenAmount;
-    }
-
     async retryFinished(command) {
         const { operationId } = command.data;
         this.handleError(
