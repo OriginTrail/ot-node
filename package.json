@@ -99,7 +99,7 @@
         "it-take": "^1.0.2",
         "jsonld": "^8.1.0",
         "jsonschema": "^1.4.1",
-        "jsonwebtoken": "^8.5.1",
+        "jsonwebtoken": "^9.0.0",
         "keccak256": "^1.0.6",
         "libp2p": "^0.32.4",
         "libp2p-bootstrap": "^0.13.0",
