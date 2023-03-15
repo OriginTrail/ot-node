@@ -650,8 +650,8 @@ class Web3Service {
             startTime: result['0'].toNumber(),
             epochsNumber: result['1'],
             epochLength: result['2'].toNumber(),
-            tokenAmount: result['3'][0],
-            addedTokenAmount: result['3'][1],
+            tokenAmount: Array.isArray(result['3']) ? result['3'][0] : result['3'],
+            updateTokenAmount: Array.isArray(result['3']) ? result['3'][1] : null,
             scoreFunctionId: result['4'][0],
             proofWindowOffsetPerc: result['4'][1],
         };
