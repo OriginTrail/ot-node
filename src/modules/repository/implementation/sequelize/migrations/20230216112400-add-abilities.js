@@ -1,4 +1,4 @@
-const newRoutes = ['BID-SUGGESTION', 'LOCAL-STORE', 'UPDATE'];
+const newRoutes = ['BID-SUGGESTION', 'LOCAL-STORE'];
 
 async function getRoleAbilities(names, queryInterface, transaction) {
     const [abilities] = await queryInterface.sequelize.query(
