@@ -23,6 +23,7 @@ import {
     NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES,
     LIBP2P_KEY_DIRECTORY,
     LIBP2P_KEY_FILENAME,
+    BYTES_IN_MEGABYTE,
 } from '../../../constants/constants.js';
 
 const devEnvironment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
@@ -489,7 +490,7 @@ class Libp2pService {
         const stringifiedData = JSON.stringify(message.data);
 
         const chunks = [stringifiedHeader];
-        const chunkSize = 1024 * 1024; // 1 MB
+        const chunkSize = BYTES_IN_MEGABYTE; // 1 MB
 
         // split data into 1 MB chunks
         for (let i = 0; i < stringifiedData.length; i += chunkSize) {

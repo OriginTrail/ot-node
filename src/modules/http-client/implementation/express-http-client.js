@@ -7,7 +7,7 @@ import requestValidationMiddleware from './middleware/request-validation-middlew
 import rateLimiterMiddleware from './middleware/rate-limiter-middleware.js';
 import authenticationMiddleware from './middleware/authentication-middleware.js';
 import authorizationMiddleware from './middleware/authorization-middleware.js';
-import { MAX_FILE_SIZE } from '../../../constants/constants.js';
+import { BYTES_IN_MEGABYTE, MAX_FILE_SIZE } from '../../../constants/constants.js';
 
 class ExpressHttpClient {
     async initialize(config, logger) {
@@ -82,7 +82,7 @@ class ExpressHttpClient {
             }),
         );
 
-        this.app.use(express.json({ limit: `${MAX_FILE_SIZE / (1024 * 1024)}mb` }));
+        this.app.use(express.json({ limit: `${MAX_FILE_SIZE / BYTES_IN_MEGABYTE}mb` }));
         this.app.use((req, res, next) => {
             this.logger.api(`${req.method}: ${req.url} request received`);
             return next();

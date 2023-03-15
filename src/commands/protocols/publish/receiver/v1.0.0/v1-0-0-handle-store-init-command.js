@@ -3,6 +3,7 @@ import {
     NETWORK_MESSAGE_TYPES,
     ERROR_TYPE,
     OPERATION_ID_STATUS,
+    BYTES_IN_KILOBYTE,
 } from '../../../../../constants/constants.js';
 
 class HandleStoreInitCommand extends HandleProtocolMessageCommand {
@@ -164,7 +165,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
 
         const serviceAgreementBid = this.blockchainModuleManager
             .toBigNumber(blockchain, agreementData.tokenAmount)
-            .mul(1024)
+            .mul(BYTES_IN_KILOBYTE)
             .div(divisor)
             .add(1); // add 1 wei because of the precision loss
 

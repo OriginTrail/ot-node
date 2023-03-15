@@ -28,6 +28,10 @@ export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
 
 export const MAX_FILE_SIZE = 2621440;
 
+export const BYTES_IN_KILOBYTE = 1024;
+
+export const BYTES_IN_MEGABYTE = BYTES_IN_KILOBYTE * BYTES_IN_KILOBYTE;
+
 export const PUBLISH_TYPES = { ASSERTION: 'assertion', ASSET: 'asset', INDEX: 'index' };
 
 export const DHT_TYPES = { DUAL: 'dual', WAN: 'wan', LAN: 'lan' };
