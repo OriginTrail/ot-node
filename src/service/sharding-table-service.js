@@ -7,6 +7,7 @@ import take from 'it-take';
 import all from 'it-all';
 
 import {
+    BYTES_IN_KILOBYTE,
     CONTRACTS,
     DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
 } from '../constants/constants.js';
@@ -25,7 +26,7 @@ class ShardingTableService {
             .getImplementationNames()
             .map((blockchainId) => this.pullBlockchainShardingTable(blockchainId));
         await Promise.all(pullBlockchainShardingTables);
-        
+
         const that = this;
         await this.networkModuleManager.onPeerConnected((connection) => {
             this.logger.trace(
@@ -159,6 +160,7 @@ class ShardingTableService {
         firstAssertionId,
         hashFunctionId,
     ) {
+        const kbSize = assertionSize < BYTES_IN_KILOBYTE ? BYTES_IN_KILOBYTE : assertionSize;
         const peerRecords = await this.findNeighbourhood(
             blockchainId,
             this.blockchainModuleManager.encodePacked(
@@ -179,10 +181,10 @@ class ShardingTableService {
 
         return this.blockchainModuleManager
             .toBigNumber(blockchainId, this.blockchainModuleManager.convertToWei(blockchainId, ask))
-            .mul(assertionSize)
+            .mul(kbSize)
             .mul(epochsNumber)
             .mul(r0)
-            .div(1024)
+            .div(BYTES_IN_KILOBYTE)
             .toString();
     }
 

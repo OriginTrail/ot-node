@@ -6,6 +6,7 @@ import RepositoryModuleManagerMock from '../mock/repository-module-manager-mock.
 import NetworkModuleManagerMock from '../mock/network-module-manager-mock.js';
 import ValidationModuleManagerMock from '../mock/validation-module-manager-mock.js';
 import EventEmitterMock from '../mock/event-emitter-mock.js';
+import { BYTES_IN_KILOBYTE } from '../../../src/constants/constants.js';
 
 let shardingTableService;
 
@@ -22,7 +23,7 @@ describe('Sharding table service test', async () => {
 
     it('Get bid suggestion, returns bid suggestion successfully', async () => {
         const epochsNumber = 5;
-        const assertionSize = 1024;
+        const assertionSize = BYTES_IN_KILOBYTE;
         const contentAssetStorageAddress = '0xABd59A9aa71847F499d624c492d3903dA953d67a';
         const firstAssertionId =
             '0xb44062de45333119471934bc0340c05ff09c0b463392384bc2030cd0a20c334b';
@@ -36,5 +37,30 @@ describe('Sharding table service test', async () => {
             hashFunctionId,
         );
         expect(bidSuggestions).to.be.equal('3788323225298705400');
+    });
+
+    it('Get bid suggestion, returns same token amount for size 1 Kb and size < 1 Kb', async () => {
+        const epochsNumber = 5;
+        const contentAssetStorageAddress = '0xABd59A9aa71847F499d624c492d3903dA953d67a';
+        const firstAssertionId =
+            '0xb44062de45333119471934bc0340c05ff09c0b463392384bc2030cd0a20c334b';
+        const hashFunctionId = 1;
+        const bidSuggestion1Kb = await shardingTableService.getBidSuggestion(
+            'ganache',
+            epochsNumber,
+            BYTES_IN_KILOBYTE,
+            contentAssetStorageAddress,
+            firstAssertionId,
+            hashFunctionId,
+        );
+        const bidSuggestion1B = await shardingTableService.getBidSuggestion(
+            'ganache',
+            epochsNumber,
+            1,
+            contentAssetStorageAddress,
+            firstAssertionId,
+            hashFunctionId,
+        );
+        expect(bidSuggestion1B).to.be.equal(bidSuggestion1Kb);
     });
 });
