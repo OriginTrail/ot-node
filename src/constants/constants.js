@@ -439,7 +439,7 @@ export const CONTRACT_EVENT_FETCH_INTERVALS = {
 };
 
 export const FIXED_GAS_LIMIT_METHODS = {
-    submitCommit: 400000,
-    submitUpdateCommit: 500000,
+    submitCommit: 600000,
+    submitUpdateCommit: 600000,
     sendProof: 500000,
 };
