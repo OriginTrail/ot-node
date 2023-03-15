@@ -3,7 +3,6 @@
 import { ethers } from 'ethers';
 import { readFile } from 'fs/promises';
 import { exec } from 'child_process';
-import { setTimeout } from 'timers/promises';
 
 const Hub = JSON.parse((await readFile('node_modules/dkg-evm-module/abi/Hub.json')).toString());
 const ParametersStorage = JSON.parse(
@@ -43,15 +42,14 @@ const testParametersStorageParams = {
  * @param {String} [options.logger] - Logger instance with debug, trace, info and error methods.
  */
 class LocalBlockchain {
-    async initialize(console = console) {
+    async initialize(_console = console) {
         const startBlockchainProcess = exec('npm run start:local_blockchain');
         startBlockchainProcess.stdout.on('data', (data) => {
-            console.log(data);
+            _console.log(data);
         });
-        console.log('Waiting for 20 seconds for blockchain to start and contracts to be deployed');
-        await setTimeout(20 * 1000);
 
         this.provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
+        await this.provider.ready;
 
         const privateKeysFile = await readFile('test/bdd/steps/api/datasets/privateKeys.json');
         const publicKeysFile = await readFile('test/bdd/steps/api/datasets/publicKeys.json');
