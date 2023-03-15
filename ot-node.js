@@ -302,7 +302,7 @@ class OTNode {
         const validationModuleManager = this.container.resolve('validationModuleManager');
 
         const migration = new PullBlockchainShardingTableMigration(
-            'pullShardingTableMigration',
+            'pullShardingTableMigrationV604',
             this.logger,
             this.config,
             repositoryModuleManager,

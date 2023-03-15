@@ -1,5 +1,3 @@
-import { ethers } from 'ethers';
-import { CONTENT_ASSET_HASH_FUNCTION_ID } from '../constants/constants.js';
 import BaseMigration from './base-migration.js';
 
 class PullBlockchainShardingTableMigration extends BaseMigration {
@@ -69,10 +67,18 @@ class PullBlockchainShardingTableMigration extends BaseMigration {
                             return {
                                 peer_id: nodeId,
                                 blockchain_id: blockchainId,
-                                ask: ethers.utils.formatUnits(peer.ask, 'ether'),
-                                stake: ethers.utils.formatUnits(peer.stake, 'ether'),
+                                ask: this.blockchainModuleManager.convertFromWei(
+                                    blockchainId,
+                                    peer.ask,
+                                    'ether',
+                                ),
+                                stake: this.blockchainModuleManager.convertFromWei(
+                                    blockchainId,
+                                    peer.stake,
+                                    'ether',
+                                ),
                                 sha256: await this.validationModuleManager.callHashFunction(
-                                    CONTENT_ASSET_HASH_FUNCTION_ID,
+                                    1,
                                     nodeId,
                                 ),
                             };
