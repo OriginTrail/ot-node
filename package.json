@@ -48,7 +48,7 @@
         "@openzeppelin/contracts": "^4.7.3",
         "@polkadot/util": "^10.1.7",
         "@polkadot/util-crypto": "^10.1.7",
-        "@truffle/hdwallet-provider": "^2.0.16",
+        "@truffle/hdwallet-provider": "^2.1.8",
         "chai": "^4.3.6",
         "dkg.js": "^6.0.0-beta.3.5.1",
         "eslint": "^8.23.0",
