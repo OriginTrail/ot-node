@@ -2,9 +2,9 @@ import 'dotenv/config';
 import { Before, BeforeAll, After, AfterAll } from '@cucumber/cucumber';
 import slugify from 'slugify';
 import fs from 'fs';
-import mysql from 'mysql2';
 import { NODE_ENVIRONMENTS } from '../../../src/constants/constants.js';
 import TripleStoreModuleManager from "../../../src/modules/triple-store/triple-store-module-manager.js";
+import mysql from "mysql2";
 
 process.env.NODE_ENV = NODE_ENVIRONMENTS.TEST;
 
@@ -26,7 +26,7 @@ Before(function beforeMethod(testCase, done) {
     done();
 });
 
-After(async function afterMethod(testCase, done) {
+After(function afterMethod(testCase, done) {
     const tripleStoreConfiguration = [];
     const databaseNames = [];
     for (const key in this.state.nodes) {
@@ -63,23 +63,21 @@ After(async function afterMethod(testCase, done) {
         promises.push(con.promise().query(sql));
     });
     promises.push(con);
+    tripleStoreConfiguration.forEach((config) => {
+        promises.push(async () => {
+            const tripleStoreModuleManager = new TripleStoreModuleManager({config, logger: this.logger});
+            await tripleStoreModuleManager.initialize()
+            for (const implementationName of tripleStoreModuleManager.getImplementationNames()) {
+                const {config} = tripleStoreModuleManager.getImplementation(implementationName);
+                Object.keys(config.repositories).map(async (repository) => {
+                        console.log('Removing triple store configuration:', JSON.stringify(config, null, 4));
+                        await tripleStoreModuleManager.deleteRepository(implementationName, repository);
+                    }
+                )
+            }
+        })
+    })
 
-    for (const config of tripleStoreConfiguration) {
-        console.log('Removing triple store configuration:', JSON.stringify(config, null, 4));
-        const tripleStoreModuleManager = new TripleStoreModuleManager({config, logger: this.logger});
-        await tripleStoreModuleManager.initialize();
-
-        for (const implementationName of tripleStoreModuleManager.getImplementationNames()) {
-            const {module, config} = tripleStoreModuleManager.getImplementation(implementationName);
-            await Promise.all(
-                Object.keys(config.repositories).map((repository) =>
-                    module.deleteRepository(repository),
-                ),
-            );
-        }
-    }
-
-    // delete ot-graphdb repositories
     Promise.all(promises)
         .then(() => {
             con.end();

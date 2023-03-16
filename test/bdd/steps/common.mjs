@@ -10,7 +10,7 @@ const stepsUtils = new StepsUtils();
 
 Given(
     /^I setup (\d+)[ additional]* node[s]*$/,
-    { timeout: 180000 },
+    { timeout: 30000 },
     function nodeSetup(nodeCount, done) {
         this.logger.log(`I setup ${nodeCount} node${nodeCount !== 1 ? 's' : ''}`);
         const wallets = this.state.localBlockchain.getWallets();
@@ -75,7 +75,7 @@ Given(
 
 Given(
     /^(\d+) bootstrap is running$/,
-    { timeout: 60000 },
+    { timeout: 30000 },
     function bootstrapRunning(nodeCount, done) {
         expect(this.state.bootstraps).to.have.length(0);
         expect(nodeCount).to.be.equal(1); // Currently not supported more.
