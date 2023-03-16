@@ -2,9 +2,9 @@ import 'dotenv/config';
 import { Before, BeforeAll, After, AfterAll } from '@cucumber/cucumber';
 import slugify from 'slugify';
 import fs from 'fs';
-import mysql from 'mysql2';
 import { NODE_ENVIRONMENTS } from '../../../src/constants/constants.js';
 import TripleStoreModuleManager from "../../../src/modules/triple-store/triple-store-module-manager.js";
+import mysql from "mysql2";
 
 process.env.NODE_ENV = NODE_ENVIRONMENTS.TEST;
 
@@ -63,45 +63,39 @@ After(function afterMethod(testCase, done) {
         promises.push(con.promise().query(sql));
     });
     promises.push(con);
-    const deleteTripleStore = [];
-    // for (const config of tripleStoreConfiguration) {
-    //     console.log('Removing triple store configuration:', JSON.stringify(config, null, 4));
-    //     const tripleStoreModuleManager = new TripleStoreModuleManager({config, logger: this.logger});
-    //     tripleStoreModuleManager.initialize().then(()=>{
-    //         for (const implementationName of tripleStoreModuleManager.getImplementationNames()) {
-    //             const {module, config} = tripleStoreModuleManager.getImplementation(implementationName);
-    //             deleteTripleStore.push(
-    //                 Object.keys(config.repositories).map((repository) =>
-    //                     module.deleteRepository(repository),
-    //                 ),
-    //             );
-    //         }
-    //     });
-    //
-    //
-    // }
+    tripleStoreConfiguration.forEach((config) => {
+        promises.push(async () => {
+            const tripleStoreModuleManager = new TripleStoreModuleManager({config, logger: this.logger});
+            await tripleStoreModuleManager.initialize()
+            for (const implementationName of tripleStoreModuleManager.getImplementationNames()) {
+                const {config} = tripleStoreModuleManager.getImplementation(implementationName);
+                Object.keys(config.repositories).map(async (repository) => {
+                        console.log('Removing triple store configuration:', JSON.stringify(config, null, 4));
+                        await tripleStoreModuleManager.deleteRepository(implementationName, repository);
+                    }
+                )
+            }
+        })
+    })
 
-    // delete ot-graphdb repositories
     Promise.all(promises)
         .then(() => {
             con.end();
         })
         .then(() => {
-            Promise.all(deleteTripleStore).then(()=>{
-                this.logger.log(
-                    'Completed scenario: ',
-                    testCase.pickle.name,
-                    `${testCase.gherkinDocument.uri}:${testCase.gherkinDocument.feature.location.line}`,
-                );
-                this.logger.log(
-                    'with status: ',
-                    testCase.result.status,
-                    ' and duration: ',
-                    testCase.result.duration,
-                    ' miliseconds.',
-                );
-                done();
-            })
+            this.logger.log(
+                'Completed scenario: ',
+                testCase.pickle.name,
+                `${testCase.gherkinDocument.uri}:${testCase.gherkinDocument.feature.location.line}`,
+            );
+            this.logger.log(
+                'with status: ',
+                testCase.result.status,
+                ' and duration: ',
+                testCase.result.duration,
+                ' miliseconds.',
+            );
+            done();
         });
 });
 
