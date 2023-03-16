@@ -1,4 +1,4 @@
-import async from 'async';
+import { queue } from 'async';
 import { setTimeout as sleep } from 'timers/promises';
 import Command from './command.js';
 import {
@@ -32,7 +32,7 @@ class CommandExecutor {
         this.verboseLoggingEnabled = this.config.commandExecutorVerboseLoggingEnabled;
 
         const that = this;
-        this.queue = async.queue(async (command, callback) => {
+        this.queue = queue(async (command) => {
             try {
                 while (!that.started) {
                     if (that.verboseLoggingEnabled) {
@@ -49,8 +49,6 @@ class CommandExecutor {
                 this.logger.error(`Something went really wrong! OT-node shutting down... ${e}`);
                 process.exit(1);
             }
-
-            callback();
         }, this.parallelism);
     }
 

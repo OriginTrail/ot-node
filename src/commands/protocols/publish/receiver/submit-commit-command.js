@@ -111,47 +111,10 @@ class SubmitCommitCommand extends EpochCommand {
             keyword,
             hashFunctionId,
             epoch,
-            async (result) => {
-                if (!result.error) {
-                    const currentEpochStartTime =
-                        agreementData.startTime + agreementData.epochLength * epoch;
+            async (error) => {
+                if (error != null) {
+                    that.logger.warn(error.message);
 
-                    const proofWindowDurationPerc =
-                        await that.blockchainModuleManager.getProofWindowDurationPerc(blockchain);
-
-                    const proofWindowDuration =
-                        (agreementData.epochLength * proofWindowDurationPerc) / 100;
-
-                    const proofWindowStartTime =
-                        currentEpochStartTime +
-                        Math.floor(
-                            (agreementData.epochLength * agreementData.proofWindowOffsetPerc) / 100,
-                        );
-                    // we are not using Date.now() here becouse we have an issue with hardhat blockchain time
-                    const timeNow = await that.blockchainModuleManager.getBlockchainTimestamp();
-                    const delay =
-                        that.serviceAgreementService.randomIntFromInterval(
-                            proofWindowStartTime + 0.1 * proofWindowDuration,
-                            proofWindowStartTime + proofWindowDuration - 0.1 * proofWindowDuration,
-                        ) - timeNow;
-
-                    that.logger.trace(
-                        `Scheduling calculateProofsCommand for agreement id: ${agreementId} in ${delay} seconds`,
-                    );
-
-                    await that.commandExecutor.add({
-                        name: 'calculateProofsCommand',
-                        delay: delay * 1000,
-                        data: { ...command.data, proofWindowStartTime },
-                        transactional: false,
-                    });
-                    that.operationIdService.emitChangeEvent(
-                        OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
-                        operationId,
-                        agreementId,
-                        epoch,
-                    );
-                } else {
                     await that.scheduleNextEpochCheck(
                         blockchain,
                         agreementId,
@@ -165,6 +128,53 @@ class SubmitCommitCommand extends EpochCommand {
                         assertionId,
                     );
                 }
+
+                that.logger.trace(
+                    `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
+                        `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
+                        `hash function id: ${hashFunctionId}. Retry number ${
+                            COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1
+                        }`,
+                );
+
+                const currentEpochStartTime =
+                    agreementData.startTime + agreementData.epochLength * epoch;
+
+                const proofWindowDurationPerc =
+                    await that.blockchainModuleManager.getProofWindowDurationPerc(blockchain);
+
+                const proofWindowDuration =
+                    (agreementData.epochLength * proofWindowDurationPerc) / 100;
+
+                const proofWindowStartTime =
+                    currentEpochStartTime +
+                    Math.floor(
+                        (agreementData.epochLength * agreementData.proofWindowOffsetPerc) / 100,
+                    );
+                // we are not using Date.now() here becouse we have an issue with hardhat blockchain time
+                const timeNow = await that.blockchainModuleManager.getBlockchainTimestamp();
+                const delay =
+                    that.serviceAgreementService.randomIntFromInterval(
+                        proofWindowStartTime + 0.1 * proofWindowDuration,
+                        proofWindowStartTime + proofWindowDuration - 0.1 * proofWindowDuration,
+                    ) - timeNow;
+
+                that.logger.trace(
+                    `Scheduling calculateProofsCommand for agreement id: ${agreementId} in ${delay} seconds`,
+                );
+
+                await that.commandExecutor.add({
+                    name: 'calculateProofsCommand',
+                    delay: delay * 1000,
+                    data: { ...command.data, proofWindowStartTime },
+                    transactional: false,
+                });
+                that.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
+                    operationId,
+                    agreementId,
+                    epoch,
+                );
             },
         );
 

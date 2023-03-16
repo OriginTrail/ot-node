@@ -81,8 +81,10 @@ class SubmitProofsCommand extends EpochCommand {
             epoch,
             proof,
             leaf,
-            async (result) => {
-                if (!result.error) {
+            async (error) => {
+                if (error != null) {
+                    that.logger.warn(error.message);
+                } else {
                     that.logger.trace(
                         `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
                             `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
@@ -90,8 +92,6 @@ class SubmitProofsCommand extends EpochCommand {
                                 COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
                             }`,
                     );
-                } else {
-                    that.logger.warn(result.error.message);
                 }
                 await that.scheduleNextEpochCheck(
                     blockchain,

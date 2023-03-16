@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import axios from 'axios';
-import async from 'async';
+import { queue } from 'async';
 import { setTimeout as sleep } from 'timers/promises';
 import { createRequire } from 'module';
 
@@ -46,18 +46,9 @@ class Web3Service {
     }
 
     initializeTransactionQueue(concurrency) {
-        this.transactionQueue = async.queue(async (args, cb) => {
+        this.transactionQueue = queue(async (args) => {
             const { contractInstance, functionName, transactionArgs } = args;
-            try {
-                const result = await this._executeContractFunction(
-                    contractInstance,
-                    functionName,
-                    transactionArgs,
-                );
-                cb({ result });
-            } catch (error) {
-                cb({ error });
-            }
+            await this._executeContractFunction(contractInstance, functionName, transactionArgs);
         }, concurrency);
     }
 
@@ -472,6 +463,8 @@ class Web3Service {
                     'Sending signed transaction to blockchain, calling method: ' +
                         `${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}`,
                 );
+                if (functionName === 'submitCommit')
+                    throw Error('Transaction was not mined within');
                 result = await contractInstance[functionName](...args, {
                     gasPrice,
                     gasLimit: gas,
