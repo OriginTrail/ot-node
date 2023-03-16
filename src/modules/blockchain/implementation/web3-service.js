@@ -463,8 +463,6 @@ class Web3Service {
                     'Sending signed transaction to blockchain, calling method: ' +
                         `${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}`,
                 );
-                if (functionName === 'submitCommit')
-                    throw Error('Transaction was not mined within');
                 result = await contractInstance[functionName](...args, {
                     gasPrice,
                     gasLimit: gas,
