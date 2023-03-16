@@ -58,5 +58,14 @@ class HttpApiHelper {
             throw Error(`Unable to publish: ${e.message}`);
         }
     }
+    async update(nodeRpcUrl, requestBody) {
+        return axios({
+            method: 'post',
+            url: `${nodeRpcUrl}/update`,
+            data: requestBody,
+        }).catch((e) => {
+            throw Error(`Unable to update: ${e.message}`);
+        });
+    }
 }
 export default HttpApiHelper;

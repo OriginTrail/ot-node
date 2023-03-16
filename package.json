@@ -16,6 +16,7 @@
         "test:unit": "nyc --all mocha --exit $(find test/unit -name '*.js')",
         "test:bdd:release": "cucumber-js --tags=@release --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/",
         "test:bdd:publish-errors": "cucumber-js --tags=@publish-errors --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/",
+        "test:bdd:update-errors": "cucumber-js --tags=@update-errors --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/",
         "test:bdd:get-errors": "cucumber-js --tags=@get-errors --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/",
         "lint": "eslint .",
         "set-ask": "node scripts/set-ask.js",

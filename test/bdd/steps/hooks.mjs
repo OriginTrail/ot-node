@@ -4,6 +4,7 @@ import slugify from 'slugify';
 import fs from 'fs';
 import mysql from 'mysql2';
 import { NODE_ENVIRONMENTS } from '../../../src/constants/constants.js';
+import TripleStoreModuleManager from "../../../src/modules/triple-store/triple-store-module-manager.js";
 
 process.env.NODE_ENV = NODE_ENVIRONMENTS.TEST;
 
@@ -25,17 +26,17 @@ Before(function beforeMethod(testCase, done) {
     done();
 });
 
-After(function afterMethod(testCase, done) {
-    const graphRepositoryNames = [];
+After(async function afterMethod(testCase, done) {
+    const tripleStoreConfiguration = [];
     const databaseNames = [];
     for (const key in this.state.nodes) {
         this.state.nodes[key].forkedNode.kill();
-        graphRepositoryNames.push(this.state.nodes[key].configuration.graphDatabase.name);
+        tripleStoreConfiguration.push({modules: {tripleStore: this.state.nodes[key].configuration.modules.tripleStore}});
         databaseNames.push(this.state.nodes[key].configuration.operationalDatabase.databaseName);
     }
     this.state.bootstraps.forEach((node) => {
         node.forkedNode.kill();
-        graphRepositoryNames.push(node.configuration.graphDatabase.name);
+        tripleStoreConfiguration.push({modules: {tripleStore: node.configuration.modules.tripleStore}});
         databaseNames.push(node.configuration.operationalDatabase.databaseName);
     });
     if (this.state.localBlockchain) {
@@ -63,17 +64,20 @@ After(function afterMethod(testCase, done) {
     });
     promises.push(con);
 
-    // graphRepositoryNames.forEach((element) => {
-    //     promises.push(axios
-    //         .delete(`http://localhost:9999/blazegraph/namespace/${element}`, {})
-    //         .catch((e) =>
-    //             this.logger.error(
-    //                 `Error while deleting ${this.getName()} triple store repository: ${element}. Error: ${
-    //                     e.message
-    //                 }`,
-    //             ),
-    //         ));
-    // });
+    for (const config of tripleStoreConfiguration) {
+        console.log('Removing triple store configuration:', JSON.stringify(config, null, 4));
+        const tripleStoreModuleManager = new TripleStoreModuleManager({config, logger: this.logger});
+        await tripleStoreModuleManager.initialize();
+
+        for (const implementationName of tripleStoreModuleManager.getImplementationNames()) {
+            const {module, config} = tripleStoreModuleManager.getImplementation(implementationName);
+            await Promise.all(
+                Object.keys(config.repositories).map((repository) =>
+                    module.deleteRepository(repository),
+                ),
+            );
+        }
+    }
 
     // delete ot-graphdb repositories
     Promise.all(promises)
