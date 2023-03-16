@@ -3,11 +3,7 @@ import { Before, BeforeAll, After, AfterAll } from '@cucumber/cucumber';
 import slugify from 'slugify';
 import fs from 'fs';
 import mysql from 'mysql2';
-import graphdb from 'graphdb';
 import { NODE_ENVIRONMENTS } from '../../../src/constants/constants.js';
-import axios from "axios";
-
-const { http, server } = graphdb;
 
 process.env.NODE_ENV = NODE_ENVIRONMENTS.TEST;
 

@@ -49,10 +49,12 @@ class LocalBlockchain {
         });
 
         this.provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
-        await this.provider.ready;
 
-        const privateKeysFile = await readFile('test/bdd/steps/api/datasets/privateKeys.json');
-        const publicKeysFile = await readFile('test/bdd/steps/api/datasets/publicKeys.json');
+        const [privateKeysFile, publicKeysFile] = await Promise.all([
+            readFile('test/bdd/steps/api/datasets/privateKeys.json'),
+            readFile('test/bdd/steps/api/datasets/publicKeys.json'),
+        ]);
+
         const privateKeys = JSON.parse(privateKeysFile.toString());
         const publicKeys = JSON.parse(publicKeysFile.toString());
 
@@ -60,8 +62,12 @@ class LocalBlockchain {
             address: publicKeys[index],
             privateKey,
         }));
+
+        
         const wallet = new ethers.Wallet(this.wallets[0].privateKey, this.provider);
         this.hubContract = new ethers.Contract(hubContractAddress, Hub, wallet);
+
+        await this.provider.ready;
         const parametersStorageAddress = await this.hubContract.getContractAddress(
             'ParametersStorage',
         );
