@@ -49,7 +49,7 @@
         "@polkadot/util": "^10.1.7",
         "@polkadot/util-crypto": "^10.1.7",
         "chai": "^4.3.6",
-        "dkg.js": "^6.0.0-beta.3.5.1",
+        "dkg.js": "file:../dkg.js",
         "eslint": "^8.23.0",
         "eslint-config-airbnb": "^19.0.4",
         "eslint-config-prettier": "^8.5.0",

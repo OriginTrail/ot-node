@@ -26,7 +26,7 @@ Before(function beforeMethod(testCase, done) {
     done();
 });
 
-After(async function afterMethod(testCase, done) {
+After(function afterMethod(testCase, done) {
     const tripleStoreConfiguration = [];
     const databaseNames = [];
     for (const key in this.state.nodes) {
@@ -63,21 +63,23 @@ After(async function afterMethod(testCase, done) {
         promises.push(con.promise().query(sql));
     });
     promises.push(con);
-
-    for (const config of tripleStoreConfiguration) {
-        console.log('Removing triple store configuration:', JSON.stringify(config, null, 4));
-        const tripleStoreModuleManager = new TripleStoreModuleManager({config, logger: this.logger});
-        await tripleStoreModuleManager.initialize();
-
-        for (const implementationName of tripleStoreModuleManager.getImplementationNames()) {
-            const {module, config} = tripleStoreModuleManager.getImplementation(implementationName);
-            await Promise.all(
-                Object.keys(config.repositories).map((repository) =>
-                    module.deleteRepository(repository),
-                ),
-            );
-        }
-    }
+    const deleteTripleStore = [];
+    // for (const config of tripleStoreConfiguration) {
+    //     console.log('Removing triple store configuration:', JSON.stringify(config, null, 4));
+    //     const tripleStoreModuleManager = new TripleStoreModuleManager({config, logger: this.logger});
+    //     tripleStoreModuleManager.initialize().then(()=>{
+    //         for (const implementationName of tripleStoreModuleManager.getImplementationNames()) {
+    //             const {module, config} = tripleStoreModuleManager.getImplementation(implementationName);
+    //             deleteTripleStore.push(
+    //                 Object.keys(config.repositories).map((repository) =>
+    //                     module.deleteRepository(repository),
+    //                 ),
+    //             );
+    //         }
+    //     });
+    //
+    //
+    // }
 
     // delete ot-graphdb repositories
     Promise.all(promises)
@@ -85,19 +87,21 @@ After(async function afterMethod(testCase, done) {
             con.end();
         })
         .then(() => {
-            this.logger.log(
-                'Completed scenario: ',
-                testCase.pickle.name,
-                `${testCase.gherkinDocument.uri}:${testCase.gherkinDocument.feature.location.line}`,
-            );
-            this.logger.log(
-                'with status: ',
-                testCase.result.status,
-                ' and duration: ',
-                testCase.result.duration,
-                ' miliseconds.',
-            );
-            done();
+            Promise.all(deleteTripleStore).then(()=>{
+                this.logger.log(
+                    'Completed scenario: ',
+                    testCase.pickle.name,
+                    `${testCase.gherkinDocument.uri}:${testCase.gherkinDocument.feature.location.line}`,
+                );
+                this.logger.log(
+                    'with status: ',
+                    testCase.result.status,
+                    ' and duration: ',
+                    testCase.result.duration,
+                    ' miliseconds.',
+                );
+                done();
+            })
         });
 });
 

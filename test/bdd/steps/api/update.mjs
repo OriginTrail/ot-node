@@ -74,7 +74,7 @@ Given('I wait for last update to finalize', { timeout: 80000 }, async function p
     const maxRetryCount = 5;
     for (retryCount = 0; retryCount < maxRetryCount; retryCount += 1) {
         this.logger.log(
-            `Getting Update result for operation id: ${updateData.operationId} on node: ${udpateData.nodeId}`,
+            `Getting Update result for operation id: ${updateData.operationId} on node: ${updateData.nodeId}`,
         );
         // eslint-disable-next-line no-await-in-loop
         const updateResult = await httpApiHelper.getOperationResult(
@@ -83,9 +83,9 @@ Given('I wait for last update to finalize', { timeout: 80000 }, async function p
         );
         this.logger.log(`Operation status: ${updateResult.data.status}`);
         if (['COMPLETED', 'FAILED'].includes(updateResult.data.status)) {
-            this.state.lastPublishData.result = updateResult;
-            this.state.lastPublishData.status = updateResult.data.status;
-            this.state.lastPublishData.errorType = updateResult.data.data?.errorType;
+            this.state.lastUpdateData.result = updateResult;
+            this.state.lastUpdateData.status = updateResult.data.status;
+            this.state.lastUpdateData.errorType = updateResult.data.data?.errorType;
             break;
         }
         if (retryCount === maxRetryCount - 1) {
