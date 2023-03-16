@@ -13,8 +13,75 @@ function createTestGraph(id, type, values) {
 // XSD:DECIMAL
 let id = 'test:decimal';
 let type = 'xsd:decimal';
-let values = [100, 100.0, '100', '100.0'];
+let values = [
+    100,
+    '100',
+    '100.0',
+    -1.23,
+    '-1.23',
+    12678967.543233,
+    '12678967.543233',
+    '+100000.00',
+    '1000000000000000000000000000000000000000000',
+];
 const decimal = createTestGraph(id, type, values);
+
+// XSD:INTEGER
+id = 'test:integer';
+type = 'xsd:integer';
+values = [
+    100,
+    '100',
+    '100.0',
+    -100,
+    '-100',
+    -1.23,
+    '-1.23',
+    12678967.543233,
+    '12678967.543233',
+    '+100000.00',
+    '1000000000000000000000000000000000000000000',
+    '-1000000000000000000000000000000000000000000',
+];
+const integer = createTestGraph(id, type, values);
+
+// XSD:INT
+id = 'test:int';
+type = 'xsd:int';
+values = [
+    100,
+    '100',
+    '100.0',
+    -100,
+    '-100',
+    -1.23,
+    '-1.23',
+    12678967.543233,
+    '12678967.543233',
+    '+100000.00',
+    '1000000000000000000000000000000000000000000',
+    '-1000000000000000000000000000000000000000000',
+];
+const int = createTestGraph(id, type, values);
+
+// XSD:LONG
+id = 'test:long';
+type = 'xsd:long';
+values = [
+    100,
+    '100',
+    '100.0',
+    -100,
+    '-100',
+    -1.23,
+    '-1.23',
+    12678967.543233,
+    '12678967.543233',
+    '+100000.00',
+    '1000000000000000000000000000000000000000000',
+    '-1000000000000000000000000000000000000000000',
+];
+const long = createTestGraph(id, type, values);
 
 // XSD:DATETIME
 id = 'test:dateTime';
@@ -78,5 +145,8 @@ const dateTime = createTestGraph(id, type, values);
 
 export default {
     decimal,
+    integer,
+    int,
+    long,
     dateTime,
 };
