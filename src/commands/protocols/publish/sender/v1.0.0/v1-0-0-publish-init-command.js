@@ -9,13 +9,6 @@ class PublishInitCommand extends ProtocolInitCommand {
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_INIT_ERROR;
     }
 
-    async prepareMessage(command) {
-        const { assertionId, blockchain, contract, tokenId, keyword, hashFunctionId } =
-            command.data;
-
-        return { assertionId, blockchain, contract, tokenId, keyword, hashFunctionId };
-    }
-
     messageTimeout() {
         return NETWORK_MESSAGE_TIMEOUT_MILLS.PUBLISH.INIT;
     }

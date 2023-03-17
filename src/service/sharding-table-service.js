@@ -1,4 +1,3 @@
-import { ethers } from 'ethers';
 import { xor as uint8ArrayXor } from 'uint8arrays/xor';
 import { compare as uint8ArrayCompare } from 'uint8arrays/compare';
 import pipe from 'it-pipe';
@@ -20,12 +19,14 @@ class ShardingTableService {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.networkModuleManager = ctx.networkModuleManager;
         this.validationModuleManager = ctx.validationModuleManager;
-        this.eventEmitter = ctx.eventEmitter;
     }
 
-    async initialize(blockchainId) {
-        await this.pullBlockchainShardingTable(blockchainId);
-        await this.listenOnEvents(blockchainId);
+    async initialize() {
+        const pullBlockchainShardingTables = this.blockchainModuleManager
+            .getImplementationNames()
+            .map((blockchainId) => this.pullBlockchainShardingTable(blockchainId));
+        await Promise.all(pullBlockchainShardingTables);
+
         const that = this;
         await this.networkModuleManager.onPeerConnected((connection) => {
             this.logger.trace(
@@ -72,7 +73,6 @@ class ShardingTableService {
         );
 
         let sliceIndex = 0;
-        // TODO: mark starting block and listen to events from that block
         while (shardingTable.length < shardingTableLength) {
             // eslint-disable-next-line no-await-in-loop
             const nodes = await this.blockchainModuleManager.getShardingTablePage(
@@ -115,114 +115,6 @@ class ShardingTableService {
                 }),
             ),
         );
-    }
-
-    async listenOnEvents(blockchainId) {
-        this.eventEmitter.on(`${blockchainId}-NodeAdded`, async (event) => {
-            const eventData = JSON.parse(event.data);
-            const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                event.blockchain_id,
-                eventData.nodeId,
-            );
-
-            const nodeIdSha256 = await this.validationModuleManager.callHashFunction(
-                // TODO: How to add more hashes?
-                1,
-                nodeId,
-            );
-
-            this.logger.trace(
-                `${blockchainId}-NodeAdded event caught, adding peer id: ${nodeId} to sharding table.`,
-            );
-
-            this.repositoryModuleManager.createPeerRecord(
-                nodeId,
-                event.blockchain_id,
-                this.blockchainModuleManager.convertFromWei(blockchainId, eventData.ask, 'ether'),
-                this.blockchainModuleManager.convertFromWei(blockchainId, eventData.stake, 'ether'),
-                new Date(0),
-                nodeIdSha256,
-            );
-
-            this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
-        });
-
-        this.eventEmitter.on(`${blockchainId}-NodeRemoved`, (event) => {
-            const eventData = JSON.parse(event.data);
-            const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                event.blockchain_id,
-                eventData.nodeId,
-            );
-            this.logger.trace(
-                `${blockchainId}-NodeRemoved event caught, removing peer id: ${nodeId} from sharding table.`,
-            );
-            this.repositoryModuleManager.removePeerRecord(blockchainId, nodeId);
-
-            this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
-        });
-
-        this.eventEmitter.on(`${blockchainId}-StakeIncreased`, async (event) => {
-            const eventData = JSON.parse(event.data);
-            const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                event.blockchain_id,
-                eventData.nodeId,
-            );
-            this.logger.trace(
-                `${blockchainId}-StakeIncreased event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
-            );
-            this.repositoryModuleManager.updatePeerStake(
-                blockchainId,
-                nodeId,
-                ethers.utils.formatUnits(
-                    await this.blockchainModuleManager.getNodeStake(
-                        blockchainId,
-                        eventData.identityId,
-                    ),
-                    'ether',
-                ),
-            );
-            this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
-        });
-
-        this.eventEmitter.on(`${blockchainId}-StakeWithdrawalStarted`, async (event) => {
-            const eventData = JSON.parse(event.data);
-            const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                event.blockchain_id,
-                eventData.nodeId,
-            );
-            this.logger.trace(
-                `${blockchainId}-StakeWithdrawalStarted event caught, updating stake value for peer id: ${nodeId} in sharding table.`,
-            );
-            this.repositoryModuleManager.updatePeerStake(
-                blockchainId,
-                nodeId,
-                ethers.utils.formatUnits(
-                    await this.blockchainModuleManager.getNodeStake(
-                        blockchainId,
-                        eventData.identityId,
-                    ),
-                    'ether',
-                ),
-            );
-            this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
-        });
-
-        this.eventEmitter.on(`${blockchainId}-AskUpdated`, (event) => {
-            const eventData = JSON.parse(event.data);
-            const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                event.blockchain_id,
-                eventData.nodeId,
-            );
-            this.logger.trace(
-                `${blockchainId}-AskUpdated event caught, updating ask value for peer id: ${nodeId} in sharding table.`,
-            );
-            this.repositoryModuleManager.updatePeerAsk(
-                blockchainId,
-                nodeId,
-                this.blockchainModuleManager.convertFromWei(blockchainId, eventData.ask, 'ether'),
-            );
-            this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
-        });
     }
 
     async findNeighbourhood(blockchainId, key, r2, hashFunctionId, filterLastSeen) {

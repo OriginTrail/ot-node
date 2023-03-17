@@ -25,7 +25,10 @@ class OperationService {
     }
 
     async getOperationStatus(operationId) {
-        return this.repositoryModuleManager.getOperationStatus(this.operationName, operationId);
+        return this.repositoryModuleManager.getOperationStatus(
+            this.getOperationName(),
+            operationId,
+        );
     }
 
     async getResponsesStatuses(responseStatus, errorMessage, operationId, keyword) {
@@ -118,7 +121,7 @@ class OperationService {
 
         if (assertionId !== calculatedAssertionId) {
             throw Error(
-                `Invalid assertion id. Received value from blockchain: ${assertionId}, calculated: ${calculatedAssertionId}`,
+                `Invalid assertion id. Received value: ${assertionId}, calculated: ${calculatedAssertionId}`,
             );
         }
 

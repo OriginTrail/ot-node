@@ -10,6 +10,13 @@ export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN.div(UINT32_MAX_BN);
 
 export const SCHEMA_CONTEXT = 'http://schema.org/';
 
+export const PRIVATE_ASSERTION_PREDICATE =
+    'https://ontology.origintrail.io/dkg/1.0#privateAssertionID';
+
+export const COMMIT_BLOCK_DURATION_IN_BLOCKS = 5;
+export const BLOCK_TIME = 12;
+export const COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS = 2;
+
 export const TRANSACTION_POLLING_TIMEOUT = 50;
 
 export const LIBP2P_KEY_DIRECTORY = 'libp2p';
@@ -28,21 +35,29 @@ export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
 
 export const MAX_FILE_SIZE = 2621440;
 
+export const GET_STATES = { LATEST: 'LATEST', LATEST_FINALIZED: 'LATEST_FINALIZED' };
 export const BYTES_IN_KILOBYTE = 1024;
 
 export const BYTES_IN_MEGABYTE = BYTES_IN_KILOBYTE * BYTES_IN_KILOBYTE;
 
 export const PUBLISH_TYPES = { ASSERTION: 'assertion', ASSET: 'asset', INDEX: 'index' };
 
-export const DHT_TYPES = { DUAL: 'dual', WAN: 'wan', LAN: 'lan' };
+export const DEFAULT_GET_STATE = GET_STATES.LATEST;
 
 export const PEER_OFFLINE_LIMIT = 24 * 60 * 60 * 1000;
+
+export const CONTENT_ASSET_HASH_FUNCTION_ID = 1;
 
 export const TRIPLE_STORE_REPOSITORIES = {
     PUBLIC_CURRENT: 'publicCurrent',
     PUBLIC_HISTORY: 'publicHistory',
     PRIVATE_CURRENT: 'privateCurrent',
     PRIVATE_HISTORY: 'privateHistory',
+};
+
+export const PENDING_STORAGE_REPOSITORIES = {
+    PUBLIC: 'public',
+    PRIVATE: 'private',
 };
 
 export const REQUIRED_MODULES = [
@@ -122,6 +137,7 @@ export const DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
 
 export const COMMAND_RETRIES = {
     SUBMIT_COMMIT: 3,
+    SUBMIT_UPDATE_COMMIT: 3,
     SUBMIT_PROOFS: 3,
 };
 
@@ -160,6 +176,10 @@ export const NETWORK_MESSAGE_TIMEOUT_MILLS = {
         INIT: 60 * 1000,
         REQUEST: 60 * 1000,
     },
+    UPDATE: {
+        INIT: 60 * 1000,
+        REQUEST: 60 * 1000,
+    },
     GET: {
         INIT: 60 * 1000,
         REQUEST: 60 * 1000,
@@ -170,11 +190,10 @@ export const MAX_OPEN_SESSIONS = 10;
 
 export const ERROR_TYPE = {
     DIAL_PROTOCOL_ERROR: 'DialProtocolError',
+    VALIDATE_ASSET_ERROR: 'ValidateAssetError',
     PUBLISH: {
         PUBLISH_START_ERROR: 'PublishStartError',
         PUBLISH_ROUTE_ERROR: 'PublishRouteError',
-        PUBLISH_VALIDATE_ASSERTION_ERROR: 'PublishValidateAssertionError',
-        PUBLISH_VALIDATE_ASSERTION_REMOTE_ERROR: 'PublishValidateAssertionRemoteError',
         PUBLISH_LOCAL_STORE_ERROR: 'PublishLocalStoreError',
         PUBLISH_LOCAL_STORE_REMOTE_ERROR: 'PublishLocalStoreRemoteError',
         PUBLISH_FIND_NODES_ERROR: 'PublishFindNodesError',
@@ -182,6 +201,18 @@ export const ERROR_TYPE = {
         PUBLISH_STORE_REQUEST_ERROR: 'PublishStoreRequestError',
         PUBLISH_ERROR: 'PublishError',
         PUBLISH_REMOTE_ERROR: 'PublishRemoteError',
+    },
+    UPDATE: {
+        UPDATE_INIT_ERROR: 'UpdateInitError',
+        UPDATE_REQUEST_ERROR: 'UpdateRequestError',
+        UPDATE_START_ERROR: 'UpdateStartError',
+        UPDATE_ROUTE_ERROR: 'UpdateRouteError',
+        UPDATE_LOCAL_STORE_ERROR: 'UpdateLocalStoreError',
+        UPDATE_LOCAL_STORE_REMOTE_ERROR: 'UpdateLocalStoreRemoteError',
+        UPDATE_ERROR: 'UpdateError',
+        UPDATE_STORE_INIT_ERROR: 'UpdateStoreInitError',
+        UPDATE_REMOTE_ERROR: 'UpdateRemoteError',
+        UPDATE_DELETE_PENDING_STATE_ERROR: 'UpdateDeletePendingStateError',
     },
     GET: {
         GET_ASSERTION_ID_ERROR: 'GetAssertionIdError',
@@ -205,6 +236,7 @@ export const ERROR_TYPE = {
         EPOCH_CHECK_ERROR: 'EpochCheckError',
         SUBMIT_COMMIT_ERROR: 'SubmitCommitError',
         SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
+        SUBMIT_UPDATE_COMMIT_ERROR: 'SubmitUpdateCommitError',
     },
 };
 export const OPERATION_ID_STATUS = {
@@ -215,19 +247,15 @@ export const OPERATION_ID_STATUS = {
     FIND_NODES_END: 'FIND_NODES_END',
     FIND_NODES_LOCAL_START: 'FIND_NODES_LOCAL_START',
     FIND_NODES_LOCAL_END: 'FIND_NODES_LOCAL_END',
-    FIND_NODES_OPEN_CONNECTION_START: 'FIND_NODES_OPEN_CONNECTION_START',
-    FIND_NODES_OPEN_CONNECTION_END: 'FIND_NODES_OPEN_CONNECTION_END',
-    FIND_NODES_CREATE_STREAM_START: 'FIND_NODES_CREATE_STREAM_START',
-    FIND_NODES_CREATE_STREAM_END: 'FIND_NODES_CREATE_STREAM_END',
-    FIND_NODES_SEND_MESSAGE_START: 'FIND_NODES_SEND_MESSAGE_START',
-    FIND_NODES_SEND_MESSAGE_END: 'FIND_NODES_SEND_MESSAGE_END',
     DIAL_PROTOCOL_START: 'DIAL_PROTOCOL_START',
     DIAL_PROTOCOL_END: 'DIAL_PROTOCOL_END',
+    VALIDATE_ASSET_START: 'VALIDATE_ASSET_START',
+    VALIDATE_ASSET_END: 'VALIDATE_ASSET_END',
+    VALIDATE_ASSET_REMOTE_START: 'VALIDATE_ASSET_REMOTE_START',
+    VALIDATE_ASSET_REMOTE_END: 'VALIDATE_ASSET_REMOTE_END',
     PUBLISH: {
-        VALIDATING_ASSERTION_START: 'VALIDATING_ASSERTION_START',
-        VALIDATING_ASSERTION_END: 'VALIDATING_ASSERTION_END',
-        VALIDATING_ASSERTION_REMOTE_START: 'VALIDATING_ASSERTION_REMOTE_START',
-        VALIDATING_ASSERTION_REMOTE_END: 'VALIDATING_ASSERTION_REMOTE_END',
+        VALIDATING_PUBLISH_ASSERTION_REMOTE_START: 'VALIDATING_PUBLISH_ASSERTION_REMOTE_START',
+        VALIDATING_PUBLISH_ASSERTION_REMOTE_END: 'VALIDATING_PUBLISH_ASSERTION_REMOTE_END',
         INSERTING_ASSERTION: 'INSERTING_ASSERTION',
         PUBLISHING_ASSERTION: 'PUBLISHING_ASSERTION',
         PUBLISH_START: 'PUBLISH_START',
@@ -238,6 +266,16 @@ export const OPERATION_ID_STATUS = {
         PUBLISH_REPLICATE_START: 'PUBLISH_REPLICATE_START',
         PUBLISH_REPLICATE_END: 'PUBLISH_REPLICATE_END',
         PUBLISH_END: 'PUBLISH_END',
+    },
+    UPDATE: {
+        UPDATE_START: 'UPDATE_START',
+        UPDATE_INIT_START: 'UPDATE_INIT_START',
+        UPDATE_INIT_END: 'UPDATE_INIT_END',
+        UPDATE_REPLICATE_START: 'UPDATE_REPLICATE_START',
+        UPDATE_REPLICATE_END: 'UPDATE_REPLICATE_END',
+        VALIDATING_UPDATE_ASSERTION_REMOTE_START: 'VALIDATING_UPDATE_ASSERTION_REMOTE_START',
+        VALIDATING_UPDATE_ASSERTION_REMOTE_END: 'VALIDATING_UPDATE_ASSERTION_REMOTE_END',
+        UPDATE_END: 'UPDATE_END',
     },
     GET: {
         ASSERTION_EXISTS_LOCAL_START: 'ASSERTION_EXISTS_LOCAL_START',
@@ -262,18 +300,8 @@ export const OPERATION_ID_STATUS = {
         CALCULATE_PROOFS_END: 'CALCULATE_PROOFS_END',
         SUBMIT_PROOFS_START: 'SUBMIT_PROOFS_START',
         SUBMIT_PROOFS_END: 'SUBMIT_PROOFS_END',
-    },
-    SEARCH_ASSERTIONS: {
-        VALIDATING_QUERY: 'VALIDATING_QUERY',
-        SEARCHING_ASSERTIONS: 'SEARCHING_ASSERTIONS',
-        FAILED: 'FAILED',
-        COMPLETED: 'COMPLETED',
-        SEARCH_START: 'SEARCH_START',
-        SEARCH_END: 'SEARCH_END',
-    },
-    SEARCH_ENTITIES: {
-        VALIDATING_QUERY: 'VALIDATING_QUERY',
-        SEARCHING_ENTITIES: 'SEARCHING_ENTITIES',
+        SUBMIT_UPDATE_COMMIT_START: 'SUBMIT_UPDATE_COMMIT_START',
+        SUBMIT_UPDATE_COMMIT_END: 'SUBMIT_UPDATE_COMMIT_END',
     },
     QUERY: {
         QUERY_INIT_START: 'QUERY_INIT_START',
@@ -291,6 +319,7 @@ export const OPERATION_ID_STATUS = {
 
 export const OPERATIONS = {
     PUBLISH: 'publish',
+    UPDATE: 'update',
     GET: 'get',
 };
 
@@ -324,6 +353,7 @@ export const COMMAND_STATUS = {
  */
 export const NETWORK_PROTOCOLS = {
     STORE: ['/store/1.0.0'],
+    UPDATE: ['/update/1.0.0'],
     GET: ['/get/1.0.0'],
 };
 
@@ -353,6 +383,15 @@ export const QUERY_TYPES = {
 };
 
 /**
+ * Local store types
+ * @type {{TRIPLE: string, PENDING: string}}
+ */
+export const LOCAL_STORE_TYPES = {
+    TRIPLE: 'TRIPLE',
+    PENDING: 'PENDING',
+};
+
+/**
  * Contract names
  * @type {{SHARDING_TABLE_CONTRACT: string}}
  */
@@ -361,4 +400,46 @@ export const CONTRACTS = {
     STAKING_CONTRACT: 'StakingContract',
     PROFILE_CONTRACT: 'ProfileContract',
     HUB_CONTRACT: 'hubContract',
+    COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
+};
+
+export const CONTRACT_EVENTS = {
+    HUB: {
+        NEW_CONTRACT: 'NewContract',
+        CONTRACT_CHANGED: 'ContractChanged',
+        NEW_ASSET_STORAGE: 'NewAssetStorage',
+        ASSET_STORAGE_CHANGED: 'AssetStorageChanged',
+    },
+    SHARDING_TABLE: {
+        NODE_ADDED: 'NodeAdded',
+        NODE_REMOVED: 'NodeRemoved',
+    },
+    STAKING: {
+        STAKE_INCREASED: 'StakeIncreased',
+        STAKE_WITHDRAWAL_STARTED: 'StakeWithdrawalStarted',
+    },
+    PROFILE: {
+        ASK_UPDATED: 'AskUpdated',
+    },
+    COMMIT_MANAGER_V1: {
+        STATE_FINALIZED: 'StateFinalized',
+    },
+};
+
+export const NODE_ENVIRONMENTS = {
+    DEVELOPMENT: 'development',
+    TEST: 'test',
+    TESTNET: 'testnet',
+    MAINNET: 'mainnet',
+};
+
+export const CONTRACT_EVENT_FETCH_INTERVALS = {
+    MAINNET: 10 * 1000,
+    DEVELOPMENT: 4 * 1000,
+};
+
+export const FIXED_GAS_LIMIT_METHODS = {
+    submitCommit: 600000,
+    submitUpdateCommit: 600000,
+    sendProof: 500000,
 };

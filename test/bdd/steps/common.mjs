@@ -10,7 +10,7 @@ const stepsUtils = new StepsUtils();
 
 Given(
     /^I setup (\d+)[ additional]* node[s]*$/,
-    { timeout: 180000 },
+    { timeout: 30000 },
     function nodeSetup(nodeCount, done) {
         this.logger.log(`I setup ${nodeCount} node${nodeCount !== 1 ? 's' : ''}`);
         const wallets = this.state.localBlockchain.getWallets();
@@ -75,7 +75,7 @@ Given(
 
 Given(
     /^(\d+) bootstrap is running$/,
-    { timeout: 60000 },
+    { timeout: 30000 },
     function bootstrapRunning(nodeCount, done) {
         expect(this.state.bootstraps).to.have.length(0);
         expect(nodeCount).to.be.equal(1); // Currently not supported more.
@@ -212,23 +212,23 @@ Given(
     },
 );
 Given(
-    /Last (GET|PUBLISH) operation finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError|PublishStartError|GetAssertionIdError|GetNetworkError|GetLocalError|PublishRouteError]+)$/,
+    /Last (Get|Publish|Update) operation finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError|PublishStartError|GetAssertionIdError|GetNetworkError|GetLocalError|PublishRouteError]+)$/,
     { timeout: 120000 },
     async function lastResolveFinishedCall(operationName, status) {
         this.logger.log(`Last ${operationName} operation finished with status: ${status}`);
-        const operationData = operationName === 'GET' ? 'lastResolveData' : 'lastPublishData';
+        const operationData = `last${operationName}Data`;
         expect(
             !!this.state[operationData],
-            `Last ${operationName} result is undefined. ${operationName} result not started.`,
+            `Last ${operationName} result is undefined. ${operationData} result not started.`,
         ).to.be.equal(true);
         expect(
             !!this.state[operationData].result,
-            `Last ${operationName} result data result is undefined. ${operationName} result is not finished.`,
+            `Last ${operationName} result data result is undefined. ${operationData} result is not finished.`,
         ).to.be.equal(true);
 
         expect(
             this.state[operationData].errorType ?? this.state[operationData].status,
-            `${operationName} result status validation failed`,
+            `${operationData} result status validation failed`,
         ).to.be.equal(status);
     },
 );
@@ -241,4 +241,9 @@ Given(/^I wait for (\d+) seconds$/, { timeout: 100000 }, async function waitFor(
 Given(/^I set R1 to be (\d+)$/, { timeout: 100000 }, async function waitFor(r1) {
     this.logger.log(`I set R1 to be ${r1}`);
     await this.state.localBlockchain.setR1(r1);
+});
+
+Given(/^I set R0 to be (\d+)$/, { timeout: 100000 }, async function waitFor(r0) {
+    this.logger.log(`I set R0 to be ${r0}`);
+    await this.state.localBlockchain.setR0(r0);
 });

@@ -1,6 +1,5 @@
 {
   "validPublishRequestBody": {
-    "publishType": "asset",
     "assertionId": "0xc311cca6412f8453067ac7a04831af411b2963734d107541763c1ef7c8e56f65",
     "assertion": [
       "_:c14n0 <http://schema.org/born> \"Born: April 30, 1916, Petoskey, Michigan, United States\" .",
@@ -9,9 +8,10 @@
       "_:c14n0 <http://schema.org/name> \"Claude Shànnon\" .",
       "_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://schema.org/Person> ."
     ],
-    "blockchain": "ganache",
-    "contract": "0x791ee543738B997B7A125bc849005B62aFD35578",
-    "tokenId": 0
+    "blockchain": "hardhat",
+    "contract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "tokenId": 0,
+    "hashFunctionId": 1
   },
   "blockchainNotDefinedRequestBody": {
     "publishType": "asset",
@@ -29,5 +29,17 @@
   },
   "nonExistentUAL": {
     "id": "did:ganache:0x791ee543738B997B7A125bc849005B62aFD35578/1"
+  },
+  "validUpdateRequestBody": {
+    "assertionId": "0x591503a1c8ba4667dd7afd203025c1bf594d817d8eec71274fe960d69fb8584f",
+    "assertion": [
+      "<uuid:2> <http://schema.org/city> <uuid:Nis> .",
+      "<uuid:2> <http://schema.org/company> \"TL\" .",
+      "<uuid:2> <http://schema.org/user> <uuid:user:2> ."
+    ],
+    "blockchain": "hardhat",
+    "contract": "0xb7278A61aa25c888815aFC32Ad3cC52fF24fE575",
+    "tokenId": 0,
+    "hashFunctionId": 1
   }
 }

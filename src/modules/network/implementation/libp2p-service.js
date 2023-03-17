@@ -23,10 +23,13 @@ import {
     NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES,
     LIBP2P_KEY_DIRECTORY,
     LIBP2P_KEY_FILENAME,
+    NODE_ENVIRONMENTS,
     BYTES_IN_MEGABYTE,
 } from '../../../constants/constants.js';
 
-const devEnvironment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+const devEnvironment =
+    process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+    process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
 
 const initializationObject = {
     addresses: {

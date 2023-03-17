@@ -1,4 +1,3 @@
-import { ethers } from 'ethers';
 import BaseMigration from './base-migration.js';
 
 class PullBlockchainShardingTableMigration extends BaseMigration {
@@ -68,8 +67,16 @@ class PullBlockchainShardingTableMigration extends BaseMigration {
                             return {
                                 peer_id: nodeId,
                                 blockchain_id: blockchainId,
-                                ask: ethers.utils.formatUnits(peer.ask, 'ether'),
-                                stake: ethers.utils.formatUnits(peer.stake, 'ether'),
+                                ask: this.blockchainModuleManager.convertFromWei(
+                                    blockchainId,
+                                    peer.ask,
+                                    'ether',
+                                ),
+                                stake: this.blockchainModuleManager.convertFromWei(
+                                    blockchainId,
+                                    peer.stake,
+                                    'ether',
+                                ),
                                 sha256: await this.validationModuleManager.callHashFunction(
                                     1,
                                     nodeId,

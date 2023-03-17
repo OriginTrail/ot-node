@@ -1,9 +1,9 @@
 #!/bin/sh
 pathToOtNode=$(pwd)
 numberOfNodes=4
-network="ganache"
+network="hardhat"
 tripleStore="ot-graphdb"
-availableNetworks=("ganache" "rinkeby")
+availableNetworks=("hardhat" "rinkeby")
 export $(xargs < $pathToOtNode/.env)
 export ACCESS_KEY=$RPC_ENDPOINT
 # Check for script arguments
@@ -21,14 +21,14 @@ while [ $# -gt 0 ]; do
     # Print script usage if --help is given
     --help)
       echo "Use --nodes=<insert_number_here> to specify the number of nodes to generate"
-      echo "Use --network=<insert_network_name> to specify the network to connect to. Available networks: ganache, rinkeby. Default: ganache"
+      echo "Use --network=<insert_network_name> to specify the network to connect to. Available networks: hardhat, rinkeby. Default: hardhat"
       exit 0
       ;;
     --network=*)
       network="${1#*=}"
       if [[ ! " ${availableNetworks[@]} " =~ " ${network} " ]]
       then
-          echo Invalid network parameter. Available networks: ganache, rinkeby
+          echo Invalid network parameter. Available networks: hardhat, rinkeby
           exit 1
       fi
       ;;
@@ -43,16 +43,17 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
-if [[ $network == ganache ]]
+if [[ $network == hardhat ]]
 then
   echo ================================
-  echo ====== Starting ganache ======
+  echo ====== Starting hardhat ======
   echo ================================
 
   osascript -e "tell app \"Terminal\"
         do script \"cd $pathToOtNode
         node tools/local-network-setup/run-local-blockchain.js\"
     end tell"
+  echo Waiting for hardhat to start and contracts deployment
 fi
 
 if [[ $network == rinkeby ]]

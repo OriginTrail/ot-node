@@ -135,10 +135,10 @@
             }
         },
         "blockchain": {
-            "defaultImplementation": "ganache",
+            "defaultImplementation": "hardhat",
             "implementation": {
-                "ganache": {
-                    "package": "./blockchain/implementation/ganache/ganache-service.js",
+                "hardhat": {
+                    "package": "./blockchain/implementation/hardhat/hardhat-service.js",
                     "config": {
                         "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
                         "rpcEndpoints": [],

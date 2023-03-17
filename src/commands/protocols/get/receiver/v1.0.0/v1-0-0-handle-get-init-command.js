@@ -1,8 +1,10 @@
 import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
 import {
     ERROR_TYPE,
+    GET_STATES,
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
+    PENDING_STORAGE_REPOSITORIES,
     TRIPLE_STORE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
@@ -11,18 +13,41 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
         super(ctx);
         this.tripleStoreService = ctx.tripleStoreService;
         this.operationService = ctx.getService;
+        this.pendingStorageService = ctx.pendingStorageService;
 
         this.errorType = ERROR_TYPE.GET.GET_INIT_REMOTE_ERROR;
     }
 
     async prepareMessage(commandData) {
-        const { assertionId, operationId } = commandData;
+        const { assertionId, operationId, state } = commandData;
+
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.GET.ASSERTION_EXISTS_LOCAL_START,
         );
 
-        const assertionExists = await this.tripleStoreService.assertionExists(
+        let assertionExists;
+        if (
+            state === GET_STATES.LATEST &&
+            commandData.blockchain != null &&
+            commandData.contract != null &&
+            commandData.tokenId != null
+        ) {
+            assertionExists = await this.pendingStorageService.assertionExists(
+                PENDING_STORAGE_REPOSITORIES.PUBLIC,
+                commandData.blockchain,
+                commandData.contract,
+                commandData.tokenId,
+                operationId,
+            );
+            if (assertionExists)
+                return {
+                    messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
+                    messageData: {},
+                };
+        }
+
+        assertionExists = await this.tripleStoreService.assertionExists(
             TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
             assertionId,
         );

@@ -15,7 +15,7 @@ const { u8aToHex } = require('@polkadot/util');
 const { Wallet } = require('@ethersproject/wallet');
 const { joinSignature } = require('@ethersproject/bytes');
 const { _TypedDataEncoder } = require('@ethersproject/hash');
-const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
+const ERC20Token = require('dkg-evm-module/abi/Token.json');
 
 const WALLETS_PATH = path.join(appRootPath.path, 'tools/substrate-accounts-mapping/wallets.json');
 

@@ -8,31 +8,30 @@ import {
     DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
     TRANSACTION_QUEUE_CONCURRENCY,
+    FIXED_GAS_LIMIT_METHODS,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
-const AbstractAsset = require('dkg-evm-module/build/contracts/AbstractAsset.json');
-const AssertionStorage = require('dkg-evm-module/build/contracts/AssertionStorage.json');
-const Staking = require('dkg-evm-module/build/contracts/Staking.json');
-const StakingStorage = require('dkg-evm-module/build/contracts/StakingStorage.json');
-const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
-const HashingProxy = require('dkg-evm-module/build/contracts/HashingProxy.json');
-const Hub = require('dkg-evm-module/build/contracts/Hub.json');
-const IdentityStorage = require('dkg-evm-module/build/contracts/IdentityStorage.json');
-const Log2PLDSF = require('dkg-evm-module/build/contracts/Log2PLDSF.json');
-const ParametersStorage = require('dkg-evm-module/build/contracts/ParametersStorage.json');
-const Profile = require('dkg-evm-module/build/contracts/Profile.json');
-const ProfileStorage = require('dkg-evm-module/build/contracts/ProfileStorage.json');
-const ScoringProxy = require('dkg-evm-module/build/contracts/ScoringProxy.json');
-const ServiceAgreementStorageV1 = require('dkg-evm-module/build/contracts/ServiceAgreementStorageV1.json');
-const ServiceAgreementV1 = require('dkg-evm-module/build/contracts/ServiceAgreementV1.json');
-const ShardingTable = require('dkg-evm-module/build/contracts/ShardingTable.json');
-const ShardingTableStorage = require('dkg-evm-module/build/contracts/ShardingTableStorage.json');
-
-const FIXED_GAS_LIMIT_METHODS = {
-    submitCommit: 300000,
-    sendProof: 400000,
-};
+const AbstractAsset = require('dkg-evm-module/abi/AbstractAsset.json');
+const AssertionStorage = require('dkg-evm-module/abi/AssertionStorage.json');
+const Staking = require('dkg-evm-module/abi/Staking.json');
+const StakingStorage = require('dkg-evm-module/abi/StakingStorage.json');
+const ERC20Token = require('dkg-evm-module/abi/Token.json');
+const HashingProxy = require('dkg-evm-module/abi/HashingProxy.json');
+const Hub = require('dkg-evm-module/abi/Hub.json');
+const IdentityStorage = require('dkg-evm-module/abi/IdentityStorage.json');
+const Log2PLDSF = require('dkg-evm-module/abi/Log2PLDSF.json');
+const ParametersStorage = require('dkg-evm-module/abi/ParametersStorage.json');
+const Profile = require('dkg-evm-module/abi/Profile.json');
+const ProfileStorage = require('dkg-evm-module/abi/ProfileStorage.json');
+const ScoringProxy = require('dkg-evm-module/abi/ScoringProxy.json');
+const ServiceAgreementV1 = require('dkg-evm-module/abi/ServiceAgreementV1.json');
+const CommitManagerV1U1 = require('dkg-evm-module/abi/CommitManagerV1U1.json');
+const ProofManagerV1U1 = require('dkg-evm-module/abi/ProofManagerV1U1.json');
+const ShardingTable = require('dkg-evm-module/abi/ShardingTable.json');
+const ShardingTableStorage = require('dkg-evm-module/abi/ShardingTableStorage.json');
+const ServiceAgreementStorageProxy = require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json');
+const UnfinalizedStateStorage = require('dkg-evm-module/abi/UnfinalizedStateStorage.json');
 
 class Web3Service {
     async initialize(config, logger) {
@@ -42,23 +41,20 @@ class Web3Service {
         this.rpcNumber = 0;
         this.initializeTransactionQueue(TRANSACTION_QUEUE_CONCURRENCY);
         await this.initializeWeb3();
-        this.currentBlock = await this.getBlockNumber();
+        this.startBlock = await this.getBlockNumber();
         await this.initializeContracts();
     }
 
     initializeTransactionQueue(concurrency) {
-        this.transactionQueue = async.queue(async (args, cb) => {
+        this.transactionQueue = async.queue((args, cb) => {
             const { contractInstance, functionName, transactionArgs } = args;
-            try {
-                const result = await this._executeContractFunction(
-                    contractInstance,
-                    functionName,
-                    transactionArgs,
-                );
-                cb({ result });
-            } catch (error) {
-                cb({ error });
-            }
+            this._executeContractFunction(contractInstance, functionName, transactionArgs)
+                .then((result) => {
+                    cb({ result });
+                })
+                .catch((error) => {
+                    cb({ error });
+                });
         }, concurrency);
     }
 
@@ -92,7 +88,7 @@ class Web3Service {
                     );
                 }
                 // eslint-disable-next-line no-await-in-loop
-                await this.provider.ready;
+                await this.providerReady();
                 isRpcConnected = true;
             } catch (e) {
                 this.logger.warn(
@@ -113,11 +109,7 @@ class Web3Service {
         this.logger.info(
             `Initializing contracts with hub contract address: ${this.config.hubContractAddress}`,
         );
-        this.hubContract = new ethers.Contract(
-            this.config.hubContractAddress,
-            Hub.abi,
-            this.wallet,
-        );
+        this.hubContract = new ethers.Contract(this.config.hubContractAddress, Hub, this.wallet);
 
         const parametersStorageAddress = await this.callContractFunction(
             this.hubContract,
@@ -126,7 +118,7 @@ class Web3Service {
         );
         this.ParametersStorageContract = new ethers.Contract(
             parametersStorageAddress,
-            ParametersStorage.abi,
+            ParametersStorage,
             this.wallet,
         );
 
@@ -135,11 +127,7 @@ class Web3Service {
             'getContractAddress',
             ['Staking'],
         );
-        this.StakingContract = new ethers.Contract(
-            stakingContractAddress,
-            Staking.abi,
-            this.wallet,
-        );
+        this.StakingContract = new ethers.Contract(stakingContractAddress, Staking, this.wallet);
 
         const stakingStorageAddress = await this.callContractFunction(
             this.hubContract,
@@ -148,7 +136,7 @@ class Web3Service {
         );
         this.StakingStorageContract = new ethers.Contract(
             stakingStorageAddress,
-            StakingStorage.abi,
+            StakingStorage,
             this.wallet,
         );
 
@@ -159,7 +147,7 @@ class Web3Service {
         );
         this.HashingProxyContract = new ethers.Contract(
             hashingProxyAddress,
-            HashingProxy.abi,
+            HashingProxy,
             this.wallet,
         );
 
@@ -170,7 +158,7 @@ class Web3Service {
         );
         this.ShardingTableContract = new ethers.Contract(
             shardingTableAddress,
-            ShardingTable.abi,
+            ShardingTable,
             this.wallet,
         );
 
@@ -181,7 +169,7 @@ class Web3Service {
         );
         this.ShardingTableStorageContract = new ethers.Contract(
             shardingTableStorageAddress,
-            ShardingTableStorage.abi,
+            ShardingTableStorage,
             this.wallet,
         );
 
@@ -192,7 +180,7 @@ class Web3Service {
         );
         this.AssertionStorageContract = new ethers.Contract(
             assertionStorageAddress,
-            AssertionStorage.abi,
+            AssertionStorage,
             this.wallet,
         );
 
@@ -201,7 +189,7 @@ class Web3Service {
             'getContractAddress',
             ['Token'],
         );
-        this.TokenContract = new ethers.Contract(tokenAddress, ERC20Token.abi, this.wallet);
+        this.TokenContract = new ethers.Contract(tokenAddress, ERC20Token, this.wallet);
 
         const identityStorageAddress = await this.callContractFunction(
             this.hubContract,
@@ -210,7 +198,7 @@ class Web3Service {
         );
         this.IdentityStorageContract = new ethers.Contract(
             identityStorageAddress,
-            IdentityStorage.abi,
+            IdentityStorage,
             this.wallet,
         );
 
@@ -219,7 +207,7 @@ class Web3Service {
             'getContractAddress',
             ['Profile'],
         );
-        this.ProfileContract = new ethers.Contract(profileAddress, Profile.abi, this.wallet);
+        this.ProfileContract = new ethers.Contract(profileAddress, Profile, this.wallet);
 
         const profileStorageAddress = await this.callContractFunction(
             this.hubContract,
@@ -228,7 +216,7 @@ class Web3Service {
         );
         this.ProfileStorageContract = new ethers.Contract(
             profileStorageAddress,
-            ProfileStorage.abi,
+            ProfileStorage,
             this.wallet,
         );
 
@@ -239,18 +227,53 @@ class Web3Service {
         );
         this.ServiceAgreementV1Contract = new ethers.Contract(
             serviceAgreementV1Address,
-            ServiceAgreementV1.abi,
+            ServiceAgreementV1,
             this.wallet,
         );
 
-        const serviceAgreementStorageV1Address = await this.callContractFunction(
+        const commitManagerV1U1Address = await this.callContractFunction(
             this.hubContract,
             'getContractAddress',
-            ['ServiceAgreementStorageV1'],
+            ['CommitManagerV1U1'],
         );
-        this.ServiceAgreementStorageV1Contract = new ethers.Contract(
-            serviceAgreementStorageV1Address,
-            ServiceAgreementStorageV1.abi,
+        this.CommitManagerV1U1Contract = new ethers.Contract(
+            commitManagerV1U1Address,
+            CommitManagerV1U1,
+            this.wallet,
+        );
+
+        const proofManagerV1U1Address = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['ProofManagerV1U1'],
+        );
+        this.ProofManagerV1U1Contract = new ethers.Contract(
+            proofManagerV1U1Address,
+            ProofManagerV1U1,
+            this.wallet,
+        );
+
+        const serviceAgreementStorageProxyAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['ServiceAgreementStorageProxy'],
+        );
+
+        this.ServiceAgreementStorageProxy = new ethers.Contract(
+            serviceAgreementStorageProxyAddress,
+            ServiceAgreementStorageProxy,
+            this.wallet,
+        );
+
+        const unfinalizedStateStorageAddress = await this.callContractFunction(
+            this.hubContract,
+            'getContractAddress',
+            ['UnfinalizedStateStorage'],
+        );
+
+        this.UnfinalizedStateStorageContract = new ethers.Contract(
+            unfinalizedStateStorageAddress,
+            UnfinalizedStateStorage,
             this.wallet,
         );
 
@@ -261,7 +284,7 @@ class Web3Service {
         );
         this.ScoringProxyContract = new ethers.Contract(
             scoringProxyAddress,
-            ScoringProxy.abi,
+            ScoringProxy,
             this.wallet,
         );
 
@@ -270,7 +293,7 @@ class Web3Service {
             'getScoreFunctionContractAddress',
             [1],
         );
-        this.Log2PLDSFContract = new ethers.Contract(log2PLDSFAddress, Log2PLDSF.abi, this.wallet);
+        this.Log2PLDSFContract = new ethers.Contract(log2PLDSFAddress, Log2PLDSF, this.wallet);
 
         this.assetStorageContracts = {};
         const assetStoragesArray = await this.callContractFunction(
@@ -281,7 +304,7 @@ class Web3Service {
         assetStoragesArray.forEach((assetStorage) => {
             this.assetStorageContracts[assetStorage[1].toLowerCase()] = new ethers.Contract(
                 assetStorage[1],
-                AbstractAsset.abi,
+                AbstractAsset,
                 this.wallet,
             );
         });
@@ -292,6 +315,10 @@ class Web3Service {
         );
 
         await this.logBalances();
+    }
+
+    async providerReady() {
+        return this.provider.getNetwork();
     }
 
     getPrivateKey() {
@@ -469,38 +496,29 @@ class Web3Service {
     }
 
     async getAllPastEvents(
+        blockchainId,
         contractName,
-        onEventsReceived,
-        getLastCheckedBlock,
-        updateLastCheckedBlock,
+        lastCheckedBlock,
+        lastCheckedTimestamp,
+        currentBlock,
     ) {
         const contract = this[contractName];
         if (!contract) {
             throw Error(`Error while getting all past events. Unknown contract: ${contractName}`);
         }
 
-        const blockchainId = this.getBlockchainId();
-        const lastCheckedBlockObject = await getLastCheckedBlock(blockchainId, contractName);
-
         let fromBlock;
-
-        if (
-            this.isOlderThan(
-                lastCheckedBlockObject?.last_checked_timestamp,
-                DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
-            )
-        ) {
-            fromBlock = this.currentBlock - 10;
+        if (this.isOlderThan(lastCheckedTimestamp, DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS)) {
+            fromBlock = this.startBlock - 10;
         } else {
-            this.currentBlock = await this.getBlockNumber();
-            fromBlock = lastCheckedBlockObject.last_checked_block + 1;
+            fromBlock = lastCheckedBlock + 1;
         }
 
         let events = [];
-        if (this.currentBlock - fromBlock > MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH) {
+        if (currentBlock - fromBlock > MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH) {
             let iteration = 1;
 
-            while (fromBlock - MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH > this.currentBlock) {
+            while (fromBlock - MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH > currentBlock) {
                 events.concat(
                     await contract.queryFilter(
                         '*',
@@ -512,28 +530,25 @@ class Web3Service {
                 iteration += 1;
             }
         } else {
-            events = await contract.queryFilter('*', fromBlock, this.currentBlock);
+            events = await contract.queryFilter('*', fromBlock, currentBlock);
         }
 
-        await updateLastCheckedBlock(blockchainId, this.currentBlock, Date.now(), contractName);
-        if (events.length > 0) {
-            await onEventsReceived(
-                events.map((event) => ({
-                    contract: contractName,
-                    event: event.event,
-                    data: JSON.stringify(
-                        Object.fromEntries(
-                            Object.entries(event.args).map(([k, v]) => [
-                                k,
-                                ethers.BigNumber.isBigNumber(v) ? v.toString() : v,
-                            ]),
-                        ),
-                    ),
-                    block: event.blockNumber,
-                    blockchainId,
-                })),
-            );
-        }
+        return events
+            ? events.map((event) => ({
+                  contract: contractName,
+                  event: event.event,
+                  data: JSON.stringify(
+                      Object.fromEntries(
+                          Object.entries(event.args).map(([k, v]) => [
+                              k,
+                              ethers.BigNumber.isBigNumber(v) ? v.toString() : v,
+                          ]),
+                      ),
+                  ),
+                  block: event.blockNumber,
+                  blockchainId,
+              }))
+            : [];
     }
 
     isOlderThan(timestamp, olderThanInMills) {
@@ -571,12 +586,48 @@ class Web3Service {
 
     async getLatestAssertionId(assetContractAddress, tokenId) {
         const assetStorageContractInstance =
-            this.assetStorageContracts[assetContractAddress.toLowerCase()];
+            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
         if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
 
         return this.callContractFunction(assetStorageContractInstance, 'getLatestAssertionId', [
             tokenId,
         ]);
+    }
+
+    async getLatestTokenId(assetContractAddress) {
+        return this.provider.getStorageAt(assetContractAddress.toString().toLowerCase(), 7);
+    }
+
+    getAssetStorageContractAddresses() {
+        return Object.keys(this.assetStorageContracts);
+    }
+
+    async getAssertionIds(assetContractAddress, tokenId) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+
+        return this.callContractFunction(assetStorageContractInstance, 'getAssertionIds', [
+            tokenId,
+        ]);
+    }
+
+    async getAssertionIdsLength(assetContractAddress, tokenId) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+
+        return this.callContractFunction(assetStorageContractInstance, 'getAssertionIdsLength', [
+            tokenId,
+        ]);
+    }
+
+    async getUnfinalizedState(tokenId) {
+        return this.callContractFunction(
+            this.UnfinalizedStateStorageContract,
+            'getUnfinalizedState',
+            [tokenId],
+        );
     }
 
     async getAssertionIssuer(assertionId) {
@@ -587,7 +638,7 @@ class Web3Service {
 
     async getAgreementData(agreementId) {
         const result = await this.callContractFunction(
-            this.ServiceAgreementStorageV1Contract,
+            this.ServiceAgreementStorageProxy,
             'getAgreementData',
             [agreementId],
         );
@@ -596,7 +647,8 @@ class Web3Service {
             startTime: result['0'].toNumber(),
             epochsNumber: result['1'],
             epochLength: result['2'].toNumber(),
-            tokenAmount: result['3'],
+            tokenAmount: result['3'][0],
+            updateTokenAmount: result['3'][1],
             scoreFunctionId: result['4'][0],
             proofWindowOffsetPerc: result['4'][1],
         };
@@ -630,17 +682,25 @@ class Web3Service {
     }
 
     async isCommitWindowOpen(agreementId, epoch) {
-        return this.callContractFunction(this.ServiceAgreementV1Contract, 'isCommitWindowOpen', [
+        return this.callContractFunction(this.CommitManagerV1U1Contract, 'isCommitWindowOpen', [
             agreementId,
             epoch,
         ]);
     }
 
-    async getTopCommitSubmissions(agreementId, epoch) {
+    async isUpdateCommitWindowOpen(agreementId, epoch, stateIndex) {
+        return this.callContractFunction(
+            this.CommitManagerV1U1Contract,
+            'isUpdateCommitWindowOpen',
+            [agreementId, epoch, stateIndex],
+        );
+    }
+
+    async getTopCommitSubmissions(agreementId, epoch, stateIndex) {
         const commits = await this.callContractFunction(
-            this.ServiceAgreementV1Contract,
+            this.CommitManagerV1U1Contract,
             'getTopCommitSubmissions',
-            [agreementId, epoch],
+            [agreementId, epoch, stateIndex],
         );
 
         return commits
@@ -668,17 +728,40 @@ class Web3Service {
         return r0;
     }
 
+    async getFinalizationCommitsNumber() {
+        const finalizationCommitsNumber = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'finalizationCommitsNumber',
+            [],
+        );
+        return finalizationCommitsNumber;
+    }
+
     async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch, callback) {
         return this.queueTransaction(
-            this.ServiceAgreementV1Contract,
+            this.CommitManagerV1U1Contract,
             'submitCommit',
             [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch]],
             callback,
         );
     }
 
+    async submitUpdateCommit(
+        assetContractAddress,
+        tokenId,
+        keyword,
+        hashFunctionId,
+        epoch,
+        callback,
+    ) {
+        return this.queueTransaction(this.CommitManagerV1U1Contract, 'submitUpdateCommit', [
+            [assetContractAddress, tokenId, keyword, hashFunctionId, epoch],
+            callback,
+        ]);
+    }
+
     async isProofWindowOpen(agreementId, epoch) {
-        return this.callContractFunction(this.ServiceAgreementV1Contract, 'isProofWindowOpen', [
+        return this.callContractFunction(this.ProofManagerV1U1Contract, 'isProofWindowOpen', [
             agreementId,
             epoch,
         ]);
@@ -686,9 +769,9 @@ class Web3Service {
 
     async getChallenge(assetContractAddress, tokenId, epoch) {
         const result = await this.callContractFunction(
-            this.ServiceAgreementV1Contract,
+            this.ProofManagerV1U1Contract,
             'getChallenge',
-            [this.getPublicKey(), assetContractAddress, tokenId, epoch],
+            [assetContractAddress, tokenId, epoch],
         );
 
         return { assertionId: result['0'], challenge: result['1'] };
@@ -705,7 +788,7 @@ class Web3Service {
         callback,
     ) {
         return this.queueTransaction(
-            this.ServiceAgreementV1Contract,
+            this.ProofManagerV1U1Contract,
             'sendProof',
             [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch, proof, chunkHash]],
             callback,
@@ -798,7 +881,7 @@ class Web3Service {
     async handleError(error, functionName) {
         let isRpcError = false;
         try {
-            await this.provider.ready;
+            await this.provider.getNetwork();
         } catch (rpcError) {
             isRpcError = true;
             this.logger.warn(
@@ -809,6 +892,15 @@ class Web3Service {
             await this.restartService();
         }
         if (!isRpcError) throw error;
+    }
+
+    async getUpdateCommitWindowDuration() {
+        const commitWindowDurationPerc = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'updateCommitWindowDuration',
+            [],
+        );
+        return Number(commitWindowDurationPerc);
     }
 
     async getCommitWindowDurationPerc() {
@@ -876,6 +968,22 @@ class Web3Service {
         });
 
         return params;
+    }
+
+    async getBlockchainTimestamp() {
+        return Math.floor(Date.now() / 1000);
+    }
+
+    async getLatestBlock() {
+        const currentBlock = await this.provider.getBlockNumber();
+        const blockTimestamp = await this.provider.getBlock(currentBlock);
+        return blockTimestamp;
+    }
+
+    async hasPendingUpdate(tokenId) {
+        return this.callContractFunction(this.UnfinalizedStateStorageContract, 'hasPendingUpdate', [
+            tokenId,
+        ]);
     }
 }
 

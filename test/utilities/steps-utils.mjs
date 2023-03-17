@@ -23,7 +23,7 @@ class StepsUtils {
             modules: {
                 blockchain: {
                     implementation: {
-                        ganache: {
+                        hardhat: {
                             config: {
                                 evmOperationalWalletPublicKey: wallet.address,
                                 evmOperationalWalletPrivateKey: wallet.privateKey,
@@ -60,29 +60,29 @@ class StepsUtils {
                 },
                 tripleStore: {
                     implementation: {
-                        'ot-graphdb': {
+                        'ot-blazegraph': {
                             config: {
                                 repositories: {
                                     "privateCurrent": {
-                                        "url": "http://localhost:7200",
+                                        "url": "http://localhost:9999",
                                         "name": "private-current",
                                         "username": "admin",
                                         "password": ""
                                     },
                                     "privateHistory": {
-                                        "url": "http://localhost:7200",
+                                        "url": "http://localhost:9999",
                                         "name": "private-history",
                                         "username": "admin",
                                         "password": ""
                                     },
                                     "publicCurrent": {
-                                        "url": "http://localhost:7200",
+                                        "url": "http://localhost:9999",
                                         "name": "public-current",
                                         "username": "admin",
                                         "password": ""
                                     },
                                     "publicHistory": {
-                                        "url": "http://localhost:7200",
+                                        "url": "http://localhost:9999",
                                         "name": "public-history",
                                         "username": "admin",
                                         "password": ""
