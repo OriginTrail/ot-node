@@ -3,6 +3,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
+    BLOCK_TIME,
 } from '../../../../constants/constants.js';
 
 class SubmitCommitCommand extends EpochCommand {
@@ -33,7 +34,6 @@ class SubmitCommitCommand extends EpochCommand {
             assertionId,
             stateIndex,
         } = command.data;
-
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_START,
             operationId,
@@ -151,7 +151,10 @@ class SubmitCommitCommand extends EpochCommand {
                         agreementId,
                         epoch,
                     );
-                } else {
+                } else if (command.retries - 1 === 0) {
+                    this.logger.error(
+                        `Failed executing submit commit command, maximum number of retries reached. Error: ${result.error.message}. Scheduling next epoch check.`,
+                    );
                     await that.scheduleNextEpochCheck(
                         blockchain,
                         agreementId,
@@ -164,6 +167,25 @@ class SubmitCommitCommand extends EpochCommand {
                         operationId,
                         assertionId,
                     );
+                    that.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
+                        operationId,
+                        agreementId,
+                        epoch,
+                    );
+                } else {
+                    const commandDelay = BLOCK_TIME * 1000; // one block
+                    this.logger.warn(
+                        `Failed executing submit commit command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
+                    );
+                    await this.commandExecutor.add({
+                        name: 'submitCommitCommand',
+                        sequence: [],
+                        delay: commandDelay,
+                        retries: command.retries - 1,
+                        data: command.data,
+                        transactional: false,
+                    });
                 }
             },
         );

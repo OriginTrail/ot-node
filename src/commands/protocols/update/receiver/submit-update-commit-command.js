@@ -3,6 +3,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
+    BLOCK_TIME,
 } from '../../../../constants/constants.js';
 
 class SubmitUpdateCommitCommand extends EpochCommand {
@@ -74,6 +75,27 @@ class SubmitUpdateCommitCommand extends EpochCommand {
             keyword,
             hashFunctionId,
             epoch,
+            async (result) => {
+                if (!result.error) {
+                    this.logger.info('Successfully executed submit update commit');
+                } else if (command.retries - 1 === 0) {
+                    this.logger.error(
+                        `Failed executing submit update commit command, maximum number of retries reached. Error: ${result.error.message}`,
+                    );
+                } else {
+                    const commandDelay = BLOCK_TIME * 1000; // one block
+                    this.logger.warn(
+                        `Failed executing submit update commit command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
+                    );
+                    this.commandExecutor.add({
+                        name: 'submitUpdateCommitCommand',
+                        delay: commandDelay,
+                        retries: command.retries - 1,
+                        data: command.data,
+                        transactional: false,
+                    });
+                }
+            },
         );
 
         return EpochCommand.empty();

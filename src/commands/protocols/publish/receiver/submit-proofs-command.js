@@ -3,6 +3,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
+    BLOCK_TIME,
 } from '../../../../constants/constants.js';
 
 class SubmitProofsCommand extends EpochCommand {
@@ -90,8 +91,24 @@ class SubmitProofsCommand extends EpochCommand {
                                 COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
                             }`,
                     );
+                } else if (command.retries - 1 === 0) {
+                    this.logger.error(
+                        `Failed executing submit proofs command, maximum number of retries reached. Error: ${result.error.message}. Scheduling next epoch check.`,
+                    );
                 } else {
-                    that.logger.warn(result.error.message);
+                    const commandDelay = BLOCK_TIME * 1000; // one block
+                    this.logger.warn(
+                        `Failed executing submit proofs command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
+                    );
+                    await this.commandExecutor.add({
+                        name: 'submitProofsCommand',
+                        sequence: [],
+                        delay: commandDelay,
+                        data: command.data,
+                        retries: command.retries - 1,
+                        transactional: false,
+                    });
+                    return;
                 }
                 await that.scheduleNextEpochCheck(
                     blockchain,

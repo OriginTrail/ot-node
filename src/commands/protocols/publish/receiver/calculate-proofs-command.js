@@ -117,7 +117,6 @@ class CalculateProofsCommand extends EpochCommand {
                 proof,
                 stateIndex,
             },
-            period: 12 * 1000, // todo: get from blockchain / oracle
             retries: COMMAND_RETRIES.SUBMIT_PROOFS,
             transactional: false,
         });

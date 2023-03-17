@@ -244,6 +244,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         keyword,
         hashFunctionId,
         epoch,
+        callback,
     ) {
         return this.callImplementationFunction(blockchain, 'submitUpdateCommit', [
             assetContractAddress,
@@ -251,6 +252,7 @@ class BlockchainModuleManager extends BaseModuleManager {
             keyword,
             hashFunctionId,
             epoch,
+            callback,
         ]);
     }
 
@@ -280,18 +282,16 @@ class BlockchainModuleManager extends BaseModuleManager {
         chunkHash,
         callback,
     ) {
-        if (this.getImplementation(blockchain)) {
-            return this.getImplementation(blockchain).module.sendProof(
-                assetContractAddress,
-                tokenId,
-                keyword,
-                hashFunctionId,
-                epoch,
-                proof,
-                chunkHash,
-                callback,
-            );
-        }
+        return this.callImplementationFunction(blockchain, 'sendProof', [
+            assetContractAddress,
+            tokenId,
+            keyword,
+            hashFunctionId,
+            epoch,
+            proof,
+            chunkHash,
+            callback,
+        ]);
     }
 
     async getR2(blockchain) {
