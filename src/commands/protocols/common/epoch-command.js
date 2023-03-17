@@ -6,6 +6,7 @@ class EpochCommand extends Command {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.operationIdService = ctx.operationIdService;
     }
 
     async scheduleNextEpochCheck(
@@ -78,6 +79,13 @@ class EpochCommand extends Command {
      */
     async recover(command, error) {
         this.logger.warn(`Failed to execute ${command.name}: error: ${error.message}`);
+
+        this.operationIdService.emitChangeEvent(
+            this.errorType,
+            command.data.operationId,
+            command.data.agreementId,
+            command.data.epoch,
+        );
 
         await this.scheduleNextEpochCheck(
             command.data.blockchain,

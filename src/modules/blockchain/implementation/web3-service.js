@@ -46,18 +46,15 @@ class Web3Service {
     }
 
     initializeTransactionQueue(concurrency) {
-        this.transactionQueue = async.queue(async (args, cb) => {
+        this.transactionQueue = async.queue((args, cb) => {
             const { contractInstance, functionName, transactionArgs } = args;
-            try {
-                const result = await this._executeContractFunction(
-                    contractInstance,
-                    functionName,
-                    transactionArgs,
-                );
-                cb({ result });
-            } catch (error) {
-                cb({ error });
-            }
+            this._executeContractFunction(contractInstance, functionName, transactionArgs)
+                .then((result) => {
+                    cb({ result });
+                })
+                .catch((error) => {
+                    cb({ error });
+                });
         }, concurrency);
     }
 
@@ -749,9 +746,17 @@ class Web3Service {
         );
     }
 
-    async submitUpdateCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch) {
+    async submitUpdateCommit(
+        assetContractAddress,
+        tokenId,
+        keyword,
+        hashFunctionId,
+        epoch,
+        callback,
+    ) {
         return this.queueTransaction(this.CommitManagerV1U1Contract, 'submitUpdateCommit', [
             [assetContractAddress, tokenId, keyword, hashFunctionId, epoch],
+            callback,
         ]);
     }
 
