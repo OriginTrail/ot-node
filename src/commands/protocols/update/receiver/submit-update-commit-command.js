@@ -82,6 +82,12 @@ class SubmitUpdateCommitCommand extends EpochCommand {
                     this.logger.error(
                         `Failed executing submit update commit command, maximum number of retries reached. Error: ${result.error.message}`,
                     );
+                    this.operationIdService.emitChangeEvent(
+                        ERROR_TYPE.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_ERROR,
+                        operationId,
+                        agreementId,
+                        epoch,
+                    );
                 } else {
                     const commandDelay = BLOCK_TIME * 1000; // one block
                     this.logger.warn(

@@ -168,7 +168,7 @@ class SubmitCommitCommand extends EpochCommand {
                         assertionId,
                     );
                     that.operationIdService.emitChangeEvent(
-                        OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
+                        ERROR_TYPE.COMMIT_PROOF.SUBMIT_COMMIT_ERROR,
                         operationId,
                         agreementId,
                         epoch,

@@ -91,9 +91,21 @@ class SubmitProofsCommand extends EpochCommand {
                                 COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
                             }`,
                     );
+                    that.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
+                        operationId,
+                        agreementId,
+                        epoch,
+                    );
                 } else if (command.retries - 1 === 0) {
                     this.logger.error(
                         `Failed executing submit proofs command, maximum number of retries reached. Error: ${result.error.message}. Scheduling next epoch check.`,
+                    );
+                    that.operationIdService.emitChangeEvent(
+                        ERROR_TYPE.COMMIT_PROOF.SUBMIT_PROOFS_ERROR,
+                        operationId,
+                        agreementId,
+                        epoch,
                     );
                 } else {
                     const commandDelay = BLOCK_TIME * 1000; // one block
@@ -121,13 +133,6 @@ class SubmitProofsCommand extends EpochCommand {
                     agreementData,
                     operationId,
                     assertionId,
-                );
-
-                that.operationIdService.emitChangeEvent(
-                    OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
-                    operationId,
-                    agreementId,
-                    epoch,
                 );
             },
         );
