@@ -1,13 +1,28 @@
 import BaseModuleManager from '../base-module-manager.js';
 
 class TripleStoreModuleManager extends BaseModuleManager {
-    async insertAsset(implementationName, repository, ual, assetNquads, deleteAssetTriples) {
+    async insertAssetMetadata(
+        implementationName,
+        repository,
+        ual,
+        assetNquads,
+        deleteAssetTriples,
+    ) {
         if (this.getImplementation(implementationName)) {
-            return this.getImplementation(implementationName).module.insertAsset(
+            return this.getImplementation(implementationName).module.insertAssetMetadata(
                 repository,
                 ual,
                 assetNquads,
                 deleteAssetTriples,
+            );
+        }
+    }
+
+    async deleteAssetMetadata(implementationName, repository, ual) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.deleteAssetMetadata(
+                repository,
+                ual,
             );
         }
     }
@@ -20,6 +35,15 @@ class TripleStoreModuleManager extends BaseModuleManager {
                 blockchain,
                 contract,
                 tokenId,
+            );
+        }
+    }
+
+    async getAssetMetadata(implementationName, repository, ual) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.getAssetMetadata(
+                repository,
+                ual,
             );
         }
     }
@@ -55,9 +79,9 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async isAssertionIdShared(implementationName, repository, assertionId) {
+    async countAssetsWithAssertionId(implementationName, repository, assertionId) {
         if (this.getImplementation(implementationName)) {
-            return this.getImplementation(implementationName).module.isAssertionIdShared(
+            return this.getImplementation(implementationName).module.countAssetsWithAssertionId(
                 repository,
                 assertionId,
             );

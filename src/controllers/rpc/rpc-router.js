@@ -6,6 +6,7 @@ class RpcRouter {
 
         this.publishRpcController = ctx.publishRpcController;
         this.getRpcController = ctx.getRpcController;
+        this.updateRpcController = ctx.updateRpcController;
     }
 
     async initialize() {

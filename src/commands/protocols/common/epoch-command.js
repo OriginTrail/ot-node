@@ -1,10 +1,12 @@
 import Command from '../../command.js';
-import { AGREEMENT_STATUS, OPERATION_ID_STATUS } from '../../../constants/constants.js';
+import { OPERATION_ID_STATUS } from '../../../constants/constants.js';
 
 class EpochCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.operationIdService = ctx.operationIdService;
     }
 
     async scheduleNextEpochCheck(
@@ -17,21 +19,20 @@ class EpochCommand extends Command {
         hashFunctionId,
         agreementData,
         operationId,
+        assertionId,
     ) {
         // todo check epoch number and make sure that delay is not in past
         const nextEpochStartTime =
-            Number(agreementData.startTime) + Number(agreementData.epochLength) * (epoch + 1);
+            agreementData.startTime + agreementData.epochLength * (epoch + 1);
 
+        const commitWindowDurationPerc =
+            await this.blockchainModuleManager.getCommitWindowDurationPerc(blockchain);
         // delay by 10% of commit window length
-        const offset =
-            ((Number(agreementData.epochLength) *
-                Number(
-                    await this.blockchainModuleManager.getCommitWindowDurationPerc(blockchain),
-                )) /
-                100) *
-            0.1;
+        const offset = ((agreementData.epochLength * commitWindowDurationPerc) / 100) * 0.1;
 
-        const delay = nextEpochStartTime - Math.floor(Date.now() / 1000) + offset;
+        const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
+
+        const delay = nextEpochStartTime - now + offset;
 
         this.logger.trace(
             `Scheduling next epoch check for agreement id: ${agreementId} in ${delay} seconds.`,
@@ -46,9 +47,9 @@ class EpochCommand extends Command {
                 contract,
                 tokenId,
                 keyword,
-                epoch: epoch + 1,
                 hashFunctionId,
                 operationId,
+                assertionId,
             },
             transactional: false,
         });
@@ -58,17 +59,17 @@ class EpochCommand extends Command {
         this.logger.trace(
             `Asset lifetime for agreement id: ${agreementId} has expired. Operation id: ${operationId}`,
         );
-        await this.repositoryModuleManager.updateOperationAgreementStatus(
-            operationId,
-            agreementId,
-            AGREEMENT_STATUS.EXPIRED,
-        );
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_END,
             operationId,
             agreementId,
             epoch,
         );
+    }
+
+    async calculateCurrentEpoch(startTime, epochLength, blockchain) {
+        const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
+        return Math.floor((now - startTime) / epochLength);
     }
 
     /**
@@ -78,6 +79,13 @@ class EpochCommand extends Command {
      */
     async recover(command, error) {
         this.logger.warn(`Failed to execute ${command.name}: error: ${error.message}`);
+
+        this.operationIdService.emitChangeEvent(
+            this.errorType,
+            command.data.operationId,
+            command.data.agreementId,
+            command.data.epoch,
+        );
 
         await this.scheduleNextEpochCheck(
             command.data.blockchain,
@@ -89,6 +97,7 @@ class EpochCommand extends Command {
             command.data.hashFunctionId,
             command.data.agreementData,
             command.data.operationId,
+            command.data.assertionId,
         );
 
         return Command.empty();
