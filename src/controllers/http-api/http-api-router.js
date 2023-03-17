@@ -5,6 +5,7 @@ class HttpApiRouter {
 
         this.getHttpApiController = ctx.getHttpApiController;
         this.publishHttpApiController = ctx.publishHttpApiController;
+        this.updateHttpApiController = ctx.updateHttpApiController;
         this.localStoreHttpApiController = ctx.localStoreHttpApiController;
         this.queryHttpApiController = ctx.queryHttpApiController;
         this.resultHttpApiController = ctx.resultHttpApiController;
@@ -28,6 +29,14 @@ class HttpApiRouter {
                 this.publishHttpApiController.handlePublishRequest(req, res);
             },
             { rateLimit: true, requestSchema: this.jsonSchemaService.publishSchema() },
+        );
+
+        this.httpClientModuleManager.post(
+            '/update',
+            (req, res) => {
+                this.updateHttpApiController.handleUpdateRequest(req, res);
+            },
+            { rateLimit: true, requestSchema: this.jsonSchemaService.updateSchema() },
         );
 
         this.httpClientModuleManager.post(

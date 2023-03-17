@@ -5,17 +5,17 @@
 require('dotenv').config({ path: `${__dirname}/../../.env` });
 const { setTimeout } = require('timers/promises');
 const appRootPath = require('app-root-path');
+const { ethers } = require('ethers');
 const path = require('path');
 const fs = require('fs');
 const { ApiPromise, HttpProvider } = require('@polkadot/api');
 const { Keyring } = require('@polkadot/keyring');
 const { mnemonicGenerate, mnemonicToMiniSecret, decodeAddress } = require('@polkadot/util-crypto');
 const { u8aToHex } = require('@polkadot/util');
-const Web3 = require('web3');
 const { Wallet } = require('@ethersproject/wallet');
 const { joinSignature } = require('@ethersproject/bytes');
 const { _TypedDataEncoder } = require('@ethersproject/hash');
-const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
+const ERC20Token = require('dkg-evm-module/abi/Token.json');
 
 const WALLETS_PATH = path.join(appRootPath.path, 'tools/substrate-accounts-mapping/wallets.json');
 
@@ -48,9 +48,10 @@ class AccountsMapping {
 
         // eslint-disable-next-line no-await-in-loop
         this.parachainProvider = await new ApiPromise({ provider }).isReady;
-        this.web3 = new Web3(HTTPS_ENDPOINT);
+        this.ethersProvider = new ethers.providers.JsonRpcProvider(HTTPS_ENDPOINT);
+        this.evmWallet = new ethers.Wallet(evmAccountWithTokens.privateKey, this.ethersProvider);
         this.initialized = true;
-        this.tokenContract = new this.web3.eth.Contract(ERC20Token.abi, TOKEN_ADDRESS);
+        this.tokenContract = new ethers.Contract(TOKEN_ADDRESS, ERC20Token.abi, this.evmWallet);
     }
 
     async mapAccounts() {
@@ -123,7 +124,7 @@ class AccountsMapping {
         console.log(`${NUMBER_OF_ACCOUNTS} wallets mapped!`);
 
         console.log(`Funding wallets with TRAC!`);
-        let nonce = await this.web3.eth.getTransactionCount(evmAccountWithTokens.publicKey);
+        let nonce = await this.evmWallet.getTransactionCount();
         // Fund management wallet with TRACE
         this.fundAccountsWithTrac(evmManagementWalletPublicKey, nonce);
         // Fund rest of wallets
@@ -175,7 +176,7 @@ class AccountsMapping {
     }
 
     async generateEVMAccount() {
-        const { address, privateKey } = await this.web3.eth.accounts.create();
+        const { address, privateKey } = await ethers.Wallet.createRandom();
         return { evmPublicKey: address, evmPrivateKey: privateKey };
     }
 
@@ -205,22 +206,11 @@ class AccountsMapping {
     }
 
     async fundAccountsWithTrac(evmWallet, nonce) {
-        const val = this.web3.utils.toWei(TRACE_AMOUNT, 'ether');
-
-        const encodedABI = this.tokenContract.methods.transfer(evmWallet, val).encodeABI();
-
-        const createTransaction = await this.web3.eth.accounts.signTransaction(
-            {
-                from: evmAccountWithTokens.publicKey,
-                to: TOKEN_ADDRESS,
-                data: encodedABI,
-                gasPrice: GAS_PRICE,
-                gas: GAS_LIMIT,
-                nonce: nonce,
-            },
-            evmAccountWithTokens.privateKey,
-        );
-        this.web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
+        this.tokenContract.transfer(evmWallet, ethers.utils.parseEther(TRACE_AMOUNT), {
+            gasPrice: GAS_PRICE,
+            gasLimit: GAS_LIMIT,
+            nonce: nonce,
+        });
     }
 
     async accountMapped(wallet) {

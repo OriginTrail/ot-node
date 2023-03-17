@@ -1,3 +1,5 @@
+import TripleStoreModuleManager from '../../src/modules/triple-store/triple-store-module-manager.js';
+
 class Utilities {
     static unpackRawTableToArray(rawTable) {
         return rawTable.rawTable[0];
@@ -51,6 +53,23 @@ class Utilities {
             }
         }
         return unpacked;
+    }
+
+    static async deleteTripleStoreRepositories(config, logger) {
+        const tripleStoreModuleManager = new TripleStoreModuleManager({ config, logger });
+        await tripleStoreModuleManager.initialize();
+
+        for (const implementationName of tripleStoreModuleManager.getImplementationNames()) {
+            // eslint-disable-next-line no-shadow
+            const { module, config } =
+                tripleStoreModuleManager.getImplementation(implementationName);
+            // eslint-disable-next-line no-await-in-loop
+            await Promise.all(
+                Object.keys(config.repositories).map((repository) =>
+                    module.deleteRepository(repository),
+                ),
+            );
+        }
     }
 }
 

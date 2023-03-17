@@ -10,9 +10,9 @@ class PublishRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { assertion } = await this.operationIdService.getCachedOperationIdData(
-            command.data.operationId,
-        );
+        const {
+            public: { assertion },
+        } = await this.operationIdService.getCachedOperationIdData(command.data.operationId);
 
         return {
             assertion,

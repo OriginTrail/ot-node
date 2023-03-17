@@ -1,5 +1,4 @@
 import axios from 'axios';
-import jsonld from 'jsonld';
 import OtTripleStore from '../ot-triple-store.js';
 
 class OtBlazegraph extends OtTripleStore {
@@ -86,7 +85,7 @@ class OtBlazegraph extends OtTripleStore {
         const { url, name } = this.repositories[repository];
 
         try {
-            const { data: jsonldNamespaces } = await axios.get(`${url}/blazegraph/namespace`, {
+            await axios.get(`${url}/blazegraph/namespace/${name}/properties`, {
                 params: {
                     'describe-each-named-graph': 'false',
                 },
@@ -94,14 +93,13 @@ class OtBlazegraph extends OtTripleStore {
                     Accept: 'application/ld+json',
                 },
             });
-
-            const compactedNamespaces = await jsonld.frame(jsonldNamespaces, {});
-
-            return compactedNamespaces['@graph'].filter(
-                (namespace) =>
-                    namespace['http://www.bigdata.com/rdf#/features/KB/Namespace'] === name,
-            ).length;
+            return true;
         } catch (error) {
+            if (error.response && error.response.status === 404) {
+                // Expected error: GraphDB is up but has not created node0 repository
+                // Ot-node will create repo in initialization
+                return false;
+            }
             this.logger.error(
                 `Error while getting ${this.getName()} repositories. Error: ${error.message}`,
             );

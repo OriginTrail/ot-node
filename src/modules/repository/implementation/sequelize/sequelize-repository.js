@@ -20,7 +20,11 @@ class SequelizeRepository {
         this.setEnvParameters();
         await this.createDatabaseIfNotExists();
         this.initializeSequelize();
-        await this.runMigrations();
+        try {
+            await this.runMigrations();
+        } catch (e) {
+            this.logger.error(e);
+        }
         await this.loadModels();
     }
 
@@ -483,17 +487,6 @@ class SequelizeRepository {
         });
     }
 
-    async updateOperationAgreementStatus(operationId, agreementId, agreementStatus) {
-        await this.models.publish.update(
-            { agreementId, agreementStatus },
-            {
-                where: {
-                    operation_id: operationId,
-                },
-            },
-        );
-    }
-
     async destroyEvents(ids) {
         await this.models.event.destroy({
             where: {
@@ -542,39 +535,34 @@ class SequelizeRepository {
     }
 
     async insertBlockchainEvents(blockchainEvents) {
-        const insertPromises = [];
-        for (const event of blockchainEvents) {
-            insertPromises.push(
-                new Promise((resolve, reject) => {
-                    this.blockchainEventExists(
-                        event.contract,
-                        event.event,
-                        event.data,
-                        event.block,
-                        event.blockchainId,
-                    )
-                        .then(async (exists) => {
-                            if (!exists) {
-                                await this.models.blockchain_event
-                                    .create({
-                                        contract: event.contract,
-                                        event: event.event,
-                                        data: event.data,
-                                        block: event.block,
-                                        blockchain_id: event.blockchainId,
-                                        processed: 0,
-                                    })
-                                    .then((result) => resolve(result));
-                            }
-                            resolve(null);
-                        })
-                        .catch((error) => {
-                            reject(error);
-                        });
-                }),
-            );
-        }
-        return Promise.all(insertPromises);
+        const inserted = [];
+
+        await Promise.all(
+            blockchainEvents.map(async (event) => {
+                const exists = await this.blockchainEventExists(
+                    event.contract,
+                    event.event,
+                    event.data,
+                    event.block,
+                    event.blockchainId,
+                );
+                if (!exists) {
+                    const insertionResult = await this.models.blockchain_event.create({
+                        contract: event.contract,
+                        event: event.event,
+                        data: event.data,
+                        block: event.block,
+                        blockchain_id: event.blockchainId,
+                        processed: 0,
+                    });
+                    if (insertionResult?.dataValues) {
+                        inserted.push(insertionResult.dataValues);
+                    }
+                }
+            }),
+        );
+
+        return inserted;
     }
 
     async blockchainEventExists(contract, event, data, block, blockchainId) {
