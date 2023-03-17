@@ -34,12 +34,14 @@ class SubmitCommitCommand extends EpochCommand {
             assertionId,
             stateIndex,
         } = command.data;
-        this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_START,
-            operationId,
-            agreementId,
-            epoch,
-        );
+        if (command.retries === COMMAND_RETRIES.SUBMIT_COMMIT) {
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_START,
+                operationId,
+                agreementId,
+                epoch,
+            );
+        }
 
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +

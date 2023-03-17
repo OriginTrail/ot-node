@@ -66,12 +66,15 @@ class SubmitProofsCommand extends EpochCommand {
             );
             return EpochCommand.empty();
         }
-        this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_START,
-            operationId,
-            agreementId,
-            epoch,
-        );
+        if (command.retries === COMMAND_RETRIES.SUBMIT_PROOFS) {
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_START,
+                operationId,
+                agreementId,
+                epoch,
+            );
+        }
+
         const that = this;
         await this.blockchainModuleManager.sendProof(
             blockchain,
