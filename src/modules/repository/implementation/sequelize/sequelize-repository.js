@@ -20,7 +20,11 @@ class SequelizeRepository {
         this.setEnvParameters();
         await this.createDatabaseIfNotExists();
         this.initializeSequelize();
-        await this.runMigrations();
+        try {
+            await this.runMigrations();
+        } catch (e) {
+            this.logger.error(e);
+        }
         await this.loadModels();
     }
 
