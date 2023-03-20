@@ -20,11 +20,7 @@ class SequelizeRepository {
         this.setEnvParameters();
         await this.createDatabaseIfNotExists();
         this.initializeSequelize();
-        try {
-            await this.runMigrations();
-        } catch (e) {
-            this.logger.error(e);
-        }
+        await this.runMigrations();
         await this.loadModels();
     }
 
@@ -75,7 +71,7 @@ class SequelizeRepository {
     }
 
     async runMigrations() {
-        const migrator = createMigrator(this.models.sequelize, this.config);
+        const migrator = createMigrator(this.models.sequelize, this.config, this.logger);
         await migrator.up();
     }
 
