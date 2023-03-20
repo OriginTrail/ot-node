@@ -28,7 +28,6 @@ class OTNode {
 
     async start() {
         await this.checkForUpdate();
-        await this.removeUpdateFile();
         await this.executeTripleStoreUserConfigurationMigration();
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
@@ -51,11 +50,11 @@ class OTNode {
 
         await this.createProfiles();
 
-        await this.initializeCommandExecutor();
         await this.initializeShardingTableService();
         await this.initializeTelemetryInjectionService();
-
         this.initializeBlockchainEventListenerService();
+
+        await this.initializeCommandExecutor();
         await this.initializeRouters();
         this.logger.info('Node is up and running!');
     }
@@ -150,26 +149,26 @@ class OTNode {
     async initializeRouters() {
         try {
             this.logger.info('Initializing http api and rpc router');
-            const httpApiRouter = this.container.resolve('httpApiRouter');
-            const rpcRouter = this.container.resolve('rpcRouter');
 
-            await Promise.all([
-                httpApiRouter.initialize().catch((err) => {
-                    this.logger.error(
-                        `Http api router initialization failed. Error message: ${err.message}, ${err.stackTrace}`,
-                    );
-                    this.stop(1);
+            const routerNames = ['httpApiRouter', 'rpcRouter'];
+            await Promise.all(
+                routerNames.map(async (routerName) => {
+                    const router = this.container.resolve(routerName);
+                    try {
+                        await router.initialize();
+                    } catch (error) {
+                        this.logger.error(
+                            `${routerName} initialization failed. Error message: ${error.message}, ${error.stackTrace}`,
+                        );
+                        this.stop(1);
+                    }
                 }),
-                rpcRouter.initialize().catch((err) => {
-                    this.logger.error(
-                        `RPC router initialization failed. Error message: ${err.message}, ${err.stackTrace}`,
-                    );
-                    this.stop(1);
-                }),
-            ]);
+            );
             this.logger.info('Routers initialized successfully');
-        } catch (e) {
-            this.logger.error(`Failed to initialize routers: ${e.message}, ${e.stackTrace}`);
+        } catch (error) {
+            this.logger.error(
+                `Failed to initialize routers: ${error.message}, ${error.stackTrace}`,
+            );
             this.stop(1);
         }
     }
@@ -341,14 +340,6 @@ class OTNode {
                 );
             }
         }
-    }
-
-    async removeUpdateFile() {
-        const updateFilePath = this.fileService.getUpdateFilePath();
-        await this.fileService.removeFile(updateFilePath).catch((error) => {
-            this.logger.warn(`Unable to remove update file. Error: ${error}`);
-        });
-        this.config.otNodeUpdated = true;
     }
 
     async checkForUpdate() {

@@ -16,11 +16,11 @@ class ExpressHttpClient {
         this.app = express();
     }
 
-    async get(route, callback, options) {
+    get(route, callback, options) {
         this.app.get(route, ...this.selectMiddlewares(options), callback);
     }
 
-    async post(route, callback, options) {
+    post(route, callback, options) {
         this.app.post(route, ...this.selectMiddlewares(options), callback);
     }
 
@@ -31,10 +31,14 @@ class ExpressHttpClient {
 
     async listen() {
         if (this.config.useSsl) {
+            const [key, cert] = await Promise.all(
+                fs.promises.readFile(this.config.sslKeyPath),
+                fs.promises.readFile(this.config.sslCertificatePath),
+            );
             this.httpsServer = https.createServer(
                 {
-                    key: await fs.promises.readFile(this.config.sslKeyPath),
-                    cert: await fs.promises.readFile(this.config.sslCertificatePath),
+                    key,
+                    cert,
                 },
                 this.app,
             );
@@ -54,14 +58,14 @@ class ExpressHttpClient {
         return middlewares;
     }
 
-    async initializeBeforeMiddlewares(authService) {
+    initializeBeforeMiddlewares(authService) {
         this._initializeCorsMiddleware();
         this.app.use(authenticationMiddleware(authService));
         this.app.use(authorizationMiddleware(authService));
         this._initializeBaseMiddlewares();
     }
 
-    async initializeAfterMiddlewares() {
+    initializeAfterMiddlewares() {
         // placeholder method for after middlewares
     }
 
