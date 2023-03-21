@@ -15,15 +15,18 @@ class EpochCommand extends Command {
         contract,
         tokenId,
         keyword,
-        epoch,
         hashFunctionId,
         agreementData,
         operationId,
         assertionId,
     ) {
-        // todo check epoch number and make sure that delay is not in past
+        const currentEpoch = await this.calculateCurrentEpoch(
+            agreementData.startTime,
+            agreementData.epochLength,
+            blockchain,
+        );
         const nextEpochStartTime =
-            agreementData.startTime + agreementData.epochLength * (epoch + 1);
+            agreementData.startTime + agreementData.epochLength * (currentEpoch + 1);
 
         const commitWindowDurationPerc =
             await this.blockchainModuleManager.getCommitWindowDurationPerc(blockchain);
@@ -93,7 +96,6 @@ class EpochCommand extends Command {
             command.data.contract,
             command.data.tokenId,
             command.data.keyword,
-            command.data.epoch,
             command.data.hashFunctionId,
             command.data.agreementData,
             command.data.operationId,
