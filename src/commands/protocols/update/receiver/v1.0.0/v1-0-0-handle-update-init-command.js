@@ -59,15 +59,6 @@ class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
         }
     }
 
-    async epochsLeft(blockchain, agreementData) {
-        const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
-        const currentEpoch = Math.floor(
-            (now - agreementData.startTime) / agreementData.epochLength,
-        );
-
-        return agreementData.epochsNumber - currentEpoch;
-    }
-
     async retryFinished(command) {
         const { operationId } = command.data;
         this.handleError(
