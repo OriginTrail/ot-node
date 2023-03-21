@@ -37,6 +37,10 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
         return validationResult;
     }
 
+    async epochsLeft(blockchain, agreementData) {
+        return agreementData.epochsNumber;
+    }
+
     async retryFinished(command) {
         const { operationId } = command.data;
         this.handleError(
