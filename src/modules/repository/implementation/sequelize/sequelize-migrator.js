@@ -5,7 +5,7 @@ import path from 'path';
 
 const require = createRequire(import.meta.url);
 
-function createMigrator(sequelize, config) {
+function createMigrator(sequelize, config, logger) {
     return new Umzug({
         migrations: {
             glob: [
@@ -18,8 +18,8 @@ function createMigrator(sequelize, config) {
                     return {
                         name: params.name,
                         path: params.path,
-                        up: async (upParams) => (await getModule()).up(upParams),
-                        down: async (downParams) => (await getModule()).down(downParams),
+                        up: async (upParams) => (await getModule()).up(upParams, logger),
+                        down: async (downParams) => (await getModule()).down(downParams, logger),
                     };
                 }
                 return {

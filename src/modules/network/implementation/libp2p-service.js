@@ -192,7 +192,7 @@ class Libp2pService {
         return this.node.peerId;
     }
 
-    async handleMessage(protocol, handler) {
+    handleMessage(protocol, handler) {
         this.logger.info(`Enabling network protocol: ${protocol}`);
 
         this.node.handle(protocol, async (handlerProps) => {

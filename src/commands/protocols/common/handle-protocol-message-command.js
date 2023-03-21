@@ -125,9 +125,19 @@ class HandleProtocolMessageCommand extends Command {
                 getAsk(),
             ]);
 
+        const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
+
+        // todo: use shared function with epoch commands
+        const currentEpoch = Math.floor(
+            (now - agreementData.startTime) / agreementData.epochLength,
+        );
+
+        // todo: consider optimizing to take into account cases where some proofs have already been submitted
+        const epochsLeft = agreementData.epochsNumber - currentEpoch;
+
         const divisor = this.blockchainModuleManager
             .toBigNumber(blockchain, r0)
-            .mul(agreementData.epochsNumber)
+            .mul(epochsLeft)
             .mul(blockchainAssertionSize);
 
         const serviceAgreementBid = this.blockchainModuleManager

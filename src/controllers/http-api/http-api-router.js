@@ -16,13 +16,13 @@ class HttpApiRouter {
     }
 
     async initialize() {
-        await this.initializeBeforeMiddlewares();
-        await this.initializeListeners();
-        await this.initializeAfterMiddlewares();
+        this.initializeBeforeMiddlewares();
+        this.initializeListeners();
+        this.initializeAfterMiddlewares();
         await this.httpClientModuleManager.listen();
     }
 
-    async initializeListeners() {
+    initializeListeners() {
         this.httpClientModuleManager.post(
             '/publish',
             (req, res) => {
@@ -80,12 +80,12 @@ class HttpApiRouter {
         );
     }
 
-    async initializeBeforeMiddlewares() {
-        await this.httpClientModuleManager.initializeBeforeMiddlewares();
+    initializeBeforeMiddlewares() {
+        this.httpClientModuleManager.initializeBeforeMiddlewares();
     }
 
-    async initializeAfterMiddlewares() {
-        await this.httpClientModuleManager.initializeAfterMiddlewares();
+    initializeAfterMiddlewares() {
+        this.httpClientModuleManager.initializeAfterMiddlewares();
     }
 }
 

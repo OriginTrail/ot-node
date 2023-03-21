@@ -37,82 +37,133 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
             .filter(({ g }) => g.startsWith('assertion:'))
             .map(({ g }) => g.replace('assertion:', ''));
 
-        if (!assertionIds?.length) return;
+        if (!assertionIds?.length) {
+            this.logger.debug(
+                `No assertions found in ${TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT} repository. Skipping migration.`,
+            );
+            return;
+        }
 
+        this.logger.debug(
+            `${assertionIds.length} assertions found in ${TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT} repository.`,
+        );
         for (const blockchain of this.blockchainModuleManager.getImplementationNames()) {
             const assetStorageContractAddresses =
                 this.blockchainModuleManager.getAssetStorageContractAddresses();
 
             for (const assetStorageContractAddress of assetStorageContractAddresses) {
-                const latestTokenId = await this.blockchainModuleManager.getLatestTokenId(
-                    blockchain,
-                    assetStorageContractAddress,
+                const latestTokenId = Number(
+                    await this.blockchainModuleManager.getLatestTokenId(
+                        blockchain,
+                        assetStorageContractAddress,
+                    ),
                 );
 
-                for (let tokenId = 0; tokenId < Number(latestTokenId); tokenId += 1) {
-                    const assertionId = await this.blockchainModuleManager.getLatestAssertionId(
-                        blockchain,
-                        assetStorageContractAddress,
-                        tokenId,
+                this.logger.debug(
+                    `Getting latest asset metadata from blockchain: ${blockchain}, asset storage contract address: ${assetStorageContractAddress}, from tokenId 0 to tokenId ${latestTokenId}`,
+                );
+                const concurrency = 100;
+                let promises = [];
+                for (let tokenId = 0; tokenId < latestTokenId; tokenId += 1) {
+                    promises.push(
+                        this._migrateAssertions(
+                            blockchain,
+                            assetStorageContractAddress,
+                            tokenId,
+                            latestTokenId,
+                            assertionIds,
+                        ),
                     );
-
-                    if (!assertionIds.includes(assertionId)) continue;
-
-                    const keyword = await this.ualService.calculateLocationKeyword(
-                        blockchain,
-                        assetStorageContractAddress,
-                        tokenId,
-                    );
-                    const agreementId = await this.serviceAgreementService.generateId(
-                        blockchain,
-                        assetStorageContractAddress,
-                        tokenId,
-                        keyword,
-                        CONTENT_ASSET_HASH_FUNCTION_ID,
-                    );
-                    const agreementData = await this.blockchainModuleManager.getAgreementData(
-                        blockchain,
-                        agreementId,
-                    );
-
-                    const agreementEndTime =
-                        agreementData.startTime +
-                        agreementData.epochsNumber * agreementData.epochLength;
-
-                    await this.tripleStoreService.insertAssetMetadata(
-                        TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-                        blockchain,
-                        assetStorageContractAddress,
-                        tokenId,
-                        assertionId,
-                        agreementData.startTime,
-                        agreementEndTime,
-                        keyword,
-                    );
-
-                    const assertion = await this.tripleStoreService.getAssertion(
-                        TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-                        assertionId,
-                    );
-
-                    const privateAssertionId = this.dataService.getPrivateAssertionId(assertion);
-
-                    if (privateAssertionId == null || !assertionIds.includes(privateAssertionId))
-                        continue;
-
-                    await this.tripleStoreService.insertAssetMetadata(
-                        TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-                        blockchain,
-                        assetStorageContractAddress,
-                        tokenId,
-                        privateAssertionId,
-                        agreementData.startTime,
-                        agreementEndTime,
-                        keyword,
-                    );
+                    if (promises.length > concurrency) {
+                        // eslint-disable-next-line no-await-in-loop
+                        await Promise.all(promises);
+                        promises = [];
+                    }
                 }
+                await Promise.all(promises);
             }
         }
+    }
+
+    async _migrateAssertions(
+        blockchain,
+        assetStorageContractAddress,
+        tokenId,
+        latestTokenId,
+        assertionIds,
+    ) {
+        this._logPercentage(tokenId, latestTokenId);
+        const assertionId = await this.blockchainModuleManager.getLatestAssertionId(
+            blockchain,
+            assetStorageContractAddress,
+            tokenId,
+        );
+
+        if (!assertionIds.includes(assertionId)) return;
+
+        this.logger.debug(
+            `Getting latest metadata for asset with token id: ${tokenId}, assertion id: ${assertionId}, blockchain: ${blockchain}, asset storage contract address: ${assetStorageContractAddress}`,
+        );
+
+        const keyword = await this.ualService.calculateLocationKeyword(
+            blockchain,
+            assetStorageContractAddress,
+            tokenId,
+        );
+        const agreementId = await this.serviceAgreementService.generateId(
+            blockchain,
+            assetStorageContractAddress,
+            tokenId,
+            keyword,
+            CONTENT_ASSET_HASH_FUNCTION_ID,
+        );
+        const agreementData = await this.blockchainModuleManager.getAgreementData(
+            blockchain,
+            agreementId,
+        );
+
+        const agreementEndTime =
+            agreementData.startTime + agreementData.epochsNumber * agreementData.epochLength;
+
+        await this.tripleStoreService.insertAssetMetadata(
+            TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+            blockchain,
+            assetStorageContractAddress,
+            tokenId,
+            assertionId,
+            agreementData.startTime,
+            agreementEndTime,
+            keyword,
+        );
+
+        const assertion = await this.tripleStoreService.getAssertion(
+            TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+            assertionId,
+        );
+
+        const privateAssertionId = this.dataService.getPrivateAssertionId(assertion);
+
+        if (privateAssertionId == null || !assertionIds.includes(privateAssertionId)) return;
+
+        await this.tripleStoreService.insertAssetMetadata(
+            TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+            blockchain,
+            assetStorageContractAddress,
+            tokenId,
+            privateAssertionId,
+            agreementData.startTime,
+            agreementEndTime,
+            keyword,
+        );
+    }
+
+    _logPercentage(index, max) {
+        const previousPercentage = (Math.max(0, index - 1) / max) * 100;
+        const currentPercentage = (index / max) * 100;
+
+        if (Math.floor(currentPercentage) - Math.floor(previousPercentage) < 1) return;
+
+        this.logger.debug(`Migration at ${Math.floor(currentPercentage * 10) / 10}%`);
     }
 }
 
