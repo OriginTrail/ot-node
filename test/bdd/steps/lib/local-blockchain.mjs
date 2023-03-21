@@ -17,6 +17,7 @@ const testParametersStorageParams = {
     minProofWindowOffsetPerc: 66, // 4 minutes
     maxProofWindowOffsetPerc: 66, // 4 minutes
     proofWindowDurationPerc: 33, // 2 minutes
+    finalizationCommitsNumber: 3,
 };
 /**
  * LocalBlockchain represent small wrapper around the Ganache.

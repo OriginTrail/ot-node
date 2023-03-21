@@ -31,10 +31,10 @@ class ExpressHttpClient {
 
     async listen() {
         if (this.config.useSsl) {
-            const [key, cert] = await Promise.all(
+            const [key, cert] = await Promise.all([
                 fs.promises.readFile(this.config.sslKeyPath),
                 fs.promises.readFile(this.config.sslCertificatePath),
-            );
+            ]);
             this.httpsServer = https.createServer(
                 {
                     key,
