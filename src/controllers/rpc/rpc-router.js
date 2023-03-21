@@ -9,7 +9,7 @@ class RpcRouter {
         this.updateRpcController = ctx.updateRpcController;
     }
 
-    async initialize() {
+    initialize() {
         this.initializeListeners();
     }
 
