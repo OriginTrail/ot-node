@@ -56,17 +56,6 @@ then
   echo Waiting for hardhat to start and contracts deployment
 fi
 
-#if [[ $network == rinkeby ]]
-#then
-#
-#  echo ============================================
-#  echo ====== Deploying contracts on rinkeby ======
-#  echo ============================================
-#
-#  hubContractAddress=`npm explore dkg-evm-module -- npm run deploy:rinkeby 2>&1 | awk '/Hub address:/ {print $3}'`
-#  echo Using hub contract address: $hubContractAddress
-#fi
-
 echo ================================
 echo ====== Generating configs ======
 echo ================================
