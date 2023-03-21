@@ -28,6 +28,7 @@ class OTNode {
 
     async start() {
         await this.checkForUpdate();
+        await this.removeUpdateFile();
         await this.executeTripleStoreUserConfigurationMigration();
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
@@ -340,6 +341,14 @@ class OTNode {
                 );
             }
         }
+    }
+
+    async removeUpdateFile() {
+        const updateFilePath = this.fileService.getUpdateFilePath();
+        await this.fileService.removeFile(updateFilePath).catch((error) => {
+            this.logger.warn(`Unable to remove update file. Error: ${error}`);
+        });
+        this.config.otNodeUpdated = true;
     }
 
     async checkForUpdate() {
