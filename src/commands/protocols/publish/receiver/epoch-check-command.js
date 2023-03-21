@@ -84,7 +84,6 @@ class EpochCheckCommand extends EpochCommand {
                 contract,
                 tokenId,
                 keyword,
-                epoch,
                 hashFunctionId,
                 agreementData,
                 operationId,
