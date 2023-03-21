@@ -497,7 +497,7 @@ class Web3Service {
 
     async getAgreementData(agreementId) {
         const result = await this.callContractFunction(
-            this.ServiceAgreementStorageProxy,
+            this.ServiceAgreementStorageProxyContract,
             'getAgreementData',
             [agreementId],
         );
