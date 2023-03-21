@@ -126,10 +126,13 @@ class HandleProtocolMessageCommand extends Command {
             ]);
 
         const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
+
+        // todo: use shared function with epoch commands
         const currentEpoch = Math.floor(
             (now - agreementData.startTime) / agreementData.epochLength,
         );
 
+        // todo: consider optimizing to take into account cases where some proofs have already been submitted
         const epochsLeft = agreementData.epochsNumber - currentEpoch;
 
         const divisor = this.blockchainModuleManager
