@@ -93,12 +93,17 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
         assertionIds,
     ) {
         this._logPercentage(tokenId, latestTokenId);
-        const assertionId = await this.blockchainModuleManager.getLatestAssertionId(
-            blockchain,
-            assetStorageContractAddress,
-            tokenId,
-        );
-
+        let assertionId;
+        try {
+            assertionId = await this.blockchainModuleManager.getLatestAssertionId(
+                blockchain,
+                assetStorageContractAddress,
+                tokenId,
+            );
+        } catch (error) {
+            this.logger.warn(`Unable to find assertion id for token id: ${tokenId}`);
+            return;
+        }
         if (!assertionIds.includes(assertionId)) return;
 
         this.logger.debug(
