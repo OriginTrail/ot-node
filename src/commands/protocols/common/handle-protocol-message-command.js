@@ -51,7 +51,7 @@ class HandleProtocolMessageCommand extends Command {
             keyword,
             await this.blockchainModuleManager.getR2(blockchain),
             hashFunctionId,
-            false,
+            true,
         );
         for (const { peer_id } of closestNodes) {
             if (peer_id === this.networkModuleManager.getPeerId().toB58String()) {
