@@ -45,8 +45,7 @@ describe('Triple store module', () => {
         logger = new Logger('trace');
         logger.info = () => {};
     });
-    beforeEach('Initialize triple store module manager', async function () {
-        this.timeout(30000);
+    beforeEach('Initialize triple store module manager', async () => {
         tripleStoreModuleManager = new TripleStoreModuleManager({
             config,
             logger,
