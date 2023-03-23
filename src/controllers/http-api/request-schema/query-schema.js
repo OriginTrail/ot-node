@@ -11,7 +11,7 @@ export default () => ({
             type: 'string',
         },
         repository: {
-            enum: [Object.values(TRIPLE_STORE_REPOSITORIES)],
+            enum: Object.values(TRIPLE_STORE_REPOSITORIES),
         },
     },
 });
