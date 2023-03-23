@@ -29,7 +29,7 @@ class LocalGetCommand extends Command {
             OPERATION_ID_STATUS.GET.GET_LOCAL_START,
         );
 
-        let assertion;
+        const response = {};
         if (
             state === GET_STATES.LATEST &&
             command.data.blockchain != null &&
@@ -48,28 +48,32 @@ class LocalGetCommand extends Command {
                     command.data.tokenId,
                     operationId,
                 );
-                if (cachedAssertion?.assertion?.length) {
-                    assertion = cachedAssertion.assertion;
+                if (cachedAssertion?.public?.assertion?.length) {
+                    response.assertion = cachedAssertion.public.assertion;
+                    if (cachedAssertion?.private?.assertion?.length) {
+                        response.privateAssertion = cachedAssertion.private.assertion;
+                    }
                     break;
                 }
             }
         }
 
-        if (!assertion?.length) {
+        if (!response?.assertion?.length) {
             for (const repository of [
                 TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
                 TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
             ]) {
                 // eslint-disable-next-line no-await-in-loop
-                assertion = await this.tripleStoreService.getAssertion(repository, assertionId);
-                if (assertion?.length) break;
+                response.assertion = await this.tripleStoreService.getAssertion(
+                    repository,
+                    assertionId,
+                );
+                if (response?.assertion?.length) break;
             }
         }
 
-        if (assertion?.length) {
-            await this.operationIdService.cacheOperationIdData(operationId, {
-                assertion,
-            });
+        if (!response?.assertion?.length) {
+            await this.operationIdService.cacheOperationIdData(operationId, response);
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 OPERATION_ID_STATUS.GET.GET_LOCAL_END,
