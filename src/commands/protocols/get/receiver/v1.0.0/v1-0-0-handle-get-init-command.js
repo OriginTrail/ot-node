@@ -26,6 +26,8 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.GET.ASSERTION_EXISTS_LOCAL_START,
         );
 
+        this.logger.trace(`Checking if assertion ${assertionId} exists for state ${state}.`);
+
         let assertionExists;
         if (
             state === GET_STATES.LATEST &&
