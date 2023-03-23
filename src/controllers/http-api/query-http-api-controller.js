@@ -29,7 +29,7 @@ class QueryController extends BaseController {
             name: 'queryCommand',
             sequence: [],
             delay: 0,
-            data: { query, queryType, operationId },
+            data: { query, queryType, repository: req.body.repository, operationId },
             transactional: false,
         });
     }
