@@ -72,7 +72,7 @@ class LocalGetCommand extends Command {
             }
         }
 
-        if (!response?.assertion?.length) {
+        if (response?.assertion?.length) {
             await this.operationIdService.cacheOperationIdData(operationId, response);
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
