@@ -28,7 +28,7 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
 
         this.logger.trace(`Checking if assertion ${assertionId} exists for state ${state}.`);
 
-        let assertionExists;
+        let assertionExists = false;
         if (
             state === GET_STATES.LATEST &&
             commandData.blockchain != null &&
@@ -42,17 +42,12 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
                 commandData.tokenId,
                 operationId,
             );
-            if (assertionExists)
-                return {
-                    messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
-                    messageData: {},
-                };
+        } else {
+            assertionExists = await this.tripleStoreService.assertionExists(
+                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                assertionId,
+            );
         }
-
-        assertionExists = await this.tripleStoreService.assertionExists(
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-            assertionId,
-        );
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
