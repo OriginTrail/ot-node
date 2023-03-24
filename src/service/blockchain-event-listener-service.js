@@ -273,6 +273,13 @@ class BlockchainEventListenerService {
         const { tokenId, keyword, state } = eventData;
         const blockchain = event.blockchain_id;
         const contract = eventData.assetContract;
+        this.logger.trace(
+            `Handling event: ${event.name} for asset with ual: ${this.ualService.deriveUAL(
+                blockchain,
+                contract,
+                tokenId,
+            )} with keyword: ${keyword}, assertion id: ${state}.`,
+        );
 
         await Promise.all([
             this._handleStateFinalizedEvent(
