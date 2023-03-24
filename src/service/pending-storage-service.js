@@ -71,7 +71,9 @@ class PendingStorageService {
             contract,
             tokenId,
         );
-
+        this.logger.trace(
+            `Checking if assertion exists in pending storage on path: ${documentPath}`,
+        );
         return this.fileService.fileExists(documentPath);
     }
 }

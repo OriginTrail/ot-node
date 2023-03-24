@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import TripleStoreModuleManager from '../../src/modules/triple-store/triple-store-module-manager.js';
 import Logger from '../../src/logger/logger.js';
+import { unlink } from 'fs/promises';
 
 const { readFile, writeFile, stat } = fs;
 
@@ -45,33 +46,26 @@ async function generateNodeConfig(nodeIndex) {
     const configPath = path.join(
         `./tools/local-network-setup/.node${nodeIndex}_origintrail_noderc.json`,
     );
-
-    if (!(await fileExists(configPath))) {
-        const template = JSON.parse(await readFile(templatePath));
-
-        logger.info(`Configuring node ${nodeIndex}`);
-        template.modules.tripleStore = generateTripleStoreConfig(
-            template.modules.tripleStore,
-            nodeIndex,
-        );
-        template.modules.blockchain = generateBlockchainConfig(
-            template.modules.blockchain,
-            nodeIndex,
-        );
-        template.modules.httpClient = generateHttpClientConfig(
-            template.modules.httpClient,
-            nodeIndex,
-        );
-        template.modules.network = generateNetworkConfig(template.modules.network, nodeIndex);
-        template.modules.repository = generateRepositoryConfig(
-            template.modules.repository,
-            nodeIndex,
-        );
-        template.appDataPath = `data${nodeIndex}`;
-        template.logLevel = process.env.LOG_LEVEL ?? template.logLevel;
-
-        await writeFile(configPath, JSON.stringify(template, null, 4));
+    if (await fileExists(configPath)) {
+        await removeFile(configPath);
     }
+
+    const template = JSON.parse(await readFile(templatePath));
+
+    logger.info(`Configuring node ${nodeIndex}`);
+    template.modules.tripleStore = generateTripleStoreConfig(
+        template.modules.tripleStore,
+        nodeIndex,
+    );
+    template.modules.blockchain = generateBlockchainConfig(template.modules.blockchain, nodeIndex);
+    template.modules.httpClient = generateHttpClientConfig(template.modules.httpClient, nodeIndex);
+    template.modules.network = generateNetworkConfig(template.modules.network, nodeIndex);
+    template.modules.repository = generateRepositoryConfig(template.modules.repository, nodeIndex);
+    template.appDataPath = `data${nodeIndex}`;
+    template.logLevel = process.env.LOG_LEVEL ?? template.logLevel;
+
+    await writeFile(configPath, JSON.stringify(template, null, 4));
+
     const config = JSON.parse(await readFile(configPath));
     await Promise.all([
         dropDatabase(
@@ -188,6 +182,10 @@ async function fileExists(filePath) {
     } catch (e) {
         return false;
     }
+}
+
+async function removeFile(filePath) {
+    await unlink(filePath);
 }
 
 async function deleteDataFolder(config) {
