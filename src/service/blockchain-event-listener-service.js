@@ -273,6 +273,13 @@ class BlockchainEventListenerService {
         const { tokenId, keyword, state } = eventData;
         const blockchain = event.blockchain_id;
         const contract = eventData.assetContract;
+        this.logger.trace(
+            `Handling event: ${event.event} for asset with ual: ${this.ualService.deriveUAL(
+                blockchain,
+                contract,
+                tokenId,
+            )} with keyword: ${keyword}, assertion id: ${state}.`,
+        );
 
         await Promise.all([
             this._handleStateFinalizedEvent(
@@ -369,7 +376,7 @@ class BlockchainEventListenerService {
         if (cachedData?.private?.assertion && cachedData?.private?.assertionId) {
             // insert private assertion in current repository
             storePromises.push(
-                await this.tripleStoreService.localStoreAsset(
+                this.tripleStoreService.localStoreAsset(
                     currentRepository,
                     cachedData.private.assertionId,
                     cachedData.private.assertion,
