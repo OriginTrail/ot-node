@@ -3,6 +3,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
+    TRIPLE_STORE_REPOSITORIES,
 } from '../../../../constants/constants.js';
 
 class EpochCheckCommand extends EpochCommand {
@@ -13,41 +14,58 @@ class EpochCheckCommand extends EpochCommand {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.operationIdService = ctx.operationIdService;
+        this.tripleStoreService = ctx.tripleStoreService;
 
-        this.errorType = ERROR_TYPE.EPOCH_CHECK_ERROR;
+        this.errorType = ERROR_TYPE.COMMIT_PROOF.EPOCH_CHECK_ERROR;
     }
 
     async execute(command) {
-        const {
-            blockchain,
-            agreementId,
-            contract,
-            tokenId,
-            keyword,
-            epoch,
-            hashFunctionId,
-            operationId,
-        } = command.data;
+        const { blockchain, agreementId, contract, tokenId, keyword, hashFunctionId, operationId } =
+            command.data;
 
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
                 `hash function id: ${hashFunctionId}`,
         );
+
+        const agreementData = await this.blockchainModuleManager.getAgreementData(
+            blockchain,
+            agreementId,
+        );
+        const epoch = await this.calculateCurrentEpoch(
+            agreementData.startTime,
+            agreementData.epochLength,
+            blockchain,
+        );
+        this.logger.trace(`Epoch number: ${epoch}`);
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_START,
             operationId,
             agreementId,
             epoch,
         );
-
-        const agreementData =
-            epoch === 0
-                ? command.data.agreementData
-                : await this.blockchainModuleManager.getAgreementData(blockchain, agreementId);
+        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
+            blockchain,
+            contract,
+            tokenId,
+        );
+        const stateIndex = assertionIds.length - 1;
+        const assertionId = assertionIds[stateIndex];
 
         if (this.assetLifetimeExpired(agreementData, epoch)) {
             await this.handleExpiredAsset(agreementId, operationId, epoch);
+            return EpochCommand.empty();
+        }
+        const assertionExists = await this.tripleStoreService.assertionExists(
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+            assertionId,
+        );
+
+        if (!assertionExists) {
+            this.logger.trace(
+                `Assertion with id: ${assertionId} not found in triple store. Not scheduling next epoch checks.`,
+            );
             return EpochCommand.empty();
         }
 
@@ -56,7 +74,6 @@ class EpochCheckCommand extends EpochCommand {
             agreementId,
             epoch,
         );
-
         if (!commitWindowOpen) {
             this.logger.trace(
                 `Commit window for agreement id: ${agreementId} is closed. Scheduling next epoch check.`,
@@ -67,10 +84,10 @@ class EpochCheckCommand extends EpochCommand {
                 contract,
                 tokenId,
                 keyword,
-                epoch,
                 hashFunctionId,
                 agreementData,
                 operationId,
+                assertionId,
             );
             return this.finishEpochCheckCommand(operationId, agreementId, epoch);
         }
@@ -85,7 +102,7 @@ class EpochCheckCommand extends EpochCommand {
             delay: 0,
             period: 12 * 1000, // todo: get from blockchain / oracle
             retries: COMMAND_RETRIES.SUBMIT_COMMIT,
-            data: { ...command.data, agreementData, identityId },
+            data: { ...command.data, agreementData, identityId, epoch, stateIndex },
             transactional: false,
         });
 
@@ -103,7 +120,7 @@ class EpochCheckCommand extends EpochCommand {
     }
 
     assetLifetimeExpired(agreementData, epoch) {
-        return epoch >= Number(agreementData.epochsNumber);
+        return epoch >= agreementData.epochsNumber;
     }
 
     /**

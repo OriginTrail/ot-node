@@ -1,13 +1,14 @@
 /* eslint-disable no-console */
 import { ethers } from 'ethers';
 import { createRequire } from 'module';
+import { NODE_ENVIRONMENTS } from '../src/constants/constants.js';
 import validateArguments from './utils.js';
 
 const require = createRequire(import.meta.url);
-const Staking = require('dkg-evm-module/build/contracts/Staking.json');
-const IdentityStorage = require('dkg-evm-module/build/contracts/IdentityStorage.json');
-const ERC20Token = require('dkg-evm-module/build/contracts/ERC20Token.json');
-const Hub = require('dkg-evm-module/build/contracts/Hub.json');
+const Staking = require('dkg-evm-module/abi/Staking.json');
+const IdentityStorage = require('dkg-evm-module/abi/IdentityStorage.json');
+const ERC20Token = require('dkg-evm-module/abi/Token.json');
+const Hub = require('dkg-evm-module/abi/Hub.json');
 const argv = require('minimist')(process.argv.slice(1), {
     string: [
         'stake',
@@ -17,7 +18,9 @@ const argv = require('minimist')(process.argv.slice(1), {
     ],
 });
 
-const devEnvironment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+const devEnvironment =
+    process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+    process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
 
 async function setStake(
     rpcEndpoint,
@@ -27,42 +30,33 @@ async function setStake(
     hubContractAddress,
 ) {
     const provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);
-    const operationalWallet = new ethers.Wallet(operationalWalletPrivateKey);
-    const managementWallet = new ethers.Wallet(managementWalletPrivateKey);
+    const operationalWallet = new ethers.Wallet(operationalWalletPrivateKey, provider);
+    const managementWallet = new ethers.Wallet(managementWalletPrivateKey, provider);
 
-    const hubContract = new ethers.Contract(hubContractAddress, Hub.abi, provider);
+    const hubContract = new ethers.Contract(hubContractAddress, Hub, provider);
 
     const stakingContractAddress = await hubContract.getContractAddress('Staking');
-    const stakingContract = new ethers.Contract(stakingContractAddress, Staking.abi, provider);
+    const stakingContract = new ethers.Contract(stakingContractAddress, Staking, managementWallet);
 
     const identityStorageAddress = await hubContract.getContractAddress('IdentityStorage');
-    const identityStorage = new ethers.Contract(
-        identityStorageAddress,
-        IdentityStorage.abi,
-        provider,
-    );
+    const identityStorage = new ethers.Contract(identityStorageAddress, IdentityStorage, provider);
 
     const identityId = await identityStorage.getIdentityId(operationalWallet.address);
 
     const tokenContractAddress = await hubContract.getContractAddress('Token');
-    const tokenContract = new ethers.Contract(tokenContractAddress, ERC20Token.abi, provider);
+    const tokenContract = new ethers.Contract(tokenContractAddress, ERC20Token, managementWallet);
 
     const stakeWei = ethers.utils.parseEther(stake);
 
-    const managementWalletSigner = managementWallet.connect(provider);
-    await tokenContract
-        .connect(managementWalletSigner)
-        .increaseAllowance(stakingContractAddress, stakeWei, {
-            gasPrice: devEnvironment ? undefined : 8,
-            gasLimit: 500_000,
-        });
+    await tokenContract.increaseAllowance(stakingContractAddress, stakeWei, {
+        gasPrice: devEnvironment ? undefined : 8,
+        gasLimit: 500_000,
+    });
     // TODO: Add ABI instead of hard-coded function definition
-    await stakingContract
-        .connect(managementWalletSigner)
-        ['addStake(uint72,uint96)'](identityId, stakeWei, {
-            gasPrice: devEnvironment ? undefined : 1_000,
-            gasLimit: 500_000,
-        });
+    await stakingContract['addStake(uint72,uint96)'](identityId, stakeWei, {
+        gasPrice: devEnvironment ? undefined : 1_000,
+        gasLimit: 500_000,
+    });
 }
 
 const expectedArguments = [

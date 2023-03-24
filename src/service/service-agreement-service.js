@@ -1,5 +1,3 @@
-import { ethers, BigNumber } from 'ethers';
-
 class ServiceAgreementService {
     constructor(ctx) {
         this.logger = ctx.logger;
@@ -11,10 +9,11 @@ class ServiceAgreementService {
         this.networkModuleManager = ctx.networkModuleManager;
     }
 
-    async generateId(assetTypeContract, tokenId, keyword, hashFunctionId) {
+    async generateId(blockchain, assetTypeContract, tokenId, keyword, hashFunctionId) {
         return this.validationModuleManager.callHashFunction(
             hashFunctionId,
-            ethers.utils.solidityPack(
+            this.blockchainModuleManager.encodePacked(
+                blockchain,
                 ['address', 'uint256', 'bytes'],
                 [assetTypeContract, tokenId, keyword],
             ),
@@ -35,6 +34,7 @@ class ServiceAgreementService {
         const hashFunctionName = this.validationModuleManager.getHashFunctionName(hashFunctionId);
 
         const distanceUint8Array = this.shardingTableService.calculateDistance(
+            blockchainId,
             peerRecord[hashFunctionName],
             keyHash,
         );
@@ -59,11 +59,17 @@ class ServiceAgreementService {
             d,
         } = this.log2PLDSFParams;
 
-        const distanceUint256BN = BigNumber.from(distanceUint8Array);
+        const distanceUint256BN = this.blockchainModuleManager.toBigNumber(
+            blockchainId,
+            distanceUint8Array,
+        );
 
-        const mappedStake = BigNumber.from(
-            this.blockchainModuleManager.convertToWei(blockchainId, peerRecord.stake),
-        ).div(stakeMappingCoefficient);
+        const mappedStake = this.blockchainModuleManager
+            .toBigNumber(
+                blockchainId,
+                this.blockchainModuleManager.convertToWei(blockchainId, peerRecord.stake),
+            )
+            .div(stakeMappingCoefficient);
         const mappedDistance = distanceUint256BN.div(distanceMappingCoefficient);
 
         const dividend = mappedStake.pow(stakeExponent).mul(a).add(b);

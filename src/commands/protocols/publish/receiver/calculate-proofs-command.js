@@ -3,6 +3,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
+    TRIPLE_STORE_REPOSITORIES,
 } from '../../../../constants/constants.js';
 
 class CalculateProofsCommand extends EpochCommand {
@@ -14,7 +15,7 @@ class CalculateProofsCommand extends EpochCommand {
         this.tripleStoreService = ctx.tripleStoreService;
         this.operationIdService = ctx.operationIdService;
         this.dataService = ctx.dataService;
-        this.errorType = ERROR_TYPE.CALCULATE_PROOFS_ERROR;
+        this.errorType = ERROR_TYPE.COMMIT_PROOF.CALCULATE_PROOFS_ERROR;
     }
 
     async execute(command) {
@@ -25,16 +26,28 @@ class CalculateProofsCommand extends EpochCommand {
             keyword,
             hashFunctionId,
             agreementData,
-            epoch,
             agreementId,
             identityId,
             operationId,
         } = command.data;
+        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
+            blockchain,
+            contract,
+            tokenId,
+        );
+        const stateIndex = assertionIds.length - 1;
+        const assertionId = assertionIds[stateIndex];
 
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +
-                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}`,
+                `blockchain:${blockchain}, contract: ${contract}, token id: ${tokenId}, ` +
+                `keyword: ${keyword}, hash function id: ${hashFunctionId} and stateIndex: ${stateIndex}`,
+        );
+
+        const epoch = await this.calculateCurrentEpoch(
+            agreementData.startTime,
+            agreementData.epochLength,
+            blockchain,
         );
 
         this.operationIdService.emitChangeEvent(
@@ -44,34 +57,52 @@ class CalculateProofsCommand extends EpochCommand {
             epoch,
         );
 
-        if (!(await this.isEligibleForRewards(blockchain, agreementId, epoch, identityId))) {
+        if (
+            !(await this.isEligibleForRewards(
+                blockchain,
+                agreementId,
+                epoch,
+                identityId,
+                stateIndex,
+            ))
+        ) {
             await this.scheduleNextEpochCheck(
                 blockchain,
                 agreementId,
                 contract,
                 tokenId,
                 keyword,
-                epoch,
                 hashFunctionId,
                 agreementData,
                 operationId,
+                assertionId,
             );
 
             return EpochCommand.empty();
         }
 
         this.logger.trace(`Calculating proofs for agreement id : ${agreementId}`);
-        const { assertionId, challenge } = await this.blockchainModuleManager.getChallenge(
+        const { challenge } = await this.blockchainModuleManager.getChallenge(
             blockchain,
             contract,
             tokenId,
             epoch,
         );
 
-        const nquads = await this.tripleStoreService.localGet(assertionId, operationId);
+        const assertion = await this.tripleStoreService.getAssertion(
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+            assertionId,
+        );
+
+        if (!assertion.length) {
+            this.logger.trace(
+                `Assertion with id: ${assertionId} not found in triple store. Not scheduling next epcoh checks.`,
+            );
+            return EpochCommand.empty();
+        }
 
         const { leaf, proof } = this.validationModuleManager.getMerkleProof(
-            nquads,
+            assertion,
             Number(challenge),
         );
 
@@ -83,8 +114,8 @@ class CalculateProofsCommand extends EpochCommand {
                 ...command.data,
                 leaf,
                 proof,
+                stateIndex,
             },
-            period: 12 * 1000, // todo: get from blockchain / oracle
             retries: COMMAND_RETRIES.SUBMIT_PROOFS,
             transactional: false,
         });
@@ -98,15 +129,15 @@ class CalculateProofsCommand extends EpochCommand {
         return EpochCommand.empty();
     }
 
-    async isEligibleForRewards(blockchain, agreementId, epoch, identityId) {
-        const r0 = Number(await this.blockchainModuleManager.getR0(blockchain));
+    async isEligibleForRewards(blockchain, agreementId, epoch, identityId, stateIndex) {
+        const r0 = await this.blockchainModuleManager.getR0(blockchain);
 
         const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
             blockchain,
             agreementId,
             epoch,
+            stateIndex,
         );
-
         for (let i = 0; i < Math.min(r0, commits.length); i += 1) {
             if (Number(commits[i].identityId) === identityId) {
                 this.logger.trace(`Node is eligible for rewards for agreement id: ${agreementId}`);

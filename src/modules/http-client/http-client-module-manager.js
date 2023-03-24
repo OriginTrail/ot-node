@@ -34,13 +34,13 @@ class HttpClientModuleManager extends BaseModuleManager {
         }
     }
 
-    async initializeBeforeMiddlewares() {
+    initializeBeforeMiddlewares() {
         if (this.initialized) {
             return this.getImplementation().module.initializeBeforeMiddlewares(this.authService);
         }
     }
 
-    async initializeAfterMiddlewares() {
+    initializeAfterMiddlewares() {
         if (this.initialized) {
             return this.getImplementation().module.initializeAfterMiddlewares(this.authService);
         }

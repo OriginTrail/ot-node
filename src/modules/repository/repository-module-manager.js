@@ -276,16 +276,6 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async updateOperationAgreementStatus(operationId, agreementId, agreementStatus) {
-        if (this.initialized) {
-            return this.getImplementation().module.updateOperationAgreementStatus(
-                operationId,
-                agreementId,
-                agreementStatus,
-            );
-        }
-    }
-
     async destroyEvents(ids) {
         if (this.initialized) {
             return this.getImplementation().module.destroyEvents(ids);

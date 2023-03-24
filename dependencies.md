@@ -57,10 +57,10 @@
 -   **version**: ^8.5.0
 -   **description**: linter plugin
 
-##### [ganache](https://www.npmjs.com/package/ganache)
+##### [ethers](https://www.npmjs.com/package/ethers)
 
--   **version**: ^7.4.1
--   **description**: ethereum simulator used in bdd tests
+-   **version**: ^5.7.2
+-   **description**: used to interact with evm smart contracts
 
 ##### [husky](https://www.npmjs.com/package/husky)
 
@@ -388,11 +388,6 @@
 
 -   **version**: ^8.3.2
 -   **description**: uuid generation
-
-##### [web3](https://www.npmjs.com/package/web3)
-
--   **version**: ^1.7.5
--   **description**: used to interact with evm smart contracts
 
 ##### [workerpool](https://www.npmjs.com/package/workerpool)
 
