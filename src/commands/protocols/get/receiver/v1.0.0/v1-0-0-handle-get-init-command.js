@@ -44,7 +44,8 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
                 tokenId,
                 operationId,
             );
-        } else {
+        }
+        if (!assertionExists) {
             assertionExists = await this.tripleStoreService.assertionExists(
                 TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
                 assertionId,
