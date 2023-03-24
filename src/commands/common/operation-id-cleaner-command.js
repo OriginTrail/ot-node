@@ -1,5 +1,6 @@
 import Command from '../command.js';
 import {
+    BYTES_IN_KILOBYTE,
     OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS,
     OPERATION_ID_STATUS,
 } from '../../constants/constants.js';
@@ -32,7 +33,7 @@ class OperationIdCleanerCommand extends Command {
         if (removed) {
             this.logger.debug(
                 `Successfully removed ${
-                    removed / 1024
+                    removed / BYTES_IN_KILOBYTE
                 } Kbs expired cached operation entries from memory`,
             );
         }

@@ -103,6 +103,21 @@ class FileService {
     getOperationIdDocumentPath(operationId) {
         return path.join(this.getOperationIdCachePath(), operationId);
     }
+
+    getPendingStorageFileName(blockchain, contract, tokenId) {
+        return `${blockchain.toLowerCase()}:${contract.toLowerCase()}:${tokenId}`;
+    }
+
+    getPendingStorageCachePath(repository) {
+        return path.join(this.getDataFolderPath(), 'pending_storage_cache', repository);
+    }
+
+    getPendingStorageDocumentPath(repository, blockchain, contract, tokenId) {
+        return path.join(
+            this.getPendingStorageCachePath(repository),
+            this.getPendingStorageFileName(blockchain, contract, tokenId),
+        );
+    }
 }
 
 export default FileService;

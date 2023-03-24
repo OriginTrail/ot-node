@@ -1,0 +1,41 @@
+{
+    "modules": {
+        "tripleStore": {
+            "enabled": true,
+            "implementation": {
+                "ot-blazegraph": {
+                    "enabled": true,
+                    "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
+                    "config": {
+                        "repositories": {
+                            "privateCurrent": {
+                                "url": "http://localhost:9999",
+                                "name": "triple-store-test-private-current",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "privateHistory": {
+                                "url": "http://localhost:9999",
+                                "name": "triple-store-test-private-history",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "publicCurrent": {
+                                "url": "http://localhost:9999",
+                                "name": "triple-store-test-public-current",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "publicHistory": {
+                                "url": "http://localhost:9999",
+                                "name": "triple-store-test-public-history",
+                                "username": "admin",
+                                "password": ""
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

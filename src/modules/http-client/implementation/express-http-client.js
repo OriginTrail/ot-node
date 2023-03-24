@@ -7,7 +7,7 @@ import requestValidationMiddleware from './middleware/request-validation-middlew
 import rateLimiterMiddleware from './middleware/rate-limiter-middleware.js';
 import authenticationMiddleware from './middleware/authentication-middleware.js';
 import authorizationMiddleware from './middleware/authorization-middleware.js';
-import { MAX_FILE_SIZE } from '../../../constants/constants.js';
+import { BYTES_IN_MEGABYTE, MAX_FILE_SIZE } from '../../../constants/constants.js';
 
 class ExpressHttpClient {
     async initialize(config, logger) {
@@ -16,11 +16,11 @@ class ExpressHttpClient {
         this.app = express();
     }
 
-    async get(route, callback, options) {
+    get(route, callback, options) {
         this.app.get(route, ...this.selectMiddlewares(options), callback);
     }
 
-    async post(route, callback, options) {
+    post(route, callback, options) {
         this.app.post(route, ...this.selectMiddlewares(options), callback);
     }
 
@@ -31,10 +31,14 @@ class ExpressHttpClient {
 
     async listen() {
         if (this.config.useSsl) {
+            const [key, cert] = await Promise.all([
+                fs.promises.readFile(this.config.sslKeyPath),
+                fs.promises.readFile(this.config.sslCertificatePath),
+            ]);
             this.httpsServer = https.createServer(
                 {
-                    key: await fs.promises.readFile(this.config.sslKeyPath),
-                    cert: await fs.promises.readFile(this.config.sslCertificatePath),
+                    key,
+                    cert,
                 },
                 this.app,
             );
@@ -54,14 +58,14 @@ class ExpressHttpClient {
         return middlewares;
     }
 
-    async initializeBeforeMiddlewares(authService) {
+    initializeBeforeMiddlewares(authService) {
         this._initializeCorsMiddleware();
         this.app.use(authenticationMiddleware(authService));
         this.app.use(authorizationMiddleware(authService));
         this._initializeBaseMiddlewares();
     }
 
-    async initializeAfterMiddlewares() {
+    initializeAfterMiddlewares() {
         // placeholder method for after middlewares
     }
 
@@ -82,7 +86,7 @@ class ExpressHttpClient {
             }),
         );
 
-        this.app.use(express.json({ limit: `${MAX_FILE_SIZE / (1024 * 1024)}mb` }));
+        this.app.use(express.json({ limit: `${MAX_FILE_SIZE / BYTES_IN_MEGABYTE}mb` }));
         this.app.use((req, res, next) => {
             this.logger.api(`${req.method}: ${req.url} request received`);
             return next();

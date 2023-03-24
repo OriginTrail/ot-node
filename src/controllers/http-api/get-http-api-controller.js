@@ -1,4 +1,9 @@
-import { OPERATION_ID_STATUS, OPERATION_STATUS } from '../../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    OPERATION_STATUS,
+    CONTENT_ASSET_HASH_FUNCTION_ID,
+    DEFAULT_GET_STATE,
+} from '../../constants/constants.js';
 import BaseController from './base-http-api-controller.js';
 
 class GetController extends BaseController {
@@ -30,15 +35,11 @@ class GetController extends BaseController {
             OPERATION_STATUS.IN_PROGRESS,
         );
 
-        const { id, hashFunctionId } = req.body;
+        const { id } = req.body;
+        const state = req.body.state ?? DEFAULT_GET_STATE;
+        const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
         this.logger.info(`Get for ${id} with operation id ${operationId} initiated.`);
-
-        const commandData = {
-            operationId,
-            id,
-            hashFunctionId,
-        };
 
         const commandSequence = [
             'getLatestAssertionIdCommand',
@@ -50,7 +51,12 @@ class GetController extends BaseController {
             name: commandSequence[0],
             sequence: commandSequence.slice(1),
             delay: 0,
-            data: commandData,
+            data: {
+                operationId,
+                id,
+                state,
+                hashFunctionId,
+            },
             transactional: false,
         });
 
