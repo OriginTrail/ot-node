@@ -134,7 +134,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             keyword,
             R2,
             hashFunctionId,
-            false,
+            true,
         );
 
         const scores = await Promise.all(
