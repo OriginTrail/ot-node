@@ -105,7 +105,7 @@ class FileService {
     }
 
     getPendingStorageFileName(blockchain, contract, tokenId) {
-        return `${blockchain}:${contract}:${tokenId}`;
+        return `${blockchain}_${contract}_${tokenId}`;
     }
 
     getPendingStorageCachePath(repository) {
