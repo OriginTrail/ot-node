@@ -9,13 +9,13 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'initializeContracts');
     }
 
-    async initializeAssetStorageContract(blockchain, contractAddress) {
+    initializeAssetStorageContract(blockchain, contractAddress) {
         return this.callImplementationFunction(blockchain, 'initializeAssetStorageContract', [
             contractAddress,
         ]);
     }
 
-    async initializeContract(blockchain, contractName, contractAddress) {
+    initializeContract(blockchain, contractName, contractAddress) {
         return this.callImplementationFunction(blockchain, 'initializeContract', [
             contractName,
             contractAddress,

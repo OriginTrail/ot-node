@@ -160,24 +160,22 @@ class BlockchainEventListenerService {
         await this.repositoryModuleManager.markBlockchainEventsAsProcessed(blockEvents);
     }
 
-    async handleNewContractEvents(blockEvents) {
-        await Promise.all(
-            blockEvents.map(async (event) => {
-                const { contractName, newContractAddress } = JSON.parse(event.data);
-                await this.blockchainModuleManager.initializeContract(
-                    event.blockchain_id,
-                    contractName,
-                    newContractAddress,
-                );
-            }),
-        );
+    handleNewContractEvents(blockEvents) {
+        for (const event of blockEvents) {
+            const { contractName, newContractAddress } = JSON.parse(event.data);
+            this.blockchainModuleManager.initializeContract(
+                event.blockchain_id,
+                contractName,
+                newContractAddress,
+            );
+        }
     }
 
     async handleContractChangedEvents(blockEvents) {
         await Promise.all(
             blockEvents.map(async (event) => {
                 const { contractName, newContractAddress } = JSON.parse(event.data);
-                await this.blockchainModuleManager.initializeContract(
+                this.blockchainModuleManager.initializeContract(
                     event.blockchain_id,
                     contractName,
                     newContractAddress,
@@ -190,28 +188,24 @@ class BlockchainEventListenerService {
         );
     }
 
-    async handleNewAssetStorageEvents(blockEvents) {
-        await Promise.all(
-            blockEvents.map(async (event) => {
-                const { newContractAddress } = JSON.parse(event.data);
-                await this.blockchainModuleManager.initializeAssetStorageContract(
-                    event.blockchain_id,
-                    newContractAddress,
-                );
-            }),
-        );
+    handleNewAssetStorageEvents(blockEvents) {
+        for (const event of blockEvents) {
+            const { newContractAddress } = JSON.parse(event.data);
+            this.blockchainModuleManager.initializeAssetStorageContract(
+                event.blockchain_id,
+                newContractAddress,
+            );
+        }
     }
 
-    async handleAssetStorageChangedEvents(blockEvents) {
-        await Promise.all(
-            blockEvents.map(async (event) => {
-                const { newContractAddress } = JSON.parse(event.data);
-                await this.blockchainModuleManager.initializeAssetStorageContract(
-                    event.blockchain_id,
-                    newContractAddress,
-                );
-            }),
-        );
+    handleAssetStorageChangedEvents(blockEvents) {
+        for (const event of blockEvents) {
+            const { newContractAddress } = JSON.parse(event.data);
+            this.blockchainModuleManager.initializeAssetStorageContract(
+                event.blockchain_id,
+                newContractAddress,
+            );
+        }
     }
 
     async handleNodeAddedEvents(blockEvents) {
