@@ -201,9 +201,9 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async removePeerRecord(blockchainId, peerId) {
+    async removePeerRecords(blockchainId, peerId) {
         if (this.initialized) {
-            return this.getImplementation().module.removePeerRecord(blockchainId, peerId);
+            return this.getImplementation().module.removePeerRecords(blockchainId, peerId);
         }
     }
 
@@ -219,15 +219,15 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async updatePeerAsk(blockchainId, peerId, ask) {
+    async updatePeersAsk(peerRecords) {
         if (this.initialized) {
-            return this.getImplementation().module.updatePeerAsk(blockchainId, peerId, ask);
+            return this.getImplementation().module.updatePeersAsk(peerRecords);
         }
     }
 
-    async updatePeerStake(blockchainId, peerId, stake) {
+    async updatePeersStake(peerRecords) {
         if (this.initialized) {
-            return this.getImplementation().module.updatePeerStake(blockchainId, peerId, stake);
+            return this.getImplementation().module.updatePeersStake(peerRecords);
         }
     }
 
@@ -318,9 +318,9 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async markBlockchainEventAsProcessed() {
+    async markBlockchainEventsAsProcessed(events) {
         if (this.initialized) {
-            return this.getImplementation().module.markBlockchainEventAsProcessed();
+            return this.getImplementation().module.markBlockchainEventsAsProcessed(events);
         }
     }
 
