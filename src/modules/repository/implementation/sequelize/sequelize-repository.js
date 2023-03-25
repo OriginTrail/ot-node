@@ -146,17 +146,15 @@ class SequelizeRepository {
 
     // OPERATION_ID
     async createOperationIdRecord(handlerData) {
-        const handlerRecord = await this.models.operation_ids.create(handlerData);
-        return handlerRecord;
+        return this.models.operation_ids.create(handlerData);
     }
 
     async getOperationIdRecord(operationId) {
-        const handlerRecord = await this.models.operation_ids.findOne({
+        return this.models.operation_ids.findOne({
             where: {
                 operation_id: operationId,
             },
         });
-        return handlerRecord;
     }
 
     async updateOperationIdRecord(data, operationId) {
@@ -172,15 +170,6 @@ class SequelizeRepository {
             where: {
                 timestamp: { [Sequelize.Op.lt]: timeToBeDeleted },
                 status: { [Sequelize.Op.in]: statuses },
-            },
-        });
-    }
-
-    async getNumberOfNodesFoundForPublish(publishId) {
-        return this.models.publish.findOne({
-            attributes: ['nodes_found'],
-            where: {
-                id: publishId,
             },
         });
     }
@@ -221,30 +210,9 @@ class SequelizeRepository {
         });
     }
 
-    async getNumberOfOperationResponses(operation, operationId) {
-        return this.models[`${operation}_response`].count({
-            where: {
-                operation_id: operationId,
-            },
-        });
-    }
-
     async getOperationResponsesStatuses(operation, operationId) {
         return this.models[`${operation}_response`].findAll({
             attributes: ['status', 'keyword'],
-            where: {
-                operation_id: operationId,
-            },
-        });
-    }
-
-    async countOperationResponseStatuses(operation, operationId) {
-        return this.models[`${operation}_response`].findAll({
-            attributes: [
-                'status',
-                [Sequelize.fn('COUNT', Sequelize.col('status')), 'count_status'],
-            ],
-            group: 'status',
             where: {
                 operation_id: operationId,
             },
@@ -382,15 +350,6 @@ class SequelizeRepository {
 
     async removePeerRecords(peerRecords) {
         await this.models.shard.bulkDestroy(peerRecords);
-    }
-
-    async updatePeerLastSeen(peerId, lastSeen) {
-        await this.models.shard.update(
-            { last_seen: lastSeen },
-            {
-                where: { peer_id: peerId },
-            },
-        );
     }
 
     async cleanShardingTable() {
@@ -569,16 +528,6 @@ class SequelizeRepository {
             where: {
                 contract: contractName,
             },
-        });
-    }
-
-    async getLastEvent(contractName, blockchainId) {
-        return this.models.blockchain_event.findOne({
-            where: {
-                contract: contractName,
-                blockchain_id: blockchainId,
-            },
-            order: [['block', 'DESC']],
         });
     }
 }

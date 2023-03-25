@@ -124,27 +124,9 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async getNumberOfOperationResponses(operation, operationId) {
-        if (this.initialized) {
-            return this.getImplementation().module.getNumberOfOperationResponses(
-                operation,
-                operationId,
-            );
-        }
-    }
-
     async getOperationResponsesStatuses(operation, operationId) {
         if (this.initialized) {
             return this.getImplementation().module.getOperationResponsesStatuses(
-                operation,
-                operationId,
-            );
-        }
-    }
-
-    async countOperationResponseStatuses(operation, operationId) {
-        if (this.initialized) {
-            return this.getImplementation().module.countOperationResponseStatuses(
                 operation,
                 operationId,
             );
@@ -237,12 +219,6 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async updatePeerLastSeen(peerId, lastSeen) {
-        if (this.initialized) {
-            return this.getImplementation().module.updatePeerLastSeen(peerId, lastSeen);
-        }
-    }
-
     async cleanShardingTable() {
         if (this.initialized) {
             return this.getImplementation().module.cleanShardingTable();
@@ -309,12 +285,6 @@ class RepositoryModuleManager extends BaseModuleManager {
     async insertBlockchainEvents(events) {
         if (this.initialized) {
             return this.getImplementation().module.insertBlockchainEvents(events);
-        }
-    }
-
-    async getLastEvent(contractName, blockchainId) {
-        if (this.initialized) {
-            return this.getImplementation().module.getLastEvent(contractName, blockchainId);
         }
     }
 
