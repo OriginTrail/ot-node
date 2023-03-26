@@ -172,7 +172,7 @@ class Web3Service {
         if (ABIs[contractName] != null) {
             this.scoringFunctionsContracts[id] = new ethers.Contract(
                 contractAddress,
-                ABIs.AbstractAsset,
+                ABIs[contractName],
                 this.wallet,
             );
         } else {
@@ -825,7 +825,7 @@ class Web3Service {
 
     async getLog2PLDSFParams() {
         const log2pldsfParams = await this.callContractFunction(
-            this.Log2PLDSFContract,
+            this.scoringFunctionsContracts[1],
             'getParameters',
             [],
         );
