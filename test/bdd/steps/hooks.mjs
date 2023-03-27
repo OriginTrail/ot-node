@@ -40,15 +40,7 @@ After(function afterMethod(testCase, done) {
         databaseNames.push(node.configuration.operationalDatabase.databaseName);
     });
     if (this.state.localBlockchain) {
-        if (Array.isArray(this.state.localBlockchain)) {
-            for (const blockchain of this.state.localBlockchain) {
-                if (blockchain.server) {
-                    blockchain.server.close();
-                }
-            }
-        } else if (this.state.localBlockchain.server) {
-            this.state.localBlockchain.server.close();
-        }
+        this.state.localBlockchain.stop();
     }
     this.logger.log('After test hook, cleaning repositories');
 
@@ -96,7 +88,6 @@ After(function afterMethod(testCase, done) {
                 ' miliseconds.',
             );
             done();
-            process.exit(0);
         });
 });
 

@@ -42,9 +42,12 @@ const testParametersStorageParams = {
  *
  * @param {String} [options.logger] - Logger instance with debug, trace, info and error methods.
  */
+
+let startBlockchainProcess;
+
 class LocalBlockchain {
     async initialize(_console = console) {
-        const startBlockchainProcess = exec('npm run start:local_blockchain');
+        startBlockchainProcess = exec('npm run start:local_blockchain');
         startBlockchainProcess.stdout.on('data', (data) => {
             _console.log(data);
         });
@@ -64,7 +67,7 @@ class LocalBlockchain {
             privateKey,
         }));
 
-        
+
         const wallet = new ethers.Wallet(this.wallets[0].privateKey, this.provider);
         this.hubContract = new ethers.Contract(hubContractAddress, Hub, wallet);
 
@@ -78,6 +81,10 @@ class LocalBlockchain {
             wallet,
         );
         await this.setParametersStorageParams(testParametersStorageParams);
+    }
+
+    stop() {
+        startBlockchainProcess.kill();
     }
 
     getWallets() {
