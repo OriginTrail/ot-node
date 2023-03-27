@@ -96,6 +96,7 @@ After(function afterMethod(testCase, done) {
                 ' miliseconds.',
             );
             done();
+            process.exit(0);
         });
 });
 
