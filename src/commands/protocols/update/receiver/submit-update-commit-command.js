@@ -72,6 +72,12 @@ class SubmitUpdateCommitCommand extends EpochCommand {
             epoch,
             async (result) => {
                 if (!result.error) {
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_END,
+                        operationId,
+                        agreementId,
+                        epoch,
+                    );
                     this.logger.info('Successfully executed submit update commit');
                 } else if (command.retries - 1 === 0) {
                     this.logger.error(
