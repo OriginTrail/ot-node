@@ -100,21 +100,21 @@ class SubmitProofsCommand extends EpochCommand {
                         epoch,
                     );
                 } else if (command.retries - 1 === 0) {
-                    this.logger.error(
-                        `Failed executing submit proofs command, maximum number of retries reached. Error: ${result.error.message}. Scheduling next epoch check.`,
-                    );
+                    const errorMessage = `Failed executing submit proofs command, maximum number of retries reached. Error: ${result.error.message}. Scheduling next epoch check.`;
+                    that.logger.error(errorMessage);
                     that.operationIdService.emitChangeEvent(
-                        ERROR_TYPE.COMMIT_PROOF.SUBMIT_PROOFS_ERROR,
+                        OPERATION_ID_STATUS.FAILED,
                         operationId,
-                        agreementId,
+                        errorMessage,
+                        that.errorType,
                         epoch,
                     );
                 } else {
                     const commandDelay = BLOCK_TIME * 1000; // one block
-                    this.logger.warn(
+                    that.logger.warn(
                         `Failed executing submit proofs command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
                     );
-                    await this.commandExecutor.add({
+                    await that.commandExecutor.add({
                         name: 'submitProofsCommand',
                         sequence: [],
                         delay: commandDelay,
