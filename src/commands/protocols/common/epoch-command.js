@@ -84,9 +84,10 @@ class EpochCommand extends Command {
         this.logger.warn(`Failed to execute ${command.name}: error: ${error.message}`);
 
         this.operationIdService.emitChangeEvent(
-            this.errorType,
+            OPERATION_ID_STATUS.FAILED,
             command.data.operationId,
-            command.data.agreementId,
+            error.message,
+            this.errorType,
             command.data.epoch,
         );
 
