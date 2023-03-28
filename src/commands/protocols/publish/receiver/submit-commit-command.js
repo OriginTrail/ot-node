@@ -104,7 +104,6 @@ class SubmitCommitCommand extends EpochCommand {
             return EpochCommand.empty();
         }
 
-        const that = this;
         await this.blockchainModuleManager.submitCommit(
             blockchain,
             contract,
@@ -118,7 +117,7 @@ class SubmitCommitCommand extends EpochCommand {
                         agreementData.startTime + agreementData.epochLength * epoch;
 
                     const proofWindowDurationPerc =
-                        await that.blockchainModuleManager.getProofWindowDurationPerc(blockchain);
+                        await this.blockchainModuleManager.getProofWindowDurationPerc(blockchain);
 
                     const proofWindowDuration =
                         (agreementData.epochLength * proofWindowDurationPerc) / 100;
@@ -129,24 +128,24 @@ class SubmitCommitCommand extends EpochCommand {
                             (agreementData.epochLength * agreementData.proofWindowOffsetPerc) / 100,
                         );
                     // we are not using Date.now() here becouse we have an issue with hardhat blockchain time
-                    const timeNow = await that.blockchainModuleManager.getBlockchainTimestamp();
+                    const timeNow = await this.blockchainModuleManager.getBlockchainTimestamp();
                     const delay =
-                        that.serviceAgreementService.randomIntFromInterval(
+                        this.serviceAgreementService.randomIntFromInterval(
                             proofWindowStartTime + 0.1 * proofWindowDuration,
                             proofWindowStartTime + proofWindowDuration - 0.1 * proofWindowDuration,
                         ) - timeNow;
 
-                    that.logger.trace(
+                    this.logger.trace(
                         `Scheduling calculateProofsCommand for agreement id: ${agreementId} in ${delay} seconds`,
                     );
 
-                    await that.commandExecutor.add({
+                    await this.commandExecutor.add({
                         name: 'calculateProofsCommand',
                         delay: delay * 1000,
                         data: { ...command.data, proofWindowStartTime },
                         transactional: false,
                     });
-                    that.operationIdService.emitChangeEvent(
+                    this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
                         operationId,
                         agreementId,
@@ -156,7 +155,7 @@ class SubmitCommitCommand extends EpochCommand {
                     this.logger.error(
                         `Failed executing submit commit command, maximum number of retries reached. Error: ${result.error.message}. Scheduling next epoch check.`,
                     );
-                    await that.scheduleNextEpochCheck(
+                    await this.scheduleNextEpochCheck(
                         blockchain,
                         agreementId,
                         contract,
@@ -167,7 +166,7 @@ class SubmitCommitCommand extends EpochCommand {
                         operationId,
                         assertionId,
                     );
-                    that.operationIdService.emitChangeEvent(
+                    this.operationIdService.emitChangeEvent(
                         ERROR_TYPE.COMMIT_PROOF.SUBMIT_COMMIT_ERROR,
                         operationId,
                         agreementId,

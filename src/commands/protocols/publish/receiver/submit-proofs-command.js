@@ -74,7 +74,6 @@ class SubmitProofsCommand extends EpochCommand {
             );
         }
 
-        const that = this;
         await this.blockchainModuleManager.sendProof(
             blockchain,
             contract,
@@ -86,14 +85,14 @@ class SubmitProofsCommand extends EpochCommand {
             leaf,
             async (result) => {
                 if (!result.error) {
-                    that.logger.trace(
+                    this.logger.trace(
                         `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
                             `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
                             `hash function id: ${hashFunctionId}. Retry number ${
                                 COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
                             }`,
                     );
-                    that.operationIdService.emitChangeEvent(
+                    this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
                         operationId,
                         agreementId,
@@ -103,7 +102,7 @@ class SubmitProofsCommand extends EpochCommand {
                     this.logger.error(
                         `Failed executing submit proofs command, maximum number of retries reached. Error: ${result.error.message}. Scheduling next epoch check.`,
                     );
-                    that.operationIdService.emitChangeEvent(
+                    this.operationIdService.emitChangeEvent(
                         ERROR_TYPE.COMMIT_PROOF.SUBMIT_PROOFS_ERROR,
                         operationId,
                         agreementId,
@@ -124,7 +123,7 @@ class SubmitProofsCommand extends EpochCommand {
                     });
                     return;
                 }
-                await that.scheduleNextEpochCheck(
+                await this.scheduleNextEpochCheck(
                     blockchain,
                     agreementId,
                     contract,
