@@ -99,7 +99,10 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
                 transactional: false,
             }),
         ]);
-
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_REMOTE_END,
+        );
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
     }
 
