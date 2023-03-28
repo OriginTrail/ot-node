@@ -81,13 +81,13 @@ class SubmitUpdateCommitCommand extends EpochCommand {
                     );
                     that.logger.info('Successfully executed submit update commit');
                 } else if (command.retries - 1 === 0) {
-                    that.logger.error(
-                        `Failed executing submit update commit command, maximum number of retries reached. Error: ${result.error.message}`,
-                    );
+                    const errorMessage = `Failed executing submit update commit command, maximum number of retries reached. Error: ${result.error.message}`;
+                    that.logger.error(errorMessage);
                     that.operationIdService.emitChangeEvent(
-                        ERROR_TYPE.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_ERROR,
+                        OPERATION_ID_STATUS.FAILED,
                         operationId,
-                        agreementId,
+                        errorMessage,
+                        that.errorType,
                         epoch,
                     );
                 } else {

@@ -153,9 +153,6 @@ class SubmitCommitCommand extends EpochCommand {
                         epoch,
                     );
                 } else if (command.retries - 1 === 0) {
-                    that.logger.error(
-                        `Failed executing submit commit command, maximum number of retries reached. Error: ${result.error.message}. Scheduling next epoch check.`,
-                    );
                     await that.scheduleNextEpochCheck(
                         blockchain,
                         agreementId,
@@ -167,10 +164,13 @@ class SubmitCommitCommand extends EpochCommand {
                         operationId,
                         assertionId,
                     );
+                    const errorMessage = `Failed executing submit commit command, maximum number of retries reached. Error: ${result.error.message}. Scheduling next epoch check.`;
+                    that.logger.error(errorMessage);
                     that.operationIdService.emitChangeEvent(
-                        ERROR_TYPE.COMMIT_PROOF.SUBMIT_COMMIT_ERROR,
+                        OPERATION_ID_STATUS.FAILED,
                         operationId,
-                        agreementId,
+                        errorMessage,
+                        that.errorType,
                         epoch,
                     );
                 } else {
