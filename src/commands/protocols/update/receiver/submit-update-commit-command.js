@@ -63,6 +63,7 @@ class SubmitUpdateCommitCommand extends EpochCommand {
             return EpochCommand.empty();
         }
 
+        const that = this;
         await this.blockchainModuleManager.submitUpdateCommit(
             blockchain,
             contract,
@@ -72,23 +73,29 @@ class SubmitUpdateCommitCommand extends EpochCommand {
             epoch,
             async (result) => {
                 if (!result.error) {
-                    this.logger.info('Successfully executed submit update commit');
-                } else if (command.retries - 1 === 0) {
-                    this.logger.error(
-                        `Failed executing submit update commit command, maximum number of retries reached. Error: ${result.error.message}`,
-                    );
-                    this.operationIdService.emitChangeEvent(
-                        ERROR_TYPE.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_ERROR,
+                    that.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_END,
                         operationId,
                         agreementId,
                         epoch,
                     );
+                    that.logger.info('Successfully executed submit update commit');
+                } else if (command.retries - 1 === 0) {
+                    const errorMessage = `Failed executing submit update commit command, maximum number of retries reached. Error: ${result.error.message}`;
+                    that.logger.error(errorMessage);
+                    that.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.FAILED,
+                        operationId,
+                        errorMessage,
+                        that.errorType,
+                        epoch,
+                    );
                 } else {
                     const commandDelay = BLOCK_TIME * 1000; // one block
-                    this.logger.warn(
+                    that.logger.warn(
                         `Failed executing submit update commit command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
                     );
-                    this.commandExecutor.add({
+                    that.commandExecutor.add({
                         name: 'submitUpdateCommitCommand',
                         delay: commandDelay,
                         retries: command.retries - 1,
