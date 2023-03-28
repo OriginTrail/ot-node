@@ -74,6 +74,7 @@ class SubmitProofsCommand extends EpochCommand {
             );
         }
 
+        const that = this;
         await this.blockchainModuleManager.sendProof(
             blockchain,
             contract,
@@ -85,24 +86,24 @@ class SubmitProofsCommand extends EpochCommand {
             leaf,
             async (result) => {
                 if (!result.error) {
-                    this.logger.trace(
+                    that.logger.trace(
                         `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
                             `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
                             `hash function id: ${hashFunctionId}. Retry number ${
                                 COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
                             }`,
                     );
-                    this.operationIdService.emitChangeEvent(
+                    that.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
                         operationId,
                         agreementId,
                         epoch,
                     );
                 } else if (command.retries - 1 === 0) {
-                    this.logger.error(
+                    that.logger.error(
                         `Failed executing submit proofs command, maximum number of retries reached. Error: ${result.error.message}. Scheduling next epoch check.`,
                     );
-                    this.operationIdService.emitChangeEvent(
+                    that.operationIdService.emitChangeEvent(
                         ERROR_TYPE.COMMIT_PROOF.SUBMIT_PROOFS_ERROR,
                         operationId,
                         agreementId,
@@ -110,10 +111,10 @@ class SubmitProofsCommand extends EpochCommand {
                     );
                 } else {
                     const commandDelay = BLOCK_TIME * 1000; // one block
-                    this.logger.warn(
+                    that.logger.warn(
                         `Failed executing submit proofs command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
                     );
-                    await this.commandExecutor.add({
+                    await that.commandExecutor.add({
                         name: 'submitProofsCommand',
                         sequence: [],
                         delay: commandDelay,
@@ -123,7 +124,7 @@ class SubmitProofsCommand extends EpochCommand {
                     });
                     return;
                 }
-                await this.scheduleNextEpochCheck(
+                await that.scheduleNextEpochCheck(
                     blockchain,
                     agreementId,
                     contract,

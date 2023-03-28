@@ -104,6 +104,7 @@ class SubmitCommitCommand extends EpochCommand {
             return EpochCommand.empty();
         }
 
+        const that = this;
         await this.blockchainModuleManager.submitCommit(
             blockchain,
             contract,
@@ -117,7 +118,7 @@ class SubmitCommitCommand extends EpochCommand {
                         agreementData.startTime + agreementData.epochLength * epoch;
 
                     const proofWindowDurationPerc =
-                        await this.blockchainModuleManager.getProofWindowDurationPerc(blockchain);
+                        await that.blockchainModuleManager.getProofWindowDurationPerc(blockchain);
 
                     const proofWindowDuration =
                         (agreementData.epochLength * proofWindowDurationPerc) / 100;
@@ -128,34 +129,34 @@ class SubmitCommitCommand extends EpochCommand {
                             (agreementData.epochLength * agreementData.proofWindowOffsetPerc) / 100,
                         );
                     // we are not using Date.now() here becouse we have an issue with hardhat blockchain time
-                    const timeNow = await this.blockchainModuleManager.getBlockchainTimestamp();
+                    const timeNow = await that.blockchainModuleManager.getBlockchainTimestamp();
                     const delay =
-                        this.serviceAgreementService.randomIntFromInterval(
+                        that.serviceAgreementService.randomIntFromInterval(
                             proofWindowStartTime + 0.1 * proofWindowDuration,
                             proofWindowStartTime + proofWindowDuration - 0.1 * proofWindowDuration,
                         ) - timeNow;
 
-                    this.logger.trace(
+                    that.logger.trace(
                         `Scheduling calculateProofsCommand for agreement id: ${agreementId} in ${delay} seconds`,
                     );
 
-                    await this.commandExecutor.add({
+                    await that.commandExecutor.add({
                         name: 'calculateProofsCommand',
                         delay: delay * 1000,
                         data: { ...command.data, proofWindowStartTime },
                         transactional: false,
                     });
-                    this.operationIdService.emitChangeEvent(
+                    that.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
                         operationId,
                         agreementId,
                         epoch,
                     );
                 } else if (command.retries - 1 === 0) {
-                    this.logger.error(
+                    that.logger.error(
                         `Failed executing submit commit command, maximum number of retries reached. Error: ${result.error.message}. Scheduling next epoch check.`,
                     );
-                    await this.scheduleNextEpochCheck(
+                    await that.scheduleNextEpochCheck(
                         blockchain,
                         agreementId,
                         contract,
@@ -166,7 +167,7 @@ class SubmitCommitCommand extends EpochCommand {
                         operationId,
                         assertionId,
                     );
-                    this.operationIdService.emitChangeEvent(
+                    that.operationIdService.emitChangeEvent(
                         ERROR_TYPE.COMMIT_PROOF.SUBMIT_COMMIT_ERROR,
                         operationId,
                         agreementId,
@@ -174,10 +175,10 @@ class SubmitCommitCommand extends EpochCommand {
                     );
                 } else {
                     const commandDelay = BLOCK_TIME * 1000; // one block
-                    this.logger.warn(
+                    that.logger.warn(
                         `Failed executing submit commit command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
                     );
-                    await this.commandExecutor.add({
+                    await that.commandExecutor.add({
                         name: 'submitCommitCommand',
                         sequence: [],
                         delay: commandDelay,

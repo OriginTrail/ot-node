@@ -63,6 +63,7 @@ class SubmitUpdateCommitCommand extends EpochCommand {
             return EpochCommand.empty();
         }
 
+        const that = this;
         await this.blockchainModuleManager.submitUpdateCommit(
             blockchain,
             contract,
@@ -72,18 +73,18 @@ class SubmitUpdateCommitCommand extends EpochCommand {
             epoch,
             async (result) => {
                 if (!result.error) {
-                    this.operationIdService.emitChangeEvent(
+                    that.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_END,
                         operationId,
                         agreementId,
                         epoch,
                     );
-                    this.logger.info('Successfully executed submit update commit');
+                    that.logger.info('Successfully executed submit update commit');
                 } else if (command.retries - 1 === 0) {
-                    this.logger.error(
+                    that.logger.error(
                         `Failed executing submit update commit command, maximum number of retries reached. Error: ${result.error.message}`,
                     );
-                    this.operationIdService.emitChangeEvent(
+                    that.operationIdService.emitChangeEvent(
                         ERROR_TYPE.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_ERROR,
                         operationId,
                         agreementId,
@@ -91,10 +92,10 @@ class SubmitUpdateCommitCommand extends EpochCommand {
                     );
                 } else {
                     const commandDelay = BLOCK_TIME * 1000; // one block
-                    this.logger.warn(
+                    that.logger.warn(
                         `Failed executing submit update commit command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
                     );
-                    this.commandExecutor.add({
+                    that.commandExecutor.add({
                         name: 'submitUpdateCommitCommand',
                         delay: commandDelay,
                         retries: command.retries - 1,
