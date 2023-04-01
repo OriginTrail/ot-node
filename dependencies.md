@@ -229,16 +229,6 @@
 -   **version**: ^1.1.8
 -   **description**: used to compare ip addresses
 
-##### [it-filter](https://www.npmjs.com/package/it-filter)
-
--   **version**: ^1.0.3
--   **description**: filter operation that supports iterables
-
-##### [it-foreach](https://www.npmjs.com/package/it-foreach)
-
--   **version**: ^0.1.1
--   **description**: foreach operation that supports iterables
-
 ##### [it-length-prefixed](https://www.npmjs.com/package/it-length-prefixed)
 
 -   **version**: ^8.0.2
@@ -248,11 +238,6 @@
 
 -   **version**: ^1.0.6
 -   **description**: used to map values received yielded by libp2p async iterators
-
-##### [it-merge](https://www.npmjs.com/package/it-merge)
-
--   **version**: ^2.0.4
--   **description**: merge operation that supports iterables
 
 ##### [it-pipe](https://www.npmjs.com/package/it-pipe)
 

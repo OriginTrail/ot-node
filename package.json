@@ -89,7 +89,6 @@
         "fs-extra": "^10.1.0",
         "graphdb": "^2.0.2",
         "ip": "^1.1.8",
-        "it-concat": "^2.0.0",
         "it-length-prefixed": "^5.0.3",
         "it-map": "^1.0.6",
         "it-pipe": "^1.1.0",
