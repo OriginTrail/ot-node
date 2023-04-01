@@ -274,11 +274,6 @@
 -   **version**: ^8.5.1
 -   **description**: used to generate, validate and decode JWTs
 
-##### [keccak256](https://www.npmjs.com/package/keccak256)
-
--   **version**: ^1.0.6
--   **description**: used to hash n-quads in validation module. **Should be moved to assertion-tools dependency**
-
 ##### [libp2p](https://www.npmjs.com/package/libp2p)
 
 -   **version**: ^0.38.0
