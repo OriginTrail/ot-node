@@ -348,8 +348,3 @@
 
 -   **version**: ^8.3.2
 -   **description**: uuid generation
-
-##### [workerpool](https://www.npmjs.com/package/workerpool)
-
--   **version**: ^6.2.1
--   **description**: offload cpu intensive work
