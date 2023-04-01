@@ -229,11 +229,6 @@
 -   **version**: ^1.1.8
 -   **description**: used to compare ip addresses
 
-##### [it-all](https://www.npmjs.com/package/it-all)
-
--   **version**: ^1.0.6
--   **description**: collect iterable values
-
 ##### [it-filter](https://www.npmjs.com/package/it-filter)
 
 -   **version**: ^1.0.3
@@ -263,16 +258,6 @@
 
 -   **version**: ^2.0.4
 -   **description**: stream pipeline that supports libp2p duplex streams. Used for streaming messages between nodes
-
-##### [it-sort](https://www.npmjs.com/package/it-sort)
-
--   **version**: ^1.0.1
--   **description**: sort operation that supports iterables
-
-##### [it-take](https://www.npmjs.com/package/it-take)
-
--   **version**: ^1.0.2
--   **description**: slice operation that supports iterables
 
 ##### [jsonld](https://www.npmjs.com/package/jsonld)
 
