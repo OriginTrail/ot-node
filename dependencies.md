@@ -279,11 +279,6 @@
 -   **version**: ^0.38.0
 -   **description**:
 
-##### [merkletreejs](https://www.npmjs.com/package/merkletreejs)
-
--   **version**: ^0.2.32
--   **description**: used to create merkle tree in validation module. **Should be moved to assertion-tools dependency**
-
 ##### [ms](https://www.npmjs.com/package/ms)
 
 -   **version**: ^2.1.3
