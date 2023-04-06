@@ -1,7 +1,7 @@
 class RepositoryModuleManagerMock {
     responseStatuses = [
         {
-            id: {},
+            id: 1,
             operation_id: 'f6354c2c-d460-11ed-afa1-0242ac120002',
             keyword: 'origintrail',
             status: 'COMPLETED',
@@ -117,6 +117,23 @@ class RepositoryModuleManagerMock {
                 ? { ...rs, status: data.status, updated_at: data.timestamp }
                 : rs,
         );
+    }
+
+    async createOperationResponseRecord(status, operation, operationId, keyword, errorMessage) {
+        console.log(operation);
+        console.log(errorMessage);
+
+        this.responseStatuses = [
+            ...this.responseStatuses,
+            {
+                id: this.responseStatuses[this.responseStatuses.length - 1] + 1,
+                status,
+                operation_id: operationId,
+                keyword,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            },
+        ];
     }
 }
 
