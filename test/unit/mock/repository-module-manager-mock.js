@@ -1,4 +1,16 @@
 class RepositoryModuleManagerMock {
+    responseStatuses = [
+        {
+            id: {},
+            operation_id: 'f6354c2c-d460-11ed-afa1-0242ac120002',
+            keyword: 'origintrail',
+            status: 'COMPLETED',
+            message: 'message',
+            created_at: '1970-01-01 00:00:00',
+            updated_at: '1970-01-01 00:00:00',
+        },
+    ];
+
     getAllPeerRecords() {
         return [
             {
@@ -92,6 +104,19 @@ class RepositoryModuleManagerMock {
                 sha256: '0x7b4f717bd647104a72c7f1fce4600366982f36ebb1cef41540a5541c8e8ca1dd',
             },
         ];
+    }
+
+    async getOperationResponsesStatuses(operation, operationId) {
+        console.log(operation);
+        return this.responseStatuses.filter((rs) => rs.operation_id === operationId);
+    }
+
+    async updateOperationIdRecord(data, operationId) {
+        this.responseStatuses = this.responseStatuses.map((rs) =>
+            rs.operation_id === operationId
+                ? { ...rs, status: data.status, updated_at: data.timestamp }
+                : rs,
+        );
     }
 }
 
