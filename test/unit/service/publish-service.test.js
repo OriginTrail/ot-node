@@ -6,6 +6,7 @@ import BlockchainModuleManagerMock from '../mock/blockchain-module-manager-mock.
 import OperationIdServiceMock from '../mock/operation-id-service-mock.js';
 import CommandExecutorMock from '../mock/command-executor-mock.js';
 import PublishService from '../../../src/service/publish-service.js';
+import Logger from '../../../src/logger/logger.js';
 
 let publishService;
 
@@ -14,17 +15,33 @@ describe('Publish service test', async () => {
         // probably operation id service mock should return some random string?
         // not sure how to mock command executor? create real one maybe/probably
         // with existing mock repository module manager
+        const repositoryModuleManagerMock = new RepositoryModuleManagerMock();
+
         publishService = new PublishService({
-            repositoryModuleManager: new RepositoryModuleManagerMock(),
-            operationIdService: new OperationIdServiceMock(),
+            repositoryModuleManager: repositoryModuleManagerMock,
+            operationIdService: new OperationIdServiceMock({ repositoryModuleManagerMock }),
             commandExecutor: new CommandExecutorMock(),
             validationModuleManager: new ValidationModuleManagerMock(),
             blockchainModuleManager: new BlockchainModuleManagerMock(),
+            logger: new Logger(),
         });
     });
 
     it('Process response, returns *whatever* successfully', async () => {
-        await publishService.processResponse();
+        await publishService.processResponse(
+            {
+                data: {
+                    operationId: '5195d01a-b437-4aae-b388-a77b9fa715f1',
+                    numberOfFoundNodes: 10,
+                    leftoverNodes: 2,
+                    keyword: 'origintrail',
+                    batchSize: 10,
+                    minAckResponses: 10,
+                },
+            },
+            'COMPLETED',
+            {},
+        );
         expect(false).to.be.equal(false);
     });
 });
