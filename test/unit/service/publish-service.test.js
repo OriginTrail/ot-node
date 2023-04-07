@@ -129,4 +129,29 @@ describe('Publish service test', async () => {
             ),
         ).to.be.true;
     });
+
+    it('Successful publish leads to scheduling operation for leftover nodes', async () => {
+        await publishService.processResponse(
+            {
+                data: {
+                    operationId: '5195d01a-b437-4aae-b388-a77b9fa715f1',
+                    numberOfFoundNodes: 1,
+                    leftoverNodes: [1, 2, 3, 4],
+                    keyword: 'origintrail',
+                    batchSize: 10,
+                    minAckResponses: 12,
+                },
+            },
+            OPERATION_REQUEST_STATUS.COMPLETED,
+            {},
+        );
+
+        expect(publishService.repositoryModuleManager.getAllResponseStatuses().length).to.be.equal(
+            2,
+        );
+
+        expect(consoleSpy.calledWith('Operation id:', '5195d01a-b437-4aae-b388-a77b9fa715f1')).to.be
+            .true;
+        expect(consoleSpy.calledWith('Leftover nodes:', [1, 2, 3, 4])).to.be.true;
+    });
 });
