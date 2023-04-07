@@ -1,5 +1,6 @@
-import { beforeEach, describe, it } from 'mocha';
+import { beforeEach, afterEach, describe, it } from 'mocha';
 import { expect } from 'chai';
+import sinon from 'sinon';
 import { OPERATION_REQUEST_STATUS } from '../../../src/constants/constants.js';
 import RepositoryModuleManagerMock from '../mock/repository-module-manager-mock.js';
 import ValidationModuleManagerMock from '../mock/validation-module-manager-mock.js';
@@ -10,6 +11,9 @@ import PublishService from '../../../src/service/publish-service.js';
 import Logger from '../../../src/logger/logger.js';
 
 let publishService;
+let loggerDebugSpy;
+let loggerTraceSpy;
+let loggerInfoSpy;
 
 describe('Publish service test', async () => {
     beforeEach(() => {
@@ -28,6 +32,16 @@ describe('Publish service test', async () => {
             blockchainModuleManager: new BlockchainModuleManagerMock(),
             logger: new Logger(),
         });
+
+        loggerDebugSpy = sinon.spy(publishService.logger, 'debug');
+        loggerTraceSpy = sinon.spy(publishService.logger, 'trace');
+        loggerInfoSpy = sinon.spy(publishService.logger, 'info');
+    });
+
+    afterEach(() => {
+        loggerDebugSpy.restore();
+        loggerTraceSpy.restore();
+        loggerInfoSpy.restore();
     });
 
     it('Process response, returns *whatever* successfully', async () => {
