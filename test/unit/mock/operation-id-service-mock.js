@@ -3,9 +3,11 @@ class OperationIdServiceMock {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
-    /* eslint-disable-next-line no-unused-vars */
     async cacheOperationIdData(operationId, data) {
         console.log('Caching data for:', operationId);
+
+        if (data.assertion) console.log('Caching data:', data.assertion);
+
         return {};
     }
 
