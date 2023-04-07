@@ -5,7 +5,7 @@ class OperationIdServiceMock {
 
     /* eslint-disable-next-line no-unused-vars */
     async cacheOperationIdData(operationId, data) {
-        console.log('aa');
+        console.log('Caching data for:', operationId);
         return {};
     }
 

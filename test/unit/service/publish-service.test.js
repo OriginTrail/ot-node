@@ -39,7 +39,7 @@ describe('Publish service test', async () => {
         loggerInfoSpy = sinon.spy(publishService.logger, 'info');
         consoleSpy = sinon.spy(console, 'log');
 
-        console.log('----------------------------------------------------------------------');
+        console.log();
     });
 
     afterEach(() => {
@@ -74,6 +74,9 @@ describe('Publish service test', async () => {
                 'publish with operation id: 5195d01a-b437-4aae-b388-a77b9fa715f1 with status: COMPLETED',
             ),
         ).to.be.true;
+
+        expect(consoleSpy.calledWith('Caching data for:', '5195d01a-b437-4aae-b388-a77b9fa715f1'))
+            .to.be.true;
 
         expect(
             returnedResponses[returnedResponses.length - 1].status ===
