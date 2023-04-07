@@ -106,6 +106,10 @@ class RepositoryModuleManagerMock {
         ];
     }
 
+    getAllResponseStatuses() {
+        return this.responseStatuses;
+    }
+
     async getOperationResponsesStatuses(operation, operationId) {
         console.log(operation);
         return this.responseStatuses.filter((rs) => rs.operation_id === operationId);
@@ -115,6 +119,15 @@ class RepositoryModuleManagerMock {
         this.responseStatuses = this.responseStatuses.map((rs) =>
             rs.operation_id === operationId
                 ? { ...rs, status: data.status, updated_at: data.timestamp }
+                : rs,
+        );
+    }
+
+    async updateOperationStatus(operation, operationId, status) {
+        console.log(operation);
+        this.responseStatuses = this.responseStatuses.map((rs) =>
+            rs.operation_id === operationId
+                ? { ...rs, status, updated_at: new Date().toISOString() }
                 : rs,
         );
     }

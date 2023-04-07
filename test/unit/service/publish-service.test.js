@@ -1,5 +1,6 @@
 import { beforeEach, describe, it } from 'mocha';
 import { expect } from 'chai';
+import { OPERATION_STATUS } from '../../../src/constants/constants.js';
 import RepositoryModuleManagerMock from '../mock/repository-module-manager-mock.js';
 import ValidationModuleManagerMock from '../mock/validation-module-manager-mock.js';
 import BlockchainModuleManagerMock from '../mock/blockchain-module-manager-mock.js';
@@ -19,7 +20,9 @@ describe('Publish service test', async () => {
 
         publishService = new PublishService({
             repositoryModuleManager: repositoryModuleManagerMock,
-            operationIdService: new OperationIdServiceMock({ repositoryModuleManagerMock }),
+            operationIdService: new OperationIdServiceMock({
+                repositoryModuleManager: repositoryModuleManagerMock,
+            }),
             commandExecutor: new CommandExecutorMock(),
             validationModuleManager: new ValidationModuleManagerMock(),
             blockchainModuleManager: new BlockchainModuleManagerMock(),
@@ -33,15 +36,20 @@ describe('Publish service test', async () => {
                 data: {
                     operationId: '5195d01a-b437-4aae-b388-a77b9fa715f1',
                     numberOfFoundNodes: 10,
-                    leftoverNodes: 2,
+                    leftoverNodes: [],
                     keyword: 'origintrail',
                     batchSize: 10,
-                    minAckResponses: 10,
+                    minAckResponses: 1,
                 },
             },
-            'COMPLETED',
+            OPERATION_STATUS.COMPLETED,
             {},
         );
-        expect(false).to.be.equal(false);
+
+        console.log(publishService.repositoryModuleManager.getAllResponseStatuses());
+
+        expect(publishService.repositoryModuleManager.getAllResponseStatuses().length).to.be.equal(
+            2,
+        );
     });
 });
