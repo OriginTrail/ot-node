@@ -47,7 +47,7 @@ describe('Publish service test', async () => {
         consoleSpy.restore();
     });
 
-    it('Successful publish completed with low ACK ask', async () => {
+    it('Successful publish completes with low ACK ask', async () => {
         await publishService.processResponse(
             {
                 data: {
@@ -74,7 +74,7 @@ describe('Publish service test', async () => {
         ).to.be.true;
     });
 
-    it('Successful publish completed with high ACK ask', async () => {
+    it('Successful publish fails with high ACK ask', async () => {
         await publishService.processResponse(
             {
                 data: {
@@ -101,5 +101,32 @@ describe('Publish service test', async () => {
         ).to.be.true;
 
         expect(consoleSpy.calledWith('Not replicated to enough nodes!')).to.be.true;
+    });
+
+    it('Failed publish fails with low ACK ask', async () => {
+        await publishService.processResponse(
+            {
+                data: {
+                    operationId: '5195d01a-b437-4aae-b388-a77b9fa715f1',
+                    numberOfFoundNodes: 1,
+                    leftoverNodes: [],
+                    keyword: 'origintrail',
+                    batchSize: 10,
+                    minAckResponses: 1,
+                },
+            },
+            OPERATION_REQUEST_STATUS.FAILED,
+            {},
+        );
+
+        expect(publishService.repositoryModuleManager.getAllResponseStatuses().length).to.be.equal(
+            2,
+        );
+
+        expect(
+            loggerInfoSpy.calledWith(
+                'publish for operationId: 5195d01a-b437-4aae-b388-a77b9fa715f1 failed.',
+            ),
+        ).to.be.true;
     });
 });
