@@ -60,8 +60,6 @@ describe('Publish service test', async () => {
             {},
         );
 
-        console.log(publishService.repositoryModuleManager.getAllResponseStatuses());
-
         expect(publishService.repositoryModuleManager.getAllResponseStatuses().length).to.be.equal(
             2,
         );
