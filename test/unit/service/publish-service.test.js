@@ -38,6 +38,8 @@ describe('Publish service test', async () => {
         loggerTraceSpy = sinon.spy(publishService.logger, 'trace');
         loggerInfoSpy = sinon.spy(publishService.logger, 'info');
         consoleSpy = sinon.spy(console, 'log');
+
+        console.log('----------------------------------------------------------------------');
     });
 
     afterEach(() => {
@@ -63,14 +65,19 @@ describe('Publish service test', async () => {
             {},
         );
 
-        expect(publishService.repositoryModuleManager.getAllResponseStatuses().length).to.be.equal(
-            2,
-        );
+        const returnedResponses = publishService.repositoryModuleManager.getAllResponseStatuses();
+
+        expect(returnedResponses.length).to.be.equal(2);
 
         expect(
             loggerInfoSpy.calledWith(
                 'publish with operation id: 5195d01a-b437-4aae-b388-a77b9fa715f1 with status: COMPLETED',
             ),
+        ).to.be.true;
+
+        expect(
+            returnedResponses[returnedResponses.length - 1].status ===
+                OPERATION_REQUEST_STATUS.COMPLETED,
         ).to.be.true;
     });
 
@@ -90,9 +97,9 @@ describe('Publish service test', async () => {
             {},
         );
 
-        expect(publishService.repositoryModuleManager.getAllResponseStatuses().length).to.be.equal(
-            2,
-        );
+        const returnedResponses = publishService.repositoryModuleManager.getAllResponseStatuses();
+
+        expect(returnedResponses.length).to.be.equal(2);
 
         expect(
             loggerInfoSpy.calledWith(
@@ -100,7 +107,12 @@ describe('Publish service test', async () => {
             ),
         ).to.be.true;
 
-        expect(consoleSpy.calledWith('Not replicated to enough nodes!')).to.be.true;
+        expect(consoleSpy.calledWith('Not replicated to enough nodes!'));
+
+        expect(
+            returnedResponses[returnedResponses.length - 1].status ===
+                OPERATION_REQUEST_STATUS.FAILED,
+        ).to.be.true;
     });
 
     it('Failed publish fails with low ACK ask', async () => {
@@ -119,14 +131,21 @@ describe('Publish service test', async () => {
             {},
         );
 
-        expect(publishService.repositoryModuleManager.getAllResponseStatuses().length).to.be.equal(
-            2,
-        );
+        const returnedResponses = publishService.repositoryModuleManager.getAllResponseStatuses();
+
+        expect(returnedResponses.length).to.be.equal(2);
 
         expect(
             loggerInfoSpy.calledWith(
                 'publish for operationId: 5195d01a-b437-4aae-b388-a77b9fa715f1 failed.',
             ),
+        ).to.be.true;
+
+        expect(consoleSpy.calledWith('Not replicated to enough nodes!'));
+
+        expect(
+            returnedResponses[returnedResponses.length - 1].status ===
+                OPERATION_REQUEST_STATUS.FAILED,
         ).to.be.true;
     });
 
@@ -146,12 +165,17 @@ describe('Publish service test', async () => {
             {},
         );
 
-        expect(publishService.repositoryModuleManager.getAllResponseStatuses().length).to.be.equal(
-            2,
-        );
+        const returnedResponses = publishService.repositoryModuleManager.getAllResponseStatuses();
+
+        expect(returnedResponses.length).to.be.equal(2);
 
         expect(consoleSpy.calledWith('Operation id:', '5195d01a-b437-4aae-b388-a77b9fa715f1')).to.be
             .true;
         expect(consoleSpy.calledWith('Leftover nodes:', [1, 2, 3, 4])).to.be.true;
+
+        expect(
+            returnedResponses[returnedResponses.length - 1].status ===
+                OPERATION_REQUEST_STATUS.COMPLETED,
+        ).to.be.true;
     });
 });
