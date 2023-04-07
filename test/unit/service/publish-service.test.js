@@ -14,6 +14,7 @@ let publishService;
 let loggerDebugSpy;
 let loggerTraceSpy;
 let loggerInfoSpy;
+let consoleSpy;
 
 describe('Publish service test', async () => {
     beforeEach(() => {
@@ -36,12 +37,14 @@ describe('Publish service test', async () => {
         loggerDebugSpy = sinon.spy(publishService.logger, 'debug');
         loggerTraceSpy = sinon.spy(publishService.logger, 'trace');
         loggerInfoSpy = sinon.spy(publishService.logger, 'info');
+        consoleSpy = sinon.spy(console, 'log');
     });
 
     afterEach(() => {
         loggerDebugSpy.restore();
         loggerTraceSpy.restore();
         loggerInfoSpy.restore();
+        consoleSpy.restore();
     });
 
     it('Successful publish completed with low ACK ask', async () => {
@@ -49,7 +52,7 @@ describe('Publish service test', async () => {
             {
                 data: {
                     operationId: '5195d01a-b437-4aae-b388-a77b9fa715f1',
-                    numberOfFoundNodes: 10,
+                    numberOfFoundNodes: 1,
                     leftoverNodes: [],
                     keyword: 'origintrail',
                     batchSize: 10,
@@ -69,5 +72,34 @@ describe('Publish service test', async () => {
                 'publish with operation id: 5195d01a-b437-4aae-b388-a77b9fa715f1 with status: COMPLETED',
             ),
         ).to.be.true;
+    });
+
+    it('Successful publish completed with high ACK ask', async () => {
+        await publishService.processResponse(
+            {
+                data: {
+                    operationId: '5195d01a-b437-4aae-b388-a77b9fa715f1',
+                    numberOfFoundNodes: 1,
+                    leftoverNodes: [],
+                    keyword: 'origintrail',
+                    batchSize: 10,
+                    minAckResponses: 12,
+                },
+            },
+            OPERATION_REQUEST_STATUS.COMPLETED,
+            {},
+        );
+
+        expect(publishService.repositoryModuleManager.getAllResponseStatuses().length).to.be.equal(
+            2,
+        );
+
+        expect(
+            loggerInfoSpy.calledWith(
+                'publish for operationId: 5195d01a-b437-4aae-b388-a77b9fa715f1 failed.',
+            ),
+        ).to.be.true;
+
+        expect(consoleSpy.calledWith('Not replicated to enough nodes!')).to.be.true;
     });
 });
