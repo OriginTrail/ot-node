@@ -44,7 +44,7 @@ describe('Publish service test', async () => {
         loggerInfoSpy.restore();
     });
 
-    it('Process response, returns *whatever* successfully', async () => {
+    it('Successful publish completed with low ACK ask', async () => {
         await publishService.processResponse(
             {
                 data: {
@@ -65,5 +65,11 @@ describe('Publish service test', async () => {
         expect(publishService.repositoryModuleManager.getAllResponseStatuses().length).to.be.equal(
             2,
         );
+
+        expect(
+            loggerInfoSpy.calledWith(
+                'publish with operation id: 5195d01a-b437-4aae-b388-a77b9fa715f1 with status: COMPLETED',
+            ),
+        ).to.be.true;
     });
 });
