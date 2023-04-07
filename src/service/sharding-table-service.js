@@ -212,7 +212,7 @@ class ShardingTableService {
     }
 
     calculateMediumBidSuggestionIndex(r1, r2, nodeArrayLength) {
-        const index = r1 + (r2 - r1) / 2;
+        const index = Math.round(r1 + (r2 - r1) / 2);
         return (index > nodeArrayLength ? nodeArrayLength : index) - 1;
     }
 
