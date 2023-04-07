@@ -9,6 +9,10 @@ class BlockchainModuleManagerMock {
         return 3;
     }
 
+    getR1() {
+        return 8;
+    }
+
     encodePacked(blockchain, types, values) {
         return ethers.utils.solidityPack(types, values);
     }

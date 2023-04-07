@@ -443,3 +443,9 @@ export const FIXED_GAS_LIMIT_METHODS = {
     submitUpdateCommit: 600000,
     sendProof: 500000,
 };
+
+export const BID_SUGGESTION_OPTIONS = {
+    LOW: 'low',
+    MEDIUM: 'medium',
+    HIGH: 'high',
+};

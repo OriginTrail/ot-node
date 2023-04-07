@@ -7,6 +7,7 @@ import take from 'it-take';
 import all from 'it-all';
 
 import {
+    BID_SUGGESTION_OPTIONS,
     BYTES_IN_KILOBYTE,
     CONTRACTS,
     DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
@@ -158,8 +159,13 @@ class ShardingTableService {
         contentAssetStorageAddress,
         firstAssertionId,
         hashFunctionId,
+        option,
     ) {
         const kbSize = assertionSize < BYTES_IN_KILOBYTE ? BYTES_IN_KILOBYTE : assertionSize;
+        const r0 = await this.blockchainModuleManager.getR0(blockchainId);
+        const r1 = await this.blockchainModuleManager.getR1(blockchainId);
+        const r2 = await this.blockchainModuleManager.getR2(blockchainId);
+
         const peerRecords = await this.findNeighbourhood(
             blockchainId,
             this.blockchainModuleManager.encodePacked(
@@ -167,16 +173,29 @@ class ShardingTableService {
                 ['address', 'bytes32'],
                 [contentAssetStorageAddress, firstAssertionId],
             ),
-            await this.blockchainModuleManager.getR2(blockchainId),
+            r2,
             hashFunctionId,
             true,
         );
 
         const sorted = peerRecords.sort((a, b) => a.ask - b.ask);
 
-        const { ask } = sorted[Math.floor(sorted.length * 0.75)];
+        let index;
+        switch (option) {
+            case BID_SUGGESTION_OPTIONS.LOW:
+                index = this.calculateLowBidSuggestionIndex(r1, sorted.length);
+                break;
+            case BID_SUGGESTION_OPTIONS.MEDIUM:
+                index = this.calculateMediumBidSuggestionIndex(r1, r2, sorted.length);
+                break;
+            case BID_SUGGESTION_OPTIONS.HIGH:
+                index = this.calculateHighBidSuggestionIndex(r2, sorted.length);
+                break;
+            default:
+                index = this.calculateMediumBidSuggestionIndex(r1, r2, sorted.length);
+        }
 
-        const r0 = await this.blockchainModuleManager.getR0(blockchainId);
+        const { ask } = sorted[index];
 
         return this.blockchainModuleManager
             .toBigNumber(blockchainId, this.blockchainModuleManager.convertToWei(blockchainId, ask))
@@ -185,6 +204,21 @@ class ShardingTableService {
             .mul(r0)
             .div(BYTES_IN_KILOBYTE)
             .toString();
+    }
+
+    calculateLowBidSuggestionIndex(r1, nodeArrayLength) {
+        const index = r1 + 2;
+        return (index > nodeArrayLength ? nodeArrayLength : index) - 1;
+    }
+
+    calculateMediumBidSuggestionIndex(r1, r2, nodeArrayLength) {
+        const index = r1 + (r2 - r1) / 2;
+        return (index > nodeArrayLength ? nodeArrayLength : index) - 1;
+    }
+
+    calculateHighBidSuggestionIndex(r2, nodeArrayLength) {
+        const index = r2;
+        return (index > nodeArrayLength ? nodeArrayLength : index) - 1;
     }
 
     async findEligibleNodes(neighbourhood, bid, r1, r0) {

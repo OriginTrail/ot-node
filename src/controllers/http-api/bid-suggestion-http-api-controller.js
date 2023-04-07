@@ -44,8 +44,8 @@ class BidSuggestionController extends BaseController {
             contentAssetStorageAddress,
             firstAssertionId,
             hashFunctionId,
+            option,
         } = req.query;
-
         this.returnResponse(res, 200, {
             bidSuggestion: await this.shardingTableService.getBidSuggestion(
                 blockchain,
@@ -54,6 +54,7 @@ class BidSuggestionController extends BaseController {
                 contentAssetStorageAddress,
                 firstAssertionId,
                 hashFunctionId,
+                option,
             ),
         });
     }

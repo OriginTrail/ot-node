@@ -1,4 +1,4 @@
-export default (blockchainImplementationNames) => ({
+export default (blockchainImplementationNames, bidSuggestionOptions) => ({
     type: 'object',
     required: [
         'blockchain',
@@ -34,6 +34,10 @@ export default (blockchainImplementationNames) => ({
             type: 'number',
             minimum: 1,
             maximum: 1,
+        },
+        option: {
+            enum: bidSuggestionOptions,
+            default: bidSuggestionOptions.MEDIUM,
         },
     },
 });
