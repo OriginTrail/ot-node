@@ -139,7 +139,7 @@ class RepositoryModuleManagerMock {
         this.responseStatuses = [
             ...this.responseStatuses,
             {
-                id: this.responseStatuses[this.responseStatuses.length - 1] + 1,
+                id: this.responseStatuses[this.responseStatuses.length - 1].id + 1,
                 status,
                 operation_id: operationId,
                 keyword,
