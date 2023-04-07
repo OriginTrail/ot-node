@@ -1,6 +1,6 @@
 import { beforeEach, describe, it } from 'mocha';
 import { expect } from 'chai';
-import { OPERATION_STATUS } from '../../../src/constants/constants.js';
+import { OPERATION_REQUEST_STATUS } from '../../../src/constants/constants.js';
 import RepositoryModuleManagerMock from '../mock/repository-module-manager-mock.js';
 import ValidationModuleManagerMock from '../mock/validation-module-manager-mock.js';
 import BlockchainModuleManagerMock from '../mock/blockchain-module-manager-mock.js';
@@ -42,7 +42,7 @@ describe('Publish service test', async () => {
                     minAckResponses: 1,
                 },
             },
-            OPERATION_STATUS.COMPLETED,
+            OPERATION_REQUEST_STATUS.COMPLETED,
             {},
         );
 
