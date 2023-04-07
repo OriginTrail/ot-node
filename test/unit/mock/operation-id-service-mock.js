@@ -3,16 +3,13 @@ class OperationIdServiceMock {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
+    /* eslint-disable-next-line no-unused-vars */
     async cacheOperationIdData(operationId, data) {
-        console.log(operationId, data);
-
         return {};
     }
 
+    /* eslint-disable-next-line no-unused-vars */
     async updateOperationIdStatus(operationId, status, errorMessage = null, errorType = null) {
-        if (errorMessage) console.log(errorMessage);
-        if (errorType) console.log(errorType);
-
         await this.repositoryModuleManager.updateOperationIdRecord(
             {
                 status,

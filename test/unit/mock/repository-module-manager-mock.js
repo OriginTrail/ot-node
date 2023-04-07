@@ -110,8 +110,8 @@ class RepositoryModuleManagerMock {
         return this.responseStatuses;
     }
 
+    /* eslint-disable-next-line no-unused-vars */
     async getOperationResponsesStatuses(operation, operationId) {
-        console.log(operation);
         return this.responseStatuses.filter((rs) => rs.operation_id === operationId);
     }
 
@@ -123,8 +123,8 @@ class RepositoryModuleManagerMock {
         );
     }
 
+    /* eslint-disable-next-line no-unused-vars */
     async updateOperationStatus(operation, operationId, status) {
-        console.log(operation);
         this.responseStatuses = this.responseStatuses.map((rs) =>
             rs.operation_id === operationId
                 ? { ...rs, status, updated_at: new Date().toISOString() }
@@ -132,10 +132,8 @@ class RepositoryModuleManagerMock {
         );
     }
 
+    /* eslint-disable-next-line no-unused-vars */
     async createOperationResponseRecord(status, operation, operationId, keyword, errorMessage) {
-        console.log(operation);
-        console.log(errorMessage);
-
         this.responseStatuses = [
             ...this.responseStatuses,
             {

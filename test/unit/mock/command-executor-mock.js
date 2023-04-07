@@ -1,6 +1,5 @@
 class CommandExecutorMock {
-    async add(addCommand, addDelay = 0, insert = true) {
-        console.log(addDelay, insert);
+    async add(addCommand) {
         console.log('Operation id:', addCommand.data.operationId);
         console.log('Leftover nodes:', addCommand.data.leftoverNodes);
     }
