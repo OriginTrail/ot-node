@@ -49,7 +49,7 @@ describe('Publish service test', async () => {
         consoleSpy.restore();
     });
 
-    it('Successful publish completes with low ACK ask', async () => {
+    it('Completed publish completes with low ACK ask', async () => {
         await publishService.processResponse(
             {
                 data: {
@@ -84,7 +84,7 @@ describe('Publish service test', async () => {
         ).to.be.true;
     });
 
-    it('Successful publish fails with high ACK ask', async () => {
+    it('Completed publish fails with high ACK ask', async () => {
         await publishService.processResponse(
             {
                 data: {
@@ -152,7 +152,7 @@ describe('Publish service test', async () => {
         ).to.be.true;
     });
 
-    it('Successful publish leads to scheduling operation for leftover nodes', async () => {
+    it('Completed publish leads to scheduling operation for leftover nodes and completes', async () => {
         await publishService.processResponse(
             {
                 data: {
