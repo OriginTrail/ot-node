@@ -152,7 +152,7 @@ describe('Publish service test', async () => {
         ).to.be.true;
     });
 
-    it('Completed publish leads to scheduling operation for leftover nodes and completes', async () => {
+    it('Completed publish leads to scheduling operation for leftover nodes and status stays same', async () => {
         await publishService.processResponse(
             {
                 data: {

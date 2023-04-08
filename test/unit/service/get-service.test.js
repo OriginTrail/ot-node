@@ -93,13 +93,13 @@ describe('Get service test', async () => {
         ).to.be.true;
     });
 
-    it('Completed get completes with high ACK ask', async () => {
+    it('Completed get leads to scheduling operation for leftover nodes and status stays same', async () => {
         await getService.processResponse(
             {
                 data: {
                     operationId: '5195d01a-b437-4aae-b388-a77b9fa715f1',
                     numberOfFoundNodes: 1,
-                    leftoverNodes: [],
+                    leftoverNodes: [1, 2, 3, 4],
                     keyword: 'origintrail',
                     batchSize: 10,
                     minAckResponses: 12,
@@ -113,20 +113,9 @@ describe('Get service test', async () => {
 
         expect(returnedResponses.length).to.be.equal(2);
 
-        expect(
-            loggerInfoSpy.calledWith(
-                'Unable to find assertion on the network for operation id: 5195d01a-b437-4aae-b388-a77b9fa715f1',
-            ),
-        ).to.be.true;
-
-        expect(
-            loggerInfoSpy.calledWith(
-                'Finalizing get for operationId: 5195d01a-b437-4aae-b388-a77b9fa715f1',
-            ),
-        ).to.be.true;
-
-        expect(consoleSpy.calledWith('Message:', 'Unable to find assertion on the network!')).to.be
+        expect(consoleSpy.calledWith('Operation id:', '5195d01a-b437-4aae-b388-a77b9fa715f1')).to.be
             .true;
+        expect(consoleSpy.calledWith('Leftover nodes:', [1, 2, 3, 4])).to.be.true;
 
         expect(
             returnedResponses[returnedResponses.length - 1].status ===
