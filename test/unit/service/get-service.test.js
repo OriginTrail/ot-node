@@ -49,7 +49,7 @@ describe('Get service test', async () => {
         consoleSpy.restore();
     });
 
-    it('Successful get completes with low ACK ask', async () => {
+    it('Completed get completes with low ACK ask', async () => {
         await getService.processResponse(
             {
                 data: {
@@ -92,9 +92,9 @@ describe('Get service test', async () => {
                 OPERATION_REQUEST_STATUS.COMPLETED,
         ).to.be.true;
     });
-    /*
-    it('Successful publish fails with high ACK ask', async () => {
-        await publishService.processResponse(
+
+    it('Completed get completes with high ACK ask', async () => {
+        await getService.processResponse(
             {
                 data: {
                     operationId: '5195d01a-b437-4aae-b388-a77b9fa715f1',
@@ -109,24 +109,31 @@ describe('Get service test', async () => {
             {},
         );
 
-        const returnedResponses = publishService.repositoryModuleManager.getAllResponseStatuses();
+        const returnedResponses = getService.repositoryModuleManager.getAllResponseStatuses();
 
         expect(returnedResponses.length).to.be.equal(2);
 
         expect(
             loggerInfoSpy.calledWith(
-                'publish for operationId: 5195d01a-b437-4aae-b388-a77b9fa715f1 failed.',
+                'Unable to find assertion on the network for operation id: 5195d01a-b437-4aae-b388-a77b9fa715f1',
             ),
         ).to.be.true;
 
-        expect(consoleSpy.calledWith('Not replicated to enough nodes!'));
+        expect(
+            loggerInfoSpy.calledWith(
+                'Finalizing get for operationId: 5195d01a-b437-4aae-b388-a77b9fa715f1',
+            ),
+        ).to.be.true;
+
+        expect(consoleSpy.calledWith('Message:', 'Unable to find assertion on the network!')).to.be
+            .true;
 
         expect(
             returnedResponses[returnedResponses.length - 1].status ===
-                OPERATION_REQUEST_STATUS.FAILED,
+                OPERATION_REQUEST_STATUS.COMPLETED,
         ).to.be.true;
     });
-
+    /*
     it('Failed publish fails with low ACK ask', async () => {
         await publishService.processResponse(
             {

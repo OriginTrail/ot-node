@@ -7,6 +7,7 @@ class OperationIdServiceMock {
         console.log('Caching data for:', operationId);
 
         if (data.assertion) console.log('Caching data:', data.assertion);
+        if (data.message) console.log('Message:', data.message);
 
         return {};
     }
