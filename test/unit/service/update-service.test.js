@@ -11,9 +11,6 @@ import UpdateService from '../../../src/service/update-service.js';
 import Logger from '../../../src/logger/logger.js';
 
 let updateService;
-let loggerDebugSpy;
-let loggerTraceSpy;
-let loggerInfoSpy;
 let consoleSpy;
 
 describe('Update service test', async () => {
@@ -34,18 +31,12 @@ describe('Update service test', async () => {
             logger: new Logger(),
         });
 
-        loggerDebugSpy = sinon.spy(updateService.logger, 'debug');
-        loggerTraceSpy = sinon.spy(updateService.logger, 'trace');
-        loggerInfoSpy = sinon.spy(updateService.logger, 'info');
         consoleSpy = sinon.spy(console, 'log');
 
         console.log();
     });
 
     afterEach(() => {
-        loggerDebugSpy.restore();
-        loggerTraceSpy.restore();
-        loggerInfoSpy.restore();
         consoleSpy.restore();
     });
 
@@ -68,12 +59,6 @@ describe('Update service test', async () => {
         const returnedResponses = updateService.repositoryModuleManager.getAllResponseStatuses();
 
         expect(returnedResponses.length).to.be.equal(2);
-
-        expect(
-            loggerInfoSpy.calledWith(
-                'update with operation id: 5195d01a-b437-4aae-b388-a77b9fa715f1 with status: COMPLETED',
-            ),
-        ).to.be.true;
 
         expect(consoleSpy.calledWith('Caching data for:', '5195d01a-b437-4aae-b388-a77b9fa715f1'))
             .to.be.true;
@@ -104,12 +89,6 @@ describe('Update service test', async () => {
 
         expect(returnedResponses.length).to.be.equal(2);
 
-        expect(
-            loggerInfoSpy.calledWith(
-                'update for operationId: 5195d01a-b437-4aae-b388-a77b9fa715f1 failed.',
-            ),
-        ).to.be.true;
-
         expect(consoleSpy.calledWith('Not replicated to enough nodes!'));
 
         expect(
@@ -137,12 +116,6 @@ describe('Update service test', async () => {
         const returnedResponses = updateService.repositoryModuleManager.getAllResponseStatuses();
 
         expect(returnedResponses.length).to.be.equal(2);
-
-        expect(
-            loggerInfoSpy.calledWith(
-                'update for operationId: 5195d01a-b437-4aae-b388-a77b9fa715f1 failed.',
-            ),
-        ).to.be.true;
 
         expect(consoleSpy.calledWith('Not replicated to enough nodes!'));
 

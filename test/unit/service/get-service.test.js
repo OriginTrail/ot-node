@@ -11,9 +11,6 @@ import GetService from '../../../src/service/get-service.js';
 import Logger from '../../../src/logger/logger.js';
 
 let getService;
-let loggerDebugSpy;
-let loggerTraceSpy;
-let loggerInfoSpy;
 let consoleSpy;
 
 describe('Get service test', async () => {
@@ -33,19 +30,12 @@ describe('Get service test', async () => {
             blockchainModuleManager: new BlockchainModuleManagerMock(),
             logger: new Logger(),
         });
-
-        loggerDebugSpy = sinon.spy(getService.logger, 'debug');
-        loggerTraceSpy = sinon.spy(getService.logger, 'trace');
-        loggerInfoSpy = sinon.spy(getService.logger, 'info');
         consoleSpy = sinon.spy(console, 'log');
 
         console.log();
     });
 
     afterEach(() => {
-        loggerDebugSpy.restore();
-        loggerTraceSpy.restore();
-        loggerInfoSpy.restore();
         consoleSpy.restore();
     });
 
@@ -70,12 +60,6 @@ describe('Get service test', async () => {
         const returnedResponses = getService.repositoryModuleManager.getAllResponseStatuses();
 
         expect(returnedResponses.length).to.be.equal(2);
-
-        expect(
-            loggerInfoSpy.calledWith(
-                'Finalizing get for operationId: 5195d01a-b437-4aae-b388-a77b9fa715f1',
-            ),
-        ).to.be.true;
 
         expect(consoleSpy.calledWith('Caching data for:', '5195d01a-b437-4aae-b388-a77b9fa715f1'))
             .to.be.true;

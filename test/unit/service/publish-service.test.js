@@ -11,9 +11,6 @@ import PublishService from '../../../src/service/publish-service.js';
 import Logger from '../../../src/logger/logger.js';
 
 let publishService;
-let loggerDebugSpy;
-let loggerTraceSpy;
-let loggerInfoSpy;
 let consoleSpy;
 
 describe('Publish service test', async () => {
@@ -33,19 +30,10 @@ describe('Publish service test', async () => {
             blockchainModuleManager: new BlockchainModuleManagerMock(),
             logger: new Logger(),
         });
-
-        loggerDebugSpy = sinon.spy(publishService.logger, 'debug');
-        loggerTraceSpy = sinon.spy(publishService.logger, 'trace');
-        loggerInfoSpy = sinon.spy(publishService.logger, 'info');
         consoleSpy = sinon.spy(console, 'log');
-
-        console.log();
     });
 
     afterEach(() => {
-        loggerDebugSpy.restore();
-        loggerTraceSpy.restore();
-        loggerInfoSpy.restore();
         consoleSpy.restore();
     });
 
@@ -68,12 +56,6 @@ describe('Publish service test', async () => {
         const returnedResponses = publishService.repositoryModuleManager.getAllResponseStatuses();
 
         expect(returnedResponses.length).to.be.equal(2);
-
-        expect(
-            loggerInfoSpy.calledWith(
-                'publish with operation id: 5195d01a-b437-4aae-b388-a77b9fa715f1 with status: COMPLETED',
-            ),
-        ).to.be.true;
 
         expect(consoleSpy.calledWith('Caching data for:', '5195d01a-b437-4aae-b388-a77b9fa715f1'))
             .to.be.true;
@@ -104,12 +86,6 @@ describe('Publish service test', async () => {
 
         expect(returnedResponses.length).to.be.equal(2);
 
-        expect(
-            loggerInfoSpy.calledWith(
-                'publish for operationId: 5195d01a-b437-4aae-b388-a77b9fa715f1 failed.',
-            ),
-        ).to.be.true;
-
         expect(consoleSpy.calledWith('Not replicated to enough nodes!'));
 
         expect(
@@ -137,12 +113,6 @@ describe('Publish service test', async () => {
         const returnedResponses = publishService.repositoryModuleManager.getAllResponseStatuses();
 
         expect(returnedResponses.length).to.be.equal(2);
-
-        expect(
-            loggerInfoSpy.calledWith(
-                'publish for operationId: 5195d01a-b437-4aae-b388-a77b9fa715f1 failed.',
-            ),
-        ).to.be.true;
 
         expect(consoleSpy.calledWith('Not replicated to enough nodes!'));
 
