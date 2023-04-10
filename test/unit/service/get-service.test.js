@@ -11,7 +11,8 @@ import GetService from '../../../src/service/get-service.js';
 import Logger from '../../../src/logger/logger.js';
 
 let getService;
-let consoleSpy;
+let cacheOperationIdDataSpy;
+let commandExecutorAddSpy;
 
 describe('Get service test', async () => {
     beforeEach(() => {
@@ -27,11 +28,13 @@ describe('Get service test', async () => {
             blockchainModuleManager: new BlockchainModuleManagerMock(),
             logger: new Logger(),
         });
-        consoleSpy = sinon.spy(console, 'log');
+        cacheOperationIdDataSpy = sinon.spy(getService.operationIdService, 'cacheOperationIdData');
+        commandExecutorAddSpy = sinon.spy(getService.commandExecutor, 'add');
     });
 
     afterEach(() => {
-        consoleSpy.restore();
+        cacheOperationIdDataSpy.restore();
+        commandExecutorAddSpy.restore();
     });
 
     it('Completed get completes with low ACK ask', async () => {
@@ -56,14 +59,11 @@ describe('Get service test', async () => {
 
         expect(returnedResponses.length).to.be.equal(2);
 
-        expect(consoleSpy.calledWith('Caching data for:', '5195d01a-b437-4aae-b388-a77b9fa715f1'))
-            .to.be.true;
-
         expect(
-            consoleSpy.calledWith(
-                'Caching data:',
-                '<http://example.org/#spiderman> <http://www.perceive.net/schemas/relationship/enemyOf> <http://example.org/#green-goblin> <http://example.org/graphs/spiderman> .',
-            ),
+            cacheOperationIdDataSpy.calledWith('5195d01a-b437-4aae-b388-a77b9fa715f1', {
+                assertion:
+                    '<http://example.org/#spiderman> <http://www.perceive.net/schemas/relationship/enemyOf> <http://example.org/#green-goblin> <http://example.org/graphs/spiderman> .',
+            }),
         ).to.be.true;
 
         expect(
@@ -92,9 +92,9 @@ describe('Get service test', async () => {
 
         expect(returnedResponses.length).to.be.equal(2);
 
-        expect(consoleSpy.calledWith('Operation id:', '5195d01a-b437-4aae-b388-a77b9fa715f1')).to.be
-            .true;
-        expect(consoleSpy.calledWith('Leftover nodes:', [1, 2, 3, 4])).to.be.true;
+        expect(
+            commandExecutorAddSpy.calledWith('5195d01a-b437-4aae-b388-a77b9fa715f1', [1, 2, 3, 4]),
+        );
 
         expect(
             returnedResponses[returnedResponses.length - 1].status ===
