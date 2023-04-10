@@ -11,7 +11,8 @@ import UpdateService from '../../../src/service/update-service.js';
 import Logger from '../../../src/logger/logger.js';
 
 let updateService;
-let consoleSpy;
+let cacheOperationIdDataSpy;
+let commandExecutorAddSpy;
 
 describe('Update service test', async () => {
     beforeEach(() => {
@@ -28,11 +29,16 @@ describe('Update service test', async () => {
             logger: new Logger(),
         });
 
-        consoleSpy = sinon.spy(console, 'log');
+        cacheOperationIdDataSpy = sinon.spy(
+            updateService.operationIdService,
+            'cacheOperationIdData',
+        );
+        commandExecutorAddSpy = sinon.spy(updateService.commandExecutor, 'add');
     });
 
     afterEach(() => {
-        consoleSpy.restore();
+        cacheOperationIdDataSpy.restore();
+        commandExecutorAddSpy.restore();
     });
 
     it('Completed update completes with low ACK ask', async () => {
@@ -55,8 +61,8 @@ describe('Update service test', async () => {
 
         expect(returnedResponses.length).to.be.equal(2);
 
-        expect(consoleSpy.calledWith('Caching data for:', '5195d01a-b437-4aae-b388-a77b9fa715f1'))
-            .to.be.true;
+        expect(cacheOperationIdDataSpy.calledWith('5195d01a-b437-4aae-b388-a77b9fa715f1', {})).to.be
+            .true;
 
         expect(
             returnedResponses[returnedResponses.length - 1].status ===
@@ -84,8 +90,6 @@ describe('Update service test', async () => {
 
         expect(returnedResponses.length).to.be.equal(2);
 
-        expect(consoleSpy.calledWith('Not replicated to enough nodes!'));
-
         expect(
             returnedResponses[returnedResponses.length - 1].status ===
                 OPERATION_REQUEST_STATUS.FAILED,
@@ -111,8 +115,6 @@ describe('Update service test', async () => {
         const returnedResponses = updateService.repositoryModuleManager.getAllResponseStatuses();
 
         expect(returnedResponses.length).to.be.equal(2);
-
-        expect(consoleSpy.calledWith('Not replicated to enough nodes!'));
 
         expect(
             returnedResponses[returnedResponses.length - 1].status ===
@@ -140,9 +142,9 @@ describe('Update service test', async () => {
 
         expect(returnedResponses.length).to.be.equal(2);
 
-        expect(consoleSpy.calledWith('Operation id:', '5195d01a-b437-4aae-b388-a77b9fa715f1')).to.be
-            .true;
-        expect(consoleSpy.calledWith('Leftover nodes:', [1, 2, 3, 4])).to.be.true;
+        expect(
+            commandExecutorAddSpy.calledWith('5195d01a-b437-4aae-b388-a77b9fa715f1', [1, 2, 3, 4]),
+        );
 
         expect(
             returnedResponses[returnedResponses.length - 1].status ===
