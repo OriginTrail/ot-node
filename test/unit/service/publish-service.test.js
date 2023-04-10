@@ -16,9 +16,6 @@ let commandExecutorAddSpy;
 
 describe('Publish service test', async () => {
     beforeEach(() => {
-        // probably operation id service mock should return some random string?
-        // not sure how to mock command executor? create real one maybe/probably
-        // with existing mock repository module manager
         const repositoryModuleManagerMock = new RepositoryModuleManagerMock();
 
         publishService = new PublishService({
