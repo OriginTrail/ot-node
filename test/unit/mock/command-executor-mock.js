@@ -1,8 +1,6 @@
 class CommandExecutorMock {
-    async add(addCommand) {
-        console.log('Operation id:', addCommand.data.operationId);
-        console.log('Leftover nodes:', addCommand.data.leftoverNodes);
-    }
+    /* eslint-disable-next-line no-unused-vars */
+    add(addCommand) {}
 }
 
 export default CommandExecutorMock;

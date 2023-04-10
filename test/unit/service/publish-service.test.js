@@ -11,7 +11,8 @@ import PublishService from '../../../src/service/publish-service.js';
 import Logger from '../../../src/logger/logger.js';
 
 let publishService;
-let consoleSpy;
+let cacheOperationIdDataSpy;
+let commandExecutorAddSpy;
 
 describe('Publish service test', async () => {
     beforeEach(() => {
@@ -30,11 +31,15 @@ describe('Publish service test', async () => {
             blockchainModuleManager: new BlockchainModuleManagerMock(),
             logger: new Logger(),
         });
-        consoleSpy = sinon.spy(console, 'log');
+        cacheOperationIdDataSpy = sinon.spy(
+            publishService.operationIdService,
+            'cacheOperationIdData',
+        );
+        commandExecutorAddSpy = sinon.spy(publishService.commandExecutor, 'add');
     });
 
     afterEach(() => {
-        consoleSpy.restore();
+        cacheOperationIdDataSpy.restore();
     });
 
     it('Completed publish completes with low ACK ask', async () => {
@@ -55,10 +60,10 @@ describe('Publish service test', async () => {
 
         const returnedResponses = publishService.repositoryModuleManager.getAllResponseStatuses();
 
-        expect(returnedResponses.length).to.be.equal(2);
+        expect(cacheOperationIdDataSpy.calledWith('5195d01a-b437-4aae-b388-a77b9fa715f1', {})).to.be
+            .true;
 
-        expect(consoleSpy.calledWith('Caching data for:', '5195d01a-b437-4aae-b388-a77b9fa715f1'))
-            .to.be.true;
+        expect(returnedResponses.length).to.be.equal(2);
 
         expect(
             returnedResponses[returnedResponses.length - 1].status ===
@@ -86,8 +91,6 @@ describe('Publish service test', async () => {
 
         expect(returnedResponses.length).to.be.equal(2);
 
-        expect(consoleSpy.calledWith('Not replicated to enough nodes!'));
-
         expect(
             returnedResponses[returnedResponses.length - 1].status ===
                 OPERATION_REQUEST_STATUS.FAILED,
@@ -113,8 +116,6 @@ describe('Publish service test', async () => {
         const returnedResponses = publishService.repositoryModuleManager.getAllResponseStatuses();
 
         expect(returnedResponses.length).to.be.equal(2);
-
-        expect(consoleSpy.calledWith('Not replicated to enough nodes!'));
 
         expect(
             returnedResponses[returnedResponses.length - 1].status ===
@@ -142,9 +143,9 @@ describe('Publish service test', async () => {
 
         expect(returnedResponses.length).to.be.equal(2);
 
-        expect(consoleSpy.calledWith('Operation id:', '5195d01a-b437-4aae-b388-a77b9fa715f1')).to.be
-            .true;
-        expect(consoleSpy.calledWith('Leftover nodes:', [1, 2, 3, 4])).to.be.true;
+        expect(
+            commandExecutorAddSpy.calledWith('5195d01a-b437-4aae-b388-a77b9fa715f1', [1, 2, 3, 4]),
+        );
 
         expect(
             returnedResponses[returnedResponses.length - 1].status ===
