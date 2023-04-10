@@ -37,6 +37,7 @@ describe('Publish service test', async () => {
 
     afterEach(() => {
         cacheOperationIdDataSpy.restore();
+        commandExecutorAddSpy.restore();
     });
 
     it('Completed publish completes with low ACK ask', async () => {
