@@ -1,0 +1,55 @@
+{
+  "modules": {
+    "blockchain": {
+      "defaultImplementation": "otp",
+      "implementation": {
+        "otp": {
+          "config": {
+            "sharesTokenSymbol": "<SHARES_TOKEN_SYMBOL>",
+            "sharesTokenName": "<SHARES_TOKEN_NAME>",
+            "evmOperationalWalletPublicKey": "<EVM_OPERATIONAL_WALLET>",
+            "evmOperationalWalletPrivateKey": "<EVM_OPERATIONAL_WALLET_PRIVATE_KEY>",
+            "evmManagementWalletPrivateKey": "<EVM_MANAGEMENT_WALLET_PRIVATE_KEY>",
+            "evmManagementWalletPublicKey": "<EVM_MANAGEMENT_WALLET>"
+          }
+        }
+      }
+    },
+    "tripleStore": {
+      "implementation": {
+        "ot-blazegraph": {
+          "enabled": true,
+          "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
+          "config": {
+            "repositories": {
+              "privateCurrent": {
+                "url": "http://localhost:9999",
+                "name": "private-current",
+                "username": "admin",
+                "password": ""
+              },
+              "privateHistory": {
+                "url": "http://localhost:9999",
+                "name": "private-history",
+                "username": "admin",
+                "password": ""
+              },
+              "publicCurrent": {
+                "url": "http://localhost:9999",
+                "name": "public-current",
+                "username": "admin",
+                "password": ""
+              },
+              "publicHistory": {
+                "url": "http://localhost:9999",
+                "name": "public-history",
+                "username": "admin",
+                "password": ""
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
