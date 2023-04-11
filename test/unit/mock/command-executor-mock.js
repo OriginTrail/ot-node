@@ -1,6 +1,11 @@
 class CommandExecutorMock {
-    /* eslint-disable-next-line no-unused-vars */
-    add(addCommand) {}
+    constructor() {
+        this.addCommandList = [];
+    }
+
+    add(addCommand) {
+        this.addCommandList.push(addCommand);
+    }
 }
 
 export default CommandExecutorMock;
