@@ -28,7 +28,7 @@ module.exports = {
             },
         },
         {
-            files: ['*-mock.js'],
+            files: ['*-mock.js', '*.test.js'],
             rules: {
                 'no-unused-vars': 'off',
             },
