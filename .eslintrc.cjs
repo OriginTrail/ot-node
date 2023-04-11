@@ -6,7 +6,7 @@ module.exports = {
     extends: ['airbnb/base', 'prettier'],
     parserOptions: {
         sourceType: 'module',
-        ecmaVersion: 'latest'
+        ecmaVersion: 'latest',
     },
     rules: {
         'linebreak-style': ['error', 'unix'],
@@ -25,6 +25,12 @@ module.exports = {
             files: ['*.test.js', '*.spec.js'],
             rules: {
                 'no-unused-expressions': 'off',
+            },
+        },
+        {
+            files: ['*-mock.js'],
+            rules: {
+                'no-unused-vars': 'off',
             },
         },
     ],
