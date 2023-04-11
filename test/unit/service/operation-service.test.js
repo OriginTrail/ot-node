@@ -144,11 +144,43 @@ describe('Operation service test', async () => {
         expect(errorThrown).to.be.true;
     });
 
-    it('Tries to validate assertion but fails due to chunk size mismatch', async () => {
+    it('Tries to validate assertion but fails due to chunk number mismatch', async () => {
         publishService.blockchainModuleManager.getAssertionChunksNumber = (
             blockchain,
             assertionId,
         ) => 5; // Will lead to mismatch with assertion chunk number calculated value
+
+        let errorThrown = false;
+        try {
+            await publishService.validateAssertion(
+                '0xde58cc52a5ce3a04ae7a05a13176226447ac02489252e4d37a72cbe0aea46b42',
+                'hardhat',
+                {
+                    '@context': 'https://schema.org',
+                    '@id': 'https://tesla.modelX/2321',
+                    '@type': 'Car',
+                    name: 'Tesla Model X',
+                    brand: {
+                        '@type': 'Brand',
+                        name: 'Tesla',
+                    },
+                    model: 'Model X',
+                    manufacturer: {
+                        '@type': 'Organization',
+                        name: 'Tesla, Inc.',
+                    },
+                    fuelType: 'Electric',
+                },
+            );
+        } catch (error) {
+            errorThrown = true;
+        }
+        expect(errorThrown).to.be.true;
+    });
+
+    it('Tries to validate assertion but fails due to validation manager returning wrong assertion id', async () => {
+        // Will lead to mismatch with passed assertion id
+        publishService.validationModuleManager.calculateRoot = (assertion) => '';
 
         let errorThrown = false;
         try {
