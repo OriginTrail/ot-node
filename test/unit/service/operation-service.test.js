@@ -90,4 +90,23 @@ describe('Operation service test', async () => {
         }
         expect(errorThrown).to.be.false;
     });
+
+    it('Tries to validate assertion but fails due to assertion size mismatch', async () => {
+        let errorThrown = false;
+        try {
+            await publishService.validateAssertion(
+                '0xde58cc52a5ce3a04ae7a05a13176226447ac02489252e4d37a72cbe0aea46b42',
+                'hardhat',
+                {
+                    '@context': 'https://schema.org',
+                    '@id': 'https://tesla.modelX/2321',
+                    '@type': 'Car',
+                    name: 'Tesla Model X',
+                },
+            );
+        } catch (error) {
+            errorThrown = true;
+        }
+        expect(errorThrown).to.be.true;
+    });
 });
