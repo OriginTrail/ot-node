@@ -111,8 +111,6 @@ class RepositoryModuleManagerMock {
     }
 
     async getOperationResponsesStatuses(operation, operationId) {
-        if (operation !== 'get' && operation !== 'publish' && operation !== 'update') return;
-
         return this.responseStatuses.filter((rs) => rs.operation_id === operationId);
     }
 
@@ -125,8 +123,6 @@ class RepositoryModuleManagerMock {
     }
 
     async updateOperationStatus(operation, operationId, status) {
-        if (operation !== 'get' && operation !== 'publish' && operation !== 'update') return;
-
         this.responseStatuses = this.responseStatuses.map((rs) =>
             rs.operation_id === operationId
                 ? { ...rs, status, updated_at: new Date().toISOString() }
@@ -135,8 +131,6 @@ class RepositoryModuleManagerMock {
     }
 
     async createOperationResponseRecord(status, operation, operationId, keyword, errorMessage) {
-        if (operation !== 'get' && operation !== 'publish' && operation !== 'update') return;
-
         if (errorMessage) console.log(errorMessage);
 
         this.responseStatuses = [
