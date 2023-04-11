@@ -14,7 +14,7 @@ let publishService;
 let cacheOperationIdDataSpy;
 let commandExecutorAddSpy;
 
-describe('Publish service test', async () => {
+describe('Operation service test', async () => {
     beforeEach(() => {
         const repositoryModuleManagerMock = new RepositoryModuleManagerMock();
 
@@ -60,5 +60,34 @@ describe('Publish service test', async () => {
         expect(returnedResponses).to.deep.equal({
             origintrail: { failedNumber: 1, completedNumber: 1 },
         });
+    });
+
+    it('Validates assertion correctly', async () => {
+        let errorThrown = false;
+        try {
+            await publishService.validateAssertion(
+                '0xde58cc52a5ce3a04ae7a05a13176226447ac02489252e4d37a72cbe0aea46b42',
+                'hardhat',
+                {
+                    '@context': 'https://schema.org',
+                    '@id': 'https://tesla.modelX/2321',
+                    '@type': 'Car',
+                    name: 'Tesla Model X',
+                    brand: {
+                        '@type': 'Brand',
+                        name: 'Tesla',
+                    },
+                    model: 'Model X',
+                    manufacturer: {
+                        '@type': 'Organization',
+                        name: 'Tesla, Inc.',
+                    },
+                    fuelType: 'Electric',
+                },
+            );
+        } catch (error) {
+            errorThrown = true;
+        }
+        expect(errorThrown).to.be.false;
     });
 });
