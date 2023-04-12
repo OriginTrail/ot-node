@@ -80,7 +80,7 @@ class OperationService {
         }
     }
 
-    async markOperationAsFailed(operationId, message) {
+    async markOperationAsFailed(operationId, message, errorType) {
         this.logger.info(`${this.operationName} for operationId: ${operationId} failed.`);
 
         await this.repositoryModuleManager.updateOperationStatus(
@@ -93,7 +93,7 @@ class OperationService {
             operationId,
             OPERATION_ID_STATUS.FAILED,
             message,
-            this.errorType,
+            errorType,
         );
     }
 

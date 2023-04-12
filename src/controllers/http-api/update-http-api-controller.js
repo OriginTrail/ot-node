@@ -35,14 +35,15 @@ class UpdateController extends BaseController {
             OPERATION_ID_STATUS.UPDATE.UPDATE_INIT_END,
         );
 
-        const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
-        const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
+        await this.repositoryModuleManager.createOperationRecord(
+            this.operationService.getOperationName(),
+            operationId,
+            OPERATION_STATUS.IN_PROGRESS,
+        );
+
         try {
-            await this.repositoryModuleManager.createOperationRecord(
-                this.operationService.getOperationName(),
-                operationId,
-                OPERATION_STATUS.IN_PROGRESS,
-            );
+            const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
+            const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
             this.logger.info(
                 `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
@@ -81,9 +82,9 @@ class UpdateController extends BaseController {
             this.logger.error(
                 `Error while initializing update data: ${error.message}. ${error.stack}`,
             );
-            await this.operationIdService.updateOperationIdStatus(
+
+            await this.operationService.markOperationAsFailed(
                 operationId,
-                OPERATION_ID_STATUS.FAILED,
                 'Unable to update data, Failed to process input data!',
                 ERROR_TYPE.UPDATE.UPDATE_ROUTE_ERROR,
             );
