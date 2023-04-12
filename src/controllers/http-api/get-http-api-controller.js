@@ -31,7 +31,7 @@ class GetController extends BaseController {
         });
 
         await this.repositoryModuleManager.createOperationRecord(
-            this.getService.getOperationName(),
+            this.operationService.getOperationName(),
             operationId,
             OPERATION_STATUS.IN_PROGRESS,
         );
