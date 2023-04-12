@@ -6,8 +6,6 @@ class OperationIdServiceMock {
     cacheOperationIdData(operationId, data) {}
 
     async updateOperationIdStatus(operationId, status, errorMessage = null, errorType = null) {
-        if (errorMessage) console.log(errorMessage);
-
         await this.repositoryModuleManager.updateOperationIdRecord(
             {
                 status,

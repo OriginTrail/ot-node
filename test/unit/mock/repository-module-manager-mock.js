@@ -131,8 +131,6 @@ class RepositoryModuleManagerMock {
     }
 
     async createOperationResponseRecord(status, operation, operationId, keyword, errorMessage) {
-        if (errorMessage) console.log(errorMessage);
-
         this.responseStatuses = [
             ...this.responseStatuses,
             {
