@@ -1,4 +1,5 @@
 import Command from '../command.js';
+// eslint-disable-next-line no-unused-vars
 import { COMMAND_STATUS, FINALIZED_COMMAND_CLEANUP_TIME_MILLS } from '../../constants/constants.js';
 
 /**
@@ -16,12 +17,13 @@ class CommandsCleanerCommand extends Command {
      * @param command
      */
     async execute() {
-        await this.repositoryModuleManager.removeFinalizedCommands([
-            COMMAND_STATUS.COMPLETED,
-            COMMAND_STATUS.FAILED,
-            COMMAND_STATUS.EXPIRED,
-            COMMAND_STATUS.UNKNOWN,
-        ]);
+        // TODO: Uncomment after discussion
+        // await this.repositoryModuleManager.removeFinalizedCommands([
+        //     COMMAND_STATUS.COMPLETED,
+        //     COMMAND_STATUS.FAILED,
+        //     COMMAND_STATUS.EXPIRED,
+        //     COMMAND_STATUS.UNKNOWN,
+        // ]);
         return Command.repeat();
     }
 
