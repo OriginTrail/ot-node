@@ -99,6 +99,45 @@ class SequelizeRepository {
         return this.models.sequelize.transaction(async (t) => execFn(t));
     }
 
+    async createAssetSyncRecord(blockchain, contract, tokenId, stateIndex, status) {
+        if (this.initialized) {
+            return this.getImplementation().module.createAssetSyncRecord(
+                blockchain,
+                contract,
+                tokenId,
+                stateIndex,
+                status,
+            );
+        }
+    }
+
+    async updateAssetSyncRecord(blockchain, contract, tokenId, stateIndex, status) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateAssetSyncRecord(
+                blockchain,
+                contract,
+                tokenId,
+                stateIndex,
+                status,
+            );
+        }
+    }
+
+    async getLatestSyncedAsset(blockchain, contract) {
+        return this.models.asset_sync.findOne({
+            raw: true,
+            attributes: [
+                Sequelize.fn('MAX', Sequelize.col('token_id')),
+                Sequelize.col('assertion_id'),
+            ],
+            where: {
+                blockchain_id: blockchain,
+                asset_storage_contract: contract,
+                status: OPERATION_ID_STATUS.COMPLETED,
+            },
+        });
+    }
+
     // COMMAND
     async updateCommand(update, opts) {
         await this.models.commands.update(update, opts);

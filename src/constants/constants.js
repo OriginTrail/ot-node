@@ -115,6 +115,8 @@ export const REMOVE_SESSION_COMMAND_DELAY = 2 * 60 * 1000;
 
 export const OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
+export const ASSET_SYNC_COMMAND_FREQUENCY_MILLIS = 5 * 60 * 1000;
+
 export const DIAL_PEERS_COMMAND_FREQUENCY_MILLS = 30 * 1000;
 
 export const DIAL_PEERS_CONCURRENCY = 10;
@@ -127,6 +129,7 @@ export const PERMANENT_COMMANDS = [
     'operationIdCleanerCommand',
     'commandsCleanerCommand',
     'dialPeersCommand',
+    'assetSyncCommand',
 ];
 
 export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
