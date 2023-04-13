@@ -21,8 +21,8 @@ class EpochCommand extends Command {
         assertionId,
     ) {
         const currentEpoch = await this.calculateCurrentEpoch(
-            agreementData.startTime,
-            agreementData.epochLength,
+            Number(agreementData.startTime),
+            Number(agreementData.epochLength),
             blockchain,
         );
         const nextEpochStartTime =
@@ -32,7 +32,7 @@ class EpochCommand extends Command {
         const commitWindowDurationPerc =
             await this.blockchainModuleManager.getCommitWindowDurationPerc(blockchain);
         // delay by 10% of commit window length
-        const offset = ((agreementData.epochLength * commitWindowDurationPerc) / 100) * 0.1;
+        const offset = ((Number(agreementData.epochLength) * commitWindowDurationPerc) / 100) * 0.1;
 
         const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
 
@@ -73,7 +73,7 @@ class EpochCommand extends Command {
 
     async calculateCurrentEpoch(startTime, epochLength, blockchain) {
         const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
-        return Math.floor((now - startTime) / epochLength);
+        return Math.floor((Number(now) - Number(startTime)) / Number(epochLength));
     }
 
     /**
