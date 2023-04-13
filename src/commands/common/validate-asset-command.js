@@ -5,11 +5,9 @@ class ValidateAssetCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        // TODO: change this according to operation for which command is executed
-        this.operationService = ctx.publishService;
         this.ualService = ctx.ualService;
         this.dataService = ctx.dataService;
-        this.validationModuleManager = ctx.validationModuleManager;
+        this.validationService = ctx.validationService;
 
         this.errorType = ERROR_TYPE.VALIDATE_ASSET_ERROR;
     }
@@ -58,11 +56,12 @@ class ValidateAssetCommand extends Command {
                 operationId,
                 `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${cachedData.public.assertionId}`,
                 this.errorType,
+                true,
             );
             return Command.empty();
         }
 
-        await this.operationService.validateAssertion(
+        await this.validationService.validateAssertion(
             cachedData.public.assertionId,
             blockchain,
             cachedData.public.assertion,
@@ -73,16 +72,13 @@ class ValidateAssetCommand extends Command {
                 `Validating asset's private assertion with id: ${cachedData.private.assertionId} ual: ${ual}`,
             );
 
-            const calculatedAssertionId = this.validationModuleManager.calculateRoot(
-                cachedData.private.assertion,
-            );
-
-            if (cachedData.private.assertionId !== calculatedAssertionId) {
-                await this.handleError(
-                    operationId,
-                    `Invalid private assertion id. Received value from request: ${cachedData.private.assertionId}, calculated: ${calculatedAssertionId}`,
-                    this.errorType,
+            try {
+                this.validationService.validateAssertionId(
+                    cachedData.private.assertion,
+                    cachedData.private.assertionId,
                 );
+            } catch (error) {
+                await this.handleError(operationId, error.message, this.errorType, true);
                 return Command.empty();
             }
         }
@@ -104,11 +100,8 @@ class ValidateAssetCommand extends Command {
             operationId,
             `Max retry count for command: ${command.name} reached! Unable to validate ual: ${ual}`,
             this.errorType,
+            true,
         );
-    }
-
-    async handleError(operationId, errorMessage, errorType) {
-        await this.operationService.markOperationAsFailed(operationId, errorMessage, errorType);
     }
 
     /**

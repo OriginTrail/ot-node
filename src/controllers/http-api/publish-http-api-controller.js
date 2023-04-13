@@ -58,7 +58,7 @@ class PublishController extends BaseController {
                 tokenId,
             });
 
-            const commandSequence = ['validateAssetCommand'];
+            const commandSequence = ['publishValidateAssetCommand'];
 
             // Backwards compatibility check - true for older clients
             if (req.body.localStore) {

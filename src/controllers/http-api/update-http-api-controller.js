@@ -59,7 +59,7 @@ class UpdateController extends BaseController {
                 tokenId,
             });
 
-            const commandSequence = ['validateAssetCommand', 'networkUpdateCommand'];
+            const commandSequence = ['updateValidateAssetCommand', 'networkUpdateCommand'];
 
             await this.commandExecutor.add({
                 name: commandSequence[0],

@@ -1,4 +1,3 @@
-import { assertionMetadata } from 'assertion-tools';
 import {
     OPERATION_ID_STATUS,
     OPERATION_REQUEST_STATUS,
@@ -7,13 +6,10 @@ import {
 
 class OperationService {
     constructor(ctx) {
-        this.config = ctx.config;
         this.logger = ctx.logger;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.operationIdService = ctx.operationIdService;
         this.commandExecutor = ctx.commandExecutor;
-        this.validationModuleManager = ctx.validationModuleManager;
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
     }
 
     getOperationName() {
@@ -112,51 +108,6 @@ class OperationService {
                 failedNumber + completedNumber
             }, failed: ${failedNumber}, completed: ${completedNumber}`,
         );
-    }
-
-    async validateAssertion(assertionId, blockchain, assertion) {
-        this.logger.info(`Validating assertionId: ${assertionId}`);
-
-        const calculatedAssertionId = this.validationModuleManager.calculateRoot(assertion);
-
-        if (assertionId !== calculatedAssertionId) {
-            throw Error(
-                `Invalid assertion id. Received value: ${assertionId}, calculated: ${calculatedAssertionId}`,
-            );
-        }
-
-        // validate size
-        const blockchainAssertionSize = await this.blockchainModuleManager.getAssertionSize(
-            blockchain,
-            assertionId,
-        );
-        const assertionSize = assertionMetadata.getAssertionSizeInBytes(assertion);
-        if (blockchainAssertionSize !== assertionSize) {
-            throw Error(
-                `Invalid assertion size, value read from blockchain: ${blockchainAssertionSize}, calculated: ${assertionSize}`,
-            );
-        }
-        // validate triples number
-        const blockchainTriplesNumber =
-            await this.blockchainModuleManager.getAssertionTriplesNumber(blockchain, assertionId);
-        const triplesNumber = assertionMetadata.getAssertionTriplesNumber(assertion);
-        if (blockchainTriplesNumber !== triplesNumber) {
-            throw Error(
-                `Invalid triples number, value read from blockchain: ${blockchainTriplesNumber}, calculated: ${triplesNumber}`,
-            );
-        }
-        // validate chunk size
-        const blockchainChunksNumber = await this.blockchainModuleManager.getAssertionChunksNumber(
-            blockchain,
-            assertionId,
-        );
-        const chunksNumber = assertionMetadata.getAssertionChunksNumber(assertion);
-        if (blockchainChunksNumber !== chunksNumber) {
-            throw Error(
-                `Invalid chunks number, value read from blockchain: ${blockchainChunksNumber}, calculated size: ${chunksNumber}`,
-            );
-        }
-        this.logger.info(`Assertion integrity validated!`);
     }
 }
 
