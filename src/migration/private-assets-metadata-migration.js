@@ -128,7 +128,8 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
         );
 
         const agreementEndTime =
-            agreementData.startTime + agreementData.epochsNumber * agreementData.epochLength;
+            Number(agreementData.startTime) +
+            Number(agreementData.epochsNumber) * Number(agreementData.epochLength);
 
         await this.tripleStoreService.insertAssetMetadata(
             TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
@@ -136,7 +137,7 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
             assetStorageContractAddress,
             tokenId,
             assertionId,
-            agreementData.startTime,
+            Number(agreementData.startTime),
             agreementEndTime,
             keyword,
         );
@@ -156,7 +157,7 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
             assetStorageContractAddress,
             tokenId,
             privateAssertionId,
-            agreementData.startTime,
+            Number(agreementData.startTime),
             agreementEndTime,
             keyword,
         );
