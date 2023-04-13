@@ -74,7 +74,7 @@ class PublishService extends OperationService {
                 await this.markOperationAsCompleted(operationId, {}, this.completedStatuses);
                 this.logResponsesSummary(completedNumber, failedNumber);
                 this.logger.info(
-                    `Publish with operation id: ${operationId} with status: ${
+                    `${this.operationName} with operation id: ${operationId} with status: ${
                         this.completedStatuses[this.completedStatuses.length - 1]
                     }`,
                 );

@@ -2,12 +2,11 @@ import 'dotenv/config';
 import { Before, BeforeAll, After, AfterAll } from '@cucumber/cucumber';
 import slugify from 'slugify';
 import fs from 'fs';
-import mysql from 'mysql2';
-import graphdb from 'graphdb';
+import { NODE_ENVIRONMENTS } from '../../../src/constants/constants.js';
+import TripleStoreModuleManager from "../../../src/modules/triple-store/triple-store-module-manager.js";
+import mysql from "mysql2";
 
-const { http, server } = graphdb;
-
-process.env.NODE_ENV = 'test';
+process.env.NODE_ENV = NODE_ENVIRONMENTS.TEST;
 
 BeforeAll(() => {});
 
@@ -28,28 +27,20 @@ Before(function beforeMethod(testCase, done) {
 });
 
 After(function afterMethod(testCase, done) {
-    const graphRepositoryNames = [];
+    const tripleStoreConfiguration = [];
     const databaseNames = [];
     for (const key in this.state.nodes) {
         this.state.nodes[key].forkedNode.kill();
-        graphRepositoryNames.push(this.state.nodes[key].configuration.graphDatabase.name);
+        tripleStoreConfiguration.push({modules: {tripleStore: this.state.nodes[key].configuration.modules.tripleStore}});
         databaseNames.push(this.state.nodes[key].configuration.operationalDatabase.databaseName);
     }
     this.state.bootstraps.forEach((node) => {
         node.forkedNode.kill();
-        graphRepositoryNames.push(node.configuration.graphDatabase.name);
+        tripleStoreConfiguration.push({modules: {tripleStore: node.configuration.modules.tripleStore}});
         databaseNames.push(node.configuration.operationalDatabase.databaseName);
     });
     if (this.state.localBlockchain) {
-        if (Array.isArray(this.state.localBlockchain)) {
-            for (const blockchain of this.state.localBlockchain) {
-                if (blockchain.server) {
-                    blockchain.server.close();
-                }
-            }
-        } else if (this.state.localBlockchain.server) {
-            this.state.localBlockchain.server.close();
-        }
+        this.state.localBlockchain.stop();
     }
     this.logger.log('After test hook, cleaning repositories');
 
@@ -64,23 +55,21 @@ After(function afterMethod(testCase, done) {
         promises.push(con.promise().query(sql));
     });
     promises.push(con);
-    const serverConfig = new server.ServerClientConfig('http://localhost:7200')
-        .setTimeout(40000)
-        .setHeaders({
-            Accept: http.RDFMimeType.N_QUADS,
+    tripleStoreConfiguration.forEach((config) => {
+        promises.push(async () => {
+            const tripleStoreModuleManager = new TripleStoreModuleManager({config, logger: this.logger});
+            await tripleStoreModuleManager.initialize()
+            for (const implementationName of tripleStoreModuleManager.getImplementationNames()) {
+                const {config} = tripleStoreModuleManager.getImplementation(implementationName);
+                Object.keys(config.repositories).map(async (repository) => {
+                        console.log('Removing triple store configuration:', JSON.stringify(config, null, 4));
+                        await tripleStoreModuleManager.deleteRepository(implementationName, repository);
+                    }
+                )
+            }
         })
-        .setKeepAlive(true);
-    const s = new server.GraphDBServerClient(serverConfig);
-    graphRepositoryNames.forEach((element) => {
-        s.hasRepository(element)
-            .then((exists) => {
-                if (exists) {
-                    promises.push(s.deleteRepository(element));
-                }
-            })
-            .catch((err) => this.logger.error(err));
-    });
-    // delete ot-graphdb repositories
+    })
+
     Promise.all(promises)
         .then(() => {
             con.end();

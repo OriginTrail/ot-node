@@ -70,10 +70,11 @@ class FindNodesCommand extends Command {
             operationId,
             OPERATION_ID_STATUS.FIND_NODES_START,
         );
+        const r2 = await this.blockchainModuleManager.getR2(blockchainId);
         const closestNodes = await this.shardingTableService.findNeighbourhood(
             blockchainId,
             keyword,
-            Number(await this.blockchainModuleManager.getR2(blockchainId)),
+            r2,
             hashFunctionId,
             true,
         );

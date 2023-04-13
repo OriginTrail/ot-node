@@ -5,12 +5,17 @@ import path from 'path';
 import fs from 'fs-extra';
 import TripleStoreModuleManager from '../../src/modules/triple-store/triple-store-module-manager.js';
 import Logger from '../../src/logger/logger.js';
+import { unlink } from 'fs/promises';
 
 const { readFile, writeFile, stat } = fs;
 
 const generalConfig = JSON.parse(await readFile('./config/config.json'));
 const templatePath = path.join('./tools/local-network-setup/.origintrail_noderc_template.json');
-const keys = JSON.parse(await readFile('./tools/local-network-setup/keys.json'));
+
+const privateKeysFile = await readFile('test/bdd/steps/api/datasets/privateKeys.json');
+const publicKeysFile = await readFile('test/bdd/steps/api/datasets/publicKeys.json');
+const privateKeys = JSON.parse(privateKeysFile.toString());
+const publicKeys = JSON.parse(publicKeysFile.toString());
 
 const logger = new Logger(generalConfig.development.logLevel);
 
@@ -41,39 +46,36 @@ async function generateNodeConfig(nodeIndex) {
     const configPath = path.join(
         `./tools/local-network-setup/.node${nodeIndex}_origintrail_noderc.json`,
     );
-
-    if (!(await fileExists(configPath))) {
-        const template = JSON.parse(await readFile(templatePath));
-
-        logger.info(`Configuring node ${nodeIndex}`);
-        template.modules.tripleStore = generateTripleStoreConfig(
-            template.modules.tripleStore,
-            nodeIndex,
-        );
-        template.modules.blockchain = generateBlockchainConfig(
-            template.modules.blockchain,
-            nodeIndex,
-        );
-        template.modules.httpClient = generateHttpClientConfig(
-            template.modules.httpClient,
-            nodeIndex,
-        );
-        template.modules.network = generateNetworkConfig(template.modules.network, nodeIndex);
-        template.modules.repository = generateRepositoryConfig(
-            template.modules.repository,
-            nodeIndex,
-        );
-        template.appDataPath = `data${nodeIndex}`;
-        template.logLevel = process.env.LOG_LEVEL ?? template.logLevel;
-
-        await writeFile(configPath, JSON.stringify(template, null, 4));
+    if (await fileExists(configPath)) {
+        await removeFile(configPath);
     }
-    const config = JSON.parse(await readFile(configPath));
-    await dropDatabase(
-        `operationaldb${nodeIndex}`,
-        generalConfig.development.modules.repository.implementation['sequelize-repository'].config,
+
+    const template = JSON.parse(await readFile(templatePath));
+
+    logger.info(`Configuring node ${nodeIndex}`);
+    template.modules.tripleStore = generateTripleStoreConfig(
+        template.modules.tripleStore,
+        nodeIndex,
     );
-    await deleteTripleStoreRepositories(config);
+    template.modules.blockchain = generateBlockchainConfig(template.modules.blockchain, nodeIndex);
+    template.modules.httpClient = generateHttpClientConfig(template.modules.httpClient, nodeIndex);
+    template.modules.network = generateNetworkConfig(template.modules.network, nodeIndex);
+    template.modules.repository = generateRepositoryConfig(template.modules.repository, nodeIndex);
+    template.appDataPath = `data${nodeIndex}`;
+    template.logLevel = process.env.LOG_LEVEL ?? template.logLevel;
+
+    await writeFile(configPath, JSON.stringify(template, null, 4));
+
+    const config = JSON.parse(await readFile(configPath));
+    await Promise.all([
+        dropDatabase(
+            `operationaldb${nodeIndex}`,
+            generalConfig.development.modules.repository.implementation['sequelize-repository']
+                .config,
+        ),
+        deleteTripleStoreRepositories(config),
+        deleteDataFolder(config),
+    ]);
 }
 
 function generateTripleStoreConfig(templateTripleStoreConfig, nodeIndex) {
@@ -101,10 +103,10 @@ function generateBlockchainConfig(templateBlockchainConfig, nodeIndex) {
         ...blockchainConfig.implementation[blockchain].config,
         hubContractAddress,
         rpcEndpoints: [process.env.RPC_ENDPOINT],
-        evmOperationalWalletPublicKey: keys.publicKey[nodeIndex],
-        evmOperationalWalletPrivateKey: keys.privateKey[nodeIndex],
-        evmManagementWalletPublicKey: keys.publicKey[keys.publicKey.length - 1 - nodeIndex],
-        evmManagementWalletPrivateKey: keys.privateKey[keys.privateKey.length - 1 - nodeIndex],
+        evmOperationalWalletPublicKey: publicKeys[nodeIndex],
+        evmOperationalWalletPrivateKey: privateKeys[nodeIndex],
+        evmManagementWalletPublicKey: publicKeys[publicKeys.length - 1 - nodeIndex],
+        evmManagementWalletPrivateKey: privateKeys[privateKeys.length - 1 - nodeIndex],
         sharesTokenName: `LocalNode${nodeIndex}`,
         sharesTokenSymbol: `LN${nodeIndex}`,
     };
@@ -179,5 +181,16 @@ async function fileExists(filePath) {
         return true;
     } catch (e) {
         return false;
+    }
+}
+
+async function removeFile(filePath) {
+    await unlink(filePath);
+}
+
+async function deleteDataFolder(config) {
+    if (await fileExists(config.appDataPath)) {
+        logger.trace(`Removing file on path: ${config.appDataPath}`);
+        await fs.rm(config.appDataPath, { recursive: true, force: true });
     }
 }

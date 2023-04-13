@@ -1,5 +1,4 @@
 import async from 'async';
-import { setTimeout as sleep } from 'timers/promises';
 import Command from './command.js';
 import {
     PERMANENT_COMMANDS,
@@ -31,26 +30,17 @@ class CommandExecutor {
         this.parallelism = QUEUE_PARALLELISM;
         this.verboseLoggingEnabled = this.config.commandExecutorVerboseLoggingEnabled;
 
-        const that = this;
-        this.queue = async.queue(async (command, callback) => {
-            try {
-                while (!that.started) {
-                    if (that.verboseLoggingEnabled) {
-                        that.logger.trace(
-                            'Command executor has not been started yet. Hibernating...',
-                        );
-                    }
-
-                    // eslint-disable-next-line no-await-in-loop
-                    await sleep(1000);
-                }
-                await this._execute(command);
-            } catch (e) {
-                this.logger.error(`Something went really wrong! OT-node shutting down... ${e}`);
-                process.exit(1);
-            }
-
-            callback();
+        this.queue = async.queue((command, callback = () => {}) => {
+            this._execute(command)
+                .then((result) => {
+                    callback(result);
+                })
+                .catch((error) => {
+                    this.logger.error(
+                        `Something went really wrong! OT-node shutting down... ${error}`,
+                    );
+                    process.exit(1);
+                });
         }, this.parallelism);
     }
 

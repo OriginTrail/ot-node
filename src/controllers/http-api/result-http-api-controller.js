@@ -1,7 +1,7 @@
 import { OPERATION_ID_STATUS } from '../../constants/constants.js';
 import BaseController from './base-http-api-controller.js';
 
-const availableOperations = ['publish', 'get', 'query', 'local-store'];
+const availableOperations = ['publish', 'get', 'query', 'local-store', 'update'];
 
 class ResultController extends BaseController {
     constructor(ctx) {
@@ -41,6 +41,7 @@ class ResultController extends BaseController {
                     case 'publish':
                     case 'query':
                     case 'local-store':
+                    case 'update':
                         if (handlerRecord.status === OPERATION_ID_STATUS.COMPLETED) {
                             response.data = await this.operationIdService.getCachedOperationIdData(
                                 operationId,

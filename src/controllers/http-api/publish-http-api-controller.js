@@ -1,5 +1,11 @@
 import BaseController from './base-http-api-controller.js';
-import { ERROR_TYPE, OPERATION_ID_STATUS, OPERATION_STATUS } from '../../constants/constants.js';
+import {
+    ERROR_TYPE,
+    OPERATION_ID_STATUS,
+    OPERATION_STATUS,
+    CONTENT_ASSET_HASH_FUNCTION_ID,
+    LOCAL_STORE_TYPES,
+} from '../../constants/constants.js';
 
 class PublishController extends BaseController {
     constructor(ctx) {
@@ -29,7 +35,8 @@ class PublishController extends BaseController {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
         );
 
-        const { assertion, assertionId, blockchain, contract, tokenId, hashFunctionId } = req.body;
+        const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
+        const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
         try {
             await this.repositoryModuleManager.createOperationRecord(
                 this.operationService.getOperationName(),
@@ -41,22 +48,24 @@ class PublishController extends BaseController {
                 `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
             );
 
-            let commandSequence = [];
+            await this.operationIdService.cacheOperationIdData(operationId, {
+                public: {
+                    assertion,
+                    assertionId,
+                },
+                blockchain,
+                contract,
+                tokenId,
+            });
 
+            const commandSequence = ['validateAssetCommand'];
+
+            // Backwards compatibility check - true for older clients
             if (req.body.localStore) {
                 commandSequence.push('localStoreCommand');
-                await this.operationIdService.cacheOperationIdData(operationId, [
-                    { assertion, assertionId },
-                ]);
-            } else {
-                await this.operationIdService.cacheOperationIdData(operationId, { assertion });
             }
 
-            commandSequence = [
-                ...commandSequence,
-                'validateAssertionCommand',
-                'networkPublishCommand',
-            ];
+            commandSequence.push('networkPublishCommand');
 
             await this.commandExecutor.add({
                 name: commandSequence[0],
@@ -65,13 +74,13 @@ class PublishController extends BaseController {
                 period: 5000,
                 retries: 3,
                 data: {
-                    assertion,
                     assertionId,
                     blockchain,
                     contract,
                     tokenId,
                     hashFunctionId,
                     operationId,
+                    storeType: LOCAL_STORE_TYPES.TRIPLE,
                 },
                 transactional: false,
             });

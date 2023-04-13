@@ -3,6 +3,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
+    BLOCK_TIME,
 } from '../../../../constants/constants.js';
 
 class SubmitCommitCommand extends EpochCommand {
@@ -15,7 +16,7 @@ class SubmitCommitCommand extends EpochCommand {
         this.shardingTableService = ctx.shardingTableService;
         this.networkModuleManager = ctx.networkModuleManager;
 
-        this.errorType = ERROR_TYPE.SUBMIT_COMMIT_ERROR;
+        this.errorType = ERROR_TYPE.COMMIT_PROOF.SUBMIT_COMMIT_ERROR;
     }
 
     async execute(command) {
@@ -30,19 +31,22 @@ class SubmitCommitCommand extends EpochCommand {
             agreementId,
             identityId,
             operationId,
+            assertionId,
+            stateIndex,
         } = command.data;
-
-        this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_START,
-            operationId,
-            agreementId,
-            epoch,
-        );
+        if (command.retries === COMMAND_RETRIES.SUBMIT_COMMIT) {
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_START,
+                operationId,
+                agreementId,
+                epoch,
+            );
+        }
 
         this.logger.trace(
-            `Started ${command.name} for agreement id: ${command.data.agreementId} ` +
+            `Started ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}. Retry number ${
+                `hash function id: ${hashFunctionId}, epoch: ${epoch}, stateIndex: ${stateIndex}. Retry number ${
                     COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1
                 }`,
         );
@@ -51,6 +55,7 @@ class SubmitCommitCommand extends EpochCommand {
             blockchain,
             agreementId,
             epoch,
+            stateIndex,
         );
 
         this.logger.trace('Commit submissions:');
@@ -91,10 +96,10 @@ class SubmitCommitCommand extends EpochCommand {
                 contract,
                 tokenId,
                 keyword,
-                epoch,
                 hashFunctionId,
                 agreementData,
                 operationId,
+                assertionId,
             );
             return EpochCommand.empty();
         }
@@ -110,31 +115,26 @@ class SubmitCommitCommand extends EpochCommand {
             async (result) => {
                 if (!result.error) {
                     const currentEpochStartTime =
-                        Number(agreementData.startTime) + Number(agreementData.epochLength) * epoch;
+                        agreementData.startTime + agreementData.epochLength * epoch;
 
-                    const proofWindowDurationPerc = Number(
-                        await that.blockchainModuleManager.getProofWindowDurationPerc(blockchain),
-                    );
+                    const proofWindowDurationPerc =
+                        await that.blockchainModuleManager.getProofWindowDurationPerc(blockchain);
 
                     const proofWindowDuration =
-                        (proofWindowDurationPerc / 100) * Number(agreementData.epochLength);
+                        (agreementData.epochLength * proofWindowDurationPerc) / 100;
 
                     const proofWindowStartTime =
                         currentEpochStartTime +
                         Math.floor(
-                            (Number(agreementData.epochLength) *
-                                Number(agreementData.proofWindowOffsetPerc)) /
-                                100,
+                            (agreementData.epochLength * agreementData.proofWindowOffsetPerc) / 100,
                         );
-
-                    const timeNow = Math.floor(Date.now() / 1000);
-                    const delay = that.serviceAgreementService.randomIntFromInterval(
-                        proofWindowStartTime - timeNow + 0.1 * proofWindowDuration,
-                        proofWindowStartTime +
-                            proofWindowDuration -
-                            timeNow -
-                            0.1 * proofWindowDuration,
-                    );
+                    // we are not using Date.now() here becouse we have an issue with hardhat blockchain time
+                    const timeNow = await that.blockchainModuleManager.getBlockchainTimestamp();
+                    const delay =
+                        that.serviceAgreementService.randomIntFromInterval(
+                            proofWindowStartTime + 0.1 * proofWindowDuration,
+                            proofWindowStartTime + proofWindowDuration - 0.1 * proofWindowDuration,
+                        ) - timeNow;
 
                     that.logger.trace(
                         `Scheduling calculateProofsCommand for agreement id: ${agreementId} in ${delay} seconds`,
@@ -152,18 +152,40 @@ class SubmitCommitCommand extends EpochCommand {
                         agreementId,
                         epoch,
                     );
-                } else {
+                } else if (command.retries - 1 === 0) {
                     await that.scheduleNextEpochCheck(
                         blockchain,
                         agreementId,
                         contract,
                         tokenId,
                         keyword,
-                        epoch,
                         hashFunctionId,
                         agreementData,
                         operationId,
+                        assertionId,
                     );
+                    const errorMessage = `Failed executing submit commit command, maximum number of retries reached. Error: ${result.error.message}. Scheduling next epoch check.`;
+                    that.logger.error(errorMessage);
+                    that.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.FAILED,
+                        operationId,
+                        errorMessage,
+                        that.errorType,
+                        epoch,
+                    );
+                } else {
+                    const commandDelay = BLOCK_TIME * 1000; // one block
+                    that.logger.warn(
+                        `Failed executing submit commit command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
+                    );
+                    await that.commandExecutor.add({
+                        name: 'submitCommitCommand',
+                        sequence: [],
+                        delay: commandDelay,
+                        retries: command.retries - 1,
+                        data: command.data,
+                        transactional: false,
+                    });
                 }
             },
         );
@@ -172,7 +194,7 @@ class SubmitCommitCommand extends EpochCommand {
     }
 
     async calculateRank(blockchain, keyword, hashFunctionId) {
-        const r2 = Number(await this.blockchainModuleManager.getR2(blockchain));
+        const r2 = await this.blockchainModuleManager.getR2(blockchain);
         const neighbourhood = await this.shardingTableService.findNeighbourhood(
             blockchain,
             keyword,

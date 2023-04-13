@@ -104,7 +104,7 @@ class OtParachainService extends Web3Service {
         if (this.config.gasPriceOracleLink) return super.getGasPrice();
 
         try {
-            return this.web3.eth.getGasPrice();
+            return this.provider.getGasPrice();
         } catch (error) {
             return undefined;
         }
@@ -137,7 +137,7 @@ class OtParachainService extends Web3Service {
     }
 
     async getNativeTokenBalance() {
-        const nativeBalance = await this.web3.eth.getBalance(this.getPublicKey());
+        const nativeBalance = await this.wallet.getBalance();
         return nativeBalance / 10 ** NATIVE_TOKEN_DECIMALS;
     }
 }

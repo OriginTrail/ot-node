@@ -112,14 +112,14 @@
             "blockchain": {
                 "enabled": true,
                 "implementation": {
-                    "ganache": {
+                    "hardhat": {
                         "enabled": true,
-                        "package": "./blockchain/implementation/ganache/ganache-service.js",
+                        "package": "./blockchain/implementation/hardhat/hardhat-service.js",
                         "config": {
-                            "blockchainTitle": "ganache",
+                            "blockchainTitle": "hardhat",
                             "networkId": "ganache::testnet",
-                            "hubContractAddress": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
-                            "rpcEndpoints": ["http://localhost:7545"],
+                            "hubContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+                            "rpcEndpoints": ["http://localhost:8545"],
                             "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
                             "initialStakeAmount": 50000,
                             "initialAskAmount": 0.2
@@ -277,14 +277,14 @@
             "blockchain": {
                 "enabled": true,
                 "implementation": {
-                    "ganache": {
+                    "hardhat": {
                         "enabled": true,
-                        "package": "./blockchain/implementation/ganache/ganache-service.js",
+                        "package": "./blockchain/implementation/hardhat/hardhat-service.js",
                         "config": {
                             "blockchainTitle": "ganache",
                             "networkId": "ganache::testnet",
-                            "hubContractAddress": "0x209679fA3B658Cd0fC74473aF28243bfe78a9b12",
-                            "rpcEndpoints": ["http://localhost:7545"],
+                            "hubContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+                            "rpcEndpoints": ["http://localhost:8545"],
                             "initialStakeAmount": 50000,
                             "initialAskAmount": 0.2
                         }
@@ -294,9 +294,9 @@
             "tripleStore": {
                 "enabled": true,
                 "implementation": {
-                    "ot-graphdb": {
+                    "ot-blazegraph": {
                         "enabled": true,
-                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
+                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
                         "config": {}
                     }
                 }
@@ -411,6 +411,7 @@
                             "hubContractAddress": "0xBbfF7Ea6b2Addc1f38A0798329e12C08f03750A6",
                             "rpcEndpoints": [
                                 "https://lofar-testnet.origin-trail.network",
+                                "https://lofar-testnet.origintrail.network",
                                 "wss://parachain-testnet-rpc.origin-trail.network"
                             ]
                         }
