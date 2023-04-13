@@ -115,18 +115,20 @@ class SubmitCommitCommand extends EpochCommand {
             async (result) => {
                 if (!result.error) {
                     const currentEpochStartTime =
-                        agreementData.startTime + agreementData.epochLength * epoch;
+                        Number(agreementData.startTime) + Number(agreementData.epochLength) * epoch;
 
                     const proofWindowDurationPerc =
                         await that.blockchainModuleManager.getProofWindowDurationPerc(blockchain);
 
                     const proofWindowDuration =
-                        (agreementData.epochLength * proofWindowDurationPerc) / 100;
+                        (Number(agreementData.epochLength) * proofWindowDurationPerc) / 100;
 
                     const proofWindowStartTime =
                         currentEpochStartTime +
                         Math.floor(
-                            (agreementData.epochLength * agreementData.proofWindowOffsetPerc) / 100,
+                            (Number(agreementData.epochLength) *
+                                Number(agreementData.proofWindowOffsetPerc)) /
+                                100,
                         );
                     // we are not using Date.now() here becouse we have an issue with hardhat blockchain time
                     const timeNow = await that.blockchainModuleManager.getBlockchainTimestamp();
