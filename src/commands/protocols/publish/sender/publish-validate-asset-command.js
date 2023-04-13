@@ -1,6 +1,6 @@
-import Command from '../../../command.js';
+import ValidateAssetCommand from '../../../common/validate-asset-command.js';
 
-class PublishValidateAssetCommand extends Command {
+class PublishValidateAssetCommand extends ValidateAssetCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
