@@ -58,7 +58,8 @@ class LocalStoreCommand extends Command {
             );
 
             const agreementEndTime =
-                agreementData.startTime + agreementData.epochsNumber * agreementData.epochLength;
+                Number(agreementData.startTime) +
+                Number(agreementData.epochsNumber) * Number(agreementData.epochLength);
 
             if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
                 const storePromises = [];
@@ -71,7 +72,7 @@ class LocalStoreCommand extends Command {
                             blockchain,
                             contract,
                             tokenId,
-                            agreementData.startTime,
+                            Number(agreementData.startTime),
                             agreementEndTime,
                             keyword,
                         ),
@@ -86,7 +87,7 @@ class LocalStoreCommand extends Command {
                             blockchain,
                             contract,
                             tokenId,
-                            agreementData.startTime,
+                            Number(agreementData.startTime),
                             agreementEndTime,
                             keyword,
                         ),
@@ -101,7 +102,7 @@ class LocalStoreCommand extends Command {
                     tokenId,
                     {
                         ...cachedData,
-                        agreementStartTime: agreementData.startTime,
+                        agreementStartTime: Number(agreementData.startTime),
                         agreementEndTime,
                         keyword,
                     },
