@@ -1,6 +1,6 @@
 import { formatAssertion } from 'assertion-tools';
 
-import { SCHEMA_CONTEXT, TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
+import { SCHEMA_CONTEXT } from '../constants/constants.js';
 
 class TripleStoreService {
     constructor(ctx) {
@@ -21,26 +21,13 @@ class TripleStoreService {
         }
     }
 
-    async localStoreAssertion(assertionId, assertion, operationId) {
-        this.logger.info(
-            `Inserting assertion with id: ${assertionId} in triple store. Operation id: ${operationId}`,
-        );
-
-        await this.tripleStoreModuleManager.insertAssertion(
-            this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT],
-            TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-            assertionId,
-            assertion.join('\n'),
-        );
-    }
-
     async localStoreAsset(
+        repository,
         assertionId,
         assertion,
         blockchain,
         contract,
         tokenId,
-        operationId,
         agreementStartTime,
         agreementEndTime,
         keyword,
@@ -48,64 +35,9 @@ class TripleStoreService {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.info(
-            `Inserting asset with assertion id: ${assertionId}, ual: ${ual} in triple store. Operation id: ${operationId}`,
+            `Inserting asset with assertion id: ${assertionId}, ual: ${ual} in triple store ${repository} repository.`,
         );
 
-        /* // get current assertion, store current assertion in history repository, add triple UAL -> assertionId
-        const assertionIds = await this.tripleStoreModuleManager.getAssetAssertionIds(
-            this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-            ual,
-        );
-        if (assertionIds?.length) {
-            const currentAssertionId = assertionIds[0];
-            let nquads = await this.tripleStoreModuleManager.getAssertion(
-                this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                currentAssertionId,
-            );
-            nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
-
-            const historyAssetNquads = await formatAssertion({
-                '@context': SCHEMA_CONTEXT,
-                '@id': ual,
-                blockchain,
-                contract,
-                tokenId,
-                assertion: { '@id': `assertion:${assertionId}` },
-            });
-            await Promise.all([
-                this.tripleStoreModuleManager.insertAsset(
-                    this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                    ual,
-                    historyAssetNquads.join('\n'),
-                    false,
-                ),
-                this.tripleStoreModuleManager.insertAssertion(
-                    this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                    assertionId,
-                    nquads,
-                ),
-            ]);
-
-            const isAssertionIdShared = await this.tripleStoreModuleManager.isAssertionIdShared(
-                this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                currentAssertionId,
-            );
-            if (!isAssertionIdShared) {
-                // delete old assertion from current repository
-                this.tripleStoreModuleManager.deleteAssertion(
-                    this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                    assertionId,
-                );
-            }
-        } */
-
-        // store new assertion in current repository, update triple UAL -> assertionId
         const currentAssetNquads = await formatAssertion({
             '@context': SCHEMA_CONTEXT,
             '@id': ual,
@@ -119,72 +51,174 @@ class TripleStoreService {
         });
 
         await Promise.all([
-            this.tripleStoreModuleManager.insertAsset(
-                this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+            this.tripleStoreModuleManager.insertAssetMetadata(
+                this.repositoryImplementations[repository],
+                repository,
                 ual,
                 currentAssetNquads.join('\n'),
             ),
             this.tripleStoreModuleManager.insertAssertion(
-                this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                this.repositoryImplementations[repository],
+                repository,
                 assertionId,
                 assertion.join('\n'),
             ),
         ]);
 
         this.logger.info(
-            `Asset with assertion id: ${assertionId}, ual: ${ual} has been successfully inserted!`,
+            `Asset with assertion id: ${assertionId}, ual: ${ual} has been successfully inserted in triple store ${repository} repository.`,
         );
     }
 
-    async localGet(assertionId, operationId, localQuery = false) {
-        let nquads;
-        if (localQuery) {
-            this.logger.debug(
-                `Getting assertion: ${assertionId} for operationId: ${operationId} from private repository`,
-            );
+    async moveAsset(
+        fromRepository,
+        toRepository,
+        assertionId,
+        blockchain,
+        contract,
+        tokenId,
+        agreementStartTime,
+        agreementEndTime,
+        keyword,
+    ) {
+        const assertion = await this.getAssertion(fromRepository, assertionId);
 
-            nquads = await this.tripleStoreModuleManager.getAssertion(
-                this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT],
-                TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-                assertionId,
-            );
+        // copy metadata and assertion
+        await this.localStoreAsset(
+            toRepository,
+            assertionId,
+            assertion,
+            blockchain,
+            contract,
+            tokenId,
+            agreementStartTime,
+            agreementEndTime,
+            keyword,
+        );
+
+        const [assetsWithAssertionIdCount] = await this.countAssetsWithAssertionId(
+            fromRepository,
+            assertionId,
+        );
+
+        // delete assertion from repository if not linked to other assets
+        if (assetsWithAssertionIdCount?.count <= 1) {
+            await this.deleteAssertion(fromRepository, assertionId);
         }
-        if (!nquads?.length) {
-            this.logger.debug(
-                `Getting assertion: ${assertionId} for operationId: ${operationId} from public repository`,
-            );
-            nquads = await this.tripleStoreModuleManager.getAssertion(
-                this.repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT],
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                assertionId,
-            );
-        }
+    }
+
+    async insertAssetMetadata(
+        repository,
+        blockchain,
+        contract,
+        tokenId,
+        assertionId,
+        agreementStartTime,
+        agreementEndTime,
+        keyword,
+    ) {
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+        this.logger.info(
+            `Inserting metadata for asset with ual: ${ual}, assertion id: ${assertionId}, in triple store ${repository} repository.`,
+        );
+
+        const currentAssetNquads = await formatAssertion({
+            '@context': SCHEMA_CONTEXT,
+            '@id': ual,
+            blockchain,
+            contract,
+            tokenId,
+            assertion: { '@id': `assertion:${assertionId}` },
+            agreementStartTime,
+            agreementEndTime,
+            keyword,
+        });
+
+        await this.tripleStoreModuleManager.insertAssetMetadata(
+            this.repositoryImplementations[repository],
+            repository,
+            ual,
+            currentAssetNquads.join('\n'),
+        );
+    }
+
+    async deleteAssetMetadata(repository, blockchain, contract, tokenId) {
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+        this.logger.info(
+            `Deleting metadata for asset with ual: ${ual} from triple store ${repository} repository.`,
+        );
+
+        return this.tripleStoreModuleManager.deleteAssetMetadata(
+            this.repositoryImplementations[repository],
+            repository,
+            ual,
+        );
+    }
+
+    async deleteAssertion(repository, assertionId) {
+        this.logger.info(
+            `Deleting assertion with id: ${assertionId} from triple store ${repository} repository.`,
+        );
+        return this.tripleStoreModuleManager.deleteAssertion(
+            this.repositoryImplementations[repository],
+            repository,
+            assertionId,
+        );
+    }
+
+    async countAssetsWithAssertionId(repository, assertionId) {
+        const bindings = await this.tripleStoreModuleManager.countAssetsWithAssertionId(
+            this.repositoryImplementations[repository],
+            repository,
+            assertionId,
+        );
+
+        return this.dataService.parseBindings(bindings);
+    }
+
+    async getAssertion(repository, assertionId) {
+        this.logger.debug(`Getting assertion: ${assertionId} from ${repository} repository`);
+        let nquads = await this.tripleStoreModuleManager.getAssertion(
+            this.repositoryImplementations[repository],
+            repository,
+            assertionId,
+        );
         nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
 
         this.logger.debug(
-            `Assertion: ${assertionId} for operationId: ${operationId} ${
+            `Assertion: ${assertionId} ${
                 nquads.length ? '' : 'not'
-            } found in local triple store.`,
+            } found in triple store ${repository} repository.`,
         );
 
         if (nquads.length) {
-            this.logger.debug(`Number of n-quads retrieved from the database : ${nquads.length}`);
+            this.logger.debug(
+                `Number of n-quads retrieved from triple store ${repository} repository: ${nquads.length}`,
+            );
         }
 
         return nquads;
     }
 
-    async assetExists(repository, ual, blockchain, contract, tokenId) {
+    async assetExists(repository, blockchain, contract, tokenId) {
         return this.tripleStoreModuleManager.assetExists(
             this.repositoryImplementations[repository],
             repository,
-            ual,
+            this.ualService.deriveUAL(blockchain, contract, tokenId),
             blockchain,
             contract,
             tokenId,
         );
+    }
+
+    async getAssetMetadata(repository, blockchain, contract, tokenId) {
+        const bindings = await this.tripleStoreModuleManager.getAssetMetadata(
+            this.repositoryImplementations[repository],
+            repository,
+            this.ualService.deriveUAL(blockchain, contract, tokenId),
+        );
+        return this.dataService.parseBindings(bindings);
     }
 
     async assertionExists(repository, assertionId) {

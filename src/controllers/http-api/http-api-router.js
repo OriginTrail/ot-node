@@ -5,6 +5,7 @@ class HttpApiRouter {
 
         this.getHttpApiController = ctx.getHttpApiController;
         this.publishHttpApiController = ctx.publishHttpApiController;
+        this.updateHttpApiController = ctx.updateHttpApiController;
         this.localStoreHttpApiController = ctx.localStoreHttpApiController;
         this.queryHttpApiController = ctx.queryHttpApiController;
         this.resultHttpApiController = ctx.resultHttpApiController;
@@ -15,19 +16,27 @@ class HttpApiRouter {
     }
 
     async initialize() {
-        await this.initializeBeforeMiddlewares();
-        await this.initializeListeners();
-        await this.initializeAfterMiddlewares();
+        this.initializeBeforeMiddlewares();
+        this.initializeListeners();
+        this.initializeAfterMiddlewares();
         await this.httpClientModuleManager.listen();
     }
 
-    async initializeListeners() {
+    initializeListeners() {
         this.httpClientModuleManager.post(
             '/publish',
             (req, res) => {
                 this.publishHttpApiController.handlePublishRequest(req, res);
             },
             { rateLimit: true, requestSchema: this.jsonSchemaService.publishSchema() },
+        );
+
+        this.httpClientModuleManager.post(
+            '/update',
+            (req, res) => {
+                this.updateHttpApiController.handleUpdateRequest(req, res);
+            },
+            { rateLimit: true, requestSchema: this.jsonSchemaService.updateSchema() },
         );
 
         this.httpClientModuleManager.post(
@@ -71,12 +80,12 @@ class HttpApiRouter {
         );
     }
 
-    async initializeBeforeMiddlewares() {
-        await this.httpClientModuleManager.initializeBeforeMiddlewares();
+    initializeBeforeMiddlewares() {
+        this.httpClientModuleManager.initializeBeforeMiddlewares();
     }
 
-    async initializeAfterMiddlewares() {
-        await this.httpClientModuleManager.initializeAfterMiddlewares();
+    initializeAfterMiddlewares() {
+        this.httpClientModuleManager.initializeAfterMiddlewares();
     }
 }
 

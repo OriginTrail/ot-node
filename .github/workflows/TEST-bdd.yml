@@ -23,10 +23,10 @@ jobs:
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-      graphdb:
-        image: khaller/graphdb-free:1.3.5-graphdb9.11.2
+      blazegraph:
+        image: lyrasis/blazegraph:2.1.5
         ports:
-          - 7200:7200
+          - 9999:9999
     strategy:
       matrix:
         node-version: [16.x]
@@ -41,6 +41,7 @@ jobs:
       - run: sudo chmod -R 777 $ARTIFACTS_DIR
       - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR
       - run: sudo chmod -R 777 $CUCUMBER_ARTIFACTS_DIR
+      - run: npm explore dkg-evm-module -- npm run compile;
       - run: npm run test:bdd;
       - uses: actions/upload-artifact@v2
         if: ${{ always() }}

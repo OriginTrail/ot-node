@@ -11,10 +11,7 @@ class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     }
 
     getNextCommandData(command) {
-        return {
-            ual: command.data.ual,
-            assertionId: command.data.assertionId,
-        };
+        return { ...super.getNextCommandData(command), state: command.data.state };
     }
 
     /**

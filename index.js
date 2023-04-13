@@ -6,16 +6,17 @@ import appRootPath from 'app-root-path';
 import { execSync } from 'child_process';
 import semver from 'semver';
 import OTNode from './ot-node.js';
+import { NODE_ENVIRONMENTS } from './src/constants/constants.js';
 
 process.env.NODE_ENV =
-    process.env.NODE_ENV && ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0
+    process.env.NODE_ENV && Object.values(NODE_ENVIRONMENTS).includes(process.env.NODE_ENV)
         ? process.env.NODE_ENV
-        : 'development';
+        : NODE_ENVIRONMENTS.DEVELOPMENT;
 
 (async () => {
     let userConfig = null;
     try {
-        if (process.env.NODE_ENV === 'development' && process.argv.length === 3) {
+        if (process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT && process.argv.length === 3) {
             const configurationFilename = process.argv[2];
             userConfig = JSON.parse(await fs.promises.readFile(process.argv[2]));
             userConfig.configFilename = configurationFilename;
@@ -30,7 +31,7 @@ process.env.NODE_ENV =
     } catch (e) {
         console.error(`Error occurred while start ot-node, error message: ${e}. ${e.stack}`);
         console.error(`Trying to recover from older version`);
-        if (process.env.NODE_ENV !== 'development') {
+        if (process.env.NODE_ENV !== NODE_ENVIRONMENTS.DEVELOPMENT) {
             const rootPath = path.join(appRootPath.path, '..');
             const oldVersionsDirs = (await fs.promises.readdir(rootPath, { withFileTypes: true }))
                 .filter((dirent) => dirent.isDirectory())

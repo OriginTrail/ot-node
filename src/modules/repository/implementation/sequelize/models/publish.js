@@ -9,8 +9,6 @@ export default (sequelize, DataTypes) => {
             },
             operation_id: DataTypes.UUID,
             status: DataTypes.STRING,
-            agreementId: DataTypes.STRING,
-            agreementStatus: DataTypes.STRING,
             created_at: DataTypes.DATE,
             updated_at: DataTypes.DATE,
         },

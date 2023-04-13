@@ -26,7 +26,7 @@ When(
                 });
             const { operationId } = result.operation;
 
-            this.state.lastResolveData = {
+            this.state.lastGetData = {
                 nodeId: node - 1,
                 operationId,
                 result,
@@ -45,10 +45,10 @@ Given(
     async function resolveFinalizeCall() {
         this.logger.log('I wait for last resolve to finalize');
         expect(
-            !!this.state.lastResolveData,
+            !!this.state.lastGetData,
             'Last resolve data is undefined. Resolve is not started.',
         ).to.be.equal(true);
-        const resolveData = this.state.lastResolveData;
+        const resolveData = this.state.lastGetData;
         let retryCount = 0;
         const maxRetryCount = 5;
         for (retryCount = 0; retryCount < maxRetryCount; retryCount += 1) {
@@ -62,9 +62,9 @@ Given(
             );
             this.logger.log(`Operation status: ${resolveResult.data.status}`);
             if (['COMPLETED', 'FAILED'].includes(resolveResult.data.status)) {
-                this.state.lastResolveData.result = resolveResult;
-                this.state.lastResolveData.status = resolveResult.data.status;
-                this.state.lastResolveData.errorType = resolveResult.data.data?.errorType;
+                this.state.lastGetData.result = resolveResult;
+                this.state.lastGetData.status = resolveResult.data.status;
+                this.state.lastGetData.errorType = resolveResult.data.data?.errorType;
                 break;
             }
             if (retryCount === maxRetryCount - 1) {
@@ -79,14 +79,14 @@ Given(
 Given(/Last resolve returned valid result$/, { timeout: 120000 }, async function resolveCall() {
     this.logger.log('Last resolve returned valid result');
     expect(
-        !!this.state.lastResolveData,
+        !!this.state.lastGetData,
         'Last resolve data is undefined. Resolve is not started.',
     ).to.be.equal(true);
     expect(
-        !!this.state.lastResolveData.result,
+        !!this.state.lastGetData.result,
         'Last publish data result is undefined. Publish is not finished.',
     ).to.be.equal(true);
-    const resolveData = this.state.lastResolveData;
+    const resolveData = this.state.lastGetData;
     expect(
         Array.isArray(resolveData.result.data),
         'Resolve result data expected to be array',
@@ -116,7 +116,7 @@ Given(
                 : { id: this.state.lastPublishData.UAL };
         const result = await httpApiHelper.get(this.state.nodes[node - 1].nodeRpcUrl, requestBody);
         const { operationId } = result.data;
-        this.state.lastResolveData = {
+        this.state.lastGetData = {
             nodeId: node - 1,
             operationId,
         };

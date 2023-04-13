@@ -1,5 +1,5 @@
 import BaseMigration from './base-migration.js';
-import { CONTRACTS } from '../constants/constants.js';
+import { CONTRACTS, NODE_ENVIRONMENTS } from '../constants/constants.js';
 
 class CleanShardingTableMigration extends BaseMigration {
     constructor(migrationName, logger, config, repositoryModuleManager) {
@@ -8,7 +8,10 @@ class CleanShardingTableMigration extends BaseMigration {
     }
 
     async executeMigration() {
-        if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
+        if (
+            process.env.NODE_ENV !== NODE_ENVIRONMENTS.DEVELOPMENT &&
+            process.env.NODE_ENV !== NODE_ENVIRONMENTS.TEST
+        ) {
             this.logger.info('Removing all entries from local sharding table');
             await this.repositoryModuleManager.cleanShardingTable();
             await this.repositoryModuleManager.removeBlockchainEvents(

@@ -1,4 +1,5 @@
 import DKG from 'dkg.js';
+import { CONTENT_ASSET_HASH_FUNCTION_ID } from '../../src/constants/constants.js';
 
 class DkgClientHelper {
     constructor(config) {
@@ -14,9 +15,9 @@ class DkgClientHelper {
             visibility: 'public',
             epochsNum: 5,
             maxNumberOfRetries: 5,
-            hashFunctionId: 1,
+            hashFunctionId: CONTENT_ASSET_HASH_FUNCTION_ID,
             blockchain: {
-                name: 'ganache',
+                name: 'hardhat',
                 publicKey: wallet.evmOperationalWalletPublicKey,
                 privateKey: wallet.evmOperationalWalletPrivateKey,
             },
@@ -24,14 +25,16 @@ class DkgClientHelper {
         return this.client.asset.create(data, options);
     }
 
-    async update(data, keywords, ual) {
-        return this.client._publishRequest({
-            ual,
-            data,
-            keywords,
-            method: 'update',
-            visibility: 'public',
-        });
+    async update(ual, assertion, wallet) {
+        const options = {
+            maxNumberOfRetries: 5,
+            blockchain: {
+                name: 'hardhat',
+                publicKey: wallet.evmOperationalWalletPublicKey,
+                privateKey: wallet.evmOperationalWalletPrivateKey,
+            },
+        };
+        return this.client.asset.update(ual, assertion, options);
     }
 
     async get(ids) {
