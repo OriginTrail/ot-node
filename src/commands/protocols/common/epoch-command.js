@@ -26,7 +26,8 @@ class EpochCommand extends Command {
             blockchain,
         );
         const nextEpochStartTime =
-            agreementData.startTime + agreementData.epochLength * (currentEpoch + 1);
+            Number(agreementData.startTime) +
+            Number(agreementData.epochLength) * (currentEpoch + 1);
 
         const commitWindowDurationPerc =
             await this.blockchainModuleManager.getCommitWindowDurationPerc(blockchain);
