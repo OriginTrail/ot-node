@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
-    const ability = sequelize.define(
-        'ability',
+    const assetSync = sequelize.define(
+        'asset_sync',
         {
             blockchain_id: {
                 allowNull: false,
@@ -28,18 +28,18 @@ export default (sequelize, DataTypes) => {
             created_at: {
                 allowNull: false,
                 type: DataTypes.DATE,
-                defaultValue: DataTypes.literal('NOW()'),
+                defaultValue: () => Date.now(),
             },
             updated_at: {
                 allowNull: false,
                 type: DataTypes.DATE,
-                defaultValue: DataTypes.literal('NOW()'),
+                defaultValue: () => Date.now(),
             },
         },
         { underscored: true },
     );
-    ability.associate = () => {
+    assetSync.associate = () => {
         // define association here
     };
-    return ability;
+    return assetSync;
 };

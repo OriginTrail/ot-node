@@ -9,7 +9,7 @@ import {
     TRIPLE_STORE_REPOSITORIES,
 } from '../../constants/constants.js';
 
-const GET_RESULT_POLLING_INTERVAL_MILLIS = 2 * 1000;
+const GET_RESULT_POLLING_INTERVAL_MILLIS = 3 * 1000;
 const GET_RESULT_POLLING_MAX_ATTEMPTS = 10;
 class AssetSyncCommand extends Command {
     constructor(ctx) {
@@ -21,6 +21,7 @@ class AssetSyncCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.ualService = ctx.ualService;
         this.serviceAgreementService = ctx.serviceAgreementService;
+        this.operationService = ctx.getService;
     }
 
     /**
@@ -35,6 +36,8 @@ class AssetSyncCommand extends Command {
             return Command.empty();
         }
 
+        this.logger.debug(`Started executing asset sync command`);
+
         for (const blockchain of this.blockchainModuleManager.getImplementationNames()) {
             const contracts =
                 this.blockchainModuleManager.getAssetStorageContractAddresses(blockchain);
@@ -44,8 +47,14 @@ class AssetSyncCommand extends Command {
                     await this.blockchainModuleManager.getLatestTokenId(blockchain, contract),
                 );
 
-                const { token_id: latestSyncedTokenId, state_index: latestSyncedStateIndex } =
-                    await this.repositoryModuleManager.getLatestSyncedAsset(blockchain, contract);
+                const latestAssetSyncRecord =
+                    await this.repositoryModuleManager.getLatestAssetSyncRecord(
+                        blockchain,
+                        contract,
+                    );
+
+                const latestSyncedTokenId = latestAssetSyncRecord?.token_id ?? 0;
+                const latestSyncedStateIndex = latestAssetSyncRecord?.state_index ?? -1;
 
                 for (let tokenId = latestSyncedTokenId; tokenId < latestTokenId; tokenId += 1) {
                     const assertionIds = await this.blockchainModuleManager.getAssertionIds(
@@ -59,7 +68,11 @@ class AssetSyncCommand extends Command {
                         stateIndex < assertionIds.length;
                         stateIndex += 1
                     ) {
-                        const assertionId = assertionIds[stateIndex];
+                        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+                        this.logger.debug(
+                            `ASSET_SYNC: Fetching state index: ${stateIndex} of ${assertionIds.length} for asset with ual: ${ual}.`,
+                        );
+                        const assertionId = assertionIds[stateIndex - 1];
 
                         const operationId = await this.operationIdService.generateOperationId(
                             OPERATION_ID_STATUS.GET.GET_START,
@@ -79,19 +92,16 @@ class AssetSyncCommand extends Command {
                         );
 
                         await this.repositoryModuleManager.createOperationRecord(
-                            this.getService.getOperationName(),
+                            this.operationService.getOperationName(),
                             operationId,
                             OPERATION_STATUS.IN_PROGRESS,
                         );
 
-                        const id = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
-                        // TODO: to be defined (waiting for historical GET PR)
                         const state = stateIndex;
                         const hashFunctionId = CONTENT_ASSET_HASH_FUNCTION_ID;
 
                         this.logger.info(
-                            `Get for ${id} with operation id ${operationId} initiated.`,
+                            `Get for ${ual} with operation id ${operationId} initiated.`,
                         );
 
                         await this.commandExecutor.add({
@@ -100,7 +110,10 @@ class AssetSyncCommand extends Command {
                             delay: 0,
                             data: {
                                 operationId,
-                                id,
+                                id: ual,
+                                blockchain,
+                                contract,
+                                tokenId,
                                 state,
                                 hashFunctionId,
                                 assertionId,
@@ -118,17 +131,24 @@ class AssetSyncCommand extends Command {
                         do {
                             await setTimeout(GET_RESULT_POLLING_INTERVAL_MILLIS);
 
-                            getResult = await this.operationIdService.getCachedOperationIdData(
+                            getResult = await this.operationIdService.getOperationIdRecord(
                                 operationId,
                             );
                             attempt += 1;
                         } while (
                             attempt < GET_RESULT_POLLING_MAX_ATTEMPTS &&
-                            getResult.status !== OPERATION_ID_STATUS.FAILED &&
-                            getResult.status !== OPERATION_ID_STATUS.COMPLETED
+                            getResult?.status !== OPERATION_ID_STATUS.FAILED &&
+                            getResult?.status !== OPERATION_ID_STATUS.COMPLETED
                         );
 
-                        if (getResult.assertion) {
+                        const cachedData = await this.operationIdService.getCachedOperationIdData(
+                            operationId,
+                        );
+
+                        if (cachedData?.assertion?.length) {
+                            this.logger.debug(
+                                `ASSET_SYNC: ${cachedData.assertion.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                            );
                             const keyword = await this.ualService.calculateLocationKeyword(
                                 blockchain,
                                 contract,
@@ -150,12 +170,13 @@ class AssetSyncCommand extends Command {
                             const agreementEndTime =
                                 agreementData.startTime +
                                 agreementData.epochsNumber * agreementData.epochLength;
+
                             await this.tripleStoreService.localStoreAsset(
                                 stateIndex === assertionIds.length - 1
                                     ? TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT
                                     : TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
                                 assertionId,
-                                getResult.assertion,
+                                cachedData.assertion,
                                 blockchain,
                                 contract,
                                 tokenId,
@@ -163,7 +184,15 @@ class AssetSyncCommand extends Command {
                                 agreementEndTime,
                                 keyword,
                             );
+                        } else {
+                            this.logger.debug(
+                                `ASSET_SYNC: No nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                            );
                         }
+
+                        this.logger.debug(
+                            `ASSET_SYNC: Updating status for asset sync record with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}, status: ${getResult?.status}`,
+                        );
 
                         await this.repositoryModuleManager.updateAssetSyncRecord(
                             blockchain,
@@ -176,6 +205,8 @@ class AssetSyncCommand extends Command {
                 }
             }
         }
+
+        this.logger.debug(`Finished executing asset sync command`);
 
         return Command.repeat();
     }
