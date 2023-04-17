@@ -34,8 +34,8 @@ class EpochCheckCommand extends EpochCommand {
             agreementId,
         );
         const epoch = await this.calculateCurrentEpoch(
-            agreementData.startTime,
-            agreementData.epochLength,
+            Number(agreementData.startTime),
+            Number(agreementData.epochLength),
             blockchain,
         );
         this.logger.trace(`Epoch number: ${epoch}`);
@@ -120,7 +120,7 @@ class EpochCheckCommand extends EpochCommand {
     }
 
     assetLifetimeExpired(agreementData, epoch) {
-        return epoch >= agreementData.epochsNumber;
+        return epoch >= Number(agreementData.epochsNumber);
     }
 
     /**
