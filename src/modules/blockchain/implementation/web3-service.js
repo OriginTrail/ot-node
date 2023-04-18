@@ -26,7 +26,9 @@ const ProfileABI = require('dkg-evm-module/abi/Profile.json');
 const ProfileStorageABI = require('dkg-evm-module/abi/ProfileStorage.json');
 const ScoringProxyABI = require('dkg-evm-module/abi/ScoringProxy.json');
 const ServiceAgreementV1ABI = require('dkg-evm-module/abi/ServiceAgreementV1.json');
+const CommitManagerV1ABI = require('dkg-evm-module/abi/CommitManagerV1.json');
 const CommitManagerV1U1ABI = require('dkg-evm-module/abi/CommitManagerV1U1.json');
+const ProofManagerV1ABI = require('dkg-evm-module/abi/ProofManagerV1.json');
 const ProofManagerV1U1ABI = require('dkg-evm-module/abi/ProofManagerV1U1.json');
 const ShardingTableABI = require('dkg-evm-module/abi/ShardingTable.json');
 const ShardingTableStorageABI = require('dkg-evm-module/abi/ShardingTableStorage.json');
@@ -123,7 +125,9 @@ class Web3Service {
             this.initializeContract('Profile', ProfileABI),
             this.initializeContract('ProfileStorage', ProfileStorageABI),
             this.initializeContract('ServiceAgreementV1', ServiceAgreementV1ABI),
+            this.initializeContract('CommitManagerV1', CommitManagerV1ABI),
             this.initializeContract('CommitManagerV1U1', CommitManagerV1U1ABI),
+            this.initializeContract('ProofManagerV1', ProofManagerV1ABI),
             this.initializeContract('ProofManagerV1U1', ProofManagerV1U1ABI),
             this.initializeContract(
                 'ServiceAgreementStorageProxy',
@@ -540,11 +544,18 @@ class Web3Service {
         return Number(assertionChunksNumber);
     }
 
-    async isCommitWindowOpen(agreementId, epoch) {
-        return this.callContractFunction(this.CommitManagerV1U1Contract, 'isCommitWindowOpen', [
-            agreementId,
-            epoch,
-        ]);
+    selectCommitManagerContract(latestStateIndex) {
+        return latestStateIndex === 0
+            ? this.CommitManagerV1Contract
+            : this.CommitManagerV1U1Contract;
+    }
+
+    async isCommitWindowOpen(agreementId, epoch, latestStateIndex) {
+        return this.callContractFunction(
+            this.selectCommitManagerContract(latestStateIndex),
+            'isCommitWindowOpen',
+            [agreementId, epoch],
+        );
     }
 
     async isUpdateCommitWindowOpen(agreementId, epoch, stateIndex) {
@@ -555,11 +566,14 @@ class Web3Service {
         );
     }
 
-    async getTopCommitSubmissions(agreementId, epoch, stateIndex) {
+    async getTopCommitSubmissions(agreementId, epoch, latestStateIndex) {
+        const args =
+            latestStateIndex === 0 ? [agreementId, epoch] : [agreementId, epoch, latestStateIndex];
+
         const commits = await this.callContractFunction(
-            this.CommitManagerV1U1Contract,
+            this.selectCommitManagerContract(latestStateIndex),
             'getTopCommitSubmissions',
-            [agreementId, epoch, stateIndex],
+            args,
         );
 
         return commits
@@ -596,9 +610,17 @@ class Web3Service {
         return finalizationCommitsNumber;
     }
 
-    async submitCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch, callback) {
+    async submitCommit(
+        assetContractAddress,
+        tokenId,
+        keyword,
+        hashFunctionId,
+        epoch,
+        latestStateIndex,
+        callback,
+    ) {
         return this.queueTransaction(
-            this.CommitManagerV1U1Contract,
+            this.selectCommitManagerContract(latestStateIndex),
             'submitCommit',
             [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch]],
             callback,
@@ -621,18 +643,28 @@ class Web3Service {
         );
     }
 
-    async isProofWindowOpen(agreementId, epoch) {
-        return this.callContractFunction(this.ProofManagerV1U1Contract, 'isProofWindowOpen', [
-            agreementId,
-            epoch,
-        ]);
+    selectProofManagerContract(latestStateIndex) {
+        return latestStateIndex === 0 ? this.ProofManagerV1Contract : this.ProofManagerV1U1Contract;
     }
 
-    async getChallenge(assetContractAddress, tokenId, epoch) {
+    async isProofWindowOpen(agreementId, epoch, latestStateIndex) {
+        return this.callContractFunction(
+            this.selectProofManagerContract(latestStateIndex),
+            'isProofWindowOpen',
+            [agreementId, epoch],
+        );
+    }
+
+    async getChallenge(assetContractAddress, tokenId, epoch, latestStateIndex) {
+        const args =
+            latestStateIndex === 0
+                ? [this.getPublicKey(), assetContractAddress, tokenId, epoch]
+                : [assetContractAddress, tokenId, epoch];
+
         const result = await this.callContractFunction(
-            this.ProofManagerV1U1Contract,
+            this.selectProofManagerContract(latestStateIndex),
             'getChallenge',
-            [assetContractAddress, tokenId, epoch],
+            args,
         );
 
         return { assertionId: result['0'], challenge: result['1'] };
@@ -646,10 +678,11 @@ class Web3Service {
         epoch,
         proof,
         chunkHash,
+        latestStateIndex,
         callback,
     ) {
         return this.queueTransaction(
-            this.ProofManagerV1U1Contract,
+            this.selectProofManagerContract(latestStateIndex),
             'sendProof',
             [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch, proof, chunkHash]],
             callback,
