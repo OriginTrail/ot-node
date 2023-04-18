@@ -111,6 +111,7 @@ class SubmitCommitCommand extends EpochCommand {
             tokenId,
             keyword,
             hashFunctionId,
+            stateIndex,
             epoch,
             async (result) => {
                 if (!result.error) {
