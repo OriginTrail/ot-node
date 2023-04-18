@@ -73,6 +73,7 @@ class EpochCheckCommand extends EpochCommand {
             blockchain,
             agreementId,
             epoch,
+            stateIndex,
         );
         if (!commitWindowOpen) {
             this.logger.trace(
