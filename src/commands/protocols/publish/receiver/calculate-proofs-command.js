@@ -45,8 +45,8 @@ class CalculateProofsCommand extends EpochCommand {
         );
 
         const epoch = await this.calculateCurrentEpoch(
-            agreementData.startTime,
-            agreementData.epochLength,
+            Number(agreementData.startTime),
+            Number(agreementData.epochLength),
             blockchain,
         );
 
@@ -87,6 +87,7 @@ class CalculateProofsCommand extends EpochCommand {
             contract,
             tokenId,
             epoch,
+            stateIndex,
         );
 
         const assertion = await this.tripleStoreService.getAssertion(

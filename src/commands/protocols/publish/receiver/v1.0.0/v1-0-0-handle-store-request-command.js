@@ -59,7 +59,8 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         );
 
         const agreementEndTime =
-            agreementData.startTime + agreementData.epochsNumber * agreementData.epochLength;
+            Number(agreementData.startTime) +
+            Number(agreementData.epochsNumber) * Number(agreementData.epochLength);
 
         await this.tripleStoreService.localStoreAsset(
             TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
@@ -68,7 +69,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             blockchain,
             contract,
             tokenId,
-            agreementData.startTime,
+            Number(agreementData.startTime),
             agreementEndTime,
             keyword,
         );
