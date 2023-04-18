@@ -87,6 +87,7 @@ class CalculateProofsCommand extends EpochCommand {
             contract,
             tokenId,
             epoch,
+            stateIndex,
         );
 
         const assertion = await this.tripleStoreService.getAssertion(
