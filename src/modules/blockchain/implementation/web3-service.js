@@ -567,10 +567,13 @@ class Web3Service {
     }
 
     async getTopCommitSubmissions(agreementId, epoch, latestStateIndex) {
+        const args =
+            latestStateIndex === 0 ? [agreementId, epoch] : [agreementId, epoch, latestStateIndex];
+
         const commits = await this.callContractFunction(
             this.selectCommitManagerContract(latestStateIndex),
             'getTopCommitSubmissions',
-            [agreementId, epoch, latestStateIndex],
+            args,
         );
 
         return commits
@@ -653,10 +656,15 @@ class Web3Service {
     }
 
     async getChallenge(assetContractAddress, tokenId, epoch, latestStateIndex) {
+        const args =
+            latestStateIndex === 0
+                ? [this.getPublicKey(), assetContractAddress, tokenId, epoch]
+                : [assetContractAddress, tokenId, epoch];
+
         const result = await this.callContractFunction(
             this.selectProofManagerContract(latestStateIndex),
             'getChallenge',
-            [assetContractAddress, tokenId, epoch],
+            args,
         );
 
         return { assertionId: result['0'], challenge: result['1'] };
