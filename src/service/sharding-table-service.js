@@ -1,10 +1,5 @@
 import { xor as uint8ArrayXor } from 'uint8arrays/xor';
 import { compare as uint8ArrayCompare } from 'uint8arrays/compare';
-import pipe from 'it-pipe';
-import map from 'it-map';
-import sort from 'it-sort';
-import take from 'it-take';
-import all from 'it-all';
 
 import {
     BYTES_IN_KILOBYTE,
@@ -129,19 +124,14 @@ class ShardingTableService {
     async sortPeers(blockchainId, keyHash, peers, count, hashFunctionId) {
         const hashFunctionName = this.validationModuleManager.getHashFunctionName(hashFunctionId);
 
-        const sorted = pipe(
-            peers,
-            (source) =>
-                map(source, async (peer) => ({
-                    peer,
-                    distance: this.calculateDistance(blockchainId, keyHash, peer[hashFunctionName]),
-                })),
-            (source) => sort(source, (a, b) => uint8ArrayCompare(a.distance, b.distance)),
-            (source) => take(source, count),
-            (source) => map(source, (pd) => pd.peer),
-        );
-
-        return all(sorted);
+        return peers
+            .map((peer) => ({
+                peer,
+                distance: this.calculateDistance(blockchainId, keyHash, peer[hashFunctionName]),
+            }))
+            .sort((a, b) => uint8ArrayCompare(a.distance, b.distance))
+            .slice(0, count)
+            .map((pd) => pd.peer);
     }
 
     calculateDistance(blockchain, peerHash, keyHash) {
