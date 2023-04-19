@@ -588,17 +588,17 @@ class Web3Service {
 
     async getR2() {
         const r2 = await this.callContractFunction(this.ParametersStorageContract, 'r2', []);
-        return r2;
+        return Number(r2);
     }
 
     async getR1() {
         const r1 = await this.callContractFunction(this.ParametersStorageContract, 'r1', []);
-        return r1;
+        return Number(r1);
     }
 
     async getR0() {
         const r0 = await this.callContractFunction(this.ParametersStorageContract, 'r0', []);
-        return r0;
+        return Number(r0);
     }
 
     async getFinalizationCommitsNumber() {

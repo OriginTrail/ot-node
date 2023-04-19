@@ -28,7 +28,7 @@
     "tokenId": 0
   },
   "nonExistentUAL": {
-    "id": "did:ganache:0x791ee543738B997B7A125bc849005B62aFD35578/1"
+    "id": "did:hardhat:0x791ee543738B997B7A125bc849005B62aFD35578/1"
   },
   "validUpdateRequestBody": {
     "assertionId": "0x591503a1c8ba4667dd7afd203025c1bf594d817d8eec71274fe960d69fb8584f",

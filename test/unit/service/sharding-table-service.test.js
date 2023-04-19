@@ -29,7 +29,7 @@ describe('Sharding table service test', async () => {
             '0xb44062de45333119471934bc0340c05ff09c0b463392384bc2030cd0a20c334b';
         const hashFunctionId = 1;
         const bidSuggestions = await shardingTableService.getBidSuggestion(
-            'ganache',
+            'hardhat',
             epochsNumber,
             assertionSize,
             contentAssetStorageAddress,
@@ -46,7 +46,7 @@ describe('Sharding table service test', async () => {
             '0xb44062de45333119471934bc0340c05ff09c0b463392384bc2030cd0a20c334b';
         const hashFunctionId = 1;
         const bidSuggestion1Kb = await shardingTableService.getBidSuggestion(
-            'ganache',
+            'hardhat',
             epochsNumber,
             BYTES_IN_KILOBYTE,
             contentAssetStorageAddress,
@@ -54,7 +54,7 @@ describe('Sharding table service test', async () => {
             hashFunctionId,
         );
         const bidSuggestion1B = await shardingTableService.getBidSuggestion(
-            'ganache',
+            'hardhat',
             epochsNumber,
             1,
             contentAssetStorageAddress,
@@ -72,7 +72,7 @@ describe('Sharding table service test', async () => {
             '0xb44062de45333119471934bc0340c05ff09c0b463392384bc2030cd0a20c334b';
         const hashFunctionId = 1;
         const bidSuggestions = await shardingTableService.getBidSuggestion(
-            'ganache',
+            'hardhat',
             epochsNumber,
             assertionSize,
             contentAssetStorageAddress,
@@ -91,7 +91,7 @@ describe('Sharding table service test', async () => {
             '0xb44062de45333119471934bc0340c05ff09c0b463392384bc2030cd0a20c334b';
         const hashFunctionId = 1;
         const bidSuggestions = await shardingTableService.getBidSuggestion(
-            'ganache',
+            'hardhat',
             epochsNumber,
             assertionSize,
             contentAssetStorageAddress,
@@ -110,7 +110,7 @@ describe('Sharding table service test', async () => {
             '0xb44062de45333119471934bc0340c05ff09c0b463392384bc2030cd0a20c334b';
         const hashFunctionId = 1;
         const bidSuggestions = await shardingTableService.getBidSuggestion(
-            'ganache',
+            'hardhat',
             epochsNumber,
             assertionSize,
             contentAssetStorageAddress,
@@ -129,7 +129,7 @@ describe('Sharding table service test', async () => {
             '0xb44062de45333119471934bc0340c05ff09c0b463392384bc2030cd0a20c334b';
         const hashFunctionId = 1;
         const bidSuggestions = await shardingTableService.getBidSuggestion(
-            'ganache',
+            'hardhat',
             epochsNumber,
             assertionSize,
             contentAssetStorageAddress,

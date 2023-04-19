@@ -1,4 +1,6 @@
-export default (blockchainImplementationNames, bidSuggestionOptions) => ({
+import { BID_SUGGESTION_OPTIONS } from '../../../constants/constants.js';
+
+export default () => ({
     type: 'object',
     required: [
         'blockchain',
@@ -10,7 +12,7 @@ export default (blockchainImplementationNames, bidSuggestionOptions) => ({
     ],
     properties: {
         blockchain: {
-            enum: blockchainImplementationNames,
+            enum: Object.values(BID_SUGGESTION_OPTIONS),
         },
         epochsNumber: {
             type: 'number',
@@ -36,8 +38,8 @@ export default (blockchainImplementationNames, bidSuggestionOptions) => ({
             maximum: 1,
         },
         option: {
-            enum: bidSuggestionOptions,
-            default: bidSuggestionOptions.MEDIUM,
+            enum: Object.values(BID_SUGGESTION_OPTIONS),
+            default: BID_SUGGESTION_OPTIONS.MEDIUM,
         },
     },
 });

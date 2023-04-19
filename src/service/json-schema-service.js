@@ -4,7 +4,6 @@ import getSchema from '../controllers/http-api/request-schema/get-schema.js';
 import querySchema from '../controllers/http-api/request-schema/query-schema.js';
 import bidSuggestionSchema from '../controllers/http-api/request-schema/bid-suggestion-schema.js';
 import localStoreSchema from '../controllers/http-api/request-schema/local-store-schema.js';
-import { BID_SUGGESTION_OPTIONS } from '../constants/constants.js';
 
 class JsonSchemaService {
     constructor(ctx) {
@@ -12,10 +11,7 @@ class JsonSchemaService {
     }
 
     bidSuggestionSchema() {
-        return bidSuggestionSchema(
-            this.blockchainModuleManager.getImplementationNames(),
-            Object.values(BID_SUGGESTION_OPTIONS),
-        );
+        return bidSuggestionSchema(this.blockchainModuleManager.getImplementationNames());
     }
 
     publishSchema() {

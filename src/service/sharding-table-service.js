@@ -152,9 +152,11 @@ class ShardingTableService {
         option,
     ) {
         const kbSize = assertionSize < BYTES_IN_KILOBYTE ? BYTES_IN_KILOBYTE : assertionSize;
-        const r0 = await this.blockchainModuleManager.getR0(blockchainId);
-        const r1 = await this.blockchainModuleManager.getR1(blockchainId);
-        const r2 = await this.blockchainModuleManager.getR2(blockchainId);
+        const [r0, r1, r2] = await Promise.all([
+            this.blockchainModuleManager.getR0(blockchainId),
+            this.blockchainModuleManager.getR1(blockchainId),
+            this.blockchainModuleManager.getR2(blockchainId),
+        ]);
 
         const peerRecords = await this.findNeighbourhood(
             blockchainId,

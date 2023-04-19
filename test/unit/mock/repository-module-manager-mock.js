@@ -15,7 +15,7 @@ class RepositoryModuleManagerMock {
         return [
             {
                 peer_id: 'QmcJY13uLyt2VQ6QiVNcYiWaxdfaHWHj3T7G472uaHPBf7',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.2824612246520951',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -24,7 +24,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'Qmcxo88zf5zEvyBLYTrtfG8nGJQW6zHpf58b5MUcjoYVqL',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.11680988694381877',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -33,7 +33,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmQeNwBzgeMQxquQEDXvBHqXBHNBEvKHtyHURg4QvnoLrD',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.25255488168658036',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -42,7 +42,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmU4ty8X8L4Xk6cbDCoyJUhgeBNLDo3HprTGEhNd9CtiT7',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.25263875217271087',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -51,7 +51,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmWmgmMCQQ1awraTeQqwsbWgqtR3ZMuX7NhbHyiftuAspb',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.2429885059428509',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -60,7 +60,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmWyf3dtqJnhuCpzEDTNmNFYc5tjxTrXhGcUUmGHdg2gtj',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.210617584797714',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -69,7 +69,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmXgeHgBVbd7iyTp8PapUAyeKciqbsXTEvsakCjW7wZRqT',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.2290449496761527',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -78,7 +78,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmYys42KLmGEE9hEmJCVCe3SR3G9zf4epoAwDUK7pVUP6S',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.1637075464317365',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -87,7 +87,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmZi2nDhZJfa1Z5iXjvxQ1BigpR8TdTQ3gWQDGecn34e9x',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.10242295311162795',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -96,7 +96,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmZueq5jip24v5dbCSBGt8v16hPjUN1CXRb3zGaxH1jfHM',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.23374911902136858',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -105,7 +105,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmZueq5jip24v5dbCSBGt8v16hPjUN1CXRb3zGaxH1j123',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.17374911902136858',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -114,7 +114,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmZueq5jip24v5dbCSBGt8v16hPjUN1CXRb3zGaxH1j456',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.20374911902136858',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -123,7 +123,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmZueq5jip24v5dbCSBGt8v16hPjUN1CXRb3zGaxH1j789',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.36374911902136858',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -132,7 +132,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmZueq5jip24v5dbCSBGt8v16hPjUN1CXRb3zGaxH1j101',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.11374911902136858',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -141,7 +141,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmZueq5jip24v5dbCSBGt8v16hPjUN1CXRb3zGaxH1j102',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.13374911902136858',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -150,7 +150,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmZueq5jip24v5dbCSBGt8v16hPjUN1CXRb3zGaxH1j103',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.19374911902136858',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -159,7 +159,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmZueq5jip24v5dbCSBGt8v16hPjUN1CXRb3zGaxH1j104',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.10374911902136858',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -168,7 +168,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmZueq5jip24v5dbCSBGt8v16hPjUN1CXRb3zGaxH1j105',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.35374911902136858',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -177,7 +177,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmZueq5jip24v5dbCSBGt8v16hPjUN1CXRb3zGaxH1j106',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.98374911902136858',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
@@ -186,7 +186,7 @@ class RepositoryModuleManagerMock {
             },
             {
                 peer_id: 'QmZueq5jip24v5dbCSBGt8v16hPjUN1CXRb3zGaxH1j107',
-                blockchain_id: 'ganache',
+                blockchain_id: 'hardhat',
                 ask: '0.44374911902136858',
                 stake: '50000.0',
                 last_seen: '1970-01-01 00:00:00',
