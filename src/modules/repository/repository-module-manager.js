@@ -183,9 +183,9 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async removePeerRecords(blockchainId, peerId) {
+    async removePeerRecords(peerRecords) {
         if (this.initialized) {
-            return this.getImplementation().module.removePeerRecords(blockchainId, peerId);
+            return this.getImplementation().module.removePeerRecords(peerRecords);
         }
     }
 
