@@ -219,9 +219,9 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async cleanShardingTable() {
+    async cleanShardingTable(blockchainId) {
         if (this.initialized) {
-            return this.getImplementation().module.cleanShardingTable();
+            return this.getImplementation().module.cleanShardingTable(blockchainId);
         }
     }
 

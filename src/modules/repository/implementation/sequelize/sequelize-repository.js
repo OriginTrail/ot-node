@@ -352,8 +352,10 @@ class SequelizeRepository {
         await this.models.shard.bulkDestroy(peerRecords);
     }
 
-    async cleanShardingTable() {
-        await this.models.shard.destroy({ where: {} });
+    async cleanShardingTable(blockchainId) {
+        await this.models.shard.destroy({
+            where: blockchainId ? { blockchain_id: blockchainId } : {},
+        });
     }
 
     async getLastCheckedBlock(blockchainId, contract) {

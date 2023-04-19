@@ -182,7 +182,7 @@ class BlockchainEventListenerService {
                 );
 
                 if (contractName === CONTRACTS.SHARDING_TABLE_CONTRACT) {
-                    await this.repositoryModuleManager.cleanShardingTable();
+                    await this.repositoryModuleManager.cleanShardingTable(event.blockchain_id);
                 }
             }),
         );
