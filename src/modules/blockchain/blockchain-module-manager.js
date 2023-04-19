@@ -175,26 +175,27 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'convertFromWei', [value, toUnit]);
     }
 
-    async isCommitWindowOpen(blockchain, agreementId, epoch) {
+    async isCommitWindowOpen(blockchain, agreementId, epoch, stateIndex) {
         return this.callImplementationFunction(blockchain, 'isCommitWindowOpen', [
             agreementId,
             epoch,
+            stateIndex,
         ]);
     }
 
-    async isUpdateCommitWindowOpen(blockchain, agreementId, epoch, stateIndex) {
+    async isUpdateCommitWindowOpen(blockchain, agreementId, epoch, latestStateIndex) {
         return this.callImplementationFunction(blockchain, 'isUpdateCommitWindowOpen', [
             agreementId,
             epoch,
-            stateIndex,
+            latestStateIndex,
         ]);
     }
 
-    async getTopCommitSubmissions(blockchain, agreementId, epoch, stateIndex) {
+    async getTopCommitSubmissions(blockchain, agreementId, epoch, latestStateIndex) {
         return this.callImplementationFunction(blockchain, 'getTopCommitSubmissions', [
             agreementId,
             epoch,
-            stateIndex,
+            latestStateIndex,
         ]);
     }
 
@@ -225,6 +226,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         keyword,
         hashFunctionId,
         epoch,
+        latestStateIndex,
         callback,
     ) {
         return this.callImplementationFunction(blockchain, 'submitCommit', [
@@ -233,6 +235,7 @@ class BlockchainModuleManager extends BaseModuleManager {
             keyword,
             hashFunctionId,
             epoch,
+            latestStateIndex,
             callback,
         ]);
     }
@@ -256,18 +259,20 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async isProofWindowOpen(blockchain, agreementId, epoch) {
+    async isProofWindowOpen(blockchain, agreementId, epoch, latestStateIndex) {
         return this.callImplementationFunction(blockchain, 'isProofWindowOpen', [
             agreementId,
             epoch,
+            latestStateIndex,
         ]);
     }
 
-    async getChallenge(blockchain, assetContractAddress, tokenId, epoch) {
+    async getChallenge(blockchain, assetContractAddress, tokenId, epoch, latestStateIndex) {
         return this.callImplementationFunction(blockchain, 'getChallenge', [
             assetContractAddress,
             tokenId,
             epoch,
+            latestStateIndex,
         ]);
     }
 
@@ -280,6 +285,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         epoch,
         proof,
         chunkHash,
+        latestStateIndex,
         callback,
     ) {
         return this.callImplementationFunction(blockchain, 'sendProof', [
@@ -290,6 +296,7 @@ class BlockchainModuleManager extends BaseModuleManager {
             epoch,
             proof,
             chunkHash,
+            latestStateIndex,
             callback,
         ]);
     }

@@ -28,6 +28,18 @@ class BlockchainModuleManagerMock {
     toBigNumber(blockchain, value) {
         return ethers.BigNumber.from(value);
     }
+
+    getAssertionSize(blockchain, assertionId) {
+        return 246;
+    }
+
+    getAssertionTriplesNumber(blockchain, assertionId) {
+        return undefined;
+    }
+
+    getAssertionChunksNumber(blockchain, assertionId) {
+        return undefined;
+    }
 }
 
 export default BlockchainModuleManagerMock;

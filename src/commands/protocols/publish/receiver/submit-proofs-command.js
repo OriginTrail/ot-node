@@ -84,6 +84,7 @@ class SubmitProofsCommand extends EpochCommand {
             epoch,
             proof,
             leaf,
+            stateIndex,
             async (result) => {
                 if (!result.error) {
                     that.logger.trace(
