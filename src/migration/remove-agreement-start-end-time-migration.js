@@ -1,7 +1,7 @@
 import BaseMigration from './base-migration.js';
 import { TRIPLE_STORE_REPOSITORIES, SCHEMA_CONTEXT } from '../constants/constants.js';
 
-class ServiceAgreementsMetadataMigraion extends BaseMigration {
+class RemoveAgreementStartEndTimeMigration extends BaseMigration {
     constructor(migrationName, logger, config, tripleStoreService) {
         super(migrationName, logger, config);
         this.tripleStoreService = tripleStoreService;
@@ -11,14 +11,18 @@ class ServiceAgreementsMetadataMigraion extends BaseMigration {
         const repositories = Object.values(TRIPLE_STORE_REPOSITORIES);
         const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
+
             DELETE {
                 GRAPH <assets:graph> {
-                    ?ual schema:agreementEndTime ?agreementEndTime.
+                    ?ual schema:agreementEndTime ?agreementEndTime .
+                    ?ual schema:agreementStartTime ?agreementStartTime .
                 }
             }
             WHERE {
                 GRAPH <assets:graph> {
-                    ?ual schema:agreementEndTime ?agreementEndTime.
+                    { ?ual schema:agreementEndTime ?agreementEndTime . }
+                        UNION
+                    { ?ual schema:agreementStartTime ?agreementStartTime . }
                 }
             }`;
 
@@ -28,4 +32,4 @@ class ServiceAgreementsMetadataMigraion extends BaseMigration {
     }
 }
 
-export default ServiceAgreementsMetadataMigraion;
+export default RemoveAgreementStartEndTimeMigration;

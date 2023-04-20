@@ -12,6 +12,7 @@ import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-upd
 import PullBlockchainShardingTableMigration from './src/migration/pull-sharding-table-migration.js';
 import TripleStoreUserConfigurationMigration from './src/migration/triple-store-user-configuration-migration.js';
 import PrivateAssetsMetadataMigration from './src/migration/private-assets-metadata-migration.js';
+import RemoveAgreementStartEndTimeMigration from './src/migration/remove-agreement-start-end-time-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -48,6 +49,7 @@ class OTNode {
         await this.initializeModules();
         await this.executePullShardingTableMigration();
         await this.executePrivateAssetsMetadataMigration();
+        await this.executeRemoveAgreementStartEndTimeMigration();
 
         await this.createProfiles();
 
@@ -308,6 +310,26 @@ class OTNode {
             repositoryModuleManager,
             blockchainModuleManager,
             validationModuleManager,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            await migration.migrate();
+        }
+    }
+
+    async executeRemoveAgreementStartEndTimeMigration() {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const tripleStoreService = this.container.resolve('tripleStoreService');
+
+        const migration = new RemoveAgreementStartEndTimeMigration(
+            'removeAgreementStartEndTimeMigration',
+            this.logger,
+            this.config,
+            tripleStoreService,
         );
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();
