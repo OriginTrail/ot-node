@@ -189,15 +189,18 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async updatePeerRecordLastDialed(peerId) {
+    async updatePeerRecordLastDialed(peerId, timestamp) {
         if (this.initialized) {
-            return this.getImplementation().module.updatePeerRecordLastDialed(peerId);
+            return this.getImplementation().module.updatePeerRecordLastDialed(peerId, timestamp);
         }
     }
 
-    async updatePeerRecordLastSeenAndLastDialed(peerId) {
+    async updatePeerRecordLastSeenAndLastDialed(peerId, timestamp) {
         if (this.initialized) {
-            return this.getImplementation().module.updatePeerRecordLastSeenAndLastDialed(peerId);
+            return this.getImplementation().module.updatePeerRecordLastSeenAndLastDialed(
+                peerId,
+                timestamp,
+            );
         }
     }
 
@@ -288,9 +291,9 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async getAllUnprocessedBlockchainEvents() {
+    async getAllUnprocessedBlockchainEvents(eventNames) {
         if (this.initialized) {
-            return this.getImplementation().module.getAllUnprocessedBlockchainEvents();
+            return this.getImplementation().module.getAllUnprocessedBlockchainEvents(eventNames);
         }
     }
 

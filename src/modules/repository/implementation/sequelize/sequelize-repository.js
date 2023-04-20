@@ -324,10 +324,10 @@ class SequelizeRepository {
         return this._bulkUpdatePeerRecords(peerRecords, ['stake']);
     }
 
-    async updatePeerRecordLastDialed(peerId) {
+    async updatePeerRecordLastDialed(peerId, timestamp) {
         await this.models.shard.update(
             {
-                last_dialed: new Date(),
+                last_dialed: timestamp,
             },
             {
                 where: { peer_id: peerId },
@@ -335,12 +335,11 @@ class SequelizeRepository {
         );
     }
 
-    async updatePeerRecordLastSeenAndLastDialed(peerId) {
-        const now = new Date();
+    async updatePeerRecordLastSeenAndLastDialed(peerId, timestamp) {
         await this.models.shard.update(
             {
-                last_dialed: now,
-                last_seen: now,
+                last_dialed: timestamp,
+                last_seen: timestamp,
             },
             {
                 where: { peer_id: peerId },
@@ -502,10 +501,11 @@ class SequelizeRepository {
         return inserted.map((event) => event.dataValues);
     }
 
-    async getAllUnprocessedBlockchainEvents() {
+    async getAllUnprocessedBlockchainEvents(eventNames) {
         return this.models.blockchain_event.findAll({
             where: {
                 processed: false,
+                event: { [Sequelize.Op.in]: eventNames },
             },
             order: [['block', 'asc']],
         });
@@ -525,11 +525,11 @@ class SequelizeRepository {
     }
 
     async markBlockchainEventsAsProcessed(events) {
-        return this.models.blockchain_event.bulkCreate(
-            events.map((event) => ({ ...event, processed: true })),
+        const idsForUpdate = events.map((event) => event.id);
+        return this.models.blockchain_event.update(
+            { processed: true },
             {
-                validate: true,
-                updateOnDuplicate: ['processed'],
+                where: { id: { [Sequelize.Op.in]: idsForUpdate } },
             },
         );
     }

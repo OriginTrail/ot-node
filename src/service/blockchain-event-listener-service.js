@@ -5,10 +5,16 @@ import {
     TRIPLE_STORE_REPOSITORIES,
     NODE_ENVIRONMENTS,
     PENDING_STORAGE_REPOSITORIES,
+    CONTRACT_EVENTS,
 } from '../constants/constants.js';
 
 const MAXIMUM_FETCH_EVENTS_FAILED_COUNT = 5;
 const fetchEventsFailedCount = {};
+
+const eventNames = [];
+Object.keys(CONTRACT_EVENTS).forEach((contractName) => {
+    eventNames.push(...Object.values(CONTRACT_EVENTS[contractName]));
+});
 
 class BlockchainEventListenerService {
     constructor(ctx) {
@@ -116,12 +122,17 @@ class BlockchainEventListenerService {
     }
 
     async handleBlockchainEvents(events) {
-        if (events?.length) {
-            this.logger.trace(`${events.length} blockchain events caught.`);
-            await this.repositoryModuleManager.insertBlockchainEvents(events);
-            const unprocessedEvents =
-                await this.repositoryModuleManager.getAllUnprocessedBlockchainEvents();
+        const eventsForProcessing = events.filter((event) => eventNames.includes(event.event));
 
+        if (eventsForProcessing?.length) {
+            this.logger.trace(`${eventsForProcessing.length} blockchain events caught.`);
+            await this.repositoryModuleManager.insertBlockchainEvents(eventsForProcessing);
+        }
+        const unprocessedEvents =
+            await this.repositoryModuleManager.getAllUnprocessedBlockchainEvents(eventNames);
+
+        if (unprocessedEvents?.length) {
+            this.logger.trace(`Processing ${unprocessedEvents.length} blockchain events.`);
             let groupedEvents = {};
             let currentBlock = 0;
             for (const event of unprocessedEvents) {
