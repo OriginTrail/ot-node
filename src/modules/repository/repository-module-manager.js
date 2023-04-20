@@ -288,6 +288,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async getAllUnprocessedBlockchainEvents() {
+        if (this.initialized) {
+            return this.getImplementation().module.getAllUnprocessedBlockchainEvents();
+        }
+    }
+
     async markBlockchainEventsAsProcessed(events) {
         if (this.initialized) {
             return this.getImplementation().module.markBlockchainEventsAsProcessed(events);

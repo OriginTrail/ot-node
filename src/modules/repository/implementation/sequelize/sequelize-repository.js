@@ -502,6 +502,15 @@ class SequelizeRepository {
         return inserted.map((event) => event.dataValues);
     }
 
+    async getAllUnprocessedBlockchainEvents() {
+        return this.models.blockchain_event.findAll({
+            where: {
+                processed: false,
+            },
+            order: [['block', 'asc']],
+        });
+    }
+
     async blockchainEventExists(contract, event, data, block, blockchainId) {
         const dbEvent = await this.models.blockchain_event.findOne({
             where: {

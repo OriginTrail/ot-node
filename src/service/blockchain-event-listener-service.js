@@ -118,14 +118,13 @@ class BlockchainEventListenerService {
     async handleBlockchainEvents(events) {
         if (events?.length) {
             this.logger.trace(`${events.length} blockchain events caught.`);
-            const insertedEvents = await this.repositoryModuleManager.insertBlockchainEvents(
-                events,
-            );
-            insertedEvents.sort((event1, event2) => event1.block - event2.block);
+            await this.repositoryModuleManager.insertBlockchainEvents(events);
+            const unprocessedEvents =
+                await this.repositoryModuleManager.getAllUnprocessedBlockchainEvents();
 
             let groupedEvents = {};
             let currentBlock = 0;
-            for (const event of insertedEvents) {
+            for (const event of unprocessedEvents) {
                 if (event.block !== currentBlock) {
                     // eslint-disable-next-line no-await-in-loop
                     await this.handleBlockGroupedEvents(groupedEvents);
@@ -156,8 +155,14 @@ class BlockchainEventListenerService {
         const handlerFunctionName = `handle${eventName}Events`;
         if (!this[handlerFunctionName]) return;
         this.logger.trace(`${blockEvents.length} ${eventName} events caught.`);
-        await this[handlerFunctionName](blockEvents);
-        await this.repositoryModuleManager.markBlockchainEventsAsProcessed(blockEvents);
+        try {
+            await this[handlerFunctionName](blockEvents);
+            await this.repositoryModuleManager.markBlockchainEventsAsProcessed(blockEvents);
+        } catch (error) {
+            this.logger.warn(
+                `Error while processing events: ${eventName}. Error: ${error.message}`,
+            );
+        }
     }
 
     handleNewContractEvents(blockEvents) {
@@ -295,32 +300,7 @@ class BlockchainEventListenerService {
     }
 
     async handleStakeWithdrawalStartedEvents(blockEvents) {
-        const peerRecords = await Promise.all(
-            blockEvents.map(async (event) => {
-                const eventData = JSON.parse(event.data);
-
-                const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                    event.blockchain_id,
-                    eventData.nodeId,
-                );
-
-                this.logger.trace(`Updating stake value for peer id: ${nodeId} in sharding table.`);
-
-                return {
-                    peer_id: nodeId,
-                    blockchain_id: event.blockchain_id,
-                    stake: this.blockchainModuleManager.convertFromWei(
-                        event.blockchain_id,
-                        await this.blockchainModuleManager.getNodeStake(
-                            event.blockchain_id,
-                            eventData.identityId,
-                        ),
-                    ),
-                };
-            }),
-        );
-
-        await this.repositoryModuleManager.updatePeersStake(peerRecords);
+        await this.handleStakeIncreasedEvents(blockEvents);
     }
 
     async handleAskUpdatedEvents(blockEvents) {
