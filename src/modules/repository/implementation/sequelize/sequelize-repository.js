@@ -99,6 +99,70 @@ class SequelizeRepository {
         return this.models.sequelize.transaction(async (t) => execFn(t));
     }
 
+    async updateServiceAgreementRecord(
+        blockchainId,
+        contract,
+        tokenId,
+        agreementId,
+        startTime,
+        epochsNumber,
+        epochLength,
+        scoreFunctionId,
+        proofWindowOffsetPerc,
+    ) {
+        await this.models.service_agreement.upsert({
+            blockchain_id: blockchainId,
+            asset_storage_contract_address: contract,
+            token_id: tokenId,
+            agreement_id: agreementId,
+            start_time: startTime,
+            epochs_number: epochsNumber,
+            epoch_length: epochLength,
+            score_function_id: scoreFunctionId,
+            proof_window_offset_perc: proofWindowOffsetPerc,
+        });
+    }
+
+    async updateAttemptedCommitCommandRecord(
+        blockchainId,
+        contract,
+        tokenId,
+        agreementId,
+        epoch,
+        status,
+        txHash,
+    ) {
+        await this.models.attempted_commit_command.upsert({
+            blockchain_id: blockchainId,
+            asset_storage_contract_address: contract,
+            token_id: tokenId,
+            agreement_id: agreementId,
+            epoch,
+            status,
+            tx_hash: txHash,
+        });
+    }
+
+    async updateAttemptedProofCommandRecord(
+        blockchainId,
+        contract,
+        tokenId,
+        agreementId,
+        epoch,
+        status,
+        txHash,
+    ) {
+        await this.models.attempted_proof_command.upsert({
+            blockchain_id: blockchainId,
+            asset_storage_contract_address: contract,
+            token_id: tokenId,
+            agreement_id: agreementId,
+            epoch,
+            status,
+            tx_hash: txHash,
+        });
+    }
+
     // COMMAND
     async updateCommand(update, opts) {
         await this.models.commands.update(update, opts);

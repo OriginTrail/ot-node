@@ -443,3 +443,15 @@ export const FIXED_GAS_LIMIT_METHODS = {
     submitUpdateCommit: 600000,
     sendProof: 500000,
 };
+
+export const ATTEMPTED_COMMIT_COMMAND_STATUS = {
+    STARTED: 'STARTED',
+    COMPLETED: 'COMPLETED',
+    FAILED: 'FAILED',
+};
+
+export const ATTEMPTED_PROOF_COMMAND_STATUS = {
+    STARTED: 'STARTED',
+    COMPLETED: 'COMPLETED',
+    FAILED: 'FAILED',
+};

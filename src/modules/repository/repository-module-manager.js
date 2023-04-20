@@ -17,6 +17,76 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async updateServiceAgreementRecord(
+        blockchainId,
+        contract,
+        tokenId,
+        agreementId,
+        startTime,
+        epochsNumber,
+        epochLength,
+        scoreFunctionId,
+        proofWindowOffsetPerc,
+    ) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateServiceAgreementRecord(
+                blockchainId,
+                contract,
+                tokenId,
+                agreementId,
+                startTime,
+                epochsNumber,
+                epochLength,
+                scoreFunctionId,
+                proofWindowOffsetPerc,
+            );
+        }
+    }
+
+    async updateAttemptedCommitCommandRecord(
+        blockchainId,
+        contract,
+        tokenId,
+        agreementId,
+        epoch,
+        status,
+        txHash,
+    ) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateAttemptedCommitCommandRecord(
+                blockchainId,
+                contract,
+                tokenId,
+                agreementId,
+                epoch,
+                status,
+                txHash,
+            );
+        }
+    }
+
+    async updateAttemptedProofCommandRecord(
+        blockchainId,
+        contract,
+        tokenId,
+        agreementId,
+        epoch,
+        status,
+        txHash,
+    ) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateAttemptedProofCommandRecord(
+                blockchainId,
+                contract,
+                tokenId,
+                agreementId,
+                epoch,
+                status,
+                txHash,
+            );
+        }
+    }
+
     // COMMANDS
     async updateCommand(update, opts) {
         if (this.initialized) {
