@@ -30,10 +30,11 @@ async function setOperatorFee(rpcEndpoint, operatorFee, walletPrivateKey, hubCon
 
     const identityId = await identityStorage.getIdentityId(wallet.address);
 
-    stakingContract.setOperatorFee(identityId, operatorFee, {
+    const tx = await stakingContract.setOperatorFee(identityId, operatorFee, {
         gasPrice: process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ? undefined : 8,
         gasLimit: 500_000,
     });
+    await tx.wait();
 }
 
 const expectedArguments = ['rpcEndpoint', 'operatorFee', 'privateKey', 'hubContractAddress'];

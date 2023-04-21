@@ -32,10 +32,11 @@ async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
 
     const askWei = ethers.utils.parseEther(ask);
 
-    await profile.setAsk(identityId, askWei, {
+    const tx = await profile.setAsk(identityId, askWei, {
         gasPrice: devEnvironment ? undefined : 8,
         gasLimit: 500_000,
     });
+    await tx.wait();
 }
 
 const expectedArguments = ['rpcEndpoint', 'ask', 'privateKey', 'hubContractAddress'];

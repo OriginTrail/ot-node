@@ -351,10 +351,11 @@ class Web3Service {
                     'Sending signed transaction to blockchain, calling method: ' +
                         `${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}`,
                 );
-                result = await contractInstance[functionName](...args, {
+                const transaction = await contractInstance[functionName](...args, {
                     gasPrice,
                     gasLimit: gas,
                 });
+                result = await transaction.wait();
             } catch (error) {
                 this.logger.warn(
                     `Failed executing smart contract function ${functionName}. Error: ${error.message}`,
