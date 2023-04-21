@@ -5,10 +5,9 @@ class ValidateAssetCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.operationService = ctx.publishService;
         this.ualService = ctx.ualService;
         this.dataService = ctx.dataService;
-        this.validationModuleManager = ctx.validationModuleManager;
+        this.validationService = ctx.validationService;
 
         this.errorType = ERROR_TYPE.VALIDATE_ASSET_ERROR;
     }
@@ -62,7 +61,7 @@ class ValidateAssetCommand extends Command {
             return Command.empty();
         }
 
-        await this.operationService.validateAssertion(
+        await this.validationService.validateAssertion(
             cachedData.public.assertionId,
             blockchain,
             cachedData.public.assertion,
@@ -73,17 +72,14 @@ class ValidateAssetCommand extends Command {
                 `Validating asset's private assertion with id: ${cachedData.private.assertionId} ual: ${ual}`,
             );
 
-            const calculatedAssertionId = this.validationModuleManager.calculateRoot(
-                cachedData.private.assertion,
-            );
-
-            if (cachedData.private.assertionId !== calculatedAssertionId) {
-                await this.handleError(
-                    operationId,
-                    `Invalid private assertion id. Received value from request: ${cachedData.private.assertionId}, calculated: ${calculatedAssertionId}`,
-                    this.errorType,
-                    true,
+            try {
+                this.validationService.validateAssertionId(
+                    cachedData.private.assertion,
+                    cachedData.private.assertionId,
                 );
+            } catch (error) {
+                await this.handleError(operationId, error.message, this.errorType, true);
+                return Command.empty();
             }
         }
 
