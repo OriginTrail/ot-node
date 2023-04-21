@@ -183,6 +183,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async query(query) {
+        if (this.initialized) {
+            return this.getImplementation().module.query(query);
+        }
+    }
+
     async removePeerRecords(peerRecords) {
         if (this.initialized) {
             return this.getImplementation().module.removePeerRecords(peerRecords);
