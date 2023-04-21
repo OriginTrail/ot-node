@@ -484,6 +484,10 @@ class SequelizeRepository {
         return abilities.map((e) => e.name);
     }
 
+    async query(query) {
+        return this.models.sequelize.query(query);
+    }
+
     async insertBlockchainEvents(events) {
         const inserted = await this.models.blockchain_event.bulkCreate(
             events.map((event) => ({
