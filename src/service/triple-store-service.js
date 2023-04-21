@@ -135,6 +135,20 @@ class TripleStoreService {
         );
     }
 
+    async deleteAssetAssertionLinks(repository, blockchain, contract, tokenId, assertionIds) {
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+        this.logger.info(
+            `Deleting assertion links for asset with ual: ${ual} from triple store ${repository} repository.`,
+        );
+
+        return this.tripleStoreModuleManager.deleteAssetAssertionLinks(
+            this.repositoryImplementations[repository],
+            repository,
+            ual,
+            assertionIds,
+        );
+    }
+
     async deleteAssertion(repository, assertionId) {
         this.logger.info(
             `Deleting assertion with id: ${assertionId} from triple store ${repository} repository.`,
@@ -185,14 +199,11 @@ class TripleStoreService {
             this.repositoryImplementations[repository],
             repository,
             this.ualService.deriveUAL(blockchain, contract, tokenId),
-            blockchain,
-            contract,
-            tokenId,
         );
     }
 
-    async getAssetMetadata(repository, blockchain, contract, tokenId) {
-        const bindings = await this.tripleStoreModuleManager.getAssetMetadata(
+    async getAssetAssertionLinks(repository, blockchain, contract, tokenId) {
+        const bindings = await this.tripleStoreModuleManager.getAssetAssertionLinks(
             this.repositoryImplementations[repository],
             repository,
             this.ualService.deriveUAL(blockchain, contract, tokenId),
