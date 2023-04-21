@@ -4,7 +4,6 @@ import {
     LOCAL_STORE_TYPES,
     PENDING_STORAGE_REPOSITORIES,
     TRIPLE_STORE_REPOSITORIES,
-    CONTENT_ASSET_HASH_FUNCTION_ID,
 } from '../../constants/constants.js';
 import Command from '../command.js';
 
@@ -45,21 +44,6 @@ class LocalStoreCommand extends Command {
                 contract,
                 tokenId,
             );
-            const agreementId = await this.serviceAgreementService.generateId(
-                blockchain,
-                contract,
-                tokenId,
-                keyword,
-                CONTENT_ASSET_HASH_FUNCTION_ID,
-            );
-            const agreementData = await this.blockchainModuleManager.getAgreementData(
-                blockchain,
-                agreementId,
-            );
-
-            const agreementEndTime =
-                Number(agreementData.startTime) +
-                Number(agreementData.epochsNumber) * Number(agreementData.epochLength);
 
             if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
                 const storePromises = [];
@@ -72,8 +56,6 @@ class LocalStoreCommand extends Command {
                             blockchain,
                             contract,
                             tokenId,
-                            Number(agreementData.startTime),
-                            agreementEndTime,
                             keyword,
                         ),
                     );
@@ -87,8 +69,6 @@ class LocalStoreCommand extends Command {
                             blockchain,
                             contract,
                             tokenId,
-                            Number(agreementData.startTime),
-                            agreementEndTime,
                             keyword,
                         ),
                     );
@@ -102,8 +82,6 @@ class LocalStoreCommand extends Command {
                     tokenId,
                     {
                         ...cachedData,
-                        agreementStartTime: Number(agreementData.startTime),
-                        agreementEndTime,
                         keyword,
                     },
                     operationId,

@@ -402,7 +402,7 @@ class BlockchainEventListenerService {
         if (assetMetadata.length) {
             // if asset exists in current repository
             await Promise.all(
-                assetMetadata.map(({ assertion, agreementStartTime, agreementEndTime }) =>
+                assetMetadata.map(({ assertion }) =>
                     this.tripleStoreService.moveAsset(
                         currentRepository,
                         historyRepository,
@@ -410,8 +410,6 @@ class BlockchainEventListenerService {
                         blockchain,
                         contract,
                         tokenId,
-                        agreementStartTime,
-                        agreementEndTime,
                         keyword,
                     ),
                 ),
@@ -443,8 +441,6 @@ class BlockchainEventListenerService {
                     blockchain,
                     contract,
                     tokenId,
-                    cachedData.agreementStartTime,
-                    cachedData.agreementEndTime,
                     keyword,
                 ),
             );
@@ -460,8 +456,6 @@ class BlockchainEventListenerService {
                     blockchain,
                     contract,
                     tokenId,
-                    cachedData.agreementStartTime,
-                    cachedData.agreementEndTime,
                     keyword,
                 ),
             );
