@@ -110,7 +110,7 @@ class SequelizeRepository {
         scoreFunctionId,
         proofWindowOffsetPerc,
     ) {
-        await this.models.service_agreement.upsert({
+        await this.models.service_agreements.upsert({
             blockchain_id: blockchainId,
             asset_storage_contract_address: contract,
             token_id: tokenId,
@@ -132,7 +132,7 @@ class SequelizeRepository {
         status,
         txHash,
     ) {
-        await this.models.attempted_commit_command.upsert({
+        await this.models.attempted_commit_commands.upsert({
             blockchain_id: blockchainId,
             asset_storage_contract_address: contract,
             token_id: tokenId,
@@ -152,7 +152,7 @@ class SequelizeRepository {
         status,
         txHash,
     ) {
-        await this.models.attempted_proof_command.upsert({
+        await this.models.attempted_proof_commands.upsert({
             blockchain_id: blockchainId,
             asset_storage_contract_address: contract,
             token_id: tokenId,
