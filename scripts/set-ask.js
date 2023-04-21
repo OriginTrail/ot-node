@@ -1,7 +1,10 @@
 /* eslint-disable no-console */
 import { ethers } from 'ethers';
 import { createRequire } from 'module';
-import { NODE_ENVIRONMENTS } from '../src/constants/constants.js';
+import {
+    NODE_ENVIRONMENTS,
+    TRANSACTION_POLLING_TIMEOUT_MILLIS,
+} from '../src/constants/constants.js';
 import validateArguments from './utils.js';
 
 const require = createRequire(import.meta.url);
@@ -36,7 +39,7 @@ async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
         gasPrice: devEnvironment ? undefined : 8,
         gasLimit: 500_000,
     });
-    await tx.wait();
+    await provider.waitForTransaction(tx.hash, null, TRANSACTION_POLLING_TIMEOUT_MILLIS);
 }
 
 const expectedArguments = ['rpcEndpoint', 'ask', 'privateKey', 'hubContractAddress'];

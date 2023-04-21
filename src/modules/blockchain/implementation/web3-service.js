@@ -9,6 +9,7 @@ import {
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
     TRANSACTION_QUEUE_CONCURRENCY,
     FIXED_GAS_LIMIT_METHODS,
+    TRANSACTION_POLLING_TIMEOUT_MILLIS,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -351,18 +352,22 @@ class Web3Service {
                     'Sending signed transaction to blockchain, calling method: ' +
                         `${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}`,
                 );
-                const transaction = await contractInstance[functionName](...args, {
+                const tx = await contractInstance[functionName](...args, {
                     gasPrice,
                     gasLimit: gas,
                 });
-                result = await transaction.wait();
+                result = await this.provider.waitForTransaction(
+                    tx.hash,
+                    null,
+                    TRANSACTION_POLLING_TIMEOUT_MILLIS,
+                );
             } catch (error) {
                 this.logger.warn(
                     `Failed executing smart contract function ${functionName}. Error: ${error.message}`,
                 );
                 if (
                     !transactionRetried &&
-                    (error.message.includes(`Transaction was not mined within`) ||
+                    (error.message.includes(`timeout exceeded`) ||
                         error.message.includes(`Pool(TooLowPriority`))
                 ) {
                     gasPrice = Math.ceil(gasPrice * 1.2);
