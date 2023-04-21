@@ -12,28 +12,35 @@ import {
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
-const AbstractAssetABI = require('dkg-evm-module/abi/AbstractAsset.json');
-const AssertionStorageABI = require('dkg-evm-module/abi/AssertionStorage.json');
-const StakingABI = require('dkg-evm-module/abi/Staking.json');
-const StakingStorageABI = require('dkg-evm-module/abi/StakingStorage.json');
-const ERC20TokenABI = require('dkg-evm-module/abi/Token.json');
-const HashingProxyABI = require('dkg-evm-module/abi/HashingProxy.json');
-const HubABI = require('dkg-evm-module/abi/Hub.json');
-const IdentityStorageABI = require('dkg-evm-module/abi/IdentityStorage.json');
-const Log2PLDSFABI = require('dkg-evm-module/abi/Log2PLDSF.json');
-const ParametersStorageABI = require('dkg-evm-module/abi/ParametersStorage.json');
-const ProfileABI = require('dkg-evm-module/abi/Profile.json');
-const ProfileStorageABI = require('dkg-evm-module/abi/ProfileStorage.json');
-const ScoringProxyABI = require('dkg-evm-module/abi/ScoringProxy.json');
-const ServiceAgreementV1ABI = require('dkg-evm-module/abi/ServiceAgreementV1.json');
-const CommitManagerV1ABI = require('dkg-evm-module/abi/CommitManagerV1.json');
-const CommitManagerV1U1ABI = require('dkg-evm-module/abi/CommitManagerV1U1.json');
-const ProofManagerV1ABI = require('dkg-evm-module/abi/ProofManagerV1.json');
-const ProofManagerV1U1ABI = require('dkg-evm-module/abi/ProofManagerV1U1.json');
-const ShardingTableABI = require('dkg-evm-module/abi/ShardingTable.json');
-const ShardingTableStorageABI = require('dkg-evm-module/abi/ShardingTableStorage.json');
-const ServiceAgreementStorageProxyABI = require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json');
-const UnfinalizedStateStorageABI = require('dkg-evm-module/abi/UnfinalizedStateStorage.json');
+
+const ABIs = {
+    AbstractAsset: require('dkg-evm-module/abi/AbstractAsset.json'),
+    AssertionStorage: require('dkg-evm-module/abi/AssertionStorage.json'),
+    Staking: require('dkg-evm-module/abi/Staking.json'),
+    StakingStorage: require('dkg-evm-module/abi/StakingStorage.json'),
+    Token: require('dkg-evm-module/abi/Token.json'),
+    HashingProxy: require('dkg-evm-module/abi/HashingProxy.json'),
+    Hub: require('dkg-evm-module/abi/Hub.json'),
+    IdentityStorage: require('dkg-evm-module/abi/IdentityStorage.json'),
+    Log2PLDSF: require('dkg-evm-module/abi/Log2PLDSF.json'),
+    ParametersStorage: require('dkg-evm-module/abi/ParametersStorage.json'),
+    Profile: require('dkg-evm-module/abi/Profile.json'),
+    ProfileStorage: require('dkg-evm-module/abi/ProfileStorage.json'),
+    ScoringProxy: require('dkg-evm-module/abi/ScoringProxy.json'),
+    ServiceAgreementV1: require('dkg-evm-module/abi/ServiceAgreementV1.json'),
+    CommitManagerV1ABI: require('dkg-evm-module/abi/CommitManagerV1.json'),
+    CommitManagerV1U1: require('dkg-evm-module/abi/CommitManagerV1U1.json'),
+    ProofManagerV1ABI: require('dkg-evm-module/abi/ProofManagerV1.json'),
+    ProofManagerV1U1: require('dkg-evm-module/abi/ProofManagerV1U1.json'),
+    ShardingTable: require('dkg-evm-module/abi/ShardingTable.json'),
+    ShardingTableStorage: require('dkg-evm-module/abi/ShardingTableStorage.json'),
+    ServiceAgreementStorageProxy: require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json'),
+    UnfinalizedStateStorage: require('dkg-evm-module/abi/UnfinalizedStateStorage.json'),
+};
+
+const SCORING_FUNCTIONS = {
+    1: 'Log2PLDSF',
+};
 
 class Web3Service {
     async initialize(config, logger) {
@@ -110,52 +117,40 @@ class Web3Service {
         this.logger.info(
             `Initializing contracts with hub contract address: ${this.config.hubContractAddress}`,
         );
-        this.hubContract = new ethers.Contract(this.config.hubContractAddress, HubABI, this.wallet);
-
-        await Promise.all([
-            this.initializeContract('ParametersStorage', ParametersStorageABI),
-            this.initializeContract('Staking', StakingABI),
-            this.initializeContract('StakingStorage', StakingStorageABI),
-            this.initializeContract('AssertionStorage', AssertionStorageABI),
-            this.initializeContract('HashingProxy', HashingProxyABI),
-            this.initializeContract('ShardingTable', ShardingTableABI),
-            this.initializeContract('ShardingTableStorage', ShardingTableStorageABI),
-            this.initializeContract('Token', ERC20TokenABI),
-            this.initializeContract('IdentityStorage', IdentityStorageABI),
-            this.initializeContract('Profile', ProfileABI),
-            this.initializeContract('ProfileStorage', ProfileStorageABI),
-            this.initializeContract('ServiceAgreementV1', ServiceAgreementV1ABI),
-            this.initializeContract('CommitManagerV1', CommitManagerV1ABI),
-            this.initializeContract('CommitManagerV1U1', CommitManagerV1U1ABI),
-            this.initializeContract('ProofManagerV1', ProofManagerV1ABI),
-            this.initializeContract('ProofManagerV1U1', ProofManagerV1U1ABI),
-            this.initializeContract(
-                'ServiceAgreementStorageProxy',
-                ServiceAgreementStorageProxyABI,
-            ),
-            this.initializeContract('UnfinalizedStateStorage', UnfinalizedStateStorageABI),
-            this.initializeContract('ScoringProxy', ScoringProxyABI),
-        ]);
-
-        const log2PLDSFAddress = await this.callContractFunction(
-            this.ScoringProxyContract,
-            'getScoreFunctionContractAddress',
-            [1],
+        this.HubContract = new ethers.Contract(
+            this.config.hubContractAddress,
+            ABIs.Hub,
+            this.wallet,
         );
-        this.Log2PLDSFContract = new ethers.Contract(log2PLDSFAddress, Log2PLDSFABI, this.wallet);
+
+        const contractsArray = await this.callContractFunction(
+            this.HubContract,
+            'getAllContracts',
+            [],
+        );
+
+        contractsArray.forEach(([contractName, contractAddress]) => {
+            this.initializeContract(contractName, contractAddress);
+        });
+
+        this.scoringFunctionsContracts = {};
+        const scoringFunctionsArray = await this.callContractFunction(
+            this.ScoringProxyContract,
+            'getAllScoreFunctions',
+            [],
+        );
+        scoringFunctionsArray.forEach(([id, scoringContractAddress]) => {
+            this.initializeScoringContract(id, scoringContractAddress);
+        });
 
         this.assetStorageContracts = {};
         const assetStoragesArray = await this.callContractFunction(
-            this.hubContract,
+            this.HubContract,
             'getAllAssetStorages',
             [],
         );
-        assetStoragesArray.forEach((assetStorage) => {
-            this.assetStorageContracts[assetStorage[1].toLowerCase()] = new ethers.Contract(
-                assetStorage[1],
-                AbstractAssetABI,
-                this.wallet,
-            );
+        assetStoragesArray.forEach(([, assetStorageAddress]) => {
+            this.initializeAssetStorageContract(assetStorageAddress);
         });
 
         this.logger.info(`Contracts initialized`);
@@ -166,18 +161,42 @@ class Web3Service {
         await this.logBalances();
     }
 
-    async initializeContract(contractName, contractABI) {
-        const contractAddress = await this.callContractFunction(
-            this.hubContract,
-            'getContractAddress',
-            [contractName],
-        );
-
-        this[`${contractName}Contract`] = new ethers.Contract(
-            contractAddress,
-            contractABI,
+    initializeAssetStorageContract(assetStorageAddress) {
+        this.assetStorageContracts[assetStorageAddress.toLowerCase()] = new ethers.Contract(
+            assetStorageAddress,
+            ABIs.AbstractAsset,
             this.wallet,
         );
+    }
+
+    initializeScoringContract(id, contractAddress) {
+        const contractName = SCORING_FUNCTIONS[id];
+
+        if (ABIs[contractName] != null) {
+            this.scoringFunctionsContracts[id] = new ethers.Contract(
+                contractAddress,
+                ABIs[contractName],
+                this.wallet,
+            );
+        } else {
+            this.logger.trace(
+                `Skipping initialisation of contract with id: ${id}, address: ${contractAddress}`,
+            );
+        }
+    }
+
+    initializeContract(contractName, contractAddress) {
+        if (ABIs[contractName] != null) {
+            this[`${contractName}Contract`] = new ethers.Contract(
+                contractAddress,
+                ABIs[contractName],
+                this.wallet,
+            );
+        } else {
+            this.logger.trace(
+                `Skipping initialisation of contract: ${contractName}, address: ${contractAddress}`,
+            );
+        }
     }
 
     async providerReady() {
@@ -421,13 +440,13 @@ class Web3Service {
     }
 
     async isHubContract(contractAddress) {
-        return this.callContractFunction(this.hubContract, 'isContract(address)', [
+        return this.callContractFunction(this.HubContract, 'isContract(address)', [
             contractAddress,
         ]);
     }
 
     async isAssetStorageContract(contractAddress) {
-        return this.callContractFunction(this.hubContract, 'isAssetStorage(address)', [
+        return this.callContractFunction(this.HubContract, 'isAssetStorage(address)', [
             contractAddress,
         ]);
     }
@@ -838,7 +857,7 @@ class Web3Service {
 
     async getLog2PLDSFParams() {
         const log2pldsfParams = await this.callContractFunction(
-            this.Log2PLDSFContract,
+            this.scoringFunctionsContracts[1],
             'getParameters',
             [],
         );
