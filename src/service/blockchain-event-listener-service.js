@@ -27,11 +27,46 @@ class BlockchainEventListenerService {
         this.ualService = ctx.ualService;
     }
 
-    initialize() {
+    async initialize() {
+        const promises = [];
+        for (const blockchainId of this.blockchainModuleManager.getImplementationNames()) {
+            promises.push(this.fetchAndHandleBlockchainEvents(blockchainId));
+        }
+        await Promise.all(promises);
+    }
+
+    startListeningOnEvents() {
         for (const blockchainId of this.blockchainModuleManager.getImplementationNames()) {
             this.listenOnBlockchainEvents(blockchainId);
             this.logger.info(`Event listener initialized for blockchain: '${blockchainId}'.`);
         }
+    }
+
+    async fetchAndHandleBlockchainEvents(blockchainId) {
+        const devEnvironment =
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
+
+        const currentBlock = await this.blockchainModuleManager.getBlockNumber();
+        const syncContractEventsPromises = [
+            this.getContractEvents(blockchainId, CONTRACTS.SHARDING_TABLE_CONTRACT, currentBlock),
+            this.getContractEvents(blockchainId, CONTRACTS.STAKING_CONTRACT, currentBlock),
+            this.getContractEvents(blockchainId, CONTRACTS.PROFILE_CONTRACT, currentBlock),
+            this.getContractEvents(
+                blockchainId,
+                CONTRACTS.COMMIT_MANAGER_V1_U1_CONTRACT,
+                currentBlock,
+            ),
+        ];
+
+        if (!devEnvironment) {
+            syncContractEventsPromises.push(
+                this.getContractEvents(blockchainId, CONTRACTS.HUB_CONTRACT, currentBlock),
+            );
+        }
+        const contractEvents = await Promise.all(syncContractEventsPromises);
+
+        await this.handleBlockchainEvents(contractEvents.flatMap((events) => events));
     }
 
     listenOnBlockchainEvents(blockchainId) {
@@ -49,30 +84,7 @@ class BlockchainEventListenerService {
             if (working) return;
             try {
                 working = true;
-                const currentBlock = await this.blockchainModuleManager.getBlockNumber();
-                const syncContractEventsPromises = [
-                    this.getContractEvents(
-                        blockchainId,
-                        CONTRACTS.SHARDING_TABLE_CONTRACT,
-                        currentBlock,
-                    ),
-                    this.getContractEvents(blockchainId, CONTRACTS.STAKING_CONTRACT, currentBlock),
-                    this.getContractEvents(blockchainId, CONTRACTS.PROFILE_CONTRACT, currentBlock),
-                    this.getContractEvents(
-                        blockchainId,
-                        CONTRACTS.COMMIT_MANAGER_V1_U1_CONTRACT,
-                        currentBlock,
-                    ),
-                ];
-
-                if (!devEnvironment) {
-                    syncContractEventsPromises.push(
-                        this.getContractEvents(blockchainId, CONTRACTS.HUB_CONTRACT, currentBlock),
-                    );
-                }
-                const contractEvents = await Promise.all(syncContractEventsPromises);
-
-                await this.handleBlockchainEvents(contractEvents.flatMap((events) => events));
+                await this.fetchAndHandleBlockchainEvents(blockchainId);
                 fetchEventsFailedCount[blockchainId] = 0;
             } catch (e) {
                 if (fetchEventsFailedCount[blockchainId] >= MAXIMUM_FETCH_EVENTS_FAILED_COUNT) {
