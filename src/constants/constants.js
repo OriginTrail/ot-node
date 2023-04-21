@@ -109,6 +109,8 @@ export const HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 16000;
 
 export const SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES = 15;
 
+export const PEER_RECORD_UPDATE_DELAY = 30 * 60 * 1000; // 30 minutes
+
 export const DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
 
 export const REMOVE_SESSION_COMMAND_DELAY = 2 * 60 * 1000;
@@ -400,7 +402,7 @@ export const CONTRACTS = {
     SHARDING_TABLE_CONTRACT: 'ShardingTableContract',
     STAKING_CONTRACT: 'StakingContract',
     PROFILE_CONTRACT: 'ProfileContract',
-    HUB_CONTRACT: 'hubContract',
+    HUB_CONTRACT: 'HubContract',
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
 };
 
