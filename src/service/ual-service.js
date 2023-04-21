@@ -4,7 +4,6 @@ class UALService {
         this.logger = ctx.logger;
 
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.validationModuleManager = ctx.validationModuleManager;
     }
 
     deriveUAL(blockchain, contract, tokenId) {

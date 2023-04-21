@@ -33,14 +33,14 @@ class UpdateService extends OperationService {
             batchSize,
             minAckResponses,
         } = command.data;
-        
+
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
             errorMessage,
             operationId,
             keyword,
         );
-        
+
         const { completedNumber, failedNumber } = keywordsStatuses[keyword];
         const numberOfResponses = completedNumber + failedNumber;
         this.logger.debug(
@@ -58,7 +58,7 @@ class UpdateService extends OperationService {
                 `Error message for operation id: ${operationId}, keyword: ${keyword} : ${responseData.errorMessage}`,
             );
         }
-        
+
         if (
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
             completedNumber === minAckResponses
@@ -84,7 +84,11 @@ class UpdateService extends OperationService {
             (numberOfFoundNodes === numberOfResponses || numberOfResponses % batchSize === 0)
         ) {
             if (leftoverNodes.length === 0) {
-                await this.markOperationAsFailed(operationId, 'Not replicated to enough nodes!');
+                await this.markOperationAsFailed(
+                    operationId,
+                    'Not replicated to enough nodes!',
+                    this.errorType,
+                );
                 this.logResponsesSummary(completedNumber, failedNumber);
             } else {
                 await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);

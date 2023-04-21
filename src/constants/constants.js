@@ -217,6 +217,7 @@ export const ERROR_TYPE = {
         UPDATE_DELETE_PENDING_STATE_ERROR: 'UpdateDeletePendingStateError',
     },
     GET: {
+        GET_ROUTE_ERROR: 'GetRouteError',
         GET_ASSERTION_ID_ERROR: 'GetAssertionIdError',
         GET_LOCAL_ERROR: 'GetLocalError',
         GET_NETWORK_ERROR: 'GetNetworkError',
