@@ -19,25 +19,21 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async deleteAssetAssertionLinks(implementationName, repository, ual, assertionIds) {
+    async assetExists(implementationName, repository, ual, blockchain, contract, tokenId) {
         if (this.getImplementation(implementationName)) {
-            return this.getImplementation(implementationName).module.deleteAssetAssertionLinks(
+            return this.getImplementation(implementationName).module.assetExists(
                 repository,
                 ual,
-                assertionIds,
+                blockchain,
+                contract,
+                tokenId,
             );
         }
     }
 
-    async assetExists(implementationName, repository, ual) {
+    async getAssetMetadata(implementationName, repository, ual) {
         if (this.getImplementation(implementationName)) {
-            return this.getImplementation(implementationName).module.assetExists(repository, ual);
-        }
-    }
-
-    async getAssetAssertionLinks(implementationName, repository, ual) {
-        if (this.getImplementation(implementationName)) {
-            return this.getImplementation(implementationName).module.getAssetAssertionLinks(
+            return this.getImplementation(implementationName).module.getAssetMetadata(
                 repository,
                 ual,
             );

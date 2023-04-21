@@ -392,42 +392,29 @@ class BlockchainEventListenerService {
         keyword,
         assertionId,
     ) {
-        const assertionLinks = await this.tripleStoreService.getAssetAssertionLinks(
+        const assetMetadata = await this.tripleStoreService.getAssetMetadata(
             currentRepository,
             blockchain,
             contract,
             tokenId,
         );
-        const storedAssertionIds = assertionLinks.map(({ assertion }) =>
-            assertion.replace('assertion:', ''),
-        );
 
-        // move old assertions to history repository
-        await Promise.all(
-            storedAssertionIds
-                .filter((storedAssertionId) => storedAssertionId !== assertionId)
-                .map((storedAssertionId) =>
+        if (assetMetadata.length) {
+            // if asset exists in current repository
+            await Promise.all(
+                assetMetadata.map(({ assertion }) =>
                     this.tripleStoreService.moveAsset(
                         currentRepository,
                         historyRepository,
-                        storedAssertionId,
+                        assertion.replace('assertion:', ''),
                         blockchain,
                         contract,
                         tokenId,
                         keyword,
                     ),
                 ),
-        );
-
-        if (storedAssertionIds.includes(assertionId)) {
-            await this.tripleStoreService.deleteAssetAssertionLinks(
-                currentRepository,
-                blockchain,
-                contract,
-                tokenId,
-                storedAssertionIds.filter((storedAssertionId) => storedAssertionId !== assertionId),
             );
-        } else {
+            // delete asset metadata from current repository
             await this.tripleStoreService.deleteAssetMetadata(
                 currentRepository,
                 blockchain,

@@ -79,22 +79,25 @@ class OtTripleStore {
         await Promise.all(ensureConnectionPromises);
     }
 
-    async assetExists(repository, ual) {
+    async assetExists(repository, ual, blockchain, contract, tokenId) {
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
                         ASK WHERE {
                             GRAPH <assets:graph> {
-                                <${ual}> ?p ?o
+                                <${ual}> schema:blockchain "${blockchain}";
+                                         schema:contract   "${contract}";
+                                         schema:tokenId    ${tokenId};
                             }
                         }`;
 
         return this.ask(repository, query);
     }
 
-    async getAssetAssertionLinks(repository, ual) {
+    async getAssetMetadata(repository, ual) {
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
-                        SELECT ?assertion  WHERE {
+                        SELECT ?assertion ?keyword  WHERE {
                             GRAPH <assets:graph> {
-                                    <${ual}> schema:assertion ?assertion
+                                    <${ual}> schema:assertion ?assertion;
+                                            schema:keyword ?keyword;
                             }
                         }`;
 
@@ -104,27 +107,10 @@ class OtTripleStore {
     async deleteAssetMetadata(repository, ual) {
         const query = `DELETE WHERE {
                 GRAPH <assets:graph> {
+                    ?s ?p ?o .
                     <${ual}> ?p ?o
                 }
             };`;
-
-        return this.queryVoid(repository, query);
-    }
-
-    async deleteAssetAssertionLinks(repository, ual, assertionIds) {
-        const query = `PREFIX schema: ${SCHEMA_CONTEXT}
-                        WITH <assets:graph>
-                        DELETE {
-                            ${ual} schema:assertion ?assertion .
-                        }
-                        WHERE {
-                            VALUES ?o {
-                                ${assertionIds
-                                    .map((assertionId) => `<assertion:${assertionId}>`)
-                                    .join('\n')}
-                            }
-                            ${ual} schema:assertion ?assertion .
-                        }`;
 
         return this.queryVoid(repository, query);
     }
