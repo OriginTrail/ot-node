@@ -137,7 +137,7 @@ class OtTripleStore {
         return this.select(repository, query);
     }
 
-    async insertAssetMetadata(repository, ual, assetNquads) {
+    async insertAssetMetadata(repository, assetNquads) {
         const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             INSERT DATA {
