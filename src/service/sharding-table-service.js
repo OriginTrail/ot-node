@@ -5,6 +5,7 @@ import {
     BYTES_IN_KILOBYTE,
     CONTRACTS,
     DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
+    PEER_RECORD_UPDATE_DELAY,
 } from '../constants/constants.js';
 
 class ShardingTableService {
@@ -14,6 +15,8 @@ class ShardingTableService {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.networkModuleManager = ctx.networkModuleManager;
         this.validationModuleManager = ctx.validationModuleManager;
+
+        this.memoryCachedPeerIds = {};
     }
 
     async initialize() {
@@ -26,11 +29,11 @@ class ShardingTableService {
             this.logger.trace(
                 `Node connected to ${connection.remotePeer.toB58String()}, updating sharding table last seen and last dialed.`,
             );
-            this.repositoryModuleManager
-                .updatePeerRecordLastSeenAndLastDialed(connection.remotePeer.toB58String())
-                .catch((error) => {
+            this.updatePeerRecordLastSeenAndLastDialed(connection.remotePeer.toB58String()).catch(
+                (error) => {
                     this.logger.warn(`Unable to update connected peer, error: ${error.message}`);
-                });
+                },
+            );
         });
     }
 
@@ -189,14 +192,50 @@ class ShardingTableService {
                     this.logger.trace(`Dialing peer ${peerId}.`);
                     await this.networkModuleManager.dial(peerId);
                 }
-                await this.repositoryModuleManager.updatePeerRecordLastSeenAndLastDialed(peerId);
+                await this.updatePeerRecordLastSeenAndLastDialed(peerId);
             } catch (error) {
                 this.logger.trace(`Unable to dial peer ${peerId}. Error: ${error.message}`);
-                await this.repositoryModuleManager.updatePeerRecordLastDialed(peerId);
+                await this.updatePeerRecordLastDialed(peerId);
             }
         } else {
-            await this.repositoryModuleManager.updatePeerRecordLastDialed(peerId);
+            await this.updatePeerRecordLastDialed(peerId);
         }
+    }
+
+    async updatePeerRecordLastSeenAndLastDialed(peerId) {
+        const now = Date.now();
+        const timestampThreshold = now - PEER_RECORD_UPDATE_DELAY;
+
+        if (!this.memoryCachedPeerIds[peerId]) {
+            this.memoryCachedPeerIds[peerId] = {
+                lastUpdated: 0,
+                lastDialed: 0,
+                lastSeen: 0,
+            };
+        }
+        if (this.memoryCachedPeerIds[peerId].lastUpdated < timestampThreshold) {
+            await this.repositoryModuleManager.updatePeerRecordLastSeenAndLastDialed(peerId, now);
+            this.memoryCachedPeerIds[peerId].lastUpdated = now;
+        }
+        this.memoryCachedPeerIds[peerId].lastDialed = now;
+        this.memoryCachedPeerIds[peerId].lastSeen = now;
+    }
+
+    async updatePeerRecordLastDialed(peerId) {
+        const now = new Date();
+        const timestampThreshold = now - PEER_RECORD_UPDATE_DELAY;
+        if (!this.memoryCachedPeerIds[peerId]) {
+            this.memoryCachedPeerIds[peerId] = {
+                lastUpdated: 0,
+                lastDialed: 0,
+                lastSeen: 0,
+            };
+        }
+        if (this.memoryCachedPeerIds[peerId].lastUpdated < timestampThreshold) {
+            await this.repositoryModuleManager.updatePeerRecordLastDialed(peerId, now);
+            this.memoryCachedPeerIds[peerId].lastUpdated = now;
+        }
+        this.memoryCachedPeerIds[peerId].lastDialed = now;
     }
 
     async findPeerAddressAndProtocols(peerId) {
