@@ -7,7 +7,7 @@ import {
     ATTEMPTED_PROOF_COMMAND_STATUS,
 } from '../constants/constants.js';
 
-class ServiceAgreementsMetadataMigraion extends BaseMigration {
+class ServiceAgreementsMetadataMigration extends BaseMigration {
     constructor(
         migrationName,
         logger,
@@ -139,4 +139,4 @@ class ServiceAgreementsMetadataMigraion extends BaseMigration {
     }
 }
 
-export default ServiceAgreementsMetadataMigraion;
+export default ServiceAgreementsMetadataMigration;

@@ -12,7 +12,7 @@ import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-upd
 import PullBlockchainShardingTableMigration from './src/migration/pull-sharding-table-migration.js';
 import TripleStoreUserConfigurationMigration from './src/migration/triple-store-user-configuration-migration.js';
 import PrivateAssetsMetadataMigration from './src/migration/private-assets-metadata-migration.js';
-import ServiceAgreementsMetadataMigraion from './src/migration/service-agreement-metadata-migration.js';
+import ServiceAgreementsMetadataMigration from './src/migration/service-agreement-metadata-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -49,7 +49,7 @@ class OTNode {
         await this.initializeModules();
         await this.executePullShardingTableMigration();
         await this.executePrivateAssetsMetadataMigration();
-        await this.executeServiceAgreementsMetadataMigraion();
+        await this.executeServiceAgreementsMetadataMigration();
 
         await this.createProfiles();
 
@@ -316,7 +316,7 @@ class OTNode {
         }
     }
 
-    async executeServiceAgreementsMetadataMigraion() {
+    async executeServiceAgreementsMetadataMigration() {
         if (
             process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
             process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
@@ -329,8 +329,8 @@ class OTNode {
         const serviceAgreementService = this.container.resolve('serviceAgreementService');
         const ualService = this.container.resolve('ualService');
 
-        const migration = new ServiceAgreementsMetadataMigraion(
-            'serviceAgreementsMetadataMigraion',
+        const migration = new ServiceAgreementsMetadataMigration(
+            'serviceAgreementsMetadataMigration',
             this.logger,
             this.config,
             tripleStoreService,
