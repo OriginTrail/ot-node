@@ -40,7 +40,7 @@ class OtTripleStore {
                 },
             ];
 
-            this.repositories[repository].insertContext = {
+            this.repositories[repository].updateContext = {
                 sources,
                 destination: {
                     type: 'sparql',
@@ -79,27 +79,22 @@ class OtTripleStore {
         await Promise.all(ensureConnectionPromises);
     }
 
-    async assetExists(repository, ual, blockchain, contract, tokenId) {
+    async assetExists(repository, ual) {
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
                         ASK WHERE {
                             GRAPH <assets:graph> {
-                                <${ual}> schema:blockchain "${blockchain}";
-                                         schema:contract   "${contract}";
-                                         schema:tokenId    ${tokenId};
+                                <${ual}> ?p ?o
                             }
                         }`;
 
         return this.ask(repository, query);
     }
 
-    async getAssetMetadata(repository, ual) {
+    async getAssetAssertionLinks(repository, ual) {
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
-                        SELECT ?assertion ?agreementStartTime ?agreementEndTime ?keyword  WHERE {
+                        SELECT ?assertion  WHERE {
                             GRAPH <assets:graph> {
-                                    <${ual}> schema:assertion ?assertion;
-                                            schema:agreementStartTime ?agreementStartTime;
-                                            schema:agreementEndTime ?agreementEndTime;
-                                            schema:keyword ?keyword;
+                                    <${ual}> schema:assertion ?assertion
                             }
                         }`;
 
@@ -109,12 +104,29 @@ class OtTripleStore {
     async deleteAssetMetadata(repository, ual) {
         const query = `DELETE WHERE {
                 GRAPH <assets:graph> {
-                    ?s ?p ?o .
                     <${ual}> ?p ?o
                 }
             };`;
 
-        return this.queryEngine.queryVoid(query, this.repositories[repository].insertContext);
+        return this.queryVoid(repository, query);
+    }
+
+    async deleteAssetAssertionLinks(repository, ual, assertionIds) {
+        const query = `PREFIX schema: ${SCHEMA_CONTEXT}
+                        WITH <assets:graph>
+                        DELETE {
+                            ${ual} schema:assertion ?assertion .
+                        }
+                        WHERE {
+                            VALUES ?o {
+                                ${assertionIds
+                                    .map((assertionId) => `<assertion:${assertionId}>`)
+                                    .join('\n')}
+                            }
+                            ${ual} schema:assertion ?assertion .
+                        }`;
+
+        return this.queryVoid(repository, query);
     }
 
     async countAssetsWithAssertionId(repository, assertionId) {
@@ -139,60 +151,29 @@ class OtTripleStore {
         return this.select(repository, query);
     }
 
-    async assetAgreementExists(repository, ual, blockchain, contract, tokenId) {
-        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
-                        ASK WHERE {
-                            GRAPH <assets:graph> {
-                                <${ual}> schema:blockchain "${blockchain}";
-                                         schema:contract   "${contract}";
-                                         schema:tokenId    ${tokenId};
-                                         schema:assertion ?assertion;
-                                         schema:agreementStartTime ?agreementStartTime;
-                                         schema:agreementEndTime ?agreementEndTime;
-                                         schema:keyword ?keyword;
-                            }
-                        }`;
-
-        return this.ask(repository, query);
-    }
-
-    async insertAssetMetadata(repository, ual, assetNquads, deleteAssetTriples = true) {
-        const deleteAssetTriplesQuery = `DELETE {
-                <${ual}> schema:agreementEndTime ?agreementEndTime
-            }
-            WHERE {
-                GRAPH <assets:graph> {
-                    ?s ?p ?o .
-                    <${ual}> schema:agreementEndTime ?agreementEndTime .
-                    <${ual}> schema:assertion ?assertion .
-                }
-            };`;
-        const insertion = `
+    async insertAssetMetadata(repository, assetNquads) {
+        const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
-            ${deleteAssetTriples ? deleteAssetTriplesQuery : ''}
             INSERT DATA {
                 GRAPH <assets:graph> { 
                     ${assetNquads} 
                 }
             }`;
-        await this.queryEngine.queryVoid(insertion, this.repositories[repository].insertContext);
+        await this.queryVoid(repository, query);
     }
 
     async insertAssertion(repository, assertionId, assertionNquads) {
         const exists = await this.assertionExists(repository, assertionId);
 
         if (!exists) {
-            const insertion = `
+            const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             INSERT DATA {
                 GRAPH <assertion:${assertionId}> { 
                     ${assertionNquads} 
                 } 
             }`;
-            await this.queryEngine.queryVoid(
-                insertion,
-                this.repositories[repository].insertContext,
-            );
+            await this.queryVoid(repository, query);
         }
     }
 
@@ -206,6 +187,10 @@ class OtTripleStore {
         // https://github.com/comunica/comunica/issues/1034
         const result = await this._executeQuery(repository, query);
         return result ? JSON.parse(result) : [];
+    }
+
+    async queryVoid(repository, query) {
+        return this.queryEngine.queryVoid(query, this.repositories[repository].updateContext);
     }
 
     async ask(repository, query) {
@@ -222,7 +207,7 @@ class OtTripleStore {
     async deleteAssertion(repository, assertionId) {
         const query = `DROP GRAPH <assertion:${assertionId}>`;
 
-        await this.queryEngine.queryVoid(query, this.repositories[repository].insertContext);
+        await this.queryVoid(repository, query);
     }
 
     async getAssertion(repository, assertionId) {

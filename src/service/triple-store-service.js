@@ -28,8 +28,6 @@ class TripleStoreService {
         blockchain,
         contract,
         tokenId,
-        agreementStartTime,
-        agreementEndTime,
         keyword,
     ) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
@@ -45,8 +43,6 @@ class TripleStoreService {
             contract,
             tokenId,
             assertion: { '@id': `assertion:${assertionId}` },
-            agreementStartTime,
-            agreementEndTime,
             keyword,
         });
 
@@ -54,7 +50,6 @@ class TripleStoreService {
             this.tripleStoreModuleManager.insertAssetMetadata(
                 this.repositoryImplementations[repository],
                 repository,
-                ual,
                 currentAssetNquads.join('\n'),
             ),
             this.tripleStoreModuleManager.insertAssertion(
@@ -77,8 +72,6 @@ class TripleStoreService {
         blockchain,
         contract,
         tokenId,
-        agreementStartTime,
-        agreementEndTime,
         keyword,
     ) {
         const assertion = await this.getAssertion(fromRepository, assertionId);
@@ -91,8 +84,6 @@ class TripleStoreService {
             blockchain,
             contract,
             tokenId,
-            agreementStartTime,
-            agreementEndTime,
             keyword,
         );
 
@@ -107,16 +98,7 @@ class TripleStoreService {
         }
     }
 
-    async insertAssetMetadata(
-        repository,
-        blockchain,
-        contract,
-        tokenId,
-        assertionId,
-        agreementStartTime,
-        agreementEndTime,
-        keyword,
-    ) {
+    async insertAssetMetadata(repository, blockchain, contract, tokenId, assertionId, keyword) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.info(
@@ -130,15 +112,12 @@ class TripleStoreService {
             contract,
             tokenId,
             assertion: { '@id': `assertion:${assertionId}` },
-            agreementStartTime,
-            agreementEndTime,
             keyword,
         });
 
         await this.tripleStoreModuleManager.insertAssetMetadata(
             this.repositoryImplementations[repository],
             repository,
-            ual,
             currentAssetNquads.join('\n'),
         );
     }
@@ -153,6 +132,20 @@ class TripleStoreService {
             this.repositoryImplementations[repository],
             repository,
             ual,
+        );
+    }
+
+    async deleteAssetAssertionLinks(repository, blockchain, contract, tokenId, assertionIds) {
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+        this.logger.info(
+            `Deleting assertion links for asset with ual: ${ual} from triple store ${repository} repository.`,
+        );
+
+        return this.tripleStoreModuleManager.deleteAssetAssertionLinks(
+            this.repositoryImplementations[repository],
+            repository,
+            ual,
+            assertionIds,
         );
     }
 
@@ -206,14 +199,11 @@ class TripleStoreService {
             this.repositoryImplementations[repository],
             repository,
             this.ualService.deriveUAL(blockchain, contract, tokenId),
-            blockchain,
-            contract,
-            tokenId,
         );
     }
 
-    async getAssetMetadata(repository, blockchain, contract, tokenId) {
-        const bindings = await this.tripleStoreModuleManager.getAssetMetadata(
+    async getAssetAssertionLinks(repository, blockchain, contract, tokenId) {
+        const bindings = await this.tripleStoreModuleManager.getAssetAssertionLinks(
             this.repositoryImplementations[repository],
             repository,
             this.ualService.deriveUAL(blockchain, contract, tokenId),
@@ -239,6 +229,14 @@ class TripleStoreService {
 
     async select(repository, query) {
         return this.tripleStoreModuleManager.select(
+            this.repositoryImplementations[repository],
+            repository,
+            query,
+        );
+    }
+
+    async queryVoid(repository, query) {
+        return this.tripleStoreModuleManager.queryVoid(
             this.repositoryImplementations[repository],
             repository,
             query,

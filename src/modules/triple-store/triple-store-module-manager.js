@@ -1,19 +1,11 @@
 import BaseModuleManager from '../base-module-manager.js';
 
 class TripleStoreModuleManager extends BaseModuleManager {
-    async insertAssetMetadata(
-        implementationName,
-        repository,
-        ual,
-        assetNquads,
-        deleteAssetTriples,
-    ) {
+    async insertAssetMetadata(implementationName, repository, assetNquads) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.insertAssetMetadata(
                 repository,
-                ual,
                 assetNquads,
-                deleteAssetTriples,
             );
         }
     }
@@ -27,35 +19,27 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async assetExists(implementationName, repository, ual, blockchain, contract, tokenId) {
+    async deleteAssetAssertionLinks(implementationName, repository, ual, assertionIds) {
         if (this.getImplementation(implementationName)) {
-            return this.getImplementation(implementationName).module.assetExists(
+            return this.getImplementation(implementationName).module.deleteAssetAssertionLinks(
                 repository,
                 ual,
-                blockchain,
-                contract,
-                tokenId,
+                assertionIds,
             );
         }
     }
 
-    async getAssetMetadata(implementationName, repository, ual) {
+    async assetExists(implementationName, repository, ual) {
         if (this.getImplementation(implementationName)) {
-            return this.getImplementation(implementationName).module.getAssetMetadata(
-                repository,
-                ual,
-            );
+            return this.getImplementation(implementationName).module.assetExists(repository, ual);
         }
     }
 
-    async assetAgreementExists(implementationName, repository, ual, blockchain, contract, tokenId) {
+    async getAssetAssertionLinks(implementationName, repository, ual) {
         if (this.getImplementation(implementationName)) {
-            return this.getImplementation(implementationName).module.assetAgreementExists(
+            return this.getImplementation(implementationName).module.getAssetAssertionLinks(
                 repository,
                 ual,
-                blockchain,
-                contract,
-                tokenId,
             );
         }
     }
@@ -124,6 +108,12 @@ class TripleStoreModuleManager extends BaseModuleManager {
     async select(implementationName, repository, query) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.select(repository, query);
+        }
+    }
+
+    async queryVoid(implementationName, repository, query) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.queryVoid(repository, query);
         }
     }
 

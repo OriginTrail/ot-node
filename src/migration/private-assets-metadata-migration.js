@@ -1,9 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import BaseMigration from './base-migration.js';
-import {
-    CONTENT_ASSET_HASH_FUNCTION_ID,
-    TRIPLE_STORE_REPOSITORIES,
-} from '../constants/constants.js';
+import { TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
 
 class PrivateAssetsMetadataMigration extends BaseMigration {
     constructor(
@@ -115,20 +112,6 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
             assetStorageContractAddress,
             tokenId,
         );
-        const agreementId = await this.serviceAgreementService.generateId(
-            blockchain,
-            assetStorageContractAddress,
-            tokenId,
-            keyword,
-            CONTENT_ASSET_HASH_FUNCTION_ID,
-        );
-        const agreementData = await this.blockchainModuleManager.getAgreementData(
-            blockchain,
-            agreementId,
-        );
-
-        const agreementEndTime =
-            agreementData.startTime + agreementData.epochsNumber * agreementData.epochLength;
 
         await this.tripleStoreService.insertAssetMetadata(
             TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
@@ -136,8 +119,6 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
             assetStorageContractAddress,
             tokenId,
             assertionId,
-            agreementData.startTime,
-            agreementEndTime,
             keyword,
         );
 
@@ -156,8 +137,6 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
             assetStorageContractAddress,
             tokenId,
             privateAssertionId,
-            agreementData.startTime,
-            agreementEndTime,
             keyword,
         );
     }

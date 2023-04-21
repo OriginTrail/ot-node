@@ -31,8 +31,8 @@ class SubmitUpdateCommitCommand extends EpochCommand {
         } = command.data;
 
         const epoch = await this.calculateCurrentEpoch(
-            agreementData.startTime,
-            agreementData.epochLength,
+            Number(agreementData.startTime),
+            Number(agreementData.epochLength),
             blockchain,
         );
 

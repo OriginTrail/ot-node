@@ -109,6 +109,8 @@ export const HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 16000;
 
 export const SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES = 15;
 
+export const PEER_RECORD_UPDATE_DELAY = 30 * 60 * 1000; // 30 minutes
+
 export const DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
 
 export const REMOVE_SESSION_COMMAND_DELAY = 2 * 60 * 1000;
@@ -215,6 +217,7 @@ export const ERROR_TYPE = {
         UPDATE_DELETE_PENDING_STATE_ERROR: 'UpdateDeletePendingStateError',
     },
     GET: {
+        GET_ROUTE_ERROR: 'GetRouteError',
         GET_ASSERTION_ID_ERROR: 'GetAssertionIdError',
         GET_LOCAL_ERROR: 'GetLocalError',
         GET_NETWORK_ERROR: 'GetNetworkError',
@@ -332,7 +335,7 @@ export const OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
  * @constant {number} FINALIZED_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time
  * finalized commands command cleanup interval time 24h
  */
-export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 30 * 24 * 60 * 60 * 1000;
 /**
  * @constant {number} COMMAND_STATUS -
  * Status for commands
@@ -399,7 +402,7 @@ export const CONTRACTS = {
     SHARDING_TABLE_CONTRACT: 'ShardingTableContract',
     STAKING_CONTRACT: 'StakingContract',
     PROFILE_CONTRACT: 'ProfileContract',
-    HUB_CONTRACT: 'hubContract',
+    HUB_CONTRACT: 'HubContract',
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
 };
 
