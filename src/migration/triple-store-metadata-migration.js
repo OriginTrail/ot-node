@@ -252,10 +252,10 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 }
             }
 
-            const latestAssertionId = assertionIds[assertionIds.length - 1];
+            const latestPublicAssertionId = assertionIds[assertionIds.length - 1];
             const latestPublicAssertion = await this.tripleStoreService.getAssertion(
                 currentRepository,
-                latestAssertionId,
+                latestPublicAssertionId,
             );
             if (latestPublicAssertion?.length) {
                 const assetMetadata = {
@@ -265,7 +265,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
                     contract,
                     tokenId,
                     keyword,
-                    assertion: [{ '@id': `assertion:${latestAssertionId}` }],
+                    assertion: [{ '@id': `assertion:${latestPublicAssertionId}` }],
                 };
 
                 const latestPrivateAssertionId =
