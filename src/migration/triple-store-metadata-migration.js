@@ -31,7 +31,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
         const currentRepository = TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT;
         const historyRepository = TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY;
 
-        await this.logMetadataStats(currentRepository);
+        await this._logMetadataStats(currentRepository);
 
         const assetsQueryResult = await this.tripleStoreService.select(
             currentRepository,
@@ -43,7 +43,9 @@ class TripleStoreMetadataMigration extends BaseMigration {
             }`,
         );
 
-        for (const { ual } of assetsQueryResult) {
+        for (let i = 0; i < assetsQueryResult.length; i += 1) {
+            this._logPercentage(i, assetsQueryResult.length, currentRepository);
+            const { ual } = assetsQueryResult[i];
             const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
 
             let assertionIds;
@@ -65,8 +67,8 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 [contract, assertionIds[0]],
             );
 
-            for (let i; i < assertionIds.length - 1; i += 1) {
-                const assertionId = assertionIds[i];
+            for (let j; j < assertionIds.length - 1; j += 1) {
+                const assertionId = assertionIds[j];
                 const assertion = await this.tripleStoreService.getAssertion(
                     currentRepository,
                     assertionId,
@@ -123,14 +125,14 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 );
             }
         }
-        await this.logMetadataStats(currentRepository);
+        await this._logMetadataStats(currentRepository);
     }
 
     async migratePrivateRepositoriesMetadata() {
         const currentRepository = TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT;
         const historyRepository = TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY;
 
-        await this.logMetadataStats(currentRepository);
+        await this._logMetadataStats(currentRepository);
         const assetsQueryResult = await this.tripleStoreService.select(
             currentRepository,
             `SELECT distinct ?ual
@@ -141,7 +143,9 @@ class TripleStoreMetadataMigration extends BaseMigration {
             }`,
         );
 
-        for (const { ual } of assetsQueryResult) {
+        for (let i = 0; i < assetsQueryResult.length; i += 1) {
+            this._logPercentage(i, assetsQueryResult.length, currentRepository);
+            const { ual } = assetsQueryResult[i];
             const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
 
             let assertionIds;
@@ -163,8 +167,8 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 [contract, assertionIds[0]],
             );
 
-            for (let i; i < assertionIds.length - 1; i += 1) {
-                const publicAssertionId = assertionIds[i];
+            for (let j; j < assertionIds.length - 1; j += 1) {
+                const publicAssertionId = assertionIds[j];
                 const publicAssertion = await this.tripleStoreService.getAssertion(
                     currentRepository,
                     publicAssertionId,
@@ -251,10 +255,10 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 );
             }
         }
-        await this.logMetadataStats(currentRepository);
+        await this._logMetadataStats(currentRepository);
     }
 
-    async logMetadataStats(repository) {
+    async _logMetadataStats(repository) {
         const result = await this.tripleStoreService.select(
             repository,
             `PREFIX schema: <${SCHEMA_CONTEXT}>
@@ -304,6 +308,19 @@ class TripleStoreMetadataMigration extends BaseMigration {
         }
 
         this.logger.debug(log);
+    }
+
+    _logPercentage(index, max, repository) {
+        const previousPercentage = (Math.max(0, index - 1) / max) * 100;
+        const currentPercentage = (index / max) * 100;
+
+        if (Math.floor(currentPercentage) - Math.floor(previousPercentage) < 1) return;
+
+        this.logger.debug(
+            `${this.migrationName} at ${
+                Math.floor(currentPercentage * 10) / 10
+            }% for ${repository} repository`,
+        );
     }
 }
 
