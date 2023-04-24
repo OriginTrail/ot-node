@@ -12,12 +12,14 @@ class TripleStoreMetadataMigration extends BaseMigration {
         blockchainModuleManager,
         serviceAgreementService,
         ualService,
+        dataService,
     ) {
         super(migrationName, logger, config);
         this.blockchainModuleManager = blockchainModuleManager;
         this.serviceAgreementService = serviceAgreementService;
         this.ualService = ualService;
         this.tripleStoreService = tripleStoreService;
+        this.dataService = dataService;
     }
 
     async executeMigration() {
@@ -120,7 +122,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
                     tokenId,
                     keyword,
                     assertion: { '@id': `assertion:${latestAssertionId}` },
-                }).join('\n');
+                });
 
                 await this.tripleStoreService.queryVoid(
                     currentRepository,
@@ -131,7 +133,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
                     };
                     INSERT DATA {
                         GRAPH <assets:graph> { 
-                            ${assetMetadataNquads} 
+                            ${assetMetadataNquads.join('\n')} 
                         }
                     }`,
                 );
@@ -276,7 +278,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
                     });
                 }
 
-                const assetMetadataNquads = await formatAssertion(assetMetadata).join('\n');
+                const assetMetadataNquads = await formatAssertion(assetMetadata);
                 await this.tripleStoreService.queryVoid(
                     currentRepository,
                     `DELETE WHERE {
@@ -286,7 +288,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
                     };
                     INSERT DATA {
                         GRAPH <assets:graph> { 
-                            ${assetMetadataNquads} 
+                            ${assetMetadataNquads.join('\n')} 
                         }
                     }`,
                 );
