@@ -115,7 +115,8 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 [contract, assertionIds[0]],
             );
 
-            for (const assertionId of assertionIds) {
+            for (let i; i < assertionIds.length - 1; i += 1) {
+                const assertionId = assertionIds[i];
                 const assertion = await this.tripleStoreService.getAssertion(
                     currentRepository,
                     assertionId,
@@ -140,7 +141,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 latestAssertionId,
             );
             if (assertion?.length) {
-                const assetNquads = await formatAssertion({
+                const assetMetadataNquads = await formatAssertion({
                     '@context': SCHEMA_CONTEXT,
                     '@id': ual,
                     blockchain,
@@ -159,7 +160,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
                     };
                     INSERT DATA {
                         GRAPH <assets:graph> { 
-                            ${assetNquads} 
+                            ${assetMetadataNquads} 
                         }
                     }`,
                 );
