@@ -366,7 +366,6 @@ class OTNode {
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();
             this.logger.info('Node will now restart!');
-            this.stop(1);
         }
     }
 
