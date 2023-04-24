@@ -341,11 +341,11 @@ class OTNode {
     }
 
     async executeTripleStoreMetadataMigration() {
-        /* if (
+        if (
             process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
             process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
         )
-            return; */
+            return;
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const tripleStoreService = this.container.resolve('tripleStoreService');
         const serviceAgreementService = this.container.resolve('serviceAgreementService');
