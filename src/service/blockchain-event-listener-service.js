@@ -30,6 +30,9 @@ class BlockchainEventListenerService {
     async initialize() {
         const promises = [];
         for (const blockchainId of this.blockchainModuleManager.getImplementationNames()) {
+            this.logger.info(
+                `Initializing blockchain event listener for blockchain ${blockchainId}, handling missed events`,
+            );
             promises.push(this.fetchAndHandleBlockchainEvents(blockchainId));
         }
         await Promise.all(promises);
