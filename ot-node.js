@@ -135,7 +135,7 @@ class OTNode {
         const eventEmitter = new EventEmitter();
         DependencyInjection.registerValue(this.container, 'eventEmitter', eventEmitter);
 
-        this.logger.info('Event emitter initialized ');
+        this.logger.info('Event emitter initialized');
     }
 
     initializeBlockchainEventListenerService() {
