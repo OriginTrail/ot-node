@@ -27,34 +27,11 @@ class TripleStoreMetadataMigration extends BaseMigration {
         await this.migratePrivateRepositoriesMetadata();
     }
 
-    // let repository = public-current
-    // get all triples from <assets:graph>
-    // create object with ual as key, metadata as value
-    // for ual in repository
-    //     resolve ual
-    //     if blockchain missing
-    //         add blockchain to object
-    //     if contract missing
-    //         add contract to object
-    //     if tokenId missing
-    //         add tokenId to object
-    //     get assertion ids from contract
-    //     if keyword missing
-    //         calculate keyword
-    //         add keyword to object
-    //     is latest assertion id in triple store
-    //     for all assertion ids - latest
-    //         if triple store has graph  <assertion:assertion id>
-    //             get assertion
-    //             insert asset metadata and assertion in public-history repository
-    //     if repository assertion ids includes latest assertion id
-    //         insert object data + delete old assertion id links for ual
-    //     else
-    //         delete metadata for ual
-
     async migratePublicRepositoriesMetadata() {
         const currentRepository = TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT;
         const historyRepository = TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY;
+
+        await this.logMetadataStats(currentRepository);
 
         const assetsQueryResult = await this.tripleStoreService.select(
             currentRepository,
@@ -146,41 +123,14 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 );
             }
         }
+        await this.logMetadataStats(currentRepository);
     }
-
-    // repository = private-current
-    // get all triples from <assets:graph>
-    // create object with ual as key, metadata as value
-    // for ual in repository
-    //     resolve ual
-    //     if blockchain missing
-    //         add blockchain to object
-    //     if contract missing
-    //         add contract to object
-    //     if tokenId missing
-    //         add tokenId to object
-    //     get assertion ids from contract
-    //     if keyword missing
-    //         calculate keyword
-    //         add keyword to object
-    //     for all assertion ids - latest
-    //         if triple store has graph  <assertion:assertion id>
-    //             get assertion
-    //             insert asset metadata and assertion in private-history repository
-    //             if private assertion id in assertion && triple store has graph  <assertion:private assertion id>
-    //                  get private assertion
-    //                  insert asset metadata and private assertion in private-history repository
-    //     if triple store has graph  <assertion:latest assertion id>
-    //          get latest assertion
-    //          if private assertion id in assertion
-    //              insert object data + private assertion id link + delete old assertion id links for ual
-    //     else
-    //         delete metadata for ual
 
     async migratePrivateRepositoriesMetadata() {
         const currentRepository = TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT;
         const historyRepository = TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY;
 
+        await this.logMetadataStats(currentRepository);
         const assetsQueryResult = await this.tripleStoreService.select(
             currentRepository,
             `SELECT distinct ?ual
@@ -301,6 +251,59 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 );
             }
         }
+        await this.logMetadataStats(currentRepository);
+    }
+
+    async logMetadataStats(repository) {
+        const result = await this.tripleStoreService.select(
+            repository,
+            `PREFIX schema: <${SCHEMA_CONTEXT}>
+
+            SELECT 
+            (COUNT(DISTINCT ?ualAll) AS ?all)
+            (COUNT(DISTINCT ?ualBlockchain) AS ?blockchain)
+            (COUNT(DISTINCT ?ualContract) AS ?contract)
+            (COUNT(DISTINCT ?ualTokenId) AS ?tokenId)
+            (COUNT(DISTINCT ?ualKeyword) AS ?keyword)
+            (COUNT(DISTINCT ?ualAssertion) AS ?assertion)
+            WHERE {
+                GRAPH <assets:graph> {
+                    {
+                        ?ualAll ?p ?o .
+                    }
+                    UNION
+                    {
+                        ?ualBlockchain schema:blockchain ?blockchain .
+                    }
+                    UNION
+                    {
+                        ?ualContract schema:contract ?contract .
+                    }
+                    UNION
+                    {
+                        ?ualTokenId schema:tokenId ?tokenId .
+                    }
+                    UNION
+                    {
+                        ?ualKeyword schema:keyword ?keyword .
+                    }
+                    UNION
+                    {
+                        ?ualAssertion schema:assertion ?assertion .
+                    }
+                }
+            }`,
+        );
+
+        const stats = this.dataService.parseBindings(result)[0];
+
+        let log = `metadata stats for ${repository} repository: `;
+        for (const key in stats) {
+            if (key === 'all') log += `\n\t\t\t\tdistinct number of uals: ${stats.all}`;
+            else log += `\n\t\t\t\tdistinct number of uals with predicate ${key}: ${stats[key]}`;
+        }
+
+        this.logger.debug(log);
     }
 }
 
