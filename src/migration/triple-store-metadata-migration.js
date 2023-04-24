@@ -27,17 +27,16 @@ class TripleStoreMetadataMigration extends BaseMigration {
         await this.migrateRepositoryMetadata(
             TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
             TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
-            `${this.migrationName}_${TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT}_info`,
         );
         await this.migrateRepositoryMetadata(
             TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
             TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
-            `${this.migrationName}_${TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT}_info`,
         );
     }
 
-    async migrateRepositoryMetadata(currentRepository, historyRepository, migrationInfoFileName) {
+    async migrateRepositoryMetadata(currentRepository, historyRepository) {
         const migrationFolderPath = this.fileService.getMigrationFolderPath();
+        const migrationInfoFileName = `${this.migrationName}_${currentRepository}`;
         const migrationInfoPath = path.join(migrationFolderPath, migrationInfoFileName);
         let migrationInfo;
         if (await this.fileService.fileExists(migrationInfoPath)) {
@@ -127,6 +126,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
             migrationInfoFileName,
             JSON.stringify(migrationInfo),
         );
+        await this._logMetadataStats(currentRepository);
     }
 
     async _moveOldAssertionIds(
