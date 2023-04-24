@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { formatAssertion } from 'assertion-tools';
+import path from 'path';
 import BaseMigration from './base-migration.js';
 import { SCHEMA_CONTEXT, TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
 
@@ -23,29 +24,48 @@ class TripleStoreMetadataMigration extends BaseMigration {
     }
 
     async executeMigration() {
-        await this.migratePublicRepositoriesMetadata();
-        await this.migratePrivateRepositoriesMetadata();
+        await this.migrateRepositoryMetadata(
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+            `${this.migrationName}_${TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT}_info`,
+        );
+        await this.migrateRepositoryMetadata(
+            TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+            TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+            `${this.migrationName}_${TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT}_info`,
+        );
     }
 
-    async migratePublicRepositoriesMetadata() {
-        const currentRepository = TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT;
-        const historyRepository = TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY;
+    async migrateRepositoryMetadata(currentRepository, historyRepository, migrationInfoFileName) {
+        const migrationFolderPath = this.fileService.getMigrationFolderPath();
+        const migrationInfoPath = path.join(migrationFolderPath, migrationInfoFileName);
+        let migrationInfo;
+        if (await this.fileService.fileExists(migrationInfoPath)) {
+            migrationInfo = await this.fileService._readFile(migrationInfoPath, true);
+        } else {
+            const assetsQueryResult = await this.tripleStoreService.select(
+                currentRepository,
+                `SELECT distinct ?ual
+                    WHERE {
+                        GRAPH <assets:graph> {
+                            ?ual ?p ?o
+                        }
+                    }`,
+            );
+
+            migrationInfo = {
+                status: 'IN_PROGRESS',
+                ualsToProcess: assetsQueryResult.map(({ ual }) => ual),
+            };
+        }
+
+        if (migrationInfo.status === 'COMPLETED') return;
 
         await this._logMetadataStats(currentRepository);
 
-        const assetsQueryResult = await this.tripleStoreService.select(
-            currentRepository,
-            `SELECT distinct ?ual
-            WHERE {
-                GRAPH <assets:graph> {
-                    ?ual ?p ?o
-                }
-            }`,
-        );
-
-        for (let i = 0; i < assetsQueryResult.length; i += 1) {
-            this._logPercentage(i, assetsQueryResult.length, currentRepository);
-            const { ual } = assetsQueryResult[i];
+        for (let i = 0; i < migrationInfo.ualsToProcess.length; i += 1) {
+            this._logPercentage(i, migrationInfo.ualsToProcess.length, currentRepository);
+            const ual = migrationInfo.ualsToProcess[i];
             const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
 
             let assertionIds;
@@ -58,6 +78,12 @@ class TripleStoreMetadataMigration extends BaseMigration {
             } catch (error) {
                 this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
                 // @TODO: verify this
+                migrationInfo.ualsToProcess.splice(i, 1);
+                await this.fileService.writeContentsToFile(
+                    migrationFolderPath,
+                    migrationInfoFileName,
+                    JSON.stringify(migrationInfo),
+                );
                 continue;
             }
 
@@ -67,124 +93,70 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 [contract, assertionIds[0]],
             );
 
-            for (let j; j < assertionIds.length - 1; j += 1) {
-                const assertionId = assertionIds[j];
-                const assertion = await this.tripleStoreService.getAssertion(
-                    currentRepository,
-                    assertionId,
-                );
-
-                if (assertion?.length) {
-                    await this.tripleStoreService.localStoreAsset(
-                        historyRepository,
-                        assertionId,
-                        assertion,
-                        blockchain,
-                        contract,
-                        tokenId,
-                        keyword,
-                    );
-                }
-            }
-
-            const latestAssertionId = assertionIds[assertionIds.length - 1];
-            const assertion = await this.tripleStoreService.getAssertion(
+            await this._moveOldAssertionIds(
                 currentRepository,
-                latestAssertionId,
+                historyRepository,
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+                assertionIds,
             );
-            if (assertion?.length) {
-                const assetMetadataNquads = await formatAssertion({
-                    '@context': SCHEMA_CONTEXT,
-                    '@id': ual,
+
+            await this._updateAssetMetadata(
+                currentRepository,
+                assertionIds,
+                ual,
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+            );
+
+            migrationInfo.ualsToProcess.splice(i, 1);
+            await this.fileService.writeContentsToFile(
+                migrationFolderPath,
+                migrationInfoFileName,
+                JSON.stringify(migrationInfo),
+            );
+        }
+
+        migrationInfo.status = 'COMPLETED';
+        await this.fileService.writeContentsToFile(
+            migrationFolderPath,
+            migrationInfoFileName,
+            JSON.stringify(migrationInfo),
+        );
+    }
+
+    async _moveOldAssertionIds(
+        currentRepository,
+        historyRepository,
+        blockchain,
+        contract,
+        tokenId,
+        keyword,
+        assertionIds,
+    ) {
+        for (let i; i < assertionIds.length - 1; i += 1) {
+            const publicAssertionId = assertionIds[i];
+            const publicAssertion = await this.tripleStoreService.getAssertion(
+                currentRepository,
+                publicAssertionId,
+            );
+
+            if (publicAssertion?.length) {
+                await this.tripleStoreService.localStoreAsset(
+                    historyRepository,
+                    publicAssertionId,
+                    publicAssertion,
                     blockchain,
                     contract,
                     tokenId,
                     keyword,
-                    assertion: { '@id': `assertion:${latestAssertionId}` },
-                });
-
-                await this.tripleStoreService.queryVoid(
-                    currentRepository,
-                    `DELETE WHERE {
-                        GRAPH <assets:graph> {
-                            <${ual}> ?p ?o
-                        }
-                    };
-                    INSERT DATA {
-                        GRAPH <assets:graph> { 
-                            ${assetMetadataNquads.join('\n')} 
-                        }
-                    }`,
-                );
-            } else {
-                await this.tripleStoreService.deleteAssetMetadata(
-                    currentRepository,
-                    blockchain,
-                    contract,
-                    tokenId,
-                );
-            }
-        }
-        await this._logMetadataStats(currentRepository);
-    }
-
-    async migratePrivateRepositoriesMetadata() {
-        const currentRepository = TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT;
-        const historyRepository = TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY;
-
-        await this._logMetadataStats(currentRepository);
-        const assetsQueryResult = await this.tripleStoreService.select(
-            currentRepository,
-            `SELECT distinct ?ual
-            WHERE {
-                GRAPH <assets:graph> {
-                    ?ual ?p ?o
-                }
-            }`,
-        );
-
-        for (let i = 0; i < assetsQueryResult.length; i += 1) {
-            this._logPercentage(i, assetsQueryResult.length, currentRepository);
-            const { ual } = assetsQueryResult[i];
-            const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
-
-            let assertionIds;
-            try {
-                assertionIds = await this.blockchainModuleManager.getAssertionIds(
-                    blockchain,
-                    contract,
-                    tokenId,
-                );
-            } catch (error) {
-                this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
-                // @TODO: verify this
-                continue;
-            }
-
-            const keyword = this.blockchainModuleManager.encodePacked(
-                blockchain,
-                ['address', 'bytes32'],
-                [contract, assertionIds[0]],
-            );
-
-            for (let j; j < assertionIds.length - 1; j += 1) {
-                const publicAssertionId = assertionIds[j];
-                const publicAssertion = await this.tripleStoreService.getAssertion(
-                    currentRepository,
-                    publicAssertionId,
                 );
 
-                if (publicAssertion?.length) {
-                    await this.tripleStoreService.localStoreAsset(
-                        historyRepository,
-                        publicAssertionId,
-                        publicAssertion,
-                        blockchain,
-                        contract,
-                        tokenId,
-                        keyword,
-                    );
-
+                if (currentRepository === TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT) {
                     const privateAssertionId =
                         this.dataService.getPrivateAssertionId(publicAssertion);
                     if (privateAssertionId) {
@@ -207,23 +179,36 @@ class TripleStoreMetadataMigration extends BaseMigration {
                     }
                 }
             }
+        }
+    }
 
-            const latestPublicAssertionId = assertionIds[assertionIds.length - 1];
-            const latestPublicAssertion = await this.tripleStoreService.getAssertion(
-                currentRepository,
-                latestPublicAssertionId,
-            );
-            if (latestPublicAssertion?.length) {
-                const assetMetadata = {
-                    '@context': SCHEMA_CONTEXT,
-                    '@id': ual,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    keyword,
-                    assertion: [{ '@id': `assertion:${latestPublicAssertionId}` }],
-                };
+    async _updateAssetMetadata(
+        currentRepository,
+        assertionIds,
+        ual,
+        blockchain,
+        contract,
+        tokenId,
+        keyword,
+    ) {
+        const latestPublicAssertionId = assertionIds[assertionIds.length - 1];
+        const latestPublicAssertion = await this.tripleStoreService.getAssertion(
+            currentRepository,
+            latestPublicAssertionId,
+        );
 
+        if (latestPublicAssertion?.length) {
+            const assetMetadata = {
+                '@context': SCHEMA_CONTEXT,
+                '@id': ual,
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+                assertion: [{ '@id': `assertion:${latestPublicAssertionId}` }],
+            };
+
+            if (currentRepository === TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT) {
                 const latestPrivateAssertionId =
                     this.dataService.getPrivateAssertionId(latestPublicAssertion);
                 if (latestPrivateAssertionId) {
@@ -231,11 +216,12 @@ class TripleStoreMetadataMigration extends BaseMigration {
                         '@id': `assertion:${latestPrivateAssertionId}`,
                     });
                 }
+            }
 
-                const assetMetadataNquads = await formatAssertion(assetMetadata);
-                await this.tripleStoreService.queryVoid(
-                    currentRepository,
-                    `DELETE WHERE {
+            const assetMetadataNquads = await formatAssertion(assetMetadata);
+            await this.tripleStoreService.queryVoid(
+                currentRepository,
+                `DELETE WHERE {
                         GRAPH <assets:graph> {
                             <${ual}> ?p ?o
                         }
@@ -245,17 +231,15 @@ class TripleStoreMetadataMigration extends BaseMigration {
                             ${assetMetadataNquads.join('\n')} 
                         }
                     }`,
-                );
-            } else {
-                await this.tripleStoreService.deleteAssetMetadata(
-                    currentRepository,
-                    blockchain,
-                    contract,
-                    tokenId,
-                );
-            }
+            );
+        } else {
+            await this.tripleStoreService.deleteAssetMetadata(
+                currentRepository,
+                blockchain,
+                contract,
+                tokenId,
+            );
         }
-        await this._logMetadataStats(currentRepository);
     }
 
     async _logMetadataStats(repository) {
