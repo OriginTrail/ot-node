@@ -36,6 +36,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
+      - run: docker ps
       - run: wget http://localhost:9999
       - run: npm install
       - run: mkdir -p $ARTIFACTS_DIR
