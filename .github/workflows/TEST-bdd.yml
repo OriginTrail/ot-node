@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: docker ps
-      - run: docker-compose up -d
+      - run: sleep 10
       - run: docker ps
       - run: sleep 10
       - run: curl http://localhost:9999
