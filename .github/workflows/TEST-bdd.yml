@@ -23,10 +23,6 @@ jobs:
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-      blazegraph:
-        image: lyrasis/blazegraph:2.1.5
-        ports:
-          - 9999:9999
     strategy:
       matrix:
         node-version: [16.x]
@@ -36,11 +32,9 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-      - run: docker ps
-      - run: sleep 10
-      - run: docker ps
-      - run: sleep 10
-      - run: curl http://localhost:9999
+      - run: wget https://github.com/blazegraph/database/releases/latest/download/blazegraph.jar
+      - run: ls -l
+      - run: /usr/bin/java -jar blazegraph.jar
       - run: npm install
       - run: mkdir -p $ARTIFACTS_DIR
       - run: sudo chmod -R 777 $ARTIFACTS_DIR
