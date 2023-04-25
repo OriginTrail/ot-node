@@ -100,7 +100,17 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 );
             } catch (error) {
                 this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
-                // @TODO: verify this
+                migrationInfo.ualsToProcess.splice(i, 1);
+                await this.fileService.writeContentsToFile(
+                    migrationFolderPath,
+                    migrationInfoFileName,
+                    JSON.stringify(migrationInfo),
+                );
+                continue;
+            }
+
+            if (!assertionIds?.length) {
+                this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
                 migrationInfo.ualsToProcess.splice(i, 1);
                 await this.fileService.writeContentsToFile(
                     migrationFolderPath,
@@ -283,18 +293,18 @@ class TripleStoreMetadataMigration extends BaseMigration {
     async updateAssertionMetadata(currentRepository, historyRepository) {
         const assetsQueryResult = await this.tripleStoreService.select(
             currentRepository,
-            `PREFIX schema: <https://schema.org/>
+            `PREFIX schema: <${SCHEMA_CONTEXT}>
 
-            SELECT ?s
+            SELECT DISTINCT ?ual
             WHERE {
                 {
-                    SELECT ?s (COUNT(?assertion) AS ?assertionCount)
+                    SELECT ?ual (COUNT(?assertion) AS ?assertionCount)
                     WHERE {
                         GRAPH <assets:graph> {
-                            ?s schema:assertion ?assertion .
+                            ?ual schema:assertion ?assertion .
                         }
                     }
-                    GROUP BY ?s
+                    GROUP BY ?ual
                 }
                 FILTER (?assertionCount != 1)
             }`,
@@ -315,6 +325,11 @@ class TripleStoreMetadataMigration extends BaseMigration {
                     tokenId,
                 );
             } catch (error) {
+                this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
+                continue;
+            }
+
+            if (!assertionIds?.length) {
                 this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
                 continue;
             }
