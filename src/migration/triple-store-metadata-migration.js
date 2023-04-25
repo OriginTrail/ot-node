@@ -293,20 +293,26 @@ class TripleStoreMetadataMigration extends BaseMigration {
     async updateAssertionMetadata(currentRepository, historyRepository) {
         const assetsQueryResult = await this.tripleStoreService.select(
             currentRepository,
-            `PREFIX schema: <${SCHEMA_CONTEXT}>
+            `PREFIX schema: <http://schema.org/>
 
-            SELECT DISTINCT ?ual
+            SELECT distinct ?s
             WHERE {
                 {
-                    SELECT ?ual (COUNT(?assertion) AS ?assertionCount)
-                    WHERE {
-                        GRAPH <assets:graph> {
-                            ?ual schema:assertion ?assertion .
-                        }
+                    GRAPH <assets:graph> {
+                        ?s ?p ?o .
                     }
-                    GROUP BY ?ual
+                    FILTER NOT EXISTS {
+                        ?s schema:assertion ?assertion .
+                    }
                 }
-                FILTER (?assertionCount != 1)
+                            UNION
+                {
+                    GRAPH <assets:graph> {
+                        ?s schema:assertion ?assertion1 .
+                        ?s schema:assertion ?assertion2 .
+                    }
+                    FILTER (?assertion1 != ?assertion2)
+                }
             }`,
         );
 
