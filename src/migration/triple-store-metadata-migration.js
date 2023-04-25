@@ -62,9 +62,10 @@ class TripleStoreMetadataMigration extends BaseMigration {
 
         await this._logMetadataStats(currentRepository);
 
-        for (let i = 0; i < migrationInfo.ualsToProcess.length; i += 1) {
-            this._logPercentage(i, migrationInfo.ualsToProcess.length, currentRepository);
-            const ual = migrationInfo.ualsToProcess[i];
+        const ualsToProcess = JSON.parse(JSON.stringify(migrationInfo.ualsToProcess));
+        for (let i = 0; i < ualsToProcess.length; i += 1) {
+            this._logPercentage(i, ualsToProcess.length, currentRepository);
+            const ual = ualsToProcess[i];
             const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
 
             let assertionIds;
@@ -138,7 +139,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
         keyword,
         assertionIds,
     ) {
-        for (let i; i < assertionIds.length - 1; i += 1) {
+        for (let i = 0; i < assertionIds.length - 1; i += 1) {
             const publicAssertionId = assertionIds[i];
             const publicAssertion = await this.tripleStoreService.getAssertion(
                 currentRepository,
