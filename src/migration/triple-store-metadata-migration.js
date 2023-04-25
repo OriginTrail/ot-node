@@ -176,7 +176,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
         for (const { ual } of assetsQueryResult) {
             const { blockchain } = this.ualService.resolveUAL(ual);
 
-            blockchainTriples += `<${ual}> schema:blockchain ${blockchain} . \n`;
+            blockchainTriples += `<${ual}> schema:blockchain "${blockchain}" . \n`;
         }
 
         await this.tripleStoreService.queryVoid(
@@ -213,7 +213,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
         for (const { ual } of assetsQueryResult) {
             const { contract } = this.ualService.resolveUAL(ual);
 
-            contractTriples += `<${ual}> schema:contract ${contract} . \n`;
+            contractTriples += `<${ual}> schema:contract "${contract}" . \n`;
         }
 
         await this.tripleStoreService.queryVoid(
@@ -266,7 +266,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 [contract, assertionIds[0]],
             );
 
-            keywordTriples += `<${ual}> schema:keyword ${keyword} . \n`;
+            keywordTriples += `<${ual}> schema:keyword "${keyword}" . \n`;
         }
 
         await this.tripleStoreService.queryVoid(
