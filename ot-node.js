@@ -52,8 +52,8 @@ class OTNode {
         await this.executePullShardingTableMigration();
         await this.executePrivateAssetsMetadataMigration();
         await this.executeRemoveAgreementStartEndTimeMigration();
-        this.executeTripleStoreMetadataMigration();
         await this.executeMarkOldBlockchainEventsAsProcessedMigration();
+        this.executeTripleStoreMetadataMigration();
 
         await this.createProfiles();
 
