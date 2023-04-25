@@ -24,17 +24,40 @@ class TripleStoreMetadataMigration extends BaseMigration {
     }
 
     async executeMigration() {
-        await this.migrateRepositoryMetadata(
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
-        );
-        await this.migrateRepositoryMetadata(
-            TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-            TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+        await this.updatePublicCurrentMetadata();
+        await this.updatePrivateCurrentMetadata();
+    }
+
+    async updatePublicCurrentMetadata() {
+        const currentRepository = TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT;
+        const historyRepository = TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY;
+        const migrationFolderPath = this.fileService.getMigrationFolderPath();
+        const migrationInfoFileName = `${this.migrationName}_${currentRepository}`;
+        const migrationInfoPath = path.join(migrationFolderPath, migrationInfoFileName);
+
+        if (await this.fileService.fileExists(migrationInfoPath)) {
+            return;
+        }
+
+        await this._logMetadataStats(currentRepository);
+
+        await this.updateBlockchainMetadata(currentRepository);
+        await this.updateContractMetadata(currentRepository);
+        await this.updateKeywordMetadata(currentRepository);
+        await this.updateAssertionMetadata(currentRepository, historyRepository);
+
+        await this._logMetadataStats(currentRepository);
+
+        await this.fileService.writeContentsToFile(
+            migrationFolderPath,
+            migrationInfoFileName,
+            'COMPLETED',
         );
     }
 
-    async migrateRepositoryMetadata(currentRepository, historyRepository) {
+    async updatePrivateCurrentMetadata() {
+        const currentRepository = TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT;
+        const historyRepository = TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY;
         const migrationFolderPath = this.fileService.getMigrationFolderPath();
         const migrationInfoFileName = `${this.migrationName}_${currentRepository}`;
         const migrationInfoPath = path.join(migrationFolderPath, migrationInfoFileName);
@@ -128,6 +151,200 @@ class TripleStoreMetadataMigration extends BaseMigration {
             JSON.stringify(migrationInfo),
         );
         await this._logMetadataStats(currentRepository);
+    }
+
+    async updateBlockchainMetadata(repository) {
+        const assetsQueryResult = await this.tripleStoreService.select(
+            repository,
+            `PREFIX schema: <${SCHEMA_CONTEXT}>
+                SELECT DISTINCT ?ual
+                    WHERE {
+                    GRAPH <assets:graph> {
+                        ?ual ?p ?o .
+                        FILTER NOT EXISTS {
+                            ?ual schema:blockchain ?blockchain .
+                        }
+                    }
+                }`,
+        );
+
+        this.logger.debug(
+            `found ${assetsQueryResult.length} assets with missing blockchain metadata`,
+        );
+
+        let blockchainTriples = '';
+        for (const { ual } of assetsQueryResult) {
+            const { blockchain } = this.ualService.resolveUAL(ual);
+
+            blockchainTriples += `<${ual}> schema:blockchain ${blockchain} . \n`;
+        }
+
+        await this.tripleStoreService.queryVoid(
+            repository,
+            `PREFIX schema: <${SCHEMA_CONTEXT}>
+            INSERT DATA {
+                GRAPH <assets:graph> { 
+                    ${blockchainTriples} 
+                }
+            }`,
+        );
+    }
+
+    async updateContractMetadata(repository) {
+        const assetsQueryResult = await this.tripleStoreService.select(
+            repository,
+            `PREFIX schema: <${SCHEMA_CONTEXT}>
+                SELECT DISTINCT ?ual
+                WHERE {
+                    GRAPH <assets:graph> {
+                        ?ual ?p ?o .
+                        FILTER NOT EXISTS {
+                            ?ual schema:contract ?contract .
+                        }
+                    }
+                }`,
+        );
+
+        this.logger.debug(
+            `found ${assetsQueryResult.length} assets with missing contract metadata`,
+        );
+
+        let contractTriples = '';
+        for (const { ual } of assetsQueryResult) {
+            const { contract } = this.ualService.resolveUAL(ual);
+
+            contractTriples += `<${ual}> schema:contract ${contract} . \n`;
+        }
+
+        await this.tripleStoreService.queryVoid(
+            repository,
+            `PREFIX schema: <${SCHEMA_CONTEXT}>
+            INSERT DATA {
+                GRAPH <assets:graph> { 
+                    ${contractTriples} 
+                }
+            }`,
+        );
+    }
+
+    async updateKeywordMetadata(repository) {
+        const assetsQueryResult = await this.tripleStoreService.select(
+            repository,
+            `PREFIX schema: <${SCHEMA_CONTEXT}>
+                SELECT DISTINCT ?ual
+                    WHERE {
+                    GRAPH <assets:graph> {
+                        ?ual ?p ?o .
+                        FILTER NOT EXISTS {
+                            ?ual schema:keyword ?keyword .
+                        }
+                    }
+                }`,
+        );
+
+        this.logger.debug(`found ${assetsQueryResult.length} assets with missing keyword metadata`);
+
+        let keywordTriples = '';
+        for (const { ual } of assetsQueryResult) {
+            const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
+
+            let assertionIds;
+            try {
+                assertionIds = await this.blockchainModuleManager.getAssertionIds(
+                    blockchain,
+                    contract,
+                    tokenId,
+                );
+            } catch (error) {
+                this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
+                continue;
+            }
+
+            const keyword = this.blockchainModuleManager.encodePacked(
+                blockchain,
+                ['address', 'bytes32'],
+                [contract, assertionIds[0]],
+            );
+
+            keywordTriples += `<${ual}> schema:keyword ${keyword} . \n`;
+        }
+
+        await this.tripleStoreService.queryVoid(
+            repository,
+            `PREFIX schema: <${SCHEMA_CONTEXT}>
+            INSERT DATA {
+                GRAPH <assets:graph> { 
+                    ${keywordTriples} 
+                }
+            }`,
+        );
+    }
+
+    async updateAssertionMetadata(currentRepository, historyRepository) {
+        const assetsQueryResult = await this.tripleStoreService.select(
+            currentRepository,
+            `PREFIX schema: <https://schema.org/>
+
+            SELECT ?s
+            WHERE {
+                {
+                    SELECT ?s (COUNT(?assertion) AS ?assertionCount)
+                    WHERE {
+                        GRAPH <assets:graph> {
+                            ?s schema:assertion ?assertion .
+                        }
+                    }
+                    GROUP BY ?s
+                }
+                FILTER (?assertionCount != 1)
+            }`,
+        );
+
+        this.logger.debug(
+            `found ${assetsQueryResult.length} assets not containing exactly one assertion id in metadata`,
+        );
+
+        for (const { ual } of assetsQueryResult) {
+            const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
+
+            let assertionIds;
+            try {
+                assertionIds = await this.blockchainModuleManager.getAssertionIds(
+                    blockchain,
+                    contract,
+                    tokenId,
+                );
+            } catch (error) {
+                this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
+                continue;
+            }
+
+            const keyword = this.blockchainModuleManager.encodePacked(
+                blockchain,
+                ['address', 'bytes32'],
+                [contract, assertionIds[0]],
+            );
+
+            await this._moveOldAssertionIds(
+                currentRepository,
+                historyRepository,
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+                assertionIds,
+            );
+
+            await this._updateAssetMetadata(
+                currentRepository,
+                assertionIds,
+                ual,
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+            );
+        }
     }
 
     async _moveOldAssertionIds(
