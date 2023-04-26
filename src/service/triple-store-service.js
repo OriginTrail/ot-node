@@ -185,14 +185,11 @@ class TripleStoreService {
             this.repositoryImplementations[repository],
             repository,
             this.ualService.deriveUAL(blockchain, contract, tokenId),
-            blockchain,
-            contract,
-            tokenId,
         );
     }
 
-    async getAssetMetadata(repository, blockchain, contract, tokenId) {
-        const bindings = await this.tripleStoreModuleManager.getAssetMetadata(
+    async getAssetAssertionLinks(repository, blockchain, contract, tokenId) {
+        const bindings = await this.tripleStoreModuleManager.getAssetAssertionLinks(
             this.repositoryImplementations[repository],
             repository,
             this.ualService.deriveUAL(blockchain, contract, tokenId),

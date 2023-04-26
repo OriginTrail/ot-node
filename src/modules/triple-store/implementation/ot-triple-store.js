@@ -79,25 +79,22 @@ class OtTripleStore {
         await Promise.all(ensureConnectionPromises);
     }
 
-    async assetExists(repository, ual, blockchain, contract, tokenId) {
+    async assetExists(repository, ual) {
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
                         ASK WHERE {
                             GRAPH <assets:graph> {
-                                <${ual}> schema:blockchain "${blockchain}";
-                                         schema:contract   "${contract}";
-                                         schema:tokenId    ${tokenId};
+                                <${ual}> ?p ?o
                             }
                         }`;
 
         return this.ask(repository, query);
     }
 
-    async getAssetMetadata(repository, ual) {
+    async getAssetAssertionLinks(repository, ual) {
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
-                        SELECT ?assertion ?keyword  WHERE {
+                        SELECT ?assertion  WHERE {
                             GRAPH <assets:graph> {
-                                    <${ual}> schema:assertion ?assertion;
-                                            schema:keyword ?keyword;
+                                    <${ual}> schema:assertion ?assertion
                             }
                         }`;
 
@@ -107,7 +104,6 @@ class OtTripleStore {
     async deleteAssetMetadata(repository, ual) {
         const query = `DELETE WHERE {
                 GRAPH <assets:graph> {
-                    ?s ?p ?o .
                     <${ual}> ?p ?o
                 }
             };`;

@@ -15,6 +15,7 @@ import PrivateAssetsMetadataMigration from './src/migration/private-assets-metad
 import ServiceAgreementsMetadataMigration from './src/migration/service-agreement-metadata-migration.js';
 import RemoveAgreementStartEndTimeMigration from './src/migration/remove-agreement-start-end-time-migration.js';
 import MarkOldBlockchainEventsAsProcessedMigration from './src/migration/mark-old-blockchain-events-as-processed-migration.js';
+import TripleStoreMetadataMigration from './src/migration/triple-store-metadata-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -54,6 +55,7 @@ class OTNode {
         await this.executeRemoveAgreementStartEndTimeMigration();
         await this.executeServiceAgreementsMetadataMigration();
         await this.executeMarkOldBlockchainEventsAsProcessedMigration();
+        this.executeTripleStoreMetadataMigration();
 
         await this.createProfiles();
 
@@ -363,6 +365,34 @@ class OTNode {
             this.config,
             tripleStoreService,
         );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            await migration.migrate();
+        }
+    }
+
+    async executeTripleStoreMetadataMigration() {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        const tripleStoreService = this.container.resolve('tripleStoreService');
+        const serviceAgreementService = this.container.resolve('serviceAgreementService');
+        const ualService = this.container.resolve('ualService');
+        const dataService = this.container.resolve('dataService');
+
+        const migration = new TripleStoreMetadataMigration(
+            'tripleStoreMetadataMigration',
+            this.logger,
+            this.config,
+            tripleStoreService,
+            blockchainModuleManager,
+            serviceAgreementService,
+            ualService,
+            dataService,
+        );
+
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();
         }
