@@ -6,8 +6,8 @@ import { exec } from 'child_process';
 
 const Hub = JSON.parse((await readFile('node_modules/dkg-evm-module/abi/Hub.json')).toString());
 const HubController = JSON.parse(
-    (await readFile('node_modules/dkg-evm-module/abi/HubController.json')).toString()
-)
+    (await readFile('node_modules/dkg-evm-module/abi/HubController.json')).toString(),
+);
 const ParametersStorage = JSON.parse(
     (await readFile('node_modules/dkg-evm-module/abi/ParametersStorage.json')).toString(),
 );
@@ -70,7 +70,6 @@ class LocalBlockchain {
             privateKey,
         }));
 
-
         const wallet = new ethers.Wallet(this.wallets[0].privateKey, this.provider);
         this.hubContract = new ethers.Contract(hubContractAddress, Hub, wallet);
 
@@ -87,7 +86,10 @@ class LocalBlockchain {
         );
         this.ParametersStorageInterface = new ethers.utils.Interface(ParametersStorage);
 
-        await this.setParametersStorageParams(parametersStorageAddress, testParametersStorageParams);
+        await this.setParametersStorageParams(
+            parametersStorageAddress,
+            testParametersStorageParams,
+        );
     }
 
     stop() {
@@ -115,16 +117,20 @@ class LocalBlockchain {
 
     async setR1(R1) {
         console.log(`Setting R1 in parameters storage to: ${R1}`);
-        await this.ParametersStorageContract.setR1(R1, {
-            gasLimit: 100000,
-        });
+        const encodedData = this.ParametersStorageInterface.encodeFunctionData('setR1', [R1]);
+        const parametersStorageAddress = await this.hubContract.getContractAddress(
+            'ParametersStorage',
+        );
+        await this.HubControllerContract.forwardCall(parametersStorageAddress, encodedData);
     }
 
     async setR0(R0) {
         console.log(`Setting R0 in parameters storage to: ${R0}`);
-        await this.ParametersStorageContract.setR0(R0, {
-            gasLimit: 100000,
-        });
+        const encodedData = this.ParametersStorageInterface.encodeFunctionData('setR0', [R0]);
+        const parametersStorageAddress = await this.hubContract.getContractAddress(
+            'ParametersStorage',
+        );
+        await this.HubControllerContract.forwardCall(parametersStorageAddress, encodedData);
     }
 }
 
