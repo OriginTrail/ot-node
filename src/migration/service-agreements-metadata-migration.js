@@ -29,9 +29,9 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
     async executeMigration() {
         // get metadata of all stored assets in public current triple store
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
-                        SELECT ?ual ?keyword  WHERE {
+                        SELECT DISTINCT ?ual  WHERE {
                             GRAPH <assets:graph> {
-                                    ?ual schema:keyword ?keyword;
+                                    ?ual ?p ?o
                             }
                         }`;
         const assetsMetadata = await this.tripleStoreService.select(
@@ -54,7 +54,7 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
     }
 
     async updateTables(blockchain, contract, tokenId, identityId) {
-        // get latest state index
+        // get assertion ids
         const assertionIds = await this.blockchainModuleManager.getAssertionIds(
             blockchain,
             contract,
