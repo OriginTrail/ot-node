@@ -183,21 +183,30 @@ class TripleStoreMetadataMigration extends BaseMigration {
         );
 
         let blockchainTriples = '';
-        for (const { ual } of assetsQueryResult) {
+
+        const insertBlockchainTriples = async () => {
+            await this.tripleStoreService.queryVoid(
+                repository,
+                `PREFIX schema: <${SCHEMA_CONTEXT}>
+                    INSERT DATA {
+                        GRAPH <assets:graph> { 
+                            ${blockchainTriples} 
+                        }
+                    }`,
+            );
+        };
+
+        for (let i = 0; i < assetsQueryResult.length; i += 1) {
+            const { ual } = assetsQueryResult[i];
             const { blockchain } = this.ualService.resolveUAL(ual);
 
             blockchainTriples += `<${ual}> schema:blockchain "${blockchain}" . \n`;
+            if (i % 10_000 === 0) {
+                await insertBlockchainTriples();
+                blockchainTriples = '';
+            }
         }
-
-        await this.tripleStoreService.queryVoid(
-            repository,
-            `PREFIX schema: <${SCHEMA_CONTEXT}>
-            INSERT DATA {
-                GRAPH <assets:graph> { 
-                    ${blockchainTriples} 
-                }
-            }`,
-        );
+        await insertBlockchainTriples();
     }
 
     async updateContractMetadata(repository) {
@@ -220,21 +229,29 @@ class TripleStoreMetadataMigration extends BaseMigration {
         );
 
         let contractTriples = '';
-        for (const { ual } of assetsQueryResult) {
-            const { contract } = this.ualService.resolveUAL(ual);
+        const insertContractTriples = async () => {
+            await this.tripleStoreService.queryVoid(
+                repository,
+                `PREFIX schema: <${SCHEMA_CONTEXT}>
+                    INSERT DATA {
+                        GRAPH <assets:graph> { 
+                            ${contractTriples} 
+                        }
+                    }`,
+            );
+        };
 
-            contractTriples += `<${ual}> schema:contract "${contract}" . \n`;
+        for (let i = 0; i < assetsQueryResult.length; i += 1) {
+            const { ual } = assetsQueryResult[i];
+            const { blockchain } = this.ualService.resolveUAL(ual);
+
+            contractTriples += `<${ual}> schema:blockchain "${blockchain}" . \n`;
+            if (i % 10_000 === 0) {
+                await insertContractTriples();
+                contractTriples = '';
+            }
         }
-
-        await this.tripleStoreService.queryVoid(
-            repository,
-            `PREFIX schema: <${SCHEMA_CONTEXT}>
-            INSERT DATA {
-                GRAPH <assets:graph> { 
-                    ${contractTriples} 
-                }
-            }`,
-        );
+        await insertContractTriples();
     }
 
     async updateKeywordMetadata(repository) {
