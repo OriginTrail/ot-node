@@ -392,36 +392,42 @@ class BlockchainEventListenerService {
         keyword,
         assertionId,
     ) {
-        const assetMetadata = await this.tripleStoreService.getAssetMetadata(
+        const assertionLinks = await this.tripleStoreService.getAssetAssertionLinks(
             currentRepository,
             blockchain,
             contract,
             tokenId,
         );
+        const storedAssertionIds = assertionLinks.map(({ assertion }) =>
+            assertion.replace('assertion:', ''),
+        );
 
-        if (assetMetadata.length) {
-            // if asset exists in current repository
-            await Promise.all(
-                assetMetadata.map(({ assertion }) =>
-                    this.tripleStoreService.moveAsset(
-                        currentRepository,
-                        historyRepository,
-                        assertion.replace('assertion:', ''),
-                        blockchain,
-                        contract,
-                        tokenId,
-                        keyword,
-                    ),
-                ),
-            );
-            // delete asset metadata from current repository
-            await this.tripleStoreService.deleteAssetMetadata(
-                currentRepository,
-                blockchain,
-                contract,
-                tokenId,
-            );
+        // event already handled
+        if (storedAssertionIds.includes(assertionId)) {
+            return;
         }
+
+        // move old assertions to history repository
+        await Promise.all(
+            storedAssertionIds.map((storedAssertionId) =>
+                this.tripleStoreService.moveAsset(
+                    currentRepository,
+                    historyRepository,
+                    storedAssertionId,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    keyword,
+                ),
+            ),
+        );
+
+        await this.tripleStoreService.deleteAssetMetadata(
+            currentRepository,
+            blockchain,
+            contract,
+            tokenId,
+        );
 
         const cachedData = await this.pendingStorageService.getCachedAssertion(
             pendingRepository,

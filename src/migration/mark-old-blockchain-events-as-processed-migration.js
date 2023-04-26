@@ -7,11 +7,11 @@ class MarkOldBlockchainEventsAsProcessedMigration extends BaseMigration {
     }
 
     async executeMigration() {
-        this.logger.info('Marking blockchain events older than 1 hour as processed');
-        const timestamp = Date.now() - 1000 * 60 * 60; // 1 hour
+        this.logger.info('Marking old blockchain events as processed');
+        const timestamp = Date.now();
         const query = `update blockchain_event
                        set processed = true
-                       where created_at < ${timestamp}`;
+                       where created_at < FROM_UNIXTIME(${timestamp / 1000})`;
         await this.repositoryModuleManager.query(query);
     }
 }
