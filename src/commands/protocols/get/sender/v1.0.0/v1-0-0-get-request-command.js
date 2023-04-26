@@ -9,6 +9,7 @@ class GetRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.getService;
+        this.validationService = ctx.validationService;
 
         this.errorType = ERROR_TYPE.GET.GET_REQUEST_ERROR;
     }
@@ -29,7 +30,7 @@ class GetRequestCommand extends ProtocolRequestCommand {
     async handleAck(command, responseData) {
         if (responseData?.nquads) {
             try {
-                await this.operationService.validateAssertion(
+                await this.validationService.validateAssertion(
                     command.data.assertionId,
                     command.data.blockchain,
                     responseData.nquads,

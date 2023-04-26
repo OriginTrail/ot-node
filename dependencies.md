@@ -7,31 +7,6 @@
 -   **version**: ^8.5.2
 -   **description**: used to execute bdd tests
 
-##### [@ethersproject/bytes](https://www.npmjs.com/package/@ethersproject/bytes)
-
--   **version**: ^5.7.0
--   **description**: Used for creating substrate and evm accounts mapping signatures in `create-account-mapping-signature.js`
-
-##### [@ethersproject/hash](https://www.npmjs.com/package/@ethersproject/hash)
-
--   **version**: ^5.7.0
--   **description**: Used for creating substrate and evm accounts mapping signatures in `create-account-mapping-signature.js`
-
-##### [@ethersproject/wallet](https://www.npmjs.com/package/@ethersproject/wallet)
-
--   **version**: ^5.7.0
--   **description**: Used for creating substrate and evm accounts mapping signatures in `create-account-mapping-signature.js`
-
-##### [@polkadot/util](https://www.npmjs.com/package/@polkadot/util)
-
--   **version**: ^10.1.7
--   **description**: Used for creating substrate and evm accounts mapping signatures in `create-account-mapping-signature.js`
-
-##### [@polkadot/util-crypto](https://www.npmjs.com/package/@polkadot/util-crypto)
-
--   **version**: ^10.1.7
--   **description**: Used for creating substrate and evm accounts mapping signatures in `create-account-mapping-signature.js`
-
 ##### [chai](https://www.npmjs.com/package/chai)
 
 -   **version**: ^4.3.6
@@ -39,7 +14,7 @@
 
 ##### [dkg.js](https://www.npmjs.com/package/dkg.js)
 
--   **version**: ^6.0.0-beta.3.0.3
+-   **version**: ^6.0.2
 -   **description**: dkg client used in bdd tests
 
 ##### [eslint](https://www.npmjs.com/package/eslint)
@@ -56,11 +31,6 @@
 
 -   **version**: ^8.5.0
 -   **description**: linter plugin
-
-##### [ethers](https://www.npmjs.com/package/ethers)
-
--   **version**: ^5.7.2
--   **description**: used to interact with evm smart contracts
 
 ##### [husky](https://www.npmjs.com/package/husky)
 
@@ -99,55 +69,45 @@
 
 ## dependencies
 
-##### [@chainsafe/libp2p-noise](https://www.npmjs.com/package/@chainsafe/libp2p-noise)
-
--   **version**: ^8.0.1
--   **description**: libp2p connection encription module
-
 ##### [@comunica/query-sparql](https://www.npmjs.com/package/@comunica/query-sparql)
 
 -   **version**: ^2.4.3
 -   **description**: sparql query engine
 
-##### [@libp2p/bootstrap](https://www.npmjs.com/package/@libp2p/bootstrap)
+##### [@ethersproject/bytes](https://www.npmjs.com/package/@ethersproject/bytes)
 
--   **version**: ^2.0.0
--   **description**: used to connect to list of boostraps
+-   **version**: ^5.7.0
+-   **description**: Used for creating substrate and evm accounts mapping signatures in `create-account-mapping-signature.js`
 
-##### [@libp2p/kad-dht](https://www.npmjs.com/package/@libp2p/kad-dht)
+##### [@ethersproject/hash](https://www.npmjs.com/package/@ethersproject/hash)
 
--   **version**: ^3.0.4
--   **description**: libp2p kademlia dht module
+-   **version**: ^5.7.0
+-   **description**: Used for creating substrate and evm accounts mapping signatures in `create-account-mapping-signature.js`
 
-##### [@libp2p/mplex](https://www.npmjs.com/package/@libp2p/mplex)
+##### [@ethersproject/wallet](https://www.npmjs.com/package/@ethersproject/wallet)
 
--   **version**: ^5.0.0
--   **description**: libp2p stream multiplexer module
-
-##### [@libp2p/peer-collections](https://www.npmjs.com/package/@libp2p/peer-collections)
-
--   **version**: ^2.0.0
--   **description**: collections that stringifies peerIds before storing them
-
-##### [@libp2p/peer-id-factory](https://www.npmjs.com/package/@libp2p/peer-id-factory)
-
--   **version**: ^1.0.18
--   **description**: used for creation of libp2p network identity
-
-##### [@libp2p/tcp](https://www.npmjs.com/package/@libp2p/tcp)
-
--   **version**: ^3.0.3
--   **description**: libp2p TCP module
-
-##### [@multiformats/multiaddr](https://www.npmjs.com/package/@multiformats/multiaddr)
-
--   **version**: ^11.0.1
--   **description**: create libp2p peers multiaddresses from string
+-   **version**: ^5.7.0
+-   **description**: Used for creating substrate and evm accounts mapping signatures in `create-account-mapping-signature.js`
 
 ##### [@polkadot/api](https://www.npmjs.com/package/@polkadot/api)
 
--   **version**: ^9.2.4
+-   **version**: ^9.3.2
 -   **description**: used to interact with substrate nodes
+
+##### [@polkadot/keyring](https://www.npmjs.com/package/@polkadot/keyring)
+
+-   **version**: ^10.1.7
+-   **description**: Used for creating substrate and evm accounts mapping signatures in `create-account-mapping-signature.js`
+
+##### [@polkadot/util](https://www.npmjs.com/package/@polkadot/util)
+
+-   **version**: ^10.1.7
+-   **description**: Used for creating substrate and evm accounts mapping signatures in `create-account-mapping-signature.js`
+
+##### [@polkadot/util-crypto](https://www.npmjs.com/package/@polkadot/util-crypto)
+
+-   **version**: ^10.1.7
+-   **description**: Used for creating substrate and evm accounts mapping signatures in `create-account-mapping-signature.js`
 
 ##### [app-root-path](https://www.npmjs.com/package/app-root-path)
 
@@ -156,7 +116,7 @@
 
 ##### [assertion-tools](https://www.npmjs.com/package/assertion-tools)
 
--   **version**: ^1.0.8
+-   **version**: ^2.0.2
 -   **description**: various functions used by both dkg.js and ot-node
 
 ##### [async](https://www.npmjs.com/package/async)
@@ -191,13 +151,18 @@
 
 ##### [dkg-evm-module](https://www.npmjs.com/package/dkg-evm-module)
 
--   **version**: ^1.0.1
+-   **version**: ^4.0.4
 -   **description**: used to import latest ot-node smart contracts abis
 
 ##### [dotenv](https://www.npmjs.com/package/dotenv)
 
 -   **version**: ^16.0.1
 -   **description**: used for NODE_ENV variable
+
+##### [ethers](https://www.npmjs.com/package/ethers)
+
+-   **version**: ^5.7.2
+-   **description**: used to interact with blockchain nodes
 
 ##### [express](https://www.npmjs.com/package/express)
 
@@ -229,24 +194,9 @@
 -   **version**: ^1.1.8
 -   **description**: used to compare ip addresses
 
-##### [it-all](https://www.npmjs.com/package/it-all)
-
--   **version**: ^1.0.6
--   **description**: collect iterable values
-
-##### [it-filter](https://www.npmjs.com/package/it-filter)
-
--   **version**: ^1.0.3
--   **description**: filter operation that supports iterables
-
-##### [it-foreach](https://www.npmjs.com/package/it-foreach)
-
--   **version**: ^0.1.1
--   **description**: foreach operation that supports iterables
-
 ##### [it-length-prefixed](https://www.npmjs.com/package/it-length-prefixed)
 
--   **version**: ^8.0.2
+-   **version**: ^5.0.3
 -   **description**: used to encode and decode streamed buffers in libp2p
 
 ##### [it-map](https://www.npmjs.com/package/it-map)
@@ -254,25 +204,10 @@
 -   **version**: ^1.0.6
 -   **description**: used to map values received yielded by libp2p async iterators
 
-##### [it-merge](https://www.npmjs.com/package/it-merge)
-
--   **version**: ^2.0.4
--   **description**: merge operation that supports iterables
-
 ##### [it-pipe](https://www.npmjs.com/package/it-pipe)
 
--   **version**: ^2.0.4
+-   **version**: ^1.1.0
 -   **description**: stream pipeline that supports libp2p duplex streams. Used for streaming messages between nodes
-
-##### [it-sort](https://www.npmjs.com/package/it-sort)
-
--   **version**: ^1.0.1
--   **description**: sort operation that supports iterables
-
-##### [it-take](https://www.npmjs.com/package/it-take)
-
--   **version**: ^1.0.2
--   **description**: slice operation that supports iterables
 
 ##### [jsonld](https://www.npmjs.com/package/jsonld)
 
@@ -286,38 +221,58 @@
 
 ##### [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken)
 
--   **version**: ^8.5.1
+-   **version**: ^9.0.0
 -   **description**: used to generate, validate and decode JWTs
-
-##### [keccak256](https://www.npmjs.com/package/keccak256)
-
--   **version**: ^1.0.6
--   **description**: used to hash n-quads in validation module. **Should be moved to assertion-tools dependency**
 
 ##### [libp2p](https://www.npmjs.com/package/libp2p)
 
--   **version**: ^0.38.0
--   **description**:
+-   **version**: ^0.32.4
+-   **description**: used for p2p network communication
 
-##### [merkletreejs](https://www.npmjs.com/package/merkletreejs)
+##### [libp2p-bootstrap](https://www.npmjs.com/package/libp2p-bootstrap)
 
--   **version**: ^0.2.32
--   **description**: used to create merkle tree in validation module. **Should be moved to assertion-tools dependency**
+-   **version**: ^0.13.0
+-   **description**: used to define libp2p bootstrap nodes
+
+##### [libp2p-kad-dht](https://www.npmjs.com/package/libp2p-kad-dht)
+
+-   **version**: ^0.24.2
+-   **description**: used for libp2p kad dht initialisation
+
+##### [libp2p-mplex](https://www.npmjs.com/package/libp2p-mplex)
+
+-   **version**: ^0.10.7
+-   **description**: used for libp2p mplex initialisation
+
+##### [libp2p-noise](https://www.npmjs.com/package/libp2p-noise)
+
+-   **version**: ^4.0.0
+-   **description**: used for libp2p message encription
+
+##### [libp2p-tcp](https://www.npmjs.com/package/libp2p-tcp)
+
+-   **version**: ^0.17.2
+-   **description**: used for libp2p tcp communication
+
+##### [minimist](https://www.npmjs.com/package/minimist)
+
+-   **version**: ^1.2.7
+-   **description**: used to parse process arguments
 
 ##### [ms](https://www.npmjs.com/package/ms)
 
 -   **version**: ^2.1.3
 -   **description**: convert expiration time to milliseconds in `token-generation.js`
 
-##### [multiformats](https://www.npmjs.com/package/multiformats)
-
--   **version**: ^9.8.1
--   **description**: calculate sha256 hash of peerIds (libp2p find nodes operation)
-
 ##### [mysql2](https://www.npmjs.com/package/mysql2)
 
 -   **version**: ^2.3.3
 -   **description**:
+
+##### [peer-id](https://www.npmjs.com/package/peer-id)
+
+-   **version**: ^0.15.3
+-   **description**: used to create network id
 
 ##### [pino](https://www.npmjs.com/package/pino)
 
@@ -346,23 +301,13 @@
 
 ##### [sequelize](https://www.npmjs.com/package/sequelize)
 
--   **version**: ^6.21.4
+-   **version**: ^6.29.0
 -   **description**: used to communicate with sql repository
 
 ##### [timeout-abort-controller](https://www.npmjs.com/package/timeout-abort-controller)
 
 -   **version**: ^3.0.0
 -   **description**: timeout network messages
-
-
-##### [multiformats](https://www.npmjs.com/package/multiformats)
-
--   **version**: ^9.8.1
--   **description**: calculate sha256 hash of peerIds (libp2p find nodes operation)
-
-##### [mysql2](https://www.npmjs.com/package/mysql2)
--   **version**: ^2.3.3
--   **description**:
 
 ##### [toobusy-js](https://www.npmjs.com/package/toobusy-js)
 
@@ -388,8 +333,3 @@
 
 -   **version**: ^8.3.2
 -   **description**: uuid generation
-
-##### [workerpool](https://www.npmjs.com/package/workerpool)
-
--   **version**: ^6.2.1
--   **description**: offload cpu intensive work
