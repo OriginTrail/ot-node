@@ -402,39 +402,32 @@ class BlockchainEventListenerService {
             assertion.replace('assertion:', ''),
         );
 
+        // event already handled
+        if (storedAssertionIds.includes(assertionId)) {
+            return;
+        }
+
         // move old assertions to history repository
         await Promise.all(
-            storedAssertionIds
-                .filter((storedAssertionId) => storedAssertionId !== assertionId)
-                .map((storedAssertionId) =>
-                    this.tripleStoreService.moveAsset(
-                        currentRepository,
-                        historyRepository,
-                        storedAssertionId,
-                        blockchain,
-                        contract,
-                        tokenId,
-                        keyword,
-                    ),
+            storedAssertionIds.map((storedAssertionId) =>
+                this.tripleStoreService.moveAsset(
+                    currentRepository,
+                    historyRepository,
+                    storedAssertionId,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    keyword,
                 ),
+            ),
         );
 
-        if (storedAssertionIds.includes(assertionId)) {
-            await this.tripleStoreService.deleteAssetAssertionLinks(
-                currentRepository,
-                blockchain,
-                contract,
-                tokenId,
-                storedAssertionIds.filter((storedAssertionId) => storedAssertionId !== assertionId),
-            );
-        } else {
-            await this.tripleStoreService.deleteAssetMetadata(
-                currentRepository,
-                blockchain,
-                contract,
-                tokenId,
-            );
-        }
+        await this.tripleStoreService.deleteAssetMetadata(
+            currentRepository,
+            blockchain,
+            contract,
+            tokenId,
+        );
 
         const cachedData = await this.pendingStorageService.getCachedAssertion(
             pendingRepository,

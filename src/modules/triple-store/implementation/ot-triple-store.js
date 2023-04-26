@@ -111,24 +111,6 @@ class OtTripleStore {
         return this.queryVoid(repository, query);
     }
 
-    async deleteAssetAssertionLinks(repository, ual, assertionIds) {
-        const query = `PREFIX schema: ${SCHEMA_CONTEXT}
-                        WITH <assets:graph>
-                        DELETE {
-                            ${ual} schema:assertion ?assertion .
-                        }
-                        WHERE {
-                            VALUES ?o {
-                                ${assertionIds
-                                    .map((assertionId) => `<assertion:${assertionId}>`)
-                                    .join('\n')}
-                            }
-                            ${ual} schema:assertion ?assertion .
-                        }`;
-
-        return this.queryVoid(repository, query);
-    }
-
     async countAssetsWithAssertionId(repository, assertionId) {
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
                     SELECT (COUNT(DISTINCT ?ual) as ?count)
