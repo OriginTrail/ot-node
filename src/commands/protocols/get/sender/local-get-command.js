@@ -11,6 +11,7 @@ class LocalGetCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
+        this.operationService = ctx.getService;
         this.operationIdService = ctx.operationIdService;
         this.tripleStoreService = ctx.tripleStoreService;
         this.pendingStorageService = ctx.pendingStorageService;
@@ -73,19 +74,11 @@ class LocalGetCommand extends Command {
         }
 
         if (response?.assertion?.length) {
-            await this.operationIdService.cacheOperationIdData(operationId, response);
-            await this.operationIdService.updateOperationIdStatus(
-                operationId,
+            await this.operationService.markOperationAsCompleted(operationId, response, [
                 OPERATION_ID_STATUS.GET.GET_LOCAL_END,
-            );
-            await this.operationIdService.updateOperationIdStatus(
-                operationId,
                 OPERATION_ID_STATUS.GET.GET_END,
-            );
-            await this.operationIdService.updateOperationIdStatus(
-                operationId,
                 OPERATION_ID_STATUS.COMPLETED,
-            );
+            ]);
 
             return Command.empty();
         }
@@ -96,6 +89,10 @@ class LocalGetCommand extends Command {
         );
 
         return this.continueSequence(command.data, command.sequence);
+    }
+
+    async handleError(operationId, errorMessage, errorType) {
+        await this.operationService.markOperationAsFailed(operationId, errorMessage, errorType);
     }
 
     /**
