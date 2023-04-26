@@ -123,6 +123,16 @@ class SequelizeRepository {
         });
     }
 
+    async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
+        await this.models.service_agreements.destroy({
+            where: {
+                blockchain_id: blockchainId,
+                asset_storage_contract_address: contract,
+                token_id: tokenId,
+            },
+        });
+    }
+
     async updateAttemptedCommitCommandRecord(
         blockchainId,
         contract,

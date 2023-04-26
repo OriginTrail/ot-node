@@ -43,6 +43,16 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
+        if (this.initialized) {
+            return this.getImplementation().module.removeServiceAgreementRecord(
+                blockchainId,
+                contract,
+                tokenId,
+            );
+        }
+    }
+
     async updateAttemptedCommitCommandRecord(
         blockchainId,
         contract,

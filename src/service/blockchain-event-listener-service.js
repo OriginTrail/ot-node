@@ -450,6 +450,30 @@ class BlockchainEventListenerService {
                     keyword,
                 ),
             );
+
+            if (
+                currentRepository === TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT &&
+                cachedData.agreementId &&
+                cachedData.agreementData
+            ) {
+                await this.repositoryModuleManager.updateServiceAgreementRecord(
+                    blockchain,
+                    contract,
+                    tokenId,
+                    cachedData.agreementId,
+                    cachedData.agreementData.startTime,
+                    cachedData.agreementData.epochsNumber,
+                    cachedData.agreementData.epochLength,
+                    cachedData.agreementData.scoreFunctionId,
+                    cachedData.agreementData.proofWindowOffsetPerc,
+                );
+            }
+        } else if (currentRepository === TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT) {
+            await this.repositoryModuleManager.removeServiceAgreementRecord(
+                blockchain,
+                contract,
+                tokenId,
+            );
         }
 
         if (cachedData?.private?.assertion && cachedData?.private?.assertionId) {
