@@ -5,6 +5,9 @@ import { readFile } from 'fs/promises';
 import { exec } from 'child_process';
 
 const Hub = JSON.parse((await readFile('node_modules/dkg-evm-module/abi/Hub.json')).toString());
+const HubController = JSON.parse(
+    (await readFile('node_modules/dkg-evm-module/abi/HubController.json')).toString(),
+);
 const ParametersStorage = JSON.parse(
     (await readFile('node_modules/dkg-evm-module/abi/ParametersStorage.json')).toString(),
 );
@@ -67,20 +70,26 @@ class LocalBlockchain {
             privateKey,
         }));
 
-
         const wallet = new ethers.Wallet(this.wallets[0].privateKey, this.provider);
         this.hubContract = new ethers.Contract(hubContractAddress, Hub, wallet);
 
         await this.provider.ready;
+        const hubControllerAddress = await this.hubContract.owner();
+        this.HubControllerContract = new ethers.Contract(
+            hubControllerAddress,
+            HubController,
+            wallet,
+        );
+
         const parametersStorageAddress = await this.hubContract.getContractAddress(
             'ParametersStorage',
         );
-        this.ParametersStorageContract = new ethers.Contract(
+        this.ParametersStorageInterface = new ethers.utils.Interface(ParametersStorage);
+
+        await this.setParametersStorageParams(
             parametersStorageAddress,
-            ParametersStorage,
-            wallet,
+            testParametersStorageParams,
         );
-        await this.setParametersStorageParams(testParametersStorageParams);
     }
 
     stop() {
@@ -91,31 +100,37 @@ class LocalBlockchain {
         return this.wallets;
     }
 
-    async setParametersStorageParams(params) {
+    async setParametersStorageParams(parametersStorageAddress, params) {
         for (const parameter of Object.keys(params)) {
             const blockchainMethodName = `set${
                 parameter.charAt(0).toUpperCase() + parameter.slice(1)
             }`;
             console.log(`Setting ${parameter} in parameters storage to: ${params[parameter]}`);
+            const encodedData = this.ParametersStorageInterface.encodeFunctionData(
+                blockchainMethodName,
+                [params[parameter]],
+            );
             // eslint-disable-next-line no-await-in-loop
-            await this.ParametersStorageContract[blockchainMethodName](params[parameter], {
-                gasLimit: 100000,
-            });
+            await this.HubControllerContract.forwardCall(parametersStorageAddress, encodedData);
         }
     }
 
     async setR1(R1) {
         console.log(`Setting R1 in parameters storage to: ${R1}`);
-        await this.ParametersStorageContract.setR1(R1, {
-            gasLimit: 100000,
-        });
+        const encodedData = this.ParametersStorageInterface.encodeFunctionData('setR1', [R1]);
+        const parametersStorageAddress = await this.hubContract.getContractAddress(
+            'ParametersStorage',
+        );
+        await this.HubControllerContract.forwardCall(parametersStorageAddress, encodedData);
     }
 
     async setR0(R0) {
         console.log(`Setting R0 in parameters storage to: ${R0}`);
-        await this.ParametersStorageContract.setR0(R0, {
-            gasLimit: 100000,
-        });
+        const encodedData = this.ParametersStorageInterface.encodeFunctionData('setR0', [R0]);
+        const parametersStorageAddress = await this.hubContract.getContractAddress(
+            'ParametersStorage',
+        );
+        await this.HubControllerContract.forwardCall(parametersStorageAddress, encodedData);
     }
 }
 
