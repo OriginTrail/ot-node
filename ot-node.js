@@ -59,7 +59,7 @@ class OTNode {
 
         await this.initializeShardingTableService();
         await this.initializeTelemetryInjectionService();
-        this.initializeBlockchainEventListenerService();
+        await this.initializeBlockchainEventListenerService();
 
         await this.initializeCommandExecutor();
         await this.initializeRouters();
@@ -140,10 +140,11 @@ class OTNode {
         this.logger.info('Event emitter initialized');
     }
 
-    initializeBlockchainEventListenerService() {
+    async initializeBlockchainEventListenerService() {
         try {
             const eventListenerService = this.container.resolve('blockchainEventListenerService');
-            eventListenerService.initialize();
+            await eventListenerService.initialize();
+            eventListenerService.startListeningOnEvents();
             this.logger.info('Event Listener Service initialized successfully');
         } catch (error) {
             this.logger.error(
