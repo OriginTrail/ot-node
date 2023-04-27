@@ -243,9 +243,9 @@ class TripleStoreMetadataMigration extends BaseMigration {
 
         for (let i = 0; i < assetsQueryResult.length; i += 1) {
             const { ual } = assetsQueryResult[i];
-            const { blockchain } = this.ualService.resolveUAL(ual);
+            const { contract } = this.ualService.resolveUAL(ual);
 
-            contractTriples += `<${ual}> schema:blockchain "${blockchain}" . \n`;
+            contractTriples += `<${ual}> schema:contract "${contract}" . \n`;
             if (i % 10_000 === 0) {
                 await insertContractTriples();
                 contractTriples = '';
