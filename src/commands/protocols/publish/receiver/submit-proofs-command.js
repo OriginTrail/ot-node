@@ -4,6 +4,7 @@ import {
     ERROR_TYPE,
     COMMAND_RETRIES,
     BLOCK_TIME,
+    ATTEMPTED_PROOF_COMMAND_STATUS,
 } from '../../../../constants/constants.js';
 
 class SubmitProofsCommand extends EpochCommand {
@@ -12,6 +13,7 @@ class SubmitProofsCommand extends EpochCommand {
 
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.operationIdService = ctx.operationIdService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.SUBMIT_PROOFS_ERROR;
     }
@@ -94,6 +96,15 @@ class SubmitProofsCommand extends EpochCommand {
                                 COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
                             }`,
                     );
+                    await that.repositoryModuleManager.updateAttemptedProofCommandRecord(
+                        blockchain,
+                        contract,
+                        tokenId,
+                        agreementId,
+                        epoch,
+                        ATTEMPTED_PROOF_COMMAND_STATUS.COMPLETED,
+                    );
+
                     that.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
                         operationId,

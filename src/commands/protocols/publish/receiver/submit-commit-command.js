@@ -4,6 +4,7 @@ import {
     ERROR_TYPE,
     COMMAND_RETRIES,
     BLOCK_TIME,
+    ATTEMPTED_COMMIT_COMMAND_STATUS,
 } from '../../../../constants/constants.js';
 
 class SubmitCommitCommand extends EpochCommand {
@@ -15,6 +16,7 @@ class SubmitCommitCommand extends EpochCommand {
         this.operationIdService = ctx.operationIdService;
         this.shardingTableService = ctx.shardingTableService;
         this.networkModuleManager = ctx.networkModuleManager;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.SUBMIT_COMMIT_ERROR;
     }
@@ -115,6 +117,23 @@ class SubmitCommitCommand extends EpochCommand {
             stateIndex,
             async (result) => {
                 if (!result.error) {
+                    that.logger.trace(
+                        `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
+                            `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
+                            `hash function id: ${hashFunctionId}. Retry number ${
+                                COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1
+                            }`,
+                    );
+
+                    await that.repositoryModuleManager.updateAttemptedCommitCommandRecord(
+                        blockchain,
+                        contract,
+                        tokenId,
+                        agreementId,
+                        epoch,
+                        ATTEMPTED_COMMIT_COMMAND_STATUS.COMPLETED,
+                    );
+
                     const currentEpochStartTime =
                         Number(agreementData.startTime) + Number(agreementData.epochLength) * epoch;
 
