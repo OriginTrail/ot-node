@@ -43,7 +43,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
         } else {
             migrationInfo = {
                 status: 'IN_PROGRESS',
-                uals: {},
+                processedUals: {},
                 deletedAssertions: [],
             };
         }
@@ -91,7 +91,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
             migrationInfo = {
                 status: 'IN_PROGRESS',
                 ualsToProcess: assetsQueryResult.map(({ ual }) => ual),
-                uals: {},
+                processedUals: {},
                 deletedAssertions: [],
             };
         }
@@ -102,7 +102,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
         for (let i = 0; i < ualsToProcess.length; i += 1) {
             this._logPercentage(i, ualsToProcess.length, currentRepository);
             const ual = ualsToProcess[i];
-            if (!migrationInfo.uals[ual]) migrationInfo.uals[ual] = {};
+            if (!migrationInfo.processedUals[ual]) migrationInfo.processedUals[ual] = {};
             const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
 
             let assertionIds;
@@ -112,7 +112,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
                     contract,
                     tokenId,
                 );
-                migrationInfo.uals[ual].assertionIds = assertionIds;
+                migrationInfo.processedUals[ual].assertionIds = assertionIds;
             } catch (error) {
                 this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
                 migrationInfo.ualsToProcess.splice(i, 1);
@@ -159,7 +159,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
             migrationInfo.ualsToProcess.splice(i, 1);
             await this._updateMigrationInfoFile(currentRepository, migrationInfo);
         }
-        await this.deleteUnlinkedAssertions(currentRepository);
+        await this.deleteUnlinkedAssertions(currentRepository, migrationInfo);
 
         await this._logMetadataStats(currentRepository);
 
@@ -198,12 +198,12 @@ class TripleStoreMetadataMigration extends BaseMigration {
             if (i % 10_000 === 0) {
                 await this.insertMetadataTriples(repository, triples);
                 for (const processedAsset of processedAssets) {
-                    if (!migrationInfoCopy.uals[processedAsset.ual])
-                        migrationInfoCopy.uals[processedAsset.ual] = {
+                    if (!migrationInfoCopy.processedUals[processedAsset.ual])
+                        migrationInfoCopy.processedUals[processedAsset.ual] = {
                             blockchain: processedAsset.blockchain,
                         };
                     else
-                        migrationInfoCopy.uals[processedAsset.ual].blockchain =
+                        migrationInfoCopy.processedUals[processedAsset.ual].blockchain =
                             processedAsset.blockchain;
                 }
                 await this._updateMigrationInfoFile(repository, migrationInfoCopy);
@@ -246,12 +246,12 @@ class TripleStoreMetadataMigration extends BaseMigration {
             if (i % 10_000 === 0) {
                 await this.insertMetadataTriples(repository, triples);
                 for (const processedAsset of processedAssets) {
-                    if (!migrationInfoCopy.uals[processedAsset.ual])
-                        migrationInfoCopy.uals[processedAsset.ual] = {
+                    if (!migrationInfoCopy.processedUals[processedAsset.ual])
+                        migrationInfoCopy.processedUals[processedAsset.ual] = {
                             contract: processedAsset.contract,
                         };
                     else
-                        migrationInfoCopy.uals[processedAsset.ual].contract =
+                        migrationInfoCopy.processedUals[processedAsset.ual].contract =
                             processedAsset.contract;
                 }
                 await this._updateMigrationInfoFile(repository, migrationInfoCopy);
@@ -314,9 +314,13 @@ class TripleStoreMetadataMigration extends BaseMigration {
         }
 
         for (const processedAsset of processedAssets) {
-            if (!migrationInfoCopy.uals[processedAsset.ual])
-                migrationInfoCopy.uals[processedAsset.ual] = { keyword: processedAsset.keyword };
-            else migrationInfoCopy.uals[processedAsset.ual].keyword = processedAsset.keyword;
+            if (!migrationInfoCopy.processedUals[processedAsset.ual])
+                migrationInfoCopy.processedUals[processedAsset.ual] = {
+                    keyword: processedAsset.keyword,
+                };
+            else
+                migrationInfoCopy.processedUals[processedAsset.ual].keyword =
+                    processedAsset.keyword;
         }
         await this.insertMetadataTriples(repository, triples);
         await this._updateMigrationInfoFile(repository, migrationInfoCopy);
@@ -355,7 +359,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
 
         let migrationInfoCopy = migrationInfo;
         for (const { ual } of assetsQueryResult) {
-            if (!migrationInfoCopy.uals[ual]) migrationInfoCopy.uals[ual] = {};
+            if (!migrationInfoCopy.processedUals[ual]) migrationInfoCopy.processedUals[ual] = {};
             const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
 
             let assertionIds;
@@ -365,7 +369,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
                     contract,
                     tokenId,
                 );
-                migrationInfoCopy.uals[ual].assertionIds = assertionIds;
+                migrationInfoCopy.processedUals[ual].assertionIds = assertionIds;
             } catch (error) {
                 this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
                 continue;
@@ -438,10 +442,10 @@ class TripleStoreMetadataMigration extends BaseMigration {
                     tokenId,
                     keyword,
                 );
-                if (!migrationInfoCopy.uals[ual].copiedHistory) {
-                    migrationInfoCopy.uals[ual].copiedHistory = [];
+                if (!migrationInfoCopy.processedUals[ual].copiedHistory) {
+                    migrationInfoCopy.processedUals[ual].copiedHistory = [];
                 }
-                migrationInfoCopy.uals[ual].copiedHistory.push({
+                migrationInfoCopy.processedUals[ual].copiedHistory.push({
                     stateIndex: i,
                     publicAssertionId,
                     publicAssertion,
@@ -468,7 +472,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
                                 tokenId,
                                 keyword,
                             );
-                            migrationInfoCopy.uals[ual].copiedHistory.push({
+                            migrationInfoCopy.processedUals[ual].copiedHistory.push({
                                 stateIndex: i,
                                 privateAssertionId,
                                 privateAssertion,
@@ -538,10 +542,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
                         }
                     }`,
             );
-            if (!migrationInfoCopy.uals[ual].upddatedMetadata) {
-                migrationInfoCopy.uals[ual].upddatedMetadata = assetMetadata;
-            }
-            await this._updateMigrationInfoFile(currentRepository, migrationInfoCopy);
+            migrationInfoCopy.processedUals[ual].upddatedMetadata = true;
         } else {
             await this.tripleStoreService.deleteAssetMetadata(
                 currentRepository,
@@ -549,15 +550,18 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 contract,
                 tokenId,
             );
-            migrationInfoCopy.uals[ual].deletedMetadata = true;
-            await this._updateMigrationInfoFile(currentRepository, migrationInfoCopy);
+            migrationInfoCopy.processedUals[ual].deletedMetadata = true;
         }
+
+        await this._updateMigrationInfoFile(currentRepository, migrationInfoCopy);
+
+        return migrationInfoCopy;
     }
 
     async deleteUnlinkedAssertions(repository, migrationInfo) {
-        const assetsQueryResult = await this.tripleStoreService.queryVoid(
+        const assetsQueryResult = await this.tripleStoreService.select(
             repository,
-            `PREFIX schema: <http://schema.org/>
+            `PREFIX schema: <${SCHEMA_CONTEXT}>
 
             SELECT DISTINCT ?g WHERE {
                 GRAPH ?g { ?s ?p ?o . }
@@ -569,11 +573,11 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 FILTER (?g != <assets:graph>)
             }`,
         );
-
         let deleteQuery = '';
         const migrationInfoCopy = migrationInfo;
         if (!migrationInfoCopy.deletedAssertions) migrationInfoCopy.deletedAssertions = [];
         for (const { g } of assetsQueryResult) {
+            console.log(g);
             deleteQuery += `
                 WITH <${g}>
                 DELETE { ?s ?p ?o }
@@ -581,7 +585,9 @@ class TripleStoreMetadataMigration extends BaseMigration {
             migrationInfoCopy.deletedAssertions.push(g);
         }
 
-        await this.tripleStoreService.queryVoid(repository, deleteQuery);
+        if (deleteQuery !== '') {
+            await this.tripleStoreService.queryVoid(repository, deleteQuery);
+        }
         await this._updateMigrationInfoFile(repository, migrationInfoCopy);
         return migrationInfoCopy;
     }
