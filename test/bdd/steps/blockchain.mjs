@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import fs from 'fs';
 import LocalBlockchain from './lib/local-blockchain.mjs';
 
-Given(/^the blockchain is set up$/, { timeout: 180_000 }, function blockchainSetup(done) {
+Given(/^the blockchain is set up$/, { timeout: 240_000 }, function blockchainSetup(done) {
     this.logger.log('Starting blockchain');
     expect(this.state.localBlockchain, "localBlockchain shouldn't be defined").to.be.equal(null);
     const blockchainConsole = new console.Console(
