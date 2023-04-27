@@ -59,7 +59,7 @@ class OTNode {
 
         await this.initializeShardingTableService();
         await this.initializeTelemetryInjectionService();
-        this.initializeBlockchainEventListenerService();
+        await this.initializeBlockchainEventListenerService();
 
         await this.initializeCommandExecutor();
         await this.initializeRouters();
