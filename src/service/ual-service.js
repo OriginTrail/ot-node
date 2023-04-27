@@ -28,7 +28,7 @@ class UALService {
         const parts = ual.replace('did:', '').replace('dkg:', '').split('/');
         if (parts.length === 3) {
             const contract = parts[1];
-            if (this.isContract(contract)) {
+            if (!this.isContract(contract)) {
                 throw new Error(`Invalid contract format: ${contract}`);
             }
             return { blockchain: parts[0], contract, tokenId: Number(parts[2]) };
@@ -36,7 +36,7 @@ class UALService {
         if (parts.length === 2) {
             const parts2 = parts[0].split(':');
             const contract = parts2[1];
-            if (this.isContract(contract)) {
+            if (!this.isContract(contract)) {
                 throw new Error(`Invalid contract format: ${contract}`);
             }
             return { blockchain: parts2[0], contract, tokenId: Number(parts[1]) };
