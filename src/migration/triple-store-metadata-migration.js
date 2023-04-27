@@ -103,7 +103,16 @@ class TripleStoreMetadataMigration extends BaseMigration {
             this._logPercentage(i, ualsToProcess.length, currentRepository);
             const ual = ualsToProcess[i];
             if (!migrationInfo.processedUals[ual]) migrationInfo.processedUals[ual] = {};
-            const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
+
+            let resolvedUAL;
+            try {
+                resolvedUAL = this.ualService.resolveUAL(ual);
+            } catch (error) {
+                this.logger.warn(`Unable to resolve UAL: ${error}`);
+                continue;
+            }
+
+            const { blockchain, contract, tokenId } = resolvedUAL;
 
             let assertionIds;
             try {
@@ -191,7 +200,15 @@ class TripleStoreMetadataMigration extends BaseMigration {
         const migrationInfoCopy = migrationInfo;
         for (let i = 0; i < assetsQueryResult.length; i += 1) {
             const { ual } = assetsQueryResult[i];
-            const { blockchain } = this.ualService.resolveUAL(ual);
+            let resolvedUAL;
+            try {
+                resolvedUAL = this.ualService.resolveUAL(ual);
+            } catch (error) {
+                this.logger.warn(`Unable to resolve UAL: ${error}`);
+                continue;
+            }
+
+            const { blockchain } = resolvedUAL;
 
             triples += `<${ual}> schema:blockchain "${blockchain}" . \n`;
             processedAssets.push({ ual, blockchain });
@@ -239,7 +256,15 @@ class TripleStoreMetadataMigration extends BaseMigration {
         const migrationInfoCopy = migrationInfo;
         for (let i = 0; i < assetsQueryResult.length; i += 1) {
             const { ual } = assetsQueryResult[i];
-            const { contract } = this.ualService.resolveUAL(ual);
+            let resolvedUAL;
+            try {
+                resolvedUAL = this.ualService.resolveUAL(ual);
+            } catch (error) {
+                this.logger.warn(`Unable to resolve UAL: ${error}`);
+                continue;
+            }
+
+            const { contract } = resolvedUAL;
 
             triples += `<${ual}> schema:contract "${contract}" . \n`;
             processedAssets.push({ ual, contract });
@@ -284,7 +309,15 @@ class TripleStoreMetadataMigration extends BaseMigration {
         const processedAssets = [];
         const migrationInfoCopy = migrationInfo;
         for (const { ual } of assetsQueryResult) {
-            const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
+            let resolvedUAL;
+            try {
+                resolvedUAL = this.ualService.resolveUAL(ual);
+            } catch (error) {
+                this.logger.warn(`Unable to resolve UAL: ${error}`);
+                continue;
+            }
+
+            const { blockchain, contract, tokenId } = resolvedUAL;
 
             let assertionIds;
             try {
@@ -360,7 +393,15 @@ class TripleStoreMetadataMigration extends BaseMigration {
         let migrationInfoCopy = migrationInfo;
         for (const { ual } of assetsQueryResult) {
             if (!migrationInfoCopy.processedUals[ual]) migrationInfoCopy.processedUals[ual] = {};
-            const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
+            let resolvedUAL;
+            try {
+                resolvedUAL = this.ualService.resolveUAL(ual);
+            } catch (error) {
+                this.logger.warn(`Unable to resolve UAL: ${error}`);
+                continue;
+            }
+
+            const { blockchain, contract, tokenId } = resolvedUAL;
 
             let assertionIds;
             try {
