@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
-    const attemptedProofCommands = sequelize.define(
-        'attempted_proof_commands',
+    const attemptedCommitCommand = sequelize.define(
+        'attempted_commit_command',
         {
             blockchain_id: {
                 type: DataTypes.STRING,
@@ -32,8 +32,8 @@ export default (sequelize, DataTypes) => {
         },
         {},
     );
-    attemptedProofCommands.associate = () => {
+    attemptedCommitCommand.associate = () => {
         // associations can be defined here
     };
-    return attemptedProofCommands;
+    return attemptedCommitCommand;
 };

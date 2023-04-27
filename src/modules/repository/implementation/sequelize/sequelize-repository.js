@@ -110,7 +110,7 @@ class SequelizeRepository {
         scoreFunctionId,
         proofWindowOffsetPerc,
     ) {
-        await this.models.service_agreements.upsert({
+        await this.models.service_agreement.upsert({
             blockchain_id: blockchainId,
             asset_storage_contract_address: contract,
             token_id: tokenId,
@@ -124,7 +124,7 @@ class SequelizeRepository {
     }
 
     async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
-        await this.models.service_agreements.destroy({
+        await this.models.service_agreement.destroy({
             where: {
                 blockchain_id: blockchainId,
                 asset_storage_contract_address: contract,
@@ -142,7 +142,7 @@ class SequelizeRepository {
         status,
         txHash,
     ) {
-        await this.models.attempted_commit_commands.upsert({
+        await this.models.attempted_commit_command.upsert({
             blockchain_id: blockchainId,
             asset_storage_contract_address: contract,
             token_id: tokenId,
@@ -162,7 +162,7 @@ class SequelizeRepository {
         status,
         txHash,
     ) {
-        await this.models.attempted_proof_commands.upsert({
+        await this.models.attempted_proof_command.upsert({
             blockchain_id: blockchainId,
             asset_storage_contract_address: contract,
             token_id: tokenId,

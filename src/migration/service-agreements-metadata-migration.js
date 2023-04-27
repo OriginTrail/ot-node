@@ -84,7 +84,7 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
             agreementId,
         );
 
-        // store in service_agreements table
+        // store in service_agreement table
         await this.repositoryModuleManager.updateServiceAgreementRecord(
             blockchain,
             contract,

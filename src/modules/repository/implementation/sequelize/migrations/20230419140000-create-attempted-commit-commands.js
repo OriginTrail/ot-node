@@ -1,5 +1,5 @@
 export const up = async ({ context: { queryInterface, Sequelize } }) => {
-    await queryInterface.createTable('attempted_commit_commands', {
+    await queryInterface.createTable('attempted_commit_command', {
         blockchain_id: {
             type: Sequelize.STRING,
             primaryKey: true,
@@ -31,5 +31,5 @@ export const up = async ({ context: { queryInterface, Sequelize } }) => {
 };
 
 export const down = async ({ context: { queryInterface } }) => {
-    await queryInterface.dropTable('attempted_commit_commands');
+    await queryInterface.dropTable('attempted_commit_command');
 };

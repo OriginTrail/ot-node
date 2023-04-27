@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
-    const attemptedCommitCommands = sequelize.define(
-        'attempted_commit_commands',
+    const serviceAgreements = sequelize.define(
+        'service_agreement',
         {
             blockchain_id: {
                 type: DataTypes.STRING,
@@ -18,22 +18,31 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 primaryKey: true,
             },
-            epoch: {
-                type: DataTypes.SMALLINT.UNSIGNED,
-                primaryKey: true,
-            },
-            status: {
-                type: DataTypes.STRING,
+            start_time: {
+                type: DataTypes.INTEGER.UNSIGNED,
                 allowNull: false,
             },
-            tx_hash: {
-                type: DataTypes.STRING,
+            epochs_number: {
+                type: DataTypes.SMALLINT.UNSIGNED,
+                allowNull: false,
+            },
+            epoch_length: {
+                type: DataTypes.INTEGER.UNSIGNED,
+                allowNull: false,
+            },
+            score_function_id: {
+                type: DataTypes.TINYINT.UNSIGNED,
+                allowNull: false,
+            },
+            proof_window_offset_perc: {
+                type: DataTypes.TINYINT.UNSIGNED,
+                allowNull: false,
             },
         },
         {},
     );
-    attemptedCommitCommands.associate = () => {
+    serviceAgreements.associate = () => {
         // associations can be defined here
     };
-    return attemptedCommitCommands;
+    return serviceAgreements;
 };
