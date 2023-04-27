@@ -45,6 +45,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
         await this.updateContractMetadata(currentRepository);
         await this.updateKeywordMetadata(currentRepository);
         await this.updateAssertionMetadata(currentRepository, historyRepository);
+        await this.deleteUnlinkedAssertions(currentRepository);
 
         await this._logMetadataStats(currentRepository);
 
@@ -153,6 +154,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 JSON.stringify(migrationInfo),
             );
         }
+        await this.deleteUnlinkedAssertions(currentRepository);
 
         migrationInfo.status = 'COMPLETED';
         await this.fileService.writeContentsToFile(
@@ -496,6 +498,33 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 tokenId,
             );
         }
+    }
+
+    async deleteUnlinkedAssertions(repository) {
+        const assetsQueryResult = await this.tripleStoreService.queryVoid(
+            repository,
+            `PREFIX schema: <http://schema.org/>
+
+            SELECT DISTINCT ?g WHERE {
+                GRAPH ?g { ?s ?p ?o . }
+                FILTER NOT EXISTS {
+                    GRAPH <assets:graph> {
+                        ?ual schema:assertion ?g .
+                    }
+                }
+                FILTER (?g != <assets:graph>)
+            }`,
+        );
+
+        let deleteQuery = '';
+        for (const { g } of assetsQueryResult) {
+            deleteQuery += `
+                WITH <${g}>
+                DELETE { ?s ?p ?o }
+                WHERE { ?s ?p ?o };`;
+        }
+
+        await this.tripleStoreService.queryVoid(repository, deleteQuery);
     }
 
     async _logMetadataStats(repository) {
