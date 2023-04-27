@@ -417,6 +417,12 @@ class RepositoryModuleManager extends BaseModuleManager {
             );
         }
     }
+
+    async getEligibleSubmitCommits() {
+        if (this.initialized) {
+            return this.getImplementation().module.getEligibleSubmitCommits();
+        }
+    }
 }
 
 export default RepositoryModuleManager;

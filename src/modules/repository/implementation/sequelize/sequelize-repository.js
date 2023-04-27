@@ -612,13 +612,8 @@ class SequelizeRepository {
         );
     }
 
-    async removeBlockchainEvents(contractName) {
-        return this.models.blockchain_event.destroy({
-            where: {
-                contract: contractName,
-            },
-        });
-    }
+    // eslint-disable-next-line no-empty-function
+    async getEligibleSubmitCommits() {}
 }
 
 export default SequelizeRepository;
