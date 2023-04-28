@@ -418,9 +418,9 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async getEligibleSubmitCommits() {
+    async getEligibleAgreementsForSubmitCommits() {
         if (this.initialized) {
-            return this.getImplementation().module.getEligibleSubmitCommits();
+            return this.getImplementation().module.getEligibleAgreementsForSubmitCommits();
         }
     }
 }

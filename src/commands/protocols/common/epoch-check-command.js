@@ -9,11 +9,13 @@ class EpochCheckCommand extends Command {
 
     async execute() {
         // get submit commit eligible
-        this.repositoryModuleManager.getEligibleSubmitCommits();
+        this.repositoryModuleManager.getEligibleAgreementsForSubmitCommits();
         // returns array of agreement data
         // schedule commands
         // get submit proofs
         // schedule commands
+
+        return Command.repeat();
     }
 
     /**
@@ -24,15 +26,11 @@ class EpochCheckCommand extends Command {
     async recover(command, error) {
         this.logger.warn(`Failed to execute ${command.name}: error: ${error.message}`);
 
-        return Command.empty();
-    }
-
-    async retryFinished(command) {
-        this.recover(command, `Max retry count for command: ${command.name} reached!`);
+        return Command.repeat();
     }
 
     /**
-     * Builds default epochCommand
+     * Builds default epochCheckCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

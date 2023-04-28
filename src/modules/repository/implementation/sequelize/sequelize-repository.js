@@ -612,8 +612,33 @@ class SequelizeRepository {
         );
     }
 
-    // eslint-disable-next-line no-empty-function
-    async getEligibleSubmitCommits() {}
+    getEligibleAgreementsForSubmitCommits() {
+        return this.models.serviceAgreement.findAll({
+            where: {
+                agreement_id: {
+                    [Sequelize.Op.in]: this.sequelize.literal(`
+                        SELECT agreement_id
+                        FROM service_agreement
+                        WHERE FLOOR((CURRENT_DATE - start_time)/epoch_length) > last_checked_epoch;
+                    `),
+                },
+            },
+        });
+    }
+
+    async getEligibleAgreementsForSubmitProof() {
+        return this.models.serviceAgreement.findAll({
+            where: {
+                agreement_id: {
+                    [Sequelize.Op.in]: this.sequelize.literal(`
+                        SELECT agreement_id
+                        FROM service_agreement
+                        WHERE FLOOR((CURRENT_DATE - start_time)/epoch_length) > last_checked_epoch;
+                    `),
+                },
+            },
+        });
+    }
 }
 
 export default SequelizeRepository;

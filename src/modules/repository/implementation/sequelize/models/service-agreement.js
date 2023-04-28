@@ -1,5 +1,5 @@
 export default (sequelize, DataTypes) => {
-    const serviceAgreements = sequelize.define(
+    const serviceAgreement = sequelize.define(
         'service_agreement',
         {
             blockchain_id: {
@@ -38,11 +38,15 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.TINYINT.UNSIGNED,
                 allowNull: false,
             },
+            last_checked_epoch: {
+                type: DataTypes.TINYINT.UNSIGNED,
+                allowNull: false,
+            },
         },
         {},
     );
-    serviceAgreements.associate = () => {
+    serviceAgreement.associate = () => {
         // associations can be defined here
     };
-    return serviceAgreements;
+    return serviceAgreement;
 };
