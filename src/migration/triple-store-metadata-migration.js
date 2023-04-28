@@ -634,55 +634,50 @@ class TripleStoreMetadataMigration extends BaseMigration {
     }
 
     async _logMetadataStats(repository) {
-        const result = await this.tripleStoreService.select(
+        const allAssetsResult = await this.tripleStoreService.select(
             repository,
             `PREFIX schema: <${SCHEMA_CONTEXT}>
 
             SELECT 
-            (COUNT(DISTINCT ?ualAll) AS ?all)
-            (COUNT(DISTINCT ?ualBlockchain) AS ?blockchain)
-            (COUNT(DISTINCT ?ualContract) AS ?contract)
-            (COUNT(DISTINCT ?ualTokenId) AS ?tokenId)
-            (COUNT(DISTINCT ?ualKeyword) AS ?keyword)
-            (COUNT(DISTINCT ?ualAssertion) AS ?assertion)
+            (COUNT(DISTINCT ?ual) AS ?all)
             WHERE {
                 GRAPH <assets:graph> {
                     {
-                        ?ualAll ?p ?o .
-                    }
-                    UNION
-                    {
-                        ?ualBlockchain schema:blockchain ?blockchain .
-                    }
-                    UNION
-                    {
-                        ?ualContract schema:contract ?contract .
-                    }
-                    UNION
-                    {
-                        ?ualTokenId schema:tokenId ?tokenId .
-                    }
-                    UNION
-                    {
-                        ?ualKeyword schema:keyword ?keyword .
-                    }
-                    UNION
-                    {
-                        ?ualAssertion schema:assertion ?assertion .
+                        ?ual ?p ?o .
                     }
                 }
             }`,
         );
-
-        const stats = this.dataService.parseBindings(result)[0];
+        let stats = this.dataService.parseBindings(allAssetsResult)[0];
 
         let log = `metadata stats for ${repository} repository: `;
-        for (const key in stats) {
-            if (key === 'all') log += `\n\t\t\t\tdistinct number of uals: ${stats.all}`;
-            else log += `\n\t\t\t\tdistinct number of uals with predicate ${key}: ${stats[key]}`;
-        }
+        log += `\n\t\t\t\tdistinct number of uals: ${stats.all}`;
 
+        const predicates = ['blockchain', 'contract', 'tokenId', 'keyword', 'assertion'];
+        for (const predicate of predicates) {
+            stats = await this._getPredicateStats(repository, predicate);
+            log += `\n\t\t\t\tdistinct number of uals with predicate ${predicate}: ${stats}`;
+        }
         this.logger.debug(log);
+    }
+
+    async _getPredicateStats(repository, predicate) {
+        const query = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+                SELECT 
+                (COUNT(DISTINCT ?ual) AS ?${predicate})
+                WHERE {
+                    GRAPH <assets:graph> {
+                        {
+                            ?ual schema:${predicate} ?${predicate} .
+                        }
+                    }
+                }`;
+
+        const result = await this.tripleStoreService.select(repository, query);
+        const stats = this.dataService.parseBindings(result)[0];
+
+        return stats[predicate];
     }
 
     _logPercentage(index, max, repository) {
