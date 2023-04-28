@@ -146,17 +146,15 @@ class SequelizeRepository {
 
     // OPERATION_ID
     async createOperationIdRecord(handlerData) {
-        const handlerRecord = await this.models.operation_ids.create(handlerData);
-        return handlerRecord;
+        return this.models.operation_ids.create(handlerData);
     }
 
     async getOperationIdRecord(operationId) {
-        const handlerRecord = await this.models.operation_ids.findOne({
+        return this.models.operation_ids.findOne({
             where: {
                 operation_id: operationId,
             },
         });
-        return handlerRecord;
     }
 
     async updateOperationIdRecord(data, operationId) {
@@ -172,15 +170,6 @@ class SequelizeRepository {
             where: {
                 timestamp: { [Sequelize.Op.lt]: timeToBeDeleted },
                 status: { [Sequelize.Op.in]: statuses },
-            },
-        });
-    }
-
-    async getNumberOfNodesFoundForPublish(publishId) {
-        return this.models.publish.findOne({
-            attributes: ['nodes_found'],
-            where: {
-                id: publishId,
             },
         });
     }
@@ -221,14 +210,6 @@ class SequelizeRepository {
         });
     }
 
-    async getNumberOfOperationResponses(operation, operationId) {
-        return this.models[`${operation}_response`].count({
-            where: {
-                operation_id: operationId,
-            },
-        });
-    }
-
     async getOperationResponsesStatuses(operation, operationId) {
         return this.models[`${operation}_response`].findAll({
             attributes: ['status', 'keyword'],
@@ -238,24 +219,24 @@ class SequelizeRepository {
         });
     }
 
-    async countOperationResponseStatuses(operation, operationId) {
-        return this.models[`${operation}_response`].findAll({
-            attributes: [
-                'status',
-                [Sequelize.fn('COUNT', Sequelize.col('status')), 'count_status'],
-            ],
-            group: 'status',
-            where: {
-                operation_id: operationId,
-            },
-        });
-    }
-
     // Sharding Table
     async createManyPeerRecords(peers) {
-        return this.models.shard.bulkCreate(peers, {
-            ignoreDuplicates: true,
-        });
+        return this._bulkUpdatePeerRecords(peers, ['ask', 'stake', 'sha256']);
+    }
+
+    async _bulkUpdatePeerRecords(peerRecords, updateColumns) {
+        return this.models.shard.bulkCreate(
+            peerRecords.map((peerRecord) => ({
+                ask: 0,
+                stake: 0,
+                sha256: '',
+                ...peerRecord,
+            })),
+            {
+                validate: true,
+                updateOnDuplicate: updateColumns,
+            },
+        );
     }
 
     async removeShardingTablePeerRecords(blockchain) {
@@ -335,32 +316,18 @@ class SequelizeRepository {
         });
     }
 
-    async updatePeerAsk(blockchainId, peerId, ask) {
-        await this.models.shard.update(
-            {
-                ask,
-            },
-            {
-                where: { peer_id: peerId, blockchain_id: blockchainId },
-            },
-        );
+    async updatePeersAsk(peerRecords) {
+        return this._bulkUpdatePeerRecords(peerRecords, ['ask']);
     }
 
-    async updatePeerStake(blockchainId, peerId, stake) {
-        await this.models.shard.update(
-            {
-                stake,
-            },
-            {
-                where: { peer_id: peerId, blockchain_id: blockchainId },
-            },
-        );
+    async updatePeersStake(peerRecords) {
+        return this._bulkUpdatePeerRecords(peerRecords, ['stake']);
     }
 
-    async updatePeerRecordLastDialed(peerId) {
+    async updatePeerRecordLastDialed(peerId, timestamp) {
         await this.models.shard.update(
             {
-                last_dialed: new Date(),
+                last_dialed: timestamp,
             },
             {
                 where: { peer_id: peerId },
@@ -368,12 +335,11 @@ class SequelizeRepository {
         );
     }
 
-    async updatePeerRecordLastSeenAndLastDialed(peerId) {
-        const now = new Date();
+    async updatePeerRecordLastSeenAndLastDialed(peerId, timestamp) {
         await this.models.shard.update(
             {
-                last_dialed: now,
-                last_seen: now,
+                last_dialed: timestamp,
+                last_seen: timestamp,
             },
             {
                 where: { peer_id: peerId },
@@ -381,26 +347,14 @@ class SequelizeRepository {
         );
     }
 
-    async removePeerRecord(blockchainId, peerId) {
+    async removePeerRecords(peerRecords) {
+        await this.models.shard.bulkDestroy(peerRecords);
+    }
+
+    async cleanShardingTable(blockchainId) {
         await this.models.shard.destroy({
-            where: {
-                peer_id: peerId,
-                blockchain_id: blockchainId,
-            },
+            where: blockchainId ? { blockchain_id: blockchainId } : {},
         });
-    }
-
-    async updatePeerLastSeen(peerId, lastSeen) {
-        await this.models.shard.update(
-            { last_seen: lastSeen },
-            {
-                where: { peer_id: peerId },
-            },
-        );
-    }
-
-    async cleanShardingTable() {
-        await this.models.shard.destroy({ where: {} });
     }
 
     async getLastCheckedBlock(blockchainId, contract) {
@@ -530,35 +484,35 @@ class SequelizeRepository {
         return abilities.map((e) => e.name);
     }
 
-    async insertBlockchainEvents(blockchainEvents) {
-        const inserted = [];
+    async query(query) {
+        return this.models.sequelize.query(query);
+    }
 
-        await Promise.all(
-            blockchainEvents.map(async (event) => {
-                const exists = await this.blockchainEventExists(
-                    event.contract,
-                    event.event,
-                    event.data,
-                    event.block,
-                    event.blockchainId,
-                );
-                if (!exists) {
-                    const insertionResult = await this.models.blockchain_event.create({
-                        contract: event.contract,
-                        event: event.event,
-                        data: event.data,
-                        block: event.block,
-                        blockchain_id: event.blockchainId,
-                        processed: 0,
-                    });
-                    if (insertionResult?.dataValues) {
-                        inserted.push(insertionResult.dataValues);
-                    }
-                }
-            }),
+    async insertBlockchainEvents(events) {
+        const inserted = await this.models.blockchain_event.bulkCreate(
+            events.map((event) => ({
+                contract: event.contract,
+                event: event.event,
+                data: event.data,
+                block: event.block,
+                blockchain_id: event.blockchainId,
+                processed: false,
+            })),
+            {
+                ignoreDuplicates: true,
+            },
         );
+        return inserted.map((event) => event.dataValues);
+    }
 
-        return inserted;
+    async getAllUnprocessedBlockchainEvents(eventNames) {
+        return this.models.blockchain_event.findAll({
+            where: {
+                processed: false,
+                event: { [Sequelize.Op.in]: eventNames },
+            },
+            order: [['block', 'asc']],
+        });
     }
 
     async blockchainEventExists(contract, event, data, block, blockchainId) {
@@ -574,33 +528,14 @@ class SequelizeRepository {
         return !!dbEvent;
     }
 
-    async markBlockchainEventAsProcessed(
-        id,
-        contract = null,
-        event = null,
-        data = null,
-        block = null,
-        blockchainId = null,
-    ) {
-        let condition;
-        if (id) {
-            condition = {
-                where: {
-                    id,
-                },
-            };
-        } else {
-            condition = {
-                where: {
-                    contract,
-                    event,
-                    data,
-                    block,
-                    blockchain_id: blockchainId,
-                },
-            };
-        }
-        return this.models.blockchain_event.update({ processed: true }, condition);
+    async markBlockchainEventsAsProcessed(events) {
+        const idsForUpdate = events.map((event) => event.id);
+        return this.models.blockchain_event.update(
+            { processed: true },
+            {
+                where: { id: { [Sequelize.Op.in]: idsForUpdate } },
+            },
+        );
     }
 
     async removeBlockchainEvents(contractName) {
@@ -608,16 +543,6 @@ class SequelizeRepository {
             where: {
                 contract: contractName,
             },
-        });
-    }
-
-    async getLastEvent(contractName, blockchainId) {
-        return this.models.blockchain_event.findOne({
-            where: {
-                contract: contractName,
-                blockchain_id: blockchainId,
-            },
-            order: [['block', 'DESC']],
         });
     }
 }
