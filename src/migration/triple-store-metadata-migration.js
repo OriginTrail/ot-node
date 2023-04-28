@@ -637,7 +637,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 repository,
                 `PREFIX schema: <${SCHEMA_CONTEXT}>
 
-                SELECT ?g WHERE {
+                SELECT DISTINCT ?g WHERE {
                     GRAPH ?g { ?s ?p ?o . }
                     FILTER NOT EXISTS {
                         GRAPH <assets:graph> {
