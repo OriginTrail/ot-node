@@ -48,6 +48,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
             };
         }
 
+        await this.deleteUnsupportedAssetsMetadata(currentRepository);
         await this._logMetadataStats(currentRepository);
 
         migrationInfo = await this.updateBlockchainMetadata(currentRepository, migrationInfo);
@@ -599,37 +600,76 @@ class TripleStoreMetadataMigration extends BaseMigration {
         return migrationInfoCopy;
     }
 
-    async deleteUnlinkedAssertions(repository, migrationInfo) {
-        const assetsQueryResult = await this.tripleStoreService.select(
-            repository,
-            `PREFIX schema: <${SCHEMA_CONTEXT}>
+    async deleteUnsupportedAssetsMetadata(repository) {
+        let assetStorageContractAddresses = [];
+        for (const blockchain of this.blockchainModuleManager.getImplementationNames()) {
+            assetStorageContractAddresses = assetStorageContractAddresses.concat(
+                await this.blockchainModuleManager.getAssetStorageContractAddresses(blockchain),
+            );
+        }
 
-            SELECT DISTINCT ?g WHERE {
-                GRAPH ?g { ?s ?p ?o . }
-                FILTER NOT EXISTS {
+        const deleteQuery = `
+                    PREFIX schema: <${SCHEMA_CONTEXT}>
+
+                    DELETE {
+                    GRAPH <assets:graph> { ?s ?p ?o . }
+                    } WHERE {
                     GRAPH <assets:graph> {
-                        ?ual schema:assertion ?g .
+                        ?s ?p ?o .
+                        ?s schema:contract ?o2 .
+                        FILTER NOT EXISTS {
+                        VALUES ?oValue { ${assetStorageContractAddresses
+                            .map((addr) => `"${addr}"`)
+                            .join(' ')} }
+                        FILTER (?o2 = ?oValue)
+                        }
                     }
-                }
-                FILTER (?g != <assets:graph>)
-            }`,
-        );
-        let deleteQuery = '';
-        const migrationInfoCopy = migrationInfo;
-        if (!migrationInfoCopy.deletedAssertions) migrationInfoCopy.deletedAssertions = [];
-        for (const { g } of assetsQueryResult) {
-            console.log(g);
-            deleteQuery += `
-                WITH <${g}>
-                DELETE { ?s ?p ?o }
-                WHERE { ?s ?p ?o };`;
-            migrationInfoCopy.deletedAssertions.push(g);
-        }
+                    }`;
 
-        if (deleteQuery !== '') {
-            await this.tripleStoreService.queryVoid(repository, deleteQuery);
-        }
-        await this._updateMigrationInfoFile(repository, migrationInfoCopy);
+        await this.tripleStoreService.queryVoid(repository, deleteQuery);
+    }
+
+    async deleteUnlinkedAssertions(repository, migrationInfo) {
+        let assetsQueryResult;
+        const migrationInfoCopy = migrationInfo;
+        do {
+            assetsQueryResult = await this.tripleStoreService.select(
+                repository,
+                `PREFIX schema: <${SCHEMA_CONTEXT}>
+
+                SELECT ?g WHERE {
+                    GRAPH ?g { ?s ?p ?o . }
+                    FILTER NOT EXISTS {
+                        GRAPH <assets:graph> {
+                            ?ual schema:assertion ?g .
+                        }
+                    }
+                    FILTER (?g != <assets:graph>)
+                }
+                LIMIT 100`,
+            );
+            if (assetsQueryResult?.length) {
+                assetsQueryResult = assetsQueryResult.filter(({ g }) => g.startsWith('assertion:'));
+            }
+            this.logger.debug(
+                `found ${assetsQueryResult.length} assertions not linked to any asset.`,
+            );
+            let deleteQuery = '';
+            if (!migrationInfoCopy.deletedAssertions) migrationInfoCopy.deletedAssertions = [];
+            for (const { g } of assetsQueryResult) {
+                deleteQuery += `
+                    WITH <${g}>
+                    DELETE { ?s ?p ?o }
+                    WHERE { ?s ?p ?o };`;
+                migrationInfoCopy.deletedAssertions.push(g);
+            }
+
+            if (deleteQuery !== '') {
+                await this.tripleStoreService.queryVoid(repository, deleteQuery);
+            }
+            await this._updateMigrationInfoFile(repository, migrationInfoCopy);
+        } while (assetsQueryResult?.length);
+
         return migrationInfoCopy;
     }
 
