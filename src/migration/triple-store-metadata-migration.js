@@ -37,7 +37,15 @@ class TripleStoreMetadataMigration extends BaseMigration {
 
         let migrationInfo;
         if (await this.fileService.fileExists(migrationInfoPath)) {
-            migrationInfo = await this.fileService._readFile(migrationInfoPath, true);
+            try {
+                migrationInfo = await this.fileService._readFile(migrationInfoPath, true);
+            } catch (error) {
+                migrationInfo = {
+                    status: 'IN_PROGRESS',
+                    processedUals: {},
+                    deletedAssertions: [],
+                };
+            }
 
             if (migrationInfo.status === 'COMPLETED') return;
         } else {
@@ -52,6 +60,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
 
         migrationInfo = await this.updateBlockchainMetadata(currentRepository, migrationInfo);
         migrationInfo = await this.updateContractMetadata(currentRepository, migrationInfo);
+        await this.deleteUnsupportedAssetsMetadata(currentRepository);
         migrationInfo = await this.updateKeywordMetadata(currentRepository, migrationInfo);
         migrationInfo = await this.updateAssertionMetadata(
             currentRepository,
@@ -74,7 +83,15 @@ class TripleStoreMetadataMigration extends BaseMigration {
         const migrationInfoPath = path.join(migrationFolderPath, migrationInfoFileName);
         let migrationInfo;
         if (await this.fileService.fileExists(migrationInfoPath)) {
-            migrationInfo = await this.fileService._readFile(migrationInfoPath, true);
+            try {
+                migrationInfo = await this.fileService._readFile(migrationInfoPath, true);
+            } catch (error) {
+                migrationInfo = {
+                    status: 'IN_PROGRESS',
+                    processedUals: {},
+                    deletedAssertions: [],
+                };
+            }
 
             if (migrationInfo.status === 'COMPLETED') return;
         } else {
@@ -103,7 +120,16 @@ class TripleStoreMetadataMigration extends BaseMigration {
             this._logPercentage(i, ualsToProcess.length, currentRepository);
             const ual = ualsToProcess[i];
             if (!migrationInfo.processedUals[ual]) migrationInfo.processedUals[ual] = {};
-            const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
+
+            let resolvedUAL;
+            try {
+                resolvedUAL = this.ualService.resolveUAL(ual);
+            } catch (error) {
+                this.logger.warn(`Unable to resolve UAL: ${error}`);
+                continue;
+            }
+
+            const { blockchain, contract, tokenId } = resolvedUAL;
 
             let assertionIds;
             try {
@@ -191,7 +217,15 @@ class TripleStoreMetadataMigration extends BaseMigration {
         const migrationInfoCopy = migrationInfo;
         for (let i = 0; i < assetsQueryResult.length; i += 1) {
             const { ual } = assetsQueryResult[i];
-            const { blockchain } = this.ualService.resolveUAL(ual);
+            let resolvedUAL;
+            try {
+                resolvedUAL = this.ualService.resolveUAL(ual);
+            } catch (error) {
+                this.logger.warn(`Unable to resolve UAL: ${error}`);
+                continue;
+            }
+
+            const { blockchain } = resolvedUAL;
 
             triples += `<${ual}> schema:blockchain "${blockchain}" . \n`;
             processedAssets.push({ ual, blockchain });
@@ -239,7 +273,15 @@ class TripleStoreMetadataMigration extends BaseMigration {
         const migrationInfoCopy = migrationInfo;
         for (let i = 0; i < assetsQueryResult.length; i += 1) {
             const { ual } = assetsQueryResult[i];
-            const { contract } = this.ualService.resolveUAL(ual);
+            let resolvedUAL;
+            try {
+                resolvedUAL = this.ualService.resolveUAL(ual);
+            } catch (error) {
+                this.logger.warn(`Unable to resolve UAL: ${error}`);
+                continue;
+            }
+
+            const { contract } = resolvedUAL;
 
             triples += `<${ual}> schema:contract "${contract}" . \n`;
             processedAssets.push({ ual, contract });
@@ -284,7 +326,15 @@ class TripleStoreMetadataMigration extends BaseMigration {
         const processedAssets = [];
         const migrationInfoCopy = migrationInfo;
         for (const { ual } of assetsQueryResult) {
-            const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
+            let resolvedUAL;
+            try {
+                resolvedUAL = this.ualService.resolveUAL(ual);
+            } catch (error) {
+                this.logger.warn(`Unable to resolve UAL: ${error}`);
+                continue;
+            }
+
+            const { blockchain, contract, tokenId } = resolvedUAL;
 
             let assertionIds;
             try {
@@ -360,7 +410,15 @@ class TripleStoreMetadataMigration extends BaseMigration {
         let migrationInfoCopy = migrationInfo;
         for (const { ual } of assetsQueryResult) {
             if (!migrationInfoCopy.processedUals[ual]) migrationInfoCopy.processedUals[ual] = {};
-            const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
+            let resolvedUAL;
+            try {
+                resolvedUAL = this.ualService.resolveUAL(ual);
+            } catch (error) {
+                this.logger.warn(`Unable to resolve UAL: ${error}`);
+                continue;
+            }
+
+            const { blockchain, contract, tokenId } = resolvedUAL;
 
             let assertionIds;
             try {
@@ -558,90 +616,124 @@ class TripleStoreMetadataMigration extends BaseMigration {
         return migrationInfoCopy;
     }
 
-    async deleteUnlinkedAssertions(repository, migrationInfo) {
-        const assetsQueryResult = await this.tripleStoreService.select(
-            repository,
-            `PREFIX schema: <${SCHEMA_CONTEXT}>
+    async deleteUnsupportedAssetsMetadata(repository) {
+        let assetStorageContractAddresses = [];
+        for (const blockchain of this.blockchainModuleManager.getImplementationNames()) {
+            assetStorageContractAddresses = assetStorageContractAddresses.concat(
+                await this.blockchainModuleManager.getAssetStorageContractAddresses(blockchain),
+            );
+        }
 
-            SELECT DISTINCT ?g WHERE {
-                GRAPH ?g { ?s ?p ?o . }
-                FILTER NOT EXISTS {
+        const deleteQuery = `
+                    PREFIX schema: <${SCHEMA_CONTEXT}>
+
+                    DELETE {
+                    GRAPH <assets:graph> { ?s ?p ?o . }
+                    } WHERE {
                     GRAPH <assets:graph> {
-                        ?ual schema:assertion ?g .
+                        ?s ?p ?o .
+                        ?s schema:contract ?o2 .
+                        FILTER NOT EXISTS {
+                        VALUES ?oValue { ${assetStorageContractAddresses
+                            .map((addr) => `"${addr}"`)
+                            .join(' ')} }
+                        FILTER (?o2 = ?oValue)
+                        }
                     }
-                }
-                FILTER (?g != <assets:graph>)
-            }`,
-        );
-        let deleteQuery = '';
-        const migrationInfoCopy = migrationInfo;
-        if (!migrationInfoCopy.deletedAssertions) migrationInfoCopy.deletedAssertions = [];
-        for (const { g } of assetsQueryResult) {
-            console.log(g);
-            deleteQuery += `
-                WITH <${g}>
-                DELETE { ?s ?p ?o }
-                WHERE { ?s ?p ?o };`;
-            migrationInfoCopy.deletedAssertions.push(g);
-        }
+                    }`;
 
-        if (deleteQuery !== '') {
-            await this.tripleStoreService.queryVoid(repository, deleteQuery);
-        }
-        await this._updateMigrationInfoFile(repository, migrationInfoCopy);
+        await this.tripleStoreService.queryVoid(repository, deleteQuery);
+    }
+
+    async deleteUnlinkedAssertions(repository, migrationInfo) {
+        let assetsQueryResult;
+        const migrationInfoCopy = migrationInfo;
+        do {
+            assetsQueryResult = await this.tripleStoreService.select(
+                repository,
+                `PREFIX schema: <${SCHEMA_CONTEXT}>
+
+                SELECT DISTINCT ?g WHERE {
+                    GRAPH ?g { ?s ?p ?o . }
+                    FILTER NOT EXISTS {
+                        GRAPH <assets:graph> {
+                            ?ual schema:assertion ?g .
+                        }
+                    }
+                    FILTER (?g != <assets:graph>)
+                }
+                LIMIT 100`,
+            );
+            if (assetsQueryResult?.length) {
+                assetsQueryResult = assetsQueryResult.filter(({ g }) => g.startsWith('assertion:'));
+            }
+            this.logger.debug(
+                `found ${assetsQueryResult.length} assertions not linked to any asset.`,
+            );
+            let deleteQuery = '';
+            if (!migrationInfoCopy.deletedAssertions) migrationInfoCopy.deletedAssertions = [];
+            for (const { g } of assetsQueryResult) {
+                deleteQuery += `
+                    WITH <${g}>
+                    DELETE { ?s ?p ?o }
+                    WHERE { ?s ?p ?o };`;
+                migrationInfoCopy.deletedAssertions.push(g);
+            }
+
+            if (deleteQuery !== '') {
+                await this.tripleStoreService.queryVoid(repository, deleteQuery);
+            }
+            await this._updateMigrationInfoFile(repository, migrationInfoCopy);
+        } while (assetsQueryResult?.length);
+
         return migrationInfoCopy;
     }
 
     async _logMetadataStats(repository) {
-        const result = await this.tripleStoreService.select(
+        const allAssetsResult = await this.tripleStoreService.select(
             repository,
             `PREFIX schema: <${SCHEMA_CONTEXT}>
 
             SELECT 
-            (COUNT(DISTINCT ?ualAll) AS ?all)
-            (COUNT(DISTINCT ?ualBlockchain) AS ?blockchain)
-            (COUNT(DISTINCT ?ualContract) AS ?contract)
-            (COUNT(DISTINCT ?ualTokenId) AS ?tokenId)
-            (COUNT(DISTINCT ?ualKeyword) AS ?keyword)
-            (COUNT(DISTINCT ?ualAssertion) AS ?assertion)
+            (COUNT(DISTINCT ?ual) AS ?all)
             WHERE {
                 GRAPH <assets:graph> {
                     {
-                        ?ualAll ?p ?o .
-                    }
-                    UNION
-                    {
-                        ?ualBlockchain schema:blockchain ?blockchain .
-                    }
-                    UNION
-                    {
-                        ?ualContract schema:contract ?contract .
-                    }
-                    UNION
-                    {
-                        ?ualTokenId schema:tokenId ?tokenId .
-                    }
-                    UNION
-                    {
-                        ?ualKeyword schema:keyword ?keyword .
-                    }
-                    UNION
-                    {
-                        ?ualAssertion schema:assertion ?assertion .
+                        ?ual ?p ?o .
                     }
                 }
             }`,
         );
-
-        const stats = this.dataService.parseBindings(result)[0];
+        let stats = this.dataService.parseBindings(allAssetsResult)[0];
 
         let log = `metadata stats for ${repository} repository: `;
-        for (const key in stats) {
-            if (key === 'all') log += `\n\t\t\t\tdistinct number of uals: ${stats.all}`;
-            else log += `\n\t\t\t\tdistinct number of uals with predicate ${key}: ${stats[key]}`;
-        }
+        log += `\n\t\t\t\tdistinct number of uals: ${stats.all}`;
 
+        const predicates = ['blockchain', 'contract', 'tokenId', 'keyword', 'assertion'];
+        for (const predicate of predicates) {
+            stats = await this._getPredicateStats(repository, predicate);
+            log += `\n\t\t\t\tdistinct number of uals with predicate ${predicate}: ${stats}`;
+        }
         this.logger.debug(log);
+    }
+
+    async _getPredicateStats(repository, predicate) {
+        const query = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+                SELECT 
+                (COUNT(DISTINCT ?ual) AS ?${predicate})
+                WHERE {
+                    GRAPH <assets:graph> {
+                        {
+                            ?ual schema:${predicate} ?${predicate} .
+                        }
+                    }
+                }`;
+
+        const result = await this.tripleStoreService.select(repository, query);
+        const stats = this.dataService.parseBindings(result)[0];
+
+        return stats[predicate];
     }
 
     _logPercentage(index, max, repository) {
