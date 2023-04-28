@@ -48,11 +48,11 @@ class TripleStoreMetadataMigration extends BaseMigration {
             };
         }
 
-        await this.deleteUnsupportedAssetsMetadata(currentRepository);
         await this._logMetadataStats(currentRepository);
 
         migrationInfo = await this.updateBlockchainMetadata(currentRepository, migrationInfo);
         migrationInfo = await this.updateContractMetadata(currentRepository, migrationInfo);
+        await this.deleteUnsupportedAssetsMetadata(currentRepository);
         migrationInfo = await this.updateKeywordMetadata(currentRepository, migrationInfo);
         migrationInfo = await this.updateAssertionMetadata(
             currentRepository,
