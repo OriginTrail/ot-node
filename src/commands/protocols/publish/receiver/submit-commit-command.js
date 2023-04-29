@@ -222,7 +222,7 @@ class SubmitCommitCommand extends EpochCommand {
         scores.sort((a, b) => b.score - a.score);
 
         return scores.findIndex(
-            (node) => node.peerId === this.networkModuleManager.getPeerId().toB58String(),
+            (node) => node.peerId === this.networkModuleManager.getPeerIdString(),
         );
     }
 

@@ -17,12 +17,6 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    getPeers() {
-        if (this.initialized) {
-            return this.getImplementation().module.getPeers();
-        }
-    }
-
     async sendMessage(protocol, remotePeerId, messageType, operationId, keyword, message, timeout) {
         if (this.initialized) {
             return this.getImplementation().module.sendMessage(
@@ -65,6 +59,12 @@ class NetworkModuleManager extends BaseModuleManager {
     getPeerId() {
         if (this.initialized) {
             return this.getImplementation().module.getPeerId();
+        }
+    }
+
+    getPeerIdString() {
+        if (this.initialized) {
+            return this.getImplementation().module.getPeerIdString();
         }
     }
 
