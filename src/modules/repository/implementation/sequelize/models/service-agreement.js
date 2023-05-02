@@ -40,13 +40,9 @@ export default (sequelize, DataTypes) => {
             },
             last_commit_epoch: {
                 type: DataTypes.SMALLINT.UNSIGNED,
-                allowNull: false,
-                defaultValue: 0,
             },
             last_proof_epoch: {
                 type: DataTypes.SMALLINT.UNSIGNED,
-                allowNull: false,
-                defaultValue: 0,
             },
         },
         {},

@@ -440,6 +440,12 @@ class RepositoryModuleManager extends BaseModuleManager {
             );
         }
     }
+
+    async destroyAllRecords(table) {
+        if (this.initialized) {
+            return this.getImplementation().module.destroyAllRecords(table);
+        }
+    }
 }
 
 export default RepositoryModuleManager;

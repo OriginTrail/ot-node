@@ -38,13 +38,9 @@ export const up = async ({ context: { queryInterface, Sequelize } }) => {
         },
         last_commit_epoch: {
             type: Sequelize.SMALLINT.UNSIGNED,
-            allowNull: false,
-            defaultValue: 0,
         },
         last_proof_epoch: {
             type: Sequelize.SMALLINT.UNSIGNED,
-            allowNull: false,
-            defaultValue: 0,
         },
     });
 };

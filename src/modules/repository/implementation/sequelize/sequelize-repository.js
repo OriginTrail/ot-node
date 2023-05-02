@@ -615,15 +615,24 @@ class SequelizeRepository {
     getEligibleAgreementsForSubmitCommit(timestamp, commitWindowDurationPerc) {
         const timestampSeconds = timestamp / 1000;
         const currentEpoch = `FLOOR((${timestampSeconds} - start_time) / epoch_length)`;
-        const currentEpochPerc = `FLOOR(((${timestampSeconds} - start_time) % epoch_length) / epoch_length)`;
+        const currentEpochPerc = `((${timestampSeconds} - start_time) % epoch_length) / epoch_length`;
 
         return this.models.service_agreement.findAll({
             where: {
-                last_commit_epoch: {
-                    [Sequelize.Op.lt]: Sequelize.literal(currentEpoch),
-                },
+                [Sequelize.Op.or]: [
+                    {
+                        last_commit_epoch: {
+                            [Sequelize.Op.is]: null,
+                        },
+                    },
+                    {
+                        last_commit_epoch: {
+                            [Sequelize.Op.lt]: Sequelize.literal(currentEpoch),
+                        },
+                    },
+                ],
                 [Sequelize.Op.and]: Sequelize.literal(
-                    `${currentEpochPerc} <= ${commitWindowDurationPerc}`,
+                    `${currentEpochPerc} <= ${commitWindowDurationPerc / 100}`,
                 ),
                 epochs_number: {
                     [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
@@ -651,9 +660,11 @@ class SequelizeRepository {
                     [Sequelize.Op.lt]: Sequelize.literal(currentEpoch),
                 },
                 [Sequelize.Op.and]: [
-                    Sequelize.literal(`${currentEpochPerc} >= ${proofWindowOffsetPerc}`),
+                    Sequelize.literal(`${currentEpochPerc} >= ${proofWindowOffsetPerc / 100}`),
                     Sequelize.literal(
-                        `${currentEpochPerc} <= ${proofWindowOffsetPerc + proofWindowDurationPerc}`,
+                        `${currentEpochPerc} <= ${
+                            proofWindowOffsetPerc / 100 + proofWindowDurationPerc / 100
+                        }`,
                     ),
                 ],
                 epochs_number: {
@@ -662,6 +673,10 @@ class SequelizeRepository {
             },
             raw: true,
         });
+    }
+
+    async destroyAllRecords(table) {
+        return this.models[table].destroy({ where: {} });
     }
 }
 
