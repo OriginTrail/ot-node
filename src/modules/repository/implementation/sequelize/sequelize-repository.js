@@ -612,31 +612,55 @@ class SequelizeRepository {
         );
     }
 
-    getEligibleAgreementsForSubmitCommits() {
-        return this.models.serviceAgreement.findAll({
+    getEligibleAgreementsForSubmitCommits(timestamp, commitWindowDurationPerc) {
+        const timestampSeconds = timestamp / 1000;
+        const currentEpoch = `FLOOR((${timestampSeconds} - start_time) / epoch_length)`;
+        const currentEpochPerc = `FLOOR(((${timestampSeconds} - start_time) % epoch_length) / epoch_length)`;
+
+        return this.models.service_agreement.findAll({
             where: {
-                agreement_id: {
-                    [Sequelize.Op.in]: this.sequelize.literal(`
-                        SELECT agreement_id
-                        FROM service_agreement
-                        WHERE FLOOR((CURRENT_DATE - start_time)/epoch_length) > last_checked_epoch;
-                    `),
+                last_commit_epoch: {
+                    [Sequelize.Op.lt]: Sequelize.literal(currentEpoch),
+                },
+                [Sequelize.Op.and]: Sequelize.literal(
+                    `${currentEpochPerc} <= ${commitWindowDurationPerc}`,
+                ),
+                epochs_number: {
+                    [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
                 },
             },
+            raw: true,
         });
     }
 
-    async getEligibleAgreementsForSubmitProof() {
-        return this.models.serviceAgreement.findAll({
+    async getEligibleAgreementsForSubmitProof(
+        timestamp,
+        proofWindowOffsetPerc,
+        proofWindowDurationPerc,
+    ) {
+        const timestampSeconds = timestamp / 1000;
+        const currentEpoch = `FLOOR((${timestampSeconds} - start_time) / epoch_length)`;
+        const currentEpochPerc = `FLOOR(((${timestampSeconds} - start_time) % epoch_length) / epoch_length)`;
+
+        return this.models.service_agreement.findAll({
             where: {
-                agreement_id: {
-                    [Sequelize.Op.in]: this.sequelize.literal(`
-                        SELECT agreement_id
-                        FROM service_agreement
-                        WHERE FLOOR((CURRENT_DATE - start_time)/epoch_length) > last_checked_epoch;
-                    `),
+                last_commit_epoch: {
+                    [Sequelize.Op.eq]: Sequelize.literal(currentEpoch),
+                },
+                last_proof_epoch: {
+                    [Sequelize.Op.lt]: Sequelize.literal(currentEpoch),
+                },
+                [Sequelize.Op.and]: [
+                    Sequelize.literal(`${currentEpochPerc} >= ${proofWindowOffsetPerc}`),
+                    Sequelize.literal(
+                        `${currentEpochPerc} <= ${proofWindowOffsetPerc + proofWindowDurationPerc}`,
+                    ),
+                ],
+                epochs_number: {
+                    [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
                 },
             },
+            raw: true,
         });
     }
 }
