@@ -34,12 +34,9 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
         const migrationInfoPath = path.join(migrationFolderPath, migrationInfoFileName);
         let migrationInfo;
         if (await this.fileService.fileExists(migrationInfoPath)) {
-            // in the event file exists but malformed (if node restarts while writing)
-            try {
-                migrationInfo = await this.fileService._readFile(migrationInfoPath, true);
-            } catch (error) {
-                /* do nothing */
-            }
+            migrationInfo = await this.fileService
+                ._readFile(migrationInfoPath, true)
+                .catch(() => {});
         }
         if (!migrationInfo?.lastProcessedTokenId) {
             migrationInfo = {
@@ -52,9 +49,9 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
                             GRAPH <assets:graph> {
                                 ?ual schema:tokenId ?tokenId
                             }
-                            FILTER (?tokenId > ${migrationInfo.lastProcessedTokenId})
+                            FILTER (xsd:integer(?tokenId) > ${migrationInfo.lastProcessedTokenId})
                         }
-                        ORDER BY ASC(?tokenId)`;
+                        ORDER BY ASC(xsd:integer(?tokenId))`;
         const assetsMetadata = await this.tripleStoreService.select(
             TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
             query,
@@ -68,7 +65,9 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
                     blockchain,
                 );
             }
-            await this.updateTables(blockchain, contract, tokenId, identities[blockchain]);
+            await this.updateTables(ual, blockchain, contract, tokenId, identities[blockchain]);
+
+            this.logger.trace(`${this.migrationName} processed asset with ual: ${ual}`);
             await this.fileService.writeContentsToFile(
                 migrationFolderPath,
                 migrationInfoFileName,
@@ -77,13 +76,16 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
         }
     }
 
-    async updateTables(blockchain, contract, tokenId, identityId) {
+    async updateTables(ual, blockchain, contract, tokenId, identityId) {
         // get assertion ids
-        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
-            blockchain,
-            contract,
-            tokenId,
-        );
+        const assertionIds = await this.blockchainModuleManager
+            .getAssertionIds(blockchain, contract, tokenId)
+            .catch(() => {});
+
+        if (!assertionIds?.length) {
+            this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
+            return;
+        }
         const stateIndex = assertionIds.length - 1;
 
         // calculate keyword
