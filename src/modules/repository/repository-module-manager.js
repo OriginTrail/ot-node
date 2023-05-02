@@ -17,42 +17,6 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async updateServiceAgreementRecord(
-        blockchainId,
-        contract,
-        tokenId,
-        agreementId,
-        startTime,
-        epochsNumber,
-        epochLength,
-        scoreFunctionId,
-        proofWindowOffsetPerc,
-    ) {
-        if (this.initialized) {
-            return this.getImplementation().module.updateServiceAgreementRecord(
-                blockchainId,
-                contract,
-                tokenId,
-                agreementId,
-                startTime,
-                epochsNumber,
-                epochLength,
-                scoreFunctionId,
-                proofWindowOffsetPerc,
-            );
-        }
-    }
-
-    async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
-        if (this.initialized) {
-            return this.getImplementation().module.removeServiceAgreementRecord(
-                blockchainId,
-                contract,
-                tokenId,
-            );
-        }
-    }
-
     async updateAttemptedCommitCommandRecord(
         blockchainId,
         contract,
@@ -414,6 +378,46 @@ class RepositoryModuleManager extends BaseModuleManager {
                 currentBlock,
                 timestamp,
                 contract,
+            );
+        }
+    }
+
+    async updateServiceAgreementRecord(
+        blockchainId,
+        contract,
+        tokenId,
+        agreementId,
+        startTime,
+        epochsNumber,
+        epochLength,
+        scoreFunctionId,
+        proofWindowOffsetPerc,
+        lastCommitEpoch,
+        lastProofEpoch,
+    ) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateServiceAgreementRecord(
+                blockchainId,
+                contract,
+                tokenId,
+                agreementId,
+                startTime,
+                epochsNumber,
+                epochLength,
+                scoreFunctionId,
+                proofWindowOffsetPerc,
+                lastCommitEpoch,
+                lastProofEpoch,
+            );
+        }
+    }
+
+    async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
+        if (this.initialized) {
+            return this.getImplementation().module.removeServiceAgreementRecord(
+                blockchainId,
+                contract,
+                tokenId,
             );
         }
     }
