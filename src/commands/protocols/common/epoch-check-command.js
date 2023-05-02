@@ -9,7 +9,7 @@ class EpochCheckCommand extends Command {
 
     async execute() {
         // get submit commit eligible
-        this.repositoryModuleManager.getEligibleAgreementsForSubmitCommits();
+        this.repositoryModuleManager.getEligibleAgreementsForSubmitCommit();
         // returns array of agreement data
         // schedule commands
         // get submit proofs

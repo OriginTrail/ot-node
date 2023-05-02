@@ -418,9 +418,26 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async getEligibleAgreementsForSubmitCommits() {
+    async getEligibleAgreementsForSubmitCommit(timestamp, commitWindowDurationPerc) {
         if (this.initialized) {
-            return this.getImplementation().module.getEligibleAgreementsForSubmitCommits();
+            return this.getImplementation().module.getEligibleAgreementsForSubmitCommit(
+                timestamp,
+                commitWindowDurationPerc,
+            );
+        }
+    }
+
+    async getEligibleAgreementsForSubmitProof(
+        timestamp,
+        proofWindowOffsetPerc,
+        proofWindowDurationPerc,
+    ) {
+        if (this.initialized) {
+            return this.getImplementation().module.getEligibleAgreementsForSubmitProof(
+                timestamp,
+                proofWindowOffsetPerc,
+                proofWindowDurationPerc,
+            );
         }
     }
 }

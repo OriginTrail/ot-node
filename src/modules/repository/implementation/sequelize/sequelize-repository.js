@@ -99,40 +99,6 @@ class SequelizeRepository {
         return this.models.sequelize.transaction(async (t) => execFn(t));
     }
 
-    async updateServiceAgreementRecord(
-        blockchainId,
-        contract,
-        tokenId,
-        agreementId,
-        startTime,
-        epochsNumber,
-        epochLength,
-        scoreFunctionId,
-        proofWindowOffsetPerc,
-    ) {
-        await this.models.service_agreement.upsert({
-            blockchain_id: blockchainId,
-            asset_storage_contract_address: contract,
-            token_id: tokenId,
-            agreement_id: agreementId,
-            start_time: startTime,
-            epochs_number: epochsNumber,
-            epoch_length: epochLength,
-            score_function_id: scoreFunctionId,
-            proof_window_offset_perc: proofWindowOffsetPerc,
-        });
-    }
-
-    async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
-        await this.models.service_agreement.destroy({
-            where: {
-                blockchain_id: blockchainId,
-                asset_storage_contract_address: contract,
-                token_id: tokenId,
-            },
-        });
-    }
-
     async updateAttemptedCommitCommandRecord(
         blockchainId,
         contract,
@@ -612,7 +578,41 @@ class SequelizeRepository {
         );
     }
 
-    getEligibleAgreementsForSubmitCommits(timestamp, commitWindowDurationPerc) {
+    async updateServiceAgreementRecord(
+        blockchainId,
+        contract,
+        tokenId,
+        agreementId,
+        startTime,
+        epochsNumber,
+        epochLength,
+        scoreFunctionId,
+        proofWindowOffsetPerc,
+    ) {
+        return this.models.service_agreement.upsert({
+            blockchain_id: blockchainId,
+            asset_storage_contract_address: contract,
+            token_id: tokenId,
+            agreement_id: agreementId,
+            start_time: startTime,
+            epochs_number: epochsNumber,
+            epoch_length: epochLength,
+            score_function_id: scoreFunctionId,
+            proof_window_offset_perc: proofWindowOffsetPerc,
+        });
+    }
+
+    async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
+        await this.models.service_agreement.destroy({
+            where: {
+                blockchain_id: blockchainId,
+                asset_storage_contract_address: contract,
+                token_id: tokenId,
+            },
+        });
+    }
+
+    getEligibleAgreementsForSubmitCommit(timestamp, commitWindowDurationPerc) {
         const timestampSeconds = timestamp / 1000;
         const currentEpoch = `FLOOR((${timestampSeconds} - start_time) / epoch_length)`;
         const currentEpochPerc = `FLOOR(((${timestampSeconds} - start_time) % epoch_length) / epoch_length)`;
