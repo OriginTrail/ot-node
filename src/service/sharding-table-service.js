@@ -26,14 +26,13 @@ class ShardingTableService {
         await Promise.all(pullBlockchainShardingTables);
 
         await this.networkModuleManager.onPeerConnected((event) => {
+            const remotePeerId = event.detail;
             this.logger.trace(
-                `Node connected to ${event.detail.remotePeer.toString()}, updating sharding table last seen and last dialed.`,
+                `Node connected to ${remotePeerId.toString()}, updating sharding table last seen and last dialed.`,
             );
-            this.updatePeerRecordLastSeenAndLastDialed(event.detail.remotePeer.toString()).catch(
-                (error) => {
-                    this.logger.warn(`Unable to update connected peer, error: ${error.message}`);
-                },
-            );
+            this.updatePeerRecordLastSeenAndLastDialed(remotePeerId.toString()).catch((error) => {
+                this.logger.warn(`Unable to update connected peer, error: ${error.message}`);
+            });
         });
     }
 
@@ -254,6 +253,7 @@ class ShardingTableService {
                 this.logger.trace(`Searching for peer ${peerId} multiaddresses on the network.`);
                 peerInfo = await this.networkModuleManager.findPeer(peerId);
             } catch (error) {
+                console.log(error);
                 this.logger.trace(`Unable to find peer ${peerId}. Error: ${error.message}`);
             }
         }
