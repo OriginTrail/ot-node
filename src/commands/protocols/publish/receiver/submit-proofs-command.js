@@ -126,6 +126,14 @@ class SubmitProofsCommand extends EpochCommand {
                     that.logger.warn(
                         `Failed executing submit proofs command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
                     );
+                    await that.repositoryModuleManager.updateAttemptedCommitCommandRecord(
+                        blockchain,
+                        contract,
+                        tokenId,
+                        agreementId,
+                        epoch,
+                        ATTEMPTED_PROOF_COMMAND_STATUS.FAILED,
+                    );
                     await that.commandExecutor.add({
                         name: 'submitProofsCommand',
                         sequence: [],

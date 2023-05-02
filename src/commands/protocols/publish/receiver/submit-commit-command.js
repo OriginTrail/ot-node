@@ -201,6 +201,14 @@ class SubmitCommitCommand extends EpochCommand {
                     that.logger.warn(
                         `Failed executing submit commit command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
                     );
+                    await that.repositoryModuleManager.updateAttemptedCommitCommandRecord(
+                        blockchain,
+                        contract,
+                        tokenId,
+                        agreementId,
+                        epoch,
+                        ATTEMPTED_COMMIT_COMMAND_STATUS.FAILED,
+                    );
                     await that.commandExecutor.add({
                         name: 'submitCommitCommand',
                         sequence: [],
