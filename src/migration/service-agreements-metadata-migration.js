@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+import path from 'path';
 import BaseMigration from './base-migration.js';
 import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
@@ -27,13 +29,32 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
     }
 
     async executeMigration() {
+        const migrationFolderPath = this.fileService.getMigrationFolderPath();
+        const migrationInfoFileName = `${this.migrationName}_info`;
+        const migrationInfoPath = path.join(migrationFolderPath, migrationInfoFileName);
+        let migrationInfo;
+        if (await this.fileService.fileExists(migrationInfoPath)) {
+            // in the event file exists but malformed (if node restarts while writing)
+            try {
+                migrationInfo = await this.fileService._readFile(migrationInfoPath, true);
+            } catch (error) {
+                /* do nothing */
+            }
+        }
+        if (!migrationInfo?.lastProcessedTokenId) {
+            migrationInfo = {
+                lastProcessedTokenId: -1,
+            };
+        }
         // get metadata of all stored assets in public current triple store
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
                         SELECT DISTINCT ?ual  WHERE {
                             GRAPH <assets:graph> {
-                                    ?ual ?p ?o
+                                ?ual schema:tokenId ?tokenId
                             }
-                        }`;
+                            FILTER (?tokenId > ${migrationInfo.lastProcessedTokenId})
+                        }
+                        ORDER BY ASC(?tokenId)`;
         const assetsMetadata = await this.tripleStoreService.select(
             TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
             query,
@@ -43,13 +64,16 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
         for (const { ual } of assetsMetadata) {
             const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
             if (!identities[blockchain]) {
-                // eslint-disable-next-line no-await-in-loop
                 identities[blockchain] = await this.blockchainModuleManager.getIdentityId(
                     blockchain,
                 );
             }
-            // eslint-disable-next-line no-await-in-loop
             await this.updateTables(blockchain, contract, tokenId, identities[blockchain]);
+            await this.fileService.writeContentsToFile(
+                migrationFolderPath,
+                migrationInfoFileName,
+                JSON.stringify({ lastProcessedTokenId: tokenId }),
+            );
         }
     }
 
