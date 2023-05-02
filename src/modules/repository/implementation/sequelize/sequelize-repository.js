@@ -646,29 +646,32 @@ class SequelizeRepository {
         });
     }
 
-    async getEligibleAgreementsForSubmitProof(
-        timestamp,
-        proofWindowOffsetPerc,
-        proofWindowDurationPerc,
-    ) {
+    async getEligibleAgreementsForSubmitProof(timestamp, proofWindowDurationPerc) {
         const timestampSeconds = timestamp / 1000;
         const currentEpoch = `FLOOR((${timestampSeconds} - start_time) / epoch_length)`;
-        const currentEpochPerc = `FLOOR(((${timestampSeconds} - start_time) % epoch_length) / epoch_length)`;
+        const currentEpochPerc = `((${timestampSeconds} - start_time) % epoch_length) / epoch_length`;
 
         return this.models.service_agreement.findAll({
             where: {
                 last_commit_epoch: {
                     [Sequelize.Op.eq]: Sequelize.literal(currentEpoch),
                 },
-                last_proof_epoch: {
-                    [Sequelize.Op.lt]: Sequelize.literal(currentEpoch),
-                },
+                [Sequelize.Op.or]: [
+                    {
+                        last_proof_epoch: {
+                            [Sequelize.Op.is]: null,
+                        },
+                    },
+                    {
+                        last_proof_epoch: {
+                            [Sequelize.Op.lt]: Sequelize.literal(currentEpoch),
+                        },
+                    },
+                ],
                 [Sequelize.Op.and]: [
-                    Sequelize.literal(`${currentEpochPerc} >= ${proofWindowOffsetPerc / 100}`),
+                    Sequelize.literal(`${currentEpochPerc} * 100 >= proof_window_offset_perc`),
                     Sequelize.literal(
-                        `${currentEpochPerc} <= ${
-                            proofWindowOffsetPerc / 100 + proofWindowDurationPerc / 100
-                        }`,
+                        `${currentEpochPerc} * 100 <= proof_window_offset_perc + ${proofWindowDurationPerc}`,
                     ),
                 ],
                 epochs_number: {

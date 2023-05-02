@@ -82,59 +82,47 @@ describe('Repository module', () => {
     });
 
     describe('Eligible service agreements', () => {
+        const createAgreement = ({
+            blockchain_id = 'hardhat',
+            asset_storage_contract_address = '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07',
+            token_id,
+            agreement_id = '0x44cf660357e2d7462c25fd8e50b68abe332d7a70b07a76e92f628846ea585881',
+            start_time,
+            epochs_number = 2,
+            epoch_length = 100,
+            score_function_id = 1,
+            proof_window_offset_perc = 66,
+            last_commit_epoch = null,
+            last_proof_epoch = null,
+        }) => ({
+            blockchain_id,
+            asset_storage_contract_address,
+            token_id,
+            agreement_id,
+            start_time,
+            epochs_number,
+            epoch_length,
+            score_function_id,
+            proof_window_offset_perc,
+            last_commit_epoch,
+            last_proof_epoch,
+        });
+
         const agreements = [
-            {
-                blockchain_id: 'hardhat',
-                asset_storage_contract_address: '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07',
-                token_id: 0,
-                agreement_id: '0x44cf660357e2d7462c25fd8e50b68abe332d7a70b07a76e92f628846ea585881',
-                start_time: 0,
-                epochs_number: 2,
-                epoch_length: 100,
-                score_function_id: 1,
-                proof_window_offset_perc: 66,
-                last_commit_epoch: null,
-                last_proof_epoch: null,
-            },
-            {
-                blockchain_id: 'hardhat',
-                asset_storage_contract_address: '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07',
+            createAgreement({ token_id: 0, start_time: 0 }),
+            createAgreement({
                 token_id: 1,
-                agreement_id: '0x44cf660357e2d7462c25fd8e50b68abe332d7a70b07a76e92f628846ea585881',
-                start_time: 25,
-                epochs_number: 2,
-                epoch_length: 100,
-                score_function_id: 1,
-                proof_window_offset_perc: 66,
-                last_commit_epoch: null,
-                last_proof_epoch: null,
-            },
-            {
-                blockchain_id: 'hardhat',
-                asset_storage_contract_address: '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07',
-                token_id: 3,
-                agreement_id: '0x44cf660357e2d7462c25fd8e50b68abe332d7a70b07a76e92f628846ea585881',
-                start_time: 25,
-                epochs_number: 2,
-                epoch_length: 100,
-                score_function_id: 1,
-                proof_window_offset_perc: 66,
+                start_time: 15,
                 last_commit_epoch: 0,
-                last_proof_epoch: null,
-            },
-            {
-                blockchain_id: 'hardhat',
-                asset_storage_contract_address: '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07',
-                token_id: 4,
-                agreement_id: '0x44cf660357e2d7462c25fd8e50b68abe332d7a70b07a76e92f628846ea585881',
-                start_time: 49,
-                epochs_number: 2,
-                epoch_length: 100,
-                score_function_id: 1,
-                proof_window_offset_perc: 66,
-                last_commit_epoch: null,
-                last_proof_epoch: null,
-            },
+            }),
+            createAgreement({ token_id: 2, start_time: 25 }),
+            createAgreement({
+                token_id: 3,
+                start_time: 25,
+                last_commit_epoch: 0,
+                last_proof_epoch: 0,
+            }),
+            createAgreement({ token_id: 4, start_time: 49 }),
         ];
 
         beforeEach(async () => {
@@ -151,71 +139,152 @@ describe('Repository module', () => {
                         agreement.score_function_id,
                         agreement.proof_window_offset_perc,
                         agreement.last_commit_epoch,
+                        agreement.last_proof_epoch,
                     ),
                 ),
             );
         });
-        function testEligibleAgreements(
-            currentTimestamp,
-            commitWindowDurationPerc,
-            expectedAgreements,
-        ) {
-            return async () => {
-                const eligibleAgreements =
-                    await repositoryModuleManager.getEligibleAgreementsForSubmitCommit(
-                        currentTimestamp,
-                        commitWindowDurationPerc,
-                    );
 
-                assert(expect(eligibleAgreements).to.exist);
-                expect(eligibleAgreements).to.be.instanceOf(Array);
-                expect(eligibleAgreements).to.have.length(expectedAgreements.length);
-                expect(eligibleAgreements).to.deep.equal(expectedAgreements);
-            };
-        }
-        it(
-            'returns two eligible service agreements at timestamp 49',
-            testEligibleAgreements(49 * 1000, 25, [agreements[1], agreements[3]]),
-        );
-        it(
-            'returns one eligible service agreement at timestamp 51',
-            testEligibleAgreements(51 * 1000, 25, [agreements[3]]),
-        );
-        it(
-            'returns one eligible service agreement at timestamp 74',
-            testEligibleAgreements(74 * 1000, 25, [agreements[3]]),
-        );
-        it(
-            'returns no eligible service agreements at timestamp 75',
-            testEligibleAgreements(75 * 1000, 25, []),
-        );
-        it(
-            'returns one eligible service agreements at timestamp 100',
-            testEligibleAgreements(100 * 1000, 25, [agreements[0]]),
-        );
-        it(
-            'returns three eligible service agreements at timestamp 125',
-            testEligibleAgreements(125 * 1000, 25, [agreements[0], agreements[1], agreements[2]]),
-        );
-        it(
-            'returns two eligible service agreements at timestamp 126',
-            testEligibleAgreements(126 * 1000, 25, [agreements[1], agreements[2]]),
-        );
-        it(
-            'returns three eligible service agreements at timestamp 149',
-            testEligibleAgreements(149 * 1000, 25, [agreements[1], agreements[2], agreements[3]]),
-        );
-        it(
-            'returns one eligible service agreements at timestamp 151',
-            testEligibleAgreements(151 * 1000, 25, [agreements[3]]),
-        );
-        it(
-            'returns no eligible service agreements at timestamp 175',
-            testEligibleAgreements(175 * 1000, 25, []),
-        );
-        it(
-            'returns no eligible service agreements at timestamp 225',
-            testEligibleAgreements(225 * 1000, 25, []),
-        );
+        describe('getEligibleAgreementsForSubmitCommit', () => {
+            const testEligibleAgreementsForSubmitCommit =
+                (currentTimestamp, commitWindowDurationPerc, expectedAgreements) => async () => {
+                    const eligibleAgreements =
+                        await repositoryModuleManager.getEligibleAgreementsForSubmitCommit(
+                            currentTimestamp,
+                            commitWindowDurationPerc,
+                        );
+
+                    assert(expect(eligibleAgreements).to.exist);
+                    expect(eligibleAgreements).to.be.instanceOf(Array);
+                    expect(eligibleAgreements).to.have.length(expectedAgreements.length);
+                    expect(eligibleAgreements).to.deep.equal(expectedAgreements);
+                };
+
+            it(
+                'returns two eligible service agreements at timestamp 49',
+                testEligibleAgreementsForSubmitCommit(49 * 1000, 25, [
+                    agreements[2],
+                    agreements[4],
+                ]),
+            );
+            it(
+                'returns one eligible service agreement at timestamp 51',
+                testEligibleAgreementsForSubmitCommit(51 * 1000, 25, [agreements[4]]),
+            );
+            it(
+                'returns one eligible service agreement at timestamp 74',
+                testEligibleAgreementsForSubmitCommit(74 * 1000, 25, [agreements[4]]),
+            );
+            it(
+                'returns no eligible service agreements at timestamp 75',
+                testEligibleAgreementsForSubmitCommit(75 * 1000, 25, []),
+            );
+            it(
+                'returns one eligible service agreements at timestamp 100',
+                testEligibleAgreementsForSubmitCommit(100 * 1000, 25, [agreements[0]]),
+            );
+            it(
+                'returns three eligible service agreements at timestamp 125',
+                testEligibleAgreementsForSubmitCommit(125 * 1000, 25, [
+                    agreements[0],
+                    agreements[1],
+                    agreements[2],
+                    agreements[3],
+                ]),
+            );
+            it(
+                'returns three eligible service agreements at timestamp 126',
+                testEligibleAgreementsForSubmitCommit(126 * 1000, 25, [
+                    agreements[1],
+                    agreements[2],
+                    agreements[3],
+                ]),
+            );
+            it(
+                'returns three eligible service agreements at timestamp 149',
+                testEligibleAgreementsForSubmitCommit(149 * 1000, 25, [
+                    agreements[2],
+                    agreements[3],
+                    agreements[4],
+                ]),
+            );
+            it(
+                'returns one eligible service agreements at timestamp 151',
+                testEligibleAgreementsForSubmitCommit(151 * 1000, 25, [agreements[4]]),
+            );
+            it(
+                'returns no eligible service agreements at timestamp 175',
+                testEligibleAgreementsForSubmitCommit(175 * 1000, 25, []),
+            );
+            it(
+                'returns no eligible service agreements at timestamp 225',
+                testEligibleAgreementsForSubmitCommit(225 * 1000, 25, []),
+            );
+        });
+
+        describe('getEligibleAgreementsForSubmitProof', () => {
+            const testEligibleAgreementsForSubmitProof =
+                (currentTimestamp, proofWindowDurationPerc, expectedAgreements) => async () => {
+                    const eligibleAgreements =
+                        await repositoryModuleManager.getEligibleAgreementsForSubmitProof(
+                            currentTimestamp,
+                            proofWindowDurationPerc,
+                        );
+
+                    assert(expect(eligibleAgreements).to.exist);
+                    expect(eligibleAgreements).to.be.instanceOf(Array);
+                    expect(eligibleAgreements).to.have.length(expectedAgreements.length);
+                    expect(eligibleAgreements).to.deep.equal(expectedAgreements);
+                };
+
+            it(
+                'returns no eligible service agreement at timestamp 49',
+                testEligibleAgreementsForSubmitProof(49 * 1000, 33, []),
+            );
+            it(
+                'returns no eligible service agreement at timestamp 67',
+                testEligibleAgreementsForSubmitProof(67 * 1000, 33, []),
+            );
+            it(
+                'returns no eligible service agreement at timestamp 80',
+                testEligibleAgreementsForSubmitProof(80 * 1000, 33, []),
+            );
+            it(
+                'returns one eligible service agreements at timestamp 81',
+                testEligibleAgreementsForSubmitProof(81 * 1000, 33, [agreements[1]]),
+            );
+            it(
+                'returns one eligible service agreements at timestamp 92',
+                testEligibleAgreementsForSubmitProof(92 * 1000, 33, [agreements[1]]),
+            );
+            it(
+                'returns one eligible service agreements at timestamp 114',
+                testEligibleAgreementsForSubmitProof(114 * 1000, 33, [agreements[1]]),
+            );
+            it(
+                'returns no eligible service agreements at timestamp 115',
+                testEligibleAgreementsForSubmitProof(115 * 1000, 33, []),
+            );
+            it(
+                'returns no eligible service agreements at timestamp 167',
+                testEligibleAgreementsForSubmitProof(167 * 1000, 33, []),
+            );
+            it(
+                'returns no eligible service agreements at timestamp 181',
+                testEligibleAgreementsForSubmitProof(181 * 1000, 33, []),
+            );
+            it(
+                'returns no eligible service agreements at timestamp 192',
+                testEligibleAgreementsForSubmitProof(192 * 1000, 33, []),
+            );
+            it(
+                'returns no eligible service agreements at timestamp 199',
+                testEligibleAgreementsForSubmitProof(199 * 1000, 33, []),
+            );
+            it(
+                'returns no eligible service agreements at timestamp 200',
+                testEligibleAgreementsForSubmitProof(200 * 1000, 33, []),
+            );
+        });
     });
 });
