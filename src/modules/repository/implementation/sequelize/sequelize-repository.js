@@ -99,40 +99,6 @@ class SequelizeRepository {
         return this.models.sequelize.transaction(async (t) => execFn(t));
     }
 
-    async updateServiceAgreementRecord(
-        blockchainId,
-        contract,
-        tokenId,
-        agreementId,
-        startTime,
-        epochsNumber,
-        epochLength,
-        scoreFunctionId,
-        proofWindowOffsetPerc,
-    ) {
-        await this.models.service_agreement.upsert({
-            blockchain_id: blockchainId,
-            asset_storage_contract_address: contract,
-            token_id: tokenId,
-            agreement_id: agreementId,
-            start_time: startTime,
-            epochs_number: epochsNumber,
-            epoch_length: epochLength,
-            score_function_id: scoreFunctionId,
-            proof_window_offset_perc: proofWindowOffsetPerc,
-        });
-    }
-
-    async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
-        await this.models.service_agreement.destroy({
-            where: {
-                blockchain_id: blockchainId,
-                asset_storage_contract_address: contract,
-                token_id: tokenId,
-            },
-        });
-    }
-
     async updateAttemptedCommitCommandRecord(
         blockchainId,
         contract,
@@ -612,32 +578,112 @@ class SequelizeRepository {
         );
     }
 
-    getEligibleAgreementsForSubmitCommits() {
-        return this.models.serviceAgreement.findAll({
+    async updateServiceAgreementRecord(
+        blockchainId,
+        contract,
+        tokenId,
+        agreementId,
+        startTime,
+        epochsNumber,
+        epochLength,
+        scoreFunctionId,
+        proofWindowOffsetPerc,
+        lastCommitEpoch,
+        lastProofEpoch,
+    ) {
+        return this.models.service_agreement.upsert({
+            blockchain_id: blockchainId,
+            asset_storage_contract_address: contract,
+            token_id: tokenId,
+            agreement_id: agreementId,
+            start_time: startTime,
+            epochs_number: epochsNumber,
+            epoch_length: epochLength,
+            score_function_id: scoreFunctionId,
+            proof_window_offset_perc: proofWindowOffsetPerc,
+            last_commit_epoch: lastCommitEpoch,
+            last_proof_epoch: lastProofEpoch,
+        });
+    }
+
+    async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
+        await this.models.service_agreement.destroy({
             where: {
-                agreement_id: {
-                    [Sequelize.Op.in]: this.sequelize.literal(`
-                        SELECT agreement_id
-                        FROM service_agreement
-                        WHERE FLOOR((CURRENT_DATE - start_time)/epoch_length) > last_checked_epoch;
-                    `),
-                },
+                blockchain_id: blockchainId,
+                asset_storage_contract_address: contract,
+                token_id: tokenId,
             },
         });
     }
 
-    async getEligibleAgreementsForSubmitProof() {
-        return this.models.serviceAgreement.findAll({
+    getEligibleAgreementsForSubmitCommit(timestamp, commitWindowDurationPerc) {
+        const timestampSeconds = timestamp / 1000;
+        const currentEpoch = `FLOOR((${timestampSeconds} - start_time) / epoch_length)`;
+        const currentEpochPerc = `((${timestampSeconds} - start_time) % epoch_length) / epoch_length`;
+
+        return this.models.service_agreement.findAll({
             where: {
-                agreement_id: {
-                    [Sequelize.Op.in]: this.sequelize.literal(`
-                        SELECT agreement_id
-                        FROM service_agreement
-                        WHERE FLOOR((CURRENT_DATE - start_time)/epoch_length) > last_checked_epoch;
-                    `),
+                [Sequelize.Op.or]: [
+                    {
+                        last_commit_epoch: {
+                            [Sequelize.Op.is]: null,
+                        },
+                    },
+                    {
+                        last_commit_epoch: {
+                            [Sequelize.Op.lt]: Sequelize.literal(currentEpoch),
+                        },
+                    },
+                ],
+                [Sequelize.Op.and]: Sequelize.literal(
+                    `${currentEpochPerc} <= ${commitWindowDurationPerc / 100}`,
+                ),
+                epochs_number: {
+                    [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
                 },
             },
+            raw: true,
         });
+    }
+
+    async getEligibleAgreementsForSubmitProof(timestamp, proofWindowDurationPerc) {
+        const timestampSeconds = timestamp / 1000;
+        const currentEpoch = `FLOOR((${timestampSeconds} - start_time) / epoch_length)`;
+        const currentEpochPerc = `((${timestampSeconds} - start_time) % epoch_length) / epoch_length`;
+
+        return this.models.service_agreement.findAll({
+            where: {
+                last_commit_epoch: {
+                    [Sequelize.Op.eq]: Sequelize.literal(currentEpoch),
+                },
+                [Sequelize.Op.or]: [
+                    {
+                        last_proof_epoch: {
+                            [Sequelize.Op.is]: null,
+                        },
+                    },
+                    {
+                        last_proof_epoch: {
+                            [Sequelize.Op.lt]: Sequelize.literal(currentEpoch),
+                        },
+                    },
+                ],
+                [Sequelize.Op.and]: [
+                    Sequelize.literal(`${currentEpochPerc} * 100 >= proof_window_offset_perc`),
+                    Sequelize.literal(
+                        `${currentEpochPerc} * 100 <= proof_window_offset_perc + ${proofWindowDurationPerc}`,
+                    ),
+                ],
+                epochs_number: {
+                    [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
+                },
+            },
+            raw: true,
+        });
+    }
+
+    async destroyAllRecords(table) {
+        return this.models[table].destroy({ where: {} });
     }
 }
 
