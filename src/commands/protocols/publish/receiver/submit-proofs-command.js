@@ -1,12 +1,13 @@
-import EpochCommand from '../../common/epoch-command.js';
 import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
     BLOCK_TIME,
+    TRIPLE_STORE_REPOSITORIES,
 } from '../../../../constants/constants.js';
+import Command from '../../../command.js';
 
-class SubmitProofsCommand extends EpochCommand {
+class SubmitProofsCommand extends Command {
     constructor(ctx) {
         super(ctx);
 
@@ -19,18 +20,14 @@ class SubmitProofsCommand extends EpochCommand {
 
     async execute(command) {
         const {
+            operationId,
             blockchain,
-            leaf,
-            proof,
-            agreementData,
-            epoch,
-            agreementId,
             contract,
             tokenId,
             keyword,
             hashFunctionId,
-            operationId,
-            identityId,
+            epoch,
+            agreementId,
             assertionId,
             stateIndex,
         } = command.data;
@@ -43,39 +40,68 @@ class SubmitProofsCommand extends EpochCommand {
                 }`,
         );
 
-        const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
-            blockchain,
-            agreementId,
-            epoch,
-            stateIndex,
-        );
-        if (this.proofAlreadySubmitted(commits, identityId)) {
-            this.logger.trace(
-                `Proofs already submitted for agreement id: ${agreementId} and epoch: ${epoch}`,
-            );
-            await this.scheduleNextEpochCheck(
-                blockchain,
-                agreementId,
-                contract,
-                tokenId,
-                keyword,
-                hashFunctionId,
-                agreementData,
-                operationId,
-                assertionId,
-            );
-            return EpochCommand.empty();
-        }
         if (command.retries === COMMAND_RETRIES.SUBMIT_PROOFS) {
             this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_START,
+                OPERATION_ID_STATUS.COMMIT_PROOF.CALCULATE_PROOFS_START,
                 operationId,
                 agreementId,
                 epoch,
             );
         }
 
-        const that = this;
+        this.logger.trace(`Calculating proofs for agreement id : ${agreementId}`);
+        const { challenge } = await this.blockchainModuleManager.getChallenge(
+            blockchain,
+            contract,
+            tokenId,
+            epoch,
+            stateIndex,
+        );
+
+        const assertion = await this.tripleStoreService.getAssertion(
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+            assertionId,
+        );
+
+        if (!assertion.length) {
+            this.logger.trace(`Assertion with id: ${assertionId} not found in triple store.`);
+            return Command.empty();
+        }
+
+        const { leaf, proof } = this.validationModuleManager.getMerkleProof(
+            assertion,
+            Number(challenge),
+        );
+
+        if (command.retries === COMMAND_RETRIES.SUBMIT_PROOFS) {
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.CALCULATE_PROOFS_END,
+                operationId,
+                agreementId,
+                epoch,
+            );
+
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_START,
+                operationId,
+                agreementId,
+                epoch,
+            );
+        } else {
+            const alreadySubmitted = await this.proofAlreadySubmitted(
+                blockchain,
+                agreementId,
+                epoch,
+                stateIndex,
+            );
+            if (alreadySubmitted) {
+                this.logger.trace(
+                    `Proofs already submitted for blockchain: ${blockchain} agreement id: ${agreementId}, epoch: ${epoch}, state index: ${stateIndex}`,
+                );
+                return Command.empty();
+            }
+        }
+
         await this.blockchainModuleManager.sendProof(
             blockchain,
             contract,
@@ -88,7 +114,7 @@ class SubmitProofsCommand extends EpochCommand {
             stateIndex,
             async (result) => {
                 if (!result.error) {
-                    that.logger.trace(
+                    this.logger.trace(
                         `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
                             `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
                             `hash function id: ${hashFunctionId}. Retry number ${
@@ -96,7 +122,7 @@ class SubmitProofsCommand extends EpochCommand {
                             }`,
                     );
 
-                    that.operationIdService.emitChangeEvent(
+                    this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
                         operationId,
                         agreementId,
@@ -104,20 +130,20 @@ class SubmitProofsCommand extends EpochCommand {
                     );
                 } else if (command.retries - 1 === 0) {
                     const errorMessage = `Failed executing submit proofs command, maximum number of retries reached. Error: ${result.error.message}. Scheduling next epoch check.`;
-                    that.logger.error(errorMessage);
-                    that.operationIdService.emitChangeEvent(
+                    this.logger.error(errorMessage);
+                    this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.FAILED,
                         operationId,
                         errorMessage,
-                        that.errorType,
+                        this.errorType,
                         epoch,
                     );
                 } else {
                     const commandDelay = BLOCK_TIME * 1000; // one block
-                    that.logger.warn(
+                    this.logger.warn(
                         `Failed executing submit proofs command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
                     );
-                    await that.commandExecutor.add({
+                    await this.commandExecutor.add({
                         name: 'submitProofsCommand',
                         sequence: [],
                         delay: commandDelay,
@@ -125,30 +151,27 @@ class SubmitProofsCommand extends EpochCommand {
                         retries: command.retries - 1,
                         transactional: false,
                     });
-                    return;
                 }
-                await that.scheduleNextEpochCheck(
-                    blockchain,
-                    agreementId,
-                    contract,
-                    tokenId,
-                    keyword,
-                    hashFunctionId,
-                    agreementData,
-                    operationId,
-                    assertionId,
-                );
             },
         );
-        return EpochCommand.empty();
+        return Command.empty();
     }
 
-    proofAlreadySubmitted(commits, myIdentity) {
-        commits.forEach((commit) => {
-            if (Number(commit.identityId) === myIdentity && Number(commit.score) === 0) {
+    async proofAlreadySubmitted(blockchain, agreementId, epoch, stateIndex) {
+        const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
+            blockchain,
+            agreementId,
+            epoch,
+            stateIndex,
+        );
+        const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
+
+        for (const commit of commits) {
+            if (Number(commit.identityId) === identityId && Number(commit.score) === 0) {
                 return true;
             }
-        });
+        }
+
         return false;
     }
 

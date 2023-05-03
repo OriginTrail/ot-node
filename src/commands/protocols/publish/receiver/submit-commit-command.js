@@ -18,8 +18,8 @@ class SubmitCommitCommand extends Command {
 
     async execute(command) {
         const {
-            blockchain,
             operationId,
+            blockchain,
             contract,
             tokenId,
             keyword,
@@ -28,6 +28,7 @@ class SubmitCommitCommand extends Command {
             agreementId,
             stateIndex,
         } = command.data;
+
         if (command.retries === COMMAND_RETRIES.SUBMIT_COMMIT) {
             this.operationIdService.emitChangeEvent(
                 OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_START,
@@ -45,7 +46,21 @@ class SubmitCommitCommand extends Command {
                 }`,
         );
 
-        const that = this;
+        if (command.retries !== COMMAND_RETRIES.SUBMIT_COMMIT) {
+            const alreadySubmitted = await this.commitAlreadySubmitted(
+                blockchain,
+                agreementId,
+                epoch,
+                stateIndex,
+            );
+            if (alreadySubmitted) {
+                this.logger.trace(
+                    `Commit already submitted for blockchain: ${blockchain} agreement id: ${agreementId}, epoch: ${epoch}, state index: ${stateIndex}`,
+                );
+                return Command.empty();
+            }
+        }
+
         await this.blockchainModuleManager.submitCommit(
             blockchain,
             contract,
@@ -56,15 +71,14 @@ class SubmitCommitCommand extends Command {
             stateIndex,
             async (result) => {
                 if (!result.error) {
-                    that.logger.trace(
+                    this.logger.trace(
                         `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
                             `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
                             `hash function id: ${hashFunctionId}. Retry number ${
                                 COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1
                             }`,
                     );
-
-                    await that.operationIdService.emitChangeEvent(
+                    this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
                         operationId,
                         agreementId,
@@ -72,20 +86,20 @@ class SubmitCommitCommand extends Command {
                     );
                 } else if (command.retries - 1 === 0) {
                     const errorMessage = `Failed executing submit commit command, maximum number of retries reached. Error: ${result.error.message}.`;
-                    that.logger.error(errorMessage);
-                    await that.operationIdService.emitChangeEvent(
+                    this.logger.error(errorMessage);
+                    this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.FAILED,
                         operationId,
                         errorMessage,
-                        that.errorType,
+                        this.errorType,
                         epoch,
                     );
                 } else {
                     const commandDelay = BLOCK_TIME * 1000; // one block
-                    that.logger.warn(
+                    this.logger.warn(
                         `Failed executing submit commit command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
                     );
-                    await that.commandExecutor.add({
+                    await this.commandExecutor.add({
                         name: 'submitCommitCommand',
                         sequence: [],
                         delay: commandDelay,
@@ -98,6 +112,24 @@ class SubmitCommitCommand extends Command {
         );
 
         return Command.empty();
+    }
+
+    async commitAlreadySubmitted(blockchain, agreementId, epoch, stateIndex) {
+        const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
+            blockchain,
+            agreementId,
+            epoch,
+            stateIndex,
+        );
+        const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
+
+        for (const commit of commits) {
+            if (Number(commit.identityId) === identityId) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

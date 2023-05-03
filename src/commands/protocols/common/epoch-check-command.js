@@ -25,14 +25,17 @@ class EpochCheckCommand extends Command {
     }
 
     async scheduleSubmitCommitCommands(blockchain) {
-        const timestamp = this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
+        const commitWindowDurationPerc =
+            await this.blockchainModuleManager.getUpdateCommitWindowDuration(blockchain);
+        const timestamp = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
         const eligibleAgreementForSubmitCommit =
             await this.repositoryModuleManager.getEligibleAgreementsForSubmitCommit(
                 timestamp,
                 blockchain,
+                commitWindowDurationPerc,
             );
 
-        for (const serviceAgreement in eligibleAgreementForSubmitCommit) {
+        for (const serviceAgreement of eligibleAgreementForSubmitCommit) {
             const rank = await this.calculateRank(
                 blockchain,
                 serviceAgreement.keyword,
@@ -43,7 +46,11 @@ class EpochCheckCommand extends Command {
 
             if (rank >= r0) {
                 this.logger.trace(
-                    `Calculated rank: ${rank} higher than R0: ${r0}. Skipping scheduling of submit commit for agreement id: ${serviceAgreement.agreement_id}`,
+                    `Calculated rank: ${
+                        rank + 1
+                    } higher than R0: ${r0}. Skipping scheduling of submit commit for agreement id: ${
+                        serviceAgreement.agreement_id
+                    }`,
                 );
             } else {
                 const epoch = await this.calculateCurrentEpoch(
@@ -58,11 +65,10 @@ class EpochCheckCommand extends Command {
                     keyword: serviceAgreement.keyword,
                     hashFunctionId: serviceAgreement.hash_function_id,
                     epoch,
-                    epochStartTime: serviceAgreement.start_time,
-                    epochLength: serviceAgreement.epoch_length,
                     agreementId: serviceAgreement.agreement_id,
                     stateIndex: serviceAgreement.state_index,
                 };
+
                 await this.commandExecutor.add({
                     name: 'submitCommitCommand',
                     sequence: [],
@@ -75,13 +81,16 @@ class EpochCheckCommand extends Command {
     }
 
     async scheduleCalculateProofsCommands(blockchain) {
-        const timestamp = this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
-        const eligibleAgreementForSubmitProofs =
+        const timestamp = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
+        const proofWindowDurationPerc =
+            await this.blockchainModuleManager.getProofWindowDurationPerc(blockchain);
+        const eligibleAgreemenstForSubmitProofs =
             await this.repositoryModuleManager.getEligibleAgreementsForSubmitProof(
                 timestamp,
                 blockchain,
+                proofWindowDurationPerc,
             );
-        for (const serviceAgreement in eligibleAgreementForSubmitProofs) {
+        for (const serviceAgreement of eligibleAgreemenstForSubmitProofs) {
             const epoch = await this.calculateCurrentEpoch(
                 serviceAgreement.start_time,
                 serviceAgreement.epoch_length,
@@ -105,8 +114,9 @@ class EpochCheckCommand extends Command {
                     assertionId: serviceAgreement.assertion_id,
                     stateIndex: serviceAgreement.state_index,
                 };
+
                 await this.commandExecutor.add({
-                    name: 'calculateProofsCommand',
+                    name: 'submitProofsCommand',
                     sequence: [],
                     data: commandData,
                     transactional: false,
@@ -158,8 +168,9 @@ class EpochCheckCommand extends Command {
             epoch,
             stateIndex,
         );
-        for (let i = 0; i < Math.min(r0, commits.length); i += 1) {
-            if (Number(commits[i].identityId) === identityId) {
+
+        for (const commit of commits.slice(0, r0)) {
+            if (Number(commit.identityId) === identityId && Number(commit.score) !== 0) {
                 this.logger.trace(`Node is eligible for rewards for agreement id: ${agreementId}`);
 
                 return true;
