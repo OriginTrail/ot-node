@@ -109,6 +109,32 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
             agreementId,
         );
 
+        // calculate current epoch
+        const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
+        const epoch = Math.floor((now - agreementData.startTime) / agreementData.epochLength);
+
+        // service agreement expired, don't update commits and proofs
+        if (epoch >= Number(agreementData.epochsNumber)) return;
+
+        // get top commits
+        const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
+            blockchain,
+            agreementId,
+            epoch,
+            stateIndex,
+        );
+        let lastCommitEpoch = null;
+        let lastProofEpoch = null;
+
+        for (const commit of commits) {
+            if (Number(commit.identityId) === identityId) {
+                lastCommitEpoch = epoch;
+                if (Number(commit.score) === 0) {
+                    lastProofEpoch = epoch;
+                }
+            }
+        }
+
         // store in service_agreement table
         await this.repositoryModuleManager.updateServiceAgreementRecord(
             blockchain,
@@ -124,41 +150,9 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
             keyword,
             assertionId,
             stateIndex,
+            lastCommitEpoch,
+            lastProofEpoch,
         );
-
-        // calculate current epoch
-        const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
-        const epoch = Math.floor((now - agreementData.startTime) / agreementData.epochLength);
-
-        // service agreement expired, don't update commits and proofs
-        if (epoch >= Number(agreementData.epochsNumber)) return;
-
-        // get top commits
-        const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
-            blockchain,
-            agreementId,
-            epoch,
-            stateIndex,
-        );
-        let commitSubmitted = false;
-        let proofSubmitted = false;
-
-        for (const commit of commits) {
-            if (Number(commit.identityId) === identityId) {
-                commitSubmitted = true;
-                if (Number(commit.score) === 0) {
-                    proofSubmitted = true;
-                }
-            }
-        }
-
-        if (commitSubmitted) {
-            // store in attempted-commit-command table
-        }
-
-        if (proofSubmitted) {
-            // store in attempted-proof-command table
-        }
     }
 }
 
