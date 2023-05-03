@@ -394,6 +394,10 @@ class RepositoryModuleManager extends BaseModuleManager {
         proofWindowOffsetPerc,
         lastCommitEpoch,
         lastProofEpoch,
+        hashFunctionId,
+        keyword,
+        assertionId,
+        stateIndex,
     ) {
         if (this.initialized) {
             return this.getImplementation().module.updateServiceAgreementRecord(
@@ -408,6 +412,10 @@ class RepositoryModuleManager extends BaseModuleManager {
                 proofWindowOffsetPerc,
                 lastCommitEpoch,
                 lastProofEpoch,
+                hashFunctionId,
+                keyword,
+                assertionId,
+                stateIndex,
             );
         }
     }
@@ -422,10 +430,11 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async getEligibleAgreementsForSubmitCommit(timestamp, commitWindowDurationPerc) {
+    async getEligibleAgreementsForSubmitCommit(timestamp, blockchain, commitWindowDurationPerc) {
         if (this.initialized) {
             return this.getImplementation().module.getEligibleAgreementsForSubmitCommit(
                 timestamp,
+                blockchain,
                 commitWindowDurationPerc,
             );
         }

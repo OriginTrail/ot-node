@@ -590,6 +590,10 @@ class SequelizeRepository {
         proofWindowOffsetPerc,
         lastCommitEpoch,
         lastProofEpoch,
+        hashFunctionId,
+        keyword,
+        assertionId,
+        stateIndex,
     ) {
         return this.models.service_agreement.upsert({
             blockchain_id: blockchainId,
@@ -603,6 +607,10 @@ class SequelizeRepository {
             proof_window_offset_perc: proofWindowOffsetPerc,
             last_commit_epoch: lastCommitEpoch,
             last_proof_epoch: lastProofEpoch,
+            hash_function_id: hashFunctionId,
+            keyword,
+            assertion_id: assertionId,
+            state_index: stateIndex,
         });
     }
 
@@ -616,13 +624,14 @@ class SequelizeRepository {
         });
     }
 
-    getEligibleAgreementsForSubmitCommit(timestamp, commitWindowDurationPerc) {
+    getEligibleAgreementsForSubmitCommit(timestamp, blockchain, commitWindowDurationPerc) {
         const timestampSeconds = timestamp / 1000;
         const currentEpoch = `FLOOR((${timestampSeconds} - start_time) / epoch_length)`;
         const currentEpochPerc = `((${timestampSeconds} - start_time) % epoch_length) / epoch_length`;
 
         return this.models.service_agreement.findAll({
             where: {
+                blockchain_id: blockchain,
                 [Sequelize.Op.or]: [
                     {
                         last_commit_epoch: {
@@ -642,17 +651,19 @@ class SequelizeRepository {
                     [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
                 },
             },
+            limit: 10,
             raw: true,
         });
     }
 
-    async getEligibleAgreementsForSubmitProof(timestamp, proofWindowDurationPerc) {
+    async getEligibleAgreementsForSubmitProof(timestamp, blockchain, proofWindowDurationPerc) {
         const timestampSeconds = timestamp / 1000;
         const currentEpoch = `FLOOR((${timestampSeconds} - start_time) / epoch_length)`;
         const currentEpochPerc = `((${timestampSeconds} - start_time) % epoch_length) / epoch_length`;
 
         return this.models.service_agreement.findAll({
             where: {
+                blockchain_id: blockchain,
                 last_commit_epoch: {
                     [Sequelize.Op.eq]: Sequelize.literal(currentEpoch),
                 },
@@ -678,6 +689,7 @@ class SequelizeRepository {
                     [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
                 },
             },
+            limit: 10,
             raw: true,
         });
     }

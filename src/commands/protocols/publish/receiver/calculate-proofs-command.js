@@ -1,12 +1,12 @@
-import EpochCommand from '../../common/epoch-command.js';
 import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
     TRIPLE_STORE_REPOSITORIES,
 } from '../../../../constants/constants.js';
+import Command from '../../../command.js';
 
-class CalculateProofsCommand extends EpochCommand {
+class CalculateProofsCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
@@ -14,7 +14,6 @@ class CalculateProofsCommand extends EpochCommand {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
         this.operationIdService = ctx.operationIdService;
-        this.dataService = ctx.dataService;
         this.errorType = ERROR_TYPE.COMMIT_PROOF.CALCULATE_PROOFS_ERROR;
     }
 
@@ -25,29 +24,17 @@ class CalculateProofsCommand extends EpochCommand {
             tokenId,
             keyword,
             hashFunctionId,
-            agreementData,
             agreementId,
-            identityId,
             operationId,
+            epoch,
+            assertionId,
+            stateIndex,
         } = command.data;
-        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
-            blockchain,
-            contract,
-            tokenId,
-        );
-        const stateIndex = assertionIds.length - 1;
-        const assertionId = assertionIds[stateIndex];
 
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +
                 `blockchain:${blockchain}, contract: ${contract}, token id: ${tokenId}, ` +
                 `keyword: ${keyword}, hash function id: ${hashFunctionId} and stateIndex: ${stateIndex}`,
-        );
-
-        const epoch = await this.calculateCurrentEpoch(
-            Number(agreementData.startTime),
-            Number(agreementData.epochLength),
-            blockchain,
         );
 
         this.operationIdService.emitChangeEvent(
@@ -56,30 +43,6 @@ class CalculateProofsCommand extends EpochCommand {
             agreementId,
             epoch,
         );
-
-        if (
-            !(await this.isEligibleForRewards(
-                blockchain,
-                agreementId,
-                epoch,
-                identityId,
-                stateIndex,
-            ))
-        ) {
-            await this.scheduleNextEpochCheck(
-                blockchain,
-                agreementId,
-                contract,
-                tokenId,
-                keyword,
-                hashFunctionId,
-                agreementData,
-                operationId,
-                assertionId,
-            );
-
-            return EpochCommand.empty();
-        }
 
         this.logger.trace(`Calculating proofs for agreement id : ${agreementId}`);
         const { challenge } = await this.blockchainModuleManager.getChallenge(
@@ -96,10 +59,8 @@ class CalculateProofsCommand extends EpochCommand {
         );
 
         if (!assertion.length) {
-            this.logger.trace(
-                `Assertion with id: ${assertionId} not found in triple store. Not scheduling next epcoh checks.`,
-            );
-            return EpochCommand.empty();
+            this.logger.trace(`Assertion with id: ${assertionId} not found in triple store.`);
+            return Command.empty();
         }
 
         const { leaf, proof } = this.validationModuleManager.getMerkleProof(
@@ -115,7 +76,6 @@ class CalculateProofsCommand extends EpochCommand {
                 ...command.data,
                 leaf,
                 proof,
-                stateIndex,
             },
             retries: COMMAND_RETRIES.SUBMIT_PROOFS,
             transactional: false,
@@ -127,29 +87,7 @@ class CalculateProofsCommand extends EpochCommand {
             agreementId,
             epoch,
         );
-        return EpochCommand.empty();
-    }
-
-    async isEligibleForRewards(blockchain, agreementId, epoch, identityId, stateIndex) {
-        const r0 = await this.blockchainModuleManager.getR0(blockchain);
-
-        const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
-            blockchain,
-            agreementId,
-            epoch,
-            stateIndex,
-        );
-        for (let i = 0; i < Math.min(r0, commits.length); i += 1) {
-            if (Number(commits[i].identityId) === identityId) {
-                this.logger.trace(`Node is eligible for rewards for agreement id: ${agreementId}`);
-
-                return true;
-            }
-        }
-
-        this.logger.trace(`Node is not eligible for rewards for agreement id: ${agreementId}`);
-
-        return false;
+        return Command.empty();
     }
 
     /**

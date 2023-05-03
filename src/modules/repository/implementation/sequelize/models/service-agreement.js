@@ -34,6 +34,22 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.TINYINT.UNSIGNED,
                 allowNull: false,
             },
+            state_index: {
+                type: DataTypes.TINYINT.UNSIGNED,
+                allowNull: false,
+            },
+            assertion_id: {
+                type: DataTypes.STRING,
+                primaryKey: true,
+            },
+            hash_function_id: {
+                type: DataTypes.TINYINT.UNSIGNED,
+                allowNull: false,
+            },
+            keyword: {
+                type: DataTypes.STRING,
+                primaryKey: true,
+            },
             proof_window_offset_perc: {
                 type: DataTypes.TINYINT.UNSIGNED,
                 allowNull: false,
