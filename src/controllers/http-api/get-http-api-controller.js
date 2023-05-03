@@ -3,6 +3,7 @@ import {
     OPERATION_STATUS,
     CONTENT_ASSET_HASH_FUNCTION_ID,
     DEFAULT_GET_STATE,
+    ERROR_TYPE,
 } from '../../constants/constants.js';
 import BaseController from './base-http-api-controller.js';
 
@@ -11,7 +12,7 @@ class GetController extends BaseController {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.operationIdService = ctx.operationIdService;
-        this.getService = ctx.getService;
+        this.operationService = ctx.getService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
@@ -30,40 +31,52 @@ class GetController extends BaseController {
         });
 
         await this.repositoryModuleManager.createOperationRecord(
-            this.getService.getOperationName(),
+            this.operationService.getOperationName(),
             operationId,
             OPERATION_STATUS.IN_PROGRESS,
         );
 
-        const { id } = req.body;
-        const state = req.body.state ?? DEFAULT_GET_STATE;
-        const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
+        try {
+            const { id } = req.body;
+            const state = req.body.state ?? DEFAULT_GET_STATE;
+            const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
-        this.logger.info(`Get for ${id} with operation id ${operationId} initiated.`);
+            this.logger.info(`Get for ${id} with operation id ${operationId} initiated.`);
 
-        const commandSequence = [
-            'getLatestAssertionIdCommand',
-            'localGetCommand',
-            'networkGetCommand',
-        ];
+            const commandSequence = [
+                'getLatestAssertionIdCommand',
+                'localGetCommand',
+                'networkGetCommand',
+            ];
 
-        await this.commandExecutor.add({
-            name: commandSequence[0],
-            sequence: commandSequence.slice(1),
-            delay: 0,
-            data: {
+            await this.commandExecutor.add({
+                name: commandSequence[0],
+                sequence: commandSequence.slice(1),
+                delay: 0,
+                data: {
+                    operationId,
+                    id,
+                    state,
+                    hashFunctionId,
+                },
+                transactional: false,
+            });
+
+            await this.operationIdService.updateOperationIdStatus(
                 operationId,
-                id,
-                state,
-                hashFunctionId,
-            },
-            transactional: false,
-        });
+                OPERATION_ID_STATUS.GET.GET_INIT_END,
+            );
+        } catch (error) {
+            this.logger.error(
+                `Error while initializing get data: ${error.message}. ${error.stack}`,
+            );
 
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            OPERATION_ID_STATUS.GET.GET_INIT_END,
-        );
+            await this.operationService.markOperationAsFailed(
+                operationId,
+                'Unable to get data, Failed to process input data!',
+                ERROR_TYPE.GET.GET_ROUTE_ERROR,
+            );
+        }
     }
 }
 
