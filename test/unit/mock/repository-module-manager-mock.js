@@ -1,4 +1,16 @@
 class RepositoryModuleManagerMock {
+    responseStatuses = [
+        {
+            id: 1,
+            operation_id: 'f6354c2c-d460-11ed-afa1-0242ac120002',
+            keyword: 'origintrail',
+            status: 'COMPLETED',
+            message: 'message',
+            created_at: '1970-01-01 00:00:00',
+            updated_at: '1970-01-01 00:00:00',
+        },
+    ];
+
     getAllPeerRecords() {
         return [
             {
@@ -90,6 +102,44 @@ class RepositoryModuleManagerMock {
                 last_seen: '1970-01-01 00:00:00',
                 last_dialed: '1970-01-01 00:00:00',
                 sha256: '0x7b4f717bd647104a72c7f1fce4600366982f36ebb1cef41540a5541c8e8ca1dd',
+            },
+        ];
+    }
+
+    getAllResponseStatuses() {
+        return this.responseStatuses;
+    }
+
+    async getOperationResponsesStatuses(operation, operationId) {
+        return this.responseStatuses.filter((rs) => rs.operation_id === operationId);
+    }
+
+    async updateOperationIdRecord(data, operationId) {
+        this.responseStatuses = this.responseStatuses.map((rs) =>
+            rs.operation_id === operationId
+                ? { ...rs, status: data.status, updated_at: data.timestamp }
+                : rs,
+        );
+    }
+
+    async updateOperationStatus(operation, operationId, status) {
+        this.responseStatuses = this.responseStatuses.map((rs) =>
+            rs.operation_id === operationId
+                ? { ...rs, status, updated_at: new Date().toISOString() }
+                : rs,
+        );
+    }
+
+    async createOperationResponseRecord(status, operation, operationId, keyword, errorMessage) {
+        this.responseStatuses = [
+            ...this.responseStatuses,
+            {
+                id: this.responseStatuses[this.responseStatuses.length - 1].id + 1,
+                status,
+                operation_id: operationId,
+                keyword,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
             },
         ];
     }
