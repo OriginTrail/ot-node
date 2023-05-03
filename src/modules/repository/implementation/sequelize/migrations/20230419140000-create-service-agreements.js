@@ -33,7 +33,7 @@ export const up = async ({ context: { queryInterface, Sequelize } }) => {
             allowNull: false,
         },
         state_index: {
-            type: Sequelize.TINYINT.UNSIGNED,
+            type: Sequelize.SMALLINT.UNSIGNED,
             allowNull: false,
         },
         assertion_id: {

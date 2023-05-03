@@ -4,7 +4,6 @@ import {
     ERROR_TYPE,
     COMMAND_RETRIES,
     BLOCK_TIME,
-    ATTEMPTED_PROOF_COMMAND_STATUS,
 } from '../../../../constants/constants.js';
 
 class SubmitProofsCommand extends EpochCommand {
@@ -95,14 +94,6 @@ class SubmitProofsCommand extends EpochCommand {
                             `hash function id: ${hashFunctionId}. Retry number ${
                                 COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
                             }`,
-                    );
-                    await that.repositoryModuleManager.updateAttemptedProofCommandRecord(
-                        blockchain,
-                        contract,
-                        tokenId,
-                        agreementId,
-                        epoch,
-                        ATTEMPTED_PROOF_COMMAND_STATUS.COMPLETED,
                     );
 
                     that.operationIdService.emitChangeEvent(

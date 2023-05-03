@@ -17,50 +17,6 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async updateAttemptedCommitCommandRecord(
-        blockchainId,
-        contract,
-        tokenId,
-        agreementId,
-        epoch,
-        status,
-        txHash,
-    ) {
-        if (this.initialized) {
-            return this.getImplementation().module.updateAttemptedCommitCommandRecord(
-                blockchainId,
-                contract,
-                tokenId,
-                agreementId,
-                epoch,
-                status,
-                txHash,
-            );
-        }
-    }
-
-    async updateAttemptedProofCommandRecord(
-        blockchainId,
-        contract,
-        tokenId,
-        agreementId,
-        epoch,
-        status,
-        txHash,
-    ) {
-        if (this.initialized) {
-            return this.getImplementation().module.updateAttemptedProofCommandRecord(
-                blockchainId,
-                contract,
-                tokenId,
-                agreementId,
-                epoch,
-                status,
-                txHash,
-            );
-        }
-    }
-
     // COMMANDS
     async updateCommand(update, opts) {
         if (this.initialized) {
@@ -392,12 +348,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         epochLength,
         scoreFunctionId,
         proofWindowOffsetPerc,
-        lastCommitEpoch,
-        lastProofEpoch,
         hashFunctionId,
         keyword,
         assertionId,
         stateIndex,
+        lastCommitEpoch,
+        lastProofEpoch,
     ) {
         if (this.initialized) {
             return this.getImplementation().module.updateServiceAgreementRecord(
@@ -410,12 +366,12 @@ class RepositoryModuleManager extends BaseModuleManager {
                 epochLength,
                 scoreFunctionId,
                 proofWindowOffsetPerc,
-                lastCommitEpoch,
-                lastProofEpoch,
                 hashFunctionId,
                 keyword,
                 assertionId,
                 stateIndex,
+                lastCommitEpoch,
+                lastProofEpoch,
             );
         }
     }

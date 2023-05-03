@@ -99,46 +99,6 @@ class SequelizeRepository {
         return this.models.sequelize.transaction(async (t) => execFn(t));
     }
 
-    async updateAttemptedCommitCommandRecord(
-        blockchainId,
-        contract,
-        tokenId,
-        agreementId,
-        epoch,
-        status,
-        txHash,
-    ) {
-        await this.models.attempted_commit_command.upsert({
-            blockchain_id: blockchainId,
-            asset_storage_contract_address: contract,
-            token_id: tokenId,
-            agreement_id: agreementId,
-            epoch,
-            status,
-            tx_hash: txHash,
-        });
-    }
-
-    async updateAttemptedProofCommandRecord(
-        blockchainId,
-        contract,
-        tokenId,
-        agreementId,
-        epoch,
-        status,
-        txHash,
-    ) {
-        await this.models.attempted_proof_command.upsert({
-            blockchain_id: blockchainId,
-            asset_storage_contract_address: contract,
-            token_id: tokenId,
-            agreement_id: agreementId,
-            epoch,
-            status,
-            tx_hash: txHash,
-        });
-    }
-
     // COMMAND
     async updateCommand(update, opts) {
         await this.models.commands.update(update, opts);
@@ -588,12 +548,12 @@ class SequelizeRepository {
         epochLength,
         scoreFunctionId,
         proofWindowOffsetPerc,
-        lastCommitEpoch,
-        lastProofEpoch,
         hashFunctionId,
         keyword,
         assertionId,
         stateIndex,
+        lastCommitEpoch,
+        lastProofEpoch,
     ) {
         return this.models.service_agreement.upsert({
             blockchain_id: blockchainId,

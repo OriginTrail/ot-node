@@ -35,7 +35,7 @@ export default (sequelize, DataTypes) => {
                 allowNull: false,
             },
             state_index: {
-                type: DataTypes.TINYINT.UNSIGNED,
+                type: DataTypes.SMALLINT.UNSIGNED,
                 allowNull: false,
             },
             assertion_id: {
