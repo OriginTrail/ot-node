@@ -8,6 +8,8 @@ let logger;
 let repositoryModuleManager;
 const config = JSON.parse(await readFile('./test/modules/repository/config.json'));
 
+const blockchain = 'hardhat';
+
 describe('Repository module', () => {
     before('Initialize logger', () => {
         logger = new Logger('trace');
@@ -30,7 +32,11 @@ describe('Repository module', () => {
     describe('Empty repository', () => {
         it('returns empty list if no service agreements', async () => {
             const eligibleAgreements =
-                await repositoryModuleManager.getEligibleAgreementsForSubmitCommit(Date.now(), 25);
+                await repositoryModuleManager.getEligibleAgreementsForSubmitCommit(
+                    Date.now(),
+                    blockchain,
+                    25,
+                );
 
             assert(expect(eligibleAgreements).to.exist);
             expect(eligibleAgreements).to.be.instanceOf(Array);
@@ -39,7 +45,7 @@ describe('Repository module', () => {
     });
     describe('Insert and update service agreement', () => {
         const agreement = {
-            blockchain_id: 'hardhat',
+            blockchain_id: blockchain,
             asset_storage_contract_address: '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07',
             token_id: 0,
             agreement_id: '0x44cf660357e2d7462c25fd8e50b68abe332d7a70b07a76e92f628846ea585881',
@@ -48,6 +54,11 @@ describe('Repository module', () => {
             epoch_length: 360,
             score_function_id: 1,
             proof_window_offset_perc: 66,
+            hash_function_id: 1,
+            keyword:
+                '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca0768e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
+            assertion_id: '0x68e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
+            state_index: 1,
         };
 
         it('inserts service agreement', async () => {
@@ -61,6 +72,12 @@ describe('Repository module', () => {
                 agreement.epoch_length,
                 agreement.score_function_id,
                 agreement.proof_window_offset_perc,
+                agreement.hash_function_id,
+                agreement.keyword,
+                agreement.assertion_id,
+                agreement.state_index,
+                agreement.last_commit_epoch,
+                agreement.last_proof_epoch,
             );
             const row = inserted[0]?.dataValues;
 
@@ -76,6 +93,10 @@ describe('Repository module', () => {
             expect(row.epoch_length).to.equal(agreement.epoch_length);
             expect(row.score_function_id).to.equal(agreement.score_function_id);
             expect(row.proof_window_offset_perc).to.equal(agreement.proof_window_offset_perc);
+            expect(row.hash_function_id).to.equal(agreement.hash_function_id);
+            expect(row.keyword).to.equal(agreement.keyword);
+            expect(row.assertion_id).to.equal(agreement.assertion_id);
+            expect(row.state_index).to.equal(agreement.state_index);
             assert(expect(row.last_commit_epoch).to.not.exist);
             assert(expect(row.last_proof_epoch).to.not.exist);
         });
@@ -83,7 +104,7 @@ describe('Repository module', () => {
 
     describe('Eligible service agreements', () => {
         const createAgreement = ({
-            blockchain_id = 'hardhat',
+            blockchain_id = blockchain,
             asset_storage_contract_address = '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07',
             token_id,
             agreement_id = '0x44cf660357e2d7462c25fd8e50b68abe332d7a70b07a76e92f628846ea585881',
@@ -92,6 +113,10 @@ describe('Repository module', () => {
             epoch_length = 100,
             score_function_id = 1,
             proof_window_offset_perc = 66,
+            hash_function_id = 1,
+            keyword = '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca0768e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
+            assertion_id = '0x68e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
+            state_index = 1,
             last_commit_epoch = null,
             last_proof_epoch = null,
         }) => ({
@@ -104,6 +129,10 @@ describe('Repository module', () => {
             epoch_length,
             score_function_id,
             proof_window_offset_perc,
+            hash_function_id,
+            keyword,
+            assertion_id,
+            state_index,
             last_commit_epoch,
             last_proof_epoch,
         });
@@ -138,6 +167,10 @@ describe('Repository module', () => {
                         agreement.epoch_length,
                         agreement.score_function_id,
                         agreement.proof_window_offset_perc,
+                        agreement.hash_function_id,
+                        agreement.keyword,
+                        agreement.assertion_id,
+                        agreement.state_index,
                         agreement.last_commit_epoch,
                         agreement.last_proof_epoch,
                     ),
@@ -151,6 +184,7 @@ describe('Repository module', () => {
                     const eligibleAgreements =
                         await repositoryModuleManager.getEligibleAgreementsForSubmitCommit(
                             currentTimestamp,
+                            blockchain,
                             commitWindowDurationPerc,
                         );
 
@@ -228,6 +262,7 @@ describe('Repository module', () => {
                     const eligibleAgreements =
                         await repositoryModuleManager.getEligibleAgreementsForSubmitProof(
                             currentTimestamp,
+                            blockchain,
                             proofWindowDurationPerc,
                         );
 

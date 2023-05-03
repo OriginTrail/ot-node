@@ -565,12 +565,12 @@ class SequelizeRepository {
             epoch_length: epochLength,
             score_function_id: scoreFunctionId,
             proof_window_offset_perc: proofWindowOffsetPerc,
-            last_commit_epoch: lastCommitEpoch,
-            last_proof_epoch: lastProofEpoch,
             hash_function_id: hashFunctionId,
             keyword,
             assertion_id: assertionId,
             state_index: stateIndex,
+            last_commit_epoch: lastCommitEpoch,
+            last_proof_epoch: lastProofEpoch,
         });
     }
 
@@ -587,7 +587,7 @@ class SequelizeRepository {
     getEligibleAgreementsForSubmitCommit(timestamp, blockchain, commitWindowDurationPerc) {
         const timestampSeconds = timestamp / 1000;
         const currentEpoch = `FLOOR((${timestampSeconds} - start_time) / epoch_length)`;
-        const currentEpochPerc = `((${timestampSeconds} - start_time) % epoch_length) / epoch_length`;
+        const currentEpochPerc = `((${timestampSeconds} - start_time) % epoch_length) / epoch_length * 100`;
 
         return this.models.service_agreement.findAll({
             where: {
@@ -605,7 +605,7 @@ class SequelizeRepository {
                     },
                 ],
                 [Sequelize.Op.and]: Sequelize.literal(
-                    `${currentEpochPerc} <= ${commitWindowDurationPerc / 100}`,
+                    `${currentEpochPerc} <= ${commitWindowDurationPerc}`,
                 ),
                 epochs_number: {
                     [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
@@ -619,7 +619,7 @@ class SequelizeRepository {
     async getEligibleAgreementsForSubmitProof(timestamp, blockchain, proofWindowDurationPerc) {
         const timestampSeconds = timestamp / 1000;
         const currentEpoch = `FLOOR((${timestampSeconds} - start_time) / epoch_length)`;
-        const currentEpochPerc = `((${timestampSeconds} - start_time) % epoch_length) / epoch_length`;
+        const currentEpochPerc = `((${timestampSeconds} - start_time) % epoch_length) / epoch_length * 100`;
 
         return this.models.service_agreement.findAll({
             where: {
@@ -640,9 +640,9 @@ class SequelizeRepository {
                     },
                 ],
                 [Sequelize.Op.and]: [
-                    Sequelize.literal(`${currentEpochPerc} * 100 >= proof_window_offset_perc`),
+                    Sequelize.literal(`${currentEpochPerc} >= proof_window_offset_perc`),
                     Sequelize.literal(
-                        `${currentEpochPerc} * 100 <= proof_window_offset_perc + ${proofWindowDurationPerc}`,
+                        `${currentEpochPerc} <= proof_window_offset_perc + ${proofWindowDurationPerc}`,
                     ),
                 ],
                 epochs_number: {

@@ -3,7 +3,7 @@ export default (sequelize, DataTypes) => {
         'service_agreement',
         {
             blockchain_id: {
-                type: DataTypes.STRING,
+                type: DataTypes.STRING(20),
                 primaryKey: true,
             },
             asset_storage_contract_address: {
@@ -15,7 +15,7 @@ export default (sequelize, DataTypes) => {
                 primaryKey: true,
             },
             agreement_id: {
-                type: DataTypes.STRING,
+                type: DataTypes.STRING(66),
                 primaryKey: true,
             },
             start_time: {
@@ -39,7 +39,7 @@ export default (sequelize, DataTypes) => {
                 allowNull: false,
             },
             assertion_id: {
-                type: DataTypes.STRING,
+                type: DataTypes.STRING(66),
                 primaryKey: true,
             },
             hash_function_id: {
@@ -47,7 +47,7 @@ export default (sequelize, DataTypes) => {
                 allowNull: false,
             },
             keyword: {
-                type: DataTypes.STRING,
+                type: DataTypes.STRING(106),
                 primaryKey: true,
             },
             proof_window_offset_perc: {

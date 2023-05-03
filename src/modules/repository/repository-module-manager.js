@@ -396,10 +396,11 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async getEligibleAgreementsForSubmitProof(timestamp, proofWindowDurationPerc) {
+    async getEligibleAgreementsForSubmitProof(timestamp, blockchain, proofWindowDurationPerc) {
         if (this.initialized) {
             return this.getImplementation().module.getEligibleAgreementsForSubmitProof(
                 timestamp,
+                blockchain,
                 proofWindowDurationPerc,
             );
         }
