@@ -4,7 +4,6 @@ import {
     ERROR_TYPE,
     COMMAND_RETRIES,
     BLOCK_TIME,
-    ATTEMPTED_PROOF_COMMAND_STATUS,
 } from '../../../../constants/constants.js';
 
 class SubmitProofsCommand extends EpochCommand {
@@ -96,14 +95,6 @@ class SubmitProofsCommand extends EpochCommand {
                                 COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
                             }`,
                     );
-                    await that.repositoryModuleManager.updateAttemptedProofCommandRecord(
-                        blockchain,
-                        contract,
-                        tokenId,
-                        agreementId,
-                        epoch,
-                        ATTEMPTED_PROOF_COMMAND_STATUS.COMPLETED,
-                    );
 
                     that.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
@@ -125,14 +116,6 @@ class SubmitProofsCommand extends EpochCommand {
                     const commandDelay = BLOCK_TIME * 1000; // one block
                     that.logger.warn(
                         `Failed executing submit proofs command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
-                    );
-                    await that.repositoryModuleManager.updateAttemptedCommitCommandRecord(
-                        blockchain,
-                        contract,
-                        tokenId,
-                        agreementId,
-                        epoch,
-                        ATTEMPTED_PROOF_COMMAND_STATUS.FAILED,
                     );
                     await that.commandExecutor.add({
                         name: 'submitProofsCommand',

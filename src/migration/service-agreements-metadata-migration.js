@@ -5,8 +5,6 @@ import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
     SCHEMA_CONTEXT,
     TRIPLE_STORE_REPOSITORIES,
-    ATTEMPTED_COMMIT_COMMAND_STATUS,
-    ATTEMPTED_PROOF_COMMAND_STATUS,
 } from '../constants/constants.js';
 
 class ServiceAgreementsMetadataMigration extends BaseMigration {
@@ -151,26 +149,10 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
 
         if (commitSubmitted) {
             // store in attempted-commit-command table
-            await this.repositoryModuleManager.updateAttemptedCommitCommandRecord(
-                blockchain,
-                contract,
-                tokenId,
-                agreementId,
-                epoch,
-                ATTEMPTED_COMMIT_COMMAND_STATUS.COMPLETED,
-            );
         }
 
         if (proofSubmitted) {
             // store in attempted-proof-command table
-            await this.repositoryModuleManager.updateAttemptedProofCommandRecord(
-                blockchain,
-                contract,
-                tokenId,
-                agreementId,
-                epoch,
-                ATTEMPTED_PROOF_COMMAND_STATUS.COMPLETED,
-            );
         }
     }
 }

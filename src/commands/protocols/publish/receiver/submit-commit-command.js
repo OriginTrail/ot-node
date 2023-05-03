@@ -4,7 +4,6 @@ import {
     ERROR_TYPE,
     COMMAND_RETRIES,
     BLOCK_TIME,
-    ATTEMPTED_COMMIT_COMMAND_STATUS,
 } from '../../../../constants/constants.js';
 
 class SubmitCommitCommand extends EpochCommand {
@@ -125,15 +124,6 @@ class SubmitCommitCommand extends EpochCommand {
                             }`,
                     );
 
-                    await that.repositoryModuleManager.updateAttemptedCommitCommandRecord(
-                        blockchain,
-                        contract,
-                        tokenId,
-                        agreementId,
-                        epoch,
-                        ATTEMPTED_COMMIT_COMMAND_STATUS.COMPLETED,
-                    );
-
                     const currentEpochStartTime =
                         Number(agreementData.startTime) + Number(agreementData.epochLength) * epoch;
 
@@ -200,14 +190,6 @@ class SubmitCommitCommand extends EpochCommand {
                     const commandDelay = BLOCK_TIME * 1000; // one block
                     that.logger.warn(
                         `Failed executing submit commit command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
-                    );
-                    await that.repositoryModuleManager.updateAttemptedCommitCommandRecord(
-                        blockchain,
-                        contract,
-                        tokenId,
-                        agreementId,
-                        epoch,
-                        ATTEMPTED_COMMIT_COMMAND_STATUS.FAILED,
                     );
                     await that.commandExecutor.add({
                         name: 'submitCommitCommand',
