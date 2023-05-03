@@ -109,8 +109,14 @@ class SequelizeRepository {
         epochLength,
         scoreFunctionId,
         proofWindowOffsetPerc,
+        lastCommitEpoch,
+        lastProofEpoch,
+        hashFunctionId,
+        keyword,
+        assertionId,
+        stateIndex,
     ) {
-        await this.models.service_agreement.upsert({
+        return this.models.service_agreement.upsert({
             blockchain_id: blockchainId,
             asset_storage_contract_address: contract,
             token_id: tokenId,
@@ -120,6 +126,12 @@ class SequelizeRepository {
             epoch_length: epochLength,
             score_function_id: scoreFunctionId,
             proof_window_offset_perc: proofWindowOffsetPerc,
+            last_commit_epoch: lastCommitEpoch,
+            last_proof_epoch: lastProofEpoch,
+            hash_function_id: hashFunctionId,
+            keyword,
+            assertion_id: assertionId,
+            state_index: stateIndex,
         });
     }
 

@@ -32,9 +32,31 @@ export const up = async ({ context: { queryInterface, Sequelize } }) => {
             type: Sequelize.TINYINT.UNSIGNED,
             allowNull: false,
         },
+        state_index: {
+            type: Sequelize.SMALLINT.UNSIGNED,
+            allowNull: false,
+        },
+        assertion_id: {
+            type: Sequelize.STRING,
+            primaryKey: true,
+        },
+        hash_function_id: {
+            type: Sequelize.TINYINT.UNSIGNED,
+            allowNull: false,
+        },
+        keyword: {
+            type: Sequelize.STRING,
+            primaryKey: true,
+        },
         proof_window_offset_perc: {
             type: Sequelize.TINYINT.UNSIGNED,
             allowNull: false,
+        },
+        last_commit_epoch: {
+            type: Sequelize.SMALLINT.UNSIGNED,
+        },
+        last_proof_epoch: {
+            type: Sequelize.SMALLINT.UNSIGNED,
         },
     });
 };

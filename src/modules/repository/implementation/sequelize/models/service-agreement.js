@@ -1,5 +1,5 @@
 export default (sequelize, DataTypes) => {
-    const serviceAgreements = sequelize.define(
+    const serviceAgreement = sequelize.define(
         'service_agreement',
         {
             blockchain_id: {
@@ -34,15 +34,37 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.TINYINT.UNSIGNED,
                 allowNull: false,
             },
+            state_index: {
+                type: DataTypes.SMALLINT.UNSIGNED,
+                allowNull: false,
+            },
+            assertion_id: {
+                type: DataTypes.STRING,
+                primaryKey: true,
+            },
+            hash_function_id: {
+                type: DataTypes.TINYINT.UNSIGNED,
+                allowNull: false,
+            },
+            keyword: {
+                type: DataTypes.STRING,
+                primaryKey: true,
+            },
             proof_window_offset_perc: {
                 type: DataTypes.TINYINT.UNSIGNED,
                 allowNull: false,
             },
+            last_commit_epoch: {
+                type: DataTypes.SMALLINT.UNSIGNED,
+            },
+            last_proof_epoch: {
+                type: DataTypes.SMALLINT.UNSIGNED,
+            },
         },
         {},
     );
-    serviceAgreements.associate = () => {
+    serviceAgreement.associate = () => {
         // associations can be defined here
     };
-    return serviceAgreements;
+    return serviceAgreement;
 };

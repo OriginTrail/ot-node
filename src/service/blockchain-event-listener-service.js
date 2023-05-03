@@ -360,7 +360,7 @@ class BlockchainEventListenerService {
         for (const event of blockEvents) {
             const eventData = JSON.parse(event.data);
 
-            const { tokenId, keyword, state } = eventData;
+            const { tokenId, keyword, state, stateIndex } = eventData;
             const blockchain = event.blockchain_id;
             const contract = eventData.assetContract;
             this.logger.trace(
@@ -382,6 +382,7 @@ class BlockchainEventListenerService {
                     tokenId,
                     keyword,
                     state,
+                    stateIndex,
                 ),
                 this._handleStateFinalizedEvent(
                     TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
@@ -392,6 +393,7 @@ class BlockchainEventListenerService {
                     tokenId,
                     keyword,
                     state,
+                    stateIndex,
                 ),
             ]);
         }
@@ -406,6 +408,7 @@ class BlockchainEventListenerService {
         tokenId,
         keyword,
         assertionId,
+        stateIndex,
     ) {
         const assertionLinks = await this.tripleStoreService.getAssetAssertionLinks(
             currentRepository,
@@ -481,6 +484,10 @@ class BlockchainEventListenerService {
                     cachedData.agreementData.epochLength,
                     cachedData.agreementData.scoreFunctionId,
                     cachedData.agreementData.proofWindowOffsetPerc,
+                    CONTENT_ASSET_HASH_FUNCTION_ID,
+                    keyword,
+                    assertionId,
+                    stateIndex,
                 );
             }
         } else if (currentRepository === TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT) {

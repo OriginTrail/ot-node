@@ -27,6 +27,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         epochLength,
         scoreFunctionId,
         proofWindowOffsetPerc,
+        lastCommitEpoch,
+        lastProofEpoch,
+        hashFunctionId,
+        keyword,
+        assertionId,
+        stateIndex,
     ) {
         if (this.initialized) {
             return this.getImplementation().module.updateServiceAgreementRecord(
@@ -39,6 +45,12 @@ class RepositoryModuleManager extends BaseModuleManager {
                 epochLength,
                 scoreFunctionId,
                 proofWindowOffsetPerc,
+                lastCommitEpoch,
+                lastProofEpoch,
+                hashFunctionId,
+                keyword,
+                assertionId,
+                stateIndex,
             );
         }
     }

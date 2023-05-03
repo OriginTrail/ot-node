@@ -85,6 +85,7 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
             return;
         }
         const stateIndex = assertionIds.length - 1;
+        const assertionId = assertionIds[stateIndex];
 
         // calculate keyword
         const keyword = this.blockchainModuleManager.encodePacked(
@@ -119,6 +120,10 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
             agreementData.epochLength,
             agreementData.scoreFunctionId,
             agreementData.proofWindowOffsetPerc,
+            CONTENT_ASSET_HASH_FUNCTION_ID,
+            keyword,
+            assertionId,
+            stateIndex,
         );
 
         // calculate current epoch
