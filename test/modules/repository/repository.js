@@ -372,11 +372,13 @@ describe('Repository module', () => {
             agreements.push(
                 createAgreement({
                     token_id: tokenId,
-                    start_time: 0,
+                    start_time: Math.floor(Math.random() * 101),
+                    last_commit_epoch: [null, 0][Math.floor(Math.random() * 3)],
+                    last_proof_epoch: [null, 0][Math.floor(Math.random() * 3)],
                 }),
             );
 
-            if (agreements.length % 50_000 === 0) {
+            if (agreements.length % 100_000 === 0) {
                 // eslint-disable-next-line no-await-in-loop
                 await repositoryModuleManager.bulkCreateServiceAgreementRecords(agreements);
                 agreements = [];
@@ -397,7 +399,7 @@ describe('Repository module', () => {
             it('getEligibleAgreementsForSubmitCommit returns agreements in less than 100 ms', async () => {
                 const start = performance.now();
                 await repositoryModuleManager.getEligibleAgreementsForSubmitCommit(
-                    10,
+                    100,
                     blockchain,
                     25,
                 );
@@ -409,7 +411,7 @@ describe('Repository module', () => {
             it('getEligibleAgreementsForSubmitProof returns agreements in less than 100 ms', async () => {
                 const start = performance.now();
                 await repositoryModuleManager.getEligibleAgreementsForSubmitProof(
-                    70,
+                    100,
                     blockchain,
                     33,
                 );
@@ -428,7 +430,7 @@ describe('Repository module', () => {
             it('getEligibleAgreementsForSubmitCommit returns agreements in less than 1000 ms', async () => {
                 const start = performance.now();
                 await repositoryModuleManager.getEligibleAgreementsForSubmitCommit(
-                    10,
+                    100,
                     blockchain,
                     25,
                 );
@@ -440,7 +442,7 @@ describe('Repository module', () => {
             it('getEligibleAgreementsForSubmitProof returns agreements in less than 1000 ms', async () => {
                 const start = performance.now();
                 await repositoryModuleManager.getEligibleAgreementsForSubmitProof(
-                    70,
+                    100,
                     blockchain,
                     33,
                 );
