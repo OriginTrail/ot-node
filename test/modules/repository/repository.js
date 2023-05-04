@@ -191,68 +191,84 @@ describe('Repository module', () => {
                     assert(expect(eligibleAgreements).to.exist);
                     expect(eligibleAgreements).to.be.instanceOf(Array);
                     expect(eligibleAgreements).to.have.length(expectedAgreements.length);
-                    expect(eligibleAgreements).to.deep.equal(expectedAgreements);
+                    expect(eligibleAgreements).to.have.deep.members(expectedAgreements);
+
+                    // ensure order is correct
+                    for (let i = 0; i < eligibleAgreements.length; i += 1) {
+                        assert.strictEqual(
+                            eligibleAgreements[i].time_left_in_submit_commit_window,
+                            expectedAgreements[i].time_left_in_submit_commit_window,
+                        );
+                    }
                 };
 
             it(
                 'returns two eligible service agreements at timestamp 49',
-                testEligibleAgreementsForSubmitCommit(49 * 1000, 25, [
-                    agreements[2],
-                    agreements[4],
+                testEligibleAgreementsForSubmitCommit(49, 25, [
+                    { ...agreements[2], current_epoch: 0, time_left_in_submit_commit_window: 1 },
+                    { ...agreements[4], current_epoch: 0, time_left_in_submit_commit_window: 25 },
                 ]),
             );
             it(
                 'returns one eligible service agreement at timestamp 51',
-                testEligibleAgreementsForSubmitCommit(51 * 1000, 25, [agreements[4]]),
+                testEligibleAgreementsForSubmitCommit(51, 25, [
+                    { ...agreements[4], current_epoch: 0, time_left_in_submit_commit_window: 23 },
+                ]),
             );
             it(
                 'returns one eligible service agreement at timestamp 74',
-                testEligibleAgreementsForSubmitCommit(74 * 1000, 25, [agreements[4]]),
+                testEligibleAgreementsForSubmitCommit(74, 25, [
+                    { ...agreements[4], current_epoch: 0, time_left_in_submit_commit_window: 0 },
+                ]),
             );
             it(
                 'returns no eligible service agreements at timestamp 75',
-                testEligibleAgreementsForSubmitCommit(75 * 1000, 25, []),
+                testEligibleAgreementsForSubmitCommit(75, 25, []),
             );
             it(
                 'returns one eligible service agreements at timestamp 100',
-                testEligibleAgreementsForSubmitCommit(100 * 1000, 25, [agreements[0]]),
+                testEligibleAgreementsForSubmitCommit(100, 25, [
+                    { ...agreements[0], current_epoch: 1, time_left_in_submit_commit_window: 25 },
+                ]),
             );
             it(
-                'returns three eligible service agreements at timestamp 125',
-                testEligibleAgreementsForSubmitCommit(125 * 1000, 25, [
-                    agreements[0],
-                    agreements[1],
-                    agreements[2],
-                    agreements[3],
+                'returns four eligible service agreements at timestamp 125',
+                testEligibleAgreementsForSubmitCommit(125, 25, [
+                    { ...agreements[0], current_epoch: 1, time_left_in_submit_commit_window: 0 },
+                    { ...agreements[1], current_epoch: 1, time_left_in_submit_commit_window: 15 },
+                    { ...agreements[2], current_epoch: 1, time_left_in_submit_commit_window: 25 },
+                    { ...agreements[3], current_epoch: 1, time_left_in_submit_commit_window: 25 },
                 ]),
             );
             it(
                 'returns three eligible service agreements at timestamp 126',
-                testEligibleAgreementsForSubmitCommit(126 * 1000, 25, [
-                    agreements[1],
-                    agreements[2],
-                    agreements[3],
+                testEligibleAgreementsForSubmitCommit(126, 25, [
+                    { ...agreements[1], current_epoch: 1, time_left_in_submit_commit_window: 14 },
+                    { ...agreements[2], current_epoch: 1, time_left_in_submit_commit_window: 24 },
+                    { ...agreements[3], current_epoch: 1, time_left_in_submit_commit_window: 24 },
                 ]),
             );
             it(
                 'returns three eligible service agreements at timestamp 149',
-                testEligibleAgreementsForSubmitCommit(149 * 1000, 25, [
-                    agreements[2],
-                    agreements[3],
-                    agreements[4],
+                testEligibleAgreementsForSubmitCommit(149, 25, [
+                    { ...agreements[2], current_epoch: 1, time_left_in_submit_commit_window: 1 },
+                    { ...agreements[3], current_epoch: 1, time_left_in_submit_commit_window: 1 },
+                    { ...agreements[4], current_epoch: 1, time_left_in_submit_commit_window: 25 },
                 ]),
             );
             it(
                 'returns one eligible service agreements at timestamp 151',
-                testEligibleAgreementsForSubmitCommit(151 * 1000, 25, [agreements[4]]),
+                testEligibleAgreementsForSubmitCommit(151, 25, [
+                    { ...agreements[4], current_epoch: 1, time_left_in_submit_commit_window: 23 },
+                ]),
             );
             it(
                 'returns no eligible service agreements at timestamp 175',
-                testEligibleAgreementsForSubmitCommit(175 * 1000, 25, []),
+                testEligibleAgreementsForSubmitCommit(175, 25, []),
             );
             it(
                 'returns no eligible service agreements at timestamp 225',
-                testEligibleAgreementsForSubmitCommit(225 * 1000, 25, []),
+                testEligibleAgreementsForSubmitCommit(225, 25, []),
             );
         });
 
@@ -269,56 +285,70 @@ describe('Repository module', () => {
                     assert(expect(eligibleAgreements).to.exist);
                     expect(eligibleAgreements).to.be.instanceOf(Array);
                     expect(eligibleAgreements).to.have.length(expectedAgreements.length);
-                    expect(eligibleAgreements).to.deep.equal(expectedAgreements);
+                    expect(eligibleAgreements).to.have.deep.members(expectedAgreements);
+
+                    // ensure order is correct
+                    for (let i = 0; i < eligibleAgreements.length; i += 1) {
+                        assert.strictEqual(
+                            eligibleAgreements[i].time_left_in_submit_proof_window,
+                            expectedAgreements[i].time_left_in_submit_proof_window,
+                        );
+                    }
                 };
 
             it(
                 'returns no eligible service agreement at timestamp 49',
-                testEligibleAgreementsForSubmitProof(49 * 1000, 33, []),
+                testEligibleAgreementsForSubmitProof(49, 33, []),
             );
             it(
                 'returns no eligible service agreement at timestamp 67',
-                testEligibleAgreementsForSubmitProof(67 * 1000, 33, []),
+                testEligibleAgreementsForSubmitProof(67, 33, []),
             );
             it(
                 'returns no eligible service agreement at timestamp 80',
-                testEligibleAgreementsForSubmitProof(80 * 1000, 33, []),
+                testEligibleAgreementsForSubmitProof(80, 33, []),
             );
             it(
                 'returns one eligible service agreements at timestamp 81',
-                testEligibleAgreementsForSubmitProof(81 * 1000, 33, [agreements[1]]),
+                testEligibleAgreementsForSubmitProof(81, 33, [
+                    { ...agreements[1], current_epoch: 0, time_left_in_submit_proof_window: 33 },
+                ]),
             );
             it(
                 'returns one eligible service agreements at timestamp 92',
-                testEligibleAgreementsForSubmitProof(92 * 1000, 33, [agreements[1]]),
+                testEligibleAgreementsForSubmitProof(92, 33, [
+                    { ...agreements[1], current_epoch: 0, time_left_in_submit_proof_window: 22 },
+                ]),
             );
             it(
                 'returns one eligible service agreements at timestamp 114',
-                testEligibleAgreementsForSubmitProof(114 * 1000, 33, [agreements[1]]),
+                testEligibleAgreementsForSubmitProof(114, 33, [
+                    { ...agreements[1], current_epoch: 0, time_left_in_submit_proof_window: 0 },
+                ]),
             );
             it(
                 'returns no eligible service agreements at timestamp 115',
-                testEligibleAgreementsForSubmitProof(115 * 1000, 33, []),
+                testEligibleAgreementsForSubmitProof(115, 33, []),
             );
             it(
                 'returns no eligible service agreements at timestamp 167',
-                testEligibleAgreementsForSubmitProof(167 * 1000, 33, []),
+                testEligibleAgreementsForSubmitProof(167, 33, []),
             );
             it(
                 'returns no eligible service agreements at timestamp 181',
-                testEligibleAgreementsForSubmitProof(181 * 1000, 33, []),
+                testEligibleAgreementsForSubmitProof(181, 33, []),
             );
             it(
                 'returns no eligible service agreements at timestamp 192',
-                testEligibleAgreementsForSubmitProof(192 * 1000, 33, []),
+                testEligibleAgreementsForSubmitProof(192, 33, []),
             );
             it(
                 'returns no eligible service agreements at timestamp 199',
-                testEligibleAgreementsForSubmitProof(199 * 1000, 33, []),
+                testEligibleAgreementsForSubmitProof(199, 33, []),
             );
             it(
                 'returns no eligible service agreements at timestamp 200',
-                testEligibleAgreementsForSubmitProof(200 * 1000, 33, []),
+                testEligibleAgreementsForSubmitProof(200, 33, []),
             );
         });
     });

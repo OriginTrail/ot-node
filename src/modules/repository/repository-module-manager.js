@@ -376,6 +376,28 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async updateServiceAgreementLastCommitEpoch(blockchainId, contract, tokenId, lastCommitEpoch) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateServiceAgreementLastCommitEpoch(
+                blockchainId,
+                contract,
+                tokenId,
+                lastCommitEpoch,
+            );
+        }
+    }
+
+    async updateServiceAgreementLastProofEpoch(blockchainId, contract, tokenId, lastProofEpoch) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateServiceAgreementLastProofEpoch(
+                blockchainId,
+                contract,
+                tokenId,
+                lastProofEpoch,
+            );
+        }
+    }
+
     async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
         if (this.initialized) {
             return this.getImplementation().module.removeServiceAgreementRecord(
@@ -386,20 +408,28 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async getEligibleAgreementsForSubmitCommit(timestamp, blockchain, commitWindowDurationPerc) {
+    async getEligibleAgreementsForSubmitCommit(
+        timestampSeconds,
+        blockchain,
+        commitWindowDurationPerc,
+    ) {
         if (this.initialized) {
             return this.getImplementation().module.getEligibleAgreementsForSubmitCommit(
-                timestamp,
+                timestampSeconds,
                 blockchain,
                 commitWindowDurationPerc,
             );
         }
     }
 
-    async getEligibleAgreementsForSubmitProof(timestamp, blockchain, proofWindowDurationPerc) {
+    async getEligibleAgreementsForSubmitProof(
+        timestampSeconds,
+        blockchain,
+        proofWindowDurationPerc,
+    ) {
         if (this.initialized) {
             return this.getImplementation().module.getEligibleAgreementsForSubmitProof(
-                timestamp,
+                timestampSeconds,
                 blockchain,
                 proofWindowDurationPerc,
             );

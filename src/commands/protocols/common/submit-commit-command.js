@@ -1,10 +1,11 @@
+import { v4 as uuidv4 } from 'uuid';
 import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
     BLOCK_TIME,
-} from '../../../../constants/constants.js';
-import Command from '../../../command.js';
+} from '../../../constants/constants.js';
+import Command from '../../command.js';
 
 class SubmitCommitCommand extends Command {
     constructor(ctx) {
@@ -18,7 +19,6 @@ class SubmitCommitCommand extends Command {
 
     async execute(command) {
         const {
-            operationId,
             blockchain,
             contract,
             tokenId,
@@ -28,6 +28,9 @@ class SubmitCommitCommand extends Command {
             agreementId,
             stateIndex,
         } = command.data;
+
+        // TODO: review operationId
+        const operationId = uuidv4();
 
         if (command.retries === COMMAND_RETRIES.SUBMIT_COMMIT) {
             this.operationIdService.emitChangeEvent(

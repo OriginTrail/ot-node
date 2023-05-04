@@ -7,6 +7,7 @@ class EpochCheckCommand extends Command {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.networkModuleManager = ctx.networkModuleManager;
         this.shardingTableService = ctx.shardingTableService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
@@ -44,6 +45,7 @@ class EpochCheckCommand extends Command {
 
             const r0 = await this.blockchainModuleManager.getR0(blockchain);
 
+            // TODO: implement logic for replacement
             if (rank >= r0) {
                 this.logger.trace(
                     `Calculated rank: ${
@@ -53,18 +55,13 @@ class EpochCheckCommand extends Command {
                     }`,
                 );
             } else {
-                const epoch = await this.calculateCurrentEpoch(
-                    serviceAgreement.start_time,
-                    serviceAgreement.epoch_length,
-                    blockchain,
-                );
                 const commandData = {
                     blockchain,
                     contract: serviceAgreement.asset_storage_contract_address,
                     tokenId: serviceAgreement.token_id,
                     keyword: serviceAgreement.keyword,
                     hashFunctionId: serviceAgreement.hash_function_id,
-                    epoch,
+                    epoch: serviceAgreement.current_epoch,
                     agreementId: serviceAgreement.agreement_id,
                     stateIndex: serviceAgreement.state_index,
                 };
@@ -77,6 +74,13 @@ class EpochCheckCommand extends Command {
                     transactional: false,
                 });
             }
+
+            await this.repositoryModuleManager.updateServiceAgreementLastCommitEpoch(
+                serviceAgreement.blockchain_id,
+                serviceAgreement.asset_storage_contract_address,
+                serviceAgreement.token_id,
+                serviceAgreement.current_epoch,
+            );
         }
     }
 
@@ -91,25 +95,23 @@ class EpochCheckCommand extends Command {
                 proofWindowDurationPerc,
             );
         for (const serviceAgreement of eligibleAgreemenstForSubmitProofs) {
-            const epoch = await this.calculateCurrentEpoch(
-                serviceAgreement.start_time,
-                serviceAgreement.epoch_length,
-                blockchain,
-            );
             const eligibleForReward = await this.isEligibleForRewards(
                 blockchain,
                 serviceAgreement.agreement_id,
-                epoch,
+                serviceAgreement.current_epoch,
                 serviceAgreement.state_index,
             );
             if (eligibleForReward) {
+                this.logger.trace(
+                    `Node is eligible for rewards for agreement id: ${serviceAgreement.agreement_id}`,
+                );
                 const commandData = {
                     blockchain,
                     contract: serviceAgreement.asset_storage_contract_address,
                     tokenId: serviceAgreement.token_id,
                     keyword: serviceAgreement.keyword,
                     hashFunctionId: serviceAgreement.hash_function_id,
-                    epoch,
+                    epoch: serviceAgreement.current_epoch,
                     agreementId: serviceAgreement.agreement_id,
                     assertionId: serviceAgreement.assertion_id,
                     stateIndex: serviceAgreement.state_index,
@@ -119,9 +121,20 @@ class EpochCheckCommand extends Command {
                     name: 'submitProofsCommand',
                     sequence: [],
                     data: commandData,
+                    retries: COMMAND_RETRIES.SUBMIT_PROOFS,
                     transactional: false,
                 });
+            } else {
+                this.logger.trace(
+                    `Node is not eligible for rewards for agreement id: ${serviceAgreement.agreement_id}`,
+                );
             }
+            await this.repositoryModuleManager.updateServiceAgreementLastProofEpoch(
+                serviceAgreement.blockchain_id,
+                serviceAgreement.asset_storage_contract_address,
+                serviceAgreement.token_id,
+                serviceAgreement.current_epoch,
+            );
         }
     }
 
@@ -171,13 +184,9 @@ class EpochCheckCommand extends Command {
 
         for (const commit of commits.slice(0, r0)) {
             if (Number(commit.identityId) === identityId && Number(commit.score) !== 0) {
-                this.logger.trace(`Node is eligible for rewards for agreement id: ${agreementId}`);
-
                 return true;
             }
         }
-
-        this.logger.trace(`Node is not eligible for rewards for agreement id: ${agreementId}`);
 
         return false;
     }
@@ -201,8 +210,9 @@ class EpochCheckCommand extends Command {
     default(map) {
         const command = {
             name: 'epochCheckCommand',
-            delay: 0,
+            data: {},
             transactional: false,
+            period: 30 * 1000, // TODO: review period
         };
         Object.assign(command, map);
         return command;

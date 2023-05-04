@@ -1,26 +1,28 @@
+import { v4 as uuidv4 } from 'uuid';
 import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
     BLOCK_TIME,
     TRIPLE_STORE_REPOSITORIES,
-} from '../../../../constants/constants.js';
-import Command from '../../../command.js';
+} from '../../../constants/constants.js';
+import Command from '../../command.js';
 
 class SubmitProofsCommand extends Command {
     constructor(ctx) {
         super(ctx);
 
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.operationIdService = ctx.operationIdService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.validationModuleManager = ctx.validationModuleManager;
+        this.tripleStoreService = ctx.tripleStoreService;
+        this.operationIdService = ctx.operationIdService;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.SUBMIT_PROOFS_ERROR;
     }
 
     async execute(command) {
         const {
-            operationId,
             blockchain,
             contract,
             tokenId,
@@ -31,6 +33,9 @@ class SubmitProofsCommand extends Command {
             assertionId,
             stateIndex,
         } = command.data;
+
+        // TODO: review operationId
+        const operationId = uuidv4();
 
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +

@@ -574,6 +574,32 @@ class SequelizeRepository {
         });
     }
 
+    async updateServiceAgreementLastCommitEpoch(blockchainId, contract, tokenId, lastCommitEpoch) {
+        return this.models.service_agreement.update(
+            { last_commit_epoch: lastCommitEpoch },
+            {
+                where: {
+                    blockchain_id: blockchainId,
+                    asset_storage_contract_address: contract,
+                    token_id: tokenId,
+                },
+            },
+        );
+    }
+
+    async updateServiceAgreementLastProofEpoch(blockchainId, contract, tokenId, lastProofEpoch) {
+        return this.models.service_agreement.update(
+            { last_proof_epoch: lastProofEpoch },
+            {
+                where: {
+                    blockchain_id: blockchainId,
+                    asset_storage_contract_address: contract,
+                    token_id: tokenId,
+                },
+            },
+        );
+    }
+
     async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
         await this.models.service_agreement.destroy({
             where: {
@@ -584,12 +610,23 @@ class SequelizeRepository {
         });
     }
 
-    getEligibleAgreementsForSubmitCommit(timestamp, blockchain, commitWindowDurationPerc) {
-        const timestampSeconds = timestamp / 1000;
+    getEligibleAgreementsForSubmitCommit(timestampSeconds, blockchain, commitWindowDurationPerc) {
         const currentEpoch = `FLOOR((${timestampSeconds} - start_time) / epoch_length)`;
         const currentEpochPerc = `((${timestampSeconds} - start_time) % epoch_length) / epoch_length * 100`;
 
         return this.models.service_agreement.findAll({
+            attributes: {
+                include: [
+                    [Sequelize.literal(currentEpoch), 'current_epoch'],
+                    [
+                        Sequelize.cast(
+                            Sequelize.literal(`${commitWindowDurationPerc} - ${currentEpochPerc}`),
+                            'DOUBLE',
+                        ),
+                        'time_left_in_submit_commit_window',
+                    ],
+                ],
+            },
             where: {
                 blockchain_id: blockchain,
                 [Sequelize.Op.or]: [
@@ -611,17 +648,35 @@ class SequelizeRepository {
                     [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
                 },
             },
+            order: [[Sequelize.col('time_left_in_submit_commit_window'), 'ASC']],
             limit: 10,
             raw: true,
         });
     }
 
-    async getEligibleAgreementsForSubmitProof(timestamp, blockchain, proofWindowDurationPerc) {
-        const timestampSeconds = timestamp / 1000;
+    async getEligibleAgreementsForSubmitProof(
+        timestampSeconds,
+        blockchain,
+        proofWindowDurationPerc,
+    ) {
         const currentEpoch = `FLOOR((${timestampSeconds} - start_time) / epoch_length)`;
         const currentEpochPerc = `((${timestampSeconds} - start_time) % epoch_length) / epoch_length * 100`;
 
         return this.models.service_agreement.findAll({
+            attributes: {
+                include: [
+                    [Sequelize.literal(currentEpoch), 'current_epoch'],
+                    [
+                        Sequelize.cast(
+                            Sequelize.literal(
+                                `proof_window_offset_perc + ${proofWindowDurationPerc} - ${currentEpochPerc}`,
+                            ),
+                            'DOUBLE',
+                        ),
+                        'time_left_in_submit_proof_window',
+                    ],
+                ],
+            },
             where: {
                 blockchain_id: blockchain,
                 last_commit_epoch: {
@@ -649,6 +704,7 @@ class SequelizeRepository {
                     [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
                 },
             },
+            order: [[Sequelize.col('time_left_in_submit_proof_window'), 'ASC']],
             limit: 10,
             raw: true,
         });
