@@ -76,9 +76,7 @@ class EpochCheckCommand extends Command {
             }
 
             await this.repositoryModuleManager.updateServiceAgreementLastCommitEpoch(
-                serviceAgreement.blockchain_id,
-                serviceAgreement.asset_storage_contract_address,
-                serviceAgreement.token_id,
+                serviceAgreement.agreement_id,
                 serviceAgreement.current_epoch,
             );
         }
@@ -130,17 +128,10 @@ class EpochCheckCommand extends Command {
                 );
             }
             await this.repositoryModuleManager.updateServiceAgreementLastProofEpoch(
-                serviceAgreement.blockchain_id,
-                serviceAgreement.asset_storage_contract_address,
-                serviceAgreement.token_id,
+                serviceAgreement.agreement_id,
                 serviceAgreement.current_epoch,
             );
         }
-    }
-
-    async calculateCurrentEpoch(startTime, epochLength, blockchain) {
-        const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
-        return Math.floor((Number(now) - Number(startTime)) / Number(epochLength));
     }
 
     async calculateRank(blockchain, keyword, hashFunctionId) {

@@ -3,19 +3,19 @@ export default (sequelize, DataTypes) => {
         'service_agreement',
         {
             blockchain_id: {
-                type: DataTypes.STRING(20),
-                primaryKey: true,
+                type: DataTypes.STRING,
+                allowNull: false,
             },
             asset_storage_contract_address: {
                 type: DataTypes.STRING(42),
-                primaryKey: true,
+                allowNull: false,
             },
             token_id: {
                 type: DataTypes.INTEGER.UNSIGNED,
-                primaryKey: true,
+                allowNull: false,
             },
             agreement_id: {
-                type: DataTypes.STRING(66),
+                type: DataTypes.STRING,
                 primaryKey: true,
             },
             start_time: {
@@ -39,16 +39,16 @@ export default (sequelize, DataTypes) => {
                 allowNull: false,
             },
             assertion_id: {
-                type: DataTypes.STRING(66),
-                primaryKey: true,
+                type: DataTypes.STRING,
+                allowNull: false,
             },
             hash_function_id: {
                 type: DataTypes.TINYINT.UNSIGNED,
                 allowNull: false,
             },
             keyword: {
-                type: DataTypes.STRING(106),
-                primaryKey: true,
+                type: DataTypes.STRING,
+                allowNull: false,
             },
             proof_window_offset_perc: {
                 type: DataTypes.TINYINT.UNSIGNED,

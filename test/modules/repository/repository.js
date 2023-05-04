@@ -1,3 +1,4 @@
+import { utils } from 'ethers';
 import { describe, it, before, beforeEach, afterEach, after } from 'mocha';
 import { expect, assert } from 'chai';
 import { readFile } from 'fs/promises';
@@ -9,23 +10,69 @@ let repositoryModuleManager;
 const config = JSON.parse(await readFile('./test/modules/repository/config.json'));
 
 const blockchain = 'hardhat';
+const createAgreement = ({
+    blockchain_id = blockchain,
+    asset_storage_contract_address = '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07',
+    token_id,
+    agreement_id = null,
+    start_time,
+    epochs_number = 2,
+    epoch_length = 100,
+    score_function_id = 1,
+    proof_window_offset_perc = 66,
+    hash_function_id = 1,
+    keyword = '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca0768e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
+    assertion_id = '0x68e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
+    state_index = 1,
+    last_commit_epoch = null,
+    last_proof_epoch = null,
+}) => {
+    const agreementId =
+        agreement_id ??
+        utils.sha256(
+            utils.toUtf8Bytes(
+                utils.solidityPack(
+                    ['address', 'uint256', 'bytes'],
+                    [asset_storage_contract_address, token_id, keyword],
+                ),
+            ),
+        );
+
+    return {
+        blockchain_id,
+        asset_storage_contract_address,
+        token_id,
+        agreement_id: agreementId,
+        start_time,
+        epochs_number,
+        epoch_length,
+        score_function_id,
+        proof_window_offset_perc,
+        hash_function_id,
+        keyword,
+        assertion_id,
+        state_index,
+        last_commit_epoch,
+        last_proof_epoch,
+    };
+};
 
 describe('Repository module', () => {
-    before('Initialize logger', () => {
+    before('Initialize repository module manager', async function initializeRepository() {
+        this.timeout(30_000);
         logger = new Logger('trace');
         logger.info = () => {};
-    });
-
-    beforeEach('Initialize repository module manager', async () => {
         repositoryModuleManager = new RepositoryModuleManager({ config, logger });
         await repositoryModuleManager.initialize();
     });
 
-    afterEach('Destroy all records', async () => {
+    afterEach('Destroy all records', async function destroyAllRecords() {
+        this.timeout(30_000);
         await repositoryModuleManager.destroyAllRecords('service_agreement');
     });
 
-    after(async () => {
+    after(async function dropDatabase() {
+        this.timeout(30_000);
         await repositoryModuleManager.dropDatabase();
     });
 
@@ -103,40 +150,6 @@ describe('Repository module', () => {
     });
 
     describe('Eligible service agreements', () => {
-        const createAgreement = ({
-            blockchain_id = blockchain,
-            asset_storage_contract_address = '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07',
-            token_id,
-            agreement_id = '0x44cf660357e2d7462c25fd8e50b68abe332d7a70b07a76e92f628846ea585881',
-            start_time,
-            epochs_number = 2,
-            epoch_length = 100,
-            score_function_id = 1,
-            proof_window_offset_perc = 66,
-            hash_function_id = 1,
-            keyword = '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca0768e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
-            assertion_id = '0x68e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
-            state_index = 1,
-            last_commit_epoch = null,
-            last_proof_epoch = null,
-        }) => ({
-            blockchain_id,
-            asset_storage_contract_address,
-            token_id,
-            agreement_id,
-            start_time,
-            epochs_number,
-            epoch_length,
-            score_function_id,
-            proof_window_offset_perc,
-            hash_function_id,
-            keyword,
-            assertion_id,
-            state_index,
-            last_commit_epoch,
-            last_proof_epoch,
-        });
-
         const agreements = [
             createAgreement({ token_id: 0, start_time: 0 }),
             createAgreement({
@@ -178,7 +191,7 @@ describe('Repository module', () => {
             );
         });
 
-        describe('getEligibleAgreementsForSubmitCommit', () => {
+        describe('getEligibleAgreementsForSubmitCommit returns correct agreements', () => {
             const testEligibleAgreementsForSubmitCommit =
                 (currentTimestamp, commitWindowDurationPerc, expectedAgreements) => async () => {
                     const eligibleAgreements =
@@ -272,7 +285,7 @@ describe('Repository module', () => {
             );
         });
 
-        describe('getEligibleAgreementsForSubmitProof', () => {
+        describe('getEligibleAgreementsForSubmitProof returns correct agreements', () => {
             const testEligibleAgreementsForSubmitProof =
                 (currentTimestamp, proofWindowDurationPerc, expectedAgreements) => async () => {
                     const eligibleAgreements =
@@ -350,6 +363,91 @@ describe('Repository module', () => {
                 'returns no eligible service agreements at timestamp 200',
                 testEligibleAgreementsForSubmitProof(200, 33, []),
             );
+        });
+    });
+
+    async function insertLoadTestAgreements(numAgreements) {
+        let agreements = [];
+        for (let tokenId = 0; tokenId < numAgreements; tokenId += 1) {
+            agreements.push(
+                createAgreement({
+                    token_id: tokenId,
+                    start_time: 0,
+                }),
+            );
+
+            if (agreements.length % 50_000 === 0) {
+                // eslint-disable-next-line no-await-in-loop
+                await repositoryModuleManager.bulkCreateServiceAgreementRecords(agreements);
+                agreements = [];
+            }
+        }
+        if (agreements.length) {
+            await repositoryModuleManager.bulkCreateServiceAgreementRecords(agreements);
+        }
+    }
+
+    describe('test load', () => {
+        describe('100_000 rows', () => {
+            beforeEach(async function t() {
+                this.timeout(0);
+                await insertLoadTestAgreements(100_000);
+            });
+
+            it('getEligibleAgreementsForSubmitCommit returns agreements in less than 100 ms', async () => {
+                const start = performance.now();
+                await repositoryModuleManager.getEligibleAgreementsForSubmitCommit(
+                    10,
+                    blockchain,
+                    25,
+                );
+                const end = performance.now();
+                const duration = end - start;
+                expect(duration).to.be.lessThan(100);
+            });
+
+            it('getEligibleAgreementsForSubmitProof returns agreements in less than 100 ms', async () => {
+                const start = performance.now();
+                await repositoryModuleManager.getEligibleAgreementsForSubmitProof(
+                    70,
+                    blockchain,
+                    33,
+                );
+                const end = performance.now();
+                const duration = end - start;
+                expect(duration).to.be.lessThan(100);
+            });
+        });
+
+        describe('1_000_000 rows', () => {
+            beforeEach(async function t() {
+                this.timeout(0);
+                await insertLoadTestAgreements(1_000_000);
+            });
+
+            it('getEligibleAgreementsForSubmitCommit returns agreements in less than 1000 ms', async () => {
+                const start = performance.now();
+                await repositoryModuleManager.getEligibleAgreementsForSubmitCommit(
+                    10,
+                    blockchain,
+                    25,
+                );
+                const end = performance.now();
+                const duration = end - start;
+                expect(duration).to.be.lessThan(1000);
+            });
+
+            it('getEligibleAgreementsForSubmitProof returns agreements in less than 1000 ms', async () => {
+                const start = performance.now();
+                await repositoryModuleManager.getEligibleAgreementsForSubmitProof(
+                    70,
+                    blockchain,
+                    33,
+                );
+                const end = performance.now();
+                const duration = end - start;
+                expect(duration).to.be.lessThan(1000);
+            });
         });
     });
 });

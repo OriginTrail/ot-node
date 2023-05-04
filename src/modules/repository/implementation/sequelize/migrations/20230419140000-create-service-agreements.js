@@ -1,19 +1,19 @@
 export const up = async ({ context: { queryInterface, Sequelize } }) => {
     await queryInterface.createTable('service_agreement', {
         blockchain_id: {
-            type: Sequelize.STRING(20),
-            primaryKey: true,
+            type: Sequelize.STRING,
+            allowNull: false,
         },
         asset_storage_contract_address: {
             type: Sequelize.STRING(42),
-            primaryKey: true,
+            allowNull: false,
         },
         token_id: {
             type: Sequelize.INTEGER.UNSIGNED,
-            primaryKey: true,
+            allowNull: false,
         },
         agreement_id: {
-            type: Sequelize.STRING(66),
+            type: Sequelize.STRING,
             primaryKey: true,
         },
         start_time: {
@@ -37,16 +37,16 @@ export const up = async ({ context: { queryInterface, Sequelize } }) => {
             allowNull: false,
         },
         assertion_id: {
-            type: Sequelize.STRING(66),
-            primaryKey: true,
+            type: Sequelize.STRING,
+            allowNull: false,
         },
         hash_function_id: {
             type: Sequelize.TINYINT.UNSIGNED,
             allowNull: false,
         },
         keyword: {
-            type: Sequelize.STRING(106),
-            primaryKey: true,
+            type: Sequelize.STRING,
+            allowNull: false,
         },
         proof_window_offset_perc: {
             type: Sequelize.TINYINT.UNSIGNED,

@@ -574,27 +574,29 @@ class SequelizeRepository {
         });
     }
 
-    async updateServiceAgreementLastCommitEpoch(blockchainId, contract, tokenId, lastCommitEpoch) {
+    async bulkCreateServiceAgreementRecords(serviceAgreements) {
+        return this.models.service_agreement.bulkCreate(serviceAgreements, {
+            validate: true,
+        });
+    }
+
+    async updateServiceAgreementLastCommitEpoch(agreementId, lastCommitEpoch) {
         return this.models.service_agreement.update(
             { last_commit_epoch: lastCommitEpoch },
             {
                 where: {
-                    blockchain_id: blockchainId,
-                    asset_storage_contract_address: contract,
-                    token_id: tokenId,
+                    agreement_id: agreementId,
                 },
             },
         );
     }
 
-    async updateServiceAgreementLastProofEpoch(blockchainId, contract, tokenId, lastProofEpoch) {
+    async updateServiceAgreementLastProofEpoch(agreementId, lastProofEpoch) {
         return this.models.service_agreement.update(
             { last_proof_epoch: lastProofEpoch },
             {
                 where: {
-                    blockchain_id: blockchainId,
-                    asset_storage_contract_address: contract,
-                    token_id: tokenId,
+                    agreement_id: agreementId,
                 },
             },
         );

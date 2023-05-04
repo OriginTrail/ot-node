@@ -376,23 +376,25 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async updateServiceAgreementLastCommitEpoch(blockchainId, contract, tokenId, lastCommitEpoch) {
+    async bulkCreateServiceAgreementRecords(records) {
+        if (this.initialized) {
+            return this.getImplementation().module.bulkCreateServiceAgreementRecords(records);
+        }
+    }
+
+    async updateServiceAgreementLastCommitEpoch(agreementId, lastCommitEpoch) {
         if (this.initialized) {
             return this.getImplementation().module.updateServiceAgreementLastCommitEpoch(
-                blockchainId,
-                contract,
-                tokenId,
+                agreementId,
                 lastCommitEpoch,
             );
         }
     }
 
-    async updateServiceAgreementLastProofEpoch(blockchainId, contract, tokenId, lastProofEpoch) {
+    async updateServiceAgreementLastProofEpoch(agreementId, lastProofEpoch) {
         if (this.initialized) {
             return this.getImplementation().module.updateServiceAgreementLastProofEpoch(
-                blockchainId,
-                contract,
-                tokenId,
+                agreementId,
                 lastProofEpoch,
             );
         }
