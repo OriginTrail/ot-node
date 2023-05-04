@@ -649,7 +649,7 @@ class SequelizeRepository {
                 },
             },
             order: [[Sequelize.col('time_left_in_submit_commit_window'), 'ASC']],
-            limit: 10,
+            limit: 10, // TODO: review this
             raw: true,
         });
     }
@@ -705,7 +705,7 @@ class SequelizeRepository {
                 },
             },
             order: [[Sequelize.col('time_left_in_submit_proof_window'), 'ASC']],
-            limit: 10,
+            limit: 10, // TODO: review this
             raw: true,
         });
     }

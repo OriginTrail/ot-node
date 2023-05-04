@@ -1,4 +1,4 @@
-import EpochCommand from '../../common/epoch-command.js';
+import Command from '../../../command.js';
 import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
@@ -6,9 +6,10 @@ import {
     BLOCK_TIME,
 } from '../../../../constants/constants.js';
 
-class SubmitUpdateCommitCommand extends EpochCommand {
+class SubmitUpdateCommitCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.operationIdService = ctx.operationIdService;
@@ -60,10 +61,9 @@ class SubmitUpdateCommitCommand extends EpochCommand {
 
         if (!hasPendingUpdate) {
             this.logger.trace(`Not submitting as state is already finalized for update.`);
-            return EpochCommand.empty();
+            return Command.empty();
         }
 
-        const that = this;
         await this.blockchainModuleManager.submitUpdateCommit(
             blockchain,
             contract,
@@ -73,29 +73,29 @@ class SubmitUpdateCommitCommand extends EpochCommand {
             epoch,
             async (result) => {
                 if (!result.error) {
-                    that.operationIdService.emitChangeEvent(
+                    this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_END,
                         operationId,
                         agreementId,
                         epoch,
                     );
-                    that.logger.info('Successfully executed submit update commit');
+                    this.logger.info('Successfully executed submit update commit');
                 } else if (command.retries - 1 === 0) {
                     const errorMessage = `Failed executing submit update commit command, maximum number of retries reached. Error: ${result.error.message}`;
-                    that.logger.error(errorMessage);
-                    that.operationIdService.emitChangeEvent(
+                    this.logger.error(errorMessage);
+                    this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.FAILED,
                         operationId,
                         errorMessage,
-                        that.errorType,
+                        this.errorType,
                         epoch,
                     );
                 } else {
                     const commandDelay = BLOCK_TIME * 1000; // one block
-                    that.logger.warn(
+                    this.logger.warn(
                         `Failed executing submit update commit command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
                     );
-                    that.commandExecutor.add({
+                    await this.commandExecutor.add({
                         name: 'submitUpdateCommitCommand',
                         delay: commandDelay,
                         retries: command.retries - 1,
@@ -106,7 +106,16 @@ class SubmitUpdateCommitCommand extends EpochCommand {
             },
         );
 
-        return EpochCommand.empty();
+        return Command.empty();
+    }
+
+    async calculateCurrentEpoch(startTime, epochLength, blockchain) {
+        const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
+        return Math.floor((Number(now) - Number(startTime)) / Number(epochLength));
+    }
+
+    async retryFinished(command) {
+        this.recover(command, `Max retry count for command: ${command.name} reached!`);
     }
 
     /**
