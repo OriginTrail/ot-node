@@ -17,7 +17,7 @@ export const COMMIT_BLOCK_DURATION_IN_BLOCKS = 5;
 export const BLOCK_TIME = 12;
 export const COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS = 2;
 
-export const TRANSACTION_POLLING_TIMEOUT = 50;
+export const TRANSACTION_POLLING_TIMEOUT_MILLIS = 50 * 1000;
 
 export const LIBP2P_KEY_DIRECTORY = 'libp2p';
 
@@ -25,7 +25,7 @@ export const LIBP2P_KEY_FILENAME = 'privateKey';
 
 export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 
-export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000;
+export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000; // 15 days
 
 export const MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH = 500;
 
@@ -108,6 +108,8 @@ export const NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
 export const HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 16000;
 
 export const SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES = 15;
+
+export const PEER_RECORD_UPDATE_DELAY = 30 * 60 * 1000; // 30 minutes
 
 export const DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
 
@@ -215,6 +217,7 @@ export const ERROR_TYPE = {
         UPDATE_DELETE_PENDING_STATE_ERROR: 'UpdateDeletePendingStateError',
     },
     GET: {
+        GET_ROUTE_ERROR: 'GetRouteError',
         GET_ASSERTION_ID_ERROR: 'GetAssertionIdError',
         GET_LOCAL_ERROR: 'GetLocalError',
         GET_NETWORK_ERROR: 'GetNetworkError',
@@ -399,7 +402,7 @@ export const CONTRACTS = {
     SHARDING_TABLE_CONTRACT: 'ShardingTableContract',
     STAKING_CONTRACT: 'StakingContract',
     PROFILE_CONTRACT: 'ProfileContract',
-    HUB_CONTRACT: 'hubContract',
+    HUB_CONTRACT: 'HubContract',
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
 };
 

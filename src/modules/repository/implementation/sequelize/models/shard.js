@@ -4,11 +4,28 @@ export default (sequelize, DataTypes) => {
         {
             peer_id: { type: DataTypes.STRING, primaryKey: true },
             blockchain_id: { type: DataTypes.STRING, primaryKey: true },
-            ask: DataTypes.STRING,
-            stake: DataTypes.STRING,
-            last_seen: DataTypes.DATE,
-            last_dialed: DataTypes.DATE,
-            sha256: DataTypes.STRING,
+            ask: {
+                type: DataTypes.INTEGER,
+                allowNull: false,
+            },
+            stake: {
+                type: DataTypes.INTEGER,
+                allowNull: false,
+            },
+            last_seen: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                defaultValue: new Date(0),
+            },
+            last_dialed: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                defaultValue: new Date(0),
+            },
+            sha256: {
+                type: DataTypes.STRING,
+                allowNull: false,
+            },
         },
         { underscored: true },
     );

@@ -9,6 +9,19 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'initializeContracts');
     }
 
+    initializeAssetStorageContract(blockchain, contractAddress) {
+        return this.callImplementationFunction(blockchain, 'initializeAssetStorageContract', [
+            contractAddress,
+        ]);
+    }
+
+    initializeContract(blockchain, contractName, contractAddress) {
+        return this.callImplementationFunction(blockchain, 'initializeContract', [
+            contractName,
+            contractAddress,
+        ]);
+    }
+
     getPrivateKey(blockchain) {
         return this.callImplementationFunction(blockchain, 'getPrivateKey');
     }

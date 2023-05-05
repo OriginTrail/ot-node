@@ -23,10 +23,6 @@ jobs:
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-      blazegraph:
-        image: lyrasis/blazegraph:2.1.5
-        ports:
-          - 9999:9999
     strategy:
       matrix:
         node-version: [16.x]
@@ -36,7 +32,25 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm install
+      - name: Download Blazegraph
+        run: wget https://github.com/blazegraph/database/releases/latest/download/blazegraph.jar
+      - name: Cache Blazegraph
+        uses: actions/cache@v2
+        with:
+          path: blazegraph.jar
+          key: ${{ runner.os }}-blazegraph-${{ hashFiles('blazegraph.jar') }}
+          restore-keys: ${{ runner.os }}-blazegraph-
+      - run: /usr/bin/java -Djava.awt.headless=true -jar blazegraph.jar &
+      - name: Cache node_modules
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.npm
+            ./node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - run: npm ci
       - run: mkdir -p $ARTIFACTS_DIR
       - run: sudo chmod -R 777 $ARTIFACTS_DIR
       - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR

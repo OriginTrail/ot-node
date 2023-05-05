@@ -4,6 +4,7 @@ import { ERROR_TYPE, GET_STATES } from '../../../../constants/constants.js';
 class GetLatestAssertionIdCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.operationService = ctx.getService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.ualService = ctx.ualService;
 
@@ -68,6 +69,10 @@ class GetLatestAssertionIdCommand extends Command {
         }
 
         return this.continueSequence({ ...command.data, ...commandData }, command.sequence);
+    }
+
+    async handleError(operationId, errorMessage, errorType) {
+        await this.operationService.markOperationAsFailed(operationId, errorMessage, errorType);
     }
 
     /**
