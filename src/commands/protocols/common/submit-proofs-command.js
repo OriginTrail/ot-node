@@ -3,7 +3,6 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
-    BLOCK_TIME,
     TRIPLE_STORE_REPOSITORIES,
 } from '../../../constants/constants.js';
 import Command from '../../command.js';
@@ -144,14 +143,14 @@ class SubmitProofsCommand extends Command {
                         epoch,
                     );
                 } else {
-                    const commandDelay = BLOCK_TIME * 1000; // one block
+                    const blockTime = this.blockchainModuleManager.getBlockTimeMillis(blockchain);
                     this.logger.warn(
-                        `Failed executing submit proofs command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
+                        `Failed executing submit proofs command, retrying in ${blockTime}ms. Error: ${result.error.message}`,
                     );
                     await this.commandExecutor.add({
                         name: 'submitProofsCommand',
                         sequence: [],
-                        delay: commandDelay,
+                        delay: blockTime,
                         data: command.data,
                         retries: command.retries - 1,
                         transactional: false,

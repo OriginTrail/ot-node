@@ -3,7 +3,6 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
-    BLOCK_TIME,
 } from '../../../../constants/constants.js';
 
 class SubmitUpdateCommitCommand extends Command {
@@ -91,13 +90,13 @@ class SubmitUpdateCommitCommand extends Command {
                         epoch,
                     );
                 } else {
-                    const commandDelay = BLOCK_TIME * 1000; // one block
+                    const blockTime = this.blockchainModuleManager.getBlockTimeMillis(blockchain);
                     this.logger.warn(
-                        `Failed executing submit update commit command, retrying in ${commandDelay}ms. Error: ${result.error.message}`,
+                        `Failed executing submit update commit command, retrying in ${blockTime}ms. Error: ${result.error.message}`,
                     );
                     await this.commandExecutor.add({
                         name: 'submitUpdateCommitCommand',
-                        delay: commandDelay,
+                        delay: blockTime,
                         retries: command.retries - 1,
                         data: command.data,
                         transactional: false,

@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import Command from '../../command.js';
-import { COMMAND_RETRIES } from '../../../constants/constants.js';
+import { COMMAND_RETRIES, TRANSACTION_CONFIRMATIONS } from '../../../constants/constants.js';
 
 class EpochCheckCommand extends Command {
     constructor(ctx) {
@@ -13,21 +13,37 @@ class EpochCheckCommand extends Command {
         this.serviceAgreementService = ctx.serviceAgreementService;
     }
 
-    async execute() {
-        const schedulePromises = [];
-        this.blockchainModuleManager.getImplementationNames().forEach((blockchain) => {
-            schedulePromises.push([
-                this.scheduleSubmitCommitCommands(blockchain),
-                this.scheduleCalculateProofsCommands(blockchain),
-            ]);
-        });
-        await Promise.all(schedulePromises);
+    async execute(command) {
+        await Promise.all(
+            this.blockchainModuleManager.getImplementationNames().flatMap(async (blockchain) => {
+                const commitWindowDurationPerc =
+                    await this.blockchainModuleManager.getCommitWindowDurationPerc(blockchain);
+                const proofWindowDurationPerc =
+                    await this.blockchainModuleManager.getProofWindowDurationPerc(blockchain);
+                const totalTransactions = await this.calculateTotalTransactions(
+                    blockchain,
+                    commitWindowDurationPerc,
+                    proofWindowDurationPerc,
+                    command.period,
+                );
+                return [
+                    this.scheduleSubmitCommitCommands(
+                        blockchain,
+                        Math.floor(totalTransactions / 2),
+                        commitWindowDurationPerc,
+                    ),
+                    this.scheduleCalculateProofsCommands(
+                        blockchain,
+                        Math.ceil(totalTransactions / 2),
+                        proofWindowDurationPerc,
+                    ),
+                ];
+            }),
+        );
         return Command.repeat();
     }
 
-    async scheduleSubmitCommitCommands(blockchain) {
-        const commitWindowDurationPerc =
-            await this.blockchainModuleManager.getUpdateCommitWindowDuration(blockchain);
+    async scheduleSubmitCommitCommands(blockchain, maxTransactions, commitWindowDurationPerc) {
         const timestamp = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
         const eligibleAgreementForSubmitCommit =
             await this.repositoryModuleManager.getEligibleAgreementsForSubmitCommit(
@@ -36,7 +52,11 @@ class EpochCheckCommand extends Command {
                 commitWindowDurationPerc,
             );
 
+        const scheduleSubmitCommitCommands = [];
+        const updateServiceAgreementsLastCommitEpoch = [];
         for (const serviceAgreement of eligibleAgreementForSubmitCommit) {
+            if (scheduleSubmitCommitCommands.length >= maxTransactions) break;
+
             const rank = await this.calculateRank(
                 blockchain,
                 serviceAgreement.keyword,
@@ -45,8 +65,11 @@ class EpochCheckCommand extends Command {
 
             const r0 = await this.blockchainModuleManager.getR0(blockchain);
 
-            // TODO: implement logic for replacement
-            if (rank >= r0) {
+            if (rank < r0) {
+                scheduleSubmitCommitCommands.push(
+                    this.scheduleSubmitCommitCommand(serviceAgreement),
+                );
+            } else {
                 this.logger.trace(
                     `Calculated rank: ${
                         rank + 1
@@ -54,45 +77,34 @@ class EpochCheckCommand extends Command {
                         serviceAgreement.agreement_id
                     }`,
                 );
-            } else {
-                const commandData = {
-                    blockchain,
-                    contract: serviceAgreement.asset_storage_contract_address,
-                    tokenId: serviceAgreement.token_id,
-                    keyword: serviceAgreement.keyword,
-                    hashFunctionId: serviceAgreement.hash_function_id,
-                    epoch: serviceAgreement.current_epoch,
-                    agreementId: serviceAgreement.agreement_id,
-                    stateIndex: serviceAgreement.state_index,
-                };
-
-                await this.commandExecutor.add({
-                    name: 'submitCommitCommand',
-                    sequence: [],
-                    retries: COMMAND_RETRIES.SUBMIT_COMMIT,
-                    data: commandData,
-                    transactional: false,
-                });
             }
 
-            await this.repositoryModuleManager.updateServiceAgreementLastCommitEpoch(
-                serviceAgreement.agreement_id,
-                serviceAgreement.current_epoch,
+            updateServiceAgreementsLastCommitEpoch.push(
+                this.repositoryModuleManager.updateServiceAgreementLastCommitEpoch(
+                    serviceAgreement.agreement_id,
+                    serviceAgreement.current_epoch,
+                ),
             );
         }
+        await Promise.all([
+            ...scheduleSubmitCommitCommands,
+            ...updateServiceAgreementsLastCommitEpoch,
+        ]);
     }
 
-    async scheduleCalculateProofsCommands(blockchain) {
+    async scheduleCalculateProofsCommands(blockchain, maxTransactions, proofWindowDurationPerc) {
         const timestamp = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
-        const proofWindowDurationPerc =
-            await this.blockchainModuleManager.getProofWindowDurationPerc(blockchain);
-        const eligibleAgreemenstForSubmitProofs =
+        const eligibleAgreementsForSubmitProofs =
             await this.repositoryModuleManager.getEligibleAgreementsForSubmitProof(
                 timestamp,
                 blockchain,
                 proofWindowDurationPerc,
             );
-        for (const serviceAgreement of eligibleAgreemenstForSubmitProofs) {
+        const scheduleSubmitProofCommands = [];
+        const updateServiceAgreementsLastProofEpoch = [];
+        for (const serviceAgreement of eligibleAgreementsForSubmitProofs) {
+            if (scheduleSubmitProofCommands.length >= maxTransactions) break;
+
             const eligibleForReward = await this.isEligibleForRewards(
                 blockchain,
                 serviceAgreement.agreement_id,
@@ -103,35 +115,26 @@ class EpochCheckCommand extends Command {
                 this.logger.trace(
                     `Node is eligible for rewards for agreement id: ${serviceAgreement.agreement_id}`,
                 );
-                const commandData = {
-                    blockchain,
-                    contract: serviceAgreement.asset_storage_contract_address,
-                    tokenId: serviceAgreement.token_id,
-                    keyword: serviceAgreement.keyword,
-                    hashFunctionId: serviceAgreement.hash_function_id,
-                    epoch: serviceAgreement.current_epoch,
-                    agreementId: serviceAgreement.agreement_id,
-                    assertionId: serviceAgreement.assertion_id,
-                    stateIndex: serviceAgreement.state_index,
-                };
 
-                await this.commandExecutor.add({
-                    name: 'submitProofsCommand',
-                    sequence: [],
-                    data: commandData,
-                    retries: COMMAND_RETRIES.SUBMIT_PROOFS,
-                    transactional: false,
-                });
+                scheduleSubmitProofCommands.push(
+                    this.scheduleSubmitProofsCommand(serviceAgreement),
+                );
             } else {
                 this.logger.trace(
                     `Node is not eligible for rewards for agreement id: ${serviceAgreement.agreement_id}`,
                 );
             }
-            await this.repositoryModuleManager.updateServiceAgreementLastProofEpoch(
-                serviceAgreement.agreement_id,
-                serviceAgreement.current_epoch,
+            updateServiceAgreementsLastProofEpoch.push(
+                this.repositoryModuleManager.updateServiceAgreementLastProofEpoch(
+                    serviceAgreement.agreement_id,
+                    serviceAgreement.current_epoch,
+                ),
             );
         }
+        await Promise.all([
+            ...scheduleSubmitProofCommands,
+            ...updateServiceAgreementsLastProofEpoch,
+        ]);
     }
 
     async calculateRank(blockchain, keyword, hashFunctionId) {
@@ -182,6 +185,81 @@ class EpochCheckCommand extends Command {
         return false;
     }
 
+    async scheduleSubmitCommitCommand(agreement) {
+        const commandData = {
+            blockchain: agreement.blockchain_id,
+            contract: agreement.asset_storage_contract_address,
+            tokenId: agreement.token_id,
+            keyword: agreement.keyword,
+            hashFunctionId: agreement.hash_function_id,
+            epoch: agreement.current_epoch,
+            agreementId: agreement.agreement_id,
+            stateIndex: agreement.state_index,
+        };
+
+        await this.commandExecutor.add({
+            name: 'submitCommitCommand',
+            sequence: [],
+            retries: COMMAND_RETRIES.SUBMIT_COMMIT,
+            data: commandData,
+            transactional: false,
+        });
+    }
+
+    async scheduleSubmitProofsCommand(agreement) {
+        const commandData = {
+            blockchain: agreement.blockchain_id,
+            contract: agreement.asset_storage_contract_address,
+            tokenId: agreement.token_id,
+            keyword: agreement.keyword,
+            hashFunctionId: agreement.hash_function_id,
+            epoch: agreement.current_epoch,
+            agreementId: agreement.agreement_id,
+            assertionId: agreement.assertion_id,
+            stateIndex: agreement.state_index,
+        };
+
+        return this.commandExecutor.add({
+            name: 'submitProofsCommand',
+            sequence: [],
+            data: commandData,
+            retries: COMMAND_RETRIES.SUBMIT_PROOFS,
+            transactional: false,
+        });
+    }
+
+    async calculateTotalTransactions(
+        blockchain,
+        commitWindowDurationPerc,
+        proofWindowDurationPerc,
+        commandPeriod,
+    ) {
+        const epochLength = await this.blockchainModuleManager.getEpochLength(blockchain);
+
+        const commitWindowDuration = (epochLength * commitWindowDurationPerc) / 100;
+        const proofWindowDuration = (epochLength * proofWindowDurationPerc) / 100;
+
+        const totalTransactionTime = Math.min(commitWindowDuration, proofWindowDuration);
+
+        const blockTime = this.blockchainModuleManager.getBlockTimeMillis(blockchain) / 1000;
+        const timePerTransaction = blockTime * TRANSACTION_CONFIRMATIONS;
+
+        const totalTransactions = Math.floor(totalTransactionTime / timePerTransaction);
+
+        const epochChecksInWindow = Math.floor(totalTransactionTime / (commandPeriod / 1000));
+
+        const transactionsPerEpochCheck = Math.floor(totalTransactions / epochChecksInWindow);
+
+        return transactionsPerEpochCheck;
+    }
+
+    calculateCommandPeriod() {
+        const devEnvironment =
+            process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+
+        return devEnvironment ? 30_000 : 120_000;
+    }
+
     /**
      * Recover system from failure
      * @param command
@@ -203,7 +281,7 @@ class EpochCheckCommand extends Command {
             name: 'epochCheckCommand',
             data: {},
             transactional: false,
-            period: 30 * 1000, // TODO: review period
+            period: this.calculateCommandPeriod(),
         };
         Object.assign(command, map);
         return command;

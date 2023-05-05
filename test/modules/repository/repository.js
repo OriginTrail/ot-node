@@ -64,6 +64,7 @@ describe('Repository module', () => {
         logger.info = () => {};
         repositoryModuleManager = new RepositoryModuleManager({ config, logger });
         await repositoryModuleManager.initialize();
+        await repositoryModuleManager.destroyAllRecords('service_agreement');
     });
 
     afterEach('Destroy all records', async function destroyAllRecords() {
@@ -229,10 +230,8 @@ describe('Repository module', () => {
                 ]),
             );
             it(
-                'returns one eligible service agreement at timestamp 74',
-                testEligibleAgreementsForSubmitCommit(74, 25, [
-                    { ...agreements[4], current_epoch: 0, time_left_in_submit_commit_window: 0 },
-                ]),
+                'returns no eligible service agreement at timestamp 74',
+                testEligibleAgreementsForSubmitCommit(74, 25, []),
             );
             it(
                 'returns no eligible service agreements at timestamp 75',
@@ -245,9 +244,15 @@ describe('Repository module', () => {
                 ]),
             );
             it(
-                'returns four eligible service agreements at timestamp 125',
+                'returns two eligible service agreements at timestamp 124',
+                testEligibleAgreementsForSubmitCommit(124, 25, [
+                    { ...agreements[0], current_epoch: 1, time_left_in_submit_commit_window: 1 },
+                    { ...agreements[1], current_epoch: 1, time_left_in_submit_commit_window: 16 },
+                ]),
+            );
+            it(
+                'returns three eligible service agreements at timestamp 125',
                 testEligibleAgreementsForSubmitCommit(125, 25, [
-                    { ...agreements[0], current_epoch: 1, time_left_in_submit_commit_window: 0 },
                     { ...agreements[1], current_epoch: 1, time_left_in_submit_commit_window: 15 },
                     { ...agreements[2], current_epoch: 1, time_left_in_submit_commit_window: 25 },
                     { ...agreements[3], current_epoch: 1, time_left_in_submit_commit_window: 25 },
@@ -334,14 +339,14 @@ describe('Repository module', () => {
                 ]),
             );
             it(
-                'returns one eligible service agreements at timestamp 114',
-                testEligibleAgreementsForSubmitProof(114, 33, [
-                    { ...agreements[1], current_epoch: 0, time_left_in_submit_proof_window: 0 },
+                'returns one eligible service agreements at timestamp 113',
+                testEligibleAgreementsForSubmitProof(113, 33, [
+                    { ...agreements[1], current_epoch: 0, time_left_in_submit_proof_window: 1 },
                 ]),
             );
             it(
-                'returns no eligible service agreements at timestamp 115',
-                testEligibleAgreementsForSubmitProof(115, 33, []),
+                'returns no eligible service agreements at timestamp 114',
+                testEligibleAgreementsForSubmitProof(114, 33, []),
             );
             it(
                 'returns no eligible service agreements at timestamp 167',

@@ -7,7 +7,6 @@ import {
     COMMAND_RETRIES,
     PENDING_STORAGE_REPOSITORIES,
     COMMIT_BLOCK_DURATION_IN_BLOCKS,
-    BLOCK_TIME,
     COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS,
 } from '../../../../../constants/constants.js';
 
@@ -70,6 +69,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             await this.blockchainModuleManager.getFinalizationCommitsNumber(blockchain);
 
         const updateCommitDelay = await this.calculateUpdateCommitDelay(
+            blockchain,
             updateCommitWindowDuration,
             finalizationCommitsNumber,
             R0,
@@ -86,7 +86,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             }),
             this.commandExecutor.add({
                 name: 'submitUpdateCommitCommand',
-                delay: updateCommitDelay * 1000,
+                delay: updateCommitDelay,
                 retries: COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT,
                 data: {
                     ...commandData,
@@ -108,14 +108,16 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async calculateUpdateCommitDelay(
+        blockchain,
         updateCommitWindowDuration,
         finalizationCommitsNumber,
         R0,
         rank,
     ) {
         const r0OffsetPeriod = 0;
+        const blockTime = this.blockchainModuleManager.getBlockTimeMillis(blockchain);
         // wait for 5 blocks for first batch to send commits
-        const commitsBlockDuration = BLOCK_TIME * COMMIT_BLOCK_DURATION_IN_BLOCKS;
+        const commitsBlockDuration = blockTime * COMMIT_BLOCK_DURATION_IN_BLOCKS;
         const commitBlock = Math.floor(rank / finalizationCommitsNumber);
         // put 2 blocks delay between nodes if they are not in first batch
         const nextNodeDelay =
@@ -123,10 +125,12 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
                 ? 0
                 : (rank % finalizationCommitsNumber) *
                   COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS *
-                  BLOCK_TIME;
+                  blockTime;
         const delay = commitsBlockDuration * commitBlock + r0OffsetPeriod + nextNodeDelay;
         this.logger.info(
-            `Calculated update commit delay: ${delay}, commitsBlockDuration: ${commitsBlockDuration}, commitBlock: ${commitBlock}, r0OffsetPeriod:${r0OffsetPeriod}, updateCommitWindowDuration ${updateCommitWindowDuration}, finalizationCommitsNumber: ${finalizationCommitsNumber}, r0: ${R0}, rank: ${rank}`,
+            `Calculated update commit delay: ${Math.floor(
+                delay / 1000,
+            )}s, commitsBlockDuration: ${commitsBlockDuration}, commitBlock: ${commitBlock}, r0OffsetPeriod:${r0OffsetPeriod}, updateCommitWindowDuration ${updateCommitWindowDuration}s, finalizationCommitsNumber: ${finalizationCommitsNumber}, r0: ${R0}, rank: ${rank}`,
         );
 
         return delay;

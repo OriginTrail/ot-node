@@ -644,14 +644,14 @@ class SequelizeRepository {
                     },
                 ],
                 [Sequelize.Op.and]: Sequelize.literal(
-                    `${currentEpochPerc} <= ${commitWindowDurationPerc}`,
+                    `${currentEpochPerc} < ${commitWindowDurationPerc}`,
                 ),
                 epochs_number: {
                     [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
                 },
             },
             order: [[Sequelize.col('time_left_in_submit_commit_window'), 'ASC']],
-            limit: 10, // TODO: review this
+            limit: 100,
             raw: true,
         });
     }
@@ -696,18 +696,18 @@ class SequelizeRepository {
                         },
                     },
                 ],
-                [Sequelize.Op.and]: [
-                    Sequelize.literal(`${currentEpochPerc} >= proof_window_offset_perc`),
-                    Sequelize.literal(
-                        `${currentEpochPerc} <= proof_window_offset_perc + ${proofWindowDurationPerc}`,
+                proof_window_offset_perc: {
+                    [Sequelize.Op.lte]: Sequelize.literal(`${currentEpochPerc}`),
+                    [Sequelize.Op.gt]: Sequelize.literal(
+                        `${currentEpochPerc} - ${proofWindowDurationPerc}`,
                     ),
-                ],
+                },
                 epochs_number: {
                     [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
                 },
             },
             order: [[Sequelize.col('time_left_in_submit_proof_window'), 'ASC']],
-            limit: 10, // TODO: review this
+            limit: 100,
             raw: true,
         });
     }

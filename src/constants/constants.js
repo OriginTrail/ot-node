@@ -14,7 +14,7 @@ export const PRIVATE_ASSERTION_PREDICATE =
     'https://ontology.origintrail.io/dkg/1.0#privateAssertionID';
 
 export const COMMIT_BLOCK_DURATION_IN_BLOCKS = 5;
-export const BLOCK_TIME = 12;
+
 export const COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS = 2;
 
 export const TRANSACTION_POLLING_TIMEOUT_MILLIS = 50 * 1000;
@@ -136,7 +136,7 @@ export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
 
 export const DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 
-export const DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
+export const DEFAULT_COMMAND_DELAY_IN_MILLS = 1 * 1000; // 60 seconds
 
 export const COMMAND_RETRIES = {
     SUBMIT_COMMIT: 3,
@@ -447,3 +447,11 @@ export const FIXED_GAS_LIMIT_METHODS = {
     submitUpdateCommit: 600000,
     sendProof: 500000,
 };
+
+export const BLOCK_TIME_MILLIS = {
+    OTP: 12_000,
+    HARDHAT: 5_000,
+    DEFAULT: 12_000,
+};
+
+export const TRANSACTION_CONFIRMATIONS = 2;
