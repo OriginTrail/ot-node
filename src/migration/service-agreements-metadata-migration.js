@@ -56,6 +56,7 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
         );
         const identities = {};
         // for each asset
+        let assetsToProcess = assetsMetadata.length;
         for (const { ual } of assetsMetadata) {
             const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
             if (!identities[blockchain]) {
@@ -65,12 +66,15 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
             }
             await this.updateTables(ual, blockchain, contract, tokenId, identities[blockchain]);
 
-            this.logger.trace(`${this.migrationName} processed asset with ual: ${ual}`);
+            this.logger.trace(
+                `${this.migrationName} processed asset with ual: ${ual}. Remaining assets to process: ${assetsToProcess}.`,
+            );
             await this.fileService.writeContentsToFile(
                 migrationFolderPath,
                 migrationInfoFileName,
                 JSON.stringify({ lastProcessedTokenId: tokenId }),
             );
+            assetsToProcess -= 1;
         }
     }
 
