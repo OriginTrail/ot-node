@@ -136,7 +136,7 @@ export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
 
 export const DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 
-export const DEFAULT_COMMAND_DELAY_IN_MILLS = 1 * 1000; // 60 seconds
+export const DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
 
 export const COMMAND_RETRIES = {
     SUBMIT_COMMIT: 3,
