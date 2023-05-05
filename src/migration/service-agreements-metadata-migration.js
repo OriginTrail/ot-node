@@ -55,7 +55,8 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
             query,
         );
         const identities = {};
-        // for each asset
+        const concurrency = 10;
+        let promises = [];
         let assetsToProcess = assetsMetadata.length;
         for (const { ual } of assetsMetadata) {
             const { blockchain, contract, tokenId } = this.ualService.resolveUAL(ual);
@@ -64,21 +65,29 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
                     blockchain,
                 );
             }
-            await this.updateTables(ual, blockchain, contract, tokenId, identities[blockchain]);
-
-            this.logger.trace(
-                `${this.migrationName} processed asset with ual: ${ual}. Remaining assets to process: ${assetsToProcess}.`,
-            );
-            await this.fileService.writeContentsToFile(
-                migrationFolderPath,
-                migrationInfoFileName,
-                JSON.stringify({ lastProcessedTokenId: tokenId }),
+            promises.push(
+                this.processAsset(ual, blockchain, contract, tokenId, identities[blockchain]),
             );
             assetsToProcess -= 1;
+            if (promises.length >= concurrency) {
+                // eslint-disable-next-line no-await-in-loop
+                await Promise.all(promises);
+                promises = [];
+                await this.fileService.writeContentsToFile(
+                    migrationFolderPath,
+                    migrationInfoFileName,
+                    JSON.stringify({ lastProcessedTokenId: tokenId }),
+                    false,
+                );
+                this.logger.trace(
+                    `${this.migrationName} remaining assets to process: ${assetsToProcess}.`,
+                );
+            }
         }
+        await Promise.all(promises);
     }
 
-    async updateTables(ual, blockchain, contract, tokenId, identityId) {
+    async processAsset(ual, blockchain, contract, tokenId, identityId) {
         // get assertion ids
         const assertionIds = await this.blockchainModuleManager
             .getAssertionIds(blockchain, contract, tokenId)
