@@ -20,7 +20,6 @@ import toobusy from 'toobusy-js';
 import { v5 as uuidv5 } from 'uuid';
 import { mkdir, writeFile, readFile, stat } from 'fs/promises';
 import ip from 'ip';
-import { TimeoutController } from 'timeout-abort-controller';
 import {
     NETWORK_API_RATE_LIMIT,
     NETWORK_API_SPAM_DETECTION,
@@ -369,18 +368,15 @@ class Libp2pService {
         let readResponseStart;
         let readResponseEnd;
         let response;
-        const timeoutController = new TimeoutController(timeout);
+        const timeoutSignal = AbortSignal.timeout(timeout);
+        const onAbort = async () => {
+            stream.abort();
+            response = null;
+        };
         try {
             readResponseStart = Date.now();
 
-            timeoutController.signal.addEventListener(
-                'abort',
-                async () => {
-                    stream.abort();
-                    response = null;
-                },
-                { once: true },
-            );
+            timeoutSignal.addEventListener('abort', onAbort, { once: true });
 
             response = await this._readMessageFromStream(
                 stream,
@@ -388,17 +384,15 @@ class Libp2pService {
                 peerId,
             );
 
-            if (timeoutController.signal.aborted) {
+            timeoutSignal.removeEventListener('abort', onAbort);
+
+            if (timeoutSignal.aborted) {
                 throw Error('Message timed out!');
             }
 
-            timeoutController.signal.removeEventListener('abort');
-            timeoutController.clear();
-
             readResponseEnd = Date.now();
         } catch (error) {
-            timeoutController.signal.removeEventListener('abort');
-            timeoutController.clear();
+            timeoutSignal.removeEventListener('abort', onAbort);
 
             readResponseEnd = Date.now();
             nackMessage.data.errorMessage = `Unable to read response from peer ${remotePeerId}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, execution time: ${

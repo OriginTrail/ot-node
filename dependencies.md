@@ -304,11 +304,6 @@
 -   **version**: ^6.29.0
 -   **description**: used to communicate with sql repository
 
-##### [timeout-abort-controller](https://www.npmjs.com/package/timeout-abort-controller)
-
--   **version**: ^3.0.0
--   **description**: timeout network messages
-
 ##### [toobusy-js](https://www.npmjs.com/package/toobusy-js)
 
 -   **version**: ^0.5.1
