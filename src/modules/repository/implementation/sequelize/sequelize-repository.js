@@ -586,6 +586,21 @@ class SequelizeRepository {
 
     // eslint-disable-next-line no-empty-function
     async getEligibleSubmitCommits() {}
+
+    async updateServiceAgreementEpochsNumber(agreementId, epochsNumber) {
+        return this.models.service_agreement.update(
+            { epochs_number: epochsNumber },
+            {
+                where: { agreement_id: agreementId },
+            },
+        );
+    }
+
+    async removeServiceAgreements(agreementIds) {
+        return this.models.service_agreement.destroy({
+            where: { agreement_id: { [Sequelize.Op.in]: agreementIds } },
+        });
+    }
 }
 
 export default SequelizeRepository;

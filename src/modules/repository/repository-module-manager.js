@@ -391,6 +391,21 @@ class RepositoryModuleManager extends BaseModuleManager {
             return this.getImplementation().module.getEligibleSubmitCommits();
         }
     }
+
+    async removeServiceAgreements(agreementIds) {
+        if (this.initialized) {
+            return this.getImplementation().module.removeServiceAgreements(agreementIds);
+        }
+    }
+
+    async updateServiceAgreementEpochsNumber(agreementId, epochsNumber) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateServiceAgreementEpochsNumber(
+                agreementId,
+                epochsNumber,
+            );
+        }
+    }
 }
 
 export default RepositoryModuleManager;
