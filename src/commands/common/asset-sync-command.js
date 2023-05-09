@@ -154,22 +154,6 @@ class AssetSyncCommand extends Command {
                                 contract,
                                 tokenId,
                             );
-                            const agreementId = await this.serviceAgreementService.generateId(
-                                blockchain,
-                                contract,
-                                tokenId,
-                                keyword,
-                                CONTENT_ASSET_HASH_FUNCTION_ID,
-                            );
-                            const agreementData =
-                                await this.blockchainModuleManager.getAgreementData(
-                                    blockchain,
-                                    agreementId,
-                                );
-
-                            const agreementEndTime =
-                                agreementData.startTime +
-                                agreementData.epochsNumber * agreementData.epochLength;
 
                             await this.tripleStoreService.localStoreAsset(
                                 stateIndex === assertionIds.length - 1
@@ -180,8 +164,6 @@ class AssetSyncCommand extends Command {
                                 blockchain,
                                 contract,
                                 tokenId,
-                                agreementData.startTime,
-                                agreementEndTime,
                                 keyword,
                             );
                         } else {
