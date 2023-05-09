@@ -15,6 +15,7 @@ class SubmitCommitCommand extends EpochCommand {
         this.operationIdService = ctx.operationIdService;
         this.shardingTableService = ctx.shardingTableService;
         this.networkModuleManager = ctx.networkModuleManager;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.SUBMIT_COMMIT_ERROR;
     }
@@ -115,6 +116,14 @@ class SubmitCommitCommand extends EpochCommand {
             stateIndex,
             async (result) => {
                 if (!result.error) {
+                    that.logger.trace(
+                        `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
+                            `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
+                            `hash function id: ${hashFunctionId}. Retry number ${
+                                COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1
+                            }`,
+                    );
+
                     const currentEpochStartTime =
                         Number(agreementData.startTime) + Number(agreementData.epochLength) * epoch;
 
