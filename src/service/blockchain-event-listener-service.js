@@ -359,8 +359,13 @@ class BlockchainEventListenerService {
 
     async handleServiceAgreementV1ExtendedEvents(blockEvents) {
         await Promise.all(
-            blockEvents.map((event) => {
-                const { agreementId, epochsNumber } = JSON.parse(event.data);
+            blockEvents.map(async (event) => {
+                const { agreementId } = JSON.parse(event.data);
+
+                const { epochsNumber } = await this.blockchainModuleManager.getAgreementData(
+                    event.blockchain_id,
+                    agreementId,
+                );
 
                 return this.repositoryModuleManager.updateServiceAgreementEpochsNumber(
                     agreementId,
