@@ -386,12 +386,6 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async getEligibleSubmitCommits() {
-        if (this.initialized) {
-            return this.getImplementation().module.getEligibleSubmitCommits();
-        }
-    }
-
     async removeServiceAgreements(agreementIds) {
         if (this.initialized) {
             return this.getImplementation().module.removeServiceAgreements(agreementIds);

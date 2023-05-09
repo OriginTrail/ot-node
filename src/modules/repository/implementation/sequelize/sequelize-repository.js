@@ -584,9 +584,6 @@ class SequelizeRepository {
         );
     }
 
-    // eslint-disable-next-line no-empty-function
-    async getEligibleSubmitCommits() {}
-
     async updateServiceAgreementEpochsNumber(agreementId, epochsNumber) {
         return this.models.service_agreement.update(
             { epochs_number: epochsNumber },
