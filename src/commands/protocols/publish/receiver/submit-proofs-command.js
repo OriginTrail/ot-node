@@ -12,6 +12,7 @@ class SubmitProofsCommand extends EpochCommand {
 
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.operationIdService = ctx.operationIdService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.SUBMIT_PROOFS_ERROR;
     }
@@ -94,6 +95,7 @@ class SubmitProofsCommand extends EpochCommand {
                                 COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
                             }`,
                     );
+
                     that.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
                         operationId,

@@ -17,7 +17,7 @@ export const COMMIT_BLOCK_DURATION_IN_BLOCKS = 5;
 export const BLOCK_TIME = 12;
 export const COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS = 2;
 
-export const TRANSACTION_POLLING_TIMEOUT = 50;
+export const TRANSACTION_POLLING_TIMEOUT_MILLIS = 50 * 1000;
 
 export const LIBP2P_KEY_DIRECTORY = 'libp2p';
 
@@ -25,7 +25,7 @@ export const LIBP2P_KEY_FILENAME = 'privateKey';
 
 export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 
-export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000;
+export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000; // 15 days
 
 export const MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH = 500;
 
@@ -404,6 +404,7 @@ export const CONTRACTS = {
     PROFILE_CONTRACT: 'ProfileContract',
     HUB_CONTRACT: 'HubContract',
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
+    SERVICE_AGREEMENT_V1_CONTRACT: 'ServiceAgreementV1Contract',
 };
 
 export const CONTRACT_EVENTS = {
@@ -426,6 +427,10 @@ export const CONTRACT_EVENTS = {
     },
     COMMIT_MANAGER_V1: {
         STATE_FINALIZED: 'StateFinalized',
+    },
+    SERVICE_AGREEMENT_V1: {
+        SERVICE_AGREEMENT_V1_EXTENDED: 'ServiceAgreementV1Extended',
+        SERVICE_AGREEMENT_V1_TERMINATED: 'ServiceAgreementV1Terminated',
     },
 };
 
