@@ -10,6 +10,7 @@ import {
 class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
+        this.validationService = ctx.validationService;
         this.operationService = ctx.publishService;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.commandExecutor = ctx.commandExecutor;
@@ -39,7 +40,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.VALIDATING_PUBLISH_ASSERTION_REMOTE_START,
         );
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
-        await this.operationService.validateAssertion(assertionId, blockchain, assertion);
+        await this.validationService.validateAssertion(assertionId, blockchain, assertion);
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -58,9 +59,6 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             tokenId,
         );
 
-        const agreementEndTime =
-            agreementData.startTime + agreementData.epochsNumber * agreementData.epochLength;
-
         await this.tripleStoreService.localStoreAsset(
             TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
             assertionId,
@@ -68,8 +66,6 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             blockchain,
             contract,
             tokenId,
-            agreementData.startTime,
-            agreementEndTime,
             keyword,
         );
 

@@ -154,27 +154,9 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async getNumberOfOperationResponses(operation, operationId) {
-        if (this.initialized) {
-            return this.getImplementation().module.getNumberOfOperationResponses(
-                operation,
-                operationId,
-            );
-        }
-    }
-
     async getOperationResponsesStatuses(operation, operationId) {
         if (this.initialized) {
             return this.getImplementation().module.getOperationResponsesStatuses(
-                operation,
-                operationId,
-            );
-        }
-    }
-
-    async countOperationResponseStatuses(operation, operationId) {
-        if (this.initialized) {
-            return this.getImplementation().module.countOperationResponseStatuses(
                 operation,
                 operationId,
             );
@@ -231,33 +213,42 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async removePeerRecord(blockchainId, peerId) {
+    async query(query) {
         if (this.initialized) {
-            return this.getImplementation().module.removePeerRecord(blockchainId, peerId);
+            return this.getImplementation().module.query(query);
         }
     }
 
-    async updatePeerRecordLastDialed(peerId) {
+    async removePeerRecords(peerRecords) {
         if (this.initialized) {
-            return this.getImplementation().module.updatePeerRecordLastDialed(peerId);
+            return this.getImplementation().module.removePeerRecords(peerRecords);
         }
     }
 
-    async updatePeerRecordLastSeenAndLastDialed(peerId) {
+    async updatePeerRecordLastDialed(peerId, timestamp) {
         if (this.initialized) {
-            return this.getImplementation().module.updatePeerRecordLastSeenAndLastDialed(peerId);
+            return this.getImplementation().module.updatePeerRecordLastDialed(peerId, timestamp);
         }
     }
 
-    async updatePeerAsk(blockchainId, peerId, ask) {
+    async updatePeerRecordLastSeenAndLastDialed(peerId, timestamp) {
         if (this.initialized) {
-            return this.getImplementation().module.updatePeerAsk(blockchainId, peerId, ask);
+            return this.getImplementation().module.updatePeerRecordLastSeenAndLastDialed(
+                peerId,
+                timestamp,
+            );
         }
     }
 
-    async updatePeerStake(blockchainId, peerId, stake) {
+    async updatePeersAsk(peerRecords) {
         if (this.initialized) {
-            return this.getImplementation().module.updatePeerStake(blockchainId, peerId, stake);
+            return this.getImplementation().module.updatePeersAsk(peerRecords);
+        }
+    }
+
+    async updatePeersStake(peerRecords) {
+        if (this.initialized) {
+            return this.getImplementation().module.updatePeersStake(peerRecords);
         }
     }
 
@@ -267,15 +258,9 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async updatePeerLastSeen(peerId, lastSeen) {
+    async cleanShardingTable(blockchainId) {
         if (this.initialized) {
-            return this.getImplementation().module.updatePeerLastSeen(peerId, lastSeen);
-        }
-    }
-
-    async cleanShardingTable() {
-        if (this.initialized) {
-            return this.getImplementation().module.cleanShardingTable();
+            return this.getImplementation().module.cleanShardingTable(blockchainId);
         }
     }
 
@@ -342,15 +327,15 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async getLastEvent(contractName, blockchainId) {
+    async getAllUnprocessedBlockchainEvents(eventNames) {
         if (this.initialized) {
-            return this.getImplementation().module.getLastEvent(contractName, blockchainId);
+            return this.getImplementation().module.getAllUnprocessedBlockchainEvents(eventNames);
         }
     }
 
-    async markBlockchainEventAsProcessed() {
+    async markBlockchainEventsAsProcessed(events) {
         if (this.initialized) {
-            return this.getImplementation().module.markBlockchainEventAsProcessed();
+            return this.getImplementation().module.markBlockchainEventsAsProcessed(events);
         }
     }
 
