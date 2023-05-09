@@ -325,7 +325,7 @@ class SequelizeRepository {
     }
 
     async updatePeerRecordLastDialed(peerId, timestamp) {
-        await this.models.shard.update(
+        return this.models.shard.update(
             {
                 last_dialed: timestamp,
             },
@@ -336,7 +336,7 @@ class SequelizeRepository {
     }
 
     async updatePeerRecordLastSeenAndLastDialed(peerId, timestamp) {
-        await this.models.shard.update(
+        return this.models.shard.update(
             {
                 last_dialed: timestamp,
                 last_seen: timestamp,

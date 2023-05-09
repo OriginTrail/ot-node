@@ -213,8 +213,14 @@ class ShardingTableService {
             };
         }
         if (this.memoryCachedPeerIds[peerId].lastUpdated < timestampThreshold) {
-            await this.repositoryModuleManager.updatePeerRecordLastSeenAndLastDialed(peerId, now);
-            this.memoryCachedPeerIds[peerId].lastUpdated = now;
+            const [rowsUpdated] =
+                await this.repositoryModuleManager.updatePeerRecordLastSeenAndLastDialed(
+                    peerId,
+                    now,
+                );
+            if (rowsUpdated) {
+                this.memoryCachedPeerIds[peerId].lastUpdated = now;
+            }
         }
         this.memoryCachedPeerIds[peerId].lastDialed = now;
         this.memoryCachedPeerIds[peerId].lastSeen = now;
@@ -231,8 +237,13 @@ class ShardingTableService {
             };
         }
         if (this.memoryCachedPeerIds[peerId].lastUpdated < timestampThreshold) {
-            await this.repositoryModuleManager.updatePeerRecordLastDialed(peerId, now);
-            this.memoryCachedPeerIds[peerId].lastUpdated = now;
+            const [rowsUpdated] = await this.repositoryModuleManager.updatePeerRecordLastDialed(
+                peerId,
+                now,
+            );
+            if (rowsUpdated) {
+                this.memoryCachedPeerIds[peerId].lastUpdated = now;
+            }
         }
         this.memoryCachedPeerIds[peerId].lastDialed = now;
     }
@@ -252,6 +263,9 @@ class ShardingTableService {
             try {
                 this.logger.trace(`Searching for peer ${peerId} multiaddresses on the network.`);
                 peerInfo = await this.networkModuleManager.findPeer(peerId);
+                if (peerInfo?.multiaddrs) {
+                    peerInfo.addresses = peerInfo.multiaddrs;
+                }
             } catch (error) {
                 this.logger.trace(`Unable to find peer ${peerId}. Error: ${error.message}`);
             }
