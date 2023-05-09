@@ -11,7 +11,7 @@ import { peerIdFromString } from '@libp2p/peer-id';
 import { keys } from '@libp2p/crypto';
 import { createLibp2p } from 'libp2p';
 import { identifyService } from 'libp2p/identify';
-import { autonatService } from 'libp2p/autonat';
+import { autoNATService } from 'libp2p/autonat';
 import { uPnPNATService } from 'libp2p/upnp-nat';
 import { pipe } from 'it-pipe';
 import map from 'it-map';
@@ -94,7 +94,7 @@ class Libp2pService {
             services: {
                 dht: kadDHT(this.config.dht),
                 identify: identifyService(),
-                autonat: autonatService(),
+                autonat: autoNATService(),
                 uPnPNAT: uPnPNATService(),
             },
             peerId: this.config.peerId,

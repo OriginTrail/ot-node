@@ -40,7 +40,7 @@
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
                             "dht": {
-                                "kBucketSize": 1
+                                "kBucketSize": 20
                             },
                             "port": 9100,
                             "bootstrap": []
