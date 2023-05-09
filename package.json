@@ -65,7 +65,7 @@
         "@ethersproject/wallet": "^5.7.0",
         "@libp2p/bootstrap": "^8.0.0",
         "@libp2p/crypto": "^1.0.17",
-        "@libp2p/kad-dht": "^9.2.0",
+        "@libp2p/kad-dht": "^9.3.2",
         "@libp2p/mplex": "^8.0.1",
         "@libp2p/peer-id": "^2.0.3",
         "@libp2p/peer-id-factory": "^2.0.3",

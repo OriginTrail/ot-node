@@ -253,7 +253,6 @@ class ShardingTableService {
                 this.logger.trace(`Searching for peer ${peerId} multiaddresses on the network.`);
                 peerInfo = await this.networkModuleManager.findPeer(peerId);
             } catch (error) {
-                console.log(error);
                 this.logger.trace(`Unable to find peer ${peerId}. Error: ${error.message}`);
             }
         }

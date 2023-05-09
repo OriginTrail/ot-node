@@ -11,6 +11,8 @@ import { peerIdFromString } from '@libp2p/peer-id';
 import { keys } from '@libp2p/crypto';
 import { createLibp2p } from 'libp2p';
 import { identifyService } from 'libp2p/identify';
+import { autonatService } from 'libp2p/autonat';
+import { uPnPNATService } from 'libp2p/upnp-nat';
 import { pipe } from 'it-pipe';
 import map from 'it-map';
 import { encode, decode } from 'it-length-prefixed';
@@ -84,17 +86,16 @@ class Libp2pService {
             peerDiscovery: [
                 bootstrap({
                     list: this.config.bootstrap,
-                    timeout: 15 * 1000,
+                    // wait 5 seconds to contact boostrap,
+                    // to give time to sharding table service to initialize
+                    timeout: 5_000,
                 }),
             ],
-            peerRouting: {
-                refreshManager: {
-                    enabled: false, // Should find the closest peers.
-                },
-            },
             services: {
                 dht: kadDHT(this.config.dht),
                 identify: identifyService(),
+                autonat: autonatService(),
+                uPnPNAT: uPnPNATService(),
             },
             peerId: this.config.peerId,
             start: true,
@@ -645,16 +646,22 @@ class Libp2pService {
         return 'Libp2p';
     }
 
-    async findPeer(peerId) {
-        return this.node.peerRouting.findPeer(peerIdFromString(peerId));
+    async findPeer(peerIdString) {
+        return this.node.peerRouting.findPeer(peerIdFromString(peerIdString));
     }
 
-    async dial(peerId) {
-        return this.node.dial(peerIdFromString(peerId));
+    async dial(peerIdString) {
+        const peerId = peerIdFromString(peerIdString);
+
+        const peerConnections = this.node.getConnections(peerId).filter(Boolean);
+
+        if (peerConnections.length) return peerConnections;
+
+        return this.node.dial(peerId);
     }
 
-    async getPeerInfo(peerId) {
-        return this.node.peerStore.get(peerIdFromString(peerId));
+    async getPeerInfo(peerIdString) {
+        return this.node.peerStore.get(peerIdFromString(peerIdString));
     }
 }
 
