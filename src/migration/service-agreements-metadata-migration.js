@@ -56,7 +56,7 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
             query,
         );
         const identities = {};
-        const concurrency = 10;
+        const concurrency = 3;
         let promises = [];
         let assetsToProcess = assetsMetadata.length;
         for (const { ual } of assetsMetadata) {
@@ -91,8 +91,9 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
     async processAsset(ual, blockchain, contract, tokenId, identityId) {
         const maxAttempts = 10;
         const sleepTimeSeconds = 2;
-        let attempt = 0;
+
         // get assertion ids
+        let attempt = 0;
         let assertionIds;
         while (!assertionIds) {
             attempt += 1;
@@ -138,8 +139,8 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
             CONTENT_ASSET_HASH_FUNCTION_ID,
         );
 
+        // get agreement data
         attempt = 0;
-        // get assertion ids
         let agreementData;
         while (!assertionIds) {
             attempt += 1;
