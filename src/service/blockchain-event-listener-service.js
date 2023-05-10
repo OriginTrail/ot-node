@@ -60,6 +60,11 @@ class BlockchainEventListenerService {
                 CONTRACTS.COMMIT_MANAGER_V1_U1_CONTRACT,
                 currentBlock,
             ),
+            this.getContractEvents(
+                blockchainId,
+                CONTRACTS.SERVICE_AGREEMENT_V1_CONTRACT,
+                currentBlock,
+            ),
         ];
 
         if (!devEnvironment) {
@@ -313,10 +318,7 @@ class BlockchainEventListenerService {
                     blockchain_id: event.blockchain_id,
                     stake: this.blockchainModuleManager.convertFromWei(
                         event.blockchain_id,
-                        await this.blockchainModuleManager.getNodeStake(
-                            event.blockchain_id,
-                            eventData.identityId,
-                        ),
+                        eventData.newStake,
                     ),
                 };
             }),
@@ -353,6 +355,30 @@ class BlockchainEventListenerService {
         );
 
         await this.repositoryModuleManager.updatePeersAsk(peerRecords);
+    }
+
+    async handleServiceAgreementV1ExtendedEvents(blockEvents) {
+        await Promise.all(
+            blockEvents.map(async (event) => {
+                const { agreementId } = JSON.parse(event.data);
+
+                const { epochsNumber } = await this.blockchainModuleManager.getAgreementData(
+                    event.blockchain_id,
+                    agreementId,
+                );
+
+                return this.repositoryModuleManager.updateServiceAgreementEpochsNumber(
+                    agreementId,
+                    epochsNumber,
+                );
+            }),
+        );
+    }
+
+    async handleServiceAgreementV1TerminatedEvents(blockEvents) {
+        await this.repositoryModuleManager.removeServiceAgreements(
+            blockEvents.map((event) => JSON.parse(event.data).agreementId),
+        );
     }
 
     async handleStateFinalizedEvents(blockEvents) {

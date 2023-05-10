@@ -712,6 +712,21 @@ class SequelizeRepository {
         });
     }
 
+    async updateServiceAgreementEpochsNumber(agreementId, epochsNumber) {
+        return this.models.service_agreement.update(
+            { epochs_number: epochsNumber },
+            {
+                where: { agreement_id: agreementId },
+            },
+        );
+    }
+
+    async removeServiceAgreements(agreementIds) {
+        return this.models.service_agreement.destroy({
+            where: { agreement_id: { [Sequelize.Op.in]: agreementIds } },
+        });
+    }
+
     async destroyAllRecords(table) {
         return this.models[table].destroy({ where: {} });
     }

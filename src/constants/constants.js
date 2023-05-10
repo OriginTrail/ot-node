@@ -405,6 +405,7 @@ export const CONTRACTS = {
     PROFILE_CONTRACT: 'ProfileContract',
     HUB_CONTRACT: 'HubContract',
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
+    SERVICE_AGREEMENT_V1_CONTRACT: 'ServiceAgreementV1Contract',
 };
 
 export const CONTRACT_EVENTS = {
@@ -427,6 +428,10 @@ export const CONTRACT_EVENTS = {
     },
     COMMIT_MANAGER_V1: {
         STATE_FINALIZED: 'StateFinalized',
+    },
+    SERVICE_AGREEMENT_V1: {
+        SERVICE_AGREEMENT_V1_EXTENDED: 'ServiceAgreementV1Extended',
+        SERVICE_AGREEMENT_V1_TERMINATED: 'ServiceAgreementV1Terminated',
     },
 };
 

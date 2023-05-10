@@ -16,6 +16,7 @@ class SubmitProofsCommand extends Command {
         this.validationModuleManager = ctx.validationModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
         this.operationIdService = ctx.operationIdService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.SUBMIT_PROOFS_ERROR;
     }
