@@ -142,7 +142,7 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
         // get agreement data
         attempt = 0;
         let agreementData;
-        while (!assertionIds) {
+        while (!agreementData) {
             attempt += 1;
             if (attempt >= maxAttempts)
                 throw Error(
