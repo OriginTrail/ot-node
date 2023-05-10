@@ -92,7 +92,7 @@
         "graphdb": "^2.0.2",
         "ip": "^1.1.8",
         "it-length-prefixed": "^9.0.1",
-        "it-map": "^3.0.2",
+        "it-map": "^3.0.3",
         "it-pipe": "^3.0.1",
         "jsonld": "^8.1.0",
         "jsonschema": "^1.4.1",

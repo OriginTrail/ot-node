@@ -651,13 +651,7 @@ class Libp2pService {
     }
 
     async dial(peerIdString) {
-        const peerId = peerIdFromString(peerIdString);
-
-        const peerConnections = this.node.getConnections(peerId).filter(Boolean);
-
-        if (peerConnections.length) return peerConnections;
-
-        return this.node.dial(peerId);
+        return this.node.dial(peerIdFromString(peerIdString));
     }
 
     async getPeerInfo(peerIdString) {
