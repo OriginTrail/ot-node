@@ -101,6 +101,9 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
                 throw Error(
                     `Error while trying to get assertion ids for asset with ual: ${ual}. Max attempts reached`,
                 );
+            if (attempt > 1) {
+                await setTimeout(sleepTimeSeconds * 1000);
+            }
             try {
                 assertionIds = await this.blockchainModuleManager.getAssertionIds(
                     blockchain,
@@ -112,8 +115,6 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
                     `Error while trying to get assertion ids for asset with ual: ${ual}. Retrying in ${sleepTimeSeconds} seconds. Attempt number: ${attempt}.`,
                 );
             }
-
-            await setTimeout(sleepTimeSeconds * 1000);
         }
 
         if (!assertionIds?.length) {
@@ -148,6 +149,9 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
                 throw Error(
                     `Error while trying to get agreement data for asset with ual: ${ual}. Max attempts reached`,
                 );
+            if (attempt > 1) {
+                await setTimeout(sleepTimeSeconds * 1000);
+            }
             try {
                 agreementData = await this.blockchainModuleManager.getAgreementData(
                     blockchain,
@@ -158,8 +162,6 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
                     `Error while trying to get agreement data for asset with ual: ${ual}. Retrying in ${sleepTimeSeconds} seconds. Attempt number: ${attempt}.`,
                 );
             }
-
-            await setTimeout(sleepTimeSeconds * 1000);
         }
 
         // calculate current epoch
