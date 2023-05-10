@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import path from 'path';
+import { setTimeout } from 'timers/promises';
 import BaseMigration from './base-migration.js';
 import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
@@ -55,7 +56,7 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
             query,
         );
         const identities = {};
-        const concurrency = 10;
+        const concurrency = 3;
         let promises = [];
         let assetsToProcess = assetsMetadata.length;
         for (const { ual } of assetsMetadata) {
@@ -88,10 +89,32 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
     }
 
     async processAsset(ual, blockchain, contract, tokenId, identityId) {
+        const maxAttempts = 10;
+        const sleepTimeSeconds = 2;
+
         // get assertion ids
-        const assertionIds = await this.blockchainModuleManager
-            .getAssertionIds(blockchain, contract, tokenId)
-            .catch(() => {});
+        let attempt = 0;
+        let assertionIds;
+        while (!assertionIds) {
+            attempt += 1;
+            if (attempt >= maxAttempts)
+                throw Error(
+                    `Error while trying to get assertion ids for asset with ual: ${ual}. Max attempts reached`,
+                );
+            try {
+                assertionIds = await this.blockchainModuleManager.getAssertionIds(
+                    blockchain,
+                    contract,
+                    tokenId,
+                );
+            } catch (error) {
+                this.logger.warn(
+                    `Error while trying to get assertion ids for asset with ual: ${ual}. Retrying in ${sleepTimeSeconds} seconds. Attempt number: ${attempt}.`,
+                );
+            }
+
+            await setTimeout(sleepTimeSeconds * 1000);
+        }
 
         if (!assertionIds?.length) {
             this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
@@ -117,10 +140,27 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
         );
 
         // get agreement data
-        const agreementData = await this.blockchainModuleManager.getAgreementData(
-            blockchain,
-            agreementId,
-        );
+        attempt = 0;
+        let agreementData;
+        while (!assertionIds) {
+            attempt += 1;
+            if (attempt >= maxAttempts)
+                throw Error(
+                    `Error while trying to get agreement data for asset with ual: ${ual}. Max attempts reached`,
+                );
+            try {
+                agreementData = await this.blockchainModuleManager.getAgreementData(
+                    blockchain,
+                    agreementId,
+                );
+            } catch (error) {
+                this.logger.warn(
+                    `Error while trying to get agreement data for asset with ual: ${ual}. Retrying in ${sleepTimeSeconds} seconds. Attempt number: ${attempt}.`,
+                );
+            }
+
+            await setTimeout(sleepTimeSeconds * 1000);
+        }
 
         // calculate current epoch
         const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
