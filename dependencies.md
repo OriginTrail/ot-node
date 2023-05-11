@@ -191,7 +191,7 @@
 
 ##### [dkg-evm-module](https://www.npmjs.com/package/dkg-evm-module)
 
--   **version**: ^4.0.4
+-   **version**: ^4.0.5
 -   **description**: used to import latest ot-node smart contracts abis
 
 ##### [dotenv](https://www.npmjs.com/package/dotenv)
@@ -281,7 +281,7 @@
 
 ##### [mysql2](https://www.npmjs.com/package/mysql2)
 
--   **version**: ^2.3.3
+-   **version**: ^3.3.0
 -   **description**:
 
 ##### [pino](https://www.npmjs.com/package/pino)
