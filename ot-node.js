@@ -12,6 +12,7 @@ import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-upd
 import PullBlockchainShardingTableMigration from './src/migration/pull-sharding-table-migration.js';
 import TripleStoreUserConfigurationMigration from './src/migration/triple-store-user-configuration-migration.js';
 import PrivateAssetsMetadataMigration from './src/migration/private-assets-metadata-migration.js';
+import ServiceAgreementsMetadataMigration from './src/migration/service-agreements-metadata-migration.js';
 import RemoveAgreementStartEndTimeMigration from './src/migration/remove-agreement-start-end-time-migration.js';
 import MarkOldBlockchainEventsAsProcessedMigration from './src/migration/mark-old-blockchain-events-as-processed-migration.js';
 import TripleStoreMetadataMigration from './src/migration/triple-store-metadata-migration.js';
@@ -53,13 +54,14 @@ class OTNode {
         await this.executePrivateAssetsMetadataMigration();
         await this.executeRemoveAgreementStartEndTimeMigration();
         await this.executeMarkOldBlockchainEventsAsProcessedMigration();
-        this.executeTripleStoreMetadataMigration();
+        await this.executeTripleStoreMetadataMigration();
+        this.executeServiceAgreementsMetadataMigration();
 
         await this.createProfiles();
 
         await this.initializeShardingTableService();
         await this.initializeTelemetryInjectionService();
-        this.initializeBlockchainEventListenerService();
+        await this.initializeBlockchainEventListenerService();
 
         await this.initializeCommandExecutor();
         await this.initializeRouters();
@@ -140,10 +142,11 @@ class OTNode {
         this.logger.info('Event emitter initialized');
     }
 
-    initializeBlockchainEventListenerService() {
+    async initializeBlockchainEventListenerService() {
         try {
             const eventListenerService = this.container.resolve('blockchainEventListenerService');
-            eventListenerService.initialize();
+            await eventListenerService.initialize();
+            eventListenerService.startListeningOnEvents();
             this.logger.info('Event Listener Service initialized successfully');
         } catch (error) {
             this.logger.error(
@@ -314,6 +317,34 @@ class OTNode {
             repositoryModuleManager,
             blockchainModuleManager,
             validationModuleManager,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            await migration.migrate();
+        }
+    }
+
+    async executeServiceAgreementsMetadataMigration() {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
+        const tripleStoreService = this.container.resolve('tripleStoreService');
+        const serviceAgreementService = this.container.resolve('serviceAgreementService');
+        const ualService = this.container.resolve('ualService');
+
+        const migration = new ServiceAgreementsMetadataMigration(
+            'serviceAgreementsMetadataMigration',
+            this.logger,
+            this.config,
+            tripleStoreService,
+            blockchainModuleManager,
+            repositoryModuleManager,
+            serviceAgreementService,
+            ualService,
         );
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();

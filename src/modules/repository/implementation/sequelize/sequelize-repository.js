@@ -58,6 +58,7 @@ class SequelizeRepository {
         await connection
             .promise()
             .query(`CREATE DATABASE IF NOT EXISTS \`${this.config.database}\`;`);
+        connection.destroy();
     }
 
     async dropDatabase() {
@@ -68,6 +69,7 @@ class SequelizeRepository {
             password: process.env.SEQUELIZE_REPOSITORY_PASSWORD,
         });
         await connection.promise().query(`DROP DATABASE IF EXISTS \`${this.config.database}\`;`);
+        connection.destroy();
     }
 
     async runMigrations() {
@@ -97,6 +99,52 @@ class SequelizeRepository {
 
     transaction(execFn) {
         return this.models.sequelize.transaction(async (t) => execFn(t));
+    }
+
+    async updateServiceAgreementRecord(
+        blockchainId,
+        contract,
+        tokenId,
+        agreementId,
+        startTime,
+        epochsNumber,
+        epochLength,
+        scoreFunctionId,
+        proofWindowOffsetPerc,
+        hashFunctionId,
+        keyword,
+        assertionId,
+        stateIndex,
+        lastCommitEpoch,
+        lastProofEpoch,
+    ) {
+        return this.models.service_agreement.upsert({
+            blockchain_id: blockchainId,
+            asset_storage_contract_address: contract,
+            token_id: tokenId,
+            agreement_id: agreementId,
+            start_time: startTime,
+            epochs_number: epochsNumber,
+            epoch_length: epochLength,
+            score_function_id: scoreFunctionId,
+            proof_window_offset_perc: proofWindowOffsetPerc,
+            last_commit_epoch: lastCommitEpoch,
+            last_proof_epoch: lastProofEpoch,
+            hash_function_id: hashFunctionId,
+            keyword,
+            assertion_id: assertionId,
+            state_index: stateIndex,
+        });
+    }
+
+    async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
+        await this.models.service_agreement.destroy({
+            where: {
+                blockchain_id: blockchainId,
+                asset_storage_contract_address: contract,
+                token_id: tokenId,
+            },
+        });
     }
 
     // COMMAND
@@ -538,11 +586,21 @@ class SequelizeRepository {
         );
     }
 
-    async removeBlockchainEvents(contractName) {
-        return this.models.blockchain_event.destroy({
-            where: {
-                contract: contractName,
+    // eslint-disable-next-line no-empty-function
+    async getEligibleSubmitCommits() {}
+
+    async updateServiceAgreementEpochsNumber(agreementId, epochsNumber) {
+        return this.models.service_agreement.update(
+            { epochs_number: epochsNumber },
+            {
+                where: { agreement_id: agreementId },
             },
+        );
+    }
+
+    async removeServiceAgreements(agreementIds) {
+        return this.models.service_agreement.destroy({
+            where: { agreement_id: { [Sequelize.Op.in]: agreementIds } },
         });
     }
 }
