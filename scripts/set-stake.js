@@ -1,7 +1,10 @@
 /* eslint-disable no-console */
 import { ethers } from 'ethers';
 import { createRequire } from 'module';
-import { NODE_ENVIRONMENTS } from '../src/constants/constants.js';
+import {
+    NODE_ENVIRONMENTS,
+    TRANSACTION_POLLING_TIMEOUT_MILLIS,
+} from '../src/constants/constants.js';
 import validateArguments from './utils.js';
 
 const require = createRequire(import.meta.url);
@@ -48,15 +51,17 @@ async function setStake(
 
     const stakeWei = ethers.utils.parseEther(stake);
 
-    await tokenContract.increaseAllowance(stakingContractAddress, stakeWei, {
+    let tx = await tokenContract.increaseAllowance(stakingContractAddress, stakeWei, {
         gasPrice: devEnvironment ? undefined : 8,
         gasLimit: 500_000,
     });
+    await provider.waitForTransaction(tx.hash, null, TRANSACTION_POLLING_TIMEOUT_MILLIS);
     // TODO: Add ABI instead of hard-coded function definition
-    await stakingContract['addStake(uint72,uint96)'](identityId, stakeWei, {
+    tx = await stakingContract['addStake(uint72,uint96)'](identityId, stakeWei, {
         gasPrice: devEnvironment ? undefined : 1_000,
         gasLimit: 500_000,
     });
+    await provider.waitForTransaction(tx.hash, null, TRANSACTION_POLLING_TIMEOUT_MILLIS);
 }
 
 const expectedArguments = [

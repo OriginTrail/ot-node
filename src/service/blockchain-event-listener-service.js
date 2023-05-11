@@ -27,11 +27,54 @@ class BlockchainEventListenerService {
         this.ualService = ctx.ualService;
     }
 
-    initialize() {
+    async initialize() {
+        const promises = [];
+        for (const blockchainId of this.blockchainModuleManager.getImplementationNames()) {
+            this.logger.info(
+                `Initializing blockchain event listener for blockchain ${blockchainId}, handling missed events`,
+            );
+            promises.push(this.fetchAndHandleBlockchainEvents(blockchainId));
+        }
+        await Promise.all(promises);
+    }
+
+    startListeningOnEvents() {
         for (const blockchainId of this.blockchainModuleManager.getImplementationNames()) {
             this.listenOnBlockchainEvents(blockchainId);
             this.logger.info(`Event listener initialized for blockchain: '${blockchainId}'.`);
         }
+    }
+
+    async fetchAndHandleBlockchainEvents(blockchainId) {
+        const devEnvironment =
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
+
+        const currentBlock = await this.blockchainModuleManager.getBlockNumber();
+        const syncContractEventsPromises = [
+            this.getContractEvents(blockchainId, CONTRACTS.SHARDING_TABLE_CONTRACT, currentBlock),
+            this.getContractEvents(blockchainId, CONTRACTS.STAKING_CONTRACT, currentBlock),
+            this.getContractEvents(blockchainId, CONTRACTS.PROFILE_CONTRACT, currentBlock),
+            this.getContractEvents(
+                blockchainId,
+                CONTRACTS.COMMIT_MANAGER_V1_U1_CONTRACT,
+                currentBlock,
+            ),
+            this.getContractEvents(
+                blockchainId,
+                CONTRACTS.SERVICE_AGREEMENT_V1_CONTRACT,
+                currentBlock,
+            ),
+        ];
+
+        if (!devEnvironment) {
+            syncContractEventsPromises.push(
+                this.getContractEvents(blockchainId, CONTRACTS.HUB_CONTRACT, currentBlock),
+            );
+        }
+        const contractEvents = await Promise.all(syncContractEventsPromises);
+
+        await this.handleBlockchainEvents(contractEvents.flatMap((events) => events));
     }
 
     listenOnBlockchainEvents(blockchainId) {
@@ -49,30 +92,7 @@ class BlockchainEventListenerService {
             if (working) return;
             try {
                 working = true;
-                const currentBlock = await this.blockchainModuleManager.getBlockNumber();
-                const syncContractEventsPromises = [
-                    this.getContractEvents(
-                        blockchainId,
-                        CONTRACTS.SHARDING_TABLE_CONTRACT,
-                        currentBlock,
-                    ),
-                    this.getContractEvents(blockchainId, CONTRACTS.STAKING_CONTRACT, currentBlock),
-                    this.getContractEvents(blockchainId, CONTRACTS.PROFILE_CONTRACT, currentBlock),
-                    this.getContractEvents(
-                        blockchainId,
-                        CONTRACTS.COMMIT_MANAGER_V1_U1_CONTRACT,
-                        currentBlock,
-                    ),
-                ];
-
-                if (!devEnvironment) {
-                    syncContractEventsPromises.push(
-                        this.getContractEvents(blockchainId, CONTRACTS.HUB_CONTRACT, currentBlock),
-                    );
-                }
-                const contractEvents = await Promise.all(syncContractEventsPromises);
-
-                await this.handleBlockchainEvents(contractEvents.flatMap((events) => events));
+                await this.fetchAndHandleBlockchainEvents(blockchainId);
                 fetchEventsFailedCount[blockchainId] = 0;
             } catch (e) {
                 if (fetchEventsFailedCount[blockchainId] >= MAXIMUM_FETCH_EVENTS_FAILED_COUNT) {
@@ -298,10 +318,7 @@ class BlockchainEventListenerService {
                     blockchain_id: event.blockchain_id,
                     stake: this.blockchainModuleManager.convertFromWei(
                         event.blockchain_id,
-                        await this.blockchainModuleManager.getNodeStake(
-                            event.blockchain_id,
-                            eventData.identityId,
-                        ),
+                        eventData.newStake,
                     ),
                 };
             }),
@@ -340,12 +357,36 @@ class BlockchainEventListenerService {
         await this.repositoryModuleManager.updatePeersAsk(peerRecords);
     }
 
+    async handleServiceAgreementV1ExtendedEvents(blockEvents) {
+        await Promise.all(
+            blockEvents.map(async (event) => {
+                const { agreementId } = JSON.parse(event.data);
+
+                const { epochsNumber } = await this.blockchainModuleManager.getAgreementData(
+                    event.blockchain_id,
+                    agreementId,
+                );
+
+                return this.repositoryModuleManager.updateServiceAgreementEpochsNumber(
+                    agreementId,
+                    epochsNumber,
+                );
+            }),
+        );
+    }
+
+    async handleServiceAgreementV1TerminatedEvents(blockEvents) {
+        await this.repositoryModuleManager.removeServiceAgreements(
+            blockEvents.map((event) => JSON.parse(event.data).agreementId),
+        );
+    }
+
     async handleStateFinalizedEvents(blockEvents) {
         // todo: find a way to safely parallelize this
         for (const event of blockEvents) {
             const eventData = JSON.parse(event.data);
 
-            const { tokenId, keyword, state } = eventData;
+            const { tokenId, keyword, state, stateIndex } = eventData;
             const blockchain = event.blockchain_id;
             const contract = eventData.assetContract;
             this.logger.trace(
@@ -367,6 +408,7 @@ class BlockchainEventListenerService {
                     tokenId,
                     keyword,
                     state,
+                    stateIndex,
                 ),
                 this._handleStateFinalizedEvent(
                     TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
@@ -377,6 +419,7 @@ class BlockchainEventListenerService {
                     tokenId,
                     keyword,
                     state,
+                    stateIndex,
                 ),
             ]);
         }
@@ -391,6 +434,7 @@ class BlockchainEventListenerService {
         tokenId,
         keyword,
         assertionId,
+        stateIndex,
     ) {
         const assertionLinks = await this.tripleStoreService.getAssetAssertionLinks(
             currentRepository,
@@ -449,6 +493,34 @@ class BlockchainEventListenerService {
                     tokenId,
                     keyword,
                 ),
+            );
+
+            if (
+                currentRepository === TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT &&
+                cachedData.agreementId &&
+                cachedData.agreementData
+            ) {
+                await this.repositoryModuleManager.updateServiceAgreementRecord(
+                    blockchain,
+                    contract,
+                    tokenId,
+                    cachedData.agreementId,
+                    cachedData.agreementData.startTime,
+                    cachedData.agreementData.epochsNumber,
+                    cachedData.agreementData.epochLength,
+                    cachedData.agreementData.scoreFunctionId,
+                    cachedData.agreementData.proofWindowOffsetPerc,
+                    CONTENT_ASSET_HASH_FUNCTION_ID,
+                    keyword,
+                    assertionId,
+                    stateIndex,
+                );
+            }
+        } else if (currentRepository === TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT) {
+            await this.repositoryModuleManager.removeServiceAgreementRecord(
+                blockchain,
+                contract,
+                tokenId,
             );
         }
 
