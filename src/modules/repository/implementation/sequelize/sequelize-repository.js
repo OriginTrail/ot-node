@@ -58,6 +58,7 @@ class SequelizeRepository {
         await connection
             .promise()
             .query(`CREATE DATABASE IF NOT EXISTS \`${this.config.database}\`;`);
+        connection.destroy();
     }
 
     async dropDatabase() {
@@ -68,6 +69,7 @@ class SequelizeRepository {
             password: process.env.SEQUELIZE_REPOSITORY_PASSWORD,
         });
         await connection.promise().query(`DROP DATABASE IF EXISTS \`${this.config.database}\`;`);
+        connection.destroy();
     }
 
     async runMigrations() {
