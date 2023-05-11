@@ -233,15 +233,15 @@ class RepositoryModuleManager extends BaseModuleManager {
     }
 
     async removeLastCheckedBlockForContract(contract) {
-        return this.getRepository('blockchain_event').removeLastCheckedBlockForContract(contract);
+        return this.getRepository('blockchain').removeLastCheckedBlockForContract(contract);
     }
 
     async getLastCheckedBlock(blockchainId, contract) {
-        return this.getRepository('blockchain_event').getLastCheckedBlock(blockchainId, contract);
+        return this.getRepository('blockchain').getLastCheckedBlock(blockchainId, contract);
     }
 
     async updateLastCheckedBlock(blockchainId, currentBlock, timestamp, contract) {
-        return this.getRepository('blockchain_event').updateLastCheckedBlock(
+        return this.getRepository('blockchain').updateLastCheckedBlock(
             blockchainId,
             currentBlock,
             timestamp,
@@ -266,7 +266,7 @@ class RepositoryModuleManager extends BaseModuleManager {
         lastCommitEpoch,
         lastProofEpoch,
     ) {
-        return this.getRepository('blockchain_event').updateServiceAgreementRecord(
+        return this.getRepository('service_agreement').updateServiceAgreementRecord(
             blockchainId,
             contract,
             tokenId,
@@ -286,7 +286,7 @@ class RepositoryModuleManager extends BaseModuleManager {
     }
 
     async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
-        return this.getRepository('blockchain_event').removeServiceAgreementRecord(
+        return this.getRepository('service_agreement').removeServiceAgreementRecord(
             blockchainId,
             contract,
             tokenId,
@@ -294,11 +294,11 @@ class RepositoryModuleManager extends BaseModuleManager {
     }
 
     async removeServiceAgreements(agreementIds) {
-        return this.getRepository('blockchain_event').removeServiceAgreements(agreementIds);
+        return this.getRepository('service_agreement').removeServiceAgreements(agreementIds);
     }
 
     async updateServiceAgreementEpochsNumber(agreementId, epochsNumber) {
-        return this.getRepository('blockchain_event').updateServiceAgreementEpochsNumber(
+        return this.getRepository('service_agreement').updateServiceAgreementEpochsNumber(
             agreementId,
             epochsNumber,
         );
