@@ -69,6 +69,11 @@
 
 ## dependencies
 
+##### [@libp2p/noise](https://www.npmjs.com/package/@libp2p/noise)
+
+-   **version**: ^4.0.0
+-   **description**: used for libp2p message encription
+
 ##### [@comunica/query-sparql](https://www.npmjs.com/package/@comunica/query-sparql)
 
 -   **version**: ^2.4.3
@@ -89,6 +94,16 @@
 -   **version**: ^5.7.0
 -   **description**: Used for creating substrate and evm accounts mapping signatures in `create-account-mapping-signature.js`
 
+##### [@libp2p/bootstrap](https://www.npmjs.com/package/@libp2p/bootstrap)
+
+-   **version**: ^8.0.0
+-   **description**: used to define libp2p bootstrap nodes
+
+##### [@libp2p/crypto](https://www.npmjs.com/package/@libp2p/crypto)
+
+-   **version**: ^1.0.17
+-   **description**: used to create libp2p keys
+
 ##### [@polkadot/api](https://www.npmjs.com/package/@polkadot/api)
 
 -   **version**: ^9.3.2
@@ -108,6 +123,31 @@
 
 -   **version**: ^10.1.7
 -   **description**: Used for creating substrate and evm accounts mapping signatures in `create-account-mapping-signature.js`
+
+##### [@libp2p/kad-dht](https://www.npmjs.com/package/@libp2p/kad-dht)
+
+-   **version**: ^9.3.3
+-   **description**: used for libp2p kad dht initialisation
+
+##### [@libp2p/mplex](https://www.npmjs.com/package/@libp2p/mplex)
+
+-   **version**: ^8.0.1
+-   **description**: used for libp2p mplex initialisation
+
+##### [@libp2p/peer-id](https://www.npmjs.com/package/@libp2p/peer-id)
+
+-   **version**: ^2.0.3
+-   **description**: used to create libp2p peer ids from string
+
+##### [@libp2p/peer-id-factory](https://www.npmjs.com/package/@libp2p/peer-id-factory)
+
+-   **version**: ^2.0.3
+-   **description**: used to create and parse libp2p keys
+
+##### [@libp2p/tcp](https://www.npmjs.com/package/@libp2p/tcp)
+
+-   **version**: ^7.0.1
+-   **description**: used for libp2p tcp communication
 
 ##### [app-root-path](https://www.npmjs.com/package/app-root-path)
 
@@ -196,17 +236,17 @@
 
 ##### [it-length-prefixed](https://www.npmjs.com/package/it-length-prefixed)
 
--   **version**: ^5.0.3
+-   **version**: ^9.0.1
 -   **description**: used to encode and decode streamed buffers in libp2p
 
 ##### [it-map](https://www.npmjs.com/package/it-map)
 
--   **version**: ^1.0.6
+-   **version**: ^3.0.3
 -   **description**: used to map values received yielded by libp2p async iterators
 
 ##### [it-pipe](https://www.npmjs.com/package/it-pipe)
 
--   **version**: ^1.1.0
+-   **version**: ^3.0.1
 -   **description**: stream pipeline that supports libp2p duplex streams. Used for streaming messages between nodes
 
 ##### [jsonld](https://www.npmjs.com/package/jsonld)
@@ -226,33 +266,8 @@
 
 ##### [libp2p](https://www.npmjs.com/package/libp2p)
 
--   **version**: ^0.32.4
+-   **version**: ^0.45.0
 -   **description**: used for p2p network communication
-
-##### [libp2p-bootstrap](https://www.npmjs.com/package/libp2p-bootstrap)
-
--   **version**: ^0.13.0
--   **description**: used to define libp2p bootstrap nodes
-
-##### [libp2p-kad-dht](https://www.npmjs.com/package/libp2p-kad-dht)
-
--   **version**: ^0.24.2
--   **description**: used for libp2p kad dht initialisation
-
-##### [libp2p-mplex](https://www.npmjs.com/package/libp2p-mplex)
-
--   **version**: ^0.10.7
--   **description**: used for libp2p mplex initialisation
-
-##### [libp2p-noise](https://www.npmjs.com/package/libp2p-noise)
-
--   **version**: ^4.0.0
--   **description**: used for libp2p message encription
-
-##### [libp2p-tcp](https://www.npmjs.com/package/libp2p-tcp)
-
--   **version**: ^0.17.2
--   **description**: used for libp2p tcp communication
 
 ##### [minimist](https://www.npmjs.com/package/minimist)
 
@@ -268,11 +283,6 @@
 
 -   **version**: ^2.3.3
 -   **description**:
-
-##### [peer-id](https://www.npmjs.com/package/peer-id)
-
--   **version**: ^0.15.3
--   **description**: used to create network id
 
 ##### [pino](https://www.npmjs.com/package/pino)
 
@@ -311,7 +321,7 @@
 
 ##### [uint8arrays](https://www.npmjs.com/package/uint8arrays)
 
--   **version**: ^3.1.0
+-   **version**: ^4.0.3
 -   **description**: used to convert from string to buffer and from buffer to string
 
 ##### [umzug](https://www.npmjs.com/package/umzug)
