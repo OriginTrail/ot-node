@@ -21,8 +21,10 @@ class FileService {
      * @param data
      * @returns {Promise}
      */
-    async writeContentsToFile(directory, filename, data) {
-        this.logger.debug(`Saving file with name: ${filename} in directory: ${directory}`);
+    async writeContentsToFile(directory, filename, data, log = true) {
+        if (log) {
+            this.logger.debug(`Saving file with name: ${filename} in directory: ${directory}`);
+        }
         await mkdir(directory, { recursive: true });
         const fullpath = path.join(directory, filename);
         await writeFile(fullpath, data);

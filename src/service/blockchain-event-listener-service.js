@@ -5,10 +5,16 @@ import {
     TRIPLE_STORE_REPOSITORIES,
     NODE_ENVIRONMENTS,
     PENDING_STORAGE_REPOSITORIES,
+    CONTRACT_EVENTS,
 } from '../constants/constants.js';
 
 const MAXIMUM_FETCH_EVENTS_FAILED_COUNT = 5;
 const fetchEventsFailedCount = {};
+
+const eventNames = [];
+Object.keys(CONTRACT_EVENTS).forEach((contractName) => {
+    eventNames.push(...Object.values(CONTRACT_EVENTS[contractName]));
+});
 
 class BlockchainEventListenerService {
     constructor(ctx) {
@@ -21,11 +27,54 @@ class BlockchainEventListenerService {
         this.ualService = ctx.ualService;
     }
 
-    initialize() {
+    async initialize() {
+        const promises = [];
+        for (const blockchainId of this.blockchainModuleManager.getImplementationNames()) {
+            this.logger.info(
+                `Initializing blockchain event listener for blockchain ${blockchainId}, handling missed events`,
+            );
+            promises.push(this.fetchAndHandleBlockchainEvents(blockchainId));
+        }
+        await Promise.all(promises);
+    }
+
+    startListeningOnEvents() {
         for (const blockchainId of this.blockchainModuleManager.getImplementationNames()) {
             this.listenOnBlockchainEvents(blockchainId);
             this.logger.info(`Event listener initialized for blockchain: '${blockchainId}'.`);
         }
+    }
+
+    async fetchAndHandleBlockchainEvents(blockchainId) {
+        const devEnvironment =
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
+
+        const currentBlock = await this.blockchainModuleManager.getBlockNumber();
+        const syncContractEventsPromises = [
+            this.getContractEvents(blockchainId, CONTRACTS.SHARDING_TABLE_CONTRACT, currentBlock),
+            this.getContractEvents(blockchainId, CONTRACTS.STAKING_CONTRACT, currentBlock),
+            this.getContractEvents(blockchainId, CONTRACTS.PROFILE_CONTRACT, currentBlock),
+            this.getContractEvents(
+                blockchainId,
+                CONTRACTS.COMMIT_MANAGER_V1_U1_CONTRACT,
+                currentBlock,
+            ),
+            this.getContractEvents(
+                blockchainId,
+                CONTRACTS.SERVICE_AGREEMENT_V1_CONTRACT,
+                currentBlock,
+            ),
+        ];
+
+        if (!devEnvironment) {
+            syncContractEventsPromises.push(
+                this.getContractEvents(blockchainId, CONTRACTS.HUB_CONTRACT, currentBlock),
+            );
+        }
+        const contractEvents = await Promise.all(syncContractEventsPromises);
+
+        await this.handleBlockchainEvents(contractEvents.flatMap((events) => events));
     }
 
     listenOnBlockchainEvents(blockchainId) {
@@ -43,30 +92,7 @@ class BlockchainEventListenerService {
             if (working) return;
             try {
                 working = true;
-                const currentBlock = await this.blockchainModuleManager.getBlockNumber();
-                const syncContractEventsPromises = [
-                    this.getContractEvents(
-                        blockchainId,
-                        CONTRACTS.SHARDING_TABLE_CONTRACT,
-                        currentBlock,
-                    ),
-                    this.getContractEvents(blockchainId, CONTRACTS.STAKING_CONTRACT, currentBlock),
-                    this.getContractEvents(blockchainId, CONTRACTS.PROFILE_CONTRACT, currentBlock),
-                    this.getContractEvents(
-                        blockchainId,
-                        CONTRACTS.COMMIT_MANAGER_V1_U1_CONTRACT,
-                        currentBlock,
-                    ),
-                ];
-
-                if (!devEnvironment) {
-                    syncContractEventsPromises.push(
-                        this.getContractEvents(blockchainId, CONTRACTS.HUB_CONTRACT, currentBlock),
-                    );
-                }
-                const contractEvents = await Promise.all(syncContractEventsPromises);
-
-                await this.handleBlockchainEvents(contractEvents.flatMap((events) => events));
+                await this.fetchAndHandleBlockchainEvents(blockchainId);
                 fetchEventsFailedCount[blockchainId] = 0;
             } catch (e) {
                 if (fetchEventsFailedCount[blockchainId] >= MAXIMUM_FETCH_EVENTS_FAILED_COUNT) {
@@ -116,193 +142,287 @@ class BlockchainEventListenerService {
     }
 
     async handleBlockchainEvents(events) {
-        if (events?.length) {
-            this.logger.trace(`${events.length} blockchain events caught.`);
-            const insertedEvents = await this.repositoryModuleManager.insertBlockchainEvents(
-                events,
-            );
-            insertedEvents.sort((event1, event2) => event1.block - event2.block);
+        const eventsForProcessing = events.filter((event) => eventNames.includes(event.event));
 
-            let handleBlockEventsPromises = [];
+        if (eventsForProcessing?.length) {
+            this.logger.trace(`${eventsForProcessing.length} blockchain events caught.`);
+            await this.repositoryModuleManager.insertBlockchainEvents(eventsForProcessing);
+        }
+        const unprocessedEvents =
+            await this.repositoryModuleManager.getAllUnprocessedBlockchainEvents(eventNames);
+
+        if (unprocessedEvents?.length) {
+            this.logger.trace(`Processing ${unprocessedEvents.length} blockchain events.`);
+            let groupedEvents = {};
             let currentBlock = 0;
-            for (const event of insertedEvents) {
+            for (const event of unprocessedEvents) {
                 if (event.block !== currentBlock) {
                     // eslint-disable-next-line no-await-in-loop
-                    await Promise.all(handleBlockEventsPromises);
-                    handleBlockEventsPromises = [];
+                    await this.handleBlockGroupedEvents(groupedEvents);
+                    groupedEvents = {};
                     currentBlock = event.block;
                 }
-                handleBlockEventsPromises.push(this.handleBlockchainEvent(event));
+                if (groupedEvents[event.event]) {
+                    groupedEvents[event.event].push(event);
+                } else {
+                    groupedEvents[event.event] = [event];
+                }
             }
-            await Promise.all(handleBlockEventsPromises);
+
+            await this.handleBlockGroupedEvents(groupedEvents);
         }
     }
 
-    async handleBlockchainEvent(event) {
-        const handlerFunctionName = `handle${event.event}Event`;
+    async handleBlockGroupedEvents(groupedEvents) {
+        const handleBlockEventsPromises = [];
+        for (const [eventName, blockEvents] of Object.entries(groupedEvents)) {
+            handleBlockEventsPromises.push(this.handleBlockEvents(eventName, blockEvents));
+        }
+        // eslint-disable-next-line no-await-in-loop
+        await Promise.all(handleBlockEventsPromises);
+    }
+
+    async handleBlockEvents(eventName, blockEvents) {
+        const handlerFunctionName = `handle${eventName}Events`;
         if (!this[handlerFunctionName]) return;
-        this.logger.trace(`${event.event} event caught.`);
-        await this[handlerFunctionName](event);
-        await this.repositoryModuleManager.markBlockchainEventAsProcessed(event.id);
-    }
-
-    async handleNewContractEvent(event) {
-        await this.reinitializeContracts(event.blockchain_id);
-    }
-
-    async handleContractChangedEvent(event) {
-        await this.reinitializeContracts(event.blockchain_id);
-        if (event.contractName === CONTRACTS.SHARDING_TABLE_CONTRACT) {
-            await this.repositoryModuleManager.cleanShardingTable();
+        this.logger.trace(`${blockEvents.length} ${eventName} events caught.`);
+        try {
+            await this[handlerFunctionName](blockEvents);
+            await this.repositoryModuleManager.markBlockchainEventsAsProcessed(blockEvents);
+        } catch (error) {
+            this.logger.warn(
+                `Error while processing events: ${eventName}. Error: ${error.message}`,
+            );
         }
     }
 
-    async handleNewAssetStorageEvent(event) {
-        await this.reinitializeContracts(event.blockchain_id);
-    }
-
-    async handleAssetStorageChangedEvent(event) {
-        await this.reinitializeContracts(event.blockchain_id);
-    }
-
-    async handleNodeAddedEvent(event) {
-        const eventData = JSON.parse(event.data);
-
-        const nodeId = this.blockchainModuleManager.convertHexToAscii(
-            event.blockchain_id,
-            eventData.nodeId,
-        );
-
-        const nodeIdSha256 = await this.validationModuleManager.callHashFunction(
-            // TODO: How to add more hashes?
-            CONTENT_ASSET_HASH_FUNCTION_ID,
-            nodeId,
-        );
-
-        this.logger.trace(`Adding peer id: ${nodeId} to sharding table.`);
-
-        await this.repositoryModuleManager.createPeerRecord(
-            nodeId,
-            event.blockchain_id,
-            this.blockchainModuleManager.convertFromWei(event.blockchain_id, eventData.ask),
-            this.blockchainModuleManager.convertFromWei(event.blockchain_id, eventData.stake),
-            new Date(0),
-            nodeIdSha256,
-        );
-    }
-
-    async handleNodeRemovedEvent(event) {
-        const eventData = JSON.parse(event.data);
-
-        const nodeId = this.blockchainModuleManager.convertHexToAscii(
-            event.blockchain_id,
-            eventData.nodeId,
-        );
-
-        this.logger.trace(`Removing peer id: ${nodeId} from sharding table.`);
-
-        await this.repositoryModuleManager.removePeerRecord(event.blockchain_id, nodeId);
-    }
-
-    async handleStakeIncreasedEvent(event) {
-        const eventData = JSON.parse(event.data);
-
-        const nodeId = this.blockchainModuleManager.convertHexToAscii(
-            event.blockchain_id,
-            eventData.nodeId,
-        );
-
-        this.logger.trace(`Updating stake value for peer id: ${nodeId} in sharding table.`);
-
-        await this.repositoryModuleManager.updatePeerStake(
-            event.blockchain_id,
-            nodeId,
-            this.blockchainModuleManager.convertFromWei(
+    handleNewContractEvents(blockEvents) {
+        for (const event of blockEvents) {
+            const { contractName, newContractAddress } = JSON.parse(event.data);
+            this.blockchainModuleManager.initializeContract(
                 event.blockchain_id,
-                await this.blockchainModuleManager.getNodeStake(
+                contractName,
+                newContractAddress,
+            );
+        }
+    }
+
+    async handleContractChangedEvents(blockEvents) {
+        await Promise.all(
+            blockEvents.map(async (event) => {
+                const { contractName, newContractAddress } = JSON.parse(event.data);
+                this.blockchainModuleManager.initializeContract(
                     event.blockchain_id,
-                    eventData.identityId,
-                ),
-            ),
+                    contractName,
+                    newContractAddress,
+                );
+
+                if (contractName === CONTRACTS.SHARDING_TABLE_CONTRACT) {
+                    await this.repositoryModuleManager.cleanShardingTable(event.blockchain_id);
+                }
+            }),
         );
     }
 
-    async handleStakeWithdrawalStartedEvent(event) {
-        const eventData = JSON.parse(event.data);
-
-        const nodeId = this.blockchainModuleManager.convertHexToAscii(
-            event.blockchain_id,
-            eventData.nodeId,
-        );
-
-        this.logger.trace(`Updating stake value for peer id: ${nodeId} in sharding table.`);
-
-        await this.repositoryModuleManager.updatePeerStake(
-            event.blockchain_id,
-            nodeId,
-            this.blockchainModuleManager.convertFromWei(
+    handleNewAssetStorageEvents(blockEvents) {
+        for (const event of blockEvents) {
+            const { newContractAddress } = JSON.parse(event.data);
+            this.blockchainModuleManager.initializeAssetStorageContract(
                 event.blockchain_id,
-                await this.blockchainModuleManager.getNodeStake(
+                newContractAddress,
+            );
+        }
+    }
+
+    handleAssetStorageChangedEvents(blockEvents) {
+        for (const event of blockEvents) {
+            const { newContractAddress } = JSON.parse(event.data);
+            this.blockchainModuleManager.initializeAssetStorageContract(
+                event.blockchain_id,
+                newContractAddress,
+            );
+        }
+    }
+
+    async handleNodeAddedEvents(blockEvents) {
+        const peerRecords = await Promise.all(
+            blockEvents.map(async (event) => {
+                const eventData = JSON.parse(event.data);
+
+                const nodeId = this.blockchainModuleManager.convertHexToAscii(
                     event.blockchain_id,
-                    eventData.identityId,
+                    eventData.nodeId,
+                );
+
+                const nodeIdSha256 = await this.validationModuleManager.callHashFunction(
+                    // TODO: How to add more hashes?
+                    CONTENT_ASSET_HASH_FUNCTION_ID,
+                    nodeId,
+                );
+
+                this.logger.trace(`Adding peer id: ${nodeId} to sharding table.`);
+                return {
+                    peer_id: nodeId,
+                    blockchain_id: event.blockchain_id,
+                    ask: this.blockchainModuleManager.convertFromWei(
+                        event.blockchain_id,
+                        eventData.ask,
+                    ),
+                    stake: this.blockchainModuleManager.convertFromWei(
+                        event.blockchain_id,
+                        eventData.stake,
+                    ),
+                    last_seen: new Date(0),
+                    sha256: nodeIdSha256,
+                };
+            }),
+        );
+        await this.repositoryModuleManager.createManyPeerRecords(peerRecords);
+    }
+
+    async handleNodeRemovedEvents(blockEvents) {
+        const peerRecords = await Promise.all(
+            blockEvents.map(async (event) => {
+                const eventData = JSON.parse(event.data);
+
+                const nodeId = this.blockchainModuleManager.convertHexToAscii(
+                    event.blockchain_id,
+                    eventData.nodeId,
+                );
+
+                this.logger.trace(`Removing peer id: ${nodeId} from sharding table.`);
+                return {
+                    peer_id: nodeId,
+                    blockchain_id: event.blockchain_id,
+                };
+            }),
+        );
+
+        await this.repositoryModuleManager.removePeerRecords(peerRecords);
+    }
+
+    async handleStakeIncreasedEvents(blockEvents) {
+        const peerRecords = await Promise.all(
+            blockEvents.map(async (event) => {
+                const eventData = JSON.parse(event.data);
+
+                const nodeId = this.blockchainModuleManager.convertHexToAscii(
+                    event.blockchain_id,
+                    eventData.nodeId,
+                );
+
+                this.logger.trace(`Updating stake value for peer id: ${nodeId} in sharding table.`);
+
+                return {
+                    peer_id: nodeId,
+                    blockchain_id: event.blockchain_id,
+                    stake: this.blockchainModuleManager.convertFromWei(
+                        event.blockchain_id,
+                        eventData.newStake,
+                    ),
+                };
+            }),
+        );
+
+        await this.repositoryModuleManager.updatePeersStake(peerRecords);
+    }
+
+    async handleStakeWithdrawalStartedEvents(blockEvents) {
+        await this.handleStakeIncreasedEvents(blockEvents);
+    }
+
+    async handleAskUpdatedEvents(blockEvents) {
+        const peerRecords = await Promise.all(
+            blockEvents.map(async (event) => {
+                const eventData = JSON.parse(event.data);
+
+                const nodeId = this.blockchainModuleManager.convertHexToAscii(
+                    event.blockchain_id,
+                    eventData.nodeId,
+                );
+
+                this.logger.trace(`Updating ask value for peer id: ${nodeId} in sharding table.`);
+
+                return {
+                    peer_id: nodeId,
+                    blockchain_id: event.blockchain_id,
+                    ask: this.blockchainModuleManager.convertFromWei(
+                        event.blockchain_id,
+                        eventData.ask,
+                    ),
+                };
+            }),
+        );
+
+        await this.repositoryModuleManager.updatePeersAsk(peerRecords);
+    }
+
+    async handleServiceAgreementV1ExtendedEvents(blockEvents) {
+        await Promise.all(
+            blockEvents.map(async (event) => {
+                const { agreementId } = JSON.parse(event.data);
+
+                const { epochsNumber } = await this.blockchainModuleManager.getAgreementData(
+                    event.blockchain_id,
+                    agreementId,
+                );
+
+                return this.repositoryModuleManager.updateServiceAgreementEpochsNumber(
+                    agreementId,
+                    epochsNumber,
+                );
+            }),
+        );
+    }
+
+    async handleServiceAgreementV1TerminatedEvents(blockEvents) {
+        await this.repositoryModuleManager.removeServiceAgreements(
+            blockEvents.map((event) => JSON.parse(event.data).agreementId),
+        );
+    }
+
+    async handleStateFinalizedEvents(blockEvents) {
+        // todo: find a way to safely parallelize this
+        for (const event of blockEvents) {
+            const eventData = JSON.parse(event.data);
+
+            const { tokenId, keyword, state, stateIndex } = eventData;
+            const blockchain = event.blockchain_id;
+            const contract = eventData.assetContract;
+            this.logger.trace(
+                `Handling event: ${event.event} for asset with ual: ${this.ualService.deriveUAL(
+                    blockchain,
+                    contract,
+                    tokenId,
+                )} with keyword: ${keyword}, assertion id: ${state}.`,
+            );
+
+            // eslint-disable-next-line no-await-in-loop
+            await Promise.all([
+                this._handleStateFinalizedEvent(
+                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                    TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                    PENDING_STORAGE_REPOSITORIES.PUBLIC,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    keyword,
+                    state,
+                    stateIndex,
                 ),
-            ),
-        );
-    }
-
-    async handleAskUpdatedEvent(event) {
-        const eventData = JSON.parse(event.data);
-
-        const nodeId = this.blockchainModuleManager.convertHexToAscii(
-            event.blockchain_id,
-            eventData.nodeId,
-        );
-
-        this.logger.trace(`Updating ask value for peer id: ${nodeId} in sharding table.`);
-
-        await this.repositoryModuleManager.updatePeerAsk(
-            event.blockchain_id,
-            nodeId,
-            this.blockchainModuleManager.convertFromWei(event.blockchain_id, eventData.ask),
-        );
-    }
-
-    async handleStateFinalizedEvent(event) {
-        const eventData = JSON.parse(event.data);
-
-        const { tokenId, keyword, state } = eventData;
-        const blockchain = event.blockchain_id;
-        const contract = eventData.assetContract;
-        this.logger.trace(
-            `Handling event: ${event.event} for asset with ual: ${this.ualService.deriveUAL(
-                blockchain,
-                contract,
-                tokenId,
-            )} with keyword: ${keyword}, assertion id: ${state}.`,
-        );
-
-        await Promise.all([
-            this._handleStateFinalizedEvent(
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
-                PENDING_STORAGE_REPOSITORIES.PUBLIC,
-                blockchain,
-                contract,
-                tokenId,
-                keyword,
-                state,
-            ),
-            this._handleStateFinalizedEvent(
-                TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-                TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
-                PENDING_STORAGE_REPOSITORIES.PRIVATE,
-                blockchain,
-                contract,
-                tokenId,
-                keyword,
-                state,
-            ),
-        ]);
+                this._handleStateFinalizedEvent(
+                    TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                    TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+                    PENDING_STORAGE_REPOSITORIES.PRIVATE,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    keyword,
+                    state,
+                    stateIndex,
+                ),
+            ]);
+        }
     }
 
     async _handleStateFinalizedEvent(
@@ -314,39 +434,44 @@ class BlockchainEventListenerService {
         tokenId,
         keyword,
         assertionId,
+        stateIndex,
     ) {
-        const assetMetadata = await this.tripleStoreService.getAssetMetadata(
+        const assertionLinks = await this.tripleStoreService.getAssetAssertionLinks(
             currentRepository,
             blockchain,
             contract,
             tokenId,
         );
+        const storedAssertionIds = assertionLinks.map(({ assertion }) =>
+            assertion.replace('assertion:', ''),
+        );
 
-        if (assetMetadata.length) {
-            // if asset exists in current repository
-            await Promise.all(
-                assetMetadata.map(({ assertion, agreementStartTime, agreementEndTime }) =>
-                    this.tripleStoreService.moveAsset(
-                        currentRepository,
-                        historyRepository,
-                        assertion.replace('assertion:', ''),
-                        blockchain,
-                        contract,
-                        tokenId,
-                        agreementStartTime,
-                        agreementEndTime,
-                        keyword,
-                    ),
-                ),
-            );
-            // delete asset metadata from current repository
-            await this.tripleStoreService.deleteAssetMetadata(
-                currentRepository,
-                blockchain,
-                contract,
-                tokenId,
-            );
+        // event already handled
+        if (storedAssertionIds.includes(assertionId)) {
+            return;
         }
+
+        // move old assertions to history repository
+        await Promise.all(
+            storedAssertionIds.map((storedAssertionId) =>
+                this.tripleStoreService.moveAsset(
+                    currentRepository,
+                    historyRepository,
+                    storedAssertionId,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    keyword,
+                ),
+            ),
+        );
+
+        await this.tripleStoreService.deleteAssetMetadata(
+            currentRepository,
+            blockchain,
+            contract,
+            tokenId,
+        );
 
         const cachedData = await this.pendingStorageService.getCachedAssertion(
             pendingRepository,
@@ -366,10 +491,36 @@ class BlockchainEventListenerService {
                     blockchain,
                     contract,
                     tokenId,
-                    cachedData.agreementStartTime,
-                    cachedData.agreementEndTime,
                     keyword,
                 ),
+            );
+
+            if (
+                currentRepository === TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT &&
+                cachedData.agreementId &&
+                cachedData.agreementData
+            ) {
+                await this.repositoryModuleManager.updateServiceAgreementRecord(
+                    blockchain,
+                    contract,
+                    tokenId,
+                    cachedData.agreementId,
+                    cachedData.agreementData.startTime,
+                    cachedData.agreementData.epochsNumber,
+                    cachedData.agreementData.epochLength,
+                    cachedData.agreementData.scoreFunctionId,
+                    cachedData.agreementData.proofWindowOffsetPerc,
+                    CONTENT_ASSET_HASH_FUNCTION_ID,
+                    keyword,
+                    assertionId,
+                    stateIndex,
+                );
+            }
+        } else if (currentRepository === TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT) {
+            await this.repositoryModuleManager.removeServiceAgreementRecord(
+                blockchain,
+                contract,
+                tokenId,
             );
         }
 
@@ -383,8 +534,6 @@ class BlockchainEventListenerService {
                     blockchain,
                     contract,
                     tokenId,
-                    cachedData.agreementStartTime,
-                    cachedData.agreementEndTime,
                     keyword,
                 ),
             );
@@ -399,19 +548,6 @@ class BlockchainEventListenerService {
             contract,
             tokenId,
         );
-    }
-
-    async reinitializeContracts(blockchainId) {
-        try {
-            await this.blockchainModuleManager.initializeContracts(blockchainId);
-        } catch (error) {
-            this.logger.warn(`Unable to reinitialize contracts. Error: ${error.message}`);
-            this.blockchainModuleManager.removeImplementation(blockchainId);
-            if (!this.blockchainModuleManager.getImplementationNames().length) {
-                this.logger.error(`Unable to initialize contracts. OT-node shutting down...`);
-                process.exit(1);
-            }
-        }
     }
 }
 

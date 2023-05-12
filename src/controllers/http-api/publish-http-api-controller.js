@@ -34,15 +34,15 @@ class PublishController extends BaseController {
             operationId,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
         );
+        await this.repositoryModuleManager.createOperationRecord(
+            this.operationService.getOperationName(),
+            operationId,
+            OPERATION_STATUS.IN_PROGRESS,
+        );
 
-        const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
-        const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
         try {
-            await this.repositoryModuleManager.createOperationRecord(
-                this.operationService.getOperationName(),
-                operationId,
-                OPERATION_STATUS.IN_PROGRESS,
-            );
+            const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
+            const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
             this.logger.info(
                 `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
@@ -58,7 +58,7 @@ class PublishController extends BaseController {
                 tokenId,
             });
 
-            const commandSequence = ['validateAssetCommand'];
+            const commandSequence = ['publishValidateAssetCommand'];
 
             // Backwards compatibility check - true for older clients
             if (req.body.localStore) {
@@ -88,9 +88,9 @@ class PublishController extends BaseController {
             this.logger.error(
                 `Error while initializing publish data: ${error.message}. ${error.stack}`,
             );
-            await this.operationIdService.updateOperationIdStatus(
+
+            await this.operationService.markOperationAsFailed(
                 operationId,
-                OPERATION_ID_STATUS.FAILED,
                 'Unable to publish data, Failed to process input data!',
                 ERROR_TYPE.PUBLISH.PUBLISH_ROUTE_ERROR,
             );
