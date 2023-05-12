@@ -171,12 +171,31 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
         if (epoch >= Number(agreementData.epochsNumber)) return;
 
         // get top commits
-        const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
-            blockchain,
-            agreementId,
-            epoch,
-            stateIndex,
-        );
+        attempt = 0;
+        let commits;
+        while (!commits) {
+            attempt += 1;
+            if (attempt >= maxAttempts)
+                throw Error(
+                    `Error while trying to get top commit submissions for asset with ual: ${ual}. Max attempts reached`,
+                );
+            if (attempt > 1) {
+                await setTimeout(sleepTimeSeconds * 1000);
+            }
+            try {
+                commits = await this.blockchainModuleManager.getTopCommitSubmissions(
+                    blockchain,
+                    agreementId,
+                    epoch,
+                    stateIndex,
+                );
+            } catch (error) {
+                this.logger.warn(
+                    `Error while trying to get top commit submissions for asset with ual: ${ual}. Retrying in ${sleepTimeSeconds} seconds. Attempt number: ${attempt}.`,
+                );
+            }
+        }
+
         let lastCommitEpoch = null;
         let lastProofEpoch = null;
 
