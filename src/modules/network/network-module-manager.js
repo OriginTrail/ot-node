@@ -44,21 +44,9 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    handleMessage(protocol, handler, options) {
+    handleMessageRequest(protocol, handler, options) {
         if (this.initialized) {
-            this.getImplementation().module.handleMessage(protocol, handler, options);
-        }
-    }
-
-    removeSession(sessionId) {
-        if (this.initialized) {
-            this.getImplementation().module.removeSession(sessionId);
-        }
-    }
-
-    getPeerId() {
-        if (this.initialized) {
-            return this.getImplementation().module.getPeerId();
+            this.getImplementation().module.handleMessageRequest(protocol, handler, options);
         }
     }
 

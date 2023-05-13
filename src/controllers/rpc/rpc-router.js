@@ -22,7 +22,7 @@ class RpcRouter {
             const handleRequest = `${version}HandleRequest`;
             const controller = `${operation}RpcController`;
 
-            this.networkModuleManager.handleMessage(protocol, (message, remotePeerId) =>
+            this.networkModuleManager.handleMessageRequest(protocol, (message, remotePeerId) =>
                 this[controller][handleRequest](message, remotePeerId, protocol),
             );
         }
