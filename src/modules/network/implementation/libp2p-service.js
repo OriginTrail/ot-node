@@ -110,8 +110,7 @@ class Libp2pService {
                     response,
                     message?.header.operationId,
                     message?.header.keywordUuid,
-                    {},
-                    error.message,
+                    { errorMessage: error.message },
                 );
                 return;
             }
@@ -139,22 +138,15 @@ class Libp2pService {
             .filter((splittedAddr) => !ip.isPrivate(splittedAddr[2]))[0]?.[2];
     }
 
-    async executeWithTiming(log, operation, args) {
-        let result;
-        const start = Date.now();
-        try {
-            result = await operation(...args);
-        } catch (error) {
-            const end = Date.now();
-            const errMsg = `${log} Error: ${error.message}, execution time: ${end - start} ms.`;
-            throw new Error(errMsg);
-        }
-        const end = Date.now();
-        this.logger.trace(`${log} execution time: ${end - start} ms.`);
-        return result;
-    }
-
-    async sendMessage(protocol, remotePeerId, messageType, operationId, keyword, message, timeout) {
+    async sendMessage(
+        protocol,
+        remotePeerId,
+        messageType,
+        operationId,
+        keyword,
+        messageData,
+        timeout,
+    ) {
         const keywordUuid = uuidv5(keyword, uuidv5.URL);
         const peerId = peerIdFromString(remotePeerId);
         const publicIp = await this.getPublicIp(peerId);
@@ -189,7 +181,7 @@ class Libp2pService {
             messageType,
             operationId,
             keywordUuid,
-            message,
+            messageData,
         );
 
         this.logger.trace(`Sending message to ${sendMessageInfo}`);
@@ -255,7 +247,7 @@ class Libp2pService {
         messageType,
         operationId,
         keywordUuid,
-        message,
+        messageData,
     ) {
         this.logger.debug(
             `Sending response from ${this.peerIdString} to ${remotePeerId}: protocol: ${protocol}, messageType: ${messageType};`,
@@ -270,7 +262,7 @@ class Libp2pService {
             messageType,
             operationId,
             keywordUuid,
-            message,
+            messageData,
         );
 
         await this._sendMessageToStream(stream, response);
