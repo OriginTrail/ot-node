@@ -397,46 +397,33 @@ class Web3Service {
 
         let fromBlock;
         if (this.isOlderThan(lastCheckedTimestamp, DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS)) {
-            fromBlock = this.startBlock - 10;
+            fromBlock = this.startBlock;
         } else {
             fromBlock = lastCheckedBlock + 1;
         }
 
         let events = [];
-        if (currentBlock - fromBlock > MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH) {
-            let iteration = 1;
-
-            while (fromBlock - MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH > currentBlock) {
-                events.concat(
-                    await contract.queryFilter(
-                        '*',
-                        fromBlock,
-                        fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH * iteration,
-                    ),
-                );
-                fromBlock += MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH * iteration;
-                iteration += 1;
-            }
-        } else {
-            events = await contract.queryFilter('*', fromBlock, currentBlock);
+        while (fromBlock <= currentBlock) {
+            const toBlock = Math.min(fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH, currentBlock);
+            const newEvents = await contract.queryFilter('*', fromBlock, toBlock);
+            events = events.concat(newEvents);
+            fromBlock += MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH;
         }
 
-        return events
-            ? events.map((event) => ({
-                  contract: contractName,
-                  event: event.event,
-                  data: JSON.stringify(
-                      Object.fromEntries(
-                          Object.entries(event.args).map(([k, v]) => [
-                              k,
-                              ethers.BigNumber.isBigNumber(v) ? v.toString() : v,
-                          ]),
-                      ),
-                  ),
-                  block: event.blockNumber,
-                  blockchainId,
-              }))
-            : [];
+        return events.map((event) => ({
+            contract: contractName,
+            event: event.event,
+            data: JSON.stringify(
+                Object.fromEntries(
+                    Object.entries(event.args).map(([k, v]) => [
+                        k,
+                        ethers.BigNumber.isBigNumber(v) ? v.toString() : v,
+                    ]),
+                ),
+            ),
+            block: event.blockNumber,
+            blockchainId,
+        }));
     }
 
     isOlderThan(timestamp, olderThanInMills) {
