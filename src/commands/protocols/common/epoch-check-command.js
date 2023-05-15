@@ -15,7 +15,7 @@ class EpochCheckCommand extends Command {
 
     async execute(command) {
         await Promise.all(
-            this.blockchainModuleManager.getImplementationNames().flatMap(async (blockchain) => {
+            this.blockchainModuleManager.getImplementationNames().map(async (blockchain) => {
                 const commitWindowDurationPerc =
                     await this.blockchainModuleManager.getCommitWindowDurationPerc(blockchain);
                 const proofWindowDurationPerc =
@@ -26,7 +26,7 @@ class EpochCheckCommand extends Command {
                     proofWindowDurationPerc,
                     command.period,
                 );
-                return [
+                await Promise.all([
                     this.scheduleSubmitCommitCommands(
                         blockchain,
                         Math.floor(totalTransactions / 2),
@@ -37,7 +37,7 @@ class EpochCheckCommand extends Command {
                         Math.ceil(totalTransactions / 2),
                         proofWindowDurationPerc,
                     ),
-                ];
+                ]);
             }),
         );
         return Command.repeat();
@@ -66,6 +66,13 @@ class EpochCheckCommand extends Command {
             const r0 = await this.blockchainModuleManager.getR0(blockchain);
 
             if (rank < r0) {
+                this.logger.trace(
+                    `Calculated rank: ${
+                        rank + 1
+                    } lower than R0: ${r0}. Scheduling submit commit command for agreement id: ${
+                        serviceAgreement.agreement_id
+                    }`,
+                );
                 scheduleSubmitCommitCommands.push(
                     this.scheduleSubmitCommitCommand(serviceAgreement),
                 );
@@ -73,7 +80,7 @@ class EpochCheckCommand extends Command {
                 this.logger.trace(
                     `Calculated rank: ${
                         rank + 1
-                    } higher than R0: ${r0}. Skipping scheduling of submit commit for agreement id: ${
+                    } higher than R0: ${r0}. Skipping scheduling submit commit command for agreement id: ${
                         serviceAgreement.agreement_id
                     }`,
                 );
@@ -113,7 +120,7 @@ class EpochCheckCommand extends Command {
             );
             if (eligibleForReward) {
                 this.logger.trace(
-                    `Node is eligible for rewards for agreement id: ${serviceAgreement.agreement_id}`,
+                    `Node is eligible for rewards for agreement id: ${serviceAgreement.agreement_id}. Scheduling submit proof command.`,
                 );
 
                 scheduleSubmitProofCommands.push(
@@ -121,7 +128,7 @@ class EpochCheckCommand extends Command {
                 );
             } else {
                 this.logger.trace(
-                    `Node is not eligible for rewards for agreement id: ${serviceAgreement.agreement_id}`,
+                    `Node is not eligible for rewards for agreement id: ${serviceAgreement.agreement_id}. Skipping scheduling submit proof command.`,
                 );
             }
             updateServiceAgreementsLastProofEpoch.push(
