@@ -21,13 +21,15 @@ import { InMemoryRateLimiter } from 'rolling-rate-limiter';
 import toobusy from 'toobusy-js';
 import { v5 as uuidv5 } from 'uuid';
 import { mkdir, writeFile, readFile, stat } from 'fs/promises';
+import { LevelDatastore } from 'datastore-level';
 import ip from 'ip';
 import {
     NETWORK_API_RATE_LIMIT,
     NETWORK_API_SPAM_DETECTION,
     NETWORK_MESSAGE_TYPES,
     NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES,
-    LIBP2P_KEY_DIRECTORY,
+    LIBP2P_DATASTORE_NAME,
+    LIBP2P_DATA_DIRECTORY,
     LIBP2P_KEY_FILENAME,
     NODE_ENVIRONMENTS,
     BYTES_IN_MEGABYTE,
@@ -76,6 +78,9 @@ class Libp2pService {
          * }
          */
         this.sessions = {};
+
+        const datastore = new LevelDatastore(this.getDataStorePath());
+        await datastore.open();
         this.node = await createLibp2p({
             addresses: {
                 listen: [`/ip4/0.0.0.0/tcp/${this.config.port}`],
@@ -98,6 +103,11 @@ class Libp2pService {
                 uPnPNAT: uPnPNATService(),
             },
             peerId: this.config.peerId,
+            datastore, // pass the opened datastore
+            peerStore: {
+                persistence: true,
+                threshold: 5,
+            },
             start: true,
         });
 
@@ -117,20 +127,22 @@ class Libp2pService {
     }
 
     getKeyPath() {
-        let directoryPath;
-        if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
-            directoryPath = join(
-                appRootPath.path,
-                '..',
-                this.config.appDataPath,
-                LIBP2P_KEY_DIRECTORY,
-            );
-        } else {
-            directoryPath = join(appRootPath.path, this.config.appDataPath, LIBP2P_KEY_DIRECTORY);
-        }
-
+        const directoryPath = this.getLibp2pDirectoryPath();
         const fullPath = join(directoryPath, LIBP2P_KEY_FILENAME);
         return { fullPath, directoryPath };
+    }
+
+    getDataStorePath() {
+        const directoryPath = this.getLibp2pDirectoryPath();
+
+        return join(directoryPath, LIBP2P_DATASTORE_NAME);
+    }
+
+    getLibp2pDirectoryPath() {
+        if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
+            return join(appRootPath.path, '..', this.config.appDataPath, LIBP2P_DATA_DIRECTORY);
+        }
+        return join(appRootPath.path, this.config.appDataPath, LIBP2P_DATA_DIRECTORY);
     }
 
     async readPrivateKeyFromFile() {

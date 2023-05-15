@@ -19,9 +19,11 @@ export const COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS = 2;
 
 export const TRANSACTION_POLLING_TIMEOUT_MILLIS = 50 * 1000;
 
-export const LIBP2P_KEY_DIRECTORY = 'libp2p';
+export const LIBP2P_DATA_DIRECTORY = 'libp2p';
 
 export const LIBP2P_KEY_FILENAME = 'privateKey';
+
+export const LIBP2P_DATASTORE_NAME = 'datastore';
 
 export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 

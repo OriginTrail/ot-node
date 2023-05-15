@@ -81,6 +81,7 @@
         "awilix": "^7.0.3",
         "axios": "^0.27.2",
         "cors": "^2.8.5",
+        "datastore-level": "^10.1.1",
         "deep-extend": "^0.6.0",
         "dkg-evm-module": "^4.0.5",
         "dotenv": "^16.0.1",
