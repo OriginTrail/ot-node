@@ -184,6 +184,11 @@
 -   **version**: ^2.8.5
 -   **description**: cors express middleware
 
+##### [datastore-level](https://www.npmjs.com/package/datastore-level)
+
+-   **version**: ^10.1.1
+-   **description**: datastore for persistent libp2p peer store
+
 ##### [deep-extend](https://www.npmjs.com/package/deep-extend)
 
 -   **version**: ^0.6.0
