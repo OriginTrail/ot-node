@@ -10,6 +10,8 @@ import {
     TRANSACTION_QUEUE_CONCURRENCY,
     FIXED_GAS_LIMIT_METHODS,
     TRANSACTION_POLLING_TIMEOUT_MILLIS,
+    TRANSACTION_CONFIRMATIONS,
+    BLOCK_TIME_MILLIS,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -243,6 +245,10 @@ class Web3Service {
         return latestBlock.number;
     }
 
+    getBlockTimeMillis() {
+        return BLOCK_TIME_MILLIS.DEFAULT;
+    }
+
     async getIdentityId() {
         if (this.config.identityId) {
             return this.config.identityId;
@@ -358,7 +364,7 @@ class Web3Service {
                 });
                 result = await this.provider.waitForTransaction(
                     tx.hash,
-                    null,
+                    TRANSACTION_CONFIRMATIONS,
                     TRANSACTION_POLLING_TIMEOUT_MILLIS,
                 );
             } catch (error) {
@@ -827,6 +833,15 @@ class Web3Service {
             'proofWindowDurationPerc',
             [],
         );
+    }
+
+    async getEpochLength() {
+        const epochLength = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'epochLength',
+            [],
+        );
+        return Number(epochLength);
     }
 
     async isHashFunction(hashFunctionId) {

@@ -128,6 +128,10 @@ class SequelizeRepository {
     async query(query) {
         return this.models.sequelize.query(query);
     }
+
+    async destroyAllRecords(table) {
+        return this.models[table].destroy({ where: {} });
+    }
 }
 
 export default SequelizeRepository;

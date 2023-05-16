@@ -338,6 +338,10 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'getCommitWindowDurationPerc');
     }
 
+    async getEpochLength(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getEpochLength');
+    }
+
     async getProofWindowDurationPerc(blockchain) {
         return this.callImplementationFunction(blockchain, 'getProofWindowDurationPerc');
     }
@@ -382,6 +386,10 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     async getBlockchainTimestamp(blockchain) {
         return this.callImplementationFunction(blockchain, 'getBlockchainTimestamp');
+    }
+
+    getBlockTimeMillis(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getBlockTimeMillis');
     }
 
     async hasPendingUpdate(blockchain, tokenId) {
