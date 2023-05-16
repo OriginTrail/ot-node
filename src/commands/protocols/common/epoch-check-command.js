@@ -74,7 +74,7 @@ class EpochCheckCommand extends Command {
                 ),
             );
 
-            if (!rank) {
+            if (rank == null) {
                 this.logger.trace(
                     `Node not in R2: ${r2} for agreement id: ${serviceAgreement.agreement_id}. Skipping scheduling submit commit command-`,
                 );

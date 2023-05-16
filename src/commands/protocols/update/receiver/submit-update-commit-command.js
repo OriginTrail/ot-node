@@ -10,10 +10,7 @@ class SubmitUpdateCommitCommand extends Command {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.serviceAgreementService = ctx.serviceAgreementService;
         this.operationIdService = ctx.operationIdService;
-        this.shardingTableService = ctx.shardingTableService;
-        this.networkModuleManager = ctx.networkModuleManager;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_ERROR;
     }
