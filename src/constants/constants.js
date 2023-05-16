@@ -459,4 +459,4 @@ export const BLOCK_TIME_MILLIS = {
     DEFAULT: 12_000,
 };
 
-export const TRANSACTION_CONFIRMATIONS = 2;
+export const TRANSACTION_CONFIRMATIONS = 1;
