@@ -44,19 +44,18 @@ class SubmitCommitCommand extends Command {
                 }`,
         );
 
-        if (command.retries !== COMMAND_RETRIES.SUBMIT_COMMIT) {
-            const alreadySubmitted = await this.commitAlreadySubmitted(
-                blockchain,
-                agreementId,
-                epoch,
-                stateIndex,
+        // this can happen in case node has already submitted update commit
+        const alreadySubmitted = await this.commitAlreadySubmitted(
+            blockchain,
+            agreementId,
+            epoch,
+            stateIndex,
+        );
+        if (alreadySubmitted) {
+            this.logger.trace(
+                `Commit already submitted for blockchain: ${blockchain} agreement id: ${agreementId}, epoch: ${epoch}, state index: ${stateIndex}`,
             );
-            if (alreadySubmitted) {
-                this.logger.trace(
-                    `Commit already submitted for blockchain: ${blockchain} agreement id: ${agreementId}, epoch: ${epoch}, state index: ${stateIndex}`,
-                );
-                return Command.empty();
-            }
+            return Command.empty();
         }
 
         await this.blockchainModuleManager.submitCommit(
