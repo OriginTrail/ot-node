@@ -67,6 +67,13 @@ class EpochCheckCommand extends Command {
                 r2,
             );
 
+            updateServiceAgreementsLastCommitEpoch.push(
+                this.repositoryModuleManager.updateServiceAgreementLastCommitEpoch(
+                    serviceAgreement.agreement_id,
+                    serviceAgreement.current_epoch,
+                ),
+            );
+
             if (!rank) {
                 this.logger.trace(
                     `Node not in R2: ${r2} for agreement id: ${serviceAgreement.agreement_id}. Skipping scheduling submit commit command-`,
@@ -90,13 +97,6 @@ class EpochCheckCommand extends Command {
             );
 
             scheduleSubmitCommitCommands.push(this.scheduleSubmitCommitCommand(serviceAgreement));
-
-            updateServiceAgreementsLastCommitEpoch.push(
-                this.repositoryModuleManager.updateServiceAgreementLastCommitEpoch(
-                    serviceAgreement.agreement_id,
-                    serviceAgreement.current_epoch,
-                ),
-            );
         }
         await Promise.all([
             ...scheduleSubmitCommitCommands,
