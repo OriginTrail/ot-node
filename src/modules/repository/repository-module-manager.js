@@ -17,6 +17,54 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async updateServiceAgreementRecord(
+        blockchainId,
+        contract,
+        tokenId,
+        agreementId,
+        startTime,
+        epochsNumber,
+        epochLength,
+        scoreFunctionId,
+        proofWindowOffsetPerc,
+        hashFunctionId,
+        keyword,
+        assertionId,
+        stateIndex,
+        lastCommitEpoch,
+        lastProofEpoch,
+    ) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateServiceAgreementRecord(
+                blockchainId,
+                contract,
+                tokenId,
+                agreementId,
+                startTime,
+                epochsNumber,
+                epochLength,
+                scoreFunctionId,
+                proofWindowOffsetPerc,
+                hashFunctionId,
+                keyword,
+                assertionId,
+                stateIndex,
+                lastCommitEpoch,
+                lastProofEpoch,
+            );
+        }
+    }
+
+    async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
+        if (this.initialized) {
+            return this.getImplementation().module.removeServiceAgreementRecord(
+                blockchainId,
+                contract,
+                tokenId,
+            );
+        }
+    }
+
     // COMMANDS
     async updateCommand(update, opts) {
         if (this.initialized) {
@@ -334,6 +382,27 @@ class RepositoryModuleManager extends BaseModuleManager {
                 currentBlock,
                 timestamp,
                 contract,
+            );
+        }
+    }
+
+    async getEligibleSubmitCommits() {
+        if (this.initialized) {
+            return this.getImplementation().module.getEligibleSubmitCommits();
+        }
+    }
+
+    async removeServiceAgreements(agreementIds) {
+        if (this.initialized) {
+            return this.getImplementation().module.removeServiceAgreements(agreementIds);
+        }
+    }
+
+    async updateServiceAgreementEpochsNumber(agreementId, epochsNumber) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateServiceAgreementEpochsNumber(
+                agreementId,
+                epochsNumber,
             );
         }
     }

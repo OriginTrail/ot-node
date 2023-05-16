@@ -56,12 +56,6 @@ jobs:
       - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR
       - run: sudo chmod -R 777 $CUCUMBER_ARTIFACTS_DIR
       - run: npm explore dkg-evm-module -- npm run compile;
-      - name: Cache compiled contracts
-        uses: actions/cache@v2
-        with:
-          path: node_modules/dkg-evm-module/artifacts
-          key: ${{ runner.os }}-contracts-${{ hashFiles('**/artifacts/contracts') }}
-          restore-keys: ${{ runner.os }}-contracts-
       - run: npm run test:bdd;
       - uses: actions/upload-artifact@v2
         if: ${{ always() }}

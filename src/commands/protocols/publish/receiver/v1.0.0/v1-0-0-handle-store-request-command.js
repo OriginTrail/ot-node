@@ -39,6 +39,12 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             operationId,
             OPERATION_ID_STATUS.PUBLISH.VALIDATING_PUBLISH_ASSERTION_REMOTE_START,
         );
+        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
+            blockchain,
+            contract,
+            tokenId,
+        );
+        const stateIndex = assertionIds.length - 1;
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
         await this.validationService.validateAssertion(assertionId, blockchain, assertion);
 
@@ -67,6 +73,22 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             contract,
             tokenId,
             keyword,
+        );
+
+        await this.repositoryModuleManager.updateServiceAgreementRecord(
+            blockchain,
+            contract,
+            tokenId,
+            agreementId,
+            agreementData.startTime,
+            agreementData.epochsNumber,
+            agreementData.epochLength,
+            agreementData.scoreFunctionId,
+            agreementData.proofWindowOffsetPerc,
+            hashFunctionId,
+            keyword,
+            assertionId,
+            stateIndex,
         );
 
         await this.operationIdService.updateOperationIdStatus(

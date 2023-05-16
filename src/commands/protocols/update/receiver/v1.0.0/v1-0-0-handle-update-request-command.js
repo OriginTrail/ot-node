@@ -53,6 +53,8 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
                 public: {
                     assertion,
                 },
+                agreementId,
+                agreementData,
             },
             operationId,
         );
