@@ -6,9 +6,7 @@ class BlockchainRepository {
 
     async getLastCheckedBlock(blockchainId, contract) {
         return this.model.findOne({
-            attributes: ['last_checked_block', 'last_checked_timestamp'],
-            where: { blockchain_id: blockchainId, contract },
-            raw: true,
+            where: { blockchainId, contract },
         });
     }
 
@@ -22,10 +20,10 @@ class BlockchainRepository {
 
     async updateLastCheckedBlock(blockchainId, currentBlock, timestamp, contract) {
         return this.model.upsert({
-            blockchain_id: blockchainId,
+            blockchainId,
             contract,
-            last_checked_block: currentBlock,
-            last_checked_timestamp: timestamp,
+            lastCheckedBlock: currentBlock,
+            lastCheckedTimestamp: timestamp,
         });
     }
 }

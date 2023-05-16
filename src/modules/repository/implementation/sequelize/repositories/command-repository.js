@@ -45,7 +45,7 @@ class CommandRepository {
         await this.model.destroy({
             where: {
                 status: { [Sequelize.Op.in]: finalizedStatuses },
-                started_at: { [Sequelize.Op.lte]: Date.now() },
+                startedAt: { [Sequelize.Op.lte]: Date.now() },
             },
         });
     }

@@ -11,49 +11,48 @@ const config = JSON.parse(await readFile('./test/modules/repository/config.json'
 
 const blockchain = 'hardhat';
 const createAgreement = ({
-    blockchain_id = blockchain,
-    asset_storage_contract_address = '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07',
-    token_id,
-    agreement_id = null,
-    start_time,
-    epochs_number = 2,
-    epoch_length = 100,
-    score_function_id = 1,
-    proof_window_offset_perc = 66,
-    hash_function_id = 1,
+    blockchainId = blockchain,
+    assetStorageContractAddress = '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07',
+    tokenId,
+    id = null,
+    startTime,
+    epochsNumber = 2,
+    epochLength = 100,
+    scoreFunctionId = 1,
+    proofWindowOffsetPerc = 66,
+    hashFunctionId = 1,
     keyword = '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca0768e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
-    assertion_id = '0x68e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
-    state_index = 1,
-    last_commit_epoch = null,
-    last_proof_epoch = null,
+    assertionId = '0x68e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
+    stateIndex = 1,
+    lastCommitEpoch = null,
+    lastProofEpoch = null,
 }) => {
     const agreementId =
-        agreement_id ??
+        id ??
         utils.sha256(
             utils.toUtf8Bytes(
                 utils.solidityPack(
                     ['address', 'uint256', 'bytes'],
-                    [asset_storage_contract_address, token_id, keyword],
+                    [assetStorageContractAddress, tokenId, keyword],
                 ),
             ),
         );
-
     return {
-        blockchain_id,
-        asset_storage_contract_address,
-        token_id,
-        agreement_id: agreementId,
-        start_time,
-        epochs_number,
-        epoch_length,
-        score_function_id,
-        proof_window_offset_perc,
-        hash_function_id,
+        blockchainId,
+        assetStorageContractAddress,
+        tokenId,
+        agreementId,
+        startTime,
+        epochsNumber,
+        epochLength,
+        scoreFunctionId,
+        proofWindowOffsetPerc,
+        hashFunctionId,
         keyword,
-        assertion_id,
-        state_index,
-        last_commit_epoch,
-        last_proof_epoch,
+        assertionId,
+        stateIndex,
+        lastCommitEpoch,
+        lastProofEpoch,
     };
 };
 
@@ -93,100 +92,98 @@ describe('Repository module', () => {
     });
     describe('Insert and update service agreement', () => {
         const agreement = {
-            blockchain_id: blockchain,
-            asset_storage_contract_address: '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07',
-            token_id: 0,
-            agreement_id: '0x44cf660357e2d7462c25fd8e50b68abe332d7a70b07a76e92f628846ea585881',
-            start_time: 1683032289,
-            epochs_number: 2,
-            epoch_length: 360,
-            score_function_id: 1,
-            proof_window_offset_perc: 66,
-            hash_function_id: 1,
+            blockchainId: blockchain,
+            assetStorageContractAddress: '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07',
+            tokenId: 0,
+            agreementId: '0x44cf660357e2d7462c25fd8e50b68abe332d7a70b07a76e92f628846ea585881',
+            startTime: 1683032289,
+            epochsNumber: 2,
+            epochLength: 360,
+            scoreFunctionId: 1,
+            proofWindowOffsetPerc: 66,
+            hashFunctionId: 1,
             keyword:
                 '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca0768e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
-            assertion_id: '0x68e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
-            state_index: 1,
+            assertionId: '0x68e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
+            stateIndex: 1,
         };
 
         it('inserts service agreement', async () => {
             const inserted = await repositoryModuleManager.updateServiceAgreementRecord(
-                agreement.blockchain_id,
-                agreement.asset_storage_contract_address,
-                agreement.token_id,
-                agreement.agreement_id,
-                agreement.start_time,
-                agreement.epochs_number,
-                agreement.epoch_length,
-                agreement.score_function_id,
-                agreement.proof_window_offset_perc,
-                agreement.hash_function_id,
+                agreement.blockchainId,
+                agreement.assetStorageContractAddress,
+                agreement.tokenId,
+                agreement.agreementId,
+                agreement.startTime,
+                agreement.epochsNumber,
+                agreement.epochLength,
+                agreement.scoreFunctionId,
+                agreement.proofWindowOffsetPerc,
+                agreement.hashFunctionId,
                 agreement.keyword,
-                agreement.assertion_id,
-                agreement.state_index,
-                agreement.last_commit_epoch,
-                agreement.last_proof_epoch,
+                agreement.assertionId,
+                agreement.stateIndex,
+                agreement.lastCommitEpoch,
+                agreement.lastProofEpoch,
             );
             const row = inserted[0]?.dataValues;
 
             assert(expect(row).to.exist);
-            expect(row.blockchain_id).to.equal(agreement.blockchain_id);
-            expect(row.asset_storage_contract_address).to.equal(
-                agreement.asset_storage_contract_address,
-            );
-            expect(row.token_id).to.equal(agreement.token_id);
-            expect(row.agreement_id).to.equal(agreement.agreement_id);
-            expect(row.start_time).to.equal(agreement.start_time);
-            expect(row.epochs_number).to.equal(agreement.epochs_number);
-            expect(row.epoch_length).to.equal(agreement.epoch_length);
-            expect(row.score_function_id).to.equal(agreement.score_function_id);
-            expect(row.proof_window_offset_perc).to.equal(agreement.proof_window_offset_perc);
-            expect(row.hash_function_id).to.equal(agreement.hash_function_id);
+            expect(row.blockchainId).to.equal(agreement.blockchainId);
+            expect(row.assetStorageContractAddress).to.equal(agreement.assetStorageContractAddress);
+            expect(row.tokenId).to.equal(agreement.tokenId);
+            expect(row.agreementId).to.equal(agreement.agreementId);
+            expect(row.startTime).to.equal(agreement.startTime);
+            expect(row.epochsNumber).to.equal(agreement.epochsNumber);
+            expect(row.epochLength).to.equal(agreement.epochLength);
+            expect(row.scoreFunctionId).to.equal(agreement.scoreFunctionId);
+            expect(row.proofWindowOffsetPerc).to.equal(agreement.proofWindowOffsetPerc);
+            expect(row.hashFunctionId).to.equal(agreement.hashFunctionId);
             expect(row.keyword).to.equal(agreement.keyword);
-            expect(row.assertion_id).to.equal(agreement.assertion_id);
-            expect(row.state_index).to.equal(agreement.state_index);
-            assert(expect(row.last_commit_epoch).to.not.exist);
-            assert(expect(row.last_proof_epoch).to.not.exist);
+            expect(row.assertionId).to.equal(agreement.assertionId);
+            expect(row.stateIndex).to.equal(agreement.stateIndex);
+            assert(expect(row.lastCommitEpoch).to.not.exist);
+            assert(expect(row.lastProofEpoch).to.not.exist);
         });
     });
 
     describe('Eligible service agreements', () => {
         const agreements = [
-            createAgreement({ token_id: 0, start_time: 0 }),
+            createAgreement({ tokenId: 0, startTime: 0 }),
             createAgreement({
-                token_id: 1,
-                start_time: 15,
-                last_commit_epoch: 0,
+                tokenId: 1,
+                startTime: 15,
+                lastCommitEpoch: 0,
             }),
-            createAgreement({ token_id: 2, start_time: 25 }),
+            createAgreement({ tokenId: 2, startTime: 25 }),
             createAgreement({
-                token_id: 3,
-                start_time: 25,
-                last_commit_epoch: 0,
-                last_proof_epoch: 0,
+                tokenId: 3,
+                startTime: 25,
+                lastCommitEpoch: 0,
+                lastProofEpoch: 0,
             }),
-            createAgreement({ token_id: 4, start_time: 49 }),
+            createAgreement({ tokenId: 4, startTime: 49 }),
         ];
 
         beforeEach(async () => {
             await Promise.all(
                 agreements.map((agreement) =>
                     repositoryModuleManager.updateServiceAgreementRecord(
-                        agreement.blockchain_id,
-                        agreement.asset_storage_contract_address,
-                        agreement.token_id,
-                        agreement.agreement_id,
-                        agreement.start_time,
-                        agreement.epochs_number,
-                        agreement.epoch_length,
-                        agreement.score_function_id,
-                        agreement.proof_window_offset_perc,
-                        agreement.hash_function_id,
+                        agreement.blockchainId,
+                        agreement.assetStorageContractAddress,
+                        agreement.tokenId,
+                        agreement.agreementId,
+                        agreement.startTime,
+                        agreement.epochsNumber,
+                        agreement.epochLength,
+                        agreement.scoreFunctionId,
+                        agreement.proofWindowOffsetPerc,
+                        agreement.hashFunctionId,
                         agreement.keyword,
-                        agreement.assertion_id,
-                        agreement.state_index,
-                        agreement.last_commit_epoch,
-                        agreement.last_proof_epoch,
+                        agreement.assertionId,
+                        agreement.stateIndex,
+                        agreement.lastCommitEpoch,
+                        agreement.lastProofEpoch,
                     ),
                 ),
             );
@@ -210,8 +207,8 @@ describe('Repository module', () => {
                     // ensure order is correct
                     for (let i = 0; i < eligibleAgreements.length; i += 1) {
                         assert.strictEqual(
-                            eligibleAgreements[i].time_left_in_submit_commit_window,
-                            expectedAgreements[i].time_left_in_submit_commit_window,
+                            eligibleAgreements[i].timeLeftInSubmitCommitWindow,
+                            expectedAgreements[i].timeLeftInSubmitCommitWindow,
                         );
                     }
                 };
@@ -219,14 +216,14 @@ describe('Repository module', () => {
             it(
                 'returns two eligible service agreements at timestamp 49',
                 testEligibleAgreementsForSubmitCommit(49, 25, [
-                    { ...agreements[2], current_epoch: 0, time_left_in_submit_commit_window: 1 },
-                    { ...agreements[4], current_epoch: 0, time_left_in_submit_commit_window: 25 },
+                    { ...agreements[2], currentEpoch: 0, timeLeftInSubmitCommitWindow: 1 },
+                    { ...agreements[4], currentEpoch: 0, timeLeftInSubmitCommitWindow: 25 },
                 ]),
             );
             it(
                 'returns one eligible service agreement at timestamp 51',
                 testEligibleAgreementsForSubmitCommit(51, 25, [
-                    { ...agreements[4], current_epoch: 0, time_left_in_submit_commit_window: 23 },
+                    { ...agreements[4], currentEpoch: 0, timeLeftInSubmitCommitWindow: 23 },
                 ]),
             );
             it(
@@ -240,44 +237,44 @@ describe('Repository module', () => {
             it(
                 'returns one eligible service agreements at timestamp 100',
                 testEligibleAgreementsForSubmitCommit(100, 25, [
-                    { ...agreements[0], current_epoch: 1, time_left_in_submit_commit_window: 25 },
+                    { ...agreements[0], currentEpoch: 1, timeLeftInSubmitCommitWindow: 25 },
                 ]),
             );
             it(
                 'returns two eligible service agreements at timestamp 124',
                 testEligibleAgreementsForSubmitCommit(124, 25, [
-                    { ...agreements[0], current_epoch: 1, time_left_in_submit_commit_window: 1 },
-                    { ...agreements[1], current_epoch: 1, time_left_in_submit_commit_window: 16 },
+                    { ...agreements[0], currentEpoch: 1, timeLeftInSubmitCommitWindow: 1 },
+                    { ...agreements[1], currentEpoch: 1, timeLeftInSubmitCommitWindow: 16 },
                 ]),
             );
             it(
                 'returns three eligible service agreements at timestamp 125',
                 testEligibleAgreementsForSubmitCommit(125, 25, [
-                    { ...agreements[1], current_epoch: 1, time_left_in_submit_commit_window: 15 },
-                    { ...agreements[2], current_epoch: 1, time_left_in_submit_commit_window: 25 },
-                    { ...agreements[3], current_epoch: 1, time_left_in_submit_commit_window: 25 },
+                    { ...agreements[1], currentEpoch: 1, timeLeftInSubmitCommitWindow: 15 },
+                    { ...agreements[2], currentEpoch: 1, timeLeftInSubmitCommitWindow: 25 },
+                    { ...agreements[3], currentEpoch: 1, timeLeftInSubmitCommitWindow: 25 },
                 ]),
             );
             it(
                 'returns three eligible service agreements at timestamp 126',
                 testEligibleAgreementsForSubmitCommit(126, 25, [
-                    { ...agreements[1], current_epoch: 1, time_left_in_submit_commit_window: 14 },
-                    { ...agreements[2], current_epoch: 1, time_left_in_submit_commit_window: 24 },
-                    { ...agreements[3], current_epoch: 1, time_left_in_submit_commit_window: 24 },
+                    { ...agreements[1], currentEpoch: 1, timeLeftInSubmitCommitWindow: 14 },
+                    { ...agreements[2], currentEpoch: 1, timeLeftInSubmitCommitWindow: 24 },
+                    { ...agreements[3], currentEpoch: 1, timeLeftInSubmitCommitWindow: 24 },
                 ]),
             );
             it(
                 'returns three eligible service agreements at timestamp 149',
                 testEligibleAgreementsForSubmitCommit(149, 25, [
-                    { ...agreements[2], current_epoch: 1, time_left_in_submit_commit_window: 1 },
-                    { ...agreements[3], current_epoch: 1, time_left_in_submit_commit_window: 1 },
-                    { ...agreements[4], current_epoch: 1, time_left_in_submit_commit_window: 25 },
+                    { ...agreements[2], currentEpoch: 1, timeLeftInSubmitCommitWindow: 1 },
+                    { ...agreements[3], currentEpoch: 1, timeLeftInSubmitCommitWindow: 1 },
+                    { ...agreements[4], currentEpoch: 1, timeLeftInSubmitCommitWindow: 25 },
                 ]),
             );
             it(
                 'returns one eligible service agreements at timestamp 151',
                 testEligibleAgreementsForSubmitCommit(151, 25, [
-                    { ...agreements[4], current_epoch: 1, time_left_in_submit_commit_window: 23 },
+                    { ...agreements[4], currentEpoch: 1, timeLeftInSubmitCommitWindow: 23 },
                 ]),
             );
             it(
@@ -308,8 +305,8 @@ describe('Repository module', () => {
                     // ensure order is correct
                     for (let i = 0; i < eligibleAgreements.length; i += 1) {
                         assert.strictEqual(
-                            eligibleAgreements[i].time_left_in_submit_proof_window,
-                            expectedAgreements[i].time_left_in_submit_proof_window,
+                            eligibleAgreements[i].timeLeftInSubmitProofWindow,
+                            expectedAgreements[i].timeLeftInSubmitProofWindow,
                         );
                     }
                 };
@@ -329,19 +326,19 @@ describe('Repository module', () => {
             it(
                 'returns one eligible service agreements at timestamp 81',
                 testEligibleAgreementsForSubmitProof(81, 33, [
-                    { ...agreements[1], current_epoch: 0, time_left_in_submit_proof_window: 33 },
+                    { ...agreements[1], currentEpoch: 0, timeLeftInSubmitProofWindow: 33 },
                 ]),
             );
             it(
                 'returns one eligible service agreements at timestamp 92',
                 testEligibleAgreementsForSubmitProof(92, 33, [
-                    { ...agreements[1], current_epoch: 0, time_left_in_submit_proof_window: 22 },
+                    { ...agreements[1], currentEpoch: 0, timeLeftInSubmitProofWindow: 22 },
                 ]),
             );
             it(
                 'returns one eligible service agreements at timestamp 113',
                 testEligibleAgreementsForSubmitProof(113, 33, [
-                    { ...agreements[1], current_epoch: 0, time_left_in_submit_proof_window: 1 },
+                    { ...agreements[1], currentEpoch: 0, timeLeftInSubmitProofWindow: 1 },
                 ]),
             );
             it(
@@ -376,10 +373,10 @@ describe('Repository module', () => {
         for (let tokenId = 0; tokenId < numAgreements; tokenId += 1) {
             agreements.push(
                 createAgreement({
-                    token_id: tokenId,
-                    start_time: Math.floor(Math.random() * 101),
-                    last_commit_epoch: [null, 0][Math.floor(Math.random() * 3)],
-                    last_proof_epoch: [null, 0][Math.floor(Math.random() * 3)],
+                    tokenId,
+                    startTime: Math.floor(Math.random() * 101),
+                    lastCommitEpoch: [null, 0][Math.floor(Math.random() * 3)],
+                    lastProofEpoch: [null, 0][Math.floor(Math.random() * 3)],
                 }),
             );
 

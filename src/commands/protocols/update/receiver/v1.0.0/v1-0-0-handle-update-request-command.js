@@ -148,12 +148,12 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         const scores = await Promise.all(
             neighbourhood.map(async (node) => ({
                 score: await this.serviceAgreementService.calculateScore(
-                    node.peer_id,
+                    node.peerId,
                     blockchain,
                     keyword,
                     hashFunctionId,
                 ),
-                peerId: node.peer_id,
+                peerId: node.peerId,
             })),
         );
 

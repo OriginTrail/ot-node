@@ -8,16 +8,16 @@ class ServiceAgreementRepository {
 
     async updateServiceAgreementEpochsNumber(agreementId, epochsNumber) {
         return this.model.update(
-            { epochs_number: epochsNumber },
+            { epochsNumber },
             {
-                where: { agreement_id: agreementId },
+                where: { agreementId },
             },
         );
     }
 
     async removeServiceAgreements(agreementIds) {
         return this.model.destroy({
-            where: { agreement_id: { [Sequelize.Op.in]: agreementIds } },
+            where: { agreementId: { [Sequelize.Op.in]: agreementIds } },
         });
     }
 
@@ -39,21 +39,21 @@ class ServiceAgreementRepository {
         lastProofEpoch,
     ) {
         return this.model.upsert({
-            blockchain_id: blockchainId,
-            asset_storage_contract_address: contract,
-            token_id: tokenId,
-            agreement_id: agreementId,
-            start_time: startTime,
-            epochs_number: epochsNumber,
-            epoch_length: epochLength,
-            score_function_id: scoreFunctionId,
-            proof_window_offset_perc: proofWindowOffsetPerc,
-            hash_function_id: hashFunctionId,
+            blockchainId,
+            assetStorageContractAddress: contract,
+            tokenId,
+            agreementId,
+            startTime,
+            epochsNumber,
+            epochLength,
+            scoreFunctionId,
+            proofWindowOffsetPerc,
+            hashFunctionId,
             keyword,
-            assertion_id: assertionId,
-            state_index: stateIndex,
-            last_commit_epoch: lastCommitEpoch,
-            last_proof_epoch: lastProofEpoch,
+            assertionId,
+            stateIndex,
+            lastCommitEpoch,
+            lastProofEpoch,
         });
     }
 
@@ -65,10 +65,10 @@ class ServiceAgreementRepository {
 
     async updateServiceAgreementLastCommitEpoch(agreementId, lastCommitEpoch) {
         return this.model.update(
-            { last_commit_epoch: lastCommitEpoch },
+            { lastCommitEpoch },
             {
                 where: {
-                    agreement_id: agreementId,
+                    agreementId,
                 },
             },
         );
@@ -76,10 +76,10 @@ class ServiceAgreementRepository {
 
     async updateServiceAgreementLastProofEpoch(agreementId, lastProofEpoch) {
         return this.model.update(
-            { last_proof_epoch: lastProofEpoch },
+            { lastProofEpoch },
             {
                 where: {
-                    agreement_id: agreementId,
+                    agreementId,
                 },
             },
         );
@@ -88,9 +88,9 @@ class ServiceAgreementRepository {
     async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
         await this.model.destroy({
             where: {
-                blockchain_id: blockchainId,
-                asset_storage_contract_address: contract,
-                token_id: tokenId,
+                blockchainId,
+                assetStorageContractAddress: contract,
+                tokenId,
             },
         });
     }
@@ -102,26 +102,26 @@ class ServiceAgreementRepository {
         return this.model.findAll({
             attributes: {
                 include: [
-                    [Sequelize.literal(currentEpoch), 'current_epoch'],
+                    [Sequelize.literal(currentEpoch), 'currentEpoch'],
                     [
                         Sequelize.cast(
                             Sequelize.literal(`${commitWindowDurationPerc} - ${currentEpochPerc}`),
                             'DOUBLE',
                         ),
-                        'time_left_in_submit_commit_window',
+                        'timeLeftInSubmitCommitWindow',
                     ],
                 ],
             },
             where: {
-                blockchain_id: blockchain,
+                blockchainId: blockchain,
                 [Sequelize.Op.or]: [
                     {
-                        last_commit_epoch: {
+                        lastCommitEpoch: {
                             [Sequelize.Op.is]: null,
                         },
                     },
                     {
-                        last_commit_epoch: {
+                        lastCommitEpoch: {
                             [Sequelize.Op.lt]: Sequelize.literal(currentEpoch),
                         },
                     },
@@ -129,11 +129,11 @@ class ServiceAgreementRepository {
                 [Sequelize.Op.and]: Sequelize.literal(
                     `${currentEpochPerc} < ${commitWindowDurationPerc}`,
                 ),
-                epochs_number: {
+                epochsNumber: {
                     [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
                 },
             },
-            order: [[Sequelize.col('time_left_in_submit_commit_window'), 'ASC']],
+            order: [[Sequelize.col('timeLeftInSubmitCommitWindow'), 'ASC']],
             limit: 100,
             raw: true,
         });
@@ -150,7 +150,7 @@ class ServiceAgreementRepository {
         return this.model.findAll({
             attributes: {
                 include: [
-                    [Sequelize.literal(currentEpoch), 'current_epoch'],
+                    [Sequelize.literal(currentEpoch), 'currentEpoch'],
                     [
                         Sequelize.cast(
                             Sequelize.literal(
@@ -158,38 +158,38 @@ class ServiceAgreementRepository {
                             ),
                             'DOUBLE',
                         ),
-                        'time_left_in_submit_proof_window',
+                        'timeLeftInSubmitProofWindow',
                     ],
                 ],
             },
             where: {
-                blockchain_id: blockchain,
-                last_commit_epoch: {
+                blockchainId: blockchain,
+                lastCommitEpoch: {
                     [Sequelize.Op.eq]: Sequelize.literal(currentEpoch),
                 },
                 [Sequelize.Op.or]: [
                     {
-                        last_proof_epoch: {
+                        lastProofEpoch: {
                             [Sequelize.Op.is]: null,
                         },
                     },
                     {
-                        last_proof_epoch: {
+                        lastProofEpoch: {
                             [Sequelize.Op.lt]: Sequelize.literal(currentEpoch),
                         },
                     },
                 ],
-                proof_window_offset_perc: {
+                proofWindowOffsetPerc: {
                     [Sequelize.Op.lte]: Sequelize.literal(`${currentEpochPerc}`),
                     [Sequelize.Op.gt]: Sequelize.literal(
                         `${currentEpochPerc} - ${proofWindowDurationPerc}`,
                     ),
                 },
-                epochs_number: {
+                epochsNumber: {
                     [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
                 },
             },
-            order: [[Sequelize.col('time_left_in_submit_proof_window'), 'ASC']],
+            order: [[Sequelize.col('timeLeftInSubmitProofWindow'), 'ASC']],
             limit: 100,
             raw: true,
         });
