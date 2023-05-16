@@ -404,10 +404,13 @@ class Web3Service {
 
         let events = [];
         while (fromBlock <= currentBlock) {
-            const toBlock = Math.min(fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH, currentBlock);
+            const toBlock = Math.min(
+                fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH - 1,
+                currentBlock,
+            );
             const newEvents = await contract.queryFilter('*', fromBlock, toBlock);
             events = events.concat(newEvents);
-            fromBlock += MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH;
+            fromBlock = toBlock + 1;
         }
 
         return events.map((event) => ({
