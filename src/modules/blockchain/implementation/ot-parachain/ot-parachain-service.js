@@ -1,4 +1,5 @@
 import { ApiPromise, WsProvider, HttpProvider } from '@polkadot/api';
+import { BLOCK_TIME_MILLIS } from '../../../../constants/constants';
 import Web3Service from '../web3-service.js';
 
 const NATIVE_TOKEN_DECIMALS = 12;
@@ -139,6 +140,10 @@ class OtParachainService extends Web3Service {
     async getNativeTokenBalance() {
         const nativeBalance = await this.wallet.getBalance();
         return nativeBalance / 10 ** NATIVE_TOKEN_DECIMALS;
+    }
+
+    getBlockTimeMillis() {
+        return BLOCK_TIME_MILLIS.OTP;
     }
 }
 

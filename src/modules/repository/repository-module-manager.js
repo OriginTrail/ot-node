@@ -30,6 +30,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async destroyAllRecords(table) {
+        if (this.initialized) {
+            return this.getImplementation().module.destroyAllRecords(table);
+        }
+    }
+
     async updateCommand(update, opts) {
         return this.getRepository('command').updateCommand(update, opts);
     }
@@ -266,31 +272,89 @@ class RepositoryModuleManager extends BaseModuleManager {
         lastCommitEpoch,
         lastProofEpoch,
     ) {
-        return this.getRepository('service_agreement').updateServiceAgreementRecord(
-            blockchainId,
-            contract,
-            tokenId,
-            agreementId,
-            startTime,
-            epochsNumber,
-            epochLength,
-            scoreFunctionId,
-            proofWindowOffsetPerc,
-            hashFunctionId,
-            keyword,
-            assertionId,
-            stateIndex,
-            lastCommitEpoch,
-            lastProofEpoch,
-        );
+        if (this.initialized) {
+            return this.getRepository('service_agreement').updateServiceAgreementRecord(
+                blockchainId,
+                contract,
+                tokenId,
+                agreementId,
+                startTime,
+                epochsNumber,
+                epochLength,
+                scoreFunctionId,
+                proofWindowOffsetPerc,
+                hashFunctionId,
+                keyword,
+                assertionId,
+                stateIndex,
+                lastCommitEpoch,
+                lastProofEpoch,
+            );
+        }
+    }
+
+    async bulkCreateServiceAgreementRecords(records) {
+        if (this.initialized) {
+            return this.getRepository('service_agreement').bulkCreateServiceAgreementRecords(
+                records,
+            );
+        }
+    }
+
+    async updateServiceAgreementLastCommitEpoch(agreementId, lastCommitEpoch) {
+        if (this.initialized) {
+            return this.getRepository('service_agreement').updateServiceAgreementLastCommitEpoch(
+                agreementId,
+                lastCommitEpoch,
+            );
+        }
+    }
+
+    async updateServiceAgreementLastProofEpoch(agreementId, lastProofEpoch) {
+        if (this.initialized) {
+            return this.getRepository('service_agreement').updateServiceAgreementLastProofEpoch(
+                agreementId,
+                lastProofEpoch,
+            );
+        }
     }
 
     async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
-        return this.getRepository('service_agreement').removeServiceAgreementRecord(
-            blockchainId,
-            contract,
-            tokenId,
-        );
+        if (this.initialized) {
+            return this.getRepository('service_agreement').removeServiceAgreementRecord(
+                blockchainId,
+                contract,
+                tokenId,
+            );
+        }
+    }
+
+    async getEligibleAgreementsForSubmitCommit(
+        timestampSeconds,
+        blockchain,
+        commitWindowDurationPerc,
+    ) {
+        if (this.initialized) {
+            return this.getRepository('service_agreement').getEligibleAgreementsForSubmitCommit(
+                timestampSeconds,
+                blockchain,
+                commitWindowDurationPerc,
+            );
+        }
+    }
+
+    async getEligibleAgreementsForSubmitProof(
+        timestampSeconds,
+        blockchain,
+        proofWindowDurationPerc,
+    ) {
+        if (this.initialized) {
+            return this.getRepository('service_agreement').getEligibleAgreementsForSubmitProof(
+                timestampSeconds,
+                blockchain,
+                proofWindowDurationPerc,
+            );
+        }
     }
 
     async removeServiceAgreements(agreementIds) {
