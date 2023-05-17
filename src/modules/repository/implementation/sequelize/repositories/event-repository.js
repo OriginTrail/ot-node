@@ -13,7 +13,7 @@ class EventRepository {
 
     async createEventRecord(operationId, name, timestamp, value1, value2, value3) {
         return this.model.create({
-            operation_id: operationId,
+            operationId,
             name,
             timestamp,
             value1,
@@ -58,7 +58,7 @@ class EventRepository {
 
         return this.model.findAll({
             where: {
-                operation_id: {
+                operationId: {
                     [Sequelize.Op.in]: operationIds,
                 },
             },

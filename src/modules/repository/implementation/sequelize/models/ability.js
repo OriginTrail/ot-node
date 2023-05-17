@@ -3,8 +3,8 @@ export default (sequelize, DataTypes) => {
         'ability',
         {
             name: DataTypes.STRING,
-            created_at: DataTypes.DATE,
-            updated_at: DataTypes.DATE,
+            createdAt: DataTypes.DATE,
+            updatedAt: DataTypes.DATE,
         },
         { underscored: true },
     );
