@@ -4,13 +4,13 @@ export default (sequelize, DataTypes) => {
         {
             id: { type: DataTypes.STRING, primaryKey: true },
             revoked: DataTypes.BOOLEAN,
-            user_id: DataTypes.INTEGER,
+            userId: DataTypes.INTEGER,
             name: {
                 type: DataTypes.STRING,
             },
-            expires_at: DataTypes.DATE,
-            created_at: DataTypes.DATE,
-            updated_at: DataTypes.DATE,
+            expiresAt: DataTypes.DATE,
+            createdAt: DataTypes.DATE,
+            updatedAt: DataTypes.DATE,
         },
         { underscored: true },
     );
