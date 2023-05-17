@@ -10,10 +10,7 @@ class SubmitUpdateCommitCommand extends Command {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.serviceAgreementService = ctx.serviceAgreementService;
         this.operationIdService = ctx.operationIdService;
-        this.shardingTableService = ctx.shardingTableService;
-        this.networkModuleManager = ctx.networkModuleManager;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_ERROR;
     }
@@ -30,6 +27,14 @@ class SubmitUpdateCommitCommand extends Command {
             operationId,
         } = command.data;
 
+        this.logger.trace(
+            `Started ${command.name} for agreement id: ${agreementId} ` +
+                `blockchain: ${blockchain} contract: ${contract}, token id: ${tokenId}, ` +
+                `keyword: ${keyword}, hash function id: ${hashFunctionId}. Retry number ${
+                    COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1
+                }`,
+        );
+
         const epoch = await this.calculateCurrentEpoch(
             Number(agreementData.startTime),
             Number(agreementData.epochLength),
@@ -44,14 +49,6 @@ class SubmitUpdateCommitCommand extends Command {
                 epoch,
             );
         }
-
-        this.logger.trace(
-            `Started ${command.name} for agreement id: ${command.data.agreementId} ` +
-                `blockchain: ${blockchain} contract: ${contract}, token id: ${tokenId}, ` +
-                `keyword: ${keyword}, hash function id: ${hashFunctionId}. Retry number ${
-                    COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1
-                }`,
-        );
 
         const hasPendingUpdate = await this.blockchainModuleManager.hasPendingUpdate(
             blockchain,
@@ -103,6 +100,16 @@ class SubmitUpdateCommitCommand extends Command {
                     });
                 }
             },
+        );
+
+        const transactionQueueLength =
+            this.blockchainModuleManager.getTransactionQueueLength(blockchain);
+
+        this.logger.trace(
+            `Scheduled submit update commit transaction for agreement id: ${agreementId} ` +
+                `blockchain: ${blockchain} contract: ${contract}, token id: ${tokenId}, ` +
+                `keyword: ${keyword}, hash function id: ${hashFunctionId}, operationId ${operationId}` +
+                `transaction queue length: ${transactionQueueLength}.`,
         );
 
         return Command.empty();
