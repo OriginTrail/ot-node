@@ -39,8 +39,8 @@ class SubmitProofsCommand extends Command {
 
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +
-                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
+                `blockchain: ${blockchain}, contract: ${contract}, token id: ${tokenId},` +
+                `keyword: ${keyword}, hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
                 `stateIndex: ${stateIndex}, operationId: ${operationId}, ` +
                 ` Retry number ${COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1}`,
         );
@@ -165,8 +165,8 @@ class SubmitProofsCommand extends Command {
 
         this.logger.trace(
             `Scheduled send proof transaction for agreement id: ${agreementId} ` +
-                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
+                `blockchain: ${blockchain}, contract: ${contract}, token id: ${tokenId},` +
+                `keyword: ${keyword}, hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
                 `stateIndex: ${stateIndex}, operationId: ${operationId}, ` +
                 `transaction queue length: ${transactionQueueLength}.`,
         );

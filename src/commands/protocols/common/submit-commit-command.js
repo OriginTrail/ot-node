@@ -29,8 +29,8 @@ class SubmitCommitCommand extends Command {
 
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +
-                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
+                `blockchain: ${blockchain}, contract: ${contract}, token id: ${tokenId},` +
+                `keyword: ${keyword}, hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
                 `stateIndex: ${stateIndex}, operationId: ${operationId}, ` +
                 ` Retry number ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}`,
         );
@@ -113,8 +113,8 @@ class SubmitCommitCommand extends Command {
 
         this.logger.trace(
             `Scheduled submit commit transaction for agreement id: ${agreementId} ` +
-                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
+                `blockchain: ${blockchain}, contract: ${contract}, token id: ${tokenId},` +
+                `keyword: ${keyword}, hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
                 `stateIndex: ${stateIndex}, operationId: ${operationId}, ` +
                 `transaction queue length: ${transactionQueueLength}.`,
         );
