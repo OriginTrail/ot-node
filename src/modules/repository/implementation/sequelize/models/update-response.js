@@ -1,5 +1,5 @@
 export default (sequelize, DataTypes) => {
-    const update_response = sequelize.define(
+    const updateResponse = sequelize.define(
         'update_response',
         {
             id: {
@@ -7,17 +7,17 @@ export default (sequelize, DataTypes) => {
                 primaryKey: true,
                 autoIncrement: true,
             },
-            operation_id: DataTypes.UUID,
+            operationId: DataTypes.UUID,
             keyword: DataTypes.STRING,
             status: DataTypes.STRING,
             message: DataTypes.TEXT,
-            created_at: DataTypes.DATE,
-            updated_at: DataTypes.DATE,
+            createdAt: DataTypes.DATE,
+            updatedAt: DataTypes.DATE,
         },
-        {},
+        { underscored: true },
     );
-    update_response.associate = () => {
+    updateResponse.associate = () => {
         // associations can be defined here
     };
-    return update_response;
+    return updateResponse;
 };
