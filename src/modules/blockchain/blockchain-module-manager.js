@@ -5,6 +5,10 @@ class BlockchainModuleManager extends BaseModuleManager {
         return 'blockchain';
     }
 
+    getTransactionQueueLength(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getTransactionQueueLength');
+    }
+
     async initializeContracts(blockchain) {
         return this.callImplementationFunction(blockchain, 'initializeContracts');
     }
