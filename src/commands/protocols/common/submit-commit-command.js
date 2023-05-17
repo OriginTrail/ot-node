@@ -27,6 +27,14 @@ class SubmitCommitCommand extends Command {
         // TODO: review operationId
         const operationId = uuidv4();
 
+        this.logger.trace(
+            `Started ${command.name} for agreement id: ${agreementId} ` +
+                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
+                `hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
+                `stateIndex: ${stateIndex}, operationId: ${operationId}, ` +
+                ` Retry number ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}`,
+        );
+
         if (command.retries === COMMAND_RETRIES.SUBMIT_COMMIT) {
             this.operationIdService.emitChangeEvent(
                 OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_START,
@@ -35,14 +43,6 @@ class SubmitCommitCommand extends Command {
                 epoch,
             );
         }
-
-        this.logger.trace(
-            `Started ${command.name} for agreement id: ${agreementId} ` +
-                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}, epoch: ${epoch}, stateIndex: ${stateIndex}. Retry number ${
-                    COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1
-                }`,
-        );
 
         // this can happen in case node has already submitted update commit
         const alreadySubmitted = await this.commitAlreadySubmitted(
@@ -106,6 +106,17 @@ class SubmitCommitCommand extends Command {
                     });
                 }
             },
+        );
+
+        const transactionQueueLength =
+            this.blockchainModuleManager.getTransactionQueueLength(blockchain);
+
+        this.logger.trace(
+            `Scheduled submit commit transaction for agreement id: ${agreementId} ` +
+                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
+                `hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
+                `stateIndex: ${stateIndex}, operationId: ${operationId}, ` +
+                `transaction queue length: ${transactionQueueLength}.`,
         );
 
         return Command.empty();

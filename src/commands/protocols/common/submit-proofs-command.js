@@ -40,9 +40,9 @@ class SubmitProofsCommand extends Command {
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +
                 `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}, stateIndex: ${stateIndex}. Retry number ${
-                    COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
-                }`,
+                `hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
+                `stateIndex: ${stateIndex}, operationId: ${operationId}, ` +
+                ` Retry number ${COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1}`,
         );
 
         if (command.retries === COMMAND_RETRIES.SUBMIT_PROOFS) {
@@ -159,6 +159,18 @@ class SubmitProofsCommand extends Command {
                 }
             },
         );
+
+        const transactionQueueLength =
+            this.blockchainModuleManager.getTransactionQueueLength(blockchain);
+
+        this.logger.trace(
+            `Scheduled send proof transaction for agreement id: ${agreementId} ` +
+                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
+                `hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
+                `stateIndex: ${stateIndex}, operationId: ${operationId}, ` +
+                `transaction queue length: ${transactionQueueLength}.`,
+        );
+
         return Command.empty();
     }
 
