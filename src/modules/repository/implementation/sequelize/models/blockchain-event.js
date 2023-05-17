@@ -8,13 +8,13 @@ export default (sequelize, DataTypes) => {
                 autoIncrement: true,
             },
             contract: DataTypes.STRING,
-            blockchain_id: DataTypes.STRING,
+            blockchainId: DataTypes.STRING,
             event: DataTypes.STRING,
             data: DataTypes.TEXT,
             block: DataTypes.INTEGER,
             processed: DataTypes.BOOLEAN,
         },
-        {},
+        { underscored: true },
     );
     event.associate = () => {
         // associations can be defined here

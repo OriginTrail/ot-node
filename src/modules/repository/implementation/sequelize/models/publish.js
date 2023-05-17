@@ -7,12 +7,12 @@ export default (sequelize, DataTypes) => {
                 primaryKey: true,
                 autoIncrement: true,
             },
-            operation_id: DataTypes.UUID,
+            operationId: DataTypes.UUID,
             status: DataTypes.STRING,
-            created_at: DataTypes.DATE,
-            updated_at: DataTypes.DATE,
+            createdAt: DataTypes.DATE,
+            updatedAt: DataTypes.DATE,
         },
-        {},
+        { underscored: true },
     );
     publish.associate = () => {
         // associations can be defined here

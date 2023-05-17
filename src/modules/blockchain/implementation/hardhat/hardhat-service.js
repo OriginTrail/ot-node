@@ -1,3 +1,4 @@
+import { BLOCK_TIME_MILLIS } from '../../../../constants/constants.js';
 import Web3Service from '../web3-service.js';
 
 class HardhatService extends Web3Service {
@@ -10,6 +11,10 @@ class HardhatService extends Web3Service {
     async getBlockchainTimestamp() {
         const latestBlock = await super.getLatestBlock();
         return latestBlock.timestamp;
+    }
+
+    getBlockTimeMillis() {
+        return BLOCK_TIME_MILLIS.HARDHAT;
     }
 
     async providerReady() {

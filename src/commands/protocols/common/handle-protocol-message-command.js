@@ -53,8 +53,9 @@ class HandleProtocolMessageCommand extends Command {
             hashFunctionId,
             true,
         );
-        for (const { peer_id } of closestNodes) {
-            if (peer_id === this.networkModuleManager.getPeerIdString()) {
+        const peerId = this.networkModuleManager.getPeerIdString();
+        for (const { peerId: otherPeerId } of closestNodes) {
+            if (otherPeerId === peerId) {
                 return true;
             }
         }

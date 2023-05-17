@@ -1,10 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 
 export default (sequelize, DataTypes) => {
-    const operation_ids = sequelize.define(
+    const operationIds = sequelize.define(
         'operation_ids',
         {
-            operation_id: {
+            operationId: {
                 type: DataTypes.UUID,
                 primaryKey: true,
                 defaultValue: () => uuidv4(),
@@ -15,13 +15,13 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.BIGINT,
                 defaultValue: () => Date.now(),
             },
-            created_at: DataTypes.DATE,
-            updated_at: DataTypes.DATE,
+            createdAt: DataTypes.DATE,
+            updatedAt: DataTypes.DATE,
         },
-        {},
+        { underscored: true },
     );
-    operation_ids.associate = () => {
+    operationIds.associate = () => {
         // associations can be defined here
     };
-    return operation_ids;
+    return operationIds;
 };
