@@ -13,7 +13,7 @@ class OperationIdRepository {
     async getOperationIdRecord(operationId) {
         return this.model.findOne({
             where: {
-                operation_id: operationId,
+                operationId,
             },
         });
     }
@@ -21,7 +21,7 @@ class OperationIdRepository {
     async updateOperationIdRecord(data, operationId) {
         await this.model.update(data, {
             where: {
-                operation_id: operationId,
+                operationId,
             },
         });
     }

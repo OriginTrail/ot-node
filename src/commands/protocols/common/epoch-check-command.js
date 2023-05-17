@@ -63,7 +63,7 @@ class EpochCheckCommand extends Command {
             const rank = await this.calculateRank(
                 blockchain,
                 serviceAgreement.keyword,
-                serviceAgreement.hash_function_id,
+                serviceAgreement.hashFunctionId,
                 r2,
             );
 
@@ -76,7 +76,7 @@ class EpochCheckCommand extends Command {
 
             if (rank == null) {
                 this.logger.trace(
-                    `Node not in R2: ${r2} for agreement id: ${serviceAgreement.agreement_id}. Skipping scheduling submit commit command-`,
+                    `Node not in R2: ${r2} for agreement id: ${serviceAgreement.agreementId}. Skipping scheduling submit commit command.`,
                 );
                 continue;
             }
@@ -84,7 +84,7 @@ class EpochCheckCommand extends Command {
             if (rank >= r0) {
                 this.logger.trace(
                     `Calculated rank: ${rank + 1}. Node not in R0: ${r0} for agreement id: ${
-                        serviceAgreement.agreement_id
+                        serviceAgreement.agreementId
                     }. Skipping scheduling submit commit command.`,
                 );
                 continue;
@@ -92,7 +92,7 @@ class EpochCheckCommand extends Command {
 
             this.logger.trace(
                 `Calculated rank: ${rank + 1}. Node in R0: ${r0} for agreement id: ${
-                    serviceAgreement.agreement_id
+                    serviceAgreement.agreementId
                 }. Scheduling submit commit command.`,
             );
 
@@ -119,13 +119,13 @@ class EpochCheckCommand extends Command {
 
             const eligibleForReward = await this.isEligibleForRewards(
                 blockchain,
-                serviceAgreement.agreement_id,
-                serviceAgreement.current_epoch,
-                serviceAgreement.state_index,
+                serviceAgreement.agreementId,
+                serviceAgreement.currentEpoch,
+                serviceAgreement.stateIndex,
             );
             if (eligibleForReward) {
                 this.logger.trace(
-                    `Node is eligible for rewards for agreement id: ${serviceAgreement.agreement_id}. Scheduling submit proof command.`,
+                    `Node is eligible for rewards for agreement id: ${serviceAgreement.agreementId}. Scheduling submit proof command.`,
                 );
 
                 scheduleSubmitProofCommands.push(
@@ -133,13 +133,13 @@ class EpochCheckCommand extends Command {
                 );
             } else {
                 this.logger.trace(
-                    `Node is not eligible for rewards for agreement id: ${serviceAgreement.agreement_id}. Skipping scheduling submit proof command.`,
+                    `Node is not eligible for rewards for agreement id: ${serviceAgreement.agreementId}. Skipping scheduling submit proof command.`,
                 );
             }
             updateServiceAgreementsLastProofEpoch.push(
                 this.repositoryModuleManager.updateServiceAgreementLastProofEpoch(
-                    serviceAgreement.agreement_id,
-                    serviceAgreement.current_epoch,
+                    serviceAgreement.agreementId,
+                    serviceAgreement.currentEpoch,
                 ),
             );
         }
@@ -166,12 +166,12 @@ class EpochCheckCommand extends Command {
         const scores = await Promise.all(
             neighbourhood.map(async (node) => ({
                 score: await this.serviceAgreementService.calculateScore(
-                    node.peer_id,
+                    node.peerId,
                     blockchain,
                     keyword,
                     hashFunctionId,
                 ),
-                peerId: node.peer_id,
+                peerId: node.peerId,
             })),
         );
 
@@ -201,14 +201,14 @@ class EpochCheckCommand extends Command {
 
     async scheduleSubmitCommitCommand(agreement) {
         const commandData = {
-            blockchain: agreement.blockchain_id,
-            contract: agreement.asset_storage_contract_address,
-            tokenId: agreement.token_id,
+            blockchain: agreement.blockchainId,
+            contract: agreement.assetStorageContractAddress,
+            tokenId: agreement.tokenId,
             keyword: agreement.keyword,
-            hashFunctionId: agreement.hash_function_id,
-            epoch: agreement.current_epoch,
-            agreementId: agreement.agreement_id,
-            stateIndex: agreement.state_index,
+            hashFunctionId: agreement.hashFunctionId,
+            epoch: agreement.currentEpoch,
+            agreementId: agreement.agreementId,
+            stateIndex: agreement.stateIndex,
         };
 
         await this.commandExecutor.add({
@@ -222,15 +222,15 @@ class EpochCheckCommand extends Command {
 
     async scheduleSubmitProofsCommand(agreement) {
         const commandData = {
-            blockchain: agreement.blockchain_id,
-            contract: agreement.asset_storage_contract_address,
-            tokenId: agreement.token_id,
+            blockchain: agreement.blockchainId,
+            contract: agreement.assetStorageContractAddress,
+            tokenId: agreement.tokenId,
             keyword: agreement.keyword,
-            hashFunctionId: agreement.hash_function_id,
-            epoch: agreement.current_epoch,
-            agreementId: agreement.agreement_id,
-            assertionId: agreement.assertion_id,
-            stateIndex: agreement.state_index,
+            hashFunctionId: agreement.hashFunctionId,
+            epoch: agreement.currentEpoch,
+            agreementId: agreement.agreementId,
+            assertionId: agreement.assertionId,
+            stateIndex: agreement.stateIndex,
         };
 
         return this.commandExecutor.add({

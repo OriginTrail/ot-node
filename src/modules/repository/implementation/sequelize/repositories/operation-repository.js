@@ -6,7 +6,7 @@ class OperationRepository {
 
     async createOperationRecord(operation, operationId, status) {
         return this.models[operation].create({
-            operation_id: operationId,
+            operationId,
             status,
         });
     }
@@ -15,7 +15,7 @@ class OperationRepository {
         return this.models[operation].findOne({
             attributes: ['status'],
             where: {
-                operation_id: operationId,
+                operationId,
             },
         });
     }
@@ -25,7 +25,7 @@ class OperationRepository {
             { status },
             {
                 where: {
-                    operation_id: operationId,
+                    operationId,
                 },
             },
         );

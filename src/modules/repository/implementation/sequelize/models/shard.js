@@ -2,8 +2,8 @@ export default (sequelize, DataTypes) => {
     const shard = sequelize.define(
         'shard',
         {
-            peer_id: { type: DataTypes.STRING, primaryKey: true },
-            blockchain_id: { type: DataTypes.STRING, primaryKey: true },
+            peerId: { type: DataTypes.STRING, primaryKey: true },
+            blockchainId: { type: DataTypes.STRING, primaryKey: true },
             ask: {
                 type: DataTypes.INTEGER,
                 allowNull: false,
@@ -12,12 +12,12 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.INTEGER,
                 allowNull: false,
             },
-            last_seen: {
+            lastSeen: {
                 type: DataTypes.DATE,
                 allowNull: false,
                 defaultValue: new Date(0),
             },
-            last_dialed: {
+            lastDialed: {
                 type: DataTypes.DATE,
                 allowNull: false,
                 defaultValue: new Date(0),

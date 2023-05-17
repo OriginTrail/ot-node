@@ -13,7 +13,7 @@ class BlockchainEventRepository {
                 event: event.event,
                 data: event.data,
                 block: event.block,
-                blockchain_id: event.blockchainId,
+                blockchainId: event.blockchainId,
                 processed: false,
             })),
             {
@@ -40,7 +40,7 @@ class BlockchainEventRepository {
                 event,
                 data,
                 block,
-                blockchain_id: blockchainId,
+                blockchainId,
             },
         });
         return !!dbEvent;
