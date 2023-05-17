@@ -81,6 +81,10 @@ class Web3Service {
         );
     }
 
+    getTransactionQueueLength() {
+        return this.transactionQueue.length();
+    }
+
     async initializeWeb3() {
         let tries = 0;
         let isRpcConnected = false;
@@ -356,7 +360,7 @@ class Web3Service {
 
                 this.logger.info(
                     'Sending signed transaction to blockchain, calling method: ' +
-                        `${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}`,
+                        `${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}. Transaction queue length: ${this.getTransactionQueueLength()}`,
                 );
                 const tx = await contractInstance[functionName](...args, {
                     gasPrice,

@@ -52,6 +52,9 @@ class EpochCheckCommand extends Command {
                 commitWindowDurationPerc,
             );
 
+        const r0 = await this.blockchainModuleManager.getR0(blockchain);
+        const r2 = await this.blockchainModuleManager.getR2(blockchain);
+
         const scheduleSubmitCommitCommands = [];
         const updateServiceAgreementsLastCommitEpoch = [];
         for (const serviceAgreement of eligibleAgreementForSubmitCommit) {
@@ -61,30 +64,8 @@ class EpochCheckCommand extends Command {
                 blockchain,
                 serviceAgreement.keyword,
                 serviceAgreement.hash_function_id,
+                r2,
             );
-
-            const r0 = await this.blockchainModuleManager.getR0(blockchain);
-
-            if (rank < r0) {
-                this.logger.trace(
-                    `Calculated rank: ${
-                        rank + 1
-                    } lower than R0: ${r0}. Scheduling submit commit command for agreement id: ${
-                        serviceAgreement.agreement_id
-                    }`,
-                );
-                scheduleSubmitCommitCommands.push(
-                    this.scheduleSubmitCommitCommand(serviceAgreement),
-                );
-            } else {
-                this.logger.trace(
-                    `Calculated rank: ${
-                        rank + 1
-                    } higher than R0: ${r0}. Skipping scheduling submit commit command for agreement id: ${
-                        serviceAgreement.agreement_id
-                    }`,
-                );
-            }
 
             updateServiceAgreementsLastCommitEpoch.push(
                 this.repositoryModuleManager.updateServiceAgreementLastCommitEpoch(
@@ -92,6 +73,30 @@ class EpochCheckCommand extends Command {
                     serviceAgreement.current_epoch,
                 ),
             );
+
+            if (rank == null) {
+                this.logger.trace(
+                    `Node not in R2: ${r2} for agreement id: ${serviceAgreement.agreement_id}. Skipping scheduling submit commit command-`,
+                );
+                continue;
+            }
+
+            if (rank >= r0) {
+                this.logger.trace(
+                    `Calculated rank: ${rank + 1}. Node not in R0: ${r0} for agreement id: ${
+                        serviceAgreement.agreement_id
+                    }. Skipping scheduling submit commit command.`,
+                );
+                continue;
+            }
+
+            this.logger.trace(
+                `Calculated rank: ${rank + 1}. Node in R0: ${r0} for agreement id: ${
+                    serviceAgreement.agreement_id
+                }. Scheduling submit commit command.`,
+            );
+
+            scheduleSubmitCommitCommands.push(this.scheduleSubmitCommitCommand(serviceAgreement));
         }
         await Promise.all([
             ...scheduleSubmitCommitCommands,
@@ -144,15 +149,19 @@ class EpochCheckCommand extends Command {
         ]);
     }
 
-    async calculateRank(blockchain, keyword, hashFunctionId) {
-        const r2 = await this.blockchainModuleManager.getR2(blockchain);
+    async calculateRank(blockchain, keyword, hashFunctionId, r2) {
         const neighbourhood = await this.shardingTableService.findNeighbourhood(
             blockchain,
             keyword,
             r2,
             hashFunctionId,
-            false,
+            true,
         );
+
+        const peerId = this.networkModuleManager.getPeerId().toB58String();
+        if (!neighbourhood.some((node) => node.peer_id === peerId)) {
+            return;
+        }
 
         const scores = await Promise.all(
             neighbourhood.map(async (node) => ({
@@ -168,9 +177,7 @@ class EpochCheckCommand extends Command {
 
         scores.sort((a, b) => b.score - a.score);
 
-        return scores.findIndex(
-            (node) => node.peerId === this.networkModuleManager.getPeerId().toB58String(),
-        );
+        return scores.findIndex((node) => node.peerId === peerId);
     }
 
     async isEligibleForRewards(blockchain, agreementId, epoch, stateIndex) {
