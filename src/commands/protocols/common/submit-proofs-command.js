@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
@@ -23,6 +22,7 @@ class SubmitProofsCommand extends Command {
 
     async execute(command) {
         const {
+            operationId,
             blockchain,
             contract,
             tokenId,
@@ -33,9 +33,6 @@ class SubmitProofsCommand extends Command {
             assertionId,
             stateIndex,
         } = command.data;
-
-        // TODO: review operationId
-        const operationId = uuidv4();
 
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +
@@ -107,68 +104,41 @@ class SubmitProofsCommand extends Command {
             }
         }
 
-        await this.blockchainModuleManager.sendProof(
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-            hashFunctionId,
-            epoch,
-            proof,
-            leaf,
-            stateIndex,
-            async (result) => {
-                if (!result.error) {
-                    this.logger.trace(
-                        `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
-                            `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                            `hash function id: ${hashFunctionId}. Retry number ${
-                                COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
-                            }`,
-                    );
+        const transactionCompletePromise = new Promise((resolve, reject) => {
+            this.blockchainModuleManager.sendProof(
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+                hashFunctionId,
+                epoch,
+                proof,
+                leaf,
+                stateIndex,
+                (result) => {
+                    if (result?.error) {
+                        reject(result.error);
+                    }
+                    resolve();
+                },
+            );
+        });
 
-                    this.operationIdService.emitChangeEvent(
-                        OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
-                        operationId,
-                        agreementId,
-                        epoch,
-                    );
-                } else if (command.retries - 1 === 0) {
-                    const errorMessage = `Failed executing submit proofs command, maximum number of retries reached. Error: ${result.error.message}. Scheduling next epoch check.`;
-                    this.logger.error(errorMessage);
-                    this.operationIdService.emitChangeEvent(
-                        OPERATION_ID_STATUS.FAILED,
-                        operationId,
-                        errorMessage,
-                        this.errorType,
-                        epoch,
-                    );
-                } else {
-                    const blockTime = this.blockchainModuleManager.getBlockTimeMillis(blockchain);
-                    this.logger.warn(
-                        `Failed executing submit proofs command, retrying in ${blockTime}ms. Error: ${result.error.message}`,
-                    );
-                    await this.commandExecutor.add({
-                        name: 'submitProofsCommand',
-                        sequence: [],
-                        delay: blockTime,
-                        data: command.data,
-                        retries: command.retries - 1,
-                        transactional: false,
-                    });
-                }
-            },
-        );
-
-        const transactionQueueLength =
-            this.blockchainModuleManager.getTransactionQueueLength(blockchain);
+        await transactionCompletePromise;
 
         this.logger.trace(
-            `Scheduled send proof transaction for agreement id: ${agreementId} ` +
-                `blockchain: ${blockchain}, contract: ${contract}, token id: ${tokenId},` +
-                `keyword: ${keyword}, hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
-                `stateIndex: ${stateIndex}, operationId: ${operationId}, ` +
-                `transaction queue length: ${transactionQueueLength}.`,
+            `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
+                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
+                `hash function id: ${hashFunctionId}. Retry number ${
+                    COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
+                }`,
+        );
+
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
+            operationId,
+            agreementId,
+            epoch,
         );
 
         return Command.empty();
@@ -190,6 +160,10 @@ class SubmitProofsCommand extends Command {
         }
 
         return false;
+    }
+
+    async retryFinished(command) {
+        this.recover(command, `Max retry count for command: ${command.name} reached!`);
     }
 
     /**
