@@ -20,12 +20,18 @@ class EpochCheckCommand extends Command {
                     await this.blockchainModuleManager.getCommitWindowDurationPerc(blockchain);
                 const proofWindowDurationPerc =
                     await this.blockchainModuleManager.getProofWindowDurationPerc(blockchain);
-                const totalTransactions = await this.calculateTotalTransactions(
+                let totalTransactions = await this.calculateTotalTransactions(
                     blockchain,
                     commitWindowDurationPerc,
                     proofWindowDurationPerc,
                     command.period,
                 );
+
+                const transactionQueueLength =
+                    this.blockchainModuleManager.getTransactionQueueLength(blockchain);
+                if (transactionQueueLength >= totalTransactions) return;
+                totalTransactions -= transactionQueueLength;
+
                 await Promise.all([
                     this.scheduleSubmitCommitCommands(
                         blockchain,
