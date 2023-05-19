@@ -1,7 +1,11 @@
 /* eslint-disable no-await-in-loop */
 import { v4 as uuidv4 } from 'uuid';
 import Command from '../../command.js';
-import { COMMAND_RETRIES, TRANSACTION_CONFIRMATIONS } from '../../../constants/constants.js';
+import {
+    COMMAND_QUEUE_PARALLELISM,
+    COMMAND_RETRIES,
+    TRANSACTION_CONFIRMATIONS,
+} from '../../../constants/constants.js';
 
 class EpochCheckCommand extends Command {
     constructor(ctx) {
@@ -27,6 +31,11 @@ class EpochCheckCommand extends Command {
                     proofWindowDurationPerc,
                     command.period,
                 );
+
+                // We don't expect to have this many transactions in one epoch check window.
+                // This is just to make sure we don't schedule too many commands and block the queue
+                // TODO: find general solution for all commands scheduling blockchain transactions
+                totalTransactions = Math.min(totalTransactions, COMMAND_QUEUE_PARALLELISM * 0.3);
 
                 const transactionQueueLength =
                     this.blockchainModuleManager.getTransactionQueueLength(blockchain);
