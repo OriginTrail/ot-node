@@ -30,11 +30,11 @@ class GetRequestCommand extends ProtocolRequestCommand {
     async handleAck(command, responseData) {
         if (responseData?.nquads) {
             try {
-                await this.validationService.validateAssertion(
-                    command.data.assertionId,
-                    command.data.blockchain,
-                    responseData.nquads,
-                );
+                // await this.validationService.validateAssertion(
+                //     command.data.assertionId,
+                //     command.data.blockchain,
+                //     responseData.nquads,
+                // );
             } catch (e) {
                 return this.handleNack(command, {
                     errorMessage: e.message,
