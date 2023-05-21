@@ -6,6 +6,8 @@ import {
     ERROR_TYPE,
     OPERATIONS,
     OPERATION_REQUEST_STATUS,
+    TRIPLE_STORE_REPOSITORIES,
+    ASSET_SYNC_PARAMETERS,
 } from '../constants/constants.js';
 
 class GetService extends OperationService {
@@ -20,6 +22,9 @@ class GetService extends OperationService {
             OPERATION_ID_STATUS.GET.GET_END,
             OPERATION_ID_STATUS.COMPLETED,
         ];
+        this.ualService = ctx.ualService;
+        this.tripleStoreService = ctx.tripleStoreService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.operationMutex = new Mutex();
     }
 
@@ -31,6 +36,12 @@ class GetService extends OperationService {
             keyword,
             batchSize,
             minAckResponses,
+            blockchain,
+            contract,
+            tokenId,
+            assertionId,
+            assetSync,
+            stateIndex,
         } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
@@ -68,6 +79,53 @@ class GetService extends OperationService {
                 this.completedStatuses,
             );
             this.logResponsesSummary(completedNumber, failedNumber);
+
+            if (assetSync) {
+                const assertionIds = await this.blockchainModuleManager.getAssertionIds(
+                    blockchain,
+                    contract,
+                    tokenId,
+                );
+                const UAL = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+                this.logger.debug(
+                    `ASSET_SYNC: ${responseData.nquads.length} nquads found for asset with ual: ${UAL}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                );
+
+                // Latest update - store in current repository
+                if (assertionIds[assertionIds.length - 1] === assertionId) {
+                    await this.tripleStoreService.localStoreAsset(
+                        TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                        assertionId,
+                        responseData.nquads,
+                        blockchain,
+                        contract,
+                        tokenId,
+                        keyword,
+                    );
+                } else {
+                    await this.tripleStoreService.localStoreAsset(
+                        TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                        assertionId,
+                        responseData.nquads,
+                        blockchain,
+                        contract,
+                        tokenId,
+                        keyword,
+                    );
+                }
+
+                this.logger.debug(
+                    `ASSET_SYNC: Updating status for asset sync record with ual: ${UAL}, state index: ${stateIndex}, assertionId: ${assertionId}, status: ${ASSET_SYNC_PARAMETERS.STATUS.COMPLETED}`,
+                );
+                await this.repositoryModuleManager.updateAssetSyncRecord(
+                    blockchain,
+                    contract,
+                    tokenId,
+                    stateIndex,
+                    ASSET_SYNC_PARAMETERS.STATUS.COMPLETED,
+                );
+            }
         }
 
         if (
