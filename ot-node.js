@@ -55,7 +55,10 @@ class OTNode {
         await this.executeMarkOldBlockchainEventsAsProcessedMigration();
         this.executeTripleStoreMetadataMigration();
 
-        await this.createProfiles();
+        // Profile creation disabled for the Asset sync nodes at the moment
+        if (!this.config.assetSync.enabled) {
+            await this.createProfiles();
+        }
 
         await this.initializeShardingTableService();
         await this.initializeTelemetryInjectionService();
