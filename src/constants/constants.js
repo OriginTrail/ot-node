@@ -117,7 +117,16 @@ export const REMOVE_SESSION_COMMAND_DELAY = 2 * 60 * 1000;
 
 export const OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
-export const ASSET_SYNC_COMMAND_FREQUENCY_MILLIS = 5 * 60 * 1000;
+export const ASSET_SYNC_PARAMETERS = {
+    COMMAND_FREQUENCY_MILLIS: 5 * 60 * 1000,
+    GET_RESULT_POLLING_INTERVAL_MILLIS: 3 * 1000,
+    GET_RESULT_POLLING_MAX_ATTEMPTS: 10,
+    STATUS: {
+        IN_PROGRESS: 'IN_PROGRESS',
+        FAILED: 'FAILED',
+        COMPLETED: 'COMPLETED',
+    },
+};
 
 export const DIAL_PEERS_COMMAND_FREQUENCY_MILLS = 30 * 1000;
 
@@ -407,6 +416,7 @@ export const CONTRACTS = {
     PROFILE_CONTRACT: 'ProfileContract',
     HUB_CONTRACT: 'HubContract',
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
+    CONTENT_ASSET: 'ContentAssetContract',
 };
 
 export const CONTRACT_EVENTS = {
@@ -429,6 +439,9 @@ export const CONTRACT_EVENTS = {
     },
     COMMIT_MANAGER_V1: {
         STATE_FINALIZED: 'StateFinalized',
+    },
+    CONTENT_ASSET: {
+        ASSET_STATE_UPDATE: 'AssetStateUpdated',
     },
 };
 
