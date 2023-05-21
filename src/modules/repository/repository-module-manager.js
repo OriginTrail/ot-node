@@ -5,36 +5,6 @@ class RepositoryModuleManager extends BaseModuleManager {
         return 'repository';
     }
 
-    async createAssetSyncRecord(blockchain, contract, tokenId, stateIndex, status) {
-        if (this.initialized) {
-            return this.getImplementation().module.createAssetSyncRecord(
-                blockchain,
-                contract,
-                tokenId,
-                stateIndex,
-                status,
-            );
-        }
-    }
-
-    async updateAssetSyncRecord(blockchain, contract, tokenId, stateIndex, status) {
-        if (this.initialized) {
-            return this.getImplementation().module.updateAssetSyncRecord(
-                blockchain,
-                contract,
-                tokenId,
-                stateIndex,
-                status,
-            );
-        }
-    }
-
-    async getLatestAssetSyncRecord(blockchain, contract) {
-        if (this.initialized) {
-            return this.getImplementation().module.getLatestAssetSyncRecord(blockchain, contract);
-        }
-    }
-
     transaction(execFn) {
         if (this.initialized) {
             return this.getImplementation().module.transaction(execFn);
@@ -261,6 +231,64 @@ class RepositoryModuleManager extends BaseModuleManager {
     async cleanShardingTable(blockchainId) {
         if (this.initialized) {
             return this.getImplementation().module.cleanShardingTable(blockchainId);
+        }
+    }
+
+    // Asset sync
+    async createAssetSyncRecord(
+        blockchain,
+        contract,
+        tokenId,
+        stateIndex,
+        status,
+        insertedByCommand = true,
+    ) {
+        if (this.initialized) {
+            return this.getImplementation().module.createAssetSyncRecord(
+                blockchain,
+                contract,
+                tokenId,
+                stateIndex,
+                status,
+                insertedByCommand,
+            );
+        }
+    }
+
+    async updateAssetSyncRecord(
+        blockchain,
+        contract,
+        tokenId,
+        stateIndex,
+        status,
+        insertedByCommand = true,
+    ) {
+        if (this.initialized) {
+            return this.getImplementation().module.updateAssetSyncRecord(
+                blockchain,
+                contract,
+                tokenId,
+                stateIndex,
+                status,
+                insertedByCommand,
+            );
+        }
+    }
+
+    async isStateSynced(blockchain, contract, tokenId, stateIndex) {
+        if (this.initialized) {
+            return this.getImplementation().module.isStateSynced(
+                blockchain,
+                contract,
+                tokenId,
+                stateIndex,
+            );
+        }
+    }
+
+    async getLatestAssetSyncRecord(blockchain, contract) {
+        if (this.initialized) {
+            return this.getImplementation().module.getLatestAssetSyncRecord(blockchain, contract);
         }
     }
 

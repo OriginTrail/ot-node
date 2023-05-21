@@ -23,6 +23,11 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             allowNull: false,
             type: Sequelize.STRING,
         },
+        inserted_by_command: {
+            allowNull: false,
+            type: Sequelize.BOOLEAN,
+            defaultValue: true,
+        },
         created_at: {
             allowNull: false,
             type: Sequelize.DATE,

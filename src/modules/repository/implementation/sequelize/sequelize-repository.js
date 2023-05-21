@@ -99,28 +99,62 @@ class SequelizeRepository {
         return this.models.sequelize.transaction(async (t) => execFn(t));
     }
 
-    async createAssetSyncRecord(blockchain, contract, tokenId, stateIndex, status) {
-        if (this.initialized) {
-            return this.getImplementation().module.createAssetSyncRecord(
-                blockchain,
-                contract,
-                tokenId,
-                stateIndex,
+    async createAssetSyncRecord(
+        blockchain,
+        contract,
+        tokenId,
+        stateIndex,
+        status,
+        insertedByCommand,
+    ) {
+        return this.models.asset_sync.create(
+            {
+                blockchain_id: blockchain,
+                asset_storage_contract: contract,
+                token_id: tokenId,
+                state_index: stateIndex,
                 status,
-            );
-        }
+                insertedByCommand,
+            },
+            {
+                ignoreDuplicates: true,
+            },
+        );
     }
 
-    async updateAssetSyncRecord(blockchain, contract, tokenId, stateIndex, status) {
-        if (this.initialized) {
-            return this.getImplementation().module.updateAssetSyncRecord(
-                blockchain,
-                contract,
-                tokenId,
-                stateIndex,
+    async updateAssetSyncRecord(
+        blockchain,
+        contract,
+        tokenId,
+        stateIndex,
+        status,
+        insertedByCommand,
+    ) {
+        return this.models.asset_sync.update(
+            {
                 status,
-            );
-        }
+                insertedByCommand,
+            },
+            {
+                where: {
+                    blockchain_id: blockchain,
+                    asset_storage_contract: contract,
+                    token_id: tokenId,
+                    state_index: stateIndex,
+                },
+            },
+        );
+    }
+
+    async isStateSynced(blockchain, contract, tokenId, stateIndex) {
+        return this.models.asset_sync.count({
+            where: {
+                blockchain_id: blockchain,
+                asset_storage_contract: contract,
+                token_id: tokenId,
+                state_index: stateIndex,
+            },
+        });
     }
 
     async getLatestAssetSyncRecord(blockchain, contract) {
@@ -129,6 +163,7 @@ class SequelizeRepository {
                 blockchain_id: blockchain,
                 asset_storage_contract: contract,
                 status: OPERATION_ID_STATUS.COMPLETED,
+                inserted_by_command: true,
             },
             order: [
                 ['token_id', 'DESC'],

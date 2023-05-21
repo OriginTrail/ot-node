@@ -25,6 +25,11 @@ export default (sequelize, DataTypes) => {
                 allowNull: false,
                 type: DataTypes.STRING,
             },
+            inserted_by_command: {
+                allowNull: false,
+                type: DataTypes.BOOLEAN,
+                defaultValue: true,
+            },
             created_at: {
                 allowNull: false,
                 type: DataTypes.DATE,
