@@ -152,19 +152,19 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         );
 
         const peerId = this.networkModuleManager.getPeerId().toB58String();
-        if (!neighbourhood.some((node) => node.peer_id === peerId)) {
+        if (!neighbourhood.some((node) => node.peerId === peerId)) {
             return;
         }
 
         const scores = await Promise.all(
             neighbourhood.map(async (node) => ({
                 score: await this.serviceAgreementService.calculateScore(
-                    node.peer_id,
+                    node.peerId,
                     blockchain,
                     keyword,
                     hashFunctionId,
                 ),
-                peerId: node.peer_id,
+                peerId: node.peerId,
             })),
         );
 
