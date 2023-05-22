@@ -352,6 +352,12 @@ export const COMMAND_STATUS = {
 };
 
 /**
+ * How many commands will run in parallel
+ * @type {number}
+ */
+export const COMMAND_QUEUE_PARALLELISM = 100;
+
+/**
  * @constant {object} NETWORK_PROTOCOLS -
  *  Network protocols
  */

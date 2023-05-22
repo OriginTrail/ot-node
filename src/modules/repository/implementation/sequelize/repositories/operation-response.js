@@ -12,7 +12,7 @@ class OperationResponseRepository {
         await this.models[`${operation}_response`].create({
             status,
             message,
-            operation_id: operationId,
+            operationId,
             keyword,
         });
     }
@@ -21,7 +21,7 @@ class OperationResponseRepository {
         return this.models[`${operation}_response`].findAll({
             attributes: ['status', 'keyword'],
             where: {
-                operation_id: operationId,
+                operationId,
             },
         });
     }
