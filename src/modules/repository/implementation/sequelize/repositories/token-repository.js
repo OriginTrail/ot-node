@@ -9,8 +9,8 @@ class TokenRepository {
     async saveToken(tokenId, userId, tokenName, expiresAt) {
         return this.model.create({
             id: tokenId,
-            user_id: userId,
-            expires_at: expiresAt,
+            userId,
+            expiresAt,
             name: tokenName,
         });
     }

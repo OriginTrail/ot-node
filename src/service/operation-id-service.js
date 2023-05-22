@@ -15,7 +15,7 @@ class OperationIdService {
         const operationIdObject = await this.repositoryModuleManager.createOperationIdRecord({
             status,
         });
-        const operationId = operationIdObject.operation_id;
+        const { operationId } = operationIdObject;
         this.emitChangeEvent(status, operationId);
         this.logger.debug(`Generated operation id for request ${operationId}`);
         return operationId;

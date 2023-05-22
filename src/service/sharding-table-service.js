@@ -44,8 +44,8 @@ class ShardingTableService {
         );
 
         if (
-            lastCheckedBlock?.last_checked_timestamp &&
-            Date.now() - lastCheckedBlock.last_checked_timestamp <
+            lastCheckedBlock?.lastCheckedTimestamp &&
+            Date.now() - lastCheckedBlock.lastCheckedTimestamp <
                 DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS
         ) {
             return;
@@ -95,8 +95,8 @@ class ShardingTableService {
                     );
 
                     return {
-                        peer_id: nodeId,
-                        blockchain_id: blockchainId,
+                        peerId: nodeId,
+                        blockchainId,
                         ask: this.blockchainModuleManager.convertFromWei(
                             blockchainId,
                             peer.ask,
