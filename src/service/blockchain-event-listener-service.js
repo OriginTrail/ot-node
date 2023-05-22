@@ -501,6 +501,11 @@ class BlockchainEventListenerService {
                 cachedData.agreementId &&
                 cachedData.agreementData
             ) {
+                const serviceAgreement =
+                    await this.repositoryModuleManager.getServiceAgreementRecord(
+                        cachedData.agreementId,
+                    );
+
                 await this.repositoryModuleManager.updateServiceAgreementRecord(
                     blockchain,
                     contract,
@@ -515,6 +520,8 @@ class BlockchainEventListenerService {
                     keyword,
                     assertionId,
                     stateIndex,
+                    serviceAgreement?.lastCommitEpoch,
+                    serviceAgreement?.lastProofEpoch,
                 );
             }
         } else if (currentRepository === TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT) {
