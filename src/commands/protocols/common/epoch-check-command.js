@@ -1,6 +1,11 @@
 /* eslint-disable no-await-in-loop */
+import { v4 as uuidv4 } from 'uuid';
 import Command from '../../command.js';
-import { COMMAND_RETRIES, TRANSACTION_CONFIRMATIONS } from '../../../constants/constants.js';
+import {
+    COMMAND_QUEUE_PARALLELISM,
+    COMMAND_RETRIES,
+    TRANSACTION_CONFIRMATIONS,
+} from '../../../constants/constants.js';
 
 class EpochCheckCommand extends Command {
     constructor(ctx) {
@@ -26,6 +31,11 @@ class EpochCheckCommand extends Command {
                     proofWindowDurationPerc,
                     command.period,
                 );
+
+                // We don't expect to have this many transactions in one epoch check window.
+                // This is just to make sure we don't schedule too many commands and block the queue
+                // TODO: find general solution for all commands scheduling blockchain transactions
+                totalTransactions = Math.min(totalTransactions, COMMAND_QUEUE_PARALLELISM * 0.3);
 
                 const transactionQueueLength =
                     this.blockchainModuleManager.getTransactionQueueLength(blockchain);
@@ -75,8 +85,8 @@ class EpochCheckCommand extends Command {
 
             updateServiceAgreementsLastCommitEpoch.push(
                 this.repositoryModuleManager.updateServiceAgreementLastCommitEpoch(
-                    serviceAgreement.agreement_id,
-                    serviceAgreement.current_epoch,
+                    serviceAgreement.agreementId,
+                    serviceAgreement.currentEpoch,
                 ),
             );
 
@@ -165,7 +175,7 @@ class EpochCheckCommand extends Command {
         );
 
         const peerId = this.networkModuleManager.getPeerId().toB58String();
-        if (!neighbourhood.some((node) => node.peer_id === peerId)) {
+        if (!neighbourhood.some((node) => node.peerId === peerId)) {
             return;
         }
 
@@ -207,6 +217,7 @@ class EpochCheckCommand extends Command {
 
     async scheduleSubmitCommitCommand(agreement) {
         const commandData = {
+            operationId: uuidv4(),
             blockchain: agreement.blockchainId,
             contract: agreement.assetStorageContractAddress,
             tokenId: agreement.tokenId,
@@ -228,6 +239,7 @@ class EpochCheckCommand extends Command {
 
     async scheduleSubmitProofsCommand(agreement) {
         const commandData = {
+            operationId: uuidv4(),
             blockchain: agreement.blockchainId,
             contract: agreement.assetStorageContractAddress,
             tokenId: agreement.tokenId,
