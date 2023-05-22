@@ -301,6 +301,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async getServiceAgreementRecord(agreementId) {
+        if (this.initialized) {
+            return this.getRepository('service_agreement').getServiceAgreementRecord(agreementId);
+        }
+    }
+
     async updateServiceAgreementLastCommitEpoch(agreementId, lastCommitEpoch) {
         if (this.initialized) {
             return this.getRepository('service_agreement').updateServiceAgreementLastCommitEpoch(

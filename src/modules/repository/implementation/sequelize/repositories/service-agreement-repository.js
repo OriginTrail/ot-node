@@ -63,6 +63,14 @@ class ServiceAgreementRepository {
         });
     }
 
+    async getServiceAgreementRecord(agreementId) {
+        return this.model.findOne({
+            where: {
+                agreementId,
+            },
+        });
+    }
+
     async updateServiceAgreementLastCommitEpoch(agreementId, lastCommitEpoch) {
         return this.model.update(
             { lastCommitEpoch },
