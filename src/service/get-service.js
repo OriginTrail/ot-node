@@ -86,37 +86,29 @@ class GetService extends OperationService {
                     contract,
                     tokenId,
                 );
-                const UAL = this.ualService.deriveUAL(blockchain, contract, tokenId);
+                const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
                 this.logger.debug(
-                    `ASSET_SYNC: ${responseData.nquads.length} nquads found for asset with ual: ${UAL}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                    `ASSET_SYNC: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
                 );
 
-                // Latest update - store in current repository
-                if (assertionIds[assertionIds.length - 1] === assertionId) {
-                    await this.tripleStoreService.localStoreAsset(
-                        TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                        assertionId,
-                        responseData.nquads,
-                        blockchain,
-                        contract,
-                        tokenId,
-                        keyword,
-                    );
-                } else {
-                    await this.tripleStoreService.localStoreAsset(
-                        TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
-                        assertionId,
-                        responseData.nquads,
-                        blockchain,
-                        contract,
-                        tokenId,
-                        keyword,
-                    );
-                }
+                const repository =
+                    assertionIds.length - 1 === stateIndex
+                        ? TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT
+                        : TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY;
+
+                await this.tripleStoreService.localStoreAsset(
+                    repository,
+                    assertionId,
+                    responseData.nquads,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    keyword,
+                );
 
                 this.logger.debug(
-                    `ASSET_SYNC: Updating status for asset sync record with ual: ${UAL}, state index: ${stateIndex}, assertionId: ${assertionId}, status: ${ASSET_SYNC_PARAMETERS.STATUS.COMPLETED}`,
+                    `ASSET_SYNC: Updating status for asset sync record with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}, status: ${ASSET_SYNC_PARAMETERS.STATUS.COMPLETED}`,
                 );
                 await this.repositoryModuleManager.updateAssetSyncRecord(
                     blockchain,
