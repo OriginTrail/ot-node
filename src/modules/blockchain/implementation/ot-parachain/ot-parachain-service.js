@@ -1,4 +1,5 @@
 import { ApiPromise, WsProvider, HttpProvider } from '@polkadot/api';
+import { BLOCK_TIME_MILLIS } from '../../../../constants/constants.js';
 import Web3Service from '../web3-service.js';
 
 const NATIVE_TOKEN_DECIMALS = 12;
@@ -86,13 +87,13 @@ class OtParachainService extends Web3Service {
                     provider = new HttpProvider(this.config.rpcEndpoints[this.rpcNumber]);
                 }
                 // eslint-disable-next-line no-await-in-loop
-                this.parachainProvider = await new ApiPromise({ provider }).isReady;
+                this.parachainProvider = await new ApiPromise({ provider }).isReadyOrError;
                 isRpcConnected = true;
             } catch (e) {
                 this.logger.warn(
                     `Unable to create parachain provider for endpoint : ${
                         this.config.rpcEndpoints[this.rpcNumber]
-                    }.`,
+                    }. Error: ${e.message}`,
                 );
                 tries += 1;
                 this.rpcNumber = (this.rpcNumber + 1) % this.config.rpcEndpoints.length;
@@ -139,6 +140,10 @@ class OtParachainService extends Web3Service {
     async getNativeTokenBalance() {
         const nativeBalance = await this.wallet.getBalance();
         return nativeBalance / 10 ** NATIVE_TOKEN_DECIMALS;
+    }
+
+    getBlockTimeMillis() {
+        return BLOCK_TIME_MILLIS.OTP;
     }
 }
 

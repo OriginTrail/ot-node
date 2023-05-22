@@ -14,7 +14,7 @@ export const PRIVATE_ASSERTION_PREDICATE =
     'https://ontology.origintrail.io/dkg/1.0#privateAssertionID';
 
 export const COMMIT_BLOCK_DURATION_IN_BLOCKS = 5;
-export const BLOCK_TIME = 12;
+
 export const COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS = 2;
 
 export const TRANSACTION_POLLING_TIMEOUT_MILLIS = 50 * 1000;
@@ -141,6 +141,7 @@ export const PERMANENT_COMMANDS = [
     'commandsCleanerCommand',
     'dialPeersCommand',
     'assetSyncCommand',
+    'epochCheckCommand',
 ];
 
 export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
@@ -363,6 +364,12 @@ export const COMMAND_STATUS = {
 };
 
 /**
+ * How many commands will run in parallel
+ * @type {number}
+ */
+export const COMMAND_QUEUE_PARALLELISM = 100;
+
+/**
  * @constant {object} NETWORK_PROTOCOLS -
  *  Network protocols
  */
@@ -416,7 +423,7 @@ export const CONTRACTS = {
     PROFILE_CONTRACT: 'ProfileContract',
     HUB_CONTRACT: 'HubContract',
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
-    CONTENT_ASSET: 'ContentAssetContract',
+    SERVICE_AGREEMENT_V1_CONTRACT: 'ServiceAgreementV1Contract',
 };
 
 export const CONTRACT_EVENTS = {
@@ -440,8 +447,9 @@ export const CONTRACT_EVENTS = {
     COMMIT_MANAGER_V1: {
         STATE_FINALIZED: 'StateFinalized',
     },
-    CONTENT_ASSET: {
-        ASSET_STATE_UPDATE: 'AssetStateUpdated',
+    SERVICE_AGREEMENT_V1: {
+        SERVICE_AGREEMENT_V1_EXTENDED: 'ServiceAgreementV1Extended',
+        SERVICE_AGREEMENT_V1_TERMINATED: 'ServiceAgreementV1Terminated',
     },
 };
 
@@ -462,3 +470,11 @@ export const FIXED_GAS_LIMIT_METHODS = {
     submitUpdateCommit: 600000,
     sendProof: 500000,
 };
+
+export const BLOCK_TIME_MILLIS = {
+    OTP: 12_000,
+    HARDHAT: 5_000,
+    DEFAULT: 12_000,
+};
+
+export const TRANSACTION_CONFIRMATIONS = 1;

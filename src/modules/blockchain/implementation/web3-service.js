@@ -10,6 +10,8 @@ import {
     TRANSACTION_QUEUE_CONCURRENCY,
     FIXED_GAS_LIMIT_METHODS,
     TRANSACTION_POLLING_TIMEOUT_MILLIS,
+    TRANSACTION_CONFIRMATIONS,
+    BLOCK_TIME_MILLIS,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -69,7 +71,7 @@ class Web3Service {
         }, concurrency);
     }
 
-    async queueTransaction(contractInstance, functionName, transactionArgs, callback) {
+    queueTransaction(contractInstance, functionName, transactionArgs, callback) {
         this.transactionQueue.push(
             {
                 contractInstance,
@@ -78,6 +80,10 @@ class Web3Service {
             },
             callback,
         );
+    }
+
+    getTransactionQueueLength() {
+        return this.transactionQueue.length();
     }
 
     async initializeWeb3() {
@@ -244,6 +250,10 @@ class Web3Service {
         return latestBlock.number;
     }
 
+    getBlockTimeMillis() {
+        return BLOCK_TIME_MILLIS.DEFAULT;
+    }
+
     async getIdentityId() {
         if (this.config.identityId) {
             return this.config.identityId;
@@ -351,7 +361,7 @@ class Web3Service {
 
                 this.logger.info(
                     'Sending signed transaction to blockchain, calling method: ' +
-                        `${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}`,
+                        `${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}. Transaction queue length: ${this.getTransactionQueueLength()}`,
                 );
                 const tx = await contractInstance[functionName](...args, {
                     gasPrice,
@@ -359,7 +369,7 @@ class Web3Service {
                 });
                 result = await this.provider.waitForTransaction(
                     tx.hash,
-                    null,
+                    TRANSACTION_CONFIRMATIONS,
                     TRANSACTION_POLLING_TIMEOUT_MILLIS,
                 );
             } catch (error) {
@@ -398,46 +408,36 @@ class Web3Service {
 
         let fromBlock;
         if (this.isOlderThan(lastCheckedTimestamp, DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS)) {
-            fromBlock = this.startBlock - 10;
+            fromBlock = this.startBlock;
         } else {
             fromBlock = lastCheckedBlock + 1;
         }
 
         let events = [];
-        if (currentBlock - fromBlock > MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH) {
-            let iteration = 1;
-
-            while (fromBlock - MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH > currentBlock) {
-                events.concat(
-                    await contract.queryFilter(
-                        '*',
-                        fromBlock,
-                        fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH * iteration,
-                    ),
-                );
-                fromBlock += MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH * iteration;
-                iteration += 1;
-            }
-        } else {
-            events = await contract.queryFilter('*', fromBlock, currentBlock);
+        while (fromBlock <= currentBlock) {
+            const toBlock = Math.min(
+                fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH - 1,
+                currentBlock,
+            );
+            const newEvents = await contract.queryFilter('*', fromBlock, toBlock);
+            events = events.concat(newEvents);
+            fromBlock = toBlock + 1;
         }
 
-        return events
-            ? events.map((event) => ({
-                  contract: contractName,
-                  event: event.event,
-                  data: JSON.stringify(
-                      Object.fromEntries(
-                          Object.entries(event.args).map(([k, v]) => [
-                              k,
-                              ethers.BigNumber.isBigNumber(v) ? v.toString() : v,
-                          ]),
-                      ),
-                  ),
-                  block: event.blockNumber,
-                  blockchainId,
-              }))
-            : [];
+        return events.map((event) => ({
+            contract: contractName,
+            event: event.event,
+            data: JSON.stringify(
+                Object.fromEntries(
+                    Object.entries(event.args).map(([k, v]) => [
+                        k,
+                        ethers.BigNumber.isBigNumber(v) ? v.toString() : v,
+                    ]),
+                ),
+            ),
+            block: event.blockNumber,
+            blockchainId,
+        }));
     }
 
     isOlderThan(timestamp, olderThanInMills) {
@@ -636,7 +636,7 @@ class Web3Service {
         return finalizationCommitsNumber;
     }
 
-    async submitCommit(
+    submitCommit(
         assetContractAddress,
         tokenId,
         keyword,
@@ -653,14 +653,7 @@ class Web3Service {
         );
     }
 
-    async submitUpdateCommit(
-        assetContractAddress,
-        tokenId,
-        keyword,
-        hashFunctionId,
-        epoch,
-        callback,
-    ) {
+    submitUpdateCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch, callback) {
         return this.queueTransaction(
             this.CommitManagerV1U1Contract,
             'submitUpdateCommit',
@@ -696,7 +689,7 @@ class Web3Service {
         return { assertionId: result['0'], challenge: result['1'] };
     }
 
-    async sendProof(
+    sendProof(
         assetContractAddress,
         tokenId,
         keyword,
@@ -838,6 +831,15 @@ class Web3Service {
             'proofWindowDurationPerc',
             [],
         );
+    }
+
+    async getEpochLength() {
+        const epochLength = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'epochLength',
+            [],
+        );
+        return Number(epochLength);
     }
 
     async isHashFunction(hashFunctionId) {

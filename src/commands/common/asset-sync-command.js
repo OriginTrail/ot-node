@@ -14,13 +14,11 @@ class AssetSyncCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.shardingTableService = ctx.shardingTableService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
         this.commandExecutor = ctx.commandExecutor;
         this.ualService = ctx.ualService;
-        this.serviceAgreementService = ctx.serviceAgreementService;
-        this.operationService = ctx.getService;
+        this.getService = ctx.getService;
     }
 
     /**
@@ -52,8 +50,8 @@ class AssetSyncCommand extends Command {
                         contract,
                     );
 
-                const latestSyncedTokenId = latestAssetSyncRecord?.token_id ?? 0;
-                let latestSyncedStateIndex = latestAssetSyncRecord?.state_index ?? -1;
+                const latestSyncedTokenId = latestAssetSyncRecord?.tokenId ?? 0;
+                let latestSyncedStateIndex = latestAssetSyncRecord?.stateIndex ?? -1;
 
                 for (let tokenId = latestSyncedTokenId; tokenId < latestTokenId; tokenId += 1) {
                     if (tokenId !== latestSyncedTokenId) {
@@ -123,7 +121,7 @@ class AssetSyncCommand extends Command {
                         );
 
                         await this.repositoryModuleManager.createOperationRecord(
-                            this.operationService.getOperationName(),
+                            this.getService.getOperationName(),
                             operationId,
                             OPERATION_STATUS.IN_PROGRESS,
                         );

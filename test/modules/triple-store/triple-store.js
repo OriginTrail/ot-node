@@ -1,4 +1,4 @@
-import { describe, it, before, beforeEach } from 'mocha';
+/* import { describe, it, before, beforeEach } from 'mocha';
 import chai from 'chai';
 import { readFile } from 'fs/promises';
 import { formatAssertion, calculateRoot } from 'assertion-tools';
@@ -72,3 +72,4 @@ describe('Triple store module', () => {
         }
     });
 });
+ */

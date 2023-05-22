@@ -2,21 +2,21 @@ export default (sequelize, DataTypes) => {
     const assetSync = sequelize.define(
         'asset_sync',
         {
-            blockchain_id: {
+            blockchainId: {
                 allowNull: false,
                 type: DataTypes.STRING,
                 primaryKey: true,
             },
-            asset_storage_contract: {
+            assetStorageContract: {
                 allowNull: false,
                 type: DataTypes.STRING,
                 primaryKey: true,
             },
-            token_id: {
+            tokenId: {
                 type: DataTypes.INTEGER,
                 primaryKey: true,
             },
-            state_index: {
+            stateIndex: {
                 type: DataTypes.INTEGER,
                 allowNull: false,
                 primaryKey: true,
@@ -25,17 +25,17 @@ export default (sequelize, DataTypes) => {
                 allowNull: false,
                 type: DataTypes.STRING,
             },
-            inserted_by_command: {
+            insertedByCommand: {
                 allowNull: false,
                 type: DataTypes.BOOLEAN,
                 defaultValue: true,
             },
-            created_at: {
+            createdAt: {
                 allowNull: false,
                 type: DataTypes.DATE,
                 defaultValue: () => Date.now(),
             },
-            updated_at: {
+            updatedAt: {
                 allowNull: false,
                 type: DataTypes.DATE,
                 defaultValue: () => Date.now(),
