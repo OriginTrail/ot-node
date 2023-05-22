@@ -4,6 +4,7 @@ import { createRequire } from 'module';
 import {
     NODE_ENVIRONMENTS,
     TRANSACTION_POLLING_TIMEOUT_MILLIS,
+    TRANSACTION_CONFIRMATIONS,
 } from '../src/constants/constants.js';
 import validateArguments from './utils.js';
 
@@ -39,7 +40,11 @@ async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
         gasPrice: devEnvironment ? undefined : 8,
         gasLimit: 500_000,
     });
-    await provider.waitForTransaction(tx.hash, null, TRANSACTION_POLLING_TIMEOUT_MILLIS);
+    await provider.waitForTransaction(
+        tx.hash,
+        TRANSACTION_CONFIRMATIONS,
+        TRANSACTION_POLLING_TIMEOUT_MILLIS,
+    );
 }
 
 const expectedArguments = ['rpcEndpoint', 'ask', 'privateKey', 'hubContractAddress'];

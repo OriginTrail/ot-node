@@ -6,8 +6,8 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 unique: true,
             },
-            created_at: DataTypes.DATE,
-            updated_at: DataTypes.DATE,
+            createdAt: DataTypes.DATE,
+            updatedAt: DataTypes.DATE,
         },
         { underscored: true },
     );

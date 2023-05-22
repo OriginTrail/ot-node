@@ -1,0 +1,22 @@
+{
+    "modules": {
+        "repository": {
+            "enabled": true,
+            "implementation": {
+                "sequelize-repository": {
+                    "enabled": true,
+                    "package": "./repository/implementation/sequelize/sequelize-repository.js",
+                    "config": {
+                        "database": "operationaldb-test",
+                        "user": "root",
+                        "password": "",
+                        "port": "3306",
+                        "host": "localhost",
+                        "dialect": "mysql",
+                        "logging": false
+                    }
+                }
+            }
+        }
+    }
+}
