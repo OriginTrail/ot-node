@@ -89,19 +89,18 @@ class SubmitProofsCommand extends Command {
                 agreementId,
                 epoch,
             );
-        } else {
-            const alreadySubmitted = await this.proofAlreadySubmitted(
-                blockchain,
-                agreementId,
-                epoch,
-                stateIndex,
+        }
+        const alreadySubmitted = await this.proofAlreadySubmitted(
+            blockchain,
+            agreementId,
+            epoch,
+            stateIndex,
+        );
+        if (alreadySubmitted) {
+            this.logger.trace(
+                `Proofs already submitted for blockchain: ${blockchain} agreement id: ${agreementId}, epoch: ${epoch}, state index: ${stateIndex}`,
             );
-            if (alreadySubmitted) {
-                this.logger.trace(
-                    `Proofs already submitted for blockchain: ${blockchain} agreement id: ${agreementId}, epoch: ${epoch}, state index: ${stateIndex}`,
-                );
-                return Command.empty();
-            }
+            return Command.empty();
         }
 
         const transactionCompletePromise = new Promise((resolve, reject) => {
