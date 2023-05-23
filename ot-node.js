@@ -16,6 +16,7 @@ import ServiceAgreementsMetadataMigration from './src/migration/service-agreemen
 import RemoveAgreementStartEndTimeMigration from './src/migration/remove-agreement-start-end-time-migration.js';
 import MarkOldBlockchainEventsAsProcessedMigration from './src/migration/mark-old-blockchain-events-as-processed-migration.js';
 import TripleStoreMetadataMigration from './src/migration/triple-store-metadata-migration.js';
+import RemoveOldEpochCommandsMigration from './src/migration/remove-old-epoch-commands-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -55,7 +56,8 @@ class OTNode {
         await this.executeRemoveAgreementStartEndTimeMigration();
         await this.executeMarkOldBlockchainEventsAsProcessedMigration();
         await this.executeTripleStoreMetadataMigration();
-        this.executeServiceAgreementsMetadataMigration();
+        await this.executeServiceAgreementsMetadataMigration();
+        await this.executeRemoveOldEpochCommandsMigration();
 
         await this.createProfiles();
 
@@ -394,6 +396,26 @@ class OTNode {
             dataService,
         );
 
+        if (!(await migration.migrationAlreadyExecuted())) {
+            await migration.migrate();
+        }
+    }
+
+    async executeRemoveOldEpochCommandsMigration() {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
+
+        const migration = new RemoveOldEpochCommandsMigration(
+            'removeOldEpochCommandsMigration',
+            this.logger,
+            this.config,
+            repositoryModuleManager,
+        );
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();
         }

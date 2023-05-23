@@ -7,7 +7,6 @@ import {
     COMMAND_RETRIES,
     PENDING_STORAGE_REPOSITORIES,
     COMMIT_BLOCK_DURATION_IN_BLOCKS,
-    BLOCK_TIME,
     COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS,
 } from '../../../../../constants/constants.js';
 
@@ -61,22 +60,42 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
 
         const updateCommitWindowDuration =
             await this.blockchainModuleManager.getUpdateCommitWindowDuration(blockchain);
-        const R0 = await this.blockchainModuleManager.getR0(blockchain);
-        const R2 = await this.blockchainModuleManager.getR2(blockchain);
+        const r0 = await this.blockchainModuleManager.getR0(blockchain);
+        const r2 = await this.blockchainModuleManager.getR2(blockchain);
+        const scheduleCommandsPromises = [];
 
-        const rank = await this.calculateRank(blockchain, keyword, hashFunctionId, R2);
-        this.logger.trace(`Calculated rank: ${rank + 1} for agreement id:  ${agreementId}`);
-        const finalizationCommitsNumber =
-            await this.blockchainModuleManager.getFinalizationCommitsNumber(blockchain);
+        const rank = await this.calculateRank(blockchain, keyword, hashFunctionId, r2);
+        if (rank != null) {
+            this.logger.trace(`Calculated rank: ${rank + 1} for agreement id:  ${agreementId}`);
+            const finalizationCommitsNumber =
+                await this.blockchainModuleManager.getFinalizationCommitsNumber(blockchain);
 
-        const updateCommitDelay = await this.calculateUpdateCommitDelay(
-            updateCommitWindowDuration,
-            finalizationCommitsNumber,
-            R0,
-            rank,
-        );
+            const updateCommitDelay = await this.calculateUpdateCommitDelay(
+                blockchain,
+                updateCommitWindowDuration,
+                finalizationCommitsNumber,
+                r0,
+                rank,
+            );
+            scheduleCommandsPromises.push(
+                this.commandExecutor.add({
+                    name: 'submitUpdateCommitCommand',
+                    delay: updateCommitDelay,
+                    retries: COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT,
+                    data: {
+                        ...commandData,
+                        agreementData,
+                        agreementId,
+                        r0,
+                        r2,
+                        updateCommitWindowDuration,
+                    },
+                    transactional: false,
+                }),
+            );
+        }
 
-        await Promise.all([
+        scheduleCommandsPromises.push(
             this.commandExecutor.add({
                 name: 'deletePendingStateCommand',
                 sequence: [],
@@ -84,22 +103,9 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
                 data: { ...commandData, repository: PENDING_STORAGE_REPOSITORIES.PUBLIC },
                 transactional: false,
             }),
-            this.commandExecutor.add({
-                name: 'submitUpdateCommitCommand',
-                delay: updateCommitDelay * 1000,
-                retries: COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT,
-                data: {
-                    ...commandData,
-                    agreementData,
-                    agreementId,
-                    R0,
-                    R2,
-                    rank,
-                    updateCommitWindowDuration,
-                },
-                transactional: false,
-            }),
-        ]);
+        );
+
+        await Promise.all(scheduleCommandsPromises);
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_REMOTE_END,
@@ -108,14 +114,16 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async calculateUpdateCommitDelay(
+        blockchain,
         updateCommitWindowDuration,
         finalizationCommitsNumber,
-        R0,
+        r0,
         rank,
     ) {
         const r0OffsetPeriod = 0;
+        const blockTime = this.blockchainModuleManager.getBlockTimeMillis(blockchain);
         // wait for 5 blocks for first batch to send commits
-        const commitsBlockDuration = BLOCK_TIME * COMMIT_BLOCK_DURATION_IN_BLOCKS;
+        const commitsBlockDuration = blockTime * COMMIT_BLOCK_DURATION_IN_BLOCKS;
         const commitBlock = Math.floor(rank / finalizationCommitsNumber);
         // put 2 blocks delay between nodes if they are not in first batch
         const nextNodeDelay =
@@ -123,41 +131,46 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
                 ? 0
                 : (rank % finalizationCommitsNumber) *
                   COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS *
-                  BLOCK_TIME;
+                  blockTime;
         const delay = commitsBlockDuration * commitBlock + r0OffsetPeriod + nextNodeDelay;
         this.logger.info(
-            `Calculated update commit delay: ${delay}, commitsBlockDuration: ${commitsBlockDuration}, commitBlock: ${commitBlock}, r0OffsetPeriod:${r0OffsetPeriod}, updateCommitWindowDuration ${updateCommitWindowDuration}, finalizationCommitsNumber: ${finalizationCommitsNumber}, r0: ${R0}, rank: ${rank}`,
+            `Calculated update commit delay: ${Math.floor(
+                delay / 1000,
+            )}s, commitsBlockDuration: ${commitsBlockDuration}, commitBlock: ${commitBlock}, r0OffsetPeriod:${r0OffsetPeriod}, updateCommitWindowDuration ${updateCommitWindowDuration}s, finalizationCommitsNumber: ${finalizationCommitsNumber}, r0: ${r0}, rank: ${rank}`,
         );
 
         return delay;
     }
 
-    async calculateRank(blockchain, keyword, hashFunctionId, R2) {
+    async calculateRank(blockchain, keyword, hashFunctionId, r2) {
         const neighbourhood = await this.shardingTableService.findNeighbourhood(
             blockchain,
             keyword,
-            R2,
+            r2,
             hashFunctionId,
             true,
         );
 
+        const peerId = this.networkModuleManager.getPeerId().toB58String();
+        if (!neighbourhood.some((node) => node.peerId === peerId)) {
+            return;
+        }
+
         const scores = await Promise.all(
             neighbourhood.map(async (node) => ({
                 score: await this.serviceAgreementService.calculateScore(
-                    node.peer_id,
+                    node.peerId,
                     blockchain,
                     keyword,
                     hashFunctionId,
                 ),
-                peerId: node.peer_id,
+                peerId: node.peerId,
             })),
         );
 
         scores.sort((a, b) => b.score - a.score);
 
-        return scores.findIndex(
-            (node) => node.peerId === this.networkModuleManager.getPeerId().toB58String(),
-        );
+        return scores.findIndex((node) => node.peerId === peerId);
     }
 
     /**

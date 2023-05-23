@@ -6,13 +6,8 @@ import {
     DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS,
     COMMAND_STATUS,
     DEFAULT_COMMAND_DELAY_IN_MILLS,
+    COMMAND_QUEUE_PARALLELISM,
 } from '../constants/constants.js';
-
-/**
- * How many commands will run in parallel
- * @type {number}
- */
-const QUEUE_PARALLELISM = 100;
 
 /**
  * Queues and processes commands
@@ -26,8 +21,6 @@ class CommandExecutor {
         this.started = false;
 
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-
-        this.parallelism = QUEUE_PARALLELISM;
         this.verboseLoggingEnabled = this.config.commandExecutorVerboseLoggingEnabled;
 
         this.queue = async.queue((command, callback = () => {}) => {
@@ -41,7 +34,7 @@ class CommandExecutor {
                     );
                     process.exit(1);
                 });
-        }, this.parallelism);
+        }, COMMAND_QUEUE_PARALLELISM);
     }
 
     /**
@@ -75,7 +68,7 @@ class CommandExecutor {
         const command = executeCommand;
         const now = Date.now();
         await this._update(command, {
-            started_at: now,
+            startedAt: now,
         });
 
         if (this.verboseLoggingEnabled) {
@@ -90,7 +83,7 @@ class CommandExecutor {
             });
             return;
         }
-        if (command.deadline_at && now > command.deadline_at) {
+        if (command.deadlineAt && now > command.deadlineAt) {
             this.logger.warn(`Command ${command.name} and ID ${command.id} is too late...`);
             await this._update(command, {
                 status: COMMAND_STATUS.EXPIRED,
@@ -108,7 +101,7 @@ class CommandExecutor {
             return;
         }
 
-        const waitMs = command.ready_at + command.delay - now;
+        const waitMs = command.readyAt + command.delay - now;
         if (waitMs > 0) {
             if (this.verboseLoggingEnabled) {
                 this.logger.trace(
@@ -158,7 +151,7 @@ class CommandExecutor {
 
                 const children = result.commands.map((c) => {
                     const newCommand = c;
-                    newCommand.parent_id = command.id;
+                    newCommand.parentId = command.id;
                     return newCommand;
                 });
 
@@ -250,10 +243,10 @@ class CommandExecutor {
         const now = Date.now();
 
         if (delay != null && delay > MAX_COMMAND_DELAY_IN_MILLS) {
-            if (command.ready_at == null) {
-                command.ready_at = now;
+            if (command.readyAt == null) {
+                command.readyAt = now;
             }
-            command.ready_at += delay;
+            command.readyAt += delay;
             delay = MAX_COMMAND_DELAY_IN_MILLS;
         }
 
@@ -339,8 +332,8 @@ class CommandExecutor {
             [command.name] = command.sequence;
             command.sequence = command.sequence.slice(1);
         }
-        if (!command.ready_at) {
-            command.ready_at = Date.now(); // take current time
+        if (!command.readyAt) {
+            command.readyAt = Date.now(); // take current time
         }
         if (command.delay == null) {
             command.delay = 0;
@@ -414,10 +407,10 @@ class CommandExecutor {
 
         // TODO consider JOIN instead
         const commands = pendingCommands.filter(async (pc) => {
-            if (!pc.parent_id) {
+            if (!pc.parentId) {
                 return true;
             }
-            const parent = await this.repositoryModuleManager.getCommandWithId(pc.parent_id);
+            const parent = await this.repositoryModuleManager.getCommandWithId(pc.parentId);
             return !parent || parent.status === 'COMPLETED';
         });
 
@@ -427,14 +420,14 @@ class CommandExecutor {
                 id: commandModel.id,
                 name: commandModel.name,
                 data: commandModel.data,
-                ready_at: commandModel.ready_at,
+                readyAt: commandModel.readyAt,
                 delay: commandModel.delay,
-                started_at: commandModel.started_at,
-                deadline_at: commandModel.deadline_at,
+                startedAt: commandModel.startedAt,
+                deadlineAt: commandModel.deadlineAt,
                 period: commandModel.period,
                 status: commandModel.status,
                 message: commandModel.message,
-                parent_id: commandModel.parent_id,
+                parentId: commandModel.parentId,
                 transactional: commandModel.transactional,
                 retries: commandModel.retries,
                 sequence: commandModel.sequence,

@@ -7,16 +7,16 @@ export default (sequelize, DataTypes) => {
                 primaryKey: true,
                 autoIncrement: true,
             },
-            operation_id: DataTypes.UUID,
+            operationId: DataTypes.UUID,
             name: DataTypes.STRING,
             timestamp: DataTypes.STRING,
             value1: DataTypes.TEXT,
             value2: DataTypes.TEXT,
             value3: DataTypes.TEXT,
-            created_at: DataTypes.DATE,
-            updated_at: DataTypes.DATE,
+            createdAt: DataTypes.DATE,
+            updatedAt: DataTypes.DATE,
         },
-        {},
+        { underscored: true },
     );
     event.associate = () => {
         // associations can be defined here
