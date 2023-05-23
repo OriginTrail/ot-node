@@ -236,7 +236,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async submitCommit(
+    submitCommit(
         blockchain,
         assetContractAddress,
         tokenId,
@@ -257,7 +257,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async submitUpdateCommit(
+    submitUpdateCommit(
         blockchain,
         assetContractAddress,
         tokenId,
@@ -293,7 +293,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async sendProof(
+    sendProof(
         blockchain,
         assetContractAddress,
         tokenId,

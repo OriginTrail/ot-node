@@ -6,13 +6,8 @@ import {
     DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS,
     COMMAND_STATUS,
     DEFAULT_COMMAND_DELAY_IN_MILLS,
+    COMMAND_QUEUE_PARALLELISM,
 } from '../constants/constants.js';
-
-/**
- * How many commands will run in parallel
- * @type {number}
- */
-const QUEUE_PARALLELISM = 100;
 
 /**
  * Queues and processes commands
@@ -24,8 +19,6 @@ class CommandExecutor {
         this.started = false;
 
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-
-        this.parallelism = QUEUE_PARALLELISM;
         this.verboseLoggingEnabled = ctx.config.commandExecutorVerboseLoggingEnabled;
 
         this.queue = async.queue((command, callback = () => {}) => {
@@ -39,7 +32,7 @@ class CommandExecutor {
                     );
                     process.exit(1);
                 });
-        }, this.parallelism);
+        }, COMMAND_QUEUE_PARALLELISM);
     }
 
     /**
