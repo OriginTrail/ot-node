@@ -152,7 +152,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         );
 
         const peerId = this.networkModuleManager.getPeerIdString();
-        if (!neighbourhood.some((node) => node.peer_id === peerId)) {
+        if (!neighbourhood.some((node) => node.peerId === peerId)) {
             return;
         }
 

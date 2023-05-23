@@ -70,7 +70,7 @@ class Web3Service {
         }, concurrency);
     }
 
-    async queueTransaction(contractInstance, functionName, transactionArgs, callback) {
+    queueTransaction(contractInstance, functionName, transactionArgs, callback) {
         this.transactionQueue.push(
             {
                 contractInstance,
@@ -635,7 +635,7 @@ class Web3Service {
         return finalizationCommitsNumber;
     }
 
-    async submitCommit(
+    submitCommit(
         assetContractAddress,
         tokenId,
         keyword,
@@ -652,14 +652,7 @@ class Web3Service {
         );
     }
 
-    async submitUpdateCommit(
-        assetContractAddress,
-        tokenId,
-        keyword,
-        hashFunctionId,
-        epoch,
-        callback,
-    ) {
+    submitUpdateCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch, callback) {
         return this.queueTransaction(
             this.CommitManagerV1U1Contract,
             'submitUpdateCommit',
@@ -695,7 +688,7 @@ class Web3Service {
         return { assertionId: result['0'], challenge: result['1'] };
     }
 
-    async sendProof(
+    sendProof(
         assetContractAddress,
         tokenId,
         keyword,
