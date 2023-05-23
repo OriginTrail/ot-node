@@ -31,7 +31,6 @@ const ABIs = {
     ProfileStorage: require('dkg-evm-module/abi/ProfileStorage.json'),
     ScoringProxy: require('dkg-evm-module/abi/ScoringProxy.json'),
     ServiceAgreementV1: require('dkg-evm-module/abi/ServiceAgreementV1.json'),
-    ContentAsset: require('dkg-evm-module/abi/ContentAsset.json'),
     CommitManagerV1: require('dkg-evm-module/abi/CommitManagerV1.json'),
     CommitManagerV1U1: require('dkg-evm-module/abi/CommitManagerV1U1.json'),
     ProofManagerV1: require('dkg-evm-module/abi/ProofManagerV1.json'),
