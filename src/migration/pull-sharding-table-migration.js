@@ -65,8 +65,8 @@ class PullBlockchainShardingTableMigration extends BaseMigration {
                             );
 
                             return {
-                                peer_id: nodeId,
-                                blockchain_id: blockchainId,
+                                peerId: nodeId,
+                                blockchainId,
                                 ask: this.blockchainModuleManager.convertFromWei(
                                     blockchainId,
                                     peer.ask,

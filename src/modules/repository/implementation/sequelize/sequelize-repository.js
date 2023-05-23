@@ -3,12 +3,18 @@ import path from 'path';
 import fs from 'fs';
 import Sequelize from 'sequelize';
 import { fileURLToPath } from 'url';
-import {
-    OPERATION_ID_STATUS,
-    HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR,
-    SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES,
-} from '../../../../constants/constants.js';
 import createMigrator from './sequelize-migrator.js';
+import BlockchainEventRepository from './repositories/blockchain-event-repository.js';
+import BlockchainRepository from './repositories/blockchain-repository.js';
+import CommandRepository from './repositories/command-repository.js';
+import EventRepository from './repositories/event-repository.js';
+import OperationIdRepository from './repositories/operation-id-repository.js';
+import OperationRepository from './repositories/operation-repository.js';
+import OperationResponseRepository from './repositories/operation-response.js';
+import ServiceAgreementRepository from './repositories/service-agreement-repository.js';
+import ShardRepository from './repositories/shard-repository.js';
+import TokenRepository from './repositories/token-repository.js';
+import UserRepository from './repositories/user-repository.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
@@ -22,6 +28,20 @@ class SequelizeRepository {
         this.initializeSequelize();
         await this.runMigrations();
         await this.loadModels();
+
+        this.repositories = {
+            blockchain_event: new BlockchainEventRepository(this.models),
+            blockchain: new BlockchainRepository(this.models),
+            command: new CommandRepository(this.models),
+            event: new EventRepository(this.models),
+            operation_id: new OperationIdRepository(this.models),
+            operation: new OperationRepository(this.models),
+            operation_response: new OperationResponseRepository(this.models),
+            service_agreement: new ServiceAgreementRepository(this.models),
+            shard: new ShardRepository(this.models),
+            token: new TokenRepository(this.models),
+            user: new UserRepository(this.models),
+        };
     }
 
     initializeSequelize() {
@@ -101,507 +121,16 @@ class SequelizeRepository {
         return this.models.sequelize.transaction(async (t) => execFn(t));
     }
 
-    async updateServiceAgreementRecord(
-        blockchainId,
-        contract,
-        tokenId,
-        agreementId,
-        startTime,
-        epochsNumber,
-        epochLength,
-        scoreFunctionId,
-        proofWindowOffsetPerc,
-        hashFunctionId,
-        keyword,
-        assertionId,
-        stateIndex,
-        lastCommitEpoch,
-        lastProofEpoch,
-    ) {
-        return this.models.service_agreement.upsert({
-            blockchain_id: blockchainId,
-            asset_storage_contract_address: contract,
-            token_id: tokenId,
-            agreement_id: agreementId,
-            start_time: startTime,
-            epochs_number: epochsNumber,
-            epoch_length: epochLength,
-            score_function_id: scoreFunctionId,
-            proof_window_offset_perc: proofWindowOffsetPerc,
-            last_commit_epoch: lastCommitEpoch,
-            last_proof_epoch: lastProofEpoch,
-            hash_function_id: hashFunctionId,
-            keyword,
-            assertion_id: assertionId,
-            state_index: stateIndex,
-        });
-    }
-
-    async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
-        await this.models.service_agreement.destroy({
-            where: {
-                blockchain_id: blockchainId,
-                asset_storage_contract_address: contract,
-                token_id: tokenId,
-            },
-        });
-    }
-
-    // COMMAND
-    async updateCommand(update, opts) {
-        await this.models.commands.update(update, opts);
-    }
-
-    async destroyCommand(name) {
-        await this.models.commands.destroy({
-            where: {
-                name: { [Sequelize.Op.eq]: name },
-            },
-        });
-    }
-
-    async createCommand(command, opts) {
-        return this.models.commands.create(command, opts);
-    }
-
-    async getCommandsWithStatus(statusArray, excludeNameArray) {
-        return this.models.commands.findAll({
-            where: {
-                status: {
-                    [Sequelize.Op.in]: statusArray,
-                },
-                name: { [Sequelize.Op.notIn]: excludeNameArray },
-            },
-        });
-    }
-
-    async getCommandWithId(id) {
-        return this.models.commands.findOne({
-            where: {
-                id,
-            },
-        });
-    }
-
-    async removeFinalizedCommands(finalizedStatuses) {
-        await this.models.commands.destroy({
-            where: {
-                status: { [Sequelize.Op.in]: finalizedStatuses },
-                started_at: { [Sequelize.Op.lte]: Date.now() },
-            },
-        });
-    }
-
-    // OPERATION_ID
-    async createOperationIdRecord(handlerData) {
-        return this.models.operation_ids.create(handlerData);
-    }
-
-    async getOperationIdRecord(operationId) {
-        return this.models.operation_ids.findOne({
-            where: {
-                operation_id: operationId,
-            },
-        });
-    }
-
-    async updateOperationIdRecord(data, operationId) {
-        await this.models.operation_ids.update(data, {
-            where: {
-                operation_id: operationId,
-            },
-        });
-    }
-
-    async removeOperationIdRecord(timeToBeDeleted, statuses) {
-        await this.models.operation_ids.destroy({
-            where: {
-                timestamp: { [Sequelize.Op.lt]: timeToBeDeleted },
-                status: { [Sequelize.Op.in]: statuses },
-            },
-        });
-    }
-
-    async createOperationRecord(operation, operationId, status) {
-        return this.models[operation].create({
-            operation_id: operationId,
-            status,
-        });
-    }
-
-    async getOperationStatus(operation, operationId) {
-        return this.models[operation].findOne({
-            attributes: ['status'],
-            where: {
-                operation_id: operationId,
-            },
-        });
-    }
-
-    async updateOperationStatus(operation, operationId, status) {
-        await this.models[operation].update(
-            { status },
-            {
-                where: {
-                    operation_id: operationId,
-                },
-            },
-        );
-    }
-
-    async createOperationResponseRecord(status, operation, operationId, keyword, message) {
-        await this.models[`${operation}_response`].create({
-            status,
-            message,
-            operation_id: operationId,
-            keyword,
-        });
-    }
-
-    async getOperationResponsesStatuses(operation, operationId) {
-        return this.models[`${operation}_response`].findAll({
-            attributes: ['status', 'keyword'],
-            where: {
-                operation_id: operationId,
-            },
-        });
-    }
-
-    // Sharding Table
-    async createManyPeerRecords(peers) {
-        return this._bulkUpdatePeerRecords(peers, ['ask', 'stake', 'sha256']);
-    }
-
-    async _bulkUpdatePeerRecords(peerRecords, updateColumns) {
-        return this.models.shard.bulkCreate(
-            peerRecords.map((peerRecord) => ({
-                ask: 0,
-                stake: 0,
-                sha256: '',
-                ...peerRecord,
-            })),
-            {
-                validate: true,
-                updateOnDuplicate: updateColumns,
-            },
-        );
-    }
-
-    async removeShardingTablePeerRecords(blockchain) {
-        return this.models.shard.destroy({
-            where: { blockchain_id: blockchain },
-        });
-    }
-
-    async createPeerRecord(peerId, blockchain, ask, stake, lastSeen, sha256) {
-        return this.models.shard.create(
-            {
-                peer_id: peerId,
-                blockchain_id: blockchain,
-                ask,
-                stake,
-                last_seen: lastSeen,
-                sha256,
-            },
-            {
-                ignoreDuplicates: true,
-            },
-        );
-    }
-
-    async getAllPeerRecords(blockchain, filterLastSeen) {
-        const query = {
-            where: {
-                blockchain_id: {
-                    [Sequelize.Op.eq]: blockchain,
-                },
-            },
-            raw: true,
-        };
-
-        if (filterLastSeen) {
-            query.where.last_seen = {
-                [Sequelize.Op.gte]: Sequelize.col('last_dialed'),
-            };
-        }
-
-        return this.models.shard.findAll(query);
-    }
-
-    async getPeerRecord(peerId, blockchain) {
-        return this.models.shard.findOne({
-            where: {
-                blockchain_id: {
-                    [Sequelize.Op.eq]: blockchain,
-                },
-                peer_id: {
-                    [Sequelize.Op.eq]: peerId,
-                },
-            },
-            raw: true,
-        });
-    }
-
-    async getPeersCount(blockchain) {
-        return this.models.shard.count({
-            where: {
-                blockchain_id: blockchain,
-            },
-        });
-    }
-
-    async getPeersToDial(limit, dialFrequencyMillis) {
-        return this.models.shard.findAll({
-            attributes: ['peer_id'],
-            where: {
-                last_dialed: {
-                    [Sequelize.Op.lt]: new Date(Date.now() - dialFrequencyMillis),
-                },
-            },
-            order: [['last_dialed', 'asc']],
-            limit,
-            raw: true,
-        });
-    }
-
-    async updatePeersAsk(peerRecords) {
-        return this._bulkUpdatePeerRecords(peerRecords, ['ask']);
-    }
-
-    async updatePeersStake(peerRecords) {
-        return this._bulkUpdatePeerRecords(peerRecords, ['stake']);
-    }
-
-    async updatePeerRecordLastDialed(peerId, timestamp) {
-        await this.models.shard.update(
-            {
-                last_dialed: timestamp,
-            },
-            {
-                where: { peer_id: peerId },
-            },
-        );
-    }
-
-    async updatePeerRecordLastSeenAndLastDialed(peerId, timestamp) {
-        await this.models.shard.update(
-            {
-                last_dialed: timestamp,
-                last_seen: timestamp,
-            },
-            {
-                where: { peer_id: peerId },
-            },
-        );
-    }
-
-    async removePeerRecords(peerRecords) {
-        await this.models.shard.bulkDestroy(peerRecords);
-    }
-
-    async cleanShardingTable(blockchainId) {
-        await this.models.shard.destroy({
-            where: blockchainId ? { blockchain_id: blockchainId } : {},
-        });
-    }
-
-    async getLastCheckedBlock(blockchainId, contract) {
-        return this.models.blockchain.findOne({
-            attributes: ['last_checked_block', 'last_checked_timestamp'],
-            where: { blockchain_id: blockchainId, contract },
-            raw: true,
-        });
-    }
-
-    async removeLastCheckedBlockForContract(contract) {
-        return this.models.blockchain.destroy({
-            where: {
-                contract,
-            },
-        });
-    }
-
-    async updateLastCheckedBlock(blockchainId, currentBlock, timestamp, contract) {
-        return this.models.blockchain.upsert({
-            blockchain_id: blockchainId,
-            contract,
-            last_checked_block: currentBlock,
-            last_checked_timestamp: timestamp,
-        });
-    }
-
-    // EVENT
-    async createEventRecord(operationId, name, timestamp, value1, value2, value3) {
-        return this.models.event.create({
-            operation_id: operationId,
-            name,
-            timestamp,
-            value1,
-            value2,
-            value3,
-        });
-    }
-
-    async getUnpublishedEvents() {
-        // events without COMPLETE/FAILED status which are older than 30min
-        // are also considered finished
-        const minutes = 5;
-
-        let operationIds = await this.models.event.findAll({
-            raw: true,
-            attributes: [
-                Sequelize.fn('DISTINCT', Sequelize.col('operation_id')),
-                Sequelize.col('timestamp'),
-            ],
-            where: {
-                [Sequelize.Op.or]: {
-                    name: {
-                        [Sequelize.Op.in]: [
-                            OPERATION_ID_STATUS.COMPLETED,
-                            OPERATION_ID_STATUS.FAILED,
-                        ],
-                    },
-                    timestamp: {
-                        [Sequelize.Op.lt]: Sequelize.literal(
-                            `(UNIX_TIMESTAMP()*1000 - 1000*60*${minutes})`,
-                        ),
-                    },
-                },
-            },
-            order: [['timestamp', 'asc']],
-            limit:
-                Math.floor(HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR / 60) *
-                SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES,
-        });
-
-        operationIds = operationIds.map((e) => e.operation_id);
-
-        return this.models.event.findAll({
-            where: {
-                operation_id: {
-                    [Sequelize.Op.in]: operationIds,
-                },
-            },
-        });
-    }
-
-    async destroyEvents(ids) {
-        await this.models.event.destroy({
-            where: {
-                id: {
-                    [Sequelize.Op.in]: ids,
-                },
-            },
-        });
-    }
-
-    async getUser(username) {
-        return this.models.user.findOne({
-            where: {
-                name: username,
-            },
-        });
-    }
-
-    async saveToken(tokenId, userId, tokenName, expiresAt) {
-        return this.models.token.create({
-            id: tokenId,
-            user_id: userId,
-            expires_at: expiresAt,
-            name: tokenName,
-        });
-    }
-
-    async isTokenRevoked(tokenId) {
-        const token = await this.models.token.findByPk(tokenId);
-
-        return token && token.revoked;
-    }
-
-    async getTokenAbilities(tokenId) {
-        const abilities = await this.models.sequelize.query(
-            `SELECT a.name FROM token t
-                INNER JOIN user u ON t.user_id = u.id
-                INNER JOIN role r ON u.role_id = u.id
-                INNER JOIN role_ability ra on r.id = ra.role_id
-                INNER JOIN ability a on ra.ability_id = a.id
-                WHERE t.id=$tokenId;`,
-            { bind: { tokenId }, type: Sequelize.QueryTypes.SELECT },
-        );
-
-        return abilities.map((e) => e.name);
+    getRepository(repositoryName) {
+        return this.repositories[repositoryName];
     }
 
     async query(query) {
         return this.models.sequelize.query(query);
     }
 
-    async insertBlockchainEvents(events) {
-        const inserted = await this.models.blockchain_event.bulkCreate(
-            events.map((event) => ({
-                contract: event.contract,
-                event: event.event,
-                data: event.data,
-                block: event.block,
-                blockchain_id: event.blockchainId,
-                processed: false,
-            })),
-            {
-                ignoreDuplicates: true,
-            },
-        );
-        return inserted.map((event) => event.dataValues);
-    }
-
-    async getAllUnprocessedBlockchainEvents(eventNames) {
-        return this.models.blockchain_event.findAll({
-            where: {
-                processed: false,
-                event: { [Sequelize.Op.in]: eventNames },
-            },
-            order: [['block', 'asc']],
-        });
-    }
-
-    async blockchainEventExists(contract, event, data, block, blockchainId) {
-        const dbEvent = await this.models.blockchain_event.findOne({
-            where: {
-                contract,
-                event,
-                data,
-                block,
-                blockchain_id: blockchainId,
-            },
-        });
-        return !!dbEvent;
-    }
-
-    async markBlockchainEventsAsProcessed(events) {
-        const idsForUpdate = events.map((event) => event.id);
-        return this.models.blockchain_event.update(
-            { processed: true },
-            {
-                where: { id: { [Sequelize.Op.in]: idsForUpdate } },
-            },
-        );
-    }
-
-    // eslint-disable-next-line no-empty-function
-    async getEligibleSubmitCommits() {}
-
-    async updateServiceAgreementEpochsNumber(agreementId, epochsNumber) {
-        return this.models.service_agreement.update(
-            { epochs_number: epochsNumber },
-            {
-                where: { agreement_id: agreementId },
-            },
-        );
-    }
-
-    async removeServiceAgreements(agreementIds) {
-        return this.models.service_agreement.destroy({
-            where: { agreement_id: { [Sequelize.Op.in]: agreementIds } },
-        });
+    async destroyAllRecords(table) {
+        return this.models[table].destroy({ where: {} });
     }
 }
 

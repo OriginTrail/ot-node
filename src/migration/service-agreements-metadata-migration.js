@@ -123,7 +123,6 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
         }
         const stateIndex = assertionIds.length - 1;
         const assertionId = assertionIds[stateIndex];
-
         // calculate keyword
         const keyword = this.blockchainModuleManager.encodePacked(
             blockchain,

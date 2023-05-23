@@ -2,47 +2,47 @@ export default (sequelize, DataTypes) => {
     const serviceAgreement = sequelize.define(
         'service_agreement',
         {
-            blockchain_id: {
+            blockchainId: {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
-            asset_storage_contract_address: {
+            assetStorageContractAddress: {
                 type: DataTypes.STRING(42),
                 allowNull: false,
             },
-            token_id: {
+            tokenId: {
                 type: DataTypes.INTEGER.UNSIGNED,
                 allowNull: false,
             },
-            agreement_id: {
+            agreementId: {
                 type: DataTypes.STRING,
                 primaryKey: true,
             },
-            start_time: {
+            startTime: {
                 type: DataTypes.INTEGER.UNSIGNED,
                 allowNull: false,
             },
-            epochs_number: {
+            epochsNumber: {
                 type: DataTypes.SMALLINT.UNSIGNED,
                 allowNull: false,
             },
-            epoch_length: {
+            epochLength: {
                 type: DataTypes.INTEGER.UNSIGNED,
                 allowNull: false,
             },
-            score_function_id: {
+            scoreFunctionId: {
                 type: DataTypes.TINYINT.UNSIGNED,
                 allowNull: false,
             },
-            state_index: {
+            stateIndex: {
                 type: DataTypes.SMALLINT.UNSIGNED,
                 allowNull: false,
             },
-            assertion_id: {
+            assertionId: {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
-            hash_function_id: {
+            hashFunctionId: {
                 type: DataTypes.TINYINT.UNSIGNED,
                 allowNull: false,
             },
@@ -50,18 +50,18 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
-            proof_window_offset_perc: {
+            proofWindowOffsetPerc: {
                 type: DataTypes.TINYINT.UNSIGNED,
                 allowNull: false,
             },
-            last_commit_epoch: {
+            lastCommitEpoch: {
                 type: DataTypes.SMALLINT.UNSIGNED,
             },
-            last_proof_epoch: {
+            lastProofEpoch: {
                 type: DataTypes.SMALLINT.UNSIGNED,
             },
         },
-        {},
+        { underscored: true },
     );
     serviceAgreement.associate = () => {
         // associations can be defined here

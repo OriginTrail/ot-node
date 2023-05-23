@@ -123,11 +123,12 @@ class BlockchainEventListenerService {
             blockchainId,
             contractName,
         );
+
         const events = await this.blockchainModuleManager.getAllPastEvents(
             blockchainId,
             contractName,
-            lastCheckedBlockObject?.last_checked_block ?? 0,
-            lastCheckedBlockObject?.last_checked_timestamp ?? 0,
+            lastCheckedBlockObject?.lastCheckedBlock ?? 0,
+            lastCheckedBlockObject?.lastCheckedTimestamp ?? 0,
             currentBlock,
         );
 
@@ -200,7 +201,7 @@ class BlockchainEventListenerService {
         for (const event of blockEvents) {
             const { contractName, newContractAddress } = JSON.parse(event.data);
             this.blockchainModuleManager.initializeContract(
-                event.blockchain_id,
+                event.blockchainId,
                 contractName,
                 newContractAddress,
             );
@@ -212,13 +213,13 @@ class BlockchainEventListenerService {
             blockEvents.map(async (event) => {
                 const { contractName, newContractAddress } = JSON.parse(event.data);
                 this.blockchainModuleManager.initializeContract(
-                    event.blockchain_id,
+                    event.blockchainId,
                     contractName,
                     newContractAddress,
                 );
 
                 if (contractName === CONTRACTS.SHARDING_TABLE_CONTRACT) {
-                    await this.repositoryModuleManager.cleanShardingTable(event.blockchain_id);
+                    await this.repositoryModuleManager.cleanShardingTable(event.blockchainId);
                 }
             }),
         );
@@ -228,7 +229,7 @@ class BlockchainEventListenerService {
         for (const event of blockEvents) {
             const { newContractAddress } = JSON.parse(event.data);
             this.blockchainModuleManager.initializeAssetStorageContract(
-                event.blockchain_id,
+                event.blockchainId,
                 newContractAddress,
             );
         }
@@ -238,7 +239,7 @@ class BlockchainEventListenerService {
         for (const event of blockEvents) {
             const { newContractAddress } = JSON.parse(event.data);
             this.blockchainModuleManager.initializeAssetStorageContract(
-                event.blockchain_id,
+                event.blockchainId,
                 newContractAddress,
             );
         }
@@ -250,7 +251,7 @@ class BlockchainEventListenerService {
                 const eventData = JSON.parse(event.data);
 
                 const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                    event.blockchain_id,
+                    event.blockchainId,
                     eventData.nodeId,
                 );
 
@@ -262,17 +263,17 @@ class BlockchainEventListenerService {
 
                 this.logger.trace(`Adding peer id: ${nodeId} to sharding table.`);
                 return {
-                    peer_id: nodeId,
-                    blockchain_id: event.blockchain_id,
+                    peerId: nodeId,
+                    blockchainId: event.blockchainId,
                     ask: this.blockchainModuleManager.convertFromWei(
-                        event.blockchain_id,
+                        event.blockchainId,
                         eventData.ask,
                     ),
                     stake: this.blockchainModuleManager.convertFromWei(
-                        event.blockchain_id,
+                        event.blockchainId,
                         eventData.stake,
                     ),
-                    last_seen: new Date(0),
+                    lastSeen: new Date(0),
                     sha256: nodeIdSha256,
                 };
             }),
@@ -286,14 +287,14 @@ class BlockchainEventListenerService {
                 const eventData = JSON.parse(event.data);
 
                 const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                    event.blockchain_id,
+                    event.blockchainId,
                     eventData.nodeId,
                 );
 
                 this.logger.trace(`Removing peer id: ${nodeId} from sharding table.`);
                 return {
-                    peer_id: nodeId,
-                    blockchain_id: event.blockchain_id,
+                    peerId: nodeId,
+                    blockchainId: event.blockchainId,
                 };
             }),
         );
@@ -307,17 +308,17 @@ class BlockchainEventListenerService {
                 const eventData = JSON.parse(event.data);
 
                 const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                    event.blockchain_id,
+                    event.blockchainId,
                     eventData.nodeId,
                 );
 
                 this.logger.trace(`Updating stake value for peer id: ${nodeId} in sharding table.`);
 
                 return {
-                    peer_id: nodeId,
-                    blockchain_id: event.blockchain_id,
+                    peerId: nodeId,
+                    blockchainId: event.blockchainId,
                     stake: this.blockchainModuleManager.convertFromWei(
-                        event.blockchain_id,
+                        event.blockchainId,
                         eventData.newStake,
                     ),
                 };
@@ -337,17 +338,17 @@ class BlockchainEventListenerService {
                 const eventData = JSON.parse(event.data);
 
                 const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                    event.blockchain_id,
+                    event.blockchainId,
                     eventData.nodeId,
                 );
 
                 this.logger.trace(`Updating ask value for peer id: ${nodeId} in sharding table.`);
 
                 return {
-                    peer_id: nodeId,
-                    blockchain_id: event.blockchain_id,
+                    peerId: nodeId,
+                    blockchainId: event.blockchainId,
                     ask: this.blockchainModuleManager.convertFromWei(
-                        event.blockchain_id,
+                        event.blockchainId,
                         eventData.ask,
                     ),
                 };
@@ -363,7 +364,7 @@ class BlockchainEventListenerService {
                 const { agreementId } = JSON.parse(event.data);
 
                 const { epochsNumber } = await this.blockchainModuleManager.getAgreementData(
-                    event.blockchain_id,
+                    event.blockchainId,
                     agreementId,
                 );
 
@@ -387,7 +388,7 @@ class BlockchainEventListenerService {
             const eventData = JSON.parse(event.data);
 
             const { tokenId, keyword, state, stateIndex } = eventData;
-            const blockchain = event.blockchain_id;
+            const blockchain = event.blockchainId;
             const contract = eventData.assetContract;
             this.logger.trace(
                 `Handling event: ${event.event} for asset with ual: ${this.ualService.deriveUAL(
@@ -500,6 +501,11 @@ class BlockchainEventListenerService {
                 cachedData.agreementId &&
                 cachedData.agreementData
             ) {
+                const serviceAgreement =
+                    await this.repositoryModuleManager.getServiceAgreementRecord(
+                        cachedData.agreementId,
+                    );
+
                 await this.repositoryModuleManager.updateServiceAgreementRecord(
                     blockchain,
                     contract,
@@ -514,6 +520,8 @@ class BlockchainEventListenerService {
                     keyword,
                     assertionId,
                     stateIndex,
+                    serviceAgreement?.lastCommitEpoch,
+                    serviceAgreement?.lastProofEpoch,
                 );
             }
         } else if (currentRepository === TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT) {
