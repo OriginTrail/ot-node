@@ -1,0 +1,50 @@
+{
+    "latestTokenId": 12,
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/0": {
+        "status": "AGREEMENT_EXPIRED"
+    },
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/1": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 6460
+    },
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/2": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 3740
+    },
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/3": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 3729
+    },
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/4": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 3732
+    },
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/5": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 3754
+    },
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/6": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 3720
+    },
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/7": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 3719
+    },
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/8": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 3705
+    },
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/9": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 3730
+    },
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/10": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 3715
+    },
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/11": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 3705
+    }
+}

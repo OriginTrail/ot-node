@@ -1,10 +1,22 @@
-/* eslint-disable no-await-in-loop,import/no-extraneous-dependencies */
+/* eslint-disable no-await-in-loop,import/no-extraneous-dependencies,no-continue */
 import { createRequire } from 'module';
 import { ethers } from 'ethers';
 import DKG from 'dkg.js';
+import path from 'path';
+import { writeFile, readFile } from 'fs/promises';
+import appRootPath from 'app-root-path';
 import Logger from '../../src/logger/logger.js';
 
 const require = createRequire(import.meta.url);
+
+const from = Number(process.argv[2]);
+let to = process.argv[3];
+const filePath = path.join(
+    appRootPath.path,
+    'tools',
+    'validate-root-hash',
+    `validation-result-${from}-${to}.json`,
+);
 
 const logger = new Logger();
 
@@ -73,16 +85,18 @@ class ValidateRootHash {
         // get number of tokens for each content asset storage contract
         for (const assetStorageContractAddress in this.assetStorageContracts) {
             const storageContract = this.assetStorageContracts[assetStorageContractAddress];
-            const latestTokenId = Number(
-                await this.provider.getStorageAt(assetStorageContractAddress.toLowerCase(), 7),
-            );
+            if (to === 'lateset') {
+                to = Number(
+                    await this.provider.getStorageAt(assetStorageContractAddress.toLowerCase(), 7),
+                );
+            }
             this.logger.info(
-                `Latest token id: ${latestTokenId} for storage address: ${assetStorageContractAddress}`,
+                `Latest token id: ${to} for storage address: ${assetStorageContractAddress}`,
             );
-
-            for (let tokenId = 0; tokenId < latestTokenId; tokenId += 1) {
-                const ual = this.deriveUAL(this.blockchain, assetStorageContractAddress, tokenId);
-
+            const validationResult = await this.readValidationResult();
+            for (let tokenId = validationResult.latestTokenId; tokenId < Number(to); tokenId += 1) {
+                const ual = this.deriveUAL('otp', assetStorageContractAddress, tokenId);
+                this.logger.info(`Validating tokenId: ${tokenId}, with UAL: ${ual}`);
                 const assertionIds = await this.callContractFunction(
                     storageContract,
                     'getAssertionIds',
@@ -90,6 +104,9 @@ class ValidateRootHash {
                 );
                 if (!assertionIds?.length) {
                     this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
+                    validationResult[ual] = {
+                        status: 'MISSING_ASSERTION_IDS',
+                    };
                     continue;
                 }
                 // calculate keyword
@@ -111,19 +128,72 @@ class ValidateRootHash {
 
                 if (this.agreementExpired(agreementData)) {
                     this.logger.info(`Agreement expired for ual: ${ual}`);
+                    validationResult[ual] = {
+                        status: 'AGREEMENT_EXPIRED',
+                    };
                     continue;
                 }
-                // call get for this ual;
+
+                const startTime = Date.now();
                 const getResult = await this.client.asset.get(ual);
+                const duration = Date.now() - startTime;
                 // calculate root hash
                 if (await this.validateGetResult(getResult)) {
                     this.logger.info(`Valid root hash for ual: ${ual}`);
+                    validationResult[ual] = {
+                        status: 'VALID_ROOT_HASH',
+                        duration,
+                    };
                 } else {
-                    this.logger.info(`Invalid root hash for ual: ${ual}`);
-                    // get and log the issuer
+                    this.logger.error(`Invalid root hash for ual: ${ual}`);
+                    validationResult[ual] = {
+                        status: 'INVALID_ROOT_HASH',
+                        duration,
+                        errorMessage: getResult.operation.publicGet.errorMessage,
+                        response: getResult.public,
+                    };
                 }
+                validationResult.latestTokenId = tokenId + 1;
+                await this.saveValidationResult(validationResult);
             }
         }
+    }
+
+    async saveValidationResult(result) {
+        await writeFile(filePath, JSON.stringify(result, null, 4));
+    }
+
+    async readValidationResult() {
+        try {
+            const result = await readFile(filePath);
+            return JSON.parse(result);
+        } catch (error) {
+            return {
+                latestTokenId: from,
+            };
+        }
+    }
+
+    async printStats() {
+        const result = await this.readValidationResult();
+
+        let invalid = 0;
+        let invalidRootHash = 0;
+        let totalNumber = 0;
+        for (const key in result) {
+            const asset = result[key];
+            if (asset.errorMessage) {
+                invalid += 1;
+                if (asset.errorMessage === "Calculated root hashes don't match!") {
+                    invalidRootHash += 1;
+                }
+            }
+            totalNumber += 1;
+        }
+        console.log(
+            `Number of invalid: ${invalid}, invalid root hash: ${invalidRootHash}, total number: ${totalNumber}`,
+        );
+        // this.logger.info();
     }
 
     deriveUAL(blockchain, contract, tokenId) {
@@ -155,21 +225,21 @@ class ValidateRootHash {
         const epochLength = agreementData['2'].toNumber();
         const epochsNumber = agreementData['1'];
 
-        return Date.now() > agreementStartTime + epochLength * epochsNumber;
+        return Date.now() > agreementStartTime * 1000 + epochLength * 1000 * epochsNumber;
     }
 
     async validateGetResult(result) {
-        return !!result;
+        return !result.operation?.publicGet?.errorType;
     }
 }
 
-const hubContractAddress = '0x833048F6e6BEa78E0AAdedeCd2Dc2231dda443FB';
+const hubContractAddress = '0x5fA7916c48Fe6D5F1738d12Ad234b78c90B4cAdA';
 const walletPublicKey = '0x0bbE3909531Ace62Eef218b27378cCc5A9Bb1E70';
 const walletPrivateKey = '0x0a4b490a7dcba4b42f53a3d86bf2f3f74ea0a2d2651eb8d8fe6e3cb3925bb47c';
-const rpcEndpoint = 'https://lofar-tm-rpc.origin-trail.network';
-const blockchain = 'parachain::testnet';
-const otNodeHostname = '';
-const otNodePort = '';
+const rpcEndpoint = 'https://astrosat-parachain-rpc.origin-trail.network';
+const blockchain = 'otp::mainnet';
+const otNodeHostname = process.argv[4];
+const otNodePort = '8900';
 
 const DkgClient = new DKG({
     endpoint: otNodeHostname,
@@ -193,3 +263,5 @@ validateRootHash
     .catch((error) => {
         logger.error(error);
     });
+
+// validateRootHash.printStats().then(() => {});
