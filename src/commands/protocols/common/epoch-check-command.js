@@ -5,6 +5,7 @@ import {
     COMMAND_QUEUE_PARALLELISM,
     COMMAND_RETRIES,
     TRANSACTION_CONFIRMATIONS,
+    OPERATION_ID_STATUS,
 } from '../../../constants/constants.js';
 
 class EpochCheckCommand extends Command {
@@ -19,6 +20,11 @@ class EpochCheckCommand extends Command {
     }
 
     async execute(command) {
+        const operationId = uuidv4();
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_START,
+            operationId,
+        );
         await Promise.all(
             this.blockchainModuleManager.getImplementationNames().map(async (blockchain) => {
                 const commitWindowDurationPerc =
@@ -65,6 +71,12 @@ class EpochCheckCommand extends Command {
                 ]);
             }),
         );
+
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_END,
+            operationId,
+        );
+
         return Command.repeat();
     }
 
