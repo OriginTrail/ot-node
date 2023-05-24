@@ -1,0 +1,7 @@
+{
+    "latestTokenId": 200001,
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/200000": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 6541
+    }
+}

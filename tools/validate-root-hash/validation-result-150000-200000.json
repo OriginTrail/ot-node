@@ -1,0 +1,31 @@
+{
+    "latestTokenId": 150007,
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/150000": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 9145
+    },
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/150001": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 3841
+    },
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/150002": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 3740
+    },
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/150003": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 8859
+    },
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/150004": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 3741
+    },
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/150005": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 6263
+    },
+    "did:dkg:otp/0x5cac41237127f94c2d21dae0b14bfefa99880630/150006": {
+        "status": "VALID_ROOT_HASH",
+        "duration": 6259
+    }
+}

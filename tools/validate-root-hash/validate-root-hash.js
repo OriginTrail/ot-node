@@ -85,7 +85,7 @@ class ValidateRootHash {
         // get number of tokens for each content asset storage contract
         for (const assetStorageContractAddress in this.assetStorageContracts) {
             const storageContract = this.assetStorageContracts[assetStorageContractAddress];
-            if (to === 'lateset') {
+            if (to === 'latest') {
                 to = Number(
                     await this.provider.getStorageAt(assetStorageContractAddress.toLowerCase(), 7),
                 );
