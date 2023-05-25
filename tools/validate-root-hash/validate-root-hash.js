@@ -84,95 +84,100 @@ class ValidateRootHash {
     }
 
     async validate() {
-        try {
-            // get number of tokens for each content asset storage contract
-            for (const assetStorageContractAddress in this.assetStorageContracts) {
-                const storageContract = this.assetStorageContracts[assetStorageContractAddress];
-                if (to === 'latest') {
-                    to = Number(
-                        await this.provider.getStorageAt(
-                            assetStorageContractAddress.toLowerCase(),
-                            7,
-                        ),
-                    );
-                }
-                this.logger.info(
-                    `Latest token id: ${to} for storage address: ${assetStorageContractAddress}`,
-                );
-                const validationResult = await this.readValidationResult();
-                for (
-                    let tokenId = validationResult.latestTokenId;
-                    tokenId < Number(to);
-                    tokenId += 1
-                ) {
-                    const ual = this.deriveUAL('otp', assetStorageContractAddress, tokenId);
-                    this.logger.info(`Validating tokenId: ${tokenId}, with UAL: ${ual}`);
-                    const assertionIds = await this.callContractFunction(
-                        storageContract,
-                        'getAssertionIds',
-                        [tokenId],
-                    );
-                    if (!assertionIds?.length) {
-                        this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
-                        validationResult[ual] = {
-                            status: 'MISSING_ASSERTION_IDS',
-                        };
-                        continue;
+        let runScript = true;
+        while (runScript) {
+            try {
+                // get number of tokens for each content asset storage contract
+                for (const assetStorageContractAddress in this.assetStorageContracts) {
+                    const storageContract = this.assetStorageContracts[assetStorageContractAddress];
+                    if (to === 'latest') {
+                        to = Number(
+                            await this.provider.getStorageAt(
+                                assetStorageContractAddress.toLowerCase(),
+                                7,
+                            ),
+                        );
                     }
-                    // calculate keyword
-                    const keyword = this.encodePacked(
-                        ['address', 'bytes32'],
-                        [assetStorageContractAddress, assertionIds[0]],
+                    this.logger.info(
+                        `Latest token id: ${to} for storage address: ${assetStorageContractAddress}`,
                     );
-                    const agreementId = await this.generateId(
-                        assetStorageContractAddress,
-                        tokenId,
-                        keyword,
-                    );
-                    // check if still valid
-                    const agreementData = await this.callContractFunction(
-                        this.ServiceAgreementStorageProxy,
-                        'getAgreementData',
-                        [agreementId],
-                    );
+                    const validationResult = await this.readValidationResult();
+                    for (
+                        let tokenId = validationResult.latestTokenId;
+                        tokenId < Number(to);
+                        tokenId += 1
+                    ) {
+                        const ual = this.deriveUAL('otp', assetStorageContractAddress, tokenId);
+                        this.logger.info(`Validating tokenId: ${tokenId}, with UAL: ${ual}`);
+                        const assertionIds = await this.callContractFunction(
+                            storageContract,
+                            'getAssertionIds',
+                            [tokenId],
+                        );
+                        if (!assertionIds?.length) {
+                            this.logger.warn(
+                                `Unable to find assertion ids for asset with ual: ${ual}`,
+                            );
+                            validationResult[ual] = {
+                                status: 'MISSING_ASSERTION_IDS',
+                            };
+                            continue;
+                        }
+                        // calculate keyword
+                        const keyword = this.encodePacked(
+                            ['address', 'bytes32'],
+                            [assetStorageContractAddress, assertionIds[0]],
+                        );
+                        const agreementId = await this.generateId(
+                            assetStorageContractAddress,
+                            tokenId,
+                            keyword,
+                        );
+                        // check if still valid
+                        const agreementData = await this.callContractFunction(
+                            this.ServiceAgreementStorageProxy,
+                            'getAgreementData',
+                            [agreementId],
+                        );
 
-                    if (this.agreementExpired(agreementData)) {
-                        this.logger.info(`Agreement expired for ual: ${ual}`);
-                        validationResult[ual] = {
-                            status: 'AGREEMENT_EXPIRED',
-                        };
-                        continue;
-                    }
+                        if (this.agreementExpired(agreementData)) {
+                            this.logger.info(`Agreement expired for ual: ${ual}`);
+                            validationResult[ual] = {
+                                status: 'AGREEMENT_EXPIRED',
+                            };
+                            continue;
+                        }
 
-                    const startTime = Date.now();
-                    const getResult = await this.client.asset.get(ual);
-                    const duration = Date.now() - startTime;
-                    // calculate root hash
-                    if (await this.validateGetResult(getResult)) {
-                        this.logger.info(`Valid root hash for ual: ${ual}`);
-                        validationResult[ual] = {
-                            status: 'VALID_ROOT_HASH',
-                            duration,
-                        };
-                    } else {
-                        this.logger.error(`Invalid root hash for ual: ${ual}`);
-                        validationResult[ual] = {
-                            status: 'INVALID_ROOT_HASH',
-                            duration,
-                            errorMessage: getResult.operation.publicGet.errorMessage,
-                            response: getResult.public,
-                        };
+                        const startTime = Date.now();
+                        const getResult = await this.client.asset.get(ual);
+                        const duration = Date.now() - startTime;
+                        // calculate root hash
+                        if (await this.validateGetResult(getResult)) {
+                            this.logger.info(`Valid root hash for ual: ${ual}`);
+                            validationResult[ual] = {
+                                status: 'VALID_ROOT_HASH',
+                                duration,
+                            };
+                        } else {
+                            this.logger.error(`Invalid root hash for ual: ${ual}`);
+                            validationResult[ual] = {
+                                status: 'INVALID_ROOT_HASH',
+                                duration,
+                                errorMessage: getResult.operation.publicGet.errorMessage,
+                                response: getResult.public,
+                            };
+                        }
+                        validationResult.latestTokenId = tokenId + 1;
+                        await this.saveValidationResult(validationResult);
                     }
-                    validationResult.latestTokenId = tokenId + 1;
-                    await this.saveValidationResult(validationResult);
                 }
+            } catch (error) {
+                this.logger.error(`Error while validating: ${error.message}`);
+                if (errorCount >= maxErrorCount) {
+                    runScript = false;
+                }
+                errorCount += 1;
             }
-        } catch (error) {
-            this.logger.error(`Error while validating: ${error.message}`);
-            if (errorCount >= maxErrorCount) {
-                await this.validate();
-            }
-            errorCount += 1;
         }
     }
 
