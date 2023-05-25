@@ -222,6 +222,10 @@ class Web3Service {
         return this.config.evmManagementWalletPublicKey;
     }
 
+    getAssetStorageAddresses() {
+        return Object.keys(this.assetStorageContracts);
+    }
+
     async logBalances() {
         const nativeBalance = await this.getNativeTokenBalance();
         const tokenBalance = await this.getTokenBalance();
