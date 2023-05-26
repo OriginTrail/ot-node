@@ -1,4 +1,3 @@
-import { Op } from 'sequelize';
 import { OPERATION_ID_STATUS } from '../../../../../constants/constants.js';
 
 class AssetSyncRepository {
@@ -82,22 +81,10 @@ class AssetSyncRepository {
     }
 
     async getMissedAssetSyncTokenIds(blockchainId, assetStorageContract) {
-        return this.model.findAll({
-            attributes: [[this.sequelize.literal('t1.token_id + 1'), 'missing_id']],
-            include: [
-                {
-                    model: this.model,
-                    as: 't2',
-                    required: false,
-                    where: { id: { [Op.eq]: this.sequelize.literal('t1.token_id + 1') } },
-                },
-            ],
-            where: {
-                '$t2.token_id$': null,
-                blockchainId,
-                assetStorageContract,
-            },
-        });
+        return this.sequelize.query(`SELECT t1.token_id + 1 AS missing_id
+FROM asset_sync t1
+LEFT JOIN asset_sync t2 ON t1.token_id + 1 = t2.token_id
+WHERE t2.token_id IS NULL and t2.blockchain_id = "${blockchainId}" and asset_storage_contract = "${assetStorageContract}"`);
     }
 }
 

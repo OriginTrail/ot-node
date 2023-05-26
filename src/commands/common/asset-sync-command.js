@@ -53,12 +53,12 @@ class AssetSyncCommand extends Command {
                 const latestSyncedTokenId = latestAssetSyncRecord?.tokenId ?? 0;
                 const latestSyncedStateIndex = latestAssetSyncRecord?.stateIndex ?? -1;
 
-                await this.syncMissedAssets(
-                    blockchain,
-                    contract,
-                    latestSyncedTokenId,
-                    latestSyncedStateIndex,
-                );
+                // await this.syncMissedAssets(
+                //     blockchain,
+                //     contract,
+                //     latestSyncedTokenId,
+                //     latestSyncedStateIndex,
+                // );
 
                 for (let tokenId = latestSyncedTokenId; tokenId < latestTokenId; tokenId += 1) {
                     await this.syncAsset(
