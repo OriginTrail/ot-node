@@ -184,7 +184,6 @@ class CommandExecutor {
             try {
                 const result = await this._handleError(command, handler, e);
                 if (result && result.repeat) {
-                    // result.commands.forEach((c) => this.add(c, c.delay, true));
                     await this._update(command, {
                         status: COMMAND_STATUS.REPEATING,
                     });
