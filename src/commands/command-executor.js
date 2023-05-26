@@ -187,8 +187,19 @@ class CommandExecutor {
 
             try {
                 const result = await this._handleError(command, handler, e);
-                if (result && result.commands) {
-                    result.commands.forEach((c) => this.add(c, c.delay, true));
+                if (result && result.repeat) {
+                    // result.commands.forEach((c) => this.add(c, c.delay, true));
+                    await this._update(command, {
+                        status: COMMAND_STATUS.REPEATING,
+                    });
+
+                    command.data = handler.pack(command.data);
+
+                    const period = command.period
+                        ? command.period
+                        : DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS;
+                    await this.add(command, period, false);
+                    return Command.repeat();
                 }
             } catch (error) {
                 this.logger.warn(
