@@ -11,7 +11,10 @@ import {
 const MAXIMUM_FETCH_EVENTS_FAILED_COUNT = 5;
 const fetchEventsFailedCount = {};
 
-const eventNames = Object.values(CONTRACT_EVENTS).flatMap((e) => e);
+const eventNames = [];
+Object.keys(CONTRACT_EVENTS).forEach((contractName) => {
+    eventNames.push(...Object.values(CONTRACT_EVENTS[contractName]));
+});
 
 class BlockchainEventListenerService {
     constructor(ctx) {
@@ -49,46 +52,24 @@ class BlockchainEventListenerService {
 
         const currentBlock = await this.blockchainModuleManager.getBlockNumber();
         const syncContractEventsPromises = [
-            this.getContractEvents(
-                blockchainId,
-                CONTRACTS.SHARDING_TABLE_CONTRACT,
-                currentBlock,
-                CONTRACT_EVENTS.SHARDING_TABLE,
-            ),
-            this.getContractEvents(
-                blockchainId,
-                CONTRACTS.STAKING_CONTRACT,
-                currentBlock,
-                CONTRACT_EVENTS.STAKING,
-            ),
-            this.getContractEvents(
-                blockchainId,
-                CONTRACTS.PROFILE_CONTRACT,
-                currentBlock,
-                CONTRACT_EVENTS.PROFILE,
-            ),
+            this.getContractEvents(blockchainId, CONTRACTS.SHARDING_TABLE_CONTRACT, currentBlock),
+            this.getContractEvents(blockchainId, CONTRACTS.STAKING_CONTRACT, currentBlock),
+            this.getContractEvents(blockchainId, CONTRACTS.PROFILE_CONTRACT, currentBlock),
             this.getContractEvents(
                 blockchainId,
                 CONTRACTS.COMMIT_MANAGER_V1_U1_CONTRACT,
                 currentBlock,
-                CONTRACT_EVENTS.COMMIT_MANAGER_V1,
             ),
             this.getContractEvents(
                 blockchainId,
                 CONTRACTS.SERVICE_AGREEMENT_V1_CONTRACT,
                 currentBlock,
-                CONTRACT_EVENTS.SERVICE_AGREEMENT_V1,
             ),
         ];
 
         if (!devEnvironment) {
             syncContractEventsPromises.push(
-                this.getContractEvents(
-                    blockchainId,
-                    CONTRACTS.HUB_CONTRACT,
-                    currentBlock,
-                    CONTRACT_EVENTS.HUB,
-                ),
+                this.getContractEvents(blockchainId, CONTRACTS.HUB_CONTRACT, currentBlock),
             );
         }
         const contractEvents = await Promise.all(syncContractEventsPromises);
@@ -137,7 +118,7 @@ class BlockchainEventListenerService {
         }, eventFetchInterval);
     }
 
-    async getContractEvents(blockchainId, contractName, currentBlock, eventsToFilter) {
+    async getContractEvents(blockchainId, contractName, currentBlock) {
         const lastCheckedBlockObject = await this.repositoryModuleManager.getLastCheckedBlock(
             blockchainId,
             contractName,
@@ -146,7 +127,6 @@ class BlockchainEventListenerService {
         const events = await this.blockchainModuleManager.getAllPastEvents(
             blockchainId,
             contractName,
-            eventsToFilter,
             lastCheckedBlockObject?.lastCheckedBlock ?? 0,
             lastCheckedBlockObject?.lastCheckedTimestamp ?? 0,
             currentBlock,

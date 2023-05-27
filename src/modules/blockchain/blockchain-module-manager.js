@@ -141,7 +141,6 @@ class BlockchainModuleManager extends BaseModuleManager {
     async getAllPastEvents(
         blockchain,
         contractName,
-        eventsToFilter,
         lastCheckedBlock,
         lastCheckedTimestamp,
         currentBlock,
@@ -149,7 +148,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'getAllPastEvents', [
             blockchain,
             contractName,
-            eventsToFilter,
             lastCheckedBlock,
             lastCheckedTimestamp,
             currentBlock,
