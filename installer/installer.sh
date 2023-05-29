@@ -65,11 +65,6 @@ install_directory() {
     perform_step ln -sfn $OTNODE_DIR/$OTNODE_VERSION $OTNODE_DIR/current "Creating symlink from $OTNODE_DIR/$OTNODE_VERSION to $OTNODE_DIR/current"
 }
 
-install_firewall() {
-    ufw allow 22/tcp && ufw allow 8900 && ufw allow 9000
-    yes | ufw enable
-}
-
 install_prereqs() {
     export DEBIAN_FRONTEND=noninteractive
     NODEJS_VER="16"
@@ -88,7 +83,6 @@ install_prereqs() {
     perform_step apt update "Updating Ubuntu package repository"
     perform_step apt-get install nodejs -y "Installing node.js"
     perform_step npm install -g npm "Installing npm"
-    perform_step install_firewall "Configuring firewall"
     perform_step apt remove unattended-upgrades -y "Remove unattended upgrades"
 }
 
@@ -263,9 +257,9 @@ install_node() {
     perform_step touch $CONFIG_DIR/.origintrail_noderc "Configuring node config file"
     perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}}' > $CONFIG_DIR/.origintrail_noderc) "Adding loglevel and auth values to node config file"
 
-    perform_step $(jq --arg tripleStore "$tripleStore" --arg tripleStoreUrl "$tripleStoreUrl" '.modules.tripleStore.implementation[$tripleStore] |= 
+    perform_step $(jq --arg tripleStore "$tripleStore" --arg tripleStoreUrl "$tripleStoreUrl" '.modules.tripleStore.implementation[$tripleStore] |=
         {
-            "enabled": "true", 
+            "enabled": "true",
             "config": {
                 "repositories": {
                     "privateCurrent": {
@@ -293,24 +287,24 @@ install_node() {
                         "password": ""
                     }
                 }
-            } 
+            }
         } + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2"
 
     perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
-    
-    perform_step $(jq --arg blockchain "otp" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" --arg evmManagementWallet "$SHARES_TOKEN_NAME" --arg evmManagementWallet "$SHARES_TOKEN_SYMBOL" --arg sharesTokenName "$SHARES_TOKEN_NAME" --arg sharesTokenSymbol "$SHARES_TOKEN_SYMBOL" '.modules.blockchain.implementation[$blockchain].config |= 
-        { 
-            "evmOperationalWalletPublicKey": $evmOperationalWallet, 
-            "evmOperationalWalletPrivateKey": $evmOperationalWalletPrivateKey, 
-            "evmManagementWalletPublicKey": $evmManagementWallet, 
-            "sharesTokenName": $sharesTokenName, 
+
+    perform_step $(jq --arg blockchain "otp" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" --arg evmManagementWallet "$SHARES_TOKEN_NAME" --arg evmManagementWallet "$SHARES_TOKEN_SYMBOL" --arg sharesTokenName "$SHARES_TOKEN_NAME" --arg sharesTokenSymbol "$SHARES_TOKEN_SYMBOL" '.modules.blockchain.implementation[$blockchain].config |=
+        {
+            "evmOperationalWalletPublicKey": $evmOperationalWallet,
+            "evmOperationalWalletPrivateKey": $evmOperationalWalletPrivateKey,
+            "evmManagementWalletPublicKey": $evmManagementWallet,
+            "sharesTokenName": $sharesTokenName,
             "sharesTokenSymbol": $sharesTokenSymbol
         } + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2"
-    
+
     perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
 
     perform_step cp $OTNODE_DIR/installer/data/otnode.service /lib/systemd/system/ "Copying otnode service file"
-    
+
     systemctl daemon-reload
     perform_step systemctl enable otnode "Enabling otnode"
     perform_step systemctl start otnode "Starting otnode"
