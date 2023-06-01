@@ -87,6 +87,7 @@ class AssetSyncRepository {
                 blockchainId,
                 assetStorageContract,
             },
+            order: [['token_id', 'ASC']],
         });
         return tokenIds.map((t) => t.tokenId);
     }

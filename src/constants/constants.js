@@ -125,6 +125,7 @@ export const ASSET_SYNC_PARAMETERS = {
         IN_PROGRESS: 'IN_PROGRESS',
         FAILED: 'FAILED',
         COMPLETED: 'COMPLETED',
+        NOT_FOUND: 'NOT_FOUND',
     },
 };
 

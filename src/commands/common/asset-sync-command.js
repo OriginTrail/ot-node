@@ -193,7 +193,7 @@ class AssetSyncCommand extends Command {
             );
 
             const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
-
+            let { status } = getResult;
             if (cachedData?.assertion?.length) {
                 this.logger.debug(
                     `ASSET_SYNC: ${cachedData.assertion.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
@@ -219,10 +219,11 @@ class AssetSyncCommand extends Command {
                 this.logger.debug(
                     `ASSET_SYNC: No nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
                 );
+                status = ASSET_SYNC_PARAMETERS.STATUS.NOT_FOUND;
             }
 
             this.logger.debug(
-                `ASSET_SYNC: Updating status for asset sync record with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}, status: ${getResult?.status}`,
+                `ASSET_SYNC: Updating status for asset sync record with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}, status: ${status}`,
             );
 
             await this.repositoryModuleManager.updateAssetSyncRecord(
@@ -230,7 +231,7 @@ class AssetSyncCommand extends Command {
                 contract,
                 tokenId,
                 stateIndex,
-                getResult.status,
+                status,
             );
         }
     }
@@ -240,7 +241,7 @@ class AssetSyncCommand extends Command {
         if (tokenIds && tokenIds.length > 0) {
             this.logger.info(`ASSET_SYNC: Found ${tokenIds.length} missed assets, syncing`);
         }
-        for (const tokenId in tokenIds) {
+        for (const tokenId of tokenIds) {
             await this.syncAsset(
                 tokenId,
                 latestSyncedTokenId,
@@ -257,8 +258,8 @@ class AssetSyncCommand extends Command {
             contract,
         );
         const missedTokenIds = [];
-        if (tokenIds.length() - 1 !== tokenIds[tokenIds.length() - 1]) {
-            for (let i = 0; i < tokenIds[tokenIds.length() - 1]; i += 1) {
+        if (tokenIds.length - 1 !== tokenIds[tokenIds.length - 1]) {
+            for (let i = 0; i < tokenIds[tokenIds.length - 1]; i += 1) {
                 if (!tokenIds.includes(i)) {
                     missedTokenIds.push(i);
                 }
