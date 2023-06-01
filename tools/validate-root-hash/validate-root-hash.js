@@ -169,7 +169,9 @@ class ValidateRootHash {
                         }
                         validationResult.latestTokenId = tokenId + 1;
                         await this.saveValidationResult(validationResult);
+                        errorCount = 0;
                     }
+                    runScript = false;
                 }
             } catch (error) {
                 this.logger.error(`Error while validating: ${error.message}`);
@@ -185,9 +187,9 @@ class ValidateRootHash {
         await writeFile(filePath, JSON.stringify(result, null, 4));
     }
 
-    async readValidationResult() {
+    async readValidationResult(fPath = filePath) {
         try {
-            const result = await readFile(filePath);
+            const result = await readFile(fPath);
             return JSON.parse(result);
         } catch (error) {
             return {
@@ -197,24 +199,65 @@ class ValidateRootHash {
     }
 
     async printStats() {
-        const result = await this.readValidationResult();
+        const filePaths = [
+            path.join(
+                appRootPath.path,
+                'tools',
+                'validate-root-hash',
+                `validation-result-0-50000.json`,
+            ),
+            path.join(
+                appRootPath.path,
+                'tools',
+                'validate-root-hash',
+                `validation-result-50000-100000.json`,
+            ),
+            path.join(
+                appRootPath.path,
+                'tools',
+                'validate-root-hash',
+                `validation-result-100000-150000.json`,
+            ),
+            path.join(
+                appRootPath.path,
+                'tools',
+                'validate-root-hash',
+                `validation-result-150000-200000.json`,
+            ),
+            path.join(
+                appRootPath.path,
+                'tools',
+                'validate-root-hash',
+                `validation-result-200000-latest.json`,
+            ),
+        ];
 
-        let invalid = 0;
-        let invalidRootHash = 0;
-        let totalNumber = 0;
-        for (const key in result) {
-            const asset = result[key];
-            if (asset.errorMessage) {
-                invalid += 1;
-                if (asset.errorMessage === "Calculated root hashes don't match!") {
-                    invalidRootHash += 1;
+        for (const fPath of filePaths) {
+            const result = await this.readValidationResult(fPath);
+            let duration = 0;
+            let invalid = 0;
+            let invalidRootHash = 0;
+            let totalNumber = 0;
+            for (const key in result) {
+                const asset = result[key];
+                if (asset.errorMessage) {
+                    invalid += 1;
+                    if (asset.errorMessage === "Calculated root hashes don't match!") {
+                        invalidRootHash += 1;
+                    }
                 }
+                if (asset.duration) {
+                    duration += asset.duration;
+                }
+                totalNumber += 1;
             }
-            totalNumber += 1;
+            console.log(
+                `Number of invalid: ${invalid}, invalid root hash: ${invalidRootHash}, total number: ${totalNumber}, avg duration: ${
+                    duration / totalNumber
+                }`,
+            );
         }
-        console.log(
-            `Number of invalid: ${invalid}, invalid root hash: ${invalidRootHash}, total number: ${totalNumber}`,
-        );
+
         // this.logger.info();
     }
 
