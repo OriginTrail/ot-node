@@ -81,7 +81,7 @@ class AssetSyncRepository {
     }
 
     async getAssetSyncTokenIds(blockchainId, assetStorageContract) {
-        const tokenIds = this.model.findAll({
+        const tokenIds = await this.model.findAll({
             attributes: ['tokenId'],
             where: {
                 blockchainId,
