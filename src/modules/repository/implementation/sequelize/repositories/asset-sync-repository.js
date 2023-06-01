@@ -80,11 +80,15 @@ class AssetSyncRepository {
         });
     }
 
-    async getMissedAssetSyncTokenIds(blockchainId, assetStorageContract) {
-        return this.sequelize.query(`SELECT t1.token_id + 1 AS missing_id
-FROM asset_sync t1
-LEFT JOIN asset_sync t2 ON t1.token_id + 1 = t2.token_id
-WHERE t2.token_id IS NULL and t2.blockchain_id = "${blockchainId}" and asset_storage_contract = "${assetStorageContract}"`);
+    async getAssetSyncTokenIds(blockchainId, assetStorageContract) {
+        const tokenIds = this.model.findAll({
+            attributes: ['tokenId'],
+            where: {
+                blockchainId,
+                assetStorageContract,
+            },
+        });
+        return tokenIds.map((t) => t.tokenId);
     }
 }
 

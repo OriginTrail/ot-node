@@ -53,12 +53,12 @@ class AssetSyncCommand extends Command {
                 const latestSyncedTokenId = latestAssetSyncRecord?.tokenId ?? 0;
                 const latestSyncedStateIndex = latestAssetSyncRecord?.stateIndex ?? -1;
 
-                // await this.syncMissedAssets(
-                //     blockchain,
-                //     contract,
-                //     latestSyncedTokenId,
-                //     latestSyncedStateIndex,
-                // );
+                await this.syncMissedAssets(
+                    blockchain,
+                    contract,
+                    latestSyncedTokenId,
+                    latestSyncedStateIndex,
+                );
 
                 for (let tokenId = latestSyncedTokenId; tokenId < latestTokenId; tokenId += 1) {
                     await this.syncAsset(
@@ -236,10 +236,7 @@ class AssetSyncCommand extends Command {
     }
 
     async syncMissedAssets(blockchain, contract, latestSyncedTokenId, latestSyncedStateIndex) {
-        const tokenIds = this.repositoryModuleManager.getMissedAssetSyncTokenIds(
-            blockchain,
-            contract,
-        );
+        const tokenIds = await this.getMissedTokenIds(blockchain, contract);
         if (tokenIds && tokenIds.length > 0) {
             this.logger.info(`ASSET_SYNC: Found ${tokenIds.length} missed assets, syncing`);
         }
@@ -252,6 +249,23 @@ class AssetSyncCommand extends Command {
                 contract,
             );
         }
+    }
+
+    async getMissedTokenIds(blockchain, contract) {
+        const tokenIds = await this.repositoryModuleManager.getAssetSyncTokenIds(
+            blockchain,
+            contract,
+        );
+        const missedTokenIds = [];
+        if (tokenIds.length() - 1 !== tokenIds[tokenIds.length() - 1]) {
+            for (let i = 0; i < tokenIds[tokenIds.length() - 1]; i += 1) {
+                if (!tokenIds.includes(i)) {
+                    missedTokenIds.push(i);
+                }
+            }
+        }
+
+        return missedTokenIds;
     }
 
     /**
