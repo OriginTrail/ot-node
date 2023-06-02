@@ -1,4 +1,4 @@
-import { OPERATION_ID_STATUS } from '../../../../../constants/constants.js';
+import { ASSET_SYNC_PARAMETERS, OPERATION_ID_STATUS } from '../../../../../constants/constants.js';
 
 class AssetSyncRepository {
     constructor(models) {
@@ -86,6 +86,7 @@ class AssetSyncRepository {
             where: {
                 blockchainId,
                 assetStorageContract,
+                status: ASSET_SYNC_PARAMETERS.STATUS.COMPLETED,
             },
             order: [['token_id', 'ASC']],
         });
