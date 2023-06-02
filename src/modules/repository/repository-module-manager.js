@@ -152,8 +152,8 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('shard').getPeersToDial(limit, dialFrequencyMillis);
     }
 
-    async removePeerRecords(peerRecords) {
-        return this.getRepository('shard').removePeerRecords(peerRecords);
+    async removePeerRecord(peerRecords) {
+        return this.getRepository('shard').removePeerRecord(peerRecords);
     }
 
     async updatePeerRecordLastDialed(peerId, timestamp) {

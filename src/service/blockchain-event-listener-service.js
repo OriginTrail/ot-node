@@ -282,7 +282,7 @@ class BlockchainEventListenerService {
     }
 
     async handleNodeRemovedEvents(blockEvents) {
-        const peerRecords = await Promise.all(
+        await Promise.all(
             blockEvents.map(async (event) => {
                 const eventData = JSON.parse(event.data);
 
@@ -292,14 +292,10 @@ class BlockchainEventListenerService {
                 );
 
                 this.logger.trace(`Removing peer id: ${nodeId} from sharding table.`);
-                return {
-                    peerId: nodeId,
-                    blockchainId: event.blockchainId,
-                };
+
+                this.repositoryModuleManager.removePeerRecord(event.blockchainId, nodeId);
             }),
         );
-
-        await this.repositoryModuleManager.removePeerRecords(peerRecords);
     }
 
     async handleStakeIncreasedEvents(blockEvents) {
