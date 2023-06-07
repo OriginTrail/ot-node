@@ -118,7 +118,7 @@ class OperationIdService {
     async removeOperationIdCache(operationId) {
         this.logger.debug(`Removing operation id: ${operationId} cached data`);
         const operationIdCachePath = this.fileService.getOperationIdDocumentPath(operationId);
-        await this.fileService.removeFile(operationIdCachePath);
+        await this.fileService.removeFiles(operationIdCachePath);
         this.removeOperationIdMemoryCache(operationId);
     }
 
@@ -152,7 +152,7 @@ class OperationIdService {
             const now = new Date();
             const createdDate = (await this.fileService.stat(filePath)).mtime;
             if (createdDate.getTime() + expiredTimeout < now.getTime()) {
-                await this.fileService.removeFile(filePath);
+                await this.fileService.removeFiles(filePath);
                 return true;
             }
             return false;

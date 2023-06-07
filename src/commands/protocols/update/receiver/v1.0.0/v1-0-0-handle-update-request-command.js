@@ -42,15 +42,16 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_REMOTE_START,
         );
 
-        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
+        const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
         await this.pendingStorageService.cacheAssertion(
             PENDING_STORAGE_REPOSITORIES.PUBLIC,
             blockchain,
             contract,
             tokenId,
             {
+                stateId: cachedData.public.assertionId,
                 public: {
-                    assertion,
+                    assertion: cachedData.assertion,
                 },
                 agreementId,
                 agreementData,

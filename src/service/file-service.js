@@ -1,3 +1,4 @@
+import glob from 'glob';
 import path from 'path';
 import { mkdir, writeFile, readFile, unlink, stat, readdir } from 'fs/promises';
 import appRootPath from 'app-root-path';
@@ -48,39 +49,73 @@ class FileService {
      * @returns {Promise<JSON object>}
      * @private
      */
-    loadJsonFromFile(filePath) {
-        return this._readFile(filePath, true);
+    loadJsonFromFile(pattern) {
+        return this._readFile(pattern, true);
     }
 
-    async fileExists(filePath) {
-        try {
-            await stat(filePath);
-            return true;
-        } catch (e) {
-            return false;
-        }
+    async fileExists(pattern) {
+        return new Promise((resolve) => {
+            glob(pattern, (err, files) => {
+                if (err) {
+                    this.logger.error('An error occurred:', err);
+                    resolve(false);
+                } else {
+                    resolve(files.length > 0);
+                }
+            });
+        });
     }
 
-    async _readFile(filePath, convertToJSON = false) {
+    async _readFile(pattern, convertToJSON = false) {
         this.logger.debug(
-            `Reading file on path: ${filePath}, converting to json: ${convertToJSON}`,
+            `Reading file matching pattern: ${pattern}, converting to json: ${convertToJSON}`,
         );
         try {
-            const data = await readFile(filePath);
+            const filenames = await new Promise((resolve, reject) => {
+                glob(pattern, (err, files) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(files);
+                    }
+                });
+            });
+
+            if (filenames.length === 0) {
+                throw new Error(`No file found for pattern: ${pattern}`);
+            }
+
+            const data = await readFile(filenames[0]);
             return convertToJSON ? JSON.parse(data) : data.toString();
         } catch (e) {
-            throw Error(`File not found on path: ${filePath}`);
+            throw Error(`Error reading file for pattern: ${pattern}`);
         }
     }
 
-    async removeFile(filePath) {
-        if (await this.fileExists(filePath)) {
-            this.logger.trace(`Removing file on path: ${filePath}`);
-            await unlink(filePath);
-            return true;
+    async removeFiles(pattern) {
+        this.logger.trace(`Removing file(s) matching pattern: ${pattern}`);
+        try {
+            const filenames = await new Promise((resolve, reject) => {
+                glob(pattern, (err, files) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(files);
+                    }
+                });
+            });
+
+            await Promise.all(filenames.map((filename) => unlink(filename)));
+
+            if (filenames.length > 0) {
+                return true;
+            }
+
+            this.logger.debug(`No file found for pattern: ${pattern}`);
+            return false;
+        } catch (e) {
+            throw new Error(`Error removing file(s) for pattern: ${pattern}`);
         }
-        this.logger.debug(`File not found on path: ${filePath}`);
-        return false;
     }
 
     getDataFolderPath() {
@@ -106,18 +141,29 @@ class FileService {
         return path.join(this.getOperationIdCachePath(), operationId);
     }
 
-    getPendingStorageFileName(blockchain, contract, tokenId) {
-        return `${blockchain.toLowerCase()}:${contract.toLowerCase()}:${tokenId}`;
+    getPendingStorageFileName(blockchain, contract, tokenId, stateId) {
+        return `${blockchain.toLowerCase()}:${contract.toLowerCase()}:${tokenId}:${stateId}`;
+    }
+
+    getPendingStorageFileNamePattern(blockchain, contract, tokenId) {
+        return `${blockchain.toLowerCase()}:${contract.toLowerCase()}:${tokenId}:*`;
     }
 
     getPendingStorageCachePath(repository) {
         return path.join(this.getDataFolderPath(), 'pending_storage_cache', repository);
     }
 
-    getPendingStorageDocumentPath(repository, blockchain, contract, tokenId) {
+    getPendingStorageDocumentPathPattern(repository, blockchain, contract, tokenId) {
         return path.join(
             this.getPendingStorageCachePath(repository),
-            this.getPendingStorageFileName(blockchain, contract, tokenId),
+            this.getPendingStorageFileNamePattern(blockchain, contract, tokenId),
+        );
+    }
+
+    getPendingStorageDocumentPath(repository, blockchain, contract, tokenId, stateId) {
+        return path.join(
+            this.getPendingStorageCachePath(repository),
+            this.getPendingStorageFileName(blockchain, contract, tokenId, stateId),
         );
     }
 }

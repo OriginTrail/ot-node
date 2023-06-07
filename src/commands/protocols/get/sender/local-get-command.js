@@ -2,7 +2,6 @@ import Command from '../../../command.js';
 import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
-    GET_STATES,
     TRIPLE_STORE_REPOSITORIES,
     PENDING_STORAGE_REPOSITORIES,
 } from '../../../../constants/constants.js';
@@ -10,6 +9,7 @@ import {
 class LocalGetCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.config = ctx.config;
         this.operationService = ctx.getService;
         this.operationIdService = ctx.operationIdService;
@@ -24,31 +24,35 @@ class LocalGetCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, assertionId, state } = command.data;
+        const { operationId, blockchain, contract, tokenId, state } = command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.GET.GET_LOCAL_START,
         );
 
         const response = {};
-        if (
-            state === GET_STATES.LATEST &&
-            command.data.blockchain != null &&
-            command.data.contract != null &&
-            command.data.tokenId != null
-        ) {
-            for (const repository of [
-                PENDING_STORAGE_REPOSITORIES.PRIVATE,
-                PENDING_STORAGE_REPOSITORIES.PUBLIC,
-            ]) {
+        for (const repository of [
+            PENDING_STORAGE_REPOSITORIES.PRIVATE,
+            PENDING_STORAGE_REPOSITORIES.PUBLIC,
+        ]) {
+            const stateIsPending = this.pendingStorageService.stateIsPending(
+                repository,
+                blockchain,
+                contract,
+                tokenId,
+                state,
+            );
+
+            if (stateIsPending) {
                 // eslint-disable-next-line no-await-in-loop
                 const cachedAssertion = await this.pendingStorageService.getCachedAssertion(
                     repository,
-                    command.data.blockchain,
-                    command.data.contract,
-                    command.data.tokenId,
+                    blockchain,
+                    contract,
+                    tokenId,
                     operationId,
                 );
+
                 if (cachedAssertion?.public?.assertion?.length) {
                     response.assertion = cachedAssertion.public.assertion;
                     if (cachedAssertion?.private?.assertion?.length) {
@@ -63,12 +67,11 @@ class LocalGetCommand extends Command {
             for (const repository of [
                 TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
                 TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+                TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
             ]) {
                 // eslint-disable-next-line no-await-in-loop
-                response.assertion = await this.tripleStoreService.getAssertion(
-                    repository,
-                    assertionId,
-                );
+                response.assertion = await this.tripleStoreService.getAssertion(repository, state);
                 if (response?.assertion?.length) break;
             }
         }

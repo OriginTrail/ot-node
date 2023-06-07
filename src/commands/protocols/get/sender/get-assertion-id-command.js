@@ -1,7 +1,7 @@
 import Command from '../../../command.js';
 import { ERROR_TYPE, GET_STATES } from '../../../../constants/constants.js';
 
-class GetLatestAssertionIdCommand extends Command {
+class GetAssertionIdCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.getService;
@@ -16,56 +16,45 @@ class GetLatestAssertionIdCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { id, operationId, state } = command.data;
+        const { blockchain, contract, tokenId, state } = command.data;
 
         const commandData = {};
-        if (!this.ualService.isUAL(id)) {
-            this.handleError(operationId, `Requested id is not a UAL`, this.errorType, true);
 
-            return Command.empty();
-        }
-
-        const { blockchain, contract, tokenId } = this.ualService.resolveUAL(id);
-        commandData.blockchain = blockchain;
-        commandData.tokenId = tokenId;
-        commandData.contract = contract;
-
-        let unfinalizedAssertionId;
+        let assertionId;
         if (state === GET_STATES.LATEST) {
             this.logger.debug(
                 `Searching for latest assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
             );
-            unfinalizedAssertionId = await this.blockchainModuleManager.getUnfinalizedAssertionId(
+
+            assertionId = await this.blockchainModuleManager.getUnfinalizedAssertionId(
                 blockchain,
                 tokenId,
             );
-            commandData.assertionId = unfinalizedAssertionId;
+
+            commandData.assertionId = assertionId;
+            commandData.state = assertionId;
         }
 
         if (
-            typeof unfinalizedAssertionId === 'undefined' ||
-            !unfinalizedAssertionId ||
-            parseInt(unfinalizedAssertionId, 16) === 0
+            state === GET_STATES.FINALIZED &&
+            (typeof assertionId === 'undefined' || !assertionId || parseInt(assertionId, 16) === 0)
         ) {
             this.logger.debug(
                 `Searching for latest finalized assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
             );
-            const blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertionId(
+
+            assertionId = await this.blockchainModuleManager.getLatestAssertionId(
                 blockchain,
                 contract,
                 tokenId,
             );
-            if (!blockchainAssertionId) {
-                this.handleError(
-                    operationId,
-                    `Unable to find latest finalized assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
-                    this.errorType,
-                    true,
-                );
 
-                return Command.empty();
-            }
-            commandData.assertionId = blockchainAssertionId;
+            commandData.assertionId = assertionId;
+            commandData.state = assertionId;
+        }
+
+        if (!Object.values(GET_STATES).includes(state)) {
+            commandData.assertionId = state;
         }
 
         return this.continueSequence({ ...command.data, ...commandData }, command.sequence);
@@ -76,13 +65,13 @@ class GetLatestAssertionIdCommand extends Command {
     }
 
     /**
-     * Builds default getLatestAssertionIdCommand
+     * Builds default getStateIdConditionalCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'getLatestAssertionIdCommand',
+            name: 'getAssertionIdCommand',
             delay: 0,
             transactional: false,
         };
@@ -91,4 +80,4 @@ class GetLatestAssertionIdCommand extends Command {
     }
 }
 
-export default GetLatestAssertionIdCommand;
+export default GetAssertionIdCommand;

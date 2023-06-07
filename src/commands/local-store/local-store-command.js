@@ -80,6 +80,7 @@ class LocalStoreCommand extends Command {
                     blockchain,
                     contract,
                     tokenId,
+                    cachedData.public.assertionId,
                     {
                         ...cachedData,
                         keyword,
