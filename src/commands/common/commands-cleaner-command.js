@@ -1,6 +1,9 @@
 import Command from '../command.js';
 // eslint-disable-next-line no-unused-vars
-import { COMMAND_STATUS, FINALIZED_COMMAND_CLEANUP_TIME_MILLS } from '../../constants/constants.js';
+import {
+    FINALIZED_COMMAND_CLEANUP_TIME_MILLS,
+    ARCHIVE_COMMANDS_FOLDER,
+} from '../../constants/constants.js';
 
 /**
  * Increases approval for Bidding contract on blockchain
@@ -10,6 +13,7 @@ class CommandsCleanerCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.fileService = ctx.fileService;
     }
 
     /**
@@ -17,13 +21,30 @@ class CommandsCleanerCommand extends Command {
      * @param command
      */
     async execute() {
-        // TODO: Uncomment after discussion
-        // await this.repositoryModuleManager.removeFinalizedCommands([
-        //     COMMAND_STATUS.COMPLETED,
-        //     COMMAND_STATUS.FAILED,
-        //     COMMAND_STATUS.EXPIRED,
-        //     COMMAND_STATUS.UNKNOWN,
-        // ]);
+        const nowTimestamp = Date.now();
+        const commandsForRemoval = await this.repositoryModuleManager.findFinalizedCommands(
+            nowTimestamp,
+        );
+        if (commandsForRemoval.length > 2) {
+            // save in archive folder data/archive/database/commands/startTimestamp-endTimestamp.archive.json
+            const archiveFolderPath =
+                this.fileService.getArchiveFolderPath(ARCHIVE_COMMANDS_FOLDER);
+
+            const archiveName = `${commandsForRemoval[0].startedAt}-${
+                commandsForRemoval[commandsForRemoval.length - 1].startedAt
+            }.json`;
+
+            await this.fileService.writeContentsToFile(
+                archiveFolderPath,
+                archiveName,
+                JSON.stringify(commandsForRemoval),
+            );
+
+            // remove from database;
+            const ids = commandsForRemoval.map((command) => command.id);
+            await this.repositoryModuleManager.removeCommands(ids);
+        }
+
         return Command.repeat();
     }
 

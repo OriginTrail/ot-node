@@ -349,7 +349,9 @@ export const OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
  * @constant {number} FINALIZED_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time
  * finalized commands command cleanup interval time 24h
  */
-export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 30 * 24 * 60 * 60 * 1000;
+export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+export const ARCHIVE_COMMANDS_FOLDER = 'commands';
 /**
  * @constant {number} COMMAND_STATUS -
  * Status for commands
