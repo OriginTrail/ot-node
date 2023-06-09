@@ -116,6 +116,7 @@ class GetService extends OperationService {
                     tokenId,
                     stateIndex,
                     ASSET_SYNC_PARAMETERS.STATUS.COMPLETED,
+                    false,
                 );
             }
         }
