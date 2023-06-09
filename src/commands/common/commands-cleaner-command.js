@@ -3,6 +3,7 @@ import Command from '../command.js';
 import {
     FINALIZED_COMMAND_CLEANUP_TIME_MILLS,
     ARCHIVE_COMMANDS_FOLDER,
+    COMMANDS_FOR_REMOVAL_MAX_NUMBER,
 } from '../../constants/constants.js';
 
 /**
@@ -22,10 +23,12 @@ class CommandsCleanerCommand extends Command {
      */
     async execute() {
         const nowTimestamp = Date.now();
-        const commandsForRemoval = await this.repositoryModuleManager.findFinalizedCommands(
+
+        let commandsForRemoval = await this.repositoryModuleManager.findFinalizedCommands(
             nowTimestamp,
+            COMMANDS_FOR_REMOVAL_MAX_NUMBER,
         );
-        if (commandsForRemoval.length > 2) {
+        while (commandsForRemoval?.length >= COMMANDS_FOR_REMOVAL_MAX_NUMBER) {
             // save in archive folder data/archive/database/commands/startTimestamp-endTimestamp.archive.json
             const archiveFolderPath =
                 this.fileService.getArchiveFolderPath(ARCHIVE_COMMANDS_FOLDER);
@@ -34,6 +37,7 @@ class CommandsCleanerCommand extends Command {
                 commandsForRemoval[commandsForRemoval.length - 1].startedAt
             }.json`;
 
+            // eslint-disable-next-line no-await-in-loop
             await this.fileService.writeContentsToFile(
                 archiveFolderPath,
                 archiveName,
@@ -42,7 +46,14 @@ class CommandsCleanerCommand extends Command {
 
             // remove from database;
             const ids = commandsForRemoval.map((command) => command.id);
+            // eslint-disable-next-line no-await-in-loop
             await this.repositoryModuleManager.removeCommands(ids);
+
+            // eslint-disable-next-line no-await-in-loop
+            commandsForRemoval = await this.repositoryModuleManager.findFinalizedCommands(
+                nowTimestamp,
+                COMMANDS_FOR_REMOVAL_MAX_NUMBER,
+            );
         }
 
         return Command.repeat();

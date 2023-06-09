@@ -50,7 +50,7 @@ class CommandRepository {
         });
     }
 
-    async findFinalizedCommands(timestamp) {
+    async findFinalizedCommands(timestamp, limit) {
         return this.model.findAll({
             where: {
                 status: {
@@ -65,6 +65,7 @@ class CommandRepository {
             },
             order: [['startedAt', 'asc']],
             raw: true,
+            limit,
         });
     }
 }

@@ -60,8 +60,8 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('command').removeCommands(ids);
     }
 
-    async findFinalizedCommands(timestamp) {
-        return this.getRepository('command').findFinalizedCommands(timestamp);
+    async findFinalizedCommands(timestamp, limit) {
+        return this.getRepository('command').findFinalizedCommands(timestamp, limit);
     }
 
     async createOperationIdRecord(handlerData) {
