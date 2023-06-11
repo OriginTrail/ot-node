@@ -1,3 +1,4 @@
+import { v5 as uuidv5 } from 'uuid';
 import Command from '../../command.js';
 import {
     NETWORK_MESSAGE_TYPES,
@@ -42,15 +43,19 @@ class ProtocolMessageCommand extends Command {
     async sendProtocolMessage(command, message, messageType) {
         const { node, operationId, keyword } = command.data;
 
+        const keywordUuid = uuidv5(keyword, uuidv5.URL);
+
         const response = await this.networkModuleManager.sendMessage(
             node.protocol,
             node.id,
             messageType,
             operationId,
-            keyword,
+            keywordUuid,
             message,
             this.messageTimeout(),
         );
+
+        this.onRequestFinished(operationId, keywordUuid, node.id);
 
         switch (response.header.messageType) {
             case NETWORK_MESSAGE_TYPES.RESPONSES.BUSY:
@@ -104,6 +109,10 @@ class ProtocolMessageCommand extends Command {
             command,
             `Max number of retries for protocol message ${command.name} reached`,
         );
+    }
+
+    onRequestFinished() {
+        // overridden by child classes
     }
 }
 

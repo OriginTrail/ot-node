@@ -12,7 +12,6 @@ import { encode, decode } from 'it-length-prefixed';
 import { create as _create, createFromPrivKey, createFromB58String } from 'peer-id';
 import { InMemoryRateLimiter } from 'rolling-rate-limiter';
 import toobusy from 'toobusy-js';
-import { v5 as uuidv5 } from 'uuid';
 import { mkdir, writeFile, readFile, stat } from 'fs/promises';
 import ip from 'ip';
 import { TimeoutController } from 'timeout-abort-controller';
@@ -288,14 +287,13 @@ class Libp2pService {
         };
     }
 
-    async sendMessage(protocol, peerId, messageType, operationId, keyword, message, timeout) {
+    async sendMessage(protocol, peerId, messageType, operationId, keywordUuid, message, timeout) {
         const nackMessage = {
             header: { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK },
             data: {
                 errorMessage: '',
             },
         };
-        const keywordUuid = uuidv5(keyword, uuidv5.URL);
 
         // const sessionStream = this.getSessionStream(operationId, remotePeerId.toB58String());
         // if (!sessionStream) {
@@ -673,6 +671,13 @@ class Libp2pService {
 
     async getPeerInfo(peerId) {
         return this.node.peerStore.get(createFromB58String(peerId));
+    }
+
+    removeCachedSession(operationId, keywordUuid, remotePeerId) {
+        if (this.sessions[remotePeerId]?.[operationId]?.[keywordUuid]?.stream) {
+            this.sessions[remotePeerId][operationId][keywordUuid].stream.close();
+            delete this.sessions[remotePeerId][operationId][keywordUuid];
+        }
     }
 }
 

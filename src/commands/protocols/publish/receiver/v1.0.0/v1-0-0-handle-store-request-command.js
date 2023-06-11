@@ -1,4 +1,4 @@
-import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
+import HandleProtocolRequestCommand from '../../../common/handle-protocol-request-command.js';
 
 import {
     NETWORK_MESSAGE_TYPES,
@@ -7,7 +7,7 @@ import {
     TRIPLE_STORE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
-class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
+class HandleStoreRequestCommand extends HandleProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
         this.validationService = ctx.validationService;

@@ -1,4 +1,4 @@
-import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
+import HandleProtocolRequestCommand from '../../../common/handle-protocol-request-command.js';
 
 import {
     ERROR_TYPE,
@@ -9,7 +9,7 @@ import {
     PENDING_STORAGE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
-class HandleGetRequestCommand extends HandleProtocolMessageCommand {
+class HandleGetRequestCommand extends HandleProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.getService;

@@ -18,6 +18,10 @@ class ProtocolRequestCommand extends ProtocolMessageCommand {
         );
         return Command.empty();
     }
+
+    onRequestFinished(operationId, keywordUuid, remotePeerId) {
+        this.networkModuleManager.removeCachedSession(operationId, keywordUuid, remotePeerId);
+    }
 }
 
 export default ProtocolRequestCommand;
