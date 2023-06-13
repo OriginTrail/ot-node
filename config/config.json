@@ -42,6 +42,7 @@
                             "dht": {
                                 "kBucketSize": 20
                             },
+                            "connectionManager": { "dialTimeout": 5e3 },
                             "port": 9100,
                             "bootstrap": []
                         }
@@ -213,6 +214,7 @@
                             "dht": {
                                 "kBucketSize": 20
                             },
+                            "connectionManager": { "dialTimeout": 5e3 },
                             "port": 9000,
                             "bootstrap": [
                                 "/ip4/0.0.0.0/tcp/9000/p2p/QmWyf3dtqJnhuCpzEDTNmNFYc5tjxTrXhGcUUmGHdg2gtj"
@@ -317,6 +319,7 @@
                             "dht": {
                                 "kBucketSize": 20
                             },
+                            "connectionManager": { "dialTimeout": 5e3 },
                             "port": 9000,
                             "bootstrap": [
                                 "/ip4/164.92.138.30/tcp/9000/p2p/QmbiZQm18JefDizrQwbRhPgkaLykTLyrUEpeMWuKJHXuUM",
@@ -452,6 +455,7 @@
                             "dht": {
                                 "kBucketSize": 20
                             },
+                            "connectionManager": { "dialTimeout": 5e3 },
                             "port": 9000,
                             "bootstrap": [
                                 "/ip4/157.230.96.194/tcp/9000/p2p/QmZFcns6eGUosD96beHyevKu1jGJ1bA56Reg2f1J4q59Jt",

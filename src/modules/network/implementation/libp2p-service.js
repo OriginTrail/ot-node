@@ -91,6 +91,9 @@ class Libp2pService {
                     timeout: 5_000,
                 }),
             ],
+            connectionManager: {
+                ...this.config.connectionManager,
+            },
             services: {
                 dht: kadDHT(this.config.dht),
                 identify: identifyService(),
