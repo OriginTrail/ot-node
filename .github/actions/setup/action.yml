@@ -25,8 +25,8 @@ runs:
       uses: actions/cache@v3
       with:
         path: blazegraph.jar
-          key: ${{ runner.os }}-blazegraph-${{ hashFiles('blazegraph.jar') }}
-          restore-keys: ${{ runner.os }}-blazegraph-
+        key: ${{ runner.os }}-blazegraph-${{ hashFiles('blazegraph.jar') }}
+        restore-keys: ${{ runner.os }}-blazegraph-
 
     - if: steps.cache-node-modules.outputs.cache-hit != 'true'
       name: Install dependencies & compile contracts
@@ -36,4 +36,5 @@ runs:
     
     - if: steps.cache-blazegraph.outputs.cache-hit != 'true'
       name: Download Blazegraph
+      shell: bash
       run: wget https://github.com/blazegraph/database/releases/latest/download/blazegraph.jar
