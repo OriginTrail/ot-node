@@ -48,8 +48,8 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             blockchain,
             contract,
             tokenId,
+            cachedData.assertionId,
             {
-                stateId: cachedData.public.assertionId,
                 public: {
                     assertion: cachedData.assertion,
                 },

@@ -4,9 +4,10 @@ Feature: Update errors test
     And 1 bootstrap is running
 
   @update-errors
-  Scenario: Update asset that was not previously published
+  Scenario: Update knowledge asset that was not previously published
     Given I setup 1 node
-    And I call update on ot-node 1 directly with validUpdateRequestBody
-    And I wait for last update to finalize
-    Then Last Update operation finished with status: ValidateAssetError
+
+    When I call Update directly on the node 1 with validUpdateRequestBody
+    And I wait for latest Update to finalize
+    Then Latest Update operation finished with status: ValidateAssetError
 

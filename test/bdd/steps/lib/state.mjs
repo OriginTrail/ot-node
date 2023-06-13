@@ -19,20 +19,20 @@ const state = {
         },
     },
     bootstraps: [],
-    lastPublishData: {
+    latestPublishData: {
         nodeId: 1,
         operationId: '',
         keywords: ['', ''],
         assertion: {},
         result: {},
     },
-    lastGetData: {
+    latestGetData: {
         nodeId: 1,
         operationId: '',
         assertionIds: ['', ''],
         result: {},
     },
-    lastUpdateData: {
+    latestUpdateData: {
         nodeId: 1,
         operationId: '',
         assertionIds: ['', ''],

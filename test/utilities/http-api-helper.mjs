@@ -2,69 +2,32 @@ import axios from 'axios';
 
 class HttpApiHelper {
     async info(nodeRpcUrl) {
-        try {
-            const response = await axios({
-                method: 'get',
-                url: `${nodeRpcUrl}/info`,
-            });
-
-            return response;
-        } catch (e) {
-            throw Error(`Unable to get info: ${e.message}`);
-        }
+        return this._sendRequest('get', `${nodeRpcUrl}/info`);
     }
 
-    async get(nodeRpcUrl, ual) {
-        // Not sure if header is needed
-        try {
-            const response = await axios({
-                method: 'post',
-                url: `${nodeRpcUrl}/get`,
-                data: ual,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            return response;
-        } catch (e) {
-            throw Error(`Unable to GET: ${e.message}`);
-        }
+    async get(nodeRpcUrl, requestBody) {
+        return this._sendRequest('post', `${nodeRpcUrl}/get`, requestBody);
     }
 
-    async getOperationResult(nodeRpcUrl, operationId) {
-        try {
-            const response = await axios({
-                method: 'get',
-                url: `${nodeRpcUrl}/publish/${operationId}`,
-            });
-
-            return response;
-        } catch (e) {
-            throw Error(`Unable to PUBLISH: ${e.message}`);
-        }
+    async getOperationResult(nodeRpcUrl, operationName, operationId) {
+        return this._sendRequest('get', `${nodeRpcUrl}/${operationName}/${operationId}`);
     }
 
     async publish(nodeRpcUrl, requestBody) {
-        try {
-            const response = await axios({
-                method: 'post',
-                url: `${nodeRpcUrl}/publish`,
-                data: requestBody,
-            });
-
-            return response;
-        } catch (e) {
-            throw Error(`Unable to publish: ${e.message}`);
-        }
+        return this._sendRequest('post', `${nodeRpcUrl}/publish`, requestBody);
     }
+
     async update(nodeRpcUrl, requestBody) {
+        return this._sendRequest('post', `${nodeRpcUrl}/update`, requestBody);
+    }
+
+    async _sendRequest(method, url, data) {
         return axios({
-            method: 'post',
-            url: `${nodeRpcUrl}/update`,
-            data: requestBody,
+            method,
+            url,
+            ...data && { data },
         }).catch((e) => {
-            throw Error(`Unable to update: ${e.message}`);
+            throw Error(`Unable to use ${url}: ${e.message}`);
         });
     }
 }

@@ -18,11 +18,11 @@ class PendingStorageService {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.debug(
-            `Caching assertion for ual: ${ual}, operation id: ${operationId} in file in ${repository} pending storage`,
+            `Caching ${stateId} assertion for ual: ${ual}, operation id: ${operationId} in file in ${repository} pending storage`,
         );
 
         const documentPath = this.fileService.getPendingStorageCachePath(repository);
-        const documentName = this.fileService.getPendingStorageFileNamePattern(
+        const documentName = this.fileService.getPendingStorageFileName(
             blockchain,
             contract,
             tokenId,

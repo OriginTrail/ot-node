@@ -1,4 +1,4 @@
-import glob from 'glob';
+import { glob } from 'glob';
 import path from 'path';
 import { mkdir, writeFile, readFile, unlink, stat, readdir } from 'fs/promises';
 import appRootPath from 'app-root-path';
@@ -54,16 +54,13 @@ class FileService {
     }
 
     async fileExists(pattern) {
-        return new Promise((resolve) => {
-            glob(pattern, (err, files) => {
-                if (err) {
-                    this.logger.error('An error occurred:', err);
-                    resolve(false);
-                } else {
-                    resolve(files.length > 0);
-                }
-            });
-        });
+        return glob(pattern).then(
+            (result) => result.length > 0,
+            (error) => {
+                this.logger.error(`An error occurred: ${error}`);
+                return false;
+            },
+        );
     }
 
     async _readFile(pattern, convertToJSON = false) {
@@ -71,18 +68,10 @@ class FileService {
             `Reading file matching pattern: ${pattern}, converting to json: ${convertToJSON}`,
         );
         try {
-            const filenames = await new Promise((resolve, reject) => {
-                glob(pattern, (err, files) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(files);
-                    }
-                });
-            });
+            const filenames = await glob(pattern);
 
             if (filenames.length === 0) {
-                throw new Error(`No file found for pattern: ${pattern}`);
+                throw new Error(`No files found for pattern: ${pattern}`);
             }
 
             const data = await readFile(filenames[0]);
@@ -95,15 +84,7 @@ class FileService {
     async removeFiles(pattern) {
         this.logger.trace(`Removing file(s) matching pattern: ${pattern}`);
         try {
-            const filenames = await new Promise((resolve, reject) => {
-                glob(pattern, (err, files) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(files);
-                    }
-                });
-            });
+            const filenames = await glob(pattern);
 
             await Promise.all(filenames.map((filename) => unlink(filename)));
 
@@ -111,7 +92,7 @@ class FileService {
                 return true;
             }
 
-            this.logger.debug(`No file found for pattern: ${pattern}`);
+            this.logger.debug(`No files found for pattern: ${pattern}`);
             return false;
         } catch (e) {
             throw new Error(`Error removing file(s) for pattern: ${pattern}`);
