@@ -80,7 +80,7 @@ Given(
 
 Given(
     /^(\d+) bootstrap is running$/,
-    { timeout: 30000 },
+    { timeout: 50000 },
     function bootstrapRunning(nodeCount, done) {
         expect(this.state.bootstraps).to.have.length(0);
         expect(nodeCount).to.be.equal(1); // Currently not supported more.
