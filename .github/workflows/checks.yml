@@ -69,6 +69,7 @@ jobs:
         run: npm run test:bdd
 
       - name: Upload log files
+        if: '!cancelled()'
         uses: actions/upload-artifact@v3
         with:
           name: bdd-test-logs
