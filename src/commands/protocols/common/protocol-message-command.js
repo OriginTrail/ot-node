@@ -8,9 +8,16 @@ class ProtocolMessageCommand extends Command {
     }
 
     async executeProtocolMessageCommand(command, messageType) {
+        if (!(await this.shouldSendMessage(command))) {
+            return Command.empty();
+        }
         const message = await this.prepareMessage(command);
 
         return this.sendProtocolMessage(command, message, messageType);
+    }
+
+    async shouldSendMessage() {
+        return true;
     }
 
     async prepareMessage() {
