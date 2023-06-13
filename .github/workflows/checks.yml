@@ -68,4 +68,8 @@ jobs:
       - name: Run BDD tests
         run: npm run test:bdd
 
-      
+      - name: Upload log files
+        uses: actions/upload-artifact@v3
+        with:
+          name: bdd-test-logs
+          path: ./test/bdd/log/
