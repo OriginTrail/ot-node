@@ -1,0 +1,39 @@
+name: setup
+
+runs:
+  using: composite
+  steps:
+    - name: Setup NodeJS
+      id: nodejs
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16.x
+        cache: npm
+
+    - name: Cache node modules
+      id: cache-node-modules
+      uses: actions/cache@v3
+      with:
+        path: '**/node_modules'
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+            ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+            ${{ runner.os }}-node-modules-
+
+    - name: Cache Blazegraph
+      id: cache-blazegraph
+      uses: actions/cache@v3
+      with:
+        path: blazegraph.jar
+          key: ${{ runner.os }}-blazegraph-${{ hashFiles('blazegraph.jar') }}
+          restore-keys: ${{ runner.os }}-blazegraph-
+
+    - if: steps.cache-node-modules.outputs.cache-hit != 'true'
+      name: Install dependencies & compile contracts
+      shell: bash
+      run: npm ci
+      run: npm explore dkg-evm-module -- npm run compile
+    
+    - if: steps.cache-blazegraph.outputs.cache-hit != 'true'
+      name: Download Blazegraph
+      run: wget https://github.com/blazegraph/database/releases/latest/download/blazegraph.jar

@@ -1,0 +1,22 @@
+name: update-cache
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: update-cache-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-cache:
+    name: Build Cache
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up environment
+        uses: ./.github/actions/setup
