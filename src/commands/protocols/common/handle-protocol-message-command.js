@@ -225,6 +225,7 @@ class HandleProtocolMessageCommand extends Command {
             keywordUuid,
             { errorMessage },
         );
+        this.networkModuleManager.removeCachedSession(operationId, keywordUuid, remotePeerId);
     }
 }
 
