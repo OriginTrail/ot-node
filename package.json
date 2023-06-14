@@ -5,7 +5,6 @@
     "main": "index.js",
     "type": "module",
     "scripts": {
-        "clean-contracts-cache": "npm explore dkg-evm-module -- npm run clean",
         "compile-contracts": "npm explore dkg-evm-module -- npm run compile",
         "bootstrap-node": "node index.js tools/local-network-setup/.bootstrap_origintrail_noderc",
         "start": "node index.js",
