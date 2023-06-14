@@ -58,7 +58,7 @@ After(function afterMethod(testCase, done) {
     tripleStoreConfiguration.forEach((config) => {
         promises.push(async () => {
             const tripleStoreModuleManager = new TripleStoreModuleManager({config, logger: this.logger});
-            await tripleStoreModuleManager.initialize()
+            await tripleStoreModuleManager.initialize();
             for (const implementationName of tripleStoreModuleManager.getImplementationNames()) {
                 const {tripleStoreConfig} = tripleStoreModuleManager.getImplementation(implementationName);
                 Object.keys(tripleStoreConfig.repositories).map(async (repository) => {
@@ -87,10 +87,6 @@ After(function afterMethod(testCase, done) {
                 testCase.result.duration,
                 ' miliseconds.',
             );
-            done();
-        })
-        .catch((error) => {
-            this.logger.error('An error occurred during after hook: ', error);
             done();
         });
 });

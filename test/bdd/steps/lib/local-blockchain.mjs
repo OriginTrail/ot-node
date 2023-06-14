@@ -94,6 +94,7 @@ class LocalBlockchain {
 
     stop() {
         startBlockchainProcess.kill();
+        exec('npm run clean-contracts-cache');
     }
 
     getWallets() {
