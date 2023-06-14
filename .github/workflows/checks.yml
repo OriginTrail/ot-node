@@ -50,11 +50,11 @@ jobs:
           env:
             MYSQL_DATABASE: operationaldb
             MYSQL_USER: node
-            MYSQL_PASSWORD: password
-            MYSQL_ROOT_PASSWORD: password
+            MYSQL_PASSWORD: ''
+            MYSQL_ROOT_PASSWORD: ''
           ports:
             - 3306:3306
-          options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+          options: -h 127.0.0.1 --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
