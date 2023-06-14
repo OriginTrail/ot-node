@@ -639,7 +639,7 @@ class Libp2pService {
     removeCachedSession(operationId, keywordUuid, peerIdString) {
         if (this.sessions[peerIdString]?.[operationId]?.[keywordUuid]?.stream) {
             this.sessions[peerIdString][operationId][keywordUuid].stream.close();
-            delete this.sessions[peerIdString][operationId][keywordUuid];
+            delete this.sessions[peerIdString][operationId];
             this.logger.trace(
                 `Removed session for remotePeerId: ${peerIdString}, operationId: ${operationId}.`,
             );
