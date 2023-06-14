@@ -55,7 +55,7 @@ class ProtocolMessageCommand extends Command {
             this.messageTimeout(),
         );
 
-        this.onRequestFinished(operationId, keywordUuid, node.id);
+        this.networkModuleManager.removeCachedSession(operationId, keywordUuid, node.id);
 
         switch (response.header.messageType) {
             case NETWORK_MESSAGE_TYPES.RESPONSES.BUSY:
@@ -109,10 +109,6 @@ class ProtocolMessageCommand extends Command {
             command,
             `Max number of retries for protocol message ${command.name} reached`,
         );
-    }
-
-    onRequestFinished() {
-        // overridden by child classes
     }
 }
 

@@ -1,4 +1,4 @@
-import HandleProtocolRequestCommand from '../../../common/handle-protocol-request-command.js';
+import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
 
 import {
     NETWORK_MESSAGE_TYPES,
@@ -10,7 +10,7 @@ import {
     COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS,
 } from '../../../../../constants/constants.js';
 
-class HandleUpdateRequestCommand extends HandleProtocolRequestCommand {
+class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.updateService;

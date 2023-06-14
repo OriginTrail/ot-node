@@ -64,12 +64,6 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    removeSession(sessionId) {
-        if (this.initialized) {
-            this.getImplementation().module.removeSession(sessionId);
-        }
-    }
-
     getPeerId() {
         if (this.initialized) {
             return this.getImplementation().module.getPeerId();
