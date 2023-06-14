@@ -46,7 +46,7 @@ After(function afterMethod(testCase, done) {
 
     const promises = [];
     const con = mysql.createConnection({
-        host: '127.0.0.1',
+        host: 'localhost',
         user: 'root',
         password: process.env.REPOSITORY_PASSWORD,
     });
@@ -87,6 +87,10 @@ After(function afterMethod(testCase, done) {
                 testCase.result.duration,
                 ' miliseconds.',
             );
+            done();
+        })
+        .catch((error) => {
+            this.logger.error('An error occurred during after hook: ', error);
             done();
         });
 });

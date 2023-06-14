@@ -6,6 +6,7 @@ Feature: Update errors test
   @update-errors
   Scenario: Update knowledge asset that was not previously published
     Given I setup 1 node
+    And I wait for 2 seconds
 
     When I call Update directly on the node 1 with validUpdateRequestBody
     And I wait for latest Update to finalize
