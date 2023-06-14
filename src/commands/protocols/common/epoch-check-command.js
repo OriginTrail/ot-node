@@ -1,5 +1,4 @@
 /* eslint-disable no-await-in-loop */
-import { v4 as uuidv4 } from 'uuid';
 import Command from '../../command.js';
 import {
     COMMAND_QUEUE_PARALLELISM,
@@ -20,7 +19,7 @@ class EpochCheckCommand extends Command {
     }
 
     async execute(command) {
-        const operationId = uuidv4();
+        const operationId = this.operationIdService.generateId();
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_START,
             operationId,
@@ -246,7 +245,7 @@ class EpochCheckCommand extends Command {
 
     async scheduleSubmitCommitCommand(agreement) {
         const commandData = {
-            operationId: uuidv4(),
+            operationId: this.operationIdService.generateId(),
             blockchain: agreement.blockchainId,
             contract: agreement.assetStorageContractAddress,
             tokenId: agreement.tokenId,
@@ -268,7 +267,7 @@ class EpochCheckCommand extends Command {
 
     async scheduleSubmitProofsCommand(agreement) {
         const commandData = {
-            operationId: uuidv4(),
+            operationId: this.operationIdService.generateId(),
             blockchain: agreement.blockchainId,
             contract: agreement.assetStorageContractAddress,
             tokenId: agreement.tokenId,
