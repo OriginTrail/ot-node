@@ -553,14 +553,6 @@ class Libp2pService {
         return true;
     }
 
-    removeSession(sessionId) {
-        if (this.sessions.sender[sessionId]) {
-            delete this.sessions.sender[sessionId];
-        } else if (this.sessions.receiver[sessionId]) {
-            delete this.sessions.receiver[sessionId];
-        }
-    }
-
     healthCheck() {
         // TODO: broadcast ping or sent msg to yourself
         const connectedNodes = this.node.connectionManager.size;
