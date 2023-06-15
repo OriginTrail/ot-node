@@ -1,15 +1,12 @@
-import Command from '../command.js';
 import {
     PROCESSED_BLOCKCHAIN_EVENTS_CLEANUP_TIME_MILLS,
     REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER,
     PROCESSED_BLOCKCHAIN_EVENTS_CLEANUP_TIME_DELAY,
     ARCHIVE_BLOCKCHAIN_EVENTS_FOLDER,
 } from '../../constants/constants.js';
+import CleanerCommand from './cleaner-command.js';
 
-/**
- * Increases approval for Bidding contract on blockchain
- */
-class BlockchainEventCleanerCommand extends Command {
+class BlockchainEventCleanerCommand extends CleanerCommand {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -17,52 +14,19 @@ class BlockchainEventCleanerCommand extends Command {
         this.archiveService = ctx.archiveService;
     }
 
-    /**
-     * Executes command and produces one or more events
-     * @param command
-     */
-    async execute() {
-        const nowTimestamp = Date.now();
-
-        let processedEventsForRemoval = await this.repositoryModuleManager.findProcessedEvents(
+    async findRowsForRemoval(nowTimestamp) {
+        return this.repositoryModuleManager.findProcessedEvents(
             nowTimestamp - PROCESSED_BLOCKCHAIN_EVENTS_CLEANUP_TIME_DELAY,
             REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER,
         );
-        while (processedEventsForRemoval?.length >= REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER) {
-            const archiveName = `${processedEventsForRemoval[0].startedAt}-${
-                processedEventsForRemoval[processedEventsForRemoval.length - 1].startedAt
-            }.json`;
-
-            // eslint-disable-next-line no-await-in-loop
-            await this.archiveService.archiveData(
-                ARCHIVE_BLOCKCHAIN_EVENTS_FOLDER,
-                archiveName,
-                processedEventsForRemoval,
-            );
-
-            // remove from database;
-            const ids = processedEventsForRemoval.map((command) => command.id);
-            // eslint-disable-next-line no-await-in-loop
-            await this.repositoryModuleManager.removeEvents(ids);
-
-            // eslint-disable-next-line no-await-in-loop
-            processedEventsForRemoval = await this.repositoryModuleManager.findProcessedEvents(
-                nowTimestamp - PROCESSED_BLOCKCHAIN_EVENTS_CLEANUP_TIME_DELAY,
-                REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER,
-            );
-        }
-
-        return Command.repeat();
     }
 
-    /**
-     * Recover system from failure
-     * @param command
-     * @param error
-     */
-    async recover(command, error) {
-        this.logger.warn(`Failed to clean processed events: error: ${error.message}`);
-        return Command.repeat();
+    getArchiveFolderName() {
+        return ARCHIVE_BLOCKCHAIN_EVENTS_FOLDER;
+    }
+
+    async deleteRows(ids) {
+        return this.repositoryModuleManager.removeEvents(ids);
     }
 
     /**

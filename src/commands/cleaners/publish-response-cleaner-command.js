@@ -1,11 +1,13 @@
-import {
-    FINALIZED_COMMAND_CLEANUP_TIME_MILLS,
-    ARCHIVE_COMMANDS_FOLDER,
-    REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER,
-} from '../../constants/constants.js';
 import CleanerCommand from './cleaner-command.js';
+import {
+    REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER,
+    OPERATIONS,
+    PUBLISH_RESPONSE_CLEANUP_TIME_DELAY,
+    PUBLISH_RESPONSE_CLEANUP_TIME_MILLS,
+    ARCHIVE_PUBLISH_RESPONSES_FOLDER,
+} from '../../constants/constants.js';
 
-class CommandsCleanerCommand extends CleanerCommand {
+class PublishResponseCleanerCommand extends CleanerCommand {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -14,18 +16,19 @@ class CommandsCleanerCommand extends CleanerCommand {
     }
 
     async findRowsForRemoval(nowTimestamp) {
-        return this.repositoryModuleManager.findFinalizedCommands(
-            nowTimestamp,
+        return this.repositoryModuleManager.findProcessedOperationResponse(
+            nowTimestamp - PUBLISH_RESPONSE_CLEANUP_TIME_DELAY,
             REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER,
+            OPERATIONS.GET,
         );
     }
 
     getArchiveFolderName() {
-        return ARCHIVE_COMMANDS_FOLDER;
+        return ARCHIVE_PUBLISH_RESPONSES_FOLDER;
     }
 
     async deleteRows(ids) {
-        return this.repositoryModuleManager.removeCommands(ids);
+        return this.repositoryModuleManager.removeOperationResponse(ids, OPERATIONS.PUBLISH);
     }
 
     /**
@@ -35,9 +38,9 @@ class CommandsCleanerCommand extends CleanerCommand {
      */
     default(map) {
         const command = {
-            name: 'commandsCleanerCommand',
+            name: 'publishResponseCleanerCommand',
             data: {},
-            period: FINALIZED_COMMAND_CLEANUP_TIME_MILLS,
+            period: PUBLISH_RESPONSE_CLEANUP_TIME_MILLS,
             transactional: false,
         };
         Object.assign(command, map);
@@ -45,4 +48,4 @@ class CommandsCleanerCommand extends CleanerCommand {
     }
 }
 
-export default CommandsCleanerCommand;
+export default PublishResponseCleanerCommand;
