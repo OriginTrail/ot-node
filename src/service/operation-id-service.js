@@ -1,4 +1,4 @@
-import { validate } from 'uuid';
+import { validate, v4 as uuidv4 } from 'uuid';
 import path from 'path';
 
 class OperationIdService {
@@ -9,6 +9,10 @@ class OperationIdService {
         this.eventEmitter = ctx.eventEmitter;
 
         this.memoryCachedHandlersData = {};
+    }
+
+    generateId() {
+        return uuidv4();
     }
 
     async generateOperationId(status) {
