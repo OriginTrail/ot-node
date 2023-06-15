@@ -54,13 +54,12 @@ class FileService {
     }
 
     async fileExists(pattern) {
-        return glob(pattern).then(
-            (result) => result.length > 0,
-            (error) => {
+        return glob(pattern)
+            .then((result) => result.length > 0)
+            .catch((error) => {
                 this.logger.error(`An error occurred: ${error}`);
                 return false;
-            },
-        );
+            });
     }
 
     async _readFile(pattern, convertToJSON = false) {
