@@ -6,29 +6,20 @@ import {
     DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS,
     COMMAND_STATUS,
     DEFAULT_COMMAND_DELAY_IN_MILLS,
+    COMMAND_QUEUE_PARALLELISM,
 } from '../constants/constants.js';
-
-/**
- * How many commands will run in parallel
- * @type {number}
- */
-const QUEUE_PARALLELISM = 100;
 
 /**
  * Queues and processes commands
  */
 class CommandExecutor {
     constructor(ctx) {
-        this.ctx = ctx;
         this.logger = ctx.logger;
         this.commandResolver = ctx.commandResolver;
-        this.config = ctx.config;
         this.started = false;
 
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-
-        this.parallelism = QUEUE_PARALLELISM;
-        this.verboseLoggingEnabled = this.config.commandExecutorVerboseLoggingEnabled;
+        this.verboseLoggingEnabled = ctx.config.commandExecutorVerboseLoggingEnabled;
 
         this.queue = async.queue((command, callback = () => {}) => {
             this._execute(command)
@@ -41,7 +32,7 @@ class CommandExecutor {
                     );
                     process.exit(1);
                 });
-        }, this.parallelism);
+        }, COMMAND_QUEUE_PARALLELISM);
     }
 
     /**
@@ -97,8 +88,8 @@ class CommandExecutor {
             });
             try {
                 const result = await handler.expired(command);
-                if (result && result.commands) {
-                    result.commands.forEach((c) => this.add(c, c.delay, true));
+                if (result?.commands) {
+                    await Promise.all(result.commands.map((c) => this.add(c, c.delay, true)));
                 }
             } catch (e) {
                 this.logger.warn(
@@ -142,9 +133,7 @@ class CommandExecutor {
 
                     command.data = handler.pack(command.data);
 
-                    const period = command.period
-                        ? command.period
-                        : DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS;
+                    const period = command.period ?? DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS;
                     await this.add(command, period, false);
                     return Command.repeat();
                 }
@@ -194,8 +183,18 @@ class CommandExecutor {
 
             try {
                 const result = await this._handleError(command, handler, e);
-                if (result && result.commands) {
-                    result.commands.forEach((c) => this.add(c, c.delay, true));
+                if (result && result.repeat) {
+                    await this._update(command, {
+                        status: COMMAND_STATUS.REPEATING,
+                    });
+
+                    command.data = handler.pack(command.data);
+
+                    const period = command.period
+                        ? command.period
+                        : DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS;
+                    await this.add(command, period, false);
+                    return Command.repeat();
                 }
             } catch (error) {
                 this.logger.warn(
@@ -244,14 +243,13 @@ class CommandExecutor {
      * @param delay
      * @param insert
      */
-    async add(addCommand, addDelay = 0, insert = true) {
+    async add(addCommand, addDelay, insert = true) {
         let command = addCommand;
-        let delay = addDelay;
-        const now = Date.now();
+        let delay = addDelay ?? 0;
 
-        if (delay != null && delay > MAX_COMMAND_DELAY_IN_MILLS) {
+        if (delay > MAX_COMMAND_DELAY_IN_MILLS) {
             if (command.readyAt == null) {
-                command.readyAt = now;
+                command.readyAt = Date.now();
             }
             command.readyAt += delay;
             delay = MAX_COMMAND_DELAY_IN_MILLS;
@@ -287,8 +285,8 @@ class CommandExecutor {
                 status: COMMAND_STATUS.PENDING,
                 retries: command.retries - 1,
             });
-            const period = command.period ? command.period : 0;
-            const delay = command.delay ? command.delay : 0;
+            const period = command.period ?? 0;
+            const delay = command.delay ?? 0;
             await this.add(command, period + delay, false);
             return Command.retry();
         }
@@ -309,8 +307,8 @@ class CommandExecutor {
             await this._update(command, {
                 retries: command.retries - 1,
             });
-            const period = command.period ? command.period : 0;
-            const delay = command.delay ? command.delay : 0;
+            const period = command.period ?? 0;
+            const delay = command.delay ?? 0;
             await this.add(command, period + delay, false);
         } else {
             try {
@@ -360,7 +358,7 @@ class CommandExecutor {
             opts.transaction = transaction;
         }
         const model = await this.repositoryModuleManager.createCommand(command, opts);
-        command.id = model.dataValues.id;
+        command.id = model.id;
         return command;
     }
 
@@ -401,49 +399,50 @@ class CommandExecutor {
      * @returns {Promise<void>}
      */
     async replay() {
-        // Wait for 1 minute for node to establish connections
-        // await new Promise((resolve) => setTimeout(resolve, 1 * 60 * 1000));
-
         this.logger.info('Replay pending/started commands from the database...');
-        const pendingCommands = (
-            await this.repositoryModuleManager.getCommandsWithStatus(
-                [COMMAND_STATUS.PENDING, COMMAND_STATUS.STARTED, COMMAND_STATUS.REPEATING],
-                ['cleanerCommand', 'autoupdaterCommand'],
-            )
-        ).filter((command) => !PERMANENT_COMMANDS.includes(command.name));
+        const pendingCommands = await this.repositoryModuleManager.getCommandsWithStatus(
+            [COMMAND_STATUS.PENDING, COMMAND_STATUS.STARTED, COMMAND_STATUS.REPEATING],
+            PERMANENT_COMMANDS,
+        );
 
-        // TODO consider JOIN instead
-        const commands = pendingCommands.filter(async (pc) => {
-            if (!pc.parentId) {
-                return true;
+        const commands = [];
+        for (const command of pendingCommands) {
+            if (!command?.parentId) {
+                continue;
             }
-            const parent = await this.repositoryModuleManager.getCommandWithId(pc.parentId);
-            return !parent || parent.status === 'COMPLETED';
-        });
+
+            // eslint-disable-next-line no-await-in-loop
+            const parent = await this.repositoryModuleManager.getCommandWithId(command.parentId);
+            if (parent && parent.status !== 'COMPLETED') {
+                continue;
+            }
+            commands.push(command);
+        }
 
         const adds = [];
         for (const commandModel of commands) {
-            const command = {
-                id: commandModel.id,
-                name: commandModel.name,
-                data: commandModel.data,
-                readyAt: commandModel.readyAt,
-                delay: commandModel.delay,
-                startedAt: commandModel.startedAt,
-                deadlineAt: commandModel.deadlineAt,
-                period: commandModel.period,
-                status: commandModel.status,
-                message: commandModel.message,
-                parentId: commandModel.parentId,
-                transactional: commandModel.transactional,
-                retries: commandModel.retries,
-                sequence: commandModel.sequence,
-            };
-            const queued = this.queue.workersList().find((e) => e.data.id === command.id);
+            const queued = this.queue.workersList().find((e) => e.data.id === commandModel.id);
             if (!queued) {
-                adds.push(this.add(command, 0, false, true));
+                const command = {
+                    id: commandModel.id,
+                    name: commandModel.name,
+                    data: commandModel.data,
+                    readyAt: commandModel.readyAt,
+                    delay: commandModel.delay,
+                    startedAt: commandModel.startedAt,
+                    deadlineAt: commandModel.deadlineAt,
+                    period: commandModel.period,
+                    status: commandModel.status,
+                    message: commandModel.message,
+                    parentId: commandModel.parentId,
+                    transactional: commandModel.transactional,
+                    retries: commandModel.retries,
+                    sequence: commandModel.sequence,
+                };
+                adds.push(this.add(command, 0, false));
             }
         }
+
         await Promise.all(adds);
     }
 }

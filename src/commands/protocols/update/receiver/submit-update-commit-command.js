@@ -60,7 +60,7 @@ class SubmitUpdateCommitCommand extends Command {
             return Command.empty();
         }
 
-        await this.blockchainModuleManager.submitUpdateCommit(
+        this.blockchainModuleManager.submitUpdateCommit(
             blockchain,
             contract,
             tokenId,
