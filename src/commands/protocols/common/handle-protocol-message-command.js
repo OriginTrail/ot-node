@@ -38,6 +38,8 @@ class HandleProtocolMessageCommand extends Command {
             await this.handleError(error.message, command);
         }
 
+        this.networkModuleManager.removeCachedSession(operationId, keywordUuid, remotePeerId);
+
         return Command.empty();
     }
 
@@ -223,6 +225,7 @@ class HandleProtocolMessageCommand extends Command {
             keywordUuid,
             { errorMessage },
         );
+        this.networkModuleManager.removeCachedSession(operationId, keywordUuid, remotePeerId);
     }
 }
 
