@@ -31,9 +31,9 @@ class OperationResponseRepository {
     async findProcessedOperationResponse(timestamp, limit, operation) {
         return this.models[`${operation}_response`].findAll({
             where: {
-                startedAt: { [Sequelize.Op.lte]: timestamp },
+                createdAt: { [Sequelize.Op.lte]: timestamp },
             },
-            order: [['startedAt', 'asc']],
+            order: [['createdAt', 'asc']],
             raw: true,
             limit,
         });

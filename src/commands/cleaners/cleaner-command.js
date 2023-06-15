@@ -19,9 +19,7 @@ class CleanerCommand extends Command {
         let rowsForRemoval = await this.findRowsForRemoval(nowTimestamp);
 
         while (rowsForRemoval?.length >= REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER) {
-            const archiveName = `${rowsForRemoval[0].startedAt}-${
-                rowsForRemoval[rowsForRemoval.length - 1].startedAt
-            }.json`;
+            const archiveName = this.getArchiveName(rowsForRemoval);
 
             // eslint-disable-next-line no-await-in-loop
             await this.archiveService.archiveData(
@@ -40,6 +38,14 @@ class CleanerCommand extends Command {
         }
 
         return Command.repeat();
+    }
+
+    getArchiveName(rowsForRemoval) {
+        const firstTimestamp = new Date(rowsForRemoval[0].createdAt).getTime();
+        const lastTimestamp = new Date(
+            rowsForRemoval[rowsForRemoval.length - 1].createdAt,
+        ).getTime();
+        return `${firstTimestamp}-${lastTimestamp}.json`;
     }
 
     // eslint-disable-next-line no-unused-vars

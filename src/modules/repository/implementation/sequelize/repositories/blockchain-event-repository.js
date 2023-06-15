@@ -68,9 +68,9 @@ class BlockchainEventRepository {
         return this.model.findAll({
             where: {
                 processed: true,
-                startedAt: { [Sequelize.Op.lte]: timestamp },
+                createdAt: { [Sequelize.Op.lte]: timestamp },
             },
-            order: [['startedAt', 'asc']],
+            order: [['createdAt', 'asc']],
             raw: true,
             limit,
         });

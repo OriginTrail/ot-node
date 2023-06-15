@@ -19,7 +19,7 @@ class PublishResponseCleanerCommand extends CleanerCommand {
         return this.repositoryModuleManager.findProcessedOperationResponse(
             nowTimestamp - PUBLISH_RESPONSE_CLEANUP_TIME_DELAY,
             REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER,
-            OPERATIONS.GET,
+            OPERATIONS.PUBLISH,
         );
     }
 
