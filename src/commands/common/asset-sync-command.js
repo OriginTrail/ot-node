@@ -1,4 +1,5 @@
 /* eslint-disable no-await-in-loop */
+import { queue } from 'async';
 import { setTimeout } from 'timers/promises';
 import Command from '../command.js';
 import {
@@ -34,6 +35,10 @@ class AssetSyncCommand extends Command {
 
         this.logger.debug(`Started executing asset sync command`);
 
+        const syncQueue = queue(async (asset) => {
+            await this.syncAsset(asset.tokenId, asset.blockchain, asset.contract);
+        }, ASSET_SYNC_PARAMETERS.CONCURRENCY);
+
         for (const blockchain of this.blockchainModuleManager.getImplementationNames()) {
             const contracts =
                 this.blockchainModuleManager.getAssetStorageContractAddresses(blockchain);
@@ -50,23 +55,17 @@ class AssetSyncCommand extends Command {
                     );
 
                 const latestSyncedTokenId = latestAssetSyncRecord?.tokenId ?? 0;
-                const latestSyncedStateIndex = latestAssetSyncRecord?.stateIndex ?? -1;
 
-                await this.syncMissedAssets(
-                    blockchain,
-                    contract,
-                    latestSyncedTokenId,
-                    latestSyncedStateIndex,
-                );
+                const tokenIds = await this.getMissedTokenIds(blockchain, contract);
+                if (tokenIds?.length) {
+                    this.logger.info(`ASSET_SYNC: Found ${tokenIds.length} missed assets, syncing`);
+                    for (const tokenId of tokenIds) {
+                        syncQueue.push({ tokenId, blockchain, contract });
+                    }
+                }
 
                 for (let tokenId = latestSyncedTokenId; tokenId < latestTokenId; tokenId += 1) {
-                    await this.syncAsset(
-                        tokenId,
-                        latestSyncedTokenId,
-                        latestSyncedStateIndex,
-                        blockchain,
-                        contract,
-                    );
+                    syncQueue.push({ tokenId, blockchain, contract });
                 }
             }
         }
@@ -76,25 +75,14 @@ class AssetSyncCommand extends Command {
         return Command.repeat();
     }
 
-    async syncAsset(tokenId, latestSyncedTokenId, lastSyncedStateIndex, blockchain, contract) {
-        let latestSyncedStateIndex = lastSyncedStateIndex;
-        if (tokenId !== latestSyncedTokenId) {
-            // StateIndex is -1 for all except
-            // for the last synced token id
-            latestSyncedStateIndex = -1;
-        }
-
+    async syncAsset(tokenId, blockchain, contract) {
         const assertionIds = await this.blockchainModuleManager.getAssertionIds(
             blockchain,
             contract,
             tokenId,
         );
 
-        for (
-            let stateIndex = latestSyncedStateIndex + 1;
-            stateIndex < assertionIds.length;
-            stateIndex += 1
-        ) {
+        for (let stateIndex = 0; stateIndex < assertionIds.length; stateIndex += 1) {
             // Skip if it is not latest state
             // TODO: Remove this skip when GET historical state is implemented
             if (stateIndex < assertionIds.length - 1) {
@@ -187,22 +175,6 @@ class AssetSyncCommand extends Command {
                 attempt < ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_MAX_ATTEMPTS &&
                 getResult?.status !== OPERATION_ID_STATUS.FAILED &&
                 getResult?.status !== OPERATION_ID_STATUS.COMPLETED
-            );
-        }
-    }
-
-    async syncMissedAssets(blockchain, contract, latestSyncedTokenId, latestSyncedStateIndex) {
-        const tokenIds = await this.getMissedTokenIds(blockchain, contract);
-        if (tokenIds && tokenIds.length > 0) {
-            this.logger.info(`ASSET_SYNC: Found ${tokenIds.length} missed assets, syncing`);
-        }
-        for (const tokenId of tokenIds) {
-            await this.syncAsset(
-                tokenId,
-                latestSyncedTokenId,
-                latestSyncedStateIndex,
-                blockchain,
-                contract,
             );
         }
     }
