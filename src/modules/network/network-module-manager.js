@@ -23,14 +23,22 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    async sendMessage(protocol, remotePeerId, messageType, operationId, keyword, message, timeout) {
+    async sendMessage(
+        protocol,
+        remotePeerId,
+        messageType,
+        operationId,
+        keywordUuid,
+        message,
+        timeout,
+    ) {
         if (this.initialized) {
             return this.getImplementation().module.sendMessage(
                 protocol,
                 remotePeerId,
                 messageType,
                 operationId,
-                keyword,
+                keywordUuid,
                 message,
                 timeout,
             );
@@ -53,12 +61,6 @@ class NetworkModuleManager extends BaseModuleManager {
     handleMessage(protocol, handler, options) {
         if (this.initialized) {
             this.getImplementation().module.handleMessage(protocol, handler, options);
-        }
-    }
-
-    removeSession(sessionId) {
-        if (this.initialized) {
-            this.getImplementation().module.removeSession(sessionId);
         }
     }
 
@@ -89,6 +91,16 @@ class NetworkModuleManager extends BaseModuleManager {
     async getPeerInfo(peerId) {
         if (this.initialized) {
             return this.getImplementation().module.getPeerInfo(peerId);
+        }
+    }
+
+    removeCachedSession(operationId, keywordUuid, remotePeerId) {
+        if (this.initialized) {
+            this.getImplementation().module.removeCachedSession(
+                operationId,
+                keywordUuid,
+                remotePeerId,
+            );
         }
     }
 }

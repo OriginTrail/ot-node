@@ -27,7 +27,7 @@ export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 
 export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000; // 15 days
 
-export const MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH = 500;
+export const MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH = 50;
 
 export const TRANSACTION_QUEUE_CONCURRENCY = 1;
 
@@ -415,30 +415,12 @@ export const CONTRACTS = {
 };
 
 export const CONTRACT_EVENTS = {
-    HUB: {
-        NEW_CONTRACT: 'NewContract',
-        CONTRACT_CHANGED: 'ContractChanged',
-        NEW_ASSET_STORAGE: 'NewAssetStorage',
-        ASSET_STORAGE_CHANGED: 'AssetStorageChanged',
-    },
-    SHARDING_TABLE: {
-        NODE_ADDED: 'NodeAdded',
-        NODE_REMOVED: 'NodeRemoved',
-    },
-    STAKING: {
-        STAKE_INCREASED: 'StakeIncreased',
-        STAKE_WITHDRAWAL_STARTED: 'StakeWithdrawalStarted',
-    },
-    PROFILE: {
-        ASK_UPDATED: 'AskUpdated',
-    },
-    COMMIT_MANAGER_V1: {
-        STATE_FINALIZED: 'StateFinalized',
-    },
-    SERVICE_AGREEMENT_V1: {
-        SERVICE_AGREEMENT_V1_EXTENDED: 'ServiceAgreementV1Extended',
-        SERVICE_AGREEMENT_V1_TERMINATED: 'ServiceAgreementV1Terminated',
-    },
+    HUB: ['NewContract', 'ContractChanged', 'NewAssetStorage', 'AssetStorageChanged'],
+    SHARDING_TABLE: ['NodeAdded', 'NodeRemoved'],
+    STAKING: ['StakeIncreased', 'StakeWithdrawalStarted'],
+    PROFILE: ['AskUpdated'],
+    COMMIT_MANAGER_V1: ['StateFinalized'],
+    SERVICE_AGREEMENT_V1: ['ServiceAgreementV1Extended', 'ServiceAgreementV1Terminated'],
 };
 
 export const NODE_ENVIRONMENTS = {
