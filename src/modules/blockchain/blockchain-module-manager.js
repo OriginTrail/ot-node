@@ -141,6 +141,7 @@ class BlockchainModuleManager extends BaseModuleManager {
     async getAllPastEvents(
         blockchain,
         contractName,
+        eventsToFilter,
         lastCheckedBlock,
         lastCheckedTimestamp,
         currentBlock,
@@ -148,6 +149,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'getAllPastEvents', [
             blockchain,
             contractName,
+            eventsToFilter,
             lastCheckedBlock,
             lastCheckedTimestamp,
             currentBlock,
@@ -236,7 +238,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async submitCommit(
+    submitCommit(
         blockchain,
         assetContractAddress,
         tokenId,
@@ -257,7 +259,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async submitUpdateCommit(
+    submitUpdateCommit(
         blockchain,
         assetContractAddress,
         tokenId,
@@ -293,7 +295,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async sendProof(
+    sendProof(
         blockchain,
         assetContractAddress,
         tokenId,

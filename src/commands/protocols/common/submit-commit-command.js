@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import { OPERATION_ID_STATUS, ERROR_TYPE, COMMAND_RETRIES } from '../../../constants/constants.js';
 import Command from '../../command.js';
 
@@ -14,6 +13,7 @@ class SubmitCommitCommand extends Command {
 
     async execute(command) {
         const {
+            operationId,
             blockchain,
             contract,
             tokenId,
@@ -23,9 +23,6 @@ class SubmitCommitCommand extends Command {
             agreementId,
             stateIndex,
         } = command.data;
-
-        // TODO: review operationId
-        const operationId = uuidv4();
 
         this.logger.trace(
             `Started ${command.name} for agreement id: ${agreementId} ` +
@@ -58,65 +55,38 @@ class SubmitCommitCommand extends Command {
             return Command.empty();
         }
 
-        await this.blockchainModuleManager.submitCommit(
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-            hashFunctionId,
-            epoch,
-            stateIndex,
-            async (result) => {
-                if (!result.error) {
-                    this.logger.trace(
-                        `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
-                            `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                            `hash function id: ${hashFunctionId}. Retry number ${
-                                COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1
-                            }`,
-                    );
-                    this.operationIdService.emitChangeEvent(
-                        OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
-                        operationId,
-                        agreementId,
-                        epoch,
-                    );
-                } else if (command.retries - 1 === 0) {
-                    const errorMessage = `Failed executing submit commit command, maximum number of retries reached. Error: ${result.error.message}.`;
-                    this.logger.error(errorMessage);
-                    this.operationIdService.emitChangeEvent(
-                        OPERATION_ID_STATUS.FAILED,
-                        operationId,
-                        errorMessage,
-                        this.errorType,
-                        epoch,
-                    );
-                } else {
-                    const blockTime = this.blockchainModuleManager.getBlockTimeMillis(blockchain);
-                    this.logger.warn(
-                        `Failed executing submit commit command, retrying in ${blockTime}ms. Error: ${result.error.message}`,
-                    );
-                    await this.commandExecutor.add({
-                        name: 'submitCommitCommand',
-                        sequence: [],
-                        delay: blockTime,
-                        retries: command.retries - 1,
-                        data: command.data,
-                        transactional: false,
-                    });
-                }
-            },
-        );
+        const transactionCompletePromise = new Promise((resolve, reject) => {
+            this.blockchainModuleManager.submitCommit(
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+                hashFunctionId,
+                epoch,
+                stateIndex,
+                (result) => {
+                    if (result?.error) {
+                        reject(result.error);
+                    }
+                    resolve();
+                },
+            );
+        });
 
-        const transactionQueueLength =
-            this.blockchainModuleManager.getTransactionQueueLength(blockchain);
+        await transactionCompletePromise;
 
         this.logger.trace(
-            `Scheduled submit commit transaction for agreement id: ${agreementId} ` +
-                `blockchain: ${blockchain}, contract: ${contract}, token id: ${tokenId},` +
-                `keyword: ${keyword}, hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
-                `stateIndex: ${stateIndex}, operationId: ${operationId}, ` +
-                `transaction queue length: ${transactionQueueLength}.`,
+            `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
+                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
+                `hash function id: ${hashFunctionId}. Retry number ${
+                    COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1
+                }`,
+        );
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
+            operationId,
+            agreementId,
+            epoch,
         );
 
         return Command.empty();
@@ -138,6 +108,10 @@ class SubmitCommitCommand extends Command {
         }
 
         return false;
+    }
+
+    async retryFinished(command) {
+        this.recover(command, `Max retry count for command: ${command.name} reached!`);
     }
 
     /**

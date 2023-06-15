@@ -1,9 +1,6 @@
+import { v5 as uuidv5 } from 'uuid';
 import Command from '../../command.js';
-import {
-    NETWORK_MESSAGE_TYPES,
-    OPERATION_REQUEST_STATUS,
-    OPERATION_STATUS,
-} from '../../../constants/constants.js';
+import { NETWORK_MESSAGE_TYPES, OPERATION_REQUEST_STATUS } from '../../../constants/constants.js';
 
 class ProtocolMessageCommand extends Command {
     constructor(ctx) {
@@ -20,19 +17,8 @@ class ProtocolMessageCommand extends Command {
         return this.sendProtocolMessage(command, message, messageType);
     }
 
-    async shouldSendMessage(command) {
-        const { operationId } = command.data;
-
-        const { status } = await this.operationService.getOperationStatus(operationId);
-
-        if (status === OPERATION_STATUS.IN_PROGRESS) {
-            return true;
-        }
-        this.logger.trace(
-            `${command.name} skipped for operationId: ${operationId} with status ${status}`,
-        );
-
-        return false;
+    async shouldSendMessage() {
+        return true;
     }
 
     async prepareMessage() {
@@ -42,15 +28,19 @@ class ProtocolMessageCommand extends Command {
     async sendProtocolMessage(command, message, messageType) {
         const { node, operationId, keyword } = command.data;
 
+        const keywordUuid = uuidv5(keyword, uuidv5.URL);
+
         const response = await this.networkModuleManager.sendMessage(
             node.protocol,
             node.id,
             messageType,
             operationId,
-            keyword,
+            keywordUuid,
             message,
             this.messageTimeout(),
         );
+
+        this.networkModuleManager.removeCachedSession(operationId, keywordUuid, node.id);
 
         switch (response.header.messageType) {
             case NETWORK_MESSAGE_TYPES.RESPONSES.BUSY:
@@ -89,6 +79,10 @@ class ProtocolMessageCommand extends Command {
     }
 
     async recover(command, err) {
+        const { node, operationId, keyword } = command.data;
+        const keywordUuid = uuidv5(keyword, uuidv5.URL);
+        this.networkModuleManager.removeCachedSession(operationId, keywordUuid, node.id);
+
         await this.markResponseAsFailed(command, err.message);
         return Command.empty();
     }
