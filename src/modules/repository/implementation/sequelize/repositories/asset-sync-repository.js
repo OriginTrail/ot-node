@@ -61,7 +61,7 @@ class AssetSyncRepository {
                 assetStorageContract,
                 tokenId,
                 stateIndex,
-                status: { [Sequelize.Op.not.eq]: ASSET_SYNC_PARAMETERS.STATUS.IN_PROGRESS },
+                status: { [Sequelize.Op.not]: ASSET_SYNC_PARAMETERS.STATUS.IN_PROGRESS },
             },
         });
     }
@@ -71,7 +71,7 @@ class AssetSyncRepository {
             where: {
                 blockchainId,
                 assetStorageContract,
-                status: { [Sequelize.Op.not.eq]: ASSET_SYNC_PARAMETERS.STATUS.IN_PROGRESS },
+                status: { [Sequelize.Op.not]: ASSET_SYNC_PARAMETERS.STATUS.IN_PROGRESS },
                 insertedByCommand: true,
             },
             order: [
@@ -88,7 +88,7 @@ class AssetSyncRepository {
             where: {
                 blockchainId,
                 assetStorageContract,
-                status: { [Sequelize.Op.not.eq]: ASSET_SYNC_PARAMETERS.STATUS.IN_PROGRESS },
+                status: { [Sequelize.Op.not]: ASSET_SYNC_PARAMETERS.STATUS.IN_PROGRESS },
             },
             order: [['tokenId', 'ASC']],
         });
