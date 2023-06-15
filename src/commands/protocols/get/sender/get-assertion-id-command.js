@@ -18,46 +18,33 @@ class GetAssertionIdCommand extends Command {
     async execute(command) {
         const { blockchain, contract, tokenId, state } = command.data;
 
-        const commandData = {};
-
         let assertionId;
-        if (state === GET_STATES.LATEST) {
+        if (!Object.values(GET_STATES).includes(state)) {
+            assertionId = state;
+        } else {
             this.logger.debug(
                 `Searching for latest assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
             );
 
-            assertionId = await this.blockchainModuleManager.getUnfinalizedAssertionId(
-                blockchain,
-                tokenId,
-            );
-
-            commandData.assertionId = assertionId;
-            commandData.state = assertionId;
+            if (state === GET_STATES.LATEST) {
+                assertionId = await this.blockchainModuleManager.getUnfinalizedAssertionId(
+                    blockchain,
+                    tokenId,
+                );
+            }
+            if (assertionId == null || parseInt(assertionId, 16) === 0) {
+                assertionId = await this.blockchainModuleManager.getLatestAssertionId(
+                    blockchain,
+                    contract,
+                    tokenId,
+                );
+            }
         }
 
-        if (
-            state === GET_STATES.FINALIZED &&
-            (typeof assertionId === 'undefined' || !assertionId || parseInt(assertionId, 16) === 0)
-        ) {
-            this.logger.debug(
-                `Searching for latest finalized assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
-            );
-
-            assertionId = await this.blockchainModuleManager.getLatestAssertionId(
-                blockchain,
-                contract,
-                tokenId,
-            );
-
-            commandData.assertionId = assertionId;
-            commandData.state = assertionId;
-        }
-
-        if (!Object.values(GET_STATES).includes(state)) {
-            commandData.assertionId = state;
-        }
-
-        return this.continueSequence({ ...command.data, ...commandData }, command.sequence);
+        return this.continueSequence(
+            { ...command.data, state: assertionId, assertionId },
+            command.sequence,
+        );
     }
 
     async handleError(operationId, errorMessage, errorType) {
