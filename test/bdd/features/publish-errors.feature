@@ -5,7 +5,7 @@ Feature: Publish errors test
 
   @publish-errors
   Scenario: Publish on a node with minimum replication factor greater than the number of nodes
-    Given I setup 4 nodes
+    Given I setup 1 nodes
     And I wait for 2 seconds
 
     When I call Publish on the node 1 with validAssertion
@@ -14,7 +14,7 @@ Feature: Publish errors test
 
   @publish-errors
   Scenario: Publish a knowledge asset directly on the node
-    Given I setup 4 nodes
+    Given I setup 1 nodes
     And I wait for 2 seconds
 
     When I call Publish directly on the node 1 with validPublishRequestBody
