@@ -634,6 +634,7 @@ class BlockchainEventListenerService {
                 assertionId,
                 assetSync: true,
                 stateIndex,
+                assetSyncInsertedByCommand: false,
             },
             transactional: false,
         });

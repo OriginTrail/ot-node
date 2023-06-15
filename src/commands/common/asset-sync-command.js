@@ -6,7 +6,6 @@ import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
     OPERATION_STATUS,
     OPERATION_ID_STATUS,
-    TRIPLE_STORE_REPOSITORIES,
     GET_STATES,
 } from '../../constants/constants.js';
 
@@ -110,13 +109,6 @@ class AssetSyncCommand extends Command {
                     stateIndex,
                 )
             ) {
-                await this.repositoryModuleManager.updateAssetSyncRecord(
-                    blockchain,
-                    contract,
-                    tokenId,
-                    stateIndex,
-                    ASSET_SYNC_PARAMETERS.STATUS.COMPLETED,
-                );
                 continue;
             }
 
@@ -132,24 +124,26 @@ class AssetSyncCommand extends Command {
                 OPERATION_ID_STATUS.GET.GET_START,
             );
 
-            await this.operationIdService.updateOperationIdStatus(
-                operationId,
-                OPERATION_ID_STATUS.GET.GET_INIT_START,
-            );
+            await Promise.all([
+                this.operationIdService.updateOperationIdStatus(
+                    operationId,
+                    OPERATION_ID_STATUS.GET.GET_INIT_START,
+                ),
 
-            await this.repositoryModuleManager.createAssetSyncRecord(
-                blockchain,
-                contract,
-                tokenId,
-                stateIndex,
-                ASSET_SYNC_PARAMETERS.STATUS.IN_PROGRESS,
-            );
+                this.repositoryModuleManager.createAssetSyncRecord(
+                    blockchain,
+                    contract,
+                    tokenId,
+                    stateIndex,
+                    ASSET_SYNC_PARAMETERS.STATUS.IN_PROGRESS,
+                ),
 
-            await this.repositoryModuleManager.createOperationRecord(
-                this.getService.getOperationName(),
-                operationId,
-                OPERATION_STATUS.IN_PROGRESS,
-            );
+                this.repositoryModuleManager.createOperationRecord(
+                    this.getService.getOperationName(),
+                    operationId,
+                    OPERATION_STATUS.IN_PROGRESS,
+                ),
+            ]);
 
             // TODO: Change to StateIndex, once GET historical state is implemented
             const state = GET_STATES.LATEST_FINALIZED;
@@ -170,6 +164,9 @@ class AssetSyncCommand extends Command {
                     state,
                     hashFunctionId,
                     assertionId,
+                    assetSync: true,
+                    stateIndex,
+                    assetSyncInsertedByCommand: true,
                 },
                 transactional: false,
             });
@@ -190,48 +187,6 @@ class AssetSyncCommand extends Command {
                 attempt < ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_MAX_ATTEMPTS &&
                 getResult?.status !== OPERATION_ID_STATUS.FAILED &&
                 getResult?.status !== OPERATION_ID_STATUS.COMPLETED
-            );
-
-            const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
-            let { status } = getResult;
-            if (cachedData?.assertion?.length) {
-                this.logger.debug(
-                    `ASSET_SYNC: ${cachedData.assertion.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
-                );
-                const keyword = await this.ualService.calculateLocationKeyword(
-                    blockchain,
-                    contract,
-                    tokenId,
-                );
-
-                await this.tripleStoreService.localStoreAsset(
-                    stateIndex === assertionIds.length - 1
-                        ? TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT
-                        : TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
-                    assertionId,
-                    cachedData.assertion,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    keyword,
-                );
-            } else {
-                this.logger.debug(
-                    `ASSET_SYNC: No nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
-                );
-                status = ASSET_SYNC_PARAMETERS.STATUS.NOT_FOUND;
-            }
-
-            this.logger.debug(
-                `ASSET_SYNC: Updating status for asset sync record with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}, status: ${status}`,
-            );
-
-            await this.repositoryModuleManager.updateAssetSyncRecord(
-                blockchain,
-                contract,
-                tokenId,
-                stateIndex,
-                status,
             );
         }
     }

@@ -14,8 +14,6 @@ class GetInitCommand extends ProtocolInitCommand {
         return {
             ...commandData,
             state: command.data.state,
-            assetSync: command.data.assetSync,
-            stateIndex: command.data.stateIndex,
         };
     }
 

@@ -42,6 +42,7 @@ class GetService extends OperationService {
             assertionId,
             assetSync,
             stateIndex,
+            assetSyncInsertedByCommand,
         } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
@@ -116,7 +117,7 @@ class GetService extends OperationService {
                     tokenId,
                     stateIndex,
                     ASSET_SYNC_PARAMETERS.STATUS.COMPLETED,
-                    false,
+                    assetSyncInsertedByCommand,
                 );
             }
         }
@@ -137,6 +138,24 @@ class GetService extends OperationService {
                     this.completedStatuses,
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);
+                if (assetSync) {
+                    const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+                    this.logger.debug(
+                        `ASSET_SYNC: No nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                    );
+                    const status = ASSET_SYNC_PARAMETERS.STATUS.NOT_FOUND;
+                    this.logger.debug(
+                        `ASSET_SYNC: Updating status for asset sync record with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}, status: ${status}`,
+                    );
+                    await this.repositoryModuleManager.updateAssetSyncRecord(
+                        blockchain,
+                        contract,
+                        tokenId,
+                        stateIndex,
+                        status,
+                        assetSyncInsertedByCommand,
+                    );
+                }
             } else {
                 await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
             }
