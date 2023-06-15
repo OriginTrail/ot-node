@@ -152,8 +152,8 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('shard').getPeersToDial(limit, dialFrequencyMillis);
     }
 
-    async removePeerRecords(peerRecords) {
-        return this.getRepository('shard').removePeerRecords(peerRecords);
+    async removePeerRecord(blockchain, peerId) {
+        return this.getRepository('shard').removePeerRecord(blockchain, peerId);
     }
 
     async updatePeerRecordLastDialed(peerId, timestamp) {
@@ -298,6 +298,12 @@ class RepositoryModuleManager extends BaseModuleManager {
             return this.getRepository('service_agreement').bulkCreateServiceAgreementRecords(
                 records,
             );
+        }
+    }
+
+    async getServiceAgreementRecord(agreementId) {
+        if (this.initialized) {
+            return this.getRepository('service_agreement').getServiceAgreementRecord(agreementId);
         }
     }
 

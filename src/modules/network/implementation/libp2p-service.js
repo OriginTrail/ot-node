@@ -14,7 +14,6 @@ import map from 'it-map';
 import { encode, decode } from 'it-length-prefixed';
 import { fromString as uint8ArrayFromString, toString as uint8ArrayToString } from 'uint8arrays';
 import toobusy from 'toobusy-js';
-import { v5 as uuidv5 } from 'uuid';
 import ip from 'ip';
 import RateLimiter from './rate-limiter.js';
 import SessionManager from './session-manager.js';
@@ -55,6 +54,9 @@ class Libp2pService {
                     timeout: 10_000,
                 }),
             ],
+            connectionManager: {
+                ...this.config.connectionManager,
+            },
             services: {
                 dht: kadDHT(this.config.dht),
                 identify: identifyService(),
@@ -87,11 +89,11 @@ class Libp2pService {
 
         this.node.handle(protocol, async (handlerProps) => {
             const { stream } = handlerProps;
-            const remotePeerId = handlerProps.connection.remotePeer.toString();
+            const peerIdString = handlerProps.connection.remotePeer.toString();
 
             let message;
             try {
-                message = await this._readMessageFromStream(stream, remotePeerId, true);
+                message = await this._readMessageFromStream(stream, peerIdString, true);
             } catch (error) {
                 let response;
                 switch (error.message) {
@@ -106,7 +108,7 @@ class Libp2pService {
 
                 await this.sendMessageResponse(
                     protocol,
-                    remotePeerId,
+                    peerIdString,
                     response,
                     message?.header.operationId,
                     message?.header.keywordUuid,
@@ -118,20 +120,20 @@ class Libp2pService {
             this.sessionManager.updateSessionStream(
                 message.header.operationId,
                 message.header.keywordUuid,
-                remotePeerId,
+                peerIdString,
                 stream,
             );
 
             this.logger.debug(
-                `Receiving message from ${remotePeerId} to ${this.peerIdString}: protocol: ${protocol}, messageType: ${message.header.messageType};`,
+                `Receiving message from ${peerIdString} to ${this.peerIdString}: protocol: ${protocol}, messageType: ${message.header.messageType};`,
             );
 
-            await handler(message, remotePeerId);
+            await handler(message, peerIdString);
         });
     }
 
-    async getPublicIp(peerId) {
-        return ((await this.node.peerStore.get(peerId)).addresses ?? [])
+    async getPublicIp(peerIdObject) {
+        return ((await this.node.peerStore.get(peerIdObject)).addresses ?? [])
             .map((addr) => addr.multiaddr)
             .filter((addr) => addr.isThinWaistAddress())
             .map((addr) => addr.toString().split('/'))
@@ -140,24 +142,23 @@ class Libp2pService {
 
     async sendMessage(
         protocol,
-        remotePeerId,
+        peerIdString,
         messageType,
         operationId,
-        keyword,
+        keywordUuid,
         messageData,
         timeout,
     ) {
-        const keywordUuid = uuidv5(keyword, uuidv5.URL);
-        const peerId = peerIdFromString(remotePeerId);
-        const publicIp = await this.getPublicIp(peerId);
+        const peerIdObject = peerIdFromString(peerIdString);
+        const publicIp = await this.getPublicIp(peerIdObject);
 
-        const sendMessageInfo = `peer: ${remotePeerId}, protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, public ip: ${publicIp}`;
+        const sendMessageInfo = `peer: ${peerIdString}, protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, public ip: ${publicIp}`;
 
         this.logger.trace(`Dialing ${sendMessageInfo}`);
         let stream;
         const dialStart = Date.now();
         try {
-            stream = await this.node.dialProtocol(peerId, protocol);
+            stream = await this.node.dialProtocol(peerIdObject, protocol);
         } catch (error) {
             return this.messageManager.createMessage(
                 NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
@@ -175,7 +176,7 @@ class Libp2pService {
             } ms.`,
         );
 
-        this.sessionManager.updateSessionStream(operationId, keywordUuid, peerId, stream);
+        this.sessionManager.updateSessionStream(operationId, keywordUuid, peerIdString, stream);
 
         const request = this.messageManager.createMessage(
             messageType,
@@ -211,7 +212,7 @@ class Libp2pService {
         try {
             timeoutSignal.addEventListener('abort', onAbort, { once: true });
 
-            response = await this._readMessageFromStream(stream, peerId);
+            response = await this._readMessageFromStream(stream, peerIdString);
 
             timeoutSignal.removeEventListener('abort', onAbort);
 
@@ -233,7 +234,7 @@ class Libp2pService {
         }
 
         this.logger.trace(
-            `Receiving response from ${remotePeerId}. protocol: ${protocol}, messageType: ${
+            `Receiving response from ${peerIdString}. protocol: ${protocol}, messageType: ${
                 response?.header?.messageType
             }, operationId: ${operationId}, execution time: ${Date.now() - readResponseStart} ms.`,
         );
@@ -243,19 +244,19 @@ class Libp2pService {
 
     async sendMessageResponse(
         protocol,
-        remotePeerId,
+        peerIdString,
         messageType,
         operationId,
         keywordUuid,
         messageData,
     ) {
         this.logger.debug(
-            `Sending response from ${this.peerIdString} to ${remotePeerId}: protocol: ${protocol}, messageType: ${messageType};`,
+            `Sending response from ${this.peerIdString} to ${peerIdString}: protocol: ${protocol}, messageType: ${messageType};`,
         );
-        const stream = this.sessionManager.getSessionStream(operationId, keywordUuid, remotePeerId);
+        const stream = this.sessionManager.getSessionStream(operationId, keywordUuid, peerIdString);
 
         if (!stream) {
-            throw Error(`Unable to find opened stream for remotePeerId: ${remotePeerId}`);
+            throw Error(`Unable to find opened stream for remotePeerId: ${peerIdString}`);
         }
 
         const response = this.messageManager.createMessage(
@@ -280,7 +281,7 @@ class Libp2pService {
         );
     }
 
-    async _readMessageFromStream(stream, remotePeerId, isRequest) {
+    async _readMessageFromStream(stream, peerIdString, isRequest) {
         return pipe(
             // Read from the stream (the source)
             stream.source,
@@ -290,14 +291,14 @@ class Libp2pService {
             (source) => map(source, (buf) => uint8ArrayToString(buf.subarray())),
             // Sink function
             async (source) => {
-                const header = await this.readHeader(source, remotePeerId, isRequest);
+                const header = await this.readHeader(source, peerIdString, isRequest);
                 const data = await this.readMessageData(source);
                 return { header, data };
             },
         );
     }
 
-    async readHeader(source, remotePeerId, isRequest) {
+    async readHeader(source, peerIdString, isRequest) {
         const stringifiedHeader = (await source.next()).value;
 
         if (!stringifiedHeader?.length) {
@@ -306,7 +307,7 @@ class Libp2pService {
 
         const header = JSON.parse(stringifiedHeader);
 
-        this.validateHeader(header, remotePeerId, isRequest);
+        await this.validateHeader(header, peerIdString, isRequest);
 
         return header;
     }
@@ -319,9 +320,9 @@ class Libp2pService {
         return JSON.parse(stringifiedData);
     }
 
-    async validateHeader(header, remotePeerId, isRequest) {
+    async validateHeader(header, peerIdString, isRequest) {
         if (isRequest) {
-            if (!(await this.isRequestValid(header, remotePeerId))) {
+            if (!(await this.isRequestValid(header, peerIdString))) {
                 throw new Error('Invalid request');
             }
             if (
@@ -335,9 +336,9 @@ class Libp2pService {
         }
     }
 
-    async isRequestValid(header, remotePeerId) {
+    async isRequestValid(header, peerIdString) {
         if (
-            (await this.rateLimiter.limitRequest(remotePeerId)) ||
+            (await this.rateLimiter.limitRequest(peerIdString)) ||
             !this.messageManager.isRequestValid(header)
         )
             return false;
@@ -347,7 +348,7 @@ class Libp2pService {
         }
 
         return this.sessionManager.sessionExists(
-            remotePeerId,
+            peerIdString,
             header.operationId,
             header.keywordUuid,
         );
@@ -377,6 +378,16 @@ class Libp2pService {
 
     async getPeerInfo(peerIdString) {
         return this.node.peerStore.get(peerIdFromString(peerIdString));
+    }
+
+    removeCachedSession(operationId, keywordUuid, peerIdString) {
+        if (this.sessions[peerIdString]?.[operationId]?.[keywordUuid]?.stream) {
+            this.sessions[peerIdString][operationId][keywordUuid].stream.close();
+            delete this.sessions[peerIdString][operationId];
+            this.logger.trace(
+                `Removed session for remotePeerId: ${peerIdString}, operationId: ${operationId}.`,
+            );
+        }
     }
 }
 

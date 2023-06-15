@@ -70,7 +70,7 @@ class Web3Service {
         }, concurrency);
     }
 
-    async queueTransaction(contractInstance, functionName, transactionArgs, callback) {
+    queueTransaction(contractInstance, functionName, transactionArgs, callback) {
         this.transactionQueue.push(
             {
                 contractInstance,
@@ -396,6 +396,7 @@ class Web3Service {
     async getAllPastEvents(
         blockchainId,
         contractName,
+        eventsToFilter,
         lastCheckedBlock,
         lastCheckedTimestamp,
         currentBlock,
@@ -412,14 +413,21 @@ class Web3Service {
             fromBlock = lastCheckedBlock + 1;
         }
 
-        let events = [];
+        const topics = [];
+        for (const filterName in contract.filters) {
+            if (!eventsToFilter.includes(filterName)) continue;
+            const filter = contract.filters[filterName]().topics[0];
+            topics.push(filter);
+        }
+
+        const events = [];
         while (fromBlock <= currentBlock) {
             const toBlock = Math.min(
                 fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH - 1,
                 currentBlock,
             );
-            const newEvents = await contract.queryFilter('*', fromBlock, toBlock);
-            events = events.concat(newEvents);
+            const newEvents = await this.processBlockRange(fromBlock, toBlock, contract, topics);
+            newEvents.forEach((e) => events.push(...e));
             fromBlock = toBlock + 1;
         }
 
@@ -437,6 +445,13 @@ class Web3Service {
             block: event.blockNumber,
             blockchainId,
         }));
+    }
+
+    async processBlockRange(fromBlock, toBlock, contract, topics) {
+        const newEvents = await Promise.all(
+            topics.map((topic) => contract.queryFilter(topic, fromBlock, toBlock)),
+        );
+        return newEvents;
     }
 
     isOlderThan(timestamp, olderThanInMills) {
@@ -635,7 +650,7 @@ class Web3Service {
         return finalizationCommitsNumber;
     }
 
-    async submitCommit(
+    submitCommit(
         assetContractAddress,
         tokenId,
         keyword,
@@ -652,14 +667,7 @@ class Web3Service {
         );
     }
 
-    async submitUpdateCommit(
-        assetContractAddress,
-        tokenId,
-        keyword,
-        hashFunctionId,
-        epoch,
-        callback,
-    ) {
+    submitUpdateCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch, callback) {
         return this.queueTransaction(
             this.CommitManagerV1U1Contract,
             'submitUpdateCommit',
@@ -695,7 +703,7 @@ class Web3Service {
         return { assertionId: result['0'], challenge: result['1'] };
     }
 
-    async sendProof(
+    sendProof(
         assetContractAddress,
         tokenId,
         keyword,
