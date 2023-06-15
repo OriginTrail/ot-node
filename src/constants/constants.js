@@ -336,7 +336,11 @@ export const OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
  * @constant {number} FINALIZED_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time
  * finalized commands command cleanup interval time 24h
  */
-export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 30 * 24 * 60 * 60 * 1000;
+export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+export const PROCESSED_BLOCKCHAIN_EVENTS_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+export const PROCESSED_BLOCKCHAIN_EVENTS_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
 /**
  * @constant {number} COMMAND_STATUS -
  * Status for commands
@@ -350,6 +354,12 @@ export const COMMAND_STATUS = {
     COMPLETED: 'COMPLETED',
     REPEATING: 'REPEATING',
 };
+
+export const REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER = 1000;
+
+export const ARCHIVE_COMMANDS_FOLDER = 'commands';
+
+export const ARCHIVE_BLOCKCHAIN_EVENTS_FOLDER = 'blockchain_events';
 
 /**
  * How many commands will run in parallel

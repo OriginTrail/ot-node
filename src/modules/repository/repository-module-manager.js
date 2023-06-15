@@ -56,8 +56,20 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('command').getCommandWithId(id);
     }
 
-    async removeFinalizedCommands(finalizedStatuses) {
-        return this.getRepository('command').removeFinalizedCommands(finalizedStatuses);
+    async removeCommands(ids) {
+        return this.getRepository('command').removeCommands(ids);
+    }
+
+    async findFinalizedCommands(timestamp, limit) {
+        return this.getRepository('command').findFinalizedCommands(timestamp, limit);
+    }
+
+    async removeEvents(ids) {
+        return this.getRepository('blockchain_event').removeEvents(ids);
+    }
+
+    async findProcessedEvents(timestamp, limit) {
+        return this.getRepository('blockchain_event').findProcessedEvents(timestamp, limit);
     }
 
     async createOperationIdRecord(handlerData) {
