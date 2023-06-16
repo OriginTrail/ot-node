@@ -4,7 +4,6 @@ import Command from '../command.js';
 class CleanerCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.logger = ctx.logger;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.archiveService = ctx.archiveService;
     }
