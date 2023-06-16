@@ -70,6 +70,10 @@ class AssetSyncCommand extends Command {
             }
         }
 
+        await new Promise((resolve) => {
+            syncQueue.drain(resolve);
+        });
+
         this.logger.debug(`Finished executing asset sync command`);
 
         return Command.repeat();
