@@ -1,4 +1,5 @@
-import { ASSET_SYNC_PARAMETERS, OPERATION_ID_STATUS } from '../../../../../constants/constants.js';
+import Sequelize from 'sequelize';
+import { ASSET_SYNC_PARAMETERS } from '../../../../../constants/constants.js';
 
 class AssetSyncRepository {
     constructor(models) {
@@ -60,6 +61,7 @@ class AssetSyncRepository {
                 assetStorageContract,
                 tokenId,
                 stateIndex,
+                status: { [Sequelize.Op.not]: ASSET_SYNC_PARAMETERS.STATUS.IN_PROGRESS },
             },
         });
     }
@@ -69,12 +71,12 @@ class AssetSyncRepository {
             where: {
                 blockchainId,
                 assetStorageContract,
-                status: OPERATION_ID_STATUS.COMPLETED,
+                status: { [Sequelize.Op.not]: ASSET_SYNC_PARAMETERS.STATUS.IN_PROGRESS },
                 insertedByCommand: true,
             },
             order: [
-                ['token_id', 'DESC'],
-                ['state_index', 'DESC'],
+                ['tokenId', 'DESC'],
+                ['stateIndex', 'DESC'],
             ],
             limit: 1,
         });
@@ -86,9 +88,9 @@ class AssetSyncRepository {
             where: {
                 blockchainId,
                 assetStorageContract,
-                status: ASSET_SYNC_PARAMETERS.STATUS.COMPLETED,
+                status: { [Sequelize.Op.not]: ASSET_SYNC_PARAMETERS.STATUS.IN_PROGRESS },
             },
-            order: [['token_id', 'ASC']],
+            order: [['tokenId', 'ASC']],
         });
         return tokenIds.map((t) => t.tokenId);
     }

@@ -27,7 +27,7 @@ export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 
 export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000; // 15 days
 
-export const MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH = 500;
+export const MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH = 50;
 
 export const TRANSACTION_QUEUE_CONCURRENCY = 1;
 
@@ -119,8 +119,9 @@ export const OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
 export const ASSET_SYNC_PARAMETERS = {
     COMMAND_FREQUENCY_MILLIS: 5 * 60 * 1000,
-    GET_RESULT_POLLING_INTERVAL_MILLIS: 3 * 1000,
-    GET_RESULT_POLLING_MAX_ATTEMPTS: 10,
+    GET_RESULT_POLLING_INTERVAL_MILLIS: 1 * 1000,
+    GET_RESULT_POLLING_MAX_ATTEMPTS: 30,
+    CONCURRENCY: 4,
     STATUS: {
         IN_PROGRESS: 'IN_PROGRESS',
         FAILED: 'FAILED',
@@ -143,6 +144,10 @@ export const PERMANENT_COMMANDS = [
     'dialPeersCommand',
     'assetSyncCommand',
     'epochCheckCommand',
+    'blockchainEventCleanerCommand',
+    'getResponseCleanerCommand',
+    'publishResponseCleanerCommand',
+    'updateResponseCleanerCommand',
 ];
 
 export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
@@ -351,9 +356,21 @@ export const OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
  */
 export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
-export const COMMANDS_FOR_REMOVAL_MAX_NUMBER = 1000;
+export const GET_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
-export const ARCHIVE_COMMANDS_FOLDER = 'commands';
+export const GET_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+
+export const PUBLISH_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+export const PUBLISH_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+
+export const UPDATE_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+export const UPDATE_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+
+export const PROCESSED_BLOCKCHAIN_EVENTS_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+export const PROCESSED_BLOCKCHAIN_EVENTS_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
 /**
  * @constant {number} COMMAND_STATUS -
  * Status for commands
@@ -367,6 +384,18 @@ export const COMMAND_STATUS = {
     COMPLETED: 'COMPLETED',
     REPEATING: 'REPEATING',
 };
+
+export const REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER = 1000;
+
+export const ARCHIVE_COMMANDS_FOLDER = 'commands';
+
+export const ARCHIVE_BLOCKCHAIN_EVENTS_FOLDER = 'blockchain_events';
+
+export const ARCHIVE_GET_RESPONSES_FOLDER = 'get_responses';
+
+export const ARCHIVE_PUBLISH_RESPONSES_FOLDER = 'publish_responses';
+
+export const ARCHIVE_UPDATE_RESPONSES_FOLDER = 'update_responses';
 
 /**
  * How many commands will run in parallel
@@ -432,30 +461,12 @@ export const CONTRACTS = {
 };
 
 export const CONTRACT_EVENTS = {
-    HUB: {
-        NEW_CONTRACT: 'NewContract',
-        CONTRACT_CHANGED: 'ContractChanged',
-        NEW_ASSET_STORAGE: 'NewAssetStorage',
-        ASSET_STORAGE_CHANGED: 'AssetStorageChanged',
-    },
-    SHARDING_TABLE: {
-        NODE_ADDED: 'NodeAdded',
-        NODE_REMOVED: 'NodeRemoved',
-    },
-    STAKING: {
-        STAKE_INCREASED: 'StakeIncreased',
-        STAKE_WITHDRAWAL_STARTED: 'StakeWithdrawalStarted',
-    },
-    PROFILE: {
-        ASK_UPDATED: 'AskUpdated',
-    },
-    COMMIT_MANAGER_V1: {
-        STATE_FINALIZED: 'StateFinalized',
-    },
-    SERVICE_AGREEMENT_V1: {
-        SERVICE_AGREEMENT_V1_EXTENDED: 'ServiceAgreementV1Extended',
-        SERVICE_AGREEMENT_V1_TERMINATED: 'ServiceAgreementV1Terminated',
-    },
+    HUB: ['NewContract', 'ContractChanged', 'NewAssetStorage', 'AssetStorageChanged'],
+    SHARDING_TABLE: ['NodeAdded', 'NodeRemoved'],
+    STAKING: ['StakeIncreased', 'StakeWithdrawalStarted'],
+    PROFILE: ['AskUpdated'],
+    COMMIT_MANAGER_V1: ['StateFinalized'],
+    SERVICE_AGREEMENT_V1: ['ServiceAgreementV1Extended', 'ServiceAgreementV1Terminated'],
 };
 
 export const NODE_ENVIRONMENTS = {

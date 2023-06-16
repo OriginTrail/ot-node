@@ -16,6 +16,7 @@ class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
             state: command.data.state,
             assetSync: command.data.assetSync,
             stateIndex: command.data.stateIndex,
+            assetSyncInsertedByCommand: command.data.assetSyncInsertedByCommand,
         };
     }
 

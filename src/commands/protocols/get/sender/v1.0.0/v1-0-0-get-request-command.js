@@ -3,6 +3,7 @@ import {
     NETWORK_MESSAGE_TIMEOUT_MILLS,
     ERROR_TYPE,
     OPERATION_REQUEST_STATUS,
+    OPERATION_STATUS,
 } from '../../../../../constants/constants.js';
 
 class GetRequestCommand extends ProtocolRequestCommand {
@@ -14,17 +15,23 @@ class GetRequestCommand extends ProtocolRequestCommand {
         this.errorType = ERROR_TYPE.GET.GET_REQUEST_ERROR;
     }
 
+    async shouldSendMessage(command) {
+        const { operationId } = command.data;
+
+        const { status } = await this.operationService.getOperationStatus(operationId);
+
+        if (status === OPERATION_STATUS.IN_PROGRESS) {
+            return true;
+        }
+        this.logger.trace(
+            `${command.name} skipped for operationId: ${operationId} with status ${status}`,
+        );
+
+        return false;
+    }
+
     async prepareMessage(command) {
-        const {
-            assertionId,
-            blockchain,
-            contract,
-            tokenId,
-            hashFunctionId,
-            state,
-            assetSync,
-            stateIndex,
-        } = command.data;
+        const { assertionId, blockchain, contract, tokenId, hashFunctionId, state } = command.data;
 
         return {
             assertionId,
@@ -33,8 +40,6 @@ class GetRequestCommand extends ProtocolRequestCommand {
             tokenId,
             hashFunctionId,
             state,
-            assetSync,
-            stateIndex,
         };
     }
 
