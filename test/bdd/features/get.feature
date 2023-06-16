@@ -4,7 +4,7 @@ Feature: Get asset states test
     And 1 bootstrap is running
 
   @release
-  Scenario: Get latest state of the knowledge asset
+  Scenario: Get first state of the updated knowledge asset
     Given I set R0 to be 1
     And I set R1 to be 2
     And I set finalizationCommitsNumber to be 2
@@ -24,7 +24,7 @@ Feature: Get asset states test
     Then Latest Get operation finished with status: COMPLETED
 
     @release
-    Scenario: Get latest state of the knowledge asset
+    Scenario: Get latest state of the updated knowledge asset
         Given I set R0 to be 1
         And I set R1 to be 2
         And I set finalizationCommitsNumber to be 2

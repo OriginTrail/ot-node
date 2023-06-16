@@ -31,7 +31,7 @@ class GetRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { blockchain, contract, tokenId, assertionId, state } = command.data;
+        const { blockchain, contract, tokenId, assertionId, state, hashFunctionId } = command.data;
 
         return {
             blockchain,
@@ -39,6 +39,7 @@ class GetRequestCommand extends ProtocolRequestCommand {
             tokenId,
             assertionId,
             state,
+            hashFunctionId,
         };
     }
 

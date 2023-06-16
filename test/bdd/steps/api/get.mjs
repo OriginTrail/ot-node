@@ -67,9 +67,9 @@ When('I wait for latest Get to finalize', { timeout: 80000 }, async function get
         );
         this.logger.log(`Operation status: ${getResult.data.status}`);
         if (['COMPLETED', 'FAILED'].includes(getResult.data.status)) {
-            this.state.latestPublishData.result = getResult;
-            this.state.latestPublishData.status = getResult.data.status;
-            this.state.latestPublishData.errorType = getResult.data.data?.errorType;
+            this.state.latestGetData.result = getResult;
+            this.state.latestGetData.status = getResult.data.status;
+            this.state.latestGetData.errorType = getResult.data.data?.errorType;
             break;
         }
         if (retryCount === maxRetryCount - 1) {

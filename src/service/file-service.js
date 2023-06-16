@@ -123,8 +123,8 @@ class FileService {
         return path.join(this.getOperationIdCachePath(), operationId);
     }
 
-    getPendingStorageFileName(blockchain, contract, tokenId, stateId) {
-        return `${blockchain.toLowerCase()}:${contract.toLowerCase()}:${tokenId}:${stateId}`;
+    getPendingStorageFileName(blockchain, contract, tokenId, assertionId) {
+        return `${blockchain.toLowerCase()}:${contract.toLowerCase()}:${tokenId}:${assertionId}`;
     }
 
     getPendingStorageFileNamePattern(blockchain, contract, tokenId) {
@@ -142,10 +142,10 @@ class FileService {
         );
     }
 
-    getPendingStorageDocumentPath(repository, blockchain, contract, tokenId, stateId) {
+    getPendingStorageDocumentPath(repository, blockchain, contract, tokenId, assertionId) {
         return path.join(
             this.getPendingStorageCachePath(repository),
-            this.getPendingStorageFileName(blockchain, contract, tokenId, stateId),
+            this.getPendingStorageFileName(blockchain, contract, tokenId, assertionId),
         );
     }
 

@@ -11,14 +11,14 @@ class PendingStorageService {
         blockchain,
         contract,
         tokenId,
-        stateId,
+        assertionId,
         assertion,
         operationId,
     ) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.debug(
-            `Caching ${stateId} assertion for ual: ${ual}, operation id: ${operationId} in file in ${repository} pending storage`,
+            `Caching ${assertionId} assertion for ual: ${ual}, operation id: ${operationId} in file in ${repository} pending storage`,
         );
 
         const documentPath = this.fileService.getPendingStorageCachePath(repository);
@@ -26,7 +26,7 @@ class PendingStorageService {
             blockchain,
             contract,
             tokenId,
-            stateId,
+            assertionId,
         );
 
         await this.fileService.writeContentsToFile(
@@ -86,13 +86,13 @@ class PendingStorageService {
         return this.fileService.fileExists(documentPathPattern);
     }
 
-    async stateIsPending(repository, blockchain, contract, tokenId, stateId) {
+    async stateIsPending(repository, blockchain, contract, tokenId, assertionId) {
         const documentPath = this.fileService.getPendingStorageDocumentPath(
             repository,
             blockchain,
             contract,
             tokenId,
-            stateId,
+            assertionId,
         );
         this.logger.trace(
             `Checking if assertion exists in pending storage on path: ${documentPath}`,
