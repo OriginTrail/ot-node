@@ -5,6 +5,8 @@ import appRootPath from 'app-root-path';
 
 const MIGRATION_FOLDER_NAME = 'migrations';
 
+const ARCHIVE_FOLDER_NAME = 'archive';
+
 class FileService {
     constructor(ctx) {
         this.config = ctx.config;
@@ -145,6 +147,10 @@ class FileService {
             this.getPendingStorageCachePath(repository),
             this.getPendingStorageFileName(blockchain, contract, tokenId, stateId),
         );
+    }
+
+    getArchiveFolderPath(subFolder) {
+        return path.join(this.getDataFolderPath(), ARCHIVE_FOLDER_NAME, subFolder);
     }
 }
 

@@ -1,4 +1,5 @@
 import Sequelize from 'sequelize';
+import { COMMAND_STATUS } from '../../../../../constants/constants.js';
 
 class CommandRepository {
     constructor(models) {
@@ -41,12 +42,30 @@ class CommandRepository {
         });
     }
 
-    async removeFinalizedCommands(finalizedStatuses) {
+    async removeCommands(ids) {
         await this.model.destroy({
             where: {
-                status: { [Sequelize.Op.in]: finalizedStatuses },
-                startedAt: { [Sequelize.Op.lte]: Date.now() },
+                id: { [Sequelize.Op.in]: ids },
             },
+        });
+    }
+
+    async findFinalizedCommands(timestamp, limit) {
+        return this.model.findAll({
+            where: {
+                status: {
+                    [Sequelize.Op.in]: [
+                        COMMAND_STATUS.COMPLETED,
+                        COMMAND_STATUS.FAILED,
+                        COMMAND_STATUS.EXPIRED,
+                        COMMAND_STATUS.UNKNOWN,
+                    ],
+                },
+                startedAt: { [Sequelize.Op.lte]: timestamp },
+            },
+            order: [['startedAt', 'asc']],
+            raw: true,
+            limit,
         });
     }
 }
