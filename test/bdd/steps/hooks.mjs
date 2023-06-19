@@ -16,6 +16,7 @@ Before(function beforeMethod(testCase, done) {
     // Initialize variables
     this.state = {};
     if (this.state.localBlockchain) {
+        this.logger.info('Stopping local blockchain!');
         this.state.localBlockchain.stop();
     }
     this.state.localBlockchain = null;
