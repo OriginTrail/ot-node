@@ -126,8 +126,13 @@ class ShardRepository {
         );
     }
 
-    async removePeerRecords(peerRecords) {
-        await this.model.bulkDestroy(peerRecords);
+    async removePeerRecord(blockchainId, peerId) {
+        await this.model.destroy({
+            where: {
+                blockchainId,
+                peerId,
+            },
+        });
     }
 
     async cleanShardingTable(blockchainId) {
