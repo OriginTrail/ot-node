@@ -40,6 +40,7 @@ After(function afterMethod(testCase, done) {
         databaseNames.push(node.configuration.operationalDatabase.databaseName);
     });
     if (this.state.localBlockchain) {
+        this.logger.info('Stopping local blockchain!');
         this.state.localBlockchain.stop();
     }
     this.logger.log('After test hook, cleaning repositories');
