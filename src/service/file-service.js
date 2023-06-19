@@ -1,5 +1,5 @@
 import path from 'path';
-import { mkdir, writeFile, readFile, unlink, stat, readdir, rmdir } from 'fs/promises';
+import { mkdir, writeFile, readFile, unlink, stat, readdir, rm } from 'fs/promises';
 import appRootPath from 'app-root-path';
 
 const MIGRATION_FOLDER_NAME = 'migrations';
@@ -95,7 +95,7 @@ class FileService {
         this.logger.trace(`Removing folder at path: ${folderPath}`);
 
         try {
-            await rmdir(folderPath, { recursive: true, force: true });
+            await rm(folderPath, { recursive: true });
         } catch (error) {
             if (error.code === 'ENOENT') {
                 this.logger.debug(`Folder not found at path: ${folderPath}`);
@@ -150,9 +150,9 @@ class FileService {
         let pendingStorageFileName;
         if (assertionId === undefined) {
             [pendingStorageFileName] = await this.readDirectory(pendingStorageFolder);
+        } else {
+            pendingStorageFileName = assertionId;
         }
-
-        pendingStorageFileName = assertionId;
 
         return path.join(pendingStorageFolder, pendingStorageFileName);
     }

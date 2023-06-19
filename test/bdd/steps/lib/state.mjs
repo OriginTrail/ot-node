@@ -12,10 +12,16 @@ const state = {
         0: {
             client: {},
             fork: {},
+            fileService: {},
+            configuration: {},
+            nodeRpcUrl: ''
         },
         1: {
             client: {},
             fork: {},
+            fileService: {},
+            configuration: {},
+            nodeRpcUrl: ''
         },
     },
     bootstraps: [],

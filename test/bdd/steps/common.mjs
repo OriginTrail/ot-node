@@ -5,6 +5,7 @@ import { setTimeout as sleep } from 'timers/promises';
 
 import DkgClientHelper from '../../utilities/dkg-client-helper.mjs';
 import StepsUtils from '../../utilities/steps-utils.mjs';
+import FileService from "../../../src/service/file-service.js";
 
 const stepsUtils = new StepsUtils();
 
@@ -67,6 +68,7 @@ Given(
                         forkedNode,
                         configuration: nodeConfiguration,
                         nodeRpcUrl: `http://localhost:${rpcPort}`,
+                        fileService: new FileService({config: nodeConfiguration, logger: this.logger}),
                     };
                 }
                 nodesStarted += 1;
@@ -130,6 +132,7 @@ Given(
                     forkedNode,
                     configuration: nodeConfiguration,
                     nodeRpcUrl: `http://localhost:${rpcPort}`,
+                    fileService: new FileService({config: nodeConfiguration, logger: this.logger}),
                 });
             }
             done();
@@ -207,6 +210,7 @@ Given(
                     forkedNode,
                     configuration: nodeConfiguration,
                     nodeRpcUrl: `http://localhost:${rpcPort}`,
+                    fileService: new FileService({config: nodeConfiguration, logger: this.logger}),
                 };
             }
             done();
