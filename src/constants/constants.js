@@ -27,7 +27,7 @@ export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 
 export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000; // 15 days
 
-export const MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH = 500;
+export const MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH = 50;
 
 export const TRANSACTION_QUEUE_CONCURRENCY = 1;
 
@@ -95,12 +95,12 @@ export const MIN_NODE_VERSION = 16;
 
 export const NETWORK_API_RATE_LIMIT = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    MAX_NUMBER: 20,
+    MAX_NUMBER: 100,
 };
 
 export const NETWORK_API_SPAM_DETECTION = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    MAX_NUMBER: 40,
+    MAX_NUMBER: 150,
 };
 
 export const NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
@@ -130,6 +130,13 @@ export const PERMANENT_COMMANDS = [
     'commandsCleanerCommand',
     'dialPeersCommand',
     'epochCheckCommand',
+    'blockchainEventCleanerCommand',
+    'getCleanerCommand',
+    'getResponseCleanerCommand',
+    'publishCleanerCommand',
+    'publishResponseCleanerCommand',
+    'updateCleanerCommand',
+    'updateResponseCleanerCommand',
 ];
 
 export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
@@ -336,7 +343,35 @@ export const OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
  * @constant {number} FINALIZED_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time
  * finalized commands command cleanup interval time 24h
  */
-export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 30 * 24 * 60 * 60 * 1000;
+export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+export const GET_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+export const GET_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+
+export const GET_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+export const GET_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+
+export const PUBLISH_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+export const PUBLISH_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+
+export const PUBLISH_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+export const PUBLISH_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+
+export const UPDATE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+export const UPDATE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+
+export const UPDATE_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+export const UPDATE_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+
+export const PROCESSED_BLOCKCHAIN_EVENTS_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+export const PROCESSED_BLOCKCHAIN_EVENTS_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
 /**
  * @constant {number} COMMAND_STATUS -
  * Status for commands
@@ -350,6 +385,26 @@ export const COMMAND_STATUS = {
     COMPLETED: 'COMPLETED',
     REPEATING: 'REPEATING',
 };
+
+export const OPERATION_ID_FILES_FOR_REMOVAL_MAX_NUMBER = 100;
+
+export const REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER = 1000;
+
+export const ARCHIVE_COMMANDS_FOLDER = 'commands';
+
+export const ARCHIVE_BLOCKCHAIN_EVENTS_FOLDER = 'blockchain_events';
+
+export const ARCHIVE_GET_FOLDER = 'get';
+
+export const ARCHIVE_GET_RESPONSES_FOLDER = 'get_responses';
+
+export const ARCHIVE_PUBLISH_FOLDER = 'publish';
+
+export const ARCHIVE_PUBLISH_RESPONSES_FOLDER = 'publish_responses';
+
+export const ARCHIVE_UPDATE_FOLDER = 'update';
+
+export const ARCHIVE_UPDATE_RESPONSES_FOLDER = 'update_responses';
 
 /**
  * How many commands will run in parallel
@@ -415,30 +470,12 @@ export const CONTRACTS = {
 };
 
 export const CONTRACT_EVENTS = {
-    HUB: {
-        NEW_CONTRACT: 'NewContract',
-        CONTRACT_CHANGED: 'ContractChanged',
-        NEW_ASSET_STORAGE: 'NewAssetStorage',
-        ASSET_STORAGE_CHANGED: 'AssetStorageChanged',
-    },
-    SHARDING_TABLE: {
-        NODE_ADDED: 'NodeAdded',
-        NODE_REMOVED: 'NodeRemoved',
-    },
-    STAKING: {
-        STAKE_INCREASED: 'StakeIncreased',
-        STAKE_WITHDRAWAL_STARTED: 'StakeWithdrawalStarted',
-    },
-    PROFILE: {
-        ASK_UPDATED: 'AskUpdated',
-    },
-    COMMIT_MANAGER_V1: {
-        STATE_FINALIZED: 'StateFinalized',
-    },
-    SERVICE_AGREEMENT_V1: {
-        SERVICE_AGREEMENT_V1_EXTENDED: 'ServiceAgreementV1Extended',
-        SERVICE_AGREEMENT_V1_TERMINATED: 'ServiceAgreementV1Terminated',
-    },
+    HUB: ['NewContract', 'ContractChanged', 'NewAssetStorage', 'AssetStorageChanged'],
+    SHARDING_TABLE: ['NodeAdded', 'NodeRemoved'],
+    STAKING: ['StakeIncreased', 'StakeWithdrawalStarted'],
+    PROFILE: ['AskUpdated'],
+    COMMIT_MANAGER_V1: ['StateFinalized'],
+    SERVICE_AGREEMENT_V1: ['ServiceAgreementV1Extended', 'ServiceAgreementV1Terminated'],
 };
 
 export const NODE_ENVIRONMENTS = {
