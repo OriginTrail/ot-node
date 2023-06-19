@@ -113,8 +113,8 @@ class OperationIdService {
         this.logger.debug(`Reading operation id: ${operationId} cached data from file`);
         const documentPath = this.fileService.getOperationIdDocumentPath(operationId);
         let data;
-        if (await this.fileService.fileExists(documentPath)) {
-            data = await this.fileService.loadJsonFromFile(documentPath);
+        if (await this.fileService.pathExists(documentPath)) {
+            data = await this.fileService.readFile(documentPath, true);
         }
         return data;
     }
@@ -146,7 +146,7 @@ class OperationIdService {
 
     async removeExpiredOperationIdFileCache(expiredTimeout) {
         const cacheFolderPath = this.fileService.getOperationIdCachePath();
-        const cacheFolderExists = await this.fileService.fileExists(cacheFolderPath);
+        const cacheFolderExists = await this.fileService.pathExists(cacheFolderPath);
         if (!cacheFolderExists) {
             return;
         }

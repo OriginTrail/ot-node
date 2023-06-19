@@ -15,7 +15,7 @@ class BlockchainIdentityMigration extends BaseMigration {
                 this.config.configFilename,
             );
 
-            const config = await this.fileService.loadJsonFromFile(configurationFilePath);
+            const config = await this.fileService.readFile(configurationFilePath, true);
             for (const blockchainImpl in config.modules.blockchain.implementation) {
                 delete config.modules.blockchain.implementation[blockchainImpl].config.identity;
             }
