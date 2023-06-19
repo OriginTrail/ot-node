@@ -40,22 +40,20 @@ class PendingStorageService {
         this.logger.debug(
             `Reading cached assertion for ual: ${ual}, operation id: ${operationId} from file in ${repository} pending storage`,
         );
-
-        const documentPath = await this.fileService.getPendingStorageDocumentPath(
-            repository,
-            blockchain,
-            contract,
-            tokenId,
-        );
-
-        let data;
         try {
-            data = await this.fileService.readFile(documentPath, true);
-        } catch {
-            data = null;
-        }
+            const documentPath = await this.fileService.getPendingStorageDocumentPath(
+                repository,
+                blockchain,
+                contract,
+                tokenId,
+            );
 
-        return data;
+            const data = await this.fileService.readFile(documentPath, true);
+            return data;
+        } catch (error) {
+            this.logger.debug('Assertion not found in pending storage');
+            return null;
+        }
     }
 
     async removeCachedAssertion(repository, blockchain, contract, tokenId, operationId) {
@@ -74,17 +72,21 @@ class PendingStorageService {
     }
 
     async assetHasPendingState(repository, blockchain, contract, tokenId, assertionId) {
-        const documentPath = await this.fileService.getPendingStorageDocumentPath(
-            repository,
-            blockchain,
-            contract,
-            tokenId,
-            assertionId,
-        );
-        this.logger.trace(
-            `Checking if assertion exists in pending storage at path: ${documentPath}`,
-        );
-        return this.fileService.pathExists(documentPath);
+        try {
+            const documentPath = await this.fileService.getPendingStorageDocumentPath(
+                repository,
+                blockchain,
+                contract,
+                tokenId,
+                assertionId,
+            );
+            this.logger.trace(
+                `Checking if assertion exists in pending storage at path: ${documentPath}`,
+            );
+            return this.fileService.pathExists(documentPath);
+        } catch (error) {
+            return false;
+        }
     }
 }
 
