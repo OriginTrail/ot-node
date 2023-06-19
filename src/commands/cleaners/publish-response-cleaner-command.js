@@ -8,13 +8,6 @@ import {
 } from '../../constants/constants.js';
 
 class PublishResponseCleanerCommand extends CleanerCommand {
-    constructor(ctx) {
-        super(ctx);
-        this.logger = ctx.logger;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.archiveService = ctx.archiveService;
-    }
-
     async findRowsForRemoval(nowTimestamp) {
         return this.repositoryModuleManager.findProcessedOperationResponse(
             nowTimestamp - PUBLISH_RESPONSE_CLEANUP_TIME_DELAY,
