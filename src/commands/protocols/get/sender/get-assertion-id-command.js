@@ -24,23 +24,17 @@ class GetAssertionIdCommand extends Command {
                 blockchain,
                 tokenId,
             );
-            const assetStates = await this.blockchainModuleManager.getAssertionIds(
-                blockchain,
-                contract,
-                tokenId,
-            );
-
-            this.logger.debug(pendingState);
-
-            this.logger.debug(blockchain);
-            this.logger.debug(contract);
-            this.logger.debug(tokenId);
-            this.logger.debug(assetStates);
 
             if (
-                pendingState !== ZERO_BYTES32 &&
-                pendingState !== state &&
-                !assetStates.includes(state)
+                (pendingState !== ZERO_BYTES32 && pendingState !== state) ||
+                (pendingState === ZERO_BYTES32 &&
+                    !(
+                        await this.blockchainModuleManager.getAssertionIds(
+                            blockchain,
+                            contract,
+                            tokenId,
+                        )
+                    ).includes(state))
             ) {
                 await this.handleError(
                     operationId,
