@@ -96,11 +96,7 @@ class RepositoryModuleManager extends BaseModuleManager {
     }
 
     async findProcessedOperations(operation, timestamp, limit) {
-        return this.getRepository('operation_response').findProcessedOperations(
-            operation,
-            timestamp,
-            limit,
-        );
+        return this.getRepository('operation').findProcessedOperations(operation, timestamp, limit);
     }
 
     async getOperationStatus(operation, operationId) {

@@ -131,8 +131,11 @@ export const PERMANENT_COMMANDS = [
     'dialPeersCommand',
     'epochCheckCommand',
     'blockchainEventCleanerCommand',
+    'getCleanerCommand',
     'getResponseCleanerCommand',
+    'publishCleanerCommand',
     'publishResponseCleanerCommand',
+    'updateCleanerCommand',
     'updateResponseCleanerCommand',
 ];
 
