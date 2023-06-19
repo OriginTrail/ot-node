@@ -1,7 +1,6 @@
 class PendingStorageService {
     constructor(ctx) {
         this.logger = ctx.logger;
-
         this.fileService = ctx.fileService;
         this.ualService = ctx.ualService;
     }
@@ -27,6 +26,7 @@ class PendingStorageService {
             contract,
             tokenId,
         );
+        const documentName = this.fileService.getPendingStorageFileName(assertionId);
 
         await this.fileService.writeContentsToFile(
             pendingStorageFolderPath,
@@ -53,7 +53,7 @@ class PendingStorageService {
             data = await this.fileService.readFile(documentPath, true);
         }
 
-        return data;
+        return this.fileService.readFirstFileFromDirectory(documentFolderPath);
     }
 
     async removeCachedAssertion(repository, blockchain, contract, tokenId, operationId) {
@@ -80,7 +80,7 @@ class PendingStorageService {
             assertionId,
         );
         this.logger.trace(
-            `Checking if assertion exists in pending storage on path: ${documentPath}`,
+            `Checking if assertion exists in pending storage at path: ${documentPath}`,
         );
         return this.fileService.pathExists(documentPath);
     }

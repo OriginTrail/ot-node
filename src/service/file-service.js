@@ -78,6 +78,7 @@ class FileService {
 
         try {
             await unlink(filePath);
+            return true;
         } catch (error) {
             if (error.code === 'ENOENT') {
                 this.logger.debug(`File not found at path: ${filePath}`);
@@ -128,10 +129,10 @@ class FileService {
         return path.join(this.getDataFolderPath(), 'pending_storage_cache', repository);
     }
 
-    getPendingStorageFolderPath(repository, blockchain, contract, tokenId) {
+    getPendingStorageAssetFolderPath(repository, blockchain, contract, tokenId) {
         return path.join(
             this.getPendingStorageCachePath(repository),
-            `${blockchain}:${contract}:${tokenId}`,
+            `${blockchain.toLowerCase()}:${contract.toLowerCase()}:${tokenId}`,
         );
     }
 
