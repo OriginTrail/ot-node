@@ -32,9 +32,9 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
         const migrationInfoFileName = `${this.migrationName}_info`;
         const migrationInfoPath = path.join(migrationFolderPath, migrationInfoFileName);
         let migrationInfo;
-        if (await this.fileService.fileExists(migrationInfoPath)) {
+        if (await this.fileService.pathExists(migrationInfoPath)) {
             migrationInfo = await this.fileService
-                ._readFile(migrationInfoPath, true)
+                .readFile(migrationInfoPath, true)
                 .catch(() => {});
         }
         if (!migrationInfo?.lastProcessedTokenId) {

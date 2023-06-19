@@ -19,7 +19,7 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { assertionId, operationId, state, blockchain, contract, tokenId } = commandData;
+        const { operationId, blockchain, contract, tokenId, assertionId, state } = commandData;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -32,12 +32,12 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
 
         let assertionExists;
         if (
-            state === GET_STATES.LATEST &&
+            state !== GET_STATES.FINALIZED &&
             blockchain != null &&
             contract != null &&
             tokenId != null
         ) {
-            assertionExists = await this.pendingStorageService.assertionExists(
+            assertionExists = await this.pendingStorageService.assetHasPendingState(
                 PENDING_STORAGE_REPOSITORIES.PUBLIC,
                 blockchain,
                 contract,
@@ -45,9 +45,18 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
                 operationId,
             );
         }
-        if (!assertionExists) {
+
+        for (const repository of [
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+        ]) {
+            if (assertionExists) {
+                break;
+            }
+
+            // eslint-disable-next-line no-await-in-loop
             assertionExists = await this.tripleStoreService.assertionExists(
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                repository,
                 assertionId,
             );
         }

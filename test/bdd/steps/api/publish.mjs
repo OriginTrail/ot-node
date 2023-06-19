@@ -1,4 +1,4 @@
-import { When, Given } from '@cucumber/cucumber';
+import { When } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
 import { setTimeout } from 'timers/promises';
 import { readFile } from 'fs/promises';
@@ -10,25 +10,23 @@ const requests = JSON.parse(await readFile('test/bdd/steps/api/datasets/requests
 const httpApiHelper = new HttpApiHelper();
 
 When(
-    /^I call publish on node (\d+) with ([^"]*)/,
+    /^I call Publish on the node (\d+) with ([^"]*)/,
     { timeout: 120000 },
     async function publish(node, assertionName) {
-        this.logger.log(`I call publish route on node ${node}`);
+        this.logger.log(`I call publish route on the node ${node}`);
         expect(
             !!assertions[assertionName],
             `Assertion with name: ${assertionName} not found!`,
         ).to.be.equal(true);
-        const { evmOperationalWalletPublicKey, evmOperationalWalletPrivateKey } =
-            this.state.nodes[node - 1].configuration.modules.blockchain.implementation.hardhat
-                .config;
+
         const assertion = assertions[assertionName];
         const result = await this.state.nodes[node - 1].client
-            .publish(assertion, { evmOperationalWalletPublicKey, evmOperationalWalletPrivateKey })
+            .publish(assertion)
             .catch((error) => {
                 assert.fail(`Error while trying to publish assertion. ${error}`);
             });
         const { operationId } = result.operation;
-        this.state.lastPublishData = {
+        this.state.latestPublishData = {
             nodeId: node - 1,
             UAL: result.UAL,
             assertionId: result.assertionId,
@@ -40,11 +38,12 @@ When(
         };
     },
 );
+
 When(
-    /^I call publish on ot-node (\d+) directly with ([^"]*)/,
+    /^I call Publish directly on the node (\d+) with ([^"]*)/,
     { timeout: 70000 },
     async function publish(node, requestName) {
-        this.logger.log(`I call publish on ot-node ${node} directly`);
+        this.logger.log(`I call publish on the node ${node} directly`);
         expect(
             !!requests[requestName],
             `Request body with name: ${requestName} not found!`,
@@ -55,63 +54,65 @@ When(
             requestBody,
         );
         const { operationId } = result.data;
-        this.state.lastPublishData = {
+        this.state.latestPublishData = {
             nodeId: node - 1,
             operationId,
         };
     },
 );
 
-Given('I wait for last publish to finalize', { timeout: 80000 }, async function publishFinalize() {
-    this.logger.log('I wait for last publish to finalize');
+When('I wait for latest Publish to finalize', { timeout: 80000 }, async function publishFinalize() {
+    this.logger.log('I wait for latest publish to finalize');
     expect(
-        !!this.state.lastPublishData,
-        'Last publish data is undefined. Publish is not started.',
+        !!this.state.latestPublishData,
+        'Latest publish data is undefined. Publish was not started.',
     ).to.be.equal(true);
-    const publishData = this.state.lastPublishData;
+    const publishData = this.state.latestPublishData;
     let retryCount = 0;
     const maxRetryCount = 5;
     for (retryCount = 0; retryCount < maxRetryCount; retryCount += 1) {
         this.logger.log(
-            `Getting publish result for operation id: ${publishData.operationId} on node: ${publishData.nodeId}`,
+            `Getting publish result for operation id: ${publishData.operationId} on the node: ${publishData.nodeId}`,
         );
         // eslint-disable-next-line no-await-in-loop
         const publishResult = await httpApiHelper.getOperationResult(
             this.state.nodes[publishData.nodeId].nodeRpcUrl,
+            'publish',
             publishData.operationId,
         );
         this.logger.log(`Operation status: ${publishResult.data.status}`);
         if (['COMPLETED', 'FAILED'].includes(publishResult.data.status)) {
-            this.state.lastPublishData.result = publishResult;
-            this.state.lastPublishData.status = publishResult.data.status;
-            this.state.lastPublishData.errorType = publishResult.data.data?.errorType;
+            this.state.latestPublishData.result = publishResult;
+            this.state.latestPublishData.status = publishResult.data.status;
+            this.state.latestPublishData.errorType = publishResult.data.data?.errorType;
             break;
         }
         if (retryCount === maxRetryCount - 1) {
-            assert.fail('Unable to get publish result');
+            assert.fail('Unable to fetch publish result');
         }
         // eslint-disable-next-line no-await-in-loop
         await setTimeout(4000);
     }
 });
 
-Given(
+When(
     /I wait for (\d+) seconds and check operation status/,
     { timeout: 120000 },
     async function publishWait(numberOfSeconds) {
         this.logger.log(`I wait for ${numberOfSeconds} seconds`);
         expect(
-            !!this.state.lastPublishData,
-            'Last publish data is undefined. Publish is not started.',
+            !!this.state.latestPublishData,
+            'Latest publish data is undefined. Publish is not started.',
         ).to.be.equal(true);
-        const publishData = this.state.lastPublishData;
+        const publishData = this.state.latestPublishData;
         this.logger.log(
-            `Getting publish result for operation id: ${publishData.operationId} on node: ${publishData.nodeId}`,
+            `Getting publish result for operation id: ${publishData.operationId} on the node: ${publishData.nodeId}`,
         );
         await setTimeout(numberOfSeconds * 1000);
         // eslint-disable-next-line no-await-in-loop
-        this.state.lastPublishData.result = await httpApiHelper.getOperationResult(
+        this.state.latestPublishData.result = await httpApiHelper.getOperationResult(
             this.state.nodes[publishData.nodeId].nodeRpcUrl,
+            'publish',
             publishData.operationId,
         );
     },
