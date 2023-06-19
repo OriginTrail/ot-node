@@ -69,7 +69,10 @@ class FileService {
             const data = await readFile(filePath);
             return convertToJSON ? JSON.parse(data) : data.toString();
         } catch (error) {
-            throw Error(`Failed to read the file: ${filePath}, error: ${error}`);
+            if (error.code === 'ENOENT') {
+                throw Error(`File not found at path: ${filePath}`);
+            }
+            throw error;
         }
     }
 
