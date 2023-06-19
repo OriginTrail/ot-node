@@ -36,7 +36,7 @@ class LocalGetCommand extends Command {
             PENDING_STORAGE_REPOSITORIES.PUBLIC,
         ]) {
             // eslint-disable-next-line no-await-in-loop
-            const stateIsPending = await this.pendingStorageService.stateIsPending(
+            const stateIsPending = await this.pendingStorageService.assetHasPendingState(
                 repository,
                 blockchain,
                 contract,

@@ -81,7 +81,6 @@
         "express-fileupload": "^1.4.0",
         "express-rate-limit": "^6.5.2",
         "fs-extra": "^10.1.0",
-        "glob": "^10.2.6",
         "graphdb": "^2.0.2",
         "ip": "^1.1.8",
         "it-length-prefixed": "^5.0.3",

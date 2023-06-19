@@ -113,8 +113,8 @@ class OperationIdService {
         this.logger.debug(`Reading operation id: ${operationId} cached data from file`);
         const documentPath = this.fileService.getOperationIdDocumentPath(operationId);
         let data;
-        if (await this.fileService.fileExists(documentPath)) {
-            data = await this.fileService.loadJsonFromFile(documentPath);
+        if (await this.fileService.pathExists(documentPath)) {
+            data = await this.fileService.readFile(documentPath, true);
         }
         return data;
     }
@@ -122,7 +122,7 @@ class OperationIdService {
     async removeOperationIdCache(operationId) {
         this.logger.debug(`Removing operation id: ${operationId} cached data`);
         const operationIdCachePath = this.fileService.getOperationIdDocumentPath(operationId);
-        await this.fileService.removeFiles(operationIdCachePath);
+        await this.fileService.removeFile(operationIdCachePath);
         this.removeOperationIdMemoryCache(operationId);
     }
 
@@ -146,7 +146,7 @@ class OperationIdService {
 
     async removeExpiredOperationIdFileCache(expiredTimeout) {
         const cacheFolderPath = this.fileService.getOperationIdCachePath();
-        const cacheFolderExists = await this.fileService.fileExists(cacheFolderPath);
+        const cacheFolderExists = await this.fileService.pathExists(cacheFolderPath);
         if (!cacheFolderExists) {
             return;
         }
@@ -156,7 +156,7 @@ class OperationIdService {
             const now = new Date();
             const createdDate = (await this.fileService.stat(filePath)).mtime;
             if (createdDate.getTime() + expiredTimeout < now.getTime()) {
-                await this.fileService.removeFiles(filePath);
+                await this.fileService.removeFile(filePath);
                 return true;
             }
             return false;

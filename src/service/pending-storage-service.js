@@ -21,17 +21,16 @@ class PendingStorageService {
             `Caching ${assertionId} assertion for ual: ${ual}, operation id: ${operationId} in file in ${repository} pending storage`,
         );
 
-        const documentPath = this.fileService.getPendingStorageCachePath(repository);
-        const documentName = this.fileService.getPendingStorageFileName(
+        const pendingStorageFolderPath = this.fileService.getPendingStorageFolderPath(
+            repository,
             blockchain,
             contract,
             tokenId,
-            assertionId,
         );
 
         await this.fileService.writeContentsToFile(
-            documentPath,
-            documentName,
+            pendingStorageFolderPath,
+            assertionId,
             JSON.stringify(assertion),
         );
     }
@@ -43,15 +42,15 @@ class PendingStorageService {
             `Reading cached assertion for ual: ${ual}, operation id: ${operationId} from file in ${repository} pending storage`,
         );
 
-        const documentPathPattern = this.fileService.getPendingStorageDocumentPathPattern(
+        const documentPath = this.fileService.getPendingStorageDocumentPath(
             repository,
             blockchain,
             contract,
             tokenId,
         );
         let data;
-        if (await this.fileService.fileExists(documentPathPattern)) {
-            data = await this.fileService.loadJsonFromFile(documentPathPattern);
+        if (await this.fileService.pathExists(documentPath)) {
+            data = await this.fileService.readFile(documentPath, true);
         }
 
         return data;
@@ -64,29 +63,15 @@ class PendingStorageService {
             `Removing cached assertion for ual: ${ual} operation id: ${operationId} from file in ${repository} pending storage`,
         );
 
-        const documentPathPattern = this.fileService.getPendingStorageDocumentPathPattern(
+        const pendingStorageFolderPath = this.fileService.getPendingStorageFolderPath(
             repository,
             blockchain,
             contract,
-            tokenId,
         );
-        await this.fileService.removeFiles(documentPathPattern);
+        await this.fileService.removeFolder(pendingStorageFolderPath);
     }
 
-    async assetHasPendingState(repository, blockchain, contract, tokenId) {
-        const documentPathPattern = this.fileService.getPendingStorageDocumentPathPattern(
-            repository,
-            blockchain,
-            contract,
-            tokenId,
-        );
-        this.logger.trace(
-            `Checking if state exists in pending storage matching pattern: ${documentPathPattern}`,
-        );
-        return this.fileService.fileExists(documentPathPattern);
-    }
-
-    async stateIsPending(repository, blockchain, contract, tokenId, assertionId) {
+    async assetHasPendingState(repository, blockchain, contract, tokenId, assertionId) {
         const documentPath = this.fileService.getPendingStorageDocumentPath(
             repository,
             blockchain,
@@ -97,7 +82,7 @@ class PendingStorageService {
         this.logger.trace(
             `Checking if assertion exists in pending storage on path: ${documentPath}`,
         );
-        return this.fileService.fileExists(documentPath);
+        return this.fileService.pathExists(documentPath);
     }
 }
 
