@@ -25,9 +25,7 @@ class FileService {
      */
     async writeContentsToFile(directory, filename, data, log = true) {
         if (log) {
-            this.logger.debug(
-                `Saving the file with the name: ${filename} in the directory: ${directory}`,
-            );
+            this.logger.debug(`Saving file with name: ${filename} in the directory: ${directory}`);
         }
         await mkdir(directory, { recursive: true });
         const fullpath = path.join(directory, filename);

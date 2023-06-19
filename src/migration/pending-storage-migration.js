@@ -1,5 +1,5 @@
 import path from 'path';
-import { mkdir } from 'fs/promises';
+import { calculateRoot } from 'assertion-tools';
 import { PENDING_STORAGE_REPOSITORIES } from '../constants/constants.js';
 import BaseMigration from './base-migration.js';
 
@@ -17,17 +17,14 @@ class PendingStorageMigration extends BaseMigration {
             await Promise.all(
                 fileNames.map(async (fileName) => {
                     const newDirectoryPath = path.join(repositoryPath, fileName);
-                    const cachedData = await this.fileService._readFile(newDirectoryPath, true);
+                    const cachedData = await this.fileService.readFile(newDirectoryPath, true);
                     await this.fileService.removeFile(newDirectoryPath);
-                    if (cachedData?.public?.assertionId) {
-                        const newDocumentName = this.fileService.getPendingStorageFileName(
-                            cachedData.public.assertionId,
-                        );
-                        await mkdir(newDirectoryPath, { recursive: true });
+                    if (cachedData?.public?.assertion) {
+                        const newDocumentName = calculateRoot(cachedData.public.assertion);
                         await this.fileService.writeContentsToFile(
                             newDirectoryPath,
                             newDocumentName,
-                            cachedData,
+                            JSON.stringify(cachedData),
                         );
                     }
                 }),
