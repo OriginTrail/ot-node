@@ -5,7 +5,6 @@ import fs from 'fs';
 import mysql from "mysql2";
 import { NODE_ENVIRONMENTS } from '../../../src/constants/constants.js';
 import TripleStoreModuleManager from "../../../src/modules/triple-store/triple-store-module-manager.js";
-import FileService from "../../../src/service/file-service.js";
 
 process.env.NODE_ENV = NODE_ENVIRONMENTS.TEST;
 

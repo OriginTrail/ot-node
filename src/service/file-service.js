@@ -94,6 +94,7 @@ class FileService {
 
         try {
             await rm(folderPath, { recursive: true });
+            return true;
         } catch (error) {
             if (error.code === 'ENOENT') {
                 this.logger.debug(`Folder not found at path: ${folderPath}`);

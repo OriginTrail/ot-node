@@ -1,4 +1,4 @@
-import { When } from '@cucumber/cucumber';
+import { Then, When } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
 import { readFile } from 'fs/promises';
 import HttpApiHelper from '../../../utilities/http-api-helper.mjs';
@@ -37,12 +37,36 @@ When(
             `Request body with name: ${requestName} not found!`,
         ).to.be.equal(true);
         const requestBody = requests[requestName];
-        const result = await httpApiHelper.get(this.state.nodes[node - 1].nodeRpcUrl, requestBody);
-        const { operationId } = result.data;
-        this.state.latestGetData = {
-            nodeId: node - 1,
-            operationId,
-        };
+
+        try {
+            const result = await httpApiHelper.get(this.state.nodes[node - 1].nodeRpcUrl, requestBody);
+            const { operationId } = result.data;
+            this.state.latestGetData = {
+                nodeId: node - 1,
+                operationId,
+            };
+        } catch (error) {
+            this.state.latestError = error;
+        }
+    },
+);
+
+Then(
+    /^It should fail with status code (\d+)/,
+    function checkLatestError(expectedStatusCode) {
+        const expectedStatusCodeInt = parseInt(expectedStatusCode, 10);
+        assert(
+            this.state.latestError, 
+            'No error occurred'
+        );
+        assert(
+            this.state.latestError.statusCode, 
+            'No status code in error'
+        );
+        assert(
+            this.state.latestError.statusCode === expectedStatusCodeInt, 
+            `Expected request to fail with status code ${expectedStatusCodeInt}, but it failed with another code.`
+        );
     },
 );
 
