@@ -15,6 +15,9 @@ Before(function beforeMethod(testCase, done) {
     this.logger.log('\nStarting scenario: ', testCase.pickle.name, `${testCase.pickle.uri}`);
     // Initialize variables
     this.state = {};
+    if (this.state.localBlockchain) {
+        this.state.localBlockchain.stop();
+    }
     this.state.localBlockchain = null;
     this.state.nodes = {};
     this.state.bootstraps = [];
@@ -42,6 +45,7 @@ After(function afterMethod(testCase, done) {
     if (this.state.localBlockchain) {
         this.logger.info('Stopping local blockchain!');
         this.state.localBlockchain.stop();
+        this.state.localBlockchain = null;
     }
     this.logger.log('After test hook, cleaning repositories');
 
