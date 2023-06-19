@@ -132,14 +132,14 @@ class FileService {
         return path.join(this.getDataFolderPath(), 'pending_storage_cache', repository);
     }
 
-    getPendingStorageAssetFolderPath(repository, blockchain, contract, tokenId) {
+    getPendingStorageFolderPath(repository, blockchain, contract, tokenId) {
         return path.join(
             this.getPendingStorageCachePath(repository),
             `${blockchain.toLowerCase()}:${contract.toLowerCase()}:${tokenId}`,
         );
     }
 
-    getPendingStorageDocumentPath(repository, blockchain, contract, tokenId, assertionId) {
+    async getPendingStorageDocumentPath(repository, blockchain, contract, tokenId, assertionId) {
         const pendingStorageFolder = this.getPendingStorageFolderPath(
             repository,
             blockchain,
@@ -149,7 +149,7 @@ class FileService {
 
         let pendingStorageFileName;
         if (assertionId === undefined) {
-            [pendingStorageFileName] = this.readDirectory(pendingStorageFolder);
+            [pendingStorageFileName] = await this.readDirectory(pendingStorageFolder);
         }
 
         pendingStorageFileName = assertionId;

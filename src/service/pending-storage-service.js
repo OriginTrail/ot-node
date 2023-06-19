@@ -26,7 +26,6 @@ class PendingStorageService {
             contract,
             tokenId,
         );
-        const documentName = this.fileService.getPendingStorageFileName(assertionId);
 
         await this.fileService.writeContentsToFile(
             pendingStorageFolderPath,
@@ -48,12 +47,15 @@ class PendingStorageService {
             contract,
             tokenId,
         );
+
         let data;
-        if (await this.fileService.pathExists(documentPath)) {
+        try {
             data = await this.fileService.readFile(documentPath, true);
+        } catch {
+            data = null;
         }
 
-        return this.fileService.readFirstFileFromDirectory(documentFolderPath);
+        return data;
     }
 
     async removeCachedAssertion(repository, blockchain, contract, tokenId, operationId) {
