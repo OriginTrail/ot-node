@@ -41,7 +41,7 @@ class PendingStorageService {
             `Reading cached assertion for ual: ${ual}, operation id: ${operationId} from file in ${repository} pending storage`,
         );
 
-        const documentPath = this.fileService.getPendingStorageDocumentPath(
+        const documentPath = await this.fileService.getPendingStorageDocumentPath(
             repository,
             blockchain,
             contract,
@@ -74,7 +74,7 @@ class PendingStorageService {
     }
 
     async assetHasPendingState(repository, blockchain, contract, tokenId, assertionId) {
-        const documentPath = this.fileService.getPendingStorageDocumentPath(
+        const documentPath = await this.fileService.getPendingStorageDocumentPath(
             repository,
             blockchain,
             contract,
