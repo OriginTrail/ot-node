@@ -17,7 +17,7 @@ import {
 const require = createRequire(import.meta.url);
 
 const ABIs = {
-    AbstractAsset: require('dkg-evm-module/abi/AbstractAsset.json'),
+    ContentAssetStorage: require('dkg-evm-module/abi/ContentAssetStorage.json'),
     AssertionStorage: require('dkg-evm-module/abi/AssertionStorage.json'),
     Staking: require('dkg-evm-module/abi/Staking.json'),
     StakingStorage: require('dkg-evm-module/abi/StakingStorage.json'),
@@ -171,7 +171,7 @@ class Web3Service {
     initializeAssetStorageContract(assetStorageAddress) {
         this.assetStorageContracts[assetStorageAddress.toLowerCase()] = new ethers.Contract(
             assetStorageAddress,
-            ABIs.AbstractAsset,
+            ABIs.ContentAssetStorage,
             this.wallet,
         );
     }
@@ -396,6 +396,7 @@ class Web3Service {
     async getAllPastEvents(
         blockchainId,
         contractName,
+        eventsToFilter,
         lastCheckedBlock,
         lastCheckedTimestamp,
         currentBlock,
@@ -412,14 +413,21 @@ class Web3Service {
             fromBlock = lastCheckedBlock + 1;
         }
 
-        let events = [];
+        const topics = [];
+        for (const filterName in contract.filters) {
+            if (!eventsToFilter.includes(filterName)) continue;
+            const filter = contract.filters[filterName]().topics[0];
+            topics.push(filter);
+        }
+
+        const events = [];
         while (fromBlock <= currentBlock) {
             const toBlock = Math.min(
                 fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH - 1,
                 currentBlock,
             );
-            const newEvents = await contract.queryFilter('*', fromBlock, toBlock);
-            events = events.concat(newEvents);
+            const newEvents = await this.processBlockRange(fromBlock, toBlock, contract, topics);
+            newEvents.forEach((e) => events.push(...e));
             fromBlock = toBlock + 1;
         }
 
@@ -437,6 +445,13 @@ class Web3Service {
             block: event.blockNumber,
             blockchainId,
         }));
+    }
+
+    async processBlockRange(fromBlock, toBlock, contract, topics) {
+        const newEvents = await Promise.all(
+            topics.map((topic) => contract.queryFilter(topic, fromBlock, toBlock)),
+        );
+        return newEvents;
     }
 
     isOlderThan(timestamp, olderThanInMills) {
@@ -508,6 +523,14 @@ class Web3Service {
         return this.callContractFunction(assetStorageContractInstance, 'getAssertionIdsLength', [
             tokenId,
         ]);
+    }
+
+    async getKnowledgeAssetOwner(assetContractAddress, tokenId) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+
+        return this.callContractFunction(assetStorageContractInstance, 'ownerOf', [tokenId]);
     }
 
     async getUnfinalizedState(tokenId) {

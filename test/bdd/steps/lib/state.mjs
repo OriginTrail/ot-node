@@ -12,31 +12,38 @@ const state = {
         0: {
             client: {},
             fork: {},
+            fileService: {},
+            configuration: {},
+            nodeRpcUrl: ''
         },
         1: {
             client: {},
             fork: {},
+            fileService: {},
+            configuration: {},
+            nodeRpcUrl: ''
         },
     },
     bootstraps: [],
-    lastPublishData: {
+    latestPublishData: {
         nodeId: 1,
         operationId: '',
         keywords: ['', ''],
         assertion: {},
         result: {},
     },
-    lastGetData: {
+    latestGetData: {
         nodeId: 1,
         operationId: '',
         assertionIds: ['', ''],
         result: {},
     },
-    lastUpdateData: {
+    latestUpdateData: {
         nodeId: 1,
         operationId: '',
         assertionIds: ['', ''],
         result: {},
     },
+    latestError: {},
     scenarionLogDir: '',
 };

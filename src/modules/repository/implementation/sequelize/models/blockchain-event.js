@@ -13,6 +13,8 @@ export default (sequelize, DataTypes) => {
             data: DataTypes.TEXT,
             block: DataTypes.INTEGER,
             processed: DataTypes.BOOLEAN,
+            createdAt: DataTypes.DATE,
+            updatedAt: DataTypes.DATE,
         },
         { underscored: true },
     );

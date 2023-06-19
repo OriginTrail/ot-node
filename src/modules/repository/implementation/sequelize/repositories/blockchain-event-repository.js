@@ -55,6 +55,26 @@ class BlockchainEventRepository {
             },
         );
     }
+
+    async removeEvents(ids) {
+        await this.model.destroy({
+            where: {
+                id: { [Sequelize.Op.in]: ids },
+            },
+        });
+    }
+
+    async findProcessedEvents(timestamp, limit) {
+        return this.model.findAll({
+            where: {
+                processed: true,
+                createdAt: { [Sequelize.Op.lte]: timestamp },
+            },
+            order: [['createdAt', 'asc']],
+            raw: true,
+            limit,
+        });
+    }
 }
 
 export default BlockchainEventRepository;

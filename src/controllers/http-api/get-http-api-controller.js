@@ -14,6 +14,8 @@ class GetController extends BaseController {
         this.operationIdService = ctx.operationIdService;
         this.operationService = ctx.getService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.ualService = ctx.ualService;
+        this.validationService = ctx.validationService;
     }
 
     async handleGetRequest(req, res) {
@@ -38,13 +40,29 @@ class GetController extends BaseController {
 
         try {
             const { id } = req.body;
+
+            if (!this.ualService.isUAL(id)) {
+                throw Error('Requested id is not a UAL.');
+            }
+
+            const { blockchain, contract, tokenId } = this.ualService.resolveUAL(id);
+
+            const isValidUal = await this.validationService.validateUal(
+                blockchain,
+                contract,
+                tokenId,
+            );
+            if (!isValidUal) {
+                throw Error(`${id} UAL isn't valid.`);
+            }
+
             const state = req.body.state ?? DEFAULT_GET_STATE;
             const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
             this.logger.info(`Get for ${id} with operation id ${operationId} initiated.`);
 
             const commandSequence = [
-                'getLatestAssertionIdCommand',
+                'getAssertionIdCommand',
                 'localGetCommand',
                 'networkGetCommand',
             ];
@@ -54,8 +72,10 @@ class GetController extends BaseController {
                 sequence: commandSequence.slice(1),
                 delay: 0,
                 data: {
+                    blockchain,
+                    contract,
+                    tokenId,
                     operationId,
-                    id,
                     state,
                     hashFunctionId,
                 },

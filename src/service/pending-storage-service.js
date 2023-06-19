@@ -1,28 +1,35 @@
 class PendingStorageService {
     constructor(ctx) {
         this.logger = ctx.logger;
-
         this.fileService = ctx.fileService;
         this.ualService = ctx.ualService;
     }
 
-    async cacheAssertion(repository, blockchain, contract, tokenId, assertion, operationId) {
+    async cacheAssertion(
+        repository,
+        blockchain,
+        contract,
+        tokenId,
+        assertionId,
+        assertion,
+        operationId,
+    ) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.debug(
-            `Caching assertion for ual: ${ual}, operation id: ${operationId} in file in ${repository} pending storage`,
+            `Caching ${assertionId} assertion for ual: ${ual}, operation id: ${operationId} in file in ${repository} pending storage`,
         );
 
-        const documentPath = this.fileService.getPendingStorageCachePath(repository);
-        const documentName = this.fileService.getPendingStorageFileName(
+        const pendingStorageFolderPath = this.fileService.getPendingStorageFolderPath(
+            repository,
             blockchain,
             contract,
             tokenId,
         );
 
         await this.fileService.writeContentsToFile(
-            documentPath,
-            documentName,
+            pendingStorageFolderPath,
+            assertionId,
             JSON.stringify(assertion),
         );
     }
@@ -33,19 +40,20 @@ class PendingStorageService {
         this.logger.debug(
             `Reading cached assertion for ual: ${ual}, operation id: ${operationId} from file in ${repository} pending storage`,
         );
+        try {
+            const documentPath = await this.fileService.getPendingStorageDocumentPath(
+                repository,
+                blockchain,
+                contract,
+                tokenId,
+            );
 
-        const documentPath = this.fileService.getPendingStorageDocumentPath(
-            repository,
-            blockchain,
-            contract,
-            tokenId,
-        );
-        let data;
-        if (await this.fileService.fileExists(documentPath)) {
-            data = await this.fileService.loadJsonFromFile(documentPath);
+            const data = await this.fileService.readFile(documentPath, true);
+            return data;
+        } catch (error) {
+            this.logger.debug('Assertion not found in pending storage');
+            return null;
         }
-
-        return data;
     }
 
     async removeCachedAssertion(repository, blockchain, contract, tokenId, operationId) {
@@ -55,26 +63,30 @@ class PendingStorageService {
             `Removing cached assertion for ual: ${ual} operation id: ${operationId} from file in ${repository} pending storage`,
         );
 
-        const documentPath = this.fileService.getPendingStorageDocumentPath(
+        const pendingStorageFolderPath = this.fileService.getPendingStorageFolderPath(
             repository,
             blockchain,
             contract,
-            tokenId,
         );
-        await this.fileService.removeFile(documentPath);
+        await this.fileService.removeFolder(pendingStorageFolderPath);
     }
 
-    async assertionExists(repository, blockchain, contract, tokenId) {
-        const documentPath = this.fileService.getPendingStorageDocumentPath(
-            repository,
-            blockchain,
-            contract,
-            tokenId,
-        );
-        this.logger.trace(
-            `Checking if assertion exists in pending storage on path: ${documentPath}`,
-        );
-        return this.fileService.fileExists(documentPath);
+    async assetHasPendingState(repository, blockchain, contract, tokenId, assertionId) {
+        try {
+            const documentPath = await this.fileService.getPendingStorageDocumentPath(
+                repository,
+                blockchain,
+                contract,
+                tokenId,
+                assertionId,
+            );
+            this.logger.trace(
+                `Checking if assertion exists in pending storage at path: ${documentPath}`,
+            );
+            return this.fileService.pathExists(documentPath);
+        } catch (error) {
+            return false;
+        }
     }
 }
 
