@@ -1,6 +1,7 @@
 import Command from '../command.js';
 import {
     BYTES_IN_KILOBYTE,
+    OPERATION_ID_FILES_FOR_REMOVAL_MAX_NUMBER,
     OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS,
     OPERATION_ID_STATUS,
 } from '../../constants/constants.js';
@@ -39,6 +40,7 @@ class OperationIdCleanerCommand extends Command {
         }
         removed = await this.operationIdService.removeExpiredOperationIdFileCache(
             OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS,
+            OPERATION_ID_FILES_FOR_REMOVAL_MAX_NUMBER,
         );
         if (removed) {
             this.logger.debug(`Successfully removed ${removed} expired cached operation files`);
