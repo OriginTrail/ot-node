@@ -1,3 +1,5 @@
+import { Sequelize } from 'sequelize';
+
 class OperationRepository {
     constructor(models) {
         this.sequelize = models.sequelize;
@@ -8,6 +10,25 @@ class OperationRepository {
         return this.models[operation].create({
             operationId,
             status,
+        });
+    }
+
+    async removeOperationRecords(operation, ids) {
+        return this.models[operation].destroy({
+            where: {
+                id: { [Sequelize.Op.in]: ids },
+            },
+        });
+    }
+
+    async findProcessedOperations(operation, timestamp, limit) {
+        return this.models[`${operation}`].findAll({
+            where: {
+                createdAt: { [Sequelize.Op.lte]: timestamp },
+            },
+            order: [['createdAt', 'asc']],
+            raw: true,
+            limit,
         });
     }
 
