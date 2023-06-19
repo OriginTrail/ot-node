@@ -44,5 +44,6 @@ const state = {
         assertionIds: ['', ''],
         result: {},
     },
+    latestError: {},
     scenarionLogDir: '',
 };

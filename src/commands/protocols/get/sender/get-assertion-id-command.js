@@ -1,5 +1,5 @@
 import Command from '../../../command.js';
-import { ERROR_TYPE, GET_STATES } from '../../../../constants/constants.js';
+import { ERROR_TYPE, GET_STATES, ZERO_BYTES32 } from '../../../../constants/constants.js';
 
 class GetAssertionIdCommand extends Command {
     constructor(ctx) {
@@ -16,10 +16,40 @@ class GetAssertionIdCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { blockchain, contract, tokenId, state } = command.data;
+        const { operationId, blockchain, contract, tokenId, state } = command.data;
 
         let assertionId;
         if (!Object.values(GET_STATES).includes(state)) {
+            const pendingState = await this.blockchainModuleManager.getUnfinalizedAssertionId(
+                blockchain,
+                tokenId,
+            );
+            const assetStates = await this.blockchainModuleManager.getAssertionIds(
+                blockchain,
+                contract,
+                tokenId,
+            );
+
+            this.logger.debug(pendingState);
+
+            this.logger.debug(blockchain);
+            this.logger.debug(contract);
+            this.logger.debug(tokenId);
+            this.logger.debug(assetStates);
+
+            if (
+                pendingState !== ZERO_BYTES32 &&
+                pendingState !== state &&
+                !assetStates.includes(state)
+            ) {
+                await this.handleError(
+                    operationId,
+                    `Given state: ${state} doesn't exist on ${blockchain} on contract: ${contract} for Knowledge Asset with tokenId: ${tokenId}`,
+                    this.errorType,
+                );
+
+                return Command.empty();
+            }
             assertionId = state;
         } else {
             this.logger.debug(

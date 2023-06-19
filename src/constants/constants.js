@@ -8,6 +8,8 @@ export const STAKE_UINT256_MULTIPLIER_BN = UINT256_MAX_BN.div(500000000);
 
 export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN.div(UINT32_MAX_BN);
 
+export const ZERO_BYTES32 = `0x${'0'.repeat(64)}`;
+
 export const SCHEMA_CONTEXT = 'http://schema.org/';
 
 export const PRIVATE_ASSERTION_PREDICATE =

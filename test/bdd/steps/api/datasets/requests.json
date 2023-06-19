@@ -19,6 +19,18 @@
   "validGetUpdatedStateRequestBody": {
     "id": "did:dkg:hardhat/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0"
   },
+  "getFirstStateRequestBody": {
+    "id": "did:dkg:hardhat/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0",
+    "state": 0
+  },
+  "getSecondStateRequestBody": {
+    "id": "did:dkg:hardhat/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0",
+    "state": 1
+  },
+  "getThirdStateRequestBody": {
+    "id": "did:dkg:hardhat/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0",
+    "state": 2
+  },
   "blockchainNotDefinedRequestBody": {
     "publishType": "asset",
     "assertionId": "0xc311cca6412f8453067ac7a04831af411b2963734d107541763c1ef7c8e56f65",
@@ -35,6 +47,17 @@
   },
   "nonExistentUAL": {
     "id": "did:dkg:hardhat/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/1"
+  },
+  "invalidUAL": {
+    "id": "did:dkg:hardhat/0xB0D4afd8879eD9F/52b28595d31B441D079B2Ca07/1"
+  },
+  "nonExistentState": {
+    "id": "did:dkg:hardhat/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0",
+    "state": -1
+  },
+  "invalidStateHash": {
+    "id": "did:dkg:hardhat/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0",
+    "state": "0x591503a1c8ba4667dd7afd203025c1bf594d817d8eec71274fe960d69fb8584e"
   },
   "validUpdateRequestBody": {
     "assertionId": "0x591503a1c8ba4667dd7afd203025c1bf594d817d8eec71274fe960d69fb8584f",

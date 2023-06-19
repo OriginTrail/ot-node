@@ -26,8 +26,12 @@ class HttpApiHelper {
             method,
             url,
             ...data && { data },
-        }).catch((e) => {
-            throw Error(`Unable to use ${url}: ${e.message}`);
+        }).catch((error) => {
+            const errorWithStatus = new Error(error.message);
+            if (error.response) {
+                errorWithStatus.statusCode = error.response.status;
+            }
+            throw errorWithStatus;
         });
     }
 }
