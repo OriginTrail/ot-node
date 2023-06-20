@@ -67,6 +67,7 @@ class PendingStorageService {
             repository,
             blockchain,
             contract,
+            tokenId,
         );
         await this.fileService.removeFolder(pendingStorageFolderPath);
     }
