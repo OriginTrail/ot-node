@@ -27,14 +27,13 @@ class GetAssertionIdCommand extends Command {
 
             if (
                 (pendingState !== ZERO_BYTES32 && pendingState !== state) ||
-                (pendingState === ZERO_BYTES32 &&
-                    !(
-                        await this.blockchainModuleManager.getAssertionIds(
-                            blockchain,
-                            contract,
-                            tokenId,
-                        )
-                    ).includes(state))
+                !(
+                    await this.blockchainModuleManager.getAssertionIds(
+                        blockchain,
+                        contract,
+                        tokenId,
+                    )
+                ).includes(state)
             ) {
                 await this.handleError(
                     operationId,
@@ -56,7 +55,7 @@ class GetAssertionIdCommand extends Command {
                     tokenId,
                 );
             }
-            if (assertionId == null || parseInt(assertionId, 16) === 0) {
+            if (assertionId == null || assertionId === ZERO_BYTES32) {
                 assertionId = await this.blockchainModuleManager.getLatestAssertionId(
                     blockchain,
                     contract,
