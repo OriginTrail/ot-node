@@ -71,7 +71,7 @@ class UpdateService extends OperationService {
                 }
             }
             if (allCompleted) {
-                await this.markOperationAsCompleted(operationId, {}, this.completedStatuses);
+                await this.markOperationAsCompleted(operationId, null, this.completedStatuses);
                 this.logResponsesSummary(completedNumber, failedNumber);
                 this.logger.info(
                     `${this.operationName} with operation id: ${operationId} with status: ${
