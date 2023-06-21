@@ -34,13 +34,17 @@ class GetAssertionIdCommand extends Command {
                 blockchain,
                 tokenId,
             );
-            const assetStates = await this.blockchainModuleManager.getAssertionIds(
-                blockchain,
-                contract,
-                tokenId,
-            );
 
-            if (state !== pendingState && !assetStates.includes(state)) {
+            if (
+                state !== pendingState &&
+                !(
+                    await this.blockchainModuleManager.getAssertionIds(
+                        blockchain,
+                        contract,
+                        tokenId,
+                    )
+                ).includes(state)
+            ) {
                 await this.handleError(
                     operationId,
                     `The provided state: ${state} does not exist on the ${blockchain} blockchain, ``within contract: ${contract}, for the Knowledge Asset with tokenId: ${tokenId}.`,
