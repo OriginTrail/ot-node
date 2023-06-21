@@ -20,23 +20,23 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { assertionId, operationId, state } = commandData;
+        const { operationId, blockchain, contract, tokenId, assertionId, state } = commandData;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.GET.GET_REMOTE_START,
         );
 
         if (
-            state === GET_STATES.LATEST &&
-            commandData.blockchain != null &&
-            commandData.contract != null &&
-            commandData.tokenId != null
+            state !== GET_STATES.FINALIZED &&
+            blockchain != null &&
+            contract != null &&
+            tokenId != null
         ) {
             const cachedAssertion = await this.pendingStorageService.getCachedAssertion(
                 PENDING_STORAGE_REPOSITORIES.PUBLIC,
-                commandData.blockchain,
-                commandData.contract,
-                commandData.tokenId,
+                blockchain,
+                contract,
+                tokenId,
                 operationId,
             );
             if (cachedAssertion?.public?.assertion?.length) {
@@ -47,10 +47,18 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             }
         }
 
-        const nquads = await this.tripleStoreService.getAssertion(
+        let nquads;
+        for (const repository of [
             TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-            assertionId,
-        );
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+        ]) {
+            // eslint-disable-next-line no-await-in-loop
+            nquads = await this.tripleStoreService.getAssertion(repository, assertionId);
+
+            if (nquads.length) {
+                break;
+            }
+        }
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

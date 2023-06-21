@@ -7,8 +7,14 @@ export default () => ({
         id: {
             type: 'string',
         },
-        type: {
-            enum: [GET_STATES.LATEST, GET_STATES.LATEST_FINALIZED],
+        state: {
+            oneOf: [
+                { enum: [GET_STATES.LATEST, GET_STATES.FINALIZED] },
+                {
+                    type: 'string',
+                    pattern: '^0x[A-Fa-f0-9]{64}$',
+                },
+            ],
         },
         hashFunctionId: {
             type: 'number',
