@@ -26,7 +26,8 @@ class GetAssertionIdCommand extends Command {
             );
 
             if (
-                (pendingState !== ZERO_BYTES32 && pendingState !== state) ||
+                state !== ZERO_BYTES32 &&
+                state !== pendingState &&
                 !(
                     await this.blockchainModuleManager.getAssertionIds(
                         blockchain,
