@@ -23,7 +23,7 @@ class GetAssertionIdCommand extends Command {
             if (state === ZERO_BYTES32) {
                 await this.handleError(
                     operationId,
-                    `Given state: ${state}. State cannot be 0x0.`,
+                    `The provided state: ${state}. State hash cannot be 0x0.`,
                     this.errorType,
                 );
 
@@ -43,7 +43,7 @@ class GetAssertionIdCommand extends Command {
             if (state !== pendingState && !assetStates.includes(state)) {
                 await this.handleError(
                     operationId,
-                    `Given state: ${state} doesn't exist on ${blockchain} on contract: ${contract} for Knowledge Asset with tokenId: ${tokenId}`,
+                    `The provided state: ${state} does not exist on the ${blockchain} blockchain, ``within contract: ${contract}, for the Knowledge Asset with tokenId: ${tokenId}.`,
                     this.errorType,
                 );
 
