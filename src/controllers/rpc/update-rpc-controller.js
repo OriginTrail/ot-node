@@ -1,5 +1,8 @@
 import BaseController from './base-rpc-controller.js';
-import { CONTENT_ASSET_HASH_FUNCTION_ID, NETWORK_MESSAGE_TYPES } from '../../constants/constants.js';
+import {
+    CONTENT_ASSET_HASH_FUNCTION_ID,
+    NETWORK_MESSAGE_TYPES,
+} from '../../constants/constants.js';
 
 class UpdateController extends BaseController {
     constructor(ctx) {
@@ -27,6 +30,7 @@ class UpdateController extends BaseController {
                 // eslint-disable-next-line no-case-declarations
                 dataSource = await this.operationIdService.getCachedOperationIdData(operationId);
                 await this.operationIdService.cacheOperationIdData(operationId, {
+                    assertionId: dataSource.assertionId,
                     assertion: message.data.assertion,
                 });
                 command.name = handleRequestCommand;

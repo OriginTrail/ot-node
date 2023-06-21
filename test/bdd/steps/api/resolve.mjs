@@ -1,32 +1,29 @@
-import { When, Given } from '@cucumber/cucumber';
+import { When } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
 import { setTimeout } from 'timers/promises';
 import HttpApiHelper from "../../../utilities/http-api-helper.mjs";
-import {readFile} from "fs/promises";
 
-const requests = JSON.parse(await readFile("test/bdd/steps/api/datasets/requests.json"));
 const httpApiHelper = new HttpApiHelper()
 
-
 When(
-    /^I get operation result from node (\d+) for last published assertion/,
+    /^I get operation result from node (\d+) for latest published assertion/,
     { timeout: 120000 },
     async function resolveCall(node) {
-        this.logger.log('I call get result for the last operation');
+        this.logger.log('I call get result for the latest operation');
         expect(
-            !!this.state.lastPublishData,
-            'Last publish data is undefined. Publish is not finalized.',
+            !!this.state.latestPublishData,
+            'Latest publish data is undefined. Publish is not finalized.',
         ).to.be.equal(true);
 
         try {
             const result = await this.state.nodes[node - 1].client
-                .getResult(this.state.lastPublishData.UAL)
+                .get(this.state.latestPublishData.UAL)
                 .catch((error) => {
                     assert.fail(`Error while trying to resolve assertion. ${error}`);
                 });
             const { operationId } = result.operation;
 
-            this.state.lastGetData = {
+            this.state.latestGetData = {
                 nodeId: node - 1,
                 operationId,
                 result,
@@ -39,32 +36,33 @@ When(
     },
 );
 
-Given(
-    'I wait for last resolve to finalize',
+When(
+    'I wait for latest resolve to finalize',
     { timeout: 120000 },
     async function resolveFinalizeCall() {
-        this.logger.log('I wait for last resolve to finalize');
+        this.logger.log('I wait for latest resolve to finalize');
         expect(
-            !!this.state.lastGetData,
-            'Last resolve data is undefined. Resolve is not started.',
+            !!this.state.latestGetData,
+            'Latest resolve data is undefined. Resolve is not started.',
         ).to.be.equal(true);
-        const resolveData = this.state.lastGetData;
+        const resolveData = this.state.latestGetData;
         let retryCount = 0;
         const maxRetryCount = 5;
         for (retryCount = 0; retryCount < maxRetryCount; retryCount += 1) {
             this.logger.log(
-                `Getting resolve result for operation id: ${resolveData.operationId} on node: ${resolveData.nodeId}`,
+                `Getting resolve result for operation id: ${resolveData.operationId} on the node: ${resolveData.nodeId}`,
             );
             // eslint-disable-next-line no-await-in-loop
             const resolveResult = await httpApiHelper.getOperationResult(
                 this.state.nodes[resolveData.nodeId].nodeRpcUrl,
+                'get',
                 resolveData.operationId,
             );
             this.logger.log(`Operation status: ${resolveResult.data.status}`);
             if (['COMPLETED', 'FAILED'].includes(resolveResult.data.status)) {
-                this.state.lastGetData.result = resolveResult;
-                this.state.lastGetData.status = resolveResult.data.status;
-                this.state.lastGetData.errorType = resolveResult.data.data?.errorType;
+                this.state.latestGetData.result = resolveResult;
+                this.state.latestGetData.status = resolveResult.data.status;
+                this.state.latestGetData.errorType = resolveResult.data.data?.errorType;
                 break;
             }
             if (retryCount === maxRetryCount - 1) {
@@ -76,17 +74,17 @@ Given(
     },
 );
 
-Given(/Last resolve returned valid result$/, { timeout: 120000 }, async function resolveCall() {
-    this.logger.log('Last resolve returned valid result');
+When(/Latest resolve returned valid result$/, { timeout: 120000 }, async function resolveCall() {
+    this.logger.log('Latest resolve returned valid result');
     expect(
-        !!this.state.lastGetData,
-        'Last resolve data is undefined. Resolve is not started.',
+        !!this.state.latestGetData,
+        'Latest resolve data is undefined. Resolve is not started.',
     ).to.be.equal(true);
     expect(
-        !!this.state.lastGetData.result,
-        'Last publish data result is undefined. Publish is not finished.',
+        !!this.state.latestGetData.result,
+        'Latest publish data result is undefined. Publish is not finished.',
     ).to.be.equal(true);
-    const resolveData = this.state.lastGetData;
+    const resolveData = this.state.latestGetData;
     expect(
         Array.isArray(resolveData.result.data),
         'Resolve result data expected to be array',
@@ -95,30 +93,7 @@ Given(/Last resolve returned valid result$/, { timeout: 120000 }, async function
     // expect(resolveData.result.data.length, 'Returned data array length').to.be.equal(1);
 
     // const resolvedAssertion = resolveData.result.data[0].assertion.data;
-    // const publishedAssertion = this.state.lastPublishData.assertion;
+    // const publishedAssertion = this.state.latestPublishData.assertion;
 
     // assert.equal(sortedStringify(publishedAssertion), sortedStringify(resolvedAssertion));
 });
-Given(
-    /^I call get directly to ot-node (\d+) with ([^"]*)/,
-    { timeout: 30000 },
-    async function getFromNode(node, requestName) {
-        this.logger.log(`I call get on ot-node ${node} directly`);
-        if (requestName !== 'lastPublishedAssetUAL') {
-            expect(
-                !!requests[requestName],
-                `Request body with name: ${requestName} not found!`,
-            ).to.be.equal(true);
-        }
-        const requestBody =
-            requestName !== 'lastPublishedAssetUAL'
-                ? requests[requestName]
-                : { id: this.state.lastPublishData.UAL };
-        const result = await httpApiHelper.get(this.state.nodes[node - 1].nodeRpcUrl, requestBody);
-        const { operationId } = result.data;
-        this.state.lastGetData = {
-            nodeId: node - 1,
-            operationId,
-        };
-    },
-);

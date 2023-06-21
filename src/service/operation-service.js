@@ -68,7 +68,9 @@ class OperationService {
             OPERATION_STATUS.COMPLETED,
         );
 
-        await this.operationIdService.cacheOperationIdData(operationId, responseData);
+        if (responseData != null) {
+            await this.operationIdService.cacheOperationIdData(operationId, responseData);
+        }
 
         for (const status of endStatuses) {
             // eslint-disable-next-line no-await-in-loop

@@ -27,7 +27,7 @@ class BaseMigration {
             this.fileService.getMigrationFolderPath(),
             this.migrationName,
         );
-        if (await this.fileService.fileExists(migrationFilePath)) {
+        if (await this.fileService.pathExists(migrationFilePath)) {
             return true;
         }
         return false;
