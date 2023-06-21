@@ -20,13 +20,22 @@ class GetAssertionIdCommand extends Command {
 
         let assertionId;
         if (!Object.values(GET_STATES).includes(state)) {
+            if (state === ZERO_BYTES32) {
+                await this.handleError(
+                    operationId,
+                    `The provided state: ${state}. State hash cannot be 0x0.`,
+                    this.errorType,
+                );
+
+                return Command.empty();
+            }
+
             const pendingState = await this.blockchainModuleManager.getUnfinalizedAssertionId(
                 blockchain,
                 tokenId,
             );
 
             if (
-                state !== ZERO_BYTES32 &&
                 state !== pendingState &&
                 !(
                     await this.blockchainModuleManager.getAssertionIds(
@@ -38,12 +47,13 @@ class GetAssertionIdCommand extends Command {
             ) {
                 await this.handleError(
                     operationId,
-                    `Given state: ${state} doesn't exist on ${blockchain} on contract: ${contract} for Knowledge Asset with tokenId: ${tokenId}`,
+                    `The provided state: ${state} does not exist on the ${blockchain} blockchain, ``within contract: ${contract}, for the Knowledge Asset with tokenId: ${tokenId}.`,
                     this.errorType,
                 );
 
                 return Command.empty();
             }
+
             assertionId = state;
         } else {
             this.logger.debug(
