@@ -10,10 +10,15 @@ class GetInitCommand extends ProtocolInitCommand {
     }
 
     async prepareMessage(command) {
-        const commandData = await super.prepareMessage(command);
+        const { blockchain, contract, tokenId, keyword, assertionId, state } = command.data;
+
         return {
-            ...commandData,
-            state: command.data.state,
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+            assertionId,
+            state,
         };
     }
 

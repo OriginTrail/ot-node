@@ -8,6 +8,8 @@ export const STAKE_UINT256_MULTIPLIER_BN = UINT256_MAX_BN.div(500000000);
 
 export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN.div(UINT32_MAX_BN);
 
+export const ZERO_BYTES32 = `0x${'0'.repeat(64)}`;
+
 export const SCHEMA_CONTEXT = 'http://schema.org/';
 
 export const PRIVATE_ASSERTION_PREDICATE =
@@ -35,7 +37,7 @@ export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
 
 export const MAX_FILE_SIZE = 2621440;
 
-export const GET_STATES = { LATEST: 'LATEST', LATEST_FINALIZED: 'LATEST_FINALIZED' };
+export const GET_STATES = { LATEST: 'LATEST', FINALIZED: 'LATEST_FINALIZED' };
 export const BYTES_IN_KILOBYTE = 1024;
 
 export const BYTES_IN_MEGABYTE = BYTES_IN_KILOBYTE * BYTES_IN_KILOBYTE;
@@ -95,12 +97,12 @@ export const MIN_NODE_VERSION = 16;
 
 export const NETWORK_API_RATE_LIMIT = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    MAX_NUMBER: 20,
+    MAX_NUMBER: 100,
 };
 
 export const NETWORK_API_SPAM_DETECTION = {
     TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    MAX_NUMBER: 40,
+    MAX_NUMBER: 150,
 };
 
 export const NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
@@ -145,8 +147,11 @@ export const PERMANENT_COMMANDS = [
     'assetSyncCommand',
     'epochCheckCommand',
     'blockchainEventCleanerCommand',
+    'getCleanerCommand',
     'getResponseCleanerCommand',
+    'publishCleanerCommand',
     'publishResponseCleanerCommand',
+    'updateCleanerCommand',
     'updateResponseCleanerCommand',
 ];
 
@@ -356,13 +361,25 @@ export const OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
  */
 export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
+export const GET_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+export const GET_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+
 export const GET_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
 export const GET_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
 
+export const PUBLISH_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+export const PUBLISH_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+
 export const PUBLISH_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
 export const PUBLISH_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+
+export const UPDATE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+export const UPDATE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
 
 export const UPDATE_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
@@ -385,15 +402,23 @@ export const COMMAND_STATUS = {
     REPEATING: 'REPEATING',
 };
 
+export const OPERATION_ID_FILES_FOR_REMOVAL_MAX_NUMBER = 100;
+
 export const REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER = 1000;
 
 export const ARCHIVE_COMMANDS_FOLDER = 'commands';
 
 export const ARCHIVE_BLOCKCHAIN_EVENTS_FOLDER = 'blockchain_events';
 
+export const ARCHIVE_GET_FOLDER = 'get';
+
 export const ARCHIVE_GET_RESPONSES_FOLDER = 'get_responses';
 
+export const ARCHIVE_PUBLISH_FOLDER = 'publish';
+
 export const ARCHIVE_PUBLISH_RESPONSES_FOLDER = 'publish_responses';
+
+export const ARCHIVE_UPDATE_FOLDER = 'update';
 
 export const ARCHIVE_UPDATE_RESPONSES_FOLDER = 'update_responses';
 
