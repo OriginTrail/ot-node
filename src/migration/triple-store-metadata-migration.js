@@ -36,9 +36,9 @@ class TripleStoreMetadataMigration extends BaseMigration {
         const migrationInfoPath = path.join(migrationFolderPath, migrationInfoFileName);
 
         let migrationInfo;
-        if (await this.fileService.fileExists(migrationInfoPath)) {
+        if (await this.fileService.pathExists(migrationInfoPath)) {
             try {
-                migrationInfo = await this.fileService._readFile(migrationInfoPath, true);
+                migrationInfo = await this.fileService.readFile(migrationInfoPath, true);
             } catch (error) {
                 migrationInfo = {
                     status: 'IN_PROGRESS',
@@ -82,9 +82,9 @@ class TripleStoreMetadataMigration extends BaseMigration {
         const migrationInfoFileName = `${this.migrationName}_${currentRepository}`;
         const migrationInfoPath = path.join(migrationFolderPath, migrationInfoFileName);
         let migrationInfo;
-        if (await this.fileService.fileExists(migrationInfoPath)) {
+        if (await this.fileService.pathExists(migrationInfoPath)) {
             try {
-                migrationInfo = await this.fileService._readFile(migrationInfoPath, true);
+                migrationInfo = await this.fileService.readFile(migrationInfoPath, true);
             } catch (error) {
                 migrationInfo = {
                     status: 'IN_PROGRESS',

@@ -15,9 +15,7 @@ class TripleStoreUserConfigurationMigration extends BaseMigration {
                 this.config.configFilename,
             );
 
-            const userConfiguration = await this.fileService.loadJsonFromFile(
-                configurationFilePath,
-            );
+            const userConfiguration = await this.fileService.readFile(configurationFilePath, true);
             if (userConfiguration.modules.tripleStore.implementation) {
                 for (const implementationName in userConfiguration.modules.tripleStore
                     .implementation) {
@@ -91,8 +89,9 @@ class TripleStoreUserConfigurationMigration extends BaseMigration {
                     'local-network-setup',
                     '.origintrail_noderc_template.json',
                 );
-                const configurationTemplate = await this.fileService.loadJsonFromFile(
+                const configurationTemplate = await this.fileService.readFile(
                     configurationTemplatePath,
+                    true,
                 );
 
                 if (

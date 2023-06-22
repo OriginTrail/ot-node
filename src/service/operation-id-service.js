@@ -1,4 +1,4 @@
-import { validate } from 'uuid';
+import { validate, v4 as uuidv4 } from 'uuid';
 import path from 'path';
 
 class OperationIdService {
@@ -9,6 +9,10 @@ class OperationIdService {
         this.eventEmitter = ctx.eventEmitter;
 
         this.memoryCachedHandlersData = {};
+    }
+
+    generateId() {
+        return uuidv4();
     }
 
     async generateOperationId(status) {
@@ -109,8 +113,8 @@ class OperationIdService {
         this.logger.debug(`Reading operation id: ${operationId} cached data from file`);
         const documentPath = this.fileService.getOperationIdDocumentPath(operationId);
         let data;
-        if (await this.fileService.fileExists(documentPath)) {
-            data = await this.fileService.loadJsonFromFile(documentPath);
+        if (await this.fileService.pathExists(documentPath)) {
+            data = await this.fileService.readFile(documentPath, true);
         }
         return data;
     }
@@ -140,16 +144,17 @@ class OperationIdService {
         return deleted;
     }
 
-    async removeExpiredOperationIdFileCache(expiredTimeout) {
+    async removeExpiredOperationIdFileCache(expiredTimeout, batchSize) {
         const cacheFolderPath = this.fileService.getOperationIdCachePath();
-        const cacheFolderExists = await this.fileService.fileExists(cacheFolderPath);
+        const cacheFolderExists = await this.fileService.pathExists(cacheFolderPath);
         if (!cacheFolderExists) {
             return;
         }
         const fileList = await this.fileService.readDirectory(cacheFolderPath);
+
+        const now = new Date();
         const deleteFile = async (fileName) => {
             const filePath = path.join(cacheFolderPath, fileName);
-            const now = new Date();
             const createdDate = (await this.fileService.stat(filePath)).mtime;
             if (createdDate.getTime() + expiredTimeout < now.getTime()) {
                 await this.fileService.removeFile(filePath);
@@ -157,8 +162,17 @@ class OperationIdService {
             }
             return false;
         };
-        const deleted = await Promise.all(fileList.map((fileName) => deleteFile(fileName)));
-        return deleted.filter((x) => x).length;
+        let totalDeleted = 0;
+        for (let i = 0; i < fileList.length; i += batchSize) {
+            const batch = fileList.slice(i, i + batchSize);
+            // eslint-disable-next-line no-await-in-loop
+            const deletionResults = await Promise.allSettled(batch.map(deleteFile));
+            totalDeleted += deletionResults.filter(
+                (result) => result.status === 'fulfilled' && result.value,
+            ).length;
+        }
+
+        return totalDeleted;
     }
 }
 
