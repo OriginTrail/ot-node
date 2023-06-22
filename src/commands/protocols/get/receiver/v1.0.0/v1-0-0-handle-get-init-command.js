@@ -42,7 +42,6 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
                 blockchain,
                 contract,
                 tokenId,
-                operationId,
             );
         }
 
