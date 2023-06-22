@@ -1,10 +1,11 @@
-import { Given } from '@cucumber/cucumber';
+import { Given, Then } from '@cucumber/cucumber';
 import { expect, assert } from 'chai';
 import fs from 'fs';
 import { setTimeout as sleep } from 'timers/promises';
 
 import DkgClientHelper from '../../utilities/dkg-client-helper.mjs';
 import StepsUtils from '../../utilities/steps-utils.mjs';
+import FileService from "../../../src/service/file-service.js";
 
 const stepsUtils = new StepsUtils();
 
@@ -53,15 +54,21 @@ Given(
                     const client = new DkgClientHelper({
                         endpoint: 'http://localhost',
                         port: rpcPort,
-                        useSSL: false,
-                        timeout: 25,
-                        loglevel: 'trace',
+                        blockchain: {
+                            name: 'hardhat',
+                            publicKey: wallet.address,
+                            privateKey: wallet.privateKey,
+                        },
+                        maxNumberOfRetries: 5,
+                        frequency: 2,
+                        contentType: 'all',
                     });
                     this.state.nodes[nodeIndex] = {
                         client,
                         forkedNode,
                         configuration: nodeConfiguration,
                         nodeRpcUrl: `http://localhost:${rpcPort}`,
+                        fileService: new FileService({config: nodeConfiguration, logger: this.logger}),
                     };
                 }
                 nodesStarted += 1;
@@ -125,6 +132,7 @@ Given(
                     forkedNode,
                     configuration: nodeConfiguration,
                     nodeRpcUrl: `http://localhost:${rpcPort}`,
+                    fileService: new FileService({config: nodeConfiguration, logger: this.logger}),
                 });
             }
             done();
@@ -162,9 +170,8 @@ Given(
             Object.prototype.hasOwnProperty.call(nodeConfiguration, propertyNameSplit[0]),
             `Property ${propertyName} doesn't exist`,
         ).to.be.equal(true);
-        const propertyNameSplitLen = propertyNameSplit.length;
         let propName = nodeConfiguration;
-        for (let i = 0; i < propertyNameSplitLen - 1; i += 1) {
+        for (let i = 0; i < propertyNameSplit.length - 1; i += 1) {
             propName = propName[propertyNameSplit[i]];
         }
         if (propName[propertyNameSplit.slice(-1)] !== undefined) {
@@ -189,41 +196,41 @@ Given(
                 const client = new DkgClientHelper({
                     endpoint: 'http://localhost',
                     port: rpcPort,
-                    useSSL: false,
-                    timeout: 25,
-                    loglevel: 'trace',
+                    blockchain: {
+                        name: 'hardhat',
+                        publicKey: wallet.address,
+                        privateKey: wallet.privateKey,
+                    },
+                    maxNumberOfRetries: 5,
+                    frequency: 2,
+                    contentType: 'all',
                 });
                 this.state.nodes[nodeIndex] = {
                     client,
-                    clientConfig: {
-                        endpoint: 'http://localhost',
-                        port: rpcPort,
-                        useSSL: false,
-                        timeout: 25,
-                        loglevel: 'trace',
-                    },
                     forkedNode,
                     configuration: nodeConfiguration,
                     nodeRpcUrl: `http://localhost:${rpcPort}`,
+                    fileService: new FileService({config: nodeConfiguration, logger: this.logger}),
                 };
             }
             done();
         });
     },
 );
-Given(
-    /Last (Get|Publish|Update) operation finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError|PublishStartError|GetAssertionIdError|GetNetworkError|GetLocalError|PublishRouteError]+)$/,
+
+Then(
+    /Latest (Get|Publish|Update) operation finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError|PublishStartError|GetAssertionIdError|GetNetworkError|GetLocalError|PublishRouteError]+)$/,
     { timeout: 120000 },
-    async function lastResolveFinishedCall(operationName, status) {
-        this.logger.log(`Last ${operationName} operation finished with status: ${status}`);
-        const operationData = `last${operationName}Data`;
+    async function latestResolveFinishedCall(operationName, status) {
+        this.logger.log(`Latest ${operationName} operation finished with status: ${status}`);
+        const operationData = `latest${operationName}Data`;
         expect(
             !!this.state[operationData],
-            `Last ${operationName} result is undefined. ${operationData} result not started.`,
+            `Latest ${operationName} result is undefined. ${operationData} result not started.`,
         ).to.be.equal(true);
         expect(
             !!this.state[operationData].result,
-            `Last ${operationName} result data result is undefined. ${operationData} result is not finished.`,
+            `Latest ${operationName} result data result is undefined. ${operationData} result is not finished.`,
         ).to.be.equal(true);
 
         expect(
@@ -246,4 +253,9 @@ Given(/^I set R1 to be (\d+)$/, { timeout: 100000 }, async function waitFor(r1) 
 Given(/^I set R0 to be (\d+)$/, { timeout: 100000 }, async function waitFor(r0) {
     this.logger.log(`I set R0 to be ${r0}`);
     await this.state.localBlockchain.setR0(r0);
+});
+
+Given(/^I set finalizationCommitsNumber to be (\d+)$/, { timeout: 100000 }, async function waitFor(finalizationCommitsNumber) {
+    this.logger.log(`I set finalizationCommitsNumber to be ${finalizationCommitsNumber}`);
+    await this.state.localBlockchain.setFinalizationCommitsNumber(finalizationCommitsNumber);
 });

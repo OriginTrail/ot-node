@@ -7,6 +7,25 @@ class ValidationService {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
     }
 
+    async validateUal(blockchain, contract, tokenId) {
+        this.logger.info(
+            `Validating UAL: did:dkg:${blockchain.toLowerCase()}/${contract.toLowerCase()}/${tokenId}`,
+        );
+
+        let isValid = true;
+        try {
+            await this.blockchainModuleManager.getKnowledgeAssetOwner(
+                blockchain,
+                contract,
+                tokenId,
+            );
+        } catch (err) {
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
     async validateAssertion(assertionId, blockchain, assertion) {
         this.logger.info(`Validating assertionId: ${assertionId}`);
 

@@ -115,6 +115,13 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
+    async getKnowledgeAssetOwner(blockchain, assetContractAddress, tokenId) {
+        return this.callImplementationFunction(blockchain, 'getKnowledgeAssetOwner', [
+            assetContractAddress,
+            tokenId,
+        ]);
+    }
+
     async getUnfinalizedAssertionId(blockchain, tokenId) {
         return this.callImplementationFunction(blockchain, 'getUnfinalizedState', [tokenId]);
     }
@@ -141,6 +148,7 @@ class BlockchainModuleManager extends BaseModuleManager {
     async getAllPastEvents(
         blockchain,
         contractName,
+        eventsToFilter,
         lastCheckedBlock,
         lastCheckedTimestamp,
         currentBlock,
@@ -148,6 +156,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'getAllPastEvents', [
             blockchain,
             contractName,
+            eventsToFilter,
             lastCheckedBlock,
             lastCheckedTimestamp,
             currentBlock,
