@@ -124,10 +124,6 @@ class StepsUtils {
             graphDatabase: {
                 name: nodeName,
             },
-            minimumAckResponses: {
-                publish: 2,
-                get: 1,
-            },
         };
     }
 }

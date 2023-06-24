@@ -7,13 +7,6 @@ import {
 import CleanerCommand from './cleaner-command.js';
 
 class BlockchainEventCleanerCommand extends CleanerCommand {
-    constructor(ctx) {
-        super(ctx);
-        this.logger = ctx.logger;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.archiveService = ctx.archiveService;
-    }
-
     async findRowsForRemoval(nowTimestamp) {
         return this.repositoryModuleManager.findProcessedEvents(
             nowTimestamp - PROCESSED_BLOCKCHAIN_EVENTS_CLEANUP_TIME_DELAY,
