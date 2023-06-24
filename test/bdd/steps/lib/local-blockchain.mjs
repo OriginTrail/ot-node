@@ -115,18 +115,27 @@ class LocalBlockchain {
         }
     }
 
-    async setR1(R1) {
-        console.log(`Setting R1 in parameters storage to: ${R1}`);
-        const encodedData = this.ParametersStorageInterface.encodeFunctionData('setR1', [R1]);
+    async setR0(r0) {
+        console.log(`Setting R0 in parameters storage to: ${r0}`);
+        const encodedData = this.ParametersStorageInterface.encodeFunctionData('setR0', [r0]);
         const parametersStorageAddress = await this.hubContract.getContractAddress(
             'ParametersStorage',
         );
         await this.HubControllerContract.forwardCall(parametersStorageAddress, encodedData);
     }
 
-    async setR0(R0) {
-        console.log(`Setting R0 in parameters storage to: ${R0}`);
-        const encodedData = this.ParametersStorageInterface.encodeFunctionData('setR0', [R0]);
+    async setR1(r1) {
+        console.log(`Setting R1 in parameters storage to: ${r1}`);
+        const encodedData = this.ParametersStorageInterface.encodeFunctionData('setR1', [r1]);
+        const parametersStorageAddress = await this.hubContract.getContractAddress(
+            'ParametersStorage',
+        );
+        await this.HubControllerContract.forwardCall(parametersStorageAddress, encodedData);
+    }
+
+    async setFinalizationCommitsNumber(commitsNumber) {
+        console.log(`Setting finalizationCommitsNumber in parameters storage to: ${commitsNumber}`);
+        const encodedData = this.ParametersStorageInterface.encodeFunctionData('setFinalizationCommitsNumber', [commitsNumber]);
         const parametersStorageAddress = await this.hubContract.getContractAddress(
             'ParametersStorage',
         );

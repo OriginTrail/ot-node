@@ -1,0 +1,77 @@
+name: checks
+
+on:
+  pull_request:
+    branches:
+      - v6/develop
+
+env:
+  REPOSITORY_PASSWORD: password
+  JWT_SECRET: aTx13FzDG+85j9b5s2G7IBEc5SJNJZZLPLe7RF8hu1xKgRKj46YFRx/z7fJi7iF2NnL7SHcxTzq7TySuPKWkdg/AYKEMD2p1I++qPYFHqg8KQeLArGjCYiqtf43i1Fgtya8z9qJXyegogMz/jYori2BJ8v6b4K3GkAw3XxiO7VaaEYktOp8qsRDcN3b+bITMZqztDvZdWp4EnViGjoES7fRFhKm/d/2C8URnQyGm6xgTR3xTfAjy7+milGmoPA0KU0nu+GsZIhOfeVc9Z2nfxOK/1JQykpjeBhNDYTOr31yW/xdvoW0Kq0PZ6JmM+yezLoyQXcYjavZ+X7cXjbREQg==
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up environment
+        uses: ./.github/actions/setup
+
+      - name: Run linter
+        run: npm run lint
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    services:
+      graphdb:
+        image: khaller/graphdb-free:latest
+        ports:
+          - 7200:7200
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up environment
+        uses: ./.github/actions/setup
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+  bdd-tests:
+    runs-on: ubuntu-latest
+    services:
+        mysql:
+          image: mysql:5.7
+          env:
+            MYSQL_DATABASE: operationaldb
+            MYSQL_USER: node
+            MYSQL_PASSWORD: password
+            MYSQL_ROOT_PASSWORD: password
+          ports:
+            - 3306:3306
+          options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up environment
+        uses: ./.github/actions/setup
+
+      - name: Run Blazegraph
+        run: /usr/bin/java -Djava.awt.headless=true -jar blazegraph.jar &
+
+      - name: Run BDD tests
+        run: npm run test:bdd
+
+      - name: Upload log files
+        if: '!cancelled()'
+        uses: actions/upload-artifact@v3
+        with:
+          name: bdd-test-logs
+          path: ./test/bdd/log/

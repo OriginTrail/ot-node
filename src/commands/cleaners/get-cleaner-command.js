@@ -2,26 +2,26 @@ import CleanerCommand from './cleaner-command.js';
 import {
     REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER,
     OPERATIONS,
-    UPDATE_RESPONSE_CLEANUP_TIME_DELAY,
-    UPDATE_RESPONSE_CLEANUP_TIME_MILLS,
-    ARCHIVE_UPDATE_RESPONSES_FOLDER,
+    GET_CLEANUP_TIME_DELAY,
+    GET_CLEANUP_TIME_MILLS,
+    ARCHIVE_GET_FOLDER,
 } from '../../constants/constants.js';
 
-class UpdateResponseCleanerCommand extends CleanerCommand {
+class GetCleanerCommand extends CleanerCommand {
     async findRowsForRemoval(nowTimestamp) {
-        return this.repositoryModuleManager.findProcessedOperationResponse(
-            nowTimestamp - UPDATE_RESPONSE_CLEANUP_TIME_DELAY,
+        return this.repositoryModuleManager.findProcessedOperations(
+            OPERATIONS.GET,
+            nowTimestamp - GET_CLEANUP_TIME_DELAY,
             REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER,
-            OPERATIONS.UPDATE,
         );
     }
 
     getArchiveFolderName() {
-        return ARCHIVE_UPDATE_RESPONSES_FOLDER;
+        return ARCHIVE_GET_FOLDER;
     }
 
     async deleteRows(ids) {
-        return this.repositoryModuleManager.removeOperationResponse(ids, OPERATIONS.UPDATE);
+        return this.repositoryModuleManager.removeOperationRecords(OPERATIONS.GET, ids);
     }
 
     /**
@@ -31,9 +31,9 @@ class UpdateResponseCleanerCommand extends CleanerCommand {
      */
     default(map) {
         const command = {
-            name: 'updateResponseCleanerCommand',
+            name: 'getCleanerCommand',
             data: {},
-            period: UPDATE_RESPONSE_CLEANUP_TIME_MILLS,
+            period: GET_CLEANUP_TIME_MILLS,
             transactional: false,
         };
         Object.assign(command, map);
@@ -41,4 +41,4 @@ class UpdateResponseCleanerCommand extends CleanerCommand {
     }
 }
 
-export default UpdateResponseCleanerCommand;
+export default GetCleanerCommand;

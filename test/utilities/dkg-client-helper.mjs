@@ -10,52 +10,35 @@ class DkgClientHelper {
         return this.client.node.info();
     }
 
-    async publish(data, wallet) {
+    async publish(data) {
         const options = {
             visibility: 'public',
             epochsNum: 5,
-            maxNumberOfRetries: 5,
             hashFunctionId: CONTENT_ASSET_HASH_FUNCTION_ID,
-            blockchain: {
-                name: 'hardhat',
-                publicKey: wallet.evmOperationalWalletPublicKey,
-                privateKey: wallet.evmOperationalWalletPrivateKey,
-            },
         };
+
         return this.client.asset.create(data, options);
     }
 
-    async update(ual, assertion, wallet) {
+    async update(ual, assertion) {
         const options = {
-            maxNumberOfRetries: 5,
-            blockchain: {
-                name: 'hardhat',
-                publicKey: wallet.evmOperationalWalletPublicKey,
-                privateKey: wallet.evmOperationalWalletPrivateKey,
-            },
+            hashFunctionId: CONTENT_ASSET_HASH_FUNCTION_ID,
         };
+
         return this.client.asset.update(ual, assertion, options);
     }
 
-    async get(ids) {
-        return this.client._getRequest({
-            ids,
-        });
+    async get(ual, state) {
+        const options = {
+            state,
+            validate: true,
+        };
+
+        return this.client.asset.get(ual, options);
     }
 
     async query(query) {
-        return this.client._queryRequest({
-            query,
-        });
-    }
-
-    async getResult(UAL) {
-        const getOptions = {
-            validate: true,
-            commitOffset: 0,
-            maxNumberOfRetries: 5,
-        };
-        return this.client.asset.get(UAL, getOptions).catch(() => {});
+        return this.client.query(query);
     }
 }
 

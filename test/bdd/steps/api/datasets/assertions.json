@@ -61,5 +61,20 @@
         "@id": "uuid:Nis"
       }
     }
+  },
+  "validUpdate_2": {
+    "public": {
+      "@context": [
+        "https://schema.org"
+      ],
+      "@id": "uuid:3",
+      "company": "TL",
+      "user": {
+        "@id": "uuid:user:3"
+      },
+      "city": {
+        "@id": "uuid:Funchal"
+      }
+    }
   }
 }
