@@ -64,26 +64,6 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('command').findFinalizedCommands(timestamp, limit);
     }
 
-    async findProcessedOperationResponse(timestamp, limit, operation) {
-        return this.getRepository('operation_response').findProcessedOperationResponse(
-            timestamp,
-            limit,
-            operation,
-        );
-    }
-
-    async removeOperationResponse(ids, operation) {
-        return this.getRepository('operation_response').removeOperationResponse(ids, operation);
-    }
-
-    async removeEvents(ids) {
-        return this.getRepository('blockchain_event').removeEvents(ids);
-    }
-
-    async findProcessedEvents(timestamp, limit) {
-        return this.getRepository('blockchain_event').findProcessedEvents(timestamp, limit);
-    }
-
     async createOperationIdRecord(handlerData) {
         return this.getRepository('operation_id').createOperationIdRecord(handlerData);
     }
@@ -109,6 +89,14 @@ class RepositoryModuleManager extends BaseModuleManager {
             operationId,
             status,
         );
+    }
+
+    async removeOperationRecords(operation, ids) {
+        return this.getRepository('operation').removeOperationRecords(operation, ids);
+    }
+
+    async findProcessedOperations(operation, timestamp, limit) {
+        return this.getRepository('operation').findProcessedOperations(operation, timestamp, limit);
     }
 
     async getOperationStatus(operation, operationId) {
@@ -138,6 +126,18 @@ class RepositoryModuleManager extends BaseModuleManager {
             operation,
             operationId,
         );
+    }
+
+    async findProcessedOperationResponse(timestamp, limit, operation) {
+        return this.getRepository('operation_response').findProcessedOperationResponse(
+            timestamp,
+            limit,
+            operation,
+        );
+    }
+
+    async removeOperationResponse(ids, operation) {
+        return this.getRepository('operation_response').removeOperationResponse(ids, operation);
     }
 
     // Sharding Table
@@ -260,6 +260,14 @@ class RepositoryModuleManager extends BaseModuleManager {
 
     async removeBlockchainEvents(contract) {
         return this.getRepository('blockchain_event').removeBlockchainEvents(contract);
+    }
+
+    async removeEvents(ids) {
+        return this.getRepository('blockchain_event').removeEvents(ids);
+    }
+
+    async findProcessedEvents(timestamp, limit) {
+        return this.getRepository('blockchain_event').findProcessedEvents(timestamp, limit);
     }
 
     async removeLastCheckedBlockForContract(contract) {

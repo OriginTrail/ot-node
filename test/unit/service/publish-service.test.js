@@ -59,7 +59,7 @@ describe('Publish service test', async () => {
         const returnedResponses = publishService.repositoryModuleManager.getAllResponseStatuses();
 
         expect(cacheOperationIdDataSpy.calledWith('5195d01a-b437-4aae-b388-a77b9fa715f1', {})).to.be
-            .true;
+            .false;
 
         expect(returnedResponses.length).to.be.equal(2);
 

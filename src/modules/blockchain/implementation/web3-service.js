@@ -17,7 +17,7 @@ import {
 const require = createRequire(import.meta.url);
 
 const ABIs = {
-    AbstractAsset: require('dkg-evm-module/abi/AbstractAsset.json'),
+    ContentAssetStorage: require('dkg-evm-module/abi/ContentAssetStorage.json'),
     AssertionStorage: require('dkg-evm-module/abi/AssertionStorage.json'),
     Staking: require('dkg-evm-module/abi/Staking.json'),
     StakingStorage: require('dkg-evm-module/abi/StakingStorage.json'),
@@ -171,7 +171,7 @@ class Web3Service {
     initializeAssetStorageContract(assetStorageAddress) {
         this.assetStorageContracts[assetStorageAddress.toLowerCase()] = new ethers.Contract(
             assetStorageAddress,
-            ABIs.AbstractAsset,
+            ABIs.ContentAssetStorage,
             this.wallet,
         );
     }
@@ -523,6 +523,14 @@ class Web3Service {
         return this.callContractFunction(assetStorageContractInstance, 'getAssertionIdsLength', [
             tokenId,
         ]);
+    }
+
+    async getKnowledgeAssetOwner(assetContractAddress, tokenId) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+
+        return this.callContractFunction(assetStorageContractInstance, 'ownerOf', [tokenId]);
     }
 
     async getUnfinalizedState(tokenId) {

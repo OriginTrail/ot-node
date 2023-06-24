@@ -10,10 +10,9 @@ class UpdateRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const data = await this.operationIdService.getCachedOperationIdData(
-            command.data.operationId,
-        );
-        const { assertion } = data.public;
+        const {
+            public: { assertion },
+        } = await this.operationIdService.getCachedOperationIdData(command.data.operationId);
 
         return {
             assertion,

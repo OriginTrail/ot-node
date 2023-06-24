@@ -17,6 +17,7 @@ import RemoveAgreementStartEndTimeMigration from './src/migration/remove-agreeme
 import MarkOldBlockchainEventsAsProcessedMigration from './src/migration/mark-old-blockchain-events-as-processed-migration.js';
 import TripleStoreMetadataMigration from './src/migration/triple-store-metadata-migration.js';
 import RemoveOldEpochCommandsMigration from './src/migration/remove-old-epoch-commands-migration.js';
+import PendingStorageMigration from './src/migration/pending-storage-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -58,6 +59,7 @@ class OTNode {
         await this.executeTripleStoreMetadataMigration();
         await this.executeServiceAgreementsMetadataMigration();
         await this.executeRemoveOldEpochCommandsMigration();
+        await this.executePendingStorageMigration();
 
         await this.createProfiles();
 
@@ -415,6 +417,23 @@ class OTNode {
             this.logger,
             this.config,
             repositoryModuleManager,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            await migration.migrate();
+        }
+    }
+
+    async executePendingStorageMigration() {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const migration = new PendingStorageMigration(
+            'pendingStorageMigration',
+            this.logger,
+            this.config,
         );
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();
