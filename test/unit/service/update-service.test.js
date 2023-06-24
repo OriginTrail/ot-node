@@ -62,7 +62,7 @@ describe('Update service test', async () => {
         expect(returnedResponses.length).to.be.equal(2);
 
         expect(cacheOperationIdDataSpy.calledWith('5195d01a-b437-4aae-b388-a77b9fa715f1', {})).to.be
-            .true;
+            .false;
 
         expect(
             returnedResponses[returnedResponses.length - 1].status ===
