@@ -7,7 +7,7 @@ import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
     OPERATION_STATUS,
     OPERATION_ID_STATUS,
-    GET_STATES,
+    TRIPLE_STORE_REPOSITORIES,
 } from '../../constants/constants.js';
 
 class AssetSyncCommand extends Command {
@@ -56,11 +56,15 @@ class AssetSyncCommand extends Command {
 
                 const latestSyncedTokenId = latestAssetSyncRecord?.tokenId ?? 0;
 
-                const tokenIds = await this.getMissedTokenIds(blockchain, contract);
-                if (tokenIds?.length) {
-                    this.logger.info(`ASSET_SYNC: Found ${tokenIds.length} missed assets, syncing`);
-                    for (const tokenId of tokenIds) {
-                        syncQueue.push({ tokenId, blockchain, contract });
+                if (latestSyncedTokenId > 0) {
+                    const tokenIds = await this.getMissedTokenIds(blockchain, contract);
+                    if (tokenIds?.length) {
+                        this.logger.info(
+                            `ASSET_SYNC: Found ${tokenIds.length} missed assets, syncing`,
+                        );
+                        for (const tokenId of tokenIds) {
+                            syncQueue.push({ tokenId, blockchain, contract });
+                        }
                     }
                 }
 
@@ -87,12 +91,6 @@ class AssetSyncCommand extends Command {
         );
 
         for (let stateIndex = 0; stateIndex < assertionIds.length; stateIndex += 1) {
-            // Skip if it is not latest state
-            // TODO: Remove this skip when GET historical state is implemented
-            if (stateIndex < assertionIds.length - 1) {
-                continue;
-            }
-
             if (
                 await this.repositoryModuleManager.isStateSynced(
                     blockchain,
@@ -101,6 +99,32 @@ class AssetSyncCommand extends Command {
                     stateIndex,
                 )
             ) {
+                this.logger.trace(
+                    `ASSET_SYNC: StateIndex: ${stateIndex} for tokenId: ${tokenId} already synced`,
+                );
+                await this.repositoryModuleManager.updateAssetSyncRecord(
+                    blockchain,
+                    contract,
+                    tokenId,
+                    stateIndex,
+                    ASSET_SYNC_PARAMETERS.STATUS.COMPLETED,
+                    true,
+                );
+                continue;
+            }
+
+            if (await this.isStatePresentInRepository(tokenId, stateIndex, assertionIds)) {
+                this.logger.trace(
+                    `ASSET_SYNC: StateIndex: ${stateIndex} for tokenId: ${tokenId} found in triple store`,
+                );
+                await this.repositoryModuleManager.createAssetSyncRecord(
+                    blockchain,
+                    contract,
+                    tokenId,
+                    stateIndex,
+                    ASSET_SYNC_PARAMETERS.STATUS.COMPLETED,
+                    true,
+                );
                 continue;
             }
 
@@ -137,11 +161,11 @@ class AssetSyncCommand extends Command {
                 ),
             ]);
 
-            // TODO: Change to StateIndex, once GET historical state is implemented
-            const state = GET_STATES.LATEST_FINALIZED;
             const hashFunctionId = CONTENT_ASSET_HASH_FUNCTION_ID;
 
-            this.logger.info(`Get for ${ual} with operation id ${operationId} initiated.`);
+            this.logger.debug(
+                `ASSET_SYNC: Get for ${ual} with operation id ${operationId} initiated.`,
+            );
 
             await this.commandExecutor.add({
                 name: 'networkGetCommand',
@@ -153,7 +177,7 @@ class AssetSyncCommand extends Command {
                     blockchain,
                     contract,
                     tokenId,
-                    state,
+                    state: assertionId,
                     hashFunctionId,
                     assertionId,
                     assetSync: true,
@@ -198,6 +222,18 @@ class AssetSyncCommand extends Command {
         }
 
         return missedTokenIds;
+    }
+
+    async isStatePresentInRepository(tokenId, stateIndex, assertionIds) {
+        const repository =
+            assertionIds.length - 1 === stateIndex
+                ? TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT
+                : TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY;
+        this.logger.debug(
+            `ASSET_SYNC: Checking if stateIndex: ${stateIndex} for tokenId: ${tokenId} exists in repository: ${repository}`,
+        );
+
+        return this.tripleStoreService.assertionExists(repository, assertionIds[stateIndex]);
     }
 
     /**
