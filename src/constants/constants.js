@@ -129,6 +129,7 @@ export const ASSET_SYNC_PARAMETERS = {
         FAILED: 'FAILED',
         COMPLETED: 'COMPLETED',
         NOT_FOUND: 'NOT_FOUND',
+        ONLY_LATEST_SYNCED: 'ONLY_LATEST_SYNCED',
     },
 };
 
