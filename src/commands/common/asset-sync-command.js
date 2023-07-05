@@ -99,7 +99,7 @@ class AssetSyncCommand extends Command {
                     stateIndex,
                 )
             ) {
-                this.logger.debug(
+                this.logger.trace(
                     `ASSET_SYNC: StateIndex: ${stateIndex} for tokenId: ${tokenId} already synced`,
                 );
                 await this.repositoryModuleManager.updateAssetSyncRecord(
@@ -114,7 +114,7 @@ class AssetSyncCommand extends Command {
             }
 
             if (await this.isStatePresentInRepository(tokenId, stateIndex, assertionIds)) {
-                this.logger.debug(
+                this.logger.trace(
                     `ASSET_SYNC: StateIndex: ${stateIndex} for tokenId: ${tokenId} found in triple store`,
                 );
                 await this.repositoryModuleManager.createAssetSyncRecord(
