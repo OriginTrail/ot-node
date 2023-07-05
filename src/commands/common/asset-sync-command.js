@@ -99,6 +99,9 @@ class AssetSyncCommand extends Command {
                     stateIndex,
                 )
             ) {
+                this.logger.debug(
+                    `ASSET_SYNC: StateIndex: ${stateIndex} for tokenId: ${tokenId} already synced`,
+                );
                 await this.repositoryModuleManager.updateAssetSyncRecord(
                     blockchain,
                     contract,
