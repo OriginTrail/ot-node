@@ -11,7 +11,7 @@
         "prepare": "husky install",
         "lint-staged": "lint-staged",
         "create-account-mapping-signature": "node tools/ot-parachain-account-mapping/create-account-mapping-signature.js ",
-        "start:local_blockchain": "npm explore dkg-evm-module -- npm run dev",
+        "start:local_blockchain": "npm explore dkg-evm-module -- npm run dev --reset",
         "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/ --exit",
         "test:unit": "nyc --all mocha --exit $(find test/unit -name '*.js')",
         "test:modules": "nyc --all mocha --exit $(find test/modules -name '*.js')",
