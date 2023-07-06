@@ -56,7 +56,7 @@ class LocalBlockchain {
         });
 
         this.provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
-
+        this.provider.send("hardhat_reset");
         const [privateKeysFile, publicKeysFile] = await Promise.all([
             readFile('test/bdd/steps/api/datasets/privateKeys.json'),
             readFile('test/bdd/steps/api/datasets/publicKeys.json'),
