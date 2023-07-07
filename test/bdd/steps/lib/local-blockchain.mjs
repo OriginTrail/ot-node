@@ -50,7 +50,7 @@ let startBlockchainProcess;
 
 class LocalBlockchain {
     async initialize(_console = console) {
-        startBlockchainProcess = exec('npm run start:local_blockchain');
+        startBlockchainProcess = exec('rm -r node_modules/dkg-evm-module/cache && npm run start:local_blockchain');
         startBlockchainProcess.stdout.on('data', (data) => {
             _console.log(data);
         });
