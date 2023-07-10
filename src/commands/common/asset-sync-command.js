@@ -212,11 +212,19 @@ class AssetSyncCommand extends Command {
             blockchain,
             contract,
         );
+        const tokenIdsSet = new Set(tokenIds); // Convert array to set for O(1) lookup
         const missedTokenIds = [];
+
         if (tokenIds.length - 1 !== tokenIds[tokenIds.length - 1]) {
             for (let i = 0; i < tokenIds[tokenIds.length - 1]; i += 1) {
-                if (!tokenIds.includes(i)) {
+                if (!tokenIdsSet.has(i)) {
                     missedTokenIds.push(i);
+                }
+                if (i % 10_000 === 0) {
+                    // yield control to event loop
+                    await new Promise((resolve) => {
+                        setImmediate(resolve);
+                    });
                 }
             }
         }
