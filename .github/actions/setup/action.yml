@@ -28,13 +28,13 @@ runs:
         key: ${{ runner.os }}-blazegraph-${{ hashFiles('blazegraph.jar') }}
         restore-keys: ${{ runner.os }}-blazegraph-
 
-    - if: steps.cache-node-modules.outputs.cache-hit != 'true'
-      name: Install dependencies & compile contracts
+    - name: Install dependencies & compile contracts
+
       shell: bash
       run: |
         npm ci
         npm explore dkg-evm-module -- npm run compile
-    
+
     - if: steps.cache-blazegraph.outputs.cache-hit != 'true'
       name: Download Blazegraph
       shell: bash
