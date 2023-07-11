@@ -313,13 +313,13 @@ class BlockchainEventListenerService {
 
                 this.logger.trace(`Removing peer id: ${nodeId} from sharding table.`);
 
-                this.repositoryModuleManager.removePeerRecord(event.blockchainId, nodeId);
+                await this.repositoryModuleManager.removePeerRecord(event.blockchainId, nodeId);
             }),
         );
     }
 
     async handleStakeIncreasedEvents(blockEvents) {
-        const peerRecords = await Promise.all(
+        await Promise.all(
             blockEvents.map(async (event) => {
                 const eventData = JSON.parse(event.data);
 
@@ -330,18 +330,16 @@ class BlockchainEventListenerService {
 
                 this.logger.trace(`Updating stake value for peer id: ${nodeId} in sharding table.`);
 
-                return {
-                    peerId: nodeId,
-                    blockchainId: event.blockchainId,
-                    stake: this.blockchainModuleManager.convertFromWei(
+                await this.repositoryModuleManager.updatePeerStake(
+                    nodeId,
+                    event.blockchainId,
+                    this.blockchainModuleManager.convertFromWei(
                         event.blockchainId,
                         eventData.newStake,
                     ),
-                };
+                );
             }),
         );
-
-        await this.repositoryModuleManager.updatePeersStake(peerRecords);
     }
 
     async handleStakeWithdrawalStartedEvents(blockEvents) {
@@ -349,7 +347,7 @@ class BlockchainEventListenerService {
     }
 
     async handleAskUpdatedEvents(blockEvents) {
-        const peerRecords = await Promise.all(
+        await Promise.all(
             blockEvents.map(async (event) => {
                 const eventData = JSON.parse(event.data);
 
@@ -360,18 +358,13 @@ class BlockchainEventListenerService {
 
                 this.logger.trace(`Updating ask value for peer id: ${nodeId} in sharding table.`);
 
-                return {
-                    peerId: nodeId,
-                    blockchainId: event.blockchainId,
-                    ask: this.blockchainModuleManager.convertFromWei(
-                        event.blockchainId,
-                        eventData.ask,
-                    ),
-                };
+                await this.repositoryModuleManager.updatePeerAsk(
+                    nodeId,
+                    event.blockchainId,
+                    this.blockchainModuleManager.convertFromWei(event.blockchainId, eventData.ask),
+                );
             }),
         );
-
-        await this.repositoryModuleManager.updatePeersAsk(peerRecords);
     }
 
     async handleServiceAgreementV1ExtendedEvents(blockEvents) {
