@@ -32,9 +32,9 @@ runs:
       shell: bash
       run: |
         ls -l
-        cd ../dkg-evm-module
+        cd dkg-evm-module
         npm install
-        cd ../ot-node
+        cd ..
         npm ci
         npm explore dkg-evm-module -- npm run compile
 
