@@ -20,6 +20,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Checkout additional repository
+        run: git clone --branch v6/github-action-test --depth 1 https://github.com/OriginTrail/dkg-evm-module.git
+
+      - name: Folders check
+        run: ls -l
+
       - name: Set up environment
         uses: ./.github/actions/setup
 
