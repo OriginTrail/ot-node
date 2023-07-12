@@ -35,7 +35,7 @@ runs:
         cd dkg-evm-module
         npm install
         cd ..
-        npm ci
+        npm install
         npm explore dkg-evm-module -- npm run compile
 
     - if: steps.cache-blazegraph.outputs.cache-hit != 'true'
