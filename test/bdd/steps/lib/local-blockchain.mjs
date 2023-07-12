@@ -93,6 +93,10 @@ class LocalBlockchain {
     }
 
     stop() {
+        const cleanHardhat = exec('npm run clean:local_blockchain');
+        cleanHardhat.stdout.on('data', (data) => {
+            console.log(data);
+        });
         startBlockchainProcess.kill();
     }
 
