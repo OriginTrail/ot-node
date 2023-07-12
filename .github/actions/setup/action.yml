@@ -31,7 +31,7 @@ runs:
     - name: Install dependencies & compile contracts
       shell: bash
       run: |
-        if [ -d "cd ../dkg-evm-module" ]; then
+        if [ -d "../dkg-evm-module" ]; then
           cd ../dkg-evm-module
           npm install
           cd ../ot-node
