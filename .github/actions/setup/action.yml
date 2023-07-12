@@ -31,10 +31,11 @@ runs:
     - name: Install dependencies & compile contracts
       shell: bash
       run: |
-        ls -l
-        cd ../dkg-evm-module
-        npm install
-        cd ../ot-node
+        if [ -d "cd ../dkg-evm-module" ]; then
+          cd ../dkg-evm-module
+          npm install
+          cd ../ot-node
+        fi        
         npm install
         npm explore dkg-evm-module -- npm run compile
 
