@@ -93,7 +93,7 @@ class LocalBlockchain {
     }
 
     stop() {
-        // this.cleanHardhat();
+        this.cleanHardhat();
         startBlockchainProcess.kill();
     }
 
