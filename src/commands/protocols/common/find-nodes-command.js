@@ -31,7 +31,7 @@ class FindNodesCommand extends Command {
         const closestNodes = [];
         const foundNodes = await this.findNodes(blockchain, keyword, operationId, hashFunctionId);
         for (const node of foundNodes) {
-            if (node.id !== this.networkModuleManager.getPeerId().toB58String()) {
+            if (node.id !== this.networkModuleManager.getPeerIdString()) {
                 closestNodes.push({ id: node.id, protocol: networkProtocols[0] });
             }
         }

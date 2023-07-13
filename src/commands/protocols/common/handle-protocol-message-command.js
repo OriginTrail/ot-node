@@ -55,7 +55,7 @@ class HandleProtocolMessageCommand extends Command {
             hashFunctionId,
             true,
         );
-        const peerId = this.networkModuleManager.getPeerId().toB58String();
+        const peerId = this.networkModuleManager.getPeerIdString();
         for (const { peerId: otherPeerId } of closestNodes) {
             if (otherPeerId === peerId) {
                 return true;
@@ -111,7 +111,7 @@ class HandleProtocolMessageCommand extends Command {
 
         const getAsk = async () => {
             const peerRecord = await this.repositoryModuleManager.getPeerRecord(
-                this.networkModuleManager.getPeerId().toB58String(),
+                this.networkModuleManager.getPeerIdString(),
                 blockchain,
             );
 
