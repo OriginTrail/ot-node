@@ -2,7 +2,7 @@
 
 import { ethers } from 'ethers';
 import { readFile } from 'fs/promises';
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 
 const Hub = JSON.parse((await readFile('node_modules/dkg-evm-module/abi/Hub.json')).toString());
 const HubController = JSON.parse(
@@ -92,7 +92,9 @@ class LocalBlockchain {
         );
     }
 
-    stop() {
+    async stop() {
+        const cleanHardhat = await execSync('npm run kill-hardhat');
+        console.log(cleanHardhat.toString());
         startBlockchainProcess.kill();
     }
 
