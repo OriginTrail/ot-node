@@ -98,7 +98,7 @@ class LocalBlockchain {
     }
 
     cleanHardhat() {
-        const cleanHardhat = exec('npm run clean:local_blockchain');
+        const cleanHardhat = exec('npm run kill-hardhat');
         cleanHardhat.stdout.on('data', (data) => {
             console.log(data);
         });
