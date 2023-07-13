@@ -6,23 +6,11 @@ class ShardRepository {
         this.model = models.shard;
     }
 
-    async createManyPeerRecords(peers) {
-        return this._bulkUpdatePeerRecords(peers, ['ask', 'stake', 'sha256']);
-    }
-
-    async _bulkUpdatePeerRecords(peerRecords, updateColumns) {
-        return this.model.bulkCreate(
-            peerRecords.map((peerRecord) => ({
-                ask: 0,
-                stake: 0,
-                sha256: '',
-                ...peerRecord,
-            })),
-            {
-                validate: true,
-                updateOnDuplicate: updateColumns,
-            },
-        );
+    async createManyPeerRecords(peerRecords) {
+        return this.model.bulkCreate(peerRecords, {
+            validate: true,
+            updateOnDuplicate: ['ask', 'stake', 'sha256'],
+        });
     }
 
     async removeShardingTablePeerRecords(blockchainId) {
@@ -95,16 +83,32 @@ class ShardRepository {
         return (result ?? []).map((record) => ({ peerId: record.peer_id }));
     }
 
-    async updatePeersAsk(peerRecords) {
-        return this._bulkUpdatePeerRecords(peerRecords, ['ask']);
+    async updatePeerAsk(peerId, blockchainId, ask) {
+        return this.model.update(
+            { ask },
+            {
+                where: {
+                    peerId,
+                    blockchainId,
+                },
+            },
+        );
     }
 
-    async updatePeersStake(peerRecords) {
-        return this._bulkUpdatePeerRecords(peerRecords, ['stake']);
+    async updatePeerStake(peerId, blockchainId, stake) {
+        return this.model.update(
+            { stake },
+            {
+                where: {
+                    peerId,
+                    blockchainId,
+                },
+            },
+        );
     }
 
     async updatePeerRecordLastDialed(peerId, timestamp) {
-        await this.model.update(
+        return this.model.update(
             {
                 lastDialed: timestamp,
             },
@@ -115,7 +119,7 @@ class ShardRepository {
     }
 
     async updatePeerRecordLastSeenAndLastDialed(peerId, timestamp) {
-        await this.model.update(
+        return this.model.update(
             {
                 lastDialed: timestamp,
                 lastSeen: timestamp,
