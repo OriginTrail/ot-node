@@ -94,7 +94,7 @@ class Libp2pService {
                 ...this.config.connectionManager,
             },
             services: {
-                dht: kadDHT(this.config.dht),
+                dht: kadDHT({ ...this.config.dht, clientMode: false }),
                 identify: identifyService(),
                 autonat: autoNATService(),
                 uPnPNAT: uPnPNATService(),
