@@ -203,7 +203,7 @@ class EpochCheckCommand extends Command {
             true,
         );
 
-        const peerId = this.networkModuleManager.getPeerId().toB58String();
+        const peerId = this.networkModuleManager.getPeerIdString();
         if (!neighbourhood.some((node) => node.peerId === peerId)) {
             return;
         }
