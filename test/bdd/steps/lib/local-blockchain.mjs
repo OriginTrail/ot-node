@@ -93,8 +93,8 @@ class LocalBlockchain {
     }
 
     async stop() {
-        const cleanHardhat = await execSync('npm run kill:local_blockchain');
-        console.log(cleanHardhat.toString());
+        const commandLog = await execSync('npm run kill:local_blockchain');
+        console.log(`Killing hardhat process: ${commandLog.toString()}`);
         startBlockchainProcess.kill();
     }
 
