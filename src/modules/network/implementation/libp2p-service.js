@@ -75,14 +75,10 @@ class Libp2pService {
          * }
          */
         this.sessions = {};
-        const addresses = {
-            listen: [`/ip4/0.0.0.0/tcp/${this.config.port}`],
-        };
-        if (ip.isV4Format(this.config.publicIp) && ip.isPublic(this.config.publicIp)) {
-            addresses.announce = [`/ip4/${this.config.publicIp}/tcp/${this.config.port}`];
-        }
         this.node = await createLibp2p({
-            addresses,
+            addresses: {
+                listen: [`/ip4/0.0.0.0/tcp/${this.config.port}`],
+            },
             transports: [tcp()],
             streamMuxers: [mplex()],
             connectionEncryption: [noise()],
@@ -173,10 +169,6 @@ class Libp2pService {
         };
 
         this.blackList = {};
-    }
-
-    getConnections(peerIdObject) {
-        return this.node.getConnections(peerIdObject);
     }
 
     getMultiaddrs() {
