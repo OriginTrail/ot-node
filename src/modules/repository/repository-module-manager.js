@@ -188,12 +188,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('shard').updatePeerRecordLastSeenAndLastDialed(peerId, timestamp);
     }
 
-    async updatePeersAsk(peerRecords) {
-        return this.getRepository('shard').updatePeersAsk(peerRecords);
+    async updatePeerAsk(peerId, blockchainId, ask) {
+        return this.getRepository('shard').updatePeerAsk(peerId, blockchainId, ask);
     }
 
-    async updatePeersStake(peerRecords) {
-        return this.getRepository('shard').updatePeersStake(peerRecords);
+    async updatePeerStake(peerId, blockchainId, stake) {
+        return this.getRepository('shard').updatePeerStake(peerId, blockchainId, stake);
     }
 
     async getNeighbourhood(assertionId, r2) {
