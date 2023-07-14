@@ -108,7 +108,7 @@ class ShardRepository {
     }
 
     async updatePeerRecordLastDialed(peerId, timestamp) {
-        return this.model.update(
+        await this.model.update(
             {
                 lastDialed: timestamp,
             },
@@ -119,7 +119,7 @@ class ShardRepository {
     }
 
     async updatePeerRecordLastSeenAndLastDialed(peerId, timestamp) {
-        return this.model.update(
+        await this.model.update(
             {
                 lastDialed: timestamp,
                 lastSeen: timestamp,

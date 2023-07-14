@@ -196,7 +196,7 @@ class OTNode {
                     if (!(await blockchainModuleManager.identityIdExists(blockchain))) {
                         this.logger.info(`Creating profile on network: ${blockchain}`);
                         const networkModuleManager = this.container.resolve('networkModuleManager');
-                        const peerId = networkModuleManager.getPeerIdString();
+                        const peerId = networkModuleManager.getPeerId().toB58String();
                         await blockchainModuleManager.createProfile(blockchain, peerId);
 
                         if (
