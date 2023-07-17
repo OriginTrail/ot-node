@@ -69,6 +69,7 @@ class OTNode {
 
         await this.initializeCommandExecutor();
         await this.initializeRouters();
+        await this.startNetworkModule();
         this.logger.info('Node is up and running!');
     }
 
@@ -252,6 +253,11 @@ class OTNode {
             );
             this.stop(1);
         }
+    }
+
+    async startNetworkModule() {
+        const networkModuleManager = this.container.resolve('networkModuleManager');
+        await networkModuleManager.start();
     }
 
     async executePrivateAssetsMetadataMigration() {
