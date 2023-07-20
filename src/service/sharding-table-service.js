@@ -214,15 +214,21 @@ class ShardingTableService {
             };
         }
         if (this.memoryCachedPeerIds[peerId].lastUpdated < timestampThreshold) {
-            await this.repositoryModuleManager.updatePeerRecordLastSeenAndLastDialed(peerId, now);
-            this.memoryCachedPeerIds[peerId].lastUpdated = now;
+            const [rowsUpdated] =
+                await this.repositoryModuleManager.updatePeerRecordLastSeenAndLastDialed(
+                    peerId,
+                    now,
+                );
+            if (rowsUpdated) {
+                this.memoryCachedPeerIds[peerId].lastUpdated = now;
+            }
         }
         this.memoryCachedPeerIds[peerId].lastDialed = now;
         this.memoryCachedPeerIds[peerId].lastSeen = now;
     }
 
     async updatePeerRecordLastDialed(peerId) {
-        const now = new Date();
+        const now = Date.now();
         const timestampThreshold = now - PEER_RECORD_UPDATE_DELAY;
         if (!this.memoryCachedPeerIds[peerId]) {
             this.memoryCachedPeerIds[peerId] = {
@@ -232,8 +238,13 @@ class ShardingTableService {
             };
         }
         if (this.memoryCachedPeerIds[peerId].lastUpdated < timestampThreshold) {
-            await this.repositoryModuleManager.updatePeerRecordLastDialed(peerId, now);
-            this.memoryCachedPeerIds[peerId].lastUpdated = now;
+            const [rowsUpdated] = await this.repositoryModuleManager.updatePeerRecordLastDialed(
+                peerId,
+                now,
+            );
+            if (rowsUpdated) {
+                this.memoryCachedPeerIds[peerId].lastUpdated = now;
+            }
         }
         this.memoryCachedPeerIds[peerId].lastDialed = now;
     }
