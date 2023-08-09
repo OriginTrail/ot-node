@@ -1,13 +1,41 @@
+import fs from 'fs';
+import path from 'path';
 import BaseModuleManager from '../base-module-manager.js';
+import stringUtil from '../../service/util/string-util.js';
 
 class HttpClientModuleManager extends BaseModuleManager {
     constructor(ctx) {
         super(ctx);
         this.authService = ctx.authService;
+        this.fileService = ctx.fileService;
     }
 
     getName() {
         return 'httpClient';
+    }
+
+    getApiVersions() {
+        const httpControllersPath = this.fileService.getHttpControllersFolderPath();
+        return fs
+            .readdirSync(httpControllersPath)
+            .filter((folder) => fs.statSync(path.join(httpControllersPath, folder)).isDirectory());
+    }
+
+    getMethodControllers(version, camelCase = true) {
+        const versionFolder = path.join(this.fileService.getHttpControllersFolderPath(), version);
+
+        const methodControllers = [];
+        for (const controller of fs.readdirSync(versionFolder)) {
+            if (!controller.endsWith(`-http-api-controller-${version}.js`)) continue;
+
+            if (camelCase) {
+                methodControllers.push(stringUtil.toCamelCase(controller.replace('.js', '')));
+            } else {
+                methodControllers.push(controller.replace('.js', ''));
+            }
+        }
+
+        return methodControllers;
     }
 
     get(route, callback, options = {}) {

@@ -104,6 +104,10 @@ class FileService {
         }
     }
 
+    getHttpControllersFolderPath() {
+        return path.join(appRootPath.path, 'src/controllers/http-api');
+    }
+
     getDataFolderPath() {
         if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
             return path.join(appRootPath.path, '..', this.config.appDataPath);

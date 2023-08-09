@@ -1,4 +1,4 @@
-import { LOCAL_STORE_TYPES } from '../../../constants/constants.js';
+import { LOCAL_STORE_TYPES } from '../../../../constants/constants.js';
 
 export default (blockchainImplementationNames) => ({
     type: 'array',

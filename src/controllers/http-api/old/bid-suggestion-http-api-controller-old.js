@@ -1,4 +1,4 @@
-import BaseController from './base-http-api-controller.js';
+import BaseController from '../base-http-api-controller.js';
 
 class BidSuggestionController extends BaseController {
     constructor(ctx) {

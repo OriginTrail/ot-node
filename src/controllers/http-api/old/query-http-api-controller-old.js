@@ -1,6 +1,6 @@
-import BaseController from './base-http-api-controller.js';
+import BaseController from '../base-http-api-controller.js';
 
-import { OPERATION_ID_STATUS } from '../../constants/constants.js';
+import { OPERATION_ID_STATUS } from '../../../constants/constants.js';
 
 class QueryController extends BaseController {
     constructor(ctx) {

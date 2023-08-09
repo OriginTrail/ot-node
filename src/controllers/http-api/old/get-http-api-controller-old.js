@@ -4,8 +4,8 @@ import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
     DEFAULT_GET_STATE,
     ERROR_TYPE,
-} from '../../constants/constants.js';
-import BaseController from './base-http-api-controller.js';
+} from '../../../constants/constants.js';
+import BaseController from '../base-http-api-controller.js';
 
 class GetController extends BaseController {
     constructor(ctx) {

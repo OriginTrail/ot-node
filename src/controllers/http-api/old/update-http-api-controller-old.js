@@ -1,11 +1,11 @@
-import BaseController from './base-http-api-controller.js';
+import BaseController from '../base-http-api-controller.js';
 import {
     ERROR_TYPE,
     OPERATION_ID_STATUS,
     OPERATION_STATUS,
     CONTENT_ASSET_HASH_FUNCTION_ID,
     LOCAL_STORE_TYPES,
-} from '../../constants/constants.js';
+} from '../../../constants/constants.js';
 
 class UpdateController extends BaseController {
     constructor(ctx) {

@@ -1,19 +1,22 @@
-import { OPERATION_ID_STATUS } from '../../constants/constants.js';
-import BaseController from './base-http-api-controller.js';
-
-const availableOperations = ['publish', 'get', 'query', 'local-store', 'update'];
+import { OPERATION_ID_STATUS } from '../../../constants/constants.js';
+import BaseController from '../base-http-api-controller.js';
 
 class ResultController extends BaseController {
     constructor(ctx) {
         super(ctx);
         this.operationIdService = ctx.operationIdService;
+
+        const controllers = ctx.httpClientModuleManager.getMethodControllers('old', false);
+        this.availableOperations = controllers.map(
+            (controller) => controller.split('-http-api-controller-')[0],
+        );
     }
 
     async handleOperationResultRequest(req, res) {
-        if (!availableOperations.includes(req.params.operation)) {
+        if (!this.availableOperations.includes(req.params.operation)) {
             return this.returnResponse(res, 400, {
                 code: 400,
-                message: `Unsupported operation, available operations are: ${availableOperations}`,
+                message: `Unsupported operation: ${req.params.operation}, available operations are: ${this.availableOperations}`,
             });
         }
 
@@ -21,7 +24,7 @@ class ResultController extends BaseController {
         if (!this.operationIdService.operationIdInRightFormat(operationId)) {
             return this.returnResponse(res, 400, {
                 code: 400,
-                message: 'Operation id is in wrong format',
+                message: `Operation id: ${operationId} is in wrong format`,
             });
         }
 

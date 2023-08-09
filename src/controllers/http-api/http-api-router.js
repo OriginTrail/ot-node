@@ -1,83 +1,101 @@
+import stringUtil from '../../service/util/string-util.js';
+
 class HttpApiRouter {
     constructor(ctx) {
         this.config = ctx.config;
         this.httpClientModuleManager = ctx.httpClientModuleManager;
 
-        this.getHttpApiController = ctx.getHttpApiController;
-        this.publishHttpApiController = ctx.publishHttpApiController;
-        this.updateHttpApiController = ctx.updateHttpApiController;
-        this.localStoreHttpApiController = ctx.localStoreHttpApiController;
-        this.queryHttpApiController = ctx.queryHttpApiController;
-        this.resultHttpApiController = ctx.resultHttpApiController;
-        this.infoHttpApiController = ctx.infoHttpApiController;
-        this.bidSuggestionHttpApiController = ctx.bidSuggestionHttpApiController;
+        const versions = this.httpClientModuleManager.getApiVersions();
+
+        for (const version of versions) {
+            const versionedMethodControllers =
+                this.httpClientModuleManager.getMethodControllers(version);
+
+            for (const versionedController of versionedMethodControllers) {
+                this[versionedController] = ctx[versionedController];
+            }
+        }
 
         this.jsonSchemaService = ctx.jsonSchemaService;
     }
 
     async initialize() {
         this.initializeBeforeMiddlewares();
-        this.initializeListeners();
+        await this.initializeListeners();
         this.initializeAfterMiddlewares();
         await this.httpClientModuleManager.listen();
     }
 
-    initializeListeners() {
+    async initializeListeners() {
+        await this.initializeVersionedListeners('v1');
+        await this.initializeOldListeners();
+    }
+
+    async initializeOldListeners() {
         this.httpClientModuleManager.post(
             '/publish',
             (req, res) => {
-                this.publishHttpApiController.handlePublishRequest(req, res);
+                this.publishHttpApiControllerOld.handlePublishRequest(req, res);
             },
-            { rateLimit: true, requestSchema: this.jsonSchemaService.publishSchema() },
+            { rateLimit: true, requestSchema: await this.jsonSchemaService.publishSchema('old') },
         );
 
         this.httpClientModuleManager.post(
             '/update',
             (req, res) => {
-                this.updateHttpApiController.handleUpdateRequest(req, res);
+                this.updateHttpApiControllerOld.handleUpdateRequest(req, res);
             },
-            { rateLimit: true, requestSchema: this.jsonSchemaService.updateSchema() },
+            { rateLimit: true, requestSchema: await this.jsonSchemaService.updateSchema('old') },
         );
 
         this.httpClientModuleManager.post(
             '/query',
             (req, res) => {
-                this.queryHttpApiController.handleQueryRequest(req, res);
+                this.queryHttpApiControllerOld.handleQueryRequest(req, res);
             },
-            { requestSchema: this.jsonSchemaService.querySchema() },
+            { requestSchema: await this.jsonSchemaService.querySchema('old') },
         );
 
         this.httpClientModuleManager.post(
             '/local-store',
             (req, res) => {
-                this.localStoreHttpApiController.handleLocalStoreRequest(req, res);
+                this.localHttpApiControllerOld.handleLocalStoreRequest(req, res);
             },
-            { requestSchema: this.jsonSchemaService.localStoreSchema() },
+            { requestSchema: await this.jsonSchemaService.localStoreSchema('old') },
         );
 
         this.httpClientModuleManager.post(
             '/get',
             (req, res) => {
-                this.getHttpApiController.handleGetRequest(req, res);
+                this.getHttpApiControllerOld.handleGetRequest(req, res);
             },
-            { rateLimit: true, requestSchema: this.jsonSchemaService.getSchema() },
+            { rateLimit: true, requestSchema: await this.jsonSchemaService.getSchema('old') },
         );
 
         this.httpClientModuleManager.get('/:operation/:operationId', (req, res) => {
-            this.resultHttpApiController.handleOperationResultRequest(req, res);
+            this.resultHttpApiControllerOld.handleOperationResultRequest(req, res);
         });
 
         this.httpClientModuleManager.get('/info', (req, res) => {
-            this.infoHttpApiController.handleInfoRequest(req, res);
+            this.infoHttpApiControllerOld.handleInfoRequest(req, res);
         });
 
         this.httpClientModuleManager.get(
             '/bid-suggestion',
             (req, res) => {
-                this.bidSuggestionHttpApiController.handleBidSuggestionRequest(req, res);
+                this.bidSuggestionHttpApiControllerOld.handleBidSuggestionRequest(req, res);
             },
-            { requestSchema: this.jsonSchemaService.bidSuggestionSchema() },
+            { requestSchema: await this.jsonSchemaService.bidSuggestionSchema('old') },
         );
+    }
+
+    async initializeVersionedListeners(version) {
+        this.httpClientModuleManager.get(`/${version}/info`, (req, res) => {
+            this[`infoHttpApiController${stringUtil.capitalize(version)}`].handleInfoRequest(
+                req,
+                res,
+            );
+        });
     }
 
     initializeBeforeMiddlewares() {
