@@ -1,0 +1,22 @@
+{
+  "modules":{
+    "validation":{
+      "enabled":true,
+      "implementation":{
+        "merkle-validation":{
+          "enabled":true,
+          "package":"./validation/implementation/merkle-validation.js",
+          "config":{
+            "database":"operationaldb-test",
+            "user":"root",
+            "password":"",
+            "port":"3306",
+            "host":"localhost",
+            "dialect":"mysql",
+            "logging":false
+          }
+        }
+      }
+    }
+  }
+}

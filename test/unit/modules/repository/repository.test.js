@@ -2,12 +2,12 @@ import { utils } from 'ethers';
 import { describe, it, before, beforeEach, afterEach, after } from 'mocha';
 import { expect, assert } from 'chai';
 import { readFile } from 'fs/promises';
-import Logger from '../../../src/logger/logger.js';
-import RepositoryModuleManager from '../../../src/modules/repository/repository-module-manager.js';
+import Logger from '../../../../src/logger/logger.js';
+import RepositoryModuleManager from '../../../../src/modules/repository/repository-module-manager.js';
 
 let logger;
 let repositoryModuleManager;
-const config = JSON.parse(await readFile('./test/modules/repository/config.json'));
+const config = JSON.parse(await readFile('./test/unit/modules/repository/config.json'));
 
 const blockchain = 'hardhat';
 const createAgreement = ({
