@@ -59,7 +59,7 @@ class HttpApiRouter {
         this.httpClientModuleManager.post(
             '/local-store',
             (req, res) => {
-                this.localHttpApiControllerOld.handleLocalStoreRequest(req, res);
+                this.localStoreHttpApiControllerOld.handleLocalStoreRequest(req, res);
             },
             { requestSchema: await this.jsonSchemaService.localStoreSchema('old') },
         );
