@@ -214,8 +214,6 @@ class HandleProtocolMessageCommand extends Command {
             };
         }
 
-        // validate assertion size
-
         await this.operationIdService.cacheOperationIdData(operationId, {
             assertionId,
             blockchain,
