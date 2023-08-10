@@ -128,6 +128,21 @@ class HandleProtocolMessageCommand extends Command {
                 getAsk(),
             ]);
 
+        if (
+            this.config.maximumAssertionSizeInKb > 0 &&
+            blockchainAssertionSize > this.config.maximumAssertionSizeInKb
+        ) {
+            this.logger.warn(
+                `The size of the received assertion exceeds the maximum limit allowed.. Maximum allowed assertion size in kb: ${this.config.maximumAssertionSizeInKb}, assertion size read from blockchain: ${blockchainAssertionSize}`,
+            );
+            return {
+                errorMessage:
+                    'The size of the received assertion exceeds the maximum limit allowed.',
+                agreementId,
+                agreementData,
+            };
+        }
+
         const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
 
         // todo: use shared function with epoch commands
@@ -198,6 +213,8 @@ class HandleProtocolMessageCommand extends Command {
                 messageData: { errorMessage },
             };
         }
+
+        // validate assertion size
 
         await this.operationIdService.cacheOperationIdData(operationId, {
             assertionId,
