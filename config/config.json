@@ -168,7 +168,7 @@
                 }
             }
         },
-        "maximumAssertionSizeInKb": 0,
+        "maximumAssertionSizeInKb": 2500,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "info",
@@ -303,7 +303,7 @@
                 }
             }
         },
-        "maximumAssertionSizeInKb": 0,
+        "maximumAssertionSizeInKb": 2500,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
@@ -451,7 +451,7 @@
                 }
             }
         },
-        "maximumAssertionSizeInKb": 0,
+        "maximumAssertionSizeInKb": 2500,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
@@ -600,7 +600,7 @@
                 }
             }
         },
-        "maximumAssertionSizeInKb": 0,
+        "maximumAssertionSizeInKb": 2500,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
