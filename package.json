@@ -15,7 +15,7 @@
         "kill:local_blockchain": "npx kill-port 8545",
         "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/ --exit",
         "test:unit": "nyc --all mocha --exit $(find test/unit -name '*.js')",
-        "test:modules": "nyc --check-coverage mocha --exit $(find test/unit/modules -name '*.js')",
+        "test:modules": "nyc --all mocha --exit $(find test/unit/modules -name '*.js')",
         "test:bdd:release": "cucumber-js --tags=@release --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/",
         "test:bdd:publish-errors": "cucumber-js --tags=@publish-errors --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/",
         "test:bdd:update-errors": "cucumber-js --tags=@update-errors --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/",
