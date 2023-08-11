@@ -49,10 +49,7 @@ class ValidationService {
         );
 
         const blockchainAssertionSizeInKb = blockchainAssertionSize / BYTES_IN_KILOBYTE;
-        if (
-            this.config.maximumAssertionSizeInKb > 0 &&
-            blockchainAssertionSizeInKb > this.config.maximumAssertionSizeInKb
-        ) {
+        if (blockchainAssertionSizeInKb > this.config.maximumAssertionSizeInKb) {
             throw Error(
                 `The size of the received assertion exceeds the maximum limit allowed.. Maximum allowed assertion size in kb: ${this.config.maximumAssertionSizeInKb}, assertion size read from blockchain in kb: ${blockchainAssertionSizeInKb}`,
             );
