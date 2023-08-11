@@ -24,10 +24,10 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
             tokenId,
             contract,
         } = command.data;
-
+        let isValid = true;
         // perform check only first time not for every batch
         if (leftoverNodes === numberOfFoundNodes) {
-            await this.validateBidsForNeighbourhood(
+            isValid = await this.validateBidsForNeighbourhood(
                 blockchain,
                 contract,
                 tokenId,
@@ -39,8 +39,10 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
                 operationId,
             );
         }
-
-        await super.execute(command);
+        if (isValid) {
+            return super.execute(command);
+        }
+        return Command.empty();
     }
 
     async validateBidsForNeighbourhood(
@@ -103,8 +105,9 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
                 'Unable to start publish, not enough nodes in neighbourhood satisfy the bid.',
                 ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR,
             );
-            return Command.empty();
+            return false;
         }
+        return true;
     }
 
     /**
