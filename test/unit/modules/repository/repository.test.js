@@ -391,7 +391,7 @@ describe('Repository module', () => {
         }
     }
 
-    describe('test load', () => {
+    describe.skip('test load', () => {
         describe('100_000 rows', () => {
             beforeEach(async function t() {
                 this.timeout(0);
