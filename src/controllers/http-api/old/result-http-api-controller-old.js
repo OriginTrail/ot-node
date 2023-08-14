@@ -6,10 +6,7 @@ class ResultController extends BaseController {
         super(ctx);
         this.operationIdService = ctx.operationIdService;
 
-        const controllers = ctx.httpClientModuleManager.getMethodControllers('old', false);
-        this.availableOperations = controllers.map(
-            (controller) => controller.split('-http-api-controller-')[0],
-        );
+        this.availableOperations = ctx.httpApiService.getAvailableOperations('old');
     }
 
     async handleOperationResultRequest(req, res) {

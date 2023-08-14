@@ -5,14 +5,16 @@ class HttpApiRouter {
         this.config = ctx.config;
         this.httpClientModuleManager = ctx.httpClientModuleManager;
 
-        const versions = this.httpClientModuleManager.getApiVersions();
+        const versions = ctx.httpApiService.getApiVersions();
 
         for (const version of versions) {
-            const versionedMethodControllers =
-                this.httpClientModuleManager.getMethodControllers(version);
+            const operations = ctx.httpApiService.getAvailableOperations(version, true);
 
-            for (const versionedController of versionedMethodControllers) {
-                this[versionedController] = ctx[versionedController];
+            for (const operation of operations) {
+                const versionedOperation = `${operation}HttpApiController${stringUtil.capitalize(
+                    version,
+                )}`;
+                this[versionedOperation] = ctx[versionedOperation];
             }
         }
 
@@ -29,6 +31,15 @@ class HttpApiRouter {
     async initializeListeners() {
         await this.initializeVersionedListeners('v1');
         await this.initializeOldListeners();
+    }
+
+    async initializeVersionedListeners(version) {
+        this.httpClientModuleManager.get(`/${version}/info`, (req, res) => {
+            this[`infoHttpApiController${stringUtil.capitalize(version)}`].handleInfoRequest(
+                req,
+                res,
+            );
+        });
     }
 
     async initializeOldListeners() {
@@ -87,15 +98,6 @@ class HttpApiRouter {
             },
             { requestSchema: await this.jsonSchemaService.bidSuggestionSchema('old') },
         );
-    }
-
-    async initializeVersionedListeners(version) {
-        this.httpClientModuleManager.get(`/${version}/info`, (req, res) => {
-            this[`infoHttpApiController${stringUtil.capitalize(version)}`].handleInfoRequest(
-                req,
-                res,
-            );
-        });
     }
 
     initializeBeforeMiddlewares() {
