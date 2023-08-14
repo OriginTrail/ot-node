@@ -1,5 +1,5 @@
 import Command from '../../command.js';
-import { NETWORK_MESSAGE_TYPES } from '../../../constants/constants.js';
+import { BYTES_IN_KILOBYTE, NETWORK_MESSAGE_TYPES } from '../../../constants/constants.js';
 
 class HandleProtocolMessageCommand extends Command {
     constructor(ctx) {
@@ -127,6 +127,18 @@ class HandleProtocolMessageCommand extends Command {
                 this.blockchainModuleManager.getR0(blockchain),
                 getAsk(),
             ]);
+        const blockchainAssertionSizeInKb = blockchainAssertionSize / BYTES_IN_KILOBYTE;
+        if (blockchainAssertionSizeInKb > this.config.maximumAssertionSizeInKb) {
+            this.logger.warn(
+                `The size of the received assertion exceeds the maximum limit allowed.. Maximum allowed assertion size in kb: ${this.config.maximumAssertionSizeInKb}, assertion size read from blockchain in kb: ${blockchainAssertionSizeInKb}`,
+            );
+            return {
+                errorMessage:
+                    'The size of the received assertion exceeds the maximum limit allowed.',
+                agreementId,
+                agreementData,
+            };
+        }
 
         const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
 
