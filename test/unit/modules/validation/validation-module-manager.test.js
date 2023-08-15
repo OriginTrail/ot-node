@@ -26,12 +26,11 @@ const assertion = [
         fuelType: 'Electric',
     },
 ];
-
 const hashFunctionId = 1;
 const keyword =
     '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca0768e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3';
 
-describe.only('Validation module manager', async () => {
+describe('Validation module manager', async () => {
     beforeEach('initialize validation module manage', async () => {
         validationManager = new ValidationModuleManager({
             config,
@@ -39,7 +38,6 @@ describe.only('Validation module manager', async () => {
         });
 
         validationManager.initialized = true;
-
         expect(await validationManager.initialize()).to.be.true;
     });
 
@@ -64,14 +62,14 @@ describe.only('Validation module manager', async () => {
         assert(expect(calculatedRootHash).to.be.undefined);
     });
 
-    it('root hash cannot be calculate if assertion is null', async () => {
+    it('root hash calculation failed when assertion is null', async () => {
         expect(() => validationManager.calculateRoot(null)).to.throw(
             Error,
             'Assertion cannot be null!',
         );
     });
 
-    it('validate merkle proof hash', async () => {
+    it('successful getting merkle proof hash', async () => {
         const calculatedMerkleHash = validationManager.getMerkleProof(assertion, 0);
 
         assert(expect(calculatedMerkleHash).to.exist);
@@ -87,7 +85,7 @@ describe.only('Validation module manager', async () => {
         assert(expect(calculatedMerkleHash).to.be.undefined);
     });
 
-    it('merkle prof hash cannot be calculated if assertion is null', async () => {
+    it('failed merkle prof hash calculation when assertion is null', async () => {
         expect(() => validationManager.getMerkleProof(null, 0)).to.throw(
             Error,
             'Assertion cannot be null!',
@@ -101,7 +99,7 @@ describe.only('Validation module manager', async () => {
         expect(getFnHashName).to.equal('sha256');
     });
 
-    it('cannot getting function name without initialization', async () => {
+    it('failed getting function name without initialization', async () => {
         validationManager.initialized = false;
         const getFnHashName = validationManager.getHashFunctionName(hashFunctionId);
 
@@ -125,7 +123,7 @@ describe.only('Validation module manager', async () => {
         assert(expect(callFunction).to.be.undefined);
     });
 
-    it('unsuccessful function name initialization when function id is null', async () => {
+    it('failed function name initialization when function id is null', async () => {
         try {
             await validationManager.callHashFunction(null, keyword);
         } catch (error) {
@@ -133,7 +131,7 @@ describe.only('Validation module manager', async () => {
         }
     });
 
-    it('unsuccessful function name initialization when data is null', async () => {
+    it('failed function name initialization when data is null', async () => {
         try {
             await validationManager.callHashFunction(hashFunctionId, null);
         } catch (error) {
