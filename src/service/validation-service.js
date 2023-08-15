@@ -1,8 +1,10 @@
 import { assertionMetadata } from 'assertion-tools';
+import { BYTES_IN_KILOBYTE } from '../constants/constants.js';
 
 class ValidationService {
     constructor(ctx) {
         this.logger = ctx.logger;
+        this.config = ctx.config;
         this.validationModuleManager = ctx.validationModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
     }
@@ -45,6 +47,13 @@ class ValidationService {
             blockchain,
             assertionId,
         );
+
+        const blockchainAssertionSizeInKb = blockchainAssertionSize / BYTES_IN_KILOBYTE;
+        if (blockchainAssertionSizeInKb > this.config.maximumAssertionSizeInKb) {
+            throw Error(
+                `The size of the received assertion exceeds the maximum limit allowed.. Maximum allowed assertion size in kb: ${this.config.maximumAssertionSizeInKb}, assertion size read from blockchain in kb: ${blockchainAssertionSizeInKb}`,
+            );
+        }
         const assertionSize = assertionMetadata.getAssertionSizeInBytes(assertion);
         if (blockchainAssertionSize !== assertionSize) {
             throw Error(
