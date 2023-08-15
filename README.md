@@ -4,7 +4,7 @@ ___
 
 <br />
 <div align="center">
-  <a href="https://github.com/OriginTrail/dkg.py">
+  <a href="https://github.com/OriginTrail/ot-node">
     <img src="images/banner.gif" alt="OriginTrail Node Banner">
   </a>
 
@@ -41,6 +41,7 @@ ___
         <li><a href="#prerequisites">Prerequisites</a></li>
         <li><a href="#local-network-setup">Local Network Setup</a></li>
         <li><a href="#dkg-node-setup">DKG Node Setup</a></li>
+        <li><a href="#build-on-dkg">Build on DKG</a></li>
       </ul>
     </li>
     <li><a href="#📄-license">📄 License</a></li>
@@ -227,11 +228,6 @@ Then, depending on the OS, use one of the scripts in order to run the local netw
 bash ./tools/local-network-setup/setup-macos-environment.sh --nodes=12
 ```
 
-**Windows (WSL)**
-```bash
-
-```
-
 ___
 <br/>
 
@@ -244,6 +240,25 @@ In order to run a DKG node on the **Testnet** or **Mainnet**, please read the of
 ___
 <br/>
 
+### Build on DKG
+
+<br/>
+
+The OriginTrail SDKs are client libraries for your applications, used to interact and connect with the OriginTrail Decentralized Knowledge Graph.
+From an architectural standpoint, the SDK libraries are application interfaces into the DKG, enabling you to create and manage Knowledge Assets through your apps, as well as perform network queries (such as search, or SPARQL queries), as illustrated below.
+
+<div align="center">
+    <img src="images/sdk.png" alt="SDK" width="200">
+</div>
+
+The OriginTrail SDK libraries are being built in various languages by the team and the community, as listed below:
+- dkg.js - JavaScript SDK implementation
+  - [Github repository](https://github.com/OriginTrail/dkg.js)
+  - [Documentation](https://docs.origintrail.io/decentralized-knowledge-graph-layer-2/dkg-sdk/dkg-v6-js-client)
+- dkg.py - Python SDK implementation
+    - [Github repository](https://github.com/OriginTrail/dkg.py)
+    - [Documentation](https://docs.origintrail.io/decentralized-knowledge-graph-layer-2/dkg-sdk/dkg-v6-py-client)
+___
 
 <br/>
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
