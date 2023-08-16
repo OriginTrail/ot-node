@@ -416,7 +416,7 @@ export const COMMAND_QUEUE_PARALLELISM = 100;
 
 /**
  * @constant {object} HTTP_API_ROUTES -
- *  Network protocols
+ *  HTTP API Routes with parameters
  */
 export const HTTP_API_ROUTES = {
     v0: [
