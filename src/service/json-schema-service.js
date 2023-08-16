@@ -21,28 +21,90 @@ class JsonSchemaService {
         return schemaFunction();
     }
 
-    async bidSuggestionSchema(version, argumentsObject = {}) {
-        return this.loadSchema(version, 'bid-suggestion', argumentsObject);
+    async bidSuggestionSchema(version) {
+        const schemaArgs = {};
+
+        switch (version) {
+            case 'v0':
+                schemaArgs.blockchainImplementationNames =
+                    this.blockchainModuleManager.getImplementationNames();
+                break;
+            default:
+                throw Error(`HTTP API version: ${version} isn't supported.`);
+        }
+
+        return this.loadSchema(version, 'bid-suggestion', schemaArgs);
     }
 
-    async publishSchema(version, argumentsObject = {}) {
-        return this.loadSchema(version, 'publish', argumentsObject);
+    async publishSchema(version) {
+        const schemaArgs = {};
+
+        switch (version) {
+            case 'v0':
+                schemaArgs.blockchainImplementationNames =
+                    this.blockchainModuleManager.getImplementationNames();
+                break;
+            default:
+                throw Error(`HTTP API version: ${version} isn't supported.`);
+        }
+
+        return this.loadSchema(version, 'publish', schemaArgs);
     }
 
-    async updateSchema(version, argumentsObject = {}) {
-        return this.loadSchema(version, 'update', argumentsObject);
+    async updateSchema(version) {
+        const schemaArgs = {};
+
+        switch (version) {
+            case 'v0':
+                schemaArgs.blockchainImplementationNames =
+                    this.blockchainModuleManager.getImplementationNames();
+                break;
+            default:
+                throw Error(`HTTP API version: ${version} isn't supported.`);
+        }
+
+        return this.loadSchema(version, 'update', schemaArgs);
     }
 
-    async getSchema(version, argumentsObject = {}) {
-        return this.loadSchema(version, 'get', argumentsObject);
+    async getSchema(version) {
+        const schemaArgs = {};
+
+        switch (version) {
+            case 'v0':
+                break;
+            default:
+                throw Error(`HTTP API version: ${version} isn't supported.`);
+        }
+
+        return this.loadSchema(version, 'get', schemaArgs);
     }
 
-    async querySchema(version, argumentsObject = {}) {
-        return this.loadSchema(version, 'query', argumentsObject);
+    async querySchema(version) {
+        const schemaArgs = {};
+
+        switch (version) {
+            case 'v0':
+                break;
+            default:
+                throw Error(`HTTP API version: ${version} isn't supported.`);
+        }
+
+        return this.loadSchema(version, 'query', schemaArgs);
     }
 
-    async localStoreSchema(version, argumentsObject = {}) {
-        return this.loadSchema(version, 'local-store', argumentsObject);
+    async localStoreSchema(version) {
+        const schemaArgs = {};
+
+        switch (version) {
+            case 'v0':
+                schemaArgs.blockchainImplementationNames =
+                    this.blockchainModuleManager.getImplementationNames();
+                break;
+            default:
+                throw Error(`HTTP API version: ${version} isn't supported.`);
+        }
+
+        return this.loadSchema(version, 'local-store', schemaArgs);
     }
 }
 

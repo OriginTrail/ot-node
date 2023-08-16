@@ -13,7 +13,7 @@ class HttpApiRouter {
         for (const version of this.apiVersions) {
             this.routers[version] = this.httpClientModuleManager.createRouterInstance();
 
-            const operations = this.apiRoutes[version].map((route) => route.name);
+            const operations = Object.keys(this.apiRoutes[version]);
 
             for (const operation of operations) {
                 const versionedOperation = `${stringUtil.toCamelCase(
@@ -45,25 +45,20 @@ class HttpApiRouter {
         const mountedLatestRoutes = new Set();
 
         for (const version of descendingOrderedVersions) {
-            for (const route of this.apiRoutes[version]) {
-                const { method, path, controller, options } = route;
+            for (const [name, route] of Object.entries(this.apiRoutes[version])) {
+                const { method, path, options } = route;
+                const camelRouteName = stringUtil.toCamelCase(name);
+                const controller = `${camelRouteName}HttpApiController${stringUtil.capitalize(
+                    version,
+                )}`;
+                const schema = `${camelRouteName}Schema`;
 
-                if (options.schema) {
-                    const argumentsObject = {};
-
-                    for (const [argName, argFuncRef] of Object.entries(options.schema.args)) {
-                        // eslint-disable-next-line no-await-in-loop
-                        argumentsObject[argName] = await this._executeFunctionFromConfigRef(
-                            this,
-                            argFuncRef,
-                        );
-                    }
-
+                if (
+                    schema in this.jsonSchemaService &&
+                    typeof this.jsonSchemaService[schema] === 'function'
+                ) {
                     // eslint-disable-next-line no-await-in-loop
-                    options.requestSchema = await this.jsonSchemaService[options.schema.name](
-                        version,
-                        argumentsObject,
-                    );
+                    options.requestSchema = await this.jsonSchemaService[schema](version);
                 }
 
                 const middlewares = this.httpClientModuleManager.selectMiddlewares(options);
@@ -92,25 +87,6 @@ class HttpApiRouter {
 
     initializeAfterMiddlewares() {
         this.httpClientModuleManager.initializeAfterMiddlewares();
-    }
-
-    async _executeFunctionFromConfigRef(context, reference) {
-        const parts = reference.split('.');
-        const fnName = parts.pop();
-        const objRef = parts.reduce((acc, part) => acc[part], context);
-
-        if (objRef && typeof objRef[fnName] === 'function') {
-            const result = objRef[fnName]();
-
-            if (result instanceof Promise) {
-                // eslint-disable-next-line no-return-await
-                return await result;
-            }
-
-            return result;
-        }
-
-        throw new Error(`Function ${reference} not found.`);
     }
 }
 

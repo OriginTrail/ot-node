@@ -419,118 +419,55 @@ export const COMMAND_QUEUE_PARALLELISM = 100;
  *  HTTP API Routes with parameters
  */
 export const HTTP_API_ROUTES = {
-    v0: [
-        {
+    v0: {
+        publish: {
             method: 'post',
-            name: 'publish',
             path: '/publish',
-            controller: 'publishHttpApiControllerV0',
-            options: {
-                rateLimit: true,
-                schema: {
-                    name: 'publishSchema',
-                    args: {
-                        blockchainImplementationNames:
-                            'blockchainModuleManager.getImplementationNames',
-                    },
-                },
-            },
+            options: { rateLimit: true },
         },
-        {
+        update: {
             method: 'post',
-            name: 'update',
             path: '/update',
-            controller: 'updateHttpApiControllerV0',
-            options: {
-                rateLimit: true,
-                schema: {
-                    name: 'updateSchema',
-                    args: {
-                        blockchainImplementationNames:
-                            'blockchainModuleManager.getImplementationNames',
-                    },
-                },
-            },
+            options: { rateLimit: true },
         },
-        {
+        query: {
             method: 'post',
-            name: 'query',
             path: '/query',
-            controller: 'queryHttpApiControllerV0',
-            options: {
-                schema: {
-                    name: 'querySchema',
-                    args: {},
-                },
-            },
+            options: {},
         },
-        {
+        'local-store': {
             method: 'post',
-            name: 'local-store',
             path: '/local-store',
-            controller: 'localStoreHttpApiControllerV0',
-            options: {
-                schema: {
-                    name: 'localStoreSchema',
-                    args: {
-                        blockchainImplementationNames:
-                            'blockchainModuleManager.getImplementationNames',
-                    },
-                },
-            },
+            options: { schema: 'localStoreSchema' },
         },
-        {
+        get: {
             method: 'post',
-            name: 'get',
             path: '/get',
-            controller: 'getHttpApiControllerV0',
-            options: {
-                rateLimit: true,
-                schema: {
-                    name: 'getSchema',
-                    args: {},
-                },
-            },
+            options: { rateLimit: true },
         },
-        {
+        result: {
             method: 'get',
-            name: 'result',
             path: '/:operation/:operationId',
-            controller: 'resultHttpApiControllerV0',
             options: {},
         },
-        {
+        info: {
             method: 'get',
-            name: 'info',
             path: '/info',
-            controller: 'infoHttpApiControllerV0',
             options: {},
         },
-        {
+        'bid-suggestion': {
             method: 'get',
-            name: 'bid-suggestion',
             path: '/bid-suggestion',
-            controller: 'bidSuggestionHttpApiControllerV0',
-            options: {
-                schema: {
-                    name: 'bidSuggestionSchema',
-                    args: {
-                        blockchainImplementationNames:
-                            'blockchainModuleManager.getImplementationNames',
-                    },
-                },
-            },
-        },
-    ],
-    v1: [
-        {
-            method: 'get',
-            name: 'info',
-            path: '/info',
-            controller: 'infoHttpApiControllerV1',
             options: {},
         },
-    ],
+    },
+    v1: {
+        info: {
+            method: 'get',
+            path: '/info',
+            options: {},
+        },
+    },
 };
 
 /**

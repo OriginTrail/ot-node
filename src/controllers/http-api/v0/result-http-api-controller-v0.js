@@ -1,4 +1,4 @@
-import { HTTP_API_ROUTES, OPERATION_ID_STATUS } from '../../../constants/constants.js';
+import { OPERATION_ID_STATUS } from '../../../constants/constants.js';
 import BaseController from '../base-http-api-controller.js';
 
 class ResultController extends BaseController {
@@ -6,7 +6,7 @@ class ResultController extends BaseController {
         super(ctx);
         this.operationIdService = ctx.operationIdService;
 
-        this.availableOperations = HTTP_API_ROUTES.v0.map((route) => route.name);
+        this.availableOperations = ['publish', 'get', 'query', 'local-store', 'update'];
     }
 
     async handleRequest(req, res) {

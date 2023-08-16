@@ -5,6 +5,12 @@ const require = createRequire(import.meta.url);
 const { version } = require('../../../../package.json');
 
 class InfoControllerV1 extends BaseController {
+    constructor(ctx) {
+        super(ctx);
+
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
+    }
+
     handleRequest(_, res) {
         this.returnResponse(res, 200, {
             version,
@@ -17,9 +23,7 @@ class InfoControllerV1 extends BaseController {
             tripleStores: Object.entries(this.config.modules.tripleStore.implementation)
                 .filter(([, value]) => value.enabled)
                 .map(([key]) => key),
-            blockchains: Object.entries(this.config.modules.blockchain.implementation)
-                .filter(([, value]) => value.enabled)
-                .map(([key]) => key),
+            blockchains: this.blockchainModuleManager.getImplementationNames(),
         };
 
         return nodeConfigData;
