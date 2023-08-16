@@ -152,7 +152,6 @@ class ShardingTableService {
         firstAssertionId,
         hashFunctionId,
     ) {
-        const kbSize = assertionSize < BYTES_IN_KILOBYTE ? BYTES_IN_KILOBYTE : assertionSize;
         const peerRecords = await this.findNeighbourhood(
             blockchainId,
             this.blockchainModuleManager.encodePacked(
@@ -164,16 +163,17 @@ class ShardingTableService {
             hashFunctionId,
             true,
         );
+        const r1 = await this.blockchainModuleManager.getR1(blockchainId);
 
         const sorted = peerRecords.sort((a, b) => a.ask - b.ask);
 
-        const { ask } = sorted[Math.floor(sorted.length * 0.75)];
+        const { ask } = sorted[r1 - 1];
 
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);
 
         return this.blockchainModuleManager
             .toBigNumber(blockchainId, this.blockchainModuleManager.convertToWei(blockchainId, ask))
-            .mul(kbSize)
+            .mul(assertionSize)
             .mul(epochsNumber)
             .mul(r0)
             .div(BYTES_IN_KILOBYTE)
