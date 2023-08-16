@@ -1,0 +1,62 @@
+{
+  "modules": {
+    "blockchain": {
+      "enabled": true,
+      "implementation": {
+        "hardhat": {
+          "enabled": true,
+          "package": "./blockchain/implementation/hardhat/hardhat-service.js",
+          "config": {
+            "blockchainTitle": "hardhat",
+            "networkId": "ganache::testnet",
+            "hubContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+            "rpcEndpoints": ["http://localhost:8545"],
+            "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
+            "initialStakeAmount": 50000,
+            "initialAskAmount": 0.2
+          }
+        },
+        "otp": {
+          "enabled": false,
+          "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
+          "config": {
+            "networkId": "otp::testnet",
+            "hubContractAddress": "0x707233a55bD035C6Bc732196CA4dbffa63CbA169",
+            "rpcEndpoints": ["wss://lofar.origin-trail.network"],
+            "initialStakeAmount": 50000,
+            "initialAskAmount": 2
+          }
+        },
+        "polygon": {
+          "enabled": false,
+          "package": "./blockchain/implementation/polygon/polygon-service.js",
+          "config": {
+            "networkId": "polygon::testnet",
+            "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
+            "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
+            "rpcEndpoints": [
+              "https://matic-mumbai.chainstacklabs.com",
+              "https://rpc-mumbai.matic.today",
+              "https://matic-testnet-archive-rpc.bwarelabs.com"
+            ],
+            "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
+            "initialStakeAmount": 50000,
+            "initialAskAmount": 2
+          }
+        },
+        "rinkeby": {
+          "enabled": false,
+          "package": "./blockchain/implementation/polygon/eth-service.js",
+          "config": {
+            "networkId": "eth::rinkeby",
+            "hubContractAddress": "",
+            "gasPriceOracleLink": "",
+            "rpcEndpoints": [],
+            "initialStakeAmount": 50000,
+            "initialAskAmount": 2
+          }
+        }
+      }
+    }
+  }
+}
