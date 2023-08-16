@@ -171,13 +171,21 @@ class ShardingTableService {
 
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);
 
-        return this.blockchainModuleManager
+        const minBidSuggestion = this.blockchainModuleManager
+            .toBigNumber(blockchainId, '1')
+            .mul(epochsNumber)
+            .mul(r0);
+
+        const bidSuggestion = this.blockchainModuleManager
             .toBigNumber(blockchainId, this.blockchainModuleManager.convertToWei(blockchainId, ask))
             .mul(assertionSize)
             .mul(epochsNumber)
             .mul(r0)
-            .div(BYTES_IN_KILOBYTE)
-            .toString();
+            .div(BYTES_IN_KILOBYTE);
+
+        return bidSuggestion.lte(minBidSuggestion)
+            ? minBidSuggestion.toString()
+            : bidSuggestion.toString();
     }
 
     async findEligibleNodes(neighbourhood, bid, r1, r0) {
