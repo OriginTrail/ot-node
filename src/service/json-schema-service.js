@@ -6,7 +6,7 @@ class JsonSchemaService {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
     }
 
-    async loadSchema(version, schemaName) {
+    async loadSchema(version, schemaName, argumentsObject = {}) {
         const schemaPath = path.resolve(
             appRootPath.path,
             `src/controllers/http-api/${version}/request-schema/${schemaName}-schema-${version}.js`,
@@ -14,35 +14,35 @@ class JsonSchemaService {
         const schemaModule = await import(schemaPath);
         const schemaFunction = schemaModule.default;
 
-        if (schemaFunction.length >= 1) {
-            return schemaFunction(this.blockchainModuleManager.getImplementationNames());
+        if (schemaFunction.length !== 0) {
+            return schemaFunction(argumentsObject);
         }
 
         return schemaFunction();
     }
 
-    async bidSuggestionSchema(version) {
-        return this.loadSchema(version, 'bid-suggestion');
+    async bidSuggestionSchema(version, argumentsObject = {}) {
+        return this.loadSchema(version, 'bid-suggestion', argumentsObject);
     }
 
-    async publishSchema(version) {
-        return this.loadSchema(version, 'publish');
+    async publishSchema(version, argumentsObject = {}) {
+        return this.loadSchema(version, 'publish', argumentsObject);
     }
 
-    async updateSchema(version) {
-        return this.loadSchema(version, 'update');
+    async updateSchema(version, argumentsObject = {}) {
+        return this.loadSchema(version, 'update', argumentsObject);
     }
 
-    async getSchema(version) {
-        return this.loadSchema(version, 'get');
+    async getSchema(version, argumentsObject = {}) {
+        return this.loadSchema(version, 'get', argumentsObject);
     }
 
-    async querySchema(version) {
-        return this.loadSchema(version, 'query');
+    async querySchema(version, argumentsObject = {}) {
+        return this.loadSchema(version, 'query', argumentsObject);
     }
 
-    async localStoreSchema(version) {
-        return this.loadSchema(version, 'local-store');
+    async localStoreSchema(version, argumentsObject = {}) {
+        return this.loadSchema(version, 'local-store', argumentsObject);
     }
 }
 

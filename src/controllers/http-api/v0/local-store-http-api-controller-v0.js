@@ -9,7 +9,7 @@ class LocalStoreController extends BaseController {
         this.dataService = ctx.dataService;
     }
 
-    async handleLocalStoreRequest(req, res) {
+    async handleRequest(req, res) {
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_INIT_START,
         );

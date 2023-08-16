@@ -18,7 +18,7 @@ class GetController extends BaseController {
         this.validationService = ctx.validationService;
     }
 
-    async handleGetRequest(req, res) {
+    async handleRequest(req, res) {
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.GET.GET_START,
         );

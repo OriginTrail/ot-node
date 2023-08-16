@@ -8,7 +8,7 @@ class BidSuggestionController extends BaseController {
         this.shardingTableService = ctx.shardingTableService;
     }
 
-    async handleBidSuggestionRequest(req, res) {
+    async handleRequest(req, res) {
         if ((await this.repositoryModuleManager.getPeersCount(req.query.blockchain)) === 0)
             this.returnResponse(res, 400, {
                 code: 400,

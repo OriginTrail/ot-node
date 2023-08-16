@@ -5,7 +5,7 @@ const require = createRequire(import.meta.url);
 const { version } = require('../../../../package.json');
 
 class InfoController extends BaseController {
-    handleInfoRequest(_, res) {
+    handleRequest(_, res) {
         this.returnResponse(res, 200, {
             version,
         });

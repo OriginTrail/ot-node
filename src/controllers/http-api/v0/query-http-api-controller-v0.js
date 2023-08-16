@@ -9,7 +9,7 @@ class QueryController extends BaseController {
         this.operationIdService = ctx.operationIdService;
     }
 
-    async handleQueryRequest(req, res) {
+    async handleRequest(req, res) {
         const { query, type: queryType } = req.body;
 
         const operationId = await this.operationIdService.generateOperationId(

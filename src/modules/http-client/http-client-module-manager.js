@@ -23,7 +23,7 @@ class HttpClientModuleManager extends BaseModuleManager {
         }
     }
 
-    use(route, callback, options) {
+    use(route, callback, options = {}) {
         if (this.initialized) {
             return this.getImplementation().module.use(route, callback, options);
         }
@@ -44,6 +44,12 @@ class HttpClientModuleManager extends BaseModuleManager {
     async listen() {
         if (this.initialized) {
             return this.getImplementation().module.listen();
+        }
+    }
+
+    selectMiddlewares(options) {
+        if (this.initialized) {
+            return this.getImplementation().module.selectMiddlewares(options);
         }
     }
 

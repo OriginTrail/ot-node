@@ -25,7 +25,7 @@ class ExpressHttpClient {
     }
 
     use(route, callback, options) {
-        this.app.use(route, callback, options);
+        this.app.use(route, ...this.selectMiddlewares(options), callback);
     }
 
     createRouterInstance() {

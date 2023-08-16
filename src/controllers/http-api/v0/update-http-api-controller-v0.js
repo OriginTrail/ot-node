@@ -7,23 +7,23 @@ import {
     LOCAL_STORE_TYPES,
 } from '../../../constants/constants.js';
 
-class PublishController extends BaseController {
+class UpdateController extends BaseController {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.publishService;
+        this.operationService = ctx.updateService;
         this.commandExecutor = ctx.commandExecutor;
         this.operationIdService = ctx.operationIdService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
-    async handlePublishRequest(req, res) {
+    async handleRequest(req, res) {
         const operationId = await this.operationIdService.generateOperationId(
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_START,
+            OPERATION_ID_STATUS.UPDATE.UPDATE_START,
         );
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_START,
+            OPERATION_ID_STATUS.UPDATE.UPDATE_INIT_START,
         );
 
         this.returnResponse(res, 202, {
@@ -32,8 +32,9 @@ class PublishController extends BaseController {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
+            OPERATION_ID_STATUS.UPDATE.UPDATE_INIT_END,
         );
+
         await this.repositoryModuleManager.createOperationRecord(
             this.operationService.getOperationName(),
             operationId,
@@ -58,14 +59,7 @@ class PublishController extends BaseController {
                 tokenId,
             });
 
-            const commandSequence = ['publishValidateAssetCommand'];
-
-            // Backwards compatibility check - true for older clients
-            if (req.body.localStore) {
-                commandSequence.push('localStoreCommand');
-            }
-
-            commandSequence.push('networkPublishCommand');
+            const commandSequence = ['updateValidateAssetCommand', 'networkUpdateCommand'];
 
             await this.commandExecutor.add({
                 name: commandSequence[0],
@@ -74,28 +68,28 @@ class PublishController extends BaseController {
                 period: 5000,
                 retries: 3,
                 data: {
-                    assertionId,
                     blockchain,
                     contract,
                     tokenId,
+                    assertionId,
                     hashFunctionId,
                     operationId,
-                    storeType: LOCAL_STORE_TYPES.TRIPLE,
+                    storeType: LOCAL_STORE_TYPES.PENDING,
                 },
                 transactional: false,
             });
         } catch (error) {
             this.logger.error(
-                `Error while initializing publish data: ${error.message}. ${error.stack}`,
+                `Error while initializing update data: ${error.message}. ${error.stack}`,
             );
 
             await this.operationService.markOperationAsFailed(
                 operationId,
-                'Unable to publish data, Failed to process input data!',
-                ERROR_TYPE.PUBLISH.PUBLISH_ROUTE_ERROR,
+                'Unable to update data, Failed to process input data!',
+                ERROR_TYPE.UPDATE.UPDATE_ROUTE_ERROR,
             );
         }
     }
 }
 
-export default PublishController;
+export default UpdateController;

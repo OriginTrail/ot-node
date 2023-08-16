@@ -1,6 +1,6 @@
 import { LOCAL_STORE_TYPES } from '../../../../constants/constants.js';
 
-export default (blockchainImplementationNames) => ({
+export default (argumentsObject) => ({
     type: 'array',
     items: {
         type: 'object',
@@ -19,7 +19,7 @@ export default (blockchainImplementationNames) => ({
                 minItems: 1,
             },
             blockchain: {
-                enum: blockchainImplementationNames,
+                enum: argumentsObject.blockchainImplementationNames,
             },
             contract: {
                 type: 'string',
