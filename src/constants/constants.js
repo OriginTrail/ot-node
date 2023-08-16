@@ -441,28 +441,56 @@ export const HTTP_API_ROUTES = {
             name: 'update',
             path: '/update',
             controller: 'updateHttpApiControllerV0',
-            options: { rateLimit: true, schema: { name: 'updateSchema', args: {} } },
+            options: {
+                rateLimit: true,
+                schema: {
+                    name: 'updateSchema',
+                    args: {
+                        blockchainImplementationNames:
+                            'blockchainModuleManager.getImplementationNames',
+                    },
+                },
+            },
         },
         {
             method: 'post',
             name: 'query',
             path: '/query',
             controller: 'queryHttpApiControllerV0',
-            options: { schema: { name: 'querySchema', args: {} } },
+            options: {
+                schema: {
+                    name: 'querySchema',
+                    args: {},
+                },
+            },
         },
         {
             method: 'post',
             name: 'local-store',
             path: '/local-store',
             controller: 'localStoreHttpApiControllerV0',
-            options: { schema: { name: 'localStoreSchema', args: {} } },
+            options: {
+                schema: {
+                    name: 'localStoreSchema',
+                    args: {
+                        blockchainImplementationNames:
+                            'blockchainModuleManager.getImplementationNames',
+                    },
+                },
+            },
         },
         {
             method: 'post',
             name: 'get',
             path: '/get',
             controller: 'getHttpApiControllerV0',
-            options: { rateLimit: true, schema: { name: 'getSchema', args: {} } },
+            options: {
+                rateLimit: true,
+                schema: {
+                    name: 'getSchema',
+                    args: {},
+                },
+            },
         },
         {
             method: 'get',
@@ -483,7 +511,15 @@ export const HTTP_API_ROUTES = {
             name: 'bid-suggestion',
             path: '/bid-suggestion',
             controller: 'bidSuggestionHttpApiControllerV0',
-            options: { schema: { name: 'bidSuggestionSchema', args: {} } },
+            options: {
+                schema: {
+                    name: 'bidSuggestionSchema',
+                    args: {
+                        blockchainImplementationNames:
+                            'blockchainModuleManager.getImplementationNames',
+                    },
+                },
+            },
         },
     ],
     v1: [
