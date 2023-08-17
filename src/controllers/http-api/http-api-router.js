@@ -24,7 +24,6 @@ class HttpApiRouter {
         }
         this.routers.latest = this.httpClientModuleManager.createRouterInstance();
 
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.jsonSchemaService = ctx.jsonSchemaService;
     }
 
