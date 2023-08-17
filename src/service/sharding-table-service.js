@@ -168,8 +168,12 @@ class ShardingTableService {
         const myPeerId = this.networkModuleManager.getPeerId().toB58String();
         const filteredPeerRecords = peerRecords.filter((peer) => peer.peerId !== myPeerId);
         const sorted = filteredPeerRecords.sort((a, b) => a.ask - b.ask);
-
-        const { ask } = sorted[r1 - 1];
+        let ask;
+        if (sorted.length > r1) {
+            ask = sorted[r1 - 1].ask;
+        } else {
+            ask = sorted[sorted.length - 1];
+        }
 
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);
 
