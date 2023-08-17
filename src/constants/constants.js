@@ -438,7 +438,7 @@ export const HTTP_API_ROUTES = {
         'local-store': {
             method: 'post',
             path: '/local-store',
-            options: { schema: 'localStoreSchema' },
+            options: {},
         },
         get: {
             method: 'post',
