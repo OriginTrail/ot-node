@@ -5,7 +5,7 @@ Feature: Publish errors test
 
   @publish-errors
   Scenario: Publish on a node with minimum replication factor greater than the number of nodes
-    Given I setup 1 nodes
+    Given I setup 2 nodes
     And I wait for 5 seconds
 
     When I call Publish on the node 1 with validAssertion
