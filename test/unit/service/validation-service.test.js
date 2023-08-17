@@ -13,6 +13,9 @@ describe('Validation service test', async () => {
             validationModuleManager: new ValidationModuleManagerMock(),
             blockchainModuleManager: new BlockchainModuleManagerMock(),
             logger: new Logger(),
+            config: {
+                maximumAssertionSizeInKb: 2500,
+            },
         });
     });
 
