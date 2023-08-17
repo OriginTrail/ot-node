@@ -4,7 +4,6 @@ class HttpClientModuleManager extends BaseModuleManager {
     constructor(ctx) {
         super(ctx);
         this.authService = ctx.authService;
-        this.fileService = ctx.fileService;
     }
 
     getName() {
