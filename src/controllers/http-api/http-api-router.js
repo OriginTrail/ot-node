@@ -16,10 +16,10 @@ class HttpApiRouter {
             const operations = Object.keys(this.apiRoutes[version]);
 
             for (const operation of operations) {
-                const versionedOperation = `${stringUtil.toCamelCase(
+                const versionedController = `${stringUtil.toCamelCase(
                     operation,
                 )}HttpApiController${stringUtil.capitalize(version)}`;
-                this[versionedOperation] = ctx[versionedOperation];
+                this[versionedController] = ctx[versionedController];
             }
         }
         this.routers.latest = this.httpClientModuleManager.createRouterInstance();
