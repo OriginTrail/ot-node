@@ -172,7 +172,7 @@ class ShardingTableService {
         if (sorted.length > r1) {
             ask = sorted[r1 - 1].ask;
         } else {
-            ask = sorted[sorted.length - 1];
+            ask = sorted[sorted.length - 1].ask;
         }
 
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);
