@@ -5,6 +5,10 @@ class BlockchainModuleManagerMock {
         return 20;
     }
 
+    getR1() {
+        return 8;
+    }
+
     getR0() {
         return 3;
     }

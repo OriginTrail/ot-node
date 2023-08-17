@@ -39,20 +39,21 @@ describe('Sharding table service test', async () => {
         expect(bidSuggestions).to.be.equal('3788323225298705400');
     });
 
-    it('Get bid suggestion, returns same token amount for size 1 Kb and size < 1 Kb', async () => {
+    it('Get bid suggestion, returns valid value for assertion size 1b and ask 1 wei', async () => {
         const epochsNumber = 5;
         const contentAssetStorageAddress = '0xABd59A9aa71847F499d624c492d3903dA953d67a';
         const firstAssertionId =
             '0xb44062de45333119471934bc0340c05ff09c0b463392384bc2030cd0a20c334b';
         const hashFunctionId = 1;
-        const bidSuggestion1Kb = await shardingTableService.getBidSuggestion(
-            'ganache',
-            epochsNumber,
-            BYTES_IN_KILOBYTE,
-            contentAssetStorageAddress,
-            firstAssertionId,
-            hashFunctionId,
-        );
+        const askInWei = '0.000000000000000001';
+        const peers = shardingTableService.repositoryModuleManager.getAllPeerRecords();
+        shardingTableService.repositoryModuleManager.getAllPeerRecords = () => {
+            peers.forEach((peer) => {
+                // eslint-disable-next-line no-param-reassign
+                peer.ask = askInWei;
+            });
+            return peers;
+        };
         const bidSuggestion1B = await shardingTableService.getBidSuggestion(
             'ganache',
             epochsNumber,
@@ -61,6 +62,33 @@ describe('Sharding table service test', async () => {
             firstAssertionId,
             hashFunctionId,
         );
-        expect(bidSuggestion1B).to.be.equal(bidSuggestion1Kb);
+        expect(bidSuggestion1B).to.be.equal('15');
+        const bidSuggestion10B = await shardingTableService.getBidSuggestion(
+            'ganache',
+            epochsNumber,
+            10,
+            contentAssetStorageAddress,
+            firstAssertionId,
+            hashFunctionId,
+        );
+        expect(bidSuggestion10B).to.be.equal('15');
+        const bidSuggestion1024B = await shardingTableService.getBidSuggestion(
+            'ganache',
+            epochsNumber,
+            1024,
+            contentAssetStorageAddress,
+            firstAssertionId,
+            hashFunctionId,
+        );
+        expect(bidSuggestion1024B).to.be.equal('15');
+        const bidSuggestion2048B = await shardingTableService.getBidSuggestion(
+            'ganache',
+            epochsNumber,
+            2048,
+            contentAssetStorageAddress,
+            firstAssertionId,
+            hashFunctionId,
+        );
+        expect(bidSuggestion2048B).to.be.equal('30');
     });
 });
