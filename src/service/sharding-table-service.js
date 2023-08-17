@@ -166,7 +166,11 @@ class ShardingTableService {
         const r1 = await this.blockchainModuleManager.getR1(blockchainId);
 
         const sorted = peerRecords.sort((a, b) => a.ask - b.ask);
-
+        console.log('ASKS');
+        sorted.forEach((peer) => {
+            console.log(peer.ask);
+        });
+        console.log('ASKS');
         const { ask } = sorted[r1 - 1];
 
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);
@@ -182,7 +186,8 @@ class ShardingTableService {
             .mul(epochsNumber)
             .mul(r0)
             .div(BYTES_IN_KILOBYTE);
-
+        console.log(bidSuggestion.toString());
+        console.log(minBidSuggestion.toString());
         return bidSuggestion.lte(minBidSuggestion)
             ? minBidSuggestion.toString()
             : bidSuggestion.toString();
