@@ -164,13 +164,11 @@ class ShardingTableService {
             true,
         );
         const r1 = await this.blockchainModuleManager.getR1(blockchainId);
+        // todo remove this line once we implement logic for storing assertion in publish node if it's in neighbourhood
+        const myPeerId = this.networkModuleManager.getPeerId().toB58String();
+        const filteredPeerRecords = peerRecords.filter((peer) => peer.peerId !== myPeerId);
+        const sorted = filteredPeerRecords.sort((a, b) => a.ask - b.ask);
 
-        const sorted = peerRecords.sort((a, b) => a.ask - b.ask);
-        console.log('ASKS');
-        sorted.forEach((peer) => {
-            console.log(peer.ask);
-        });
-        console.log('ASKS');
         const { ask } = sorted[r1 - 1];
 
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);
