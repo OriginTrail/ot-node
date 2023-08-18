@@ -3,7 +3,6 @@ import { HTTP_API_ROUTES } from '../../constants/constants.js';
 
 class HttpApiRouter {
     constructor(ctx) {
-        this.config = ctx.config;
         this.httpClientModuleManager = ctx.httpClientModuleManager;
 
         this.apiRoutes = HTTP_API_ROUTES;
@@ -19,6 +18,7 @@ class HttpApiRouter {
                 const versionedController = `${stringUtil.toCamelCase(
                     operation,
                 )}HttpApiController${stringUtil.capitalize(version)}`;
+
                 this[versionedController] = ctx[versionedController];
             }
         }

@@ -29,6 +29,7 @@ module.exports = {
         {
             files: ['*-mock.js', '*.test.js'],
             rules: {
+                'no-empty-function': 'off',
                 'no-unused-vars': 'off',
             },
         },
