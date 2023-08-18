@@ -11,10 +11,6 @@ class HttpClientModuleManagerMock {
 
     use(path, callback) {}
 
-    get() {}
-
-    post() {}
-
     selectMiddlewares(options) {
         return [];
     }
