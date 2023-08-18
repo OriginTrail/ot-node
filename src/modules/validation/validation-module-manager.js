@@ -39,7 +39,7 @@ class ValidationModuleManager extends BaseModuleManager {
 
     async callHashFunction(hashFunctionId, data) {
         if (this.initialized) {
-            if (!!hashFunctionId || !!data) {
+            if (!!hashFunctionId && !!data) {
                 return this.getImplementation().module.callHashFunction(hashFunctionId, data);
             }
             throw new Error('Calling hash fn failed: Values cannot be null or undefined.');
