@@ -8,7 +8,7 @@ Feature: Release related tests
     Given I set R0 to be 1
     And I set R1 to be 2
     And I setup 4 nodes
-    And I wait for 2 seconds
+    And I wait for 5 seconds
 
     When I call Publish on the node 4 with validAssertion
     And I wait for latest Publish to finalize
