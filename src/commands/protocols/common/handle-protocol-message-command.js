@@ -155,8 +155,7 @@ class HandleProtocolMessageCommand extends Command {
             .mul(epochsLeft)
             .mul(blockchainAssertionSize);
 
-        const serviceAgreementBid = this.blockchainModuleManager
-            .toBigNumber(blockchain, agreementData.tokenAmount)
+        const serviceAgreementBid = agreementData.tokenAmount
             .add(agreementData.updateTokenAmount)
             .mul(1024)
             .div(divisor)

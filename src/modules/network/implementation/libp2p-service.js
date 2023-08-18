@@ -101,14 +101,14 @@ class Libp2pService {
          */
         this.sessions = {};
         this.node = await libp2p.create(initializationObject);
-        const port = parseInt(this.node.multiaddrs.toString().split('/')[4], 10);
         const peerId = this.node.peerId.toB58String();
         this.config.id = peerId;
-        this.logger.info(`Network ID is ${peerId}, connection port is ${port}`);
     }
 
     async start() {
-        this.node.start();
+        await this.node.start();
+        const port = parseInt(this.node.multiaddrs.toString().split('/')[4], 10);
+        this.logger.info(`Network ID is ${this.config.id}, connection port is ${port}`);
     }
 
     async onPeerConnected(listener) {
