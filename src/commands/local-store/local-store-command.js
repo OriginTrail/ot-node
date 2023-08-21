@@ -94,7 +94,11 @@ class LocalStoreCommand extends Command {
                     name: 'deletePendingStateCommand',
                     sequence: [],
                     delay: updateCommitWindowDuration * 1000,
-                    data: { ...command.data, repository: PENDING_STORAGE_REPOSITORIES.PRIVATE },
+                    data: {
+                        ...command.data,
+                        repository: PENDING_STORAGE_REPOSITORIES.PRIVATE,
+                        assertionId: cachedData.public.assertionId,
+                    },
                     transactional: false,
                 });
             }

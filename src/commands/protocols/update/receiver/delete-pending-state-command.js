@@ -10,13 +10,15 @@ class DeletePendingStateCommand extends Command {
     }
 
     async execute(command) {
-        const { blockchain, contract, tokenId, operationId, repository } = command.data;
+        const { repository, blockchain, contract, tokenId, assertionId, operationId } =
+            command.data;
 
         await this.pendingStorageService.removeCachedAssertion(
             repository,
             blockchain,
             contract,
             tokenId,
+            assertionId,
             operationId,
         );
 

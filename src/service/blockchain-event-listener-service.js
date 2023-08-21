@@ -488,6 +488,7 @@ class BlockchainEventListenerService {
             blockchain,
             contract,
             tokenId,
+            assertionId,
         );
 
         const storePromises = [];
@@ -564,6 +565,7 @@ class BlockchainEventListenerService {
             blockchain,
             contract,
             tokenId,
+            assertionId,
         );
     }
 }

@@ -101,7 +101,11 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
                 name: 'deletePendingStateCommand',
                 sequence: [],
                 delay: updateCommitWindowDuration * 1000,
-                data: { ...commandData, repository: PENDING_STORAGE_REPOSITORIES.PUBLIC },
+                data: {
+                    ...commandData,
+                    repository: PENDING_STORAGE_REPOSITORIES.PUBLIC,
+                    assertionId: cachedData.assertionId,
+                },
                 transactional: false,
             }),
         );

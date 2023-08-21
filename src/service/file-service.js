@@ -90,7 +90,7 @@ class FileService {
     }
 
     async removeFolder(folderPath) {
-        // this.logger.trace(`Removing folder at path: ${folderPath}`);
+        this.logger.trace(`Removing folder at path: ${folderPath}`);
 
         try {
             await rm(folderPath, { recursive: true });
@@ -146,18 +146,15 @@ class FileService {
             tokenId,
         );
 
-        let pendingStorageFileName;
-        if (assertionId === undefined) {
-            [pendingStorageFileName] = await this.readDirectory(pendingStorageFolder);
-        } else {
-            pendingStorageFileName = assertionId;
-        }
-
-        return path.join(pendingStorageFolder, pendingStorageFileName);
+        return path.join(pendingStorageFolder, assertionId);
     }
 
     getArchiveFolderPath(subFolder) {
         return path.join(this.getDataFolderPath(), ARCHIVE_FOLDER_NAME, subFolder);
+    }
+
+    getParentDirectory(filePath) {
+        return path.dirname(filePath);
     }
 }
 
