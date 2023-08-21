@@ -492,12 +492,6 @@ export const CONTRACT_EVENT_FETCH_INTERVALS = {
     DEVELOPMENT: 4 * 1000,
 };
 
-export const FIXED_GAS_LIMIT_METHODS = {
-    submitCommit: 600000,
-    submitUpdateCommit: 600000,
-    sendProof: 500000,
-};
-
 export const BLOCK_TIME_MILLIS = {
     OTP: 12_000,
     HARDHAT: 5_000,
