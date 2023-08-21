@@ -18,6 +18,7 @@ class AutoUpdaterModuleManager extends BaseModuleManager {
         if (this.initialized) {
             return this.getImplementation().module.compareVersions();
         }
+        throw new Error('Auto updater module is not initialized.');
     }
 
     /**
@@ -29,6 +30,7 @@ class AutoUpdaterModuleManager extends BaseModuleManager {
         if (this.initialized) {
             return this.getImplementation().module.update();
         }
+        throw new Error('Auto updater module is not initialized.');
     }
 }
 
