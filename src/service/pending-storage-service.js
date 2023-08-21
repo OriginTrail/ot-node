@@ -81,14 +81,6 @@ class PendingStorageService {
             assertionId,
         );
         await this.fileService.removeFile(pendingAssertionPath);
-
-        const pendingStorageFolderPath = this.fileService.getParentDirectory(pendingAssertionPath);
-        const otherPendingAssertions = await this.fileService.readDirectory(
-            pendingStorageFolderPath,
-        );
-        if (otherPendingAssertions.length === 0) {
-            await this.fileService.removeFolder(pendingStorageFolderPath);
-        }
     }
 
     async assetHasPendingState(repository, blockchain, contract, tokenId, assertionId) {
