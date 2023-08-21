@@ -26,6 +26,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.GET.GET_REMOTE_START,
         );
 
+        let nquads;
         if (
             state !== GET_STATES.FINALIZED &&
             blockchain != null &&
@@ -37,26 +38,24 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
                 blockchain,
                 contract,
                 tokenId,
+                assertionId,
                 operationId,
             );
             if (cachedAssertion?.public?.assertion?.length) {
-                return {
-                    messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
-                    messageData: { nquads: cachedAssertion.public.assertion },
-                };
+                nquads = cachedAssertion.public.assertion;
             }
         }
 
-        let nquads;
-        for (const repository of [
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
-        ]) {
-            // eslint-disable-next-line no-await-in-loop
-            nquads = await this.tripleStoreService.getAssertion(repository, assertionId);
-
-            if (nquads.length) {
-                break;
+        if (!nquads.length) {
+            for (const repository of [
+                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+            ]) {
+                // eslint-disable-next-line no-await-in-loop
+                nquads = await this.tripleStoreService.getAssertion(repository, assertionId);
+                if (nquads.length) {
+                    break;
+                }
             }
         }
 
