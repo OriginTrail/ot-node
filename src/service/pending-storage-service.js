@@ -53,7 +53,7 @@ class PendingStorageService {
             return data;
         } catch (error) {
             this.logger.debug(
-                `Assertion not found in pending storage. Error message: ${error.message}, ${error.stackTrace}`,
+                `Assertion not found in ${repository} pending storage. Error message: ${error.message}, ${error.stackTrace}`,
             );
             return null;
         }
@@ -83,17 +83,19 @@ class PendingStorageService {
         await this.fileService.removeFile(pendingAssertionPath);
 
         const pendingStorageFolderPath = this.fileService.getParentDirectory(pendingAssertionPath);
-        const pendingStorageFolderExists = await this.fileService.pathExists(
-            pendingStorageFolderPath,
-        );
 
-        if (pendingStorageFolderExists) {
+        try {
             const otherPendingAssertions = await this.fileService.readDirectory(
                 pendingStorageFolderPath,
             );
             if (otherPendingAssertions.length === 0) {
                 await this.fileService.removeFolder(pendingStorageFolderPath);
             }
+        } catch (error) {
+            this.logger.debug(
+                `Assertions folder not found in ${repository} pending storage. ` +
+                    `Error message: ${error.message}, ${error.stackTrace}`,
+            );
         }
     }
 

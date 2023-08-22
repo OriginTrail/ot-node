@@ -13,27 +13,50 @@ class DeletePendingStateCommand extends Command {
     async execute(command) {
         const { blockchain, contract, tokenId, assertionId, operationId } = command.data;
 
-        const assetStates = this.blockchainModuleManager.getAssertionIds(
+        this.logger.trace(
+            `Started ${command.name} for blockchain: ${blockchain} contract: ${contract}, ` +
+                `token id: ${tokenId}, assertion id: ${assertionId}`,
+        );
+
+        const assetStates = await this.blockchainModuleManager.getAssertionIds(
             blockchain,
             contract,
             tokenId,
         );
 
-        if (!assetStates.includes(assertionId)) {
-            for (const repository of [
-                PENDING_STORAGE_REPOSITORIES.PUBLIC,
-                PENDING_STORAGE_REPOSITORIES.PRIVATE,
-            ]) {
-                // eslint-disable-next-line no-await-in-loop
-                await this.pendingStorageService.removeCachedAssertion(
-                    repository,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    assertionId,
-                    operationId,
-                );
+        if (assetStates.includes(assertionId)) {
+            this.logger.trace(
+                `Not clearing the pending storage as state was finalized and clearing is triggered by StateFinalized event.`,
+            );
+            return Command.empty();
+        }
+
+        for (const repository of [
+            PENDING_STORAGE_REPOSITORIES.PUBLIC,
+            PENDING_STORAGE_REPOSITORIES.PRIVATE,
+        ]) {
+            // eslint-disable-next-line no-await-in-loop
+            const pendingStateExists = await this.pendingStorageService.assetHasPendingState(
+                repository,
+                blockchain,
+                contract,
+                tokenId,
+                assertionId,
+            );
+
+            if (!pendingStateExists) {
+                continue;
             }
+
+            // eslint-disable-next-line no-await-in-loop
+            await this.pendingStorageService.removeCachedAssertion(
+                repository,
+                blockchain,
+                contract,
+                tokenId,
+                assertionId,
+                operationId,
+            );
         }
 
         return Command.empty();

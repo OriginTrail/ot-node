@@ -46,7 +46,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             }
         }
 
-        if (!nquads.length) {
+        if (!nquads?.length) {
             for (const repository of [
                 TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
                 TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
