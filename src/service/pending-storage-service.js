@@ -73,7 +73,7 @@ class PendingStorageService {
             `Removing cached assertion for ual: ${ual} operation id: ${operationId} from file in ${repository} pending storage`,
         );
 
-        const pendingAssertionPath = this.fileService.getPendingStorageDocumentPath(
+        const pendingAssertionPath = await this.fileService.getPendingStorageDocumentPath(
             repository,
             blockchain,
             contract,
@@ -83,11 +83,17 @@ class PendingStorageService {
         await this.fileService.removeFile(pendingAssertionPath);
 
         const pendingStorageFolderPath = this.fileService.getParentDirectory(pendingAssertionPath);
-        const otherPendingAssertions = await this.fileService.readDirectory(
+        const pendingStorageFolderExists = await this.fileService.pathExists(
             pendingStorageFolderPath,
         );
-        if (otherPendingAssertions.length === 0) {
-            await this.fileService.removeFolder(pendingStorageFolderPath);
+
+        if (pendingStorageFolderExists) {
+            const otherPendingAssertions = await this.fileService.readDirectory(
+                pendingStorageFolderPath,
+            );
+            if (otherPendingAssertions.length === 0) {
+                await this.fileService.removeFolder(pendingStorageFolderPath);
+            }
         }
     }
 
