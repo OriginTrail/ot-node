@@ -152,6 +152,10 @@ class FileService {
     getArchiveFolderPath(subFolder) {
         return path.join(this.getDataFolderPath(), ARCHIVE_FOLDER_NAME, subFolder);
     }
+
+    getParentDirectory(filePath) {
+        return path.dirname(filePath);
+    }
 }
 
 export default FileService;
