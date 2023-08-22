@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 import axios from 'axios';
 import async from 'async';
 import { setTimeout as sleep } from 'timers/promises';
@@ -348,7 +348,6 @@ class Web3Service {
             try {
                 /* eslint-disable no-await-in-loop */
                 const gasLimit = await contractInstance.estimateGas[functionName](...args);
-
                 const gas = gasLimit ?? this.convertToWei(900, 'kwei');
 
                 this.logger.info(
@@ -376,7 +375,7 @@ class Web3Service {
                     (error.message.includes(`timeout exceeded`) ||
                         error.message.includes(`Pool(TooLowPriority`))
                 ) {
-                    gasPrice += 1;
+                    gasPrice = BigNumber.from(gasPrice).add(1);
                     this.logger.warn(
                         `Retrying to execute smart contract function ${functionName} with gasPrice: ${gasPrice}`,
                     );
