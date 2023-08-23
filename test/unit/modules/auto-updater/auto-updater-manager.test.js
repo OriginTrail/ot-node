@@ -3,12 +3,14 @@ import { expect, assert } from 'chai';
 import { readFile } from 'fs/promises';
 import AutoUpdaterModuleManager from '../../../../src/modules/auto-updater/auto-updater-module-manager.js';
 import Logger from '../../../../src/logger/logger.js';
+import OTAutoUpdater from '../../../../src/modules/auto-updater/implementation/ot-auto-updater.js';
 
 let autoUpdaterManager;
+let otAutoUpdater;
 
 const config = JSON.parse(await readFile('./test/unit/modules/auto-updater/config.json', 'utf-8'));
 
-describe('Auto-updater module manager', async () => {
+describe.only('Auto-updater module manager', async () => {
     beforeEach('initialize auto-updater module manager', async () => {
         autoUpdaterManager = new AutoUpdaterModuleManager({
             config,
@@ -42,6 +44,17 @@ describe('Auto-updater module manager', async () => {
         } catch (error) {
             expect(error.message).to.equal('Auto updater module is not initialized.');
         }
+    });
+
+    it.only('successful update', async (done) => {
+        otAutoUpdater = new OTAutoUpdater();
+        otAutoUpdater.initialized = true;
+        otAutoUpdater.readRemoteVersion = () => Promise.resolve('6.0.14');
+
+        autoUpdaterManager.initialized = true;
+
+        const updateVersion = await autoUpdaterManager.update();
+        console.log(updateVersion);
     });
 
     it('failed update without initialization', async () => {
