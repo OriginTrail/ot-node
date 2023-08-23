@@ -371,6 +371,9 @@ class Web3Service {
                     TRANSACTION_CONFIRMATIONS,
                     TRANSACTION_POLLING_TIMEOUT_MILLIS,
                 );
+                if (result?.status === 0) {
+                    throw Error();
+                }
             } catch (error) {
                 this.logger.warn(
                     `Failed executing smart contract function ${functionName}. Error: ${error.message}`,
