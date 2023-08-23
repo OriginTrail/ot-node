@@ -9,7 +9,7 @@ Feature: Update asset test
     And I set R1 to be 2
     And I set finalizationCommitsNumber to be 2
     And I setup 4 nodes
-    And I wait for 2 seconds
+    And I wait for 5 seconds
 
     When I call Publish on the node 4 with validPublish_1ForValidUpdate_1
     And I wait for latest Publish to finalize
