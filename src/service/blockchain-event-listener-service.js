@@ -500,6 +500,7 @@ class BlockchainEventListenerService {
             blockchain,
             contract,
             tokenId,
+            assertionId,
         );
 
         const storePromises = [];
@@ -571,12 +572,15 @@ class BlockchainEventListenerService {
         await Promise.all(storePromises);
 
         // remove asset from pending storage
-        await this.pendingStorageService.removeCachedAssertion(
-            pendingRepository,
-            blockchain,
-            contract,
-            tokenId,
-        );
+        if (cachedData) {
+            await this.pendingStorageService.removeCachedAssertion(
+                pendingRepository,
+                blockchain,
+                contract,
+                tokenId,
+                assertionId,
+            );
+        }
     }
 
     async _syncUpdatedAsset(blockchain, contract, tokenId, assertionId) {

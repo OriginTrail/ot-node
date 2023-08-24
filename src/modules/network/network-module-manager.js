@@ -5,6 +5,12 @@ class NetworkModuleManager extends BaseModuleManager {
         return 'network';
     }
 
+    async start() {
+        if (this.initialized) {
+            return this.getImplementation().module.start();
+        }
+    }
+
     async onPeerConnected(listener) {
         if (this.initialized) {
             return this.getImplementation().module.onPeerConnected(listener);

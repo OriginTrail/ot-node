@@ -91,7 +91,7 @@ When('I wait for latest Publish to finalize', { timeout: 80000 }, async function
             assert.fail('Unable to fetch publish result');
         }
         // eslint-disable-next-line no-await-in-loop
-        await setTimeout(4000);
+        await setTimeout(6000);
     }
 });
 
