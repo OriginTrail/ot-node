@@ -1,6 +1,8 @@
-import { describe, it, beforeEach } from 'mocha';
-import { expect, assert } from 'chai';
+import { beforeEach, describe, it } from 'mocha';
+import { expect } from 'chai';
 import { readFile } from 'fs/promises';
+import path from 'path';
+import appRootPath from 'app-root-path';
 import AutoUpdaterModuleManager from '../../../../src/modules/auto-updater/auto-updater-module-manager.js';
 import Logger from '../../../../src/logger/logger.js';
 import OTAutoUpdater from '../../../../src/modules/auto-updater/implementation/ot-auto-updater.js';
@@ -46,15 +48,82 @@ describe.only('Auto-updater module manager', async () => {
         }
     });
 
+    it('Comparing versions mismatch when the module is initialized', async () => {
+        // otAutoUpdater = new OTAutoUpdater();
+        // otAutoUpdater.initialized = true;
+        //
+        // // eslint-disable-next-line no-multi-assign
+        // const newRemoteVersion = autoUpdaterManager.readRemoteVersion = () => Promise.resolve('6.0.14');
+        // const remoteVersion = await newRemoteVersion();
+    });
+
     it.only('successful update', async (done) => {
         otAutoUpdater = new OTAutoUpdater();
         otAutoUpdater.initialized = true;
+
+        const rootPath = path.join(appRootPath.path, '..');
+        // eslint-disable-next-line no-multi-assign
         otAutoUpdater.readRemoteVersion = () => Promise.resolve('6.0.14');
+        const { currentVersion } = await autoUpdaterManager.compareVersions();
+        const currentDirectory = appRootPath.path;
+        const updateDirectory = path.join(rootPath, '6.0.14');
+        const zipArchiveDestination = `${updateDirectory}.zip`;
+        const tmpExtractionPath = path.join(rootPath, 'TmpExtractionPath');
 
-        autoUpdaterManager.initialized = true;
+        otAutoUpdater.downloadUpdate = (destination) => {
+            if (!destination) {
+                throw new Error('The destination is not defined');
+            }
+            return Promise.resolve();
+        };
 
-        const updateVersion = await autoUpdaterManager.update();
-        console.log(updateVersion);
+        await otAutoUpdater.downloadUpdate(zipArchiveDestination);
+
+        otAutoUpdater.unzipFile = (destination, source) => {
+            if (!destination && !source) {
+                throw new Error('The destination and source are not defined');
+            }
+            return Promise.resolve();
+        };
+        await otAutoUpdater.unzipFile(tmpExtractionPath, zipArchiveDestination);
+
+        otAutoUpdater.moveAndCleanExtractedData = (extractedDataPath, destinationPath) => {
+            if (!extractedDataPath && !destinationPath) {
+                throw new Error('The values are not defined');
+            }
+            return Promise.resolve();
+        };
+
+        await otAutoUpdater.moveAndCleanExtractedData(tmpExtractionPath, updateDirectory);
+
+        otAutoUpdater.copyConfigFiles = (source, destination) => {
+            if (!destination && !source) {
+                throw new Error('The destination and source are not defined');
+            }
+            return Promise.resolve();
+        };
+
+        await otAutoUpdater.copyConfigFiles(currentDirectory, updateDirectory);
+
+        otAutoUpdater.installDependencies = (destination) => {
+            if (!destination) {
+                throw new Error('The destination is not defined');
+            }
+            return Promise.resolve();
+        };
+
+        await otAutoUpdater.installDependencies(updateDirectory);
+
+        otAutoUpdater.removeOldVersions = (currentVersionValue, newVersionValue) => {
+            if (!currentVersionValue && !newVersionValue) {
+                throw new Error('The values are not defined');
+            }
+            return Promise.resolve();
+        };
+
+        await otAutoUpdater.removeOldVersions(currentVersion, '6.0.14');
+
+        const test = await otAutoUpdater.update();
     });
 
     it('failed update without initialization', async () => {
