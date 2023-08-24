@@ -152,7 +152,6 @@ class ShardingTableService {
         firstAssertionId,
         hashFunctionId,
     ) {
-        const kbSize = assertionSize < BYTES_IN_KILOBYTE ? BYTES_IN_KILOBYTE : assertionSize;
         const peerRecords = await this.findNeighbourhood(
             blockchainId,
             this.blockchainModuleManager.encodePacked(
@@ -164,20 +163,34 @@ class ShardingTableService {
             hashFunctionId,
             true,
         );
-
-        const sorted = peerRecords.sort((a, b) => a.ask - b.ask);
-
-        const { ask } = sorted[Math.floor(sorted.length * 0.75)];
+        const r1 = await this.blockchainModuleManager.getR1(blockchainId);
+        // todo remove this line once we implement logic for storing assertion in publish node if it's in neighbourhood
+        const myPeerId = this.networkModuleManager.getPeerId().toB58String();
+        const filteredPeerRecords = peerRecords.filter((peer) => peer.peerId !== myPeerId);
+        const sorted = filteredPeerRecords.sort((a, b) => a.ask - b.ask);
+        let ask;
+        if (sorted.length > r1) {
+            ask = sorted[r1 - 1].ask;
+        } else {
+            ask = sorted[sorted.length - 1].ask;
+        }
 
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);
 
-        return this.blockchainModuleManager
+        const minBidSuggestion = this.blockchainModuleManager
+            .toBigNumber(blockchainId, '1')
+            .mul(epochsNumber)
+            .mul(r0);
+
+        const bidSuggestion = this.blockchainModuleManager
             .toBigNumber(blockchainId, this.blockchainModuleManager.convertToWei(blockchainId, ask))
-            .mul(kbSize)
+            .mul(assertionSize)
             .mul(epochsNumber)
             .mul(r0)
-            .div(BYTES_IN_KILOBYTE)
-            .toString();
+            .div(BYTES_IN_KILOBYTE);
+        return bidSuggestion.lte(minBidSuggestion)
+            ? minBidSuggestion.toString()
+            : bidSuggestion.toString();
     }
 
     async findEligibleNodes(neighbourhood, bid, r1, r0) {
@@ -214,15 +227,21 @@ class ShardingTableService {
             };
         }
         if (this.memoryCachedPeerIds[peerId].lastUpdated < timestampThreshold) {
-            await this.repositoryModuleManager.updatePeerRecordLastSeenAndLastDialed(peerId, now);
-            this.memoryCachedPeerIds[peerId].lastUpdated = now;
+            const [rowsUpdated] =
+                await this.repositoryModuleManager.updatePeerRecordLastSeenAndLastDialed(
+                    peerId,
+                    now,
+                );
+            if (rowsUpdated) {
+                this.memoryCachedPeerIds[peerId].lastUpdated = now;
+            }
         }
         this.memoryCachedPeerIds[peerId].lastDialed = now;
         this.memoryCachedPeerIds[peerId].lastSeen = now;
     }
 
     async updatePeerRecordLastDialed(peerId) {
-        const now = new Date();
+        const now = Date.now();
         const timestampThreshold = now - PEER_RECORD_UPDATE_DELAY;
         if (!this.memoryCachedPeerIds[peerId]) {
             this.memoryCachedPeerIds[peerId] = {
@@ -232,8 +251,13 @@ class ShardingTableService {
             };
         }
         if (this.memoryCachedPeerIds[peerId].lastUpdated < timestampThreshold) {
-            await this.repositoryModuleManager.updatePeerRecordLastDialed(peerId, now);
-            this.memoryCachedPeerIds[peerId].lastUpdated = now;
+            const [rowsUpdated] = await this.repositoryModuleManager.updatePeerRecordLastDialed(
+                peerId,
+                now,
+            );
+            if (rowsUpdated) {
+                this.memoryCachedPeerIds[peerId].lastUpdated = now;
+            }
         }
         this.memoryCachedPeerIds[peerId].lastDialed = now;
     }
