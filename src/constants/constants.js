@@ -461,13 +461,7 @@ export const HTTP_API_ROUTES = {
             options: {},
         },
     },
-    v1: {
-        info: {
-            method: 'get',
-            path: '/info',
-            options: {},
-        },
-    },
+    v1: {},
 };
 
 /**
