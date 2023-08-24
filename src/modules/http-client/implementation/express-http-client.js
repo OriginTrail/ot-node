@@ -24,6 +24,14 @@ class ExpressHttpClient {
         this.app.post(route, ...this.selectMiddlewares(options), callback);
     }
 
+    use(route, callback, options) {
+        this.app.use(route, ...this.selectMiddlewares(options), callback);
+    }
+
+    createRouterInstance() {
+        return express.Router();
+    }
+
     sendResponse(res, status, returnObject) {
         res.status(status);
         res.send(returnObject);
