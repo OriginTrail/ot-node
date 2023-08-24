@@ -1,4 +1,5 @@
 import { beforeEach, describe, it } from 'mocha';
+import mock from 'mock-fs';
 import { expect } from 'chai';
 import { readFile } from 'fs/promises';
 import path from 'path';
@@ -12,7 +13,7 @@ let otAutoUpdater;
 
 const config = JSON.parse(await readFile('./test/unit/modules/auto-updater/config.json', 'utf-8'));
 
-describe.only('Auto-updater module manager', async () => {
+describe('Auto-updater module manager', async () => {
     beforeEach('initialize auto-updater module manager', async () => {
         autoUpdaterManager = new AutoUpdaterModuleManager({
             config,
@@ -22,6 +23,9 @@ describe.only('Auto-updater module manager', async () => {
         autoUpdaterManager.initialized = true;
 
         expect(await autoUpdaterManager.initialize()).to.be.true;
+        mock({
+            '/Users/djordjekovacevic/Desktop/projects/6.0.14': {},
+        });
     });
 
     it('validates module name is as expected', async () => {
@@ -59,12 +63,16 @@ describe.only('Auto-updater module manager', async () => {
 
     it.only('successful update', async (done) => {
         otAutoUpdater = new OTAutoUpdater();
+        await otAutoUpdater.initialize(
+            config.modules.autoUpdater.implementation['ot-auto-updater'].config,
+            new Logger(),
+        );
         otAutoUpdater.initialized = true;
 
         const rootPath = path.join(appRootPath.path, '..');
         // eslint-disable-next-line no-multi-assign
         otAutoUpdater.readRemoteVersion = () => Promise.resolve('6.0.14');
-        const { currentVersion } = await autoUpdaterManager.compareVersions();
+        const { currentVersion } = await otAutoUpdater.compareVersions();
         const currentDirectory = appRootPath.path;
         const updateDirectory = path.join(rootPath, '6.0.14');
         const zipArchiveDestination = `${updateDirectory}.zip`;

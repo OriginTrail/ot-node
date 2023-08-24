@@ -56,7 +56,8 @@
         "nyc": "^15.1.0",
         "prettier": "^2.7.1",
         "sinon": "^14.0.0",
-        "slugify": "^1.6.5"
+        "slugify": "^1.6.5",
+        "mock-fs": "^5.2.0"
     },
     "dependencies": {
         "@comunica/query-sparql": "^2.4.3",
