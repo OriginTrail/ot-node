@@ -75,10 +75,7 @@ class GetAssertionIdCommand extends Command {
             }
         }
 
-        return this.continueSequence(
-            { ...command.data, state: assertionId, assertionId },
-            command.sequence,
-        );
+        return this.continueSequence({ ...command.data, state, assertionId }, command.sequence);
     }
 
     async handleError(operationId, errorMessage, errorType) {
