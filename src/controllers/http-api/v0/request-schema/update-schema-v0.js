@@ -1,4 +1,4 @@
-export default (blockchainImplementationNames) => ({
+export default (argumentsObject) => ({
     type: 'object',
     required: ['assertionId', 'assertion', 'blockchain', 'contract', 'tokenId'],
     properties: {
@@ -15,7 +15,7 @@ export default (blockchainImplementationNames) => ({
             minItems: 1,
         },
         blockchain: {
-            enum: blockchainImplementationNames,
+            enum: argumentsObject.blockchainImplementationNames,
         },
         contract: {
             type: 'string',

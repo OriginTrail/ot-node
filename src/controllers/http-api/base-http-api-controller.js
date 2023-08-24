@@ -1,5 +1,6 @@
 class BaseController {
     constructor(ctx) {
+        this.config = ctx.config;
         this.logger = ctx.logger;
     }
 
