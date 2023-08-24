@@ -204,6 +204,70 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('shard').cleanShardingTable(blockchainId);
     }
 
+    async createAssetSyncRecord(
+        blockchain,
+        contract,
+        tokenId,
+        stateIndex,
+        status,
+        insertedByCommand = true,
+    ) {
+        if (this.initialized) {
+            return this.getRepository('asset_sync').createAssetSyncRecord(
+                blockchain,
+                contract,
+                tokenId,
+                stateIndex,
+                status,
+                insertedByCommand,
+            );
+        }
+    }
+
+    async updateAssetSyncRecord(
+        blockchain,
+        contract,
+        tokenId,
+        stateIndex,
+        status,
+        insertedByCommand = true,
+    ) {
+        if (this.initialized) {
+            return this.getRepository('asset_sync').updateAssetSyncRecord(
+                blockchain,
+                contract,
+                tokenId,
+                stateIndex,
+                status,
+                insertedByCommand,
+            );
+        }
+    }
+
+    async isStateSynced(blockchain, contract, tokenId, stateIndex) {
+        if (this.initialized) {
+            return this.getRepository('asset_sync').isStateSynced(
+                blockchain,
+                contract,
+                tokenId,
+                stateIndex,
+            );
+        }
+    }
+
+    async getLatestAssetSyncRecord(blockchain, contract) {
+        if (this.initialized) {
+            return this.getRepository('asset_sync').getLatestAssetSyncRecord(blockchain, contract);
+        }
+    }
+
+    async getAssetSyncTokenIds(blockchain, contract) {
+        if (this.initialized) {
+            return this.getRepository('asset_sync').getAssetSyncTokenIds(blockchain, contract);
+        }
+    }
+
+    // EVENT
     async createEventRecord(
         operationId,
         name,

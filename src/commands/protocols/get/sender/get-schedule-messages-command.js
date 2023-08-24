@@ -11,7 +11,13 @@ class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     }
 
     getNextCommandData(command) {
-        return { ...super.getNextCommandData(command), state: command.data.state };
+        return {
+            ...super.getNextCommandData(command),
+            state: command.data.state,
+            assetSync: command.data.assetSync,
+            stateIndex: command.data.stateIndex,
+            assetSyncInsertedByCommand: command.data.assetSyncInsertedByCommand,
+        };
     }
 
     /**

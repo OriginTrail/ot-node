@@ -4,6 +4,7 @@ import fs from 'fs';
 import Sequelize from 'sequelize';
 import { fileURLToPath } from 'url';
 import createMigrator from './sequelize-migrator.js';
+import AssetSyncRepository from './repositories/asset-sync-repository.js';
 import BlockchainEventRepository from './repositories/blockchain-event-repository.js';
 import BlockchainRepository from './repositories/blockchain-repository.js';
 import CommandRepository from './repositories/command-repository.js';
@@ -30,6 +31,7 @@ class SequelizeRepository {
         await this.loadModels();
 
         this.repositories = {
+            asset_sync: new AssetSyncRepository(this.models),
             blockchain_event: new BlockchainEventRepository(this.models),
             blockchain: new BlockchainRepository(this.models),
             command: new CommandRepository(this.models),
