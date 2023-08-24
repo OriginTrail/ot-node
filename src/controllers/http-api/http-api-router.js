@@ -1,87 +1,87 @@
+import stringUtil from '../../service/util/string-util.js';
+import { HTTP_API_ROUTES } from '../../constants/constants.js';
+
 class HttpApiRouter {
     constructor(ctx) {
-        this.config = ctx.config;
         this.httpClientModuleManager = ctx.httpClientModuleManager;
 
-        this.getHttpApiController = ctx.getHttpApiController;
-        this.publishHttpApiController = ctx.publishHttpApiController;
-        this.updateHttpApiController = ctx.updateHttpApiController;
-        this.localStoreHttpApiController = ctx.localStoreHttpApiController;
-        this.queryHttpApiController = ctx.queryHttpApiController;
-        this.resultHttpApiController = ctx.resultHttpApiController;
-        this.infoHttpApiController = ctx.infoHttpApiController;
-        this.bidSuggestionHttpApiController = ctx.bidSuggestionHttpApiController;
+        this.apiRoutes = HTTP_API_ROUTES;
+        this.apiVersions = Object.keys(this.apiRoutes);
+
+        this.routers = {};
+        for (const version of this.apiVersions) {
+            this.routers[version] = this.httpClientModuleManager.createRouterInstance();
+
+            const operations = Object.keys(this.apiRoutes[version]);
+
+            for (const operation of operations) {
+                const versionedController = `${stringUtil.toCamelCase(
+                    operation,
+                )}HttpApiController${stringUtil.capitalize(version)}`;
+
+                this[versionedController] = ctx[versionedController];
+            }
+        }
+        this.routers.latest = this.httpClientModuleManager.createRouterInstance();
 
         this.jsonSchemaService = ctx.jsonSchemaService;
     }
 
     async initialize() {
         this.initializeBeforeMiddlewares();
-        this.initializeListeners();
+        await this.initializeVersionedListeners();
+        this.initializeRouters();
         this.initializeAfterMiddlewares();
         await this.httpClientModuleManager.listen();
     }
 
-    initializeListeners() {
-        this.httpClientModuleManager.post(
-            '/publish',
-            (req, res) => {
-                this.publishHttpApiController.handlePublishRequest(req, res);
-            },
-            { rateLimit: true, requestSchema: this.jsonSchemaService.publishSchema() },
-        );
-
-        this.httpClientModuleManager.post(
-            '/update',
-            (req, res) => {
-                this.updateHttpApiController.handleUpdateRequest(req, res);
-            },
-            { rateLimit: true, requestSchema: this.jsonSchemaService.updateSchema() },
-        );
-
-        this.httpClientModuleManager.post(
-            '/query',
-            (req, res) => {
-                this.queryHttpApiController.handleQueryRequest(req, res);
-            },
-            { requestSchema: this.jsonSchemaService.querySchema() },
-        );
-
-        this.httpClientModuleManager.post(
-            '/local-store',
-            (req, res) => {
-                this.localStoreHttpApiController.handleLocalStoreRequest(req, res);
-            },
-            { requestSchema: this.jsonSchemaService.localStoreSchema() },
-        );
-
-        this.httpClientModuleManager.post(
-            '/get',
-            (req, res) => {
-                this.getHttpApiController.handleGetRequest(req, res);
-            },
-            { rateLimit: true, requestSchema: this.jsonSchemaService.getSchema() },
-        );
-
-        this.httpClientModuleManager.get('/:operation/:operationId', (req, res) => {
-            this.resultHttpApiController.handleOperationResultRequest(req, res);
-        });
-
-        this.httpClientModuleManager.get('/info', (req, res) => {
-            this.infoHttpApiController.handleInfoRequest(req, res);
-        });
-
-        this.httpClientModuleManager.get(
-            '/bid-suggestion',
-            (req, res) => {
-                this.bidSuggestionHttpApiController.handleBidSuggestionRequest(req, res);
-            },
-            { requestSchema: this.jsonSchemaService.bidSuggestionSchema() },
-        );
-    }
-
     initializeBeforeMiddlewares() {
         this.httpClientModuleManager.initializeBeforeMiddlewares();
+    }
+
+    async initializeVersionedListeners() {
+        const descendingOrderedVersions = this.apiVersions.sort((a, b) => b.localeCompare(a));
+        const mountedLatestRoutes = new Set();
+
+        for (const version of descendingOrderedVersions) {
+            for (const [name, route] of Object.entries(this.apiRoutes[version])) {
+                const { method, path, options } = route;
+                const camelRouteName = stringUtil.toCamelCase(name);
+                const controller = `${camelRouteName}HttpApiController${stringUtil.capitalize(
+                    version,
+                )}`;
+                const schema = `${camelRouteName}Schema`;
+
+                if (
+                    schema in this.jsonSchemaService &&
+                    typeof this.jsonSchemaService[schema] === 'function'
+                ) {
+                    // eslint-disable-next-line no-await-in-loop
+                    options.requestSchema = await this.jsonSchemaService[schema](version);
+                }
+
+                const middlewares = this.httpClientModuleManager.selectMiddlewares(options);
+                const callback = (req, res) => {
+                    this[controller].handleRequest(req, res);
+                };
+
+                this.routers[version][method](path, ...middlewares, callback);
+
+                if (!mountedLatestRoutes.has(route.name)) {
+                    this.routers.latest[method](path, ...middlewares, callback);
+                    mountedLatestRoutes.add(route.name);
+                }
+            }
+        }
+    }
+
+    initializeRouters() {
+        for (const version of this.apiVersions) {
+            this.httpClientModuleManager.use(`/${version}`, this.routers[version]);
+        }
+
+        this.httpClientModuleManager.use('/latest', this.routers.latest);
+        this.httpClientModuleManager.use('/', this.routers.v0);
     }
 
     initializeAfterMiddlewares() {
