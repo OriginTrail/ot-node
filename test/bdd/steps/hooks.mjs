@@ -46,7 +46,7 @@ After(function afterMethod(testCase, done) {
     });
     if (this.state.localBlockchain) {
         this.logger.info('Stopping local blockchain!');
-        this.state.localBlockchain.stop();
+        promises.push(this.state.localBlockchain.stop());
         this.state.localBlockchain = null;
     }
     this.logger.log('After test hook, cleaning repositories');
