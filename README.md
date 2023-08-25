@@ -59,7 +59,7 @@ ___
 <details open>
 <summary>
 
-### <b>What is a Decentralized Knowledge Graph?</b>
+### <b>What is the OriginTrail Decentralized Knowledge Graph?</b>
 </summary>
 
 <br/>
@@ -68,26 +68,7 @@ ___
     <img src="images/nodes.png" alt="Knowledge Asset" width="200">
 </div>
 
-There are many available definitions of a knowledge graph, therefore we will present a simplified one focused on usability, rather than completeness. The purpose of this introduction is not to be a comprehensive guide for knowledge graphs, however it aims to get you started with the basics.
-
-A **Knowledge Graph (KG)** is a complex structure that maps the connections and relationships among various entities - be they physical, digital, event-based, or conceptual. Commonly represented as semantic networks, these graphs are leveraged by major corporations such as [Amazon](http://lunadong.com/talks/PG.pdf), [Google](https://en.wikipedia.org/wiki/Google_Knowledge_Graph), [Uber](https://www.youtube.com/watch?v=r3yMSl5NB_Q), and [IBM](https://www.ibm.com/cloud/learn/knowledge-graph) for a wide array of applications, including search, data integration, knowledge reasoning, recommendation engines, analytics, and diverse facets of machine learning and artificial intelligence.
-
-Key characteristics of knowledge graphs include:
-
-- Prioritization of data connections, treating them as "first-class citizens" within the realm of linked data.
-- Designed to accommodate data from diverse sources, supporting a variety of formats.
-- Their data models are flexible and easily extendable, ready to adapt to the evolving nature of data and its relationships.
-
-While knowledge graphs are typically deployed within the boundaries of a single organization to capture knowledge from various internal and external sources, we conceptualize them more broadly. We define the **Decentralized Knowledge Graph (DKG)** as a global, open data structure comprised of interlinked knowledge assets, benefiting both organizations and individuals.
-
-Unique attributes of the DKG are:
-
-- Empowerment of decentralized applications (Dapps) with search, integration, analytics, AI, and ML capabilities across a wide range of data sources, including blockchains, IPFS, enterprise systems, web services, and personal devices.
-- Elimination of the need for a central authority by leveraging decentralized infrastructure.
-- Facilitation of permissionless operations within the public network.
-- Utilization of decentralized identity and Verifiable Credentials for access control, enabling references to private data.
-
-This expansive approach enhances accessibility and flexibility, positioning the DKG as a powerful tool in the evolving digital landscape.
+OriginTrail Decentralized Knowledge Graph (DKG), hosted on the OriginTrail Decentralized Network (ODN) as trusted knowledge infrastructure, is shared global Knowledge Graph of Knowledge Assets. Running on the basis of the permissionless multi-chain OriginTrail protocol, it combines blockchains and knowledge graph technology to enable trusted AI applications based on key W3C standards.
 </details>
 
 <details open>
@@ -98,32 +79,19 @@ This expansive approach enhances accessibility and flexibility, positioning the 
 
 <br/>
 
-The OriginTrail tech stack is tailored to enable the discoverability, verifiability, and connectivity of physical and digital assets in a coherent Web3 data ecosystem. It meets two fundamental requirements for such an infrastructure:
-
-- Ensuring trust via decentralized consensus.
-- Utilizing semantic, verifiable asset data to represent complex real-world relationships and characteristics.
-
-OriginTrail achieves this by incorporating two distinct types of technology into two network layers - Blockchains (trust networks) and Knowledge Graphs (semantic data networks).
+The OriginTrail tech stack is a three layer structure, consisting of the multi-chain consensus layer (OriginTrail layer 1, running on multiple blockchains), the Decentralized Knowledge Graph layer (OriginTrail Layer 2, hosted on the ODN) and Trusted Knowledge applications in the application layer. 
 
 <div align="center">
     <img src="images/dkg-architecture1.png" alt="DKG Architecture" width="400">
 </div>
 
-**The DKG layer (Layer 2) consists of multiple sub-layers:**
-
-- **Consensus layer**: Implements interfaces to several blockchains hosting trusted smart contracts used to manage relations between the nodes and implement trustless protocols.
-- **Network layer**: A peer-to-peer swarm of DKG nodes hosted by individuals and organizations.
-- **Data layer**: Hosting the knowledge graph data, distributed across the network in separate instances of graph databases.
-- **Service layer**: Implements various core & extended services like authentication, standard interfaces, and data pipelines.
-- **Application layer**: Includes Dapps and traditional applications that utilize the OriginTrail DKG as part of their data flows.
-
 <div align="center">
     <img src="images/dkg-architecture2.png" alt="DKG Architecture" width="400">
 </div>
 
-Further, the architecture differentiates between **the public, replicated knowledge graph** shared by all network nodes according to the protocol, and **private graphs** hosted separately by each of the networked nodes.
+Further, the architecture differentiates between **the public, replicated knowledge graph** shared by all network nodes according to the protocol, and **private Knowledge graphs** hosted separately by each of the OriginTrail nodes.
 
-**The OriginTrail DKG** - combining blockchain and knowledge graph technologies - forms the backbone of the new, trusted Web3 data ecosystem. If you're a developer, you can use it to create, maintain, and use Knowledge Assets across Web3 applications, implementing standardized technologies like GS1 EPCIS, RDF/SPARQL, JSON-LD, and other W3C and GS1 standards right out of the box.
+**Anyone can run an OriginTrail node and become part of the ODN, contributing  to the network capacity and hosting the OriginTrail DKG. The OriginTrail node is the ultimate data service for data and knowledge intensive Web3 applications and is used as the key backbone for trusted AI applications (see https://chatdkg.ai)**
 </details>
 
 <details open>
@@ -141,10 +109,11 @@ Further, the architecture differentiates between **the public, replicated knowle
 **Knowledge Asset is the new, AI‑ready resource for the Internet**
 
 Knowledge Assets are verifiable containers of structured knowledge that live on the OriginTrail DKG and provide:
-- **Discoverability - UAL is the new URL**. Consider Uniform Asset Locators (UALs) a kind of URL that identify a piece of knowledge and make it easy to find and connect with other Knowledge Assets.
-- **Ownership - NFTs enable ownership**. Each Knowledge Asset is created with an NFT token that enables trusted ownership and verifiability of your knowledge.
-- **Verifiability - On-chain information trail**. The blockchain tech increases trust, security, transparency, and the traceability of information.
+- **Discoverability - UAL is the new URL**. Uniform Asset Locators (UALs, based on the W3C Decentralized Identifiers) are a new Web3 knowledge identifier (extensions of the Uniform Resource Locators - URLs) which identify a specific piece of knowledge and make it easy to find and connect with other Knowledge Assets.
+- **Ownership - NFTs enable ownership**. Each Knowledge Asset contains an NFT token that enables ownership, knowledge asset administration and market mechanisms.
+- **Verifiability - On-chain information origin and verifiable trail**. The blockchain tech increases trust, security, transparency, and the traceability of information.
 
+By their nature, Knowledge Assets are semantic resources (following the W3C Semantic Web set of standards), and through their symbolic representations inherently AI ready. See more at https://chatdkg.ai
 <br/>
 
 **Discover Knowledge Assets with the DKG Explorer:**
