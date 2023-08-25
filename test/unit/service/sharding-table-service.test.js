@@ -1,4 +1,4 @@
-import { beforeEach, describe, it } from 'mocha';
+import { beforeEach, describe, it, before } from 'mocha';
 import { expect } from 'chai';
 import ShardingTableService from '../../../src/service/sharding-table-service.js';
 import BlockchainModuleManagerMock from '../mock/blockchain-module-manager-mock.js';
@@ -29,7 +29,7 @@ describe('Sharding table service test', async () => {
             '0xb44062de45333119471934bc0340c05ff09c0b463392384bc2030cd0a20c334b';
         const hashFunctionId = 1;
         const bidSuggestions = await shardingTableService.getBidSuggestion(
-            'ganache',
+            'hardhat',
             epochsNumber,
             assertionSize,
             contentAssetStorageAddress,
@@ -55,7 +55,7 @@ describe('Sharding table service test', async () => {
             return peers;
         };
         const bidSuggestion1B = await shardingTableService.getBidSuggestion(
-            'ganache',
+            'hardhat',
             epochsNumber,
             1,
             contentAssetStorageAddress,
@@ -64,7 +64,7 @@ describe('Sharding table service test', async () => {
         );
         expect(bidSuggestion1B).to.be.equal('15');
         const bidSuggestion10B = await shardingTableService.getBidSuggestion(
-            'ganache',
+            'hardhat',
             epochsNumber,
             10,
             contentAssetStorageAddress,
@@ -73,7 +73,7 @@ describe('Sharding table service test', async () => {
         );
         expect(bidSuggestion10B).to.be.equal('15');
         const bidSuggestion1024B = await shardingTableService.getBidSuggestion(
-            'ganache',
+            'hardhat',
             epochsNumber,
             1024,
             contentAssetStorageAddress,
@@ -82,7 +82,7 @@ describe('Sharding table service test', async () => {
         );
         expect(bidSuggestion1024B).to.be.equal('15');
         const bidSuggestion2048B = await shardingTableService.getBidSuggestion(
-            'ganache',
+            'hardhat',
             epochsNumber,
             2048,
             contentAssetStorageAddress,
