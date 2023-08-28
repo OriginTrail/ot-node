@@ -1,24 +1,63 @@
 import Command from '../../../command.js';
-import { ERROR_TYPE } from '../../../../constants/constants.js';
+import { ERROR_TYPE, PENDING_STORAGE_REPOSITORIES } from '../../../../constants/constants.js';
 
 class DeletePendingStateCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.pendingStorageService = ctx.pendingStorageService;
 
         this.errorType = ERROR_TYPE.UPDATE.UPDATE_DELETE_PENDING_STATE_ERROR;
     }
 
     async execute(command) {
-        const { blockchain, contract, tokenId, operationId, repository } = command.data;
+        const { blockchain, contract, tokenId, assertionId, operationId } = command.data;
 
-        await this.pendingStorageService.removeCachedAssertion(
-            repository,
+        this.logger.trace(
+            `Started ${command.name} for blockchain: ${blockchain} contract: ${contract}, ` +
+                `token id: ${tokenId}, assertion id: ${assertionId}`,
+        );
+
+        const assetStates = await this.blockchainModuleManager.getAssertionIds(
             blockchain,
             contract,
             tokenId,
-            operationId,
         );
+
+        if (assetStates.includes(assertionId)) {
+            this.logger.trace(
+                `Not clearing the pending storage as state was finalized and clearing is triggered by StateFinalized event.`,
+            );
+            return Command.empty();
+        }
+
+        for (const repository of [
+            PENDING_STORAGE_REPOSITORIES.PUBLIC,
+            PENDING_STORAGE_REPOSITORIES.PRIVATE,
+        ]) {
+            // eslint-disable-next-line no-await-in-loop
+            const pendingStateExists = await this.pendingStorageService.assetHasPendingState(
+                repository,
+                blockchain,
+                contract,
+                tokenId,
+                assertionId,
+            );
+
+            if (!pendingStateExists) {
+                continue;
+            }
+
+            // eslint-disable-next-line no-await-in-loop
+            await this.pendingStorageService.removeCachedAssertion(
+                repository,
+                blockchain,
+                contract,
+                tokenId,
+                assertionId,
+                operationId,
+            );
+        }
 
         return Command.empty();
     }

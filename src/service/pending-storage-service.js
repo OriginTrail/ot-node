@@ -34,11 +34,11 @@ class PendingStorageService {
         );
     }
 
-    async getCachedAssertion(repository, blockchain, contract, tokenId, operationId) {
+    async getCachedAssertion(repository, blockchain, contract, tokenId, assertionId, operationId) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.debug(
-            `Reading cached assertion for ual: ${ual}, operation id: ${operationId} from file in ${repository} pending storage`,
+            `Reading cached assertion for ual: ${ual}, assertion id: ${assertionId}, operation id: ${operationId} from file in ${repository} pending storage`,
         );
         try {
             const documentPath = await this.fileService.getPendingStorageDocumentPath(
@@ -46,30 +46,57 @@ class PendingStorageService {
                 blockchain,
                 contract,
                 tokenId,
+                assertionId,
             );
 
             const data = await this.fileService.readFile(documentPath, true);
             return data;
         } catch (error) {
-            this.logger.debug('Assertion not found in pending storage');
+            this.logger.debug(
+                `Assertion not found in ${repository} pending storage. Error message: ${error.message}, ${error.stackTrace}`,
+            );
             return null;
         }
     }
 
-    async removeCachedAssertion(repository, blockchain, contract, tokenId, operationId) {
+    async removeCachedAssertion(
+        repository,
+        blockchain,
+        contract,
+        tokenId,
+        assertionId,
+        operationId,
+    ) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.debug(
             `Removing cached assertion for ual: ${ual} operation id: ${operationId} from file in ${repository} pending storage`,
         );
 
-        const pendingStorageFolderPath = this.fileService.getPendingStorageFolderPath(
+        const pendingAssertionPath = await this.fileService.getPendingStorageDocumentPath(
             repository,
             blockchain,
             contract,
             tokenId,
+            assertionId,
         );
-        await this.fileService.removeFolder(pendingStorageFolderPath);
+        await this.fileService.removeFile(pendingAssertionPath);
+
+        const pendingStorageFolderPath = this.fileService.getParentDirectory(pendingAssertionPath);
+
+        try {
+            const otherPendingAssertions = await this.fileService.readDirectory(
+                pendingStorageFolderPath,
+            );
+            if (otherPendingAssertions.length === 0) {
+                await this.fileService.removeFolder(pendingStorageFolderPath);
+            }
+        } catch (error) {
+            this.logger.debug(
+                `Assertions folder not found in ${repository} pending storage. ` +
+                    `Error message: ${error.message}, ${error.stackTrace}`,
+            );
+        }
     }
 
     async assetHasPendingState(repository, blockchain, contract, tokenId, assertionId) {
