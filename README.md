@@ -82,11 +82,7 @@ OriginTrail Decentralized Knowledge Graph (DKG), hosted on the OriginTrail Decen
 The OriginTrail tech stack is a three layer structure, consisting of the multi-chain consensus layer (OriginTrail layer 1, running on multiple blockchains), the Decentralized Knowledge Graph layer (OriginTrail Layer 2, hosted on the ODN) and Trusted Knowledge applications in the application layer. 
 
 <div align="center">
-    <img src="images/dkg-architecture1.png" alt="DKG Architecture" width="400">
-</div>
-
-<div align="center">
-    <img src="images/dkg-architecture2.png" alt="DKG Architecture" width="400">
+    <img src="images/dkg-architecture.png" alt="DKG Architecture" width="400">
 </div>
 
 Further, the architecture differentiates between **the public, replicated knowledge graph** shared by all network nodes according to the protocol, and **private Knowledge graphs** hosted separately by each of the OriginTrail nodes.
