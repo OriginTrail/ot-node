@@ -1,4 +1,4 @@
-import { QUERY_TYPES, TRIPLE_STORE_REPOSITORIES } from '../../../constants/constants.js';
+import { QUERY_TYPES, TRIPLE_STORE_REPOSITORIES } from '../../../../constants/constants.js';
 
 export default () => ({
     type: 'object',
