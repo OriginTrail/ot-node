@@ -1,4 +1,4 @@
-export default (blockchainImplementationNames) => ({
+export default (argumentsObject) => ({
     type: 'object',
     required: [
         'blockchain',
@@ -10,7 +10,7 @@ export default (blockchainImplementationNames) => ({
     ],
     properties: {
         blockchain: {
-            enum: blockchainImplementationNames,
+            enum: argumentsObject.blockchainImplementationNames,
         },
         epochsNumber: {
             type: 'number',
