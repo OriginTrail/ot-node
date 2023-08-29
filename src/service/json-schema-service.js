@@ -1,37 +1,110 @@
-import publishSchema from '../controllers/http-api/request-schema/publish-schema.js';
-import updateSchema from '../controllers/http-api/request-schema/update-schema.js';
-import getSchema from '../controllers/http-api/request-schema/get-schema.js';
-import querySchema from '../controllers/http-api/request-schema/query-schema.js';
-import bidSuggestionSchema from '../controllers/http-api/request-schema/bid-suggestion-schema.js';
-import localStoreSchema from '../controllers/http-api/request-schema/local-store-schema.js';
+import path from 'path';
+import appRootPath from 'app-root-path';
 
 class JsonSchemaService {
     constructor(ctx) {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
     }
 
-    bidSuggestionSchema() {
-        return bidSuggestionSchema(this.blockchainModuleManager.getImplementationNames());
+    async loadSchema(version, schemaName, argumentsObject = {}) {
+        const schemaPath = path.resolve(
+            appRootPath.path,
+            `src/controllers/http-api/${version}/request-schema/${schemaName}-schema-${version}.js`,
+        );
+        const schemaModule = await import(schemaPath);
+        const schemaFunction = schemaModule.default;
+
+        if (schemaFunction.length !== 0) {
+            return schemaFunction(argumentsObject);
+        }
+
+        return schemaFunction();
     }
 
-    publishSchema() {
-        return publishSchema(this.blockchainModuleManager.getImplementationNames());
+    async bidSuggestionSchema(version) {
+        const schemaArgs = {};
+
+        switch (version) {
+            case 'v0':
+                schemaArgs.blockchainImplementationNames =
+                    this.blockchainModuleManager.getImplementationNames();
+                break;
+            default:
+                throw Error(`HTTP API version: ${version} isn't supported.`);
+        }
+
+        return this.loadSchema(version, 'bid-suggestion', schemaArgs);
     }
 
-    updateSchema() {
-        return updateSchema(this.blockchainModuleManager.getImplementationNames());
+    async publishSchema(version) {
+        const schemaArgs = {};
+
+        switch (version) {
+            case 'v0':
+                schemaArgs.blockchainImplementationNames =
+                    this.blockchainModuleManager.getImplementationNames();
+                break;
+            default:
+                throw Error(`HTTP API version: ${version} isn't supported.`);
+        }
+
+        return this.loadSchema(version, 'publish', schemaArgs);
     }
 
-    getSchema() {
-        return getSchema();
+    async updateSchema(version) {
+        const schemaArgs = {};
+
+        switch (version) {
+            case 'v0':
+                schemaArgs.blockchainImplementationNames =
+                    this.blockchainModuleManager.getImplementationNames();
+                break;
+            default:
+                throw Error(`HTTP API version: ${version} isn't supported.`);
+        }
+
+        return this.loadSchema(version, 'update', schemaArgs);
     }
 
-    querySchema() {
-        return querySchema();
+    async getSchema(version) {
+        const schemaArgs = {};
+
+        switch (version) {
+            case 'v0':
+                break;
+            default:
+                throw Error(`HTTP API version: ${version} isn't supported.`);
+        }
+
+        return this.loadSchema(version, 'get', schemaArgs);
     }
 
-    localStoreSchema() {
-        return localStoreSchema(this.blockchainModuleManager.getImplementationNames());
+    async querySchema(version) {
+        const schemaArgs = {};
+
+        switch (version) {
+            case 'v0':
+                break;
+            default:
+                throw Error(`HTTP API version: ${version} isn't supported.`);
+        }
+
+        return this.loadSchema(version, 'query', schemaArgs);
+    }
+
+    async localStoreSchema(version) {
+        const schemaArgs = {};
+
+        switch (version) {
+            case 'v0':
+                schemaArgs.blockchainImplementationNames =
+                    this.blockchainModuleManager.getImplementationNames();
+                break;
+            default:
+                throw Error(`HTTP API version: ${version} isn't supported.`);
+        }
+
+        return this.loadSchema(version, 'local-store', schemaArgs);
     }
 }
 

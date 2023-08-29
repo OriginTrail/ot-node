@@ -430,6 +430,56 @@ export const ARCHIVE_UPDATE_RESPONSES_FOLDER = 'update_responses';
 export const COMMAND_QUEUE_PARALLELISM = 100;
 
 /**
+ * @constant {object} HTTP_API_ROUTES -
+ *  HTTP API Routes with parameters
+ */
+export const HTTP_API_ROUTES = {
+    v0: {
+        publish: {
+            method: 'post',
+            path: '/publish',
+            options: { rateLimit: true },
+        },
+        update: {
+            method: 'post',
+            path: '/update',
+            options: { rateLimit: true },
+        },
+        query: {
+            method: 'post',
+            path: '/query',
+            options: {},
+        },
+        'local-store': {
+            method: 'post',
+            path: '/local-store',
+            options: {},
+        },
+        get: {
+            method: 'post',
+            path: '/get',
+            options: { rateLimit: true },
+        },
+        result: {
+            method: 'get',
+            path: '/:operation/:operationId',
+            options: {},
+        },
+        info: {
+            method: 'get',
+            path: '/info',
+            options: {},
+        },
+        'bid-suggestion': {
+            method: 'get',
+            path: '/bid-suggestion',
+            options: {},
+        },
+    },
+    v1: {},
+};
+
+/**
  * @constant {object} NETWORK_PROTOCOLS -
  *  Network protocols
  */

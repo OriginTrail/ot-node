@@ -1,8 +1,8 @@
 import { createRequire } from 'module';
-import BaseController from './base-http-api-controller.js';
+import BaseController from '../base-http-api-controller.js';
 
 const require = createRequire(import.meta.url);
-const { version } = require('../../../package.json');
+const { version } = require('../../../../package.json');
 
 class InfoController extends BaseController {
     constructor(ctx) {
@@ -12,7 +12,7 @@ class InfoController extends BaseController {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
-    async handleInfoRequest(req, res) {
+    async handleRequest(req, res) {
         const response = {
             version,
         };
