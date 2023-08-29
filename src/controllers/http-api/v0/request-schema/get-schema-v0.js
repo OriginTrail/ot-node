@@ -1,4 +1,4 @@
-import { GET_STATES } from '../../../constants/constants.js';
+import { GET_STATES } from '../../../../constants/constants.js';
 
 export default () => ({
     type: 'object',
