@@ -20,3 +20,14 @@ Feature: Publish errors test
     When I call Publish directly on the node 1 with validPublishRequestBody
     And I wait for latest Publish to finalize
     Then Latest Publish operation finished with status: ValidateAssetError
+
+  @publish-errors
+  Scenario: Publish a knowledge asset with low bid
+    Given I set R0 to be 1
+    And I set R1 to be 2
+    And I setup 4 nodes
+    And I wait for 5 seconds
+
+    When I call Publish on the node 1 with validAssertion and 1 wei
+    And I wait for latest Publish to finalize
+    Then Latest Publish operation finished with status: PublishError and error message: Not replicated to enough nodes!

@@ -10,11 +10,12 @@ class DkgClientHelper {
         return this.client.node.info();
     }
 
-    async publish(data) {
+    async publish(data, tokenAmount = null) {
         const options = {
             visibility: 'public',
             epochsNum: 5,
             hashFunctionId: CONTENT_ASSET_HASH_FUNCTION_ID,
+            tokenAmount: tokenAmount
         };
 
         return this.client.asset.create(data, options);

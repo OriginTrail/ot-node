@@ -240,6 +240,29 @@ Then(
     },
 );
 
+Then(
+    /Latest (Get|Publish|Update) operation finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError|PublishStartError|GetAssertionIdError|GetNetworkError|GetLocalError|PublishRouteError]+) and error message: ([^"]*)$/,
+    { timeout: 120000 },
+    async function latestResolveFinishedCall(operationName, status, errorMessage) {
+        this.logger.log(`Latest ${operationName} operation finished with status: ${status}`);
+        const operationData = `latest${operationName}Data`;
+        expect(
+            !!this.state[operationData],
+            `Latest ${operationName} result is undefined. ${operationData} result not started.`,
+        ).to.be.equal(true);
+        expect(
+            !!this.state[operationData].result,
+            `Latest ${operationName} result data result is undefined. ${operationData} result is not finished.`,
+        ).to.be.equal(true);
+        expect(
+            this.state[operationData].errorType ?? this.state[operationData].status,
+            `${operationData} result status validation failed`,
+        ).to.be.equal(status);
+        expect(this.state[operationData].result.data.data.errorMessage, `${operationData} error message validation failed`
+        ).to.be.equal(errorMessage);
+    },
+);
+
 Given(/^I wait for (\d+) seconds$/, { timeout: 100000 }, async function waitFor(seconds) {
     this.logger.log(`I wait for ${seconds} seconds for nodes to connect to each other`);
     await sleep(seconds * 1000);

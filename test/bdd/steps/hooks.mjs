@@ -35,14 +35,18 @@ After(function afterMethod(testCase, done) {
         tripleStoreConfiguration.push({modules: {tripleStore: this.state.nodes[key].configuration.modules.tripleStore}});
         databaseNames.push(this.state.nodes[key].configuration.operationalDatabase.databaseName);
         const dataFolderPath = this.state.nodes[key].fileService.getDataFolderPath();
-        promises.push(this.state.nodes[key].fileService.removeFolder(dataFolderPath));
+        if (this.state.nodes[key].fileService.pathExists(dataFolderPath)) {
+            promises.push(this.state.nodes[key].fileService.removeFolder(dataFolderPath));
+        }
     }
     this.state.bootstraps.forEach((node) => {
         node.forkedNode.kill();
         tripleStoreConfiguration.push({modules: {tripleStore: node.configuration.modules.tripleStore}});
         databaseNames.push(node.configuration.operationalDatabase.databaseName);
         const dataFolderPath = node.fileService.getDataFolderPath();
-        promises.push(node.fileService.removeFolder(dataFolderPath));
+        if (node.fileService.pathExists(dataFolderPath)) {
+            promises.push(node.fileService.removeFolder(dataFolderPath));
+        }
     });
     if (this.state.localBlockchain) {
         this.logger.info('Stopping local blockchain!');

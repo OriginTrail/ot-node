@@ -10,9 +10,9 @@ const requests = JSON.parse(await readFile('test/bdd/steps/api/datasets/requests
 const httpApiHelper = new HttpApiHelper();
 
 When(
-    /^I call Publish on the node (\d+) with ([^"]*)/,
+    /^I call Publish on the node (\d+) with ([^"]*) and (\d+) wei/,
     { timeout: 120000 },
-    async function publish(node, assertionName) {
+    async function publish(node, assertionName, tokenAmount) {
         this.logger.log(`I call publish route on the node ${node}`);
         expect(
             !!assertions[assertionName],
@@ -21,7 +21,7 @@ When(
 
         const assertion = assertions[assertionName];
         const result = await this.state.nodes[node - 1].client
-            .publish(assertion)
+            .publish(assertion, tokenAmount)
             .catch((error) => {
                 assert.fail(`Error while trying to publish assertion. ${error}`);
             });
