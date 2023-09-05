@@ -23,7 +23,8 @@
         "lint": "eslint .",
         "set-ask": "node scripts/set-ask.js",
         "set-stake": "node scripts/set-stake.js",
-        "set-operator-fee": "node scripts/set-operator-fee.js"
+        "set-operator-fee": "node scripts/set-operator-fee.js",
+        "get-sharding-table": "node tools/get-sharding-table/get-sharding-table.js"
     },
     "repository": {
         "type": "git",
