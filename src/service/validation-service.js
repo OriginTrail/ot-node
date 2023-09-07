@@ -34,7 +34,6 @@ class ValidationService {
         this.validateAssertionId(assertion, assertionId);
 
         // TODO: get assertion data in one call
-
         await this.validateAssertionSize(blockchain, assertionId, assertion);
         await this.validateTriplesNumber(blockchain, assertionId, assertion);
         await this.validateChunkSize(blockchain, assertionId, assertion);
@@ -56,7 +55,8 @@ class ValidationService {
         }
         const assertionSize = assertionMetadata.getAssertionSizeInBytes(assertion);
         if (blockchainAssertionSize !== assertionSize) {
-            throw Error(
+            // todo after corrective component is implemented, update this logic
+            this.logger.warn(
                 `Invalid assertion size, value read from blockchain: ${blockchainAssertionSize}, calculated: ${assertionSize}`,
             );
         }
@@ -90,7 +90,8 @@ class ValidationService {
         const calculatedAssertionId = this.validationModuleManager.calculateRoot(assertion);
 
         if (assertionId !== calculatedAssertionId) {
-            throw Error(
+            // todo after corrective component is implemented, update this logic
+            this.logger.warn(
                 `Invalid assertion id. Received value: ${assertionId}, calculated: ${calculatedAssertionId}`,
             );
         }
