@@ -2,8 +2,7 @@ name: checks
 
 on:
   pull_request:
-    branches:
-      - v6/develop
+    types: [opened, reopened, synchronize]
 
 env:
   REPOSITORY_PASSWORD: password

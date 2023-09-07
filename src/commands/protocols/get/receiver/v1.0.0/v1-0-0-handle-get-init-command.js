@@ -42,22 +42,24 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
                 blockchain,
                 contract,
                 tokenId,
+                assertionId,
             );
         }
 
-        for (const repository of [
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
-        ]) {
-            if (assertionExists) {
-                break;
+        if (!assertionExists) {
+            for (const repository of [
+                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+            ]) {
+                // eslint-disable-next-line no-await-in-loop
+                assertionExists = await this.tripleStoreService.assertionExists(
+                    repository,
+                    assertionId,
+                );
+                if (assertionExists) {
+                    break;
+                }
             }
-
-            // eslint-disable-next-line no-await-in-loop
-            assertionExists = await this.tripleStoreService.assertionExists(
-                repository,
-                assertionId,
-            );
         }
 
         await this.operationIdService.updateOperationIdStatus(
