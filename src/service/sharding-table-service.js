@@ -152,6 +152,7 @@ class ShardingTableService {
         firstAssertionId,
         hashFunctionId,
     ) {
+        const kbSize = assertionSize < BYTES_IN_KILOBYTE ? BYTES_IN_KILOBYTE : assertionSize;
         const peerRecords = await this.findNeighbourhood(
             blockchainId,
             this.blockchainModuleManager.encodePacked(
@@ -177,20 +178,13 @@ class ShardingTableService {
 
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);
 
-        const minBidSuggestion = this.blockchainModuleManager
-            .toBigNumber(blockchainId, '1')
-            .mul(epochsNumber)
-            .mul(r0);
-
         const bidSuggestion = this.blockchainModuleManager
             .toBigNumber(blockchainId, this.blockchainModuleManager.convertToWei(blockchainId, ask))
-            .mul(assertionSize)
+            .mul(kbSize)
             .mul(epochsNumber)
             .mul(r0)
             .div(BYTES_IN_KILOBYTE);
-        return bidSuggestion.lte(minBidSuggestion)
-            ? minBidSuggestion.toString()
-            : bidSuggestion.toString();
+        return bidSuggestion.toString();
     }
 
     async findEligibleNodes(neighbourhood, bid, r1, r0) {
