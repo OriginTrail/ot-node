@@ -61,15 +61,18 @@ class OTNode {
         await this.executeRemoveOldEpochCommandsMigration();
         await this.executePendingStorageMigration();
 
-        await this.createProfiles();
-
-        await this.initializeShardingTableService();
-        await this.initializeTelemetryInjectionService();
-        await this.initializeBlockchainEventListenerService();
+        // Profile creation disabled for the Asset sync nodes at the moment
+        if (!this.config.assetSync.enabled) {
+            await this.createProfiles();
+        }
 
         await this.initializeCommandExecutor();
         await this.initializeRouters();
         await this.startNetworkModule();
+
+        await this.initializeShardingTableService();
+        await this.initializeTelemetryInjectionService();
+        await this.initializeBlockchainEventListenerService();
         this.logger.info('Node is up and running!');
     }
 

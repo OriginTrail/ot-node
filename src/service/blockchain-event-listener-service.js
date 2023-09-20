@@ -2,10 +2,14 @@ import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
     CONTRACTS,
     CONTRACT_EVENT_FETCH_INTERVALS,
+    OPERATIONS,
     TRIPLE_STORE_REPOSITORIES,
     NODE_ENVIRONMENTS,
     PENDING_STORAGE_REPOSITORIES,
     CONTRACT_EVENTS,
+    OPERATION_ID_STATUS,
+    OPERATION_STATUS,
+    GET_STATES,
 } from '../constants/constants.js';
 
 const MAXIMUM_FETCH_EVENTS_FAILED_COUNT = 5;
@@ -16,11 +20,14 @@ const eventNames = Object.values(CONTRACT_EVENTS).flatMap((e) => e);
 class BlockchainEventListenerService {
     constructor(ctx) {
         this.logger = ctx.logger;
+        this.config = ctx.config;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.validationModuleManager = ctx.validationModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
         this.pendingStorageService = ctx.pendingStorageService;
+        this.operationIdService = ctx.operationIdService;
+        this.commandExecutor = ctx.commandExecutor;
         this.ualService = ctx.ualService;
     }
 
@@ -432,6 +439,11 @@ class BlockchainEventListenerService {
                     stateIndex,
                 ),
             ]);
+
+            if (this.config.assetSync.enabled) {
+                // eslint-disable-next-line no-await-in-loop
+                await this._syncUpdatedAsset(blockchain, contract, tokenId, state);
+            }
         }
     }
 
@@ -569,6 +581,80 @@ class BlockchainEventListenerService {
                 assertionId,
             );
         }
+    }
+
+    async _syncUpdatedAsset(blockchain, contract, tokenId, assertionId) {
+        const assertionExists = await this.tripleStoreService.assertionExists(
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+            assertionId,
+        );
+
+        if (assertionExists) {
+            return;
+        }
+
+        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
+            blockchain,
+            contract,
+            tokenId,
+        );
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+        const stateIndex = assertionIds.indexOf(assertionId) ?? 1;
+
+        const operationId = await this.operationIdService.generateOperationId(
+            OPERATION_ID_STATUS.GET.GET_START,
+        );
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            OPERATION_ID_STATUS.GET.GET_INIT_START,
+        );
+
+        await this.repositoryModuleManager.createAssetSyncRecord(
+            blockchain,
+            contract,
+            tokenId,
+            stateIndex,
+            OPERATION_STATUS.IN_PROGRESS,
+            false,
+        );
+
+        this.logger.debug(
+            `ASSET_SYNC: Reacting on state finalized event for state index: ${stateIndex + 1} of ${
+                assertionIds.length
+            } for asset with ual: ${ual}.`,
+        );
+
+        await this.repositoryModuleManager.createOperationRecord(
+            OPERATIONS.GET,
+            operationId,
+            OPERATION_STATUS.IN_PROGRESS,
+        );
+
+        const state = GET_STATES.LATEST;
+        const hashFunctionId = CONTENT_ASSET_HASH_FUNCTION_ID;
+
+        this.logger.info(`Get for ${ual} with operation id ${operationId} initiated.`);
+
+        await this.commandExecutor.add({
+            name: 'networkGetCommand',
+            sequence: [],
+            delay: 0,
+            data: {
+                operationId,
+                blockchain,
+                contract,
+                tokenId,
+                state,
+                hashFunctionId,
+                assertionId,
+                assetSync: true,
+                stateIndex,
+                assetSyncInsertedByCommand: false,
+            },
+            transactional: false,
+        });
     }
 }
 

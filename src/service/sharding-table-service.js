@@ -170,8 +170,8 @@ class ShardingTableService {
         const filteredPeerRecords = peerRecords.filter((peer) => peer.peerId !== myPeerId);
         const sorted = filteredPeerRecords.sort((a, b) => a.ask - b.ask);
         let ask;
-        if (sorted.length > r1) {
-            ask = sorted[r1 - 1].ask;
+        if (sorted.length > r1 + 1) {
+            ask = sorted[r1].ask;
         } else {
             ask = sorted[sorted.length - 1].ask;
         }

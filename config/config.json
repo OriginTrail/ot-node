@@ -183,6 +183,9 @@
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
             "publicOperations": []
+        },
+        "assetSync": {
+            "enabled": false
         }
     },
     "test": {
@@ -318,6 +321,9 @@
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
             "publicOperations": []
+        },
+         "assetSync": {
+            "enabled": false
         }
     },
     "testnet": {
@@ -466,6 +472,9 @@
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
             "publicOperations": []
+        },
+        "assetSync": {
+            "enabled": false
         }
     },
     "mainnet": {
@@ -615,6 +624,9 @@
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
             "publicOperations": []
+        },
+        "assetSync": {
+            "enabled": false
         }
     }
 }

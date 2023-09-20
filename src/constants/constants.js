@@ -119,6 +119,20 @@ export const REMOVE_SESSION_COMMAND_DELAY = 2 * 60 * 1000;
 
 export const OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
+export const ASSET_SYNC_PARAMETERS = {
+    COMMAND_FREQUENCY_MILLIS: 5 * 60 * 1000,
+    GET_RESULT_POLLING_INTERVAL_MILLIS: 1 * 1000,
+    GET_RESULT_POLLING_MAX_ATTEMPTS: 30,
+    CONCURRENCY: 2,
+    STATUS: {
+        IN_PROGRESS: 'IN_PROGRESS',
+        FAILED: 'FAILED',
+        COMPLETED: 'COMPLETED',
+        NOT_FOUND: 'NOT_FOUND',
+        ONLY_LATEST_SYNCED: 'ONLY_LATEST_SYNCED',
+    },
+};
+
 export const DIAL_PEERS_COMMAND_FREQUENCY_MILLS = 30 * 1000;
 
 export const DIAL_PEERS_CONCURRENCY = 10;
@@ -131,6 +145,7 @@ export const PERMANENT_COMMANDS = [
     'operationIdCleanerCommand',
     'commandsCleanerCommand',
     'dialPeersCommand',
+    'assetSyncCommand',
     'epochCheckCommand',
     'blockchainEventCleanerCommand',
     'getCleanerCommand',
