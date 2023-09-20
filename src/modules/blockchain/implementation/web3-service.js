@@ -5,6 +5,10 @@ import { setTimeout as sleep } from 'timers/promises';
 import { createRequire } from 'module';
 
 import {
+    SOLIDITY_ERROR_STRING_PREFIX,
+    SOLIDITY_PANIC_CODE_PREFIX,
+    SOLIDITY_PANIC_REASONS,
+    ZERO_PREFIX,
     DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
     TRANSACTION_QUEUE_CONCURRENCY,
@@ -344,31 +348,39 @@ class Web3Service {
         let result;
         let gasPrice = (await this.getGasPrice()) ?? this.convertToWei(20, 'gwei');
         let transactionRetried = false;
+
         while (result === undefined) {
+            let gasLimit;
+
             try {
                 /* eslint-disable no-await-in-loop */
-                const gasLimit = await contractInstance.estimateGas[functionName](...args);
-                const gas = gasLimit ?? this.convertToWei(900, 'kwei');
+                gasLimit = await contractInstance.estimateGas[functionName](...args);
+            } catch (error) {
+                const decodedReturnData = this._decodeReturnData(error, contractInstance.interface);
+                await this.handleError(Error(decodedReturnData), functionName);
+            }
 
-                this.logger.info(
-                    'Sending signed transaction to blockchain, calling method: ' +
-                        `${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}. Transaction queue length: ${this.getTransactionQueueLength()}`,
-                );
+            gasLimit = gasLimit ?? this.convertToWei(900, 'kwei');
+
+            this.logger.info(
+                'Sending signed transaction to blockchain, calling method: ' +
+                    `${functionName} with gas limit: ${gasLimit.toString()} and gasPrice ${gasPrice.toString()}. ` +
+                    `Transaction queue length: ${this.getTransactionQueueLength()}`,
+            );
+
+            try {
                 const tx = await contractInstance[functionName](...args, {
                     gasPrice,
-                    gasLimit: gas,
+                    gasLimit,
                 });
-                result = await this.provider.waitForTransaction(
-                    tx.hash,
+                result = await tx.wait(
                     TRANSACTION_CONFIRMATIONS,
                     TRANSACTION_POLLING_TIMEOUT_MILLIS,
                 );
-                if (result?.status === 0) {
-                    throw Error();
-                }
             } catch (error) {
+                const decodedReturnData = this._decodeReturnData(error, contractInstance.interface);
                 this.logger.warn(
-                    `Failed executing smart contract function ${functionName}. Error: ${error.message}`,
+                    `Failed executing smart contract function ${functionName}. Error: ${decodedReturnData}`,
                 );
                 if (
                     !transactionRetried &&
@@ -381,11 +393,76 @@ class Web3Service {
                     );
                     transactionRetried = true;
                 } else {
-                    await this.handleError(error, functionName);
+                    await this.handleError(Error(decodedReturnData), functionName);
                 }
             }
         }
         return result;
+    }
+
+    _getReturnData(error) {
+        const errorData = error.data ?? error.error?.data;
+
+        if (errorData === undefined) {
+            throw error;
+        }
+
+        let returnData = typeof errorData === 'string' ? errorData : errorData.data;
+
+        if (typeof returnData === 'object' && returnData.data) {
+            returnData = returnData.data;
+        }
+
+        if (returnData === undefined || typeof returnData !== 'string') {
+            throw error;
+        }
+
+        return returnData;
+    }
+
+    _decodeReturnData(evmError, contractInterface) {
+        let returnData;
+
+        try {
+            returnData = this._getErrorReturnData(evmError);
+        } catch (error) {
+            return error.message;
+        }
+
+        // Handle empty error data
+        if (returnData === ZERO_PREFIX) {
+            return 'Empty error data.';
+        }
+
+        // Handle standard solidity string error
+        if (returnData.startsWith(SOLIDITY_ERROR_STRING_PREFIX)) {
+            const encodedReason = returnData.slice(SOLIDITY_ERROR_STRING_PREFIX.length);
+            try {
+                return ethers.utils.defaultAbiCoder.decode(['string'], `0x${encodedReason}`)[0];
+            } catch (error) {
+                return error.message;
+            }
+        }
+
+        // Handle solidity panic code
+        if (returnData.startsWith(SOLIDITY_PANIC_CODE_PREFIX)) {
+            const encodedReason = returnData.slice(SOLIDITY_PANIC_CODE_PREFIX.length);
+            let code;
+            try {
+                [code] = ethers.utils.defaultAbiCoder.decode(['uint256'], `0x${encodedReason}`);
+            } catch (error) {
+                return error.message;
+            }
+
+            return SOLIDITY_PANIC_REASONS[code] ?? 'Unknown panic code.';
+        }
+
+        // Try parsing a custom error using the contract ABI
+        try {
+            return contractInterface.parseError(returnData);
+        } catch (error) {
+            return 'Failed to decode custom error data.';
+        }
     }
 
     async getAllPastEvents(
