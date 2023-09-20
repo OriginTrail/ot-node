@@ -424,7 +424,7 @@ class Web3Service {
         let returnData;
 
         try {
-            returnData = this._getErrorReturnData(evmError);
+            returnData = this._getReturnData(evmError);
         } catch (error) {
             return error.message;
         }
