@@ -8,7 +8,6 @@ import {
     DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
     TRANSACTION_QUEUE_CONCURRENCY,
-    FIXED_GAS_LIMIT_METHODS,
     TRANSACTION_POLLING_TIMEOUT_MILLIS,
     TRANSACTION_CONFIRMATIONS,
     BLOCK_TIME_MILLIS,
@@ -352,14 +351,7 @@ class Web3Service {
         while (result === undefined) {
             try {
                 /* eslint-disable no-await-in-loop */
-                let gasLimit;
-
-                if (FIXED_GAS_LIMIT_METHODS[functionName]) {
-                    gasLimit = FIXED_GAS_LIMIT_METHODS[functionName];
-                } else {
-                    gasLimit = await contractInstance.estimateGas[functionName](...args);
-                }
-
+                const gasLimit = await contractInstance.estimateGas[functionName](...args);
                 const gas = gasLimit ?? this.convertToWei(900, 'kwei');
 
                 this.logger.info(

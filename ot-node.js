@@ -66,13 +66,13 @@ class OTNode {
             await this.createProfiles();
         }
 
-        await this.initializeShardingTableService();
-        await this.initializeTelemetryInjectionService();
-        await this.initializeBlockchainEventListenerService();
-
         await this.initializeCommandExecutor();
         await this.initializeRouters();
         await this.startNetworkModule();
+
+        await this.initializeShardingTableService();
+        await this.initializeTelemetryInjectionService();
+        await this.initializeBlockchainEventListenerService();
         this.logger.info('Node is up and running!');
     }
 
