@@ -21,6 +21,10 @@ class TripleStoreService {
         }
     }
 
+    getRepositoryImplementations() {
+        return this.repositoryImplementations;
+    }
+
     async localStoreAsset(
         repository,
         assertionId,

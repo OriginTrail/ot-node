@@ -14,6 +14,7 @@ class SendTelemetryCommand extends Command {
         this.telemetryInjectionService = ctx.telemetryInjectionService;
         this.networkModuleManager = ctx.networkModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.tripleStoreService = ctx.tripleStoreService;
     }
 
     /**
@@ -33,7 +34,8 @@ class SendTelemetryCommand extends Command {
                     hostname: this.config.hostname,
                     operational_wallet: this.blockchainModuleManager.getPublicKey(),
                     management_wallet: this.blockchainModuleManager.getManagementKey(),
-                    triple_store: this.config.modules.tripleStore.defaultImplementation,
+                    triple_store: this.tripleStoreService.getRepositoryImplementations(),
+                    blockchain: this.blockchainModuleManager.getImplementationNames(),
                     auto_update_enabled: this.config.modules.autoUpdater.enabled,
                     multiaddresses: this.networkModuleManager.getMultiaddrs(),
                 },
