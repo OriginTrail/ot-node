@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { ethers, BigNumber } from 'ethers';
 import axios from 'axios';
 import async from 'async';
 import { setTimeout as sleep } from 'timers/promises';
@@ -357,7 +357,10 @@ class Web3Service {
                 gasLimit = await contractInstance.estimateGas[functionName](...args);
             } catch (error) {
                 const decodedReturnData = this._decodeReturnData(error, contractInstance.interface);
-                await this.handleError(Error(decodedReturnData), functionName);
+                await this.handleError(
+                    Error(`gas estimation failed, reason: ${decodedReturnData}`),
+                    functionName,
+                );
             }
 
             gasLimit = gasLimit ?? this.convertToWei(900, 'kwei');
@@ -373,10 +376,15 @@ class Web3Service {
                     gasPrice,
                     gasLimit,
                 });
-                result = await tx.wait(
+                result = await this.provider.waitForTransaction(
+                    tx.hash,
                     TRANSACTION_CONFIRMATIONS,
                     TRANSACTION_POLLING_TIMEOUT_MILLIS,
                 );
+
+                if (result.status === 0) {
+                    await this.provider.call(tx, tx.blockNumber);
+                }
             } catch (error) {
                 const decodedReturnData = this._decodeReturnData(error, contractInstance.interface);
                 this.logger.warn(
@@ -393,7 +401,10 @@ class Web3Service {
                     );
                     transactionRetried = true;
                 } else {
-                    await this.handleError(Error(decodedReturnData), functionName);
+                    await this.handleError(
+                        Error(`transaction reverted, reason: ${decodedReturnData}`),
+                        functionName,
+                    );
                 }
             }
         }
@@ -401,7 +412,11 @@ class Web3Service {
     }
 
     _getReturnData(error) {
-        const errorData = error.data ?? error.error?.data;
+        let nestedError = error;
+        while (nestedError && nestedError.error) {
+            nestedError = nestedError.error;
+        }
+        const errorData = nestedError.data;
 
         if (errorData === undefined) {
             throw error;
@@ -454,15 +469,50 @@ class Web3Service {
                 return error.message;
             }
 
-            return SOLIDITY_PANIC_REASONS[code] ?? 'Unknown panic code.';
+            return SOLIDITY_PANIC_REASONS[code] ?? 'Unknown Solidity panic code.';
         }
 
         // Try parsing a custom error using the contract ABI
         try {
-            return contractInterface.parseError(returnData);
+            const decodedCustomError = contractInterface.parseError(returnData);
+            const formattedArgs = decodedCustomError.errorFragment.inputs
+                .map((input, i) => {
+                    const argName = input.name;
+                    const argValue = this._formatCustomErrorArgument(decodedCustomError.args[i]);
+                    return `${argName}=${argValue}`;
+                })
+                .join(', ');
+            return `custom error ${decodedCustomError.name}(${formattedArgs})`;
         } catch (error) {
-            return 'Failed to decode custom error data.';
+            return `Failed to decode custom error data. Error: ${error}`;
         }
+    }
+
+    _formatCustomErrorArgument(value) {
+        if (value === null || value === undefined) {
+            return 'null';
+        }
+
+        if (typeof value === 'string') {
+            return value;
+        }
+
+        if (typeof value === 'number' || BigNumber.isBigNumber(value)) {
+            return value.toString();
+        }
+
+        if (Array.isArray(value)) {
+            return `[${value.map((v) => this._formatCustomErrorArgument(v)).join(', ')}]`;
+        }
+
+        if (typeof value === 'object') {
+            const formattedEntries = Object.entries(value).map(
+                ([k, v]) => `${k}: ${this._formatCustomErrorArgument(v)}`,
+            );
+            return `{${formattedEntries.join(', ')}}`;
+        }
+
+        return value.toString();
     }
 
     async getAllPastEvents(
