@@ -131,7 +131,7 @@
                         "config": {
                             "networkId": "otp::testnet",
                             "hubContractAddress": "0x707233a55bD035C6Bc732196CA4dbffa63CbA169",
-                            "rpcEndpoints": ["https://lofar-tm-rpc.origin-trail.network"],
+                            "rpcEndpoints": ["wss://lofar.origin-trail.network"],
                             "initialStakeAmount": 50000,
                             "initialAskAmount": 2
                         }
@@ -413,7 +413,8 @@
                             "hubContractAddress": "0xBbfF7Ea6b2Addc1f38A0798329e12C08f03750A6",
                             "rpcEndpoints": [
                                 "https://lofar-testnet.origin-trail.network",
-                                "https://lofar-testnet.origintrail.network"
+                                "https://lofar-testnet.origintrail.network",
+                                "wss://parachain-testnet-rpc.origin-trail.network"
                             ]
                         }
                     }
@@ -561,7 +562,8 @@
                             "hubContractAddress": "0x5fA7916c48Fe6D5F1738d12Ad234b78c90B4cAdA",
                             "rpcEndpoints": [
                                 "https://astrosat-parachain-rpc.origin-trail.network",
-                                "https://astrosat.origintrail.network/"
+                                "https://astrosat.origintrail.network/",
+                                "wss://parachain-rpc.origin-trail.network"
                             ]
                         }
                     }

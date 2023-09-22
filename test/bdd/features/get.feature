@@ -59,8 +59,6 @@ Feature: Get asset states test
     And I wait for latest Update to finalize
     Then Latest Update operation finished with status: COMPLETED
 
-    And I wait for 30 seconds
-
     When I call Update on the node 4 for the latest published UAL with validUpdate_2
     And I wait for latest Update to finalize
     Then Latest Update operation finished with status: COMPLETED

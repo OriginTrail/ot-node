@@ -16,6 +16,7 @@ class CommandExecutor {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.commandResolver = ctx.commandResolver;
+        this.started = false;
 
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.verboseLoggingEnabled = ctx.config.commandExecutorVerboseLoggingEnabled;
@@ -38,8 +39,8 @@ class CommandExecutor {
      * Initialize executor
      * @returns {Promise<void>}
      */
-    async addDefaultCommands() {
-        await Promise.all(PERMANENT_COMMANDS.map((command) => this._addDefaultCommand(command)));
+    async init() {
+        await Promise.all(PERMANENT_COMMANDS.map((command) => this._startDefaultCommand(command)));
 
         if (this.verboseLoggingEnabled) {
             this.logger.trace('Command executor has been initialized...');
@@ -47,23 +48,14 @@ class CommandExecutor {
     }
 
     /**
-     * Resumes the command executor queue
+     * Starts the command executor
+     * @return {Promise<void>}
      */
-    resumeQueue() {
+    async start() {
+        this.started = true;
         if (this.verboseLoggingEnabled) {
-            this.logger.trace('Command executor queue has been resumed...');
+            this.logger.trace('Command executor has been started...');
         }
-        this.queue.resume();
-    }
-
-    /**
-     * Pause the command executor queue
-     */
-    pauseQueue() {
-        if (this.verboseLoggingEnabled) {
-            this.logger.trace('Command executor queue has been paused...');
-        }
-        this.queue.pause();
     }
 
     /**
@@ -232,7 +224,7 @@ class CommandExecutor {
      * @return {Promise<void>}
      * @private
      */
-    async _addDefaultCommand(name) {
+    async _startDefaultCommand(name) {
         await this._delete(name);
         const handler = this.commandResolver.resolve(name);
         if (!handler) {
@@ -406,7 +398,7 @@ class CommandExecutor {
      * Replays pending commands from the database
      * @returns {Promise<void>}
      */
-    async replayOldCommands() {
+    async replay() {
         this.logger.info('Replay pending/started commands from the database...');
         const pendingCommands = await this.repositoryModuleManager.getCommandsWithStatus(
             [COMMAND_STATUS.PENDING, COMMAND_STATUS.STARTED, COMMAND_STATUS.REPEATING],
