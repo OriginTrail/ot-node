@@ -5,8 +5,11 @@ const getToken = (req) => {
 };
 
 export default (authService) => async (req, res, next) => {
-    const urlElements = req.url.split('/');
-    const operation = urlElements[urlElements.length - 1].split('?')[0].toUpperCase();
+    // eslint-disable-next-line no-useless-escape
+    const match = req.path.match(/^\/(?:v[0-9]+\/)?([^\/\?]+)/);
+    if (!match) return res.status(404).send('Not found.');
+
+    const operation = match[0].substring(1);
 
     if (authService.isPublicOperation(operation)) {
         return next();
