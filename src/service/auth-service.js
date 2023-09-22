@@ -62,7 +62,10 @@ class AuthService {
             return false;
         }
 
-        return this._authConfig.publicOperations.includes(operationName);
+        return (
+            this._authConfig.publicOperations.includes(`v0/${operationName}`) ||
+            this._authConfig.publicOperations.includes(operationName)
+        );
     }
 
     /**
