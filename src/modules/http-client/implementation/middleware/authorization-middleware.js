@@ -5,7 +5,8 @@ const getToken = (req) => {
 };
 
 export default (authService) => async (req, res, next) => {
-    const operation = req.url.split('/')[1].split('?')[0].toUpperCase();
+    const urlElements = req.url.split('/');
+    const operation = urlElements[urlElements.length() - 1].split('?')[0].toUpperCase();
 
     if (authService.isPublicOperation(operation)) {
         return next();
