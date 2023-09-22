@@ -63,14 +63,13 @@ class OTNode {
 
         await this.createProfiles();
 
-        await this.initializeCommandExecutor();
         await this.initializeShardingTableService();
         await this.initializeTelemetryInjectionService();
         await this.initializeBlockchainEventListenerService();
 
+        await this.initializeCommandExecutor();
         await this.initializeRouters();
         await this.startNetworkModule();
-        this.resumeCommandExecutor();
         this.logger.info('Node is up and running!');
     }
 
@@ -245,26 +244,12 @@ class OTNode {
     async initializeCommandExecutor() {
         try {
             const commandExecutor = this.container.resolve('commandExecutor');
-            commandExecutor.pauseQueue();
-            await commandExecutor.addDefaultCommands();
-            commandExecutor
-                .replayOldCommands()
-                .then(() => this.logger.info('Finished replaying old commands'));
+            await commandExecutor.init();
+            commandExecutor.replay();
+            await commandExecutor.start();
         } catch (e) {
             this.logger.error(
                 `Command executor initialization failed. Error message: ${e.message}`,
-            );
-            this.stop(1);
-        }
-    }
-
-    resumeCommandExecutor() {
-        try {
-            const commandExecutor = this.container.resolve('commandExecutor');
-            commandExecutor.resumeQueue();
-        } catch (e) {
-            this.logger.error(
-                `Unable to resume command executor queue. Error message: ${e.message}`,
             );
             this.stop(1);
         }
