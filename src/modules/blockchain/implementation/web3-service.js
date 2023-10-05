@@ -1,10 +1,14 @@
-import { ethers } from 'ethers';
+import { ethers, BigNumber } from 'ethers';
 import axios from 'axios';
 import async from 'async';
 import { setTimeout as sleep } from 'timers/promises';
 import { createRequire } from 'module';
 
 import {
+    SOLIDITY_ERROR_STRING_PREFIX,
+    SOLIDITY_PANIC_CODE_PREFIX,
+    SOLIDITY_PANIC_REASONS,
+    ZERO_PREFIX,
     DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
     TRANSACTION_QUEUE_CONCURRENCY,
@@ -344,31 +348,47 @@ class Web3Service {
         let result;
         let gasPrice = (await this.getGasPrice()) ?? this.convertToWei(20, 'gwei');
         let transactionRetried = false;
+
         while (result === undefined) {
+            let gasLimit;
+
             try {
                 /* eslint-disable no-await-in-loop */
-                const gasLimit = await contractInstance.estimateGas[functionName](...args);
-                const gas = gasLimit ?? this.convertToWei(900, 'kwei');
-
-                this.logger.info(
-                    'Sending signed transaction to blockchain, calling method: ' +
-                        `${functionName} with gas limit: ${gas.toString()} and gasPrice ${gasPrice.toString()}. Transaction queue length: ${this.getTransactionQueueLength()}`,
+                gasLimit = await contractInstance.estimateGas[functionName](...args);
+            } catch (error) {
+                const decodedReturnData = this._decodeReturnData(error, contractInstance.interface);
+                await this.handleError(
+                    Error(`gas estimation failed, reason: ${decodedReturnData}`),
+                    functionName,
                 );
+            }
+
+            gasLimit = gasLimit ?? this.convertToWei(900, 'kwei');
+
+            this.logger.info(
+                'Sending signed transaction to blockchain, calling method: ' +
+                    `${functionName} with gas limit: ${gasLimit.toString()} and gasPrice ${gasPrice.toString()}. ` +
+                    `Transaction queue length: ${this.getTransactionQueueLength()}`,
+            );
+
+            try {
                 const tx = await contractInstance[functionName](...args, {
                     gasPrice,
-                    gasLimit: gas,
+                    gasLimit,
                 });
                 result = await this.provider.waitForTransaction(
                     tx.hash,
                     TRANSACTION_CONFIRMATIONS,
                     TRANSACTION_POLLING_TIMEOUT_MILLIS,
                 );
-                if (result?.status === 0) {
-                    throw Error();
+
+                if (result.status === 0) {
+                    await this.provider.call(tx, tx.blockNumber);
                 }
             } catch (error) {
+                const decodedReturnData = this._decodeReturnData(error, contractInstance.interface);
                 this.logger.warn(
-                    `Failed executing smart contract function ${functionName}. Error: ${error.message}`,
+                    `Failed executing smart contract function ${functionName}. Error: ${decodedReturnData}`,
                 );
                 if (
                     !transactionRetried &&
@@ -381,11 +401,118 @@ class Web3Service {
                     );
                     transactionRetried = true;
                 } else {
-                    await this.handleError(error, functionName);
+                    await this.handleError(
+                        Error(`transaction reverted, reason: ${decodedReturnData}`),
+                        functionName,
+                    );
                 }
             }
         }
         return result;
+    }
+
+    _getReturnData(error) {
+        let nestedError = error;
+        while (nestedError && nestedError.error) {
+            nestedError = nestedError.error;
+        }
+        const errorData = nestedError.data;
+
+        if (errorData === undefined) {
+            throw error;
+        }
+
+        let returnData = typeof errorData === 'string' ? errorData : errorData.data;
+
+        if (typeof returnData === 'object' && returnData.data) {
+            returnData = returnData.data;
+        }
+
+        if (returnData === undefined || typeof returnData !== 'string') {
+            throw error;
+        }
+
+        return returnData;
+    }
+
+    _decodeReturnData(evmError, contractInterface) {
+        let returnData;
+
+        try {
+            returnData = this._getReturnData(evmError);
+        } catch (error) {
+            return error.message;
+        }
+
+        // Handle empty error data
+        if (returnData === ZERO_PREFIX) {
+            return 'Empty error data.';
+        }
+
+        // Handle standard solidity string error
+        if (returnData.startsWith(SOLIDITY_ERROR_STRING_PREFIX)) {
+            const encodedReason = returnData.slice(SOLIDITY_ERROR_STRING_PREFIX.length);
+            try {
+                return ethers.utils.defaultAbiCoder.decode(['string'], `0x${encodedReason}`)[0];
+            } catch (error) {
+                return error.message;
+            }
+        }
+
+        // Handle solidity panic code
+        if (returnData.startsWith(SOLIDITY_PANIC_CODE_PREFIX)) {
+            const encodedReason = returnData.slice(SOLIDITY_PANIC_CODE_PREFIX.length);
+            let code;
+            try {
+                [code] = ethers.utils.defaultAbiCoder.decode(['uint256'], `0x${encodedReason}`);
+            } catch (error) {
+                return error.message;
+            }
+
+            return SOLIDITY_PANIC_REASONS[code] ?? 'Unknown Solidity panic code.';
+        }
+
+        // Try parsing a custom error using the contract ABI
+        try {
+            const decodedCustomError = contractInterface.parseError(returnData);
+            const formattedArgs = decodedCustomError.errorFragment.inputs
+                .map((input, i) => {
+                    const argName = input.name;
+                    const argValue = this._formatCustomErrorArgument(decodedCustomError.args[i]);
+                    return `${argName}=${argValue}`;
+                })
+                .join(', ');
+            return `custom error ${decodedCustomError.name}(${formattedArgs})`;
+        } catch (error) {
+            return `Failed to decode custom error data. Error: ${error}`;
+        }
+    }
+
+    _formatCustomErrorArgument(value) {
+        if (value === null || value === undefined) {
+            return 'null';
+        }
+
+        if (typeof value === 'string') {
+            return value;
+        }
+
+        if (typeof value === 'number' || BigNumber.isBigNumber(value)) {
+            return value.toString();
+        }
+
+        if (Array.isArray(value)) {
+            return `[${value.map((v) => this._formatCustomErrorArgument(v)).join(', ')}]`;
+        }
+
+        if (typeof value === 'object') {
+            const formattedEntries = Object.entries(value).map(
+                ([k, v]) => `${k}: ${this._formatCustomErrorArgument(v)}`,
+            );
+            return `{${formattedEntries.join(', ')}}`;
+        }
+
+        return value.toString();
     }
 
     async getAllPastEvents(
