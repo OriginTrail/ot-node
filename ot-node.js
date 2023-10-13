@@ -65,7 +65,6 @@ class OTNode {
 
         await this.initializeCommandExecutor();
         await this.initializeShardingTableService();
-        // await this.initializeTelemetryInjectionService();
         await this.initializeBlockchainEventListenerService();
 
         await this.initializeRouters();
@@ -487,22 +486,6 @@ class OTNode {
                 `Unable to initialize sharding table service. Error message: ${error.message} OT-node shutting down...`,
             );
             this.stop(1);
-        }
-    }
-
-    async initializeTelemetryInjectionService() {
-        if (this.config.telemetry.enabled) {
-            try {
-                const telemetryHubModuleManager = this.container.resolve(
-                    'telemetryInjectionService',
-                );
-                telemetryHubModuleManager.initialize();
-                this.logger.info('Telemetry Injection Service initialized successfully');
-            } catch (e) {
-                this.logger.error(
-                    `Telemetry hub module initialization failed. Error message: ${e.message}`,
-                );
-            }
         }
     }
 
