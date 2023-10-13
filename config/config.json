@@ -166,17 +166,25 @@
                         }
                     }
                 }
+            },
+            "telemetry" : {
+                "enabled":true,
+                "implementation": {
+                    "telemetry-service": {
+                        "enabled":true,
+                        "package": "./telemetry/implementation/telemetry-service.js",
+                        "config": {
+                            "sendTelemetryData": true,
+                            "signalingServerUrl": "http://localhost:3000/sendTelemetryData"
+                        }
+                    }
+                }
             }
         },
         "maximumAssertionSizeInKb": 2500,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "info",
-        "telemetry": {
-            "enabled": true,
-            "sendTelemetryData": false,
-            "signalingServerUrl": "null"
-        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
@@ -602,11 +610,6 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
-        "telemetry": {
-            "enabled": true,
-            "sendTelemetryData": true,
-            "signalingServerUrl": "https://mainnet-signaling.origin-trail.network/signal"
-        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,

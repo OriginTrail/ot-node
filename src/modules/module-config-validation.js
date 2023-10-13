@@ -8,9 +8,12 @@ class ModuleConfigValidation {
 
     validateModule(name, config) {
         this.validateRequiredModule(name, config);
-
         const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
-        this[`validate${capitalizedName}`](config);
+        if (typeof this[`validate${capitalizedName}`] === 'function') {
+            this[`validate${capitalizedName}`](config);
+        } else {
+            throw Error(`Missing validation for ${capitalizedName}`);
+        }
     }
 
     validateAutoUpdater() {
@@ -67,6 +70,10 @@ class ModuleConfigValidation {
             }
             this.logger.warn(message);
         }
+    }
+
+    validateTelemetry() {
+        return true;
     }
 }
 
