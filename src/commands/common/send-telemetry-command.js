@@ -42,7 +42,6 @@ class SendTelemetryCommand extends Command {
                 auto_update_enabled: this.config.modules.autoUpdater.enabled,
                 multiaddresses: this.networkModuleManager.getMultiaddrs(),
             };
-            this.logger.info(nodeData);
             const response = await this.telemetryModuleManager.sendTelemetryData(nodeData, events);
             if (response.status === 200 && events?.length > 0) {
                 await this.removePublishedEvents(events);
