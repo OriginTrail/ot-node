@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-class TelemetryService {
+class OTTelemetry {
     async initialize(config, logger) {
         this.config = config;
         this.logger = logger;
@@ -14,7 +14,6 @@ class TelemetryService {
         const signalingMessage = { nodeData, events };
         const config = {
             method: 'post',
-            // TODO: Use config to get url
             url: this.config.signalingServerUrl,
             headers: {
                 'Content-Type': 'application/json',
@@ -26,4 +25,4 @@ class TelemetryService {
     }
 }
 
-export default TelemetryService;
+export default OTTelemetry;
