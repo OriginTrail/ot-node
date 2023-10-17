@@ -328,11 +328,6 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
-        "telemetry": {
-            "enabled": true,
-            "sendTelemetryData": false,
-            "signalingServerUrl": "null"
-        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
@@ -488,11 +483,6 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
-        "telemetry": {
-            "enabled": true,
-            "sendTelemetryData": true,
-            "signalingServerUrl": "https://testnet-signaling.origin-trail.network/signal"
-        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
