@@ -24,7 +24,7 @@ class SendTelemetryCommand extends Command {
         const implementationName = this.telemetryModuleManager.getImplementationNames();
         if (
             !this.config.modules.telemetry.enabled ||
-            !this.config.modules.telemetry.implementation[implementationName].config
+            !this.telemetryModuleManager.getModuleConfiguration(implementationName)
                 .sendTelemetryData
         ) {
             return Command.empty();
