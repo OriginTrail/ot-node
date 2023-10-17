@@ -23,7 +23,6 @@ class TelemetryModuleUserConfigurationMigration extends BaseMigration {
                         enabled: oldConfigTelemetry.enabled,
                         package: './telemetry/implementation/ot-telemetry.js',
                         config: {
-                            enabled: oldConfigTelemetry.enabled,
                             sendTelemetryData: oldConfigTelemetry.sendTelemetryData,
                             signalingServerUrl: oldConfigTelemetry.signalingServerUrl,
                         },
