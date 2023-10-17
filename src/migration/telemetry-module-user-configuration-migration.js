@@ -3,7 +3,7 @@ import path from 'path';
 import BaseMigration from './base-migration.js';
 import { NODE_ENVIRONMENTS } from '../constants/constants.js';
 
-class TelemetryModuleMigration extends BaseMigration {
+class TelemetryModuleUserConfigurationMigration extends BaseMigration {
     async executeMigration() {
         if (
             process.env.NODE_ENV !== NODE_ENVIRONMENTS.DEVELOPMENT &&
@@ -55,7 +55,7 @@ class TelemetryModuleMigration extends BaseMigration {
         delete this.config.telemetry;
         this.config.modules.telemetry = newTelemetryConfig;
 
-        const configurationFolderPath = path.join(appRootPath.path, '..');
+        const configurationFolderPath = path.join(appRootPath.path);
         await this.fileService.writeContentsToFile(
             configurationFolderPath,
             this.config.configFilename,
@@ -64,4 +64,4 @@ class TelemetryModuleMigration extends BaseMigration {
     }
 }
 
-export default TelemetryModuleMigration;
+export default TelemetryModuleUserConfigurationMigration;

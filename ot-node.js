@@ -11,7 +11,7 @@ import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js'
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
 import PullBlockchainShardingTableMigration from './src/migration/pull-sharding-table-migration.js';
 import TripleStoreUserConfigurationMigration from './src/migration/triple-store-user-configuration-migration.js';
-import TelemetryModuleMigration from './src/migration/telemetry-module-migration.js';
+import TelemetryModuleUserConfigurationMigration from './src/migration/telemetry-module-user-configuration-migration.js';
 import PrivateAssetsMetadataMigration from './src/migration/private-assets-metadata-migration.js';
 import ServiceAgreementsMetadataMigration from './src/migration/service-agreements-metadata-migration.js';
 import RemoveAgreementStartEndTimeMigration from './src/migration/remove-agreement-start-end-time-migration.js';
@@ -37,7 +37,7 @@ class OTNode {
         await this.checkForUpdate();
         await this.removeUpdateFile();
         await this.executeTripleStoreUserConfigurationMigration();
-        await this.executeTelemetryModuleMigration();
+        await this.executeTelemetryModuleUserConfigurationMigration();
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
         this.logger.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
@@ -322,9 +322,9 @@ class OTNode {
         }
     }
 
-    async executeTelemetryModuleMigration() {
-        const migration = new TelemetryModuleMigration(
-            'telemetryModuleMigration',
+    async executeTelemetryModuleUserConfigurationMigration() {
+        const migration = new TelemetryModuleUserConfigurationMigration(
+            'telemetryModuleUserConfigurationMigration',
             this.logger,
             this.config,
         );
