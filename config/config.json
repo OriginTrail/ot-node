@@ -472,8 +472,8 @@
                         "enabled":true,
                         "package": "./telemetry/implementation/ot-telemetry.js",
                         "config": {
-                            "sendTelemetryData": false,
-                            "signalingServerUrl": "null"
+                            "sendTelemetryData": true,
+                            "signalingServerUrl": "https://testnet-signaling.origin-trail.network/signal"
                         }
                     }
                 }
@@ -628,8 +628,8 @@
                         "enabled":true,
                         "package": "./telemetry/implementation/ot-telemetry.js",
                         "config": {
-                            "sendTelemetryData": false,
-                            "signalingServerUrl": "null"
+                            "sendTelemetryData": true,
+                            "signalingServerUrl": "https://mainnet-signaling.origin-trail.network/signal"
                         }
                     }
                 }
