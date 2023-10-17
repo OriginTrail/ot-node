@@ -170,12 +170,12 @@
             "telemetry" : {
                 "enabled":true,
                 "implementation": {
-                    "telemetry-service": {
+                    "ot-telemetry": {
                         "enabled":true,
-                        "package": "./telemetry/implementation/telemetry-service.js",
+                        "package": "./telemetry/implementation/ot-telemetry.js",
                         "config": {
-                            "sendTelemetryData": true,
-                            "signalingServerUrl": "http://localhost:3000/sendTelemetryData"
+                            "sendTelemetryData": false,
+                            "signalingServerUrl": "null"
                         }
                     }
                 }
@@ -307,6 +307,19 @@
                         "enabled": true,
                         "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
                         "config": {}
+                    }
+                }
+            },
+            "telemetry" : {
+                "enabled":true,
+                "implementation": {
+                    "ot-telemetry": {
+                        "enabled":true,
+                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "config": {
+                            "sendTelemetryData": false,
+                            "signalingServerUrl": "null"
+                        }
                     }
                 }
             }
@@ -456,6 +469,19 @@
                         "config": {}
                     }
                 }
+            },
+            "telemetry" : {
+                "enabled":true,
+                "implementation": {
+                    "ot-telemetry": {
+                        "enabled":true,
+                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "config": {
+                            "sendTelemetryData": false,
+                            "signalingServerUrl": "null"
+                        }
+                    }
+                }
             }
         },
         "maximumAssertionSizeInKb": 2500,
@@ -602,6 +628,19 @@
                         "enabled": true,
                         "package": "./validation/implementation/merkle-validation.js",
                         "config": {}
+                    }
+                }
+            },
+            "telemetry" : {
+                "enabled":true,
+                "implementation": {
+                    "ot-telemetry": {
+                        "enabled":true,
+                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "config": {
+                            "sendTelemetryData": false,
+                            "signalingServerUrl": "null"
+                        }
                     }
                 }
             }
