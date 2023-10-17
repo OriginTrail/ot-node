@@ -71,7 +71,7 @@ class OTNode {
 
         await this.initializeRouters();
         await this.startNetworkModule();
-        await this.startTelemetryModule();
+        this.startTelemetryModule();
         this.resumeCommandExecutor();
         this.logger.info('Node is up and running!');
     }
@@ -277,10 +277,10 @@ class OTNode {
         await networkModuleManager.start();
     }
 
-    async startTelemetryModule() {
-        const telmetryModuleManager = this.container.resolve('telemetryModuleManager');
+    startTelemetryModule() {
+        const telemetryModuleManager = this.container.resolve('telemetryModuleManager');
         const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
-        await telmetryModuleManager.listenOnEvents((eventData) => {
+        telemetryModuleManager.listenOnEvents((eventData) => {
             repositoryModuleManager.createEventRecord(
                 eventData.operationId,
                 eventData.lastEvent,
