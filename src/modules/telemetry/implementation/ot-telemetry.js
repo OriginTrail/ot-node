@@ -21,7 +21,8 @@ class OTTelemetry {
             data: JSON.stringify(signalingMessage),
         };
         const response = await axios(config);
-        return response;
+        const isSuccess = response.status === 200;
+        return isSuccess;
     }
 }
 
