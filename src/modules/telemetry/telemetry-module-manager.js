@@ -10,11 +10,11 @@ class TelemetryModuleManager extends BaseModuleManager {
         return 'telemetry';
     }
 
-    async listenOnEvents(onEvenetRecived) {
+    async listenOnEvents(onEventReceived) {
         if (this.config.modules.telemetry.enabled && this.initialized) {
             return this.getImplementation().module.listenOnEvents(
                 this.eventEmitter,
-                onEvenetRecived,
+                onEventReceived,
             );
         }
     }

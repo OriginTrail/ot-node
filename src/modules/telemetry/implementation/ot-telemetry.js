@@ -6,8 +6,8 @@ class OTTelemetry {
         this.logger = logger;
     }
 
-    listenOnEvents(eventEmitter, onEventRecived) {
-        return eventEmitter.on('operation_status_changed', onEventRecived);
+    listenOnEvents(eventEmitter, onEventReceived) {
+        return eventEmitter.on('operation_status_changed', onEventReceived);
     }
 
     async sendTelemetryData(nodeData, events) {
