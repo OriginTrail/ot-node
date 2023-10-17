@@ -323,6 +323,12 @@ class OTNode {
     }
 
     async executeTelemetryModuleUserConfigurationMigration() {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
         const migration = new TelemetryModuleUserConfigurationMigration(
             'telemetryModuleUserConfigurationMigration',
             this.logger,
@@ -330,6 +336,8 @@ class OTNode {
         );
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();
+            this.logger.info('Node will now restart!');
+            this.stop(1);
         }
     }
 
