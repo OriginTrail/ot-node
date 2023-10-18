@@ -21,11 +21,9 @@ class SendTelemetryCommand extends Command {
      * @param command
      */
     async execute() {
-        const implementationName = this.telemetryModuleManager.getImplementationNames();
         if (
             !this.config.modules.telemetry.enabled ||
-            !this.telemetryModuleManager.getModuleConfiguration(implementationName)
-                .sendTelemetryData
+            !this.telemetryModuleManager.getModuleConfiguration().sendTelemetryData
         ) {
             return Command.empty();
         }
