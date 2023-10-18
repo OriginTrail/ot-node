@@ -1,0 +1,17 @@
+{
+    "modules": {
+        "telemetry" : {
+            "enabled":true,
+            "implementation": {
+                "ot-telemetry": {
+                    "enabled":true,
+                    "package": "./telemetry/implementation/ot-telemetry.js",
+                    "config": {
+                        "sendTelemetryData": false,
+                        "signalingServerUrl": "null"
+                    }
+                }
+            }
+        }
+    }
+}
