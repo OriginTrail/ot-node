@@ -167,11 +167,11 @@
                     }
                 }
             },
-            "telemetry" : {
-                "enabled":true,
+            "telemetry": {
+                "enabled": true,
                 "implementation": {
                     "ot-telemetry": {
-                        "enabled":true,
+                        "enabled": true,
                         "package": "./telemetry/implementation/ot-telemetry.js",
                         "config": {
                             "sendTelemetryData": false,
@@ -310,11 +310,11 @@
                     }
                 }
             },
-            "telemetry" : {
-                "enabled":true,
+            "telemetry": {
+                "enabled": true,
                 "implementation": {
                     "ot-telemetry": {
-                        "enabled":true,
+                        "enabled": true,
                         "package": "./telemetry/implementation/ot-telemetry.js",
                         "config": {
                             "sendTelemetryData": false,
@@ -465,11 +465,11 @@
                     }
                 }
             },
-            "telemetry" : {
-                "enabled":true,
+            "telemetry": {
+                "enabled": true,
                 "implementation": {
                     "ot-telemetry": {
-                        "enabled":true,
+                        "enabled": true,
                         "package": "./telemetry/implementation/ot-telemetry.js",
                         "config": {
                             "sendTelemetryData": true,
@@ -621,11 +621,11 @@
                     }
                 }
             },
-            "telemetry" : {
-                "enabled":true,
+            "telemetry": {
+                "enabled": true,
                 "implementation": {
                     "ot-telemetry": {
-                        "enabled":true,
+                        "enabled": true,
                         "package": "./telemetry/implementation/ot-telemetry.js",
                         "config": {
                             "sendTelemetryData": true,
