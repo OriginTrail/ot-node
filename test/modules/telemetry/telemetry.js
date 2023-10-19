@@ -9,12 +9,12 @@ let telemetryModuleManager;
 const config = JSON.parse(await readFile('./test/modules/telemetry/config.json'));
 
 describe('Telemetry module', () => {
-    before('Initialize telemetry module manager', () => {
+    before('Initialize logger', () => {
         logger = new Logger('trace');
         logger.info = () => {};
     });
 
-    describe('Your Test Suite', () => {
+    describe('Handle received events', () => {
         it('should call onEventReceived when event is emitted', async () => {
             const eventEmitter = {
                 eventListeners: {},
