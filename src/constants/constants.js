@@ -211,6 +211,9 @@ export const NETWORK_MESSAGE_TIMEOUT_MILLS = {
         INIT: 60 * 1000,
         REQUEST: 60 * 1000,
     },
+    ACTIVE_ASSETS: {
+        REQUEST: 60 * 1000,
+    },
 };
 
 export const MAX_OPEN_SESSIONS = 10;
@@ -265,6 +268,12 @@ export const ERROR_TYPE = {
         SUBMIT_COMMIT_ERROR: 'SubmitCommitError',
         SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
         SUBMIT_UPDATE_COMMIT_ERROR: 'SubmitUpdateCommitError',
+    },
+    ACTIVE_ASSETS: {
+        ACTIVE_ASSETS_ERROR: 'ActiveAssetsError',
+        ACTIVE_ASSETS_ROUTE_ERROR: 'ActiveAssetsRouteError',
+        ACTIVEA_SSETS_REQUEST_ERROR: 'ActiveAssetsRequestError',
+        ACTIVE_ASSETS_REQUEST_REMOTE_ERROR: 'ActiveAssetsRequestRemoteError',
     },
 };
 export const OPERATION_ID_STATUS = {
@@ -342,6 +351,12 @@ export const OPERATION_ID_STATUS = {
         LOCAL_STORE_INIT_END: 'LOCAL_STORE_INIT_END',
         LOCAL_STORE_START: 'LOCAL_STORE_START',
         LOCAL_STORE_END: 'LOCAL_STORE_END',
+    },
+    ACTIVE_ASSETS: {
+        ACTIVE_ASSETS_START: 'ACTIVE_ASSETS_START',
+        ACTIVE_ASSETS_END: 'ACTIVE_ASSETS_END',
+        ACTIVE_ASSETS_REQUEST_REMOTE_START: 'ACTIVE_ASSETS_REQUEST_REMOTE_START',
+        ACTIVE_ASSETS_REQUEST_REMOTE_END: 'ACTIVE_ASSETS_REQUEST_REMOTE_END',
     },
 };
 
@@ -475,6 +490,11 @@ export const HTTP_API_ROUTES = {
             path: '/bid-suggestion',
             options: {},
         },
+        'active-assets': {
+            mathod: 'get',
+            path: '/active-assets',
+            options: {},
+        },
     },
     v1: {},
 };
@@ -487,6 +507,7 @@ export const NETWORK_PROTOCOLS = {
     STORE: ['/store/1.0.0'],
     UPDATE: ['/update/1.0.0'],
     GET: ['/get/1.0.0'],
+    ACTIVE_ASSETS: ['/active-assets/1.0.0'],
 };
 
 export const OPERATION_STATUS = {

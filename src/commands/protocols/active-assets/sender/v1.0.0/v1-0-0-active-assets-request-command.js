@@ -8,15 +8,18 @@ import {
 class ActiveAssetsRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.getService;
+        this.operationService = ctx.activeAssetsService;
 
-        // TODO: add const
-        this.errorType = ERROR_TYPE.ACTIVE_ASSETS.ACTIVEASSETS_REQUEST_ERROR;
+        this.errorType = ERROR_TYPE.ACTIVE_ASSETS.ACTIVEA_SSETS_REQUEST_ERROR;
     }
 
     // eslint-disable-next-line no-unused-vars
     async prepareMessage(command) {
-        return {};
+        const { blockchainId } = command.data;
+
+        return {
+            blockchainId,
+        };
     }
 
     async handleAck(command, responseData) {
@@ -30,6 +33,7 @@ class ActiveAssetsRequestCommand extends ProtocolRequestCommand {
                 });
             }
 
+            // TODO: Implement processResponse
             await this.operationService.processResponse(
                 command,
                 OPERATION_REQUEST_STATUS.COMPLETED,
@@ -43,7 +47,6 @@ class ActiveAssetsRequestCommand extends ProtocolRequestCommand {
     }
 
     messageTimeout() {
-        // TODO: add const
         return NETWORK_MESSAGE_TIMEOUT_MILLS.ACTIVE_ASSETS.REQUEST;
     }
 
