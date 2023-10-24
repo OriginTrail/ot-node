@@ -564,6 +564,7 @@ export const CONTRACT_EVENT_FETCH_INTERVALS = {
 export const BLOCK_TIME_MILLIS = {
     OTP: 12_000,
     HARDHAT: 5_000,
+    GNOSIS: 5_000,
     DEFAULT: 12_000,
 };
 
