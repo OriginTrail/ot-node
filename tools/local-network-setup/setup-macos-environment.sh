@@ -51,7 +51,17 @@ then
 
   osascript -e "tell app \"Terminal\"
         do script \"cd $pathToOtNode
-        node tools/local-network-setup/run-local-blockchain.js\"
+        node tools/local-network-setup/run-local-blockchain.js 8545\"
+    end tell"
+  echo Waiting for hardhat to start and contracts deployment
+
+  echo ================================
+  echo ====== Starting hardhat 2 ======
+  echo ================================
+
+  osascript -e "tell app \"Terminal\"
+        do script \"cd $pathToOtNode
+        node tools/local-network-setup/run-local-blockchain.js 9545\"
     end tell"
   echo Waiting for hardhat to start and contracts deployment
 fi

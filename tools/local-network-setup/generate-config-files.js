@@ -102,7 +102,20 @@ function generateBlockchainConfig(templateBlockchainConfig, nodeIndex) {
     blockchainConfig.implementation[blockchain].config = {
         ...blockchainConfig.implementation[blockchain].config,
         hubContractAddress,
-        rpcEndpoints: [process.env.RPC_ENDPOINT],
+        rpcEndpoints: [process.env.RPC_ENDPOINT1],
+        evmOperationalWalletPublicKey: publicKeys[nodeIndex],
+        evmOperationalWalletPrivateKey: privateKeys[nodeIndex],
+        evmManagementWalletPublicKey: publicKeys[publicKeys.length - 1 - nodeIndex],
+        evmManagementWalletPrivateKey: privateKeys[privateKeys.length - 1 - nodeIndex],
+        sharesTokenName: `LocalNode${nodeIndex}`,
+        sharesTokenSymbol: `LN${nodeIndex}`,
+    };
+
+    // TODO: Don't use string
+    blockchainConfig.implementation['hardhat2'].config = {
+        ...blockchainConfig.implementation['hardhat2'].config,
+        hubContractAddress,
+        rpcEndpoints: [process.env.RPC_ENDPOINT2],
         evmOperationalWalletPublicKey: publicKeys[nodeIndex],
         evmOperationalWalletPrivateKey: privateKeys[nodeIndex],
         evmManagementWalletPublicKey: publicKeys[publicKeys.length - 1 - nodeIndex],

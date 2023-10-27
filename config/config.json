@@ -125,6 +125,19 @@
                             "initialAskAmount": 0.2
                         }
                     },
+                    "hardhat2": {
+                        "enabled": true,
+                        "package": "./blockchain/implementation/hardhat/hardhat-service.js",
+                        "config": {
+                            "blockchainTitle": "hardhat2",
+                            "networkId": "ganache::testnet",
+                            "hubContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+                            "rpcEndpoints": ["http://localhost:9545"],
+                            "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
+                            "initialStakeAmount": 50000,
+                            "initialAskAmount": 0.2
+                        }
+                    },
                     "otp": {
                         "enabled": false,
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
