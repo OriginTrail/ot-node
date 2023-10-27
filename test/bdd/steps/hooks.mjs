@@ -16,6 +16,7 @@ Before(function beforeMethod(testCase, done) {
     // Initialize variables
     this.state = {};
     this.state.localBlockchain = null;
+    this.state.localBlockchains = [];
     this.state.nodes = {};
     this.state.bootstraps = [];
     let logDir = process.env.CUCUMBER_ARTIFACTS_DIR || '.';

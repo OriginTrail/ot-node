@@ -297,6 +297,30 @@
                             "initialStakeAmount": 50000,
                             "initialAskAmount": 0.2
                         }
+                    },
+                    "hardhat-test1": {
+                        "enabled": true,
+                        "package": "./blockchain/implementation/hardhat/hardhat-service.js",
+                        "config": {
+                            "blockchainTitle": "hardhat-test-1",
+                            "networkId": "hardhat::testnet1",
+                            "hubContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+                            "rpcEndpoints": ["http://localhost:8545"],
+                            "initialStakeAmount": 50000,
+                            "initialAskAmount": 0.2
+                        }
+                    },
+                    "hardhat-test2": {
+                        "enabled": true,
+                        "package": "./blockchain/implementation/hardhat/hardhat-service.js",
+                        "config": {
+                            "blockchainTitle": "hardhat-test-2",
+                            "networkId": "hardhat::testnet2",
+                            "hubContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+                            "rpcEndpoints": ["http://localhost:8545"],
+                            "initialStakeAmount": 50000,
+                            "initialAskAmount": 0.2
+                        }
                     }
                 }
             },

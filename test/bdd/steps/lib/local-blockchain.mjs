@@ -50,13 +50,13 @@ const testParametersStorageParams = {
 let startBlockchainProcess;
 
 class LocalBlockchain {
-    async initialize(_console = console) {
-        startBlockchainProcess = exec('npm run start:local_blockchain');
+    async initialize(port, _console = console) {
+        startBlockchainProcess = exec(`npm run start:local_blockchain -- ${port}`);
         startBlockchainProcess.stdout.on('data', (data) => {
             _console.log(data);
         });
 
-        this.provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
+        this.provider = new ethers.providers.JsonRpcProvider(`http://localhost:${port}`);
 
         const [privateKeysFile, publicKeysFile] = await Promise.all([
             readFile('test/bdd/steps/api/datasets/privateKeys.json'),
