@@ -8,7 +8,10 @@ const state = {
     // this is local blockchain object look at test/bdd/steps/lib/local-blockchain.js
     localBlockchain: {},
     // this is local blockchain object look at test/bdd/steps/lib/local-blockchain.js
-    localBlockchains: [],
+    localBlockchains: {
+        test1: {},
+        test2: {}
+    },
     // array of nodes
     nodes: {
         0: {

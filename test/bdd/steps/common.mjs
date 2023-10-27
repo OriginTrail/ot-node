@@ -245,17 +245,26 @@ Given(/^I wait for (\d+) seconds$/, { timeout: 100000 }, async function waitFor(
     await sleep(seconds * 1000);
 });
 
-Given(/^I set R1 to be (\d+)$/, { timeout: 100000 }, async function waitFor(r1) {
-    this.logger.log(`I set R1 to be ${r1}`);
-    await this.state.localBlockchain.setR1(r1);
+Given(/^I set R1 to be (\d+) on blockchain ([^"]*)$/, { timeout: 100000 }, async function waitFor(r1, blockchain) {
+    if (!this.state.localBlockchains[blockchain]) {
+        throw Error(`Unknown blockchain ${blockchain}`);
+    }
+    this.logger.log(`I set R1 to be ${r1} on blockchain ${blockchain}`);
+    await this.state.localBlockchains[blockchain].setR1(r1);
 });
 
-Given(/^I set R0 to be (\d+)$/, { timeout: 100000 }, async function waitFor(r0) {
-    this.logger.log(`I set R0 to be ${r0}`);
-    await this.state.localBlockchain.setR0(r0);
+Given(/^I set R0 to be (\d+) on blockchain ([^"]*)$/, { timeout: 100000 }, async function waitFor(r0, blockchain) {
+    if (!this.state.localBlockchains[blockchain]) {
+        throw Error(`Unknown blockchain ${blockchain}`);
+    }
+    this.logger.log(`I set R0 to be ${r0} on blockchain ${blockchain}`);
+    await this.state.localBlockchains[blockchain].setR0(r0);
 });
 
-Given(/^I set finalizationCommitsNumber to be (\d+)$/, { timeout: 100000 }, async function waitFor(finalizationCommitsNumber) {
-    this.logger.log(`I set finalizationCommitsNumber to be ${finalizationCommitsNumber}`);
-    await this.state.localBlockchain.setFinalizationCommitsNumber(finalizationCommitsNumber);
+Given(/^I set finalizationCommitsNumber to be (\d+) on blockchain ([^"]*)$/, { timeout: 100000 }, async function waitFor(finalizationCommitsNumber, blockchain) {
+    if (!this.state.localBlockchains[blockchain]) {
+        throw Error(`Unknown blockchain ${blockchain}`);
+    }
+    this.logger.log(`I set finalizationCommitsNumber to be ${finalizationCommitsNumber} on blockchain ${blockchain}`);
+    await this.state.localBlockchains[blockchain].setFinalizationCommitsNumber(finalizationCommitsNumber);
 });

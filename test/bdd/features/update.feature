@@ -1,13 +1,16 @@
 Feature: Update asset test
   Background: Setup local blockchain, bootstraps and nodes
-    Given the blockchain is set up
+    Given the blockchains are set up
     And 1 bootstrap is running
 
   @release
   Scenario: Update an existing knowledge asset
-    Given I set R0 to be 1
-    And I set R1 to be 2
-    And I set finalizationCommitsNumber to be 2
+    Given I set R0 to be 1 on blockchain test1
+    And I set R1 to be 2 on blockchain test1
+    And I set finalizationCommitsNumber to be 2 on blockchain test1
+    And I set R0 to be 1 on blockchain test2
+    And I set R1 to be 2 on blockchain test2
+    And I set finalizationCommitsNumber to be 2 on blockchain test2
     And I setup 4 nodes
     And I wait for 5 seconds
 
