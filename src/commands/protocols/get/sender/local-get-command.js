@@ -107,10 +107,6 @@ class LocalGetCommand extends Command {
         return this.continueSequence(command.data, command.sequence);
     }
 
-    async handleError(operationId, errorMessage, errorType) {
-        await this.operationService.markOperationAsFailed(operationId, errorMessage, errorType);
-    }
-
     /**
      * Builds default localGetCommand
      * @param map

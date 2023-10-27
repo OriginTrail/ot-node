@@ -31,9 +31,10 @@ class ProtocolScheduleMessagesCommand extends Command {
         this.logger.debug(
             `Trying to ${this.operationService.getOperationName()} to batch of ${
                 currentBatchNodes.length
-            } nodes for keyword : ${keyword}, leftover for retry: ${
+            } nodes for the Keyword: ${keyword}, leftover for retry: ${
                 currentBatchLeftoverNodes.length
-            }`,
+            }.`,
+            command,
         );
 
         const addCommandPromises = currentBatchNodes.map(async (node) => {

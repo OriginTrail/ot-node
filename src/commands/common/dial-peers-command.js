@@ -14,16 +14,15 @@ class DialPeersCommand extends Command {
 
     /**
      * Executes command and produces one or more events
-     * @param command
      */
-    async execute() {
+    async execute(command) {
         const peersToDial = await this.repositoryModuleManager.getPeersToDial(
             DIAL_PEERS_CONCURRENCY,
             MIN_DIAL_FREQUENCY_MILLIS,
         );
 
         if (peersToDial.length) {
-            this.logger.trace(`Dialing ${peersToDial.length} remote peers`);
+            this.logger.trace(`Dialing ${peersToDial.length} remote peers.`, command);
             await Promise.all(
                 peersToDial.map(({ peerId }) => this.shardingTableService.dial(peerId)),
             );
@@ -38,7 +37,11 @@ class DialPeersCommand extends Command {
      * @param error
      */
     async recover(command, error) {
-        this.logger.warn(`Failed to dial peers: error: ${error.message}`);
+        this.logger.warn(
+            `Error occurred during the command execution; ` +
+                `Error Message: ${error.message}. Repeating the command...`,
+            command,
+        );
         return Command.repeat();
     }
 

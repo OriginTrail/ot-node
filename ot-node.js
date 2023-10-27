@@ -80,7 +80,8 @@ class OTNode {
         this.logger.warn(`Using node.js version: ${process.versions.node}`);
         if (nodeMajorVersion < MIN_NODE_VERSION) {
             this.logger.warn(
-                `This node was tested with node.js version 16. To make sure that your node is running properly please update your node version!`,
+                `This node was tested with node.js version 16. ` +
+                    `To make sure that your node is running properly please update your node version!`,
             );
         }
         this.logger.warn('======================================================');
@@ -88,10 +89,14 @@ class OTNode {
 
     initializeLogger() {
         this.logger = new Logger(this.config.logLevel);
+
+        this.logger.info('Logger has been successfully initialized.');
     }
 
     initializeFileService() {
         this.fileService = new FileService({ config: this.config, logger: this.logger });
+
+        this.logger.info('File Service has been successfully initialized.');
     }
 
     initializeAutoUpdaterModule() {
@@ -100,6 +105,8 @@ class OTNode {
             this.config.modules.autoUpdater.implementation['ot-auto-updater'].config,
             this.logger,
         );
+
+        this.logger.info('Auto Updater has been successfully initialized.');
     }
 
     initializeConfiguration(userConfig) {
@@ -121,7 +128,7 @@ class OTNode {
         DependencyInjection.registerValue(this.container, 'config', this.config);
         DependencyInjection.registerValue(this.container, 'logger', this.logger);
 
-        this.logger.info('Dependency injection module is initialized');
+        this.logger.info('Dependency Injection Module has been successfully initialized.');
     }
 
     async initializeModules() {
@@ -134,18 +141,22 @@ class OTNode {
         }
         try {
             await Promise.all(initializationPromises);
-            this.logger.info(`All modules initialized!`);
         } catch (e) {
-            this.logger.error(`Module initialization failed. Error message: ${e.message}`);
+            this.logger.error(
+                `Module initialization failed. Error: ${e.message}. ` +
+                    `OT-Node is shutting down...`,
+            );
             this.stop(1);
         }
+
+        this.logger.info(`All modules have been successfully initialized.`);
     }
 
     initializeEventEmitter() {
         const eventEmitter = new EventEmitter();
         DependencyInjection.registerValue(this.container, 'eventEmitter', eventEmitter);
 
-        this.logger.info('Event emitter initialized');
+        this.logger.info('Event Emitter has been successfully initialized.');
     }
 
     async initializeBlockchainEventListenerService() {
@@ -153,40 +164,35 @@ class OTNode {
             const eventListenerService = this.container.resolve('blockchainEventListenerService');
             await eventListenerService.initialize();
             eventListenerService.startListeningOnEvents();
-            this.logger.info('Event Listener Service initialized successfully');
         } catch (error) {
             this.logger.error(
-                `Unable to initialize event listener service. Error message: ${error.message} OT-node shutting down...`,
+                `Unable to initialize Event Listener Service. Error: ${error.message}. ` +
+                    `OT-Node is shutting down...`,
             );
             this.stop(1);
         }
+
+        this.logger.info('Event Listener Service has been successfully initialized.');
     }
 
     async initializeRouters() {
-        try {
-            this.logger.info('Initializing http api and rpc router');
+        const routerNames = ['httpApiRouter', 'rpcRouter'];
+        await Promise.all(
+            routerNames.map(async (routerName) => {
+                const router = this.container.resolve(routerName);
+                try {
+                    await router.initialize();
+                } catch (error) {
+                    this.logger.error(
+                        `${routerName} initialization failed. Error: ${error.message}. ` +
+                            `OT-Node is shutting down...`,
+                    );
+                    this.stop(1);
+                }
+            }),
+        );
 
-            const routerNames = ['httpApiRouter', 'rpcRouter'];
-            await Promise.all(
-                routerNames.map(async (routerName) => {
-                    const router = this.container.resolve(routerName);
-                    try {
-                        await router.initialize();
-                    } catch (error) {
-                        this.logger.error(
-                            `${routerName} initialization failed. Error message: ${error.message}, ${error.stackTrace}`,
-                        );
-                        this.stop(1);
-                    }
-                }),
-            );
-            this.logger.info('Routers initialized successfully');
-        } catch (error) {
-            this.logger.error(
-                `Failed to initialize routers: ${error.message}, ${error.stackTrace}`,
-            );
-            this.stop(1);
-        }
+        this.logger.info('HTTP API and RPC Routers are successfully initialized.');
     }
 
     async createProfiles() {
@@ -196,7 +202,7 @@ class OTNode {
             .map(async (blockchain) => {
                 try {
                     if (!(await blockchainModuleManager.identityIdExists(blockchain))) {
-                        this.logger.info(`Creating profile on network: ${blockchain}`);
+                        this.logger.info(`Creating profile on ${blockchain} network.`);
                         const networkModuleManager = this.container.resolve('networkModuleManager');
                         const peerId = networkModuleManager.getPeerId().toB58String();
                         await blockchainModuleManager.createProfile(blockchain, peerId);
@@ -225,10 +231,10 @@ class OTNode {
                         }
                     }
                     const identityId = await blockchainModuleManager.getIdentityId(blockchain);
-                    this.logger.info(`Identity ID: ${identityId}`);
+                    this.logger.info(`Identity ID: ${identityId}.`);
                 } catch (error) {
                     this.logger.warn(
-                        `Unable to create ${blockchain} blockchain profile. Removing implementation. Error: ${error.message}`,
+                        `Unable to create ${blockchain} blockchain profile. Error: ${error.message}. Removing implementation...`,
                     );
                     blockchainModuleManager.removeImplementation(blockchain);
                 }
@@ -237,7 +243,7 @@ class OTNode {
         await Promise.all(createProfilesPromises);
 
         if (!blockchainModuleManager.getImplementationNames().length) {
-            this.logger.error(`Unable to create blockchain profiles. OT-node shutting down...`);
+            this.logger.error(`Unable to create blockchain profiles. OT-Node is shutting down...`);
             this.stop(1);
         }
     }
@@ -249,10 +255,11 @@ class OTNode {
             await commandExecutor.addDefaultCommands();
             commandExecutor
                 .replayOldCommands()
-                .then(() => this.logger.info('Finished replaying old commands'));
+                .then(() => this.logger.info('Finished replaying old commands.'));
         } catch (e) {
             this.logger.error(
-                `Command executor initialization failed. Error message: ${e.message}`,
+                `Command executor initialization failed. Error: ${e.message}. ` +
+                    `OT-Node is shutting down...`,
             );
             this.stop(1);
         }
@@ -273,6 +280,8 @@ class OTNode {
     async startNetworkModule() {
         const networkModuleManager = this.container.resolve('networkModuleManager');
         await networkModuleManager.start();
+
+        this.logger.info('Network Module has been successfully started.');
     }
 
     async executePrivateAssetsMetadataMigration() {
@@ -465,13 +474,15 @@ class OTNode {
         try {
             const shardingTableService = this.container.resolve('shardingTableService');
             await shardingTableService.initialize();
-            this.logger.info('Sharding Table Service initialized successfully');
         } catch (error) {
             this.logger.error(
-                `Unable to initialize sharding table service. Error message: ${error.message} OT-node shutting down...`,
+                `Unable to initialize sharding table service. Error: ${error.message} ` +
+                    `OT-Node is shutting down...`,
             );
             this.stop(1);
         }
+
+        this.logger.info('Sharding Table Service has been successfully initialized.');
     }
 
     async initializeTelemetryInjectionService() {
@@ -481,19 +492,20 @@ class OTNode {
                     'telemetryInjectionService',
                 );
                 telemetryHubModuleManager.initialize();
-                this.logger.info('Telemetry Injection Service initialized successfully');
             } catch (e) {
                 this.logger.error(
-                    `Telemetry hub module initialization failed. Error message: ${e.message}`,
+                    `Telemetry hub module initialization failed. Error: ${e.message}`,
                 );
             }
+
+            this.logger.info('Telemetry Injection Service has been successfully initialized.');
         }
     }
 
     async removeUpdateFile() {
         const updateFilePath = this.fileService.getUpdateFilePath();
         await this.fileService.removeFile(updateFilePath).catch((error) => {
-            this.logger.warn(`Unable to remove update file. Error: ${error}`);
+            this.logger.warn(`Unable to remove update file. Error: ${error}.`);
         });
         this.config.otNodeUpdated = true;
     }
@@ -510,7 +522,7 @@ class OTNode {
     }
 
     stop(code = 0) {
-        this.logger.info('Stopping node...');
+        this.logger.info('Stopping the node...');
         process.exit(code);
     }
 

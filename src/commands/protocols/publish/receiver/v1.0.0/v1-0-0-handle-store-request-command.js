@@ -21,7 +21,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR;
     }
 
-    async prepareMessage(commandData) {
+    async prepareMessage(command) {
         const {
             blockchain,
             keyword,
@@ -32,7 +32,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             assertionId,
             agreementId,
             agreementData,
-        } = commandData;
+        } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

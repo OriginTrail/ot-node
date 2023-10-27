@@ -10,9 +10,9 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_REMOTE_ERROR;
     }
 
-    async prepareMessage(commandData) {
+    async prepareMessage(command) {
         const { operationId, assertionId, blockchain, contract, tokenId, keyword, hashFunctionId } =
-            commandData;
+            command.data;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -38,11 +38,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
     }
 
     async retryFinished(command) {
-        const { operationId } = command.data;
-        this.handleError(
-            `Retry count for command: ${command.name} reached! Unable to validate data for operation id: ${operationId}`,
-            command,
-        );
+        this.handleError(command, `Max retries exceeded! Unable to validate the data.`);
     }
 
     /**

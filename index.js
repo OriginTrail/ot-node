@@ -55,6 +55,6 @@ process.env.NODE_ENV =
 })();
 
 process.on('uncaughtException', (err) => {
-    console.error('Something went really wrong! OT-node shutting down...', err);
+    console.error(`Something went really wrong! Error: ${err.message}. OT-node shutting down...`);
     process.exit(1);
 });

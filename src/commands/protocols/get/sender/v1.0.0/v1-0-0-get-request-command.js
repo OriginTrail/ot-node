@@ -24,7 +24,8 @@ class GetRequestCommand extends ProtocolRequestCommand {
             return true;
         }
         this.logger.trace(
-            `${command.name} skipped for operationId: ${operationId} with status ${status}`,
+            `Command skipped for the operation ID: ${operationId} with the status ${status}.`,
+            command,
         );
 
         return false;

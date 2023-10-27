@@ -21,7 +21,7 @@ class HandleProtocolMessageCommand extends Command {
         const { remotePeerId, operationId, keywordUuid, protocol } = command.data;
 
         try {
-            const { messageType, messageData } = await this.prepareMessage(command.data);
+            const { messageType, messageData } = await this.prepareMessage(command);
             await this.networkModuleManager.sendMessageResponse(
                 protocol,
                 remotePeerId,
@@ -32,10 +32,14 @@ class HandleProtocolMessageCommand extends Command {
             );
         } catch (error) {
             if (command.retries) {
-                this.logger.warn(error.message);
+                this.logger.warn(
+                    `Error occurred during the command execution; ` +
+                        `Error Message: ${error.message}. Retrying the command...`,
+                    command,
+                );
                 return Command.retry();
             }
-            await this.handleError(error.message, command);
+            await this.handleError(command, error.message);
         }
 
         this.networkModuleManager.removeCachedSession(operationId, keywordUuid, remotePeerId);
@@ -44,7 +48,7 @@ class HandleProtocolMessageCommand extends Command {
     }
 
     async prepareMessage() {
-        throw Error('prepareMessage not implemented');
+        throw Error('prepareMessage is not implemented.');
     }
 
     async validateNeighborhood(blockchain, keyword, hashFunctionId, ual) {
@@ -61,7 +65,8 @@ class HandleProtocolMessageCommand extends Command {
                 return true;
             }
         }
-        this.logger.warn(`Invalid neighborhood for ual: ${ual}`);
+
+        this.logger.warn(`Invalid neighborhood for the UAL: ${ual}`);
 
         return false;
     }
@@ -74,7 +79,9 @@ class HandleProtocolMessageCommand extends Command {
         );
         if (blockchainAssertionId !== assertionId) {
             throw Error(
-                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${assertionId}`,
+                `Invalid Assertion ID for the Knowledge Asset with the UAL: ${ual}. ` +
+                    `Value from the blockchain: ${blockchainAssertionId}; ` +
+                    `Value from the request: ${assertionId}.`,
             );
         }
     }
@@ -88,16 +95,13 @@ class HandleProtocolMessageCommand extends Command {
         assertionId,
         operationId,
     ) {
-        const geAgreementData = async () => {
+        const getAgreementData = async () => {
             const agreementId = await this.serviceAgreementService.generateId(
                 blockchain,
                 contract,
                 tokenId,
                 keyword,
                 hashFunctionId,
-            );
-            this.logger.info(
-                `Calculated agreement id: ${agreementId} for contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}, operationId: ${operationId}`,
             );
 
             return {
@@ -122,7 +126,7 @@ class HandleProtocolMessageCommand extends Command {
 
         const [{ agreementId, agreementData }, blockchainAssertionSize, r0, ask] =
             await Promise.all([
-                geAgreementData(),
+                getAgreementData(),
                 this.blockchainModuleManager.getAssertionSize(blockchain, assertionId),
                 this.blockchainModuleManager.getR0(blockchain),
                 getAsk(),
@@ -130,11 +134,15 @@ class HandleProtocolMessageCommand extends Command {
         const blockchainAssertionSizeInKb = blockchainAssertionSize / BYTES_IN_KILOBYTE;
         if (blockchainAssertionSizeInKb > this.config.maximumAssertionSizeInKb) {
             this.logger.warn(
-                `The size of the received assertion exceeds the maximum limit allowed.. Maximum allowed assertion size in kb: ${this.config.maximumAssertionSizeInKb}, assertion size read from blockchain in kb: ${blockchainAssertionSizeInKb}`,
+                `The size of the received Assertion for the Service Agreement ` +
+                    `with ID: ${agreementId} exceeds the maximum limit allowed. ` +
+                    `Maximum allowed assertion size: ${this.config.maximumAssertionSizeInKb} KB; ` +
+                    `Assertion size read from blockchain: ${blockchainAssertionSizeInKb} KB.`,
             );
             return {
                 errorMessage:
-                    'The size of the received assertion exceeds the maximum limit allowed.',
+                    `The size of the received Assertion for the Service Agreement ` +
+                    `with ID: ${agreementId} exceeds the maximum limit allowed.`,
                 agreementId,
                 agreementData,
             };
@@ -161,7 +169,7 @@ class HandleProtocolMessageCommand extends Command {
             .div(divisor)
             .add(1); // add 1 wei because of the precision loss
 
-        const bidAskLog = `Service agreement bid: ${serviceAgreementBid}, ask: ${ask}, operationId: ${operationId}`;
+        const bidAskLog = `Operation ID: ${operationId}; Service Agreement Bid: ${serviceAgreementBid}; Node Ask: ${ask}.`;
         this.logger.trace(bidAskLog);
 
         return {
@@ -182,17 +190,19 @@ class HandleProtocolMessageCommand extends Command {
     ) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
-        this.logger.trace(`Validating neighborhood for ual: ${ual}`);
+        this.logger.trace(`Validating neighborhood for the Knowledge Asset with the UAL: ${ual}.`);
         if (!(await this.validateNeighborhood(blockchain, keyword, hashFunctionId, ual))) {
             return {
                 messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                messageData: { errorMessage: 'Invalid neighbourhood' },
+                messageData: {
+                    errorMessage: `Invalid neighbourhood for the Knowledge Asset with the UAL: ${ual}.`,
+                },
             };
         }
 
-        this.logger.trace(`Validating assertion with ual: ${ual}`);
+        this.logger.trace(`Validating Assertion for the Knowledge Asset with the UAL: ${ual}.`);
         await this.validateAssertionId(blockchain, contract, tokenId, assertionId, ual);
-        this.logger.trace(`Validating bid for asset with ual: ${ual}`);
+        this.logger.trace(`Validating Bid for the Knowledge Asset with the UAL: ${ual}.`);
         const { errorMessage, agreementId, agreementData } = await this.validateBid(
             contract,
             tokenId,
@@ -224,10 +234,10 @@ class HandleProtocolMessageCommand extends Command {
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
     }
 
-    async handleError(errorMessage, command) {
+    async handleError(command, errorMessage) {
         const { operationId, remotePeerId, keywordUuid, protocol } = command.data;
 
-        await super.handleError(operationId, errorMessage, this.errorType, true);
+        await super.handleError(operationId, command, this.errorType, errorMessage, true);
         await this.networkModuleManager.sendMessageResponse(
             protocol,
             remotePeerId,

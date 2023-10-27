@@ -25,7 +25,7 @@ class FindNodesCommand extends Command {
         } = command.data;
 
         this.errorType = errorType;
-        this.logger.debug(`Searching for closest node(s) for keyword ${keyword}`);
+        this.logger.debug(`Searching for the closest node(s) for the keyword ${keyword}.`, command);
 
         // TODO: protocol selection
         const closestNodes = [];
@@ -36,20 +36,25 @@ class FindNodesCommand extends Command {
             }
         }
 
-        this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${keyword}`);
+        this.logger.debug(
+            `Found ${closestNodes.length} node(s) for the keyword ${keyword}.`,
+            command,
+        );
         this.logger.trace(
-            `Found neighbourhood: ${JSON.stringify(
+            `Found the neighbourhood: ${JSON.stringify(
                 closestNodes.map((node) => node.id),
                 null,
                 2,
             )}`,
+            command,
         );
 
         if (closestNodes.length < minAckResponses) {
             this.handleError(
                 operationId,
-                `Unable to find enough nodes for ${operationId}. Minimum number of nodes required: ${minAckResponses}`,
+                command,
                 this.errorType,
+                `Unable to find enough nodes. Minimum number of nodes required: ${minAckResponses}.`,
                 true,
             );
             return Command.empty();

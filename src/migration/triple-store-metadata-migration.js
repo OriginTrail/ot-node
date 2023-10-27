@@ -125,7 +125,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
             try {
                 resolvedUAL = this.ualService.resolveUAL(ual);
             } catch (error) {
-                this.logger.warn(`Unable to resolve UAL: ${error}`);
+                this.logger.warn(`Unable to resolve UAL: ${error}.`);
                 continue;
             }
 
@@ -140,14 +140,14 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 );
                 migrationInfo.processedUals[ual].assertionIds = assertionIds;
             } catch (error) {
-                this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
+                this.logger.warn(`Unable to find assertion IDs for asset with UAL: ${ual}.`);
                 migrationInfo.ualsToProcess.splice(i, 1);
                 await this._updateMigrationInfoFile(currentRepository, migrationInfo);
                 continue;
             }
 
             if (!assertionIds?.length) {
-                this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
+                this.logger.warn(`Unable to find assertion IDs for asset with UAL: ${ual}.`);
                 migrationInfo.ualsToProcess.splice(i, 1);
                 await this._updateMigrationInfoFile(currentRepository, migrationInfo);
                 continue;
@@ -209,7 +209,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
         );
 
         this.logger.debug(
-            `found ${assetsQueryResult.length} assets with missing blockchain metadata`,
+            `Found ${assetsQueryResult.length} assets with missing blockchain metadata.`,
         );
 
         let triples = '';
@@ -221,7 +221,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
             try {
                 resolvedUAL = this.ualService.resolveUAL(ual);
             } catch (error) {
-                this.logger.warn(`Unable to resolve UAL: ${error}`);
+                this.logger.warn(`Unable to resolve UAL: ${error}.`);
                 continue;
             }
 
@@ -265,7 +265,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
         );
 
         this.logger.debug(
-            `found ${assetsQueryResult.length} assets with missing contract metadata`,
+            `Found ${assetsQueryResult.length} assets with missing contract metadata.`,
         );
 
         let triples = '';
@@ -277,7 +277,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
             try {
                 resolvedUAL = this.ualService.resolveUAL(ual);
             } catch (error) {
-                this.logger.warn(`Unable to resolve UAL: ${error}`);
+                this.logger.warn(`Unable to resolve UAL: ${error}.`);
                 continue;
             }
 
@@ -320,7 +320,9 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 }`,
         );
 
-        this.logger.debug(`found ${assetsQueryResult.length} assets with missing keyword metadata`);
+        this.logger.debug(
+            `Found ${assetsQueryResult.length} assets with missing keyword metadata.`,
+        );
 
         let triples = '';
         const processedAssets = [];
@@ -330,7 +332,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
             try {
                 resolvedUAL = this.ualService.resolveUAL(ual);
             } catch (error) {
-                this.logger.warn(`Unable to resolve UAL: ${error}`);
+                this.logger.warn(`Unable to resolve UAL: ${error}.`);
                 continue;
             }
 
@@ -344,12 +346,12 @@ class TripleStoreMetadataMigration extends BaseMigration {
                     tokenId,
                 );
             } catch (error) {
-                this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
+                this.logger.warn(`Unable to find assertion IDs for asset with UAL: ${ual}`);
                 continue;
             }
 
             if (!assertionIds?.length) {
-                this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
+                this.logger.warn(`Unable to find assertion IDs for asset with UAL: ${ual}`);
                 continue;
             }
 
@@ -404,7 +406,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
         );
 
         this.logger.debug(
-            `found ${assetsQueryResult.length} assets not containing exactly one assertion id in metadata`,
+            `Found ${assetsQueryResult.length} assets not containing exactly one assertion ID in metadata.`,
         );
 
         let migrationInfoCopy = migrationInfo;
@@ -414,7 +416,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
             try {
                 resolvedUAL = this.ualService.resolveUAL(ual);
             } catch (error) {
-                this.logger.warn(`Unable to resolve UAL: ${error}`);
+                this.logger.warn(`Unable to resolve UAL: ${error}.`);
                 continue;
             }
 
@@ -429,12 +431,12 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 );
                 migrationInfoCopy.processedUals[ual].assertionIds = assertionIds;
             } catch (error) {
-                this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
+                this.logger.warn(`Unable to find assertion IDs for asset with UAL: ${ual}.`);
                 continue;
             }
 
             if (!assertionIds?.length) {
-                this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
+                this.logger.warn(`Unable to find assertion IDs for asset with UAL: ${ual}.`);
                 continue;
             }
 
@@ -668,7 +670,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 assetsQueryResult = assetsQueryResult.filter(({ g }) => g.startsWith('assertion:'));
             }
             this.logger.debug(
-                `found ${assetsQueryResult.length} assertions not linked to any asset.`,
+                `Found ${assetsQueryResult.length} assertions not linked to any asset.`,
             );
             let deleteQuery = '';
             if (!migrationInfoCopy.deletedAssertions) migrationInfoCopy.deletedAssertions = [];
@@ -706,13 +708,13 @@ class TripleStoreMetadataMigration extends BaseMigration {
         );
         let stats = this.dataService.parseBindings(allAssetsResult)[0];
 
-        let log = `metadata stats for ${repository} repository: `;
-        log += `\n\t\t\t\tdistinct number of uals: ${stats.all}`;
+        let log = `Metadata stats for ${repository} repository: `;
+        log += `\n\t\t\t\tdistinct number of UALs: ${stats.all}`;
 
         const predicates = ['blockchain', 'contract', 'tokenId', 'keyword', 'assertion'];
         for (const predicate of predicates) {
             stats = await this._getPredicateStats(repository, predicate);
-            log += `\n\t\t\t\tdistinct number of uals with predicate ${predicate}: ${stats}`;
+            log += `\n\t\t\t\tdistinct number of UALs with predicate ${predicate}: ${stats}`;
         }
         this.logger.debug(log);
     }

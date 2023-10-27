@@ -12,26 +12,29 @@ class OtnodeUpdateCommand extends Command {
 
     /**
      * Performs code update by fetching new code from github repo
-     * @param command
      */
-    async execute() {
+    async execute(command) {
         if (!this.config.modules.autoUpdater.enabled) {
             return Command.empty();
         }
         try {
-            this.logger.info('Checking for new updates...');
+            this.logger.info('Checking for new updates...', command);
             const { upToDate, currentVersion, remoteVersion } =
                 await this.autoUpdaterModuleManager.compareVersions();
             if (!upToDate) {
                 if (semver.major(currentVersion) < semver.major(remoteVersion)) {
                     this.logger.info(
-                        `New major update available. Please run update to version ${remoteVersion} manually.`,
+                        `A new major update is available. ` +
+                            `Please run the update to version ${remoteVersion} manually.`,
+                        command,
                     );
                     return Command.repeat();
                 }
                 if (semver.lt(semver.valid(remoteVersion), semver.valid(currentVersion))) {
                     this.logger.info(
-                        'Remote version less than current version, update will be skipped',
+                        'The remote version is older than the current version; ' +
+                            'therefore, the update will be skipped.',
+                        command,
                     );
                     return Command.repeat();
                 }
@@ -44,27 +47,34 @@ class OtnodeUpdateCommand extends Command {
                         'UPDATED',
                         'UPDATED',
                     );
-                    this.logger.info('Node will now restart!');
+                    this.logger.info('OtnodeUpdateCommand: Node will now restart!');
                     process.exit(1);
                 }
-                this.logger.info('Unable to update ot-node to new version.');
+                this.logger.info('Unable to update ot-node to the new version.', command);
             } else {
-                this.logger.info('Your node is running on the latest version!');
+                this.logger.info('Your node is running on the latest version!', command);
             }
-        } catch (e) {
-            await this.handleError(e);
+        } catch (err) {
+            await this.handleError(command, err);
         }
         return Command.repeat();
     }
 
-    async recover(command, err) {
-        await this.handleError(err);
-
+    async recover(command, error) {
+        this.logger.error(
+            `Error occurred during the command execution; ` +
+                `Error Message: ${error.message}. Repeating the command...`,
+            command,
+        );
         return Command.repeat();
     }
 
-    async handleError(error) {
-        this.logger.error(`Error in update command: ${error}. ${error.stack}`);
+    async handleError(command, error) {
+        this.logger.error(
+            `Error occurred during the command execution; ` +
+                `Error Message: ${error.message}; Error Stack: ${error.stack}.`,
+            command,
+        );
     }
 
     /**

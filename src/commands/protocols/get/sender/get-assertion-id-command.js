@@ -23,8 +23,10 @@ class GetAssertionIdCommand extends Command {
             if (state === ZERO_BYTES32) {
                 await this.handleError(
                     operationId,
-                    `The provided state: ${state}. State hash cannot be 0x0.`,
+                    command,
                     this.errorType,
+                    `State hash cannot be 0x0.`,
+                    true,
                 );
 
                 return Command.empty();
@@ -47,8 +49,11 @@ class GetAssertionIdCommand extends Command {
             ) {
                 await this.handleError(
                     operationId,
-                    `The provided state: ${state} does not exist on the ${blockchain} blockchain, ``within contract: ${contract}, for the Knowledge Asset with tokenId: ${tokenId}.`,
+                    command,
                     this.errorType,
+                    `Provided State: ${state} does not exist on the Blockchain: ${blockchain}, ` +
+                        `within the Contract: ${contract}, for the Knowledge Asset with the token ID: ${tokenId}.`,
+                    true,
                 );
 
                 return Command.empty();
@@ -57,7 +62,8 @@ class GetAssertionIdCommand extends Command {
             assertionId = state;
         } else {
             this.logger.debug(
-                `Searching for latest assertion id on ${blockchain} on contract: ${contract} with tokenId: ${tokenId}`,
+                `Searching for the latest Assertion ID on the Blockchain: ${blockchain}, ` +
+                    `within the Contract: ${contract}, for the Knowledge Asset with the Token ID: ${tokenId}.`,
             );
 
             if (state === GET_STATES.LATEST) {
@@ -76,10 +82,6 @@ class GetAssertionIdCommand extends Command {
         }
 
         return this.continueSequence({ ...command.data, state, assertionId }, command.sequence);
-    }
-
-    async handleError(operationId, errorMessage, errorType) {
-        await this.operationService.markOperationAsFailed(operationId, errorMessage, errorType);
     }
 
     /**

@@ -11,7 +11,7 @@ class ValidationService {
 
     async validateUal(blockchain, contract, tokenId) {
         this.logger.info(
-            `Validating UAL: did:dkg:${blockchain.toLowerCase()}/${contract.toLowerCase()}/${tokenId}`,
+            `Validating the UAL: did:dkg:${blockchain.toLowerCase()}/${contract.toLowerCase()}/${tokenId}.`,
         );
 
         let isValid = true;
@@ -29,16 +29,16 @@ class ValidationService {
     }
 
     async validateAssertion(assertionId, blockchain, assertion) {
-        this.logger.info(`Validating assertionId: ${assertionId}`);
+        this.logger.info(`Validating Assertion with the ID: ${assertionId}.`);
 
-        this.validateAssertionId(assertion, assertionId);
+        this.validateAssertionId(blockchain, assertionId, assertion);
 
         // TODO: get assertion data in one call
         await this.validateAssertionSize(blockchain, assertionId, assertion);
         await this.validateTriplesNumber(blockchain, assertionId, assertion);
         await this.validateChunkSize(blockchain, assertionId, assertion);
 
-        this.logger.info(`Assertion integrity validated!`);
+        this.logger.info(`Assertion integrity has been validated!`);
     }
 
     async validateAssertionSize(blockchain, assertionId, assertion) {
@@ -50,14 +50,17 @@ class ValidationService {
         const blockchainAssertionSizeInKb = blockchainAssertionSize / BYTES_IN_KILOBYTE;
         if (blockchainAssertionSizeInKb > this.config.maximumAssertionSizeInKb) {
             throw Error(
-                `The size of the received assertion exceeds the maximum limit allowed.. Maximum allowed assertion size in kb: ${this.config.maximumAssertionSizeInKb}, assertion size read from blockchain in kb: ${blockchainAssertionSizeInKb}`,
+                `The size of the received assertion exceeds the maximum limit allowed. ` +
+                    `Maximum allowed Assertion Size in KB: ${this.config.maximumAssertionSizeInKb}. ` +
+                    `Assertion Size read from the Blockchain: ${blockchain} in KB: ${blockchainAssertionSizeInKb}.`,
             );
         }
         const assertionSize = assertionMetadata.getAssertionSizeInBytes(assertion);
         if (blockchainAssertionSize !== assertionSize) {
             // todo after corrective component is implemented, update this logic
             this.logger.warn(
-                `Invalid assertion size, value read from blockchain: ${blockchainAssertionSize}, calculated: ${assertionSize}`,
+                `Invalid Assertion Size. Calculated Assertion Size in KB: ${assertionSize}. ` +
+                    `Value read from the Blockchain (${blockchain}) in KB: ${blockchainAssertionSize}.`,
             );
         }
     }
@@ -68,7 +71,8 @@ class ValidationService {
         const triplesNumber = assertionMetadata.getAssertionTriplesNumber(assertion);
         if (blockchainTriplesNumber !== triplesNumber) {
             throw Error(
-                `Invalid triples number, value read from blockchain: ${blockchainTriplesNumber}, calculated: ${triplesNumber}`,
+                `Invalid triples number. Calculated Assertion Triples Number: ${triplesNumber}. ` +
+                    `Value read from the Blockchain (${blockchain}): ${blockchainTriplesNumber}.`,
             );
         }
     }
@@ -81,18 +85,20 @@ class ValidationService {
         const chunksNumber = assertionMetadata.getAssertionChunksNumber(assertion);
         if (blockchainChunksNumber !== chunksNumber) {
             throw Error(
-                `Invalid chunks number, value read from blockchain: ${blockchainChunksNumber}, calculated size: ${chunksNumber}`,
+                `Invalid chunks number. Calculated Assertion Chunks Number: ${chunksNumber}. ` +
+                    `Value read from the Blockchain (${blockchain}): ${blockchainChunksNumber}.`,
             );
         }
     }
 
-    validateAssertionId(assertion, assertionId) {
+    validateAssertionId(blockchain, assertionId, assertion) {
         const calculatedAssertionId = this.validationModuleManager.calculateRoot(assertion);
 
         if (assertionId !== calculatedAssertionId) {
             // todo after corrective component is implemented, update this logic
             this.logger.warn(
-                `Invalid assertion id. Received value: ${assertionId}, calculated: ${calculatedAssertionId}`,
+                `Invalid Assertion ID. Calculated Assertion ID: ${calculatedAssertionId}. ` +
+                    `Value read from the Blockchain (${blockchain}): ${assertionId}.`,
             );
         }
     }

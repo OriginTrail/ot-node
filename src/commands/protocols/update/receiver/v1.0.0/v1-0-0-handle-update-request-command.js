@@ -25,7 +25,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         this.errorType = ERROR_TYPE.UPDATE.UPDATE_LOCAL_STORE_REMOTE_ERROR;
     }
 
-    async prepareMessage(commandData) {
+    async prepareMessage(command) {
         const {
             blockchain,
             contract,
@@ -35,7 +35,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             keyword,
             hashFunctionId,
             agreementData,
-        } = commandData;
+        } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -67,7 +67,10 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
 
         const rank = await this.calculateRank(blockchain, keyword, hashFunctionId, r2);
         if (rank != null) {
-            this.logger.trace(`Calculated rank: ${rank + 1} for agreement id:  ${agreementId}`);
+            this.logger.trace(
+                `Calculated rank: ${rank + 1} for the Service Agreement ID: ${agreementId}.`,
+                command,
+            );
             const finalizationCommitsNumber =
                 await this.blockchainModuleManager.getFinalizationCommitsNumber(blockchain);
 
@@ -84,7 +87,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
                     delay: updateCommitDelay,
                     retries: COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT,
                     data: {
-                        ...commandData,
+                        ...command.data,
                         agreementData,
                         agreementId,
                         r0,
@@ -102,7 +105,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
                 sequence: [],
                 delay: (updateCommitWindowDuration + 60) * 1000,
                 data: {
-                    ...commandData,
+                    ...command.data,
                     assertionId: cachedData.assertionId,
                 },
                 transactional: false,
@@ -138,9 +141,10 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
                   blockTime;
         const delay = commitsBlockDuration * commitBlock + r0OffsetPeriod + nextNodeDelay;
         this.logger.info(
-            `Calculated update commit delay: ${Math.floor(
-                delay / 1000,
-            )}s, commitsBlockDuration: ${commitsBlockDuration}, commitBlock: ${commitBlock}, r0OffsetPeriod:${r0OffsetPeriod}, updateCommitWindowDuration ${updateCommitWindowDuration}s, finalizationCommitsNumber: ${finalizationCommitsNumber}, r0: ${r0}, rank: ${rank}`,
+            `Calculated UpdateCommitCommand delay: ${Math.floor(delay / 1000)}s, ` +
+                `commitsBlockDuration: ${commitsBlockDuration}, commitBlock: ${commitBlock}, ` +
+                `r0OffsetPeriod:${r0OffsetPeriod}, updateCommitWindowDuration ${updateCommitWindowDuration}s, ` +
+                `finalizationCommitsNumber: ${finalizationCommitsNumber}, r0: ${r0}, rank: ${rank}`,
         );
 
         return delay;

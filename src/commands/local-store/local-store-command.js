@@ -112,7 +112,7 @@ class LocalStoreCommand extends Command {
                 OPERATION_ID_STATUS.COMPLETED,
             );
         } catch (e) {
-            await this.handleError(operationId, e.message, this.errorType, true);
+            await this.handleError(operationId, command, this.errorType, e.message, true);
             return Command.empty();
         }
 

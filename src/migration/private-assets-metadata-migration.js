@@ -98,7 +98,7 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
                 tokenId,
             );
         } catch (error) {
-            this.logger.warn(`Unable to find assertion id for token id: ${tokenId}`);
+            this.logger.warn(`Unable to find assertion id for token id: ${tokenId}.`);
             return;
         }
         if (!assertionIds.includes(assertionId)) return;

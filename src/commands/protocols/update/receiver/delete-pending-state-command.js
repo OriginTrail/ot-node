@@ -14,8 +14,9 @@ class DeletePendingStateCommand extends Command {
         const { blockchain, contract, tokenId, assertionId, operationId } = command.data;
 
         this.logger.trace(
-            `Started ${command.name} for blockchain: ${blockchain} contract: ${contract}, ` +
-                `token id: ${tokenId}, assertion id: ${assertionId}`,
+            `Started the command for the Blockchain: ${blockchain}, Contract: ${contract}, ` +
+                `Token ID: ${tokenId}, Assertion ID: ${assertionId}.`,
+            command,
         );
 
         const assetStates = await this.blockchainModuleManager.getAssertionIds(
@@ -27,6 +28,7 @@ class DeletePendingStateCommand extends Command {
         if (assetStates.includes(assertionId)) {
             this.logger.trace(
                 `Not clearing the pending storage as state was finalized and clearing is triggered by StateFinalized event.`,
+                command,
             );
             return Command.empty();
         }

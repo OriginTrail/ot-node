@@ -49,13 +49,18 @@ class ValidateAssetCommand extends Command {
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         this.logger.info(
-            `Validating asset's public assertion with id: ${cachedData.public.assertionId} ual: ${ual}`,
+            `Validating Knowledge Asset's Public Assertion ` +
+                `with ID: ${cachedData.public.assertionId}, UAL: ${ual}.`,
+            command,
         );
         if (blockchainAssertionId !== cachedData.public.assertionId) {
             await this.handleError(
                 operationId,
-                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${cachedData.public.assertionId}`,
+                command,
                 this.errorType,
+                `Invalid Assertion ID for the Knowledge Asset with the UAL: ${ual}. ` +
+                    `Value from the blockchain: ${blockchainAssertionId}; ` +
+                    `Value from the request: ${cachedData.public.assertionId}`,
                 true,
             );
             return Command.empty();
@@ -69,16 +74,19 @@ class ValidateAssetCommand extends Command {
 
         if (cachedData.private?.assertionId && cachedData.private?.assertion) {
             this.logger.info(
-                `Validating asset's private assertion with id: ${cachedData.private.assertionId} ual: ${ual}`,
+                `Validating Knowledge Asset's Private Assertion ` +
+                    `with ID: ${cachedData.private.assertionId}, UAL: ${ual}`,
+                command,
             );
 
             try {
                 this.validationService.validateAssertionId(
-                    cachedData.private.assertion,
+                    blockchain,
                     cachedData.private.assertionId,
+                    cachedData.private.assertion,
                 );
             } catch (error) {
-                await this.handleError(operationId, error.message, this.errorType, true);
+                await this.handleError(operationId, command, this.errorType, error.message, true);
                 return Command.empty();
             }
         }
@@ -98,8 +106,9 @@ class ValidateAssetCommand extends Command {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         await this.handleError(
             operationId,
-            `Max retry count for command: ${command.name} reached! Unable to validate ual: ${ual}`,
+            command,
             this.errorType,
+            `Max retries exceeded! Unable to validate the Knowledge Asset with the UAL: ${ual}`,
             true,
         );
     }

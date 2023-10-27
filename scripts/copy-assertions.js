@@ -61,20 +61,20 @@ function logPercentage(index, max) {
 
     if (Math.floor(currentPercentage) - Math.floor(previousPercentage) < 1) return;
 
-    logger.debug(`Migration at ${Math.floor(currentPercentage * 10) / 10}%`);
+    logger.debug(`Migration at ${Math.floor(currentPercentage * 10) / 10}%.`);
 }
 
 let toRepositoryAssertions = await getAssertions(toImplementation, toRepository);
 logger.info(
-    `${toRepositoryAssertions.length} assertions found in ${toRepository} repository before migration`,
+    `${toRepositoryAssertions.length} assertions found in ${toRepository} repository before migration.`,
 );
 
 logger.info(
-    `Starting to copy assertions from ${fromImplementation} repository ${fromRepository} with name ${fromRepositoryName} to repository ${toImplementation} repository ${toRepository} with name ${toRepositoryName}`,
+    `Starting to copy assertions from ${fromImplementation} repository ${fromRepository} ``with name ${fromRepositoryName} to repository ${toImplementation} repository ${toRepository} ``with name ${toRepositoryName}.`,
 );
 
 const fromRepositoryAssertions = await getAssertions(fromImplementation, fromRepository);
-logger.info(`${fromRepositoryAssertions.length} assertions found in ${fromRepository}`);
+logger.info(`${fromRepositoryAssertions.length} assertions found in ${fromRepository}.`);
 
 let completed = 0;
 const copyAssertion = async (g) => {
@@ -101,9 +101,9 @@ const copyAssertion = async (g) => {
             logger.error(
                 `Error while getting assertion ${g.substring(
                     'assertion:'.length,
-                )} from ${fromImplementation} repository ${fromRepository} with name ${fromRepositoryName}. Error: ${
+                )} from ${fromImplementation} repository ${fromRepository} with name ${fromRepositoryName}; Error: ${
                     error.message
-                }`,
+                }.`,
             );
             process.exit(1);
         }
@@ -119,9 +119,9 @@ const copyAssertion = async (g) => {
             logger.error(
                 `Error while inserting assertion ${g.substring(
                     'assertion:'.length,
-                )} with nquads: ${nquads} in ${toImplementation} repository ${toRepository} with name ${toRepositoryName}. Error: ${
+                )} with nquads: ${nquads} in ${toImplementation} repository ${toRepository} with name ${toRepositoryName}; Error: ${
                     error.message
-                }`,
+                }.`,
             );
             process.exit(1);
         }
@@ -150,5 +150,5 @@ logger.info(`Migration completed! Lasted ${(end - start) / 1000} seconds.`);
 
 toRepositoryAssertions = await getAssertions(toImplementation, toRepository);
 logger.info(
-    `${toRepositoryAssertions.length} assertions found in ${toRepository} repository after migration`,
+    `${toRepositoryAssertions.length} assertions found in ${toRepository} repository after migration.`,
 );

@@ -19,10 +19,8 @@ class OperationIdCleanerCommand extends Command {
 
     /**
      * Executes command and produces one or more events
-     * @param command
      */
-    async execute() {
-        this.logger.debug('Starting command for removal of expired cache files');
+    async execute(command) {
         const timeToBeDeleted = Date.now() - OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS;
         await this.repositoryModuleManager.removeOperationIdRecord(timeToBeDeleted, [
             OPERATION_ID_STATUS.COMPLETED,
@@ -33,9 +31,9 @@ class OperationIdCleanerCommand extends Command {
         );
         if (removed) {
             this.logger.debug(
-                `Successfully removed ${
-                    removed / BYTES_IN_KILOBYTE
-                } Kbs expired cached operation entries from memory`,
+                `Successfully removed ${removed / BYTES_IN_KILOBYTE} KBs ` +
+                    `of expired cached operation entries from the memory.`,
+                command,
             );
         }
         removed = await this.operationIdService.removeExpiredOperationIdFileCache(
@@ -43,7 +41,10 @@ class OperationIdCleanerCommand extends Command {
             OPERATION_ID_FILES_FOR_REMOVAL_MAX_NUMBER,
         );
         if (removed) {
-            this.logger.debug(`Successfully removed ${removed} expired cached operation files`);
+            this.logger.debug(
+                `Successfully removed ${removed} expired cached operation files.`,
+                command,
+            );
         }
 
         return Command.repeat();
@@ -55,7 +56,11 @@ class OperationIdCleanerCommand extends Command {
      * @param error
      */
     async recover(command, error) {
-        this.logger.warn(`Failed to clean operation ids table: error: ${error.message}`);
+        this.logger.warn(
+            `Error occurred during the command execution; ` +
+                `Error Message: ${error.message}. Repeating the command...`,
+            command,
+        );
         return Command.repeat();
     }
 

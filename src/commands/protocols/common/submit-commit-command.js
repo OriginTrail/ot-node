@@ -25,11 +25,12 @@ class SubmitCommitCommand extends Command {
         } = command.data;
 
         this.logger.trace(
-            `Started ${command.name} for agreement id: ${agreementId} ` +
-                `blockchain: ${blockchain}, contract: ${contract}, token id: ${tokenId},` +
-                `keyword: ${keyword}, hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
-                `stateIndex: ${stateIndex}, operationId: ${operationId}, ` +
-                ` Retry number ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}`,
+            `Started the command for the Blockchain: ${blockchain}, ` +
+                `Contract: ${contract}, Token ID: ${tokenId}, Service Agreement ID: ${agreementId}, ` +
+                `Keyword: ${keyword}, Hash Function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
+                `Retry number: ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}.`,
+            command,
         );
 
         if (command.retries === COMMAND_RETRIES.SUBMIT_COMMIT) {
@@ -50,7 +51,11 @@ class SubmitCommitCommand extends Command {
         );
         if (alreadySubmitted) {
             this.logger.trace(
-                `Commit already submitted for blockchain: ${blockchain} agreement id: ${agreementId}, epoch: ${epoch}, state index: ${stateIndex}`,
+                `Commit has been already submitted for the Blockchain: ${blockchain}, ` +
+                    `Contract: ${contract}, Token ID: ${tokenId}, Service Agreement ID: ${agreementId}, ` +
+                    `Keyword: ${keyword}, Hash Function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                    `State Index: ${stateIndex}, Operation ID: ${operationId}.`,
+                command,
             );
             return Command.empty();
         }
@@ -76,11 +81,12 @@ class SubmitCommitCommand extends Command {
         await transactionCompletePromise;
 
         this.logger.trace(
-            `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
-                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}. Retry number ${
-                    COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1
-                }`,
+            `Successfully executed the command for for the Blockchain: ${blockchain}, ` +
+                `Contract: ${contract}, Token ID: ${tokenId}, Service Agreement ID: ${agreementId}, ` +
+                `Keyword: ${keyword}, Hash Function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
+                `Retry number: ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}.`,
+            command,
         );
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
@@ -111,7 +117,7 @@ class SubmitCommitCommand extends Command {
     }
 
     async retryFinished(command) {
-        this.recover(command, `Max retry count for command: ${command.name} reached!`);
+        this.recover(command, Error('Max retries have been exceeded!'));
     }
 
     /**

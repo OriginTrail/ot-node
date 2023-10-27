@@ -4,13 +4,13 @@ import Command from '../command.js';
 class CleanerCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.logger = ctx.logger;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.archiveService = ctx.archiveService;
     }
 
     /**
      * Executes command and produces one or more events
-     * @param command
      */
     async execute() {
         const nowTimestamp = Date.now();
@@ -49,16 +49,16 @@ class CleanerCommand extends Command {
 
     // eslint-disable-next-line no-unused-vars
     async findRowsForRemoval(nowTimestamp) {
-        throw Error('findRowsForRemoval not implemented');
+        throw Error('findRowsForRemoval is not implemented.');
     }
 
     getArchiveFolderName() {
-        throw Error('getArchiveFolderName not implemented');
+        throw Error('getArchiveFolderName is not implemented.');
     }
 
     // eslint-disable-next-line no-unused-vars
     async deleteRows(ids) {
-        throw Error('deleteRows not implemented');
+        throw Error('deleteRows is not implemented.');
     }
 
     /**
@@ -67,7 +67,11 @@ class CleanerCommand extends Command {
      * @param error
      */
     async recover(command, error) {
-        this.logger.warn(`Failed to clean operational db data: error: ${error.message}`);
+        this.logger.warn(
+            `Error occurred during the command execution; ` +
+                `Error Message: ${error.message}. Repeating the command...`,
+            command,
+        );
         return Command.repeat();
     }
 }

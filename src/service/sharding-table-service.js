@@ -31,7 +31,7 @@ class ShardingTableService {
             );
             this.updatePeerRecordLastSeenAndLastDialed(connection.remotePeer.toB58String()).catch(
                 (error) => {
-                    this.logger.warn(`Unable to update connected peer, error: ${error.message}`);
+                    this.logger.warn(`Unable to update connected peer. Error: ${error.message}`);
                 },
             );
         });

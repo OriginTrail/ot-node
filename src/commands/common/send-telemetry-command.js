@@ -20,7 +20,7 @@ class SendTelemetryCommand extends Command {
      * Performs code update by fetching new code from github repo
      * @param command
      */
-    async execute() {
+    async execute(command) {
         if (!this.config.telemetry.enabled || !this.config.telemetry.sendTelemetryData) {
             return Command.empty();
         }
@@ -51,20 +51,27 @@ class SendTelemetryCommand extends Command {
             if (response.status === 200 && events?.length > 0) {
                 await this.telemetryInjectionService.removePublishedEvents(events);
             }
-        } catch (e) {
-            await this.handleError(e);
+        } catch (err) {
+            await this.handleError(command, err);
         }
         return Command.repeat();
     }
 
-    async recover(command, err) {
-        await this.handleError(err);
-
+    async recover(command, error) {
+        this.logger.error(
+            `Error occurred during the command execution; ` +
+                `Error Message: ${error.message}. Repeating the command...`,
+            command,
+        );
         return Command.repeat();
     }
 
-    async handleError(error) {
-        this.logger.error(`Error in send telemetry command: ${error}. ${error.stack}`);
+    async handleError(command, error) {
+        this.logger.error(
+            `Error occurred during the command execution; ` +
+                `Error Message: ${error.message}. Error Stack: ${error.stack}.`,
+            command,
+        );
     }
 
     /**

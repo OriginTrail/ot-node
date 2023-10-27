@@ -25,7 +25,7 @@ class Command {
      */
     async recover(command, err) {
         const { operationId } = command.data;
-        await this.handleError(operationId, err.message, this.errorType, true, command.data);
+        await this.handleError(operationId, command, this.errorType, err.message, true);
 
         return Command.empty();
     }
@@ -104,19 +104,23 @@ class Command {
     }
 
     async retryFinished(command) {
-        this.logger.trace(`Max retry count for command: ${command.name} reached!`);
+        this.logger.trace(`Max retries have been exceeded!`, command);
     }
 
     /**
      * Error handler for command
-     * @param operationId  - Operation operation id
-     * @param error  - Error object
-     * @param errorName - Name of error
+     * @param operationId  - Operation operation ID
+     * @param command - Command object
+     * @param error - Error object
      * @param markFailed - Update operation status to failed
      * @returns {*}
      */
-    async handleError(operationId, errorMessage, errorName, markFailed) {
-        this.logger.error(`Command error (${errorName}): ${errorMessage}`);
+    async handleError(operationId, command, errorName, errorMessage, markFailed = false) {
+        this.logger.error(
+            `Error occurred during ${operationId} operation in the command; ` +
+                `Error: ${errorName}; Error Message: ${errorMessage}.`,
+            command,
+        );
         if (markFailed) {
             await this.operationIdService.updateOperationIdStatus(
                 operationId,

@@ -18,8 +18,8 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
         this.errorType = ERROR_TYPE.GET.GET_INIT_REMOTE_ERROR;
     }
 
-    async prepareMessage(commandData) {
-        const { operationId, blockchain, contract, tokenId, assertionId, state } = commandData;
+    async prepareMessage(command) {
+        const { operationId, blockchain, contract, tokenId, assertionId, state } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -27,7 +27,10 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
         );
 
         this.logger.trace(
-            `Checking if assertion ${assertionId} exists for state ${state}, on blockchain: ${blockchain}, contract: ${contract}, and tokenId: ${tokenId}`,
+            `Checking if Assertion with ID: ${assertionId} exists on the Blockchain: ${blockchain}, ` +
+                `within the Contract: ${contract}, for the Knowledge Asset with the Token ID: ${tokenId} ` +
+                `and State: ${state}.`,
+            command,
         );
 
         let assertionExists;

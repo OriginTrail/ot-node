@@ -13,9 +13,9 @@ class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
         this.errorType = ERROR_TYPE.UPDATE.UPDATE_REMOTE_ERROR;
     }
 
-    async prepareMessage(commandData) {
+    async prepareMessage(command) {
         const { operationId, assertionId, blockchain, contract, tokenId, keyword, hashFunctionId } =
-            commandData;
+            command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.VALIDATE_ASSET_REMOTE_START,
@@ -54,17 +54,15 @@ class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
         );
         if (blockchainAssertionId !== assertionId) {
             throw Error(
-                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${assertionId}`,
+                `Invalid Assertion ID for the Knowledge Asset with the UAL: ${ual}. ` +
+                    `Assertion ID from the request: ${assertionId}. ` +
+                    `Received value from the Blockchain (${blockchain}): ${blockchainAssertionId}.`,
             );
         }
     }
 
     async retryFinished(command) {
-        const { operationId } = command.data;
-        this.handleError(
-            `Retry count for command: ${command.name} reached! Unable to validate data for operation id: ${operationId}`,
-            command,
-        );
+        this.handleError(command, `Max retries exceeded! Unable to validate the data.`);
     }
 
     /**

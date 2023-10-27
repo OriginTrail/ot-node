@@ -6,10 +6,6 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         this.operationService = ctx.publishService;
     }
 
-    async handleError(operationId, errorMessage, errorType) {
-        await this.operationService.markOperationAsFailed(operationId, errorMessage, errorType);
-    }
-
     /**
      * Builds default publishValidateAssetCommand
      * @param map

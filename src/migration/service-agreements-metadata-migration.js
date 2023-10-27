@@ -99,7 +99,8 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
             attempt += 1;
             if (attempt >= maxAttempts)
                 throw Error(
-                    `Error while trying to get assertion ids for asset with ual: ${ual}. Max attempts reached`,
+                    `Failed to get assertion IDs for asset with UAL: ${ual}. ` +
+                        `Max attempts reached.`,
                 );
             if (attempt > 1) {
                 await setTimeout(sleepTimeSeconds * 1000);
@@ -112,13 +113,14 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
                 );
             } catch (error) {
                 this.logger.warn(
-                    `Error while trying to get assertion ids for asset with ual: ${ual}. Retrying in ${sleepTimeSeconds} seconds. Attempt number: ${attempt}.`,
+                    `Filed to get assertion IDs for asset with UAL: ${ual}. ` +
+                        `Retrying in ${sleepTimeSeconds} seconds. Attempt number: ${attempt}.`,
                 );
             }
         }
 
         if (!assertionIds?.length) {
-            this.logger.warn(`Unable to find assertion ids for asset with ual: ${ual}`);
+            this.logger.warn(`Unable to find assertion IDs for asset with UAL: ${ual}`);
             return;
         }
         const stateIndex = assertionIds.length - 1;
@@ -146,7 +148,8 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
             attempt += 1;
             if (attempt >= maxAttempts)
                 throw Error(
-                    `Error while trying to get agreement data for asset with ual: ${ual}. Max attempts reached`,
+                    `Error while trying to get agreement data for asset with ual: ${ual}. ` +
+                        `Max attempts reached`,
                 );
             if (attempt > 1) {
                 await setTimeout(sleepTimeSeconds * 1000);
@@ -158,7 +161,8 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
                 );
             } catch (error) {
                 this.logger.warn(
-                    `Error while trying to get agreement data for asset with ual: ${ual}. Retrying in ${sleepTimeSeconds} seconds. Attempt number: ${attempt}.`,
+                    `Failed to get agreement data for asset with UAL: ${ual}. ` +
+                        `Retrying in ${sleepTimeSeconds} seconds. Attempt number: ${attempt}.`,
                 );
             }
         }
@@ -177,7 +181,8 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
             attempt += 1;
             if (attempt >= maxAttempts)
                 throw Error(
-                    `Error while trying to get top commit submissions for asset with ual: ${ual}. Max attempts reached`,
+                    `Failed to get top commit submissions for asset with UAL: ${ual}. ` +
+                        `Max attempts reached`,
                 );
             if (attempt > 1) {
                 await setTimeout(sleepTimeSeconds * 1000);
@@ -191,7 +196,8 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
                 );
             } catch (error) {
                 this.logger.warn(
-                    `Error while trying to get top commit submissions for asset with ual: ${ual}. Retrying in ${sleepTimeSeconds} seconds. Attempt number: ${attempt}.`,
+                    `Failed to get top commit submissions for asset with UAL: ${ual}. ` +
+                        `Retrying in ${sleepTimeSeconds} seconds. Attempt number: ${attempt}.`,
                 );
             }
         }

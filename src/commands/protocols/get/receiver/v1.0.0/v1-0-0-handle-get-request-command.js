@@ -19,8 +19,8 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         this.errorType = ERROR_TYPE.GET.GET_REQUEST_REMOTE_ERROR;
     }
 
-    async prepareMessage(commandData) {
-        const { operationId, blockchain, contract, tokenId, assertionId, state } = commandData;
+    async prepareMessage(command) {
+        const { operationId, blockchain, contract, tokenId, assertionId, state } = command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.GET.GET_REMOTE_START,

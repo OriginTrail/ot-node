@@ -12,12 +12,12 @@ class CommandResolver {
      * @param name
      * @return {*}
      */
-    resolve(name) {
-        try {
-            return this.ctx[`${name}`];
-        } catch (e) {
-            this.logger.warn(`No handler defined for command '${name}'`);
+    resolve(commandName) {
+        const handler = this.ctx[`${commandName}`];
+        if (handler === undefined) {
+            this.logger.warn(`No handler defined for the ${commandName}.`);
         }
+        return handler;
     }
 }
 

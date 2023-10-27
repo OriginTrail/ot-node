@@ -27,7 +27,7 @@ class CommandExecutor {
                 })
                 .catch((error) => {
                     this.logger.error(
-                        `Something went really wrong! OT-node shutting down... ${error}`,
+                        `Something went really wrong! Message: ${error}. OT-node is shutting down...`,
                     );
                     process.exit(1);
                 });
@@ -42,7 +42,7 @@ class CommandExecutor {
         await Promise.all(PERMANENT_COMMANDS.map((command) => this._addDefaultCommand(command)));
 
         if (this.verboseLoggingEnabled) {
-            this.logger.trace('Command executor has been initialized...');
+            this.logger.trace('Command Executor has been initialized.');
         }
     }
 
@@ -51,7 +51,7 @@ class CommandExecutor {
      */
     resumeQueue() {
         if (this.verboseLoggingEnabled) {
-            this.logger.trace('Command executor queue has been resumed...');
+            this.logger.trace('Command Executor queue has been resumed.');
         }
         this.queue.resume();
     }
@@ -61,7 +61,7 @@ class CommandExecutor {
      */
     pauseQueue() {
         if (this.verboseLoggingEnabled) {
-            this.logger.trace('Command executor queue has been paused...');
+            this.logger.trace('Command Executor queue has been paused.');
         }
         this.queue.pause();
     }
@@ -78,19 +78,23 @@ class CommandExecutor {
         });
 
         if (this.verboseLoggingEnabled) {
-            this.logger.trace(`Command ${command.name} and ID ${command.id} started.`);
+            this.logger.trace('Command has been started.', command);
         }
 
         const handler = this.commandResolver.resolve(command.name);
         if (!handler) {
-            this.logger.warn(`Command '${command.name}' will not be executed.`);
+            this.logger.warn(`Command won't be executed.`, command);
             await this._update(command, {
                 status: COMMAND_STATUS.UNKNOWN,
             });
             return;
         }
         if (command.deadlineAt && now > command.deadlineAt) {
-            this.logger.warn(`Command ${command.name} and ID ${command.id} is too late...`);
+            this.logger.warn(
+                `Command has exceeded the deadline. ` +
+                    `Time now: ${now}. Deadline: ${command.deadlineAt}.`,
+                command,
+            );
             await this._update(command, {
                 status: COMMAND_STATUS.EXPIRED,
             });
@@ -99,9 +103,10 @@ class CommandExecutor {
                 if (result?.commands) {
                     await Promise.all(result.commands.map((c) => this.add(c, c.delay, true)));
                 }
-            } catch (e) {
+            } catch (err) {
                 this.logger.warn(
-                    `Failed to handle expired callback for command ${command.name} and ID ${command.id}`,
+                    `Failed to handle expired callback; Error Message: ${err.message}.`,
+                    command,
                 );
             }
             return;
@@ -110,9 +115,7 @@ class CommandExecutor {
         const waitMs = command.readyAt + command.delay - now;
         if (waitMs > 0) {
             if (this.verboseLoggingEnabled) {
-                this.logger.trace(
-                    `Command ${command.name} with ID ${command.id} should be delayed`,
-                );
+                this.logger.trace(`Command will be delayed.`, command);
             }
             await this.add(command, Math.min(waitMs, MAX_COMMAND_DELAY_IN_MILLS), false);
             return;
@@ -174,7 +177,7 @@ class CommandExecutor {
 
             if (!processResult.repeat && !processResult.retry) {
                 if (this.verboseLoggingEnabled) {
-                    this.logger.trace(`Command ${command.name} and ID ${command.id} processed.`);
+                    this.logger.trace(`Command is being processed.`, command);
                 }
                 const addPromises = [];
                 processResult.children.forEach((e) =>
@@ -182,15 +185,17 @@ class CommandExecutor {
                 );
                 await Promise.all(addPromises);
             }
-        } catch (e) {
+        } catch (err) {
             if (this.verboseLoggingEnabled) {
                 this.logger.trace(
-                    `Failed to process command ${command.name} and ID ${command.id}. ${e}.\n${e.stack}`,
+                    `Command is failed to process; ` +
+                        `Error Message: ${err.message}; Error Stack: ${err.stack}.`,
+                    command,
                 );
             }
 
             try {
-                const result = await this._handleError(command, handler, e);
+                const result = await this._handleError(command, handler, err);
                 if (result && result.repeat) {
                     await this._update(command, {
                         status: COMMAND_STATUS.REPEATING,
@@ -206,7 +211,8 @@ class CommandExecutor {
                 }
             } catch (error) {
                 this.logger.warn(
-                    `Failed to handle error callback for command ${command.name} and ID ${command.id}, error: ${error.message}`,
+                    `Failed to handle error callback; Error Message: ${error.message}.`,
+                    command,
                 );
             }
         }
@@ -228,20 +234,20 @@ class CommandExecutor {
 
     /**
      * Starts the default command by name
-     * @param name - Command name
+     * @param commandName - Command name
      * @return {Promise<void>}
      * @private
      */
-    async _addDefaultCommand(name) {
-        await this._delete(name);
-        const handler = this.commandResolver.resolve(name);
+    async _addDefaultCommand(commandName) {
+        await this._delete(commandName);
+        const handler = this.commandResolver.resolve(commandName);
         if (!handler) {
-            this.logger.warn(`Command '${name}' will not be executed.`);
+            this.logger.warn(`Failed to resolve ${commandName}, skipping execution.`);
             return;
         }
         await this.add(handler.default(), DEFAULT_COMMAND_DELAY_IN_MILLS, true);
         if (this.verboseLoggingEnabled) {
-            this.logger.trace(`Permanent command ${name} created.`);
+            this.logger.trace(`Permanent ${commandName} has been created.`);
         }
     }
 
@@ -324,10 +330,16 @@ class CommandExecutor {
                     status: COMMAND_STATUS.FAILED,
                     message: err.message,
                 });
-                this.logger.warn(`Error in command: ${command.name}, error: ${err.message}`);
+                this.logger.warn(
+                    `Error occurred during command execution; Error Message: ${err.message}.`,
+                    command,
+                );
                 return await handler.recover(command, err);
-            } catch (e) {
-                this.logger.warn(`Failed to recover command ${command.name} and ID ${command.id}`);
+            } catch (error) {
+                this.logger.warn(
+                    `Failed to recover the command; Error Message: ${error.message}.`,
+                    command,
+                );
             }
         }
     }
@@ -407,7 +419,6 @@ class CommandExecutor {
      * @returns {Promise<void>}
      */
     async replayOldCommands() {
-        this.logger.info('Replay pending/started commands from the database...');
         const pendingCommands = await this.repositoryModuleManager.getCommandsWithStatus(
             [COMMAND_STATUS.PENDING, COMMAND_STATUS.STARTED, COMMAND_STATUS.REPEATING],
             PERMANENT_COMMANDS,

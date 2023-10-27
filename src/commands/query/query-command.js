@@ -56,8 +56,8 @@ class QueryCommand extends Command {
                 operationId,
                 OPERATION_ID_STATUS.COMPLETED,
             );
-        } catch (e) {
-            await this.handleError(operationId, e.message, this.errorType, true);
+        } catch (err) {
+            await this.handleError(operationId, command, this.errorType, err.message, true);
         }
 
         return Command.empty();

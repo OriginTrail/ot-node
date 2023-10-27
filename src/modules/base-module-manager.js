@@ -30,7 +30,7 @@ class BaseModuleManager {
                 }
 
                 if (!implementationConfig.package) {
-                    this.logger.warn(`Package for ${this.getName()} module is not defined`);
+                    this.logger.warn(`Package for ${this.getName()} module is not defined.`);
                     return false;
                 }
 

@@ -139,11 +139,11 @@ class OTAutoUpdater {
                 });
                 res.on('end', () => {
                     if (res.statusCode === 200) return resolve(body);
-                    this.logger.warn(`AutoUpdater - Bad Response ${res.statusCode}`);
+                    this.logger.warn(`AutoUpdater - Bad Response ${res.statusCode}.`);
                     reject(res.statusCode);
                 });
             });
-            this.logger.debug(`AutoUpdater - Sending request to ${url}`);
+            this.logger.debug(`AutoUpdater - Sending request to ${url}.`);
             req.on('error', reject);
             req.end();
         });
@@ -156,7 +156,7 @@ class OTAutoUpdater {
         const options = {};
         let url = `${REPOSITORY_URL}/${this.config.branch}/package.json`;
         if (url.includes('github')) url = url.replace('github.com', 'raw.githubusercontent.com');
-        this.logger.debug(`AutoUpdater - Reading remote version from ${url}`);
+        this.logger.debug(`AutoUpdater - Reading remote version from ${url}.`);
 
         try {
             const body = await this.promiseHttpsRequest(url, options);
@@ -173,7 +173,7 @@ class OTAutoUpdater {
     downloadUpdate(destination) {
         return new Promise((resolve, reject) => {
             const url = `https://${path.join(ARCHIVE_REPOSITORY_URL, this.config.branch)}.zip`;
-            this.logger.debug(`AutoUpdater - Downloading ot-node .zip file from url: ${url}`);
+            this.logger.debug(`AutoUpdater - Downloading ot-node .zip file from url: ${url}.`);
             axios({ method: 'get', url, responseType: 'stream' })
                 .then((response) => {
                     const fileStream = fs.createWriteStream(destination);

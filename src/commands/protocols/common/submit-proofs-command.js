@@ -35,11 +35,12 @@ class SubmitProofsCommand extends Command {
         } = command.data;
 
         this.logger.trace(
-            `Started ${command.name} for agreement id: ${agreementId} ` +
-                `blockchain: ${blockchain}, contract: ${contract}, token id: ${tokenId},` +
-                `keyword: ${keyword}, hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
-                `stateIndex: ${stateIndex}, operationId: ${operationId}, ` +
-                ` Retry number ${COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1}`,
+            `Started the command for the Blockchain: ${blockchain}, ` +
+                `Contract: ${contract}, Token ID: ${tokenId}, Service Agreement ID: ${agreementId}, ` +
+                `Keyword: ${keyword}, Hash Function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
+                `Retry number: ${COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1}.`,
+            command,
         );
 
         if (command.retries === COMMAND_RETRIES.SUBMIT_PROOFS) {
@@ -51,7 +52,10 @@ class SubmitProofsCommand extends Command {
             );
         }
 
-        this.logger.trace(`Calculating proofs for agreement id : ${agreementId}`);
+        this.logger.trace(
+            `Calculating proofs for the Service Agreement ID: ${agreementId}.`,
+            command,
+        );
         const { challenge } = await this.blockchainModuleManager.getChallenge(
             blockchain,
             contract,
@@ -66,7 +70,10 @@ class SubmitProofsCommand extends Command {
         );
 
         if (!assertion.length) {
-            this.logger.trace(`Assertion with id: ${assertionId} not found in triple store.`);
+            this.logger.trace(
+                `Assertion with the ID: ${assertionId} not found in the triple store.`,
+                command,
+            );
             return Command.empty();
         }
 
@@ -98,7 +105,11 @@ class SubmitProofsCommand extends Command {
         );
         if (alreadySubmitted) {
             this.logger.trace(
-                `Proofs already submitted for blockchain: ${blockchain} agreement id: ${agreementId}, epoch: ${epoch}, state index: ${stateIndex}`,
+                `Proof has been already submitted for the Blockchain: ${blockchain}, ` +
+                    `Contract: ${contract}, Token ID: ${tokenId}, Service Agreement ID: ${agreementId}, ` +
+                    `Keyword: ${keyword}, Hash Function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                    `State Index: ${stateIndex}, Operation ID: ${operationId}.`,
+                command,
             );
             return Command.empty();
         }
@@ -126,11 +137,12 @@ class SubmitProofsCommand extends Command {
         await transactionCompletePromise;
 
         this.logger.trace(
-            `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
-                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}. Retry number ${
-                    COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
-                }`,
+            `Successfully executed the command for the Blockchain: ${blockchain}, ` +
+                `Contract: ${contract}, Token ID: ${tokenId}, Service Agreement ID: ${agreementId}, ` +
+                `Keyword: ${keyword}, Hash Function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
+                `Retry number: ${COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1}.`,
+            command,
         );
 
         this.operationIdService.emitChangeEvent(
@@ -162,7 +174,7 @@ class SubmitProofsCommand extends Command {
     }
 
     async retryFinished(command) {
-        this.recover(command, `Max retry count for command: ${command.name} reached!`);
+        this.recover(command, Error('Max retries have been exceeded!'));
     }
 
     /**

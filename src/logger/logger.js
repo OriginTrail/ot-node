@@ -33,45 +33,59 @@ class Logger {
         }
     }
 
+    log(level, obj, commandMetadata = {}) {
+        const commandMetadataStr = commandMetadata.name
+            ? this._formatCommandMetadata(commandMetadata)
+            : '';
+        const objStr = typeof obj === 'object' ? JSON.stringify(obj) : obj;
+        const logStr = `${commandMetadataStr}${objStr}`;
+        this.pinoLogger[level](logStr);
+    }
+
     restart() {
         this.initialize(this.logLevel, true);
     }
 
-    fatal(obj) {
-        this.pinoLogger.fatal(obj);
+    fatal(obj, commandMetadata = {}) {
+        this.log('fatal', obj, commandMetadata);
     }
 
-    error(obj) {
-        this.pinoLogger.error(obj);
+    error(obj, commandMetadata = {}) {
+        this.log('error', obj, commandMetadata);
     }
 
-    warn(obj) {
-        this.pinoLogger.warn(obj);
+    warn(obj, commandMetadata = {}) {
+        this.log('warn', obj, commandMetadata);
     }
 
-    info(obj) {
-        this.pinoLogger.info(obj);
+    info(obj, commandMetadata = {}) {
+        this.log('info', obj, commandMetadata);
     }
 
-    debug(obj) {
-        this.pinoLogger.debug(obj);
+    debug(obj, commandMetadata = {}) {
+        this.log('debug', obj, commandMetadata);
     }
 
-    emit(obj) {
-        this.pinoLogger.emit(obj);
+    emit(obj, commandMetadata = {}) {
+        this.log('emit', obj, commandMetadata);
     }
 
-    trace(obj) {
-        this.pinoLogger.trace(obj);
+    trace(obj, commandMetadata = {}) {
+        this.log('trace', obj, commandMetadata);
     }
 
-    api(obj) {
-        this.pinoLogger.api(obj);
+    api(obj, commandMetadata = {}) {
+        this.log('api', obj, commandMetadata);
     }
 
     closeLogger(closingMessage) {
         const finalLogger = pino.final(this.pinoLogger);
         finalLogger.info(closingMessage);
+    }
+
+    _formatCommandMetadata(commandMetadata) {
+        const commandIdStr = commandMetadata.id ? ` (${commandMetadata.id})` : '';
+        return `${commandMetadata.name}${commandIdStr}: `;
     }
 }
 

@@ -6,10 +6,6 @@ class UpdateValidateAssetCommand extends ValidateAssetCommand {
         this.operationService = ctx.updateService;
     }
 
-    async handleError(operationId, errorMessage, errorType) {
-        await this.operationService.markOperationAsFailed(operationId, errorMessage, errorType);
-    }
-
     /**
      * Builds default updateValidateAssetCommand
      * @param map
