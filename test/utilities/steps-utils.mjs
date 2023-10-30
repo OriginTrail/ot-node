@@ -9,8 +9,8 @@ class StepsUtils {
     }
 
     createNodeConfiguration(
-        wallet,
-        managementWallet,
+        nodeWallets,
+        nodeManagementWallets,
         nodeIndex,
         nodeName,
         rpcPort,
@@ -24,11 +24,24 @@ class StepsUtils {
                 blockchain: {
                     implementation: {
                         hardhat: {
+                            enabled: false,
+                        },
+                        'hardhat-test1': {
                             config: {
-                                evmOperationalWalletPublicKey: wallet.address,
-                                evmOperationalWalletPrivateKey: wallet.privateKey,
-                                evmManagementWalletPublicKey: managementWallet.address,
-                                evmManagementWalletPrivateKey: managementWallet.privateKey,
+                                evmOperationalWalletPublicKey: nodeWallets[0].address,
+                                evmOperationalWalletPrivateKey: nodeWallets[0].privateKey,
+                                evmManagementWalletPublicKey: nodeManagementWallets[0].address,
+                                evmManagementWalletPrivateKey: nodeManagementWallets[0].privateKey,
+                                sharesTokenName,
+                                sharesTokenSymbol,
+                            },
+                        },
+                        'hardhat-test2': {
+                            config: {
+                                evmOperationalWalletPublicKey: nodeWallets[1].address,
+                                evmOperationalWalletPrivateKey: nodeWallets[1].privateKey,
+                                evmManagementWalletPublicKey: nodeManagementWallets[1].address,
+                                evmManagementWalletPrivateKey: nodeManagementWallets[1].privateKey,
                                 sharesTokenName,
                                 sharesTokenSymbol,
                             },
@@ -63,30 +76,30 @@ class StepsUtils {
                         'ot-blazegraph': {
                             config: {
                                 repositories: {
-                                    "privateCurrent": {
-                                        "url": "http://localhost:9999",
-                                        "name": "private-current",
-                                        "username": "admin",
-                                        "password": ""
+                                    privateCurrent: {
+                                        url: 'http://localhost:9999',
+                                        name: 'private-current',
+                                        username: 'admin',
+                                        password: '',
                                     },
-                                    "privateHistory": {
-                                        "url": "http://localhost:9999",
-                                        "name": "private-history",
-                                        "username": "admin",
-                                        "password": ""
+                                    privateHistory: {
+                                        url: 'http://localhost:9999',
+                                        name: 'private-history',
+                                        username: 'admin',
+                                        password: '',
                                     },
-                                    "publicCurrent": {
-                                        "url": "http://localhost:9999",
-                                        "name": "public-current",
-                                        "username": "admin",
-                                        "password": ""
+                                    publicCurrent: {
+                                        url: 'http://localhost:9999',
+                                        name: 'public-current',
+                                        username: 'admin',
+                                        password: '',
                                     },
-                                    "publicHistory": {
-                                        "url": "http://localhost:9999",
-                                        "name": "public-history",
-                                        "username": "admin",
-                                        "password": ""
-                                    }
+                                    publicHistory: {
+                                        url: 'http://localhost:9999',
+                                        name: 'public-history',
+                                        username: 'admin',
+                                        password: '',
+                                    },
                                 },
                             },
                         },
