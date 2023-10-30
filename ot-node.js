@@ -19,6 +19,7 @@ import MarkOldBlockchainEventsAsProcessedMigration from './src/migration/mark-ol
 import TripleStoreMetadataMigration from './src/migration/triple-store-metadata-migration.js';
 import RemoveOldEpochCommandsMigration from './src/migration/remove-old-epoch-commands-migration.js';
 import PendingStorageMigration from './src/migration/pending-storage-migration.js';
+import UalExtensionMigration from './src/migration/ual-extension-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -38,6 +39,7 @@ class OTNode {
         await this.removeUpdateFile();
         await this.executeTripleStoreUserConfigurationMigration();
         await this.executeTelemetryModuleUserConfigurationMigration();
+        await this.executeUalExtensionMigration();
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
         this.logger.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
@@ -333,6 +335,27 @@ class OTNode {
             'telemetryModuleUserConfigurationMigration',
             this.logger,
             this.config,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            await migration.migrate();
+            this.logger.info('Node will now restart!');
+            this.stop(1);
+        }
+    }
+
+    async executeUalExtensionMigration() {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
+
+        const migration = new UalExtensionMigration(
+            'ualExtensionMigration',
+            this.logger,
+            this.config,
+            repositoryModuleManager,
         );
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();
