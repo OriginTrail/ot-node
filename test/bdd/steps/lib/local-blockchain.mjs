@@ -51,6 +51,7 @@ let startBlockchainProcess;
 
 class LocalBlockchain {
     async initialize(port, _console = console) {
+        this.port = port;
         startBlockchainProcess = exec(`npm run start:local_blockchain -- ${port}`);
         startBlockchainProcess.stdout.on('data', (data) => {
             _console.log(data);
@@ -94,7 +95,7 @@ class LocalBlockchain {
     }
 
     async stop() {
-        const commandLog = await execSync('npm run kill:local_blockchain');
+        const commandLog = await execSync(`npm run kill:local_blockchain -- ${this.port}`);
         console.log(`Killing hardhat process: ${commandLog.toString()}`);
         startBlockchainProcess.kill();
     }
@@ -138,7 +139,10 @@ class LocalBlockchain {
 
     async setFinalizationCommitsNumber(commitsNumber) {
         console.log(`Setting finalizationCommitsNumber in parameters storage to: ${commitsNumber}`);
-        const encodedData = this.ParametersStorageInterface.encodeFunctionData('setFinalizationCommitsNumber', [commitsNumber]);
+        const encodedData = this.ParametersStorageInterface.encodeFunctionData(
+            'setFinalizationCommitsNumber',
+            [commitsNumber],
+        );
         const parametersStorageAddress = await this.hubContract.getContractAddress(
             'ParametersStorage',
         );
