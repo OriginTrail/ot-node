@@ -1,6 +1,14 @@
 import appRootPath from 'app-root-path';
 import path from 'path';
 import BaseMigration from './base-migration.js';
+import { NODE_ENVIRONMENTS } from '../constants/constants.js';
+
+const chainIds = {
+    [NODE_ENVIRONMENTS.TESTNET]: 20430,
+    [NODE_ENVIRONMENTS.MAINNET]: 2043,
+    [NODE_ENVIRONMENTS.DEVELOPMENT]: 2160,
+};
+const chainId = chainIds[process.env.NODE_ENV];
 
 class UalExtensionUserConfigurationMigration extends BaseMigration {
     constructor(migrationName, logger, config, repositoryModuleManager) {
@@ -17,12 +25,14 @@ class UalExtensionUserConfigurationMigration extends BaseMigration {
 
         const userConfiguration = await this.fileService.readFile(configurationFilePath, true);
 
-        // user configuration migration
         if (userConfiguration.modules.blockchain.implementation.otp) {
-            // todo add chain id in implementation name
-            userConfiguration.modules.blockchain.implementation['otp:'] =
-                userConfiguration.modules.blockchain.implementation.otp;
-            delete userConfiguration.modules.blockchain.implementation.otp;
+            const oldBlockchainId = 'otp';
+            const newBlockchainId = `${oldBlockchainId}:${chainId}`;
+            userConfiguration.modules.blockchain.implementation.defaultImplementation =
+                newBlockchainId;
+            userConfiguration.modules.blockchain.implementation[newBlockchainId] =
+                userConfiguration.modules.blockchain.implementation[oldBlockchainId];
+            delete userConfiguration.modules.blockchain.implementation[oldBlockchainId];
             await this.fileService.writeContentsToFile(
                 configurationFolderPath,
                 this.config.configFilename,

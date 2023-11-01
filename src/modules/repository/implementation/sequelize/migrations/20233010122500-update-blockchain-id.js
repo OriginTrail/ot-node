@@ -1,10 +1,9 @@
 import { NODE_ENVIRONMENTS } from '../../../../../constants/constants.js';
 
-// todo add real chain id
 const chainIds = {
-    [NODE_ENVIRONMENTS.TESTNET]: 1234,
-    [NODE_ENVIRONMENTS.MAINNET]: 4321,
-    [NODE_ENVIRONMENTS.DEVELOPMENT]: 5678,
+    [NODE_ENVIRONMENTS.TESTNET]: 20430,
+    [NODE_ENVIRONMENTS.MAINNET]: 2043,
+    [NODE_ENVIRONMENTS.DEVELOPMENT]: 2160,
 };
 const chainId = chainIds[process.env.NODE_ENV];
 

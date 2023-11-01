@@ -421,7 +421,7 @@
             "blockchain": {
                 "enabled": true,
                 "implementation": {
-                    "otp": {
+                    "otp:20430": {
                         "enabled": true,
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
@@ -575,9 +575,9 @@
             },
             "blockchain": {
                 "enabled": true,
-                "defaultImplementation": "otp",
+                "defaultImplementation": "otp:2043",
                 "implementation": {
-                    "otp": {
+                    "otp:2043": {
                         "enabled": true,
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
