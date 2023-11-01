@@ -12,6 +12,10 @@ Feature: Release related tests
     And I setup 4 nodes
     And I wait for 5 seconds
 
-    When I call Publish on the node 4 with validAssertion
+    When I call Publish on the node 4 with validAssertion on blockchain test1
+    And I wait for latest Publish to finalize
+    Then Latest Publish operation finished with status: COMPLETED
+
+    When I call Publish on the node 4 with validAssertion on blockchain test2
     And I wait for latest Publish to finalize
     Then Latest Publish operation finished with status: COMPLETED

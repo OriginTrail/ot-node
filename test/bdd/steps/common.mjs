@@ -36,6 +36,7 @@ Given(
             const sharesTokenName = `origintrail-test-${nodeIndex}`;
             const sharesTokenSymbol = `OT-T-${nodeIndex}`;
             const nodeConfiguration = stepsUtils.createNodeConfiguration(
+                this.state.localBlockchains,
                 nodeWallets,
                 nodeManagementWallets,
                 nodeIndex,
@@ -63,20 +64,23 @@ Given(
                     const client = new DkgClientHelper({
                         endpoint: 'http://localhost',
                         port: rpcPort,
-                        blockchain: {
-                            name: 'hardhat-test1',
-                            publicKey: nodeWallets[0].address,
-                            privateKey: nodeManagementWallets[0].privateKey,
-                        },
-                        blockchain: {
-                            name: 'hardhat-test2',
-                            publicKey: nodeWallets[1].address,
-                            privateKey: nodeManagementWallets[1].privateKey,
-                        },
                         maxNumberOfRetries: 5,
                         frequency: 2,
                         contentType: 'all',
                     });
+                    let clientBlockchainOptions = {};
+                    Object.keys(this.state.localBlockchains).forEach((localBlockchain, index) => {
+                        clientBlockchainOptions[localBlockchain] = {
+                            blockchain: {
+                                name: localBlockchain,
+                                publicKey: nodeWallets[index].address,
+                                privateKey: nodeWallets[index].privateKey,
+                                rpc: `http://localhost:${this.state.localBlockchains[localBlockchain].port}`,
+                                hubContract: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+                            },
+                        };
+                    });
+
                     this.state.nodes[nodeIndex] = {
                         client,
                         forkedNode,
@@ -86,6 +90,7 @@ Given(
                             config: nodeConfiguration,
                             logger: this.logger,
                         }),
+                        clientBlockchainOptions,
                     };
                 }
                 nodesStarted += 1;
@@ -123,6 +128,7 @@ Given(
         const sharesTokenName = `${nodeName}-${nodeIndex}`;
         const sharesTokenSymbol = `OT-B-${nodeIndex}`;
         const nodeConfiguration = stepsUtils.createNodeConfiguration(
+            this.state.localBlockchains,
             nodeWallets,
             nodeManagementWallets,
             nodeIndex,
