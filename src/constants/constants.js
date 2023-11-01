@@ -552,13 +552,15 @@ export const CONTRACT_EVENTS = {
 export const NODE_ENVIRONMENTS = {
     DEVELOPMENT: 'development',
     TEST: 'test',
+    DEVNET: 'devnet',
     TESTNET: 'testnet',
     MAINNET: 'mainnet',
 };
 
 export const CHAIN_IDS = {
-    DEVELOPMENT: 2160,
-    TEST: 'test',
+    DEVELOPMENT: 31337,
+    TEST: 31337,
+    DEVNET: 2160,
     TESTNET: 20430,
     MAINNET: 2043,
 };

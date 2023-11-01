@@ -12,7 +12,6 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
     async executeMigration() {
         const oldBlockchainId = 'did:dkg:otp';
         const newBlockchainId = `${oldBlockchainId}:${chainId}`;
-
         const updateSubjectQuery = `
                     WITH <assets:graph>
                     DELETE {
@@ -23,7 +22,7 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
                     }
                     WHERE {
                       ?s ?p ?o .
-                      FILTER (STRSTARTS(STR(?s), "${oldBlockchainId}"))
+                      FILTER (STRSTARTS(STR(?s), "${oldBlockchainId}/"))
                       BIND (IRI(REPLACE(STR(?s), "${oldBlockchainId}", "${newBlockchainId}")) AS ?newSubject)
                     }
         `;
@@ -48,10 +47,7 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
             } 
         `;
 
-        await this.tripleStoreService.queryVoidAllRepositories(
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-            updateObjectQuery,
-        );
+        await this.tripleStoreService.queryVoidAllRepositories(updateObjectQuery);
     }
 }
 
