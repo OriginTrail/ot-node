@@ -19,7 +19,8 @@ import MarkOldBlockchainEventsAsProcessedMigration from './src/migration/mark-ol
 import TripleStoreMetadataMigration from './src/migration/triple-store-metadata-migration.js';
 import RemoveOldEpochCommandsMigration from './src/migration/remove-old-epoch-commands-migration.js';
 import PendingStorageMigration from './src/migration/pending-storage-migration.js';
-import UalExtensionMigration from './src/migration/ual-extension-migration.js';
+import UalExtensionTripleStoreMigration from './src/migration/ual-extension-triple-store-migration.js';
+import UalExtensionUserConfigurationMigration from './src/migration/ual-extension-user-configuration-migration.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -39,7 +40,7 @@ class OTNode {
         await this.removeUpdateFile();
         await this.executeTripleStoreUserConfigurationMigration();
         await this.executeTelemetryModuleUserConfigurationMigration();
-        await this.executeUalExtensionMigration();
+        await this.executeUalExtensionUserConfigurationMigration();
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
         this.logger.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
@@ -56,6 +57,7 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
+        await this.executeUalExtensionTripleStoreMigration();
         await this.executePullShardingTableMigration();
         await this.executePrivateAssetsMetadataMigration();
         await this.executeRemoveAgreementStartEndTimeMigration();
@@ -343,19 +345,39 @@ class OTNode {
         }
     }
 
-    async executeUalExtensionMigration() {
+    async executeUalExtensionUserConfigurationMigration() {
         if (
             process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
             process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
         )
             return;
-        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
 
-        const migration = new UalExtensionMigration(
-            'ualExtensionMigration',
+        const migration = new UalExtensionUserConfigurationMigration(
+            'ualExtensionUserConfigurationMigration',
             this.logger,
             this.config,
-            repositoryModuleManager,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            await migration.migrate();
+            this.logger.info('Node will now restart!');
+            this.stop(1);
+        }
+    }
+
+    async executeUalExtensionTripleStoreMigration() {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const tripleStoreService = this.container.resolve('tripleStoreService');
+
+        const migration = new UalExtensionTripleStoreMigration(
+            'ualExtensionTripleStoreMigration',
+            this.logger,
+            this.config,
+            tripleStoreService,
         );
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();
