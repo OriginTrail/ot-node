@@ -1,14 +1,9 @@
 import appRootPath from 'app-root-path';
 import path from 'path';
 import BaseMigration from './base-migration.js';
-import { NODE_ENVIRONMENTS } from '../constants/constants.js';
+import { CHAIN_IDS } from '../constants/constants.js';
 
-const chainIds = {
-    [NODE_ENVIRONMENTS.TESTNET]: 20430,
-    [NODE_ENVIRONMENTS.MAINNET]: 2043,
-    [NODE_ENVIRONMENTS.DEVELOPMENT]: 2160,
-};
-const chainId = chainIds[process.env.NODE_ENV];
+const chainId = CHAIN_IDS[process.env.NODE_ENV];
 
 class UalExtensionUserConfigurationMigration extends BaseMigration {
     constructor(migrationName, logger, config, repositoryModuleManager) {

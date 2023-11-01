@@ -1,11 +1,6 @@
-import { NODE_ENVIRONMENTS } from '../../../../../constants/constants.js';
+import { CHAIN_IDS } from '../../../../../constants/constants.js';
 
-const chainIds = {
-    [NODE_ENVIRONMENTS.TESTNET]: 20430,
-    [NODE_ENVIRONMENTS.MAINNET]: 2043,
-    [NODE_ENVIRONMENTS.DEVELOPMENT]: 2160,
-};
-const chainId = chainIds[process.env.NODE_ENV];
+const chainId = CHAIN_IDS[process.env.NODE_ENV];
 
 export async function up({ context: { queryInterface } }) {
     await queryInterface.sequelize.query(`
