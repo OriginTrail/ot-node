@@ -52,7 +52,12 @@ class SubmitCommitCommand extends Command {
             const errorMessage = `Commit already submitted for blockchain: ${blockchain} agreement id: ${agreementId}, epoch: ${epoch}, state index: ${stateIndex}`;
             this.logger.trace(errorMessage);
 
-            await this.handleError(operationId, errorMessage, this.errorType, true);
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
+                operationId,
+                agreementId,
+                epoch,
+            );
             return Command.empty();
         }
 
@@ -66,7 +71,10 @@ class SubmitCommitCommand extends Command {
                 epoch,
                 stateIndex,
                 (result) => {
-                    if (result?.error) {
+                    if (
+                        result?.error &&
+                        !result.error.message.includes('NodeAlreadySubmittedCommit')
+                    ) {
                         reject(result.error);
                     }
                     resolve();
