@@ -1,5 +1,13 @@
 import { BigNumber } from 'ethers';
 
+export const WS_RPC_PROVIDER_PRIORITY = 2;
+
+export const HTTP_RPC_PROVIDER_PRIORITY = 1;
+
+export const FALLBACK_PROVIDER_QUORUM = 1;
+
+export const RPC_PROVIDER_STALL_TIMEOUT = 60 * 1000;
+
 export const UINT256_MAX_BN = BigNumber.from(2).pow(256).sub(1);
 
 export const UINT32_MAX_BN = BigNumber.from(2).pow(32).sub(1);
