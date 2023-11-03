@@ -132,7 +132,7 @@ class SubmitProofsCommand extends Command {
                 leaf,
                 stateIndex,
                 (result) => {
-                    if (result?.error && !result.error.includes('NodeAlreadyRewarded')) {
+                    if (result?.error && !result.error.message.includes('NodeAlreadyRewarded')) {
                         reject(result.error);
                     }
                     resolve();
