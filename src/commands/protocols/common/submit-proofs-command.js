@@ -69,7 +69,7 @@ class SubmitProofsCommand extends Command {
             const errorMessage = `Assertion with id: ${assertionId} not found in triple store.`;
             this.logger.trace(errorMessage);
 
-            this.handleError(operationId, errorMessage, this.errorType, true);
+            await this.handleError(operationId, errorMessage, this.errorType, true);
             return Command.empty();
         }
 
@@ -101,17 +101,17 @@ class SubmitProofsCommand extends Command {
         );
         if (alreadySubmitted) {
             const errorMessage = `Proofs already submitted for blockchain: ${blockchain} agreement id: ${agreementId}, epoch: ${epoch}, state index: ${stateIndex}`;
-
             this.logger.trace(errorMessage);
-            this.handleError(operationId, errorMessage, this.errorType, true);
+
+            await this.handleError(operationId, errorMessage, this.errorType, true);
             return Command.empty();
         }
 
         if (proof.length === 0) {
             const errorMessage = `Error during Merkle Proof calculation for blockchain: ${blockchain} agreement id: ${agreementId}, epoch: ${epoch}, state index: ${stateIndex}, proof cannot be empty`;
-
             this.logger.trace(errorMessage);
-            this.handleError(operationId, errorMessage, this.errorType, true);
+
+            await this.handleError(operationId, errorMessage, this.errorType, true);
             return Command.empty();
         }
 
