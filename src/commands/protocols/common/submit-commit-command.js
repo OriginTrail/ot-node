@@ -71,7 +71,10 @@ class SubmitCommitCommand extends Command {
                 epoch,
                 stateIndex,
                 (result) => {
-                    if (result?.error && !result.error.includes('NodeAlreadySubmittedCommit')) {
+                    if (
+                        result?.error &&
+                        !result.error.message.includes('NodeAlreadySubmittedCommit')
+                    ) {
                         reject(result.error);
                     }
                     resolve();
