@@ -91,7 +91,7 @@ class BaseModuleManager {
         delete this.handlers[name];
     }
 
-    getModuleConfiguration(name) {
+    getModuleConfiguration(name = null) {
         return this.getImplementation(name).config;
     }
 }

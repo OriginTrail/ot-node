@@ -166,17 +166,25 @@
                         }
                     }
                 }
+            },
+            "telemetry": {
+                "enabled": true,
+                "implementation": {
+                    "ot-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "config": {
+                            "sendTelemetryData": false,
+                            "signalingServerUrl": "null"
+                        }
+                    }
+                }
             }
         },
         "maximumAssertionSizeInKb": 2500,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "info",
-        "telemetry": {
-            "enabled": true,
-            "sendTelemetryData": false,
-            "signalingServerUrl": "null"
-        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
@@ -301,17 +309,25 @@
                         "config": {}
                     }
                 }
+            },
+            "telemetry": {
+                "enabled": true,
+                "implementation": {
+                    "ot-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "config": {
+                            "sendTelemetryData": false,
+                            "signalingServerUrl": "null"
+                        }
+                    }
+                }
             }
         },
         "maximumAssertionSizeInKb": 2500,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
-        "telemetry": {
-            "enabled": true,
-            "sendTelemetryData": false,
-            "signalingServerUrl": "null"
-        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
@@ -448,17 +464,25 @@
                         "config": {}
                     }
                 }
+            },
+            "telemetry": {
+                "enabled": true,
+                "implementation": {
+                    "ot-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "config": {
+                            "sendTelemetryData": true,
+                            "signalingServerUrl": "https://testnet-signaling.origin-trail.network/signal"
+                        }
+                    }
+                }
             }
         },
         "maximumAssertionSizeInKb": 2500,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
-        "telemetry": {
-            "enabled": true,
-            "sendTelemetryData": true,
-            "signalingServerUrl": "https://testnet-signaling.origin-trail.network/signal"
-        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
@@ -596,17 +620,25 @@
                         "config": {}
                     }
                 }
+            },
+            "telemetry": {
+                "enabled": true,
+                "implementation": {
+                    "ot-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "config": {
+                            "sendTelemetryData": true,
+                            "signalingServerUrl": "https://mainnet-signaling.origin-trail.network/signal"
+                        }
+                    }
+                }
             }
         },
         "maximumAssertionSizeInKb": 2500,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
-        "telemetry": {
-            "enabled": true,
-            "sendTelemetryData": true,
-            "signalingServerUrl": "https://mainnet-signaling.origin-trail.network/signal"
-        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
