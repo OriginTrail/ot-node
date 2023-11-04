@@ -15,6 +15,10 @@ import {
     TRANSACTION_POLLING_TIMEOUT_MILLIS,
     TRANSACTION_CONFIRMATIONS,
     BLOCK_TIME_MILLIS,
+    WS_RPC_PROVIDER_PRIORITY,
+    HTTP_RPC_PROVIDER_PRIORITY,
+    FALLBACK_PROVIDER_QUORUM,
+    RPC_PROVIDER_STALL_TIMEOUT,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -53,7 +57,6 @@ class Web3Service {
         this.config = config;
         this.logger = logger;
 
-        this.rpcNumber = 0;
         this.initializeTransactionQueue(TRANSACTION_QUEUE_CONCURRENCY);
         await this.initializeWeb3();
         this.startBlock = await this.getBlockNumber();
@@ -89,36 +92,43 @@ class Web3Service {
     }
 
     async initializeWeb3() {
-        let tries = 0;
-        let isRpcConnected = false;
-        while (!isRpcConnected) {
-            if (tries >= this.config.rpcEndpoints.length) {
-                throw Error('RPC initialization failed');
-            }
-
+        const rpcProviders = [];
+        for (const rpcEndpoint of this.config.rpcEndpoints) {
             try {
-                if (this.config.rpcEndpoints[this.rpcNumber].startsWith('ws')) {
-                    this.provider = new ethers.providers.WebSocketProvider(
-                        this.config.rpcEndpoints[this.rpcNumber],
-                    );
+                if (rpcEndpoint.startsWith('ws')) {
+                    rpcProviders.push({
+                        provider: new ethers.providers.WebSocketProvider(rpcEndpoint),
+                        priority: WS_RPC_PROVIDER_PRIORITY,
+                        weight: 1,
+                        stallTimeout: RPC_PROVIDER_STALL_TIMEOUT,
+                    });
                 } else {
-                    this.provider = new ethers.providers.JsonRpcProvider(
-                        this.config.rpcEndpoints[this.rpcNumber],
-                    );
+                    rpcProviders.push({
+                        provider: new ethers.providers.JsonRpcProvider(rpcEndpoint),
+                        priority: HTTP_RPC_PROVIDER_PRIORITY,
+                        weight: 1,
+                        stallTimeout: RPC_PROVIDER_STALL_TIMEOUT,
+                    });
                 }
-                // eslint-disable-next-line no-await-in-loop
-                await this.providerReady();
-                isRpcConnected = true;
+                this.logger.debug(`Connected to the blockchain RPC: ${rpcEndpoint}.`);
             } catch (e) {
-                this.logger.warn(
-                    `Unable to connect to blockchain rpc : ${
-                        this.config.rpcEndpoints[this.rpcNumber]
-                    }.`,
-                );
-                tries += 1;
-                this.rpcNumber = (this.rpcNumber + 1) % this.config.rpcEndpoints.length;
+                this.logger.warn(`Unable to connect to the blockchain RPC: ${rpcEndpoint}.`);
             }
         }
+
+        try {
+            this.provider = new ethers.providers.FallbackProvider(
+                rpcProviders,
+                FALLBACK_PROVIDER_QUORUM,
+            );
+        } catch (e) {
+            throw Error(
+                `RPC Fallback Provider initialization failed. Fallback Provider quorum: ${FALLBACK_PROVIDER_QUORUM}. Error: ${e.message}.`,
+            );
+        }
+
+        // eslint-disable-next-line no-await-in-loop
+        await this.providerReady();
 
         this.wallet = new ethers.Wallet(this.getPrivateKey(), this.provider);
     }
@@ -164,9 +174,6 @@ class Web3Service {
         });
 
         this.logger.info(`Contracts initialized`);
-        this.logger.debug(
-            `Connected to blockchain rpc : ${this.config.rpcEndpoints[this.rpcNumber]}.`,
-        );
 
         await this.logBalances();
     }
@@ -925,12 +932,6 @@ class Web3Service {
     }
 
     async restartService() {
-        this.rpcNumber = (this.rpcNumber + 1) % this.config.rpcEndpoints.length;
-        this.logger.warn(
-            `There was an issue with current blockchain rpc. Connecting to ${
-                this.config.rpcEndpoints[this.rpcNumber]
-            }`,
-        );
         await this.initializeWeb3();
         await this.initializeContracts();
     }
@@ -942,9 +943,7 @@ class Web3Service {
         } catch (rpcError) {
             isRpcError = true;
             this.logger.warn(
-                `Unable to execute smart contract function ${functionName} using blockchain rpc : ${
-                    this.config.rpcEndpoints[this.rpcNumber]
-                }.`,
+                `Unable to execute smart contract function ${functionName} using Fallback RPC Provider.`,
             );
             await this.restartService();
         }
