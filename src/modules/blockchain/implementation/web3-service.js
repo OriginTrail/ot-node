@@ -61,7 +61,7 @@ class Web3Service {
         await this.initializeWeb3();
         this.startBlock = await this.getBlockNumber();
         await this.initializeContracts();
-        this.initializeProviderDebugging();
+        // this.initializeProviderDebugging();
     }
 
     initializeTransactionQueue(concurrency) {
