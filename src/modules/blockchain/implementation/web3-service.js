@@ -61,6 +61,7 @@ class Web3Service {
         await this.initializeWeb3();
         this.startBlock = await this.getBlockNumber();
         await this.initializeContracts();
+        this.initializeProviderDebugging();
     }
 
     initializeTransactionQueue(concurrency) {
@@ -92,24 +93,26 @@ class Web3Service {
     }
 
     async initializeWeb3() {
-        const rpcProviders = [];
+        const providers = [];
         for (const rpcEndpoint of this.config.rpcEndpoints) {
+            const isWebSocket = rpcEndpoint.startsWith('ws');
+            const Provider = isWebSocket
+                ? ethers.providers.WebSocketProvider
+                : ethers.providers.JsonRpcProvider;
+            const priority = isWebSocket ? WS_RPC_PROVIDER_PRIORITY : HTTP_RPC_PROVIDER_PRIORITY;
+
             try {
-                if (rpcEndpoint.startsWith('ws')) {
-                    rpcProviders.push({
-                        provider: new ethers.providers.WebSocketProvider(rpcEndpoint),
-                        priority: WS_RPC_PROVIDER_PRIORITY,
-                        weight: 1,
-                        stallTimeout: RPC_PROVIDER_STALL_TIMEOUT,
-                    });
-                } else {
-                    rpcProviders.push({
-                        provider: new ethers.providers.JsonRpcProvider(rpcEndpoint),
-                        priority: HTTP_RPC_PROVIDER_PRIORITY,
-                        weight: 1,
-                        stallTimeout: RPC_PROVIDER_STALL_TIMEOUT,
-                    });
-                }
+                const provider = new Provider(rpcEndpoint);
+                // eslint-disable-next-line no-await-in-loop
+                await provider.getNetwork();
+
+                providers.push({
+                    provider,
+                    priority,
+                    weight: 1,
+                    stallTimeout: RPC_PROVIDER_STALL_TIMEOUT,
+                });
+
                 this.logger.debug(`Connected to the blockchain RPC: ${rpcEndpoint}.`);
             } catch (e) {
                 this.logger.warn(`Unable to connect to the blockchain RPC: ${rpcEndpoint}.`);
@@ -118,22 +121,24 @@ class Web3Service {
 
         try {
             this.provider = new ethers.providers.FallbackProvider(
-                rpcProviders,
+                providers,
                 FALLBACK_PROVIDER_QUORUM,
             );
+
+            // eslint-disable-next-line no-await-in-loop
+            await this.providerReady();
         } catch (e) {
             throw Error(
                 `RPC Fallback Provider initialization failed. Fallback Provider quorum: ${FALLBACK_PROVIDER_QUORUM}. Error: ${e.message}.`,
             );
         }
 
-        // eslint-disable-next-line no-await-in-loop
-        await this.providerReady();
-
         this.wallet = new ethers.Wallet(this.getPrivateKey(), this.provider);
     }
 
     async initializeContracts() {
+        this.contractAddresses = {};
+
         this.logger.info(
             `Initializing contracts with hub contract address: ${this.config.hubContractAddress}`,
         );
@@ -142,6 +147,7 @@ class Web3Service {
             ABIs.Hub,
             this.wallet,
         );
+        this.contractAddresses[this.config.hubContractAddress] = this.HubContract;
 
         const contractsArray = await this.callContractFunction(
             this.HubContract,
@@ -178,12 +184,81 @@ class Web3Service {
         await this.logBalances();
     }
 
+    initializeProviderDebugging() {
+        this.provider.on('debug', (info) => {
+            switch (info.request.method) {
+                case 'call':
+                    if (info.backend.error) {
+                        const contractInstance = this.contractAddresses[info.request.params.to];
+                        const inputData = info.request.params.data;
+                        const decodedInputData = this._decodeInputData(
+                            inputData,
+                            contractInstance.interface,
+                        );
+                        const decodedErrorData = this._decodeErrorData(
+                            info.backend.error,
+                            contractInstance.interface,
+                        );
+
+                        this.logger.debug(
+                            `${decodedInputData} call has failed; ` +
+                                `Error: ${decodedErrorData}; ` +
+                                `RPC: ${info.backend.provider.connection.url}.`,
+                        );
+                    }
+                    break;
+                case 'estimateGas': {
+                    const contractInstance = this.contractAddresses[info.request.params.to];
+                    const inputData = info.request.params.data;
+                    let decodedInputData;
+                    if (info.backend.result || info.backend.result === null) {
+                        decodedInputData = this._decodeInputData(
+                            inputData,
+                            contractInstance.interface,
+                        );
+                        const decodedResultData = this._decodeResultData(
+                            inputData.slice(0, 10),
+                            info.backend.result,
+                            contractInstance.interface,
+                        );
+
+                        this.logger.debug(
+                            `${decodedInputData} transaction has been successfully executed; ` +
+                                `Result: ${decodedResultData} ` +
+                                `RPC: ${info.backend.provider.connection.url}.`,
+                        );
+                    } else if (info.backend.error) {
+                        decodedInputData = this._decodeInputData(
+                            inputData,
+                            contractInstance.interface,
+                        );
+                        const decodedErrorData = this._decodeErrorData(
+                            info.backend.error,
+                            contractInstance.interface,
+                        );
+
+                        this.logger.debug(
+                            `${decodedInputData} transaction has failed; ` +
+                                `Error: ${decodedErrorData}; ` +
+                                `RPC: ${info.backend.provider.connection.url}.`,
+                        );
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+        });
+    }
+
     initializeAssetStorageContract(assetStorageAddress) {
         this.assetStorageContracts[assetStorageAddress.toLowerCase()] = new ethers.Contract(
             assetStorageAddress,
             ABIs.ContentAssetStorage,
             this.wallet,
         );
+        this.contractAddresses[assetStorageAddress] =
+            this.assetStorageContracts[assetStorageAddress.toLowerCase()];
     }
 
     initializeScoringContract(id, contractAddress) {
@@ -195,6 +270,7 @@ class Web3Service {
                 ABIs[contractName],
                 this.wallet,
             );
+            this.contractAddresses[contractAddress] = this.scoringFunctionsContracts[id];
         } else {
             this.logger.trace(
                 `Skipping initialisation of contract with id: ${id}, address: ${contractAddress}`,
@@ -209,6 +285,7 @@ class Web3Service {
                 ABIs[contractName],
                 this.wallet,
             );
+            this.contractAddresses[contractAddress] = this[`${contractName}Contract`];
         } else {
             this.logger.trace(
                 `Skipping initialisation of contract: ${contractName}, address: ${contractAddress}`,
@@ -343,8 +420,12 @@ class Web3Service {
                 // eslint-disable-next-line no-await-in-loop
                 result = await contractInstance[functionName](...args);
             } catch (error) {
+                const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
                 // eslint-disable-next-line no-await-in-loop
-                await this.handleError(error, functionName);
+                await this.handleError(
+                    Error(`Call failed, reason: ${decodedErrorData}`),
+                    functionName,
+                );
             }
         }
 
@@ -363,19 +444,19 @@ class Web3Service {
                 /* eslint-disable no-await-in-loop */
                 gasLimit = await contractInstance.estimateGas[functionName](...args);
             } catch (error) {
-                const decodedReturnData = this._decodeReturnData(error, contractInstance.interface);
+                const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
                 await this.handleError(
-                    Error(`gas estimation failed, reason: ${decodedReturnData}`),
+                    Error(`Gas estimation failed, reason: ${decodedErrorData}`),
                     functionName,
                 );
             }
 
             gasLimit = gasLimit ?? this.convertToWei(900, 'kwei');
 
-            this.logger.info(
-                'Sending signed transaction to blockchain, calling method: ' +
-                    `${functionName} with gas limit: ${gasLimit.toString()} and gasPrice ${gasPrice.toString()}. ` +
-                    `Transaction queue length: ${this.getTransactionQueueLength()}`,
+            this.logger.debug(
+                `Sending signed transaction ${functionName} to the blockchain ` +
+                    `with gas limit: ${gasLimit.toString()} and gasPrice ${gasPrice.toString()}. ` +
+                    `Transaction queue length: ${this.getTransactionQueueLength()}.`,
             );
 
             try {
@@ -393,23 +474,17 @@ class Web3Service {
                     await this.provider.call(tx, tx.blockNumber);
                 }
             } catch (error) {
-                const decodedReturnData = this._decodeReturnData(error, contractInstance.interface);
-                this.logger.warn(
-                    `Failed executing smart contract function ${functionName}. Error: ${decodedReturnData}`,
-                );
+                const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
                 if (
                     !transactionRetried &&
                     (error.message.includes(`timeout exceeded`) ||
                         error.message.includes(`Pool(TooLowPriority`))
                 ) {
                     gasPrice = Math.ceil(gasPrice * 1.2);
-                    this.logger.warn(
-                        `Retrying to execute smart contract function ${functionName} with gasPrice: ${gasPrice}`,
-                    );
                     transactionRetried = true;
                 } else {
                     await this.handleError(
-                        Error(`transaction reverted, reason: ${decodedReturnData}`),
+                        Error(`Transaction reverted, reason: ${decodedErrorData}`),
                         functionName,
                     );
                 }
@@ -418,7 +493,7 @@ class Web3Service {
         return result;
     }
 
-    _getReturnData(error) {
+    _getErrorData(error) {
         let nestedError = error;
         while (nestedError && nestedError.error) {
             nestedError = nestedError.error;
@@ -442,23 +517,31 @@ class Web3Service {
         return returnData;
     }
 
-    _decodeReturnData(evmError, contractInterface) {
-        let returnData;
+    _decodeInputData(inputData, contractInterface) {
+        if (inputData === ZERO_PREFIX) {
+            return 'Empty input data.';
+        }
+
+        return contractInterface.decodeFunctionData(inputData.slice(0, 10), inputData);
+    }
+
+    _decodeErrorData(evmError, contractInterface) {
+        let errorData;
 
         try {
-            returnData = this._getReturnData(evmError);
+            errorData = this._getErrorData(evmError);
         } catch (error) {
             return error.message;
         }
 
         // Handle empty error data
-        if (returnData === ZERO_PREFIX) {
+        if (errorData === ZERO_PREFIX) {
             return 'Empty error data.';
         }
 
         // Handle standard solidity string error
-        if (returnData.startsWith(SOLIDITY_ERROR_STRING_PREFIX)) {
-            const encodedReason = returnData.slice(SOLIDITY_ERROR_STRING_PREFIX.length);
+        if (errorData.startsWith(SOLIDITY_ERROR_STRING_PREFIX)) {
+            const encodedReason = errorData.slice(SOLIDITY_ERROR_STRING_PREFIX.length);
             try {
                 return ethers.utils.defaultAbiCoder.decode(['string'], `0x${encodedReason}`)[0];
             } catch (error) {
@@ -467,8 +550,8 @@ class Web3Service {
         }
 
         // Handle solidity panic code
-        if (returnData.startsWith(SOLIDITY_PANIC_CODE_PREFIX)) {
-            const encodedReason = returnData.slice(SOLIDITY_PANIC_CODE_PREFIX.length);
+        if (errorData.startsWith(SOLIDITY_PANIC_CODE_PREFIX)) {
+            const encodedReason = errorData.slice(SOLIDITY_PANIC_CODE_PREFIX.length);
             let code;
             try {
                 [code] = ethers.utils.defaultAbiCoder.decode(['uint256'], `0x${encodedReason}`);
@@ -481,7 +564,7 @@ class Web3Service {
 
         // Try parsing a custom error using the contract ABI
         try {
-            const decodedCustomError = contractInterface.parseError(returnData);
+            const decodedCustomError = contractInterface.parseError(errorData);
             const formattedArgs = decodedCustomError.errorFragment.inputs
                 .map((input, i) => {
                     const argName = input.name;
@@ -493,6 +576,14 @@ class Web3Service {
         } catch (error) {
             return `Failed to decode custom error data. Error: ${error}`;
         }
+    }
+
+    _decodeResultData(fragment, resultData, contractInterface) {
+        if (resultData === ZERO_PREFIX) {
+            return 'Empty input data.';
+        }
+
+        return contractInterface.decodeFunctionResult(fragment, resultData);
     }
 
     _formatCustomErrorArgument(value) {
