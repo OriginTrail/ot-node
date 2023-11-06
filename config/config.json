@@ -131,7 +131,10 @@
                         "config": {
                             "networkId": "otp::testnet",
                             "hubContractAddress": "0x707233a55bD035C6Bc732196CA4dbffa63CbA169",
-                            "rpcEndpoints": ["https://lofar-tm-rpc.origin-trail.network"],
+                            "rpcEndpoints": [
+                                "https://lofar-tm-rpc.origin-trail.network",
+                                "https://lofar.origintrail.network/"
+                            ],
                             "initialStakeAmount": 50000,
                             "initialAskAmount": 2
                         }
@@ -166,17 +169,25 @@
                         }
                     }
                 }
+            },
+            "telemetry": {
+                "enabled": true,
+                "implementation": {
+                    "ot-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "config": {
+                            "sendTelemetryData": false,
+                            "signalingServerUrl": "null"
+                        }
+                    }
+                }
             }
         },
         "maximumAssertionSizeInKb": 2500,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "info",
-        "telemetry": {
-            "enabled": true,
-            "sendTelemetryData": false,
-            "signalingServerUrl": "null"
-        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
@@ -301,17 +312,25 @@
                         "config": {}
                     }
                 }
+            },
+            "telemetry": {
+                "enabled": true,
+                "implementation": {
+                    "ot-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "config": {
+                            "sendTelemetryData": false,
+                            "signalingServerUrl": "null"
+                        }
+                    }
+                }
             }
         },
         "maximumAssertionSizeInKb": 2500,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
-        "telemetry": {
-            "enabled": true,
-            "sendTelemetryData": false,
-            "signalingServerUrl": "null"
-        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
@@ -448,17 +467,25 @@
                         "config": {}
                     }
                 }
+            },
+            "telemetry": {
+                "enabled": true,
+                "implementation": {
+                    "ot-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "config": {
+                            "sendTelemetryData": true,
+                            "signalingServerUrl": "https://testnet-signaling.origin-trail.network/signal"
+                        }
+                    }
+                }
             }
         },
         "maximumAssertionSizeInKb": 2500,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
-        "telemetry": {
-            "enabled": true,
-            "sendTelemetryData": true,
-            "signalingServerUrl": "https://testnet-signaling.origin-trail.network/signal"
-        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
@@ -561,7 +588,8 @@
                             "hubContractAddress": "0x5fA7916c48Fe6D5F1738d12Ad234b78c90B4cAdA",
                             "rpcEndpoints": [
                                 "https://astrosat-parachain-rpc.origin-trail.network",
-                                "https://astrosat.origintrail.network/"
+                                "https://astrosat.origintrail.network/",
+                                "https://astrosat-2.origintrail.network/"
                             ]
                         }
                     }
@@ -596,17 +624,25 @@
                         "config": {}
                     }
                 }
+            },
+            "telemetry": {
+                "enabled": true,
+                "implementation": {
+                    "ot-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "config": {
+                            "sendTelemetryData": true,
+                            "signalingServerUrl": "https://mainnet-signaling.origin-trail.network/signal"
+                        }
+                    }
+                }
             }
         },
         "maximumAssertionSizeInKb": 2500,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
-        "telemetry": {
-            "enabled": true,
-            "sendTelemetryData": true,
-            "signalingServerUrl": "https://mainnet-signaling.origin-trail.network/signal"
-        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
