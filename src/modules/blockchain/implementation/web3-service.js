@@ -186,67 +186,42 @@ class Web3Service {
 
     initializeProviderDebugging() {
         this.provider.on('debug', (info) => {
-            switch (info.request.method) {
-                case 'call':
-                    if (info.backend.error) {
-                        const contractInstance = this.contractAddresses[info.request.params.to];
-                        const inputData = info.request.params.data;
-                        const decodedInputData = this._decodeInputData(
-                            inputData,
-                            contractInstance.interface,
-                        );
-                        const decodedErrorData = this._decodeErrorData(
-                            info.backend.error,
-                            contractInstance.interface,
-                        );
+            const contractInstance = this.contractAddresses[info.request.params.to];
+            const inputData = info.request.params.data;
+            const decodedInputData = this._decodeInputData(inputData, contractInstance.interface);
 
-                        this.logger.debug(
-                            `${decodedInputData} call has failed; ` +
-                                `Error: ${decodedErrorData}; ` +
-                                `RPC: ${info.backend.provider.connection.url}.`,
-                        );
-                    }
-                    break;
-                case 'estimateGas': {
-                    const contractInstance = this.contractAddresses[info.request.params.to];
-                    const inputData = info.request.params.data;
-                    let decodedInputData;
-                    if (info.backend.result || info.backend.result === null) {
-                        decodedInputData = this._decodeInputData(
-                            inputData,
-                            contractInstance.interface,
-                        );
+            if (info.request.method === 'call' && info.backend.error) {
+                const decodedErrorData = this._decodeErrorData(
+                    info.backend.error,
+                    contractInstance.interface,
+                );
+                this.logger.debug(
+                    `${decodedInputData} call has failed; Error: ${decodedErrorData}; ` +
+                        `RPC: ${info.backend.provider.connection.url}.`,
+                );
+            } else if (info.request.method === 'estimateGas') {
+                if (info.backend.error) {
+                    const decodedErrorData = this._decodeErrorData(
+                        info.backend.error,
+                        contractInstance.interface,
+                    );
+                    this.logger.debug(
+                        `${decodedInputData} gas estimation has failed; Error: ${decodedErrorData}; ` +
+                            `RPC: ${info.backend.provider.connection.url}.`,
+                    );
+                } else if (info.backend.result !== undefined) {
+                    let message = `${decodedInputData} gas has been successfully estimated; `;
+                    if (info.backend.result !== null) {
                         const decodedResultData = this._decodeResultData(
                             inputData.slice(0, 10),
                             info.backend.result,
                             contractInstance.interface,
                         );
-
-                        this.logger.debug(
-                            `${decodedInputData} transaction has been successfully executed; ` +
-                                `Result: ${decodedResultData} ` +
-                                `RPC: ${info.backend.provider.connection.url}.`,
-                        );
-                    } else if (info.backend.error) {
-                        decodedInputData = this._decodeInputData(
-                            inputData,
-                            contractInstance.interface,
-                        );
-                        const decodedErrorData = this._decodeErrorData(
-                            info.backend.error,
-                            contractInstance.interface,
-                        );
-
-                        this.logger.debug(
-                            `${decodedInputData} transaction has failed; ` +
-                                `Error: ${decodedErrorData}; ` +
-                                `RPC: ${info.backend.provider.connection.url}.`,
-                        );
+                        message += `Result: ${decodedResultData} `;
                     }
-                    break;
+                    message += `RPC: ${info.backend.provider.connection.url}.`;
+                    this.logger.debug(message);
                 }
-                default:
-                    break;
             }
         });
     }
