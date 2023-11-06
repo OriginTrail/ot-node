@@ -186,31 +186,28 @@ class Web3Service {
 
     initializeProviderDebugging() {
         this.provider.on('debug', (info) => {
-            const contractInstance = this.contractAddresses[info.request.params.to];
-            const inputData = info.request.params.data;
-            const decodedInputData = this._decodeInputData(inputData, contractInstance.interface);
+            const { method } = info.request;
 
-            if (info.request.method === 'call' && info.backend.error) {
-                const decodedErrorData = this._decodeErrorData(
-                    info.backend.error,
+            if (['call', 'estimateGas'].includes(method)) {
+                const contractInstance = this.contractAddresses[info.request.params.to];
+                const inputData = info.request.params.data;
+                const decodedInputData = this._decodeInputData(
+                    inputData,
                     contractInstance.interface,
                 );
-                this.logger.debug(
-                    `${decodedInputData} call has failed; Error: ${decodedErrorData}; ` +
-                        `RPC: ${info.backend.provider.connection.url}.`,
-                );
-            } else if (info.request.method === 'estimateGas') {
+
                 if (info.backend.error) {
                     const decodedErrorData = this._decodeErrorData(
                         info.backend.error,
                         contractInstance.interface,
                     );
                     this.logger.debug(
-                        `${decodedInputData} gas estimation has failed; Error: ${decodedErrorData}; ` +
+                        `${decodedInputData} ${method} has failed; Error: ${decodedErrorData}; ` +
                             `RPC: ${info.backend.provider.connection.url}.`,
                     );
                 } else if (info.backend.result !== undefined) {
-                    let message = `${decodedInputData} gas has been successfully estimated; `;
+                    let message = `${decodedInputData} ${method} has been successfully executed; `;
+
                     if (info.backend.result !== null) {
                         const decodedResultData = this._decodeResultData(
                             inputData.slice(0, 10),
@@ -219,7 +216,9 @@ class Web3Service {
                         );
                         message += `Result: ${decodedResultData} `;
                     }
+
                     message += `RPC: ${info.backend.provider.connection.url}.`;
+
                     this.logger.debug(message);
                 }
             }
