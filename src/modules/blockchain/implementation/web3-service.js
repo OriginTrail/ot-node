@@ -61,7 +61,7 @@ class Web3Service {
         await this.initializeWeb3();
         this.startBlock = await this.getBlockNumber();
         await this.initializeContracts();
-        // this.initializeProviderDebugging();
+        this.initializeProviderDebugging();
     }
 
     initializeTransactionQueue(concurrency) {
@@ -189,26 +189,32 @@ class Web3Service {
             const { method } = info.request;
 
             if (['call', 'estimateGas'].includes(method)) {
-                const contractInstance = this.contractAddresses[info.request.params.to];
-                const inputData = info.request.params.data;
-                const decodedInputData = this._decodeInputData(
-                    inputData,
-                    contractInstance.interface,
-                );
+                const contractInstance = this.contractAddresses[info.request.params.transaction.to];
+                const inputData = info.request.params.transaction.data;
+                let decodedInputData = this._decodeInputData(inputData, contractInstance.interface);
+                if (decodedInputData.length === 0) {
+                    decodedInputData = 'noArgs';
+                }
 
+                const functionFragment = contractInstance.interface.getFunction(
+                    inputData.slice(0, 10),
+                );
+                const functionName = functionFragment.name;
                 if (info.backend.error) {
                     const decodedErrorData = this._decodeErrorData(
                         info.backend.error,
                         contractInstance.interface,
                     );
                     this.logger.debug(
-                        `${decodedInputData} ${method} has failed; Error: ${decodedErrorData}; ` +
+                        `${decodedInputData} ${functionName}  ${method} has failed; Error: ${decodedErrorData}; ` +
                             `RPC: ${info.backend.provider.connection.url}.`,
                     );
                 } else if (info.backend.result !== undefined) {
-                    let message = `${decodedInputData} ${method} has been successfully executed; `;
+                    let message = `${decodedInputData} ${functionName} ${method} has been successfully executed; `;
 
-                    if (info.backend.result !== null) {
+                    if (info.backend.result !== null && method === 'estimateGas') {
+                        message += `Result: ${JSON.stringify(info.backend.result)}`;
+                    } else if (info.backend.result !== null) {
                         const decodedResultData = this._decodeResultData(
                             inputData.slice(0, 10),
                             info.backend.result,
