@@ -199,19 +199,20 @@ class Web3Service {
                     inputData.slice(0, 10),
                 );
                 const functionName = functionFragment.name;
-                const inputs = functionFragment.inputs.map((input) => input.name);
-
+                const inputs = functionFragment.inputs.map(
+                    (input, i) => `${input.name}=${decodedInputData[i]}`,
+                );
                 if (info.backend.error) {
                     const decodedErrorData = this._decodeErrorData(
                         info.backend.error,
                         contractInstance.interface,
                     );
                     this.logger.debug(
-                        `${decodedInputData} ${functionName}(${inputs})  ${method} has failed; Error: ${decodedErrorData}; ` +
+                        `${functionName}(${inputs})  ${method} has failed; Error: ${decodedErrorData}; ` +
                             `RPC: ${info.backend.provider.connection.url}.`,
                     );
                 } else if (info.backend.result !== undefined) {
-                    let message = `${decodedInputData} ${functionName}(${inputs}) ${method} has been successfully executed; `;
+                    let message = `${functionName}(${inputs}) ${method} has been successfully executed; `;
 
                     if (info.backend.result !== null && method !== 'estimateGas') {
                         const decodedResultData = this._decodeResultData(
