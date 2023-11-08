@@ -401,9 +401,17 @@ class Web3Service {
                 result = await contractInstance[functionName](...args);
             } catch (error) {
                 const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
+
+                const functionFragment = contractInstance.interface.getFunction(
+                    error.transaction.data.slice(0, 10),
+                );
+                const inputs = functionFragment.inputs.map(
+                    (input, i) => `${input.name}=${args[i]}`,
+                );
+
                 // eslint-disable-next-line no-await-in-loop
                 await this.handleError(
-                    Error(`Call ${functionName}(${args}) failed, reason: ${decodedErrorData}`),
+                    Error(`Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`),
                 );
             }
         }
@@ -424,9 +432,17 @@ class Web3Service {
                 gasLimit = await contractInstance.estimateGas[functionName](...args);
             } catch (error) {
                 const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
+
+                const functionFragment = contractInstance.interface.getFunction(
+                    error.transaction.data.slice(0, 10),
+                );
+                const inputs = functionFragment.inputs.map(
+                    (input, i) => `${input.name}=${args[i]}`,
+                );
+
                 await this.handleError(
                     Error(
-                        `Gas estimation ${functionName}(${args}) failed, reason: ${decodedErrorData}`,
+                        `Gas estimation ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`,
                     ),
                 );
             }
