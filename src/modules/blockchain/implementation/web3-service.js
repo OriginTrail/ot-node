@@ -219,7 +219,7 @@ class Web3Service {
                             info.backend.result,
                             contractInstance.interface,
                         );
-                        message += `Result: ${decodedResultData} `;
+                        message += `Result: ${decodedResultData}; `;
                     }
 
                     message += `RPC: ${info.backend.provider.connection.url}.`;
@@ -402,8 +402,7 @@ class Web3Service {
                 const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
                 // eslint-disable-next-line no-await-in-loop
                 await this.handleError(
-                    Error(`Call failed, reason: ${decodedErrorData}`),
-                    functionName,
+                    Error(`Call ${functionName}(${args}) failed, reason: ${decodedErrorData}`),
                 );
             }
         }
@@ -425,8 +424,9 @@ class Web3Service {
             } catch (error) {
                 const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
                 await this.handleError(
-                    Error(`Gas estimation failed, reason: ${decodedErrorData}`),
-                    functionName,
+                    Error(
+                        `Gas estimation ${functionName}(${args}) failed, reason: ${decodedErrorData}`,
+                    ),
                 );
             }
 
