@@ -191,10 +191,10 @@ class Web3Service {
             if (['call', 'estimateGas'].includes(method)) {
                 const contractInstance = this.contractAddresses[info.request.params.transaction.to];
                 const inputData = info.request.params.transaction.data;
-                let decodedInputData = this._decodeInputData(inputData, contractInstance.interface);
-                if (decodedInputData.length === 0) {
-                    decodedInputData = 'noArgs';
-                }
+                const decodedInputData = this._decodeInputData(
+                    inputData,
+                    contractInstance.interface,
+                );
                 const functionFragment = contractInstance.interface.getFunction(
                     inputData.slice(0, 10),
                 );
