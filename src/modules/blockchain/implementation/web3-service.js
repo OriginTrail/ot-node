@@ -213,9 +213,7 @@ class Web3Service {
                 } else if (info.backend.result !== undefined) {
                     let message = `${decodedInputData} ${functionName}(${inputs}) ${method} has been successfully executed; `;
 
-                    if (info.backend.result !== null && method === 'estimateGas') {
-                        message += `Result: ${JSON.stringify(info.backend.result)}`;
-                    } else if (info.backend.result !== null) {
+                    if (info.backend.result !== null && method !== 'estimateGas') {
                         const decodedResultData = this._decodeResultData(
                             inputData.slice(0, 10),
                             info.backend.result,
