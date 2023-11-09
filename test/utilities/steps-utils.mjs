@@ -23,7 +23,7 @@ class StepsUtils {
             modules: {
                 blockchain: {
                     implementation: {
-                        hardhat: {
+                        'hardhat:31337': {
                             config: {
                                 evmOperationalWalletPublicKey: wallet.address,
                                 evmOperationalWalletPrivateKey: wallet.privateKey,
@@ -63,30 +63,30 @@ class StepsUtils {
                         'ot-blazegraph': {
                             config: {
                                 repositories: {
-                                    "privateCurrent": {
-                                        "url": "http://localhost:9999",
-                                        "name": "private-current",
-                                        "username": "admin",
-                                        "password": ""
+                                    privateCurrent: {
+                                        url: 'http://localhost:9999',
+                                        name: 'private-current',
+                                        username: 'admin',
+                                        password: '',
                                     },
-                                    "privateHistory": {
-                                        "url": "http://localhost:9999",
-                                        "name": "private-history",
-                                        "username": "admin",
-                                        "password": ""
+                                    privateHistory: {
+                                        url: 'http://localhost:9999',
+                                        name: 'private-history',
+                                        username: 'admin',
+                                        password: '',
                                     },
-                                    "publicCurrent": {
-                                        "url": "http://localhost:9999",
-                                        "name": "public-current",
-                                        "username": "admin",
-                                        "password": ""
+                                    publicCurrent: {
+                                        url: 'http://localhost:9999',
+                                        name: 'public-current',
+                                        username: 'admin',
+                                        password: '',
                                     },
-                                    "publicHistory": {
-                                        "url": "http://localhost:9999",
-                                        "name": "public-history",
-                                        "username": "admin",
-                                        "password": ""
-                                    }
+                                    publicHistory: {
+                                        url: 'http://localhost:9999',
+                                        name: 'public-history',
+                                        username: 'admin',
+                                        password: '',
+                                    },
                                 },
                             },
                         },
