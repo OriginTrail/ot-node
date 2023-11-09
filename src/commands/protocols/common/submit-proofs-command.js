@@ -112,14 +112,6 @@ class SubmitProofsCommand extends Command {
             return Command.empty();
         }
 
-        if (proof.length === 0) {
-            const errorMessage = `Error during Merkle Proof calculation for blockchain: ${blockchain} agreement id: ${agreementId}, epoch: ${epoch}, state index: ${stateIndex}, proof cannot be empty`;
-            this.logger.trace(errorMessage);
-
-            await this.handleError(operationId, errorMessage, this.errorType, true);
-            return Command.empty();
-        }
-
         const transactionCompletePromise = new Promise((resolve, reject) => {
             this.blockchainModuleManager.sendProof(
                 blockchain,
