@@ -15,12 +15,21 @@ class UALService {
         const parts = ual.replace('did:', '').replace('dkg:', '').split('/');
         if (parts.length === 3) {
             // eslint-disable-next-line no-restricted-globals
-            return this.isContract(parts[1]) && !isNaN(Number(parts[2]));
+            return this.isContract(parts[1]) && !Number.isNaN(Number(parts[2]));
         }
         if (parts.length === 2) {
             const parts2 = parts[0].split(':');
             // eslint-disable-next-line no-restricted-globals
-            return parts2.length === 2 && this.isContract(parts2[1]) && !isNaN(Number(parts[1]));
+            if (parts2.length === 3) {
+                return (
+                    parts2.length === 2 &&
+                    this.isContract(parts2[2]) &&
+                    !Number.isNaN(Number(parts[1]))
+                );
+            }
+            return (
+                parts2.length === 2 && this.isContract(parts2[1]) && !Number.isNaN(Number(parts[1]))
+            );
         }
     }
 
