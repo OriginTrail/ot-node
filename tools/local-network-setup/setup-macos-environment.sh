@@ -1,9 +1,9 @@
 #!/bin/sh
 pathToOtNode=$(pwd)
 numberOfNodes=4
-network="hardhat"
+network="hardhat:31337"
 tripleStore="ot-blazegraph"
-availableNetworks=("hardhat")
+availableNetworks=("hardhat:31337")
 export $(xargs < $pathToOtNode/.env)
 export ACCESS_KEY=$RPC_ENDPOINT
 # Check for script arguments
@@ -43,7 +43,7 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
-if [[ $network == hardhat ]]
+if [[ $network == hardhat:31337 ]]
 then
   echo ================================
   echo ====== Starting hardhat ======
