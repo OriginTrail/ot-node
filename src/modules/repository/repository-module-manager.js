@@ -405,6 +405,14 @@ class RepositoryModuleManager extends BaseModuleManager {
             epochsNumber,
         );
     }
+
+    async getNumberOfActiveServiceAgreements() {
+        return this.getRepository('service_agreement').getNumberOfActiveServiceAgreements();
+    }
+
+    async getServiceAgreements(fromTokenId, batchSize) {
+        return this.getRepository('service_agreement').getServiceAgreements(fromTokenId, batchSize);
+    }
 }
 
 export default RepositoryModuleManager;
