@@ -194,7 +194,7 @@ class Libp2pService {
         return this.node.peerId;
     }
 
-    handleMessage(protocol, handler) {
+    handleMessage(protocol, blockchainImplementations, handler) {
         this.logger.info(`Enabling network protocol: ${protocol}`);
 
         this.node.handle(protocol, async (handlerProps) => {
@@ -245,9 +245,23 @@ class Libp2pService {
                 this.logger.debug(
                     `Receiving message from ${peerIdString} to ${this.config.id}: protocol: ${protocol}, messageType: ${message.header.messageType};`,
                 );
-                await handler(message, peerIdString);
+                const modifiedMessage = this.modifyMessage(message, blockchainImplementations);
+                await handler(modifiedMessage, peerIdString);
             }
         });
+    }
+
+    modifyMessage(message, blockchainImplementations) {
+        const modifiedMessage = message;
+        if (modifiedMessage.data.blockchain?.split(':').length === 1) {
+            for (const implementation of blockchainImplementations) {
+                if (implementation.split(':')[0] === modifiedMessage.data.blockchain) {
+                    modifiedMessage.data.blockchain = implementation;
+                    break;
+                }
+            }
+        }
+        return modifiedMessage;
     }
 
     updateSessionStream(operationId, keywordUuid, peerIdString, stream) {
