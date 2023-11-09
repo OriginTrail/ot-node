@@ -4,6 +4,7 @@ import { HTTP_API_ROUTES } from '../../constants/constants.js';
 class HttpApiRouter {
     constructor(ctx) {
         this.httpClientModuleManager = ctx.httpClientModuleManager;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
 
         this.apiRoutes = HTTP_API_ROUTES;
         this.apiVersions = Object.keys(this.apiRoutes);
@@ -36,7 +37,8 @@ class HttpApiRouter {
     }
 
     initializeBeforeMiddlewares() {
-        this.httpClientModuleManager.initializeBeforeMiddlewares();
+        const blockchainImpelemntations = this.blockchainModuleManager.getImplementationNames();
+        this.httpClientModuleManager.initializeBeforeMiddlewares(blockchainImpelemntations);
     }
 
     async initializeVersionedListeners() {
