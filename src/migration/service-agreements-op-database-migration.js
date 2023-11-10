@@ -1,6 +1,10 @@
 /* eslint-disable no-await-in-loop */
 import BaseMigration from './base-migration.js';
 
+let wrongAgreementsCount = 0;
+const MAX_BATCH_SIZE = 10000;
+const CONCURRENCY = 3;
+
 class ServiceAgreementsOpDatabaseMigration extends BaseMigration {
     constructor(
         migrationName,
@@ -30,8 +34,9 @@ class ServiceAgreementsOpDatabaseMigration extends BaseMigration {
             await this.repositoryModuleManager.getNumberOfActiveServiceAgreements();
         let processed = 0;
         const batchSize =
-            numberOfActiveServiceAgreements > 10000 ? 10000 : numberOfActiveServiceAgreements;
-        const concurrency = 3;
+            numberOfActiveServiceAgreements > MAX_BATCH_SIZE
+                ? MAX_BATCH_SIZE
+                : numberOfActiveServiceAgreements;
 
         while (processed < numberOfActiveServiceAgreements) {
             const serviceAgreementsToProcess =
@@ -39,15 +44,22 @@ class ServiceAgreementsOpDatabaseMigration extends BaseMigration {
                     migrationInfo.lastProcessedTokenId,
                     batchSize,
                 );
-
             let promises = [];
 
             for (const serviceAgreement of serviceAgreementsToProcess) {
                 promises.push(this.processServiceAgreement(serviceAgreement));
 
-                if (promises.length >= concurrency) {
-                    // eslint-disable-next-line no-await-in-loop
-                    await Promise.all(promises);
+                if (
+                    promises.length >= CONCURRENCY ||
+                    promises.length === serviceAgreementsToProcess.length
+                ) {
+                    try {
+                        await Promise.all(promises);
+                    } catch (error) {
+                        this.logger.warn(
+                            `Unable to process invalid service agreements. Error: ${error}`,
+                        );
+                    }
                     promises = [];
                     migrationInfo.lastProcessedTokenId =
                         serviceAgreementsToProcess.slice(-1)[0].tokenId;
@@ -60,15 +72,19 @@ class ServiceAgreementsOpDatabaseMigration extends BaseMigration {
 
             processed += batchSize;
         }
+
+        this.logger.trace(
+            `${this.migrationName} Total number of processed agreements ${processed}. Found invalid agreements: ${wrongAgreementsCount}`,
+        );
     }
 
     async processServiceAgreement(serviceAgreement) {
-        const updatedServiceAgreement = serviceAgreement;
+        const updatedServiceAgreement = {};
         let updated = false;
         const keyword = await this.ualService.calculateLocationKeyword(
-            updatedServiceAgreement.blockchainId,
-            updatedServiceAgreement.assetStorageContractAddress,
-            updatedServiceAgreement.tokenId,
+            serviceAgreement.blockchainId,
+            serviceAgreement.assetStorageContractAddress,
+            serviceAgreement.tokenId,
         );
 
         if (serviceAgreement.keyword !== keyword) {
@@ -77,11 +93,11 @@ class ServiceAgreementsOpDatabaseMigration extends BaseMigration {
         }
 
         const agreementId = await this.serviceAgreementService.generateId(
-            updatedServiceAgreement.blockchainId,
-            updatedServiceAgreement.assetStorageContractAddress,
-            updatedServiceAgreement.tokenId,
+            serviceAgreement.blockchainId,
+            serviceAgreement.assetStorageContractAddress,
+            serviceAgreement.tokenId,
             keyword,
-            updatedServiceAgreement.hashFunctionId,
+            serviceAgreement.hashFunctionId,
         );
 
         if (serviceAgreement.agreementId !== agreementId) {
@@ -89,39 +105,31 @@ class ServiceAgreementsOpDatabaseMigration extends BaseMigration {
             updated = true;
         }
 
-        const assertionIds = this.blockchainModuleManager.getAssertionIds(
+        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
+            serviceAgreement.blockchain,
             serviceAgreement.assetStorageContractAddress,
             serviceAgreement.tokenId,
         );
         const stateIndex = assertionIds.length - 1;
 
-        if (updatedServiceAgreement.assertionId !== assertionIds[stateIndex]) {
+        if (serviceAgreement.assertionId !== assertionIds[stateIndex]) {
             updatedServiceAgreement.assertionId = assertionIds[stateIndex];
             updated = true;
         }
 
-        if (updatedServiceAgreement.stateIndex !== stateIndex) {
+        if (serviceAgreement.stateIndex !== stateIndex) {
             updatedServiceAgreement.stateIndex = stateIndex;
             updated = true;
         }
         if (updated) {
-            await this.repositoryModuleManager.updateServiceAgreementRecord(
-                updatedServiceAgreement.blockchainId,
-                updatedServiceAgreement.assetStorageContractAddress,
-                updatedServiceAgreement.tokenId,
-                updatedServiceAgreement.agreementId,
-                updatedServiceAgreement.startTime,
-                updatedServiceAgreement.epochsNumber,
-                updatedServiceAgreement.epochLength,
-                updatedServiceAgreement.scoreFunctionId,
-                updatedServiceAgreement.proofWindowOffsetPerc,
-                updatedServiceAgreement.hashFunctionId,
-                updatedServiceAgreement.keyword,
-                updatedServiceAgreement.assertionId,
-                updatedServiceAgreement.stateIndex,
-                updatedServiceAgreement.lastCommitEpoch,
-                updatedServiceAgreement.lastProofEpoch,
+            await this.repositoryModuleManager.updateServiceAgreementForTokenId(
+                serviceAgreement.tokenId,
+                updatedServiceAgreement.agreementId ?? serviceAgreement.agreementId,
+                updatedServiceAgreement.keyword ?? serviceAgreement.keyword,
+                updatedServiceAgreement.assertionId ?? serviceAgreement.assertionId,
+                updatedServiceAgreement.stateIndex ?? serviceAgreement.stateIndex,
             );
+            wrongAgreementsCount += 1;
         }
     }
 }

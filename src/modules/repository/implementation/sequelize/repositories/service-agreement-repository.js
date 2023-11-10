@@ -23,7 +23,7 @@ class ServiceAgreementRepository {
 
     async updateServiceAgreementRecord(
         blockchainId,
-        contract,
+        assetStorageContractAddress,
         tokenId,
         agreementId,
         startTime,
@@ -40,7 +40,7 @@ class ServiceAgreementRepository {
     ) {
         return this.model.upsert({
             blockchainId,
-            assetStorageContractAddress: contract,
+            assetStorageContractAddress,
             tokenId,
             agreementId,
             startTime,
@@ -55,6 +55,22 @@ class ServiceAgreementRepository {
             lastCommitEpoch,
             lastProofEpoch,
         });
+    }
+
+    async updateServiceAgreementForTokenId(tokenId, agreementId, keyword, assertionId, stateIndex) {
+        return this.model.update(
+            {
+                agreementId,
+                keyword,
+                assertionId,
+                stateIndex,
+            },
+            {
+                where: {
+                    tokenId,
+                },
+            },
+        );
     }
 
     async bulkCreateServiceAgreementRecords(serviceAgreements) {
@@ -210,7 +226,7 @@ class ServiceAgreementRepository {
     async getServiceAgreements(fromTokenId, batchSize) {
         return this.model.findAll({
             where: {
-                tokenId: { [Sequelize.Op.gt]: fromTokenId },
+                tokenId: { [Sequelize.Op.gte]: fromTokenId },
             },
             limit: batchSize,
         });
