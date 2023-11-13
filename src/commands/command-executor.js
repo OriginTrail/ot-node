@@ -279,16 +279,6 @@ class CommandExecutor {
         }
     }
 
-    async update(updateCommand, updates) {
-        const command = updateCommand;
-
-        Object.keys(updates).forEach((key) => {
-            command[key] = updates[key];
-        });
-
-        await this._update(command, updates);
-    }
-
     /**
      * Handles command retry
      * @param command
@@ -301,6 +291,7 @@ class CommandExecutor {
             command.data = handler.pack(command.data);
             await this._update(command, {
                 status: COMMAND_STATUS.PENDING,
+                data: command.data,
                 retries: command.retries - 1,
             });
             const period = command.period ?? 0;

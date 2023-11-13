@@ -113,12 +113,7 @@ class SubmitCommitCommand extends Command {
                 newGasPrice = null;
             }
 
-            await this.commandExecutor.update(command, {
-                data: {
-                    ...command.data,
-                    gasPrice: newGasPrice,
-                },
-            });
+            Object.assign(command.data, { gasPrice: newGasPrice });
 
             return Command.retry();
         }
