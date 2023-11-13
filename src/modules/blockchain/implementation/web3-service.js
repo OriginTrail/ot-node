@@ -488,9 +488,14 @@ class Web3Service {
         } catch (error) {
             const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
 
-            const functionFragment = contractInstance.interface.getFunction(
-                error.transaction.data.slice(0, 10),
-            );
+            let sigHash;
+            if (error.transaction) {
+                sigHash = error.transaction.data.slice(0, 10);
+            } else {
+                sigHash = this._getFunctionSighash(contractInstance, functionName, args);
+            }
+
+            const functionFragment = contractInstance.interface.getFunction(sigHash);
             const inputs = functionFragment.inputs
                 .map((input, i) => {
                     const argName = input.name;
@@ -507,6 +512,36 @@ class Web3Service {
             );
         }
         return result;
+    }
+
+    _getFunctionSighash(contractInstance, functionName, args) {
+        const functions = contractInstance.interface.functions.filter(
+            (func) => func.name === functionName,
+        );
+
+        for (const func of functions) {
+            try {
+                // Checks if given arguments can be encoded with function ABI inputs
+                // may be useful for overloaded functions as it would help to find
+                // needed function fragment
+                ethers.utils.defaultAbiCoder.encode(func.inputs, args);
+
+                const signature = `${func.name}(${func.inputs
+                    .map((input) => input.type)
+                    .join(',')})`;
+                const sighash = ethers.utils.hexDataSlice(
+                    ethers.utils.keccak256(ethers.utils.toUtf8Bytes(signature)),
+                    0,
+                    4,
+                );
+
+                return sighash;
+            } catch (error) {
+                continue;
+            }
+        }
+
+        throw Error('No matching function signature found');
     }
 
     _getErrorData(error) {

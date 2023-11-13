@@ -151,7 +151,7 @@ class SubmitProofsCommand extends Command {
         try {
             txSuccess = await transactionCompletePromise;
         } catch (error) {
-            this.logger.trace(
+            this.logger.warn(
                 `Failed to execute ${command.name}, Error Message: ${error.message} for the Service Agreement ` +
                     `with the ID: ${agreementId}, Blockchain: ${blockchain}, Contract: ${contract}, ` +
                     `Token ID: ${tokenId}, Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, ` +
