@@ -66,8 +66,8 @@ class Web3Service {
 
     initializeTransactionQueue(concurrency) {
         this.transactionQueue = async.queue((args, cb) => {
-            const { contractInstance, functionName, transactionArgs } = args;
-            this._executeContractFunction(contractInstance, functionName, transactionArgs)
+            const { contractInstance, functionName, transactionArgs, gasPrice } = args;
+            this._executeContractFunction(contractInstance, functionName, transactionArgs, gasPrice)
                 .then((result) => {
                     cb({ result });
                 })
@@ -77,12 +77,13 @@ class Web3Service {
         }, concurrency);
     }
 
-    queueTransaction(contractInstance, functionName, transactionArgs, callback) {
+    queueTransaction(contractInstance, functionName, transactionArgs, callback, gasPrice) {
         this.transactionQueue.push(
             {
                 contractInstance,
                 functionName,
                 transactionArgs,
+                gasPrice,
             },
             callback,
         );
@@ -199,9 +200,13 @@ class Web3Service {
                     inputData.slice(0, 10),
                 );
                 const functionName = functionFragment.name;
-                const inputs = functionFragment.inputs.map(
-                    (input, i) => `${input.name}=${decodedInputData[i]}`,
-                );
+                const inputs = functionFragment.inputs
+                    .map((input, i) => {
+                        const argName = input.name;
+                        const argValue = this._formatArgument(decodedInputData[i]);
+                        return `${argName}=${argValue}`;
+                    })
+                    .join(', ');
                 if (info.backend.error) {
                     const decodedErrorData = this._decodeErrorData(
                         info.backend.error,
@@ -405,13 +410,20 @@ class Web3Service {
                 const functionFragment = contractInstance.interface.getFunction(
                     error.transaction.data.slice(0, 10),
                 );
-                const inputs = functionFragment.inputs.map(
-                    (input, i) => `${input.name}=${args[i]}`,
-                );
+                const inputs = functionFragment.inputs
+                    .map((input, i) => {
+                        const argName = input.name;
+                        const argValue = this._formatArgument(args[i]);
+                        return `${argName}=${argValue}`;
+                    })
+                    .join(', ');
 
                 // eslint-disable-next-line no-await-in-loop
                 await this.handleError(
-                    Error(`Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`),
+                    Error(
+                        `Call ${functionName}(${inputs}) has failed, reason: ${decodedErrorData}`,
+                    ),
+                    functionName,
                 );
             }
         }
@@ -419,72 +431,80 @@ class Web3Service {
         return result;
     }
 
-    async _executeContractFunction(contractInstance, functionName, args) {
+    async _executeContractFunction(contractInstance, functionName, args, predefinedGasPrice) {
         let result;
-        let gasPrice = (await this.getGasPrice()) ?? this.convertToWei(20, 'gwei');
-        let transactionRetried = false;
+        const gasPrice =
+            predefinedGasPrice ?? (await this.getGasPrice()) ?? this.convertToWei(20, 'gwei');
+        let gasLimit;
 
-        while (result === undefined) {
-            let gasLimit;
+        try {
+            /* eslint-disable no-await-in-loop */
+            gasLimit = await contractInstance.estimateGas[functionName](...args);
+        } catch (error) {
+            const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
 
-            try {
-                /* eslint-disable no-await-in-loop */
-                gasLimit = await contractInstance.estimateGas[functionName](...args);
-            } catch (error) {
-                const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
+            const functionFragment = contractInstance.interface.getFunction(
+                error.transaction.data.slice(0, 10),
+            );
+            const inputs = functionFragment.inputs
+                .map((input, i) => {
+                    const argName = input.name;
+                    const argValue = this._formatArgument(args[i]);
+                    return `${argName}=${argValue}`;
+                })
+                .join(', ');
 
-                const functionFragment = contractInstance.interface.getFunction(
-                    error.transaction.data.slice(0, 10),
-                );
-                const inputs = functionFragment.inputs.map(
-                    (input, i) => `${input.name}=${args[i]}`,
-                );
+            await this.handleError(
+                Error(
+                    `Gas estimation for ${functionName}(${inputs}) has failed, reason: ${decodedErrorData}`,
+                ),
+                functionName,
+            );
+        }
 
-                await this.handleError(
-                    Error(
-                        `Gas estimation ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`,
-                    ),
-                );
-            }
+        gasLimit = gasLimit ?? this.convertToWei(900, 'kwei');
 
-            gasLimit = gasLimit ?? this.convertToWei(900, 'kwei');
+        this.logger.debug(
+            `Sending signed transaction ${functionName} to the blockchain ` +
+                `with gas limit: ${gasLimit.toString()} and gasPrice ${gasPrice.toString()}. ` +
+                `Transaction queue length: ${this.getTransactionQueueLength()}.`,
+        );
 
-            this.logger.debug(
-                `Sending signed transaction ${functionName} to the blockchain ` +
-                    `with gas limit: ${gasLimit.toString()} and gasPrice ${gasPrice.toString()}. ` +
-                    `Transaction queue length: ${this.getTransactionQueueLength()}.`,
+        const tx = await contractInstance[functionName](...args, {
+            gasPrice,
+            gasLimit,
+        });
+
+        try {
+            result = await this.provider.waitForTransaction(
+                tx.hash,
+                TRANSACTION_CONFIRMATIONS,
+                TRANSACTION_POLLING_TIMEOUT_MILLIS,
             );
 
-            try {
-                const tx = await contractInstance[functionName](...args, {
-                    gasPrice,
-                    gasLimit,
-                });
-                result = await this.provider.waitForTransaction(
-                    tx.hash,
-                    TRANSACTION_CONFIRMATIONS,
-                    TRANSACTION_POLLING_TIMEOUT_MILLIS,
-                );
-
-                if (result.status === 0) {
-                    await this.provider.call(tx, tx.blockNumber);
-                }
-            } catch (error) {
-                const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
-                if (
-                    !transactionRetried &&
-                    (error.message.includes(`timeout exceeded`) ||
-                        error.message.includes(`Pool(TooLowPriority`))
-                ) {
-                    gasPrice = Math.ceil(gasPrice * 1.2);
-                    transactionRetried = true;
-                } else {
-                    await this.handleError(
-                        Error(`Transaction reverted, reason: ${decodedErrorData}`),
-                        functionName,
-                    );
-                }
+            if (result.status === 0) {
+                await this.provider.call(tx, tx.blockNumber);
             }
+        } catch (error) {
+            const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
+
+            const functionFragment = contractInstance.interface.getFunction(
+                error.transaction.data.slice(0, 10),
+            );
+            const inputs = functionFragment.inputs
+                .map((input, i) => {
+                    const argName = input.name;
+                    const argValue = this._formatArgument(args[i]);
+                    return `${argName}=${argValue}`;
+                })
+                .join(', ');
+
+            await this.handleError(
+                Error(
+                    `Transaction ${functionName}(${inputs}) has been reverted, reason: ${decodedErrorData}`,
+                ),
+                functionName,
+            );
         }
         return result;
     }
@@ -564,7 +584,7 @@ class Web3Service {
             const formattedArgs = decodedCustomError.errorFragment.inputs
                 .map((input, i) => {
                     const argName = input.name;
-                    const argValue = this._formatCustomErrorArgument(decodedCustomError.args[i]);
+                    const argValue = this._formatArgument(decodedCustomError.args[i]);
                     return `${argName}=${argValue}`;
                 })
                 .join(', ');
@@ -582,7 +602,7 @@ class Web3Service {
         return contractInterface.decodeFunctionResult(fragment, resultData);
     }
 
-    _formatCustomErrorArgument(value) {
+    _formatArgument(value) {
         if (value === null || value === undefined) {
             return 'null';
         }
@@ -596,12 +616,12 @@ class Web3Service {
         }
 
         if (Array.isArray(value)) {
-            return `[${value.map((v) => this._formatCustomErrorArgument(v)).join(', ')}]`;
+            return `[${value.map((v) => this._formatArgument(v)).join(', ')}]`;
         }
 
         if (typeof value === 'object') {
             const formattedEntries = Object.entries(value).map(
-                ([k, v]) => `${k}: ${this._formatCustomErrorArgument(v)}`,
+                ([k, v]) => `${k}: ${this._formatArgument(v)}`,
             );
             return `{${formattedEntries.join(', ')}}`;
         }
@@ -882,21 +902,32 @@ class Web3Service {
         epoch,
         latestStateIndex,
         callback,
+        gasPrice,
     ) {
         return this.queueTransaction(
             this.selectCommitManagerContract(latestStateIndex),
             'submitCommit',
             [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch]],
             callback,
+            gasPrice,
         );
     }
 
-    submitUpdateCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch, callback) {
+    submitUpdateCommit(
+        assetContractAddress,
+        tokenId,
+        keyword,
+        hashFunctionId,
+        epoch,
+        callback,
+        gasPrice,
+    ) {
         return this.queueTransaction(
             this.CommitManagerV1U1Contract,
             'submitUpdateCommit',
             [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch]],
             callback,
+            gasPrice,
         );
     }
 
@@ -937,12 +968,14 @@ class Web3Service {
         chunkHash,
         latestStateIndex,
         callback,
+        gasPrice,
     ) {
         return this.queueTransaction(
             this.selectProofManagerContract(latestStateIndex),
             'sendProof',
             [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch, proof, chunkHash]],
             callback,
+            gasPrice,
         );
     }
 

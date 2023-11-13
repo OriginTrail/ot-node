@@ -279,6 +279,16 @@ class CommandExecutor {
         }
     }
 
+    async update(updateCommand, updates) {
+        const command = updateCommand;
+
+        Object.keys(updates).forEach((key) => {
+            command[key] = updates[key];
+        });
+
+        await this._update(command, updates);
+    }
+
     /**
      * Handles command retry
      * @param command
