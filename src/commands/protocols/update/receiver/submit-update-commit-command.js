@@ -31,7 +31,7 @@ class SubmitUpdateCommitCommand extends Command {
 
         this.logger.trace(
             `Started ${command.name} for the Service Agreement with the ID: ${agreementId}, ` +
-                `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId},` +
+                `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Operation ID: ${operationId}, ` +
                 `Retry number: ${COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1}`,
         );
@@ -126,7 +126,7 @@ class SubmitUpdateCommitCommand extends Command {
 
         this.logger.trace(
             `Successfully executed ${command.name} for the Service Agreement with the ID: ${agreementId}, ` +
-                `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId},` +
+                `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                 `Operation ID: ${operationId}, Retry number: ${
                     COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1

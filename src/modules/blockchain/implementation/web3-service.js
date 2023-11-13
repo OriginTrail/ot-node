@@ -515,9 +515,9 @@ class Web3Service {
     }
 
     _getFunctionSighash(contractInstance, functionName, args) {
-        const functions = contractInstance.interface.functions.filter(
-            (func) => func.name === functionName,
-        );
+        const functions = Object.keys(contractInstance.interface.functions)
+            .filter((key) => contractInstance.interface.functions[key].name === functionName)
+            .map((key) => ({ signature: key, ...contractInstance.interface.functions[key] }));
 
         for (const func of functions) {
             try {
@@ -526,11 +526,8 @@ class Web3Service {
                 // needed function fragment
                 ethers.utils.defaultAbiCoder.encode(func.inputs, args);
 
-                const signature = `${func.name}(${func.inputs
-                    .map((input) => input.type)
-                    .join(',')})`;
                 const sighash = ethers.utils.hexDataSlice(
-                    ethers.utils.keccak256(ethers.utils.toUtf8Bytes(signature)),
+                    ethers.utils.keccak256(ethers.utils.toUtf8Bytes(func.signature)),
                     0,
                     4,
                 );
