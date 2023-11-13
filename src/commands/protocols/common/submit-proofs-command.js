@@ -151,6 +151,14 @@ class SubmitProofsCommand extends Command {
         try {
             txSuccess = await transactionCompletePromise;
         } catch (error) {
+            this.logger.trace(
+                `Failed to execute ${command.name}, Error Message: ${error.message} for the Service Agreement ` +
+                    `with the ID: ${agreementId}, Blockchain: ${blockchain}, Contract: ${contract}, ` +
+                    `Token ID: ${tokenId}, Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, ` +
+                    `Epoch: ${epoch}, State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
+                    `Retry number: ${COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1}.`,
+            );
+
             let newGasPrice;
             if (
                 error.message.includes(`timeout exceeded`) ||
