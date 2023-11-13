@@ -32,7 +32,7 @@ class SubmitCommitCommand extends Command {
 
         this.logger.trace(
             `Started ${command.name} for the Service Agreement with the ID: ${agreementId}, ` +
-                `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId},` +
+                `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                 `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
                 `Retry number: ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}`,
