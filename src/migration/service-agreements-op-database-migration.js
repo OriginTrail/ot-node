@@ -3,7 +3,7 @@ import BaseMigration from './base-migration.js';
 
 let wrongAgreementsCount = 0;
 const MAX_BATCH_SIZE = 10000;
-const CONCURRENCY = 3;
+const CONCURRENCY = 200;
 
 class ServiceAgreementsOpDatabaseMigration extends BaseMigration {
     constructor(
@@ -61,8 +61,7 @@ class ServiceAgreementsOpDatabaseMigration extends BaseMigration {
                         );
                     }
                     promises = [];
-                    migrationInfo.lastProcessedTokenId =
-                        serviceAgreementsToProcess.slice(-1)[0].tokenId;
+                    migrationInfo.lastProcessedTokenId = serviceAgreement.tokenId;
                     await this.saveMigrationInfo(migrationInfo);
                     this.logger.trace(
                         `${this.migrationName} Last token id processed ${migrationInfo.lastProcessedTokenId}.`,
@@ -81,10 +80,30 @@ class ServiceAgreementsOpDatabaseMigration extends BaseMigration {
     async processServiceAgreement(serviceAgreement) {
         const updatedServiceAgreement = {};
         let updated = false;
+
+        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
+            serviceAgreement.blockchain,
+            serviceAgreement.assetStorageContractAddress,
+            serviceAgreement.tokenId,
+        );
+
+        const stateIndex = assertionIds.length - 1;
+
+        if (serviceAgreement.assertionId !== assertionIds[stateIndex]) {
+            updatedServiceAgreement.assertionId = assertionIds[stateIndex];
+            updated = true;
+        }
+
+        if (serviceAgreement.stateIndex !== stateIndex) {
+            updatedServiceAgreement.stateIndex = stateIndex;
+            updated = true;
+        }
+
         const keyword = await this.ualService.calculateLocationKeyword(
             serviceAgreement.blockchainId,
             serviceAgreement.assetStorageContractAddress,
             serviceAgreement.tokenId,
+            assertionIds[0],
         );
 
         if (serviceAgreement.keyword !== keyword) {
@@ -105,22 +124,6 @@ class ServiceAgreementsOpDatabaseMigration extends BaseMigration {
             updated = true;
         }
 
-        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
-            serviceAgreement.blockchain,
-            serviceAgreement.assetStorageContractAddress,
-            serviceAgreement.tokenId,
-        );
-        const stateIndex = assertionIds.length - 1;
-
-        if (serviceAgreement.assertionId !== assertionIds[stateIndex]) {
-            updatedServiceAgreement.assertionId = assertionIds[stateIndex];
-            updated = true;
-        }
-
-        if (serviceAgreement.stateIndex !== stateIndex) {
-            updatedServiceAgreement.stateIndex = stateIndex;
-            updated = true;
-        }
         if (updated) {
             await this.repositoryModuleManager.updateServiceAgreementForTokenId(
                 serviceAgreement.tokenId,
