@@ -215,12 +215,18 @@ class Web3Service {
                     let message = `${functionName}(${inputs}) ${method} has been successfully executed; `;
 
                     if (info.backend.result !== null && method !== 'estimateGas') {
-                        const decodedResultData = this._decodeResultData(
-                            inputData.slice(0, 10),
-                            info.backend.result,
-                            contractInstance.interface,
-                        );
-                        message += `Result: ${decodedResultData}; `;
+                        try {
+                            const decodedResultData = this._decodeResultData(
+                                inputData.slice(0, 10),
+                                info.backend.result,
+                                contractInstance.interface,
+                            );
+                            message += `Result: ${decodedResultData}; `;
+                        } catch (error) {
+                            this.logger.warn(
+                                `Unable to decode result data for. Message: ${message}`,
+                            );
+                        }
                     }
 
                     message += `RPC: ${info.backend.provider.connection.url}.`;
@@ -409,9 +415,8 @@ class Web3Service {
                     (input, i) => `${input.name}=${args[i]}`,
                 );
 
-                // eslint-disable-next-line no-await-in-loop
-                await this.handleError(
-                    Error(`Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`),
+                throw new Error(
+                    `Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`,
                 );
             }
         }
@@ -440,10 +445,8 @@ class Web3Service {
                     (input, i) => `${input.name}=${args[i]}`,
                 );
 
-                await this.handleError(
-                    Error(
-                        `Gas estimation ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`,
-                    ),
+                throw new Error(
+                    `Gas estimation ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`,
                 );
             }
 
@@ -479,10 +482,7 @@ class Web3Service {
                     gasPrice = Math.ceil(gasPrice * 1.2);
                     transactionRetried = true;
                 } else {
-                    await this.handleError(
-                        Error(`Transaction reverted, reason: ${decodedErrorData}`),
-                        functionName,
-                    );
+                    throw new Error(`Transaction reverted, reason: ${decodedErrorData}`);
                 }
             }
         }
@@ -1021,20 +1021,6 @@ class Web3Service {
     async restartService() {
         await this.initializeWeb3();
         await this.initializeContracts();
-    }
-
-    async handleError(error, functionName) {
-        let isRpcError = false;
-        try {
-            await this.provider.getNetwork();
-        } catch (rpcError) {
-            isRpcError = true;
-            this.logger.warn(
-                `Unable to execute smart contract function ${functionName} using Fallback RPC Provider.`,
-            );
-            await this.restartService();
-        }
-        if (!isRpcError) throw error;
     }
 
     async getUpdateCommitWindowDuration() {
