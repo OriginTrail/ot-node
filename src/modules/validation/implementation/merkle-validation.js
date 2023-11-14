@@ -30,11 +30,11 @@ class MerkleValidation {
     }
 
     async sha256(data) {
-        if (!ethers.utils.isBytesLike(data)) {
-            const bytesLikeData = ethers.utils.toUtf8Bytes(data);
-            return ethers.utils.sha256(bytesLikeData);
+        if (!ethers.isBytesLike(data)) {
+            const bytesLikeData = ethers.toUtf8Bytes(data);
+            return ethers.sha256(bytesLikeData);
         }
-        return ethers.utils.sha256(data);
+        return ethers.sha256(data);
     }
 }
 

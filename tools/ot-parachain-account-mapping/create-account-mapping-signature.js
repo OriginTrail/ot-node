@@ -1,8 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-console */
-import { Wallet } from '@ethersproject/wallet';
-import { joinSignature } from '@ethersproject/bytes';
-import { _TypedDataEncoder } from '@ethersproject/hash';
+import { ethers } from 'ethers';
 import { u8aToHex } from '@polkadot/util';
 import { decodeAddress } from '@polkadot/util-crypto';
 
@@ -68,9 +66,9 @@ async function sign() {
         },
     };
 
-    const wallet = new Wallet(`${PRIVATE_ETH_KEY}`);
+    const wallet = new ethers.Wallet(`${PRIVATE_ETH_KEY}`);
 
-    const digest = _TypedDataEncoder.hash(
+    const digest = await wallet.signTypedData(
         payload.domain,
         {
             Transaction: payload.types.Transaction,
@@ -78,7 +76,7 @@ async function sign() {
         payload.message,
     );
 
-    const signature = joinSignature(wallet._signingKey().signDigest(digest));
+    const signature = ethers.Signature.from(wallet._signingKey().signDigest(digest)).serialized;
     console.log('Paste the signature to polkadot.js api evmAddress claimAccount interface:');
     console.log('==== Signature ====');
     console.log(signature);

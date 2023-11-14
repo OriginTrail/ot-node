@@ -17,7 +17,7 @@ const argv = require('minimist')(process.argv.slice(1), {
 });
 
 async function setOperatorFee(rpcEndpoint, operatorFee, walletPrivateKey, hubContractAddress) {
-    const provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);
+    const provider = new ethers.JsonRpcProvider(rpcEndpoint);
     const wallet = new ethers.Wallet(walletPrivateKey, provider);
 
     const hubContract = new ethers.Contract(hubContractAddress, Hub.abi, provider);

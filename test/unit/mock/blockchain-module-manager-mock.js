@@ -14,19 +14,19 @@ class BlockchainModuleManagerMock {
     }
 
     encodePacked(blockchain, types, values) {
-        return ethers.utils.solidityPack(types, values);
+        return ethers.solidityPacked(types, values);
     }
 
     convertBytesToUint8Array(blockchain, bytesLikeData) {
-        return ethers.utils.arrayify(bytesLikeData);
+        return ethers.toBeArray(bytesLikeData);
     }
 
     convertToWei(blockchainId, value) {
-        return ethers.utils.parseUnits(value.toString(), 'ether').toString();
+        return ethers.parseUnits(value.toString(), 'ether').toString();
     }
 
     toBigNumber(blockchain, value) {
-        return ethers.BigNumber.from(value);
+        return BigInt(value);
     }
 
     getAssertionSize(blockchain, assertionId) {

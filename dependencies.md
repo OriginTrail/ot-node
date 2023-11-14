@@ -74,21 +74,6 @@
 -   **version**: ^2.4.3
 -   **description**: sparql query engine
 
-##### [@ethersproject/bytes](https://www.npmjs.com/package/@ethersproject/bytes)
-
--   **version**: ^5.7.0
--   **description**: Used for creating substrate and evm accounts mapping signatures in `create-account-mapping-signature.js`
-
-##### [@ethersproject/hash](https://www.npmjs.com/package/@ethersproject/hash)
-
--   **version**: ^5.7.0
--   **description**: Used for creating substrate and evm accounts mapping signatures in `create-account-mapping-signature.js`
-
-##### [@ethersproject/wallet](https://www.npmjs.com/package/@ethersproject/wallet)
-
--   **version**: ^5.7.0
--   **description**: Used for creating substrate and evm accounts mapping signatures in `create-account-mapping-signature.js`
-
 ##### [@polkadot/api](https://www.npmjs.com/package/@polkadot/api)
 
 -   **version**: ^9.3.2
@@ -161,7 +146,7 @@
 
 ##### [ethers](https://www.npmjs.com/package/ethers)
 
--   **version**: ^5.7.2
+-   **version**: ^6.8.1
 -   **description**: used to interact with blockchain nodes
 
 ##### [express](https://www.npmjs.com/package/express)

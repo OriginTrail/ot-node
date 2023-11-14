@@ -21,7 +21,7 @@ const devEnvironment =
     process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
 
 async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
-    const provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);
+    const provider = new ethers.JsonRpcProvider(rpcEndpoint);
     const wallet = new ethers.Wallet(walletPrivateKey, provider);
 
     const hubContract = new ethers.Contract(hubContractAddress, Hub, provider);
@@ -34,7 +34,7 @@ async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
 
     const identityId = await identityStorage.getIdentityId(wallet.address);
 
-    const askWei = ethers.utils.parseEther(ask);
+    const askWei = ethers.parseEther(ask);
 
     const tx = await profile.setAsk(identityId, askWei, {
         gasPrice: devEnvironment ? undefined : 8,

@@ -1,4 +1,4 @@
-import { utils } from 'ethers';
+import { ethers } from 'ethers';
 import { describe, it, before, beforeEach, afterEach, after } from 'mocha';
 import { expect, assert } from 'chai';
 import { readFile } from 'fs/promises';
@@ -29,9 +29,9 @@ const createAgreement = ({
 }) => {
     const agreementId =
         id ??
-        utils.sha256(
-            utils.toUtf8Bytes(
-                utils.solidityPack(
+        ethers.sha256(
+            ethers.toUtf8Bytes(
+                ethers.solidityPacked(
                     ['address', 'uint256', 'bytes'],
                     [assetStorageContractAddress, tokenId, keyword],
                 ),

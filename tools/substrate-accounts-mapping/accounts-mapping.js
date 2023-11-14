@@ -12,9 +12,6 @@ const { ApiPromise, HttpProvider } = require('@polkadot/api');
 const { Keyring } = require('@polkadot/keyring');
 const { mnemonicGenerate, mnemonicToMiniSecret, decodeAddress } = require('@polkadot/util-crypto');
 const { u8aToHex } = require('@polkadot/util');
-const { Wallet } = require('@ethersproject/wallet');
-const { joinSignature } = require('@ethersproject/bytes');
-const { _TypedDataEncoder } = require('@ethersproject/hash');
 const ERC20Token = require('dkg-evm-module/abi/Token.json');
 
 const WALLETS_PATH = path.join(appRootPath.path, 'tools/substrate-accounts-mapping/wallets.json');
@@ -48,7 +45,7 @@ class AccountsMapping {
 
         // eslint-disable-next-line no-await-in-loop
         this.parachainProvider = await new ApiPromise({ provider }).isReady;
-        this.ethersProvider = new ethers.providers.JsonRpcProvider(HTTPS_ENDPOINT);
+        this.ethersProvider = new ethers.JsonRpcProvider(HTTPS_ENDPOINT);
         this.evmWallet = new ethers.Wallet(evmAccountWithTokens.privateKey, this.ethersProvider);
         this.initialized = true;
         this.tokenContract = new ethers.Contract(TOKEN_ADDRESS, ERC20Token.abi, this.evmWallet);
@@ -176,7 +173,7 @@ class AccountsMapping {
     }
 
     async generateEVMAccount() {
-        const { address, privateKey } = await ethers.Wallet.createRandom();
+        const { address, privateKey } = ethers.Wallet.createRandom();
         return { evmPublicKey: address, evmPrivateKey: privateKey };
     }
 
@@ -206,7 +203,7 @@ class AccountsMapping {
     }
 
     async fundAccountsWithTrac(evmWallet, nonce) {
-        this.tokenContract.transfer(evmWallet, ethers.utils.parseEther(TRACE_AMOUNT), {
+        this.tokenContract.transfer(evmWallet, ethers.parseEther(TRACE_AMOUNT), {
             gasPrice: GAS_PRICE,
             gasLimit: GAS_LIMIT,
             nonce: nonce,
@@ -275,9 +272,9 @@ class AccountsMapping {
             },
         };
 
-        const wallet = new Wallet(privateEthKey);
+        const wallet = new ethers.Wallet(privateEthKey);
 
-        const digest = _TypedDataEncoder.hash(
+        const digest = await wallet.signTypedData(
             payload.domain,
             {
                 Transaction: payload.types.Transaction,
@@ -285,7 +282,7 @@ class AccountsMapping {
             payload.message,
         );
 
-        const signature = joinSignature(wallet._signingKey().signDigest(digest));
+        const signature = ethers.Signature.from(wallet._signingKey().signDigest(digest)).serialized;
         return signature;
     }
 }

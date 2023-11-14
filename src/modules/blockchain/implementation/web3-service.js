@@ -1,4 +1,4 @@
-import { ethers, BigNumber } from 'ethers';
+import { AbiCoder, ethers } from 'ethers';
 import axios from 'axios';
 import async from 'async';
 import { setTimeout as sleep } from 'timers/promises';
@@ -97,9 +97,7 @@ class Web3Service {
         const providers = [];
         for (const rpcEndpoint of this.config.rpcEndpoints) {
             const isWebSocket = rpcEndpoint.startsWith('ws');
-            const Provider = isWebSocket
-                ? ethers.providers.WebSocketProvider
-                : ethers.providers.JsonRpcProvider;
+            const Provider = isWebSocket ? ethers.WebSocketProvider : ethers.JsonRpcProvider;
             const priority = isWebSocket ? WS_RPC_PROVIDER_PRIORITY : HTTP_RPC_PROVIDER_PRIORITY;
 
             try {
@@ -121,10 +119,7 @@ class Web3Service {
         }
 
         try {
-            this.provider = new ethers.providers.FallbackProvider(
-                providers,
-                FALLBACK_PROVIDER_QUORUM,
-            );
+            this.provider = new ethers.FallbackProvider(providers, FALLBACK_PROVIDER_QUORUM);
 
             // eslint-disable-next-line no-await-in-loop
             await this.providerReady();
@@ -306,14 +301,14 @@ class Web3Service {
 
     async getNativeTokenBalance() {
         const nativeBalance = await this.wallet.getBalance();
-        return Number(ethers.utils.formatEther(nativeBalance));
+        return Number(ethers.formatEther(nativeBalance));
     }
 
     async getTokenBalance() {
         const tokenBalance = await this.callContractFunction(this.TokenContract, 'balanceOf', [
             this.getPublicKey(),
         ]);
-        return Number(ethers.utils.formatEther(tokenBalance));
+        return Number(ethers.formatEther(tokenBalance));
     }
 
     async getBlockNumber() {
@@ -524,10 +519,11 @@ class Web3Service {
                 // Checks if given arguments can be encoded with function ABI inputs
                 // may be useful for overloaded functions as it would help to find
                 // needed function fragment
-                ethers.utils.defaultAbiCoder.encode(func.inputs, args);
+                const coder = AbiCoder.defaultAbiCoder();
+                coder.encode(func.inputs, args);
 
-                const sighash = ethers.utils.hexDataSlice(
-                    ethers.utils.keccak256(ethers.utils.toUtf8Bytes(func.signature)),
+                const sighash = ethers.dataSlice(
+                    ethers.keccak256(ethers.toUtf8Bytes(func.signature)),
                     0,
                     4,
                 );
@@ -591,7 +587,8 @@ class Web3Service {
         if (errorData.startsWith(SOLIDITY_ERROR_STRING_PREFIX)) {
             const encodedReason = errorData.slice(SOLIDITY_ERROR_STRING_PREFIX.length);
             try {
-                return ethers.utils.defaultAbiCoder.decode(['string'], `0x${encodedReason}`)[0];
+                const coder = AbiCoder.defaultAbiCoder();
+                return coder.decode(['string'], `0x${encodedReason}`)[0];
             } catch (error) {
                 return error.message;
             }
@@ -602,7 +599,8 @@ class Web3Service {
             const encodedReason = errorData.slice(SOLIDITY_PANIC_CODE_PREFIX.length);
             let code;
             try {
-                [code] = ethers.utils.defaultAbiCoder.decode(['uint256'], `0x${encodedReason}`);
+                const coder = AbiCoder.defaultAbiCoder();
+                [code] = coder.decode(['uint256'], `0x${encodedReason}`);
             } catch (error) {
                 return error.message;
             }
@@ -643,7 +641,7 @@ class Web3Service {
             return value;
         }
 
-        if (typeof value === 'number' || BigNumber.isBigNumber(value)) {
+        if (typeof value === 'number' || typeof value === 'bigint') {
             return value.toString();
         }
 
@@ -706,7 +704,7 @@ class Web3Service {
                 Object.fromEntries(
                     Object.entries(event.args).map(([k, v]) => [
                         k,
-                        ethers.BigNumber.isBigNumber(v) ? v.toString() : v,
+                        typeof v === 'bigint' ? v.toString() : v,
                     ]),
                 ),
             ),
@@ -1037,7 +1035,7 @@ class Web3Service {
     }
 
     toBigNumber(value) {
-        return ethers.BigNumber.from(value);
+        return BigInt(value);
     }
 
     keccak256(bytesLikeData) {
@@ -1045,31 +1043,31 @@ class Web3Service {
     }
 
     sha256(bytesLikeData) {
-        return ethers.utils.sha256(bytesLikeData);
+        return ethers.sha256(bytesLikeData);
     }
 
     encodePacked(types, values) {
-        return ethers.utils.solidityPack(types, values);
+        return ethers.solidityPacked(types, values);
     }
 
     convertAsciiToHex(string) {
-        return ethers.utils.hexlify(ethers.utils.toUtf8Bytes(string));
+        return ethers.toBeHex(ethers.toUtf8Bytes(string));
     }
 
     convertHexToAscii(hexString) {
-        return ethers.utils.toUtf8String(hexString);
+        return ethers.toUtf8String(hexString);
     }
 
     convertBytesToUint8Array(bytesLikeData) {
-        return ethers.utils.arrayify(bytesLikeData);
+        return ethers.toBeArray(bytesLikeData);
     }
 
     convertToWei(value, fromUnit = 'ether') {
-        return ethers.utils.parseUnits(value.toString(), fromUnit).toString();
+        return ethers.parseUnits(value.toString(), fromUnit).toString();
     }
 
     convertFromWei(value, toUnit = 'ether') {
-        return ethers.utils.formatUnits(value, toUnit);
+        return ethers.formatUnits(value, toUnit);
     }
 
     async healthCheck() {

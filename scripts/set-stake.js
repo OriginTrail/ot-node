@@ -33,7 +33,7 @@ async function setStake(
     managementWalletPrivateKey,
     hubContractAddress,
 ) {
-    const provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);
+    const provider = new ethers.JsonRpcProvider(rpcEndpoint);
     const operationalWallet = new ethers.Wallet(operationalWalletPrivateKey, provider);
     const managementWallet = new ethers.Wallet(managementWalletPrivateKey, provider);
 
@@ -50,7 +50,7 @@ async function setStake(
     const tokenContractAddress = await hubContract.getContractAddress('Token');
     const tokenContract = new ethers.Contract(tokenContractAddress, ERC20Token, managementWallet);
 
-    const stakeWei = ethers.utils.parseEther(stake);
+    const stakeWei = ethers.parseEther(stake);
 
     let tx = await tokenContract.increaseAllowance(stakingContractAddress, stakeWei, {
         gasPrice: devEnvironment ? undefined : 8,

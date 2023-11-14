@@ -1,5 +1,3 @@
-import { BigNumber } from 'ethers';
-
 export const WS_RPC_PROVIDER_PRIORITY = 2;
 
 export const HTTP_RPC_PROVIDER_PRIORITY = 1;
@@ -8,13 +6,13 @@ export const FALLBACK_PROVIDER_QUORUM = 1;
 
 export const RPC_PROVIDER_STALL_TIMEOUT = 60 * 1000;
 
-export const UINT256_MAX_BN = BigNumber.from(2).pow(256).sub(1);
+export const UINT256_MAX_BN = BigInt(2) ** BigInt(256) - BigInt(1);
 
-export const UINT32_MAX_BN = BigNumber.from(2).pow(32).sub(1);
+export const UINT32_MAX_BN = BigInt(2) ** BigInt(32) - BigInt(1);
 
-export const STAKE_UINT256_MULTIPLIER_BN = UINT256_MAX_BN.div(500000000);
+export const STAKE_UINT256_MULTIPLIER_BN = UINT256_MAX_BN / BigInt(500000000);
 
-export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN.div(UINT32_MAX_BN);
+export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN / UINT32_MAX_BN;
 
 export const ZERO_PREFIX = '0x';
 
