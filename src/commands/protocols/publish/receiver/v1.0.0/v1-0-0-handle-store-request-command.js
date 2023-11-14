@@ -83,22 +83,6 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             stateIndex,
         );
 
-        await this.repositoryModuleManager.updateServiceAgreementRecord(
-            blockchain,
-            contract,
-            tokenId,
-            agreementId,
-            agreementData.startTime,
-            agreementData.epochsNumber,
-            agreementData.epochLength,
-            agreementData.scoreFunctionId,
-            agreementData.proofWindowOffsetPerc,
-            hashFunctionId,
-            keyword,
-            assertionId,
-            stateIndex,
-        );
-
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,

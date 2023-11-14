@@ -108,8 +108,8 @@ class SubmitUpdateCommitCommand extends Command {
         this.logger.trace(
             `Scheduled submit update commit transaction for agreement id: ${agreementId} ` +
                 `blockchain: ${blockchain} contract: ${contract}, token id: ${tokenId}, ` +
-                `keyword: ${keyword}, hash function id: ${hashFunctionId}, operationId ${operationId}` +
-                `transaction queue length: ${transactionQueueLength}.`,
+                `keyword: ${keyword}, hash function id: ${hashFunctionId}, operationId ${operationId}. ` +
+                `Transaction queue length: ${transactionQueueLength}.`,
         );
 
         return Command.empty();

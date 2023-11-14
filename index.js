@@ -1,10 +1,6 @@
 /* eslint-disable no-console */
 import 'dotenv/config';
 import fs from 'fs-extra';
-import path from 'path';
-import appRootPath from 'app-root-path';
-import { execSync } from 'child_process';
-import semver from 'semver';
 import OTNode from './ot-node.js';
 import { NODE_ENVIRONMENTS } from './src/constants/constants.js';
 
@@ -30,26 +26,26 @@ process.env.NODE_ENV =
         await node.start();
     } catch (e) {
         console.error(`Error occurred while start ot-node, error message: ${e}. ${e.stack}`);
-        console.error(`Trying to recover from older version`);
-        if (process.env.NODE_ENV !== NODE_ENVIRONMENTS.DEVELOPMENT) {
-            const rootPath = path.join(appRootPath.path, '..');
-            const oldVersionsDirs = (await fs.promises.readdir(rootPath, { withFileTypes: true }))
-                .filter((dirent) => dirent.isDirectory())
-                .map((dirent) => dirent.name)
-                .filter((name) => semver.valid(name) && !appRootPath.path.includes(name));
-
-            if (oldVersionsDirs.length === 0) {
-                console.error(
-                    `Failed to start OT-Node, no backup code available. Error message: ${e.message}`,
-                );
-                process.exit(1);
-            }
-
-            const oldVersion = oldVersionsDirs.sort(semver.compare).pop();
-            const oldversionPath = path.join(rootPath, oldVersion);
-            execSync(`ln -sfn ${oldversionPath} ${rootPath}/current`);
-            await fs.promises.rm(appRootPath.path, { force: true, recursive: true });
-        }
+        // console.error(`Trying to recover from older version`);
+        // if (process.env.NODE_ENV !== NODE_ENVIRONMENTS.DEVELOPMENT) {
+        //     const rootPath = path.join(appRootPath.path, '..');
+        //     const oldVersionsDirs = (await fs.promises.readdir(rootPath, { withFileTypes: true }))
+        //         .filter((dirent) => dirent.isDirectory())
+        //         .map((dirent) => dirent.name)
+        //         .filter((name) => semver.valid(name) && !appRootPath.path.includes(name));
+        //
+        //     if (oldVersionsDirs.length === 0) {
+        //         console.error(
+        //             `Failed to start OT-Node, no backup code available. Error message: ${e.message}`,
+        //         );
+        //         process.exit(1);
+        //     }
+        //
+        //     const oldVersion = oldVersionsDirs.sort(semver.compare).pop();
+        //     const oldversionPath = path.join(rootPath, oldVersion);
+        //     execSync(`ln -sfn ${oldversionPath} ${rootPath}/current`);
+        //     await fs.promises.rm(appRootPath.path, { force: true, recursive: true });
+        // }
         process.exit(1);
     }
 })();

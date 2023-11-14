@@ -26,7 +26,7 @@ describe('authentication middleware test', async () => {
             }),
         );
 
-        const req = { headers: { authorization: 'Bearer token' }, url: '/publish' };
+        const req = { headers: { authorization: 'Bearer token' }, path: '/publish' };
 
         const spySend = sandbox.spy();
         const spyStatus = sandbox.spy(() => ({ send: spySend }));
@@ -46,7 +46,7 @@ describe('authentication middleware test', async () => {
             }),
         );
 
-        const req = { headers: { authorization: 'Bearer token' }, url: '/publish' };
+        const req = { headers: { authorization: 'Bearer token' }, path: '/publish' };
 
         const spySend = sandbox.spy();
         const spyStatus = sandbox.spy(() => ({ send: spySend }));
@@ -67,7 +67,7 @@ describe('authentication middleware test', async () => {
             }),
         );
 
-        const req = { headers: { authorization: 'Bearer token' }, url: '/publish' };
+        const req = { headers: { authorization: 'Bearer token' }, path: '/publish' };
 
         const spySend = sandbox.spy();
         const spyStatus = sandbox.spy(() => ({ send: spySend }));

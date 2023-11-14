@@ -66,7 +66,10 @@ class SubmitProofsCommand extends Command {
         );
 
         if (!assertion.length) {
-            this.logger.trace(`Assertion with id: ${assertionId} not found in triple store.`);
+            const errorMessage = `Assertion with id: ${assertionId} not found in triple store.`;
+            this.logger.trace(errorMessage);
+
+            await this.handleError(operationId, errorMessage, this.errorType, true);
             return Command.empty();
         }
 
@@ -97,8 +100,14 @@ class SubmitProofsCommand extends Command {
             stateIndex,
         );
         if (alreadySubmitted) {
-            this.logger.trace(
-                `Proofs already submitted for blockchain: ${blockchain} agreement id: ${agreementId}, epoch: ${epoch}, state index: ${stateIndex}`,
+            const errorMessage = `Proofs already submitted for blockchain: ${blockchain} agreement id: ${agreementId}, epoch: ${epoch}, state index: ${stateIndex}`;
+            this.logger.trace(errorMessage);
+
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
+                operationId,
+                agreementId,
+                epoch,
             );
             return Command.empty();
         }
@@ -115,7 +124,7 @@ class SubmitProofsCommand extends Command {
                 leaf,
                 stateIndex,
                 (result) => {
-                    if (result?.error) {
+                    if (result?.error && !result.error.message.includes('NodeAlreadyRewarded')) {
                         reject(result.error);
                     }
                     resolve();
