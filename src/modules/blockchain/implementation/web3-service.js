@@ -61,7 +61,7 @@ class Web3Service {
         await this.initializeWeb3();
         this.startBlock = await this.getBlockNumber();
         await this.initializeContracts();
-        // this.initializeProviderDebugging();
+        this.initializeProviderDebugging();
     }
 
     initializeTransactionQueue(concurrency) {
@@ -189,32 +189,44 @@ class Web3Service {
             const { method } = info.request;
 
             if (['call', 'estimateGas'].includes(method)) {
-                const contractInstance = this.contractAddresses[info.request.params.to];
-                const inputData = info.request.params.data;
+                const contractInstance = this.contractAddresses[info.request.params.transaction.to];
+                const inputData = info.request.params.transaction.data;
                 const decodedInputData = this._decodeInputData(
                     inputData,
                     contractInstance.interface,
                 );
-
+                const functionFragment = contractInstance.interface.getFunction(
+                    inputData.slice(0, 10),
+                );
+                const functionName = functionFragment.name;
+                const inputs = functionFragment.inputs.map(
+                    (input, i) => `${input.name}=${decodedInputData[i]}`,
+                );
                 if (info.backend.error) {
                     const decodedErrorData = this._decodeErrorData(
                         info.backend.error,
                         contractInstance.interface,
                     );
                     this.logger.debug(
-                        `${decodedInputData} ${method} has failed; Error: ${decodedErrorData}; ` +
+                        `${functionName}(${inputs})  ${method} has failed; Error: ${decodedErrorData}; ` +
                             `RPC: ${info.backend.provider.connection.url}.`,
                     );
                 } else if (info.backend.result !== undefined) {
-                    let message = `${decodedInputData} ${method} has been successfully executed; `;
+                    let message = `${functionName}(${inputs}) ${method} has been successfully executed; `;
 
-                    if (info.backend.result !== null) {
-                        const decodedResultData = this._decodeResultData(
-                            inputData.slice(0, 10),
-                            info.backend.result,
-                            contractInstance.interface,
-                        );
-                        message += `Result: ${decodedResultData} `;
+                    if (info.backend.result !== null && method !== 'estimateGas') {
+                        try {
+                            const decodedResultData = this._decodeResultData(
+                                inputData.slice(0, 10),
+                                info.backend.result,
+                                contractInstance.interface,
+                            );
+                            message += `Result: ${decodedResultData}; `;
+                        } catch (error) {
+                            this.logger.warn(
+                                `Unable to decode result data for. Message: ${message}`,
+                            );
+                        }
                     }
 
                     message += `RPC: ${info.backend.provider.connection.url}.`;
@@ -395,10 +407,16 @@ class Web3Service {
                 result = await contractInstance[functionName](...args);
             } catch (error) {
                 const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
-                // eslint-disable-next-line no-await-in-loop
-                await this.handleError(
-                    Error(`Call failed, reason: ${decodedErrorData}`),
-                    functionName,
+
+                const functionFragment = contractInstance.interface.getFunction(
+                    error.transaction.data.slice(0, 10),
+                );
+                const inputs = functionFragment.inputs.map(
+                    (input, i) => `${input.name}=${args[i]}`,
+                );
+
+                throw new Error(
+                    `Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`,
                 );
             }
         }
@@ -419,9 +437,16 @@ class Web3Service {
                 gasLimit = await contractInstance.estimateGas[functionName](...args);
             } catch (error) {
                 const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
-                await this.handleError(
-                    Error(`Gas estimation failed, reason: ${decodedErrorData}`),
-                    functionName,
+
+                const functionFragment = contractInstance.interface.getFunction(
+                    error.transaction.data.slice(0, 10),
+                );
+                const inputs = functionFragment.inputs.map(
+                    (input, i) => `${input.name}=${args[i]}`,
+                );
+
+                throw new Error(
+                    `Gas estimation ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`,
                 );
             }
 
@@ -457,10 +482,7 @@ class Web3Service {
                     gasPrice = Math.ceil(gasPrice * 1.2);
                     transactionRetried = true;
                 } else {
-                    await this.handleError(
-                        Error(`Transaction reverted, reason: ${decodedErrorData}`),
-                        functionName,
-                    );
+                    throw new Error(`Transaction reverted, reason: ${decodedErrorData}`);
                 }
             }
         }
@@ -999,20 +1021,6 @@ class Web3Service {
     async restartService() {
         await this.initializeWeb3();
         await this.initializeContracts();
-    }
-
-    async handleError(error, functionName) {
-        let isRpcError = false;
-        try {
-            await this.provider.getNetwork();
-        } catch (rpcError) {
-            isRpcError = true;
-            this.logger.warn(
-                `Unable to execute smart contract function ${functionName} using Fallback RPC Provider.`,
-            );
-            await this.restartService();
-        }
-        if (!isRpcError) throw error;
     }
 
     async getUpdateCommitWindowDuration() {
