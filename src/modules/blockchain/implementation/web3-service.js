@@ -66,8 +66,8 @@ class Web3Service {
 
     initializeTransactionQueue(concurrency) {
         this.transactionQueue = async.queue((args, cb) => {
-            const { contractInstance, functionName, transactionArgs } = args;
-            this._executeContractFunction(contractInstance, functionName, transactionArgs)
+            const { contractInstance, functionName, transactionArgs, gasPrice } = args;
+            this._executeContractFunction(contractInstance, functionName, transactionArgs, gasPrice)
                 .then((result) => {
                     cb({ result });
                 })
@@ -77,12 +77,13 @@ class Web3Service {
         }, concurrency);
     }
 
-    queueTransaction(contractInstance, functionName, transactionArgs, callback) {
+    queueTransaction(contractInstance, functionName, transactionArgs, callback, gasPrice) {
         this.transactionQueue.push(
             {
                 contractInstance,
                 functionName,
                 transactionArgs,
+                gasPrice,
             },
             callback,
         );
@@ -128,7 +129,7 @@ class Web3Service {
             // eslint-disable-next-line no-await-in-loop
             await this.providerReady();
         } catch (e) {
-            throw Error(
+            throw new Error(
                 `RPC Fallback Provider initialization failed. Fallback Provider quorum: ${FALLBACK_PROVIDER_QUORUM}. Error: ${e.message}.`,
             );
         }
@@ -199,9 +200,13 @@ class Web3Service {
                     inputData.slice(0, 10),
                 );
                 const functionName = functionFragment.name;
-                const inputs = functionFragment.inputs.map(
-                    (input, i) => `${input.name}=${decodedInputData[i]}`,
-                );
+                const inputs = functionFragment.inputs
+                    .map((input, i) => {
+                        const argName = input.name;
+                        const argValue = this._formatArgument(decodedInputData[i]);
+                        return `${argName}=${argValue}`;
+                    })
+                    .join(', ');
                 if (info.backend.error) {
                     const decodedErrorData = this._decodeErrorData(
                         info.backend.error,
@@ -347,7 +352,7 @@ class Web3Service {
 
     async createProfile(peerId) {
         if (!this.config.sharesTokenName || !this.config.sharesTokenSymbol) {
-            throw Error(
+            throw new Error(
                 'Missing sharesTokenName and sharesTokenSymbol in blockchain configuration. Please add it and start the node again.',
             );
         }
@@ -411,9 +416,13 @@ class Web3Service {
                 const functionFragment = contractInstance.interface.getFunction(
                     error.transaction.data.slice(0, 10),
                 );
-                const inputs = functionFragment.inputs.map(
-                    (input, i) => `${input.name}=${args[i]}`,
-                );
+                const inputs = functionFragment.inputs
+                    .map((input, i) => {
+                        const argName = input.name;
+                        const argValue = this._formatArgument(args[i]);
+                        return `${argName}=${argValue}`;
+                    })
+                    .join(', ');
 
                 throw new Error(
                     `Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`,
@@ -424,69 +433,108 @@ class Web3Service {
         return result;
     }
 
-    async _executeContractFunction(contractInstance, functionName, args) {
+    async _executeContractFunction(contractInstance, functionName, args, predefinedGasPrice) {
         let result;
-        let gasPrice = (await this.getGasPrice()) ?? this.convertToWei(20, 'gwei');
-        let transactionRetried = false;
+        const gasPrice =
+            predefinedGasPrice ?? (await this.getGasPrice()) ?? this.convertToWei(20, 'gwei');
+        let gasLimit;
 
-        while (result === undefined) {
-            let gasLimit;
+        try {
+            /* eslint-disable no-await-in-loop */
+            gasLimit = await contractInstance.estimateGas[functionName](...args);
+        } catch (error) {
+            const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
 
-            try {
-                /* eslint-disable no-await-in-loop */
-                gasLimit = await contractInstance.estimateGas[functionName](...args);
-            } catch (error) {
-                const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
+            const functionFragment = contractInstance.interface.getFunction(
+                error.transaction.data.slice(0, 10),
+            );
+            const inputs = functionFragment.inputs
+                .map((input, i) => {
+                    const argName = input.name;
+                    const argValue = this._formatArgument(args[i]);
+                    return `${argName}=${argValue}`;
+                })
+                .join(', ');
 
-                const functionFragment = contractInstance.interface.getFunction(
-                    error.transaction.data.slice(0, 10),
-                );
-                const inputs = functionFragment.inputs.map(
-                    (input, i) => `${input.name}=${args[i]}`,
-                );
+            throw new Error(
+                `Gas estimation for ${functionName}(${inputs}) has failed, reason: ${decodedErrorData}`,
+            );
+        }
 
-                throw new Error(
-                    `Gas estimation ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`,
-                );
-            }
+        gasLimit = gasLimit ?? this.convertToWei(900, 'kwei');
 
-            gasLimit = gasLimit ?? this.convertToWei(900, 'kwei');
+        this.logger.debug(
+            `Sending signed transaction ${functionName} to the blockchain ` +
+                `with gas limit: ${gasLimit.toString()} and gasPrice ${gasPrice.toString()}. ` +
+                `Transaction queue length: ${this.getTransactionQueueLength()}.`,
+        );
 
-            this.logger.debug(
-                `Sending signed transaction ${functionName} to the blockchain ` +
-                    `with gas limit: ${gasLimit.toString()} and gasPrice ${gasPrice.toString()}. ` +
-                    `Transaction queue length: ${this.getTransactionQueueLength()}.`,
+        const tx = await contractInstance[functionName](...args, {
+            gasPrice,
+            gasLimit,
+        });
+
+        try {
+            result = await this.provider.waitForTransaction(
+                tx.hash,
+                TRANSACTION_CONFIRMATIONS,
+                TRANSACTION_POLLING_TIMEOUT_MILLIS,
             );
 
-            try {
-                const tx = await contractInstance[functionName](...args, {
-                    gasPrice,
-                    gasLimit,
-                });
-                result = await this.provider.waitForTransaction(
-                    tx.hash,
-                    TRANSACTION_CONFIRMATIONS,
-                    TRANSACTION_POLLING_TIMEOUT_MILLIS,
-                );
-
-                if (result.status === 0) {
-                    await this.provider.call(tx, tx.blockNumber);
-                }
-            } catch (error) {
-                const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
-                if (
-                    !transactionRetried &&
-                    (error.message.includes(`timeout exceeded`) ||
-                        error.message.includes(`Pool(TooLowPriority`))
-                ) {
-                    gasPrice = Math.ceil(gasPrice * 1.2);
-                    transactionRetried = true;
-                } else {
-                    throw new Error(`Transaction reverted, reason: ${decodedErrorData}`);
-                }
+            if (result.status === 0) {
+                await this.provider.call(tx, tx.blockNumber);
             }
+        } catch (error) {
+            const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
+
+            let sigHash;
+            if (error.transaction) {
+                sigHash = error.transaction.data.slice(0, 10);
+            } else {
+                sigHash = this._getFunctionSighash(contractInstance, functionName, args);
+            }
+
+            const functionFragment = contractInstance.interface.getFunction(sigHash);
+            const inputs = functionFragment.inputs
+                .map((input, i) => {
+                    const argName = input.name;
+                    const argValue = this._formatArgument(args[i]);
+                    return `${argName}=${argValue}`;
+                })
+                .join(', ');
+
+            throw new Error(
+                `Transaction ${functionName}(${inputs}) has been reverted, reason: ${decodedErrorData}`,
+            );
         }
         return result;
+    }
+
+    _getFunctionSighash(contractInstance, functionName, args) {
+        const functions = Object.keys(contractInstance.interface.functions)
+            .filter((key) => contractInstance.interface.functions[key].name === functionName)
+            .map((key) => ({ signature: key, ...contractInstance.interface.functions[key] }));
+
+        for (const func of functions) {
+            try {
+                // Checks if given arguments can be encoded with function ABI inputs
+                // may be useful for overloaded functions as it would help to find
+                // needed function fragment
+                ethers.utils.defaultAbiCoder.encode(func.inputs, args);
+
+                const sighash = ethers.utils.hexDataSlice(
+                    ethers.utils.keccak256(ethers.utils.toUtf8Bytes(func.signature)),
+                    0,
+                    4,
+                );
+
+                return sighash;
+            } catch (error) {
+                continue;
+            }
+        }
+
+        throw new Error('No matching function signature found');
     }
 
     _getErrorData(error) {
@@ -564,7 +612,7 @@ class Web3Service {
             const formattedArgs = decodedCustomError.errorFragment.inputs
                 .map((input, i) => {
                     const argName = input.name;
-                    const argValue = this._formatCustomErrorArgument(decodedCustomError.args[i]);
+                    const argValue = this._formatArgument(decodedCustomError.args[i]);
                     return `${argName}=${argValue}`;
                 })
                 .join(', ');
@@ -582,7 +630,7 @@ class Web3Service {
         return contractInterface.decodeFunctionResult(fragment, resultData);
     }
 
-    _formatCustomErrorArgument(value) {
+    _formatArgument(value) {
         if (value === null || value === undefined) {
             return 'null';
         }
@@ -596,12 +644,12 @@ class Web3Service {
         }
 
         if (Array.isArray(value)) {
-            return `[${value.map((v) => this._formatCustomErrorArgument(v)).join(', ')}]`;
+            return `[${value.map((v) => this._formatArgument(v)).join(', ')}]`;
         }
 
         if (typeof value === 'object') {
             const formattedEntries = Object.entries(value).map(
-                ([k, v]) => `${k}: ${this._formatCustomErrorArgument(v)}`,
+                ([k, v]) => `${k}: ${this._formatArgument(v)}`,
             );
             return `{${formattedEntries.join(', ')}}`;
         }
@@ -619,7 +667,9 @@ class Web3Service {
     ) {
         const contract = this[contractName];
         if (!contract) {
-            throw Error(`Error while getting all past events. Unknown contract: ${contractName}`);
+            throw new Error(
+                `Error while getting all past events. Unknown contract: ${contractName}`,
+            );
         }
 
         let fromBlock;
@@ -695,7 +745,8 @@ class Web3Service {
     async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toLowerCase()];
-        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
 
         return this.callContractFunction(assetStorageContractInstance, 'getAssertionIdByIndex', [
             tokenId,
@@ -706,7 +757,8 @@ class Web3Service {
     async getLatestAssertionId(assetContractAddress, tokenId) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
-        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
 
         return this.callContractFunction(assetStorageContractInstance, 'getLatestAssertionId', [
             tokenId,
@@ -724,7 +776,8 @@ class Web3Service {
     async getAssertionIds(assetContractAddress, tokenId) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
-        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
 
         return this.callContractFunction(assetStorageContractInstance, 'getAssertionIds', [
             tokenId,
@@ -734,7 +787,8 @@ class Web3Service {
     async getAssertionIdsLength(assetContractAddress, tokenId) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
-        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
 
         return this.callContractFunction(assetStorageContractInstance, 'getAssertionIdsLength', [
             tokenId,
@@ -744,7 +798,8 @@ class Web3Service {
     async getKnowledgeAssetOwner(assetContractAddress, tokenId) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
-        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
 
         return this.callContractFunction(assetStorageContractInstance, 'ownerOf', [tokenId]);
     }
@@ -882,21 +937,32 @@ class Web3Service {
         epoch,
         latestStateIndex,
         callback,
+        gasPrice,
     ) {
         return this.queueTransaction(
             this.selectCommitManagerContract(latestStateIndex),
             'submitCommit',
             [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch]],
             callback,
+            gasPrice,
         );
     }
 
-    submitUpdateCommit(assetContractAddress, tokenId, keyword, hashFunctionId, epoch, callback) {
+    submitUpdateCommit(
+        assetContractAddress,
+        tokenId,
+        keyword,
+        hashFunctionId,
+        epoch,
+        callback,
+        gasPrice,
+    ) {
         return this.queueTransaction(
             this.CommitManagerV1U1Contract,
             'submitUpdateCommit',
             [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch]],
             callback,
+            gasPrice,
         );
     }
 
@@ -937,12 +1003,14 @@ class Web3Service {
         chunkHash,
         latestStateIndex,
         callback,
+        gasPrice,
     ) {
         return this.queueTransaction(
             this.selectProofManagerContract(latestStateIndex),
             'sendProof',
             [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch, proof, chunkHash]],
             callback,
+            gasPrice,
         );
     }
 
