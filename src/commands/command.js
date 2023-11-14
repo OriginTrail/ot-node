@@ -25,7 +25,7 @@ class Command {
      */
     async recover(command, err) {
         const { operationId } = command.data;
-        await this.handleError(operationId, err.message, this.errorType, true, command.data);
+        await this.handleError(operationId, err.message, this.errorType, true);
 
         return Command.empty();
     }
