@@ -1,5 +1,13 @@
 import { BigNumber } from 'ethers';
 
+export const WS_RPC_PROVIDER_PRIORITY = 2;
+
+export const HTTP_RPC_PROVIDER_PRIORITY = 1;
+
+export const FALLBACK_PROVIDER_QUORUM = 1;
+
+export const RPC_PROVIDER_STALL_TIMEOUT = 60 * 1000;
+
 export const UINT256_MAX_BN = BigNumber.from(2).pow(256).sub(1);
 
 export const UINT32_MAX_BN = BigNumber.from(2).pow(32).sub(1);
@@ -7,6 +15,8 @@ export const UINT32_MAX_BN = BigNumber.from(2).pow(32).sub(1);
 export const STAKE_UINT256_MULTIPLIER_BN = UINT256_MAX_BN.div(500000000);
 
 export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN.div(UINT32_MAX_BN);
+
+export const ZERO_PREFIX = '0x';
 
 export const ZERO_BYTES32 = `0x${'0'.repeat(64)}`;
 
@@ -19,7 +29,23 @@ export const COMMIT_BLOCK_DURATION_IN_BLOCKS = 5;
 
 export const COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS = 2;
 
-export const TRANSACTION_POLLING_TIMEOUT_MILLIS = 50 * 1000;
+export const TRANSACTION_POLLING_TIMEOUT_MILLIS = 120 * 1000;
+
+export const SOLIDITY_ERROR_STRING_PREFIX = '0x08c379a0';
+
+export const SOLIDITY_PANIC_CODE_PREFIX = '0x4e487b71';
+
+export const SOLIDITY_PANIC_REASONS = {
+    0x1: 'Assertion error',
+    0x11: 'Arithmetic operation underflowed or overflowed outside of an unchecked block',
+    0x12: 'Division or modulo division by zero',
+    0x21: 'Tried to convert a value into an enum, but the value was too big or negative',
+    0x22: 'Incorrectly encoded storage byte array',
+    0x31: '.pop() was called on an empty array',
+    0x32: 'Array accessed at an out-of-bounds or negative index',
+    0x41: 'Too much memory was allocated, or an array was created that is too large',
+    0x51: 'Called a zero-initialized variable of internal function type',
+};
 
 export const LIBP2P_KEY_DIRECTORY = 'libp2p';
 
@@ -38,6 +64,7 @@ export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
 export const MAX_FILE_SIZE = 2621440;
 
 export const GET_STATES = { LATEST: 'LATEST', FINALIZED: 'LATEST_FINALIZED' };
+
 export const BYTES_IN_KILOBYTE = 1024;
 
 export const BYTES_IN_MEGABYTE = BYTES_IN_KILOBYTE * BYTES_IN_KILOBYTE;
@@ -148,9 +175,9 @@ export const DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 export const DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
 
 export const COMMAND_RETRIES = {
-    SUBMIT_COMMIT: 3,
-    SUBMIT_UPDATE_COMMIT: 3,
-    SUBMIT_PROOFS: 3,
+    SUBMIT_COMMIT: 0,
+    SUBMIT_UPDATE_COMMIT: 0,
+    SUBMIT_PROOFS: 0,
 };
 
 export const WEBSOCKET_PROVIDER_OPTIONS = {
@@ -415,6 +442,56 @@ export const ARCHIVE_UPDATE_RESPONSES_FOLDER = 'update_responses';
 export const COMMAND_QUEUE_PARALLELISM = 100;
 
 /**
+ * @constant {object} HTTP_API_ROUTES -
+ *  HTTP API Routes with parameters
+ */
+export const HTTP_API_ROUTES = {
+    v0: {
+        publish: {
+            method: 'post',
+            path: '/publish',
+            options: { rateLimit: true },
+        },
+        update: {
+            method: 'post',
+            path: '/update',
+            options: { rateLimit: true },
+        },
+        query: {
+            method: 'post',
+            path: '/query',
+            options: {},
+        },
+        'local-store': {
+            method: 'post',
+            path: '/local-store',
+            options: {},
+        },
+        get: {
+            method: 'post',
+            path: '/get',
+            options: { rateLimit: true },
+        },
+        result: {
+            method: 'get',
+            path: '/:operation/:operationId',
+            options: {},
+        },
+        info: {
+            method: 'get',
+            path: '/info',
+            options: {},
+        },
+        'bid-suggestion': {
+            method: 'get',
+            path: '/bid-suggestion',
+            options: {},
+        },
+    },
+    v1: {},
+};
+
+/**
  * @constant {object} NETWORK_PROTOCOLS -
  *  Network protocols
  */
@@ -490,12 +567,6 @@ export const NODE_ENVIRONMENTS = {
 export const CONTRACT_EVENT_FETCH_INTERVALS = {
     MAINNET: 10 * 1000,
     DEVELOPMENT: 4 * 1000,
-};
-
-export const FIXED_GAS_LIMIT_METHODS = {
-    submitCommit: 600000,
-    submitUpdateCommit: 600000,
-    sendProof: 500000,
 };
 
 export const BLOCK_TIME_MILLIS = {

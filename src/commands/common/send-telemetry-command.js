@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { createRequire } from 'module';
 import Command from '../command.js';
 import { SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES } from '../../constants/constants.js';
@@ -11,9 +10,10 @@ class SendTelemetryCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.telemetryInjectionService = ctx.telemetryInjectionService;
         this.networkModuleManager = ctx.networkModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.telemetryModuleManager = ctx.telemetryModuleManager;
     }
 
     /**
@@ -21,35 +21,31 @@ class SendTelemetryCommand extends Command {
      * @param command
      */
     async execute() {
-        if (!this.config.telemetry.enabled || !this.config.telemetry.sendTelemetryData) {
+        if (
+            !this.config.modules.telemetry.enabled ||
+            !this.telemetryModuleManager.getModuleConfiguration().sendTelemetryData
+        ) {
             return Command.empty();
         }
+
         try {
-            const events = await this.telemetryInjectionService.getUnpublishedEvents();
-            const signalingMessage = {
-                nodeData: {
-                    version: pjson.version,
-                    identity: this.networkModuleManager.getPeerId().toB58String(),
-                    hostname: this.config.hostname,
-                    operational_wallet: this.blockchainModuleManager.getPublicKey(),
-                    management_wallet: this.blockchainModuleManager.getManagementKey(),
-                    triple_store: this.config.modules.tripleStore.defaultImplementation,
-                    auto_update_enabled: this.config.modules.autoUpdater.enabled,
-                    multiaddresses: this.networkModuleManager.getMultiaddrs(),
-                },
-                events: events || [],
+            const events = (await this.getUnpublishedEvents()) || [];
+            const nodeData = {
+                version: pjson.version,
+                identity: this.networkModuleManager.getPeerId().toB58String(),
+                hostname: this.config.hostname,
+                operational_wallet: this.blockchainModuleManager.getPublicKey(),
+                management_wallet: this.blockchainModuleManager.getManagementKey(),
+                triple_store: this.config.modules.tripleStore.defaultImplementation,
+                auto_update_enabled: this.config.modules.autoUpdater.enabled,
+                multiaddresses: this.networkModuleManager.getMultiaddrs(),
             };
-            const config = {
-                method: 'post',
-                url: this.config.telemetry.signalingServerUrl,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                data: JSON.stringify(signalingMessage),
-            };
-            const response = await axios(config);
-            if (response.status === 200 && events?.length > 0) {
-                await this.telemetryInjectionService.removePublishedEvents(events);
+            const isDataSuccessfullySent = await this.telemetryModuleManager.sendTelemetryData(
+                nodeData,
+                events,
+            );
+            if (isDataSuccessfullySent && events?.length > 0) {
+                await this.removePublishedEvents(events);
             }
         } catch (e) {
             await this.handleError(e);
@@ -82,6 +78,16 @@ class SendTelemetryCommand extends Command {
         };
         Object.assign(command, map);
         return command;
+    }
+
+    async getUnpublishedEvents() {
+        return this.repositoryModuleManager.getUnpublishedEvents();
+    }
+
+    async removePublishedEvents(events) {
+        const ids = events.map((event) => event.id);
+
+        await this.repositoryModuleManager.destroyEvents(ids);
     }
 }
 
