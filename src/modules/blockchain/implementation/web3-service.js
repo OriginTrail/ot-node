@@ -129,7 +129,7 @@ class Web3Service {
             // eslint-disable-next-line no-await-in-loop
             await this.providerReady();
         } catch (e) {
-            throw Error(
+            throw new Error(
                 `RPC Fallback Provider initialization failed. Fallback Provider quorum: ${FALLBACK_PROVIDER_QUORUM}. Error: ${e.message}.`,
             );
         }
@@ -352,7 +352,7 @@ class Web3Service {
 
     async createProfile(peerId) {
         if (!this.config.sharesTokenName || !this.config.sharesTokenSymbol) {
-            throw Error(
+            throw new Error(
                 'Missing sharesTokenName and sharesTokenSymbol in blockchain configuration. Please add it and start the node again.',
             );
         }
@@ -534,7 +534,7 @@ class Web3Service {
             }
         }
 
-        throw Error('No matching function signature found');
+        throw new Error('No matching function signature found');
     }
 
     _getErrorData(error) {
@@ -667,7 +667,9 @@ class Web3Service {
     ) {
         const contract = this[contractName];
         if (!contract) {
-            throw Error(`Error while getting all past events. Unknown contract: ${contractName}`);
+            throw new Error(
+                `Error while getting all past events. Unknown contract: ${contractName}`,
+            );
         }
 
         let fromBlock;
@@ -743,7 +745,8 @@ class Web3Service {
     async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toLowerCase()];
-        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
 
         return this.callContractFunction(assetStorageContractInstance, 'getAssertionIdByIndex', [
             tokenId,
@@ -754,7 +757,8 @@ class Web3Service {
     async getLatestAssertionId(assetContractAddress, tokenId) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
-        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
 
         return this.callContractFunction(assetStorageContractInstance, 'getLatestAssertionId', [
             tokenId,
@@ -772,7 +776,8 @@ class Web3Service {
     async getAssertionIds(assetContractAddress, tokenId) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
-        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
 
         return this.callContractFunction(assetStorageContractInstance, 'getAssertionIds', [
             tokenId,
@@ -782,7 +787,8 @@ class Web3Service {
     async getAssertionIdsLength(assetContractAddress, tokenId) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
-        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
 
         return this.callContractFunction(assetStorageContractInstance, 'getAssertionIdsLength', [
             tokenId,
@@ -792,7 +798,8 @@ class Web3Service {
     async getKnowledgeAssetOwner(assetContractAddress, tokenId) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
-        if (!assetStorageContractInstance) throw Error('Unknown asset storage contract address');
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
 
         return this.callContractFunction(assetStorageContractInstance, 'ownerOf', [tokenId]);
     }
