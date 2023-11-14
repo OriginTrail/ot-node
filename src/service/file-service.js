@@ -90,8 +90,7 @@ class FileService {
     }
 
     async removeFolder(folderPath) {
-        this.logger.trace(`Removing folder at path: ${folderPath}`);
-
+        this.logger.debug(`Removing folder at path: ${folderPath}`);
         try {
             await rm(folderPath, { recursive: true });
             return true;
