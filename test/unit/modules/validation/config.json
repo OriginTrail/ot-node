@@ -1,0 +1,14 @@
+{
+  "modules":{
+    "validation":{
+      "enabled":true,
+      "implementation":{
+        "merkle-validation":{
+          "enabled":true,
+          "package":"./validation/implementation/merkle-validation.js",
+          "config":{}
+        }
+      }
+    }
+  }
+}
