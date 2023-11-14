@@ -229,6 +229,7 @@ class ServiceAgreementRepository {
                 tokenId: { [Sequelize.Op.gte]: fromTokenId },
             },
             limit: batchSize,
+            order: [['token_id', 'asc']],
         });
     }
 }
