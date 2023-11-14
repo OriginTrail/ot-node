@@ -11,6 +11,7 @@ import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js'
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
 import PullBlockchainShardingTableMigration from './src/migration/pull-sharding-table-migration.js';
 import TripleStoreUserConfigurationMigration from './src/migration/triple-store-user-configuration-migration.js';
+import TelemetryModuleUserConfigurationMigration from './src/migration/telemetry-module-user-configuration-migration.js';
 import PrivateAssetsMetadataMigration from './src/migration/private-assets-metadata-migration.js';
 import ServiceAgreementsMetadataMigration from './src/migration/service-agreements-metadata-migration.js';
 import RemoveAgreementStartEndTimeMigration from './src/migration/remove-agreement-start-end-time-migration.js';
@@ -36,6 +37,7 @@ class OTNode {
         await this.checkForUpdate();
         await this.removeUpdateFile();
         await this.executeTripleStoreUserConfigurationMigration();
+        await this.executeTelemetryModuleUserConfigurationMigration();
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
         this.logger.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
@@ -63,13 +65,14 @@ class OTNode {
 
         await this.createProfiles();
 
+        await this.initializeCommandExecutor();
         await this.initializeShardingTableService();
-        await this.initializeTelemetryInjectionService();
         await this.initializeBlockchainEventListenerService();
 
-        await this.initializeCommandExecutor();
         await this.initializeRouters();
         await this.startNetworkModule();
+        this.startTelemetryModule();
+        this.resumeCommandExecutor();
         this.logger.info('Node is up and running!');
     }
 
@@ -244,9 +247,11 @@ class OTNode {
     async initializeCommandExecutor() {
         try {
             const commandExecutor = this.container.resolve('commandExecutor');
-            await commandExecutor.init();
-            commandExecutor.replay();
-            await commandExecutor.start();
+            commandExecutor.pauseQueue();
+            await commandExecutor.addDefaultCommands();
+            commandExecutor
+                .replayOldCommands()
+                .then(() => this.logger.info('Finished replaying old commands'));
         } catch (e) {
             this.logger.error(
                 `Command executor initialization failed. Error message: ${e.message}`,
@@ -255,9 +260,36 @@ class OTNode {
         }
     }
 
+    resumeCommandExecutor() {
+        try {
+            const commandExecutor = this.container.resolve('commandExecutor');
+            commandExecutor.resumeQueue();
+        } catch (e) {
+            this.logger.error(
+                `Unable to resume command executor queue. Error message: ${e.message}`,
+            );
+            this.stop(1);
+        }
+    }
+
     async startNetworkModule() {
         const networkModuleManager = this.container.resolve('networkModuleManager');
         await networkModuleManager.start();
+    }
+
+    startTelemetryModule() {
+        const telemetryModuleManager = this.container.resolve('telemetryModuleManager');
+        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
+        telemetryModuleManager.listenOnEvents((eventData) => {
+            repositoryModuleManager.createEventRecord(
+                eventData.operationId,
+                eventData.lastEvent,
+                eventData.timestamp,
+                eventData.value1,
+                eventData.value2,
+                eventData.value3,
+            );
+        });
     }
 
     async executePrivateAssetsMetadataMigration() {
@@ -283,6 +315,25 @@ class OTNode {
             dataService,
         );
 
+        if (!(await migration.migrationAlreadyExecuted())) {
+            await migration.migrate();
+            this.logger.info('Node will now restart!');
+            this.stop(1);
+        }
+    }
+
+    async executeTelemetryModuleUserConfigurationMigration() {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const migration = new TelemetryModuleUserConfigurationMigration(
+            'telemetryModuleUserConfigurationMigration',
+            this.logger,
+            this.config,
+        );
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();
             this.logger.info('Node will now restart!');
@@ -456,22 +507,6 @@ class OTNode {
                 `Unable to initialize sharding table service. Error message: ${error.message} OT-node shutting down...`,
             );
             this.stop(1);
-        }
-    }
-
-    async initializeTelemetryInjectionService() {
-        if (this.config.telemetry.enabled) {
-            try {
-                const telemetryHubModuleManager = this.container.resolve(
-                    'telemetryInjectionService',
-                );
-                telemetryHubModuleManager.initialize();
-                this.logger.info('Telemetry Injection Service initialized successfully');
-            } catch (e) {
-                this.logger.error(
-                    `Telemetry hub module initialization failed. Error message: ${e.message}`,
-                );
-            }
         }
     }
 

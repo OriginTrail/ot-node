@@ -5,6 +5,7 @@ import {
     COMMAND_RETRIES,
     TRANSACTION_CONFIRMATIONS,
     OPERATION_ID_STATUS,
+    ERROR_TYPE,
 } from '../../../constants/constants.js';
 
 class EpochCheckCommand extends Command {
@@ -16,6 +17,8 @@ class EpochCheckCommand extends Command {
         this.shardingTableService = ctx.shardingTableService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
+
+        this.errorType = ERROR_TYPE.COMMIT_PROOF.EPOCH_CHECK_ERROR;
     }
 
     async execute(command) {
@@ -99,43 +102,56 @@ class EpochCheckCommand extends Command {
         for (const serviceAgreement of eligibleAgreementForSubmitCommit) {
             if (scheduleSubmitCommitCommands.length >= maxTransactions) break;
 
-            const rank = await this.calculateRank(
-                blockchain,
-                serviceAgreement.keyword,
-                serviceAgreement.hashFunctionId,
-                r2,
-            );
-
-            updateServiceAgreementsLastCommitEpoch.push(
-                this.repositoryModuleManager.updateServiceAgreementLastCommitEpoch(
-                    serviceAgreement.agreementId,
-                    serviceAgreement.currentEpoch,
-                ),
-            );
-
-            if (rank == null) {
-                this.logger.trace(
-                    `Node not in R2: ${r2} for agreement id: ${serviceAgreement.agreementId}. Skipping scheduling submit commit command.`,
+            try {
+                const rank = await this.calculateRank(
+                    blockchain,
+                    serviceAgreement.keyword,
+                    serviceAgreement.hashFunctionId,
+                    r2,
                 );
-                continue;
-            }
 
-            if (rank >= r0) {
+                updateServiceAgreementsLastCommitEpoch.push(
+                    this.repositoryModuleManager.updateServiceAgreementLastCommitEpoch(
+                        serviceAgreement.agreementId,
+                        serviceAgreement.currentEpoch,
+                    ),
+                );
+
+                if (rank == null) {
+                    this.logger.trace(
+                        `Node not in R2: ${r2} for the Service Agreement with the ID: ${serviceAgreement.agreementId}. Skipping scheduling submitCommitCommand.`,
+                    );
+                    continue;
+                }
+
+                if (rank >= r0) {
+                    this.logger.trace(
+                        `Calculated rank: ${
+                            rank + 1
+                        }. Node not in R0: ${r0} for the Service Agreement with the ID: ${
+                            serviceAgreement.agreementId
+                        }. Skipping scheduling submitCommitCommand.`,
+                    );
+                    continue;
+                }
+
                 this.logger.trace(
-                    `Calculated rank: ${rank + 1}. Node not in R0: ${r0} for agreement id: ${
+                    `Calculated rank: ${
+                        rank + 1
+                    }. Node in R0: ${r0} for the Service Agreement with the ID: ${
                         serviceAgreement.agreementId
-                    }. Skipping scheduling submit commit command.`,
+                    }. Scheduling submitCommitCommand.`,
+                );
+
+                scheduleSubmitCommitCommands.push(
+                    this.scheduleSubmitCommitCommand(serviceAgreement),
+                );
+            } catch (error) {
+                this.logger.warn(
+                    `Failed to schedule submitCommitCommand for the Service Agreement with the ID: ${serviceAgreement.agreementId}. Error message: ${error.message}.`,
                 );
                 continue;
             }
-
-            this.logger.trace(
-                `Calculated rank: ${rank + 1}. Node in R0: ${r0} for agreement id: ${
-                    serviceAgreement.agreementId
-                }. Scheduling submit commit command.`,
-            );
-
-            scheduleSubmitCommitCommands.push(this.scheduleSubmitCommitCommand(serviceAgreement));
         }
         await Promise.all([
             ...scheduleSubmitCommitCommands,
@@ -161,32 +177,39 @@ class EpochCheckCommand extends Command {
         for (const serviceAgreement of eligibleAgreementsForSubmitProofs) {
             if (scheduleSubmitProofCommands.length >= maxTransactions) break;
 
-            const eligibleForReward = await this.isEligibleForRewards(
-                blockchain,
-                serviceAgreement.agreementId,
-                serviceAgreement.currentEpoch,
-                serviceAgreement.stateIndex,
-                r0,
-            );
-            if (eligibleForReward) {
-                this.logger.trace(
-                    `Node is eligible for rewards for agreement id: ${serviceAgreement.agreementId}. Scheduling submit proof command.`,
-                );
-
-                scheduleSubmitProofCommands.push(
-                    this.scheduleSubmitProofsCommand(serviceAgreement),
-                );
-            } else {
-                this.logger.trace(
-                    `Node is not eligible for rewards for agreement id: ${serviceAgreement.agreementId}. Skipping scheduling submit proof command.`,
-                );
-            }
-            updateServiceAgreementsLastProofEpoch.push(
-                this.repositoryModuleManager.updateServiceAgreementLastProofEpoch(
+            try {
+                const eligibleForReward = await this.isEligibleForRewards(
+                    blockchain,
                     serviceAgreement.agreementId,
                     serviceAgreement.currentEpoch,
-                ),
-            );
+                    serviceAgreement.stateIndex,
+                    r0,
+                );
+                if (eligibleForReward) {
+                    this.logger.trace(
+                        `Node is eligible for rewards for the Service Agreement with the ID: ${serviceAgreement.agreementId}. Scheduling submitProofsCommand.`,
+                    );
+
+                    scheduleSubmitProofCommands.push(
+                        this.scheduleSubmitProofsCommand(serviceAgreement),
+                    );
+                } else {
+                    this.logger.trace(
+                        `Node is not eligible for rewards for the Service Agreement with the ID: ${serviceAgreement.agreementId}. Skipping scheduling submitProofsCommand.`,
+                    );
+                }
+                updateServiceAgreementsLastProofEpoch.push(
+                    this.repositoryModuleManager.updateServiceAgreementLastProofEpoch(
+                        serviceAgreement.agreementId,
+                        serviceAgreement.currentEpoch,
+                    ),
+                );
+            } catch (error) {
+                this.logger.warn(
+                    `Failed to schedule submitProofsCommand for the Service Agreement with the ID: ${serviceAgreement.agreementId}. Error message: ${error.message}.`,
+                );
+                continue;
+            }
         }
         await Promise.all([
             ...scheduleSubmitProofCommands,
@@ -326,7 +349,7 @@ class EpochCheckCommand extends Command {
      * @param error
      */
     async recover(command, error) {
-        this.logger.warn(`Failed to execute ${command.name}: error: ${error.message}`);
+        this.logger.warn(`Failed to execute ${command.name}; Error: ${error.message}`);
 
         return Command.repeat();
     }
