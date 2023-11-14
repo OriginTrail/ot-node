@@ -3,7 +3,7 @@ import BaseMigration from './base-migration.js';
 
 let wrongAgreementsCount = 0;
 const MAX_BATCH_SIZE = 10000;
-const CONCURRENCY = 15;
+const CONCURRENCY = 200;
 
 class ServiceAgreementsOpDatabaseMigration extends BaseMigration {
     constructor(
