@@ -117,6 +117,12 @@ class OtTripleStore {
                     }
                 }`;
             await this.queryVoid(repository, deleteQuery);
+
+            const linkedAssets = await this.countAssetsWithAssertionId(repository, assertionId);
+
+            if (linkedAssets === 0) {
+                await this.deleteAssertion(repository, assertionId);
+            }
         }
     }
 
@@ -140,6 +146,12 @@ class OtTripleStore {
                     }
                 }`;
             await this.queryVoid(repository, updateQuery);
+
+            const linkedAssets = await this.countAssetsWithAssertionId(repository, oldAssertionId);
+
+            if (linkedAssets === 0) {
+                await this.deleteAssertion(repository, oldAssertionId);
+            }
         }
     }
 
