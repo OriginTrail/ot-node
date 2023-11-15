@@ -117,12 +117,6 @@ class OtTripleStore {
                     }
                 }`;
             await this.queryVoid(repository, deleteQuery);
-
-            const linkedAssets = await this.countAssetsWithAssertionId(repository, assertionId);
-
-            if (linkedAssets === 0) {
-                await this.deleteAssertion(repository, assertionId);
-            }
         }
     }
 
@@ -146,12 +140,6 @@ class OtTripleStore {
                     }
                 }`;
             await this.queryVoid(repository, updateQuery);
-
-            const linkedAssets = await this.countAssetsWithAssertionId(repository, oldAssertionId);
-
-            if (linkedAssets === 0) {
-                await this.deleteAssertion(repository, oldAssertionId);
-            }
         }
     }
 
@@ -176,6 +164,29 @@ class OtTripleStore {
             }`;
 
         return this.ask(repository, query);
+    }
+
+    async updateAssetNonAssertionMetadata(repository, ual, assetNquads) {
+        const updateQuery = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            DELETE {
+                GRAPH <assets:graph> {
+                    <${ual}> ?p ?o .
+                    FILTER(?p != schema:assertion)
+                }
+            }
+            INSERT {
+                GRAPH <assets:graph> { 
+                    ${assetNquads} 
+                }
+            }
+            WHERE {
+                GRAPH <assets:graph> {
+                    <${ual}> ?p ?o .
+                    FILTER(?p != schema:assertion)
+                }
+            }`;
+        await this.queryVoid(repository, updateQuery);
     }
 
     async deleteAssetMetadata(repository, ual) {
@@ -210,7 +221,7 @@ class OtTripleStore {
         return this.select(repository, query);
     }
 
-    async insertAssetMetadata(repository, assetNquads) {
+    async insertAssetAssertionMetadata(repository, assetNquads) {
         const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             INSERT DATA {

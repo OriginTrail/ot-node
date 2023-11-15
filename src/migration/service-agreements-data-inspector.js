@@ -135,9 +135,11 @@ class ServiceAgreementsDataInspector extends BaseMigration {
                 contract: serviceAgreement.assetStorageContractAddress,
                 tokenId: serviceAgreement.tokenId,
                 agreementId: updatedServiceAgreement.agreementId ?? serviceAgreement.agreementId,
-                keyword: updatedServiceAgreement.keyword ?? serviceAgreement.keyword,
-                invalidAssertionId: serviceAgreement.assertionId,
-                assertionId: updatedServiceAgreement.assertionId ?? serviceAgreement.assertionId,
+                currentKeyword: serviceAgreement.keyword,
+                correctKeyword: updatedServiceAgreement.keyword ?? serviceAgreement.keyword,
+                currentAssertionId: serviceAgreement.assertionId,
+                correctAssertionId:
+                    updatedServiceAgreement.assertionId ?? serviceAgreement.assertionId,
                 stateIndex: updatedServiceAgreement.stateIndex ?? serviceAgreement.stateIndex,
             });
         }

@@ -32,67 +32,96 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
 
             this.logger.trace(
                 `Fixing Service Agreement in the Operational DB for the Knowledge Asset with the ID: ${serviceAgreement.tokenId}, ` +
-                    `Service Agreement ID: ${serviceAgreement.agreementId}, Keyword: ${serviceAgreement.keyword}, Assertion ID: ${serviceAgreement.assertionId}, State Index: ${serviceAgreement.stateIndex}.`,
+                    `Service Agreement ID: ${serviceAgreement.agreementId}, Keyword: ${serviceAgreement.correctKeyword}, ` +
+                    `Assertion ID: ${serviceAgreement.correctAssertionId}, State Index: ${serviceAgreement.stateIndex}.`,
             );
 
             await this.repositoryModuleManager.updateServiceAgreementForTokenId(
                 serviceAgreement.tokenId,
                 serviceAgreement.agreementId,
-                serviceAgreement.keyword,
-                serviceAgreement.assertionId,
+                serviceAgreement.correctKeyword,
+                serviceAgreement.correctAssertionId,
                 serviceAgreement.stateIndex,
             );
 
-            if (serviceAgreement.invalidAssertionId === serviceAgreement.assertionId) {
-                continue;
+            // Fix wrong Assertion links in the PublicCurrent / PrivateCurrent repositories
+            if (serviceAgreement.currentAssertionId !== serviceAgreement.correctAssertionId) {
+                const assertionLinkedInPublicCurrentRepository =
+                    await this.tripleStoreService.assetAssertionLinkExists(
+                        TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                        serviceAgreement.blockchain,
+                        serviceAgreement.contract,
+                        serviceAgreement.tokenId,
+                        serviceAgreement.currentAssertionId,
+                    );
+
+                if (assertionLinkedInPublicCurrentRepository) {
+                    await this.tripleStoreService.updateAssetAssertionLink(
+                        TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                        serviceAgreement.blockchain,
+                        serviceAgreement.contract,
+                        serviceAgreement.tokenId,
+                        serviceAgreement.currentAssertionId,
+                        serviceAgreement.correctAssertionId,
+                    );
+                }
+
+                const assertionLinkedInPrivateCurrentRepository =
+                    await this.tripleStoreService.assetAssertionLinkExists(
+                        TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                        serviceAgreement.blockchain,
+                        serviceAgreement.contract,
+                        serviceAgreement.tokenId,
+                        serviceAgreement.currentAssertionId,
+                    );
+
+                if (assertionLinkedInPrivateCurrentRepository) {
+                    await this.tripleStoreService.updateAssetAssertionLink(
+                        TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                        serviceAgreement.blockchain,
+                        serviceAgreement.contract,
+                        serviceAgreement.tokenId,
+                        serviceAgreement.currentAssertionId,
+                        serviceAgreement.correctAssertionId,
+                    );
+                }
             }
 
-            if (
-                await this.tripleStoreService.assetAssertionLinkExists(
+            // Fix wrong keyword for the Asset Metadata in the PublicCurrent / PrivateCurrent repository
+            if (serviceAgreement.currentKeyword !== serviceAgreement.correctKeyword) {
+                const assetInPublicCurrentRepository = await this.tripleStoreService.assetExists(
                     TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
                     serviceAgreement.blockchain,
                     serviceAgreement.contract,
                     serviceAgreement.tokenId,
-                    serviceAgreement.invalidAssertionId,
-                )
-            ) {
-                this.logger.trace(
-                    `Fixing Service Agreement in the Triple Store (repository: ${TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT}) for the Knowledge Asset with the ID: ` +
-                        `${serviceAgreement.tokenId}, Service Agreement ID: ${serviceAgreement.agreementId}, ` +
-                        `Keyword: ${serviceAgreement.keyword}, Assertion ID: ${serviceAgreement.assertionId}, State Index: ${serviceAgreement.stateIndex}.`,
                 );
 
-                await this.tripleStoreService.updateAssetAssertionLink(
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                    serviceAgreement.blockchain,
-                    serviceAgreement.contract,
-                    serviceAgreement.tokenId,
-                    serviceAgreement.invalidAssertionId,
-                    serviceAgreement.assertionId,
-                );
-            } else if (
-                await this.tripleStoreService.assetAssertionLinkExists(
+                if (assetInPublicCurrentRepository) {
+                    await this.tripleStoreService.updateAssetNonAssertionMetadata(
+                        TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                        serviceAgreement.blockchain,
+                        serviceAgreement.contract,
+                        serviceAgreement.tokenId,
+                        serviceAgreement.correctKeyword,
+                    );
+                }
+
+                const assetInPrivateCurrentRepository = await this.tripleStoreService.assetExists(
                     TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
                     serviceAgreement.blockchain,
                     serviceAgreement.contract,
                     serviceAgreement.tokenId,
-                    serviceAgreement.invalidAssertionId,
-                )
-            ) {
-                this.logger.trace(
-                    `Fixing Service Agreement in the Triple Store (repository: ${TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT}) for the Knowledge Asset with the ID: ` +
-                        `${serviceAgreement.tokenId}, Service Agreement ID: ${serviceAgreement.agreementId}, ` +
-                        `Keyword: ${serviceAgreement.keyword}, Assertion ID: ${serviceAgreement.assertionId}, State Index: ${serviceAgreement.stateIndex}.`,
                 );
 
-                await this.tripleStoreService.updateAssetAssertionLink(
-                    TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-                    serviceAgreement.blockchain,
-                    serviceAgreement.contract,
-                    serviceAgreement.tokenId,
-                    serviceAgreement.invalidAssertionId,
-                    serviceAgreement.assertionId,
-                );
+                if (assetInPrivateCurrentRepository) {
+                    await this.tripleStoreService.updateAssetNonAssertionMetadata(
+                        TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                        serviceAgreement.blockchain,
+                        serviceAgreement.contract,
+                        serviceAgreement.tokenId,
+                        serviceAgreement.correctKeyword,
+                    );
+                }
             }
         }
     }

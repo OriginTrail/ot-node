@@ -33,7 +33,8 @@ class TripleStoreService {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.info(
-            `Inserting asset with assertion id: ${assertionId}, ual: ${ual} in triple store ${repository} repository.`,
+            `Inserting Knowledge Asset with the UAL: ${ual}, Assertion ID: ${assertionId}, ` +
+                `to the Triple Store's ${repository} repository.`,
         );
 
         const currentAssetNquads = await formatAssertion({
@@ -47,7 +48,7 @@ class TripleStoreService {
         });
 
         await Promise.all([
-            this.tripleStoreModuleManager.insertAssetMetadata(
+            this.tripleStoreModuleManager.insertAssetAssertionMetadata(
                 this.repositoryImplementations[repository],
                 repository,
                 currentAssetNquads.join('\n'),
@@ -61,7 +62,8 @@ class TripleStoreService {
         ]);
 
         this.logger.info(
-            `Asset with assertion id: ${assertionId}, ual: ${ual} has been successfully inserted in triple store ${repository} repository.`,
+            `Knowledge Asset with the UAL: ${ual}, Assertion ID: ${assertionId}, ` +
+                `has been successfully inserted to the Triple Store's ${repository} repository.`,
         );
     }
 
@@ -98,11 +100,19 @@ class TripleStoreService {
         }
     }
 
-    async insertAssetMetadata(repository, blockchain, contract, tokenId, assertionId, keyword) {
+    async insertAssetAssertionMetadata(
+        repository,
+        blockchain,
+        contract,
+        tokenId,
+        assertionId,
+        keyword,
+    ) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.info(
-            `Inserting metadata for asset with ual: ${ual}, assertion id: ${assertionId}, in triple store ${repository} repository.`,
+            `Inserting metadata for the Knowledge Asset with the UAL: ${ual}, Assertion ID: ${assertionId}, ` +
+                `to the Triple Store's ${repository} repository.`,
         );
 
         const currentAssetNquads = await formatAssertion({
@@ -115,29 +125,79 @@ class TripleStoreService {
             keyword,
         });
 
-        await this.tripleStoreModuleManager.insertAssetMetadata(
+        await this.tripleStoreModuleManager.insertAssetAssertionMetadata(
             this.repositoryImplementations[repository],
             repository,
             currentAssetNquads.join('\n'),
         );
     }
 
+    async updateAssetNonAssertionMetadata(repository, blockchain, contract, tokenId, keyword) {
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+        this.logger.info(
+            `Updating Non-Assertion metadata for the Knowledge Asset with the UAL: ${ual} ` +
+                `in the Triple Store's ${repository} repository.`,
+        );
+
+        const updatedAssetNquads = await formatAssertion({
+            '@context': SCHEMA_CONTEXT,
+            '@id': ual,
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+        });
+
+        await this.tripleStoreModuleManager.updateAssetNonAssertionMetadata(
+            this.repositoryImplementations[repository],
+            repository,
+            ual,
+            updatedAssetNquads.join('\n'),
+        );
+    }
+
     async deleteAssetMetadata(repository, blockchain, contract, tokenId) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         this.logger.info(
-            `Deleting metadata for asset with ual: ${ual} from triple store ${repository} repository.`,
+            `Deleting metadata for the Knowledge Asset with the UAL: ${ual} ` +
+                `from the Triple Store's ${repository} repository.`,
         );
 
-        return this.tripleStoreModuleManager.deleteAssetMetadata(
+        const assertionLinks = await this.getAssetAssertionLinks(
+            repository,
+            blockchain,
+            contract,
+            tokenId,
+        );
+        const linkedAssertionIds = assertionLinks.map(({ assertion }) =>
+            assertion.replace('assertion:', ''),
+        );
+
+        await this.tripleStoreModuleManager.deleteAssetMetadata(
             this.repositoryImplementations[repository],
             repository,
             ual,
         );
+
+        // Delete assertions that were linked only to this Knowledge Asset
+        for (const linkedAssertionId of linkedAssertionIds) {
+            // eslint-disable-next-line no-await-in-loop
+            const [assetsWithAssertionIdCount] = await this.countAssetsWithAssertionId(
+                repository,
+                linkedAssertionId,
+            );
+
+            if (assetsWithAssertionIdCount?.count === 0) {
+                // eslint-disable-next-line no-await-in-loop
+                await this.deleteAssertion(repository, linkedAssertionId);
+            }
+        }
     }
 
     async deleteAssertion(repository, assertionId) {
         this.logger.info(
-            `Deleting assertion with id: ${assertionId} from triple store ${repository} repository.`,
+            `Deleting Assertion with the ID: ${assertionId} from the Triple Store's ${repository} repository.`,
         );
         return this.tripleStoreModuleManager.deleteAssertion(
             this.repositoryImplementations[repository],
@@ -157,7 +217,9 @@ class TripleStoreService {
     }
 
     async getAssertion(repository, assertionId) {
-        this.logger.debug(`Getting assertion: ${assertionId} from ${repository} repository`);
+        this.logger.debug(
+            `Getting Assertion with the ID: ${assertionId} from the Triple Store's ${repository} repository.`,
+        );
         let nquads = await this.tripleStoreModuleManager.getAssertion(
             this.repositoryImplementations[repository],
             repository,
@@ -167,13 +229,13 @@ class TripleStoreService {
 
         this.logger.debug(
             `Assertion: ${assertionId} ${
-                nquads.length ? '' : 'not'
-            } found in triple store ${repository} repository.`,
+                nquads.length ? '' : 'is not'
+            } found in the Triple Store's ${repository} repository.`,
         );
 
         if (nquads.length) {
             this.logger.debug(
-                `Number of n-quads retrieved from triple store ${repository} repository: ${nquads.length}`,
+                `Number of n-quads retrieved from the Triple Store's ${repository} repository: ${nquads.length}.`,
             );
         }
 
@@ -190,19 +252,12 @@ class TripleStoreService {
 
     async insertAssetAssertionLink(repository, blockchain, contract, tokenId, assertionId) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+        this.logger.info(
+            `Inserting Link to the Assertion with the ID: ${assertionId} for the Knowledge Asset with the UAL: ${ual} ` +
+                `to the Triple Store's ${repository} repository.`,
+        );
 
         return this.tripleStoreModuleManager.insertAssetAssertionLink(
-            this.repositoryImplementations[repository],
-            repository,
-            ual,
-            assertionId,
-        );
-    }
-
-    async deleteAssetAssertionLink(repository, blockchain, contract, tokenId, assertionId) {
-        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
-        return this.tripleStoreModuleManager.deleteAssetAssertionLink(
             this.repositoryImplementations[repository],
             repository,
             ual,
@@ -220,17 +275,52 @@ class TripleStoreService {
     ) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         this.logger.info(
-            `Updating Assertion for the Knowledge Asset with the UAL: ${ual} in the triple store ${repository} repository. ` +
+            `Updating Assertion for the Knowledge Asset with the UAL: ${ual} in the Triple Store's ${repository} repository. ` +
                 `Old Assertion ID: ${oldAssertionId}. New Assertion ID: ${newAssertionId}.`,
         );
 
-        return this.tripleStoreModuleManager.updateAssetAssertionLink(
+        await this.tripleStoreModuleManager.updateAssetAssertionLink(
             this.repositoryImplementations[repository],
             repository,
             ual,
             oldAssertionId,
             newAssertionId,
         );
+
+        const [assetsWithAssertionIdCount] = await this.countAssetsWithAssertionId(
+            repository,
+            oldAssertionId,
+        );
+
+        // Delete old assertion if it was only linked to this Knowledge Asset
+        if (assetsWithAssertionIdCount?.count === 0) {
+            await this.deleteAssertion(repository, oldAssertionId);
+        }
+    }
+
+    async deleteAssetAssertionLink(repository, blockchain, contract, tokenId, assertionId) {
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+        this.logger.info(
+            `Deleting Link to the Assertion with the ID: ${assertionId} for the Knowledge Asset with the UAL: ${ual} ` +
+                `from the Triple Store's ${repository} repository.`,
+        );
+
+        await this.tripleStoreModuleManager.deleteAssetAssertionLink(
+            this.repositoryImplementations[repository],
+            repository,
+            ual,
+            assertionId,
+        );
+
+        const [assetsWithAssertionIdCount] = await this.countAssetsWithAssertionId(
+            repository,
+            assertionId,
+        );
+
+        // Delete assertion if it was only linked to this Knowledge Asset
+        if (assetsWithAssertionIdCount?.count === 0) {
+            await this.deleteAssertion(repository, assertionId);
+        }
     }
 
     async getAssetAssertionLinks(repository, blockchain, contract, tokenId) {
