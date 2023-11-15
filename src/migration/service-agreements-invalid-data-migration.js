@@ -20,11 +20,13 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
         const serviceAgreementsDataInspectorInfo = await this.getMigrationInfo(
             'serviceAgreementsDataInspector',
         );
+
+        // Fixing invalid Service Agreements in the Operational DB (agreementId + keyword + assertionId + stateIndex) +
+        // Current repositories of the Triple Store ([Metadata: keyword] + [Assertion Links])
         const serviceAgreementsToUpdate =
             serviceAgreementsDataInspectorInfo.fixedServiceAgreements.sort(
                 (a, b) => a.tokenId - b.tokenId,
             );
-
         for (const serviceAgreement of serviceAgreementsToUpdate) {
             if (serviceAgreement.tokenId < migrationInfo.lastFixedTokenId) {
                 continue;
@@ -87,7 +89,7 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
                 }
             }
 
-            // Fix wrong keyword for the Asset Metadata in the PublicCurrent / PrivateCurrent repository
+            // Fix wrong keyword for the Asset Metadata in the Triple Store
             if (serviceAgreement.currentKeyword !== serviceAgreement.correctKeyword) {
                 const assetInPublicCurrentRepository = await this.tripleStoreService.assetExists(
                     TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
@@ -122,6 +124,92 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
                         serviceAgreement.correctKeyword,
                     );
                 }
+
+                const assetInPublicHistoricalRepository = await this.tripleStoreService.assetExists(
+                    TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                    serviceAgreement.blockchain,
+                    serviceAgreement.contract,
+                    serviceAgreement.tokenId,
+                );
+
+                if (assetInPublicHistoricalRepository) {
+                    await this.tripleStoreService.updateAssetNonAssertionMetadata(
+                        TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                        serviceAgreement.blockchain,
+                        serviceAgreement.contract,
+                        serviceAgreement.tokenId,
+                        serviceAgreement.correctKeyword,
+                    );
+                }
+
+                const assetInPrivateHistoricalRepository =
+                    await this.tripleStoreService.assetExists(
+                        TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+                        serviceAgreement.blockchain,
+                        serviceAgreement.contract,
+                        serviceAgreement.tokenId,
+                    );
+
+                if (assetInPrivateHistoricalRepository) {
+                    await this.tripleStoreService.updateAssetNonAssertionMetadata(
+                        TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+                        serviceAgreement.blockchain,
+                        serviceAgreement.contract,
+                        serviceAgreement.tokenId,
+                        serviceAgreement.correctKeyword,
+                    );
+                }
+            }
+        }
+
+        // Fixing invalid Historical Assertions ([Assertion Links])
+        const historicalStatesToUpdate =
+            serviceAgreementsDataInspectorInfo.fixedHistoricalAssertions.sort(
+                (a, b) => a.tokenId - b.tokenId,
+            );
+        for (const state of historicalStatesToUpdate) {
+            if (state.tokenId < migrationInfo.lastFixedTokenId) {
+                continue;
+            }
+
+            for (const assertionId of state.missingPublicHistoricalAssertions) {
+                await this.tripleStoreService.insertAssetAssertionLink(
+                    TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                    state.blockchain,
+                    state.contract,
+                    state.tokenId,
+                    assertionId,
+                );
+            }
+
+            for (const assertionId of state.missingPrivateHistoricalAssertions) {
+                await this.tripleStoreService.insertAssetAssertionLink(
+                    TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+                    state.blockchain,
+                    state.contract,
+                    state.tokenId,
+                    assertionId,
+                );
+            }
+
+            for (const assertionId of state.redundantPublicHistoricalAssertions) {
+                await this.tripleStoreService.deleteAssetAssertionLink(
+                    TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                    state.blockchain,
+                    state.contract,
+                    state.tokenId,
+                    assertionId,
+                );
+            }
+
+            for (const assertionId of state.redundantPrivateHistoricalAssertions) {
+                await this.tripleStoreService.deleteAssetAssertionLink(
+                    TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+                    state.blockchain,
+                    state.contract,
+                    state.tokenId,
+                    assertionId,
+                );
             }
         }
     }

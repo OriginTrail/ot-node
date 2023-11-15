@@ -1,7 +1,9 @@
 /* eslint-disable no-await-in-loop */
 import BaseMigration from './base-migration.js';
+import { TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
 
 const fixedServiceAgreements = [];
+const fixedHistoricalAssertions = [];
 let wrongAgreementsCount = 0;
 const MAX_BATCH_SIZE = 10000;
 const CONCURRENCY = 200;
@@ -13,14 +15,16 @@ class ServiceAgreementsDataInspector extends BaseMigration {
         config,
         blockchainModuleManager,
         repositoryModuleManager,
-        serviceAgreementService,
+        tripleStoreService,
         ualService,
+        serviceAgreementService,
     ) {
         super(migrationName, logger, config);
         this.blockchainModuleManager = blockchainModuleManager;
         this.repositoryModuleManager = repositoryModuleManager;
-        this.serviceAgreementService = serviceAgreementService;
+        this.tripleStoreService = tripleStoreService;
         this.ualService = ualService;
+        this.serviceAgreementService = serviceAgreementService;
     }
 
     async executeMigration() {
@@ -28,6 +32,7 @@ class ServiceAgreementsDataInspector extends BaseMigration {
         if (!migrationInfo?.lastProcessedTokenId) {
             migrationInfo = {
                 fixedServiceAgreements: [],
+                fixedHistoricalAssertions: [],
                 lastProcessedTokenId: 0,
             };
         }
@@ -64,11 +69,13 @@ class ServiceAgreementsDataInspector extends BaseMigration {
                     }
                     promises = [];
                     migrationInfo.fixedServiceAgreements.push(...fixedServiceAgreements);
+                    migrationInfo.fixedHistoricalAssertions.push(...fixedHistoricalAssertions);
                     migrationInfo.lastProcessedTokenId = serviceAgreement.tokenId;
                     await this.saveMigrationInfo(migrationInfo);
                     this.logger.trace(
                         `${this.migrationName} Last token id processed: ${migrationInfo.lastProcessedTokenId}. ` +
-                            `Invalid Service Agreements: ${migrationInfo.fixedServiceAgreements.length}.`,
+                            `Invalid Service Agreements: ${migrationInfo.fixedServiceAgreements.length}. ` +
+                            `Assets with Invalid Historical Assertions: ${migrationInfo.fixedHistoricalAssertions.length}.`,
                     );
                 }
             }
@@ -83,7 +90,7 @@ class ServiceAgreementsDataInspector extends BaseMigration {
 
     async processServiceAgreement(serviceAgreement) {
         const updatedServiceAgreement = {};
-        let updated = false;
+        let isInvalid = false;
 
         const assertionIds = await this.blockchainModuleManager.getAssertionIds(
             serviceAgreement.blockchain,
@@ -91,16 +98,70 @@ class ServiceAgreementsDataInspector extends BaseMigration {
             serviceAgreement.tokenId,
         );
 
+        const historicalAssertionIds = assertionIds.slice(0, -1);
+
+        const publicHistoricalAssertionLinks = await this.tripleStoreService.getAssetAssertionLinks(
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+            serviceAgreement.blockchain,
+            serviceAgreement.assetStorageContractAddress,
+            serviceAgreement.tokenId,
+        );
+        const publicHistoricalLinkedAssertionIds = publicHistoricalAssertionLinks.map(
+            ({ assertion }) => assertion.replace('assertion:', ''),
+        );
+        const missingPublicHistoricalAssertions = historicalAssertionIds.filter(
+            (element) => !publicHistoricalLinkedAssertionIds.includes(element),
+        );
+        const redundantPublicHistoricalAssertions = publicHistoricalLinkedAssertionIds.filter(
+            (element) => !historicalAssertionIds.includes(element),
+        );
+
+        const privateHistoricalAssertionLinks =
+            await this.tripleStoreService.getAssetAssertionLinks(
+                TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+                serviceAgreement.blockchain,
+                serviceAgreement.assetStorageContractAddress,
+                serviceAgreement.tokenId,
+            );
+        const privateHistoricalLinkedAssertionIds = privateHistoricalAssertionLinks.map(
+            ({ assertion }) => assertion.replace('assertion:', ''),
+        );
+        const missingPrivateHistoricalAssertions = historicalAssertionIds.filter(
+            (element) => !privateHistoricalLinkedAssertionIds.includes(element),
+        );
+        const redundantPrivateHistoricalAssertions = privateHistoricalLinkedAssertionIds.filter(
+            (element) => !historicalAssertionIds.includes(element),
+        );
+
+        const hasInvalidHistoricalAssertions = [
+            missingPublicHistoricalAssertions,
+            missingPrivateHistoricalAssertions,
+            redundantPublicHistoricalAssertions,
+            redundantPrivateHistoricalAssertions,
+        ].some((array) => array.length > 0);
+
+        if (hasInvalidHistoricalAssertions) {
+            fixedHistoricalAssertions.push({
+                blockchain: serviceAgreement.blockchain,
+                contract: serviceAgreement.assetStorageContractAddress,
+                tokenId: serviceAgreement.tokenId,
+                missingPublicHistoricalAssertions,
+                missingPrivateHistoricalAssertions,
+                redundantPublicHistoricalAssertions,
+                redundantPrivateHistoricalAssertions,
+            });
+        }
+
         const stateIndex = assertionIds.length - 1;
 
         if (serviceAgreement.assertionId !== assertionIds[stateIndex]) {
             updatedServiceAgreement.assertionId = assertionIds[stateIndex];
-            updated = true;
+            isInvalid = true;
         }
 
         if (serviceAgreement.stateIndex !== stateIndex) {
             updatedServiceAgreement.stateIndex = stateIndex;
-            updated = true;
+            isInvalid = true;
         }
 
         const keyword = await this.ualService.calculateLocationKeyword(
@@ -112,7 +173,7 @@ class ServiceAgreementsDataInspector extends BaseMigration {
 
         if (serviceAgreement.keyword !== keyword) {
             updatedServiceAgreement.keyword = keyword;
-            updated = true;
+            isInvalid = true;
         }
 
         const agreementId = await this.serviceAgreementService.generateId(
@@ -125,10 +186,10 @@ class ServiceAgreementsDataInspector extends BaseMigration {
 
         if (serviceAgreement.agreementId !== agreementId) {
             updatedServiceAgreement.agreementId = agreementId;
-            updated = true;
+            isInvalid = true;
         }
 
-        if (updated) {
+        if (isInvalid) {
             wrongAgreementsCount += 1;
             fixedServiceAgreements.push({
                 blockchain: serviceAgreement.blockchain,
