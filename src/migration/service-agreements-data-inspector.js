@@ -1,11 +1,12 @@
 /* eslint-disable no-await-in-loop */
 import BaseMigration from './base-migration.js';
 
+const fixedServiceAgreements = [];
 let wrongAgreementsCount = 0;
 const MAX_BATCH_SIZE = 10000;
 const CONCURRENCY = 200;
 
-class ServiceAgreementsOpDatabaseMigration extends BaseMigration {
+class ServiceAgreementsDataInspector extends BaseMigration {
     constructor(
         migrationName,
         logger,
@@ -26,6 +27,7 @@ class ServiceAgreementsOpDatabaseMigration extends BaseMigration {
         let migrationInfo = await this.getMigrationInfo();
         if (!migrationInfo?.lastProcessedTokenId) {
             migrationInfo = {
+                fixedServiceAgreements: [],
                 lastProcessedTokenId: 0,
             };
         }
@@ -61,15 +63,17 @@ class ServiceAgreementsOpDatabaseMigration extends BaseMigration {
                         );
                     }
                     promises = [];
+                    migrationInfo.fixedServiceAgreements.push(...fixedServiceAgreements);
                     migrationInfo.lastProcessedTokenId = serviceAgreement.tokenId;
                     await this.saveMigrationInfo(migrationInfo);
                     this.logger.trace(
-                        `${this.migrationName} Last token id processed ${migrationInfo.lastProcessedTokenId}.`,
+                        `${this.migrationName} Last token id processed: ${migrationInfo.lastProcessedTokenId}. ` +
+                            `Invalid Service Agreements: ${migrationInfo.fixedServiceAgreements.length}.`,
                     );
                 }
             }
 
-            processed += batchSize;
+            processed += serviceAgreementsToProcess.length;
         }
 
         this.logger.trace(
@@ -125,16 +129,19 @@ class ServiceAgreementsOpDatabaseMigration extends BaseMigration {
         }
 
         if (updated) {
-            await this.repositoryModuleManager.updateServiceAgreementForTokenId(
-                serviceAgreement.tokenId,
-                updatedServiceAgreement.agreementId ?? serviceAgreement.agreementId,
-                updatedServiceAgreement.keyword ?? serviceAgreement.keyword,
-                updatedServiceAgreement.assertionId ?? serviceAgreement.assertionId,
-                updatedServiceAgreement.stateIndex ?? serviceAgreement.stateIndex,
-            );
             wrongAgreementsCount += 1;
+            fixedServiceAgreements.push({
+                blockchain: serviceAgreement.blockchain,
+                contract: serviceAgreement.assetStorageContractAddress,
+                tokenId: serviceAgreement.tokenId,
+                agreementId: updatedServiceAgreement.agreementId ?? serviceAgreement.agreementId,
+                keyword: updatedServiceAgreement.keyword ?? serviceAgreement.keyword,
+                invalidAssertionId: serviceAgreement.assertionId,
+                assertionId: updatedServiceAgreement.assertionId ?? serviceAgreement.assertionId,
+                stateIndex: updatedServiceAgreement.stateIndex ?? serviceAgreement.stateIndex,
+            });
         }
     }
 }
 
-export default ServiceAgreementsOpDatabaseMigration;
+export default ServiceAgreementsDataInspector;

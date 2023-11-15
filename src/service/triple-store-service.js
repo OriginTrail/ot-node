@@ -188,6 +188,51 @@ class TripleStoreService {
         );
     }
 
+    async insertAssetAssertionLink(repository, blockchain, contract, tokenId, assertionId) {
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+        return this.tripleStoreModuleManager.insertAssetAssertionLink(
+            this.repositoryImplementations[repository],
+            repository,
+            ual,
+            assertionId,
+        );
+    }
+
+    async deleteAssetAssertionLink(repository, blockchain, contract, tokenId, assertionId) {
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+        return this.tripleStoreModuleManager.deleteAssetAssertionLink(
+            this.repositoryImplementations[repository],
+            repository,
+            ual,
+            assertionId,
+        );
+    }
+
+    async updateAssetAssertionLink(
+        repository,
+        blockchain,
+        contract,
+        tokenId,
+        oldAssertionId,
+        newAssertionId,
+    ) {
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+        this.logger.info(
+            `Updating Assertion for the Knowledge Asset with the UAL: ${ual} in the triple store ${repository} repository. ` +
+                `Old Assertion ID: ${oldAssertionId}. New Assertion ID: ${newAssertionId}.`,
+        );
+
+        return this.tripleStoreModuleManager.updateAssetAssertionLink(
+            this.repositoryImplementations[repository],
+            repository,
+            ual,
+            oldAssertionId,
+            newAssertionId,
+        );
+    }
+
     async getAssetAssertionLinks(repository, blockchain, contract, tokenId) {
         const bindings = await this.tripleStoreModuleManager.getAssetAssertionLinks(
             this.repositoryImplementations[repository],
@@ -195,6 +240,17 @@ class TripleStoreService {
             this.ualService.deriveUAL(blockchain, contract, tokenId),
         );
         return this.dataService.parseBindings(bindings);
+    }
+
+    async assetAssertionLinkExists(repository, blockchain, contract, tokenId, assertionId) {
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+        return this.tripleStoreModuleManager.assetAssertionLinkExists(
+            this.repositoryImplementations[repository],
+            repository,
+            ual,
+            assertionId,
+        );
     }
 
     async assertionExists(repository, assertionId) {

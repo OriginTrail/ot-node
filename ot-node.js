@@ -87,7 +87,12 @@ class OTNode {
             this.config,
         );
         await MigrationExecutor.executePendingStorageMigration(this.logger, this.config);
-        await MigrationExecutor.executeServiceAgreementsOpDatabaseMigration(
+        MigrationExecutor.executeServiceAgreementsDataInspector(
+            this.container,
+            this.logger,
+            this.config,
+        );
+        await MigrationExecutor.executeServiceAgreementsInvalidDataMigration(
             this.container,
             this.logger,
             this.config,
