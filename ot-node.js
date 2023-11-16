@@ -19,6 +19,7 @@ import MarkOldBlockchainEventsAsProcessedMigration from './src/migration/mark-ol
 import TripleStoreMetadataMigration from './src/migration/triple-store-metadata-migration.js';
 import RemoveOldEpochCommandsMigration from './src/migration/remove-old-epoch-commands-migration.js';
 import PendingStorageMigration from './src/migration/pending-storage-migration.js';
+import ServiceAgreementsDataInspector from './src/migration/service-agreements-data-inspector.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -62,7 +63,7 @@ class OTNode {
         await this.executeServiceAgreementsMetadataMigration();
         await this.executeRemoveOldEpochCommandsMigration();
         await this.executePendingStorageMigration();
-
+        await this.executeServiceAgreementsDataInspector();
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
@@ -86,6 +87,36 @@ class OTNode {
             );
         }
         this.logger.warn('======================================================');
+    }
+
+    async executeServiceAgreementsDataInspector(container, logger, config) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const blockchainModuleManager = container.resolve('blockchainModuleManager');
+        const repositoryModuleManager = container.resolve('repositoryModuleManager');
+        const tripleStoreService = container.resolve('tripleStoreService');
+        const ualService = container.resolve('ualService');
+        const serviceAgreementService = container.resolve('serviceAgreementService');
+
+        const migration = new ServiceAgreementsDataInspector(
+            'serviceAgreementsDataInspector',
+            logger,
+            config,
+            blockchainModuleManager,
+            repositoryModuleManager,
+            tripleStoreService,
+            ualService,
+            serviceAgreementService,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            migration.migrate();
+            logger.info('Node will now restart!');
+            this.stop(1);
+        }
     }
 
     initializeLogger() {
