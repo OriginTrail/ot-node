@@ -2,9 +2,8 @@
 import BaseMigration from './base-migration.js';
 import { TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
 
-const fixedServiceAgreements = [];
-const fixedHistoricalAssertions = [];
-let wrongAgreementsCount = 0;
+let fixedServiceAgreements = [];
+let fixedHistoricalAssertions = [];
 const MAX_BATCH_SIZE = 10000;
 const CONCURRENCY = 200;
 
@@ -31,9 +30,10 @@ class ServiceAgreementsDataInspector extends BaseMigration {
         let migrationInfo = await this.getMigrationInfo();
         if (!migrationInfo?.lastProcessedTokenId) {
             migrationInfo = {
+                processedServiceAgreements: 0,
+                lastProcessedTokenId: 0,
                 fixedServiceAgreements: [],
                 fixedHistoricalAssertions: [],
-                lastProcessedTokenId: 0,
             };
         }
 
@@ -53,7 +53,9 @@ class ServiceAgreementsDataInspector extends BaseMigration {
                 );
             let promises = [];
 
-            for (const serviceAgreement of serviceAgreementsToProcess) {
+            for (let i = 0; i < serviceAgreementsToProcess.length; i += 1) {
+                const serviceAgreement = serviceAgreementsToProcess[i];
+
                 promises.push(this.processServiceAgreement(serviceAgreement));
 
                 if (
@@ -67,13 +69,17 @@ class ServiceAgreementsDataInspector extends BaseMigration {
                             `Unable to process invalid service agreements. Error: ${error}`,
                         );
                     }
-                    promises = [];
+                    migrationInfo.processedServiceAgreements += promises.length;
+                    migrationInfo.lastProcessedTokenId = serviceAgreement.tokenId;
                     migrationInfo.fixedServiceAgreements.push(...fixedServiceAgreements);
                     migrationInfo.fixedHistoricalAssertions.push(...fixedHistoricalAssertions);
-                    migrationInfo.lastProcessedTokenId = serviceAgreement.tokenId;
+                    promises = [];
+                    fixedServiceAgreements = [];
+                    fixedHistoricalAssertions = [];
                     await this.saveMigrationInfo(migrationInfo);
                     this.logger.trace(
-                        `${this.migrationName} Last token id processed: ${migrationInfo.lastProcessedTokenId}. ` +
+                        `${this.migrationName} Processed Service Agreements: ${migrationInfo.processedServiceAgreements}, ` +
+                            `Last token id processed: ${migrationInfo.lastProcessedTokenId}. ` +
                             `Invalid Service Agreements: ${migrationInfo.fixedServiceAgreements.length}. ` +
                             `Assets with Invalid Historical Assertions: ${migrationInfo.fixedHistoricalAssertions.length}.`,
                     );
@@ -83,8 +89,19 @@ class ServiceAgreementsDataInspector extends BaseMigration {
             processed += serviceAgreementsToProcess.length;
         }
 
+        const invalidServiceAgreementPercentage =
+            (migrationInfo.fixedServiceAgreements.length / processed) * 100;
+        const invalidHistoricalAssertionsPercentage =
+            (migrationInfo.fixedHistoricalAssertions.length / processed) * 100;
+
         this.logger.trace(
-            `${this.migrationName} Total number of processed agreements ${processed}. Found invalid agreements: ${wrongAgreementsCount}`,
+            `${this.migrationName} Total number of processed Service Agreements: ${migrationInfo.processedServiceAgreements}. ` +
+                `Found invalid Service Agreements: ${
+                    migrationInfo.fixedServiceAgreements.length
+                } (${invalidServiceAgreementPercentage.toFixed(2)}%)` +
+                `Found Assets with Invalid Historical Assertions: ${
+                    migrationInfo.fixedHistoricalAssertions.length
+                } (${invalidHistoricalAssertionsPercentage.toFixed(2)}%)`,
         );
     }
 
@@ -93,7 +110,7 @@ class ServiceAgreementsDataInspector extends BaseMigration {
         let isInvalid = false;
 
         const assertionIds = await this.blockchainModuleManager.getAssertionIds(
-            serviceAgreement.blockchain,
+            serviceAgreement.blockchainId,
             serviceAgreement.assetStorageContractAddress,
             serviceAgreement.tokenId,
         );
@@ -102,7 +119,7 @@ class ServiceAgreementsDataInspector extends BaseMigration {
 
         const publicHistoricalAssertionLinks = await this.tripleStoreService.getAssetAssertionLinks(
             TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
-            serviceAgreement.blockchain,
+            serviceAgreement.blockchainId,
             serviceAgreement.assetStorageContractAddress,
             serviceAgreement.tokenId,
         );
@@ -119,7 +136,7 @@ class ServiceAgreementsDataInspector extends BaseMigration {
         const privateHistoricalAssertionLinks =
             await this.tripleStoreService.getAssetAssertionLinks(
                 TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
-                serviceAgreement.blockchain,
+                serviceAgreement.blockchainId,
                 serviceAgreement.assetStorageContractAddress,
                 serviceAgreement.tokenId,
             );
@@ -142,7 +159,7 @@ class ServiceAgreementsDataInspector extends BaseMigration {
 
         if (hasInvalidHistoricalAssertions) {
             fixedHistoricalAssertions.push({
-                blockchain: serviceAgreement.blockchain,
+                blockchain: serviceAgreement.blockchainId,
                 contract: serviceAgreement.assetStorageContractAddress,
                 tokenId: serviceAgreement.tokenId,
                 missingPublicHistoricalAssertions,
@@ -190,9 +207,8 @@ class ServiceAgreementsDataInspector extends BaseMigration {
         }
 
         if (isInvalid) {
-            wrongAgreementsCount += 1;
             fixedServiceAgreements.push({
-                blockchain: serviceAgreement.blockchain,
+                blockchain: serviceAgreement.blockchainId,
                 contract: serviceAgreement.assetStorageContractAddress,
                 tokenId: serviceAgreement.tokenId,
                 agreementId: updatedServiceAgreement.agreementId ?? serviceAgreement.agreementId,
