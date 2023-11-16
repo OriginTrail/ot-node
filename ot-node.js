@@ -63,11 +63,7 @@ class OTNode {
         await this.executeServiceAgreementsMetadataMigration();
         await this.executeRemoveOldEpochCommandsMigration();
         await this.executePendingStorageMigration();
-        await this.executeServiceAgreementsMetadataMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
+        await this.executeServiceAgreementsDataInspector(this.container, this.logger, this.config);
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
