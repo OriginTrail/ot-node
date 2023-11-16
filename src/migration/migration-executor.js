@@ -243,8 +243,9 @@ class MigrationExecutor {
 
         const blockchainModuleManager = container.resolve('blockchainModuleManager');
         const repositoryModuleManager = container.resolve('repositoryModuleManager');
-        const serviceAgreementService = container.resolve('serviceAgreementService');
+        const tripleStoreService = container.resolve('tripleStoreService');
         const ualService = container.resolve('ualService');
+        const serviceAgreementService = container.resolve('serviceAgreementService');
 
         const migration = new ServiceAgreementsDataInspector(
             'serviceAgreementsDataInspector',
@@ -252,8 +253,9 @@ class MigrationExecutor {
             config,
             blockchainModuleManager,
             repositoryModuleManager,
-            serviceAgreementService,
+            tripleStoreService,
             ualService,
+            serviceAgreementService,
         );
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();
