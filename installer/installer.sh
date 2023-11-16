@@ -9,12 +9,15 @@ text_color() {
     BRED='\033[1;31m'
     YELLOW='\033[0;33m'
     BYELLOW='\033[1;33m'
+    BOLD='\033[1m'
     NC='\033[0m' # No Color
     echo -e "$@$NC"
 }
 
 header_color() {
-    echo && text_color $@ && echo
+    LIGHTCYAN='\033[1;36m'
+    NC='\033[0m' # No Color
+    echo -e "${LIGHTCYAN}$@$NC"
 }
 
 perform_step() {
@@ -24,11 +27,41 @@ perform_step() {
     OUTPUT=$(${@:1:$#-1} 2>&1)
 
     if [[ $? -ne 0 ]]; then
-        text_color $RED FAILED
+        text_color $BOLD$RED FAILED
         echo -e "${N1}Step failed. Output of error is:${N1}${N1}$OUTPUT"
+        echo -e "${BRED}Press Enter to exit the installer.${NC}"
+        read
         exit 1
     else
-        text_color $GREEN OK
+        text_color $BOLD$GREEN OK
+    fi
+}
+
+# Function to display a notification box
+notification_box() {
+    local message="$1"
+    text_color "$BOLD$message"
+    echo -e "${BRED}Press Enter to exit the installer.${NC}"
+    read
+}
+
+# Check Ubuntu version
+check_ubuntu_version() {
+    UBUNTU_VERSION=$(lsb_release -r -s)
+
+    if [[ "$UBUNTU_VERSION" != "20.04" && "$UBUNTU_VERSION" != "22.04" ]]; then
+        notification_box "Error: OriginTrail node installer currently requires Ubuntu 20.04 LTS or 22.04 LTS versions in order to execute successfully. You are installing on Ubuntu $UBUNTU_VERSION."
+        echo -e "${BRED}Please make sure that you get familiar with the requirements before setting up your OriginTrail node! Documentation: docs.origintrail.io${NC}"
+        exit 1
+    fi
+}
+
+# Check if script is running as root
+check_root() {
+    if [[ $EUID -ne 0 ]]; then
+        notification_box "Error: This script must be run as root."
+        echo -e "${BRED}Please re-run the script as root using 'sudo'.${NC}"
+        exit 1
     fi
 }
 
@@ -74,23 +107,35 @@ install_prereqs() {
     export DEBIAN_FRONTEND=noninteractive
     NODEJS_VER="16"
 
-    perform_step install_aliases "Updating .bashrc file with OriginTrail node aliases"
-    perform_step rm -rf /var/lib/dpkg/lock-frontend "Removing any frontend locks"
-    perform_step apt update "Updating Ubuntu package repository"
-    perform_step apt upgrade -y "Updating Ubuntu to latest version"
-    perform_step apt install unzip jq -y "Installing unzip, jq"
-    perform_step apt install default-jre -y "Installing default-jre"
-    perform_step apt install build-essential -y "Installing build-essential"
-    perform_step wget https://deb.nodesource.com/setup_$NODEJS_VER.x "Downloading Node.js v$NODEJS_VER"
-    chmod +x setup_$NODEJS_VER.x
-    perform_step ./setup_$NODEJS_VER.x "Installing Node.js v$NODEJS_VER"
-    rm -rf setup_$NODEJS_VER.x
-    perform_step apt update "Updating Ubuntu package repository"
-    perform_step apt-get install nodejs -y "Installing node.js"
-    perform_step npm install -g npm@^8 "Installing npm"
-    perform_step install_firewall "Configuring firewall"
-    perform_step apt remove unattended-upgrades -y "Remove unattended upgrades"
+    perform_step install_aliases "Updating .bashrc file with OriginTrail node aliases" > /dev/null 2>&1
+    perform_step rm -rf /var/lib/dpkg/lock-frontend "Removing any frontend locks" > /dev/null 2>&1
+    perform_step apt update "Updating Ubuntu package repository" > /dev/null 2>&1
+    perform_step apt upgrade -y "Updating Ubuntu to the latest version" > /dev/null 2>&1
+    perform_step apt install unzip jq -y "Installing unzip, jq" > /dev/null 2>&1
+    perform_step apt install default-jre -y "Installing default-jre" > /dev/null 2>&1
+    perform_step apt install build-essential -y "Installing build-essential" > /dev/null 2>&1
+
+    # Install nodejs 16 (via NVM).
+    wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash > /dev/null 2>&1
+    export NVM_DIR="$HOME/.nvm"
+    # This loads nvm
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    # This loads nvm bash_completion
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+    nvm install v16.20.1 > /dev/null 2>&1
+    nvm use v16.20.1 > /dev/null 2>&1
+
+    # Set nodejs 16.20.1 as default and link node to /usr/bin/
+    nvm alias default 16.20.1 > /dev/null 2>&1
+    sudo ln -s $(which node) /usr/bin/ > /dev/null 2>&1
+    sudo ln -s $(which npm) /usr/bin/ > /dev/null 2>&1
+
+    apt remove unattended-upgrades -y > /dev/null 2>&1
+
+    perform_step install_firewall "Configuring firewall" > /dev/null 2>&1
+    perform_step apt remove unattended-upgrades -y "Remove unattended upgrades" > /dev/null 2>&1
 }
+
 
 install_fuseki() {
     FUSEKI_VER="apache-jena-fuseki-$(git ls-remote --tags https://github.com/apache/jena | grep -o 'refs/tags/jena-[0-9]*\.[0-9]*\.[0-9]*' | sort -r | head -n 1 | grep -o '[^\/-]*$')"
@@ -221,7 +266,7 @@ install_node() {
     #for ((i = 0; i < ${#blockchains[@]}; ++i));
     #do
     #   read -p "Do you want to connect your node to blockchain: ${blockchains[$i]} ? [Y]Yes [N]No [E]Exit: " choice
-    #	case "$choice" in
+    #   case "$choice" in
     #       [Yy]* )
 
     #            read -p "Enter your substrate operational wallet address: " SUBSTRATE_OPERATIONAL_WALLET
@@ -321,6 +366,17 @@ install_node() {
 if [[ ! -z $(grep "arch" "/etc/os-release") ]]; then
     source <(curl -s https://raw.githubusercontent.com/OriginTrail/ot-node/v6/develop/installer/data/archlinux)
 fi
+
+
+
+# Perform checks
+header_color "Checking Ubuntu version"
+check_ubuntu_version
+
+header_color "Checking root privilege"
+check_root
+
+
 
 #### INSTALLATION START ####
 clear

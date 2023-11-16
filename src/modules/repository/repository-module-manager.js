@@ -325,6 +325,18 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async updateServiceAgreementForTokenId(tokenId, agreementId, keyword, assertionId, stateIndex) {
+        if (this.initialized) {
+            return this.getRepository('service_agreement').updateServiceAgreementForTokenId(
+                tokenId,
+                agreementId,
+                keyword,
+                assertionId,
+                stateIndex,
+            );
+        }
+    }
+
     async bulkCreateServiceAgreementRecords(records) {
         if (this.initialized) {
             return this.getRepository('service_agreement').bulkCreateServiceAgreementRecords(
@@ -404,6 +416,14 @@ class RepositoryModuleManager extends BaseModuleManager {
             agreementId,
             epochsNumber,
         );
+    }
+
+    async getNumberOfActiveServiceAgreements() {
+        return this.getRepository('service_agreement').getNumberOfActiveServiceAgreements();
+    }
+
+    async getServiceAgreements(fromTokenId, batchSize) {
+        return this.getRepository('service_agreement').getServiceAgreements(fromTokenId, batchSize);
     }
 }
 

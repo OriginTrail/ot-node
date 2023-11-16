@@ -22,10 +22,10 @@ class BaseMigration {
         this.fileService = new FileService({ config: this.config, logger: this.logger });
     }
 
-    async migrationAlreadyExecuted() {
+    async migrationAlreadyExecuted(migrationName = null) {
         const migrationFilePath = path.join(
             this.fileService.getMigrationFolderPath(),
-            this.migrationName,
+            migrationName ?? this.migrationName,
         );
         if (await this.fileService.pathExists(migrationFilePath)) {
             return true;
@@ -49,6 +49,30 @@ class BaseMigration {
             `${this.migrationName} migration completed. Lasted: ${
                 Date.now() - this.startedTimestamp
             } millisecond(s).`,
+        );
+    }
+
+    async getMigrationInfo(migrationName = null) {
+        const migrationFolderPath = this.fileService.getMigrationFolderPath();
+        const migrationInfoFileName = `${migrationName ?? this.migrationName}_info`;
+        const migrationInfoPath = path.join(migrationFolderPath, migrationInfoFileName);
+        let migrationInfo = null;
+        if (await this.fileService.pathExists(migrationInfoPath)) {
+            migrationInfo = await this.fileService
+                .readFile(migrationInfoPath, true)
+                .catch(() => {});
+        }
+        return migrationInfo;
+    }
+
+    async saveMigrationInfo(migrationInfo) {
+        const migrationFolderPath = this.fileService.getMigrationFolderPath();
+        const migrationInfoFileName = `${this.migrationName}_info`;
+        await this.fileService.writeContentsToFile(
+            migrationFolderPath,
+            migrationInfoFileName,
+            JSON.stringify(migrationInfo),
+            false,
         );
     }
 
