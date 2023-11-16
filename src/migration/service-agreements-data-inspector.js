@@ -53,9 +53,7 @@ class ServiceAgreementsDataInspector extends BaseMigration {
                 );
             let promises = [];
 
-            for (let i = 0; i < serviceAgreementsToProcess.length; i += 1) {
-                const serviceAgreement = serviceAgreementsToProcess[i];
-
+            for (const serviceAgreement of serviceAgreementsToProcess) {
                 promises.push(this.processServiceAgreement(serviceAgreement));
 
                 if (
