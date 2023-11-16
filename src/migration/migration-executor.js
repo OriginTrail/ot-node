@@ -9,7 +9,8 @@ import TripleStoreMetadataMigration from './triple-store-metadata-migration.js';
 import RemoveOldEpochCommandsMigration from './remove-old-epoch-commands-migration.js';
 import PendingStorageMigration from './pending-storage-migration.js';
 import MarkOldBlockchainEventsAsProcessedMigration from './mark-old-blockchain-events-as-processed-migration.js';
-import ServiceAgreementsOpDatabaseMigration from './service-agreements-op-database-migration.js';
+import ServiceAgreementsDataInspector from './service-agreements-data-inspector.js';
+import ServiceAgreementsInvalidDataMigration from './service-agreements-invalid-data-migration.js';
 
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
@@ -233,8 +234,7 @@ class MigrationExecutor {
         }
     }
 
-    static async executeServiceAgreementsOpDatabaseMigration(container, logger, config) {
-        // todo should we also exclude testnet?
+    static async executeServiceAgreementsDataInspector(container, logger, config) {
         if (
             process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
             process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
@@ -243,19 +243,48 @@ class MigrationExecutor {
 
         const blockchainModuleManager = container.resolve('blockchainModuleManager');
         const repositoryModuleManager = container.resolve('repositoryModuleManager');
-        const serviceAgreementService = container.resolve('serviceAgreementService');
+        const tripleStoreService = container.resolve('tripleStoreService');
         const ualService = container.resolve('ualService');
+        const serviceAgreementService = container.resolve('serviceAgreementService');
 
-        const migration = new ServiceAgreementsOpDatabaseMigration(
-            'serviceAgreementsOpDatabaseMigration',
+        const migration = new ServiceAgreementsDataInspector(
+            'serviceAgreementsDataInspector',
             logger,
             config,
             blockchainModuleManager,
             repositoryModuleManager,
-            serviceAgreementService,
+            tripleStoreService,
             ualService,
+            serviceAgreementService,
         );
         if (!(await migration.migrationAlreadyExecuted())) {
+            await migration.migrate();
+            logger.info('Node will now restart!');
+            MigrationExecutor.exitNode(1);
+        }
+    }
+
+    static async executeServiceAgreementsInvalidDataMigration(container, logger, config) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const repositoryModuleManager = container.resolve('repositoryModuleManager');
+        const tripleStoreService = container.resolve('tripleStoreService');
+
+        const migration = new ServiceAgreementsInvalidDataMigration(
+            'serviceAgreementsInvalidDataMigration',
+            logger,
+            config,
+            repositoryModuleManager,
+            tripleStoreService,
+        );
+        if (
+            (await migration.migrationAlreadyExecuted('serviceAgreementsDataInspector')) &&
+            !(await migration.migrationAlreadyExecuted())
+        ) {
             await migration.migrate();
         }
     }
