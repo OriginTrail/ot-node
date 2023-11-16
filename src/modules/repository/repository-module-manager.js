@@ -24,6 +24,14 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async getNumberOfActiveServiceAgreements() {
+        return this.getRepository('service_agreement').getNumberOfActiveServiceAgreements();
+    }
+
+    async getServiceAgreements(fromTokenId, batchSize) {
+        return this.getRepository('service_agreement').getServiceAgreements(fromTokenId, batchSize);
+    }
+
     async query(query) {
         if (this.initialized) {
             return this.getImplementation().module.query(query);

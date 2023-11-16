@@ -1,4 +1,5 @@
 /* eslint-disable no-await-in-loop */
+import path from 'path';
 import BaseMigration from './base-migration.js';
 import { TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
 
@@ -204,6 +205,30 @@ class ServiceAgreementsDataInspector extends BaseMigration {
                 stateIndex: updatedServiceAgreement.stateIndex ?? serviceAgreement.stateIndex,
             });
         }
+    }
+
+    async getMigrationInfo() {
+        const migrationFolderPath = this.fileService.getMigrationFolderPath();
+        const migrationInfoFileName = `${this.migrationName}_info`;
+        const migrationInfoPath = path.join(migrationFolderPath, migrationInfoFileName);
+        let migrationInfo = null;
+        if (await this.fileService.pathExists(migrationInfoPath)) {
+            migrationInfo = await this.fileService
+                .readFile(migrationInfoPath, true)
+                .catch(() => {});
+        }
+        return migrationInfo;
+    }
+
+    async saveMigrationInfo(migrationInfo) {
+        const migrationFolderPath = this.fileService.getMigrationFolderPath();
+        const migrationInfoFileName = `${this.migrationName}_info`;
+        await this.fileService.writeContentsToFile(
+            migrationFolderPath,
+            migrationInfoFileName,
+            JSON.stringify(migrationInfo),
+            false,
+        );
     }
 }
 

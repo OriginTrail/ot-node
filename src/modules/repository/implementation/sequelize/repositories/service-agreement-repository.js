@@ -202,6 +202,20 @@ class ServiceAgreementRepository {
             raw: true,
         });
     }
+
+    async getNumberOfActiveServiceAgreements() {
+        return this.model.count();
+    }
+
+    async getServiceAgreements(fromTokenId, batchSize) {
+        return this.model.findAll({
+            where: {
+                tokenId: { [Sequelize.Op.gte]: fromTokenId },
+            },
+            limit: batchSize,
+            order: [['token_id', 'asc']],
+        });
+    }
 }
 
 export default ServiceAgreementRepository;
