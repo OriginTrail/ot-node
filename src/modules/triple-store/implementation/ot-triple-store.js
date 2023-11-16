@@ -90,6 +90,59 @@ class OtTripleStore {
         return this.ask(repository, query);
     }
 
+    async insertAssetAssertionLink(repository, ual, assertionId) {
+        const assetExists = await this.assetExists(repository, ual);
+
+        if (assetExists) {
+            const insertQuery = `
+                PREFIX schema: <${SCHEMA_CONTEXT}>
+                INSERT DATA {
+                    GRAPH <assets:graph> {
+                        <${ual}> schema:assertion <assertion:${assertionId}> .
+                    }
+                }`;
+            await this.queryVoid(repository, insertQuery);
+        }
+    }
+
+    async deleteAssetAssertionLink(repository, ual, assertionId) {
+        const linkExists = await this.assetAssertionLinkExists(repository, ual, assertionId);
+
+        if (linkExists) {
+            const deleteQuery = `
+                PREFIX schema: <${SCHEMA_CONTEXT}>
+                DELETE DATA {
+                    GRAPH <assets:graph> {
+                        <${ual}> schema:assertion <assertion:${assertionId}> .
+                    }
+                }`;
+            await this.queryVoid(repository, deleteQuery);
+        }
+    }
+
+    async updateAssetAssertionLink(repository, ual, oldAssertionId, newAssertionId) {
+        const linkExists = await this.assetAssertionLinkExists(repository, ual, oldAssertionId);
+
+        if (linkExists) {
+            const updateQuery = `
+                PREFIX schema: <${SCHEMA_CONTEXT}>
+                DELETE {
+                    GRAPH <assets:graph> {
+                        <${ual}> schema:assertion <assertion:${oldAssertionId}> .
+                    }
+                } INSERT {
+                    GRAPH <assets:graph> {
+                        <${ual}> schema:assertion <assertion:${newAssertionId}> .
+                    }
+                } WHERE {
+                    GRAPH <assets:graph> {
+                        <${ual}> schema:assertion <assertion:${oldAssertionId}> .
+                    }
+                }`;
+            await this.queryVoid(repository, updateQuery);
+        }
+    }
+
     async getAssetAssertionLinks(repository, ual) {
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
                         SELECT ?assertion  WHERE {
@@ -99,6 +152,41 @@ class OtTripleStore {
                         }`;
 
         return this.select(repository, query);
+    }
+
+    async assetAssertionLinkExists(repository, ual, assertionId) {
+        const query = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            ASK {
+                GRAPH <assets:graph> {
+                    <${ual}> schema:assertion <assertion:${assertionId}> .
+                }
+            }`;
+
+        return this.ask(repository, query);
+    }
+
+    async updateAssetNonAssertionMetadata(repository, ual, assetNquads) {
+        const updateQuery = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            DELETE {
+                GRAPH <assets:graph> {
+                    <${ual}> ?p ?o .
+                    FILTER(?p != schema:assertion)
+                }
+            }
+            INSERT {
+                GRAPH <assets:graph> { 
+                    ${assetNquads} 
+                }
+            }
+            WHERE {
+                GRAPH <assets:graph> {
+                    <${ual}> ?p ?o .
+                    FILTER(?p != schema:assertion)
+                }
+            }`;
+        await this.queryVoid(repository, updateQuery);
     }
 
     async deleteAssetMetadata(repository, ual) {
@@ -133,7 +221,7 @@ class OtTripleStore {
         return this.select(repository, query);
     }
 
-    async insertAssetMetadata(repository, assetNquads) {
+    async insertAssetAssertionMetadata(repository, assetNquads) {
         const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             INSERT DATA {
