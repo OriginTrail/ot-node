@@ -22,10 +22,10 @@ class BaseMigration {
         this.fileService = new FileService({ config: this.config, logger: this.logger });
     }
 
-    async migrationAlreadyExecuted() {
+    async migrationAlreadyExecuted(migrationName = null) {
         const migrationFilePath = path.join(
             this.fileService.getMigrationFolderPath(),
-            this.migrationName,
+            migrationName ?? this.migrationName,
         );
         if (await this.fileService.pathExists(migrationFilePath)) {
             return true;
@@ -52,9 +52,9 @@ class BaseMigration {
         );
     }
 
-    async getMigrationInfo() {
+    async getMigrationInfo(migrationName = null) {
         const migrationFolderPath = this.fileService.getMigrationFolderPath();
-        const migrationInfoFileName = `${this.migrationName}_info`;
+        const migrationInfoFileName = `${migrationName ?? this.migrationName}_info`;
         const migrationInfoPath = path.join(migrationFolderPath, migrationInfoFileName);
         let migrationInfo = null;
         if (await this.fileService.pathExists(migrationInfoPath)) {
