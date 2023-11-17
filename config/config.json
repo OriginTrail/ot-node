@@ -296,16 +296,6 @@
                             "rpcEndpoints": ["http://localhost:8545"],
                             "initialStakeAmount": 50000,
                             "initialAskAmount": 0.2
-                        },
-                        "gnosis": {
-                            "enabled": false,
-                            "package": "./blockchain/implementation/gnosis/gnosis-service.js",
-                            "config": {
-                                "networkId": "chiado",
-                                "hubContractAddress": "",
-                                "gasPriceOracleLink": "",
-                                "rpcEndpoints": ["https://rpc.chiadochain.net"]
-                            }
                         }
                     }
                 }
