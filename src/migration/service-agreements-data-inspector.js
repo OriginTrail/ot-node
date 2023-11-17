@@ -28,7 +28,7 @@ class ServiceAgreementsDataInspector extends BaseMigration {
 
     async executeMigration() {
         let migrationInfo = await this.getMigrationInfo();
-        if (!migrationInfo?.lastProcessedTokenId) {
+        if (!migrationInfo?.lastProcessedTokenId || !migrationInfo?.processedServiceAgreements) {
             migrationInfo = {
                 processedServiceAgreements: 0,
                 lastProcessedTokenId: 0,
@@ -56,9 +56,11 @@ class ServiceAgreementsDataInspector extends BaseMigration {
             for (const serviceAgreement of serviceAgreementsToProcess) {
                 promises.push(this.processServiceAgreement(serviceAgreement));
 
+                const promisesBatchLength = promises.length;
+
                 if (
-                    promises.length >= CONCURRENCY ||
-                    promises.length === serviceAgreementsToProcess.length
+                    promisesBatchLength >= CONCURRENCY ||
+                    promisesBatchLength === serviceAgreementsToProcess.length
                 ) {
                     try {
                         await Promise.all(promises);
@@ -67,11 +69,11 @@ class ServiceAgreementsDataInspector extends BaseMigration {
                             `Unable to process invalid service agreements. Error: ${error}`,
                         );
                     }
-                    migrationInfo.processedServiceAgreements += promises.length;
+                    promises = [];
+                    migrationInfo.processedServiceAgreements += promisesBatchLength;
                     migrationInfo.lastProcessedTokenId = serviceAgreement.tokenId;
                     migrationInfo.fixedServiceAgreements.push(...fixedServiceAgreements);
                     migrationInfo.fixedHistoricalAssertions.push(...fixedHistoricalAssertions);
-                    promises = [];
                     fixedServiceAgreements = [];
                     fixedHistoricalAssertions = [];
                     await this.saveMigrationInfo(migrationInfo);
@@ -96,10 +98,10 @@ class ServiceAgreementsDataInspector extends BaseMigration {
             `${this.migrationName} Total number of processed Service Agreements: ${migrationInfo.processedServiceAgreements}. ` +
                 `Found invalid Service Agreements: ${
                     migrationInfo.fixedServiceAgreements.length
-                } (${invalidServiceAgreementPercentage.toFixed(2)}%)` +
+                } (${invalidServiceAgreementPercentage.toFixed(2)}%), ` +
                 `Found Assets with Invalid Historical Assertions: ${
                     migrationInfo.fixedHistoricalAssertions.length
-                } (${invalidHistoricalAssertionsPercentage.toFixed(2)}%)`,
+                } (${invalidHistoricalAssertionsPercentage.toFixed(2)}%).`,
         );
     }
 
