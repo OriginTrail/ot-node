@@ -1,10 +1,20 @@
 import BaseModuleManager from '../base-module-manager.js';
 
 class TripleStoreModuleManager extends BaseModuleManager {
-    async insertAssetMetadata(implementationName, repository, assetNquads) {
+    async insertAssetAssertionMetadata(implementationName, repository, assetNquads) {
         if (this.getImplementation(implementationName)) {
-            return this.getImplementation(implementationName).module.insertAssetMetadata(
+            return this.getImplementation(implementationName).module.insertAssetAssertionMetadata(
                 repository,
+                assetNquads,
+            );
+        }
+    }
+
+    async updateAssetNonAssertionMetadata(implementationName, repository, ual, assetNquads) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.updateAssetMetadata(
+                repository,
+                ual,
                 assetNquads,
             );
         }
@@ -25,11 +35,58 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
+    async insertAssetAssertionLink(implementationName, repository, ual, assertionId) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.insertAssetAssertionLink(
+                repository,
+                ual,
+                assertionId,
+            );
+        }
+    }
+
+    async deleteAssetAssertionLink(implementationName, repository, ual, assertionId) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.deleteAssetAssertionLink(
+                repository,
+                ual,
+                assertionId,
+            );
+        }
+    }
+
+    async updateAssetAssertionLink(
+        implementationName,
+        repository,
+        ual,
+        oldAssertionId,
+        newAssertionId,
+    ) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.updateAssetAssertionLink(
+                repository,
+                ual,
+                oldAssertionId,
+                newAssertionId,
+            );
+        }
+    }
+
     async getAssetAssertionLinks(implementationName, repository, ual) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.getAssetAssertionLinks(
                 repository,
                 ual,
+            );
+        }
+    }
+
+    async assetAssertionLinkExists(implementationName, repository, ual, assertionId) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.assetAssertionLinkExists(
+                repository,
+                ual,
+                assertionId,
             );
         }
     }

@@ -87,9 +87,7 @@ class GetController extends BaseController {
                 OPERATION_ID_STATUS.GET.GET_INIT_END,
             );
         } catch (error) {
-            this.logger.error(
-                `Error while initializing get data: ${error.message}. ${error.stack}`,
-            );
+            this.logger.error(`Error while initializing get data: ${error.message}.`);
 
             await this.operationService.markOperationAsFailed(
                 operationId,

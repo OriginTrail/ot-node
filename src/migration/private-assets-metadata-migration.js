@@ -113,7 +113,7 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
             tokenId,
         );
 
-        await this.tripleStoreService.insertAssetMetadata(
+        await this.tripleStoreService.insertAssetAssertionMetadata(
             TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
             blockchain,
             assetStorageContractAddress,
@@ -131,7 +131,7 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
 
         if (privateAssertionId == null || !assertionIds.includes(privateAssertionId)) return;
 
-        await this.tripleStoreService.insertAssetMetadata(
+        await this.tripleStoreService.insertAssetAssertionMetadata(
             TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
             blockchain,
             assetStorageContractAddress,
