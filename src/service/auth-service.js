@@ -96,7 +96,7 @@ class AuthService {
 
     /**
      * Checks whether provided ip is whitelisted in config
-     * Returns false if ip based auth is disabled
+     * Returns true if ip based auth is disabled
      * @param reqIp
      * @returns {boolean}
      * @private
