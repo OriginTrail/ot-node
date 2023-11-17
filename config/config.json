@@ -443,7 +443,7 @@
                             ]
                         }
                     },
-                    "gnosis": {
+                    "chiado:10200": {
                         "enabled": false,
                         "package": "./blockchain/implementation/gnosis/gnosis-service.js",
                         "config": {
@@ -609,7 +609,7 @@
                             ]
                         }
                     },
-                    "gnosis": {
+                    "gnosis:100": {
                         "enabled": false,
                         "package": "./blockchain/implementation/gnosis/gnosis-service.js",
                         "config": {
