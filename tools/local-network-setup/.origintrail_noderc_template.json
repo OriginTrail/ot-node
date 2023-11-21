@@ -137,7 +137,7 @@
         "blockchain": {
             "defaultImplementation": "hardhat",
             "implementation": {
-                "hardhat": {
+                "hardhat:31337": {
                     "package": "./blockchain/implementation/hardhat/hardhat-service.js",
                     "config": {
                         "evmOperationalWalletPublicKey": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
@@ -171,9 +171,6 @@
         }
     },
     "auth": {
-        "ipWhitelist": [
-            "::1",
-            "127.0.0.1"
-        ]
+        "ipWhitelist": ["::1", "127.0.0.1"]
     }
 }

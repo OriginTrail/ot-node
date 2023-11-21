@@ -10,8 +10,8 @@ class StepsUtils {
 
     createNodeConfiguration(
         localBlockchains,
-        nodeWallets,
-        nodeManagementWallets,
+        nodeWallet,
+        nodeManagementWallet,
         nodeIndex,
         nodeName,
         rpcPort,
@@ -24,8 +24,15 @@ class StepsUtils {
             modules: {
                 blockchain: {
                     implementation: {
-                        hardhat: {
-                            enabled: false,
+                        'hardhat:31337': {
+                            config: {
+                                evmOperationalWalletPublicKey: wallet.address,
+                                evmOperationalWalletPrivateKey: wallet.privateKey,
+                                evmManagementWalletPublicKey: managementWallet.address,
+                                evmManagementWalletPrivateKey: managementWallet.privateKey,
+                                sharesTokenName,
+                                sharesTokenSymbol,
+                            },
                         },
                     },
                 },
