@@ -10,10 +10,16 @@ const requests = JSON.parse(await readFile('test/bdd/steps/api/datasets/requests
 const httpApiHelper = new HttpApiHelper();
 
 When(
-    /^I call Update on the node (\d+) for the latest published UAL with ([^"]*)/,
+    /^I call Update on the node (\d+) for the latest published UAL with ([^"]*) on blockchain ([^"]*)/,
     { timeout: 120000 },
-    async function update(node, assertionName) {
-        this.logger.log(`I call update route on the node ${node}`);
+    async function update(node, assertionName, blockchain) {
+        this.logger.log(`I call update route on the node ${node} on blockchain ${blockchain}`);
+
+        expect(
+            !!this.state.localBlockchains[blockchain],
+            `Blockchain with name ${blockchain} not found`,
+        ).to.be.equal(true);
+
         expect(
             !!assertions[assertionName],
             `Assertion with name: ${assertionName} not found!`,
@@ -21,8 +27,9 @@ When(
 
         const assertion = assertions[assertionName];
         const { UAL } = this.state.latestPublishData;
+        const options = this.state.nodes[node - 1].clientBlockchainOptions[blockchain];
         const result = await this.state.nodes[node - 1].client
-            .update(UAL, assertion)
+            .update(UAL, assertion, options)
             .catch((error) => {
                 assert.fail(`Error while trying to update assertion. ${error}`);
             });

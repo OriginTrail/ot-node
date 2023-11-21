@@ -1,6 +1,6 @@
 Feature: Get errors test
   Background: Setup local blockchain, bootstraps and nodes
-    Given the blockchain is set up
+    Given the blockchains are set up
     And 1 bootstrap is running
 
   @get-errors
@@ -24,8 +24,10 @@ Feature: Get errors test
   @get-errors
   Scenario: Getting non-existent state
     Given I setup 4 nodes
-    And I set R0 to be 1
-    And I set R1 to be 2
+    And I set R0 to be 1 on blockchain test1
+    And I set R1 to be 2 on blockchain test1
+    And I set R0 to be 1 on blockchain test2
+    And I set R1 to be 2 on blockchain test2
     And I wait for 5 seconds
 
     When I call Publish on the node 1 with validAssertion
@@ -36,8 +38,10 @@ Feature: Get errors test
   @get-errors
   Scenario: Getting invalid state hash
     Given I setup 4 nodes
-    And I set R0 to be 1
-    And I set R1 to be 2
+    And I set R0 to be 1 on blockchain test1
+    And I set R1 to be 2 on blockchain test1
+    And I set R0 to be 1 on blockchain test2
+    And I set R1 to be 2 on blockchain test2
     And I wait for 5 seconds
 
     When I call Publish on the node 1 with validAssertion
