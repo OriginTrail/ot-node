@@ -84,13 +84,15 @@ class UALService {
         return contractRegex.test(contract);
     }
 
-    async calculateLocationKeyword(blockchain, contract, tokenId) {
-        const firstAssertionId = await this.blockchainModuleManager.getAssertionIdByIndex(
-            blockchain,
-            contract,
-            tokenId,
-            0,
-        );
+    async calculateLocationKeyword(blockchain, contract, tokenId, assertionId = null) {
+        const firstAssertionId =
+            assertionId ??
+            (await this.blockchainModuleManager.getAssertionIdByIndex(
+                blockchain,
+                contract,
+                tokenId,
+                0,
+            ));
         return this.blockchainModuleManager.encodePacked(
             blockchain,
             ['address', 'bytes32'],

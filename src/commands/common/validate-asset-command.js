@@ -1,5 +1,10 @@
 import Command from '../command.js';
-import { ERROR_TYPE, OPERATION_ID_STATUS, LOCAL_STORE_TYPES } from '../../constants/constants.js';
+import {
+    ERROR_TYPE,
+    OPERATION_ID_STATUS,
+    LOCAL_STORE_TYPES,
+    ZERO_BYTES32,
+} from '../../constants/constants.js';
 
 class ValidateAssetCommand extends Command {
     constructor(ctx) {
@@ -43,7 +48,7 @@ class ValidateAssetCommand extends Command {
                 tokenId,
             );
         }
-        if (!blockchainAssertionId) {
+        if (!blockchainAssertionId || blockchainAssertionId === ZERO_BYTES32) {
             return Command.retry();
         }
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);

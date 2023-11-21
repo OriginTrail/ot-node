@@ -1,5 +1,13 @@
 import { BigNumber } from 'ethers';
 
+export const WS_RPC_PROVIDER_PRIORITY = 2;
+
+export const HTTP_RPC_PROVIDER_PRIORITY = 1;
+
+export const FALLBACK_PROVIDER_QUORUM = 1;
+
+export const RPC_PROVIDER_STALL_TIMEOUT = 60 * 1000;
+
 export const UINT256_MAX_BN = BigNumber.from(2).pow(256).sub(1);
 
 export const UINT32_MAX_BN = BigNumber.from(2).pow(32).sub(1);
@@ -21,7 +29,7 @@ export const COMMIT_BLOCK_DURATION_IN_BLOCKS = 5;
 
 export const COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS = 2;
 
-export const TRANSACTION_POLLING_TIMEOUT_MILLIS = 50 * 1000;
+export const TRANSACTION_POLLING_TIMEOUT_MILLIS = 300 * 1000;
 
 export const SOLIDITY_ERROR_STRING_PREFIX = '0x08c379a0';
 
@@ -167,9 +175,15 @@ export const DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 export const DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
 
 export const COMMAND_RETRIES = {
-    SUBMIT_COMMIT: 3,
-    SUBMIT_UPDATE_COMMIT: 3,
-    SUBMIT_PROOFS: 3,
+    SUBMIT_COMMIT: 5,
+    SUBMIT_UPDATE_COMMIT: 5,
+    SUBMIT_PROOFS: 5,
+};
+
+export const COMMAND_TX_GAS_INCREASE_FACTORS = {
+    SUBMIT_COMMIT: 1.2,
+    SUBMIT_UPDATE_COMMIT: 1.2,
+    SUBMIT_PROOFS: 1.2,
 };
 
 export const WEBSOCKET_PROVIDER_OPTIONS = {
