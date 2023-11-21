@@ -1,6 +1,6 @@
 Feature: Update errors test
   Background: Setup local blockchain, bootstraps and nodes
-    Given the blockchain is set up
+    Given the blockchains are set up
     And 1 bootstrap is running
 
   @update-errors

@@ -387,6 +387,16 @@
                                 "https://lofar-testnet.origintrail.network"
                             ]
                         }
+                    },
+                    "chiado:10200": {
+                        "enabled": false,
+                        "package": "./blockchain/implementation/gnosis/gnosis-service.js",
+                        "config": {
+                            "networkId": "chiado",
+                            "hubContractAddress": "",
+                            "gasPriceOracleLink": "",
+                            "rpcEndpoints": ["https://rpc.chiadochain.net"]
+                        }
                     }
                 }
             },
@@ -695,6 +705,16 @@
                                 "https://astrosat-parachain-rpc.origin-trail.network",
                                 "https://astrosat.origintrail.network/"
                             ]
+                        }
+                    },
+                    "gnosis:100": {
+                        "enabled": false,
+                        "package": "./blockchain/implementation/gnosis/gnosis-service.js",
+                        "config": {
+                            "networkId": "gnosis",
+                            "hubContractAddress": "",
+                            "gasPriceOracleLink": "https://api.gnosisscan.io/api?module=proxy&action=eth_gasPrice",
+                            "rpcEndpoints": ["https://rpc.gnosischain.com/"]
                         }
                     }
                 }
