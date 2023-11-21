@@ -112,8 +112,8 @@ function generateBlockchainConfig(templateBlockchainConfig, nodeIndex) {
     };
 
     // TODO: Don't use string
-    blockchainConfig.implementation['hardhat2'].config = {
-        ...blockchainConfig.implementation['hardhat2'].config,
+    blockchainConfig.implementation['hardhat2:31337'].config = {
+        ...blockchainConfig.implementation['hardhat2:31337'].config,
         hubContractAddress,
         rpcEndpoints: [process.env.RPC_ENDPOINT2],
         evmOperationalWalletPublicKey: publicKeys[nodeIndex],

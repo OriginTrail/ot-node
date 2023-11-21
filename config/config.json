@@ -112,7 +112,7 @@
             "blockchain": {
                 "enabled": true,
                 "implementation": {
-                    "hardhat:31337": {
+                    "hardhat1:31337": {
                         "enabled": true,
                         "package": "./blockchain/implementation/hardhat/hardhat-service.js",
                         "config": {
@@ -123,7 +123,7 @@
                             "initialAskAmount": 0.2
                         }
                     },
-                    "hardhat2": {
+                    "hardhat2:31337": {
                         "enabled": true,
                         "package": "./blockchain/implementation/hardhat/hardhat-service.js",
                         "config": {
