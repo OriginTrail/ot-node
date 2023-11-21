@@ -552,8 +552,17 @@ export const CONTRACT_EVENTS = {
 export const NODE_ENVIRONMENTS = {
     DEVELOPMENT: 'development',
     TEST: 'test',
+    DEVNET: 'devnet',
     TESTNET: 'testnet',
     MAINNET: 'mainnet',
+};
+
+export const CHAIN_IDS = {
+    DEVELOPMENT: 31337,
+    TEST: 31337,
+    DEVNET: 2160,
+    TESTNET: 20430,
+    MAINNET: 2043,
 };
 
 export const CONTRACT_EVENT_FETCH_INTERVALS = {
@@ -564,6 +573,7 @@ export const CONTRACT_EVENT_FETCH_INTERVALS = {
 export const BLOCK_TIME_MILLIS = {
     OTP: 12_000,
     HARDHAT: 5_000,
+    GNOSIS: 5_000,
     DEFAULT: 12_000,
 };
 

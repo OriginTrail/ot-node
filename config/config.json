@@ -112,12 +112,10 @@
             "blockchain": {
                 "enabled": true,
                 "implementation": {
-                    "hardhat": {
+                    "hardhat:31337": {
                         "enabled": true,
                         "package": "./blockchain/implementation/hardhat/hardhat-service.js",
                         "config": {
-                            "blockchainTitle": "hardhat",
-                            "networkId": "ganache::testnet",
                             "hubContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
                             "rpcEndpoints": ["http://localhost:8545"],
                             "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
@@ -299,36 +297,10 @@
             "blockchain": {
                 "enabled": true,
                 "implementation": {
-                    "hardhat": {
+                    "hardhat:31337": {
                         "enabled": true,
                         "package": "./blockchain/implementation/hardhat/hardhat-service.js",
                         "config": {
-                            "blockchainTitle": "ganache",
-                            "networkId": "ganache::testnet",
-                            "hubContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-                            "rpcEndpoints": ["http://localhost:8545"],
-                            "initialStakeAmount": 50000,
-                            "initialAskAmount": 0.2
-                        }
-                    },
-                    "hardhat-test1": {
-                        "enabled": true,
-                        "package": "./blockchain/implementation/hardhat/hardhat-service.js",
-                        "config": {
-                            "blockchainTitle": "hardhat-test-1",
-                            "networkId": "hardhat::testnet1",
-                            "hubContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-                            "rpcEndpoints": ["http://localhost:8545"],
-                            "initialStakeAmount": 50000,
-                            "initialAskAmount": 0.2
-                        }
-                    },
-                    "hardhat-test2": {
-                        "enabled": true,
-                        "package": "./blockchain/implementation/hardhat/hardhat-service.js",
-                        "config": {
-                            "blockchainTitle": "hardhat-test-2",
-                            "networkId": "hardhat::testnet2",
                             "hubContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
                             "rpcEndpoints": ["http://localhost:8545"],
                             "initialStakeAmount": 50000,
@@ -458,16 +430,25 @@
             "blockchain": {
                 "enabled": true,
                 "implementation": {
-                    "otp": {
+                    "otp:20430": {
                         "enabled": true,
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
-                            "networkId": "parachain::testnet",
                             "hubContractAddress": "0xBbfF7Ea6b2Addc1f38A0798329e12C08f03750A6",
                             "rpcEndpoints": [
                                 "https://lofar-testnet.origin-trail.network",
                                 "https://lofar-testnet.origintrail.network"
                             ]
+                        }
+                    },
+                    "chiado:10200": {
+                        "enabled": false,
+                        "package": "./blockchain/implementation/gnosis/gnosis-service.js",
+                        "config": {
+                            "networkId": "chiado",
+                            "hubContractAddress": "",
+                            "gasPriceOracleLink": "",
+                            "rpcEndpoints": ["https://rpc.chiadochain.net"]
                         }
                     }
                 }
@@ -511,6 +492,160 @@
                         "config": {
                             "sendTelemetryData": true,
                             "signalingServerUrl": "https://testnet-signaling.origin-trail.network/signal"
+                        }
+                    }
+                }
+            }
+        },
+        "maximumAssertionSizeInKb": 2500,
+        "commandExecutorVerboseLoggingEnabled": false,
+        "appDataPath": "data",
+        "logLevel": "trace",
+        "auth": {
+            "ipBasedAuthEnabled": true,
+            "tokenBasedAuthEnabled": false,
+            "loggingEnabled": true,
+            "ipWhitelist": ["::1", "127.0.0.1"],
+            "publicOperations": []
+        }
+    },
+    "devnet": {
+        "modules": {
+            "autoUpdater": {
+                "enabled": true,
+                "implementation": {
+                    "ot-auto-updater": {
+                        "enabled": true,
+                        "package": "./auto-updater/implementation/ot-auto-updater.js",
+                        "config": {
+                            "branch": "v6/release/testnet"
+                        }
+                    }
+                }
+            },
+            "network": {
+                "enabled": true,
+                "implementation": {
+                    "libp2p-service": {
+                        "enabled": true,
+                        "package": "./network/implementation/libp2p-service.js",
+                        "config": {
+                            "dht": {
+                                "kBucketSize": 20
+                            },
+                            "connectionManager": {
+                                "autoDial": true,
+                                "autoDialInterval": 10e3,
+                                "dialTimeout": 2e3
+                            },
+                            "peerRouting": {
+                                "refreshManager": {
+                                    "enabled": true,
+                                    "interval": 6e5,
+                                    "bootDelay": 2e3
+                                }
+                            },
+                            "port": 9000,
+                            "bootstrap": [
+                                "/ip4/64.225.99.151/tcp/9000/p2p/QmawsTRqaLPyLQ5PfStpFcpQW4bvNQ59zV1by2G5aJHuVn",
+                                "/ip4/18.157.122.121/tcp/9000/p2p/QmfDebvsKNwCggBBmEWB43cAZtTa2umMsnRvBnMV4sY5th"
+                            ]
+                        }
+                    }
+                }
+            },
+            "httpClient": {
+                "enabled": true,
+                "implementation": {
+                    "express-http-client": {
+                        "enabled": true,
+                        "package": "./http-client/implementation/express-http-client.js",
+                        "config": {
+                            "useSsl": false,
+                            "port": 8900,
+                            "sslKeyPath": "/root/certs/privkey.pem",
+                            "sslCertificatePath": "/root/certs/fullchain.pem",
+                            "rateLimiter": {
+                                "timeWindowSeconds": 60,
+                                "maxRequests": 10
+                            }
+                        }
+                    }
+                }
+            },
+            "repository": {
+                "enabled": true,
+                "implementation": {
+                    "sequelize-repository": {
+                        "enabled": true,
+                        "package": "./repository/implementation/sequelize/sequelize-repository.js",
+                        "config": {
+                            "database": "operationaldb",
+                            "user": "root",
+                            "password": "password",
+                            "port": "3306",
+                            "host": "localhost",
+                            "dialect": "mysql",
+                            "logging": false
+                        }
+                    }
+                }
+            },
+            "blockchain": {
+                "enabled": true,
+                "implementation": {
+                    "otp:2160": {
+                        "enabled": true,
+                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
+                        "config": {
+                            "hubContractAddress": "0x833048F6e6BEa78E0AAdedeCd2Dc2231dda443FB",
+                            "rpcEndpoints": [
+                                "https://lofar-tm-rpc.origin-trail.network",
+                                "https://lofar.origintrail.network"
+                            ]
+                        }
+                    }
+                }
+            },
+            "validation": {
+                "enabled": true,
+                "implementation": {
+                    "merkle-validation": {
+                        "enabled": true,
+                        "package": "./validation/implementation/merkle-validation.js",
+                        "config": {}
+                    }
+                }
+            },
+            "tripleStore": {
+                "enabled": true,
+                "implementation": {
+                    "ot-blazegraph": {
+                        "enabled": false,
+                        "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
+                        "config": {}
+                    },
+                    "ot-fuseki": {
+                        "enabled": false,
+                        "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
+                        "config": {}
+                    },
+                    "ot-graphdb": {
+                        "enabled": false,
+                        "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
+                        "config": {}
+                    }
+                }
+            },
+            "telemetry": {
+                "enabled": true,
+                "implementation": {
+                    "ot-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "config": {
+                            "sendTelemetryData": true,
+                            "signalingServerUrl": "https://devnet-signaling.origin-trail.network/signal"
                         }
                     }
                 }
@@ -612,18 +747,27 @@
             },
             "blockchain": {
                 "enabled": true,
-                "defaultImplementation": "otp",
+                "defaultImplementation": "otp:2043",
                 "implementation": {
-                    "otp": {
+                    "otp:2043": {
                         "enabled": true,
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
-                            "networkId": "otp::mainnet",
                             "hubContractAddress": "0x5fA7916c48Fe6D5F1738d12Ad234b78c90B4cAdA",
                             "rpcEndpoints": [
                                 "https://astrosat-parachain-rpc.origin-trail.network",
                                 "https://astrosat.origintrail.network/"
                             ]
+                        }
+                    },
+                    "gnosis:100": {
+                        "enabled": false,
+                        "package": "./blockchain/implementation/gnosis/gnosis-service.js",
+                        "config": {
+                            "networkId": "gnosis",
+                            "hubContractAddress": "",
+                            "gasPriceOracleLink": "https://api.gnosisscan.io/api?module=proxy&action=eth_gasPrice",
+                            "rpcEndpoints": ["https://rpc.gnosischain.com/"]
                         }
                     }
                 }

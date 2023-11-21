@@ -7,6 +7,7 @@ import requestValidationMiddleware from './middleware/request-validation-middlew
 import rateLimiterMiddleware from './middleware/rate-limiter-middleware.js';
 import authenticationMiddleware from './middleware/authentication-middleware.js';
 import authorizationMiddleware from './middleware/authorization-middleware.js';
+import blockchainIdMiddleware from './middleware/blockchain-id-midleware.js';
 import { BYTES_IN_MEGABYTE, MAX_FILE_SIZE } from '../../../constants/constants.js';
 
 class ExpressHttpClient {
@@ -66,11 +67,12 @@ class ExpressHttpClient {
         return middlewares;
     }
 
-    initializeBeforeMiddlewares(authService) {
+    initializeBeforeMiddlewares(authService, blockchainImpelemntations) {
         this._initializeCorsMiddleware();
         this.app.use(authenticationMiddleware(authService));
         this.app.use(authorizationMiddleware(authService));
         this._initializeBaseMiddlewares();
+        this.app.use(blockchainIdMiddleware(blockchainImpelemntations));
     }
 
     initializeAfterMiddlewares() {

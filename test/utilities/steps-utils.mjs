@@ -9,8 +9,9 @@ class StepsUtils {
     }
 
     createNodeConfiguration(
-        wallet,
-        managementWallet,
+        localBlockchains,
+        nodeWallet,
+        nodeManagementWallet,
         nodeIndex,
         nodeName,
         rpcPort,
@@ -19,11 +20,11 @@ class StepsUtils {
         sharesTokenSymbol,
         bootstrap = false,
     ) {
-        return {
+        let config = {
             modules: {
                 blockchain: {
                     implementation: {
-                        hardhat: {
+                        'hardhat:31337': {
                             config: {
                                 evmOperationalWalletPublicKey: wallet.address,
                                 evmOperationalWalletPrivateKey: wallet.privateKey,
@@ -63,30 +64,30 @@ class StepsUtils {
                         'ot-blazegraph': {
                             config: {
                                 repositories: {
-                                    "privateCurrent": {
-                                        "url": "http://localhost:9999",
-                                        "name": "private-current",
-                                        "username": "admin",
-                                        "password": ""
+                                    privateCurrent: {
+                                        url: 'http://localhost:9999',
+                                        name: 'private-current',
+                                        username: 'admin',
+                                        password: '',
                                     },
-                                    "privateHistory": {
-                                        "url": "http://localhost:9999",
-                                        "name": "private-history",
-                                        "username": "admin",
-                                        "password": ""
+                                    privateHistory: {
+                                        url: 'http://localhost:9999',
+                                        name: 'private-history',
+                                        username: 'admin',
+                                        password: '',
                                     },
-                                    "publicCurrent": {
-                                        "url": "http://localhost:9999",
-                                        "name": "public-current",
-                                        "username": "admin",
-                                        "password": ""
+                                    publicCurrent: {
+                                        url: 'http://localhost:9999',
+                                        name: 'public-current',
+                                        username: 'admin',
+                                        password: '',
                                     },
-                                    "publicHistory": {
-                                        "url": "http://localhost:9999",
-                                        "name": "public-history",
-                                        "username": "admin",
-                                        "password": ""
-                                    }
+                                    publicHistory: {
+                                        url: 'http://localhost:9999',
+                                        name: 'public-history',
+                                        username: 'admin',
+                                        password: '',
+                                    },
                                 },
                             },
                         },
@@ -125,6 +126,28 @@ class StepsUtils {
                 name: nodeName,
             },
         };
+
+        Object.keys(localBlockchains).forEach((localBlockchain, index) => {
+            config.modules.blockchain.implementation[localBlockchain] = {
+                enabled: true,
+                package: './blockchain/implementation/hardhat/hardhat-service.js',
+                config: {
+                    blockchainTitle: localBlockchain,
+                    networkId: `hardhat::${localBlockchain}`,
+                    hubContractAddress: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+                    rpcEndpoints: [`http://localhost:${localBlockchains[localBlockchain].port}`],
+                    initialStakeAmount: 50000,
+                    initialAskAmount: 0.2,
+                    evmOperationalWalletPublicKey: nodeWallets[index].address,
+                    evmOperationalWalletPrivateKey: nodeWallets[index].privateKey,
+                    evmManagementWalletPublicKey: nodeManagementWallets[index].address,
+                    evmManagementWalletPrivateKey: nodeManagementWallets[index].privateKey,
+                    sharesTokenName,
+                    sharesTokenSymbol,
+                },
+            };
+        });
+        return config;
     }
 }
 export default StepsUtils;
