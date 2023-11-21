@@ -1,5 +1,5 @@
 import BaseMigration from './base-migration.js';
-import { CHAIN_IDS, TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
+import { CHAIN_IDS } from '../constants/constants.js';
 
 const chainId = CHAIN_IDS[process.env.NODE_ENV];
 
@@ -27,10 +27,7 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
                     }
         `;
 
-        await this.tripleStoreService.queryVoidAllRepositories(
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-            updateSubjectQuery,
-        );
+        await this.tripleStoreService.queryVoidAllRepositories(updateSubjectQuery);
 
         const updateObjectQuery = `
         WITH <assets:graph>

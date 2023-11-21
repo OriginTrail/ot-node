@@ -572,11 +572,11 @@ export const NODE_ENVIRONMENTS = {
 };
 
 export const CHAIN_IDS = {
-    DEVELOPMENT: 31337,
-    TEST: 31337,
-    DEVNET: 2160,
-    TESTNET: 20430,
-    MAINNET: 2043,
+    development: 31337,
+    test: 31337,
+    devnet: 2160,
+    testnet: 20430,
+    mainnet: 2043,
 };
 
 export const CONTRACT_EVENT_FETCH_INTERVALS = {

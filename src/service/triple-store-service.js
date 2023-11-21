@@ -381,7 +381,7 @@ class TripleStoreService {
             queryPromises.push(
                 this.tripleStoreModuleManager.queryVoid(
                     this.repositoryImplementations[repository],
-                    repository,
+                    TRIPLE_STORE_REPOSITORIES[repository],
                     query,
                 ),
             );
