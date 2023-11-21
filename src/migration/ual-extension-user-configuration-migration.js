@@ -20,20 +20,34 @@ class UalExtensionUserConfigurationMigration extends BaseMigration {
 
         const userConfiguration = await this.fileService.readFile(configurationFilePath, true);
 
-        if (userConfiguration.modules.blockchain.implementation.otp) {
-            const oldBlockchainId = 'otp';
-            const newBlockchainId = `${oldBlockchainId}:${chainId}`;
-            userConfiguration.modules.blockchain.implementation.defaultImplementation =
-                newBlockchainId;
-            userConfiguration.modules.blockchain.implementation[newBlockchainId] =
-                userConfiguration.modules.blockchain.implementation[oldBlockchainId];
-            delete userConfiguration.modules.blockchain.implementation[oldBlockchainId];
-            await this.fileService.writeContentsToFile(
-                configurationFolderPath,
-                this.config.configFilename,
-                JSON.stringify(userConfiguration, null, 4),
-            );
+        const oldBlockchainId = this.getOldBlockchainId(userConfiguration);
+        const newBlockchainId = `${oldBlockchainId}:${chainId}`;
+        userConfiguration.modules.blockchain.implementation.defaultImplementation = newBlockchainId;
+        userConfiguration.modules.blockchain.implementation[newBlockchainId] =
+            userConfiguration.modules.blockchain.implementation[oldBlockchainId];
+        delete userConfiguration.modules.blockchain.implementation[oldBlockchainId];
+        await this.fileService.writeContentsToFile(
+            configurationFolderPath,
+            this.config.configFilename,
+            JSON.stringify(userConfiguration, null, 4),
+        );
+    }
+
+    getOldBlockchainId(userConfiguration) {
+        let oldBlockchainId;
+        if (userConfiguration.modules.blockchain.implementation) {
+            for (const implementationName in userConfiguration.modules.blockchain.implementation) {
+                if (
+                    userConfiguration.modules.blockchain.implementation[implementationName].enabled
+                ) {
+                    oldBlockchainId = implementationName;
+                }
+            }
         }
+        if (!oldBlockchainId) {
+            throw Error('Unable to find old blockchain id in user configuration');
+        }
+        return oldBlockchainId;
     }
 }
 

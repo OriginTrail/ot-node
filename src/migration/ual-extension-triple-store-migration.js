@@ -1,3 +1,5 @@
+import path from 'path';
+import appRootPath from 'app-root-path';
 import BaseMigration from './base-migration.js';
 import { CHAIN_IDS } from '../constants/constants.js';
 
@@ -10,8 +12,16 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
     }
 
     async executeMigration() {
-        const oldBlockchainId = 'did:dkg:otp';
-        const newBlockchainId = `${oldBlockchainId}:${chainId}`;
+        const configurationFolderPath = path.join(appRootPath.path, '..');
+        const configurationFilePath = path.join(
+            configurationFolderPath,
+            this.config.configFilename,
+        );
+
+        const userConfiguration = await this.fileService.readFile(configurationFilePath, true);
+
+        const oldBlockchainId = this.getOldBlockchainId(userConfiguration);
+        const newBlockchainId = `did:dkg:${oldBlockchainId}:${chainId}`;
         const updateSubjectQuery = `
                     WITH <assets:graph>
                     DELETE {
@@ -45,6 +55,23 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
         `;
 
         await this.tripleStoreService.queryVoidAllRepositories(updateObjectQuery);
+    }
+
+    getOldBlockchainId(userConfiguration) {
+        let oldBlockchainId;
+        if (userConfiguration.modules.blockchain.implementation) {
+            for (const implementationName in userConfiguration.modules.blockchain.implementation) {
+                if (
+                    userConfiguration.modules.blockchain.implementation[implementationName].enabled
+                ) {
+                    oldBlockchainId = implementationName;
+                }
+            }
+        }
+        if (!oldBlockchainId) {
+            throw Error('Unable to find old blockchain id in user configuration');
+        }
+        return oldBlockchainId.split(':')[0];
     }
 }
 
