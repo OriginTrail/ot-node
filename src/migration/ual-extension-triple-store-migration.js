@@ -21,7 +21,7 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
         const userConfiguration = await this.fileService.readFile(configurationFilePath, true);
 
         const oldBlockchainId = this.getOldBlockchainId(userConfiguration);
-        const newBlockchainId = `did:dkg:${oldBlockchainId}:${chainId}`;
+        const newBlockchainId = `${oldBlockchainId}:${chainId}`;
         const updateSubjectQuery = `
                     WITH <assets:graph>
                     DELETE {
@@ -32,7 +32,7 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
                     }
                     WHERE {
                       ?s ?p ?o .
-                      FILTER (STRSTARTS(STR(?s), "${oldBlockchainId}/"))
+                      FILTER (STRSTARTS(STR(?s), "did:dkg:${oldBlockchainId}/"))
                       BIND (IRI(REPLACE(STR(?s), "${oldBlockchainId}", "${newBlockchainId}")) AS ?newSubject)
                     }
         `;
