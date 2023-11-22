@@ -12,6 +12,8 @@
         "lint-staged": "lint-staged",
         "create-account-mapping-signature": "node tools/ot-parachain-account-mapping/create-account-mapping-signature.js ",
         "start:local_blockchain": "npm explore dkg-evm-module -- npm run dev -- --port",
+        "start:local_blockchainv1": "npm explore dkg-evm-module -- npm run dev:v1 -- --port",
+        "start:local_blockchainv2": "npm explore dkg-evm-module -- npm run dev:v2 -- --port",
         "kill:local_blockchain": "npx kill-port --port",
         "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ --import test/bdd/steps/ --exit",
         "test:unit": "nyc --all mocha --exit $(find test/unit -name '*.js')",

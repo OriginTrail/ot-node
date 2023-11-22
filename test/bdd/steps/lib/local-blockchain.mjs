@@ -50,9 +50,9 @@ const testParametersStorageParams = {
 let startBlockchainProcess;
 
 class LocalBlockchain {
-    async initialize(port, _console = console) {
+    async initialize(port, version, _console = console) {
         this.port = port;
-        startBlockchainProcess = exec(`npm run start:local_blockchain -- ${port}`);
+        startBlockchainProcess = exec(`npm run start:local_blockchain${version} -- ${port}`);
         startBlockchainProcess.stdout.on('data', (data) => {
             _console.log(data);
         });
