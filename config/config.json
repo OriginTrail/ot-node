@@ -112,7 +112,7 @@
             "blockchain": {
                 "enabled": true,
                 "implementation": {
-                    "hardhat1:31337": {
+                    "hardhat:31337": {
                         "enabled": true,
                         "package": "./blockchain/implementation/hardhat/hardhat-service.js",
                         "config": {
