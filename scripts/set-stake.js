@@ -83,7 +83,7 @@ async function setStake(
     );
     // TODO: Add ABI instead of hard-coded function definition
     tx = await stakingContract['addStake(uint72,uint96)'](identityId, stakeWei, {
-        gasPrice: gasPrice * 100,
+        gasPrice: gasPrice ? gasPrice * 100 : undefined,
         gasLimit: 500_000,
     });
     await provider.waitForTransaction(
