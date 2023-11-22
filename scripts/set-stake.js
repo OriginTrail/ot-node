@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { ethers } from 'ethers';
 import { createRequire } from 'module';
+import axios from 'axios';
 import {
     NODE_ENVIRONMENTS,
     TRANSACTION_POLLING_TIMEOUT_MILLIS,
@@ -19,6 +20,7 @@ const argv = require('minimist')(process.argv.slice(1), {
         'operationalWalletPrivateKey',
         'managementWalletPrivateKey',
         'hubContractAddress',
+        'gasPriceOracleLink',
     ],
 });
 
@@ -26,12 +28,27 @@ const devEnvironment =
     process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
     process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
 
+async function getGasPrice(gasPriceOracleLink) {
+    if (!gasPriceOracleLink) {
+        return devEnvironment ? undefined : 8;
+    }
+    try {
+        const response = await axios.get(gasPriceOracleLink);
+        const gasPriceRounded = Math.round(response.result * 1e9);
+        this.logger.debug(`Gas price: ${gasPriceRounded}`);
+        return gasPriceRounded;
+    } catch (error) {
+        return undefined;
+    }
+}
+
 async function setStake(
     rpcEndpoint,
     stake,
     operationalWalletPrivateKey,
     managementWalletPrivateKey,
     hubContractAddress,
+    gasPriceOracleLink,
 ) {
     const provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);
     const operationalWallet = new ethers.Wallet(operationalWalletPrivateKey, provider);
@@ -52,10 +69,13 @@ async function setStake(
 
     const stakeWei = ethers.utils.parseEther(stake);
 
+    const gasPrice = await getGasPrice(gasPriceOracleLink);
+
     let tx = await tokenContract.increaseAllowance(stakingContractAddress, stakeWei, {
-        gasPrice: devEnvironment ? undefined : 8,
+        gasPrice,
         gasLimit: 500_000,
     });
+
     await provider.waitForTransaction(
         tx.hash,
         TRANSACTION_CONFIRMATIONS,
@@ -63,7 +83,7 @@ async function setStake(
     );
     // TODO: Add ABI instead of hard-coded function definition
     tx = await stakingContract['addStake(uint72,uint96)'](identityId, stakeWei, {
-        gasPrice: devEnvironment ? undefined : 1_000,
+        gasPrice: gasPrice * 100,
         gasLimit: 500_000,
     });
     await provider.waitForTransaction(
@@ -88,6 +108,7 @@ if (validateArguments(argv, expectedArguments)) {
         argv.operationalWalletPrivateKey,
         argv.managementWalletPrivateKey,
         argv.hubContractAddress,
+        argv.gasPriceOracleLink,
     )
         .then(() => {
             console.log('Set stake completed');

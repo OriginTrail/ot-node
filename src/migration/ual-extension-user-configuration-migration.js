@@ -21,6 +21,14 @@ class UalExtensionUserConfigurationMigration extends BaseMigration {
         const userConfiguration = await this.fileService.readFile(configurationFilePath, true);
 
         const oldBlockchainId = this.getOldBlockchainId(userConfiguration);
+
+        if (!this.blockchainIdInNewFormat(oldBlockchainId)) {
+            this.logger.info(
+                'Blockchain id in user configuration already updated to be in new format, migration will be skipped',
+            );
+            return null;
+        }
+
         const newBlockchainId = `${oldBlockchainId}:${chainId}`;
         userConfiguration.modules.blockchain.implementation.defaultImplementation = newBlockchainId;
         userConfiguration.modules.blockchain.implementation[newBlockchainId] =
@@ -31,6 +39,10 @@ class UalExtensionUserConfigurationMigration extends BaseMigration {
             this.config.configFilename,
             JSON.stringify(userConfiguration, null, 4),
         );
+    }
+
+    blockchainIdInNewFormat(blockchainId) {
+        return blockchainId.contains(':');
     }
 
     getOldBlockchainId(userConfiguration) {
