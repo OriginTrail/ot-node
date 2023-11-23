@@ -250,8 +250,11 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('blockchain_event').insertBlockchainEvents(events);
     }
 
-    async getAllUnprocessedBlockchainEvents(eventNames) {
-        return this.getRepository('blockchain_event').getAllUnprocessedBlockchainEvents(eventNames);
+    async getAllUnprocessedBlockchainEvents(eventNames, blockchainId) {
+        return this.getRepository('blockchain_event').getAllUnprocessedBlockchainEvents(
+            eventNames,
+            blockchainId,
+        );
     }
 
     async markBlockchainEventsAsProcessed(events) {
