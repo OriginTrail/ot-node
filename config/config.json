@@ -127,8 +127,6 @@
                         "enabled": true,
                         "package": "./blockchain/implementation/hardhat/hardhat-service.js",
                         "config": {
-                            "blockchainTitle": "hardhat2",
-                            "networkId": "ganache::testnet",
                             "hubContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
                             "rpcEndpoints": ["http://localhost:9545"],
                             "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
@@ -140,7 +138,6 @@
                         "enabled": false,
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
-                            "networkId": "otp::testnet",
                             "hubContractAddress": "0x707233a55bD035C6Bc732196CA4dbffa63CbA169",
                             "rpcEndpoints": [
                                 "https://lofar-tm-rpc.origin-trail.network",
@@ -154,7 +151,6 @@
                         "enabled": false,
                         "package": "./blockchain/implementation/polygon/polygon-service.js",
                         "config": {
-                            "networkId": "polygon::testnet",
                             "hubContractAddress": "0xdaa16AC171CfE8Df6F79C06E7EEAb2249E2C9Ec8",
                             "gasPriceOracleLink": "https://gasstation-mumbai.matic.today/v2",
                             "rpcEndpoints": [
@@ -171,7 +167,6 @@
                         "enabled": false,
                         "package": "./blockchain/implementation/polygon/eth-service.js",
                         "config": {
-                            "networkId": "eth::rinkeby",
                             "hubContractAddress": "",
                             "gasPriceOracleLink": "",
                             "rpcEndpoints": [],
@@ -444,11 +439,10 @@
                             ]
                         }
                     },
-                    "chiado:10200": {
+                    "gnosis:10200": {
                         "enabled": false,
                         "package": "./blockchain/implementation/gnosis/gnosis-service.js",
                         "config": {
-                            "networkId": "chiado",
                             "hubContractAddress": "",
                             "gasPriceOracleLink": "",
                             "rpcEndpoints": ["https://rpc.chiadochain.net"]
@@ -768,7 +762,6 @@
                         "enabled": false,
                         "package": "./blockchain/implementation/gnosis/gnosis-service.js",
                         "config": {
-                            "networkId": "gnosis",
                             "hubContractAddress": "",
                             "gasPriceOracleLink": "https://api.gnosisscan.io/api?module=proxy&action=eth_gasPrice",
                             "rpcEndpoints": ["https://rpc.gnosischain.com/"]

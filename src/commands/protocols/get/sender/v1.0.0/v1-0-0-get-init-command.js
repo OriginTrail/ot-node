@@ -12,7 +12,7 @@ class GetInitCommand extends ProtocolInitCommand {
     async prepareMessage(command) {
         const { contract, tokenId, keyword, assertionId, state } = command.data;
 
-        // Backwards compatibility, send blockchain without chainId
+        // TODO: Backwards compatibility, send blockchain without chainId
         const blockchain = command.data.blockchain.split(':')[0];
 
         return {

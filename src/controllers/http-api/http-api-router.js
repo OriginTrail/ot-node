@@ -37,8 +37,8 @@ class HttpApiRouter {
     }
 
     initializeBeforeMiddlewares() {
-        const blockchainImpelemntations = this.blockchainModuleManager.getImplementationNames();
-        this.httpClientModuleManager.initializeBeforeMiddlewares(blockchainImpelemntations);
+        const blockchainImplementations = this.blockchainModuleManager.getImplementationNames();
+        this.httpClientModuleManager.initializeBeforeMiddlewares(blockchainImplementations);
     }
 
     async initializeVersionedListeners() {

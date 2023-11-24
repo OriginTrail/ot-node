@@ -5,7 +5,7 @@ class ProtocolInitCommand extends ProtocolMessageCommand {
     async prepareMessage(command) {
         const { assertionId, contract, tokenId, keyword, hashFunctionId } = command.data;
 
-        // Backwards compatibility, send blockchain without chainId
+        // TODO: Backwards compatibility, send blockchain without chainId
         const blockchain = command.data.blockchain.split(':')[0];
 
         return { assertionId, blockchain, contract, tokenId, keyword, hashFunctionId };

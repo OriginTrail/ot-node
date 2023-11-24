@@ -12,6 +12,7 @@ class UALService {
 
     // did:dkg:otp:2043/0x123231/5
     isUAL(ual) {
+        if (!ual.startsWith('did:dkg:')) return false;
         const parts = ual.replace('did:', '').replace('dkg:', '').split('/');
         if (parts.length === 3) {
             // eslint-disable-next-line no-restricted-globals
@@ -40,16 +41,16 @@ class UALService {
             if (!this.isContract(contract)) {
                 throw new Error(`Invalid contract format: ${contract}`);
             }
-            let blockchainUAL = parts[0];
-            if (blockchainUAL.split(':').length === 1) {
+            let blockchainName = parts[0];
+            if (blockchainName.split(':').length === 1) {
                 for (const implementation of this.blockchainModuleManager.getImplementationNames()) {
-                    if (implementation.split(':')[0] === blockchainUAL) {
-                        blockchainUAL = implementation;
+                    if (implementation.split(':')[0] === blockchainName) {
+                        blockchainName = implementation;
                         break;
                     }
                 }
             }
-            return { blockchain: blockchainUAL, contract, tokenId: Number(parts[2]) };
+            return { blockchain: blockchainName, contract, tokenId: Number(parts[2]) };
         }
         if (parts.length === 2) {
             const parts2 = parts[0].split(':');

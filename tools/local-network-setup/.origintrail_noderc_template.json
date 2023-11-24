@@ -135,7 +135,6 @@
             }
         },
         "blockchain": {
-            "defaultImplementation": "hardhat1:31337",
             "implementation": {
                 "hardhat:31337": {
                     "enabled": true,
@@ -170,7 +169,6 @@
                 "rinkeby": {
                     "package": "./blockchain/implementation/polygon/eth-service.js",
                     "config": {
-                        "networkId": "eth::rinkeby",
                         "hubContractAddress": "",
                         "gasPriceOracleLink": "",
                         "rpcEndpoints": []

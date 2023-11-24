@@ -67,12 +67,12 @@ class ExpressHttpClient {
         return middlewares;
     }
 
-    initializeBeforeMiddlewares(authService, blockchainImpelemntations) {
+    initializeBeforeMiddlewares(authService, blockchainImplementations) {
         this._initializeCorsMiddleware();
         this.app.use(authenticationMiddleware(authService));
         this.app.use(authorizationMiddleware(authService));
         this._initializeBaseMiddlewares();
-        this.app.use(blockchainIdMiddleware(blockchainImpelemntations));
+        this.app.use(blockchainIdMiddleware(blockchainImplementations));
     }
 
     initializeAfterMiddlewares() {

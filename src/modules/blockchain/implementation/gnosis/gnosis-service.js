@@ -1,4 +1,3 @@
-import axios from 'axios';
 import Web3Service from '../web3-service.js';
 import { BLOCK_TIME_MILLIS } from '../../../../constants/constants.js';
 
@@ -15,12 +14,10 @@ class GnosisService extends Web3Service {
     }
 
     async getGasPrice() {
+        if (this.config.gasPriceOracleLink) return super.getGasPrice();
+
         try {
-            this.logger.debug('Gas price:');
-            const response = await axios.get(this.config.gasPriceOracleLink);
-            this.logger.debug(response);
-            const gasPriceRounded = Math.round(response.result * 1e9);
-            return gasPriceRounded;
+            return this.provider.getGasPrice();
         } catch (error) {
             return undefined;
         }
