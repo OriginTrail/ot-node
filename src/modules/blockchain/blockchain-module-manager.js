@@ -393,8 +393,6 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     callImplementationFunction(blockchain, functionName, args = []) {
         if (blockchain) {
-            // const split = blockchain.split(':');
-            // const [name] = split;
             if (this.getImplementation(blockchain)) {
                 return this.getImplementation(blockchain).module[functionName](...args);
             }
