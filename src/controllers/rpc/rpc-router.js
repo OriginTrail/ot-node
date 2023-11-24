@@ -25,13 +25,24 @@ class RpcRouter {
             const controller = `${operation}RpcController`;
             const blockchainImplementations = this.blockchainModuleManager.getImplementationNames();
 
-            this.networkModuleManager.handleMessage(
-                protocol,
-                blockchainImplementations,
-                (message, remotePeerId) =>
-                    this[controller][handleRequest](message, remotePeerId, protocol),
-            );
+            this.networkModuleManager.handleMessage(protocol, (message, remotePeerId) => {
+                const modifyedMessage = this.modifyMessage(message, blockchainImplementations);
+                this[controller][handleRequest](modifyedMessage, remotePeerId, protocol);
+            });
         }
+    }
+
+    modifyMessage(message, blockchainImplementations) {
+        const modifiedMessage = message;
+        if (modifiedMessage.data.blockchain?.split(':').length === 1) {
+            for (const implementation of blockchainImplementations) {
+                if (implementation.split(':')[0] === modifiedMessage.data.blockchain) {
+                    modifiedMessage.data.blockchain = implementation;
+                    break;
+                }
+            }
+        }
+        return modifiedMessage;
     }
 }
 
