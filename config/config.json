@@ -442,9 +442,10 @@
                     "gnosis:10200": {
                         "enabled": false,
                         "package": "./blockchain/implementation/gnosis/gnosis-service.js",
+
                         "config": {
                             "hubContractAddress": "",
-                            "gasPriceOracleLink": "",
+                            "gasPriceOracleLink": "https://blockscout.chiadochain.net/api/v1/gas-price-oracle",
                             "rpcEndpoints": ["https://rpc.chiadochain.net"]
                         }
                     }
@@ -600,6 +601,16 @@
                                 "https://lofar-tm-rpc.origin-trail.network",
                                 "https://lofar.origintrail.network"
                             ]
+                        }
+                    },
+                    "gnosis:10200": {
+                        "enabled": false,
+                        "package": "./blockchain/implementation/gnosis/gnosis-service.js",
+
+                        "config": {
+                            "hubContractAddress": "",
+                            "gasPriceOracleLink": "https://blockscout.chiadochain.net/api/v1/gas-price-oracle",
+                            "rpcEndpoints": ["https://rpc.chiadochain.net"]
                         }
                     }
                 }

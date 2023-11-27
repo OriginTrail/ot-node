@@ -17,9 +17,14 @@ class GnosisService extends Web3Service {
     async getGasPrice() {
         try {
             const response = await axios.get(this.config.gasPriceOracleLink);
-            const gasPriceRounded = Math.round(response.result * 1e9);
-            this.logger.debug(`Gas price on Gnosis: ${gasPriceRounded}`);
-            return gasPriceRounded;
+            let gasPrice;
+            if (this.config.name.split(':')[1] === '100') {
+                gasPrice = Number(response.result, 10);
+            } else if (this.config.name.split(':')[1] === '10200') {
+                gasPrice = Math.round(response.average * 1e9);
+            }
+            this.logger.debug(`Gas price on Gnosis: ${gasPrice}`);
+            return gasPrice;
         } catch (error) {
             return undefined;
         }
