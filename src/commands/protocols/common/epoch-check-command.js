@@ -10,6 +10,7 @@ import {
 class EpochCheckCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.config = ctx.config;
         this.commandExecutor = ctx.commandExecutor;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.networkModuleManager = ctx.networkModuleManager;
@@ -19,6 +20,10 @@ class EpochCheckCommand extends Command {
     }
 
     async execute(command) {
+        if (this.config.assetSync.enabled) {
+            return Command.empty();
+        }
+
         const operationId = this.operationIdService.generateId();
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_START,
