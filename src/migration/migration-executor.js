@@ -327,8 +327,6 @@ class MigrationExecutor {
         );
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();
-            // logger.info('Node will now restart!');
-            // this.exitNode(1);
         }
     }
 
