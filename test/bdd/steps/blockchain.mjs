@@ -12,10 +12,10 @@ Given(/^the blockchains are set up$/, { timeout: 240_000 }, function blockchainS
 
     const promises = [];
 
-    blockchains.forEach((blockchain)=>{
+    blockchains.forEach((blockchain, index)=>{
         this.logger.log(`Starting local blockchain ${blockchain.name} on port: ${blockchain.port}`);
         const blockchainConsole = new console.Console(
-            fs.createWriteStream(`${this.state.scenarionLogDir}/blockchain-${blockchain.name}.log`),
+            fs.createWriteStream(`${this.state.scenarionLogDir}/blockchain-${blockchain.name.replace(':', '-')}.log`),
         );
         const localBlockchain = new LocalBlockchain();
         this.state.localBlockchains[blockchain.name] = localBlockchain;
