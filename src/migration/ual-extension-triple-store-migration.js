@@ -1,6 +1,12 @@
 import BaseMigration from './base-migration.js';
-import { CHAIN_IDS } from '../constants/constants.js';
 
+const CHAIN_IDS = {
+    development: 31337,
+    test: 31337,
+    devnet: 2160,
+    testnet: 20430,
+    mainnet: 2043,
+};
 const chainId = CHAIN_IDS[process.env.NODE_ENV];
 
 class UalExtensionTripleStoreMigration extends BaseMigration {

@@ -571,14 +571,6 @@ export const NODE_ENVIRONMENTS = {
     MAINNET: 'mainnet',
 };
 
-export const CHAIN_IDS = {
-    development: 31337,
-    test: 31337,
-    devnet: 2160,
-    testnet: 20430,
-    mainnet: 2043,
-};
-
 export const CONTRACT_EVENT_FETCH_INTERVALS = {
     MAINNET: 10 * 1000,
     DEVELOPMENT: 4 * 1000,
