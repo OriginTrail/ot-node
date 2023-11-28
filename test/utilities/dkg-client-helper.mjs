@@ -10,29 +10,35 @@ class DkgClientHelper {
         return this.client.node.info();
     }
 
-    async publish(data) {
-        const options = {
+    async publish(data, userOptions = {}) {
+        const defaultOptions = {
             visibility: 'public',
             epochsNum: 5,
             hashFunctionId: CONTENT_ASSET_HASH_FUNCTION_ID,
         };
 
+        const options = { ...defaultOptions, ...userOptions };
+
         return this.client.asset.create(data, options);
     }
 
-    async update(ual, assertion) {
-        const options = {
+    async update(ual, assertion, userOptions = {}) {
+        const defaultOptions = {
             hashFunctionId: CONTENT_ASSET_HASH_FUNCTION_ID,
         };
+
+        const options = { ...defaultOptions, ...userOptions };
 
         return this.client.asset.update(ual, assertion, options);
     }
 
-    async get(ual, state) {
-        const options = {
+    async get(ual, state, userOptions = {}) {
+        const defaultOptions = {
             state,
             validate: true,
         };
+
+        const options = { ...defaultOptions, ...userOptions };
 
         return this.client.asset.get(ual, options);
     }
