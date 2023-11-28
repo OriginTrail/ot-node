@@ -14,21 +14,21 @@ Given(
     { timeout: 30000 },
     function nodeSetup(nodeCount, done) {
         this.logger.log(`I setup ${nodeCount} node${nodeCount !== 1 ? 's' : ''}`);
-        const wallets = {};
-        Object.keys(this.state.localBlockchains).forEach((localBlockchain) => {
-            wallets[localBlockchain] = this.state.localBlockchains[localBlockchain].getWallets();
-        });
+
         const currentNumberOfNodes = Object.keys(this.state.nodes).length;
         let nodesStarted = 0;
         for (let i = 0; i < nodeCount; i += 1) {
             const nodeIndex = currentNumberOfNodes + i;
-            const nodeWallets = Object.keys(wallets).map((localBlockchain) => {
-                return wallets[localBlockchain][nodeIndex + 1];
-            });
-            const nodeManagementWallets = Object.keys(wallets).map((localBlockchain) => {
-                return wallets[localBlockchain][
-                    nodeIndex + 1 + Math.floor(wallets[localBlockchain].length / 2)
-                ];
+            const blockchains = [];
+            Object.keys(this.state.localBlockchains).forEach((blockchainId) => {
+                const blockchain = this.state.localBlockchains[blockchainId];
+                const wallets = blockchain.getWallets();
+                blockchains.push({
+                    blockchainId,
+                    operationalWallet: wallets[nodeIndex],
+                    managementWallet: wallets[nodeIndex + Math.floor(wallets.length / 2)],
+                    port: blockchain.port
+                })
             });
             const rpcPort = 8901 + nodeIndex;
             const networkPort = 9001 + nodeIndex;
@@ -36,9 +36,7 @@ Given(
             const sharesTokenName = `origintrail-test-${nodeIndex}`;
             const sharesTokenSymbol = `OT-T-${nodeIndex}`;
             const nodeConfiguration = stepsUtils.createNodeConfiguration(
-                this.state.localBlockchains,
-                nodeWallets,
-                nodeManagementWallets,
+                blockchains,
                 nodeIndex,
                 nodeName,
                 rpcPort,
@@ -69,13 +67,15 @@ Given(
                         contentType: 'all',
                     });
                     let clientBlockchainOptions = {};
-                    Object.keys(this.state.localBlockchains).forEach((localBlockchain, index) => {
-                        clientBlockchainOptions[localBlockchain] = {
+                    Object.keys(this.state.localBlockchains).forEach((blockchainId, index) => {
+                        const blockchain = this.state.localBlockchains[blockchainId];
+                        const wallets = blockchain.getWallets();
+                        clientBlockchainOptions[blockchainId] = {
                             blockchain: {
-                                name: localBlockchain,
-                                publicKey: nodeWallets[index].address,
-                                privateKey: nodeWallets[index].privateKey,
-                                rpc: `http://localhost:${this.state.localBlockchains[localBlockchain].port}`,
+                                name: blockchainId,
+                                publicKey: wallets[index].address,
+                                privateKey: wallets[index].privateKey,
+                                rpc: `http://localhost:${blockchain.port}`,
                                 hubContract: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
                             },
                         };
@@ -110,17 +110,17 @@ Given(
         expect(nodeCount).to.be.equal(1); // Currently not supported more.
         this.logger.log('Initializing bootstrap node');
         const nodeIndex = Object.keys(this.state.nodes).length;
-        const wallets = {};
-        Object.keys(this.state.localBlockchains).forEach((localBlockchain) => {
-            wallets[localBlockchain] = this.state.localBlockchains[localBlockchain].getWallets();
-        });
-        const nodeWallets = Object.keys(wallets).map((localBlockchain) => {
-            return wallets[localBlockchain][nodeIndex];
-        });
-        const nodeManagementWallets = Object.keys(wallets).map((localBlockchain) => {
-            return wallets[localBlockchain][
-                nodeIndex + Math.floor(wallets[localBlockchain].length / 2)
-            ];
+
+        const blockchains = [];
+        Object.keys(this.state.localBlockchains).forEach((blockchainId) => {
+            const blockchain = this.state.localBlockchains[blockchainId];
+            const wallets = blockchain.getWallets();
+            blockchains.push({
+                blockchainId,
+                operationalWallet: wallets[0],
+                managementWallet: wallets[Math.floor(wallets.length / 2)],
+                port: this.state.localBlockchains[blockchainId].port
+            })
         });
         const rpcPort = 8900;
         const networkPort = 9000;
@@ -128,9 +128,7 @@ Given(
         const sharesTokenName = `${nodeName}-${nodeIndex}`;
         const sharesTokenSymbol = `OT-B-${nodeIndex}`;
         const nodeConfiguration = stepsUtils.createNodeConfiguration(
-            this.state.localBlockchains,
-            nodeWallets,
-            nodeManagementWallets,
+            blockchains,
             nodeIndex,
             nodeName,
             rpcPort,
@@ -173,87 +171,95 @@ Given(
         });
     },
 );
-// regex allows strings separated by dots
-Given(
-    /^I setup node (\d+) with ([a-z][\w-]*(?:\.[\w-]+)*) set to ([^"]*)$/,
-    { timeout: 120000 },
-    function setupPublishNode(nodeNum, propertyName, propertyValue, done) {
-        const nodeIndex = Object.keys(this.state.nodes).length;
-        const wallets = this.state.localBlockchain.getWallets();
-        const wallet = wallets[nodeIndex + 1];
-        const managementWallet =
-            this.state.localBlockchain.getWallets()[nodeIndex + 1 + Math.floor(wallets.length / 2)];
-        const rpcPort = 8901 + nodeIndex;
-        const networkPort = 9001 + nodeIndex;
-        const nodeName = `origintrail-test-${nodeIndex}`;
-        const sharesTokenName = `origintrail-test-${nodeIndex}`;
-        const sharesTokenSymbol = `OT-T-${nodeIndex}`;
-        const nodeConfiguration = stepsUtils.createNodeConfiguration(
-            wallet,
-            managementWallet,
-            nodeIndex,
-            nodeName,
-            rpcPort,
-            networkPort,
-            sharesTokenName,
-            sharesTokenSymbol,
-        );
-        const propertyNameSplit = propertyName.split('.');
-        this.logger.log(`I setup node ${nodeNum} with ${propertyName} set to ${propertyValue}`);
-        expect(
-            Object.prototype.hasOwnProperty.call(nodeConfiguration, propertyNameSplit[0]),
-            `Property ${propertyName} doesn't exist`,
-        ).to.be.equal(true);
-        let propName = nodeConfiguration;
-        for (let i = 0; i < propertyNameSplit.length - 1; i += 1) {
-            propName = propName[propertyNameSplit[i]];
-        }
-        if (propName[propertyNameSplit.slice(-1)] !== undefined) {
-            propName[propertyNameSplit.slice(-1)] = propertyValue === '\\0' ? '\0' : propertyValue;
-        } else {
-            assert.fail(`Property ${propertyName} doesn't exist`);
-        }
-        const forkedNode = stepsUtils.forkNode(nodeConfiguration);
-
-        const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
-        forkedNode.stdout.setEncoding('utf8');
-        forkedNode.stdout.on('data', (data) => {
-            // Here is where the output goes
-            logFileStream.write(data);
-        });
-
-        // eslint-disable-next-line no-loop-func
-        forkedNode.on('message', (response) => {
-            if (response.error) {
-                assert.fail(`Error while initializing node${nodeIndex} : ${response.error}`);
-            } else {
-                const client = new DkgClientHelper({
-                    endpoint: 'http://localhost',
-                    port: rpcPort,
-                    blockchain: {
-                        name: 'hardhat',
-                        publicKey: wallet.address,
-                        privateKey: wallet.privateKey,
-                    },
-                    maxNumberOfRetries: 5,
-                    frequency: 2,
-                    contentType: 'all',
-                });
-                this.state.nodes[nodeIndex] = {
-                    client,
-                    forkedNode,
-                    configuration: nodeConfiguration,
-                    nodeRpcUrl: `http://localhost:${rpcPort}`,
-                    fileService: new FileService({
-                        config: nodeConfiguration,
-                        logger: this.logger,
-                    }),
-                };
-            }
-            done();
-        });
-    },
-);
+//
+// Given(
+//     /^I setup node (\d+) with ([a-z][\w-]*(?:\.[\w-]+)*) set to ([^"]*)$/,
+//     { timeout: 120000 },
+//     function setupPublishNode(nodeNum, propertyName, propertyValue, done) {
+//         const nodeIndex = Object.keys(this.state.nodes).length;
+//
+//         const blockchains = [];
+//
+//         Object.keys(this.state.localBlockchains).forEach((blockchainId) => {
+//             const blockchain = this.state.localBlockchains[blockchainId];
+//             const wallets = blockchain.getWallets();
+//             blockchains.push({
+//                 blockchainId,
+//                 operationalWallet: wallets[nodeIndex],
+//                 managementWallet: wallets[nodeIndex + Math.floor(wallets[blockchainId].length / 2)],
+//                 port: blockchain.port
+//             })
+//         });
+//         const rpcPort = 8901 + nodeIndex;
+//         const networkPort = 9001 + nodeIndex;
+//         const nodeName = `origintrail-test-${nodeIndex}`;
+//         const sharesTokenName = `origintrail-test-${nodeIndex}`;
+//         const sharesTokenSymbol = `OT-T-${nodeIndex}`;
+//         const nodeConfiguration = stepsUtils.createNodeConfiguration(
+//             blockchains,
+//             nodeIndex,
+//             nodeName,
+//             rpcPort,
+//             networkPort,
+//             sharesTokenName,
+//             sharesTokenSymbol,
+//         );
+//         const propertyNameSplit = propertyName.split('.');
+//         this.logger.log(`I setup node ${nodeNum} with ${propertyName} set to ${propertyValue}`);
+//         expect(
+//             Object.prototype.hasOwnProperty.call(nodeConfiguration, propertyNameSplit[0]),
+//             `Property ${propertyName} doesn't exist`,
+//         ).to.be.equal(true);
+//         let propName = nodeConfiguration;
+//         for (let i = 0; i < propertyNameSplit.length - 1; i += 1) {
+//             propName = propName[propertyNameSplit[i]];
+//         }
+//         if (propName[propertyNameSplit.slice(-1)] !== undefined) {
+//             propName[propertyNameSplit.slice(-1)] = propertyValue === '\\0' ? '\0' : propertyValue;
+//         } else {
+//             assert.fail(`Property ${propertyName} doesn't exist`);
+//         }
+//         const forkedNode = stepsUtils.forkNode(nodeConfiguration);
+//
+//         const logFileStream = fs.createWriteStream(`${this.state.scenarionLogDir}/${nodeName}.log`);
+//         forkedNode.stdout.setEncoding('utf8');
+//         forkedNode.stdout.on('data', (data) => {
+//             // Here is where the output goes
+//             logFileStream.write(data);
+//         });
+//
+//         // eslint-disable-next-line no-loop-func
+//         forkedNode.on('message', (response) => {
+//             if (response.error) {
+//                 assert.fail(`Error while initializing node${nodeIndex} : ${response.error}`);
+//             } else {
+//                 const client = new DkgClientHelper({
+//                     endpoint: 'http://localhost',
+//                     port: rpcPort,
+//                     blockchain: {
+//                         name: 'hardhat',
+//                         publicKey: wallet.address,
+//                         privateKey: wallet.privateKey,
+//                     },
+//                     maxNumberOfRetries: 5,
+//                     frequency: 2,
+//                     contentType: 'all',
+//                 });
+//                 this.state.nodes[nodeIndex] = {
+//                     client,
+//                     forkedNode,
+//                     configuration: nodeConfiguration,
+//                     nodeRpcUrl: `http://localhost:${rpcPort}`,
+//                     fileService: new FileService({
+//                         config: nodeConfiguration,
+//                         logger: this.logger,
+//                     }),
+//                 };
+//             }
+//             done();
+//         });
+//     },
+// );
 
 Then(
     /Latest (Get|Publish|Update) operation finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError|PublishStartError|GetAssertionIdError|GetNetworkError|GetLocalError|PublishRouteError]+)$/,

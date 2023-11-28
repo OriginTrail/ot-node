@@ -99,10 +99,10 @@ function generateTripleStoreConfig(templateTripleStoreConfig, nodeIndex) {
 function generateBlockchainConfig(templateBlockchainConfig, nodeIndex) {
     const blockchainConfig = JSON.parse(JSON.stringify(templateBlockchainConfig));
 
-    blockchainConfig.implementation[blockchain].config = {
-        ...blockchainConfig.implementation[blockchain].config,
+    blockchainConfig.implementation['hardhat1:31337'].config = {
+        ...blockchainConfig.implementation['hardhat1:31337'].config,
         hubContractAddress,
-        rpcEndpoints: [process.env.RPC_ENDPOINT1],
+        rpcEndpoints: [process.env.RPC_ENDPOINT_BC1],
         evmOperationalWalletPublicKey: publicKeys[nodeIndex],
         evmOperationalWalletPrivateKey: privateKeys[nodeIndex],
         evmManagementWalletPublicKey: publicKeys[publicKeys.length - 1 - nodeIndex],
@@ -115,7 +115,7 @@ function generateBlockchainConfig(templateBlockchainConfig, nodeIndex) {
     blockchainConfig.implementation['hardhat2:31337'].config = {
         ...blockchainConfig.implementation['hardhat2:31337'].config,
         hubContractAddress,
-        rpcEndpoints: [process.env.RPC_ENDPOINT2],
+        rpcEndpoints: [process.env.RPC_ENDPOINT_BC2],
         evmOperationalWalletPublicKey: publicKeys[nodeIndex],
         evmOperationalWalletPrivateKey: privateKeys[nodeIndex],
         evmManagementWalletPublicKey: publicKeys[publicKeys.length - 1 - nodeIndex],

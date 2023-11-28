@@ -16,11 +16,14 @@ class ValidationService {
 
         let isValid = true;
         try {
-            await this.blockchainModuleManager.getKnowledgeAssetOwner(
+            const result = await this.blockchainModuleManager.getKnowledgeAssetOwner(
                 blockchain,
                 contract,
                 tokenId,
             );
+            if (!result) {
+                isValid = false;
+            }
         } catch (err) {
             isValid = false;
         }

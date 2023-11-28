@@ -6,8 +6,8 @@ import LocalBlockchain from './lib/local-blockchain.mjs';
 Given(/^the blockchains are set up$/, { timeout: 240_000 }, function blockchainSetup(done) {
 
     const blockchains = [
-        {name: 'test1', port: 8545},
-        {name: 'test2', port: 9545}
+        {name: 'hardhat1:31337', port: 8545},
+        {name: 'hardhat2:31337', port: 9545}
     ]
 
     const promises = [];
