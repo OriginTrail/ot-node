@@ -21,7 +21,7 @@ class ValidationService {
                 contract,
                 tokenId,
             );
-            if (result === ZERO_ADDRESS) {
+            if (!result || result === ZERO_ADDRESS) {
                 isValid = false;
             }
         } catch (err) {
