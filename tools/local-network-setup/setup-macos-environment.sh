@@ -1,9 +1,9 @@
 #!/bin/sh
 pathToOtNode=$(pwd)
 numberOfNodes=4
-network="hardhat:31337"
+network="hardhat1:31337"
 tripleStore="ot-blazegraph"
-availableNetworks=("hardhat:31337")
+availableNetworks=("hardhat1:31337")
 export $(xargs < $pathToOtNode/.env)
 export ACCESS_KEY=$RPC_ENDPOINT
 # Check for script arguments
@@ -43,10 +43,10 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
-if [[ $network == hardhat:31337 ]]
+if [[ $network == hardhat1:31337 ]]
 then
   echo ================================
-  echo ====== Starting hardhat ======
+  echo ====== Starting hardhat1 ======
   echo ================================
 
   osascript -e "tell app \"Terminal\"
