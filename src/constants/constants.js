@@ -1,4 +1,4 @@
-import { BigNumber } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 
 export const WS_RPC_PROVIDER_PRIORITY = 2;
 
@@ -18,7 +18,9 @@ export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN.div(UINT32_MAX_BN);
 
 export const ZERO_PREFIX = '0x';
 
-export const ZERO_BYTES32 = `0x${'0'.repeat(64)}`;
+export const ZERO_BYTES32 = ethers.constants.HashZero;
+
+export const ZERO_ADDRESS = ethers.constants.AddressZero;
 
 export const SCHEMA_CONTEXT = 'http://schema.org/';
 
