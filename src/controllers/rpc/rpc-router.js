@@ -27,7 +27,7 @@ class RpcRouter {
 
             this.networkModuleManager.handleMessage(protocol, (message, remotePeerId) => {
                 const modifiedMessage = this.modifyMessage(message, blockchainImplementations);
-                this[controller][handleRequest](modifyedMessage, remotePeerId, protocol);
+                this[controller][handleRequest](modifiedMessage, remotePeerId, protocol);
             });
         }
     }
