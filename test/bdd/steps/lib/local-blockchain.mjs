@@ -50,13 +50,14 @@ const testParametersStorageParams = {
 let startBlockchainProcess;
 
 class LocalBlockchain {
-    async initialize(_console = console) {
-        startBlockchainProcess = exec('npm run start:local_blockchain');
+    async initialize(port, _console = console, version = '') {
+        this.port = port;
+        startBlockchainProcess = exec(`npm run start:local_blockchain${version} -- ${port}`);
         startBlockchainProcess.stdout.on('data', (data) => {
             _console.log(data);
         });
 
-        this.provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
+        this.provider = new ethers.providers.JsonRpcProvider(`http://localhost:${port}`);
 
         const [privateKeysFile, publicKeysFile] = await Promise.all([
             readFile('test/bdd/steps/api/datasets/privateKeys.json'),
@@ -94,7 +95,7 @@ class LocalBlockchain {
     }
 
     async stop() {
-        const commandLog = await execSync('npm run kill:local_blockchain');
+        const commandLog = await execSync(`npm run kill:local_blockchain -- ${this.port}`);
         console.log(`Killing hardhat process: ${commandLog.toString()}`);
         startBlockchainProcess.kill();
     }
@@ -138,7 +139,10 @@ class LocalBlockchain {
 
     async setFinalizationCommitsNumber(commitsNumber) {
         console.log(`Setting finalizationCommitsNumber in parameters storage to: ${commitsNumber}`);
-        const encodedData = this.ParametersStorageInterface.encodeFunctionData('setFinalizationCommitsNumber', [commitsNumber]);
+        const encodedData = this.ParametersStorageInterface.encodeFunctionData(
+            'setFinalizationCommitsNumber',
+            [commitsNumber],
+        );
         const parametersStorageAddress = await this.hubContract.getContractAddress(
             'ParametersStorage',
         );

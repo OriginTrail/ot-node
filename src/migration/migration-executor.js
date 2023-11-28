@@ -11,6 +11,8 @@ import PendingStorageMigration from './pending-storage-migration.js';
 import MarkOldBlockchainEventsAsProcessedMigration from './mark-old-blockchain-events-as-processed-migration.js';
 import ServiceAgreementsDataInspector from './service-agreements-data-inspector.js';
 import ServiceAgreementsInvalidDataMigration from './service-agreements-invalid-data-migration.js';
+import UalExtensionUserConfigurationMigration from './ual-extension-user-configuration-migration.js';
+import UalExtensionTripleStoreMigration from './ual-extension-triple-store-migration.js';
 
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
@@ -285,6 +287,45 @@ class MigrationExecutor {
             (await migration.migrationAlreadyExecuted('serviceAgreementsDataInspector')) &&
             !(await migration.migrationAlreadyExecuted())
         ) {
+            await migration.migrate();
+        }
+    }
+
+    static async executeUalExtensionUserConfigurationMigration(logger, config) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const migration = new UalExtensionUserConfigurationMigration(
+            'ualExtensionUserConfigurationMigration',
+            logger,
+            config,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            await migration.migrate();
+            logger.info('Node will now restart!');
+            this.exitNode(1);
+        }
+    }
+
+    static async executeUalExtensionTripleStoreMigration(container, logger, config) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const tripleStoreService = container.resolve('tripleStoreService');
+
+        const migration = new UalExtensionTripleStoreMigration(
+            'ualExtensionTripleStoreMigration',
+            logger,
+            config,
+            tripleStoreService,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();
         }
     }

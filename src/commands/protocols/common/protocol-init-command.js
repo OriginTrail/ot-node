@@ -3,8 +3,10 @@ import { NETWORK_MESSAGE_TYPES } from '../../../constants/constants.js';
 
 class ProtocolInitCommand extends ProtocolMessageCommand {
     async prepareMessage(command) {
-        const { assertionId, blockchain, contract, tokenId, keyword, hashFunctionId } =
-            command.data;
+        const { assertionId, contract, tokenId, keyword, hashFunctionId } = command.data;
+
+        // TODO: Backwards compatibility, send blockchain without chainId
+        const blockchain = command.data.blockchain.split(':')[0];
 
         return { assertionId, blockchain, contract, tokenId, keyword, hashFunctionId };
     }

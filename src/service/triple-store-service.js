@@ -1,6 +1,6 @@
 import { formatAssertion } from 'assertion-tools';
 
-import { SCHEMA_CONTEXT } from '../constants/constants.js';
+import { SCHEMA_CONTEXT, TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
 
 class TripleStoreService {
     constructor(ctx) {
@@ -373,6 +373,21 @@ class TripleStoreService {
             repository,
             query,
         );
+    }
+
+    async queryVoidAllRepositories(query) {
+        const queryPromises = [];
+        for (const repository in TRIPLE_STORE_REPOSITORIES) {
+            queryPromises.push(
+                this.tripleStoreModuleManager.queryVoid(
+                    this.repositoryImplementations[repository],
+                    TRIPLE_STORE_REPOSITORIES[repository],
+                    query,
+                ),
+            );
+        }
+
+        return Promise.all(queryPromises);
     }
 }
 
