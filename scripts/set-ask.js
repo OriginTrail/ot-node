@@ -26,10 +26,21 @@ async function getGasPrice(gasPriceOracleLink) {
         return devEnvironment ? undefined : 8;
     }
     try {
+        let gasPrice;
         const response = await axios.get(gasPriceOracleLink);
-        const gasPriceRounded = Math.round(response.result * 1e9);
-        this.logger.debug(`Gas price: ${gasPriceRounded}`);
-        return gasPriceRounded;
+        if (
+            gasPriceOracleLink === 'https://api.gnosisscan.io/api?module=proxy&action=eth_gasPrice'
+        ) {
+            gasPrice = Number(response.result, 10);
+        } else if (
+            gasPriceOracleLink === 'https://blockscout.chiadochain.net/api/v1/gas-price-oracle'
+        ) {
+            gasPrice = Math.round(response.average * 1e9);
+        } else {
+            gasPrice = Math.round(response.result * 1e9);
+        }
+        this.logger.debug(`Gas price: ${gasPrice}`);
+        return gasPrice;
     } catch (error) {
         return undefined;
     }
