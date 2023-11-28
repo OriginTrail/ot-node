@@ -8,27 +8,27 @@
             "_:c14n0 <http://schema.org/name> \"Claude Shànnon\" .",
             "_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://schema.org/Person> ."
         ],
-        "blockchain": "test2",
+        "blockchain": "hardhat1:31337",
         "contract": "0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07",
         "tokenId": 0
     },
     "validGetFirstStateRequestBody": {
-        "id": "did:dkg:blockchain/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0",
+        "id": "did:dkg:hardhat1:31337/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0",
         "state": "0xe3a6733d7b999ca6f0d141afe3e38ac59223a4dfde7a5458932d2094ed4193cf"
     },
     "validGetUpdatedStateRequestBody": {
-        "id": "did:dkg:blockchain/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0"
+        "id": "did:dkg:hardhat1:31337/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0"
     },
     "getFirstStateRequestBody": {
-        "id": "did:dkg:blockchain/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0",
+        "id": "did:dkg:hardhat1:31337/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0",
         "state": "0xe3a6733d7b999ca6f0d141afe3e38ac59223a4dfde7a5458932d2094ed4193cf"
     },
     "getSecondStateRequestBody": {
-        "id": "did:dkg:blockchain/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0",
+        "id": "did:dkg:hardhat1:31337/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0",
         "state": "0x591503a1c8ba4667dd7afd203025c1bf594d817d8eec71274fe960d69fb8584f"
     },
     "getThirdStateRequestBody": {
-        "id": "did:dkg:blockchain/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0",
+        "id": "did:dkg:hardhat1:31337/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0",
         "state": "0x759c285786b95622dad67a6be857a4eec3d9ba0caec991ed4297629ae6abbc0d"
     },
     "blockchainNotDefinedRequestBody": {
@@ -46,17 +46,17 @@
         "tokenId": 0
     },
     "nonExistentUAL": {
-        "id": "did:dkg:hardhat/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/1"
+        "id": "did:dkg:hardhat1:31337/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/1"
     },
     "invalidUAL": {
         "id": "did:dkg:hardhat/0xB0D4afd8879eD9F/52b28595d31B441D079B2Ca07/1"
     },
     "nonExistentState": {
-        "id": "did:dkg:hardhat/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0",
+        "id": "did:dkg:hardhat1:31337/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0",
         "state": -1
     },
     "invalidStateHash": {
-        "id": "did:dkg:hardhat/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0",
+        "id": "did:dkg:hardhat1:31337/0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07/0",
         "state": "0x591503a1c8ba4667dd7afd203025c1bf594d817d8eec71274fe960d69fb8584e"
     },
     "validUpdateRequestBody": {
@@ -66,7 +66,7 @@
             "<uuid:2> <http://schema.org/company> \"TL\" .",
             "<uuid:2> <http://schema.org/user> <uuid:user:2> ."
         ],
-        "blockchain": "test2",
+        "blockchain": "hardhat1:31337",
         "contract": "0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07",
         "tokenId": 0
     }
