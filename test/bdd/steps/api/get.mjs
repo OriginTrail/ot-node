@@ -44,9 +44,7 @@ When(
         ).to.be.equal(true);
 
         const requestBody = JSON.parse(JSON.stringify(requests[requestName]));
-        this.logger.log(`Start: ${JSON.stringify(requestBody, null, 4)}`);
         requestBody.id = requestBody.id.replace('blockchain', blockchain);
-        this.logger.log(`Replace: ${JSON.stringify(requestBody, null, 4)}`);
 
         try {
             const result = await httpApiHelper.get(
