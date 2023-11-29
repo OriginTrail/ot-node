@@ -1,3 +1,4 @@
+import path from 'path';
 import { NODE_ENVIRONMENTS } from '../constants/constants.js';
 import PullBlockchainShardingTableMigration from './pull-sharding-table-migration.js';
 import PrivateAssetsMetadataMigration from './private-assets-metadata-migration.js';
@@ -339,6 +340,14 @@ class MigrationExecutor {
 
     static exitNode(code = 0) {
         process.exit(code);
+    }
+
+    static async migrationAlreadyExecuted(migrationName, fileService) {
+        const migrationFilePath = path.join(fileService.getMigrationFolderPath(), migrationName);
+        if (await fileService.pathExists(migrationFilePath)) {
+            return true;
+        }
+        return false;
     }
 }
 

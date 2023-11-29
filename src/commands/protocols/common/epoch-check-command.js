@@ -7,6 +7,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
 } from '../../../constants/constants.js';
+import MigrationExecutor from '../../../migration/migration-executor.js';
 
 class EpochCheckCommand extends Command {
     constructor(ctx) {
@@ -17,11 +18,19 @@ class EpochCheckCommand extends Command {
         this.shardingTableService = ctx.shardingTableService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
+        this.fileService = ctx.fileService;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.EPOCH_CHECK_ERROR;
     }
 
     async execute(command) {
+        const migrationExecuted = await MigrationExecutor.migrationAlreadyExecuted(
+            'ualExtensionTripleStoreMigration',
+            this.fileService,
+        );
+        if (!migrationExecuted) {
+            return Command.repeat();
+        }
         const operationId = this.operationIdService.generateId();
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_START,
