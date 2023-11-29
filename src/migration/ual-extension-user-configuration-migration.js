@@ -39,6 +39,7 @@ class UalExtensionUserConfigurationMigration extends BaseMigration {
         userConfiguration.modules.blockchain.implementation.defaultImplementation = newBlockchainId;
         userConfiguration.modules.blockchain.implementation[newBlockchainId] =
             userConfiguration.modules.blockchain.implementation[oldBlockchainId];
+        userConfiguration.modules.blockchain.implementation[newBlockchainId].enabled = true;
         delete userConfiguration.modules.blockchain.implementation[oldBlockchainId];
         await this.fileService.writeContentsToFile(
             configurationFolderPath,
@@ -55,9 +56,7 @@ class UalExtensionUserConfigurationMigration extends BaseMigration {
         let oldBlockchainId;
         if (userConfiguration.modules.blockchain.implementation) {
             for (const implementationName in userConfiguration.modules.blockchain.implementation) {
-                if (
-                    userConfiguration.modules.blockchain.implementation[implementationName].enabled
-                ) {
+                if (implementationName === 'otp') {
                     oldBlockchainId = implementationName;
                 }
             }
