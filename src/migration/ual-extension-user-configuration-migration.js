@@ -56,7 +56,7 @@ class UalExtensionUserConfigurationMigration extends BaseMigration {
         let oldBlockchainId;
         if (userConfiguration.modules.blockchain.implementation) {
             for (const implementationName in userConfiguration.modules.blockchain.implementation) {
-                if (implementationName === 'otp') {
+                if (implementationName.includes('otp')) {
                     oldBlockchainId = implementationName;
                 }
             }
