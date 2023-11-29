@@ -57,12 +57,6 @@ class OTNode {
 
         await this.initializeModules();
 
-        await MigrationExecutor.executeUalExtensionTripleStoreMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
         await MigrationExecutor.executePullShardingTableMigration(
             this.container,
             this.logger,
@@ -104,7 +98,14 @@ class OTNode {
 
         await this.initializeCommandExecutor();
         await this.initializeShardingTableService();
-        await this.initializeBlockchainEventListenerService();
+
+        MigrationExecutor.executeUalExtensionTripleStoreMigration(
+            this.container,
+            this.logger,
+            this.config,
+        ).then(async () => {
+            await this.initializeBlockchainEventListenerService();
+        });
 
         await this.initializeRouters();
         await this.startNetworkModule();
