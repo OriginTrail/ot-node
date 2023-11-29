@@ -57,7 +57,7 @@ class OTNode {
 
         await this.initializeModules();
 
-        await MigrationExecutor.executeUalExtensionTripleStoreMigration(
+        MigrationExecutor.executeUalExtensionTripleStoreMigration(
             this.container,
             this.logger,
             this.config,

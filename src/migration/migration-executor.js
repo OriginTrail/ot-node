@@ -326,7 +326,14 @@ class MigrationExecutor {
             tripleStoreService,
         );
         if (!(await migration.migrationAlreadyExecuted())) {
-            await migration.migrate();
+            try {
+                await migration.migrate();
+            } catch (error) {
+                logger.error(
+                    `Unable to execute ual extension triple store migration. Error: ${error.message}`,
+                );
+                this.exitNode(1);
+            }
         }
     }
 
