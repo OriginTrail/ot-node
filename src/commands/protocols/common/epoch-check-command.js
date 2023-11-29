@@ -29,8 +29,12 @@ class EpochCheckCommand extends Command {
             this.fileService,
         );
         if (!migrationExecuted) {
+            this.logger.info(
+                'Epoch check command will be postponed until ual extension triple store migration is completed',
+            );
             return Command.repeat();
         }
+        this.logger.info('Starting epoch check command');
         const operationId = this.operationIdService.generateId();
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_START,
