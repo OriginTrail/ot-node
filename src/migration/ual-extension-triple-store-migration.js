@@ -20,7 +20,7 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
         const oldBlockchainId = this.getOldBlockchainId();
         const newBlockchainId = `${oldBlockchainId}:${chainId}`;
 
-        const chunkSize = 5000;
+        const chunkSize = 100000;
 
         const totalSubjectsQuery = `
           SELECT (COUNT(*) AS ?totalObjects)
@@ -30,6 +30,15 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
               FILTER (STRSTARTS(STR(?s), "did:dkg:${oldBlockchainId}/"))
             }
           }`;
+
+        const totalObjectsQuery = `
+        SELECT (COUNT(*) AS ?totalObjects)
+        WHERE {
+          ?s ?p ?o .
+          FILTER(STRENDS(STR(?p), "blockchain") && STRENDS(STR(?o), "${oldBlockchainId}"))
+        }
+        
+        `;
         const updateSubjectQuery = `
         WITH <assets:graph>
             DELETE {
@@ -78,7 +87,7 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
                 )[1],
                 10,
             );
-            let offset = 0;
+            let offsetSubject = 0;
             if (totalSubjects !== 0) {
                 do {
                     // eslint-disable-next-line no-await-in-loop
@@ -87,14 +96,31 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
                         updateSubjectQuery,
                     );
 
+                    offsetSubject += chunkSize;
+                } while (offsetSubject < totalSubjects);
+            }
+            // eslint-disable-next-line no-await-in-loop
+            const totalObjectsResult = await this.tripleStoreService.select(
+                TRIPLE_STORE_REPOSITORIES[repository],
+                totalObjectsQuery,
+            );
+            const totalObjects = parseInt(
+                totalObjectsResult[0].totalObjects.match(
+                    /"(\d+)"\^\^http:\/\/www.w3.org\/2001\/XMLSchema#integer/,
+                )[1],
+                10,
+            );
+            let offsetObject = 0;
+            if (totalObjects !== 0) {
+                do {
                     // eslint-disable-next-line no-await-in-loop
                     await this.tripleStoreService.queryVoid(
                         TRIPLE_STORE_REPOSITORIES[repository],
                         updateObjectQuery,
                     );
 
-                    offset += chunkSize;
-                } while (offset < totalSubjects);
+                    offsetObject += chunkSize;
+                } while (offsetObject < totalObjects);
             }
         }
     }
