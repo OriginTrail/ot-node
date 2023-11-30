@@ -20,7 +20,7 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
         const oldBlockchainId = this.getOldBlockchainId();
         const newBlockchainId = `${oldBlockchainId}:${chainId}`;
 
-        const chunkSize = 100000;
+        const chunkSize = 10000;
 
         const totalSubjectsQuery = `
           SELECT (COUNT(*) AS ?totalObjects)
@@ -70,7 +70,7 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
           SELECT ?s ?p ?o
           WHERE {
             ?s ?p ?o .
-            FILTER(STRENDS(STR(?p), "blockchain"))
+            FILTER(STRENDS(STR(?p), "blockchain") && STRENDS(STR(?o), "${oldBlockchainId}"))
           }
           LIMIT ${chunkSize}
         }
@@ -87,6 +87,9 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
                 )[1],
                 10,
             );
+            this.logger.debug(
+                `Total number of triple store subjects that will be updated: ${totalSubjects} in repositroy: ${repository}.`,
+            );
             let offsetSubject = 0;
             if (totalSubjects !== 0) {
                 do {
@@ -97,7 +100,13 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
                     );
 
                     offsetSubject += chunkSize;
+                    this.logger.debug(
+                        `Number of subjects updated: ${offsetSubject} in repository ${repository}`,
+                    );
                 } while (offsetSubject < totalSubjects);
+                this.logger.debug(
+                    `Finalised triple store subject update in repository: ${repository}.`,
+                );
             }
             // eslint-disable-next-line no-await-in-loop
             const totalObjectsResult = await this.tripleStoreService.select(
@@ -111,6 +120,9 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
                 10,
             );
             let offsetObject = 0;
+            this.logger.debug(
+                `Total number of triple store object that will be updated: ${totalObjects} in repositroy: ${repository}.`,
+            );
             if (totalObjects !== 0) {
                 do {
                     // eslint-disable-next-line no-await-in-loop
@@ -120,8 +132,70 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
                     );
 
                     offsetObject += chunkSize;
+                    this.logger.debug(
+                        `Number of objects updated: ${offsetObject} in repository ${repository}`,
+                    );
                 } while (offsetObject < totalObjects);
+                this.logger.debug(
+                    `Finalised triple store object update in repository: ${repository}.`,
+                );
             }
+        }
+        for (const repository in TRIPLE_STORE_REPOSITORIES) {
+            const countOldSujbectQuerry = `SELECT (COUNT(*) AS ?count)
+                                WHERE {
+                                ?s ?p ?o .
+                                FILTER (STRSTARTS(STR(?s), "did:dkg:otp/"))
+                                }`;
+            // eslint-disable-next-line no-await-in-loop
+            const countOldSujbectResult = await this.tripleStoreModuleManager.select(
+                this.repositoryImplementations[repository],
+                TRIPLE_STORE_REPOSITORIES[repository],
+                countOldSujbectQuerry,
+            );
+            const countNewSujbectQuerry = `SELECT (COUNT(*) AS ?count)
+                                          WHERE {
+                                            ?s ?p ?o .
+                                            FILTER (STRSTARTS(STR(?s), "did:dkg:otp:2160/"))
+                                          }`;
+            // eslint-disable-next-line no-await-in-loop
+            const countNewSujbectQuerryResult = await this.tripleStoreModuleManager.select(
+                this.repositoryImplementations[repository],
+                TRIPLE_STORE_REPOSITORIES[repository],
+                countNewSujbectQuerry,
+            );
+
+            const countOldObjectsQuery = `SELECT (COUNT(*) AS ?count)
+                                          WHERE {
+                                            ?s ?p ?o .
+                                            FILTER(STRENDS(STR(?p), "blockchain") && STRENDS(STR(?o), "otp"))
+                                          }`;
+            // eslint-disable-next-line no-await-in-loop
+            const countOldObjectsQueryResult = await this.tripleStoreModuleManager.select(
+                this.repositoryImplementations[repository],
+                TRIPLE_STORE_REPOSITORIES[repository],
+                countOldObjectsQuery,
+            );
+            const countNewObjectQuery = `SELECT (COUNT(*) AS ?count)
+            WHERE {
+              ?s ?p ?o .
+              FILTER(STRENDS(STR(?p), "blockchain") && STRENDS(STR(?o), "otp:2160"))
+            }`;
+            // eslint-disable-next-line no-await-in-loop
+            const countNewObjectQueryResult = await this.tripleStoreModuleManager.select(
+                this.repositoryImplementations[repository],
+                TRIPLE_STORE_REPOSITORIES[repository],
+                countNewObjectQuery,
+            );
+            this.logger.debug(
+                `Report for UAL extentsion triple store migragrion on repository: ${repository}. Old subject count: ${JSON.stringify(
+                    countOldSujbectResult,
+                )}. New subject count: ${JSON.stringify(
+                    countNewSujbectQuerryResult,
+                )}. Old object count: ${JSON.stringify(
+                    countOldObjectsQueryResult,
+                )}. New object count: ${JSON.stringify(countNewObjectQueryResult)}.`,
+            );
         }
     }
 
