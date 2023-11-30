@@ -141,62 +141,62 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
                 );
             }
         }
-        for (const repository in TRIPLE_STORE_REPOSITORIES) {
-            const countOldSujbectQuerry = `SELECT (COUNT(*) AS ?count)
-                                WHERE {
-                                ?s ?p ?o .
-                                FILTER (STRSTARTS(STR(?s), "did:dkg:otp/"))
-                                }`;
-            // eslint-disable-next-line no-await-in-loop
-            const countOldSujbectResult = await this.tripleStoreModuleManager.select(
-                this.repositoryImplementations[repository],
-                TRIPLE_STORE_REPOSITORIES[repository],
-                countOldSujbectQuerry,
-            );
-            const countNewSujbectQuerry = `SELECT (COUNT(*) AS ?count)
-                                          WHERE {
-                                            ?s ?p ?o .
-                                            FILTER (STRSTARTS(STR(?s), "did:dkg:otp:2160/"))
-                                          }`;
-            // eslint-disable-next-line no-await-in-loop
-            const countNewSujbectQuerryResult = await this.tripleStoreModuleManager.select(
-                this.repositoryImplementations[repository],
-                TRIPLE_STORE_REPOSITORIES[repository],
-                countNewSujbectQuerry,
-            );
-
-            const countOldObjectsQuery = `SELECT (COUNT(*) AS ?count)
-                                          WHERE {
-                                            ?s ?p ?o .
-                                            FILTER(STRENDS(STR(?p), "blockchain") && STRENDS(STR(?o), "otp"))
-                                          }`;
-            // eslint-disable-next-line no-await-in-loop
-            const countOldObjectsQueryResult = await this.tripleStoreModuleManager.select(
-                this.repositoryImplementations[repository],
-                TRIPLE_STORE_REPOSITORIES[repository],
-                countOldObjectsQuery,
-            );
-            const countNewObjectQuery = `SELECT (COUNT(*) AS ?count)
-            WHERE {
-              ?s ?p ?o .
-              FILTER(STRENDS(STR(?p), "blockchain") && STRENDS(STR(?o), "otp:2160"))
-            }`;
-            // eslint-disable-next-line no-await-in-loop
-            const countNewObjectQueryResult = await this.tripleStoreModuleManager.select(
-                this.repositoryImplementations[repository],
-                TRIPLE_STORE_REPOSITORIES[repository],
-                countNewObjectQuery,
-            );
-            this.logger.debug(
-                `Report for UAL extentsion triple store migragrion on repository: ${repository}. Old subject count: ${JSON.stringify(
-                    countOldSujbectResult,
-                )}. New subject count: ${JSON.stringify(
-                    countNewSujbectQuerryResult,
-                )}. Old object count: ${JSON.stringify(
-                    countOldObjectsQueryResult,
-                )}. New object count: ${JSON.stringify(countNewObjectQueryResult)}.`,
-            );
-        }
+        // for (const repository in TRIPLE_STORE_REPOSITORIES) {
+        //     const countOldSujbectQuerry = `SELECT (COUNT(*) AS ?count)
+        //                         WHERE {
+        //                         ?s ?p ?o .
+        //                         FILTER (STRSTARTS(STR(?s), "did:dkg:otp/"))
+        //                         }`;
+        //     // eslint-disable-next-line no-await-in-loop
+        //     const countOldSujbectResult = await this.tripleStoreModuleManager.select(
+        //         this.repositoryImplementations[repository],
+        //         TRIPLE_STORE_REPOSITORIES[repository],
+        //         countOldSujbectQuerry,
+        //     );
+        //     const countNewSujbectQuerry = `SELECT (COUNT(*) AS ?count)
+        //                                   WHERE {
+        //                                     ?s ?p ?o .
+        //                                     FILTER (STRSTARTS(STR(?s), "did:dkg:otp:2160/"))
+        //                                   }`;
+        //     // eslint-disable-next-line no-await-in-loop
+        //     const countNewSujbectQuerryResult = await this.tripleStoreModuleManager.select(
+        //         this.repositoryImplementations[repository],
+        //         TRIPLE_STORE_REPOSITORIES[repository],
+        //         countNewSujbectQuerry,
+        //     );
+        //
+        //     const countOldObjectsQuery = `SELECT (COUNT(*) AS ?count)
+        //                                   WHERE {
+        //                                     ?s ?p ?o .
+        //                                     FILTER(STRENDS(STR(?p), "blockchain") && STRENDS(STR(?o), "otp"))
+        //                                   }`;
+        //     // eslint-disable-next-line no-await-in-loop
+        //     const countOldObjectsQueryResult = await this.tripleStoreModuleManager.select(
+        //         this.repositoryImplementations[repository],
+        //         TRIPLE_STORE_REPOSITORIES[repository],
+        //         countOldObjectsQuery,
+        //     );
+        //     const countNewObjectQuery = `SELECT (COUNT(*) AS ?count)
+        //     WHERE {
+        //       ?s ?p ?o .
+        //       FILTER(STRENDS(STR(?p), "blockchain") && STRENDS(STR(?o), "otp:2160"))
+        //     }`;
+        //     // eslint-disable-next-line no-await-in-loop
+        //     const countNewObjectQueryResult = await this.tripleStoreModuleManager.select(
+        //         this.repositoryImplementations[repository],
+        //         TRIPLE_STORE_REPOSITORIES[repository],
+        //         countNewObjectQuery,
+        //     );
+        //     this.logger.debug(
+        //         `Report for UAL extentsion triple store migragrion on repository: ${repository}. Old subject count: ${JSON.stringify(
+        //             countOldSujbectResult,
+        //         )}. New subject count: ${JSON.stringify(
+        //             countNewSujbectQuerryResult,
+        //         )}. Old object count: ${JSON.stringify(
+        //             countOldObjectsQueryResult,
+        //         )}. New object count: ${JSON.stringify(countNewObjectQueryResult)}.`,
+        //     );
+        // }
     }
 
     getOldBlockchainId() {
