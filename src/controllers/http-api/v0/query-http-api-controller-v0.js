@@ -22,6 +22,7 @@ class QueryController extends BaseController {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            null,
             OPERATION_ID_STATUS.QUERY.QUERY_INIT_END,
         );
 

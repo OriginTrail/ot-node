@@ -23,6 +23,7 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.GET.ASSERTION_EXISTS_LOCAL_START,
         );
 
@@ -64,6 +65,7 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.GET.ASSERTION_EXISTS_LOCAL_END,
         );
 

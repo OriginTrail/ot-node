@@ -48,6 +48,7 @@ class SubmitProofsCommand extends Command {
             this.operationIdService.emitChangeEvent(
                 OPERATION_ID_STATUS.COMMIT_PROOF.CALCULATE_PROOFS_START,
                 operationId,
+                blockchain,
                 agreementId,
                 epoch,
             );
@@ -70,7 +71,7 @@ class SubmitProofsCommand extends Command {
             const errorMessage = `Assertion with id: ${assertionId} not found in the triple store.`;
             this.logger.trace(errorMessage);
 
-            await this.handleError(operationId, errorMessage, this.errorType, true);
+            await this.handleError(operationId, blockchain, errorMessage, this.errorType, true);
 
             return Command.empty();
         }
@@ -84,6 +85,7 @@ class SubmitProofsCommand extends Command {
             this.operationIdService.emitChangeEvent(
                 OPERATION_ID_STATUS.COMMIT_PROOF.CALCULATE_PROOFS_END,
                 operationId,
+                blockchain,
                 agreementId,
                 epoch,
             );
@@ -91,6 +93,7 @@ class SubmitProofsCommand extends Command {
             this.operationIdService.emitChangeEvent(
                 OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_START,
                 operationId,
+                blockchain,
                 agreementId,
                 epoch,
             );
@@ -112,6 +115,7 @@ class SubmitProofsCommand extends Command {
             this.operationIdService.emitChangeEvent(
                 OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
                 operationId,
+                blockchain,
                 agreementId,
                 epoch,
             );
@@ -192,6 +196,7 @@ class SubmitProofsCommand extends Command {
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
             operationId,
+            blockchain,
             agreementId,
             epoch,
         );

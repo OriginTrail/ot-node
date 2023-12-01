@@ -34,6 +34,7 @@ class LocalStoreCommand extends Command {
         try {
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
+                blockchain,
                 OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_START,
             );
 
@@ -104,15 +105,17 @@ class LocalStoreCommand extends Command {
 
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
+                blockchain,
                 OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_END,
             );
 
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
+                blockchain,
                 OPERATION_ID_STATUS.COMPLETED,
             );
         } catch (e) {
-            await this.handleError(operationId, e.message, this.errorType, true);
+            await this.handleError(operationId, blockchain, e.message, this.errorType, true);
             return Command.empty();
         }
 

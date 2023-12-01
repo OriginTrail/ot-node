@@ -48,6 +48,7 @@ class FindNodesCommand extends Command {
         if (closestNodes.length < minAckResponses) {
             this.handleError(
                 operationId,
+                blockchain,
                 `Unable to find enough nodes for ${operationId}. Minimum number of nodes required: ${minAckResponses}`,
                 this.errorType,
                 true,
@@ -68,6 +69,7 @@ class FindNodesCommand extends Command {
     async findNodes(blockchainId, keyword, operationId, hashFunctionId) {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchainId,
             OPERATION_ID_STATUS.FIND_NODES_START,
         );
         const r2 = await this.blockchainModuleManager.getR2(blockchainId);
@@ -87,6 +89,7 @@ class FindNodesCommand extends Command {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchainId,
             OPERATION_ID_STATUS.FIND_NODES_END,
         );
 

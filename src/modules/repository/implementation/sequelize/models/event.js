@@ -8,6 +8,7 @@ export default (sequelize, DataTypes) => {
                 autoIncrement: true,
             },
             operationId: DataTypes.UUID,
+            blockchainId: DataTypes.STRING,
             name: DataTypes.STRING,
             timestamp: DataTypes.STRING,
             value1: DataTypes.TEXT,
