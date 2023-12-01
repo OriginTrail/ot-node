@@ -96,7 +96,6 @@ class Web3Service {
     async initializeWeb3() {
         const providers = [];
         for (const rpcEndpoint of this.config.rpcEndpoints) {
-            console.log(rpcEndpoint);
             const isWebSocket = rpcEndpoint.startsWith('ws');
             const Provider = isWebSocket
                 ? ethers.providers.WebSocketProvider
