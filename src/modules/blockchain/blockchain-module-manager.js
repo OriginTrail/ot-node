@@ -416,23 +416,6 @@ class BlockchainModuleManager extends BaseModuleManager {
     async hasPendingUpdate(blockchain, tokenId) {
         return this.callImplementationFunction(blockchain, 'hasPendingUpdate', [tokenId]);
     }
-
-    async getBlockchainsNodeInfo() {
-        const blockchainsNodeInfo = [];
-        const implementations = this.getImplementationNames();
-        for (const implementation of implementations) {
-            const blockchainInfo = {
-                blockchain_id: implementation,
-                // eslint-disable-next-line no-await-in-loop
-                identity_id: await this.getIdentityId(implementation),
-                operational_wallet: this.getPublicKey(implementation),
-                management_wallet: this.getManagementKey(implementation),
-            };
-            blockchainsNodeInfo.push(blockchainInfo);
-        }
-
-        return blockchainsNodeInfo;
-    }
 }
 
 export default BlockchainModuleManager;

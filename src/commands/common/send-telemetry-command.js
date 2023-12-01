@@ -30,6 +30,19 @@ class SendTelemetryCommand extends Command {
 
         try {
             const events = (await this.getUnpublishedEvents()) || [];
+            const blockchainsNodeInfo = [];
+            const implementations = this.blockchainModuleManager.getImplementationNames();
+            for (const implementation of implementations) {
+                const blockchainInfo = {
+                    blockchain_id: implementation,
+                    // eslint-disable-next-line no-await-in-loop
+                    identity_id: await this.blockchainModuleManager.getIdentityId(implementation),
+                    operational_wallet: this.blockchainModuleManager.getPublicKey(implementation),
+                    management_wallet:
+                        this.blockchainModuleManager.getManagementKey(implementation),
+                };
+                blockchainsNodeInfo.push(blockchainInfo);
+            }
             const nodeData = {
                 version: pjson.version,
                 identity: this.networkModuleManager.getPeerId().toB58String(),
@@ -37,7 +50,7 @@ class SendTelemetryCommand extends Command {
                 triple_store: this.config.modules.tripleStore.defaultImplementation,
                 auto_update_enabled: this.config.modules.autoUpdater.enabled,
                 multiaddresses: this.networkModuleManager.getMultiaddrs(),
-                blockchains: await this.blockchainModuleManager.getBlockchainsNodeInfo(),
+                blockchains: blockchainsNodeInfo,
             };
             const isDataSuccessfullySent = await this.telemetryModuleManager.sendTelemetryData(
                 nodeData,
