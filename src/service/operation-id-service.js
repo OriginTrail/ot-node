@@ -80,7 +80,7 @@ class OperationIdService {
     emitChangeEvent(
         status,
         operationId,
-        blockchain = null,
+        blockchainId = null,
         value1 = null,
         value2 = null,
         value3 = null,
@@ -91,7 +91,7 @@ class OperationIdService {
         const eventData = {
             lastEvent: status,
             operationId,
-            blockchain,
+            blockchainId,
             timestamp,
             value1,
             value2,
