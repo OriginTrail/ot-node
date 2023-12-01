@@ -18,6 +18,7 @@ class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
             commandData;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.VALIDATE_ASSET_REMOTE_START,
         );
 
@@ -42,6 +43,7 @@ class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.VALIDATE_ASSET_REMOTE_END,
         );
         return validationResult;

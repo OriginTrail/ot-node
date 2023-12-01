@@ -26,7 +26,11 @@ class ProtocolScheduleMessagesCommand extends Command {
         const currentBatchLeftoverNodes =
             batchSize < leftoverNodes.length ? leftoverNodes.slice(batchSize) : [];
 
-        await this.operationIdService.updateOperationIdStatus(operationId, this.startEvent);
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            this.startEvent,
+        );
 
         this.logger.debug(
             `Trying to ${this.operationService.getOperationName()} to batch of ${

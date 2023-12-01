@@ -225,9 +225,9 @@ class HandleProtocolMessageCommand extends Command {
     }
 
     async handleError(errorMessage, command) {
-        const { operationId, remotePeerId, keywordUuid, protocol } = command.data;
+        const { operationId, blockchain, remotePeerId, keywordUuid, protocol } = command.data;
 
-        await super.handleError(operationId, errorMessage, this.errorType, true);
+        await super.handleError(operationId, blockchain, errorMessage, this.errorType, true);
         await this.networkModuleManager.sendMessageResponse(
             protocol,
             remotePeerId,
