@@ -9,6 +9,7 @@ import {
     OPERATION_ID_STATUS,
     TRIPLE_STORE_REPOSITORIES,
 } from '../../constants/constants.js';
+import MigrationExecutor from '../../migration/migration-executor.js';
 
 class AssetSyncCommand extends Command {
     constructor(ctx) {
@@ -31,6 +32,16 @@ class AssetSyncCommand extends Command {
                 `Skipping execution of ${command.name} as assetSync is not enabled in configuration`,
             );
             return Command.empty();
+        }
+        const migrationExecuted = await MigrationExecutor.migrationAlreadyExecuted(
+            'ualExtensionTripleStoreMigration',
+            this.fileService,
+        );
+        if (!migrationExecuted) {
+            this.logger.info(
+                'Asset sync command will be postponed until ual extension triple store migration is completed',
+            );
+            return Command.repeat();
         }
 
         this.logger.debug(`Started executing asset sync command`);
