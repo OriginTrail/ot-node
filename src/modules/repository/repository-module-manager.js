@@ -314,8 +314,11 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('blockchain_event').insertBlockchainEvents(events);
     }
 
-    async getAllUnprocessedBlockchainEvents(eventNames) {
-        return this.getRepository('blockchain_event').getAllUnprocessedBlockchainEvents(eventNames);
+    async getAllUnprocessedBlockchainEvents(eventNames, blockchainId) {
+        return this.getRepository('blockchain_event').getAllUnprocessedBlockchainEvents(
+            eventNames,
+            blockchainId,
+        );
     }
 
     async markBlockchainEventsAsProcessed(events) {
@@ -385,6 +388,18 @@ class RepositoryModuleManager extends BaseModuleManager {
                 stateIndex,
                 lastCommitEpoch,
                 lastProofEpoch,
+            );
+        }
+    }
+
+    async updateServiceAgreementForTokenId(tokenId, agreementId, keyword, assertionId, stateIndex) {
+        if (this.initialized) {
+            return this.getRepository('service_agreement').updateServiceAgreementForTokenId(
+                tokenId,
+                agreementId,
+                keyword,
+                assertionId,
+                stateIndex,
             );
         }
     }
@@ -468,6 +483,14 @@ class RepositoryModuleManager extends BaseModuleManager {
             agreementId,
             epochsNumber,
         );
+    }
+
+    async getNumberOfActiveServiceAgreements() {
+        return this.getRepository('service_agreement').getNumberOfActiveServiceAgreements();
+    }
+
+    async getServiceAgreements(fromTokenId, batchSize) {
+        return this.getRepository('service_agreement').getServiceAgreements(fromTokenId, batchSize);
     }
 }
 

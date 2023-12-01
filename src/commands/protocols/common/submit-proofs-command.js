@@ -2,6 +2,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
+    COMMAND_TX_GAS_INCREASE_FACTORS,
     TRIPLE_STORE_REPOSITORIES,
 } from '../../../constants/constants.js';
 import Command from '../../command.js';
@@ -32,14 +33,15 @@ class SubmitProofsCommand extends Command {
             agreementId,
             assertionId,
             stateIndex,
+            gasPrice,
         } = command.data;
 
         this.logger.trace(
-            `Started ${command.name} for agreement id: ${agreementId} ` +
-                `blockchain: ${blockchain}, contract: ${contract}, token id: ${tokenId},` +
-                `keyword: ${keyword}, hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
-                `stateIndex: ${stateIndex}, operationId: ${operationId}, ` +
-                ` Retry number ${COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1}`,
+            `Started ${command.name} for the Service Agreement with the ID: ${agreementId} ` +
+                `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
+                `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
+                `Retry number: ${COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1}`,
         );
 
         if (command.retries === COMMAND_RETRIES.SUBMIT_PROOFS) {
@@ -51,7 +53,6 @@ class SubmitProofsCommand extends Command {
             );
         }
 
-        this.logger.trace(`Calculating proofs for agreement id : ${agreementId}`);
         const { challenge } = await this.blockchainModuleManager.getChallenge(
             blockchain,
             contract,
@@ -66,7 +67,11 @@ class SubmitProofsCommand extends Command {
         );
 
         if (!assertion.length) {
-            this.logger.trace(`Assertion with id: ${assertionId} not found in triple store.`);
+            const errorMessage = `Assertion with id: ${assertionId} not found in the triple store.`;
+            this.logger.trace(errorMessage);
+
+            await this.handleError(operationId, errorMessage, this.errorType, true);
+
             return Command.empty();
         }
 
@@ -98,10 +103,23 @@ class SubmitProofsCommand extends Command {
         );
         if (alreadySubmitted) {
             this.logger.trace(
-                `Proofs already submitted for blockchain: ${blockchain} agreement id: ${agreementId}, epoch: ${epoch}, state index: ${stateIndex}`,
+                `Proof has already been submitted for the Service Agreement with the ID: ${agreementId}, ` +
+                    `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
+                    `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                    `State Index: ${stateIndex}, Operation ID: ${operationId}`,
             );
+
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
+                operationId,
+                agreementId,
+                epoch,
+            );
+
             return Command.empty();
         }
+
+        const txGasPrice = gasPrice ?? (await this.blockchainModuleManager.getGasPrice());
 
         const transactionCompletePromise = new Promise((resolve, reject) => {
             this.blockchainModuleManager.sendProof(
@@ -116,21 +134,59 @@ class SubmitProofsCommand extends Command {
                 stateIndex,
                 (result) => {
                     if (result?.error) {
-                        reject(result.error);
+                        if (result.error.message.includes('NodeAlreadyRewarded')) {
+                            resolve(false);
+                        } else {
+                            reject(result.error);
+                        }
                     }
-                    resolve();
+
+                    resolve(true);
                 },
+                txGasPrice,
             );
         });
 
-        await transactionCompletePromise;
+        let txSuccess;
+        try {
+            txSuccess = await transactionCompletePromise;
+        } catch (error) {
+            this.logger.warn(
+                `Failed to execute ${command.name}, Error Message: ${error.message} for the Service Agreement ` +
+                    `with the ID: ${agreementId}, Blockchain: ${blockchain}, Contract: ${contract}, ` +
+                    `Token ID: ${tokenId}, Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, ` +
+                    `Epoch: ${epoch}, State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
+                    `Retry number: ${COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1}.`,
+            );
+
+            let newGasPrice;
+            if (
+                error.message.includes(`timeout exceeded`) ||
+                error.message.includes(`Pool(TooLowPriority`)
+            ) {
+                newGasPrice = Math.ceil(txGasPrice * COMMAND_TX_GAS_INCREASE_FACTORS.SUBMIT_PROOFS);
+            } else {
+                newGasPrice = null;
+            }
+
+            Object.assign(command.data, { gasPrice: newGasPrice });
+
+            return Command.retry();
+        }
+
+        let msgBase;
+        if (txSuccess) {
+            msgBase = 'Successfully executed';
+        } else {
+            msgBase = 'Node has already sent proof. Finishing';
+        }
 
         this.logger.trace(
-            `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
-                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}. Retry number ${
-                    COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1
-                }`,
+            `${msgBase} ${command.name} for the Service Agreement with the ID: ${agreementId}, ` +
+                `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
+                `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
+                `Retry number: ${COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1}`,
         );
 
         this.operationIdService.emitChangeEvent(

@@ -1,5 +1,5 @@
 import { assertionMetadata } from 'assertion-tools';
-import { BYTES_IN_KILOBYTE } from '../constants/constants.js';
+import { BYTES_IN_KILOBYTE, ZERO_ADDRESS } from '../constants/constants.js';
 
 class ValidationService {
     constructor(ctx) {
@@ -16,11 +16,14 @@ class ValidationService {
 
         let isValid = true;
         try {
-            await this.blockchainModuleManager.getKnowledgeAssetOwner(
+            const result = await this.blockchainModuleManager.getKnowledgeAssetOwner(
                 blockchain,
                 contract,
                 tokenId,
             );
+            if (!result || result === ZERO_ADDRESS) {
+                isValid = false;
+            }
         } catch (err) {
             isValid = false;
         }

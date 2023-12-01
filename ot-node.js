@@ -5,19 +5,11 @@ import { createRequire } from 'module';
 import { execSync } from 'child_process';
 import DependencyInjection from './src/service/dependency-injection.js';
 import Logger from './src/logger/logger.js';
-import { MIN_NODE_VERSION, NODE_ENVIRONMENTS } from './src/constants/constants.js';
+import { MIN_NODE_VERSION } from './src/constants/constants.js';
 import FileService from './src/service/file-service.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
-import PullBlockchainShardingTableMigration from './src/migration/pull-sharding-table-migration.js';
-import TripleStoreUserConfigurationMigration from './src/migration/triple-store-user-configuration-migration.js';
-import PrivateAssetsMetadataMigration from './src/migration/private-assets-metadata-migration.js';
-import ServiceAgreementsMetadataMigration from './src/migration/service-agreements-metadata-migration.js';
-import RemoveAgreementStartEndTimeMigration from './src/migration/remove-agreement-start-end-time-migration.js';
-import MarkOldBlockchainEventsAsProcessedMigration from './src/migration/mark-old-blockchain-events-as-processed-migration.js';
-import TripleStoreMetadataMigration from './src/migration/triple-store-metadata-migration.js';
-import RemoveOldEpochCommandsMigration from './src/migration/remove-old-epoch-commands-migration.js';
-import PendingStorageMigration from './src/migration/pending-storage-migration.js';
+import MigrationExecutor from './src/migration/migration-executor.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -35,7 +27,19 @@ class OTNode {
     async start() {
         await this.checkForUpdate();
         await this.removeUpdateFile();
-        await this.executeTripleStoreUserConfigurationMigration();
+
+        await MigrationExecutor.executeTripleStoreUserConfigurationMigration(
+            this.logger,
+            this.config,
+        );
+        await MigrationExecutor.executeTelemetryModuleUserConfigurationMigration(
+            this.logger,
+            this.config,
+        );
+        await MigrationExecutor.executeUalExtensionUserConfigurationMigration(
+            this.logger,
+            this.config,
+        );
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
         this.logger.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
@@ -52,14 +56,43 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
-        await this.executePullShardingTableMigration();
-        await this.executePrivateAssetsMetadataMigration();
-        await this.executeRemoveAgreementStartEndTimeMigration();
-        await this.executeMarkOldBlockchainEventsAsProcessedMigration();
-        await this.executeTripleStoreMetadataMigration();
-        await this.executeServiceAgreementsMetadataMigration();
-        await this.executeRemoveOldEpochCommandsMigration();
-        await this.executePendingStorageMigration();
+
+        await MigrationExecutor.executePullShardingTableMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+        await MigrationExecutor.executePrivateAssetsMetadataMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+        await MigrationExecutor.executeRemoveAgreementStartEndTimeMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+        await MigrationExecutor.executeMarkOldBlockchainEventsAsProcessedMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+        await MigrationExecutor.executeTripleStoreMetadataMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+        await MigrationExecutor.executeServiceAgreementsMetadataMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+        await MigrationExecutor.executeRemoveOldEpochCommandsMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+        await MigrationExecutor.executePendingStorageMigration(this.logger, this.config);
 
         // Profile creation disabled for the Asset sync nodes at the moment
         if (!this.config.assetSync.enabled) {
@@ -67,12 +100,21 @@ class OTNode {
         }
 
         await this.initializeCommandExecutor();
+        await this.initializeShardingTableService();
+
+        MigrationExecutor.executeUalExtensionTripleStoreMigration(
+            this.container,
+            this.logger,
+            this.config,
+        ).then(async () => {
+            await this.initializeBlockchainEventListenerService();
+        });
+
         await this.initializeRouters();
         await this.startNetworkModule();
 
-        await this.initializeShardingTableService();
-        await this.initializeTelemetryInjectionService();
-        await this.initializeBlockchainEventListenerService();
+        this.startTelemetryModule();
+        this.resumeCommandExecutor();
         this.logger.info('Node is up and running!');
     }
 
@@ -247,12 +289,26 @@ class OTNode {
     async initializeCommandExecutor() {
         try {
             const commandExecutor = this.container.resolve('commandExecutor');
-            await commandExecutor.init();
-            commandExecutor.replay();
-            await commandExecutor.start();
+            commandExecutor.pauseQueue();
+            await commandExecutor.addDefaultCommands();
+            commandExecutor
+                .replayOldCommands()
+                .then(() => this.logger.info('Finished replaying old commands'));
         } catch (e) {
             this.logger.error(
                 `Command executor initialization failed. Error message: ${e.message}`,
+            );
+            this.stop(1);
+        }
+    }
+
+    resumeCommandExecutor() {
+        try {
+            const commandExecutor = this.container.resolve('commandExecutor');
+            commandExecutor.resumeQueue();
+        } catch (e) {
+            this.logger.error(
+                `Unable to resume command executor queue. Error message: ${e.message}`,
             );
             this.stop(1);
         }
@@ -263,190 +319,19 @@ class OTNode {
         await networkModuleManager.start();
     }
 
-    async executePrivateAssetsMetadataMigration() {
-        if (
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
-        )
-            return;
-        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
-        const tripleStoreService = this.container.resolve('tripleStoreService');
-        const serviceAgreementService = this.container.resolve('serviceAgreementService');
-        const ualService = this.container.resolve('ualService');
-        const dataService = this.container.resolve('dataService');
-
-        const migration = new PrivateAssetsMetadataMigration(
-            'privateAssetsMetadataMigration',
-            this.logger,
-            this.config,
-            tripleStoreService,
-            blockchainModuleManager,
-            serviceAgreementService,
-            ualService,
-            dataService,
-        );
-
-        if (!(await migration.migrationAlreadyExecuted())) {
-            await migration.migrate();
-            this.logger.info('Node will now restart!');
-            this.stop(1);
-        }
-    }
-
-    async executeTripleStoreUserConfigurationMigration() {
-        if (
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
-        )
-            return;
-
-        const migration = new TripleStoreUserConfigurationMigration(
-            'tripleStoreUserConfigurationMigration',
-            this.logger,
-            this.config,
-        );
-        if (!(await migration.migrationAlreadyExecuted())) {
-            await migration.migrate();
-            this.logger.info('Node will now restart!');
-            this.stop(1);
-        }
-    }
-
-    async executePullShardingTableMigration() {
-        if (
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
-        )
-            return;
-
-        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+    startTelemetryModule() {
+        const telemetryModuleManager = this.container.resolve('telemetryModuleManager');
         const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
-        const validationModuleManager = this.container.resolve('validationModuleManager');
-
-        const migration = new PullBlockchainShardingTableMigration(
-            'pullShardingTableMigrationV612',
-            this.logger,
-            this.config,
-            repositoryModuleManager,
-            blockchainModuleManager,
-            validationModuleManager,
-        );
-        if (!(await migration.migrationAlreadyExecuted())) {
-            await migration.migrate();
-        }
-    }
-
-    async executeServiceAgreementsMetadataMigration() {
-        if (
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
-        )
-            return;
-
-        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
-        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
-        const tripleStoreService = this.container.resolve('tripleStoreService');
-        const serviceAgreementService = this.container.resolve('serviceAgreementService');
-        const ualService = this.container.resolve('ualService');
-
-        const migration = new ServiceAgreementsMetadataMigration(
-            'serviceAgreementsMetadataMigration',
-            this.logger,
-            this.config,
-            tripleStoreService,
-            blockchainModuleManager,
-            repositoryModuleManager,
-            serviceAgreementService,
-            ualService,
-        );
-        if (!(await migration.migrationAlreadyExecuted())) {
-            await migration.migrate();
-        }
-    }
-
-    async executeRemoveAgreementStartEndTimeMigration() {
-        if (
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
-        )
-            return;
-
-        const tripleStoreService = this.container.resolve('tripleStoreService');
-
-        const migration = new RemoveAgreementStartEndTimeMigration(
-            'removeAgreementStartEndTimeMigration',
-            this.logger,
-            this.config,
-            tripleStoreService,
-        );
-        if (!(await migration.migrationAlreadyExecuted())) {
-            await migration.migrate();
-        }
-    }
-
-    async executeTripleStoreMetadataMigration() {
-        if (
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
-        )
-            return;
-        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
-        const tripleStoreService = this.container.resolve('tripleStoreService');
-        const serviceAgreementService = this.container.resolve('serviceAgreementService');
-        const ualService = this.container.resolve('ualService');
-        const dataService = this.container.resolve('dataService');
-
-        const migration = new TripleStoreMetadataMigration(
-            'tripleStoreMetadataMigration',
-            this.logger,
-            this.config,
-            tripleStoreService,
-            blockchainModuleManager,
-            serviceAgreementService,
-            ualService,
-            dataService,
-        );
-
-        if (!(await migration.migrationAlreadyExecuted())) {
-            await migration.migrate();
-        }
-    }
-
-    async executeRemoveOldEpochCommandsMigration() {
-        if (
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
-        )
-            return;
-
-        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
-
-        const migration = new RemoveOldEpochCommandsMigration(
-            'removeOldEpochCommandsMigration',
-            this.logger,
-            this.config,
-            repositoryModuleManager,
-        );
-        if (!(await migration.migrationAlreadyExecuted())) {
-            await migration.migrate();
-        }
-    }
-
-    async executePendingStorageMigration() {
-        if (
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
-        )
-            return;
-
-        const migration = new PendingStorageMigration(
-            'pendingStorageMigration',
-            this.logger,
-            this.config,
-        );
-        if (!(await migration.migrationAlreadyExecuted())) {
-            await migration.migrate();
-        }
+        telemetryModuleManager.listenOnEvents((eventData) => {
+            repositoryModuleManager.createEventRecord(
+                eventData.operationId,
+                eventData.lastEvent,
+                eventData.timestamp,
+                eventData.value1,
+                eventData.value2,
+                eventData.value3,
+            );
+        });
     }
 
     async initializeShardingTableService() {
@@ -459,22 +344,6 @@ class OTNode {
                 `Unable to initialize sharding table service. Error message: ${error.message} OT-node shutting down...`,
             );
             this.stop(1);
-        }
-    }
-
-    async initializeTelemetryInjectionService() {
-        if (this.config.telemetry.enabled) {
-            try {
-                const telemetryHubModuleManager = this.container.resolve(
-                    'telemetryInjectionService',
-                );
-                telemetryHubModuleManager.initialize();
-                this.logger.info('Telemetry Injection Service initialized successfully');
-            } catch (e) {
-                this.logger.error(
-                    `Telemetry hub module initialization failed. Error message: ${e.message}`,
-                );
-            }
         }
     }
 
@@ -500,26 +369,6 @@ class OTNode {
     stop(code = 0) {
         this.logger.info('Stopping node...');
         process.exit(code);
-    }
-
-    async executeMarkOldBlockchainEventsAsProcessedMigration() {
-        if (
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
-        )
-            return;
-
-        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
-
-        const migration = new MarkOldBlockchainEventsAsProcessedMigration(
-            'markOldBlockchainEventsAsProcessedMigration',
-            this.logger,
-            this.config,
-            repositoryModuleManager,
-        );
-        if (!(await migration.migrationAlreadyExecuted())) {
-            await migration.migrate();
-        }
     }
 }
 

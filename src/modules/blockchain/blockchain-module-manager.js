@@ -68,6 +68,10 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'createProfile', [peerId]);
     }
 
+    async getGasPrice(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getGasPrice');
+    }
+
     async healthCheck(blockchain) {
         return this.callImplementationFunction(blockchain, 'healthCheck');
     }
@@ -258,6 +262,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         epoch,
         latestStateIndex,
         callback,
+        gasPrice,
     ) {
         return this.callImplementationFunction(blockchain, 'submitCommit', [
             assetContractAddress,
@@ -267,6 +272,7 @@ class BlockchainModuleManager extends BaseModuleManager {
             epoch,
             latestStateIndex,
             callback,
+            gasPrice,
         ]);
     }
 
@@ -278,6 +284,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         hashFunctionId,
         epoch,
         callback,
+        gasPrice,
     ) {
         return this.callImplementationFunction(blockchain, 'submitUpdateCommit', [
             assetContractAddress,
@@ -286,6 +293,7 @@ class BlockchainModuleManager extends BaseModuleManager {
             hashFunctionId,
             epoch,
             callback,
+            gasPrice,
         ]);
     }
 
@@ -317,6 +325,7 @@ class BlockchainModuleManager extends BaseModuleManager {
         chunkHash,
         latestStateIndex,
         callback,
+        gasPrice,
     ) {
         return this.callImplementationFunction(blockchain, 'sendProof', [
             assetContractAddress,
@@ -328,6 +337,7 @@ class BlockchainModuleManager extends BaseModuleManager {
             chunkHash,
             latestStateIndex,
             callback,
+            gasPrice,
         ]);
     }
 
@@ -387,10 +397,8 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     callImplementationFunction(blockchain, functionName, args = []) {
         if (blockchain) {
-            const split = blockchain.split(':');
-            const [name] = split;
-            if (this.getImplementation(name)) {
-                return this.getImplementation(name).module[functionName](...args);
+            if (this.getImplementation(blockchain)) {
+                return this.getImplementation(blockchain).module[functionName](...args);
             }
         } else {
             return this.getImplementation().module[functionName](...args);

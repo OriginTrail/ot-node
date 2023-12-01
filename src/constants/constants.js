@@ -1,4 +1,12 @@
-import { BigNumber } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
+
+export const WS_RPC_PROVIDER_PRIORITY = 2;
+
+export const HTTP_RPC_PROVIDER_PRIORITY = 1;
+
+export const FALLBACK_PROVIDER_QUORUM = 1;
+
+export const RPC_PROVIDER_STALL_TIMEOUT = 60 * 1000;
 
 export const UINT256_MAX_BN = BigNumber.from(2).pow(256).sub(1);
 
@@ -8,7 +16,11 @@ export const STAKE_UINT256_MULTIPLIER_BN = UINT256_MAX_BN.div(500000000);
 
 export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN.div(UINT32_MAX_BN);
 
-export const ZERO_BYTES32 = `0x${'0'.repeat(64)}`;
+export const ZERO_PREFIX = '0x';
+
+export const ZERO_BYTES32 = ethers.constants.HashZero;
+
+export const ZERO_ADDRESS = ethers.constants.AddressZero;
 
 export const SCHEMA_CONTEXT = 'http://schema.org/';
 
@@ -19,7 +31,23 @@ export const COMMIT_BLOCK_DURATION_IN_BLOCKS = 5;
 
 export const COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS = 2;
 
-export const TRANSACTION_POLLING_TIMEOUT_MILLIS = 50 * 1000;
+export const TRANSACTION_POLLING_TIMEOUT_MILLIS = 300 * 1000;
+
+export const SOLIDITY_ERROR_STRING_PREFIX = '0x08c379a0';
+
+export const SOLIDITY_PANIC_CODE_PREFIX = '0x4e487b71';
+
+export const SOLIDITY_PANIC_REASONS = {
+    0x1: 'Assertion error',
+    0x11: 'Arithmetic operation underflowed or overflowed outside of an unchecked block',
+    0x12: 'Division or modulo division by zero',
+    0x21: 'Tried to convert a value into an enum, but the value was too big or negative',
+    0x22: 'Incorrectly encoded storage byte array',
+    0x31: '.pop() was called on an empty array',
+    0x32: 'Array accessed at an out-of-bounds or negative index',
+    0x41: 'Too much memory was allocated, or an array was created that is too large',
+    0x51: 'Called a zero-initialized variable of internal function type',
+};
 
 export const LIBP2P_KEY_DIRECTORY = 'libp2p';
 
@@ -38,6 +66,7 @@ export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
 export const MAX_FILE_SIZE = 2621440;
 
 export const GET_STATES = { LATEST: 'LATEST', FINALIZED: 'LATEST_FINALIZED' };
+
 export const BYTES_IN_KILOBYTE = 1024;
 
 export const BYTES_IN_MEGABYTE = BYTES_IN_KILOBYTE * BYTES_IN_KILOBYTE;
@@ -163,9 +192,15 @@ export const DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 export const DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
 
 export const COMMAND_RETRIES = {
-    SUBMIT_COMMIT: 3,
-    SUBMIT_UPDATE_COMMIT: 3,
-    SUBMIT_PROOFS: 3,
+    SUBMIT_COMMIT: 5,
+    SUBMIT_UPDATE_COMMIT: 5,
+    SUBMIT_PROOFS: 5,
+};
+
+export const COMMAND_TX_GAS_INCREASE_FACTORS = {
+    SUBMIT_COMMIT: 1.2,
+    SUBMIT_UPDATE_COMMIT: 1.2,
+    SUBMIT_PROOFS: 1.2,
 };
 
 export const WEBSOCKET_PROVIDER_OPTIONS = {
@@ -548,6 +583,7 @@ export const CONTRACT_EVENTS = {
 export const NODE_ENVIRONMENTS = {
     DEVELOPMENT: 'development',
     TEST: 'test',
+    DEVNET: 'devnet',
     TESTNET: 'testnet',
     MAINNET: 'mainnet',
 };
@@ -560,6 +596,7 @@ export const CONTRACT_EVENT_FETCH_INTERVALS = {
 export const BLOCK_TIME_MILLIS = {
     OTP: 12_000,
     HARDHAT: 5_000,
+    GNOSIS: 5_000,
     DEFAULT: 12_000,
 };
 

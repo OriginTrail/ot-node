@@ -123,7 +123,7 @@ class Libp2pService {
 
     getKeyPath() {
         let directoryPath;
-        if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
+        if (!devEnvironment) {
             directoryPath = join(
                 appRootPath.path,
                 '..',

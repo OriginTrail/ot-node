@@ -3,6 +3,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     COMMAND_RETRIES,
+    COMMAND_TX_GAS_INCREASE_FACTORS,
 } from '../../../../constants/constants.js';
 
 class SubmitUpdateCommitCommand extends Command {
@@ -25,14 +26,14 @@ class SubmitUpdateCommitCommand extends Command {
             agreementData,
             agreementId,
             operationId,
+            gasPrice,
         } = command.data;
 
         this.logger.trace(
-            `Started ${command.name} for agreement id: ${agreementId} ` +
-                `blockchain: ${blockchain} contract: ${contract}, token id: ${tokenId}, ` +
-                `keyword: ${keyword}, hash function id: ${hashFunctionId}. Retry number ${
-                    COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1
-                }`,
+            `Started ${command.name} for the Service Agreement with the ID: ${agreementId}, ` +
+                `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
+                `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Operation ID: ${operationId}, ` +
+                `Retry number: ${COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1}`,
         );
 
         const epoch = await this.calculateCurrentEpoch(
@@ -56,60 +57,87 @@ class SubmitUpdateCommitCommand extends Command {
         );
 
         if (!hasPendingUpdate) {
-            this.logger.trace(`Not submitting as state is already finalized for update.`);
+            this.logger.trace(
+                `Not submitting update commit as state has been already finalized for the Service Agreement ` +
+                    `with the ID: ${agreementId}, Blockchain: ${blockchain}, Contract: ${contract}, ` +
+                    `Token ID: ${tokenId}, Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, ` +
+                    `Epoch: ${epoch}, Operation ID: ${operationId}`,
+            );
+
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_END,
+                operationId,
+                agreementId,
+                epoch,
+            );
+
             return Command.empty();
         }
 
-        this.blockchainModuleManager.submitUpdateCommit(
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-            hashFunctionId,
-            epoch,
-            async (result) => {
-                if (!result.error) {
-                    this.operationIdService.emitChangeEvent(
-                        OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_END,
-                        operationId,
-                        agreementId,
-                        epoch,
-                    );
-                    this.logger.info('Successfully executed submit update commit');
-                } else if (command.retries - 1 === 0) {
-                    const errorMessage = `Failed executing submit update commit command, maximum number of retries reached. Error: ${result.error.message}`;
-                    this.logger.error(errorMessage);
-                    this.operationIdService.emitChangeEvent(
-                        OPERATION_ID_STATUS.FAILED,
-                        operationId,
-                        errorMessage,
-                        this.errorType,
-                        epoch,
-                    );
-                } else {
-                    const blockTime = this.blockchainModuleManager.getBlockTimeMillis(blockchain);
-                    this.logger.warn(
-                        `Failed executing submit update commit command, retrying in ${blockTime}ms. Error: ${result.error.message}`,
-                    );
-                    await this.commandExecutor.add({
-                        name: 'submitUpdateCommitCommand',
-                        delay: blockTime,
-                        retries: command.retries - 1,
-                        data: command.data,
-                        transactional: false,
-                    });
-                }
-            },
-        );
+        const txGasPrice = gasPrice ?? (await this.blockchainModuleManager.getGasPrice());
 
-        const transactionQueueLength =
-            this.blockchainModuleManager.getTransactionQueueLength(blockchain);
+        const transactionCompletePromise = new Promise((resolve, reject) => {
+            this.blockchainModuleManager.submitUpdateCommit(
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+                hashFunctionId,
+                epoch,
+                (result) => {
+                    if (result?.error) {
+                        reject(result.error);
+                    }
+
+                    resolve();
+                },
+                txGasPrice,
+            );
+        });
+
+        try {
+            await transactionCompletePromise;
+        } catch (error) {
+            this.logger.warn(
+                `Failed to execute ${command.name}, Error Message: ${error.message} for the Service Agreement ` +
+                    `with the ID: ${agreementId}, Blockchain: ${blockchain}, Contract: ${contract}, ` +
+                    `Token ID: ${tokenId}, Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, ` +
+                    `Epoch: ${epoch}, Operation ID: ${operationId}, Retry number: ${
+                        COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1
+                    }.`,
+            );
+
+            let newGasPrice;
+            if (
+                error.message.includes(`timeout exceeded`) ||
+                error.message.includes(`Pool(TooLowPriority`)
+            ) {
+                newGasPrice = Math.ceil(
+                    txGasPrice * COMMAND_TX_GAS_INCREASE_FACTORS.SUBMIT_UPDATE_COMMIT,
+                );
+            } else {
+                newGasPrice = null;
+            }
+
+            Object.assign(command.data, { gasPrice: newGasPrice });
+
+            return Command.retry();
+        }
 
         this.logger.trace(
-            `Scheduled submit update commit transaction for agreement id: ${agreementId} ` +
-                `blockchain: ${blockchain} contract: ${contract}, token id: ${tokenId}, ` +
-                `keyword: ${keyword}, hash function id: ${hashFunctionId}, operationId ${operationId}` +
-                `transaction queue length: ${transactionQueueLength}.`,
+            `Successfully executed ${command.name} for the Service Agreement with the ID: ${agreementId}, ` +
+                `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
+                `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                `Operation ID: ${operationId}, Retry number: ${
+                    COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1
+                }`,
+        );
+
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_END,
+            operationId,
+            agreementId,
+            epoch,
         );
 
         return Command.empty();

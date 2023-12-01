@@ -90,8 +90,7 @@ class FileService {
     }
 
     async removeFolder(folderPath) {
-        this.logger.trace(`Removing folder at path: ${folderPath}`);
-
+        this.logger.debug(`Removing folder at path: ${folderPath}`);
         try {
             await rm(folderPath, { recursive: true });
             return true;
@@ -105,7 +104,11 @@ class FileService {
     }
 
     getDataFolderPath() {
-        if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
+        if (
+            process.env.NODE_ENV === 'testnet' ||
+            process.env.NODE_ENV === 'mainnet' ||
+            process.env.NODE_ENV === 'devnet'
+        ) {
             return path.join(appRootPath.path, '..', this.config.appDataPath);
         }
         return path.join(appRootPath.path, this.config.appDataPath);

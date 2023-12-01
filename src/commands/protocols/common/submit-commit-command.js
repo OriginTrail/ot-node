@@ -1,4 +1,9 @@
-import { OPERATION_ID_STATUS, ERROR_TYPE, COMMAND_RETRIES } from '../../../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+    COMMAND_RETRIES,
+    COMMAND_TX_GAS_INCREASE_FACTORS,
+} from '../../../constants/constants.js';
 import Command from '../../command.js';
 
 class SubmitCommitCommand extends Command {
@@ -22,14 +27,15 @@ class SubmitCommitCommand extends Command {
             epoch,
             agreementId,
             stateIndex,
+            gasPrice,
         } = command.data;
 
         this.logger.trace(
-            `Started ${command.name} for agreement id: ${agreementId} ` +
-                `blockchain: ${blockchain}, contract: ${contract}, token id: ${tokenId},` +
-                `keyword: ${keyword}, hash function id: ${hashFunctionId}, epoch: ${epoch}, ` +
-                `stateIndex: ${stateIndex}, operationId: ${operationId}, ` +
-                ` Retry number ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}`,
+            `Started ${command.name} for the Service Agreement with the ID: ${agreementId}, ` +
+                `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
+                `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
+                `Retry number: ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}`,
         );
 
         if (command.retries === COMMAND_RETRIES.SUBMIT_COMMIT) {
@@ -50,10 +56,23 @@ class SubmitCommitCommand extends Command {
         );
         if (alreadySubmitted) {
             this.logger.trace(
-                `Commit already submitted for blockchain: ${blockchain} agreement id: ${agreementId}, epoch: ${epoch}, state index: ${stateIndex}`,
+                `Commit has already been submitted for the Service Agreement with the ID: ${agreementId}, ` +
+                    `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
+                    `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                    `State Index: ${stateIndex}, Operation ID: ${operationId}`,
             );
+
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
+                operationId,
+                agreementId,
+                epoch,
+            );
+
             return Command.empty();
         }
+
+        const txGasPrice = gasPrice ?? (await this.blockchainModuleManager.getGasPrice());
 
         const transactionCompletePromise = new Promise((resolve, reject) => {
             this.blockchainModuleManager.submitCommit(
@@ -66,22 +85,61 @@ class SubmitCommitCommand extends Command {
                 stateIndex,
                 (result) => {
                     if (result?.error) {
-                        reject(result.error);
+                        if (result.error.message.includes('NodeAlreadySubmittedCommit')) {
+                            resolve(false);
+                        } else {
+                            reject(result.error);
+                        }
                     }
-                    resolve();
+
+                    resolve(true);
                 },
+                txGasPrice,
             );
         });
 
-        await transactionCompletePromise;
+        let txSuccess;
+        try {
+            txSuccess = await transactionCompletePromise;
+        } catch (error) {
+            this.logger.warn(
+                `Failed to execute ${command.name}, Error Message: ${error.message} for the Service Agreement ` +
+                    `with the ID: ${agreementId}, Blockchain: ${blockchain}, Contract: ${contract}, ` +
+                    `Token ID: ${tokenId}, Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, ` +
+                    `Epoch: ${epoch}, State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
+                    `Retry number: ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}.`,
+            );
+
+            let newGasPrice;
+            if (
+                error.message.includes(`timeout exceeded`) ||
+                error.message.includes(`Pool(TooLowPriority`)
+            ) {
+                newGasPrice = Math.ceil(txGasPrice * COMMAND_TX_GAS_INCREASE_FACTORS.SUBMIT_COMMIT);
+            } else {
+                newGasPrice = null;
+            }
+
+            Object.assign(command.data, { gasPrice: newGasPrice });
+
+            return Command.retry();
+        }
+
+        let msgBase;
+        if (txSuccess) {
+            msgBase = 'Successfully executed';
+        } else {
+            msgBase = 'Node has already submitted commit. Finishing';
+        }
 
         this.logger.trace(
-            `Successfully executed ${command.name} for agreement id: ${agreementId} ` +
-                `contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, ` +
-                `hash function id: ${hashFunctionId}. Retry number ${
-                    COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1
-                }`,
+            `${msgBase} ${command.name} for the Service Agreement with the ID: ${agreementId}, ` +
+                `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
+                `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
+                `Retry number: ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}`,
         );
+
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
             operationId,

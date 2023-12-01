@@ -10,7 +10,11 @@ class NetworkPrivateKeyMigration extends BaseMigration {
 
         if (networkPrivateKey) {
             let directoryPath;
-            if (process.env.NODE_ENV === 'testnet' || process.env.NODE_ENV === 'mainnet') {
+            if (
+                process.env.NODE_ENV === 'testnet' ||
+                process.env.NODE_ENV === 'mainnet' ||
+                process.env.NODE_ENV === 'devnet'
+            ) {
                 directoryPath = join(
                     appRootPath.path,
                     '..',
