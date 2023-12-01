@@ -20,6 +20,7 @@ class AssetSyncCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.ualService = ctx.ualService;
         this.getService = ctx.getService;
+        this.fileService = ctx.fileService;
     }
 
     /**
