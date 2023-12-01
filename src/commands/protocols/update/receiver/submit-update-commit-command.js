@@ -46,6 +46,7 @@ class SubmitUpdateCommitCommand extends Command {
             this.operationIdService.emitChangeEvent(
                 OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_START,
                 operationId,
+                blockchain,
                 agreementId,
                 epoch,
             );
@@ -67,6 +68,7 @@ class SubmitUpdateCommitCommand extends Command {
             this.operationIdService.emitChangeEvent(
                 OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_END,
                 operationId,
+                blockchain,
                 agreementId,
                 epoch,
             );
@@ -136,6 +138,7 @@ class SubmitUpdateCommitCommand extends Command {
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_END,
             operationId,
+            blockchain,
             agreementId,
             epoch,
         );
