@@ -123,7 +123,7 @@ class SubmitUpdateCommitCommand extends Command {
 
             Object.assign(command, {
                 data: { ...command.data, gasPrice: newGasPrice },
-                error,
+                message: error.message,
             });
 
             return Command.retry();
