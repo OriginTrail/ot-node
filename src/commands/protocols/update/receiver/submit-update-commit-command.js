@@ -123,7 +123,7 @@ class SubmitUpdateCommitCommand extends Command {
 
             Object.assign(command, {
                 data: { ...command.data, gasPrice: newGasPrice },
-                message: error.message,
+                error,
             });
 
             return Command.retry();
@@ -155,12 +155,14 @@ class SubmitUpdateCommitCommand extends Command {
     }
 
     async retryFinished(command) {
-        const errorMsgBase = `Max retries has been reached!`;
-        const errorMsg = command.message
-            ? `${errorMsgBase} Latest Error Message: ${command.message}`
-            : errorMsgBase;
-
-        await this.recover(command, new Error(errorMsg));
+        const { blockchain, operationId } = command.data;
+        await this.handleError(
+            operationId,
+            blockchain,
+            `Max retries has been reached! Latest Error Message: ${command.error.message}`,
+            this.errorType,
+            true,
+        );
     }
 
     /**

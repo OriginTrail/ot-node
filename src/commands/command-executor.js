@@ -312,7 +312,7 @@ class CommandExecutor {
      * @return {Promise<void>}
      * @private
      */
-    async _handleError(command, handler, err) {
+    async _handleError(command, handler, error) {
         if (command.retries > 0) {
             await this._update(command, {
                 retries: command.retries - 1,
@@ -324,10 +324,10 @@ class CommandExecutor {
             try {
                 await this._update(command, {
                     status: COMMAND_STATUS.FAILED,
-                    message: err.message,
+                    error,
                 });
-                this.logger.warn(`Error in command: ${command.name}, error: ${err.message}`);
-                return await handler.recover(command, err);
+                this.logger.warn(`Error in command: ${command.name}, error: ${error.message}`);
+                return await handler.recover(command);
             } catch (e) {
                 this.logger.warn(`Failed to recover command ${command.name} and ID ${command.id}`);
             }
