@@ -60,7 +60,7 @@ class SendTelemetryCommand extends Command {
                 await this.removePublishedEvents(events);
             }
         } catch (error) {
-            await this.handleError(error);
+            await this.handleError(error.message);
         }
         return Command.repeat();
     }
