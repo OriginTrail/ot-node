@@ -122,7 +122,10 @@ class SubmitCommitCommand extends Command {
                 newGasPrice = null;
             }
 
-            Object.assign(command.data, { gasPrice: newGasPrice });
+            Object.assign(command, {
+                data: { ...command.data, gasPrice: newGasPrice },
+                message: error.message,
+            });
 
             return Command.retry();
         }
@@ -172,10 +175,12 @@ class SubmitCommitCommand extends Command {
     }
 
     async retryFinished(command) {
-        await this.recover(
-            command,
-            new Error(`Max retry count for command: ${command.name} reached!`),
-        );
+        const errorMsgBase = `Max retries has been reached!`;
+        const errorMsg = command.message
+            ? `${errorMsgBase} Latest Error Message: ${command.message}`
+            : errorMsgBase;
+
+        await this.recover(command, new Error(errorMsg));
     }
 
     /**

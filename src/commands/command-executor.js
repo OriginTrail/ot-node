@@ -293,6 +293,7 @@ class CommandExecutor {
                 status: COMMAND_STATUS.PENDING,
                 data: command.data,
                 retries: command.retries - 1,
+                message: command.message,
             });
             const period = command.period ?? 0;
             const delay = command.delay ?? 0;
