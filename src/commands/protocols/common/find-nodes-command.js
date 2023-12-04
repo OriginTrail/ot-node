@@ -46,7 +46,7 @@ class FindNodesCommand extends Command {
         );
 
         if (closestNodes.length < minAckResponses) {
-            this.handleError(
+            await this.handleError(
                 operationId,
                 blockchain,
                 `Unable to find enough nodes for ${operationId}. Minimum number of nodes required: ${minAckResponses}`,

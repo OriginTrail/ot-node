@@ -172,7 +172,7 @@ class SubmitCommitCommand extends Command {
     }
 
     async retryFinished(command) {
-        this.recover(command, `Max retry count for command: ${command.name} reached!`);
+        await this.recover(command, `Max retry count for command: ${command.name} reached!`);
     }
 
     /**
