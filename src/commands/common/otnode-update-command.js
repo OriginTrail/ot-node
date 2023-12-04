@@ -51,20 +51,20 @@ class OtnodeUpdateCommand extends Command {
             } else {
                 this.logger.info('Your node is running on the latest version!');
             }
-        } catch (e) {
-            await this.handleError(e);
+        } catch (error) {
+            await this.handleError(error.message);
         }
         return Command.repeat();
     }
 
     async recover(command) {
-        await this.handleError(command.error);
+        await this.handleError(command.message);
 
         return Command.repeat();
     }
 
-    async handleError(error) {
-        this.logger.error(`Error in update command: ${error}. ${error.stack}`);
+    async handleError(errorMessage) {
+        this.logger.error(`Error in update command: ${errorMessage}`);
     }
 
     /**

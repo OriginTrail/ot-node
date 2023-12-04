@@ -55,7 +55,7 @@ class OperationIdCleanerCommand extends Command {
      * @param error
      */
     async recover(command) {
-        this.logger.warn(`Failed to clean operation ids table: error: ${command.error.message}`);
+        this.logger.warn(`Failed to clean operation ids table: error: ${command.message}`);
         return Command.repeat();
     }
 

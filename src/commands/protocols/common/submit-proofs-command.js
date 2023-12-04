@@ -230,7 +230,7 @@ class SubmitProofsCommand extends Command {
         await this.handleError(
             operationId,
             blockchain,
-            `Max retries has been reached! Latest Error Message: ${command.error.message}`,
+            `Max retries has been reached! Latest Error Message: ${command.message}`,
             this.errorType,
             true,
         );

@@ -38,7 +38,7 @@ class DialPeersCommand extends Command {
      * @param error
      */
     async recover(command) {
-        this.logger.warn(`Failed to dial peers: error: ${command.error.message}`);
+        this.logger.warn(`Failed to dial peers: error: ${command.message}`);
         return Command.repeat();
     }
 

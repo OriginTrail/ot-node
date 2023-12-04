@@ -371,7 +371,7 @@ class EpochCheckCommand extends Command {
      * @param error
      */
     async recover(command) {
-        this.logger.warn(`Failed to execute ${command.name}; Error: ${command.error.message}`);
+        this.logger.warn(`Failed to execute ${command.name}. Error: ${command.message}`);
 
         return Command.repeat();
     }

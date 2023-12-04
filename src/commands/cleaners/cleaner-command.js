@@ -67,7 +67,7 @@ class CleanerCommand extends Command {
      * @param error
      */
     async recover(command) {
-        this.logger.warn(`Failed to clean operational db data: error: ${command.error.message}`);
+        this.logger.warn(`Failed to clean operational db data: error: ${command.message}`);
         return Command.repeat();
     }
 }

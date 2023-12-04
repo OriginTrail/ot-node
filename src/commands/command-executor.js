@@ -293,7 +293,7 @@ class CommandExecutor {
                 status: COMMAND_STATUS.PENDING,
                 data: command.data,
                 retries: command.retries - 1,
-                error: command.error,
+                message: command.message,
             });
             const period = command.period ?? 0;
             const delay = command.delay ?? 0;
@@ -324,7 +324,7 @@ class CommandExecutor {
             try {
                 await this._update(command, {
                     status: COMMAND_STATUS.FAILED,
-                    error,
+                    message: error.message,
                 });
                 this.logger.warn(`Error in command: ${command.name}, error: ${error.message}`);
                 return await handler.recover(command);

@@ -25,13 +25,7 @@ class Command {
      */
     async recover(command) {
         const { operationId, blockchain } = command.data;
-        await this.handleError(
-            operationId,
-            blockchain,
-            command.error.message,
-            this.errorType,
-            true,
-        );
+        await this.handleError(operationId, blockchain, command.message, this.errorType, true);
 
         return Command.empty();
     }

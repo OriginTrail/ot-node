@@ -59,20 +59,20 @@ class SendTelemetryCommand extends Command {
             if (isDataSuccessfullySent && events?.length > 0) {
                 await this.removePublishedEvents(events);
             }
-        } catch (e) {
-            await this.handleError(e);
+        } catch (error) {
+            await this.handleError(error);
         }
         return Command.repeat();
     }
 
     async recover(command) {
-        await this.handleError(command.error);
+        await this.handleError(command.message);
 
         return Command.repeat();
     }
 
-    async handleError(error) {
-        this.logger.error(`Error in send telemetry command: ${error}. ${error.stack}`);
+    async handleError(errorMessage) {
+        this.logger.error(`Error in send telemetry command: ${errorMessage}`);
     }
 
     /**

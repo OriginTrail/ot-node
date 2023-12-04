@@ -83,7 +83,7 @@ class ProtocolMessageCommand extends Command {
         const keywordUuid = uuidv5(keyword, uuidv5.URL);
         this.networkModuleManager.removeCachedSession(operationId, keywordUuid, node.id);
 
-        await this.markResponseAsFailed(command, command.error.message);
+        await this.markResponseAsFailed(command, command.message);
         return Command.empty();
     }
 
