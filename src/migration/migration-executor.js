@@ -1,3 +1,4 @@
+import path from 'path';
 import { NODE_ENVIRONMENTS } from '../constants/constants.js';
 import PullBlockchainShardingTableMigration from './pull-sharding-table-migration.js';
 import PrivateAssetsMetadataMigration from './private-assets-metadata-migration.js';
@@ -11,6 +12,8 @@ import PendingStorageMigration from './pending-storage-migration.js';
 import MarkOldBlockchainEventsAsProcessedMigration from './mark-old-blockchain-events-as-processed-migration.js';
 import ServiceAgreementsDataInspector from './service-agreements-data-inspector.js';
 import ServiceAgreementsInvalidDataMigration from './service-agreements-invalid-data-migration.js';
+import UalExtensionUserConfigurationMigration from './ual-extension-user-configuration-migration.js';
+import UalExtensionTripleStoreMigration from './ual-extension-triple-store-migration.js';
 
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
@@ -289,8 +292,62 @@ class MigrationExecutor {
         }
     }
 
+    static async executeUalExtensionUserConfigurationMigration(logger, config) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const migration = new UalExtensionUserConfigurationMigration(
+            'ualExtensionUserConfigurationMigration',
+            logger,
+            config,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            await migration.migrate();
+            logger.info('Node will now restart!');
+            this.exitNode(1);
+        }
+    }
+
+    static async executeUalExtensionTripleStoreMigration(container, logger, config) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const tripleStoreService = container.resolve('tripleStoreService');
+
+        const migration = new UalExtensionTripleStoreMigration(
+            'ualExtensionTripleStoreMigration',
+            logger,
+            config,
+            tripleStoreService,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            try {
+                await migration.migrate();
+            } catch (error) {
+                logger.error(
+                    `Unable to execute ual extension triple store migration. Error: ${error.message}`,
+                );
+                this.exitNode(1);
+            }
+        }
+    }
+
     static exitNode(code = 0) {
         process.exit(code);
+    }
+
+    static async migrationAlreadyExecuted(migrationName, fileService) {
+        const migrationFilePath = path.join(fileService.getMigrationFolderPath(), migrationName);
+        if (await fileService.pathExists(migrationFilePath)) {
+            return true;
+        }
+        return false;
     }
 }
 

@@ -1,6 +1,6 @@
 Feature: Publish errors test
   Background: Setup local blockchain, bootstraps and nodes
-    Given the blockchain is set up
+    Given the blockchains are set up
     And 1 bootstrap is running
 
   @publish-errors
@@ -8,7 +8,7 @@ Feature: Publish errors test
     Given I setup 2 nodes
     And I wait for 5 seconds
 
-    When I call Publish on the node 1 with validAssertion
+    When I call Publish on the node 1 with validAssertion on blockchain hardhat1:31337
     And I wait for latest Publish to finalize
     Then Latest Publish operation finished with status: PublishStartError
 

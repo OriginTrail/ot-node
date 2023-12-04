@@ -27,11 +27,16 @@ class OTNode {
     async start() {
         await this.checkForUpdate();
         await this.removeUpdateFile();
+
         await MigrationExecutor.executeTripleStoreUserConfigurationMigration(
             this.logger,
             this.config,
         );
         await MigrationExecutor.executeTelemetryModuleUserConfigurationMigration(
+            this.logger,
+            this.config,
+        );
+        await MigrationExecutor.executeUalExtensionUserConfigurationMigration(
             this.logger,
             this.config,
         );
@@ -51,6 +56,7 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
+
         await MigrationExecutor.executePullShardingTableMigration(
             this.container,
             this.logger,
@@ -87,21 +93,19 @@ class OTNode {
             this.config,
         );
         await MigrationExecutor.executePendingStorageMigration(this.logger, this.config);
-        // MigrationExecutor.executeServiceAgreementsDataInspector(
-        //     this.container,
-        //     this.logger,
-        //     this.config,
-        // );
-        // await MigrationExecutor.executeServiceAgreementsInvalidDataMigration(
-        //     this.container,
-        //     this.logger,
-        //     this.config,
-        // );
+
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
         await this.initializeShardingTableService();
-        await this.initializeBlockchainEventListenerService();
+
+        MigrationExecutor.executeUalExtensionTripleStoreMigration(
+            this.container,
+            this.logger,
+            this.config,
+        ).then(async () => {
+            await this.initializeBlockchainEventListenerService();
+        });
 
         await this.initializeRouters();
         await this.startNetworkModule();

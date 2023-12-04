@@ -1,9 +1,9 @@
 #!/bin/sh
 pathToOtNode=$(pwd)
 numberOfNodes=4
-network="hardhat"
+network="hardhat1:31337"
 tripleStore="ot-blazegraph"
-availableNetworks=("hardhat")
+availableNetworks=("hardhat1:31337")
 export $(xargs < $pathToOtNode/.env)
 export ACCESS_KEY=$RPC_ENDPOINT
 # Check for script arguments
@@ -43,15 +43,25 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
-if [[ $network == hardhat ]]
+if [[ $network == hardhat1:31337 ]]
 then
   echo ================================
-  echo ====== Starting hardhat ======
+  echo ====== Starting hardhat1 ======
   echo ================================
 
   osascript -e "tell app \"Terminal\"
         do script \"cd $pathToOtNode
-        node tools/local-network-setup/run-local-blockchain.js\"
+        node tools/local-network-setup/run-local-blockchain.js 8545 :v1\"
+    end tell"
+  echo Waiting for hardhat to start and contracts deployment
+
+  echo ================================
+  echo ====== Starting hardhat 2 ======
+  echo ================================
+
+  osascript -e "tell app \"Terminal\"
+        do script \"cd $pathToOtNode
+        node tools/local-network-setup/run-local-blockchain.js 9545 :v2\"
     end tell"
   echo Waiting for hardhat to start and contracts deployment
 fi
@@ -61,7 +71,7 @@ echo ====== Generating configs ======
 echo ================================
 
 node $pathToOtNode/tools/local-network-setup/generate-config-files.js $numberOfNodes $network $tripleStore $hubContractAddress
-
+sleep 5
 echo ================================
 echo ======== Starting nodes ========
 echo ================================

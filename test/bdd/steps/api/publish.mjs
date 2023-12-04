@@ -10,18 +10,25 @@ const requests = JSON.parse(await readFile('test/bdd/steps/api/datasets/requests
 const httpApiHelper = new HttpApiHelper();
 
 When(
-    /^I call Publish on the node (\d+) with ([^"]*)/,
+    /^I call Publish on the node (\d+) with ([^"]*) on blockchain ([^"]*)/,
     { timeout: 120000 },
-    async function publish(node, assertionName) {
-        this.logger.log(`I call publish route on the node ${node}`);
+    async function publish(node, assertionName, blockchain) {
+        this.logger.log(`I call publish route on the node ${node} on blockchain ${blockchain}`);
+
+        expect(
+            !!this.state.localBlockchains[blockchain],
+            `Blockchain with name ${blockchain} not found`,
+        ).to.be.equal(true);
+
         expect(
             !!assertions[assertionName],
             `Assertion with name: ${assertionName} not found!`,
         ).to.be.equal(true);
 
         const assertion = assertions[assertionName];
+        const options = this.state.nodes[node - 1].clientBlockchainOptions[blockchain];
         const result = await this.state.nodes[node - 1].client
-            .publish(assertion)
+            .publish(assertion, options)
             .catch((error) => {
                 assert.fail(`Error while trying to publish assertion. ${error}`);
             });
