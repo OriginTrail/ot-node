@@ -1,11 +1,15 @@
 # DKG local network setup tool
 
+========================
+
 This tool will help you set up a local DKG v6 network running with the Hardhat blockchain. It is useful for development and testing purposes and is used internally by the OriginTrail core developers.
 <br/>
 
 **Note: This tool is an internal tool used by the OriginTrail team and thus is developed for our workflow, meaning that it currently only supports MacOS**, but we encourage you to adapt it for your workflow as well.
 
 # Prerequisites
+
+=============
 
 -   An installed and running triplestore (graph database)
     -   We recommend testing with Blazegraph. In order to download Blazegraph, please visit their official [website](https://blazegraph.com/). Alternatively other triple stores can be used (GraphBD, Apache Jena and other RDF native graph databases)
@@ -69,6 +73,8 @@ Available networks:
 -   hardhat - default network
 
 # Contribution
+
+============
 
 OriginTrail is an open source project. We happily invite you to join us in our mission of building decentralized knowledge graph - we're excited for your contributions! Join us in discord to meet the dev community
 
