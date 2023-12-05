@@ -48,6 +48,32 @@ class SubmitCommitCommand extends Command {
             );
         }
 
+        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
+            blockchain,
+            contract,
+            tokenId,
+        );
+
+        // If update for new state is already finalized (and node haven't processed the event yet), don't send commit for the older state
+        if (stateIndex < assertionIds.length - 1) {
+            this.logger.trace(
+                `Knowledge Asset was updated, not sending Commit for the Service Agreement with the ID: ${agreementId}, ` +
+                    `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
+                    `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                    `State Index: ${stateIndex}, Operation ID: ${operationId}`,
+            );
+
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
+                operationId,
+                blockchain,
+                agreementId,
+                epoch,
+            );
+
+            return Command.empty();
+        }
+
         // this can happen in case node has already submitted update commit
         const alreadySubmitted = await this.commitAlreadySubmitted(
             blockchain,
