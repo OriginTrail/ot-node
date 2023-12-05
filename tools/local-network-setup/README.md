@@ -8,7 +8,7 @@ This tool will help you set up a local DKG v6 network running with the Hardhat b
 # Prerequisites
 
 -   An installed and running triplestore (graph database)
-    -   We recommend testing with Blazegraph. In order to download Blazegraph, please visit their official [website](https://blazegraph.com/). Alternatively other triple stores can be used (GraphBD, Apache Jena and other RDF native graph databases)
+    -   We recommend testing with Blazegraph. In order to download Blazegraph, please visit their official [website](https://blazegraph.com/). Alternatively other triple stores can be used (GraphBD or and other RDF native graph databases)
 -   An installed and running MySQL server
 -   You should have installed npm and Node.js (v16)
 
