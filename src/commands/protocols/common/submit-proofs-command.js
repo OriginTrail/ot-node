@@ -114,14 +114,6 @@ class SubmitProofsCommand extends Command {
                     `State Index: ${stateIndex}, Operation ID: ${operationId}`,
             );
 
-            this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
-                operationId,
-                blockchain,
-                agreementId,
-                epoch,
-            );
-
             return Command.empty();
         }
 
@@ -137,14 +129,6 @@ class SubmitProofsCommand extends Command {
                     `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                     `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                     `State Index: ${stateIndex}, Operation ID: ${operationId}`,
-            );
-
-            this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
-                operationId,
-                blockchain,
-                agreementId,
-                epoch,
             );
 
             return Command.empty();
@@ -211,6 +195,14 @@ class SubmitProofsCommand extends Command {
         let msgBase;
         if (txSuccess) {
             msgBase = 'Successfully executed';
+
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
+                operationId,
+                blockchain,
+                agreementId,
+                epoch,
+            );
         } else {
             msgBase = 'Node has already sent proof. Finishing';
         }
@@ -221,14 +213,6 @@ class SubmitProofsCommand extends Command {
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                 `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
                 `Retry number: ${COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1}`,
-        );
-
-        this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
-            operationId,
-            blockchain,
-            agreementId,
-            epoch,
         );
 
         return Command.empty();
