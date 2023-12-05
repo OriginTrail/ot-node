@@ -65,14 +65,6 @@ class SubmitUpdateCommitCommand extends Command {
                     `Epoch: ${epoch}, Operation ID: ${operationId}`,
             );
 
-            this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_END,
-                operationId,
-                blockchain,
-                agreementId,
-                epoch,
-            );
-
             return Command.empty();
         }
 
