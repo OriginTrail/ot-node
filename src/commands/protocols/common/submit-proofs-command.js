@@ -98,6 +98,25 @@ class SubmitProofsCommand extends Command {
                 epoch,
             );
         }
+
+        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
+            blockchain,
+            contract,
+            tokenId,
+        );
+
+        // If update for new state is already finalized (and node haven't processed the event yet), don't send commit for the older state
+        if (stateIndex < assertionIds.length - 1) {
+            this.logger.trace(
+                `Knowledge Asset was updated, not sending Proof for the Service Agreement with the ID: ${agreementId}, ` +
+                    `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
+                    `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                    `State Index: ${stateIndex}, Operation ID: ${operationId}`,
+            );
+
+            return Command.empty();
+        }
+
         const alreadySubmitted = await this.proofAlreadySubmitted(
             blockchain,
             agreementId,
@@ -110,14 +129,6 @@ class SubmitProofsCommand extends Command {
                     `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                     `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                     `State Index: ${stateIndex}, Operation ID: ${operationId}`,
-            );
-
-            this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
-                operationId,
-                blockchain,
-                agreementId,
-                epoch,
             );
 
             return Command.empty();
@@ -173,7 +184,10 @@ class SubmitProofsCommand extends Command {
                 newGasPrice = null;
             }
 
-            Object.assign(command.data, { gasPrice: newGasPrice });
+            Object.assign(command, {
+                data: { ...command.data, gasPrice: newGasPrice },
+                message: error.message,
+            });
 
             return Command.retry();
         }
@@ -181,6 +195,14 @@ class SubmitProofsCommand extends Command {
         let msgBase;
         if (txSuccess) {
             msgBase = 'Successfully executed';
+
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
+                operationId,
+                blockchain,
+                agreementId,
+                epoch,
+            );
         } else {
             msgBase = 'Node has already sent proof. Finishing';
         }
@@ -191,14 +213,6 @@ class SubmitProofsCommand extends Command {
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                 `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
                 `Retry number: ${COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1}`,
-        );
-
-        this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
-            operationId,
-            blockchain,
-            agreementId,
-            epoch,
         );
 
         return Command.empty();
@@ -223,7 +237,14 @@ class SubmitProofsCommand extends Command {
     }
 
     async retryFinished(command) {
-        this.recover(command, `Max retry count for command: ${command.name} reached!`);
+        const { blockchain, operationId } = command.data;
+        await this.handleError(
+            operationId,
+            blockchain,
+            `Max retries has been reached! Latest Error Message: ${command.message}`,
+            this.errorType,
+            true,
+        );
     }
 
     /**

@@ -65,14 +65,6 @@ class SubmitUpdateCommitCommand extends Command {
                     `Epoch: ${epoch}, Operation ID: ${operationId}`,
             );
 
-            this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_END,
-                operationId,
-                blockchain,
-                agreementId,
-                epoch,
-            );
-
             return Command.empty();
         }
 
@@ -121,7 +113,10 @@ class SubmitUpdateCommitCommand extends Command {
                 newGasPrice = null;
             }
 
-            Object.assign(command.data, { gasPrice: newGasPrice });
+            Object.assign(command, {
+                data: { ...command.data, gasPrice: newGasPrice },
+                message: error.message,
+            });
 
             return Command.retry();
         }
@@ -152,7 +147,14 @@ class SubmitUpdateCommitCommand extends Command {
     }
 
     async retryFinished(command) {
-        this.recover(command, `Max retry count for command: ${command.name} reached!`);
+        const { blockchain, operationId } = command.data;
+        await this.handleError(
+            operationId,
+            blockchain,
+            `Max retries has been reached! Latest Error Message: ${command.message}`,
+            this.errorType,
+            true,
+        );
     }
 
     /**

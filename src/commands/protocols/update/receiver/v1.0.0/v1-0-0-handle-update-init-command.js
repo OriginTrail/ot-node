@@ -63,7 +63,7 @@ class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
 
     async retryFinished(command) {
         const { operationId } = command.data;
-        this.handleError(
+        await this.handleError(
             `Retry count for command: ${command.name} reached! Unable to validate data for operation id: ${operationId}`,
             command,
         );
