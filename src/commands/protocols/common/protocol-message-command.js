@@ -78,12 +78,12 @@ class ProtocolMessageCommand extends Command {
         return Command.empty();
     }
 
-    async recover(command, err) {
+    async recover(command) {
         const { node, operationId, keyword } = command.data;
         const keywordUuid = uuidv5(keyword, uuidv5.URL);
         this.networkModuleManager.removeCachedSession(operationId, keywordUuid, node.id);
 
-        await this.markResponseAsFailed(command, err.message);
+        await this.markResponseAsFailed(command, command.message);
         return Command.empty();
     }
 
