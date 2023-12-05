@@ -200,7 +200,6 @@ and paste the following content inside (save and close):
 NODE_ENV=development
 RPC_ENDPOINT_BC1=http://localhost:8545
 RPC_ENDPOINT_BC2=http://localhost:9545
-PRIVATE_KEY=02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e
 ```
 
 Run the Triple Store.
