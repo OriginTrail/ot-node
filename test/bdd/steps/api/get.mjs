@@ -28,18 +28,29 @@ When(
 );
 
 When(
-    /^I call Get directly on the node (\d+) with ([^"]*)/,
+    /^I call Get directly on the node (\d+) with ([^"]*) on blockchain ([^"]*)/,
     { timeout: 30000 },
-    async function getFromNode(node, requestName) {
-        this.logger.log(`I call get directly on the node ${node}`);
+    async function getFromNode(node, requestName, blockchain) {
+        this.logger.log(`I call get directly on the node ${node} on blockchain ${blockchain}`);
+
+        expect(
+            !!this.state.localBlockchains[blockchain],
+            `Blockchain with name ${blockchain} not found`,
+        ).to.be.equal(true);
+
         expect(
             !!requests[requestName],
             `Request body with name: ${requestName} not found!`,
         ).to.be.equal(true);
-        const requestBody = requests[requestName];
+
+        const requestBody = JSON.parse(JSON.stringify(requests[requestName]));
+        requestBody.id = requestBody.id.replace('blockchain', blockchain);
 
         try {
-            const result = await httpApiHelper.get(this.state.nodes[node - 1].nodeRpcUrl, requestBody);
+            const result = await httpApiHelper.get(
+                this.state.nodes[node - 1].nodeRpcUrl,
+                requestBody,
+            );
             const { operationId } = result.data;
             this.state.latestGetData = {
                 nodeId: node - 1,
@@ -51,24 +62,15 @@ When(
     },
 );
 
-Then(
-    /^It should fail with status code (\d+)/,
-    function checkLatestError(expectedStatusCode) {
-        const expectedStatusCodeInt = parseInt(expectedStatusCode, 10);
-        assert(
-            this.state.latestError, 
-            'No error occurred'
-        );
-        assert(
-            this.state.latestError.statusCode, 
-            'No status code in error'
-        );
-        assert(
-            this.state.latestError.statusCode === expectedStatusCodeInt, 
-            `Expected request to fail with status code ${expectedStatusCodeInt}, but it failed with another code.`
-        );
-    },
-);
+Then(/^It should fail with status code (\d+)/, function checkLatestError(expectedStatusCode) {
+    const expectedStatusCodeInt = parseInt(expectedStatusCode, 10);
+    assert(this.state.latestError, 'No error occurred');
+    assert(this.state.latestError.statusCode, 'No status code in error');
+    assert(
+        this.state.latestError.statusCode === expectedStatusCodeInt,
+        `Expected request to fail with status code ${expectedStatusCodeInt}, but it failed with another code.`,
+    );
+});
 
 When('I wait for latest Get to finalize', { timeout: 80000 }, async function getFinalize() {
     this.logger.log('I wait for latest get to finalize');

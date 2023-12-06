@@ -25,6 +25,7 @@ class GetController extends BaseController {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            null,
             OPERATION_ID_STATUS.GET.GET_INIT_START,
         );
 
@@ -38,6 +39,9 @@ class GetController extends BaseController {
             OPERATION_STATUS.IN_PROGRESS,
         );
 
+        let blockchain;
+        let contract;
+        let tokenId;
         try {
             const { id } = req.body;
 
@@ -45,7 +49,7 @@ class GetController extends BaseController {
                 throw Error('Requested id is not a UAL.');
             }
 
-            const { blockchain, contract, tokenId } = this.ualService.resolveUAL(id);
+            ({ blockchain, contract, tokenId } = this.ualService.resolveUAL(id));
 
             const isValidUal = await this.validationService.validateUal(
                 blockchain,
@@ -84,6 +88,7 @@ class GetController extends BaseController {
 
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
+                blockchain,
                 OPERATION_ID_STATUS.GET.GET_INIT_END,
             );
         } catch (error) {
@@ -91,6 +96,7 @@ class GetController extends BaseController {
 
             await this.operationService.markOperationAsFailed(
                 operationId,
+                blockchain,
                 'Unable to get data, Failed to process input data!',
                 ERROR_TYPE.GET.GET_ROUTE_ERROR,
             );

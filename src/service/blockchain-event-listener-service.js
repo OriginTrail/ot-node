@@ -47,7 +47,7 @@ class BlockchainEventListenerService {
             process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
             process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
 
-        const currentBlock = await this.blockchainModuleManager.getBlockNumber();
+        const currentBlock = await this.blockchainModuleManager.getBlockNumber(blockchainId);
         const syncContractEventsPromises = [
             this.getContractEvents(
                 blockchainId,
@@ -93,7 +93,10 @@ class BlockchainEventListenerService {
         }
         const contractEvents = await Promise.all(syncContractEventsPromises);
 
-        await this.handleBlockchainEvents(contractEvents.flatMap((events) => events));
+        await this.handleBlockchainEvents(
+            contractEvents.flatMap((events) => events),
+            blockchainId,
+        );
     }
 
     listenOnBlockchainEvents(blockchainId) {
@@ -162,18 +165,25 @@ class BlockchainEventListenerService {
         return events;
     }
 
-    async handleBlockchainEvents(events) {
+    async handleBlockchainEvents(events, blockchainId) {
         const eventsForProcessing = events.filter((event) => eventNames.includes(event.event));
 
         if (eventsForProcessing?.length) {
-            this.logger.trace(`${eventsForProcessing.length} blockchain events caught.`);
+            this.logger.trace(
+                `${eventsForProcessing.length} blockchain events caught on blockchain ${blockchainId}.`,
+            );
             await this.repositoryModuleManager.insertBlockchainEvents(eventsForProcessing);
         }
         const unprocessedEvents =
-            await this.repositoryModuleManager.getAllUnprocessedBlockchainEvents(eventNames);
+            await this.repositoryModuleManager.getAllUnprocessedBlockchainEvents(
+                eventNames,
+                blockchainId,
+            );
 
         if (unprocessedEvents?.length) {
-            this.logger.trace(`Processing ${unprocessedEvents.length} blockchain events.`);
+            this.logger.trace(
+                `Processing ${unprocessedEvents.length} blockchain events on blockchain ${blockchainId}.`,
+            );
             let groupedEvents = {};
             let currentBlock = 0;
             for (const event of unprocessedEvents) {

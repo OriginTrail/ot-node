@@ -102,6 +102,7 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         if (validBids < minAckResponses) {
             await this.operationService.markOperationAsFailed(
                 operationId,
+                blockchain,
                 'Unable to start publish, not enough nodes in neighbourhood satisfy the bid.',
                 ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR,
             );

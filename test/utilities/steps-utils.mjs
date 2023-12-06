@@ -8,9 +8,25 @@ class StepsUtils {
         return forkedNode;
     }
 
+    /**
+     *
+     * @param blockchains [{
+     *     blockchainId: 'blockchainId',
+     *     port: '',
+     *     operationalWallet: 'operationalWallet',
+     *     managementWallet: 'managementWallet'
+     * }]
+     * @param nodeIndex
+     * @param nodeName
+     * @param rpcPort
+     * @param networkPort
+     * @param sharesTokenName
+     * @param sharesTokenSymbol
+     * @param bootstrap
+     * @returns {{operationalDatabase: {databaseName: (string|string)}, graphDatabase: {name}, auth: {ipBasedAuthEnabled: boolean}, appDataPath: (string|string), rpcPort, modules: {httpClient: {implementation: {"express-http-client": {config: {port}}}}, repository: {implementation: {"sequelize-repository": {config: {database: (string|string)}}}}, tripleStore: {implementation: {"ot-blazegraph": {config: {repositories: {publicHistory: {password: string, name: string, url: string, username: string}, publicCurrent: {password: string, name: string, url: string, username: string}, privateHistory: {password: string, name: string, url: string, username: string}, privateCurrent: {password: string, name: string, url: string, username: string}}}}}}, validation: {implementation: {"merkle-validation": {package: string, enabled: boolean}}, enabled: boolean}, network: {implementation: {"libp2p-service": {config: {privateKey: (string|undefined), port}}}}}}}
+     */
     createNodeConfiguration(
-        wallet,
-        managementWallet,
+        blockchains,
         nodeIndex,
         nodeName,
         rpcPort,
@@ -19,21 +35,10 @@ class StepsUtils {
         sharesTokenSymbol,
         bootstrap = false,
     ) {
-        return {
+        let config = {
             modules: {
                 blockchain: {
-                    implementation: {
-                        hardhat: {
-                            config: {
-                                evmOperationalWalletPublicKey: wallet.address,
-                                evmOperationalWalletPrivateKey: wallet.privateKey,
-                                evmManagementWalletPublicKey: managementWallet.address,
-                                evmManagementWalletPrivateKey: managementWallet.privateKey,
-                                sharesTokenName,
-                                sharesTokenSymbol,
-                            },
-                        },
-                    },
+                    implementation: {}
                 },
                 network: {
                     implementation: {
@@ -63,30 +68,30 @@ class StepsUtils {
                         'ot-blazegraph': {
                             config: {
                                 repositories: {
-                                    "privateCurrent": {
-                                        "url": "http://localhost:9999",
-                                        "name": "private-current",
-                                        "username": "admin",
-                                        "password": ""
+                                    privateCurrent: {
+                                        url: 'http://localhost:9999',
+                                        name: 'private-current',
+                                        username: 'admin',
+                                        password: '',
                                     },
-                                    "privateHistory": {
-                                        "url": "http://localhost:9999",
-                                        "name": "private-history",
-                                        "username": "admin",
-                                        "password": ""
+                                    privateHistory: {
+                                        url: 'http://localhost:9999',
+                                        name: 'private-history',
+                                        username: 'admin',
+                                        password: '',
                                     },
-                                    "publicCurrent": {
-                                        "url": "http://localhost:9999",
-                                        "name": "public-current",
-                                        "username": "admin",
-                                        "password": ""
+                                    publicCurrent: {
+                                        url: 'http://localhost:9999',
+                                        name: 'public-current',
+                                        username: 'admin',
+                                        password: '',
                                     },
-                                    "publicHistory": {
-                                        "url": "http://localhost:9999",
-                                        "name": "public-history",
-                                        "username": "admin",
-                                        "password": ""
-                                    }
+                                    publicHistory: {
+                                        url: 'http://localhost:9999',
+                                        name: 'public-history',
+                                        username: 'admin',
+                                        password: '',
+                                    },
                                 },
                             },
                         },
@@ -125,6 +130,26 @@ class StepsUtils {
                 name: nodeName,
             },
         };
+
+        for (const blockchain of blockchains) {
+            config.modules.blockchain.implementation[blockchain.blockchainId] = {
+                enabled: true,
+                package: './blockchain/implementation/hardhat/hardhat-service.js',
+                config: {
+                    hubContractAddress: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+                    rpcEndpoints: [`http://localhost:${blockchain.port}`],
+                    initialStakeAmount: 50000,
+                    initialAskAmount: 0.2,
+                    evmOperationalWalletPublicKey: blockchain.operationalWallet.address,
+                    evmOperationalWalletPrivateKey: blockchain.operationalWallet.privateKey,
+                    evmManagementWalletPublicKey: blockchain.managementWallet.address,
+                    evmManagementWalletPrivateKey: blockchain.managementWallet.privateKey,
+                    sharesTokenName,
+                    sharesTokenSymbol,
+                },
+            };
+        }
+        return config;
     }
 }
 export default StepsUtils;

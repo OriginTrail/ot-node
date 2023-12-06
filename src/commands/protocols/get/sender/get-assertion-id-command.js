@@ -23,6 +23,7 @@ class GetAssertionIdCommand extends Command {
             if (state === ZERO_BYTES32) {
                 await this.handleError(
                     operationId,
+                    blockchain,
                     `The provided state: ${state}. State hash cannot be 0x0.`,
                     this.errorType,
                 );
@@ -47,6 +48,7 @@ class GetAssertionIdCommand extends Command {
             ) {
                 await this.handleError(
                     operationId,
+                    blockchain,
                     `The provided state: ${state} does not exist on the ${blockchain} blockchain, ``within contract: ${contract}, for the Knowledge Asset with tokenId: ${tokenId}.`,
                     this.errorType,
                 );
@@ -78,8 +80,13 @@ class GetAssertionIdCommand extends Command {
         return this.continueSequence({ ...command.data, state, assertionId }, command.sequence);
     }
 
-    async handleError(operationId, errorMessage, errorType) {
-        await this.operationService.markOperationAsFailed(operationId, errorMessage, errorType);
+    async handleError(operationId, blockchain, errorMessage, errorType) {
+        await this.operationService.markOperationAsFailed(
+            operationId,
+            blockchain,
+            errorMessage,
+            errorType,
+        );
     }
 
     /**
