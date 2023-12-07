@@ -31,12 +31,12 @@ class GetService extends OperationService {
     async processResponse(command, responseStatus, responseData) {
         const {
             operationId,
+            blockchain,
             numberOfFoundNodes,
             leftoverNodes,
             keyword,
             batchSize,
             minAckResponses,
-            blockchain,
             contract,
             tokenId,
             assertionId,
@@ -76,6 +76,7 @@ class GetService extends OperationService {
         ) {
             await this.markOperationAsCompleted(
                 operationId,
+                blockchain,
                 { assertion: responseData.nquads },
                 this.completedStatuses,
             );
@@ -132,6 +133,7 @@ class GetService extends OperationService {
                 );
                 await this.markOperationAsCompleted(
                     operationId,
+                    blockchain,
                     {
                         message: 'Unable to find assertion on the network!',
                     },

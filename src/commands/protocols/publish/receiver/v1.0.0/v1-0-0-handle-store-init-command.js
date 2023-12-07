@@ -16,6 +16,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.VALIDATE_ASSET_REMOTE_START,
         );
 
@@ -31,6 +32,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
 
         this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.VALIDATE_ASSET_REMOTE_END,
         );
 
@@ -39,7 +41,7 @@ class HandleStoreInitCommand extends HandleProtocolMessageCommand {
 
     async retryFinished(command) {
         const { operationId } = command.data;
-        this.handleError(
+        await this.handleError(
             `Retry count for command: ${command.name} reached! Unable to validate data for operation id: ${operationId}`,
             command,
         );

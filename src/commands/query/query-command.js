@@ -27,6 +27,7 @@ class QueryCommand extends Command {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            null,
             OPERATION_ID_STATUS.QUERY.QUERY_START,
         );
         try {
@@ -47,6 +48,7 @@ class QueryCommand extends Command {
 
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
+                null,
                 OPERATION_ID_STATUS.QUERY.QUERY_END,
             );
 
@@ -54,10 +56,11 @@ class QueryCommand extends Command {
 
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
+                null,
                 OPERATION_ID_STATUS.COMPLETED,
             );
         } catch (e) {
-            await this.handleError(operationId, e.message, this.errorType, true);
+            await this.handleError(operationId, null, e.message, this.errorType, true);
         }
 
         return Command.empty();

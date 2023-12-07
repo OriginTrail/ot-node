@@ -54,7 +54,7 @@ class BlockchainEventListenerService {
             process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
             process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
 
-        const currentBlock = await this.blockchainModuleManager.getBlockNumber();
+        const currentBlock = await this.blockchainModuleManager.getBlockNumber(blockchainId);
         const syncContractEventsPromises = [
             this.getContractEvents(
                 blockchainId,

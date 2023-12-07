@@ -38,9 +38,11 @@ class OperationIdService {
 
     async updateOperationIdStatusWithValues(
         operationId,
+        blockchain,
         status,
         value1 = null,
         value2 = null,
+        value3 = null,
         timestamp = Date.now(),
     ) {
         const response = {
@@ -48,12 +50,18 @@ class OperationIdService {
             timestamp,
         };
 
-        this.emitChangeEvent(status, operationId, value1, value2, null, timestamp);
+        this.emitChangeEvent(status, operationId, blockchain, value1, value2, value3, timestamp);
 
         await this.repositoryModuleManager.updateOperationIdRecord(response, operationId);
     }
 
-    async updateOperationIdStatus(operationId, status, errorMessage = null, errorType = null) {
+    async updateOperationIdStatus(
+        operationId,
+        blockchain,
+        status,
+        errorMessage = null,
+        errorType = null,
+    ) {
         const response = {
             status,
         };
@@ -64,7 +72,7 @@ class OperationIdService {
             await this.removeOperationIdCache(operationId);
         }
 
-        this.emitChangeEvent(status, operationId, errorMessage, errorType);
+        this.emitChangeEvent(status, operationId, blockchain, errorMessage, errorType);
 
         await this.repositoryModuleManager.updateOperationIdRecord(response, operationId);
     }
@@ -72,6 +80,7 @@ class OperationIdService {
     emitChangeEvent(
         status,
         operationId,
+        blockchainId = null,
         value1 = null,
         value2 = null,
         value3 = null,
@@ -82,6 +91,7 @@ class OperationIdService {
         const eventData = {
             lastEvent: status,
             operationId,
+            blockchainId,
             timestamp,
             value1,
             value2,
