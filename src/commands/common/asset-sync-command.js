@@ -155,6 +155,7 @@ class AssetSyncCommand extends Command {
             await Promise.all([
                 this.operationIdService.updateOperationIdStatus(
                     operationId,
+                    blockchain,
                     OPERATION_ID_STATUS.GET.GET_INIT_START,
                 ),
 
@@ -201,6 +202,7 @@ class AssetSyncCommand extends Command {
 
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
+                blockchain,
                 OPERATION_ID_STATUS.GET.GET_INIT_END,
             );
 
