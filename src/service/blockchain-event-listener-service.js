@@ -618,6 +618,7 @@ class BlockchainEventListenerService {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.GET.GET_INIT_START,
         );
 
