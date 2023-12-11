@@ -26,7 +26,7 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
         for (const repository in TRIPLE_STORE_REPOSITORIES) {
             const getUalListQuery = `
             PREFIX schema: <http://schema.org/>
-                SELECT DISTINCT ?subject, ?object
+                SELECT DISTINCT ?subject ?object
                 WHERE {
                    ?subject schema:assertion ?object .
                 }`;
@@ -57,10 +57,9 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
                     PREFIX owl: <http://www.w3.org/2002/07/owl#>
                     INSERT DATA {
                     GRAPH <assets:graph> { 
-                        ${triplesForInsert.join('\n')}
+                        ${triplesForInsert.join(' .\n')}
                     }
                 }`;
-
                 await this.tripleStoreService.queryVoid(
                     TRIPLE_STORE_REPOSITORIES[repository],
                     insertQuery,
