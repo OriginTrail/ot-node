@@ -275,6 +275,10 @@ class Web3Service {
         resultCache[parameterName] = parameterValue;
     }
 
+    getCachedValue(parameterName) {
+        return resultCache[parameterName];
+    }
+
     initializeContract(contractName, contractAddress) {
         if (ABIs[contractName] != null) {
             this[`${contractName}Contract`] = new ethers.Contract(
@@ -412,11 +416,8 @@ class Web3Service {
 
     async callContractFunction(contractInstance, functionName, args) {
         let result;
-        if (
-            CACHED_FUNCTIONS.ParametersStorage.includes(functionName) &&
-            resultCache[functionName] !== undefined
-        ) {
-            result = resultCache[functionName];
+        if (CACHED_FUNCTIONS.ParametersStorage.includes(functionName)) {
+            result = this.getCachedValue(functionName);
         } else {
             while (result === undefined) {
                 try {
