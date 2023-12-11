@@ -51,6 +51,17 @@ const ABIs = {
 const SCORING_FUNCTIONS = {
     1: 'Log2PLDSF',
 };
+const cachedFunctionsList = [
+    'r0',
+    'r1',
+    'r2',
+    'finalizationCommitsNumber',
+    'updateCommitWindowDuration',
+    'commitWindowDurationPerc',
+    'proofWindowDurationPerc',
+    'epochLength',
+];
+const resultCache = {};
 
 class Web3Service {
     async initialize(config, logger) {
@@ -269,6 +280,11 @@ class Web3Service {
         }
     }
 
+    cacheParameter(parameterName, parameterValue) {
+        console.log('cache web3 service');
+        resultCache[parameterName] = parameterValue;
+    }
+
     initializeContract(contractName, contractAddress) {
         if (ABIs[contractName] != null) {
             this[`${contractName}Contract`] = new ethers.Contract(
@@ -406,30 +422,42 @@ class Web3Service {
 
     async callContractFunction(contractInstance, functionName, args) {
         let result;
-        while (result === undefined) {
-            try {
-                // eslint-disable-next-line no-await-in-loop
-                result = await contractInstance[functionName](...args);
-            } catch (error) {
-                const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
+        if (cachedFunctionsList.includes(functionName) && resultCache[functionName] !== undefined) {
+            console.log('cached!');
+            result = resultCache[functionName];
+            console.log(result);
+        } else {
+            while (result === undefined) {
+                try {
+                    // eslint-disable-next-line no-await-in-loop
+                    result = await contractInstance[functionName](...args);
+                    if (cachedFunctionsList.includes(functionName)) {
+                        resultCache[functionName] = result;
+                        console.log(`Cached result for ${functionName}:`, result);
+                    }
+                } catch (error) {
+                    const decodedErrorData = this._decodeErrorData(
+                        error,
+                        contractInstance.interface,
+                    );
 
-                const functionFragment = contractInstance.interface.getFunction(
-                    error.transaction.data.slice(0, 10),
-                );
-                const inputs = functionFragment.inputs
-                    .map((input, i) => {
-                        const argName = input.name;
-                        const argValue = this._formatArgument(args[i]);
-                        return `${argName}=${argValue}`;
-                    })
-                    .join(', ');
+                    const functionFragment = contractInstance.interface.getFunction(
+                        error.transaction.data.slice(0, 10),
+                    );
+                    const inputs = functionFragment.inputs
+                        .map((input, i) => {
+                            const argName = input.name;
+                            const argValue = this._formatArgument(args[i]);
+                            return `${argName}=${argValue}`;
+                        })
+                        .join(', ');
 
-                throw new Error(
-                    `Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`,
-                );
+                    throw new Error(
+                        `Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`,
+                    );
+                }
             }
         }
-
         return result;
     }
 
@@ -904,6 +932,7 @@ class Web3Service {
                 score: commit.score,
             }));
     }
+    // OVO OVDE TREBA DODATI MEMORY CACHE NAJPAMETNIJE URADITI U CALL CONTRACT FFFF
 
     async getR2() {
         const r2 = await this.callContractFunction(this.ParametersStorageContract, 'r2', []);

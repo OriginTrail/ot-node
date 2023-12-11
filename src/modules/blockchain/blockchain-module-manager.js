@@ -26,6 +26,14 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
+    cacheParameter(blockchain, parameterName, parameterValue) {
+        console.log('CacheParametar module manager');
+        return this.callImplementationFunction(blockchain, 'cacheParameter', [
+            parameterName,
+            parameterValue,
+        ]);
+    }
+
     getPrivateKey(blockchain) {
         return this.callImplementationFunction(blockchain, 'getPrivateKey');
     }

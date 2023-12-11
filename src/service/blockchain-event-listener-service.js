@@ -79,6 +79,12 @@ class BlockchainEventListenerService {
                 currentBlock,
                 CONTRACT_EVENTS.SERVICE_AGREEMENT_V1,
             ),
+            this.getContractEvents(
+                blockchainId,
+                CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+                currentBlock,
+                CONTRACT_EVENTS.PARAMETERS_STORAGE,
+            ),
         ];
 
         if (!devEnvironment) {
@@ -223,6 +229,19 @@ class BlockchainEventListenerService {
         } catch (error) {
             this.logger.warn(
                 `Error while processing events: ${eventName}. Error: ${error.message}`,
+            );
+        }
+    }
+
+    async handleParameterChangedEvents(blockEvents) {
+        console.log('handler');
+        for (const event of blockEvents) {
+            const { parameterName, parameterValue } = JSON.parse(event.data);
+            console.log('Handler', parameterName, parameterValue);
+            this.blockchainModuleManager.cacheParameter(
+                event.blockchainId,
+                parameterName,
+                parameterValue,
             );
         }
     }

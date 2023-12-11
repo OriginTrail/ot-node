@@ -554,6 +554,7 @@ export const CONTRACTS = {
     HUB_CONTRACT: 'HubContract',
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
     SERVICE_AGREEMENT_V1_CONTRACT: 'ServiceAgreementV1Contract',
+    PARAMETERS_STORAGE_CONTRACT: 'ParametersStorageContract',
 };
 
 export const CONTRACT_EVENTS = {
@@ -563,6 +564,7 @@ export const CONTRACT_EVENTS = {
     PROFILE: ['AskUpdated'],
     COMMIT_MANAGER_V1: ['StateFinalized'],
     SERVICE_AGREEMENT_V1: ['ServiceAgreementV1Extended', 'ServiceAgreementV1Terminated'],
+    PARAMETERS_STORAGE: ['ParameterChanged'],
 };
 
 export const NODE_ENVIRONMENTS = {
