@@ -48,13 +48,13 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
                 } else {
                     newUal = ual.replace(oldBlockchainId, newBlockchainId);
                 }
-                newTriples.push(`<${ual}> owl:sameAs <${newUal}>`);
+                newTriples.push(`<${ual}> schema:assertion <${newUal}>`);
             }
 
             while (newTriples.length) {
                 const triplesForInsert = newTriples.splice(0, chunkSize);
                 const insertQuery = `
-                    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                    PREFIX schema: <http://schema.org/>
                     INSERT DATA {
                     GRAPH <assets:graph> { 
                         ${triplesForInsert.join(' .\n')}
