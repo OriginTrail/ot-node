@@ -47,11 +47,22 @@ class TripleStoreService {
             keyword,
         });
 
+        const oldUalConnection = await formatAssertion({
+            '@context': SCHEMA_CONTEXT,
+            '@id': this.ualService.getUalWithoutChainId(ual, blockchain),
+            assertion: { '@id': `assertion:${assertionId}` },
+        });
+
         await Promise.all([
             this.tripleStoreModuleManager.insertAssetAssertionMetadata(
                 this.repositoryImplementations[repository],
                 repository,
                 currentAssetNquads.join('\n'),
+            ),
+            this.tripleStoreModuleManager.insertAssetAssertionMetadata(
+                this.repositoryImplementations[repository],
+                repository,
+                oldUalConnection.join('\n'),
             ),
             this.tripleStoreModuleManager.insertAssertion(
                 this.repositoryImplementations[repository],
@@ -178,6 +189,11 @@ class TripleStoreService {
             this.repositoryImplementations[repository],
             repository,
             ual,
+        );
+        await this.tripleStoreModuleManager.deleteAssetMetadata(
+            this.repositoryImplementations[repository],
+            repository,
+            this.ualService.getUalWithoutChainId(ual, blockchain),
         );
 
         // Delete assertions that were linked only to this Knowledge Asset
