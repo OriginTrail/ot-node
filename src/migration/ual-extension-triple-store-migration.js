@@ -41,14 +41,14 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
             );
 
             const newTriples = [];
-            for (const { subject: ual } of ualList) {
+            for (const { subject: ual, object: assertionId } of ualList) {
                 let newUal;
                 if (ual.includes(newBlockchainId)) {
                     newUal = ual.replace(newBlockchainId, oldBlockchainId);
                 } else {
                     newUal = ual.replace(oldBlockchainId, newBlockchainId);
                 }
-                newTriples.push(`<${ual}> schema:assertion <${newUal}>`);
+                newTriples.push(`<${newUal}> schema:assertion <${assertionId}>`);
             }
 
             while (newTriples.length) {
