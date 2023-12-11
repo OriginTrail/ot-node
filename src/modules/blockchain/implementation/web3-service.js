@@ -418,37 +418,34 @@ class Web3Service {
         let result;
         if (CACHED_FUNCTIONS.ParametersStorage.includes(functionName)) {
             result = this.getCachedValue(functionName);
-        } else {
-            while (result === undefined) {
-                try {
-                    // eslint-disable-next-line no-await-in-loop
-                    result = await contractInstance[functionName](...args);
-                    if (CACHED_FUNCTIONS.ParametersStorage.includes(functionName)) {
-                        resultCache[functionName] = result;
-                    }
-                } catch (error) {
-                    const decodedErrorData = this._decodeErrorData(
-                        error,
-                        contractInstance.interface,
-                    );
-
-                    const functionFragment = contractInstance.interface.getFunction(
-                        error.transaction.data.slice(0, 10),
-                    );
-                    const inputs = functionFragment.inputs
-                        .map((input, i) => {
-                            const argName = input.name;
-                            const argValue = this._formatArgument(args[i]);
-                            return `${argName}=${argValue}`;
-                        })
-                        .join(', ');
-
-                    throw new Error(
-                        `Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`,
-                    );
+        }
+        while (!result) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                result = await contractInstance[functionName](...args);
+                if (CACHED_FUNCTIONS.ParametersStorage.includes(functionName)) {
+                    this.cacheParameter(functionName, result);
                 }
+            } catch (error) {
+                const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
+
+                const functionFragment = contractInstance.interface.getFunction(
+                    error.transaction.data.slice(0, 10),
+                );
+                const inputs = functionFragment.inputs
+                    .map((input, i) => {
+                        const argName = input.name;
+                        const argValue = this._formatArgument(args[i]);
+                        return `${argName}=${argValue}`;
+                    })
+                    .join(', ');
+
+                throw new Error(
+                    `Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`,
+                );
             }
         }
+
         return result;
     }
 
