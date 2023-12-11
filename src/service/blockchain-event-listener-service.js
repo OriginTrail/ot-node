@@ -234,10 +234,8 @@ class BlockchainEventListenerService {
     }
 
     async handleParameterChangedEvents(blockEvents) {
-        console.log('handler');
         for (const event of blockEvents) {
             const { parameterName, parameterValue } = JSON.parse(event.data);
-            console.log('Handler', parameterName, parameterValue);
             this.blockchainModuleManager.cacheParameter(
                 event.blockchainId,
                 parameterName,

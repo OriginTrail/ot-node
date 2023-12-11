@@ -588,3 +588,16 @@ export const BLOCK_TIME_MILLIS = {
 };
 
 export const TRANSACTION_CONFIRMATIONS = 1;
+
+export const CACHED_FUNCTIONS = {
+    ParametersStorage: [
+        'r0',
+        'r1',
+        'r2',
+        'finalizationCommitsNumber',
+        'updateCommitWindowDuration',
+        'commitWindowDurationPerc',
+        'proofWindowDurationPerc',
+        'epochLength',
+    ],
+};

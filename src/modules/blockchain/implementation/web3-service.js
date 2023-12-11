@@ -19,6 +19,7 @@ import {
     HTTP_RPC_PROVIDER_PRIORITY,
     FALLBACK_PROVIDER_QUORUM,
     RPC_PROVIDER_STALL_TIMEOUT,
+    CACHED_FUNCTIONS,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -51,16 +52,6 @@ const ABIs = {
 const SCORING_FUNCTIONS = {
     1: 'Log2PLDSF',
 };
-const cachedFunctionsList = [
-    'r0',
-    'r1',
-    'r2',
-    'finalizationCommitsNumber',
-    'updateCommitWindowDuration',
-    'commitWindowDurationPerc',
-    'proofWindowDurationPerc',
-    'epochLength',
-];
 const resultCache = {};
 
 class Web3Service {
@@ -281,7 +272,6 @@ class Web3Service {
     }
 
     cacheParameter(parameterName, parameterValue) {
-        console.log('cache web3 service');
         resultCache[parameterName] = parameterValue;
     }
 
@@ -422,18 +412,18 @@ class Web3Service {
 
     async callContractFunction(contractInstance, functionName, args) {
         let result;
-        if (cachedFunctionsList.includes(functionName) && resultCache[functionName] !== undefined) {
-            console.log('cached!');
+        if (
+            CACHED_FUNCTIONS.ParametersStorage.includes(functionName) &&
+            resultCache[functionName] !== undefined
+        ) {
             result = resultCache[functionName];
-            console.log(result);
         } else {
             while (result === undefined) {
                 try {
                     // eslint-disable-next-line no-await-in-loop
                     result = await contractInstance[functionName](...args);
-                    if (cachedFunctionsList.includes(functionName)) {
+                    if (CACHED_FUNCTIONS.ParametersStorage.includes(functionName)) {
                         resultCache[functionName] = result;
-                        console.log(`Cached result for ${functionName}:`, result);
                     }
                 } catch (error) {
                     const decodedErrorData = this._decodeErrorData(
@@ -932,7 +922,6 @@ class Web3Service {
                 score: commit.score,
             }));
     }
-    // OVO OVDE TREBA DODATI MEMORY CACHE NAJPAMETNIJE URADITI U CALL CONTRACT FFFF
 
     async getR2() {
         const r2 = await this.callContractFunction(this.ParametersStorageContract, 'r2', []);
