@@ -228,8 +228,13 @@ class TripleStoreService {
             repository,
             assertionId,
         );
-
-        return this.dataService.parseBindings(bindings);
+        const count = this.dataService.parseBindings(bindings);
+        if (count > 1) {
+            // since 6.1.0 in asset metadata we are storing two triples connected to assertion id
+            // using 2 formats of ual - so we can expect that this query returns 2 triples per asset
+            return Math.round(count / 2);
+        }
+        return count;
     }
 
     async getAssertion(repository, assertionId) {
