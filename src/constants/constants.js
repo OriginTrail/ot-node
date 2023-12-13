@@ -589,15 +589,19 @@ export const BLOCK_TIME_MILLIS = {
 
 export const TRANSACTION_CONFIRMATIONS = 1;
 
+export const CACHE_DATA_TYPES = {
+    NUMBER: 'number',
+};
+
 export const CACHED_FUNCTIONS = {
     ParametersStorage: [
-        'r0',
-        'r1',
-        'r2',
-        'finalizationCommitsNumber',
-        'updateCommitWindowDuration',
-        'commitWindowDurationPerc',
-        'proofWindowDurationPerc',
-        'epochLength',
+        { name: 'r0', type: CACHE_DATA_TYPES.NUMBER },
+        { name: 'r1', type: CACHE_DATA_TYPES.NUMBER },
+        { name: 'r2', type: CACHE_DATA_TYPES.NUMBER },
+        { name: 'finalizationCommitsNumber', type: CACHE_DATA_TYPES.NUMBER },
+        { name: 'updateCommitWindowDuration', type: CACHE_DATA_TYPES.NUMBER },
+        { name: 'commitWindowDurationPerc', type: CACHE_DATA_TYPES.NUMBER },
+        { name: 'proofWindowDurationPerc', type: CACHE_DATA_TYPES.NUMBER },
+        { name: 'epochLength', type: CACHE_DATA_TYPES.NUMBER },
     ],
 };

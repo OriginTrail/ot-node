@@ -20,6 +20,7 @@ import {
     FALLBACK_PROVIDER_QUORUM,
     RPC_PROVIDER_STALL_TIMEOUT,
     CACHED_FUNCTIONS,
+    CACHE_DATA_TYPES,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -272,11 +273,28 @@ class Web3Service {
     }
 
     cacheParameter(parameterName, parameterValue) {
-        resultCache[parameterName] = parameterValue;
+        console.log('PARAMETER IME', parameterName);
+        const found = Object.values(CACHED_FUNCTIONS)
+            .flat()
+            .find((item) => item.name === parameterName);
+        if (found) {
+            console.log('NADJENO?', found);
+            const { type } = found;
+
+            switch (type) {
+                case CACHE_DATA_TYPES.NUMBER:
+                    resultCache[parameterName] = Number(parameterValue);
+                    break;
+                default:
+                    resultCache[parameterName] = parameterValue;
+            }
+        }
     }
 
     getCachedValue(parameterName) {
-        return resultCache[parameterName];
+        if (CACHED_FUNCTIONS.ParametersStorage.some((item) => item.name === parameterName)) {
+            return resultCache[parameterName];
+        }
     }
 
     initializeContract(contractName, contractAddress) {
@@ -416,16 +434,13 @@ class Web3Service {
 
     async callContractFunction(contractInstance, functionName, args) {
         let result;
-        if (CACHED_FUNCTIONS.ParametersStorage.includes(functionName)) {
-            result = this.getCachedValue(functionName);
-        }
+        result = this.getCachedValue(functionName);
+
         while (!result) {
             try {
                 // eslint-disable-next-line no-await-in-loop
                 result = await contractInstance[functionName](...args);
-                if (CACHED_FUNCTIONS.ParametersStorage.includes(functionName)) {
-                    this.cacheParameter(functionName, result);
-                }
+                this.cacheParameter(functionName, result);
             } catch (error) {
                 const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
 
