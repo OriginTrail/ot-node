@@ -273,12 +273,10 @@ class Web3Service {
     }
 
     cacheParameter(parameterName, parameterValue) {
-        console.log('PARAMETER IME', parameterName);
         const found = Object.values(CACHED_FUNCTIONS)
             .flat()
             .find((item) => item.name === parameterName);
         if (found) {
-            console.log('NADJENO?', found);
             const { type } = found;
 
             switch (type) {
