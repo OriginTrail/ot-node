@@ -17,12 +17,20 @@ class UpdateController extends BaseController {
     }
 
     async handleRequest(req, res) {
+        const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
+        const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
+
+        this.logger.info(
+            `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
+        );
+
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.UPDATE.UPDATE_START,
         );
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.UPDATE.UPDATE_INIT_START,
         );
 
@@ -32,6 +40,7 @@ class UpdateController extends BaseController {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.UPDATE.UPDATE_INIT_END,
         );
 
@@ -42,13 +51,6 @@ class UpdateController extends BaseController {
         );
 
         try {
-            const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
-            const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
-
-            this.logger.info(
-                `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
-            );
-
             await this.operationIdService.cacheOperationIdData(operationId, {
                 public: {
                     assertion,
@@ -85,6 +87,7 @@ class UpdateController extends BaseController {
 
             await this.operationService.markOperationAsFailed(
                 operationId,
+                blockchain,
                 'Unable to update data, Failed to process input data!',
                 ERROR_TYPE.UPDATE.UPDATE_ROUTE_ERROR,
             );

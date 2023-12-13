@@ -20,6 +20,7 @@ class LocalStoreController extends BaseController {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            null,
             OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_INIT_END,
         );
 

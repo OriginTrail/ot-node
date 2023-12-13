@@ -52,9 +52,12 @@ class HttpClientModuleManager extends BaseModuleManager {
         }
     }
 
-    initializeBeforeMiddlewares() {
+    initializeBeforeMiddlewares(blockchainImpelemntations) {
         if (this.initialized) {
-            return this.getImplementation().module.initializeBeforeMiddlewares(this.authService);
+            return this.getImplementation().module.initializeBeforeMiddlewares(
+                this.authService,
+                blockchainImpelemntations,
+            );
         }
     }
 

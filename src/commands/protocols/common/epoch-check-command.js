@@ -6,7 +6,9 @@ import {
     TRANSACTION_CONFIRMATIONS,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
+    NODE_ENVIRONMENTS,
 } from '../../../constants/constants.js';
+import MigrationExecutor from '../../../migration/migration-executor.js';
 
 class EpochCheckCommand extends Command {
     constructor(ctx) {
@@ -17,18 +19,37 @@ class EpochCheckCommand extends Command {
         this.shardingTableService = ctx.shardingTableService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
+        this.fileService = ctx.fileService;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.EPOCH_CHECK_ERROR;
     }
 
     async execute(command) {
-        const operationId = this.operationIdService.generateId();
-        this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_START,
-            operationId,
+        const migrationExecuted = await MigrationExecutor.migrationAlreadyExecuted(
+            'ualExtensionTripleStoreMigration',
+            this.fileService,
         );
+        if (
+            process.env.NODE_ENV !== NODE_ENVIRONMENTS.DEVELOPMENT &&
+            process.env.NODE_ENV !== NODE_ENVIRONMENTS.TEST &&
+            !migrationExecuted
+        ) {
+            this.logger.info(
+                'Epoch check command will be postponed until ual extension triple store migration is completed',
+            );
+            return Command.repeat();
+        }
+        this.logger.info('Starting epoch check command');
+        const operationId = this.operationIdService.generateId();
+
         await Promise.all(
             this.blockchainModuleManager.getImplementationNames().map(async (blockchain) => {
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_START,
+                    operationId,
+                    blockchain,
+                );
+
                 const commitWindowDurationPerc =
                     await this.blockchainModuleManager.getCommitWindowDurationPerc(blockchain);
                 const proofWindowDurationPerc =
@@ -71,12 +92,13 @@ class EpochCheckCommand extends Command {
                         r0,
                     ),
                 ]);
-            }),
-        );
 
-        this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_END,
-            operationId,
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_END,
+                    operationId,
+                    blockchain,
+                );
+            }),
         );
 
         return Command.repeat();
@@ -348,8 +370,8 @@ class EpochCheckCommand extends Command {
      * @param command
      * @param error
      */
-    async recover(command, error) {
-        this.logger.warn(`Failed to execute ${command.name}; Error: ${error.message}`);
+    async recover(command) {
+        this.logger.warn(`Failed to execute ${command.name}. Error: ${command.message}`);
 
         return Command.repeat();
     }
