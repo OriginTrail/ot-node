@@ -19,8 +19,7 @@ import {
     HTTP_RPC_PROVIDER_PRIORITY,
     FALLBACK_PROVIDER_QUORUM,
     RPC_PROVIDER_STALL_TIMEOUT,
-    CACHED_FUNCTIONS,
-    CACHE_DATA_TYPES,
+    CACHED_CONTRACT_CALLS,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -53,7 +52,7 @@ const ABIs = {
 const SCORING_FUNCTIONS = {
     1: 'Log2PLDSF',
 };
-const resultCache = {};
+const contractCallCache = {};
 
 class Web3Service {
     async initialize(config, logger) {
@@ -272,28 +271,27 @@ class Web3Service {
         }
     }
 
-    cacheParameter(contractName, parameterName, parameterValue) {
-        const found =
-            CACHED_FUNCTIONS[contractName] &&
-            CACHED_FUNCTIONS[contractName].find((item) => item.name === parameterName);
-        if (found) {
-            const { type } = found;
-            switch (type) {
-                case CACHE_DATA_TYPES.NUMBER:
-                    resultCache[parameterName] = Number(parameterValue);
-                    break;
-                default:
-                    resultCache[parameterName] = parameterValue;
+    setContractCallCache(contractName, parameterName, parameterValue) {
+        if (CACHED_CONTRACT_CALLS[contractName]?.has(parameterName)) {
+            if (!contractCallCache[contractName]) {
+                contractCallCache[contractName] = {};
             }
+            contractCallCache[contractName][parameterName] = parameterValue;
         }
     }
 
-    getCachedValue(contractName, parameterName) {
+    resetContractCallCache(contract, parameterName) {
+        if (contractCallCache[contract]) {
+            contractCallCache[contract][parameterName] = null;
+        }
+    }
+
+    getContractCallCache(contractName, parameterName) {
         if (
-            CACHED_FUNCTIONS[contractName] &&
-            CACHED_FUNCTIONS[contractName].some((item) => item.name === parameterName)
+            CACHED_CONTRACT_CALLS[contractName]?.has(parameterName) &&
+            contractCallCache[contractName]
         ) {
-            return resultCache[parameterName];
+            return contractCallCache[contractName][parameterName];
         }
     }
 
@@ -433,32 +431,30 @@ class Web3Service {
     }
 
     async callContractFunction(contractInstance, functionName, args, contractName = null) {
-        let result;
-        result = this.getCachedValue(contractName, functionName);
+        let result = this.getContractCallCache(contractName, functionName);
 
-        while (!result) {
-            try {
-                // eslint-disable-next-line no-await-in-loop
+        try {
+            if (!result) {
                 result = await contractInstance[functionName](...args);
-                this.cacheParameter(contractName, functionName, result);
-            } catch (error) {
-                const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
-
-                const functionFragment = contractInstance.interface.getFunction(
-                    error.transaction.data.slice(0, 10),
-                );
-                const inputs = functionFragment.inputs
-                    .map((input, i) => {
-                        const argName = input.name;
-                        const argValue = this._formatArgument(args[i]);
-                        return `${argName}=${argValue}`;
-                    })
-                    .join(', ');
-
-                throw new Error(
-                    `Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`,
-                );
+                if (contractName) {
+                    this.setContractCallCache(contractName, functionName, result);
+                }
             }
+        } catch (error) {
+            const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
+
+            const functionFragment = contractInstance.interface.getFunction(
+                error.transaction.data.slice(0, 10),
+            );
+            const inputs = functionFragment.inputs
+                .map((input, i) => {
+                    const argName = input.name;
+                    const argValue = this._formatArgument(args[i]);
+                    return `${argName}=${argValue}`;
+                })
+                .join(', ');
+
+            throw new Error(`Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`);
         }
 
         return result;
@@ -941,7 +937,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'r2',
             [],
-            'ParametersStorage',
+            'ParametersStorageContract',
         );
         return r2;
     }
@@ -951,7 +947,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'r1',
             [],
-            'ParametersStorage',
+            'ParametersStorageContract',
         );
         return r1;
     }
@@ -961,7 +957,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'r0',
             [],
-            'ParametersStorage',
+            'ParametersStorageContract',
         );
         return r0;
     }
@@ -971,7 +967,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'finalizationCommitsNumber',
             [],
-            'ParametersStorage',
+            'ParametersStorageContract',
         );
         return finalizationCommitsNumber;
     }
@@ -1143,7 +1139,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'updateCommitWindowDuration',
             [],
-            'ParametersStorage',
+            'ParametersStorageContract',
         );
         return Number(commitWindowDurationPerc);
     }
@@ -1153,7 +1149,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'commitWindowDurationPerc',
             [],
-            'ParametersStorage',
+            'ParametersStorageContract',
         );
         return Number(commitWindowDurationPerc);
     }
@@ -1163,7 +1159,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'proofWindowDurationPerc',
             [],
-            'ParametersStorage',
+            'ParametersStorageContract',
         );
     }
 
@@ -1172,7 +1168,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'epochLength',
             [],
-            'ParametersStorage',
+            'ParametersStorageContract',
         );
         return Number(epochLength);
     }
@@ -1204,6 +1200,7 @@ class Web3Service {
             this.scoringFunctionsContracts[1],
             'getParameters',
             [],
+            'Log2PLDSFContract',
         );
 
         const params = {};
@@ -1241,6 +1238,10 @@ class Web3Service {
         return this.callContractFunction(this.UnfinalizedStateStorageContract, 'hasPendingUpdate', [
             tokenId,
         ]);
+    }
+
+    getABI(contractName) {
+        return this[contractName].interface;
     }
 }
 

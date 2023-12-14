@@ -555,6 +555,7 @@ export const CONTRACTS = {
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
     SERVICE_AGREEMENT_V1_CONTRACT: 'ServiceAgreementV1Contract',
     PARAMETERS_STORAGE_CONTRACT: 'ParametersStorageContract',
+    LOG2PLDSF: 'Log2PLDSFContract',
 };
 
 export const CONTRACT_EVENTS = {
@@ -565,6 +566,7 @@ export const CONTRACT_EVENTS = {
     COMMIT_MANAGER_V1: ['StateFinalized'],
     SERVICE_AGREEMENT_V1: ['ServiceAgreementV1Extended', 'ServiceAgreementV1Terminated'],
     PARAMETERS_STORAGE: ['ParameterChanged'],
+    LOG2PLDSF: ['ParameterChanged'],
 };
 
 export const NODE_ENVIRONMENTS = {
@@ -589,19 +591,20 @@ export const BLOCK_TIME_MILLIS = {
 
 export const TRANSACTION_CONFIRMATIONS = 1;
 
-export const CACHE_DATA_TYPES = {
-    NUMBER: 'number',
+export const SOLIDITY_TYPES_MAP = {
+    uint256: Number,
 };
 
-export const CACHED_FUNCTIONS = {
-    ParametersStorage: [
-        { name: 'r0', type: CACHE_DATA_TYPES.NUMBER },
-        { name: 'r1', type: CACHE_DATA_TYPES.NUMBER },
-        { name: 'r2', type: CACHE_DATA_TYPES.NUMBER },
-        { name: 'finalizationCommitsNumber', type: CACHE_DATA_TYPES.NUMBER },
-        { name: 'updateCommitWindowDuration', type: CACHE_DATA_TYPES.NUMBER },
-        { name: 'commitWindowDurationPerc', type: CACHE_DATA_TYPES.NUMBER },
-        { name: 'proofWindowDurationPerc', type: CACHE_DATA_TYPES.NUMBER },
-        { name: 'epochLength', type: CACHE_DATA_TYPES.NUMBER },
-    ],
+export const CACHED_CONTRACT_CALLS = {
+    ParametersStorageContract: new Set([
+        'r0',
+        'r1',
+        'r2',
+        'finalizationCommitsNumber',
+        'updateCommitWindowDuration',
+        'commitWindowDurationPerc',
+        'proofWindowDurationPerc',
+        'epochLength',
+    ]),
+    Log2PLDSFContract: new Set(['getParameters']),
 };

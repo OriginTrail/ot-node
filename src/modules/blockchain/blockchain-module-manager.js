@@ -26,10 +26,18 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    cacheParameter(blockchain, parameterName, parameterValue) {
-        return this.callImplementationFunction(blockchain, 'cacheParameter', [
+    setContractCallCache(blockchain, contractName, parameterName, parameterValue) {
+        return this.callImplementationFunction(blockchain, 'setContractCallCache', [
+            contractName,
             parameterName,
             parameterValue,
+        ]);
+    }
+
+    resetContractCallCache(blockchain, contract, parameterName) {
+        return this.callImplementationFunction(blockchain, 'resetContractCallCache', [
+            contract,
+            parameterName,
         ]);
     }
 
@@ -422,6 +430,10 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     async hasPendingUpdate(blockchain, tokenId) {
         return this.callImplementationFunction(blockchain, 'hasPendingUpdate', [tokenId]);
+    }
+
+    getABI(blockchain, contractName) {
+        return this.callImplementationFunction(blockchain, 'getABI', [contractName]);
     }
 }
 

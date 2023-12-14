@@ -6,6 +6,7 @@ import {
     NODE_ENVIRONMENTS,
     PENDING_STORAGE_REPOSITORIES,
     CONTRACT_EVENTS,
+    SOLIDITY_TYPES_MAP,
 } from '../constants/constants.js';
 
 const MAXIMUM_FETCH_EVENTS_FAILED_COUNT = 5;
@@ -84,6 +85,12 @@ class BlockchainEventListenerService {
                 CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
                 currentBlock,
                 CONTRACT_EVENTS.PARAMETERS_STORAGE,
+            ),
+            this.getContractEvents(
+                blockchainId,
+                CONTRACTS.LOG2PLDSF,
+                currentBlock,
+                CONTRACT_EVENTS.LOG2PLDSF,
             ),
         ];
 
@@ -235,12 +242,39 @@ class BlockchainEventListenerService {
 
     async handleParameterChangedEvents(blockEvents) {
         for (const event of blockEvents) {
+            const { blockchainId, contract, event: eventName } = event;
             const { parameterName, parameterValue } = JSON.parse(event.data);
-            this.blockchainModuleManager.cacheParameter(
-                event.blockchainId,
-                parameterName,
-                parameterValue,
-            );
+
+            if (contract === CONTRACTS.LOG2PLDSF) {
+                this.blockchainModuleManager.resetContractCallCache(
+                    blockchainId,
+                    contract,
+                    'getParameters',
+                );
+            } else {
+                const contractABI = this.blockchainModuleManager.getABI(blockchainId, contract);
+
+                const eventNameWithArgs = Object.keys(contractABI.events).find((contractEvent) =>
+                    contractEvent.startsWith(eventName),
+                );
+
+                const parameterValueSolidityType = contractABI.events[
+                    eventNameWithArgs
+                ].inputs.find((input) => input.name === 'parameterValue').type;
+
+                const castedParameterValue = Object.keys(SOLIDITY_TYPES_MAP).includes(
+                    parameterValueSolidityType,
+                )
+                    ? SOLIDITY_TYPES_MAP[parameterValueSolidityType](parameterValue)
+                    : parameterValue;
+
+                this.blockchainModuleManager.setContractCallCache(
+                    blockchainId,
+                    contract,
+                    parameterName,
+                    castedParameterValue,
+                );
+            }
         }
     }
 
