@@ -272,13 +272,12 @@ class Web3Service {
         }
     }
 
-    cacheParameter(parameterName, parameterValue) {
-        const found = Object.values(CACHED_FUNCTIONS)
-            .flat()
-            .find((item) => item.name === parameterName);
+    cacheParameter(contractName, parameterName, parameterValue) {
+        const found =
+            CACHED_FUNCTIONS[contractName] &&
+            CACHED_FUNCTIONS[contractName].find((item) => item.name === parameterName);
         if (found) {
             const { type } = found;
-
             switch (type) {
                 case CACHE_DATA_TYPES.NUMBER:
                     resultCache[parameterName] = Number(parameterValue);
@@ -289,8 +288,11 @@ class Web3Service {
         }
     }
 
-    getCachedValue(parameterName) {
-        if (CACHED_FUNCTIONS.ParametersStorage.some((item) => item.name === parameterName)) {
+    getCachedValue(contractName, parameterName) {
+        if (
+            CACHED_FUNCTIONS[contractName] &&
+            CACHED_FUNCTIONS[contractName].some((item) => item.name === parameterName)
+        ) {
             return resultCache[parameterName];
         }
     }
@@ -430,15 +432,15 @@ class Web3Service {
         }
     }
 
-    async callContractFunction(contractInstance, functionName, args) {
+    async callContractFunction(contractInstance, functionName, args, contractName = null) {
         let result;
-        result = this.getCachedValue(functionName);
+        result = this.getCachedValue(contractName, functionName);
 
         while (!result) {
             try {
                 // eslint-disable-next-line no-await-in-loop
                 result = await contractInstance[functionName](...args);
-                this.cacheParameter(functionName, result);
+                this.cacheParameter(contractName, functionName, result);
             } catch (error) {
                 const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
 
@@ -935,17 +937,32 @@ class Web3Service {
     }
 
     async getR2() {
-        const r2 = await this.callContractFunction(this.ParametersStorageContract, 'r2', []);
+        const r2 = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'r2',
+            [],
+            'ParametersStorage',
+        );
         return r2;
     }
 
     async getR1() {
-        const r1 = await this.callContractFunction(this.ParametersStorageContract, 'r1', []);
+        const r1 = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'r1',
+            [],
+            'ParametersStorage',
+        );
         return r1;
     }
 
     async getR0() {
-        const r0 = await this.callContractFunction(this.ParametersStorageContract, 'r0', []);
+        const r0 = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'r0',
+            [],
+            'ParametersStorage',
+        );
         return r0;
     }
 
@@ -954,6 +971,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'finalizationCommitsNumber',
             [],
+            'ParametersStorage',
         );
         return finalizationCommitsNumber;
     }
@@ -1125,6 +1143,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'updateCommitWindowDuration',
             [],
+            'ParametersStorage',
         );
         return Number(commitWindowDurationPerc);
     }
@@ -1134,6 +1153,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'commitWindowDurationPerc',
             [],
+            'ParametersStorage',
         );
         return Number(commitWindowDurationPerc);
     }
@@ -1143,6 +1163,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'proofWindowDurationPerc',
             [],
+            'ParametersStorage',
         );
     }
 
@@ -1151,6 +1172,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'epochLength',
             [],
+            'ParametersStorage',
         );
         return Number(epochLength);
     }
