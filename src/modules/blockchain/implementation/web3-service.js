@@ -8,6 +8,7 @@ import {
     SOLIDITY_ERROR_STRING_PREFIX,
     SOLIDITY_PANIC_CODE_PREFIX,
     SOLIDITY_PANIC_REASONS,
+    SOLIDITY_TYPES_MAP,
     ZERO_PREFIX,
     DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
@@ -293,6 +294,16 @@ class Web3Service {
         ) {
             return contractCallCache[contractName][parameterName];
         }
+    }
+
+    getContractEventABI(contractName, eventName) {
+        return this[contractName].interface.getEvent(eventName);
+    }
+
+    fromSolidityType(solidityType, parameterValue) {
+        return SOLIDITY_TYPES_MAP[solidityType]
+            ? SOLIDITY_TYPES_MAP[solidityType](parameterValue)
+            : parameterValue;
     }
 
     initializeContract(contractName, contractAddress) {
@@ -1238,10 +1249,6 @@ class Web3Service {
         return this.callContractFunction(this.UnfinalizedStateStorageContract, 'hasPendingUpdate', [
             tokenId,
         ]);
-    }
-
-    getABI(contractName) {
-        return this[contractName].interface;
     }
 }
 

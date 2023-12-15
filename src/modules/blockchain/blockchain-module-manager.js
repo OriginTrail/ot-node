@@ -41,6 +41,20 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
+    getContractEventABI(blockchain, contractName, eventName) {
+        return this.callImplementationFunction(blockchain, 'getContractEventABI', [
+            contractName,
+            eventName,
+        ]);
+    }
+
+    fromSolidityType(blockchain, solidityType, parameterValue) {
+        return this.callImplementationFunction(blockchain, 'fromSolidityType', [
+            solidityType,
+            parameterValue,
+        ]);
+    }
+
     getPrivateKey(blockchain) {
         return this.callImplementationFunction(blockchain, 'getPrivateKey');
     }
@@ -430,10 +444,6 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     async hasPendingUpdate(blockchain, tokenId) {
         return this.callImplementationFunction(blockchain, 'hasPendingUpdate', [tokenId]);
-    }
-
-    getABI(blockchain, contractName) {
-        return this.callImplementationFunction(blockchain, 'getABI', [contractName]);
     }
 }
 

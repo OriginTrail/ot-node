@@ -6,7 +6,6 @@ import {
     NODE_ENVIRONMENTS,
     PENDING_STORAGE_REPOSITORIES,
     CONTRACT_EVENTS,
-    SOLIDITY_TYPES_MAP,
 } from '../constants/constants.js';
 
 const MAXIMUM_FETCH_EVENTS_FAILED_COUNT = 5;
@@ -252,21 +251,19 @@ class BlockchainEventListenerService {
                     'getParameters',
                 );
             } else {
-                const contractABI = this.blockchainModuleManager.getABI(blockchainId, contract);
-
-                const eventNameWithArgs = Object.keys(contractABI.events).find((contractEvent) =>
-                    contractEvent.startsWith(eventName),
+                const eventABI = this.blockchainModuleManager.getContractEventABI(
+                    blockchainId,
+                    contract,
+                    eventName,
                 );
+                const parameterSolidityType = eventABI.inputs.find(
+                    (input) => input.name === 'parameterValue',
+                ).type;
 
-                const parameterValueSolidityType = contractABI.events[
-                    eventNameWithArgs
-                ].inputs.find((input) => input.name === 'parameterValue').type;
-
-                const castedParameterValue = Object.keys(SOLIDITY_TYPES_MAP).includes(
-                    parameterValueSolidityType,
-                )
-                    ? SOLIDITY_TYPES_MAP[parameterValueSolidityType](parameterValue)
-                    : parameterValue;
+                const castedParameterValue = this.blockchainModuleManager.fromSolidityType(
+                    parameterSolidityType,
+                    parameterValue,
+                );
 
                 this.blockchainModuleManager.setContractCallCache(
                     blockchainId,
