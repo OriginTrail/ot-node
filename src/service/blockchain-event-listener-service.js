@@ -261,6 +261,7 @@ class BlockchainEventListenerService {
                 ).type;
 
                 const castedParameterValue = this.blockchainModuleManager.fromSolidityType(
+                    blockchainId,
                     parameterSolidityType,
                     parameterValue,
                 );

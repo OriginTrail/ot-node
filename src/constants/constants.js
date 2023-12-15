@@ -592,18 +592,7 @@ export const BLOCK_TIME_MILLIS = {
 export const TRANSACTION_CONFIRMATIONS = 1;
 
 export const SOLIDITY_TYPES_MAP = {
-    uint8: (value) => Number(value),
-    uint16: (value) => Number(value),
-    uint32: (value) => Number(value),
-    uint72: (value) => Number(value),
-    uint96: (value) => Number(value),
-    uint128: (value) => Number(value),
     uint256: (value) => Number(value),
-
-    'uint8[]': (values) => values.map((value) => Number(value)),
-    'uint32[]': (values) => values.map((value) => Number(value)),
-    'uint96[]': (values) => values.map((value) => Number(value)),
-    'uint256[]': (values) => values.map((value) => Number(value)),
 };
 
 export const CACHED_CONTRACT_CALLS = {

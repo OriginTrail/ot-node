@@ -301,19 +301,9 @@ class Web3Service {
     }
 
     fromSolidityType(solidityType, parameterValue) {
-        const arrayMatch = solidityType.match(/^(.+)\[(\d+)\]$/);
-        if (arrayMatch) {
-            const elementType = arrayMatch[1];
-            const arraySize = parseInt(arrayMatch[2], 10);
-            if (SOLIDITY_TYPES_MAP[elementType]) {
-                return Array.from({ length: arraySize }, (_, index) =>
-                    SOLIDITY_TYPES_MAP[elementType](parameterValue[index]),
-                );
-            }
-        } else if (SOLIDITY_TYPES_MAP[solidityType]) {
-            return SOLIDITY_TYPES_MAP[solidityType](parameterValue);
-        }
-        return parameterValue;
+        return SOLIDITY_TYPES_MAP[solidityType]
+            ? SOLIDITY_TYPES_MAP[solidityType](parameterValue)
+            : parameterValue;
     }
 
     initializeContract(contractName, contractAddress) {
@@ -379,9 +369,12 @@ class Web3Service {
     }
 
     async getIdentityId() {
-        return this.callContractFunction(this.IdentityStorageContract, 'getIdentityId', [
-            this.getPublicKey(),
-        ]);
+        const identityId = await this.callContractFunction(
+            this.IdentityStorageContract,
+            'getIdentityId',
+            [this.getPublicKey()],
+        );
+        return Number(identityId);
     }
 
     async identityIdExists() {
@@ -449,18 +442,7 @@ class Web3Service {
 
         try {
             if (!result) {
-                const rawResult = await contractInstance[functionName](...args);
-
-                const functionABI = contractInstance.interface.getFunction(functionName);
-
-                const castedResults = Array.isArray(rawResult) ? rawResult : [rawResult];
-                for (let i = 0; i < functionABI.outputs.length; i += 1) {
-                    const outputType = functionABI.outputs[i].type;
-                    castedResults[i] = this.fromSolidityType(outputType, castedResults[i]);
-                }
-
-                result = castedResults.length === 1 ? castedResults[0] : castedResults;
-
+                result = await contractInstance[functionName](...args);
                 if (contractName) {
                     this.setContractCallCache(contractName, functionName, result);
                 }
@@ -826,6 +808,17 @@ class Web3Service {
         ]);
     }
 
+    async getAssertionIdsLength(assetContractAddress, tokenId) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
+
+        return this.callContractFunction(assetStorageContractInstance, 'getAssertionIdsLength', [
+            tokenId,
+        ]);
+    }
+
     async getKnowledgeAssetOwner(assetContractAddress, tokenId) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
@@ -844,33 +837,48 @@ class Web3Service {
     }
 
     async getAgreementData(agreementId) {
-        return this.callContractFunction(
+        const result = await this.callContractFunction(
             this.ServiceAgreementStorageProxyContract,
             'getAgreementData',
             [agreementId],
         );
+
+        return {
+            startTime: result['0'].toNumber(),
+            epochsNumber: result['1'],
+            epochLength: result['2'].toNumber(),
+            tokenAmount: result['3'][0],
+            updateTokenAmount: result['3'][1],
+            scoreFunctionId: result['4'][0],
+            proofWindowOffsetPerc: result['4'][1],
+        };
     }
 
     async getAssertionSize(assertionId) {
-        return this.callContractFunction(this.AssertionStorageContract, 'getAssertionSize', [
-            assertionId,
-        ]);
+        const assertionSize = await this.callContractFunction(
+            this.AssertionStorageContract,
+            'getAssertionSize',
+            [assertionId],
+        );
+        return Number(assertionSize);
     }
 
     async getAssertionTriplesNumber(assertionId) {
-        return this.callContractFunction(
+        const assertionTriplesNumber = await this.callContractFunction(
             this.AssertionStorageContract,
             'getAssertionTriplesNumber',
             [assertionId],
         );
+        return Number(assertionTriplesNumber);
     }
 
     async getAssertionChunksNumber(assertionId) {
-        return this.callContractFunction(
+        const assertionChunksNumber = await this.callContractFunction(
             this.AssertionStorageContract,
             'getAssertionChunksNumber',
             [assertionId],
         );
+        return Number(assertionChunksNumber);
     }
 
     selectCommitManagerContract(latestStateIndex) {
@@ -1041,7 +1049,12 @@ class Web3Service {
     }
 
     async getShardingTableLength() {
-        return this.callContractFunction(this.ShardingTableStorageContract, 'nodesCount', []);
+        const nodesCount = await this.callContractFunction(
+            this.ShardingTableStorageContract,
+            'nodesCount',
+            [],
+        );
+        return Number(nodesCount);
     }
 
     async getShardingTablePage(startingIdentityId, nodesNum) {
@@ -1109,21 +1122,23 @@ class Web3Service {
     }
 
     async getUpdateCommitWindowDuration() {
-        return this.callContractFunction(
+        const commitWindowDurationPerc = await this.callContractFunction(
             this.ParametersStorageContract,
             'updateCommitWindowDuration',
             [],
             'ParametersStorageContract',
         );
+        return Number(commitWindowDurationPerc);
     }
 
     async getCommitWindowDurationPerc() {
-        return this.callContractFunction(
+        const commitWindowDurationPerc = await this.callContractFunction(
             this.ParametersStorageContract,
             'commitWindowDurationPerc',
             [],
             'ParametersStorageContract',
         );
+        return Number(commitWindowDurationPerc);
     }
 
     async getProofWindowDurationPerc() {
@@ -1136,12 +1151,13 @@ class Web3Service {
     }
 
     async getEpochLength() {
-        return this.callContractFunction(
+        const epochLength = await this.callContractFunction(
             this.ParametersStorageContract,
             'epochLength',
             [],
             'ParametersStorageContract',
         );
+        return Number(epochLength);
     }
 
     async isHashFunction(hashFunctionId) {
