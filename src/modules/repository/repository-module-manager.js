@@ -206,6 +206,7 @@ class RepositoryModuleManager extends BaseModuleManager {
 
     async createEventRecord(
         operationId,
+        blockchainId,
         name,
         timestamp,
         value1 = null,
@@ -214,6 +215,7 @@ class RepositoryModuleManager extends BaseModuleManager {
     ) {
         return this.getRepository('event').createEventRecord(
             operationId,
+            blockchainId,
             name,
             timestamp,
             value1,
@@ -250,8 +252,11 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('blockchain_event').insertBlockchainEvents(events);
     }
 
-    async getAllUnprocessedBlockchainEvents(eventNames) {
-        return this.getRepository('blockchain_event').getAllUnprocessedBlockchainEvents(eventNames);
+    async getAllUnprocessedBlockchainEvents(eventNames, blockchainId) {
+        return this.getRepository('blockchain_event').getAllUnprocessedBlockchainEvents(
+            eventNames,
+            blockchainId,
+        );
     }
 
     async markBlockchainEventsAsProcessed(events) {

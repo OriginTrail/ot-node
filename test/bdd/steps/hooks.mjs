@@ -2,9 +2,9 @@ import 'dotenv/config';
 import { Before, BeforeAll, After, AfterAll } from '@cucumber/cucumber';
 import slugify from 'slugify';
 import fs from 'fs';
-import mysql from "mysql2";
+import mysql from 'mysql2';
 import { NODE_ENVIRONMENTS } from '../../../src/constants/constants.js';
-import TripleStoreModuleManager from "../../../src/modules/triple-store/triple-store-module-manager.js";
+import TripleStoreModuleManager from '../../../src/modules/triple-store/triple-store-module-manager.js';
 
 process.env.NODE_ENV = NODE_ENVIRONMENTS.TEST;
 
@@ -16,6 +16,7 @@ Before(function beforeMethod(testCase, done) {
     // Initialize variables
     this.state = {};
     this.state.localBlockchain = null;
+    this.state.localBlockchains = [];
     this.state.nodes = {};
     this.state.bootstraps = [];
     let logDir = process.env.CUCUMBER_ARTIFACTS_DIR || '.';
@@ -32,22 +33,26 @@ After(function afterMethod(testCase, done) {
     const promises = [];
     for (const key in this.state.nodes) {
         this.state.nodes[key].forkedNode.kill();
-        tripleStoreConfiguration.push({modules: {tripleStore: this.state.nodes[key].configuration.modules.tripleStore}});
+        tripleStoreConfiguration.push({
+            modules: { tripleStore: this.state.nodes[key].configuration.modules.tripleStore },
+        });
         databaseNames.push(this.state.nodes[key].configuration.operationalDatabase.databaseName);
         const dataFolderPath = this.state.nodes[key].fileService.getDataFolderPath();
         promises.push(this.state.nodes[key].fileService.removeFolder(dataFolderPath));
     }
     this.state.bootstraps.forEach((node) => {
         node.forkedNode.kill();
-        tripleStoreConfiguration.push({modules: {tripleStore: node.configuration.modules.tripleStore}});
+        tripleStoreConfiguration.push({
+            modules: { tripleStore: node.configuration.modules.tripleStore },
+        });
         databaseNames.push(node.configuration.operationalDatabase.databaseName);
         const dataFolderPath = node.fileService.getDataFolderPath();
         promises.push(node.fileService.removeFolder(dataFolderPath));
     });
-    if (this.state.localBlockchain) {
-        this.logger.info('Stopping local blockchain!');
-        promises.push(this.state.localBlockchain.stop());
-        this.state.localBlockchain = null;
+    for (const localBlockchain in this.state.localBlockchains) {
+        this.logger.info(`Stopping local blockchain ${localBlockchain}!`);
+        promises.push(this.state.localBlockchains[localBlockchain].stop());
+        this.state.localBlockchains[localBlockchain] = null;
     }
     this.logger.log('After test hook, cleaning repositories');
 
@@ -63,18 +68,24 @@ After(function afterMethod(testCase, done) {
     promises.push(con);
     tripleStoreConfiguration.forEach((config) => {
         promises.push(async () => {
-            const tripleStoreModuleManager = new TripleStoreModuleManager({config, logger: this.logger});
+            const tripleStoreModuleManager = new TripleStoreModuleManager({
+                config,
+                logger: this.logger,
+            });
             await tripleStoreModuleManager.initialize();
             for (const implementationName of tripleStoreModuleManager.getImplementationNames()) {
-                const {tripleStoreConfig} = tripleStoreModuleManager.getImplementation(implementationName);
+                const { tripleStoreConfig } =
+                    tripleStoreModuleManager.getImplementation(implementationName);
                 Object.keys(tripleStoreConfig.repositories).map(async (repository) => {
-                        this.logger.log('Removing triple store configuration:', JSON.stringify(tripleStoreConfig, null, 4));
-                        await tripleStoreModuleManager.deleteRepository(implementationName, repository);
-                    }
-                )
+                    this.logger.log(
+                        'Removing triple store configuration:',
+                        JSON.stringify(tripleStoreConfig, null, 4),
+                    );
+                    await tripleStoreModuleManager.deleteRepository(implementationName, repository);
+                });
             }
-        })
-    })
+        });
+    });
     Promise.all(promises)
         .then(() => {
             con.end();
