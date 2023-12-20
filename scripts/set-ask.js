@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import { ethers } from 'ethers';
+import axios from 'axios';
 import { createRequire } from 'module';
 import {
     NODE_ENVIRONMENTS,
@@ -13,14 +14,39 @@ const Profile = require('dkg-evm-module/abi/Profile.json');
 const IdentityStorage = require('dkg-evm-module/abi/IdentityStorage.json');
 const Hub = require('dkg-evm-module/abi/Hub.json');
 const argv = require('minimist')(process.argv.slice(1), {
-    string: ['ask', 'privateKey', 'hubContractAddress'],
+    string: ['ask', 'privateKey', 'hubContractAddress', 'gasPriceOracleLink'],
 });
 
 const devEnvironment =
     process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
     process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
 
-async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
+async function getGasPrice(gasPriceOracleLink) {
+    if (!gasPriceOracleLink) {
+        return devEnvironment ? undefined : 8;
+    }
+    try {
+        let gasPrice;
+        const response = await axios.get(gasPriceOracleLink);
+        if (
+            gasPriceOracleLink === 'https://api.gnosisscan.io/api?module=proxy&action=eth_gasPrice'
+        ) {
+            gasPrice = Number(response.result, 10);
+        } else if (
+            gasPriceOracleLink === 'https://blockscout.chiadochain.net/api/v1/gas-price-oracle'
+        ) {
+            gasPrice = Math.round(response.average * 1e9);
+        } else {
+            gasPrice = Math.round(response.result * 1e9);
+        }
+        this.logger.debug(`Gas price: ${gasPrice}`);
+        return gasPrice;
+    } catch (error) {
+        return undefined;
+    }
+}
+
+async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress, gasPriceOracleLink) {
     const provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);
     const wallet = new ethers.Wallet(walletPrivateKey, provider);
 
@@ -36,8 +62,10 @@ async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
 
     const askWei = ethers.utils.parseEther(ask);
 
+    const gasPrice = await getGasPrice(gasPriceOracleLink);
+
     const tx = await profile.setAsk(identityId, askWei, {
-        gasPrice: devEnvironment ? undefined : 8,
+        gasPrice,
         gasLimit: 500_000,
     });
     await provider.waitForTransaction(
@@ -50,7 +78,13 @@ async function setAsk(rpcEndpoint, ask, walletPrivateKey, hubContractAddress) {
 const expectedArguments = ['rpcEndpoint', 'ask', 'privateKey', 'hubContractAddress'];
 
 if (validateArguments(argv, expectedArguments)) {
-    setAsk(argv.rpcEndpoint, argv.ask, argv.privateKey, argv.hubContractAddress)
+    setAsk(
+        argv.rpcEndpoint,
+        argv.ask,
+        argv.privateKey,
+        argv.hubContractAddress,
+        argv.gasPriceOracleLink,
+    )
         .then(() => {
             console.log('Set ask completed');
             process.exit(0);

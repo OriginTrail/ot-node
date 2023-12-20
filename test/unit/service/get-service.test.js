@@ -42,6 +42,7 @@ describe('Get service test', async () => {
             {
                 data: {
                     operationId: '5195d01a-b437-4aae-b388-a77b9fa715f1',
+                    blockchain: 'hardhat',
                     numberOfFoundNodes: 1,
                     leftoverNodes: [],
                     keyword: 'origintrail',
@@ -77,6 +78,7 @@ describe('Get service test', async () => {
             {
                 data: {
                     operationId: '5195d01a-b437-4aae-b388-a77b9fa715f1',
+                    blockchain: 'hardhat',
                     numberOfFoundNodes: 1,
                     leftoverNodes: [1, 2, 3, 4],
                     keyword: 'origintrail',

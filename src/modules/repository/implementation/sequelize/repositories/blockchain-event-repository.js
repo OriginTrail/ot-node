@@ -23,9 +23,10 @@ class BlockchainEventRepository {
         return inserted.map((event) => event.dataValues);
     }
 
-    async getAllUnprocessedBlockchainEvents(eventNames) {
+    async getAllUnprocessedBlockchainEvents(eventNames, blockchainId) {
         return this.model.findAll({
             where: {
+                blockchainId,
                 processed: false,
                 event: { [Sequelize.Op.in]: eventNames },
             },

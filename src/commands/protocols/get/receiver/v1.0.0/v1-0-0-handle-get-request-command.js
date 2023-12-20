@@ -23,6 +23,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         const { operationId, blockchain, contract, tokenId, assertionId, state } = commandData;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.GET.GET_REMOTE_START,
         );
 
@@ -61,6 +62,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.GET.GET_REMOTE_END,
         );
 

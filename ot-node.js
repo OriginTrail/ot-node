@@ -27,11 +27,8 @@ class OTNode {
     async start() {
         await this.checkForUpdate();
         await this.removeUpdateFile();
-        await MigrationExecutor.executeTripleStoreUserConfigurationMigration(
-            this.logger,
-            this.config,
-        );
-        await MigrationExecutor.executeTelemetryModuleUserConfigurationMigration(
+
+        await MigrationExecutor.executeUalExtensionUserConfigurationMigration(
             this.logger,
             this.config,
         );
@@ -51,57 +48,19 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
-        await MigrationExecutor.executePullShardingTableMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-        await MigrationExecutor.executePrivateAssetsMetadataMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-        await MigrationExecutor.executeRemoveAgreementStartEndTimeMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-        await MigrationExecutor.executeMarkOldBlockchainEventsAsProcessedMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-        await MigrationExecutor.executeTripleStoreMetadataMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-        await MigrationExecutor.executeServiceAgreementsMetadataMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-        await MigrationExecutor.executeRemoveOldEpochCommandsMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-        await MigrationExecutor.executePendingStorageMigration(this.logger, this.config);
-        // MigrationExecutor.executeServiceAgreementsDataInspector(
-        //     this.container,
-        //     this.logger,
-        //     this.config,
-        // );
-        // await MigrationExecutor.executeServiceAgreementsInvalidDataMigration(
-        //     this.container,
-        //     this.logger,
-        //     this.config,
-        // );
+
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
         await this.initializeShardingTableService();
-        await this.initializeBlockchainEventListenerService();
+
+        MigrationExecutor.executeUalExtensionTripleStoreMigration(
+            this.container,
+            this.logger,
+            this.config,
+        ).then(async () => {
+            await this.initializeBlockchainEventListenerService();
+        });
 
         await this.initializeRouters();
         await this.startNetworkModule();
@@ -317,6 +276,7 @@ class OTNode {
         telemetryModuleManager.listenOnEvents((eventData) => {
             repositoryModuleManager.createEventRecord(
                 eventData.operationId,
+                eventData.blockchainId,
                 eventData.lastEvent,
                 eventData.timestamp,
                 eventData.value1,
