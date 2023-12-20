@@ -253,60 +253,112 @@ install_node() {
     # Change directory to ot-node/current
     cd $OTNODE_DIR
 
-    #request node env
-    read -p "Please select node environment: (Default: Mainnet) [T]estnet [M]ainnet [E]xit " choice
+    # Request node env with strict input validation
+    while true; do
+        read -p "Please select node environment: (Default: Mainnet) [T]estnet [M]ainnet [E]xit " choice
         case "$choice" in
-            [tT]* ) nodeEnv="testnet";;
-            [eE]* ) text_color $RED"Installer stopped by user"; exit;;
-            * )     nodeEnv="mainnet";;
+            [tT]* ) nodeEnv="testnet"; break;;
+            [mM]* ) nodeEnv="mainnet"; break;;
+            [eE]* ) text_color $RED "Installer stopped by user"; exit;;
+            * ) text_color $RED "Invalid choice. Please enter either [T]estnet, [M]ainnet, or [E]xit."; continue;;
         esac
+    done
     echo "NODE_ENV=$nodeEnv" >> $OTNODE_DIR/.env
 
-    #blockchains=("otp" "polygon")
-    #for ((i = 0; i < ${#blockchains[@]}; ++i));
-    #do
-    #   read -p "Do you want to connect your node to blockchain: ${blockchains[$i]} ? [Y]Yes [N]No [E]Exit: " choice
-    #   case "$choice" in
-    #       [Yy]* )
+# Blockchains prompt based on the selected environment
+if [ "$nodeEnv" == "mainnet" ]; then
+    blockchain_prompt=("OTP" "Gnosis" "Both")
+elif [ "$nodeEnv" == "testnet" ]; then
+    blockchain_prompt=("Chiado" "OTP" "Both")
+fi
 
-    #            read -p "Enter your substrate operational wallet address: " SUBSTRATE_OPERATIONAL_WALLET
-    #            echo "Substrate operational wallet address: $SUBSTRATE_OPERATIONAL_WALLET"
+# Ask user which blockchain to connect to with strict input validation
+while true; do
+    read -p "Please select the blockchain you want to connect your node to:
+    1. ${blockchain_prompt[0]}
+    2. ${blockchain_prompt[1]}
+    3. ${blockchain_prompt[2]}
+    Your choice: " blockchain_choice
 
-    #            read -p "Enter your substrate operational wallet private key: " SUBSTRATE_OPERATIONAL_PRIVATE_KEY
-    #            echo "Substrate operational wallet private key: $SUBSTRATE_OPERATIONAL_PRIVATE_KEY"
+    case "$blockchain_choice" in
+        [1]* ) blockchain="${blockchain_prompt[0]}"; break;;
+        [2]* ) blockchain="${blockchain_prompt[1]}"; break;;
+        [3]* ) blockchain="${blockchain_prompt[2]}"; break;;
+        [eE]* ) text_color $RED "Installer stopped by user"; exit;;
+        * ) text_color $RED "Invalid choice. Please enter a valid number."; continue;;
+    esac
+done
 
-                read -p "Enter your EVM operational wallet address: " EVM_OPERATIONAL_WALLET
-                text_color $GREEN "EVM operational wallet address: $EVM_OPERATIONAL_WALLET"
+# Case statement to handle blockchain-specific configurations
+case "$blockchain" in
+    "OTP" | "Gnosis" | "Chiado" )
+        # Input wallets for the selected blockchain
+        read -p "Enter your EVM operational wallet address for $blockchain: " EVM_OPERATIONAL_WALLET
+        text_color $GREEN "EVM operational wallet address for $blockchain: $EVM_OPERATIONAL_WALLET"
 
-                read -p "Enter your EVM operational wallet private key: " EVM_OPERATIONAL_PRIVATE_KEY
-                text_color $GREEN "EVM operational wallet private key: $EVM_OPERATIONAL_PRIVATE_KEY"
+        read -p "Enter your EVM operational wallet private key for $blockchain: " EVM_OPERATIONAL_PRIVATE_KEY
+        text_color $GREEN "EVM operational wallet private key for $blockchain: $EVM_OPERATIONAL_PRIVATE_KEY"
 
-    #            read -p "Enter your substrate management wallet address: " SUBSTRATE_MANAGEMENT_WALLET
-    #            echo "Substrate management wallet address: $SUBSTRATE_MANAGEMENT_WALLET"
+        read -p "Enter your EVM management wallet address for $blockchain: " EVM_MANAGEMENT_WALLET
+        text_color $GREEN "EVM management wallet address for $blockchain: $EVM_MANAGEMENT_WALLET"
 
-    #            read -p "Enter your substrate management wallet private key: " SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY
-    #            echo "Substrate management wallet private key: $SUBSTRATE_MANAGEMENT_WALLET_PRIVATE_KEY"
+        read -p "Enter your profile shares token name for $blockchain: " SHARES_TOKEN_NAME
+        text_color $GREEN "Profile shares token name for $blockchain: $SHARES_TOKEN_NAME"
 
-                read -p "Enter your EVM management wallet address: " EVM_MANAGEMENT_WALLET
-                text_color $GREEN "EVM management wallet address: $EVM_MANAGEMENT_WALLET"
+        read -p "Enter your profile shares token symbol for $blockchain: " SHARES_TOKEN_SYMBOL
+        text_color $GREEN "Profile shares token symbol for $blockchain: $SHARES_TOKEN_SYMBOL"
+        ;;
+    "Both" )
+        if [ "$nodeEnv" == "mainnet" ]; then
+            blockchain1="OTP"
+            blockchain2="Gnosis"
+        elif [ "$nodeEnv" == "testnet" ]; then
+            blockchain1="Chiado"
+            blockchain2="OTP"
+        fi
 
-                read -p "Enter your profile shares token name: " SHARES_TOKEN_NAME
-                text_color $GREEN "Profile shares token name: $SHARES_TOKEN_NAME"
+        # Input wallets for the first blockchain
+        read -p "Enter your EVM operational wallet address for $blockchain1: " EVM_OPERATIONAL_WALLET
+        text_color $GREEN "EVM operational wallet address for $blockchain1: $EVM_OPERATIONAL_WALLET"
 
-                read -p "Enter your profile shares token symbol: " SHARES_TOKEN_SYMBOL
-                text_color $GREEN "Profile shares token name: $SHARES_TOKEN_SYMBOL"
-                # ;;
-    #      [Nn]* ) ;;
-    #     [Ee]* ) echo "Installer stopped by user"; exit;;
-        #    * ) ((--i));echo "Please make a valid choice and try again.";;
-        #esac
-    #done
+        read -p "Enter your EVM operational wallet private key for $blockchain1: " EVM_OPERATIONAL_PRIVATE_KEY
+        text_color $GREEN "EVM operational wallet private key for $blockchain1: $EVM_OPERATIONAL_PRIVATE_KEY"
 
-    perform_step npm ci --omit=dev --ignore-scripts "Executing npm install"
+        read -p "Enter your EVM management wallet address for $blockchain1: " EVM_MANAGEMENT_WALLET
+        text_color $GREEN "EVM management wallet address for $blockchain1: $EVM_MANAGEMENT_WALLET"
 
-    CONFIG_DIR=$OTNODE_DIR/..
-    perform_step touch $CONFIG_DIR/.origintrail_noderc "Configuring node config file"
-    perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}}' > $CONFIG_DIR/.origintrail_noderc) "Adding loglevel and auth values to node config file"
+        read -p "Enter your profile shares token name for $blockchain1: " SHARES_TOKEN_NAME
+        text_color $GREEN "Profile shares token name for $blockchain1: $SHARES_TOKEN_NAME"
+
+        read -p "Enter your profile shares token symbol for $blockchain1: " SHARES_TOKEN_SYMBOL
+        text_color $GREEN "Profile shares token symbol for $blockchain1: $SHARES_TOKEN_SYMBOL"
+
+        # Input wallets for the second blockchain
+        read -p "Enter your EVM operational wallet address for $blockchain2: " EVM_OPERATIONAL_WALLET_2
+        text_color $GREEN "EVM operational wallet address for $blockchain2: $EVM_OPERATIONAL_WALLET_2"
+
+        read -p "Enter your EVM operational wallet private key for $blockchain2: " EVM_OPERATIONAL_PRIVATE_KEY_2
+        text_color $GREEN "EVM operational wallet private key for $blockchain2: $EVM_OPERATIONAL_PRIVATE_KEY_2"
+
+        read -p "Enter your EVM management wallet address for $blockchain2: " EVM_MANAGEMENT_WALLET_2
+        text_color $GREEN "EVM management wallet address for $blockchain2: $EVM_MANAGEMENT_WALLET_2"
+
+        read -p "Enter your profile shares token name for $blockchain2: " SHARES_TOKEN_NAME_2
+        text_color $GREEN "Profile shares token name for $blockchain2: $SHARES_TOKEN_NAME_2"
+
+        read -p "Enter your profile shares token symbol for $blockchain2: " SHARES_TOKEN_SYMBOL_2
+        text_color $GREEN "Profile shares token symbol for $blockchain2: $SHARES_TOKEN_SYMBOL_2"
+        ;;
+    * )
+        text_color $RED "Invalid blockchain choice. Exiting installer."
+        exit;;
+esac
+
+perform_step npm ci --omit=dev --ignore-scripts "Executing npm install"
+
+CONFIG_DIR=$OTNODE_DIR/..
+perform_step touch $CONFIG_DIR/.origintrail_noderc "Configuring node config file"
+perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}}' > $CONFIG_DIR/.origintrail_noderc) "Adding loglevel and auth values to node config file"
 
     perform_step $(jq --arg tripleStore "$tripleStore" --arg tripleStoreUrl "$tripleStoreUrl" '.modules.tripleStore.implementation[$tripleStore] |=
         {
@@ -343,16 +395,60 @@ install_node() {
 
     perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
 
-    perform_step $(jq --arg blockchain "otp" --arg evmOperationalWallet "$EVM_OPERATIONAL_WALLET" --arg evmOperationalWalletPrivateKey "$EVM_OPERATIONAL_PRIVATE_KEY" --arg evmManagementWallet "$EVM_MANAGEMENT_WALLET" --arg evmManagementWallet "$SHARES_TOKEN_NAME" --arg evmManagementWallet "$SHARES_TOKEN_SYMBOL" --arg sharesTokenName "$SHARES_TOKEN_NAME" --arg sharesTokenSymbol "$SHARES_TOKEN_SYMBOL" '.modules.blockchain.implementation[$blockchain].config |=
-        {
-            "evmOperationalWalletPublicKey": $evmOperationalWallet,
-            "evmOperationalWalletPrivateKey": $evmOperationalWalletPrivateKey,
-            "evmManagementWalletPublicKey": $evmManagementWallet,
-            "sharesTokenName": $sharesTokenName,
-            "sharesTokenSymbol": $sharesTokenSymbol
-        } + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2"
+# Set blockchain IDs based on the environment
+if [ "$nodeEnv" == "mainnet" ]; then
+    otp_blockchain_id=2043
+    gnosis_blockchain_id=100
+else
+    otp_blockchain_id=20430
+    gnosis_blockchain_id=10200
+fi
 
-    perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
+# Check if "Both" blockchains are selected
+if [ "$blockchain" == "Both" ]; then
+
+  perform_step $(jq --arg otp_blockchain_id "$otp_blockchain_id" --arg EVM_OPERATIONAL_WALLET "$EVM_OPERATIONAL_WALLET" --arg EVM_OPERATIONAL_PRIVATE_KEY "$EVM_OPERATIONAL_PRIVATE_KEY" --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" --arg gnosis_blockchain_id "$gnosis_blockchain_id" --arg EVM_OPERATIONAL_WALLET_GNOSIS "$EVM_OPERATIONAL_WALLET_GNOSIS" --arg EVM_OPERATIONAL_PRIVATE_KEY_GNOSIS "$EVM_OPERATIONAL_PRIVATE_KEY_GNOSIS" --arg EVM_MANAGEMENT_WALLET_GNOSIS "$EVM_MANAGEMENT_WALLET_GNOSIS" --arg SHARES_TOKEN_NAME_GNOSIS "$SHARES_TOKEN_NAME_GNOSIS" --arg SHARES_TOKEN_SYMBOL_GNOSIS "$SHARES_TOKEN_SYMBOL_GNOSIS" '
+    .blockchain.implementation += {
+      "otp:'$otp_blockchain_id'": {
+        "config": {
+          "evmOperationalWalletPublicKey": $EVM_OPERATIONAL_WALLET,
+          "evmOperationalWalletPrivateKey": $EVM_OPERATIONAL_PRIVATE_KEY,
+          "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET,
+          "sharesTokenName": $SHARES_TOKEN_NAME,
+          "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL
+        }
+      },
+      "gnosis:'$gnosis_blockchain_id'": {
+        "config": {
+          "evmOperationalWalletPublicKey": $EVM_OPERATIONAL_WALLET_GNOSIS,
+          "evmOperationalWalletPrivateKey": $EVM_OPERATIONAL_PRIVATE_KEY_GNOSIS,
+          "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET_GNOSIS,
+          "sharesTokenName": $SHARES_TOKEN_NAME_GNOSIS,
+          "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL_GNOSIS
+        }
+      }
+    }' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2 for Both"
+
+else
+
+  # Single blockchain selected
+  blockchain_arg="$blockchain"
+
+  perform_step $(jq --arg blockchain_arg "$blockchain_arg" --arg otp_blockchain_id "$otp_blockchain_id" --arg EVM_OPERATIONAL_WALLET "$EVM_OPERATIONAL_WALLET" --arg EVM_OPERATIONAL_PRIVATE_KEY "$EVM_OPERATIONAL_PRIVATE_KEY" --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" '
+    .blockchain.implementation += {
+      "$blockchain_arg:'$otp_blockchain_id'": {
+        "config": {
+          "evmOperationalWalletPublicKey": $EVM_OPERATIONAL_WALLET,
+          "evmOperationalWalletPrivateKey": $EVM_OPERATIONAL_PRIVATE_KEY,
+          "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET,
+          "sharesTokenName": $SHARES_TOKEN_NAME,
+          "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL
+        }
+      }
+    }' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2"
+fi
+
+perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
 
     perform_step cp $OTNODE_DIR/installer/data/otnode.service /lib/systemd/system/ "Copying otnode service file"
 
