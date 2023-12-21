@@ -39,6 +39,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_REMOTE_START,
         );
 
@@ -112,6 +113,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         await Promise.all(scheduleCommandsPromises);
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_REMOTE_END,
         );
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };

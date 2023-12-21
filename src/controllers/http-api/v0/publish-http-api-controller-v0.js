@@ -17,12 +17,20 @@ class PublishController extends BaseController {
     }
 
     async handleRequest(req, res) {
+        const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
+        const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
+
+        this.logger.info(
+            `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
+        );
+
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_START,
         );
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_START,
         );
 
@@ -32,6 +40,7 @@ class PublishController extends BaseController {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_INIT_END,
         );
         await this.repositoryModuleManager.createOperationRecord(
@@ -41,13 +50,6 @@ class PublishController extends BaseController {
         );
 
         try {
-            const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
-            const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
-
-            this.logger.info(
-                `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
-            );
-
             await this.operationIdService.cacheOperationIdData(operationId, {
                 public: {
                     assertion,
@@ -91,6 +93,7 @@ class PublishController extends BaseController {
 
             await this.operationService.markOperationAsFailed(
                 operationId,
+                blockchain,
                 'Unable to publish data, Failed to process input data!',
                 ERROR_TYPE.PUBLISH.PUBLISH_ROUTE_ERROR,
             );

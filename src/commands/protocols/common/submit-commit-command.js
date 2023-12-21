@@ -42,9 +42,28 @@ class SubmitCommitCommand extends Command {
             this.operationIdService.emitChangeEvent(
                 OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_START,
                 operationId,
+                blockchain,
                 agreementId,
                 epoch,
             );
+        }
+
+        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
+            blockchain,
+            contract,
+            tokenId,
+        );
+
+        // If update for new state is already finalized (and node haven't processed the event yet), don't send commit for the older state
+        if (stateIndex < assertionIds.length - 1) {
+            this.logger.trace(
+                `Knowledge Asset was updated, not sending Commit for the Service Agreement with the ID: ${agreementId}, ` +
+                    `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
+                    `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                    `State Index: ${stateIndex}, Operation ID: ${operationId}`,
+            );
+
+            return Command.empty();
         }
 
         // this can happen in case node has already submitted update commit
@@ -60,13 +79,6 @@ class SubmitCommitCommand extends Command {
                     `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                     `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                     `State Index: ${stateIndex}, Operation ID: ${operationId}`,
-            );
-
-            this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
-                operationId,
-                agreementId,
-                epoch,
             );
 
             return Command.empty();
@@ -120,7 +132,10 @@ class SubmitCommitCommand extends Command {
                 newGasPrice = null;
             }
 
-            Object.assign(command.data, { gasPrice: newGasPrice });
+            Object.assign(command, {
+                data: { ...command.data, gasPrice: newGasPrice },
+                message: error.message,
+            });
 
             return Command.retry();
         }
@@ -128,6 +143,14 @@ class SubmitCommitCommand extends Command {
         let msgBase;
         if (txSuccess) {
             msgBase = 'Successfully executed';
+
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
+                operationId,
+                blockchain,
+                agreementId,
+                epoch,
+            );
         } else {
             msgBase = 'Node has already submitted commit. Finishing';
         }
@@ -138,13 +161,6 @@ class SubmitCommitCommand extends Command {
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                 `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
                 `Retry number: ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}`,
-        );
-
-        this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_END,
-            operationId,
-            agreementId,
-            epoch,
         );
 
         return Command.empty();
@@ -169,7 +185,14 @@ class SubmitCommitCommand extends Command {
     }
 
     async retryFinished(command) {
-        this.recover(command, `Max retry count for command: ${command.name} reached!`);
+        const { blockchain, operationId } = command.data;
+        await this.handleError(
+            operationId,
+            blockchain,
+            `Max retries has been reached! Latest Error Message: ${command.message}`,
+            this.errorType,
+            true,
+        );
     }
 
     /**

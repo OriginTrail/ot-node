@@ -11,9 +11,10 @@ class EventRepository {
         this.model = models.event;
     }
 
-    async createEventRecord(operationId, name, timestamp, value1, value2, value3) {
+    async createEventRecord(operationId, blockchainId, name, timestamp, value1, value2, value3) {
         return this.model.create({
             operationId,
+            blockchainId,
             name,
             timestamp,
             value1,

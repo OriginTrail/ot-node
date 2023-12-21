@@ -59,7 +59,7 @@ class OperationService {
         return keywordsStatuses;
     }
 
-    async markOperationAsCompleted(operationId, responseData, endStatuses) {
+    async markOperationAsCompleted(operationId, blockchain, responseData, endStatuses) {
         this.logger.info(`Finalizing ${this.operationName} for operationId: ${operationId}`);
 
         await this.repositoryModuleManager.updateOperationStatus(
@@ -74,11 +74,11 @@ class OperationService {
 
         for (const status of endStatuses) {
             // eslint-disable-next-line no-await-in-loop
-            await this.operationIdService.updateOperationIdStatus(operationId, status);
+            await this.operationIdService.updateOperationIdStatus(operationId, blockchain, status);
         }
     }
 
-    async markOperationAsFailed(operationId, message, errorType) {
+    async markOperationAsFailed(operationId, blockchain, message, errorType) {
         this.logger.info(`${this.operationName} for operationId: ${operationId} failed.`);
 
         await this.repositoryModuleManager.updateOperationStatus(
@@ -89,6 +89,7 @@ class OperationService {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.FAILED,
             message,
             errorType,
