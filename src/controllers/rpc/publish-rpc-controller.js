@@ -18,30 +18,35 @@ class PublishController extends BaseController {
         const command = { sequence: [], delay: 0, transactional: false, data: {} };
         let dataSource;
         const [handleInitCommand, handleRequestCommand] = this.getCommandSequence(protocol);
-        switch (messageType) {
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
-                dataSource = message.data;
-                command.name = handleInitCommand;
-                command.period = 5000;
-                command.retries = 3;
+        try {
+            switch (messageType) {
+                case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
+                    dataSource = message.data;
+                    command.name = handleInitCommand;
+                    command.period = 5000;
+                    command.retries = 3;
 
-                break;
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
-                // eslint-disable-next-line no-case-declarations
-                dataSource = await this.operationIdService.getCachedOperationIdData(operationId);
-                await this.operationIdService.cacheOperationIdData(operationId, {
-                    assertionId: dataSource.assertionId,
-                    assertion: message.data.assertion,
-                });
-                command.name = handleRequestCommand;
-                command.data.keyword = message.data.keyword;
-                command.data.agreementId = dataSource.agreementId;
-                command.data.agreementData = dataSource.agreementData;
-                break;
-            default:
-                throw Error('unknown message type');
+                    break;
+                case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
+                    // eslint-disable-next-line no-case-declarations
+                    dataSource = await this.operationIdService.getCachedOperationIdData(
+                        operationId,
+                    );
+                    await this.operationIdService.cacheOperationIdData(operationId, {
+                        assertionId: dataSource.assertionId,
+                        assertion: message.data.assertion,
+                    });
+                    command.name = handleRequestCommand;
+                    command.data.keyword = message.data.keyword;
+                    command.data.agreementId = dataSource.agreementId;
+                    command.data.agreementData = dataSource.agreementData;
+                    break;
+                default:
+                    throw Error('unknown message type');
+            }
+        } catch (error) {
+            this.logger.error(error.message);
         }
-
         command.data = {
             ...command.data,
             remotePeerId,
