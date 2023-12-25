@@ -9,11 +9,15 @@ class BidSuggestionController extends BaseController {
     }
 
     async handleRequest(req, res) {
-        if ((await this.repositoryModuleManager.getPeersCount(req.query.blockchain)) === 0)
-            this.returnResponse(res, 400, {
-                code: 400,
-                message: 'Empty Sharding Table',
+        if ((await this.repositoryModuleManager.getPeersCount(req.query.blockchain)) === 0) {
+            const message = `Unable to get bid suggestion. Empty sharding table for blockchain id: ${req.query.blockchain}`;
+            this.logger.error(message);
+            this.returnResponse(res, 406, {
+                code: 406,
+                message,
             });
+            return;
+        }
 
         // Uncomment when switch to ethers.js
         // if (
