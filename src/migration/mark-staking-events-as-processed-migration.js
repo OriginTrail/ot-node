@@ -1,10 +1,10 @@
 import BaseMigration from './base-migration.js';
 
 class MarkStakingEventsAsProcessedMigration extends BaseMigration {
-    constructor(migrationName, logger, config, repositoryModuleManager) {
+    constructor(migrationName, logger, config, repositoryModuleManager, blockchainModuleManager) {
         super(migrationName, logger, config);
         this.repositoryModuleManager = repositoryModuleManager;
-        this.blockchainModuleManager = repositoryModuleManager;
+        this.blockchainModuleManager = blockchainModuleManager;
     }
 
     async executeMigration() {

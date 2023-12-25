@@ -54,6 +54,12 @@ class OTNode {
         await this.initializeCommandExecutor();
         await this.initializeShardingTableService();
 
+        await MigrationExecutor.executeMarkStakingEventsAsProcessedMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         MigrationExecutor.executeUalExtensionTripleStoreMigration(
             this.container,
             this.logger,
