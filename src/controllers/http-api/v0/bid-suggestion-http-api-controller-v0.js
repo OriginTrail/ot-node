@@ -45,17 +45,24 @@ class BidSuggestionController extends BaseController {
             firstAssertionId,
             hashFunctionId,
         } = req.query;
-
-        this.returnResponse(res, 200, {
-            bidSuggestion: await this.shardingTableService.getBidSuggestion(
+        try {
+            const bidSuggestion = await this.shardingTableService.getBidSuggestion(
                 blockchain,
                 epochsNumber,
                 assertionSize,
                 contentAssetStorageAddress,
                 firstAssertionId,
                 hashFunctionId,
-            ),
-        });
+            );
+
+            this.returnResponse(res, 200, { bidSuggestion });
+        } catch (error) {
+            this.logger.error(`Unable to get bid suggestion. Error: ${error}`);
+            this.returnResponse(res, 500, {
+                code: 500,
+                message: 'Unable to calculate bid suggestion',
+            });
+        }
     }
 }
 
