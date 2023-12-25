@@ -21,6 +21,7 @@ import {
     FALLBACK_PROVIDER_QUORUM,
     RPC_PROVIDER_STALL_TIMEOUT,
     CACHED_CONTRACT_CALLS,
+    CONTRACTS,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -928,7 +929,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'r2',
             [],
-            'ParametersStorageContract',
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
     }
 
@@ -937,7 +938,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'r1',
             [],
-            'ParametersStorageContract',
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
     }
 
@@ -946,7 +947,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'r0',
             [],
-            'ParametersStorageContract',
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
     }
 
@@ -955,7 +956,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'finalizationCommitsNumber',
             [],
-            'ParametersStorageContract',
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
     }
 
@@ -1126,7 +1127,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'updateCommitWindowDuration',
             [],
-            'ParametersStorageContract',
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
         return Number(commitWindowDurationPerc);
     }
@@ -1136,7 +1137,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'commitWindowDurationPerc',
             [],
-            'ParametersStorageContract',
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
         return Number(commitWindowDurationPerc);
     }
@@ -1146,7 +1147,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'proofWindowDurationPerc',
             [],
-            'ParametersStorageContract',
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
     }
 
@@ -1155,7 +1156,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'epochLength',
             [],
-            'ParametersStorageContract',
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
         return Number(epochLength);
     }
@@ -1181,7 +1182,7 @@ class Web3Service {
             this.scoringFunctionsContracts[1],
             'getParameters',
             [],
-            'Log2PLDSFContract',
+            CONTRACTS.LOG2PLDSF,
         );
 
         const params = {};
