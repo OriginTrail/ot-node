@@ -613,6 +613,6 @@ export const CACHED_FUNCTIONS = {
         epochLength: CACHE_DATA_TYPES.NUMBER,
     },
     IdentityStorageContract: {
-        getIndentityId: CACHE_DATA_TYPES.NUMBER,
+        getIdentityId: CACHE_DATA_TYPES.NUMBER,
     },
 };

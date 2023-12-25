@@ -289,10 +289,14 @@ class Web3Service {
         }
     }
 
-    getContractCallCache(contractName, parameterName) {
-        if (CACHED_FUNCTIONS[contractName]?.[parameterName]) {
-            return contractCallCache[contractName][parameterName];
+    getContractCallCache(contractName, functionName) {
+        if (
+            CACHED_FUNCTIONS[contractName]?.[functionName] &&
+            contractCallCache[contractName]?.[functionName]
+        ) {
+            return contractCallCache[contractName][functionName];
         }
+        return null;
     }
 
     initializeContract(contractName, contractAddress) {
