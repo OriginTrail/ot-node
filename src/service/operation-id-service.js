@@ -102,20 +102,16 @@ class OperationIdService {
     }
 
     async cacheOperationIdData(operationId, data) {
-        try {
-            this.logger.debug(`Caching data for operation id: ${operationId} in file`);
-            const operationIdCachePath = this.fileService.getOperationIdCachePath();
+        this.logger.debug(`Caching data for operation id: ${operationId} in file`);
+        const operationIdCachePath = this.fileService.getOperationIdCachePath();
 
-            await this.fileService.writeContentsToFile(
-                operationIdCachePath,
-                operationId,
-                JSON.stringify(data),
-            );
+        await this.fileService.writeContentsToFile(
+            operationIdCachePath,
+            operationId,
+            JSON.stringify(data),
+        );
 
-            this.memoryCachedHandlersData[operationId] = { data, timestamp: Date.now() };
-        } catch (error) {
-            this.logger.error(error);
-        }
+        this.memoryCachedHandlersData[operationId] = { data, timestamp: Date.now() };
     }
 
     async getCachedOperationIdData(operationId) {

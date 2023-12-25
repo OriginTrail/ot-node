@@ -641,7 +641,7 @@ class Libp2pService {
                 );
             }
         } catch (error) {
-            this.logger.error(error.message);
+            this.logger.error(`Unable to remove cached session. Error message: ${error.message}`);
         }
     }
 }

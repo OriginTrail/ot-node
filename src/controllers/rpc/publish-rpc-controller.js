@@ -45,7 +45,8 @@ class PublishController extends BaseController {
                     throw Error('unknown message type');
             }
         } catch (error) {
-            this.logger.error(error.message);
+            this.logger.error(`Unable to handle publish request. Error message: ${error.message}`);
+            throw Error('unknown message type');
         }
         command.data = {
             ...command.data,
