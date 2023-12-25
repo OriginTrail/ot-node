@@ -1121,7 +1121,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'updateCommitWindowDuration',
             [],
-            'ParametersStorage',
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
         return Number(commitWindowDurationPerc);
     }
