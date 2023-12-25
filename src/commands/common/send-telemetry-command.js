@@ -30,15 +30,27 @@ class SendTelemetryCommand extends Command {
 
         try {
             const events = (await this.getUnpublishedEvents()) || [];
+            const blockchainsNodeInfo = [];
+            const implementations = this.blockchainModuleManager.getImplementationNames();
+            for (const implementation of implementations) {
+                const blockchainInfo = {
+                    blockchain_id: implementation,
+                    // eslint-disable-next-line no-await-in-loop
+                    identity_id: await this.blockchainModuleManager.getIdentityId(implementation),
+                    operational_wallet: this.blockchainModuleManager.getPublicKey(implementation),
+                    management_wallet:
+                        this.blockchainModuleManager.getManagementKey(implementation),
+                };
+                blockchainsNodeInfo.push(blockchainInfo);
+            }
             const nodeData = {
                 version: pjson.version,
                 identity: this.networkModuleManager.getPeerId().toB58String(),
                 hostname: this.config.hostname,
-                operational_wallet: this.blockchainModuleManager.getPublicKey(),
-                management_wallet: this.blockchainModuleManager.getManagementKey(),
                 triple_store: this.config.modules.tripleStore.defaultImplementation,
                 auto_update_enabled: this.config.modules.autoUpdater.enabled,
                 multiaddresses: this.networkModuleManager.getMultiaddrs(),
+                blockchains: blockchainsNodeInfo,
             };
             const isDataSuccessfullySent = await this.telemetryModuleManager.sendTelemetryData(
                 nodeData,
@@ -47,20 +59,20 @@ class SendTelemetryCommand extends Command {
             if (isDataSuccessfullySent && events?.length > 0) {
                 await this.removePublishedEvents(events);
             }
-        } catch (e) {
-            await this.handleError(e);
+        } catch (error) {
+            await this.handleError(error.message);
         }
         return Command.repeat();
     }
 
-    async recover(command, err) {
-        await this.handleError(err);
+    async recover(command) {
+        await this.handleError(command.message);
 
         return Command.repeat();
     }
 
-    async handleError(error) {
-        this.logger.error(`Error in send telemetry command: ${error}. ${error.stack}`);
+    async handleError(errorMessage) {
+        this.logger.error(`Error in send telemetry command: ${errorMessage}`);
     }
 
     /**

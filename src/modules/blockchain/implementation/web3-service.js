@@ -118,9 +118,13 @@ class Web3Service {
                     stallTimeout: RPC_PROVIDER_STALL_TIMEOUT,
                 });
 
-                this.logger.debug(`Connected to the blockchain RPC: ${rpcEndpoint}.`);
+                this.logger.debug(
+                    `Connected to the blockchain RPC: ${this.maskRpcUrl(rpcEndpoint)}.`,
+                );
             } catch (e) {
-                this.logger.warn(`Unable to connect to the blockchain RPC: ${rpcEndpoint}.`);
+                this.logger.warn(
+                    `Unable to connect to the blockchain RPC: ${this.maskRpcUrl(rpcEndpoint)}.`,
+                );
             }
         }
 
@@ -218,7 +222,7 @@ class Web3Service {
                     );
                     this.logger.debug(
                         `${functionName}(${inputs})  ${method} has failed; Error: ${decodedErrorData}; ` +
-                            `RPC: ${info.backend.provider.connection.url}.`,
+                            `RPC: ${this.maskRpcUrl(info.backend.provider.connection.url)}.`,
                     );
                 } else if (info.backend.result !== undefined) {
                     let message = `${functionName}(${inputs}) ${method} has been successfully executed; `;
@@ -238,12 +242,19 @@ class Web3Service {
                         }
                     }
 
-                    message += `RPC: ${info.backend.provider.connection.url}.`;
+                    message += `RPC: ${this.maskRpcUrl(info.backend.provider.connection.url)}.`;
 
                     this.logger.debug(message);
                 }
             }
         });
+    }
+
+    maskRpcUrl(url) {
+        if (url.includes('apiKey')) {
+            return url.split('apiKey')[0];
+        }
+        return url;
     }
 
     initializeAssetStorageContract(assetStorageAddress) {

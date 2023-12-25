@@ -206,6 +206,7 @@ class RepositoryModuleManager extends BaseModuleManager {
 
     async createEventRecord(
         operationId,
+        blockchainId,
         name,
         timestamp,
         value1 = null,
@@ -214,6 +215,7 @@ class RepositoryModuleManager extends BaseModuleManager {
     ) {
         return this.getRepository('event').createEventRecord(
             operationId,
+            blockchainId,
             name,
             timestamp,
             value1,

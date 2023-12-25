@@ -28,6 +28,7 @@ class LocalGetCommand extends Command {
         const { operationId, blockchain, contract, tokenId, assertionId, state } = command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.GET.GET_LOCAL_START,
         );
 
@@ -90,25 +91,36 @@ class LocalGetCommand extends Command {
         }
 
         if (response?.assertion?.length) {
-            await this.operationService.markOperationAsCompleted(operationId, response, [
-                OPERATION_ID_STATUS.GET.GET_LOCAL_END,
-                OPERATION_ID_STATUS.GET.GET_END,
-                OPERATION_ID_STATUS.COMPLETED,
-            ]);
+            await this.operationService.markOperationAsCompleted(
+                operationId,
+                blockchain,
+                response,
+                [
+                    OPERATION_ID_STATUS.GET.GET_LOCAL_END,
+                    OPERATION_ID_STATUS.GET.GET_END,
+                    OPERATION_ID_STATUS.COMPLETED,
+                ],
+            );
 
             return Command.empty();
         }
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.GET.GET_LOCAL_END,
         );
 
         return this.continueSequence(command.data, command.sequence);
     }
 
-    async handleError(operationId, errorMessage, errorType) {
-        await this.operationService.markOperationAsFailed(operationId, errorMessage, errorType);
+    async handleError(operationId, blockchain, errorMessage, errorType) {
+        await this.operationService.markOperationAsFailed(
+            operationId,
+            blockchain,
+            errorMessage,
+            errorType,
+        );
     }
 
     /**

@@ -32,6 +32,7 @@ class ValidateAssetCommand extends Command {
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.VALIDATE_ASSET_START,
         );
 
@@ -59,6 +60,7 @@ class ValidateAssetCommand extends Command {
         if (blockchainAssertionId !== cachedData.public.assertionId) {
             await this.handleError(
                 operationId,
+                blockchain,
                 `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${cachedData.public.assertionId}`,
                 this.errorType,
                 true,
@@ -83,13 +85,20 @@ class ValidateAssetCommand extends Command {
                     cachedData.private.assertionId,
                 );
             } catch (error) {
-                await this.handleError(operationId, error.message, this.errorType, true);
+                await this.handleError(
+                    operationId,
+                    blockchain,
+                    error.message,
+                    this.errorType,
+                    true,
+                );
                 return Command.empty();
             }
         }
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
+            blockchain,
             OPERATION_ID_STATUS.VALIDATE_ASSET_END,
         );
         return this.continueSequence(
@@ -103,6 +112,7 @@ class ValidateAssetCommand extends Command {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         await this.handleError(
             operationId,
+            blockchain,
             `Max retry count for command: ${command.name} reached! Unable to validate ual: ${ual}`,
             this.errorType,
             true,
