@@ -374,6 +374,7 @@ class Web3Service {
             this.IdentityStorageContract,
             'getIdentityId',
             [this.getPublicKey()],
+            CONTRACTS.IDENTITY_STORAGE_CONTRACT,
         );
         return Number(identityId);
     }

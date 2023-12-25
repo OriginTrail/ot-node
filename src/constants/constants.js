@@ -555,6 +555,7 @@ export const CONTRACTS = {
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
     SERVICE_AGREEMENT_V1_CONTRACT: 'ServiceAgreementV1Contract',
     PARAMETERS_STORAGE_CONTRACT: 'ParametersStorageContract',
+    IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
     LOG2PLDSF: 'Log2PLDSFContract',
 };
 
@@ -607,4 +608,5 @@ export const CACHED_CONTRACT_CALLS = {
         'epochLength',
     ]),
     Log2PLDSFContract: new Set(['getParameters']),
+    IdentityStorageContract: new Set(['getIdentityId']),
 };
