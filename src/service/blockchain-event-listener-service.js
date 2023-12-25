@@ -85,6 +85,12 @@ class BlockchainEventListenerService {
                 currentBlock,
                 CONTRACT_EVENTS.PARAMETERS_STORAGE,
             ),
+            this.getContractEvents(
+                blockchainId,
+                CONTRACTS.LOG2PLDSF,
+                currentBlock,
+                CONTRACT_EVENTS.LOG2PLDSF,
+            ),
         ];
 
         if (!devEnvironment) {
@@ -235,12 +241,38 @@ class BlockchainEventListenerService {
 
     async handleParameterChangedEvents(blockEvents) {
         for (const event of blockEvents) {
+            const { blockchainId, contract, event: eventName } = event;
             const { parameterName, parameterValue } = JSON.parse(event.data);
-            this.blockchainModuleManager.cacheParameter(
-                event.blockchainId,
-                parameterName,
-                parameterValue,
-            );
+
+            if (contract === CONTRACTS.LOG2PLDSF) {
+                this.blockchainModuleManager.resetContractCallCache(
+                    blockchainId,
+                    contract,
+                    'getParameters',
+                );
+            } else {
+                const eventABI = this.blockchainModuleManager.getContractEventABI(
+                    blockchainId,
+                    contract,
+                    eventName,
+                );
+                const parameterSolidityType = eventABI.inputs.find(
+                    (input) => input.name === 'parameterValue',
+                ).type;
+
+                const castedParameterValue = this.blockchainModuleManager.fromSolidityType(
+                    blockchainId,
+                    parameterSolidityType,
+                    parameterValue,
+                );
+
+                this.blockchainModuleManager.setContractCallCache(
+                    blockchainId,
+                    contract,
+                    parameterName,
+                    castedParameterValue,
+                );
+            }
         }
     }
 

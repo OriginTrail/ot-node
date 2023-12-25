@@ -8,6 +8,7 @@ import {
     SOLIDITY_ERROR_STRING_PREFIX,
     SOLIDITY_PANIC_CODE_PREFIX,
     SOLIDITY_PANIC_REASONS,
+    SOLIDITY_TYPES_MAP,
     ZERO_PREFIX,
     DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
@@ -19,8 +20,8 @@ import {
     HTTP_RPC_PROVIDER_PRIORITY,
     FALLBACK_PROVIDER_QUORUM,
     RPC_PROVIDER_STALL_TIMEOUT,
-    CACHED_FUNCTIONS,
-    CACHE_DATA_TYPES,
+    CACHED_CONTRACT_CALLS,
+    CONTRACTS,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -53,7 +54,7 @@ const ABIs = {
 const SCORING_FUNCTIONS = {
     1: 'Log2PLDSF',
 };
-const resultCache = {};
+const contractCallCache = {};
 
 class Web3Service {
     async initialize(config, logger) {
@@ -272,29 +273,38 @@ class Web3Service {
         }
     }
 
-    cacheParameter(contractName, parameterName, parameterValue) {
-        const found =
-            CACHED_FUNCTIONS[contractName] &&
-            CACHED_FUNCTIONS[contractName].find((item) => item.name === parameterName);
-        if (found) {
-            const { type } = found;
-            switch (type) {
-                case CACHE_DATA_TYPES.NUMBER:
-                    resultCache[parameterName] = Number(parameterValue);
-                    break;
-                default:
-                    resultCache[parameterName] = parameterValue;
+    setContractCallCache(contractName, parameterName, parameterValue) {
+        if (CACHED_CONTRACT_CALLS[contractName]?.has(parameterName)) {
+            if (!contractCallCache[contractName]) {
+                contractCallCache[contractName] = {};
             }
+            contractCallCache[contractName][parameterName] = parameterValue;
         }
     }
 
-    getCachedValue(contractName, parameterName) {
-        if (
-            CACHED_FUNCTIONS[contractName] &&
-            CACHED_FUNCTIONS[contractName].some((item) => item.name === parameterName)
-        ) {
-            return resultCache[parameterName];
+    resetContractCallCache(contract, parameterName) {
+        if (contractCallCache[contract]) {
+            contractCallCache[contract][parameterName] = null;
         }
+    }
+
+    getContractCallCache(contractName, parameterName) {
+        if (
+            CACHED_CONTRACT_CALLS[contractName]?.has(parameterName) &&
+            contractCallCache[contractName]
+        ) {
+            return contractCallCache[contractName][parameterName];
+        }
+    }
+
+    getContractEventABI(contractName, eventName) {
+        return this[contractName].interface.getEvent(eventName);
+    }
+
+    fromSolidityType(solidityType, parameterValue) {
+        return SOLIDITY_TYPES_MAP[solidityType]
+            ? SOLIDITY_TYPES_MAP[solidityType](parameterValue)
+            : parameterValue;
     }
 
     initializeContract(contractName, contractAddress) {
@@ -360,16 +370,13 @@ class Web3Service {
     }
 
     async getIdentityId() {
-        if (this.config.identityId) {
-            return this.config.identityId;
-        }
         const identityId = await this.callContractFunction(
             this.IdentityStorageContract,
             'getIdentityId',
             [this.getPublicKey()],
+            CONTRACTS.IDENTITY_STORAGE_CONTRACT,
         );
-        this.config.identityId = Number(identityId);
-        return this.config.identityId;
+        return Number(identityId);
     }
 
     async identityIdExists() {
@@ -433,32 +440,30 @@ class Web3Service {
     }
 
     async callContractFunction(contractInstance, functionName, args, contractName = null) {
-        let result;
-        result = this.getCachedValue(contractName, functionName);
+        let result = this.getContractCallCache(contractName, functionName);
 
-        while (!result) {
-            try {
-                // eslint-disable-next-line no-await-in-loop
+        try {
+            if (!result) {
                 result = await contractInstance[functionName](...args);
-                this.cacheParameter(contractName, functionName, result);
-            } catch (error) {
-                const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
-
-                const functionFragment = contractInstance.interface.getFunction(
-                    error.transaction.data.slice(0, 10),
-                );
-                const inputs = functionFragment.inputs
-                    .map((input, i) => {
-                        const argName = input.name;
-                        const argValue = this._formatArgument(args[i]);
-                        return `${argName}=${argValue}`;
-                    })
-                    .join(', ');
-
-                throw new Error(
-                    `Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`,
-                );
+                if (contractName) {
+                    this.setContractCallCache(contractName, functionName, result);
+                }
             }
+        } catch (error) {
+            const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
+
+            const functionFragment = contractInstance.interface.getFunction(
+                error.transaction.data.slice(0, 10),
+            );
+            const inputs = functionFragment.inputs
+                .map((input, i) => {
+                    const argName = input.name;
+                    const argValue = this._formatArgument(args[i]);
+                    return `${argName}=${argValue}`;
+                })
+                .join(', ');
+
+            throw new Error(`Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`);
         }
 
         return result;
@@ -757,20 +762,10 @@ class Web3Service {
         return timestamp < timestampThirtyDaysInPast;
     }
 
-    async isHubContract(contractAddress) {
-        return this.callContractFunction(this.HubContract, 'isContract(address)', [
-            contractAddress,
-        ]);
-    }
-
     async isAssetStorageContract(contractAddress) {
         return this.callContractFunction(this.HubContract, 'isAssetStorage(address)', [
             contractAddress,
         ]);
-    }
-
-    async getNodeStake(identityId) {
-        return this.callContractFunction(this.StakingStorageContract, 'totalStakes', [identityId]);
     }
 
     async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
@@ -841,12 +836,6 @@ class Web3Service {
             'getUnfinalizedState',
             [tokenId],
         );
-    }
-
-    async getAssertionIssuer(assertionId) {
-        return this.callContractFunction(this.AssertionStorageContract, 'getAssertionIssuer', [
-            assertionId,
-        ]);
     }
 
     async getAgreementData(agreementId) {
@@ -937,43 +926,39 @@ class Web3Service {
     }
 
     async getR2() {
-        const r2 = await this.callContractFunction(
+        return this.callContractFunction(
             this.ParametersStorageContract,
             'r2',
             [],
-            'ParametersStorage',
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
-        return r2;
     }
 
     async getR1() {
-        const r1 = await this.callContractFunction(
+        return this.callContractFunction(
             this.ParametersStorageContract,
             'r1',
             [],
-            'ParametersStorage',
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
-        return r1;
     }
 
     async getR0() {
-        const r0 = await this.callContractFunction(
+        return this.callContractFunction(
             this.ParametersStorageContract,
             'r0',
             [],
-            'ParametersStorage',
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
-        return r0;
     }
 
     async getFinalizationCommitsNumber() {
-        const finalizationCommitsNumber = await this.callContractFunction(
+        return this.callContractFunction(
             this.ParametersStorageContract,
             'finalizationCommitsNumber',
             [],
-            'ParametersStorage',
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
-        return finalizationCommitsNumber;
     }
 
     submitCommit(
@@ -1143,7 +1128,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'updateCommitWindowDuration',
             [],
-            'ParametersStorage',
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
         return Number(commitWindowDurationPerc);
     }
@@ -1153,7 +1138,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'commitWindowDurationPerc',
             [],
-            'ParametersStorage',
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
         return Number(commitWindowDurationPerc);
     }
@@ -1163,7 +1148,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'proofWindowDurationPerc',
             [],
-            'ParametersStorage',
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
     }
 
@@ -1172,7 +1157,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'epochLength',
             [],
-            'ParametersStorage',
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
         return Number(epochLength);
     }
@@ -1180,12 +1165,6 @@ class Web3Service {
     async isHashFunction(hashFunctionId) {
         return this.callContractFunction(this.HashingProxyContract, 'isHashFunction(uint8)', [
             hashFunctionId,
-        ]);
-    }
-
-    async isScoreFunction(scoreFunctionId) {
-        return this.callContractFunction(this.ScoringProxyContract, 'isScoreFunction(uint8)', [
-            scoreFunctionId,
         ]);
     }
 
@@ -1204,6 +1183,7 @@ class Web3Service {
             this.scoringFunctionsContracts[1],
             'getParameters',
             [],
+            CONTRACTS.LOG2PLDSF,
         );
 
         const params = {};

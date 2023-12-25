@@ -39,12 +39,7 @@ class ServiceAgreementService {
             keyHash,
         );
 
-        // todo: store this in a more appropriate way
-        if (!this.log2PLDSFParams) {
-            this.log2PLDSFParams = await this.blockchainModuleManager.getLog2PLDSFParams(
-                blockchainId,
-            );
-        }
+        const log2PLDSFParams = await this.blockchainModuleManager.getLog2PLDSFParams(blockchainId);
 
         const {
             distanceMappingCoefficient,
@@ -57,7 +52,7 @@ class ServiceAgreementService {
             c,
             distanceExponent,
             d,
-        } = this.log2PLDSFParams;
+        } = log2PLDSFParams;
 
         const distanceUint256BN = this.blockchainModuleManager.toBigNumber(
             blockchainId,

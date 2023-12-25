@@ -26,9 +26,31 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    cacheParameter(blockchain, parameterName, parameterValue) {
-        return this.callImplementationFunction(blockchain, 'cacheParameter', [
+    setContractCallCache(blockchain, contractName, parameterName, parameterValue) {
+        return this.callImplementationFunction(blockchain, 'setContractCallCache', [
+            contractName,
             parameterName,
+            parameterValue,
+        ]);
+    }
+
+    resetContractCallCache(blockchain, contract, parameterName) {
+        return this.callImplementationFunction(blockchain, 'resetContractCallCache', [
+            contract,
+            parameterName,
+        ]);
+    }
+
+    getContractEventABI(blockchain, contractName, eventName) {
+        return this.callImplementationFunction(blockchain, 'getContractEventABI', [
+            contractName,
+            eventName,
+        ]);
+    }
+
+    fromSolidityType(blockchain, solidityType, parameterValue) {
+        return this.callImplementationFunction(blockchain, 'fromSolidityType', [
+            solidityType,
             parameterValue,
         ]);
     }
@@ -45,18 +67,10 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'getManagementKey');
     }
 
-    async isHubContract(blockchain, contractAddress) {
-        return this.callImplementationFunction(blockchain, 'isHubContract', [contractAddress]);
-    }
-
     async isAssetStorageContract(blockchain, contractAddress) {
         return this.callImplementationFunction(blockchain, 'isAssetStorageContract', [
             contractAddress,
         ]);
-    }
-
-    async getNodeStake(blockchain, identityId) {
-        return this.callImplementationFunction(blockchain, 'getNodeStake', [identityId]);
     }
 
     async getBlockNumber(blockchain) {
@@ -119,13 +133,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async getAssertionIdsLength(blockchain, assetContractAddress, tokenId) {
-        return this.callImplementationFunction(blockchain, 'getAssertionIdsLength', [
-            assetContractAddress,
-            tokenId,
-        ]);
-    }
-
     async getKnowledgeAssetOwner(blockchain, assetContractAddress, tokenId) {
         return this.callImplementationFunction(blockchain, 'getKnowledgeAssetOwner', [
             assetContractAddress,
@@ -135,10 +142,6 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     async getUnfinalizedAssertionId(blockchain, tokenId) {
         return this.callImplementationFunction(blockchain, 'getUnfinalizedState', [tokenId]);
-    }
-
-    async getAssertionIssuer(blockchain, assertionId) {
-        return this.callImplementationFunction(blockchain, 'getAssertionIssuer', [assertionId]);
     }
 
     async getShardingTableHead(blockchain) {
@@ -378,10 +381,6 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     async isHashFunction(blockchain, hashFunctionId) {
         return this.callImplementationFunction(blockchain, 'isHashFunction', [hashFunctionId]);
-    }
-
-    async isScoreFunction(blockchain, scoreFunctionId) {
-        return this.callImplementationFunction(blockchain, 'isScoreFunction', [scoreFunctionId]);
     }
 
     async callScoreFunction(blockchain, scoreFunctionId, hashFunctionId, peerId, keyword, stake) {
