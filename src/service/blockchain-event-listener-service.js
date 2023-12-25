@@ -236,8 +236,9 @@ class BlockchainEventListenerService {
     async handleParameterChangedEvents(blockEvents) {
         for (const event of blockEvents) {
             const { parameterName, parameterValue } = JSON.parse(event.data);
-            this.blockchainModuleManager.cacheParameter(
+            this.blockchainModuleManager.setContractCallCache(
                 event.blockchainId,
+                CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
                 parameterName,
                 parameterValue,
             );

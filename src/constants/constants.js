@@ -555,6 +555,7 @@ export const CONTRACTS = {
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
     SERVICE_AGREEMENT_V1_CONTRACT: 'ServiceAgreementV1Contract',
     PARAMETERS_STORAGE_CONTRACT: 'ParametersStorageContract',
+    IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
 };
 
 export const CONTRACT_EVENTS = {
@@ -593,15 +594,25 @@ export const CACHE_DATA_TYPES = {
     NUMBER: 'number',
 };
 
+/**
+ * CACHED_FUNCTIONS:
+ * ContractName: {
+ *     functionName: returnType
+ * }
+ * @type {{IdentityStorageContract: [{name: string, type: string}], ParametersStorageContract: *}}
+ */
 export const CACHED_FUNCTIONS = {
-    ParametersStorage: [
-        { name: 'r0', type: CACHE_DATA_TYPES.NUMBER },
-        { name: 'r1', type: CACHE_DATA_TYPES.NUMBER },
-        { name: 'r2', type: CACHE_DATA_TYPES.NUMBER },
-        { name: 'finalizationCommitsNumber', type: CACHE_DATA_TYPES.NUMBER },
-        { name: 'updateCommitWindowDuration', type: CACHE_DATA_TYPES.NUMBER },
-        { name: 'commitWindowDurationPerc', type: CACHE_DATA_TYPES.NUMBER },
-        { name: 'proofWindowDurationPerc', type: CACHE_DATA_TYPES.NUMBER },
-        { name: 'epochLength', type: CACHE_DATA_TYPES.NUMBER },
-    ],
+    ParametersStorageContract: {
+        r0: CACHE_DATA_TYPES.NUMBER,
+        r1: CACHE_DATA_TYPES.NUMBER,
+        r2: CACHE_DATA_TYPES.NUMBER,
+        finalizationCommitsNumber: CACHE_DATA_TYPES.NUMBER,
+        updateCommitWindowDuration: CACHE_DATA_TYPES.NUMBER,
+        commitWindowDurationPerc: CACHE_DATA_TYPES.NUMBER,
+        proofWindowDurationPerc: CACHE_DATA_TYPES.NUMBER,
+        epochLength: CACHE_DATA_TYPES.NUMBER,
+    },
+    IdentityStorageContract: {
+        getIndentityId: CACHE_DATA_TYPES.NUMBER,
+    },
 };
