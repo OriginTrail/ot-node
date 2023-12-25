@@ -16,7 +16,7 @@ class MarkStakingEventsAsProcessedMigration extends BaseMigration {
             const query = `update blockchain
                            set lastCheckedBlock     = ${block},
                                lastCheckedTimestamp = ${timestamp}
-                           where contract = 'StakingContract'`;
+                           where blockchain_id = 'otp:2043'`;
             await this.repositoryModuleManager.query(query);
         }
     }
