@@ -62,6 +62,12 @@ class OTNode {
             await this.initializeBlockchainEventListenerService();
         });
 
+        await MigrationExecutor.executePullShardingTableMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         await this.initializeRouters();
         await this.startNetworkModule();
         this.startTelemetryModule();
