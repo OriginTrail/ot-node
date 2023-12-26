@@ -703,7 +703,13 @@ class Web3Service {
                 fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH - 1,
                 currentBlock,
             );
+            this.logger.debug(
+                `Processing block range ${fromBlock} - ${toBlock} for contract: ${contractName} on blockchain: ${blockchainId}.`,
+            );
             const newEvents = await this.processBlockRange(fromBlock, toBlock, contract, topics);
+            this.logger.debug(
+                `Found ${newEvents.length} events in block range ${fromBlock} - ${toBlock} for contract: ${contractName} on blockchain: ${blockchainId}.`,
+            );
             newEvents.forEach((e) => events.push(...e));
             fromBlock = toBlock + 1;
         }

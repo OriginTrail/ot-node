@@ -48,6 +48,9 @@ class BlockchainEventListenerService {
             process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
 
         const currentBlock = await this.blockchainModuleManager.getBlockNumber(blockchainId);
+        this.logger.debug(
+            `Starting to sync contracts events until block: ${currentBlock}, on blockchain ${blockchainId}.`,
+        );
         const syncContractEventsPromises = [
             this.getContractEvents(
                 blockchainId,
@@ -92,7 +95,9 @@ class BlockchainEventListenerService {
             );
         }
         const contractEvents = await Promise.all(syncContractEventsPromises);
-
+        this.logger.debug(
+            `Finished syncing contracts events until block: ${currentBlock}, on blockchain ${blockchainId}.`,
+        );
         await this.handleBlockchainEvents(
             contractEvents.flatMap((events) => events),
             blockchainId,
@@ -145,7 +150,9 @@ class BlockchainEventListenerService {
             blockchainId,
             contractName,
         );
-
+        this.logger.debug(
+            `Starting to sync ${contractName} events, from block: ${lastCheckedBlockObject.lastCheckedBlock} until block: ${currentBlock}, on blockchain ${blockchainId}.`,
+        );
         const events = await this.blockchainModuleManager.getAllPastEvents(
             blockchainId,
             contractName,
@@ -154,7 +161,9 @@ class BlockchainEventListenerService {
             lastCheckedBlockObject?.lastCheckedTimestamp ?? 0,
             currentBlock,
         );
-
+        this.logger.debug(
+            `Finished syncing ${contractName} events, from block: ${lastCheckedBlockObject.lastCheckedBlock} until block: ${currentBlock}, on blockchain ${blockchainId}.`,
+        );
         await this.repositoryModuleManager.updateLastCheckedBlock(
             blockchainId,
             currentBlock,
@@ -182,7 +191,7 @@ class BlockchainEventListenerService {
 
         if (unprocessedEvents?.length) {
             this.logger.trace(
-                `Processing ${unprocessedEvents.length} blockchain events on blockchain ${blockchainId}.`,
+                `Processing ${unprocessedEvents.length} blockchain events on blockchain: ${blockchainId}.`,
             );
             let groupedEvents = {};
             let currentBlock = 0;
