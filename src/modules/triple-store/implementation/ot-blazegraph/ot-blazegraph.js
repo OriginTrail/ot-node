@@ -4,6 +4,8 @@ import OtTripleStore from '../ot-triple-store.js';
 class OtBlazegraph extends OtTripleStore {
     async initialize(config, logger) {
         await super.initialize(config, logger);
+        // this regex will match \Uxxxxxxxx but will exclude cases where there is a double slash before U (\\U)
+        this.unicodeRegex = /(?<!\\)\\U([a-fA-F0-9]{8})/g;
 
         await Promise.all(
             Object.keys(this.repositories).map(async (repository) => {
@@ -45,6 +47,40 @@ class OtBlazegraph extends OtTripleStore {
                 data: assertionNquads,
             });
         }
+    }
+
+    hasUnicodeCodePoints(input) {
+        return this.unicodeRegex.test(input);
+    }
+
+    decodeUnicodeCodePoints(input) {
+        const decodedString = input.replace(this.unicodeRegex, (match, hex) => {
+            const codePoint = parseInt(hex, 16);
+            return String.fromCodePoint(codePoint);
+        });
+
+        return decodedString;
+    }
+
+    async _executeQuery(repository, query, mediaType) {
+        const result = await this.queryEngine.query(
+            query,
+            this.repositories[repository].queryContext,
+        );
+        const { data } = await this.queryEngine.resultToString(result, mediaType);
+
+        let response = '';
+
+        for await (const chunk of data) {
+            response += chunk;
+        }
+
+        // Handle Blazegraph special characters corruption
+        if (this.hasUnicodeCodePoints(response)) {
+            response = this.decodeUnicodeCodePoints(response);
+        }
+
+        return response;
     }
 
     async healthCheck(repository) {
