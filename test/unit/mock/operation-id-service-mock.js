@@ -5,7 +5,13 @@ class OperationIdServiceMock {
 
     cacheOperationIdData(operationId, data) {}
 
-    async updateOperationIdStatus(operationId, status, errorMessage = null, errorType = null) {
+    async updateOperationIdStatus(
+        operationId,
+        blockchain,
+        status,
+        errorMessage = null,
+        errorType = null,
+    ) {
         await this.repositoryModuleManager.updateOperationIdRecord(
             {
                 status,

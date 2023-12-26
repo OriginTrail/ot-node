@@ -19,6 +19,9 @@ import {
     HTTP_RPC_PROVIDER_PRIORITY,
     FALLBACK_PROVIDER_QUORUM,
     RPC_PROVIDER_STALL_TIMEOUT,
+    CACHED_FUNCTIONS,
+    CACHE_DATA_TYPES,
+    CONTRACTS,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -51,6 +54,7 @@ const ABIs = {
 const SCORING_FUNCTIONS = {
     1: 'Log2PLDSF',
 };
+const contractCallCache = {};
 
 class Web3Service {
     async initialize(config, logger) {
@@ -114,9 +118,13 @@ class Web3Service {
                     stallTimeout: RPC_PROVIDER_STALL_TIMEOUT,
                 });
 
-                this.logger.debug(`Connected to the blockchain RPC: ${rpcEndpoint}.`);
+                this.logger.debug(
+                    `Connected to the blockchain RPC: ${this.maskRpcUrl(rpcEndpoint)}.`,
+                );
             } catch (e) {
-                this.logger.warn(`Unable to connect to the blockchain RPC: ${rpcEndpoint}.`);
+                this.logger.warn(
+                    `Unable to connect to the blockchain RPC: ${this.maskRpcUrl(rpcEndpoint)}.`,
+                );
             }
         }
 
@@ -214,7 +222,7 @@ class Web3Service {
                     );
                     this.logger.debug(
                         `${functionName}(${inputs})  ${method} has failed; Error: ${decodedErrorData}; ` +
-                            `RPC: ${info.backend.provider.connection.url}.`,
+                            `RPC: ${this.maskRpcUrl(info.backend.provider.connection.url)}.`,
                     );
                 } else if (info.backend.result !== undefined) {
                     let message = `${functionName}(${inputs}) ${method} has been successfully executed; `;
@@ -234,12 +242,19 @@ class Web3Service {
                         }
                     }
 
-                    message += `RPC: ${info.backend.provider.connection.url}.`;
+                    message += `RPC: ${this.maskRpcUrl(info.backend.provider.connection.url)}.`;
 
                     this.logger.debug(message);
                 }
             }
         });
+    }
+
+    maskRpcUrl(url) {
+        if (url.includes('apiKey')) {
+            return url.split('apiKey')[0];
+        }
+        return url;
     }
 
     initializeAssetStorageContract(assetStorageAddress) {
@@ -267,6 +282,32 @@ class Web3Service {
                 `Skipping initialisation of contract with id: ${id}, address: ${contractAddress}`,
             );
         }
+    }
+
+    setContractCallCache(contractName, functionName, value) {
+        if (CACHED_FUNCTIONS[contractName]?.[functionName]) {
+            const type = CACHED_FUNCTIONS[contractName][functionName];
+            if (!contractCallCache[contractName]) {
+                contractCallCache[contractName] = {};
+            }
+            switch (type) {
+                case CACHE_DATA_TYPES.NUMBER:
+                    contractCallCache[contractName][functionName] = Number(value);
+                    break;
+                default:
+                    contractCallCache[contractName][functionName] = value;
+            }
+        }
+    }
+
+    getContractCallCache(contractName, functionName) {
+        if (
+            CACHED_FUNCTIONS[contractName]?.[functionName] &&
+            contractCallCache[contractName]?.[functionName]
+        ) {
+            return contractCallCache[contractName][functionName];
+        }
+        return null;
     }
 
     initializeContract(contractName, contractAddress) {
@@ -332,16 +373,13 @@ class Web3Service {
     }
 
     async getIdentityId() {
-        if (this.config.identityId) {
-            return this.config.identityId;
-        }
         const identityId = await this.callContractFunction(
             this.IdentityStorageContract,
             'getIdentityId',
             [this.getPublicKey()],
+            CONTRACTS.IDENTITY_STORAGE_CONTRACT,
         );
-        this.config.identityId = Number(identityId);
-        return this.config.identityId;
+        return Number(identityId);
     }
 
     async identityIdExists() {
@@ -404,32 +442,30 @@ class Web3Service {
         }
     }
 
-    async callContractFunction(contractInstance, functionName, args) {
-        let result;
-        while (result === undefined) {
-            try {
+    async callContractFunction(contractInstance, functionName, args, contractName = null) {
+        let result = this.getContractCallCache(contractName, functionName);
+        try {
+            if (!result) {
                 // eslint-disable-next-line no-await-in-loop
                 result = await contractInstance[functionName](...args);
-            } catch (error) {
-                const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
-
-                const functionFragment = contractInstance.interface.getFunction(
-                    error.transaction.data.slice(0, 10),
-                );
-                const inputs = functionFragment.inputs
-                    .map((input, i) => {
-                        const argName = input.name;
-                        const argValue = this._formatArgument(args[i]);
-                        return `${argName}=${argValue}`;
-                    })
-                    .join(', ');
-
-                throw new Error(
-                    `Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`,
-                );
+                this.setContractCallCache(contractName, functionName, result);
             }
-        }
+        } catch (error) {
+            const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
 
+            const functionFragment = contractInstance.interface.getFunction(
+                error.transaction.data.slice(0, 10),
+            );
+            const inputs = functionFragment.inputs
+                .map((input, i) => {
+                    const argName = input.name;
+                    const argValue = this._formatArgument(args[i]);
+                    return `${argName}=${argValue}`;
+                })
+                .join(', ');
+
+            throw new Error(`Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`);
+        }
         return result;
     }
 
@@ -726,20 +762,10 @@ class Web3Service {
         return timestamp < timestampThirtyDaysInPast;
     }
 
-    async isHubContract(contractAddress) {
-        return this.callContractFunction(this.HubContract, 'isContract(address)', [
-            contractAddress,
-        ]);
-    }
-
     async isAssetStorageContract(contractAddress) {
         return this.callContractFunction(this.HubContract, 'isAssetStorage(address)', [
             contractAddress,
         ]);
-    }
-
-    async getNodeStake(identityId) {
-        return this.callContractFunction(this.StakingStorageContract, 'totalStakes', [identityId]);
     }
 
     async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
@@ -784,17 +810,6 @@ class Web3Service {
         ]);
     }
 
-    async getAssertionIdsLength(assetContractAddress, tokenId) {
-        const assetStorageContractInstance =
-            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
-        if (!assetStorageContractInstance)
-            throw new Error('Unknown asset storage contract address');
-
-        return this.callContractFunction(assetStorageContractInstance, 'getAssertionIdsLength', [
-            tokenId,
-        ]);
-    }
-
     async getKnowledgeAssetOwner(assetContractAddress, tokenId) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
@@ -810,12 +825,6 @@ class Web3Service {
             'getUnfinalizedState',
             [tokenId],
         );
-    }
-
-    async getAssertionIssuer(assertionId) {
-        return this.callContractFunction(this.AssertionStorageContract, 'getAssertionIssuer', [
-            assertionId,
-        ]);
     }
 
     async getAgreementData(agreementId) {
@@ -906,17 +915,32 @@ class Web3Service {
     }
 
     async getR2() {
-        const r2 = await this.callContractFunction(this.ParametersStorageContract, 'r2', []);
+        const r2 = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'r2',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
         return r2;
     }
 
     async getR1() {
-        const r1 = await this.callContractFunction(this.ParametersStorageContract, 'r1', []);
+        const r1 = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'r1',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
         return r1;
     }
 
     async getR0() {
-        const r0 = await this.callContractFunction(this.ParametersStorageContract, 'r0', []);
+        const r0 = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'r0',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
         return r0;
     }
 
@@ -925,6 +949,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'finalizationCommitsNumber',
             [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
         return finalizationCommitsNumber;
     }
@@ -1096,6 +1121,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'updateCommitWindowDuration',
             [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
         return Number(commitWindowDurationPerc);
     }
@@ -1105,6 +1131,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'commitWindowDurationPerc',
             [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
         return Number(commitWindowDurationPerc);
     }
@@ -1114,6 +1141,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'proofWindowDurationPerc',
             [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
     }
 
@@ -1122,6 +1150,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'epochLength',
             [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
         return Number(epochLength);
     }
@@ -1129,22 +1158,6 @@ class Web3Service {
     async isHashFunction(hashFunctionId) {
         return this.callContractFunction(this.HashingProxyContract, 'isHashFunction(uint8)', [
             hashFunctionId,
-        ]);
-    }
-
-    async isScoreFunction(scoreFunctionId) {
-        return this.callContractFunction(this.ScoringProxyContract, 'isScoreFunction(uint8)', [
-            scoreFunctionId,
-        ]);
-    }
-
-    async callScoreFunction(scoreFunctionId, hashFunctionId, peerId, keyword, stake) {
-        return this.callContractFunction(this.ScoringProxyContract, 'callScoreFunction', [
-            scoreFunctionId,
-            hashFunctionId,
-            this.convertAsciiToHex(peerId),
-            keyword,
-            stake,
         ]);
     }
 

@@ -23,9 +23,9 @@ class Command {
      * @param command
      * @param err
      */
-    async recover(command, err) {
-        const { operationId } = command.data;
-        await this.handleError(operationId, err.message, this.errorType, true);
+    async recover(command) {
+        const { operationId, blockchain } = command.data;
+        await this.handleError(operationId, blockchain, command.message, this.errorType, true);
 
         return Command.empty();
     }
@@ -115,11 +115,12 @@ class Command {
      * @param markFailed - Update operation status to failed
      * @returns {*}
      */
-    async handleError(operationId, errorMessage, errorName, markFailed) {
+    async handleError(operationId, blockchain, errorMessage, errorName, markFailed) {
         this.logger.error(`Command error (${errorName}): ${errorMessage}`);
         if (markFailed) {
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
+                blockchain,
                 OPERATION_ID_STATUS.FAILED,
                 errorMessage,
                 errorName,

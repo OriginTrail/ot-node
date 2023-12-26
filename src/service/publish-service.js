@@ -27,6 +27,7 @@ class PublishService extends OperationService {
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
         const {
             operationId,
+            blockchain,
             numberOfFoundNodes,
             leftoverNodes,
             keyword,
@@ -71,7 +72,12 @@ class PublishService extends OperationService {
                 }
             }
             if (allCompleted) {
-                await this.markOperationAsCompleted(operationId, null, this.completedStatuses);
+                await this.markOperationAsCompleted(
+                    operationId,
+                    blockchain,
+                    null,
+                    this.completedStatuses,
+                );
                 this.logResponsesSummary(completedNumber, failedNumber);
                 this.logger.info(
                     `${this.operationName} with operation id: ${operationId} with status: ${
@@ -86,6 +92,7 @@ class PublishService extends OperationService {
             if (leftoverNodes.length === 0) {
                 await this.markOperationAsFailed(
                     operationId,
+                    blockchain,
                     'Not replicated to enough nodes!',
                     this.errorType,
                 );

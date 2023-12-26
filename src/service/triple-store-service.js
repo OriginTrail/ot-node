@@ -1,6 +1,6 @@
 import { formatAssertion } from 'assertion-tools';
 
-import { SCHEMA_CONTEXT, TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
+import { SCHEMA_CONTEXT, TRIPLE_STORE_REPOSITORIES, MEDIA_TYPES } from '../constants/constants.js';
 
 class TripleStoreService {
     constructor(ctx) {
@@ -47,11 +47,22 @@ class TripleStoreService {
             keyword,
         });
 
+        const oldUalConnection = await formatAssertion({
+            '@context': SCHEMA_CONTEXT,
+            '@id': this.ualService.getUalWithoutChainId(ual, blockchain),
+            assertion: { '@id': `assertion:${assertionId}` },
+        });
+
         await Promise.all([
             this.tripleStoreModuleManager.insertAssetAssertionMetadata(
                 this.repositoryImplementations[repository],
                 repository,
                 currentAssetNquads.join('\n'),
+            ),
+            this.tripleStoreModuleManager.insertAssetAssertionMetadata(
+                this.repositoryImplementations[repository],
+                repository,
+                oldUalConnection.join('\n'),
             ),
             this.tripleStoreModuleManager.insertAssertion(
                 this.repositoryImplementations[repository],
@@ -76,7 +87,14 @@ class TripleStoreService {
         tokenId,
         keyword,
     ) {
-        const assertion = await this.getAssertion(fromRepository, assertionId);
+        let assertion;
+        // Try-catch to prevent infinite processing loop when unexpected error is thrown while getting KA
+        try {
+            assertion = await this.getAssertion(fromRepository, assertionId);
+        } catch (e) {
+            this.logger.error(`Error while getting assertion for moving asset: ${e.message}`);
+            return;
+        }
 
         // copy metadata and assertion
         await this.localStoreAsset(
@@ -179,6 +197,11 @@ class TripleStoreService {
             repository,
             ual,
         );
+        await this.tripleStoreModuleManager.deleteAssetMetadata(
+            this.repositoryImplementations[repository],
+            repository,
+            this.ualService.getUalWithoutChainId(ual, blockchain),
+        );
 
         // Delete assertions that were linked only to this Knowledge Asset
         for (const linkedAssertionId of linkedAssertionIds) {
@@ -212,8 +235,13 @@ class TripleStoreService {
             repository,
             assertionId,
         );
-
-        return this.dataService.parseBindings(bindings);
+        const count = this.dataService.parseBindings(bindings);
+        if (count > 1) {
+            // since 6.1.0 in asset metadata we are storing two triples connected to assertion id
+            // using 2 formats of ual - so we can expect that this query returns 2 triples per asset
+            return Math.round(count / 2);
+        }
+        return count;
     }
 
     async getAssertion(repository, assertionId) {
@@ -225,7 +253,7 @@ class TripleStoreService {
             repository,
             assertionId,
         );
-        nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
+        nquads = await this.dataService.toNQuads(nquads, MEDIA_TYPES.N_QUADS);
 
         this.logger.debug(
             `Assertion: ${assertionId} ${

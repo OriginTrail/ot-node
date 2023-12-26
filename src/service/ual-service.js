@@ -100,6 +100,15 @@ class UALService {
             [contract, firstAssertionId],
         );
     }
+
+    getUalWithoutChainId(ual, blockchain) {
+        const blockchainParts = blockchain.split(':');
+
+        if (ual.includes(blockchain)) {
+            return ual.replace(blockchain, blockchainParts[0]);
+        }
+        return ual;
+    }
 }
 
 export default UALService;

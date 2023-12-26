@@ -47,7 +47,7 @@ class BlockchainEventListenerService {
             process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
             process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
 
-        const currentBlock = await this.blockchainModuleManager.getBlockNumber();
+        const currentBlock = await this.blockchainModuleManager.getBlockNumber(blockchainId);
         const syncContractEventsPromises = [
             this.getContractEvents(
                 blockchainId,
@@ -78,6 +78,12 @@ class BlockchainEventListenerService {
                 CONTRACTS.SERVICE_AGREEMENT_V1_CONTRACT,
                 currentBlock,
                 CONTRACT_EVENTS.SERVICE_AGREEMENT_V1,
+            ),
+            this.getContractEvents(
+                blockchainId,
+                CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+                currentBlock,
+                CONTRACT_EVENTS.PARAMETERS_STORAGE,
             ),
         ];
 
@@ -223,6 +229,18 @@ class BlockchainEventListenerService {
         } catch (error) {
             this.logger.warn(
                 `Error while processing events: ${eventName}. Error: ${error.message}`,
+            );
+        }
+    }
+
+    async handleParameterChangedEvents(blockEvents) {
+        for (const event of blockEvents) {
+            const { parameterName, parameterValue } = JSON.parse(event.data);
+            this.blockchainModuleManager.setContractCallCache(
+                event.blockchainId,
+                CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+                parameterName,
+                parameterValue,
             );
         }
     }
