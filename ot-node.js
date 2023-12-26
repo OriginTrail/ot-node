@@ -54,6 +54,12 @@ class OTNode {
         await this.initializeCommandExecutor();
         await this.initializeShardingTableService();
 
+        await MigrationExecutor.executeMarkStakingEventsAsProcessedMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         MigrationExecutor.executeUalExtensionTripleStoreMigration(
             this.container,
             this.logger,
@@ -61,6 +67,12 @@ class OTNode {
         ).then(async () => {
             await this.initializeBlockchainEventListenerService();
         });
+
+        await MigrationExecutor.executePullShardingTableMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
 
         await this.initializeRouters();
         await this.startNetworkModule();
