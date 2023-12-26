@@ -7,20 +7,30 @@ class BlockchainEventRepository {
     }
 
     async insertBlockchainEvents(events) {
-        const inserted = await this.model.bulkCreate(
-            events.map((event) => ({
-                contract: event.contract,
-                event: event.event,
-                data: event.data,
-                block: event.block,
-                blockchainId: event.blockchainId,
-                processed: false,
-            })),
-            {
-                ignoreDuplicates: true,
-            },
-        );
-        return inserted.map((event) => event.dataValues);
+        const chunkSize = 10000;
+        let insertedEvents = [];
+
+        for (let i = 0; i < events.length; i += chunkSize) {
+            const chunk = events.slice(i, i + chunkSize);
+            // eslint-disable-next-line no-await-in-loop
+            const insertedChunk = await this.model.bulkCreate(
+                chunk.map((event) => ({
+                    contract: event.contract,
+                    event: event.event,
+                    data: event.data,
+                    block: event.block,
+                    blockchainId: event.blockchainId,
+                    processed: false,
+                })),
+                {
+                    ignoreDuplicates: true,
+                },
+            );
+
+            insertedEvents = insertedEvents.concat(insertedChunk.map((event) => event.dataValues));
+        }
+
+        return insertedEvents;
     }
 
     async getAllUnprocessedBlockchainEvents(eventNames, blockchainId) {

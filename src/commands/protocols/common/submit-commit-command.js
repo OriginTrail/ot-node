@@ -84,7 +84,7 @@ class SubmitCommitCommand extends Command {
             return Command.empty();
         }
 
-        const txGasPrice = gasPrice ?? (await this.blockchainModuleManager.getGasPrice());
+        const txGasPrice = gasPrice ?? (await this.blockchainModuleManager.getGasPrice(blockchain));
 
         const transactionCompletePromise = new Promise((resolve, reject) => {
             this.blockchainModuleManager.submitCommit(
