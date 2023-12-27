@@ -39,16 +39,20 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
             this.logger.info(
                 `Ual extension triple store migration: found ${ualList.length} distinct UALs in ${repository}`,
             );
-
+            const subjectsSet = new Set(ualList.map((item) => item.subject));
             const newTriples = [];
             for (const { subject: ual, object: assertionId } of ualList) {
-                let newUal;
-                if (ual.includes(newBlockchainId)) {
-                    newUal = ual.replace(newBlockchainId, oldBlockchainId);
-                } else {
-                    newUal = ual.replace(oldBlockchainId, newBlockchainId);
+                if (assertionId.startsWith('assertion:')) {
+                    let newUal;
+                    if (ual.includes(newBlockchainId)) {
+                        newUal = ual.replace(newBlockchainId, oldBlockchainId);
+                    } else {
+                        newUal = ual.replace(oldBlockchainId, newBlockchainId);
+                    }
+                    if (!subjectsSet.has(newUal)) {
+                        newTriples.push(`<${newUal}> schema:assertion <${assertionId}>`);
+                    }
                 }
-                newTriples.push(`<${newUal}> schema:assertion <${assertionId}>`);
             }
 
             while (newTriples.length) {
