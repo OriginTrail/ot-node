@@ -115,13 +115,9 @@ class OperationIdService {
     }
 
     async getCachedOperationIdData(operationId) {
-        try {
-            if (this.memoryCachedHandlersData[operationId]) {
-                this.logger.debug(`Reading operation id: ${operationId} cached data from memory`);
-                return this.memoryCachedHandlersData[operationId].data;
-            }
-        } catch (error) {
-            this.logger.error(error);
+        if (this.memoryCachedHandlersData[operationId]) {
+            this.logger.debug(`Reading operation id: ${operationId} cached data from memory`);
+            return this.memoryCachedHandlersData[operationId]?.data;
         }
         this.logger.debug(`Reading operation id: ${operationId} cached data from file`);
         const documentPath = this.fileService.getOperationIdDocumentPath(operationId);

@@ -632,16 +632,16 @@ class Libp2pService {
     }
 
     removeCachedSession(operationId, keywordUuid, peerIdString) {
-        try {
-            if (this.sessions[peerIdString]?.[operationId]?.[keywordUuid]?.stream) {
+        if (this.sessions[peerIdString]?.[operationId]?.[keywordUuid]?.stream) {
+            try {
                 this.sessions[peerIdString][operationId][keywordUuid].stream.close();
-                delete this.sessions[peerIdString][operationId];
-                this.logger.trace(
-                    `Removed session for remotePeerId: ${peerIdString}, operationId: ${operationId}.`,
-                );
+            } catch (error) {
+                this.logger.error(`Error closing session stream.Error: ${error.message}`);
             }
-        } catch (error) {
-            this.logger.error(`Unable to remove cached session. Error message: ${error.message}`);
+            delete this.sessions[peerIdString][operationId];
+            this.logger.trace(
+                `Removed session for remotePeerId: ${peerIdString}, operationId: ${operationId}.`,
+            );
         }
     }
 }
