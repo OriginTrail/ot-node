@@ -707,8 +707,11 @@ class Web3Service {
                 `Processing block range ${fromBlock} - ${toBlock} for contract: ${contractName} on blockchain: ${blockchainId}.`,
             );
             const newEvents = await this.processBlockRange(fromBlock, toBlock, contract, topics);
+            let numberOfNewEventsFound = 0;
+            // eslint-disable-next-line no-return-assign
+            newEvents.forEach((e) => (numberOfNewEventsFound += e.length));
             this.logger.debug(
-                `Found ${newEvents.length} events in block range ${fromBlock} - ${toBlock} for contract: ${contractName} on blockchain: ${blockchainId}.`,
+                `Found ${numberOfNewEventsFound} events in block range ${fromBlock} - ${toBlock} for contract: ${contractName} on blockchain: ${blockchainId}.`,
             );
             newEvents.forEach((e) => events.push(...e));
             fromBlock = toBlock + 1;
