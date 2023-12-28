@@ -49,6 +49,12 @@ class OTNode {
 
         await this.initializeModules();
 
+        await MigrationExecutor.executePullShardingTableMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         // Profile creation disabled for the Asset sync nodes at the moment
         if (!this.config.assetSync.enabled) {
             await this.createProfiles();
@@ -56,6 +62,12 @@ class OTNode {
 
         await this.initializeCommandExecutor();
         await this.initializeShardingTableService();
+
+        await MigrationExecutor.executeMarkStakingEventsAsProcessedMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
 
         MigrationExecutor.executeUalExtensionTripleStoreMigration(
             this.container,
