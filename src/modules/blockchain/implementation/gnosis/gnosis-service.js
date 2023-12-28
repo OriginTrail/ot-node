@@ -19,9 +19,9 @@ class GnosisService extends Web3Service {
             const response = await axios.get(this.config.gasPriceOracleLink);
             let gasPrice;
             if (this.config.name.split(':')[1] === '100') {
-                gasPrice = Number(response.result, 10);
+                gasPrice = Number(response.data.result, 10);
             } else if (this.config.name.split(':')[1] === '10200') {
-                gasPrice = Math.round(response.average * 1e9);
+                gasPrice = Math.round(response.data.average * 1e9);
             }
             this.logger.debug(`Gas price on Gnosis: ${gasPrice}`);
             return gasPrice;
