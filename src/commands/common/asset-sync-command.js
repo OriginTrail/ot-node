@@ -51,41 +51,11 @@ class AssetSyncCommand extends Command {
             await this.syncAsset(asset.tokenId, asset.blockchain, asset.contract);
         }, ASSET_SYNC_PARAMETERS.CONCURRENCY);
 
+        const promises = [];
         for (const blockchain of this.blockchainModuleManager.getImplementationNames()) {
-            const contracts =
-                this.blockchainModuleManager.getAssetStorageContractAddresses(blockchain);
-
-            for (const contract of contracts) {
-                const latestTokenId = Number(
-                    await this.blockchainModuleManager.getLatestTokenId(blockchain, contract),
-                );
-
-                const latestAssetSyncRecord =
-                    await this.repositoryModuleManager.getLatestAssetSyncRecord(
-                        blockchain,
-                        contract,
-                    );
-
-                const latestSyncedTokenId = latestAssetSyncRecord?.tokenId ?? 0;
-
-                if (latestSyncedTokenId > 0) {
-                    const tokenIds = await this.getMissedTokenIds(blockchain, contract);
-                    if (tokenIds?.length) {
-                        this.logger.info(
-                            `ASSET_SYNC: Found ${tokenIds.length} missed assets, syncing`,
-                        );
-                        for (const tokenId of tokenIds) {
-                            syncQueue.push({ tokenId, blockchain, contract });
-                        }
-                    }
-                }
-
-                for (let tokenId = latestSyncedTokenId; tokenId < latestTokenId; tokenId += 1) {
-                    syncQueue.push({ tokenId, blockchain, contract });
-                }
-            }
+            promises.push(this.syncBlockchain(blockchain, syncQueue));
         }
-
+        await Promise.all(promises);
         await new Promise((resolve) => {
             syncQueue.drain(resolve);
         });
@@ -93,6 +63,37 @@ class AssetSyncCommand extends Command {
         this.logger.debug(`Finished executing asset sync command`);
 
         return Command.repeat();
+    }
+
+    async syncBlockchain(blockchain, syncQueue) {
+        const contracts = this.blockchainModuleManager.getAssetStorageContractAddresses(blockchain);
+
+        for (const contract of contracts) {
+            const latestTokenId = Number(
+                await this.blockchainModuleManager.getLatestTokenId(blockchain, contract),
+            );
+
+            const latestAssetSyncRecord =
+                await this.repositoryModuleManager.getLatestAssetSyncRecord(blockchain, contract);
+
+            const latestSyncedTokenId = latestAssetSyncRecord?.tokenId ?? 0;
+
+            if (latestSyncedTokenId > 0) {
+                const tokenIds = await this.getMissedTokenIds(blockchain, contract);
+                if (tokenIds?.length) {
+                    this.logger.info(
+                        `ASSET_SYNC: Found ${tokenIds.length} missed assets, syncing for blockchain: ${blockchain}`,
+                    );
+                    for (const tokenId of tokenIds) {
+                        syncQueue.push({ tokenId, blockchain, contract });
+                    }
+                }
+            }
+
+            for (let tokenId = latestSyncedTokenId; tokenId < latestTokenId; tokenId += 1) {
+                syncQueue.push({ tokenId, blockchain, contract });
+            }
+        }
     }
 
     async syncAsset(tokenId, blockchain, contract) {
@@ -112,7 +113,7 @@ class AssetSyncCommand extends Command {
                 )
             ) {
                 this.logger.trace(
-                    `ASSET_SYNC: StateIndex: ${stateIndex} for tokenId: ${tokenId} already synced`,
+                    `ASSET_SYNC: StateIndex: ${stateIndex} for tokenId: ${tokenId} already synced blockchain: ${blockchain}`,
                 );
                 await this.repositoryModuleManager.updateAssetSyncRecord(
                     blockchain,
@@ -127,7 +128,7 @@ class AssetSyncCommand extends Command {
 
             if (await this.isStatePresentInRepository(tokenId, stateIndex, assertionIds)) {
                 this.logger.trace(
-                    `ASSET_SYNC: StateIndex: ${stateIndex} for tokenId: ${tokenId} found in triple store`,
+                    `ASSET_SYNC: StateIndex: ${stateIndex} for tokenId: ${tokenId} found in triple store blockchain: ${blockchain}`,
                 );
                 await this.repositoryModuleManager.createAssetSyncRecord(
                     blockchain,
@@ -144,7 +145,7 @@ class AssetSyncCommand extends Command {
             this.logger.debug(
                 `ASSET_SYNC: Fetching state index: ${stateIndex + 1} of ${
                     assertionIds.length
-                } for asset with ual: ${ual}.`,
+                } for asset with ual: ${ual}. blockchain: ${blockchain}`,
             );
             const assertionId = assertionIds[stateIndex];
 
@@ -177,7 +178,7 @@ class AssetSyncCommand extends Command {
             const hashFunctionId = CONTENT_ASSET_HASH_FUNCTION_ID;
 
             this.logger.debug(
-                `ASSET_SYNC: Get for ${ual} with operation id ${operationId} initiated.`,
+                `ASSET_SYNC: Get for ${ual} with operation id ${operationId} initiated. blockchain: ${blockchain}`,
             );
 
             await this.commandExecutor.add({
