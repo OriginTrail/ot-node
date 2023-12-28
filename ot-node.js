@@ -28,14 +28,6 @@ class OTNode {
         await this.checkForUpdate();
         await this.removeUpdateFile();
 
-        await MigrationExecutor.executeTripleStoreUserConfigurationMigration(
-            this.logger,
-            this.config,
-        );
-        await MigrationExecutor.executeTelemetryModuleUserConfigurationMigration(
-            this.logger,
-            this.config,
-        );
         await MigrationExecutor.executeUalExtensionUserConfigurationMigration(
             this.logger,
             this.config,
@@ -62,37 +54,6 @@ class OTNode {
             this.logger,
             this.config,
         );
-        await MigrationExecutor.executePrivateAssetsMetadataMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-        await MigrationExecutor.executeRemoveAgreementStartEndTimeMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-        await MigrationExecutor.executeMarkOldBlockchainEventsAsProcessedMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-        await MigrationExecutor.executeTripleStoreMetadataMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-        await MigrationExecutor.executeServiceAgreementsMetadataMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-        await MigrationExecutor.executeRemoveOldEpochCommandsMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-        await MigrationExecutor.executePendingStorageMigration(this.logger, this.config);
 
         // Profile creation disabled for the Asset sync nodes at the moment
         if (!this.config.assetSync.enabled) {
@@ -102,6 +63,12 @@ class OTNode {
         await this.initializeCommandExecutor();
         await this.initializeShardingTableService();
 
+        await MigrationExecutor.executeMarkStakingEventsAsProcessedMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         MigrationExecutor.executeUalExtensionTripleStoreMigration(
             this.container,
             this.logger,
@@ -109,6 +76,12 @@ class OTNode {
         ).then(async () => {
             await this.initializeBlockchainEventListenerService();
         });
+
+        await MigrationExecutor.executePullShardingTableMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
 
         await this.initializeRouters();
         await this.startNetworkModule();
