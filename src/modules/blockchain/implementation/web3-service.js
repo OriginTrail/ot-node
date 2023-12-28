@@ -54,13 +54,12 @@ const ABIs = {
 const SCORING_FUNCTIONS = {
     1: 'Log2PLDSF',
 };
-const contractCallCache = {};
 
 class Web3Service {
     async initialize(config, logger) {
         this.config = config;
         this.logger = logger;
-
+        this.contractCallCache = {};
         this.initializeTransactionQueue(TRANSACTION_QUEUE_CONCURRENCY);
         await this.initializeWeb3();
         this.startBlock = await this.getBlockNumber();
@@ -287,15 +286,15 @@ class Web3Service {
     setContractCallCache(contractName, functionName, value) {
         if (CACHED_FUNCTIONS[contractName]?.[functionName]) {
             const type = CACHED_FUNCTIONS[contractName][functionName];
-            if (!contractCallCache[contractName]) {
-                contractCallCache[contractName] = {};
+            if (!this.contractCallCache[contractName]) {
+                this.contractCallCache[contractName] = {};
             }
             switch (type) {
                 case CACHE_DATA_TYPES.NUMBER:
-                    contractCallCache[contractName][functionName] = Number(value);
+                    this.contractCallCache[contractName][functionName] = Number(value);
                     break;
                 default:
-                    contractCallCache[contractName][functionName] = value;
+                    this.contractCallCache[contractName][functionName] = value;
             }
         }
     }
@@ -303,9 +302,9 @@ class Web3Service {
     getContractCallCache(contractName, functionName) {
         if (
             CACHED_FUNCTIONS[contractName]?.[functionName] &&
-            contractCallCache[contractName]?.[functionName]
+            this.contractCallCache[contractName]?.[functionName]
         ) {
-            return contractCallCache[contractName][functionName];
+            return this.contractCallCache[contractName][functionName];
         }
         return null;
     }
