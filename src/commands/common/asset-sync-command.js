@@ -47,17 +47,19 @@ class AssetSyncCommand extends Command {
 
         this.logger.debug(`Started executing asset sync command`);
 
-        const syncQueue = queue(async (asset) => {
+        const concurrency = process.env.ASSET_SYNC_CONCURRENCY ?? ASSET_SYNC_PARAMETERS.CONCURRENCY;
+
+        this.syncQueue = queue(async (asset) => {
             await this.syncAsset(asset.tokenId, asset.blockchain, asset.contract);
-        }, ASSET_SYNC_PARAMETERS.CONCURRENCY);
+        }, concurrency);
 
         const promises = [];
         for (const blockchain of this.blockchainModuleManager.getImplementationNames()) {
-            promises.push(this.syncBlockchain(blockchain, syncQueue));
+            promises.push(this.syncBlockchain(blockchain, this.syncQueue));
         }
         await Promise.all(promises);
         await new Promise((resolve) => {
-            syncQueue.drain(resolve);
+            this.syncQueue.drain(resolve);
         });
 
         this.logger.debug(`Finished executing asset sync command`);
@@ -78,6 +80,18 @@ class AssetSyncCommand extends Command {
 
             const latestSyncedTokenId = latestAssetSyncRecord?.tokenId ?? 0;
 
+            const tokenIdsForSync = [];
+
+            this.logger.info(
+                `ASSET_SYNC: Found ${
+                    latestTokenId - latestSyncedTokenId
+                } new assets, syncing for blockchain: ${blockchain}`,
+            );
+
+            for (let tokenId = latestSyncedTokenId; tokenId < latestTokenId; tokenId += 1) {
+                tokenIdsForSync.push({ tokenId, blockchain, contract });
+            }
+
             if (latestSyncedTokenId > 0) {
                 const tokenIds = await this.getMissedTokenIds(blockchain, contract);
                 if (tokenIds?.length) {
@@ -85,13 +99,17 @@ class AssetSyncCommand extends Command {
                         `ASSET_SYNC: Found ${tokenIds.length} missed assets, syncing for blockchain: ${blockchain}`,
                     );
                     for (const tokenId of tokenIds) {
-                        syncQueue.push({ tokenId, blockchain, contract });
+                        tokenIdsForSync.push({ tokenId, blockchain, contract });
                     }
                 }
             }
 
-            for (let tokenId = latestSyncedTokenId; tokenId < latestTokenId; tokenId += 1) {
-                syncQueue.push({ tokenId, blockchain, contract });
+            this.logger.info(
+                `ASSET_SYNC: Total number of assets to be synced ${tokenIdsForSync.length},  syncing for blockchain: ${blockchain}`,
+            );
+
+            for (const tokenId of tokenIdsForSync) {
+                syncQueue.push(tokenId);
             }
         }
     }
