@@ -94,16 +94,6 @@ class AssetSyncCommand extends Command {
 
             const tokenIdsForSync = [];
 
-            this.logger.info(
-                `ASSET_SYNC: Found ${
-                    latestTokenId - latestSyncedTokenId
-                } new assets, syncing for blockchain: ${blockchain}`,
-            );
-
-            for (let tokenId = latestSyncedTokenId; tokenId < latestTokenId; tokenId += 1) {
-                tokenIdsForSync.push({ tokenId, blockchain, contract });
-            }
-
             if (latestSyncedTokenId > 0) {
                 const tokenIds = await this.getMissedTokenIds(blockchain, contract);
                 if (tokenIds?.length) {
@@ -115,6 +105,16 @@ class AssetSyncCommand extends Command {
                     }
                 }
             }
+
+            for (let tokenId = latestSyncedTokenId; tokenId < latestTokenId; tokenId += 1) {
+                tokenIdsForSync.push({ tokenId, blockchain, contract });
+            }
+
+            this.logger.info(
+                `ASSET_SYNC: Found ${
+                    latestTokenId - latestSyncedTokenId
+                } new assets, syncing for blockchain: ${blockchain}`,
+            );
 
             this.logger.info(
                 `ASSET_SYNC: Total number of assets to be synced ${tokenIdsForSync.length},  syncing for blockchain: ${blockchain}`,
