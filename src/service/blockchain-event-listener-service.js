@@ -133,15 +133,15 @@ class BlockchainEventListenerService {
                 if (fetchEventsFailedCount[blockchainId] >= MAXIMUM_FETCH_EVENTS_FAILED_COUNT) {
                     clearInterval(fetchEventInterval);
                     this.blockchainModuleManager.removeImplementation(blockchainId);
-                    if (!this.blockchainModuleManager.getImplementationNames().length) {
-                        this.logger.error(
-                            `Unable to fetch new events for blockchain: ${blockchainId}. Error message: ${e.message} OT-node shutting down...`,
-                        );
-                        process.exit(1);
-                    }
+                    // if (!this.blockchainModuleManager.getImplementationNames().length) {
                     this.logger.error(
-                        `Unable to fetch new events for blockchain: ${blockchainId}. Error message: ${e.message} blockchain implementation removed.`,
+                        `Unable to fetch new events for blockchain: ${blockchainId}. Error message: ${e.message} OT-node shutting down...`,
                     );
+                    process.exit(1);
+                    // }
+                    // this.logger.error(
+                    //     `Unable to fetch new events for blockchain: ${blockchainId}. Error message: ${e.message} blockchain implementation removed.`,
+                    // );
                 }
                 this.logger.error(
                     `Failed to get and process blockchain events for blockchain: ${blockchainId}. Error: ${e}`,

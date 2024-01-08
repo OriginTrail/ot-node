@@ -329,7 +329,9 @@ class CommandExecutor {
                 this.logger.warn(`Error in command: ${command.name}, error: ${error.message}`);
                 return await handler.recover(command);
             } catch (e) {
-                this.logger.warn(`Failed to recover command ${command.name} and ID ${command.id}`);
+                this.logger.warn(
+                    `Failed to recover command ${command.name} and ID ${command.id}. Error: ${e}`,
+                );
             }
         }
     }

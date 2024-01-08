@@ -49,19 +49,19 @@ class AssetSyncCommand extends Command {
 
         const concurrency = process.env.ASSET_SYNC_CONCURRENCY ?? ASSET_SYNC_PARAMETERS.CONCURRENCY;
 
-        const syncQueues = [];
+        this.syncQueues = [];
         const syncBlockchainPromises = [];
         for (const blockchain of this.blockchainModuleManager.getImplementationNames()) {
             const syncQueue = queue(async (asset) => {
                 await this.syncAsset(asset.tokenId, asset.blockchain, asset.contract);
             }, concurrency);
             syncBlockchainPromises.push(this.syncBlockchain(blockchain, syncQueue));
-            syncQueues.push(syncQueue);
+            this.syncQueues.push(syncQueue);
         }
         await Promise.all(syncBlockchainPromises);
 
         const drainQueuePromises = [];
-        for (const syncQueue of syncQueues) {
+        for (const syncQueue of this.syncQueues) {
             drainQueuePromises.push(
                 new Promise((resolve) => {
                     syncQueue.drain(resolve);
@@ -71,7 +71,7 @@ class AssetSyncCommand extends Command {
 
         await Promise.any(drainQueuePromises);
 
-        for (const syncQueue of syncQueues) {
+        for (const syncQueue of this.syncQueues) {
             syncQueue.kill();
         }
         this.logger.debug(`Finished executing asset sync command`);
@@ -306,10 +306,12 @@ class AssetSyncCommand extends Command {
     /**
      * Recover system from failure
      * @param command
-     * @param error
      */
-    async recover(command, error) {
-        this.logger.warn(`Failed to sync knowledge assets: error: ${error.message}`);
+    async recover(command) {
+        this.logger.warn(`Failed to sync knowledge assets: error: ${command.message}`);
+        for (const syncQueue of this.syncQueues) {
+            syncQueue.kill();
+        }
         return Command.repeat();
     }
 
