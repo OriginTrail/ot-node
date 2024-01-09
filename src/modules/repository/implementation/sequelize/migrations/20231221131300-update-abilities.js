@@ -20,10 +20,10 @@ async function getAbilityIds(names, queryInterface, transaction) {
 
 async function getAdminRoleId(queryInterface, transaction) {
     const [[role]] = await queryInterface.sequelize.query(
-        "SELECT id FROM role WHERE name='ADMIN'",
+        'SELECT id FROM role WHERE name IS NOT NULL',
         { transaction },
     );
-
+    console.log(role);
     return role.id;
 }
 
