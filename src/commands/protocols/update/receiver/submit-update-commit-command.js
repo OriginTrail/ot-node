@@ -98,6 +98,7 @@ class SubmitUpdateCommitCommand extends Command {
                 agreementId,
                 epoch,
             );
+            await transactionCompletePromise;
             this.operationIdService.emitChangeEvent(
                 OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_SEND_TX_END,
                 sendSubmitUpdateCommitTransactionOperationId,
@@ -105,7 +106,6 @@ class SubmitUpdateCommitCommand extends Command {
                 agreementId,
                 epoch,
             );
-            await transactionCompletePromise;
         } catch (error) {
             this.logger.warn(
                 `Failed to execute ${command.name}, Error Message: ${error.message} for the Service Agreement ` +
