@@ -23,7 +23,6 @@ async function getAdminRoleId(queryInterface, transaction) {
         'SELECT id FROM role WHERE name IS NOT NULL',
         { transaction },
     );
-    console.log(role);
     return role.id;
 }
 
