@@ -18,32 +18,37 @@ async function getAbilityIds(names, queryInterface, transaction) {
     return abilities.map((ability) => ability.id);
 }
 
-async function getAdminRoleId(queryInterface, transaction) {
-    const [[role]] = await queryInterface.sequelize.query(
-        'SELECT id FROM role WHERE name IS NOT NULL',
-        { transaction },
+async function getRoleIds(queryInterface, transaction) {
+    const [roles] = await queryInterface.sequelize.query(
+        'SELECT id FROM role WHERE name IS NOT NULL;',
+        {
+            transaction,
+        },
     );
-    return role.id;
+
+    return roles.map((role) => role.id);
 }
 
 async function getRoleAbilities(names, queryInterface, transaction) {
     const abilityIds = await getAbilityIds(names, queryInterface, transaction);
-    const adminRoleId = await getAdminRoleId(queryInterface, transaction);
+    const roleIds = await getRoleIds(queryInterface, transaction);
 
-    return abilityIds.map((abilityId) => ({
-        ability_id: abilityId,
-        role_id: adminRoleId,
-    }));
+    return roleIds.flatMap((roleId) =>
+        abilityIds.map((abilityId) => ({
+            ability_id: abilityId,
+            role_id: roleId,
+        })),
+    );
 }
 
 async function removeAbilities(names, queryInterface, transaction) {
-    const adminRoleId = await getAdminRoleId(queryInterface, transaction);
+    const roleIds = await getRoleIds(queryInterface, transaction);
     const abilityIds = await getAbilityIds(names, queryInterface, transaction);
 
     await queryInterface.bulkDelete(
         'role_ability',
         {
-            role_id: adminRoleId,
+            role_id: roleIds,
             ability_id: abilityIds,
         },
         { transaction },
