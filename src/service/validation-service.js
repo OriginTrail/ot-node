@@ -35,21 +35,18 @@ class ValidationService {
         this.logger.info(`Validating assertionId: ${assertionId}`);
 
         this.validateAssertionId(assertion, assertionId);
-
-        // TODO: get assertion data in one call
-        await this.validateAssertionSize(blockchain, assertionId, assertion);
-        await this.validateTriplesNumber(blockchain, assertionId, assertion);
-        await this.validateChunkSize(blockchain, assertionId, assertion);
+        const blockchainData = await this.blockchainModuleManager.getAssertionData(
+            blockchain,
+            assertionId,
+        );
+        await this.validateAssertionSize(blockchainData.size, assertion);
+        await this.validateTriplesNumber(blockchainData.triplesNumber, assertion);
+        await this.validateChunkSize(blockchainData.chunksNumber, assertion);
 
         this.logger.info(`Assertion integrity validated!`);
     }
 
-    async validateAssertionSize(blockchain, assertionId, assertion) {
-        const blockchainAssertionSize = await this.blockchainModuleManager.getAssertionSize(
-            blockchain,
-            assertionId,
-        );
-
+    async validateAssertionSize(blockchainAssertionSize, assertion) {
         const blockchainAssertionSizeInKb = blockchainAssertionSize / BYTES_IN_KILOBYTE;
         if (blockchainAssertionSizeInKb > this.config.maximumAssertionSizeInKb) {
             throw Error(
@@ -65,9 +62,7 @@ class ValidationService {
         }
     }
 
-    async validateTriplesNumber(blockchain, assertionId, assertion) {
-        const blockchainTriplesNumber =
-            await this.blockchainModuleManager.getAssertionTriplesNumber(blockchain, assertionId);
+    async validateTriplesNumber(blockchainTriplesNumber, assertion) {
         const triplesNumber = assertionMetadata.getAssertionTriplesNumber(assertion);
         if (blockchainTriplesNumber !== triplesNumber) {
             throw Error(
@@ -76,11 +71,7 @@ class ValidationService {
         }
     }
 
-    async validateChunkSize(blockchain, assertionId, assertion) {
-        const blockchainChunksNumber = await this.blockchainModuleManager.getAssertionChunksNumber(
-            blockchain,
-            assertionId,
-        );
+    async validateChunkSize(blockchainChunksNumber, assertion) {
         const chunksNumber = assertionMetadata.getAssertionChunksNumber(assertion);
         if (blockchainChunksNumber !== chunksNumber) {
             throw Error(
