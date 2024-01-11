@@ -878,7 +878,6 @@ class Web3Service {
             [assertionId],
         );
         return {
-            ...assertionData,
             timestamp: Number(assertionData.timestamp),
             size: Number(assertionData.size),
             triplesNumber: Number(assertionData.triplesNumber),
