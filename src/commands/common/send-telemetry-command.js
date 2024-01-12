@@ -44,13 +44,21 @@ class SendTelemetryCommand extends Command {
                 };
                 blockchainsNodeInfo.push(blockchainInfo);
             }
+
+            const tripleStoreNodeInfo = [];
             const tripleStoreImplementations =
                 this.tripleStoreModuleManager.getImplementationNames();
+            for (const implementation of tripleStoreImplementations) {
+                const tripleStoreInfo = {
+                    implementationName: implementation,
+                };
+                tripleStoreNodeInfo.push(tripleStoreInfo);
+            }
             const nodeData = {
                 version: pjson.version,
                 identity: this.networkModuleManager.getPeerId().toB58String(),
                 hostname: this.config.hostname,
-                triple_stores: tripleStoreImplementations,
+                triple_stores: tripleStoreNodeInfo,
                 auto_update_enabled: this.config.modules.autoUpdater.enabled,
                 multiaddresses: this.networkModuleManager.getMultiaddrs(),
                 blockchains: blockchainsNodeInfo,
