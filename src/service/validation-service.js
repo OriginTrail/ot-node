@@ -35,18 +35,18 @@ class ValidationService {
         this.logger.info(`Validating assertionId: ${assertionId}`);
 
         this.validateAssertionId(assertion, assertionId);
-        const blockchainData = await this.blockchainModuleManager.getAssertionData(
+        const blockchainAssertionData = await this.blockchainModuleManager.getAssertionData(
             blockchain,
             assertionId,
         );
-        await this.validateAssertionSize(blockchainData.size, assertion);
-        await this.validateTriplesNumber(blockchainData.triplesNumber, assertion);
-        await this.validateChunkSize(blockchainData.chunksNumber, assertion);
+        this.validateAssertionSize(blockchainAssertionData.size, assertion);
+        this.validateTriplesNumber(blockchainAssertionData.triplesNumber, assertion);
+        this.validateChunkSize(blockchainAssertionData.chunksNumber, assertion);
 
-        this.logger.info(`Assertion integrity validated!`);
+        this.logger.info(`Assertion integrity validated! AssertionId: ${assertionId}`);
     }
 
-    async validateAssertionSize(blockchainAssertionSize, assertion) {
+    validateAssertionSize(blockchainAssertionSize, assertion) {
         const blockchainAssertionSizeInKb = blockchainAssertionSize / BYTES_IN_KILOBYTE;
         if (blockchainAssertionSizeInKb > this.config.maximumAssertionSizeInKb) {
             throw Error(
@@ -62,7 +62,7 @@ class ValidationService {
         }
     }
 
-    async validateTriplesNumber(blockchainTriplesNumber, assertion) {
+    validateTriplesNumber(blockchainTriplesNumber, assertion) {
         const triplesNumber = assertionMetadata.getAssertionTriplesNumber(assertion);
         if (blockchainTriplesNumber !== triplesNumber) {
             throw Error(
@@ -71,7 +71,7 @@ class ValidationService {
         }
     }
 
-    async validateChunkSize(blockchainChunksNumber, assertion) {
+    validateChunkSize(blockchainChunksNumber, assertion) {
         const chunksNumber = assertionMetadata.getAssertionChunksNumber(assertion);
         if (blockchainChunksNumber !== chunksNumber) {
             throw Error(
