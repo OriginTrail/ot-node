@@ -6,6 +6,9 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
+        this.serviceAgreementService = ctx.serviceAgreementService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.startEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_START;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR;
@@ -26,7 +29,7 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         } = command.data;
         let isValid = true;
         // perform check only first time not for every batch
-        if (leftoverNodes === numberOfFoundNodes) {
+        if (leftoverNodes.length === numberOfFoundNodes) {
             isValid = await this.validateBidsForNeighbourhood(
                 blockchain,
                 contract,
@@ -90,15 +93,15 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
 
         let validBids = 0;
 
-        nodes.forEach((node) => {
-            const askNumber = this.blockchainModuleManager.convertToWei(blockchain, node.ask);
+        await Promise.all(
+            nodes.map(async (node) => {
+                const ask = await this.getAsk(blockchain, node.id);
+                if (ask.lte(serviceAgreementBid)) {
+                    validBids += 1;
+                }
+            }),
+        );
 
-            const ask = this.blockchainModuleManager.toBigNumber(blockchain, askNumber);
-
-            if (ask.lte(serviceAgreementBid)) {
-                validBids += 1;
-            }
-        });
         if (validBids < minAckResponses) {
             await this.operationService.markOperationAsFailed(
                 operationId,
@@ -109,6 +112,13 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
             return false;
         }
         return true;
+    }
+
+    async getAsk(blockchain, nodeId) {
+        const peerRecord = await this.repositoryModuleManager.getPeerRecord(nodeId, blockchain);
+        const ask = this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
+
+        return this.blockchainModuleManager.toBigNumber(blockchain, ask);
     }
 
     /**

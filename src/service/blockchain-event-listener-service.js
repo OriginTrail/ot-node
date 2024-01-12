@@ -1,3 +1,4 @@
+import { setTimeout } from 'timers/promises';
 import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
     CONTRACTS,
@@ -6,9 +7,10 @@ import {
     NODE_ENVIRONMENTS,
     PENDING_STORAGE_REPOSITORIES,
     CONTRACT_EVENTS,
+    MAXIMUM_FETCH_EVENTS_FAILED_COUNT,
+    DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS,
 } from '../constants/constants.js';
 
-const MAXIMUM_FETCH_EVENTS_FAILED_COUNT = 5;
 const fetchEventsFailedCount = {};
 
 const eventNames = Object.values(CONTRACT_EVENTS).flatMap((e) => e);
@@ -140,6 +142,7 @@ class BlockchainEventListenerService {
                     `Failed to get and process blockchain events for blockchain: ${blockchainId}. Error: ${e}`,
                 );
                 fetchEventsFailedCount[blockchainId] += 1;
+                await setTimeout(DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS);
             } finally {
                 working = false;
             }
