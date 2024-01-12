@@ -131,7 +131,7 @@ class SubmitCommitCommand extends Command {
                     `Retry number: ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}.`,
             );
             this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_ERROR,
+                ERROR_TYPE.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_ERROR,
                 sendSubmitCommitTransactionOperationId,
                 blockchain,
                 error.message,
