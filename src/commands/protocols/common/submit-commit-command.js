@@ -178,7 +178,7 @@ class SubmitCommitCommand extends Command {
         } else {
             msgBase = 'Node has already submitted commit. Finishing';
             this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_ERROR,
+                ERROR_TYPE.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_ERROR,
                 sendSubmitCommitTransactionOperationId,
                 blockchain,
                 msgBase,

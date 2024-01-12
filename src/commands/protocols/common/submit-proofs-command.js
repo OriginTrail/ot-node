@@ -226,7 +226,7 @@ class SubmitProofsCommand extends Command {
         } else {
             msgBase = 'Node has already sent proof. Finishing';
             this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_ERROR,
+                ERROR_TYPE.COMMIT_PROOF.SUBMIT_PROOFS_SEND_TX_ERROR,
                 sendSubmitProofsTransactionOperationId,
                 blockchain,
                 msgBase,
