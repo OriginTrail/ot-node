@@ -122,14 +122,6 @@ class SubmitCommitCommand extends Command {
                 operationId,
             );
             txSuccess = await transactionCompletePromise;
-            this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_END,
-                sendSubmitCommitTransactionOperationId,
-                blockchain,
-                agreementId,
-                epoch,
-                operationId,
-            );
         } catch (error) {
             this.logger.warn(
                 `Failed to execute ${command.name}, Error Message: ${error.message} for the Service Agreement ` +
@@ -166,6 +158,14 @@ class SubmitCommitCommand extends Command {
 
         let msgBase;
         if (txSuccess) {
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_END,
+                sendSubmitCommitTransactionOperationId,
+                blockchain,
+                agreementId,
+                epoch,
+                operationId,
+            );
             msgBase = 'Successfully executed';
 
             this.operationIdService.emitChangeEvent(
@@ -177,6 +177,14 @@ class SubmitCommitCommand extends Command {
             );
         } else {
             msgBase = 'Node has already submitted commit. Finishing';
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_ERROR,
+                sendSubmitCommitTransactionOperationId,
+                blockchain,
+                msgBase,
+                this.errorType,
+                operationId,
+            );
         }
 
         this.logger.trace(
