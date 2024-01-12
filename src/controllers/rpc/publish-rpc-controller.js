@@ -27,24 +27,17 @@ class PublishController extends BaseController {
 
                 break;
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
-                try {
-                    // eslint-disable-next-line no-case-declarations
-                    dataSource = await this.operationIdService.getCachedOperationIdData(
-                        operationId,
-                    );
-                    await this.operationIdService.cacheOperationIdData(operationId, {
-                        assertionId: dataSource.assertionId,
-                        assertion: message.data.assertion,
-                    });
-                    command.name = handleRequestCommand;
-                    command.data.keyword = message.data.keyword;
-                    command.data.agreementId = dataSource.agreementId;
-                    command.data.agreementData = dataSource.agreementData;
-                } catch (error) {
-                    this.logger.error(
-                        `Unable to handle publish request. Error message: ${error.message}`,
-                    );
-                }
+                // eslint-disable-next-line no-case-declarations
+                dataSource = await this.operationIdService.getCachedOperationIdData(operationId);
+                await this.operationIdService.cacheOperationIdData(operationId, {
+                    assertionId: dataSource.assertionId,
+                    assertion: message.data.assertion,
+                });
+                command.name = handleRequestCommand;
+                command.data.keyword = message.data.keyword;
+                command.data.agreementId = dataSource.agreementId;
+                command.data.agreementData = dataSource.agreementData;
+
                 break;
             default:
                 throw Error('unknown message type');
