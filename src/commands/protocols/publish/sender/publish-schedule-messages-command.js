@@ -115,7 +115,7 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     }
 
     async getAsk(blockchain, id) {
-        const peerRecord = await this.repositoryModuleManager.getPeerRecord(id, blockchain);
+        const peerRecord = await this.repositoryModuleManager.getPeerRecord(nodeId, blockchain);
         const ask = this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
 
         return this.blockchainModuleManager.toBigNumber(blockchain, ask);
