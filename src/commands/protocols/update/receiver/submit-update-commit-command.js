@@ -116,7 +116,7 @@ class SubmitUpdateCommitCommand extends Command {
                     }.`,
             );
             this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_ERROR,
+                ERROR_TYPE.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_SEND_TX_ERROR,
                 sendSubmitUpdateCommitTransactionOperationId,
                 blockchain,
                 error.message,
