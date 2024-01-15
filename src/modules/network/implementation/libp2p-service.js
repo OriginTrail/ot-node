@@ -196,7 +196,6 @@ class Libp2pService {
 
     handleMessage(protocol, handler) {
         this.logger.info(`Enabling network protocol: ${protocol}`);
-
         this.node.handle(protocol, async (handlerProps) => {
             const { stream } = handlerProps;
             const peerIdString = handlerProps.connection.remotePeer.toB58String();
@@ -205,7 +204,6 @@ class Libp2pService {
                 this.isRequestValid.bind(this),
                 peerIdString,
             );
-
             this.updateSessionStream(
                 message.header.operationId,
                 message.header.keywordUuid,
@@ -222,6 +220,7 @@ class Libp2pService {
                     message.header.keywordUuid,
                     { errorMessage: 'Invalid request message' },
                 );
+
                 this.removeCachedSession(
                     message.header.operationId,
                     message.header.keywordUuid,
@@ -245,7 +244,21 @@ class Libp2pService {
                 this.logger.debug(
                     `Receiving message from ${peerIdString} to ${this.config.id}: protocol: ${protocol}, messageType: ${message.header.messageType};`,
                 );
-                await handler(message, peerIdString);
+                try {
+                    await handler(message, peerIdString);
+                } catch (error) {
+                    await this.sendMessageResponse(
+                        protocol,
+                        peerIdString,
+                        NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                        message.header.operationId,
+                        message.header.keywordUuid,
+                        { errorMessage: 'Unable to handle request' },
+                    );
+                    this.logger.error(
+                        `Error handling message from ${peerIdString} to ${this.config.id}: protocol :${protocol}, Error : ${error} `,
+                    );
+                }
             }
         });
     }
