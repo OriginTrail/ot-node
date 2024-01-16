@@ -26,8 +26,22 @@ class GnosisService extends Web3Service {
             this.logger.debug(`Gas price on Gnosis: ${gasPrice}`);
             return gasPrice;
         } catch (error) {
-            return undefined;
+            this.logger.debug(
+                `Failed to fetch the gas price from the Gnosis: ${error}. Using default value: 2 Gwei.`,
+            );
+            this.convertToWei(2, 'gwei');
         }
+    }
+
+    async healthCheck() {
+        try {
+            const blockNumber = await this.getBlockNumber();
+            if (blockNumber) return true;
+        } catch (e) {
+            this.logger.error(`Error on checking Gnosis blockchain. ${e}`);
+            return false;
+        }
+        return false;
     }
 }
 
