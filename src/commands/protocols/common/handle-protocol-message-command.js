@@ -47,12 +47,19 @@ class HandleProtocolMessageCommand extends Command {
         throw Error('prepareMessage not implemented');
     }
 
-    async validateNeighborhood(blockchain, keyword, hashFunctionId, ual) {
+    async validateNeighborhood(
+        blockchain,
+        keyword,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+        ual,
+    ) {
         const closestNodes = await this.shardingTableService.findNeighbourhood(
             blockchain,
             keyword,
             await this.blockchainModuleManager.getR2(blockchain),
             hashFunctionId,
+            proximityScoreFunctionsPairId,
             true,
         );
         const peerId = this.networkModuleManager.getPeerId().toB58String();

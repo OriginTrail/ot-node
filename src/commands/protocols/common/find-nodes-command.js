@@ -66,7 +66,13 @@ class FindNodesCommand extends Command {
         );
     }
 
-    async findNodes(blockchainId, keyword, operationId, hashFunctionId) {
+    async findNodes(
+        blockchainId,
+        keyword,
+        operationId,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+    ) {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchainId,
@@ -78,6 +84,7 @@ class FindNodesCommand extends Command {
             keyword,
             r2,
             hashFunctionId,
+            proximityScoreFunctionsPairId,
             true,
         );
 

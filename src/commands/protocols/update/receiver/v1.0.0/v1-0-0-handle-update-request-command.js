@@ -148,12 +148,13 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         return delay;
     }
 
-    async calculateRank(blockchain, keyword, hashFunctionId, r2) {
+    async calculateRank(blockchain, keyword, hashFunctionId, proximityScoreFunctionsPairId, r2) {
         const neighbourhood = await this.shardingTableService.findNeighbourhood(
             blockchain,
             keyword,
             r2,
             hashFunctionId,
+            proximityScoreFunctionsPairId,
             true,
         );
 
