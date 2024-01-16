@@ -131,12 +131,11 @@ class SubmitCommitCommand extends Command {
                     `Retry number: ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}.`,
             );
             this.operationIdService.emitChangeEvent(
-                ERROR_TYPE.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_ERROR,
+                OPERATION_ID_STATUS.FAILED,
                 sendSubmitCommitTransactionOperationId,
                 blockchain,
                 error.message,
-                this.errorType,
-                operationId,
+                ERROR_TYPE.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_ERROR,
             );
             let newGasPrice;
             if (
@@ -178,12 +177,11 @@ class SubmitCommitCommand extends Command {
         } else {
             msgBase = 'Node has already submitted commit. Finishing';
             this.operationIdService.emitChangeEvent(
-                ERROR_TYPE.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_ERROR,
+                OPERATION_ID_STATUS.FAILED,
                 sendSubmitCommitTransactionOperationId,
                 blockchain,
                 msgBase,
-                this.errorType,
-                operationId,
+                ERROR_TYPE.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_ERROR,
             );
         }
 

@@ -116,11 +116,11 @@ class SubmitUpdateCommitCommand extends Command {
                     }.`,
             );
             this.operationIdService.emitChangeEvent(
-                ERROR_TYPE.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_SEND_TX_ERROR,
+                OPERATION_ID_STATUS.FAILED,
                 sendSubmitUpdateCommitTransactionOperationId,
                 blockchain,
                 error.message,
-                this.errorType,
+                ERROR_TYPE.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_SEND_TX_ERROR,
             );
             let newGasPrice;
             if (
