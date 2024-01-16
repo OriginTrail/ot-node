@@ -186,11 +186,20 @@ class HandleProtocolMessageCommand extends Command {
         tokenId,
         keyword,
         hashFunctionId,
+        proximityScoreFunctionsPairId,
     ) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.trace(`Validating neighborhood for ual: ${ual}`);
-        if (!(await this.validateNeighborhood(blockchain, keyword, hashFunctionId, ual))) {
+        if (
+            !(await this.validateNeighborhood(
+                blockchain,
+                keyword,
+                hashFunctionId,
+                proximityScoreFunctionsPairId,
+                ual,
+            ))
+        ) {
             return {
                 messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
                 messageData: { errorMessage: 'Invalid neighbourhood' },

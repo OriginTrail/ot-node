@@ -34,6 +34,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             agreementId,
             keyword,
             hashFunctionId,
+            proximityScoreFunctionsPairId,
             agreementData,
         } = commandData;
 
@@ -66,7 +67,13 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         const r2 = await this.blockchainModuleManager.getR2(blockchain);
         const scheduleCommandsPromises = [];
 
-        const rank = await this.calculateRank(blockchain, keyword, hashFunctionId, r2);
+        const rank = await this.calculateRank(
+            blockchain,
+            keyword,
+            hashFunctionId,
+            proximityScoreFunctionsPairId,
+            r2,
+        );
         if (rank != null) {
             this.logger.trace(`Calculated rank: ${rank + 1} for agreement id:  ${agreementId}`);
             const finalizationCommitsNumber =
@@ -170,6 +177,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
                     blockchain,
                     keyword,
                     hashFunctionId,
+                    proximityScoreFunctionsPairId,
                 ),
                 peerId: node.peerId,
             })),
