@@ -115,3 +115,6 @@ data*
 
 # VS code files
 .vscode/launch.json
+
+# KAs Distribution Simulation Script Plots
+tools/knowledge-assets-distribution-simulation/plots/*jpg
