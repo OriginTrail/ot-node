@@ -129,6 +129,7 @@ class EpochCheckCommand extends Command {
                     blockchain,
                     serviceAgreement.keyword,
                     serviceAgreement.hashFunctionId,
+                    serviceAgreement.scoreFunctionId,
                     r2,
                 );
 
@@ -239,12 +240,13 @@ class EpochCheckCommand extends Command {
         ]);
     }
 
-    async calculateRank(blockchain, keyword, hashFunctionId, r2) {
+    async calculateRank(blockchain, keyword, hashFunctionId, proximityScoreFunctionsPairId, r2) {
         const neighbourhood = await this.shardingTableService.findNeighbourhood(
             blockchain,
             keyword,
             r2,
             hashFunctionId,
+            proximityScoreFunctionsPairId,
             true,
         );
 

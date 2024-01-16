@@ -18,7 +18,7 @@ class BlockchainEventListenerService {
         this.logger = ctx.logger;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.validationModuleManager = ctx.validationModuleManager;
+        this.hashingService = ctx.hashingService;
         this.tripleStoreService = ctx.tripleStoreService;
         this.pendingStorageService = ctx.pendingStorageService;
         this.ualService = ctx.ualService;
@@ -303,7 +303,7 @@ class BlockchainEventListenerService {
                     eventData.nodeId,
                 );
 
-                const nodeIdSha256 = await this.validationModuleManager.callHashFunction(
+                const nodeIdSha256 = await this.hashingService.callHashFunction(
                     // TODO: How to add more hashes?
                     CONTENT_ASSET_HASH_FUNCTION_ID,
                     nodeId,

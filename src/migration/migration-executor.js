@@ -26,7 +26,7 @@ class MigrationExecutor {
 
         const blockchainModuleManager = container.resolve('blockchainModuleManager');
         const repositoryModuleManager = container.resolve('repositoryModuleManager');
-        const validationModuleManager = container.resolve('validationModuleManager');
+        const hashingService = container.resolve('hashingService');
 
         const migration = new PullBlockchainShardingTableMigration(
             'pullShardingTableMigrationV611',
@@ -34,7 +34,7 @@ class MigrationExecutor {
             config,
             repositoryModuleManager,
             blockchainModuleManager,
-            validationModuleManager,
+            hashingService,
         );
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();

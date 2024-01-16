@@ -11,6 +11,7 @@ class GetController extends BaseController {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.operationIdService = ctx.operationIdService;
         this.operationService = ctx.getService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
@@ -62,6 +63,7 @@ class GetController extends BaseController {
 
             const state = req.body.state ?? DEFAULT_GET_STATE;
             const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
+            const proximityScoreFunctionsPairId = req.body.scoreFunctionId;
 
             this.logger.info(`Get for ${id} with operation id ${operationId} initiated.`);
 
@@ -82,6 +84,7 @@ class GetController extends BaseController {
                     operationId,
                     state,
                     hashFunctionId,
+                    proximityScoreFunctionsPairId,
                 },
                 transactional: false,
             });

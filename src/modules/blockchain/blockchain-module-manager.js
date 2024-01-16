@@ -172,6 +172,10 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'encodePacked', [types, values]);
     }
 
+    convertUint8ArrayToHex(blockchain, uint8Array) {
+        return this.callImplementationFunction(blockchain, 'convertUint8ArrayToHex', [uint8Array]);
+    }
+
     convertAsciiToHex(blockchain, string) {
         return this.callImplementationFunction(blockchain, 'convertAsciiToHex', [string]);
     }

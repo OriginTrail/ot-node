@@ -7,12 +7,12 @@ class PullBlockchainShardingTableMigration extends BaseMigration {
         config,
         repositoryModuleManager,
         blockchainModuleManager,
-        validationModuleManager,
+        hashingService,
     ) {
         super(migrationName, logger, config);
         this.repositoryModuleManager = repositoryModuleManager;
         this.blockchainModuleManager = blockchainModuleManager;
-        this.validationModuleManager = validationModuleManager;
+        this.hashingService = hashingService;
     }
 
     async executeMigration() {
@@ -77,10 +77,7 @@ class PullBlockchainShardingTableMigration extends BaseMigration {
                                     peer.stake,
                                     'ether',
                                 ),
-                                sha256: await this.validationModuleManager.callHashFunction(
-                                    1,
-                                    nodeId,
-                                ),
+                                sha256: await this.hashingService.callHashFunction(1, nodeId),
                             };
                         }),
                     ),

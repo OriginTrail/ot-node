@@ -2,15 +2,15 @@ class ServiceAgreementService {
     constructor(ctx) {
         this.logger = ctx.logger;
 
-        this.validationModuleManager = ctx.validationModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.shardingTableService = ctx.shardingTableService;
         this.networkModuleManager = ctx.networkModuleManager;
+        this.hashingService = ctx.hashingService;
     }
 
     async generateId(blockchain, assetTypeContract, tokenId, keyword, hashFunctionId) {
-        return this.validationModuleManager.callHashFunction(
+        return this.hashingService.callHashFunction(
             hashFunctionId,
             this.blockchainModuleManager.encodePacked(
                 blockchain,
@@ -26,12 +26,9 @@ class ServiceAgreementService {
 
     async calculateScore(peerId, blockchainId, keyword, hashFunctionId) {
         const peerRecord = await this.repositoryModuleManager.getPeerRecord(peerId, blockchainId);
-        const keyHash = await this.validationModuleManager.callHashFunction(
-            hashFunctionId,
-            keyword,
-        );
+        const keyHash = await this.hashingService.callHashFunction(hashFunctionId, keyword);
 
-        const hashFunctionName = this.validationModuleManager.getHashFunctionName(hashFunctionId);
+        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
 
         const distanceUint8Array = this.shardingTableService.calculateDistance(
             blockchainId,

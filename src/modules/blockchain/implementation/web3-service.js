@@ -1079,8 +1079,12 @@ class Web3Service {
         return ethers.utils.solidityPack(types, values);
     }
 
+    convertUint8ArrayToHex(uint8Array) {
+        return ethers.utils.hexlify(uint8Array);
+    }
+
     convertAsciiToHex(string) {
-        return ethers.utils.hexlify(ethers.utils.toUtf8Bytes(string));
+        return this.convertUint8ArrayToHex(ethers.utils.toUtf8Bytes(string));
     }
 
     convertHexToAscii(hexString) {
