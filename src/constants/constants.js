@@ -188,6 +188,8 @@ export const COMMAND_TX_GAS_INCREASE_FACTORS = {
     SUBMIT_PROOFS: 1.2,
 };
 
+export const GNOSIS_DEFAULT_GAS_PRICE = 2;
+
 export const WEBSOCKET_PROVIDER_OPTIONS = {
     reconnect: {
         auto: true,
