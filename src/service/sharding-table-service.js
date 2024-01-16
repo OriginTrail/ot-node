@@ -14,7 +14,7 @@ class ShardingTableService {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.networkModuleManager = ctx.networkModuleManager;
-        this.validationModuleManager = ctx.validationModuleManager;
+        this.hashingService = ctx.hashingService;
 
         this.memoryCachedPeerIds = {};
     }
@@ -107,7 +107,7 @@ class ShardingTableService {
                             peer.stake,
                             'ether',
                         ),
-                        sha256: await this.validationModuleManager.callHashFunction(1, nodeId),
+                        sha256: await this.hashingService.callHashFunction(1, nodeId),
                     };
                 }),
             ),
@@ -119,13 +119,13 @@ class ShardingTableService {
             blockchainId,
             filterLastSeen,
         );
-        const keyHash = await this.validationModuleManager.callHashFunction(hashFunctionId, key);
+        const keyHash = await this.hashingService.callHashFunction(hashFunctionId, key);
 
         return this.sortPeers(blockchainId, keyHash, peers, r2, hashFunctionId);
     }
 
     async sortPeers(blockchainId, keyHash, peers, count, hashFunctionId) {
-        const hashFunctionName = this.validationModuleManager.getHashFunctionName(hashFunctionId);
+        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
 
         return peers
             .map((peer) => ({
