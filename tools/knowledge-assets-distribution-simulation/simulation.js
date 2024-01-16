@@ -9,13 +9,16 @@ import D3Node from 'd3-node';
 import * as d3 from 'd3';
 import sharp from 'sharp';
 import { readFile } from 'fs/promises';
+import { createRequire } from 'module';
 import { create as createLibP2PKey, createFromPrivKey } from 'peer-id';
 import BlockchainModuleManagerMock from './mocks/blockchain-module-manager-mock.js';
 import HashingService from '../../src/service/hashing-service.js';
 import ProximityScoringService from '../../src/service/proximity-scoring-service.js';
 import Logger from '../../src/logger/logger.js';
-import configjson from '../../config/config.json';
-import pjson from '../../package.json';
+
+const require = createRequire(import.meta.url);
+const configjson = require('../../config/config.json');
+const pjson = require('../../package.json');
 
 function getConfig() {
     let config;
@@ -73,7 +76,12 @@ function generateRandomHashes(numberOfHashes) {
     return numberOfHashes === 1 ? hashes[0] : hashes;
 }
 
-async function generateRandomNodes(numberOfNodes, hashFunctionId = 1) {
+async function generateRandomNodes(
+    numberOfNodes,
+    stakeMin = 50000,
+    stakeMax = 1000000,
+    hashFunctionId = 1,
+) {
     const nodes = [];
 
     for (let i = 0; i < numberOfNodes; i += 1) {
@@ -81,7 +89,7 @@ async function generateRandomNodes(numberOfNodes, hashFunctionId = 1) {
             .privKey;
         const nodeId = (await createFromPrivKey(libp2pPrivKey)).toB58String();
         const sha256 = await hashingService.callHashFunction(hashFunctionId, nodeId);
-        const stake = String(generateRandomNumber(50000, 5000000));
+        const stake = String(generateRandomNumber(stakeMin, stakeMax));
 
         nodes.push({ nodeId, sha256, stake });
     }
@@ -101,6 +109,7 @@ async function readJsonFromFile(filePath) {
 
 function convertSvgToJpg(svgString, outputImageName) {
     sharp(Buffer.from(svgString))
+        .flatten({ background: '#FFFFFF' })
         .jpeg({ quality: 100 })
         .toBuffer()
         .then((buffer) => {
@@ -242,7 +251,7 @@ function generateScatterPlot(data, metric, outputImageName) {
         .style('text-anchor', 'middle')
         .text(`Knowledge Assets ${metric}`);
 
-    svg.append('g').attr('transform', `translate(0, ${height})`).call(d3.axisBottom(x));
+    svg.append('g').attr('transform', `translate(0, ${height})`).call(d3.axisBottom(x).ticks(15));
 
     svg.append('g').call(d3.axisLeft(y).ticks(30));
 
