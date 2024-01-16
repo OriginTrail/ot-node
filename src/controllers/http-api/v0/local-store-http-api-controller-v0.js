@@ -75,7 +75,7 @@ class LocalStoreController extends BaseController {
                 err.message,
                 ERROR_TYPE.LOCAL_STORE.LOCAL_STORE_ERROR,
             );
-            this.logger.warn(`Error caching operationId data, ${err}`);
+            this.logger.warn(`Error caching operationId: ${operationId} data, ${err}`);
         }
 
         const commandSequence = ['validateAssetCommand', 'localStoreCommand'];

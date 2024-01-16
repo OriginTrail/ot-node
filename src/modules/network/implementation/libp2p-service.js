@@ -222,7 +222,9 @@ class Libp2pService {
                         { errorMessage: 'Invalid request message' },
                     );
                 } catch (error) {
-                    this.logger.warn(`Request message is not valid!`);
+                    this.logger.warn(
+                        `Request message is not valid with operationId:${message.header.operationId}, peerId:${peerIdString}, Error:${error}`,
+                    );
                 }
 
                 this.removeCachedSession(
@@ -241,7 +243,9 @@ class Libp2pService {
                         {},
                     );
                 } catch (error) {
-                    this.logger.warn(`Peer is busy, Error: ${error}`);
+                    this.logger.warn(
+                        `Peer is busy, operationId:${message.header.operationId}, peerId:${peerIdString}, keyword:${message.header.keywordUuid}, Error: ${error}`,
+                    );
                 }
                 this.removeCachedSession(
                     message.header.operationId,
@@ -250,7 +254,7 @@ class Libp2pService {
                 );
             } else {
                 this.logger.debug(
-                    `Receiving message from ${peerIdString} to ${this.config.id}: protocol: ${protocol}, messageType: ${message.header.messageType};`,
+                    `Receiving message from ${peerIdString} to ${this.config.id}: protocol: ${protocol} with operationId:${message.header.operationId} and keyword:${message.header.keywordUuid}, messageType: ${message.header.messageType};`,
                 );
                 try {
                     await handler(message, peerIdString);
@@ -657,7 +661,9 @@ class Libp2pService {
             try {
                 this.sessions[peerIdString][operationId][keywordUuid].stream.close();
             } catch (error) {
-                this.logger.error(`Error closing session stream.Error: ${error.message}`);
+                this.logger.error(
+                    `Error closing session stream. OperationId:${operationId}, peerId:${peerIdString} Error: ${error.message}`,
+                );
             }
             delete this.sessions[peerIdString][operationId];
             this.logger.trace(
