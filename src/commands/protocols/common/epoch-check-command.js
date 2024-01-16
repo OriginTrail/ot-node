@@ -129,6 +129,7 @@ class EpochCheckCommand extends Command {
                     blockchain,
                     serviceAgreement.keyword,
                     serviceAgreement.hashFunctionId,
+                    serviceAgreement.scoreFunctionId,
                     r2,
                 );
 
@@ -261,6 +262,7 @@ class EpochCheckCommand extends Command {
                     blockchain,
                     keyword,
                     hashFunctionId,
+                    proximityScoreFunctionsPairId,
                 ),
                 peerId: node.peerId,
             })),
