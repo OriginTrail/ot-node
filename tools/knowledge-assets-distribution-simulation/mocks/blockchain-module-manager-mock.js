@@ -37,6 +37,7 @@ class BlockchainModuleManagerMock {
         return {
             distanceScaleFactor: '1000000000000000000',
             exponentMultiplier: -0.000001,
+            maclaurinSeriesDegree: 20,
             x0: 50000,
             w1: 1,
             w2: 1,

@@ -105,12 +105,12 @@ class ProximityScoringService {
     }
 
     // Using Maclaurin Series to approximate e^x
-    _approximateExp(x, precision = 20) {
+    _approximateExp(x, degree) {
         let xPow = x;
         let factorial = 1;
         let result = 1;
 
-        for (let i = 1; i <= precision; i += 1) {
+        for (let i = 1; i <= degree; i += 1) {
             factorial *= i;
             result += xPow / factorial;
             xPow *= x;
@@ -122,7 +122,8 @@ class ProximityScoringService {
     async LinearLogisticSum(blockchain, distance, stake, maxNeighborhoodDistance) {
         const linearLogisticSumParams =
             await this.blockchainModuleManager.getLinearLogisticSumParams(blockchain);
-        const { distanceScaleFactor, exponentMultiplier, x0, w1, w2 } = linearLogisticSumParams;
+        const { distanceScaleFactor, exponentMultiplier, maclaurinSeriesDegree, x0, w1, w2 } =
+            linearLogisticSumParams;
 
         let dividend = distance;
         let divisor = maxNeighborhoodDistance;
@@ -136,7 +137,7 @@ class ProximityScoringService {
             parseFloat(divResult.toString()) / parseFloat(distanceScaleFactor.toString());
 
         const exponentPart = exponentMultiplier * (stake - x0);
-        const mappedStake = 2 / (1 + this._approximateExp(exponentPart)) - 1;
+        const mappedStake = 2 / (1 + this._approximateExp(exponentPart, maclaurinSeriesDegree)) - 1;
 
         const proximityScore = w1 * (1 - mappedDistance);
         const stakeScore = w2 * mappedStake;
