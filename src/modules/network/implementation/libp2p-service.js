@@ -212,14 +212,18 @@ class Libp2pService {
             );
 
             if (!valid) {
-                await this.sendMessageResponse(
-                    protocol,
-                    peerIdString,
-                    NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                    message.header.operationId,
-                    message.header.keywordUuid,
-                    { errorMessage: 'Invalid request message' },
-                );
+                try {
+                    await this.sendMessageResponse(
+                        protocol,
+                        peerIdString,
+                        NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                        message.header.operationId,
+                        message.header.keywordUuid,
+                        { errorMessage: 'Invalid request message' },
+                    );
+                } catch (error) {
+                    this.logger.warn(`Request message is not valid!`);
+                }
 
                 this.removeCachedSession(
                     message.header.operationId,
@@ -227,14 +231,18 @@ class Libp2pService {
                     peerIdString,
                 );
             } else if (busy) {
-                await this.sendMessageResponse(
-                    protocol,
-                    peerIdString,
-                    NETWORK_MESSAGE_TYPES.RESPONSES.BUSY,
-                    message.header.operationId,
-                    message.header.keywordUuid,
-                    {},
-                );
+                try {
+                    await this.sendMessageResponse(
+                        protocol,
+                        peerIdString,
+                        NETWORK_MESSAGE_TYPES.RESPONSES.BUSY,
+                        message.header.operationId,
+                        message.header.keywordUuid,
+                        {},
+                    );
+                } catch (error) {
+                    this.logger.warn(`Peer is busy, Error: ${error}`);
+                }
                 this.removeCachedSession(
                     message.header.operationId,
                     message.header.keywordUuid,
