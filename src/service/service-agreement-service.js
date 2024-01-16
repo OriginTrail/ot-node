@@ -7,6 +7,7 @@ class ServiceAgreementService {
         this.shardingTableService = ctx.shardingTableService;
         this.networkModuleManager = ctx.networkModuleManager;
         this.hashingService = ctx.hashingService;
+        this.proximityScoringService = ctx.proximityScoringService;
     }
 
     async generateId(blockchain, assetTypeContract, tokenId, keyword, hashFunctionId) {
@@ -24,57 +25,30 @@ class ServiceAgreementService {
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
-    async calculateScore(peerId, blockchainId, keyword, hashFunctionId) {
+    async calculateScore(
+        peerId,
+        blockchainId,
+        keyword,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+    ) {
         const peerRecord = await this.repositoryModuleManager.getPeerRecord(peerId, blockchainId);
         const keyHash = await this.hashingService.callHashFunction(hashFunctionId, keyword);
 
         const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
 
-        const distanceUint8Array = this.shardingTableService.calculateDistance(
+        const distance = await this.proximityScoringService.callProximityFunction(
             blockchainId,
+            proximityScoreFunctionsPairId,
             peerRecord[hashFunctionName],
             keyHash,
         );
 
-        // todo: store this in a more appropriate way
-        if (!this.log2PLDSFParams) {
-            this.log2PLDSFParams = await this.blockchainModuleManager.getLog2PLDSFParams(
-                blockchainId,
-            );
-        }
-
-        const {
-            distanceMappingCoefficient,
-            stakeMappingCoefficient,
-            multiplier,
-            logArgumentConstant,
-            a,
-            stakeExponent,
-            b,
-            c,
-            distanceExponent,
-            d,
-        } = this.log2PLDSFParams;
-
-        const distanceUint256BN = this.blockchainModuleManager.toBigNumber(
+        return this.proximityScoringService.callScoreFunction(
             blockchainId,
-            distanceUint8Array,
-        );
-
-        const mappedStake = this.blockchainModuleManager
-            .toBigNumber(
-                blockchainId,
-                this.blockchainModuleManager.convertToWei(blockchainId, peerRecord.stake),
-            )
-            .div(stakeMappingCoefficient);
-        const mappedDistance = distanceUint256BN.div(distanceMappingCoefficient);
-
-        const dividend = mappedStake.pow(stakeExponent).mul(a).add(b);
-        const divisor = mappedDistance.pow(distanceExponent).mul(c).add(d);
-
-        return Math.floor(
-            Number(multiplier) *
-                Math.log2(Number(logArgumentConstant) + dividend.toNumber() / divisor.toNumber()),
+            proximityScoreFunctionsPairId,
+            distance,
+            peerRecord.stake,
         );
     }
 }
