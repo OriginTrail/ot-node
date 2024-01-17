@@ -1203,6 +1203,14 @@ class Web3Service {
             tokenId,
         ]);
     }
+
+    async getAgreementScoreFunctionId(agreementId) {
+        return this.callContractFunction(
+            this.ServiceAgreementStorageProxyContract,
+            'getAgreementScoreFunctionId',
+            [agreementId],
+        );
+    }
 }
 
 export default Web3Service;

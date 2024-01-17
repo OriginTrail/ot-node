@@ -4,6 +4,7 @@ class NetworkProtocolCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
+        this.blockchainModuleManager = ctx.this.blockchainModuleManager;
     }
 
     /**
@@ -23,11 +24,11 @@ class NetworkProtocolCommand extends Command {
             tokenId,
             keywords,
         );
-        const agreementData = this.blockchainModuleManager.getAgreementData(
-            blockchain,
-            serviceAgreementId,
-        );
-        const proximityScoreFunctionsPairId = agreementData.scoreFunctionId;
+        const proximityScoreFunctionsPairId =
+            this.blockchainModuleManager.getAgreementScoreFunctionId(
+                blockchain,
+                serviceAgreementId,
+            );
 
         const commandSequence = [
             'findNodesCommand',

@@ -391,6 +391,12 @@ class BlockchainModuleManager extends BaseModuleManager {
     async hasPendingUpdate(blockchain, tokenId) {
         return this.callImplementationFunction(blockchain, 'hasPendingUpdate', [tokenId]);
     }
+
+    async getAgreementScoreFunctionId(blockchain, agreementId) {
+        return this.callImplementationFunction(blockchain, 'getAgreementScoreFunctionId', [
+            agreementId,
+        ]);
+    }
 }
 
 export default BlockchainModuleManager;
