@@ -223,7 +223,7 @@ class Libp2pService {
                     );
                 } catch (error) {
                     this.logger.warn(
-                        `Request message is not valid with operationId:${message.header.operationId}, peerId:${peerIdString}, Error:${error}`,
+                        `Request message is not valid with operationId:${message.header.operationId}, peerId:${peerIdString}, keyword:${message.header.keywordUuid}, Error:${error}`,
                     );
                 }
 
@@ -268,7 +268,7 @@ class Libp2pService {
                         { errorMessage: 'Unable to handle request' },
                     );
                     this.logger.error(
-                        `Error handling message from ${peerIdString} to ${this.config.id}: protocol :${protocol}, Error : ${error} `,
+                        `Error handling message from ${peerIdString} to ${this.config.id}: protocol :${protocol} with operationId${message.header.operationId} and keyword:${message.header.keywordUuid}, Error : ${error} `,
                     );
                 }
             }
