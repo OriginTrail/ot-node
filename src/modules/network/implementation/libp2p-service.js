@@ -223,7 +223,7 @@ class Libp2pService {
                     );
                 } catch (error) {
                     this.logger.warn(
-                        `Request message is not valid with operationId:${message.header.operationId}, peerId:${peerIdString}, keyword:${message.header.keywordUuid}, Error:${error}`,
+                        `Request message is not valid with operationId: ${message.header.operationId}, peerId: ${peerIdString}, keyword: ${message.header.keywordUuid}, Error: ${error}`,
                     );
                 }
 
@@ -244,7 +244,7 @@ class Libp2pService {
                     );
                 } catch (error) {
                     this.logger.warn(
-                        `Peer is busy, operationId:${message.header.operationId}, peerId:${peerIdString}, keyword:${message.header.keywordUuid}, Error: ${error}`,
+                        `Peer is busy, operationId: ${message.header.operationId}, peerId: ${peerIdString}, keyword: ${message.header.keywordUuid}, Error: ${error}`,
                     );
                 }
                 this.removeCachedSession(
@@ -254,7 +254,7 @@ class Libp2pService {
                 );
             } else {
                 this.logger.debug(
-                    `Receiving message from ${peerIdString} to ${this.config.id}: protocol: ${protocol} with operationId:${message.header.operationId} and keyword:${message.header.keywordUuid}, messageType: ${message.header.messageType};`,
+                    `Receiving message from peerId: ${peerIdString} to ${this.config.id} protocol: ${protocol} with operationId: ${message.header.operationId} and keyword: ${message.header.keywordUuid}, messageType: ${message.header.messageType};`,
                 );
                 try {
                     await handler(message, peerIdString);
@@ -268,7 +268,7 @@ class Libp2pService {
                         { errorMessage: 'Unable to handle request' },
                     );
                     this.logger.error(
-                        `Error handling message from ${peerIdString} to ${this.config.id}: protocol :${protocol} with operationId${message.header.operationId} and keyword:${message.header.keywordUuid}, Error : ${error} `,
+                        `Error handling message from peerId: ${peerIdString} to ${this.config.id} protocol : ${protocol} with operationId: ${message.header.operationId} and keyword: ${message.header.keywordUuid}, Error: ${error} `,
                     );
                 }
             }
@@ -662,7 +662,7 @@ class Libp2pService {
                 this.sessions[peerIdString][operationId][keywordUuid].stream.close();
             } catch (error) {
                 this.logger.error(
-                    `Error closing session stream. OperationId:${operationId}, peerId:${peerIdString} Error: ${error.message}`,
+                    `Error closing session stream. OperationId: ${operationId}, peerId: ${peerIdString} Error: ${error.message}`,
                 );
             }
             delete this.sessions[peerIdString][operationId];
