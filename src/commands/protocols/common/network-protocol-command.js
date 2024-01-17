@@ -11,11 +11,23 @@ class NetworkProtocolCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { blockchain } = command.data;
+        const { blockchain, contract, tokenId } = command.data;
 
         const keywords = await this.getKeywords(command);
         const batchSize = await this.getBatchSize(blockchain);
         const minAckResponses = await this.getMinAckResponses(blockchain);
+
+        const serviceAgreementId = this.serviceAgreementService.generateId(
+            blockchain,
+            contract,
+            tokenId,
+            keywords,
+        );
+        const agreementData = this.blockchainModuleManager.getAgreementData(
+            blockchain,
+            serviceAgreementId,
+        );
+        const proximityScoreFunctionsPairId = agreementData.scoreFunctionId;
 
         const commandSequence = [
             'findNodesCommand',
@@ -34,6 +46,7 @@ class NetworkProtocolCommand extends Command {
                     minAckResponses,
                     errorType: this.errorType,
                     networkProtocols: this.operationService.getNetworkProtocols(),
+                    proximityScoreFunctionsPairId,
                 },
                 transactional: false,
             }),
