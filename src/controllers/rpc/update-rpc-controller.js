@@ -54,6 +54,7 @@ class UpdateController extends BaseController {
             tokenId: dataSource.tokenId,
             keyword: dataSource.keyword,
             hashFunctionId: dataSource.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID,
+            proximityScoreFunctionsPairId: dataSource.proximityScoreFunctionsPairId,
         };
 
         await this.commandExecutor.add(command);
