@@ -238,6 +238,10 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
+    async getAssertionData(blockchain, assertionid) {
+        return this.callImplementationFunction(blockchain, 'getAssertionData', [assertionid]);
+    }
+
     submitCommit(
         blockchain,
         assetContractAddress,
