@@ -126,7 +126,7 @@ When(
 
         expect(
             !Number.isInteger(scoreFunctionId),
-            `hashFunctionId value: ${scoreFunctionId} is not an integer!`,
+            `scoreFunctionId value: ${scoreFunctionId} is not an integer!`,
         ).to.be.equal(true);
 
         const assertion = assertions[assertionName];
