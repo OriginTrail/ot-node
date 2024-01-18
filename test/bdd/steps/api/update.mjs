@@ -102,3 +102,55 @@ When('I wait for latest Update to finalize', { timeout: 80000 }, async function 
         await setTimeout(4000);
     }
 });
+
+When(
+    /^I call Update on the node (\d+) for the latest published UAL with ([^"]*) on blockchain ([^"]*) with hashFunctionId (\d+) and scoreFunctionId (\d+)/,
+    { timeout: 120000 },
+    async function update(node, assertionName, blockchain, hashFunctionId, scoreFunctionId) {
+        this.logger.log(`I call update route on the node ${node} on blockchain ${blockchain}`);
+
+        expect(
+            !!this.state.localBlockchains[blockchain],
+            `Blockchain with name ${blockchain} not found`,
+        ).to.be.equal(true);
+
+        expect(
+            !!assertions[assertionName],
+            `Assertion with name: ${assertionName} not found!`,
+        ).to.be.equal(true);
+
+        expect(
+            !Number.isInteger(hashFunctionId),
+            `hashFunctionId value: ${hashFunctionId} is not an integer!`,
+        ).to.be.equal(true);
+
+        expect(
+            !Number.isInteger(scoreFunctionId),
+            `hashFunctionId value: ${scoreFunctionId} is not an integer!`,
+        ).to.be.equal(true);
+
+        const assertion = assertions[assertionName];
+        const { UAL } = this.state.latestPublishData;
+        const options = {
+            blockchain: this.state.nodes[node - 1].clientBlockchainOptions[blockchain],
+            hashFunctionId,
+            scoreFunctionId,
+        };
+        const result = await this.state.nodes[node - 1].client
+            .update(UAL, assertion, options)
+            .catch((error) => {
+                assert.fail(`Error while trying to update assertion. ${error}`);
+            });
+        const { operationId } = result.operation;
+        this.state.latestUpdateData = {
+            nodeId: node - 1,
+            UAL,
+            assertionId: result.assertionId,
+            operationId,
+            assertion: assertions[assertionName],
+            status: result.operation.status,
+            errorType: result.operation.errorType,
+            result,
+        };
+    },
+);
