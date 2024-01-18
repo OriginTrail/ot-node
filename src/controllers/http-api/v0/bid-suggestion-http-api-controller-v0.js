@@ -54,8 +54,10 @@ class BidSuggestionController extends BaseController {
         try {
             // ADD-DOCS
             if (!proximityScoreFunctionsPairId) {
-                if (blockchain.startsWith('otp')) proximityScoreFunctionsPairId = 1;
-                else if (blockchain.startsWith('gnosis')) proximityScoreFunctionsPairId = 2;
+                if (blockchain.startsWith('otp') || blockchain.startsWith('hardhat1'))
+                    proximityScoreFunctionsPairId = 1;
+                else if (blockchain.startsWith('gnosis') || blockchain.startsWith('hardhat2'))
+                    proximityScoreFunctionsPairId = 2;
             }
 
             const bidSuggestion = await this.shardingTableService.getBidSuggestion(
