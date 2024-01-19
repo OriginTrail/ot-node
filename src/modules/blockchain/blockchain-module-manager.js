@@ -397,6 +397,10 @@ class BlockchainModuleManager extends BaseModuleManager {
             agreementId,
         ]);
     }
+
+    convertUint8ArrayToHex(blockchain, uint8Array) {
+        return this.callImplementationFunction(blockchain, 'convertUint8ArrayToHex', [uint8Array]);
+    }
 }
 
 export default BlockchainModuleManager;

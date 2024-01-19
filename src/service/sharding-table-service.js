@@ -126,7 +126,7 @@ class ShardingTableService {
         );
         const keyHash = await this.hashingService.callHashFunction(hashFunctionId, key);
 
-        return this.sortPeers(
+        const soretedPeers = this.sortPeers(
             blockchainId,
             keyHash,
             peers,
@@ -134,6 +134,7 @@ class ShardingTableService {
             hashFunctionId,
             proximityScoreFunctionsPairId,
         );
+        return soretedPeers;
     }
 
     async sortPeers(
@@ -145,9 +146,8 @@ class ShardingTableService {
         proximityScoreFunctionsPairId,
     ) {
         const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
-
-        return peers
-            .map(async (peer) => ({
+        const peersWithDistance = await Promise.all(
+            peers.map(async (peer) => ({
                 peer,
                 distance: await this.proximityScoringService.callProximityFunction(
                     blockchainId,
@@ -155,18 +155,19 @@ class ShardingTableService {
                     peer[hashFunctionName],
                     keyHash,
                 ),
-            }))
-            .sort((a, b) => {
-                if (a.lt(b)) {
-                    return -1;
-                }
-                if (a.gt(b)) {
-                    return 1;
-                }
-                return 0;
-            })
-            .slice(0, count)
-            .map((pd) => pd.peer);
+            })),
+        );
+        peersWithDistance.sort((a, b) => {
+            if (a.distance < b.distance) {
+                return -1;
+            }
+            if (a.distance > b.distance) {
+                return 1;
+            }
+            return 0;
+        });
+        const result = peersWithDistance.slice(0, count).map((pd) => pd.peer);
+        return result;
     }
 
     async getBidSuggestion(
