@@ -4,7 +4,7 @@ Feature: Release related tests
     And 1 bootstrap is running
 
   @release
-  Scenario: Get big suggestion with a valid assertion and valid hashFunctionId and scoreFunctionId on both blockchains
+  Scenario: Get bid suggestion with a valid assertion and valid hashFunctionId and scoreFunctionId on both blockchains
     Given I set R0 to be 1 on blockchain hardhat1:31337
     And I set R1 to be 2 on blockchain hardhat1:31337
     And I set R0 to be 1 on blockchain hardhat2:31337
