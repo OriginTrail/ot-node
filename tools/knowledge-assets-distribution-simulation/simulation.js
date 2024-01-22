@@ -286,6 +286,119 @@ function generateScatterPlot(data, metric, outputImageName) {
     convertSvgToJpg(d3n.svgString(), outputImageName);
 }
 
+function generateBoxPlot(data, metric, outputImageName) {
+    const d3n = new D3Node();
+    const margin = { top: 60, right: 30, bottom: 60, left: 60 };
+    const width = 2000 - margin.left - margin.right;
+    const height = 1000 - margin.top - margin.bottom;
+
+    const svg = d3n
+        .createSVG(width + margin.left + margin.right, height + margin.top + margin.bottom)
+        .append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+
+    svg.append('text')
+        .attr('x', width / 2)
+        .attr('y', 0 - margin.top / 2)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '20px')
+        .style('text-decoration', 'underline')
+        .text(`${metric[0].toUpperCase() + metric.slice(1)} Distribution Plot`);
+
+    const groupedData = d3.group(data, (d) => d.nodeId);
+    const valuesPerNode = Array.from(groupedData.values(), (d) => d.map((item) => item[metric]));
+
+    const x = d3
+        .scaleBand()
+        .domain(valuesPerNode.map((_, i) => i))
+        .range([0, width]);
+
+    svg.append('text')
+        .attr('transform', `translate(${width / 2}, ${height + margin.top - 20})`)
+        .style('text-anchor', 'middle')
+        .text('Node Index');
+
+    const y = d3
+        .scaleLinear()
+        .domain([0, d3.max(data, (d) => d[metric])])
+        .nice()
+        .range([height, 0]);
+
+    svg.append('text')
+        .attr('transform', 'rotate(-90)')
+        .attr('y', 0 - margin.left)
+        .attr('x', 0 - height / 2)
+        .attr('dy', '1em')
+        .style('text-anchor', 'middle')
+        .text(metric[0].toUpperCase() + metric.slice(1));
+
+    svg.append('g')
+        .attr('transform', `translate(0, ${height})`)
+        .call(d3.axisBottom(x))
+        .selectAll('text')
+        .style('text-anchor', 'end')
+        .attr('dx', '-.8em')
+        .attr('dy', '.15em')
+        .attr('transform', 'rotate(-65)');
+
+    svg.append('g').call(d3.axisLeft(y).ticks(30));
+
+    const boxWidth = x.bandwidth() - 3;
+
+    valuesPerNode.forEach((d, i) => {
+        const box = svg
+            .append('g')
+            .attr('transform', `translate(${x(i) + (x.bandwidth() - boxWidth) / 2},0)`);
+
+        const q1 = d3.quantile(d, 0.25);
+        const median = d3.quantile(d, 0.5);
+        const q3 = d3.quantile(d, 0.75);
+        const iqr = q3 - q1;
+        const lowerLimit = q1 - 1.5 * iqr;
+        const upperLimit = q3 + 1.5 * iqr;
+
+        const lowerWhisker = d3.max([d3.min(data, (n) => n[metric]), lowerLimit]);
+        const upperWhisker = d3.min([d3.max(data, (n) => n[metric]), upperLimit]);
+
+        box.append('rect')
+            .attr('y', y(q3))
+            .attr('height', y(q1) - y(q3))
+            .attr('width', boxWidth)
+            .style('fill', '#69b3a2');
+
+        box.append('line')
+            .attr('y1', y(median))
+            .attr('y2', y(median))
+            .attr('x1', 0)
+            .attr('x2', boxWidth)
+            .style('stroke', 'black')
+            .style('width', 80);
+
+        box.append('line')
+            .attr('y1', y(lowerWhisker))
+            .attr('y2', y(upperWhisker))
+            .attr('x1', boxWidth / 2)
+            .attr('x2', boxWidth / 2)
+            .style('stroke', 'black');
+
+        box.append('line')
+            .attr('y1', y(lowerWhisker))
+            .attr('y2', y(lowerWhisker))
+            .attr('x1', boxWidth * 0.25)
+            .attr('x2', boxWidth * 0.75)
+            .style('stroke', 'black');
+
+        box.append('line')
+            .attr('y1', y(upperWhisker))
+            .attr('y2', y(upperWhisker))
+            .attr('x1', boxWidth * 0.25)
+            .attr('x2', boxWidth * 0.75)
+            .style('stroke', 'black');
+    });
+
+    convertSvgToJpg(d3n.svgString(), outputImageName);
+}
+
 async function runSimulation(
     mode,
     filePath,
@@ -316,8 +429,11 @@ async function runSimulation(
     );
 
     const knowledgeAssets = await generateRandomHashes(numberOfKAs);
-    const distances = [];
+    const metrics = [];
     const replicas = {};
+
+    const N = 100;
+    const EMAs = {};
 
     for (const node of nodes) {
         replicas[node.nodeId] = {
@@ -327,32 +443,48 @@ async function runSimulation(
         };
     }
 
+    const positions = await Promise.all(
+        nodes.map(async (node) => blockchainModuleManagerMock.toBigNumber(blockchain, node.sha256)),
+    );
+    const sortedPositions = positions.sort((a, b) => a.sub(b));
+
     for (const key of knowledgeAssets) {
+        const closestNode = sortedPositions.reduce((prev, curr) => {
+            const diffCurr = curr.sub(key).abs();
+            const diffPrev = prev.sub(key).abs();
+
+            return diffCurr.lt(diffPrev) ? curr : prev;
+        });
+
+        const closestNodeIndex = sortedPositions.findIndex((pos) => pos.eq(closestNode));
+
         const nodesWithDistances = await Promise.all(
             nodes.map(async (node) => {
-                const distance = await proximityScoringService.callProximityFunction(
-                    blockchain,
-                    proximityScoreFunctionsPairId,
-                    node.sha256,
-                    key,
-                );
+                const peerIndex = sortedPositions.findIndex((pos) => pos.eq(node.sha256));
 
-                distances.push({ nodeId: node.nodeId, assertionId: key, distance });
+                let distance;
+                if (proximityScoreFunctionsPairId === 6) {
+                    const directDistance = Math.abs(closestNodeIndex - peerIndex);
+                    const wraparoundDistance = positions.length - directDistance;
+                    distance = await blockchainModuleManagerMock.toBigNumber(
+                        blockchain,
+                        Math.min(directDistance, wraparoundDistance),
+                    );
+                } else {
+                    distance = await proximityScoringService.callProximityFunction(
+                        blockchain,
+                        proximityScoreFunctionsPairId,
+                        node.sha256,
+                        key,
+                    );
+                }
 
                 return { ...node, distance };
             }),
         );
 
         const nodesSortedByDistance = nodesWithDistances
-            .sort((a, b) => {
-                if (a.distance.lt(b.distance)) {
-                    return -1;
-                }
-                if (a.distance.gt(b.distance)) {
-                    return 1;
-                }
-                return 0;
-            })
+            .sort((a, b) => a.distance.sub(b.distance))
             .slice(0, r2);
 
         const maxDistance = nodesSortedByDistance[nodesSortedByDistance.length - 1].distance;
@@ -363,13 +495,26 @@ async function runSimulation(
 
         const nodesWithScores = await Promise.all(
             nodesSortedByDistance.map(async (node) => {
-                const score = await proximityScoringService.callScoreFunction(
-                    blockchain,
-                    proximityScoreFunctionsPairId,
-                    node.distance,
-                    node.stake,
-                    maxDistance,
-                );
+                const { mappedDistance, mappedStake, score } =
+                    await proximityScoringService.callScoreFunction(
+                        blockchain,
+                        proximityScoreFunctionsPairId,
+                        node.distance,
+                        node.stake,
+                        maxDistance,
+                        EMAs[node.nodeId],
+                    );
+
+                metrics.push({ nodeId: node.nodeId, mappedDistance, mappedStake, score });
+
+                if (!(node.nodeId in EMAs)) {
+                    EMAs[node.nodeId] = node.distance;
+                } else {
+                    EMAs[node.nodeId] = node.distance
+                        .mul(2)
+                        .div(N + 1)
+                        .add(EMAs[node.nodeId].mul(N - 1).div(N + 1));
+                }
 
                 return { ...node, score };
             }),
@@ -395,6 +540,17 @@ async function runSimulation(
         Object.values(replicas),
         'won',
         `${mode}-${nodes.length}-${numberOfKAs}-${proximityScoreFunctionsPairId}-stake-wins-relation`,
+    );
+
+    generateBoxPlot(
+        metrics,
+        'mappedDistance',
+        `${mode}-${nodes.length}-${numberOfKAs}-${proximityScoreFunctionsPairId}-mapped-distances-distribution`,
+    );
+    generateBoxPlot(
+        metrics,
+        'score',
+        `${mode}-${nodes.length}-${numberOfKAs}-${proximityScoreFunctionsPairId}-scores-distribution`,
     );
 }
 

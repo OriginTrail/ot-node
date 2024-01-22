@@ -9,12 +9,20 @@ class BlockchainModuleManagerMock {
         return ethers.utils.hexlify(uint8Array);
     }
 
+    convertFromWei(value, toUnit = 'ether') {
+        return ethers.utils.formatUnits(value, toUnit);
+    }
+
     convertToWei(blockchain, value, fromUnit = 'ether') {
         return ethers.utils.parseUnits(value.toString(), fromUnit).toString();
     }
 
     toBigNumber(blockchain, value) {
         return ethers.BigNumber.from(value);
+    }
+
+    getMaximumStake(blockchain) {
+        return '1000000000000000000000000';
     }
 
     getLog2PLDSFParams(blockchain) {
@@ -42,6 +50,14 @@ class BlockchainModuleManagerMock {
             w1: 1,
             w2: 1,
         };
+    }
+
+    getLinearSumParams(blockchain) {
+        return { distanceScaleFactor: '1000000000000000000', w1: 1, w2: 0.25 };
+    }
+
+    getLinearDivisionParams(blockchain) {
+        return { distanceScaleFactor: '1000000000000000000', w1: 1, w2: 0.1 };
     }
 }
 
