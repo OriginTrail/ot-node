@@ -11,7 +11,7 @@ import sharp from 'sharp';
 import { readFile } from 'fs/promises';
 import { createRequire } from 'module';
 import { create as createLibP2PKey, createFromPrivKey } from 'peer-id';
-import { UINT128_MAX_BN } from '../../src/constants/constants.js';
+import { HASH_RING_SIZE, UINT128_MAX_BN } from '../../src/constants/constants.js';
 import BlockchainModuleManagerMock from './mocks/blockchain-module-manager-mock.js';
 import HashingService from '../../src/service/hashing-service.js';
 import ProximityScoringService from '../../src/service/proximity-scoring-service.js';
@@ -441,6 +441,15 @@ async function runSimulation(
         };
     }
 
+    const nodesNumber = nodes.length;
+    let IDEAL_MAX_DISTANCE_IN_NEIGHBORHOOD;
+
+    if (proximityScoreFunctionsPairId === 2) {
+        IDEAL_MAX_DISTANCE_IN_NEIGHBORHOOD = HASH_RING_SIZE.div(nodesNumber).mul(20);
+    } else if (proximityScoreFunctionsPairId === 3) {
+        IDEAL_MAX_DISTANCE_IN_NEIGHBORHOOD = HASH_RING_SIZE.div(nodesNumber).mul(10);
+    }
+
     const linearSumParams = await blockchainModuleManagerMock.getLinearSumParams(blockchain);
     const { distanceScaleFactor } = linearSumParams;
     const minimumStake = await blockchainModuleManagerMock.getMinimumStake(blockchain);
@@ -464,7 +473,12 @@ async function runSimulation(
             .sort((a, b) => a.distance.sub(b.distance))
             .slice(0, r2);
 
-        const maxDistance = nodesSortedByDistance[nodesSortedByDistance.length - 1].distance;
+        const maxDistanceInNeighborhood =
+            nodesSortedByDistance[nodesSortedByDistance.length - 1].distance;
+        const maxDistance =
+            maxDistanceInNeighborhood > IDEAL_MAX_DISTANCE_IN_NEIGHBORHOOD
+                ? IDEAL_MAX_DISTANCE_IN_NEIGHBORHOOD
+                : maxDistanceInNeighborhood;
 
         for (const node of nodesSortedByDistance) {
             replicas[node.nodeId].replicated += 1;
