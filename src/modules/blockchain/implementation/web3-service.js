@@ -913,6 +913,28 @@ class Web3Service {
             }));
     }
 
+    async getMinimumStake() {
+        const minimumStake = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'minimumStake',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
+
+        return Number(ethers.utils.formatEther(minimumStake));
+    }
+
+    async getMaximumStake() {
+        const maximumStake = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'maximumStake',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
+
+        return Number(ethers.utils.formatEther(maximumStake));
+    }
+
     async getR2() {
         const r2 = await this.callContractFunction(
             this.ParametersStorageContract,

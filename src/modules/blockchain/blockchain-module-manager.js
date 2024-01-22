@@ -326,6 +326,14 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
+    async getMinimumStake(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getMinimumStake');
+    }
+
+    async getMaximumStake(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getMaximumStake');
+    }
+
     async getR2(blockchain) {
         return this.callImplementationFunction(blockchain, 'getR2');
     }

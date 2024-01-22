@@ -21,8 +21,12 @@ class BlockchainModuleManagerMock {
         return ethers.BigNumber.from(value);
     }
 
+    getMinimumStake(blockchain) {
+        return 50000;
+    }
+
     getMaximumStake(blockchain) {
-        return '1000000000000000000000000';
+        return 1000000;
     }
 
     getLog2PLDSFParams(blockchain) {
@@ -41,23 +45,12 @@ class BlockchainModuleManagerMock {
         };
     }
 
-    getLinearLogisticSumParams(blockchain) {
+    getLinearSumParams(blockchain) {
         return {
             distanceScaleFactor: '1000000000000000000',
-            exponentMultiplier: -0.000001,
-            maclaurinSeriesDegree: 20,
-            x0: 50000,
             w1: 1,
             w2: 1,
         };
-    }
-
-    getLinearSumParams(blockchain) {
-        return { distanceScaleFactor: '1000000000000000000', w1: 1, w2: 0.25 };
-    }
-
-    getLinearDivisionParams(blockchain) {
-        return { distanceScaleFactor: '1000000000000000000', w1: 1, w2: 0.1 };
     }
 }
 

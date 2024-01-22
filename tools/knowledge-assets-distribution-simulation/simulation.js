@@ -11,6 +11,7 @@ import sharp from 'sharp';
 import { readFile } from 'fs/promises';
 import { createRequire } from 'module';
 import { create as createLibP2PKey, createFromPrivKey } from 'peer-id';
+import { UINT128_MAX_BN } from '../../src/constants/constants.js';
 import BlockchainModuleManagerMock from './mocks/blockchain-module-manager-mock.js';
 import HashingService from '../../src/service/hashing-service.js';
 import ProximityScoringService from '../../src/service/proximity-scoring-service.js';
@@ -432,9 +433,6 @@ async function runSimulation(
     const metrics = [];
     const replicas = {};
 
-    const N = 100;
-    const EMAs = {};
-
     for (const node of nodes) {
         replicas[node.nodeId] = {
             stake: Number(node.stake),
@@ -443,41 +441,20 @@ async function runSimulation(
         };
     }
 
-    const positions = await Promise.all(
-        nodes.map(async (node) => blockchainModuleManagerMock.toBigNumber(blockchain, node.sha256)),
-    );
-    const sortedPositions = positions.sort((a, b) => a.sub(b));
+    const linearSumParams = await blockchainModuleManagerMock.getLinearSumParams(blockchain);
+    const { distanceScaleFactor } = linearSumParams;
+    const minimumStake = await blockchainModuleManagerMock.getMinimumStake(blockchain);
+    const maximumStake = await blockchainModuleManagerMock.getMaximumStake(blockchain);
 
     for (const key of knowledgeAssets) {
-        const closestNode = sortedPositions.reduce((prev, curr) => {
-            const diffCurr = curr.sub(key).abs();
-            const diffPrev = prev.sub(key).abs();
-
-            return diffCurr.lt(diffPrev) ? curr : prev;
-        });
-
-        const closestNodeIndex = sortedPositions.findIndex((pos) => pos.eq(closestNode));
-
         const nodesWithDistances = await Promise.all(
             nodes.map(async (node) => {
-                const peerIndex = sortedPositions.findIndex((pos) => pos.eq(node.sha256));
-
-                let distance;
-                if (proximityScoreFunctionsPairId === 6) {
-                    const directDistance = Math.abs(closestNodeIndex - peerIndex);
-                    const wraparoundDistance = positions.length - directDistance;
-                    distance = await blockchainModuleManagerMock.toBigNumber(
-                        blockchain,
-                        Math.min(directDistance, wraparoundDistance),
-                    );
-                } else {
-                    distance = await proximityScoringService.callProximityFunction(
-                        blockchain,
-                        proximityScoreFunctionsPairId,
-                        node.sha256,
-                        key,
-                    );
-                }
+                const distance = await proximityScoringService.callProximityFunction(
+                    blockchain,
+                    proximityScoreFunctionsPairId,
+                    node.sha256,
+                    key,
+                );
 
                 return { ...node, distance };
             }),
@@ -495,26 +472,28 @@ async function runSimulation(
 
         const nodesWithScores = await Promise.all(
             nodesSortedByDistance.map(async (node) => {
-                const { mappedDistance, mappedStake, score } =
-                    await proximityScoringService.callScoreFunction(
-                        blockchain,
-                        proximityScoreFunctionsPairId,
-                        node.distance,
-                        node.stake,
-                        maxDistance,
-                        EMAs[node.nodeId],
-                    );
+                const score = await proximityScoringService.callScoreFunction(
+                    blockchain,
+                    proximityScoreFunctionsPairId,
+                    node.distance,
+                    node.stake,
+                    maxDistance,
+                );
+
+                let dividend = node.distance;
+                let divisor = maxDistance;
+                if (dividend.gt(UINT128_MAX_BN) || divisor.gt(UINT128_MAX_BN)) {
+                    dividend = dividend.div(distanceScaleFactor);
+                    divisor = divisor.div(distanceScaleFactor);
+                }
+
+                const divResult = dividend.mul(distanceScaleFactor).div(divisor);
+
+                const mappedDistance =
+                    parseFloat(divResult.toString()) / parseFloat(distanceScaleFactor.toString());
+                const mappedStake = (node.stake - minimumStake) / (maximumStake - minimumStake);
 
                 metrics.push({ nodeId: node.nodeId, mappedDistance, mappedStake, score });
-
-                if (!(node.nodeId in EMAs)) {
-                    EMAs[node.nodeId] = node.distance;
-                } else {
-                    EMAs[node.nodeId] = node.distance
-                        .mul(2)
-                        .div(N + 1)
-                        .add(EMAs[node.nodeId].mul(N - 1).div(N + 1));
-                }
 
                 return { ...node, score };
             }),
