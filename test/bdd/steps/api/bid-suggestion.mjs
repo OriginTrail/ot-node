@@ -5,17 +5,17 @@ import { readFile } from 'fs/promises';
 const assertions = JSON.parse(await readFile('test/bdd/steps/api/datasets/assertions.json'));
 
 When(
-    /^I call Get Bid Suggestion on the node (\d+) with ([^"]*) on blockchain ([^"]*) with hashFunctionId (\d+) and scoreFunctionId (\d+)/,
+    /^I call Get Bid Suggestion on node (\d+) using parameters ([^"]*), hashFunctionId (\d+), scoreFunctionId (\d+), within blockchain ([^"]*)/,
     { timeout: 300000 },
-    async function getBidSuggestion(
+    async function getBidSuggestionWithHashAndScore(
         node,
         assertionName,
-        blockchain,
         hashFunctionId,
         scoreFunctionId,
+        blockchain,
     ) {
         this.logger.log(
-            `I call get bid suggestion route on the node ${node} on blockchain ${blockchain}`,
+            `I call get bid suggestion route on the node ${node} on blockchain ${blockchain} with hashFunctionId ${hashFunctionId} and scoreFunctionId ${scoreFunctionId}`,
         );
 
         expect(
@@ -29,17 +29,16 @@ When(
         ).to.be.equal(true);
 
         expect(
-            !Number.isInteger(hashFunctionId),
+            Number.isInteger(hashFunctionId),
             `hashFunctionId value: ${hashFunctionId} is not an integer!`,
         ).to.be.equal(true);
 
         expect(
-            !Number.isInteger(scoreFunctionId),
+            Number.isInteger(scoreFunctionId),
             `scoreFunctionId value: ${scoreFunctionId} is not an integer!`,
         ).to.be.equal(true);
 
         const assertion = assertions[assertionName];
-
         const publicAssertionId = await this.state.nodes[node - 1].client
             .getPublicAssertionId(assertion)
             .catch((error) => {
@@ -53,9 +52,9 @@ When(
             });
 
         const options = {
-            blockchain: this.state.nodes[node - 1].clientBlockchainOptions[blockchain],
-            hashFunctionId,
-            scoreFunctionId,
+            ...this.state.nodes[node - 1].clientBlockchainOptions[blockchain],
+            hashFunctionId: hashFunctionId,
+            scoreFunctionId: scoreFunctionId,
         };
         let getBidSuggestionError;
         const result = await this.state.nodes[node - 1].client
@@ -94,7 +93,6 @@ When(
         ).to.be.equal(true);
 
         const assertion = assertions[assertionName];
-
         const publicAssertionId = await this.state.nodes[node - 1].client
             .getPublicAssertionId(assertion)
             .catch((error) => {
@@ -107,9 +105,7 @@ When(
                 assert.fail(`Error while trying to get  size in bytes. ${error}`);
             });
 
-        const options = {
-            blockchain: this.state.nodes[node - 1].clientBlockchainOptions[blockchain],
-        };
+        const options = this.state.nodes[node - 1].clientBlockchainOptions[blockchain];
         let getBidSuggestionError;
         const result = await this.state.nodes[node - 1].client
             .getBidSuggestion(publicAssertionId, sizeInBytes, options)

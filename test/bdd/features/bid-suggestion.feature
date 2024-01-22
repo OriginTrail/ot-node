@@ -17,3 +17,21 @@ Feature: Release related tests
     
     When I call Get Bid Suggestion on the node 2 with validPublish_1ForValidUpdate_1 on blockchain hardhat2:31337
     Then I call Info route on the node 2
+
+    When I call Get Bid Suggestion on node 2 using parameters validPublish_1ForValidUpdate_1, hashFunctionId 1, scoreFunctionId 1, within blockchain hardhat1:31337
+    Then I call Info route on the node 2   
+    
+    When I call Get Bid Suggestion on node 2 using parameters validPublish_1ForValidUpdate_1, hashFunctionId 1, scoreFunctionId 1, within blockchain hardhat2:31337
+    Then I call Info route on the node 2  
+    
+    When I call Get Bid Suggestion on node 2 using parameters validPublish_1ForValidUpdate_1, hashFunctionId 1, scoreFunctionId 2, within blockchain hardhat1:31337
+    Then I call Info route on the node 2   
+    
+    When I call Get Bid Suggestion on node 2 using parameters validPublish_1ForValidUpdate_1, hashFunctionId 1, scoreFunctionId 2, within blockchain hardhat2:31337
+    Then I call Info route on the node 2  
+    
+    When I call Get Bid Suggestion on node 2 using parameters validPublish_1ForValidUpdate_1, hashFunctionId 1, scoreFunctionId 4, within blockchain hardhat1:31337
+    Then I call Info route on the node 2  
+    
+    When I call Get Bid Suggestion on node 2 using parameters validPublish_1ForValidUpdate_1, hashFunctionId 1, scoreFunctionId 4, within blockchain hardhat2:31337
+    Then I call Info route on the node 2  
