@@ -7,6 +7,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     NODE_ENVIRONMENTS,
+    // HASH_RING_SIZE,
 } from '../../../constants/constants.js';
 import MigrationExecutor from '../../../migration/migration-executor.js';
 
@@ -124,6 +125,15 @@ class EpochCheckCommand extends Command {
         for (const serviceAgreement of eligibleAgreementForSubmitCommit) {
             if (scheduleSubmitCommitCommands.length >= maxTransactions) break;
 
+            const neighbourhood = await this.shardingTableService.findNeighbourhood(
+                blockchain,
+                serviceAgreement.keyword,
+                r2,
+                serviceAgreement.hashFunctionId,
+                serviceAgreement.scoreFunctionId,
+                true,
+            );
+
             try {
                 const rank = await this.calculateRank(
                     blockchain,
@@ -131,6 +141,7 @@ class EpochCheckCommand extends Command {
                     serviceAgreement.hashFunctionId,
                     serviceAgreement.scoreFunctionId,
                     r2,
+                    neighbourhood,
                 );
 
                 updateServiceAgreementsLastCommitEpoch.push(
@@ -165,9 +176,14 @@ class EpochCheckCommand extends Command {
                         serviceAgreement.agreementId
                     }. Scheduling submitCommitCommand.`,
                 );
-
+                const neighbourhoodEdges = this.getNeighboorhoodEdges(
+                    neighbourhood,
+                    blockchain,
+                    serviceAgreement.hashFunctionId,
+                    serviceAgreement.scoreFunctionId,
+                );
                 scheduleSubmitCommitCommands.push(
-                    this.scheduleSubmitCommitCommand(serviceAgreement),
+                    this.scheduleSubmitCommitCommand(serviceAgreement, neighbourhoodEdges),
                 );
             } catch (error) {
                 this.logger.warn(
@@ -240,16 +256,14 @@ class EpochCheckCommand extends Command {
         ]);
     }
 
-    async calculateRank(blockchain, keyword, hashFunctionId, proximityScoreFunctionsPairId, r2) {
-        const neighbourhood = await this.shardingTableService.findNeighbourhood(
-            blockchain,
-            keyword,
-            r2,
-            hashFunctionId,
-            proximityScoreFunctionsPairId,
-            true,
-        );
-
+    async calculateRank(
+        blockchain,
+        keyword,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+        r2,
+        neighbourhood,
+    ) {
         const peerId = this.networkModuleManager.getPeerId().toB58String();
         if (!neighbourhood.some((node) => node.peerId === peerId)) {
             return;
@@ -291,7 +305,7 @@ class EpochCheckCommand extends Command {
         return false;
     }
 
-    async scheduleSubmitCommitCommand(agreement) {
+    async scheduleSubmitCommitCommand(agreement, neighbourhoodEdges, closestNode) {
         const commandData = {
             operationId: this.operationIdService.generateId(),
             blockchain: agreement.blockchainId,
@@ -302,6 +316,9 @@ class EpochCheckCommand extends Command {
             epoch: agreement.currentEpoch,
             agreementId: agreement.agreementId,
             stateIndex: agreement.stateIndex,
+            closestNode,
+            leftNeighborhoodEdge: neighbourhoodEdges.leftNeighborhoodEdge,
+            rightNeighborhoodEdge: neighbourhoodEdges.rightNeighborhoodEdge,
         };
 
         await this.commandExecutor.add({
@@ -366,6 +383,77 @@ class EpochCheckCommand extends Command {
             process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
 
         return devEnvironment ? 30_000 : 120_000;
+    }
+
+    async getNeighboorhoodEdges(
+        neighbourhood,
+        blockchainId,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+    ) {
+        const closestNode = neighbourhood[0];
+
+        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
+        const nodesWithDistanceFromClosestNode = await Promise.all(
+            neighbourhood.map(async (node) => ({
+                node,
+                distance: await this.proximityScoringService.callProximityFunction(
+                    blockchainId,
+                    proximityScoreFunctionsPairId,
+                    node[hashFunctionName],
+                    closestNode[hashFunctionName],
+                ),
+            })),
+        );
+
+        const maxDistanceFromClosestNode = Math.max(
+            ...nodesWithDistanceFromClosestNode.map((node) => node.distance),
+        );
+        const firstEdge = nodesWithDistanceFromClosestNode.find(
+            (node) => node.distance === maxDistanceFromClosestNode,
+        )?.node;
+
+        // const nodesWithDistanceFromFirstEdge =
+        await Promise.all(
+            neighbourhood.map(async (node) => ({
+                node,
+                distance: await this.proximityScoringService.callProximityFunction(
+                    blockchainId,
+                    proximityScoreFunctionsPairId,
+                    node[hashFunctionName],
+                    firstEdge[hashFunctionName],
+                ),
+            })),
+        );
+
+        // const maxDistanceFromFirstEdge = Math.max(
+        //     ...nodesWithDistanceFromFirstEdge.map((node) => node.distance),
+        // );
+        // const secondEdge = nodesWithDistanceFromFirstEdge.find(
+        //     (node) => node.distance === maxDistanceFromFirstEdge,
+        // )?.node;
+
+        // const firstEgdePositionOnRing = await this.blockchainModuleManager.toBigNumber(
+        //     blockchainId,
+        //     firstEdge[hashFunctionId],
+        // );
+        // const secondEdgePositionOnRing = await this.blockchainModuleManager.toBigNumber(
+        //     blockchainId,
+        //     secondEdge[hashFunctionId],
+        // );
+        // const closestNodePositionOnRing = await this.blockchainModuleManager.toBigNumber(
+        //     blockchainId,
+        //     closestNode[hashFunctionId],
+        // );
+
+        // const firstEdgeClockWiseDistanceFromClossestNode =
+        //     firstEgdePositionOnRing <= closestNodePositionOnRing
+        //         ? closestNodePositionOnRing - firstEgdePositionOnRing
+        //         : HASH_RING_SIZE - firstEgdePositionOnRing + closestNodePositionOnRing + 1;
+        // const secondEdgeClockWiseDistanceFromClossestNode =
+        //     secondEdgePositionOnRing <= closestNodePositionOnRing
+        //         ? closestNodePositionOnRing - secondEdgePositionOnRing
+        //         : HASH_RING_SIZE - secondEdgePositionOnRing + closestNodePositionOnRing + 1;
     }
 
     /**

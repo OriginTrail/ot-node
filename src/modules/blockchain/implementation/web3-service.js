@@ -981,6 +981,9 @@ class Web3Service {
         keyword,
         hashFunctionId,
         epoch,
+        closestNode,
+        leftNeighborhoodEdge,
+        rightNeighborhoodEdge,
         latestStateIndex,
         callback,
         gasPrice,
@@ -988,7 +991,18 @@ class Web3Service {
         return this.queueTransaction(
             this.selectCommitManagerContract(latestStateIndex),
             'submitCommit',
-            [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch]],
+            [
+                [
+                    assetContractAddress,
+                    tokenId,
+                    keyword,
+                    hashFunctionId,
+                    epoch,
+                    closestNode,
+                    leftNeighborhoodEdge,
+                    rightNeighborhoodEdge,
+                ],
+            ],
             callback,
             gasPrice,
         );

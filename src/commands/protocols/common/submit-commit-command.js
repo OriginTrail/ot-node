@@ -28,6 +28,9 @@ class SubmitCommitCommand extends Command {
             agreementId,
             stateIndex,
             gasPrice,
+            closestNode,
+            leftNeighborhoodEdge,
+            rightNeighborhoodEdge,
         } = command.data;
 
         this.logger.trace(
@@ -35,6 +38,8 @@ class SubmitCommitCommand extends Command {
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                 `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
+                `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                `Right neighborhood edge: ${rightNeighborhoodEdge}` +
                 `Retry number: ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}`,
         );
 
@@ -60,7 +65,9 @@ class SubmitCommitCommand extends Command {
                 `Knowledge Asset was updated, not sending Commit for the Service Agreement with the ID: ${agreementId}, ` +
                     `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                     `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
-                    `State Index: ${stateIndex}, Operation ID: ${operationId}`,
+                    `State Index: ${stateIndex}, Operation ID: ${operationId}` +
+                    `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                    `Right neighborhood edge: ${rightNeighborhoodEdge}`,
             );
 
             return Command.empty();
@@ -78,7 +85,9 @@ class SubmitCommitCommand extends Command {
                 `Commit has already been submitted for the Service Agreement with the ID: ${agreementId}, ` +
                     `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                     `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
-                    `State Index: ${stateIndex}, Operation ID: ${operationId}`,
+                    `State Index: ${stateIndex}, Operation ID: ${operationId}` +
+                    `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                    `Right neighborhood edge: ${rightNeighborhoodEdge}`,
             );
 
             return Command.empty();
@@ -94,6 +103,9 @@ class SubmitCommitCommand extends Command {
                 keyword,
                 hashFunctionId,
                 epoch,
+                closestNode,
+                leftNeighborhoodEdge,
+                rightNeighborhoodEdge,
                 stateIndex,
                 (result) => {
                     if (result?.error) {
@@ -119,6 +131,8 @@ class SubmitCommitCommand extends Command {
                     `with the ID: ${agreementId}, Blockchain: ${blockchain}, Contract: ${contract}, ` +
                     `Token ID: ${tokenId}, Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, ` +
                     `Epoch: ${epoch}, State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
+                    `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                    `Right neighborhood edge: ${rightNeighborhoodEdge}` +
                     `Retry number: ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}.`,
             );
 
@@ -160,6 +174,8 @@ class SubmitCommitCommand extends Command {
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                 `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
+                `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                `Right neighborhood edge: ${rightNeighborhoodEdge}` +
                 `Retry number: ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}`,
         );
 

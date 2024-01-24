@@ -158,10 +158,10 @@ class ShardingTableService {
             })),
         );
         peersWithDistance.sort((a, b) => {
-            if (a.distance < b.distance) {
+            if (a.distance.lt(b.distance)) {
                 return -1;
             }
-            if (a.distance > b.distance) {
+            if (a.distance.gt(b.distance)) {
                 return 1;
             }
             return 0;
