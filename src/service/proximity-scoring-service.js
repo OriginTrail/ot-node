@@ -10,7 +10,10 @@ class ProximityScoringService {
 
         this.proximityScoreFunctionsPairs = {
             1: [this.calculateBinaryXOR.bind(this), this.Log2PLDSF.bind(this)],
-            2: [this.calculateProximityOnHashRing.bind(this), this.LinearLogisticSum.bind(this)],
+            2: [
+                this.calculateBidirectionalProximityOnHashRing.bind(this),
+                this.LinearSum.bind(this),
+            ],
         };
     }
 
@@ -52,7 +55,7 @@ class ProximityScoringService {
         return this.blockchainModuleManager.toBigNumber(blockchain, distanceHex);
     }
 
-    async calculateProximityOnHashRing(blockchain, peerHash, keyHash) {
+    async calculateBidirectionalProximityOnHashRing(blockchain, peerHash, keyHash) {
         const peerPositionOnHashRing = await this.blockchainModuleManager.toBigNumber(
             blockchain,
             peerHash,
@@ -62,12 +65,9 @@ class ProximityScoringService {
             keyHash,
         );
 
-        let directDistance = peerPositionOnHashRing.sub(keyPositionOnHashRing);
-
-        if (directDistance.lt(0)) {
-            directDistance = directDistance.add(HASH_RING_SIZE);
-        }
-
+        const directDistance = peerPositionOnHashRing.gt(keyPositionOnHashRing)
+            ? peerPositionOnHashRing.sub(keyPositionOnHashRing)
+            : keyPositionOnHashRing.sub(peerPositionOnHashRing);
         const wraparoundDistance = HASH_RING_SIZE.sub(directDistance);
 
         return directDistance.lt(wraparoundDistance) ? directDistance : wraparoundDistance;
@@ -98,32 +98,23 @@ class ProximityScoringService {
         const dividend = mappedStake.pow(stakeExponent).mul(a).add(b);
         const divisor = mappedDistance.pow(distanceExponent).mul(c).add(d);
 
-        return Math.floor(
-            Number(multiplier) *
-                Math.log2(Number(logArgumentConstant) + dividend.toNumber() / divisor.toNumber()),
-        );
+        return {
+            mappedDistance,
+            mappedStake,
+            score: Math.floor(
+                Number(multiplier) *
+                    Math.log2(
+                        Number(logArgumentConstant) + dividend.toNumber() / divisor.toNumber(),
+                    ),
+            ),
+        };
     }
 
-    // Using Maclaurin Series to approximate e^x
-    _approximateExp(x, degree) {
-        let xPow = x;
-        let factorial = 1;
-        let result = 1;
-
-        for (let i = 1; i <= degree; i += 1) {
-            factorial *= i;
-            result += xPow / factorial;
-            xPow *= x;
-        }
-
-        return result;
-    }
-
-    async LinearLogisticSum(blockchain, distance, stake, maxNeighborhoodDistance) {
-        const linearLogisticSumParams =
-            await this.blockchainModuleManager.getLinearLogisticSumParams(blockchain);
-        const { distanceScaleFactor, exponentMultiplier, maclaurinSeriesDegree, x0, w1, w2 } =
-            linearLogisticSumParams;
+    async LinearSum(blockchain, distance, stake, maxNeighborhoodDistance) {
+        const linearSumParams = await this.blockchainModuleManager.getLinearSumParams(blockchain);
+        const { distanceScaleFactor, w1, w2 } = linearSumParams;
+        const minimumStake = await this.blockchainModuleManager.getMinimumStake(blockchain);
+        const maximumStake = await this.blockchainModuleManager.getMaximumStake(blockchain);
 
         let dividend = distance;
         let divisor = maxNeighborhoodDistance;
@@ -133,11 +124,10 @@ class ProximityScoringService {
         }
 
         const divResult = dividend.mul(distanceScaleFactor).div(divisor);
+
         const mappedDistance =
             parseFloat(divResult.toString()) / parseFloat(distanceScaleFactor.toString());
-
-        const exponentPart = exponentMultiplier * (stake - x0);
-        const mappedStake = 2 / (1 + this._approximateExp(exponentPart, maclaurinSeriesDegree)) - 1;
+        const mappedStake = (stake - minimumStake) / (maximumStake - minimumStake);
 
         const proximityScore = w1 * (1 - mappedDistance);
         const stakeScore = w2 * mappedStake;
