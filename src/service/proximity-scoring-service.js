@@ -10,8 +10,7 @@ class ProximityScoringService {
 
         this.proximityScoreFunctionsPairs = {
             1: [this.calculateBinaryXOR.bind(this), this.Log2PLDSF.bind(this)],
-            2: [this.calculateClockwiseProximityOnHashRing.bind(this), this.LinearSum.bind(this)],
-            3: [
+            2: [
                 this.calculateBidirectionalProximityOnHashRing.bind(this),
                 this.LinearSum.bind(this),
             ],
@@ -54,27 +53,6 @@ class ProximityScoringService {
         );
 
         return this.blockchainModuleManager.toBigNumber(blockchain, distanceHex);
-    }
-
-    async calculateClockwiseProximityOnHashRing(blockchain, peerHash, keyHash) {
-        const peerPositionOnHashRing = await this.blockchainModuleManager.toBigNumber(
-            blockchain,
-            peerHash,
-        );
-        const keyPositionOnHashRing = await this.blockchainModuleManager.toBigNumber(
-            blockchain,
-            keyHash,
-        );
-
-        let clockwiseDistance;
-        if (peerPositionOnHashRing.gt(keyPositionOnHashRing)) {
-            const distanceToEnd = HASH_RING_SIZE.sub(peerPositionOnHashRing);
-            clockwiseDistance = distanceToEnd.add(keyPositionOnHashRing);
-        } else {
-            clockwiseDistance = keyPositionOnHashRing.sub(peerPositionOnHashRing);
-        }
-
-        return clockwiseDistance;
     }
 
     async calculateBidirectionalProximityOnHashRing(blockchain, peerHash, keyHash) {
