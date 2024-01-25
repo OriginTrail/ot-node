@@ -318,9 +318,9 @@ class EpochCheckCommand extends Command {
             epoch: agreement.currentEpoch,
             agreementId: agreement.agreementId,
             stateIndex: agreement.stateIndex,
-            closestNode: closestNode.peerId,
-            leftNeighborhoodEdge: neighbourhoodEdges.leftNeighborhoodEdge.peerId,
-            rightNeighborhoodEdge: neighbourhoodEdges.rightNeighborhoodEdge.peerId,
+            closestNode: closestNode.index,
+            leftNeighborhoodEdge: neighbourhoodEdges.leftNeighborhoodEdge.index,
+            rightNeighborhoodEdge: neighbourhoodEdges.rightNeighborhoodEdge.index,
         };
 
         await this.commandExecutor.add({

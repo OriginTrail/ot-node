@@ -120,10 +120,13 @@ class ShardingTableService {
         proximityScoreFunctionsPairId,
         filterLastSeen,
     ) {
-        const peers = await this.repositoryModuleManager.getAllPeerRecords(
+        let peers = await this.repositoryModuleManager.getAllPeerRecords(
             blockchainId,
             filterLastSeen,
         );
+
+        peers = peers.map((peer, index) => ({ ...peer, index }));
+
         const keyHash = await this.hashingService.callHashFunction(hashFunctionId, key);
 
         const soretedPeers = this.sortPeers(
