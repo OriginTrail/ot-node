@@ -125,7 +125,7 @@ class ShardingTableService {
             filterLastSeen,
         );
 
-        peers = peers.map((peer, index) => ({ ...peer, index }));
+        peers = peers.map((peer, index) => ({ ...peer.dataValues, index }));
 
         const keyHash = await this.hashingService.callHashFunction(hashFunctionId, key);
 
