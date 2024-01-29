@@ -77,7 +77,7 @@ class ShardingTableService {
             );
             shardingTable.push(...nodes.slice(sliceIndex).filter((node) => node.nodeId !== '0x'));
             sliceIndex = 1;
-            startingIdentityId = nodes[nodes.length - 1].identityId;
+            startingIdentityId = nodes[nodes.length - 1];
         }
 
         this.logger.debug(
