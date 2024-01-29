@@ -39,15 +39,6 @@ class ServiceAgreementService {
             return;
         }
 
-        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
-
-        const maxNeighborhoodDistance = await this.proximityScoringService.callProximityFunction(
-            blockchain,
-            proximityScoreFunctionsPairId,
-            neighbourhoodEdges.leftEdge[hashFunctionName],
-            neighbourhoodEdges.rightEdge[hashFunctionName],
-        );
-
         const scores = await Promise.all(
             neighbourhood.map(async (node) => ({
                 score: await this.calculateScore(
@@ -56,7 +47,7 @@ class ServiceAgreementService {
                     keyword,
                     hashFunctionId,
                     proximityScoreFunctionsPairId,
-                    maxNeighborhoodDistance,
+                    neighbourhoodEdges,
                 ),
                 peerId: node.peerId,
             })),
