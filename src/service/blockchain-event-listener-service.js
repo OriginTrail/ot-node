@@ -303,11 +303,13 @@ class BlockchainEventListenerService {
                     eventData.nodeId,
                 );
 
-                const nodeIdSha256 = await this.hashingService.callHashFunction(
-                    // TODO: How to add more hashes?
+                const sha256 = await this.hashingService.callHashFunction(
                     CONTENT_ASSET_HASH_FUNCTION_ID,
                     nodeId,
                 );
+
+                const cleanHexString = sha256.startsWith('0x') ? sha256.slice(2) : sha256;
+                const sha256Blob = Buffer.from(cleanHexString, 'hex');
 
                 this.logger.trace(`Adding peer id: ${nodeId} to sharding table.`);
                 return {
@@ -322,7 +324,8 @@ class BlockchainEventListenerService {
                         eventData.stake,
                     ),
                     lastSeen: new Date(0),
-                    sha256: nodeIdSha256,
+                    sha256,
+                    sha256Blob,
                 };
             }),
         );

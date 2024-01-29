@@ -12,7 +12,7 @@ class ProximityScoringService {
             1: [this.calculateBinaryXOR.bind(this), this.Log2PLDSF.bind(this)],
             2: [
                 this.calculateBidirectionalProximityOnHashRing.bind(this),
-                this.LinearSum.bind(this),
+                this.linearSum.bind(this),
             ],
         };
     }
@@ -110,7 +110,7 @@ class ProximityScoringService {
         };
     }
 
-    async LinearSum(blockchain, distance, stake, maxNeighborhoodDistance) {
+    async linearSum(blockchain, distance, stake, maxNeighborhoodDistance) {
         const linearSumParams = await this.blockchainModuleManager.getLinearSumParams(blockchain);
         const { distanceScaleFactor, w1, w2 } = linearSumParams;
         const minimumStake = await this.blockchainModuleManager.getMinimumStake(blockchain);

@@ -91,7 +91,10 @@ class ShardingTableService {
                         blockchainId,
                         peer.nodeId,
                     );
+                    const sha256 = await this.hashingService.callHashFunction(1, nodeId);
 
+                    const cleanHexString = sha256.startsWith('0x') ? sha256.slice(2) : sha256;
+                    const sha256Blob = Buffer.from(cleanHexString, 'hex');
                     return {
                         peerId: nodeId,
                         blockchainId,
@@ -105,7 +108,8 @@ class ShardingTableService {
                             peer.stake,
                             'ether',
                         ),
-                        sha256: await this.hashingService.callHashFunction(1, nodeId),
+                        sha256,
+                        sha256Blob,
                     };
                 }),
             ),
@@ -124,9 +128,7 @@ class ShardingTableService {
             blockchainId,
             filterLastSeen,
         );
-
         peers = peers.map((peer, index) => ({ ...peer.dataValues, index }));
-
         const keyHash = await this.hashingService.callHashFunction(hashFunctionId, key);
 
         const soretedPeers = this.sortPeers(
