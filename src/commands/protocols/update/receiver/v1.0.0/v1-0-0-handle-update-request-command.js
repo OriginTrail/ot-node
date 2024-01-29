@@ -96,7 +96,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             throw Error('Unable to find neighbourhood edges for asset');
         }
 
-        const rank = await this.calculateRank(
+        const rank = await this.serviceAgreementService.calculateRank(
             blockchain,
             keyword,
             hashFunctionId,
