@@ -597,6 +597,7 @@ export const TRANSACTION_CONFIRMATIONS = 1;
 
 export const CACHE_DATA_TYPES = {
     NUMBER: 'number',
+    ANY: 'any',
 };
 
 /**
@@ -616,13 +617,13 @@ export const CACHED_FUNCTIONS = {
         commitWindowDurationPerc: CACHE_DATA_TYPES.NUMBER,
         proofWindowDurationPerc: CACHE_DATA_TYPES.NUMBER,
         epochLength: CACHE_DATA_TYPES.NUMBER,
-        minimumStake: null,
-        maximumStake: null,
+        minimumStake: CACHE_DATA_TYPES.ANY,
+        maximumStake: CACHE_DATA_TYPES.ANY,
     },
     IdentityStorageContract: {
         getIdentityId: CACHE_DATA_TYPES.NUMBER,
     },
     Log2PLDSF: {
-        getParameters: null,
+        getParameters: CACHE_DATA_TYPES.ANY,
     },
 };
