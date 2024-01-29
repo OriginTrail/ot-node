@@ -41,10 +41,8 @@ const ABIs = {
     ProfileStorage: require('dkg-evm-module/abi/ProfileStorage.json'),
     ScoringProxy: require('dkg-evm-module/abi/ScoringProxy.json'),
     ServiceAgreementV1: require('dkg-evm-module/abi/ServiceAgreementV1.json'),
-    CommitManagerV1: require('dkg-evm-module/abi/CommitManagerV1.json'),
-    CommitManagerV1U1: require('dkg-evm-module/abi/CommitManagerV1U1.json'),
-    CommitManagerV2: require('dkg-evm-module/abi/CommitManagerV2.json'),
-    CommitManagerV2U1: require('dkg-evm-module/abi/CommitManagerV2U1.json'),
+    CommitManagerV1: require('dkg-evm-module/abi/CommitManagerV2.json'),
+    CommitManagerV1U1: require('dkg-evm-module/abi/CommitManagerV2U1.json'),
     ProofManagerV1: require('dkg-evm-module/abi/ProofManagerV1.json'),
     ProofManagerV1U1: require('dkg-evm-module/abi/ProofManagerV1U1.json'),
     ShardingTable: require('dkg-evm-module/abi/ShardingTableV2.json'),
@@ -875,39 +873,34 @@ class Web3Service {
         return Number(assertionChunksNumber);
     }
 
-    selectCommitManagerContract(latestStateIndex, proximityScoreFunctionsPairId = 1) {
+    selectCommitManagerContract(latestStateIndex) {
         return latestStateIndex === 0
-            ? this[`CommitManagerV${proximityScoreFunctionsPairId}Contract`]
-            : this[`CommitManagerV${proximityScoreFunctionsPairId}U1Contract`];
+            ? this.CommitManagerV1Contract
+            : this.CommitManagerV1U1Contract;
     }
 
-    async isCommitWindowOpen(agreementId, epoch, latestStateIndex, proximityScoreFunctionsPairId) {
+    async isCommitWindowOpen(agreementId, epoch, latestStateIndex) {
         return this.callContractFunction(
-            this.selectCommitManagerContract(latestStateIndex, proximityScoreFunctionsPairId),
+            this.selectCommitManagerContract(latestStateIndex),
             'isCommitWindowOpen',
             [agreementId, epoch],
         );
     }
 
-    async isUpdateCommitWindowOpen(agreementId, epoch, stateIndex, proximityScoreFunctionsPairId) {
+    async isUpdateCommitWindowOpen(agreementId, epoch, stateIndex) {
         return this.callContractFunction(
-            this.selectCommitManagerContract(1, proximityScoreFunctionsPairId),
+            this.CommitManagerV1U1Contract,
             'isUpdateCommitWindowOpen',
             [agreementId, epoch, stateIndex],
         );
     }
 
-    async getTopCommitSubmissions(
-        agreementId,
-        epoch,
-        latestStateIndex,
-        proximityScoreFunctionsPairId,
-    ) {
+    async getTopCommitSubmissions(agreementId, epoch, latestStateIndex) {
         const args =
             latestStateIndex === 0 ? [agreementId, epoch] : [agreementId, epoch, latestStateIndex];
 
         const commits = await this.callContractFunction(
-            this.selectCommitManagerContract(latestStateIndex, proximityScoreFunctionsPairId),
+            this.selectCommitManagerContract(latestStateIndex),
             'getTopCommitSubmissions',
             args,
         );
@@ -990,20 +983,19 @@ class Web3Service {
         keyword,
         hashFunctionId,
         epoch,
+        closestNode,
+        leftNeighborhoodEdge,
+        rightNeighborhoodEdge,
         latestStateIndex,
         callback,
         gasPrice,
-        proximityScoreFunctionsPairId = 1,
-        closestNode = null,
-        leftNeighborhoodEdge = null,
-        rightNeighborhoodEdge = null,
     ) {
         const submitCommitArgs = [assetContractAddress, tokenId, keyword, hashFunctionId, epoch];
         if (closestNode && leftNeighborhoodEdge && rightNeighborhoodEdge) {
             submitCommitArgs.push(closestNode, leftNeighborhoodEdge, rightNeighborhoodEdge);
         }
         return this.queueTransaction(
-            this.selectCommitManagerContract(latestStateIndex, proximityScoreFunctionsPairId),
+            this.selectCommitManagerContract(latestStateIndex),
             'submitCommit',
             [submitCommitArgs],
             callback,
@@ -1016,20 +1008,19 @@ class Web3Service {
         tokenId,
         keyword,
         hashFunctionId,
+        closestNode,
+        leftNeighborhoodEdge,
+        rightNeighborhoodEdge,
         epoch,
         callback,
         gasPrice,
-        proximityScoreFunctionsPairId = 1,
-        closestNode = null,
-        leftNeighborhoodEdge = null,
-        rightNeighborhoodEdge = null,
     ) {
         const submitCommitArgs = [assetContractAddress, tokenId, keyword, hashFunctionId, epoch];
         if (closestNode && leftNeighborhoodEdge && rightNeighborhoodEdge) {
             submitCommitArgs.push(closestNode, leftNeighborhoodEdge, rightNeighborhoodEdge);
         }
         return this.queueTransaction(
-            this.selectCommitManagerContract(1, proximityScoreFunctionsPairId),
+            this.CommitManagerV1U1Contract,
             'submitUpdateCommit',
             [submitCommitArgs],
             callback,

@@ -27,7 +27,6 @@ class SubmitUpdateCommitCommand extends Command {
             agreementId,
             operationId,
             gasPrice,
-            proximityScoreFunctionsPairId,
             closestNode,
             leftNeighborhoodEdge,
             rightNeighborhoodEdge,
@@ -94,7 +93,6 @@ class SubmitUpdateCommitCommand extends Command {
                     resolve();
                 },
                 txGasPrice,
-                proximityScoreFunctionsPairId,
                 closestNode,
                 leftNeighborhoodEdge,
                 rightNeighborhoodEdge,
