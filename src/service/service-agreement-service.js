@@ -25,13 +25,55 @@ class ServiceAgreementService {
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
+    async calculateRank(
+        blockchain,
+        keyword,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+        r2,
+        neighbourhood,
+        neighbourhoodEdges,
+    ) {
+        const peerId = this.networkModuleManager.getPeerId().toB58String();
+        if (!neighbourhood.some((node) => node.peerId === peerId)) {
+            return;
+        }
+
+        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
+
+        const maxNeighborhoodDistance = await this.proximityScoringService.callProximityFunction(
+            blockchain,
+            proximityScoreFunctionsPairId,
+            neighbourhoodEdges.leftEdge[hashFunctionName],
+            neighbourhoodEdges.rightEdge[hashFunctionName],
+        );
+
+        const scores = await Promise.all(
+            neighbourhood.map(async (node) => ({
+                score: await this.calculateScore(
+                    node.peerId,
+                    blockchain,
+                    keyword,
+                    hashFunctionId,
+                    proximityScoreFunctionsPairId,
+                    maxNeighborhoodDistance,
+                ),
+                peerId: node.peerId,
+            })),
+        );
+
+        scores.sort((a, b) => b.score - a.score);
+
+        return scores.findIndex((node) => node.peerId === peerId);
+    }
+
     async calculateScore(
         peerId,
         blockchainId,
         keyword,
         hashFunctionId,
         proximityScoreFunctionsPairId,
-        maxNeighborhoodDistance,
+        neighbourhoodEdges,
     ) {
         const peerRecord = await this.repositoryModuleManager.getPeerRecord(peerId, blockchainId);
         const keyHash = await this.hashingService.callHashFunction(hashFunctionId, keyword);
@@ -44,6 +86,15 @@ class ServiceAgreementService {
             peerRecord[hashFunctionName],
             keyHash,
         );
+        let maxNeighborhoodDistance;
+        if (neighbourhoodEdges) {
+            maxNeighborhoodDistance = await this.proximityScoringService.callProximityFunction(
+                blockchainId,
+                proximityScoreFunctionsPairId,
+                neighbourhoodEdges.leftEdge[hashFunctionName],
+                neighbourhoodEdges.rightEdge[hashFunctionName],
+            );
+        }
 
         return this.proximityScoringService.callScoreFunction(
             blockchainId,

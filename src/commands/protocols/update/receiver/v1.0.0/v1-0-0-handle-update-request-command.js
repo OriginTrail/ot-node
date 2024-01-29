@@ -81,13 +81,20 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
 
         const closestNode = neighbourhood[0];
 
-        const neighbourhoodEdges = await this.getNeighboorhoodEdgeNodes(
-            neighbourhood,
-            blockchain,
-            hashFunctionId,
-            proximityScoreFunctionsPairId,
-            keyword,
-        );
+        let neighbourhoodEdges = null;
+        if (proximityScoreFunctionsPairId === 2) {
+            neighbourhoodEdges = await this.shardingTableService.getNeighboorhoodEdgeNodes(
+                neighbourhood,
+                blockchain,
+                hashFunctionId,
+                proximityScoreFunctionsPairId,
+                keyword,
+            );
+        }
+
+        if (!neighbourhoodEdges && proximityScoreFunctionsPairId === 2) {
+            throw Error('Unable to find neighbourhood edges for asset');
+        }
 
         const rank = await this.calculateRank(
             blockchain,
@@ -123,9 +130,9 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
                         r2,
                         updateCommitWindowDuration,
                         proximityScoreFunctionsPairId,
-                        closestNode: closestNode.index,
-                        leftNeighborhoodEdge: neighbourhoodEdges.leftEdge.index,
-                        rightNeighborhoodEdge: neighbourhoodEdges.rightEdge.index,
+                        closestNode: closestNode?.index,
+                        leftNeighborhoodEdge: neighbourhoodEdges?.leftEdge?.index,
+                        rightNeighborhoodEdge: neighbourhoodEdges?.rightEdge?.index,
                     },
                     transactional: false,
                 }),
@@ -181,95 +188,6 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         );
 
         return delay;
-    }
-
-    async calculateRank(
-        blockchain,
-        keyword,
-        hashFunctionId,
-        proximityScoreFunctionsPairId,
-        r2,
-        neighbourhood,
-        neighbourhoodEdges,
-    ) {
-        const peerId = this.networkModuleManager.getPeerId().toB58String();
-        if (!neighbourhood.some((node) => node.peerId === peerId)) {
-            return;
-        }
-
-        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
-
-        const maxNeighborhoodDistance = await this.proximityScoringService.callProximityFunction(
-            blockchain,
-            proximityScoreFunctionsPairId,
-            neighbourhoodEdges.leftEdge[hashFunctionName],
-            neighbourhoodEdges.rightEdge[hashFunctionName],
-        );
-
-        const scores = await Promise.all(
-            neighbourhood.map(async (node) => ({
-                score: await this.serviceAgreementService.calculateScore(
-                    node.peerId,
-                    blockchain,
-                    keyword,
-                    hashFunctionId,
-                    proximityScoreFunctionsPairId,
-                    maxNeighborhoodDistance,
-                ),
-                peerId: node.peerId,
-            })),
-        );
-
-        scores.sort((a, b) => b.score - a.score);
-
-        return scores.findIndex((node) => node.peerId === peerId);
-    }
-
-    async getNeighboorhoodEdgeNodes(
-        neighbourhood,
-        blockchainId,
-        hashFunctionId,
-        proximityScoreFunctionsPairId,
-        assetHash,
-    ) {
-        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
-        const assetPositionOnHashRing = await this.blockchainModuleManager.toBigNumber(
-            blockchainId,
-            assetHash,
-        );
-        const hashRing = [];
-
-        const maxDistance = await this.proximityScoringService.callProximityFunction(
-            blockchainId,
-            proximityScoreFunctionsPairId,
-            neighbourhood[neighbourhood.length - 1][hashFunctionName],
-            assetHash,
-        );
-        for (const neighbour of neighbourhood) {
-            // eslint-disable-next-line no-await-in-loop
-            const neighbourPositionOnHashRing = await this.blockchainModuleManager.toBigNumber(
-                blockchainId,
-                neighbour[hashFunctionName],
-            );
-            if (assetPositionOnHashRing.lte(neighbourPositionOnHashRing)) {
-                if (neighbourPositionOnHashRing.sub(assetPositionOnHashRing).lt(maxDistance)) {
-                    hashRing.push(neighbour);
-                } else {
-                    hashRing.unshift(neighbour);
-                }
-            } else if (assetPositionOnHashRing.gt(neighbourPositionOnHashRing)) {
-                if (assetPositionOnHashRing.sub(neighbourPositionOnHashRing).lt(maxDistance)) {
-                    hashRing.unshift(neighbour);
-                } else {
-                    hashRing.push(neighbour);
-                }
-            }
-        }
-
-        return {
-            leftEdge: hashRing[0],
-            rightEdge: hashRing[hashRing.length - 1],
-        };
     }
 
     /**

@@ -311,6 +311,53 @@ class ShardingTableService {
             protocols: peerInfo?.protocols ?? [],
         };
     }
+
+    async getNeighboorhoodEdgeNodes(
+        neighbourhood,
+        blockchainId,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+        assetHash,
+    ) {
+        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
+        const assetPositionOnHashRing = await this.blockchainModuleManager.toBigNumber(
+            blockchainId,
+            assetHash,
+        );
+        const hashRing = [];
+
+        const maxDistance = await this.proximityScoringService.callProximityFunction(
+            blockchainId,
+            proximityScoreFunctionsPairId,
+            neighbourhood[neighbourhood.length - 1][hashFunctionName],
+            assetHash,
+        );
+        for (const neighbour of neighbourhood) {
+            // eslint-disable-next-line no-await-in-loop
+            const neighbourPositionOnHashRing = await this.blockchainModuleManager.toBigNumber(
+                blockchainId,
+                neighbour[hashFunctionName],
+            );
+            if (assetPositionOnHashRing.lte(neighbourPositionOnHashRing)) {
+                if (neighbourPositionOnHashRing.sub(assetPositionOnHashRing).lt(maxDistance)) {
+                    hashRing.push(neighbour);
+                } else {
+                    hashRing.unshift(neighbour);
+                }
+            } else if (assetPositionOnHashRing.gt(neighbourPositionOnHashRing)) {
+                if (assetPositionOnHashRing.sub(neighbourPositionOnHashRing).lt(maxDistance)) {
+                    hashRing.unshift(neighbour);
+                } else {
+                    hashRing.push(neighbour);
+                }
+            }
+        }
+
+        return {
+            leftEdge: hashRing[0],
+            rightEdge: hashRing[hashRing.length - 1],
+        };
+    }
 }
 
 export default ShardingTableService;

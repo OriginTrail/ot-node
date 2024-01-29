@@ -135,16 +135,23 @@ class EpochCheckCommand extends Command {
                 true,
             );
 
-            const neighbourhoodEdges = await this.getNeighboorhoodEdgeNodes(
-                neighbourhood,
-                blockchain,
-                serviceAgreement.hashFunctionId,
-                serviceAgreement.scoreFunctionId,
-                serviceAgreement.keyword,
-            );
+            let neighbourhoodEdges = null;
+            if (serviceAgreement.scoreFunctionId === 2) {
+                neighbourhoodEdges = await this.shardingTableService.getNeighboorhoodEdgeNodes(
+                    neighbourhood,
+                    blockchain,
+                    serviceAgreement.hashFunctionId,
+                    serviceAgreement.scoreFunctionId,
+                    serviceAgreement.keyword,
+                );
+            }
+
+            if (!neighbourhoodEdges && serviceAgreement.scoreFunctionId === 2) {
+                throw Error('Unable to find neighbourhood edges for asset');
+            }
 
             try {
-                const rank = await this.calculateRank(
+                const rank = await this.serviceAgreementService.calculateRank(
                     blockchain,
                     serviceAgreement.keyword,
                     serviceAgreement.hashFunctionId,
@@ -265,48 +272,6 @@ class EpochCheckCommand extends Command {
         ]);
     }
 
-    async calculateRank(
-        blockchain,
-        keyword,
-        hashFunctionId,
-        proximityScoreFunctionsPairId,
-        r2,
-        neighbourhood,
-        neighbourhoodEdges,
-    ) {
-        const peerId = this.networkModuleManager.getPeerId().toB58String();
-        if (!neighbourhood.some((node) => node.peerId === peerId)) {
-            return;
-        }
-
-        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
-
-        const maxNeighborhoodDistance = await this.proximityScoringService.callProximityFunction(
-            blockchain,
-            proximityScoreFunctionsPairId,
-            neighbourhoodEdges.leftEdge[hashFunctionName],
-            neighbourhoodEdges.rightEdge[hashFunctionName],
-        );
-
-        const scores = await Promise.all(
-            neighbourhood.map(async (node) => ({
-                score: await this.serviceAgreementService.calculateScore(
-                    node.peerId,
-                    blockchain,
-                    keyword,
-                    hashFunctionId,
-                    proximityScoreFunctionsPairId,
-                    maxNeighborhoodDistance,
-                ),
-                peerId: node.peerId,
-            })),
-        );
-
-        scores.sort((a, b) => b.score - a.score);
-
-        return scores.findIndex((node) => node.peerId === peerId);
-    }
-
     async isEligibleForRewards(blockchain, agreementId, epoch, stateIndex, r0) {
         const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
         const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
@@ -403,52 +368,6 @@ class EpochCheckCommand extends Command {
             process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
 
         return devEnvironment ? 30_000 : 120_000;
-    }
-
-    async getNeighboorhoodEdgeNodes(
-        neighbourhood,
-        blockchainId,
-        hashFunctionId,
-        proximityScoreFunctionsPairId,
-        assetHash,
-    ) {
-        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
-        const assetPositionOnHashRing = await this.blockchainModuleManager.toBigNumber(
-            blockchainId,
-            assetHash,
-        );
-        const hashRing = [];
-
-        const maxDistance = await this.proximityScoringService.callProximityFunction(
-            blockchainId,
-            proximityScoreFunctionsPairId,
-            neighbourhood[neighbourhood.length - 1][hashFunctionName],
-            assetHash,
-        );
-        for (const neighbour of neighbourhood) {
-            const neighbourPositionOnHashRing = await this.blockchainModuleManager.toBigNumber(
-                blockchainId,
-                neighbour[hashFunctionName],
-            );
-            if (assetPositionOnHashRing.lte(neighbourPositionOnHashRing)) {
-                if (neighbourPositionOnHashRing.sub(assetPositionOnHashRing).lt(maxDistance)) {
-                    hashRing.push(neighbour);
-                } else {
-                    hashRing.unshift(neighbour);
-                }
-            } else if (assetPositionOnHashRing.gt(neighbourPositionOnHashRing)) {
-                if (assetPositionOnHashRing.sub(neighbourPositionOnHashRing).lt(maxDistance)) {
-                    hashRing.unshift(neighbour);
-                } else {
-                    hashRing.push(neighbour);
-                }
-            }
-        }
-
-        return {
-            leftEdge: hashRing[0],
-            rightEdge: hashRing[hashRing.length - 1],
-        };
     }
 
     /**
