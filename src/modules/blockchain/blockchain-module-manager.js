@@ -257,13 +257,13 @@ class BlockchainModuleManager extends BaseModuleManager {
             tokenId,
             keyword,
             hashFunctionId,
+            closestNode,
+            leftNeighborhoodEdge,
+            rightNeighborhoodEdge,
             epoch,
             latestStateIndex,
             callback,
             gasPrice,
-            closestNode,
-            leftNeighborhoodEdge,
-            rightNeighborhoodEdge,
         ]);
     }
 
@@ -273,24 +273,24 @@ class BlockchainModuleManager extends BaseModuleManager {
         tokenId,
         keyword,
         hashFunctionId,
-        epoch,
-        callback,
-        gasPrice,
         closestNode,
         leftNeighborhoodEdge,
         rightNeighborhoodEdge,
+        epoch,
+        callback,
+        gasPrice,
     ) {
         return this.callImplementationFunction(blockchain, 'submitUpdateCommit', [
             assetContractAddress,
             tokenId,
             keyword,
             hashFunctionId,
-            epoch,
-            callback,
-            gasPrice,
             closestNode,
             leftNeighborhoodEdge,
             rightNeighborhoodEdge,
+            epoch,
+            callback,
+            gasPrice,
         ]);
     }
 

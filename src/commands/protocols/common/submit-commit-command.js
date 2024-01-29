@@ -102,10 +102,10 @@ class SubmitCommitCommand extends Command {
                 tokenId,
                 keyword,
                 hashFunctionId,
-                epoch,
                 closestNode,
                 leftNeighborhoodEdge,
                 rightNeighborhoodEdge,
+                epoch,
                 stateIndex,
                 (result) => {
                     if (result?.error) {
