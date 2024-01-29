@@ -186,9 +186,13 @@ class EpochCheckCommand extends Command {
                         serviceAgreement.agreementId
                     }. Scheduling submitCommitCommand.`,
                 );
-
+                const closestNode = neighbourhood[0];
                 scheduleSubmitCommitCommands.push(
-                    this.scheduleSubmitCommitCommand(serviceAgreement, neighbourhoodEdges),
+                    this.scheduleSubmitCommitCommand(
+                        serviceAgreement,
+                        neighbourhoodEdges,
+                        closestNode,
+                    ),
                 );
             } catch (error) {
                 this.logger.warn(
@@ -343,8 +347,8 @@ class EpochCheckCommand extends Command {
             agreementId: agreement.agreementId,
             stateIndex: agreement.stateIndex,
             closestNode: closestNode.index,
-            leftNeighborhoodEdge: neighbourhoodEdges.leftNeighborhoodEdge.index,
-            rightNeighborhoodEdge: neighbourhoodEdges.rightNeighborhoodEdge.index,
+            leftNeighborhoodEdge: neighbourhoodEdges.leftEdge.index,
+            rightNeighborhoodEdge: neighbourhoodEdges.rightEdge.index,
         };
 
         await this.commandExecutor.add({
@@ -424,7 +428,7 @@ class EpochCheckCommand extends Command {
             blockchainId,
             assetHash,
         );
-        const hashRing = [assetPositionOnHashRing];
+        const hashRing = [];
 
         const maxDistance = await this.proximityScoringService.callProximityFunction(
             blockchainId,
@@ -439,30 +443,22 @@ class EpochCheckCommand extends Command {
             );
             if (assetPositionOnHashRing.lte(neighbourPositionOnHashRing)) {
                 if (neighbourPositionOnHashRing.sub(assetPositionOnHashRing).lt(maxDistance)) {
-                    hashRing.push(neighbourPositionOnHashRing);
+                    hashRing.push(neighbour);
                 } else {
-                    hashRing.unshift(neighbourPositionOnHashRing);
+                    hashRing.unshift(neighbour);
                 }
             } else if (assetPositionOnHashRing.gt(neighbourPositionOnHashRing)) {
                 if (assetPositionOnHashRing.sub(neighbourPositionOnHashRing).lt(maxDistance)) {
-                    hashRing.unshift(neighbourPositionOnHashRing);
+                    hashRing.unshift(neighbour);
                 } else {
-                    hashRing.push(neighbourPositionOnHashRing);
+                    hashRing.push(neighbour);
                 }
             }
         }
 
         return {
-            leftEdge: neighbourhood.find(async (node) => {
-                await this.blockchainModuleManager
-                    .toBigNumber(blockchainId, node[hashFunctionName])
-                    .eq(hashRing[0]);
-            }),
-            rightEdge: neighbourhood.find(async (node) => {
-                await this.blockchainModuleManager
-                    .toBigNumber(blockchainId, node[hashFunctionName])
-                    .eq(hashRing[hashRing.length - 1]);
-            }),
+            leftEdge: hashRing[0],
+            rightEdge: hashRing[hashRing.length - 1],
         };
     }
 

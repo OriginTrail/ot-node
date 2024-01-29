@@ -31,6 +31,7 @@ class ServiceAgreementService {
         keyword,
         hashFunctionId,
         proximityScoreFunctionsPairId,
+        maxNeighborhoodDistance,
     ) {
         const peerRecord = await this.repositoryModuleManager.getPeerRecord(peerId, blockchainId);
         const keyHash = await this.hashingService.callHashFunction(hashFunctionId, keyword);
@@ -49,6 +50,7 @@ class ServiceAgreementService {
             proximityScoreFunctionsPairId,
             distance,
             peerRecord.stake,
+            maxNeighborhoodDistance,
         );
     }
 }

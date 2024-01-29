@@ -21,6 +21,8 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         this.tripleStoreService = ctx.tripleStoreService;
         this.ualService = ctx.ualService;
         this.pendingStorageService = ctx.pendingStorageService;
+        this.shardingTableService = ctx.shardingTableService;
+        this.hashingService = ctx.hashingService;
 
         this.errorType = ERROR_TYPE.UPDATE.UPDATE_LOCAL_STORE_REMOTE_ERROR;
     }
@@ -67,12 +69,31 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         const r2 = await this.blockchainModuleManager.getR2(blockchain);
         const scheduleCommandsPromises = [];
 
+        const neighbourhood = await this.shardingTableService.findNeighbourhood(
+            blockchain,
+            keyword,
+            r2,
+            hashFunctionId,
+            proximityScoreFunctionsPairId,
+            true,
+        );
+
+        const neighbourhoodEdges = await this.getNeighboorhoodEdgeNodes(
+            neighbourhood,
+            blockchain,
+            hashFunctionId,
+            proximityScoreFunctionsPairId,
+            keyword,
+        );
+
         const rank = await this.calculateRank(
             blockchain,
             keyword,
             hashFunctionId,
             proximityScoreFunctionsPairId,
             r2,
+            neighbourhood,
+            neighbourhoodEdges,
         );
         if (rank != null) {
             this.logger.trace(`Calculated rank: ${rank + 1} for agreement id:  ${agreementId}`);
@@ -156,20 +177,28 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         return delay;
     }
 
-    async calculateRank(blockchain, keyword, hashFunctionId, proximityScoreFunctionsPairId, r2) {
-        const neighbourhood = await this.shardingTableService.findNeighbourhood(
-            blockchain,
-            keyword,
-            r2,
-            hashFunctionId,
-            proximityScoreFunctionsPairId,
-            true,
-        );
-
+    async calculateRank(
+        blockchain,
+        keyword,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+        r2,
+        neighbourhood,
+        neighbourhoodEdges,
+    ) {
         const peerId = this.networkModuleManager.getPeerId().toB58String();
         if (!neighbourhood.some((node) => node.peerId === peerId)) {
             return;
         }
+
+        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
+
+        const maxNeighborhoodDistance = await this.proximityScoringService.callProximityFunction(
+            blockchain,
+            proximityScoreFunctionsPairId,
+            neighbourhoodEdges.leftEdge[hashFunctionName],
+            neighbourhoodEdges.rightEdge[hashFunctionName],
+        );
 
         const scores = await Promise.all(
             neighbourhood.map(async (node) => ({
@@ -179,6 +208,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
                     keyword,
                     hashFunctionId,
                     proximityScoreFunctionsPairId,
+                    maxNeighborhoodDistance,
                 ),
                 peerId: node.peerId,
             })),
@@ -187,6 +217,53 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         scores.sort((a, b) => b.score - a.score);
 
         return scores.findIndex((node) => node.peerId === peerId);
+    }
+
+    async getNeighboorhoodEdgeNodes(
+        neighbourhood,
+        blockchainId,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+        assetHash,
+    ) {
+        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
+        const assetPositionOnHashRing = await this.blockchainModuleManager.toBigNumber(
+            blockchainId,
+            assetHash,
+        );
+        const hashRing = [];
+
+        const maxDistance = await this.proximityScoringService.callProximityFunction(
+            blockchainId,
+            proximityScoreFunctionsPairId,
+            neighbourhood[neighbourhood.length - 1][hashFunctionName],
+            assetHash,
+        );
+        for (const neighbour of neighbourhood) {
+            // eslint-disable-next-line no-await-in-loop
+            const neighbourPositionOnHashRing = await this.blockchainModuleManager.toBigNumber(
+                blockchainId,
+                neighbour[hashFunctionName],
+            );
+            if (assetPositionOnHashRing.lte(neighbourPositionOnHashRing)) {
+                if (neighbourPositionOnHashRing.sub(assetPositionOnHashRing).lt(maxDistance)) {
+                    hashRing.push(neighbour);
+                } else {
+                    hashRing.unshift(neighbour);
+                }
+            } else if (assetPositionOnHashRing.gt(neighbourPositionOnHashRing)) {
+                if (assetPositionOnHashRing.sub(neighbourPositionOnHashRing).lt(maxDistance)) {
+                    hashRing.unshift(neighbour);
+                } else {
+                    hashRing.push(neighbour);
+                }
+            }
+        }
+
+        return {
+            leftEdge: hashRing[0],
+            rightEdge: hashRing[hashRing.length - 1],
+        };
     }
 
     /**
