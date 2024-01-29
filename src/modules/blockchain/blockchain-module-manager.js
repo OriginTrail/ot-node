@@ -409,6 +409,10 @@ class BlockchainModuleManager extends BaseModuleManager {
     convertUint8ArrayToHex(blockchain, uint8Array) {
         return this.callImplementationFunction(blockchain, 'convertUint8ArrayToHex', [uint8Array]);
     }
+
+    getLinearSumParams(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getLinearSumParams');
+    }
 }
 
 export default BlockchainModuleManager;

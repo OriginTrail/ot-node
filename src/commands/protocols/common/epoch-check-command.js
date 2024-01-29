@@ -135,6 +135,14 @@ class EpochCheckCommand extends Command {
                 true,
             );
 
+            const neighbourhoodEdges = this.getNeighboorhoodEdgeNodes(
+                neighbourhood,
+                blockchain,
+                serviceAgreement.hashFunctionId,
+                serviceAgreement.scoreFunctionId,
+                serviceAgreement.keyword,
+            );
+
             try {
                 const rank = await this.calculateRank(
                     blockchain,
@@ -143,6 +151,7 @@ class EpochCheckCommand extends Command {
                     serviceAgreement.scoreFunctionId,
                     r2,
                     neighbourhood,
+                    neighbourhoodEdges,
                 );
 
                 updateServiceAgreementsLastCommitEpoch.push(
@@ -177,13 +186,7 @@ class EpochCheckCommand extends Command {
                         serviceAgreement.agreementId
                     }. Scheduling submitCommitCommand.`,
                 );
-                const neighbourhoodEdges = this.getNeighboorhoodEdgeNodes(
-                    neighbourhood,
-                    blockchain,
-                    serviceAgreement.hashFunctionId,
-                    serviceAgreement.scoreFunctionId,
-                    serviceAgreement.keyword,
-                );
+
                 scheduleSubmitCommitCommands.push(
                     this.scheduleSubmitCommitCommand(serviceAgreement, neighbourhoodEdges),
                 );
@@ -270,6 +273,8 @@ class EpochCheckCommand extends Command {
         if (!neighbourhood.some((node) => node.peerId === peerId)) {
             return;
         }
+
+        // const maxNeighborhoodDistance = this.proximityScoringService.g
 
         const scores = await Promise.all(
             neighbourhood.map(async (node) => ({

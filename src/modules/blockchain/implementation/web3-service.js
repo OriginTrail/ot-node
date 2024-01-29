@@ -49,10 +49,12 @@ const ABIs = {
     ShardingTableStorage: require('dkg-evm-module/abi/ShardingTableStorageV2.json'),
     ServiceAgreementStorageProxy: require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json'),
     UnfinalizedStateStorage: require('dkg-evm-module/abi/UnfinalizedStateStorage.json'),
+    LinearSum: require('dkg-evm-module/abi/LinearSum.json'),
 };
 
 const SCORING_FUNCTIONS = {
     1: 'Log2PLDSF',
+    2: 'LinearSum',
 };
 
 class Web3Service {
@@ -1250,6 +1252,19 @@ class Web3Service {
             'getAgreementScoreFunctionId',
             [agreementId],
         );
+    }
+
+    async getLinearSumParams() {
+        const linearSumParams = await this.callContractFunction(
+            this.scoringFunctionsContracts[2],
+            'getParameters',
+            [],
+        );
+        return {
+            distanceScaleFactor: linearSumParams[0],
+            w1: linearSumParams[1],
+            w2: linearSumParams[2],
+        };
     }
 }
 
