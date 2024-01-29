@@ -23,6 +23,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         this.pendingStorageService = ctx.pendingStorageService;
         this.shardingTableService = ctx.shardingTableService;
         this.hashingService = ctx.hashingService;
+        this.proximityScoringService = ctx.proximityScoringService;
 
         this.errorType = ERROR_TYPE.UPDATE.UPDATE_LOCAL_STORE_REMOTE_ERROR;
     }
@@ -78,6 +79,8 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             true,
         );
 
+        const closestNode = neighbourhood[0];
+
         const neighbourhoodEdges = await this.getNeighboorhoodEdgeNodes(
             neighbourhood,
             blockchain,
@@ -120,6 +123,9 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
                         r2,
                         updateCommitWindowDuration,
                         proximityScoreFunctionsPairId,
+                        closestNode: closestNode.index,
+                        leftNeighborhoodEdge: neighbourhoodEdges.leftEdge.index,
+                        rightNeighborhoodEdge: neighbourhoodEdges.rightEdge.index,
                     },
                     transactional: false,
                 }),
