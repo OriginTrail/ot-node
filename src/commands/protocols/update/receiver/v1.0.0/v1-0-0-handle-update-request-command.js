@@ -98,6 +98,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
                         r0,
                         r2,
                         updateCommitWindowDuration,
+                        proximityScoreFunctionsPairId,
                     },
                     transactional: false,
                 }),

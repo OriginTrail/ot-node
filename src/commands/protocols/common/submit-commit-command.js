@@ -31,6 +31,7 @@ class SubmitCommitCommand extends Command {
             closestNode,
             leftNeighborhoodEdge,
             rightNeighborhoodEdge,
+            proximityScoreFunctionsPairId,
         } = command.data;
 
         this.logger.trace(
@@ -79,6 +80,7 @@ class SubmitCommitCommand extends Command {
             agreementId,
             epoch,
             stateIndex,
+            proximityScoreFunctionsPairId,
         );
         if (alreadySubmitted) {
             this.logger.trace(
@@ -103,9 +105,6 @@ class SubmitCommitCommand extends Command {
                 keyword,
                 hashFunctionId,
                 epoch,
-                closestNode,
-                leftNeighborhoodEdge,
-                rightNeighborhoodEdge,
                 stateIndex,
                 (result) => {
                     if (result?.error) {
@@ -119,6 +118,10 @@ class SubmitCommitCommand extends Command {
                     resolve(true);
                 },
                 txGasPrice,
+                proximityScoreFunctionsPairId,
+                closestNode,
+                leftNeighborhoodEdge,
+                rightNeighborhoodEdge,
             );
         });
 
@@ -182,12 +185,19 @@ class SubmitCommitCommand extends Command {
         return Command.empty();
     }
 
-    async commitAlreadySubmitted(blockchain, agreementId, epoch, stateIndex) {
+    async commitAlreadySubmitted(
+        blockchain,
+        agreementId,
+        epoch,
+        stateIndex,
+        proximityScoreFunctionsPairId,
+    ) {
         const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
             blockchain,
             agreementId,
             epoch,
             stateIndex,
+            proximityScoreFunctionsPairId,
         );
         const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
 

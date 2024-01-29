@@ -194,27 +194,48 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'convertFromWei', [value, toUnit]);
     }
 
-    async isCommitWindowOpen(blockchain, agreementId, epoch, stateIndex) {
+    async isCommitWindowOpen(
+        blockchain,
+        agreementId,
+        epoch,
+        stateIndex,
+        proximityScoreFunctionsPairId,
+    ) {
         return this.callImplementationFunction(blockchain, 'isCommitWindowOpen', [
             agreementId,
             epoch,
             stateIndex,
+            proximityScoreFunctionsPairId,
         ]);
     }
 
-    async isUpdateCommitWindowOpen(blockchain, agreementId, epoch, latestStateIndex) {
+    async isUpdateCommitWindowOpen(
+        blockchain,
+        agreementId,
+        epoch,
+        latestStateIndex,
+        proximityScoreFunctionsPairId,
+    ) {
         return this.callImplementationFunction(blockchain, 'isUpdateCommitWindowOpen', [
             agreementId,
             epoch,
             latestStateIndex,
+            proximityScoreFunctionsPairId,
         ]);
     }
 
-    async getTopCommitSubmissions(blockchain, agreementId, epoch, latestStateIndex) {
+    async getTopCommitSubmissions(
+        blockchain,
+        agreementId,
+        epoch,
+        latestStateIndex,
+        proximityScoreFunctionsPairId,
+    ) {
         return this.callImplementationFunction(blockchain, 'getTopCommitSubmissions', [
             agreementId,
             epoch,
             latestStateIndex,
+            proximityScoreFunctionsPairId,
         ]);
     }
 
@@ -248,6 +269,10 @@ class BlockchainModuleManager extends BaseModuleManager {
         latestStateIndex,
         callback,
         gasPrice,
+        proximityScoreFunctionsPairId,
+        closestNode,
+        leftNeighborhoodEdge,
+        rightNeighborhoodEdge,
     ) {
         return this.callImplementationFunction(blockchain, 'submitCommit', [
             assetContractAddress,
@@ -258,6 +283,10 @@ class BlockchainModuleManager extends BaseModuleManager {
             latestStateIndex,
             callback,
             gasPrice,
+            proximityScoreFunctionsPairId,
+            closestNode,
+            leftNeighborhoodEdge,
+            rightNeighborhoodEdge,
         ]);
     }
 
@@ -270,6 +299,10 @@ class BlockchainModuleManager extends BaseModuleManager {
         epoch,
         callback,
         gasPrice,
+        proximityScoreFunctionsPairId,
+        closestNode,
+        leftNeighborhoodEdge,
+        rightNeighborhoodEdge,
     ) {
         return this.callImplementationFunction(blockchain, 'submitUpdateCommit', [
             assetContractAddress,
@@ -279,6 +312,10 @@ class BlockchainModuleManager extends BaseModuleManager {
             epoch,
             callback,
             gasPrice,
+            proximityScoreFunctionsPairId,
+            closestNode,
+            leftNeighborhoodEdge,
+            rightNeighborhoodEdge,
         ]);
     }
 

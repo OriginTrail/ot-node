@@ -27,6 +27,10 @@ class SubmitUpdateCommitCommand extends Command {
             agreementId,
             operationId,
             gasPrice,
+            proximityScoreFunctionsPairId,
+            closestNode,
+            leftNeighborhoodEdge,
+            rightNeighborhoodEdge,
         } = command.data;
 
         this.logger.trace(
@@ -86,6 +90,10 @@ class SubmitUpdateCommitCommand extends Command {
                     resolve();
                 },
                 txGasPrice,
+                proximityScoreFunctionsPairId,
+                closestNode,
+                leftNeighborhoodEdge,
+                rightNeighborhoodEdge,
             );
         });
 

@@ -34,6 +34,7 @@ class SubmitProofsCommand extends Command {
             assertionId,
             stateIndex,
             gasPrice,
+            proximityScoreFunctionsPairId,
         } = command.data;
 
         this.logger.trace(
@@ -122,6 +123,7 @@ class SubmitProofsCommand extends Command {
             agreementId,
             epoch,
             stateIndex,
+            proximityScoreFunctionsPairId,
         );
         if (alreadySubmitted) {
             this.logger.trace(
@@ -218,12 +220,19 @@ class SubmitProofsCommand extends Command {
         return Command.empty();
     }
 
-    async proofAlreadySubmitted(blockchain, agreementId, epoch, stateIndex) {
+    async proofAlreadySubmitted(
+        blockchain,
+        agreementId,
+        epoch,
+        stateIndex,
+        proximityScoreFunctionsPairId,
+    ) {
         const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
             blockchain,
             agreementId,
             epoch,
             stateIndex,
+            proximityScoreFunctionsPairId,
         );
         const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
 

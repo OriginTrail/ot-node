@@ -228,6 +228,7 @@ class EpochCheckCommand extends Command {
                     serviceAgreement.currentEpoch,
                     serviceAgreement.stateIndex,
                     r0,
+                    serviceAgreement.scoreFunctionId,
                 );
                 if (eligibleForReward) {
                     this.logger.trace(
@@ -303,13 +304,21 @@ class EpochCheckCommand extends Command {
         return scores.findIndex((node) => node.peerId === peerId);
     }
 
-    async isEligibleForRewards(blockchain, agreementId, epoch, stateIndex, r0) {
+    async isEligibleForRewards(
+        blockchain,
+        agreementId,
+        epoch,
+        stateIndex,
+        r0,
+        proximityScoreFunctionsPairId,
+    ) {
         const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
         const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
             blockchain,
             agreementId,
             epoch,
             stateIndex,
+            proximityScoreFunctionsPairId,
         );
 
         for (const commit of commits.slice(0, r0)) {
@@ -329,6 +338,7 @@ class EpochCheckCommand extends Command {
             tokenId: agreement.tokenId,
             keyword: agreement.keyword,
             hashFunctionId: agreement.hashFunctionId,
+            proximityScoreFunctionsPairId: agreement.scoreFunctionId,
             epoch: agreement.currentEpoch,
             agreementId: agreement.agreementId,
             stateIndex: agreement.stateIndex,
@@ -354,6 +364,7 @@ class EpochCheckCommand extends Command {
             tokenId: agreement.tokenId,
             keyword: agreement.keyword,
             hashFunctionId: agreement.hashFunctionId,
+            proximityScoreFunctionsPairId: agreement.scoreFunctionId,
             epoch: agreement.currentEpoch,
             agreementId: agreement.agreementId,
             assertionId: agreement.assertionId,
