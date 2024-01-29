@@ -95,7 +95,11 @@ class AssetSyncCommand extends Command {
             const tokenIdsForSync = [];
 
             if (latestSyncedTokenId > 0) {
-                const tokenIds = await this.getMissedTokenIds(blockchain, contract);
+                const tokenIds = await this.getMissedTokenIds(
+                    blockchain,
+                    contract,
+                    latestSyncedTokenId,
+                );
                 if (tokenIds?.length) {
                     this.logger.info(
                         `ASSET_SYNC: Found ${tokenIds.length} missed assets, syncing for blockchain: ${blockchain}`,
@@ -267,27 +271,26 @@ class AssetSyncCommand extends Command {
     }
 
     async getMissedTokenIds(blockchain, contract) {
+        const assetSyncTokenIdsLimit = 1000000;
         const tokenIds = await this.repositoryModuleManager.getAssetSyncTokenIds(
             blockchain,
             contract,
+            assetSyncTokenIdsLimit,
         );
         const tokenIdsSet = new Set(tokenIds); // Convert array to set for O(1) lookup
         const missedTokenIds = [];
 
-        if (tokenIds.length - 1 !== tokenIds[tokenIds.length - 1]) {
-            for (let i = 0; i < tokenIds[tokenIds.length - 1]; i += 1) {
-                if (!tokenIdsSet.has(i)) {
-                    missedTokenIds.push(i);
-                }
-                if (i % 10_000 === 0) {
-                    // yield control to event loop
-                    await new Promise((resolve) => {
-                        setImmediate(resolve);
-                    });
-                }
+        for (let i = tokenIds[tokenIds.length - 1]; i < tokenIds[0]; i += 1) {
+            if (!tokenIdsSet.has(i)) {
+                missedTokenIds.push(i);
+            }
+            if (i % 10_000 === 0) {
+                // yield control to event loop
+                await new Promise((resolve) => {
+                    setImmediate(resolve);
+                });
             }
         }
-
         return missedTokenIds;
     }
 

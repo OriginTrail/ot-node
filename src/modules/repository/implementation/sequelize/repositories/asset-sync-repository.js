@@ -87,7 +87,7 @@ class AssetSyncRepository {
         });
     }
 
-    async getAssetSyncTokenIds(blockchainId, assetStorageContract) {
+    async getAssetSyncTokenIds(blockchainId, assetStorageContract, limit) {
         const tokenIds = await this.model.findAll({
             attributes: ['tokenId'],
             where: {
@@ -100,7 +100,8 @@ class AssetSyncRepository {
                     ],
                 },
             },
-            order: [['tokenId', 'ASC']],
+            order: [['tokenId', 'DESC']],
+            limit,
         });
         return tokenIds.map((t) => t.tokenId);
     }

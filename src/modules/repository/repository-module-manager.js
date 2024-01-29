@@ -261,9 +261,13 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async getAssetSyncTokenIds(blockchain, contract) {
+    async getAssetSyncTokenIds(blockchain, contract, limit) {
         if (this.initialized) {
-            return this.getRepository('asset_sync').getAssetSyncTokenIds(blockchain, contract);
+            return this.getRepository('asset_sync').getAssetSyncTokenIds(
+                blockchain,
+                contract,
+                limit,
+            );
         }
     }
 
