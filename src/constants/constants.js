@@ -560,6 +560,7 @@ export const CONTRACTS = {
     SERVICE_AGREEMENT_V1_CONTRACT: 'ServiceAgreementV1Contract',
     PARAMETERS_STORAGE_CONTRACT: 'ParametersStorageContract',
     IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
+    Log2PLDSF: 'Log2PLDSF',
 };
 
 export const CONTRACT_EVENTS = {
@@ -615,8 +616,13 @@ export const CACHED_FUNCTIONS = {
         commitWindowDurationPerc: CACHE_DATA_TYPES.NUMBER,
         proofWindowDurationPerc: CACHE_DATA_TYPES.NUMBER,
         epochLength: CACHE_DATA_TYPES.NUMBER,
+        minimumStake: null,
+        maximumStake: null,
     },
     IdentityStorageContract: {
         getIdentityId: CACHE_DATA_TYPES.NUMBER,
+    },
+    Log2PLDSF: {
+        getParameters: null,
     },
 };

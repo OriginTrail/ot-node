@@ -1077,7 +1077,7 @@ class Web3Service {
     }
 
     async getShardingTableHead() {
-        return this.callContractFunction(this.ShardingTableStorageContract, 'head', []);
+        return this.callContractFunction(this.ShardingTableStorageContract, 'getNodeByIndex', [0]);
     }
 
     async getShardingTableLength() {
@@ -1207,6 +1207,7 @@ class Web3Service {
             this.scoringFunctionsContracts[1],
             'getParameters',
             [],
+            CONTRACTS.Log2PLDSF,
         );
 
         const params = {};
