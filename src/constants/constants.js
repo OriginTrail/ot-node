@@ -615,8 +615,6 @@ export const CACHED_FUNCTIONS = {
         commitWindowDurationPerc: CACHE_DATA_TYPES.NUMBER,
         proofWindowDurationPerc: CACHE_DATA_TYPES.NUMBER,
         epochLength: CACHE_DATA_TYPES.NUMBER,
-        maximumStake: CACHE_DATA_TYPES.NUMBER,
-        minimumStake: CACHE_DATA_TYPES.NUMBER,
     },
     IdentityStorageContract: {
         getIdentityId: CACHE_DATA_TYPES.NUMBER,

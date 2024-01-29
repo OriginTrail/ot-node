@@ -74,7 +74,11 @@ class ProximityScoringService {
     }
 
     async Log2PLDSF(blockchain, distance, stake) {
-        const log2PLDSFParams = await this.blockchainModuleManager.getLog2PLDSFParams(blockchain);
+        if (!this.log2PLDSFParams) {
+            this.log2PLDSFParams = await this.blockchainModuleManager.getLog2PLDSFParams(
+                blockchain,
+            );
+        }
 
         const {
             distanceMappingCoefficient,
@@ -87,7 +91,7 @@ class ProximityScoringService {
             c,
             distanceExponent,
             d,
-        } = log2PLDSFParams;
+        } = this.log2PLDSFParams;
 
         const mappedStake = this.blockchainModuleManager
             .toBigNumber(blockchain, this.blockchainModuleManager.convertToWei(blockchain, stake))
