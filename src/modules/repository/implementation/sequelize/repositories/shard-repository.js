@@ -41,6 +41,7 @@ class ShardRepository {
             where: {
                 blockchainId,
             },
+            attributes: ['peerId', 'blockchainId', 'ask', 'stake', 'lastSeen', 'sha256'],
             order: [['sha256Blob', 'ASC']],
         };
 
