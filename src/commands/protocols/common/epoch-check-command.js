@@ -135,7 +135,7 @@ class EpochCheckCommand extends Command {
                 true,
             );
 
-            const neighbourhoodEdges = this.getNeighboorhoodEdgeNodes(
+            const neighbourhoodEdges = await this.getNeighboorhoodEdgeNodes(
                 neighbourhood,
                 blockchain,
                 serviceAgreement.hashFunctionId,
@@ -268,13 +268,21 @@ class EpochCheckCommand extends Command {
         proximityScoreFunctionsPairId,
         r2,
         neighbourhood,
+        neighbourhoodEdges,
     ) {
         const peerId = this.networkModuleManager.getPeerId().toB58String();
         if (!neighbourhood.some((node) => node.peerId === peerId)) {
             return;
         }
 
-        // const maxNeighborhoodDistance = this.proximityScoringService.g
+        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
+
+        const maxNeighborhoodDistance = await this.proximityScoringService.callProximityFunction(
+            blockchain,
+            proximityScoreFunctionsPairId,
+            neighbourhoodEdges.leftEdge[hashFunctionName],
+            neighbourhoodEdges.rightEdge[hashFunctionName],
+        );
 
         const scores = await Promise.all(
             neighbourhood.map(async (node) => ({
@@ -284,6 +292,7 @@ class EpochCheckCommand extends Command {
                     keyword,
                     hashFunctionId,
                     proximityScoreFunctionsPairId,
+                    maxNeighborhoodDistance,
                 ),
                 peerId: node.peerId,
             })),
@@ -406,10 +415,10 @@ class EpochCheckCommand extends Command {
         );
         const hashRing = [assetPositionOnHashRing];
 
-        const maxDistance = this.proximityScoringService.callProximityFunction(
+        const maxDistance = await this.proximityScoringService.callProximityFunction(
             blockchainId,
             proximityScoreFunctionsPairId,
-            neighbourhood[neighbourhood.length - 1],
+            neighbourhood[neighbourhood.length - 1][hashFunctionName],
             assetHash,
         );
         for (const neighbour of neighbourhood) {
@@ -433,10 +442,16 @@ class EpochCheckCommand extends Command {
         }
 
         return {
-            leftEdge: neighbourhood.find((node) => node[hashFunctionName] === hashRing[0]),
-            rightEdge: neighbourhood.find(
-                (node) => node[hashFunctionName] === hashRing[hashRing.length() - 1],
-            ),
+            leftEdge: neighbourhood.find(async (node) => {
+                await this.blockchainModuleManager
+                    .toBigNumber(blockchainId, node[hashFunctionName])
+                    .eq(hashRing[0]);
+            }),
+            rightEdge: neighbourhood.find(async (node) => {
+                await this.blockchainModuleManager
+                    .toBigNumber(blockchainId, node[hashFunctionName])
+                    .eq(hashRing[hashRing.length - 1]);
+            }),
         };
     }
 
