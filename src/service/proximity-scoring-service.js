@@ -1,5 +1,10 @@
 import { xor as uint8ArrayXor } from 'uint8arrays/xor';
-import { HASH_RING_SIZE, UINT128_MAX_BN } from '../constants/constants.js';
+import {
+    HASH_RING_SIZE,
+    UINT40_MAX_BN,
+    UINT64_MAX_BN,
+    UINT256_MAX_BN,
+} from '../constants/constants.js';
 
 class ProximityScoringService {
     constructor(ctx) {
@@ -9,7 +14,7 @@ class ProximityScoringService {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
 
         this.proximityScoreFunctionsPairs = {
-            1: [this.calculateBinaryXOR.bind(this), this.Log2PLDSF.bind(this)],
+            1: [this.calculateBinaryXOR.bind(this), this.log2PLDSF.bind(this)],
             2: [
                 this.calculateBidirectionalProximityOnHashRing.bind(this),
                 this.linearSum.bind(this),
@@ -73,7 +78,7 @@ class ProximityScoringService {
         return directDistance.lt(wraparoundDistance) ? directDistance : wraparoundDistance;
     }
 
-    async Log2PLDSF(blockchain, distance, stake) {
+    async log2PLDSF(blockchain, distance, stake) {
         const log2PLDSFParams = await this.blockchainModuleManager.getLog2PLDSFParams(blockchain);
 
         const {
@@ -110,29 +115,64 @@ class ProximityScoringService {
         };
     }
 
-    async linearSum(blockchain, distance, stake, maxNeighborhoodDistance) {
+    async linearSum(
+        blockchain,
+        distance,
+        stake,
+        maxNeighborhoodDistance,
+        r2,
+        nodesNumber,
+        minStake,
+        maxStake,
+    ) {
         const linearSumParams = await this.blockchainModuleManager.getLinearSumParams(blockchain);
-        const { distanceScaleFactor, w1, w2 } = linearSumParams;
-        const minimumStake = await this.blockchainModuleManager.getMinimumStake(blockchain);
-        const maximumStake = await this.blockchainModuleManager.getMaximumStake(blockchain);
+        const { distanceScaleFactor, stakeScaleFactor, w1, w2 } = linearSumParams;
 
-        let dividend = distance;
-        let divisor = maxNeighborhoodDistance;
-        if (dividend.gt(UINT128_MAX_BN) || divisor.gt(UINT128_MAX_BN)) {
-            dividend = dividend.div(distanceScaleFactor);
-            divisor = divisor.div(distanceScaleFactor);
+        const idealMaxDistanceInNeighborhood = HASH_RING_SIZE.div(nodesNumber).mul(
+            Math.ceil(r2 / 2),
+        );
+        const divisor =
+            maxNeighborhoodDistance <= idealMaxDistanceInNeighborhood
+                ? maxNeighborhoodDistance
+                : idealMaxDistanceInNeighborhood;
+
+        const maxMultiplier = UINT256_MAX_BN.div(distance);
+
+        let scaledDistanceScaleFactor = distanceScaleFactor;
+        let compensationFactor = 1;
+
+        if (scaledDistanceScaleFactor.gt(maxMultiplier)) {
+            compensationFactor = scaledDistanceScaleFactor.div(maxMultiplier);
+            scaledDistanceScaleFactor = maxMultiplier;
         }
 
-        const divResult = dividend.mul(distanceScaleFactor).div(divisor);
+        const scaledDistance = distance.mul(scaledDistanceScaleFactor);
+        const adjustedDivisor = divisor.div(compensationFactor);
 
-        const mappedDistance =
-            parseFloat(divResult.toString()) / parseFloat(distanceScaleFactor.toString());
-        const mappedStake = (stake - minimumStake) / (maximumStake - minimumStake);
+        let normalizedDistance = scaledDistance.div(adjustedDivisor);
+        if (normalizedDistance.gt(UINT64_MAX_BN)) {
+            normalizedDistance = normalizedDistance.mod(UINT64_MAX_BN.add(1));
+        }
 
-        const proximityScore = w1 * (1 - mappedDistance);
-        const stakeScore = w2 * mappedStake;
+        let normalizedStake = stakeScaleFactor.mul(stake - minStake).div(maxStake - minStake);
+        if (normalizedStake.gt(UINT64_MAX_BN)) {
+            normalizedStake = normalizedStake.mod(UINT64_MAX_BN.add(1));
+        }
 
-        return proximityScore + stakeScore;
+        const oneEther = await this.blockchainModuleManager.toBigNumber(
+            blockchain,
+            '1000000000000000000',
+        );
+
+        const proximityScore = oneEther.sub(normalizedDistance).mul(w1);
+        const stakeScore = normalizedStake.mul(w2);
+
+        let finalScore = proximityScore.add(stakeScore);
+        if (finalScore.gt(UINT40_MAX_BN)) {
+            finalScore = finalScore.mod(UINT40_MAX_BN.add(1));
+        }
+
+        return finalScore;
     }
 }
 

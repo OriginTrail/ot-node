@@ -12,6 +12,10 @@ export const UINT256_MAX_BN = BigNumber.from(2).pow(256).sub(1);
 
 export const UINT128_MAX_BN = BigNumber.from(2).pow(128).sub(1);
 
+export const UINT64_MAX_BN = BigNumber.from(2).pow(64).sub(1);
+
+export const UINT40_MAX_BN = BigNumber.from(2).pow(40).sub(1);
+
 export const UINT32_MAX_BN = BigNumber.from(2).pow(32).sub(1);
 
 export const HASH_RING_SIZE = BigNumber.from(2).pow(256);
