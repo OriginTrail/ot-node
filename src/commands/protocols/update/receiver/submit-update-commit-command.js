@@ -84,6 +84,9 @@ class SubmitUpdateCommitCommand extends Command {
                 tokenId,
                 keyword,
                 hashFunctionId,
+                closestNode,
+                leftNeighborhoodEdge,
+                rightNeighborhoodEdge,
                 epoch,
                 (result) => {
                     if (result?.error) {
@@ -93,9 +96,6 @@ class SubmitUpdateCommitCommand extends Command {
                     resolve();
                 },
                 txGasPrice,
-                closestNode,
-                leftNeighborhoodEdge,
-                rightNeighborhoodEdge,
             );
         });
 
