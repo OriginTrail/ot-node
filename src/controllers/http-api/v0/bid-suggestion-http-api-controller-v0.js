@@ -52,7 +52,7 @@ class BidSuggestionController extends BaseController {
         } = req.query;
         let { proximityScoreFunctionsPairId } = req.query;
         try {
-            // ADD-DOCS
+            // TODO: ADD-DOCS
             if (!proximityScoreFunctionsPairId) {
                 if (blockchain.startsWith('otp') || blockchain.startsWith('hardhat1'))
                     proximityScoreFunctionsPairId = 1;
