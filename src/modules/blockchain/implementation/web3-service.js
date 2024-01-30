@@ -1029,12 +1029,19 @@ class Web3Service {
         gasPrice,
     ) {
         const submitCommitArgs = [assetContractAddress, tokenId, keyword, hashFunctionId, epoch];
-        if (closestNode && leftNeighborhoodEdge && rightNeighborhoodEdge) {
+        let functionName = 'submitUpdateCommit((address,uint256,bytes,uint8,uint16))';
+        if (
+            closestNode !== undefined &&
+            leftNeighborhoodEdge !== undefined &&
+            rightNeighborhoodEdge !== undefined
+        ) {
             submitCommitArgs.push(closestNode, leftNeighborhoodEdge, rightNeighborhoodEdge);
+            functionName =
+                'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))';
         }
         return this.queueTransaction(
             this.CommitManagerV1U1Contract,
-            'submitUpdateCommit',
+            functionName,
             [submitCommitArgs],
             callback,
             gasPrice,
