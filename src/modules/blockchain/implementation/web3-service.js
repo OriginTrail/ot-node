@@ -1282,10 +1282,10 @@ class Web3Service {
             [],
         );
         return {
-            distanceScaleFactor: linearSumParams[0],
-            stakeScaleFactor: linearSumParams[1],
-            w1: linearSumParams[2],
-            w2: linearSumParams[3],
+            distanceScaleFactor: BigNumber.from(linearSumParams[0]),
+            stakeScaleFactor: BigNumber.from(linearSumParams[1]),
+            w1: Number(linearSumParams[2]),
+            w2: Number(linearSumParams[3]),
         };
     }
 }
