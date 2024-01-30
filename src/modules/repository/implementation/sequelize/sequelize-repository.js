@@ -94,7 +94,13 @@ class SequelizeRepository {
 
     async runMigrations() {
         const migrator = createMigrator(this.models.sequelize, this.config, this.logger);
-        await migrator.up();
+        try {
+            await migrator.up();
+        } catch (error) {
+            this.logger.error(`Failed to execute ${migrator.name} migration: ${error.message}.`);
+            await migrator.down();
+            throw error;
+        }
     }
 
     async loadModels() {
