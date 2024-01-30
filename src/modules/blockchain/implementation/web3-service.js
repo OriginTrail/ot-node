@@ -482,6 +482,12 @@ class Web3Service {
         } catch (error) {
             const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
 
+            if (error.transaction === undefined) {
+                throw new Error(
+                    `Gas estimation for ${functionName} has failed, reason: ${decodedErrorData}`,
+                );
+            }
+
             const functionFragment = contractInstance.interface.getFunction(
                 error.transaction.data.slice(0, 10),
             );
