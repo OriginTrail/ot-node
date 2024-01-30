@@ -67,6 +67,7 @@ class BlockchainEventListenerService {
                 currentBlock,
                 CONTRACT_EVENTS.PROFILE,
             ),
+            // TODO: Update with new commit managers
             this.getContractEvents(
                 blockchainId,
                 CONTRACTS.COMMIT_MANAGER_V1_U1_CONTRACT,
