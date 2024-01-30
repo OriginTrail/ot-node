@@ -132,7 +132,7 @@ class SubmitCommitCommand extends Command {
                     `Token ID: ${tokenId}, Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, ` +
                     `Epoch: ${epoch}, State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
                     `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
-                    `Right neighborhood edge: ${rightNeighborhoodEdge}` +
+                    `Right neighborhood edge: ${rightNeighborhoodEdge}, ` +
                     `Retry number: ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}.`,
             );
 
