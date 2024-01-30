@@ -875,8 +875,8 @@ class Web3Service {
 
     selectCommitManagerContract(latestStateIndex) {
         return latestStateIndex === 0
-            ? this.CommitManagerV2Contract
-            : this.CommitManagerV2U1Contract;
+            ? this.CommitManagerV1Contract
+            : this.CommitManagerV1U1Contract;
     }
 
     async isCommitWindowOpen(agreementId, epoch, latestStateIndex) {
@@ -889,7 +889,7 @@ class Web3Service {
 
     async isUpdateCommitWindowOpen(agreementId, epoch, stateIndex) {
         return this.callContractFunction(
-            this.CommitManagerV2U1Contract,
+            this.CommitManagerV1U1Contract,
             'isUpdateCommitWindowOpen',
             [agreementId, epoch, stateIndex],
         );
@@ -1020,7 +1020,7 @@ class Web3Service {
             submitCommitArgs.push(closestNode, leftNeighborhoodEdge, rightNeighborhoodEdge);
         }
         return this.queueTransaction(
-            this.CommitManagerV2U1Contract,
+            this.CommitManagerV1U1Contract,
             'submitUpdateCommit',
             [submitCommitArgs],
             callback,
