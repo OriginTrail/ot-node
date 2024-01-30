@@ -317,12 +317,14 @@ class ShardingTableService {
         blockchainId,
         hashFunctionId,
         proximityScoreFunctionsPairId,
-        assetHash,
+        key,
     ) {
+        const keyHash = await this.hashingService.callHashFunction(hashFunctionId, key);
+
         const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
         const assetPositionOnHashRing = await this.blockchainModuleManager.toBigNumber(
             blockchainId,
-            assetHash,
+            keyHash,
         );
         const hashRing = [];
 
@@ -330,7 +332,7 @@ class ShardingTableService {
             blockchainId,
             proximityScoreFunctionsPairId,
             neighbourhood[neighbourhood.length - 1][hashFunctionName],
-            assetHash,
+            keyHash,
         );
         for (const neighbour of neighbourhood) {
             // eslint-disable-next-line no-await-in-loop
