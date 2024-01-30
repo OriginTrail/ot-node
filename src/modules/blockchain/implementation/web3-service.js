@@ -43,6 +43,8 @@ const ABIs = {
     ServiceAgreementV1: require('dkg-evm-module/abi/ServiceAgreementV1.json'),
     CommitManagerV1: require('dkg-evm-module/abi/CommitManagerV2.json'),
     CommitManagerV1U1: require('dkg-evm-module/abi/CommitManagerV2U1.json'),
+    CommitManagerV2: require('dkg-evm-module/abi/CommitManagerV2.json'),
+    CommitManagerV2U1: require('dkg-evm-module/abi/CommitManagerV2U1.json'),
     ProofManagerV1: require('dkg-evm-module/abi/ProofManagerV1.json'),
     ProofManagerV1U1: require('dkg-evm-module/abi/ProofManagerV1U1.json'),
     ShardingTable: require('dkg-evm-module/abi/ShardingTableV2.json'),
@@ -875,8 +877,8 @@ class Web3Service {
 
     selectCommitManagerContract(latestStateIndex) {
         return latestStateIndex === 0
-            ? this.CommitManagerV1Contract
-            : this.CommitManagerV1U1Contract;
+            ? this.CommitManagerV2Contract
+            : this.CommitManagerV2U1Contract;
     }
 
     async isCommitWindowOpen(agreementId, epoch, latestStateIndex) {
@@ -889,7 +891,7 @@ class Web3Service {
 
     async isUpdateCommitWindowOpen(agreementId, epoch, stateIndex) {
         return this.callContractFunction(
-            this.CommitManagerV1U1Contract,
+            this.CommitManagerV2U1Contract,
             'isUpdateCommitWindowOpen',
             [agreementId, epoch, stateIndex],
         );
@@ -1020,7 +1022,7 @@ class Web3Service {
             submitCommitArgs.push(closestNode, leftNeighborhoodEdge, rightNeighborhoodEdge);
         }
         return this.queueTransaction(
-            this.CommitManagerV1U1Contract,
+            this.CommitManagerV2U1Contract,
             'submitUpdateCommit',
             [submitCommitArgs],
             callback,
