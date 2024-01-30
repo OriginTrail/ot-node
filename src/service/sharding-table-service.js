@@ -351,13 +351,13 @@ class ShardingTableService {
                 }`,
             );
             if (assetPositionOnHashRing.lte(neighbourPositionOnHashRing)) {
-                if (neighbourPositionOnHashRing.sub(assetPositionOnHashRing).lt(maxDistance)) {
+                if (neighbourPositionOnHashRing.sub(assetPositionOnHashRing).lte(maxDistance)) {
                     hashRing.push(neighbour);
                 } else {
                     hashRing.unshift(neighbour);
                 }
             } else if (assetPositionOnHashRing.gt(neighbourPositionOnHashRing)) {
-                if (assetPositionOnHashRing.sub(neighbourPositionOnHashRing).lt(maxDistance)) {
+                if (assetPositionOnHashRing.sub(neighbourPositionOnHashRing).lte(maxDistance)) {
                     hashRing.unshift(neighbour);
                 } else {
                     hashRing.push(neighbour);
