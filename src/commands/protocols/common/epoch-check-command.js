@@ -302,8 +302,8 @@ class EpochCheckCommand extends Command {
             agreementId: agreement.agreementId,
             stateIndex: agreement.stateIndex,
             closestNode: closestNode.index,
-            leftNeighborhoodEdge: neighbourhoodEdges.leftEdge.index,
-            rightNeighborhoodEdge: neighbourhoodEdges.rightEdge.index,
+            leftNeighborhoodEdge: neighbourhoodEdges?.leftEdge.index,
+            rightNeighborhoodEdge: neighbourhoodEdges?.rightEdge.index,
         };
 
         await this.commandExecutor.add({
