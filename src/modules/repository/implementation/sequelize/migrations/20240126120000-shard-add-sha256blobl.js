@@ -17,8 +17,8 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             {
                 replacements: {
                     sha256Blob,
-                    peerId: shard.peerId,
-                    blockchainId: shard.blockchainId,
+                    peerId: shard.peer_id,
+                    blockchainId: shard.blockchain_id,
                 },
                 type: queryInterface.sequelize.QueryTypes.UPDATE,
             },
