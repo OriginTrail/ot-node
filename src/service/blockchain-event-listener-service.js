@@ -20,10 +20,10 @@ class BlockchainEventListenerService {
         this.logger = ctx.logger;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.validationModuleManager = ctx.validationModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
         this.pendingStorageService = ctx.pendingStorageService;
         this.ualService = ctx.ualService;
+        this.hashingService = ctx.hashingService;
     }
 
     async initialize() {
@@ -69,6 +69,7 @@ class BlockchainEventListenerService {
                 currentBlock,
                 CONTRACT_EVENTS.PROFILE,
             ),
+            // TODO: Update with new commit managers
             this.getContractEvents(
                 blockchainId,
                 CONTRACTS.COMMIT_MANAGER_V1_U1_CONTRACT,
@@ -306,11 +307,13 @@ class BlockchainEventListenerService {
                     eventData.nodeId,
                 );
 
-                const nodeIdSha256 = await this.validationModuleManager.callHashFunction(
-                    // TODO: How to add more hashes?
+                const sha256 = await this.hashingService.callHashFunction(
                     CONTENT_ASSET_HASH_FUNCTION_ID,
                     nodeId,
                 );
+
+                const cleanHexString = sha256.startsWith('0x') ? sha256.slice(2) : sha256;
+                const sha256Blob = Buffer.from(cleanHexString, 'hex');
 
                 this.logger.trace(`Adding peer id: ${nodeId} to sharding table.`);
                 return {
@@ -325,7 +328,8 @@ class BlockchainEventListenerService {
                         eventData.stake,
                     ),
                     lastSeen: new Date(0),
-                    sha256: nodeIdSha256,
+                    sha256,
+                    sha256Blob,
                 };
             }),
         );

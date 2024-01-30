@@ -22,6 +22,9 @@ const testParametersStorageParams = {
     proofWindowDurationPerc: 33, // 2 minutes
     updateCommitWindowDuration: 60, // 1 minute
     finalizationCommitsNumber: 3,
+    r0: 3,
+    r1: 5,
+    r2: 6,
 };
 /**
  * LocalBlockchain represent small wrapper around the Ganache.
