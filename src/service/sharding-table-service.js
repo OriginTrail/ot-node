@@ -334,11 +334,21 @@ class ShardingTableService {
             neighbourhood[neighbourhood.length - 1][hashFunctionName],
             keyHash,
         );
+        this.logger.info(`Searching for edges:`);
+        this.logger.info(`****************`);
+
         for (const neighbour of neighbourhood) {
             // eslint-disable-next-line no-await-in-loop
             const neighbourPositionOnHashRing = await this.blockchainModuleManager.toBigNumber(
                 blockchainId,
                 neighbour[hashFunctionName],
+            );
+            this.logger.info(
+                `peerId: ${neighbour.peerId} sha256 :  ${
+                    neighbour.sha256
+                }, asset position: ${assetPositionOnHashRing}, maxDistance: ${maxDistance.toString()} ring position: ${neighbourPositionOnHashRing.toString()} index: ${
+                    neighbour.index
+                }`,
             );
             if (assetPositionOnHashRing.lte(neighbourPositionOnHashRing)) {
                 if (neighbourPositionOnHashRing.sub(assetPositionOnHashRing).lt(maxDistance)) {
@@ -354,6 +364,11 @@ class ShardingTableService {
                 }
             }
         }
+        this.logger.info('Hash ring:');
+        hashRing.forEach((node) => {
+            this.logger.info(JSON.stringify(node, null, 2));
+        });
+        this.logger.info(`****************`);
 
         return {
             leftEdge: hashRing[0],
