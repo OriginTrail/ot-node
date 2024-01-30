@@ -105,3 +105,44 @@ When('I wait for latest Get to finalize', { timeout: 80000 }, async function get
         await setTimeout(4000);
     }
 });
+
+When(
+    /^I call Get directly on the node (\d+) with ([^"]*) on blockchain ([^"]*) with hashFunctionId (\d+)/,
+    { timeout: 30000 },
+    async function getFromNode(node, requestName, blockchain, hashFunctionId) {
+        this.logger.log(`I call get directly on the node ${node} on blockchain ${blockchain}`);
+
+        expect(
+            !!this.state.localBlockchains[blockchain],
+            `Blockchain with name ${blockchain} not found`,
+        ).to.be.equal(true);
+
+        expect(
+            !!requests[requestName],
+            `Request body with name: ${requestName} not found!`,
+        ).to.be.equal(true);
+
+        expect(
+            !Number.isInteger(hashFunctionId),
+            `hashFunctionId value: ${hashFunctionId} is not an integer!`,
+        ).to.be.equal(true);
+
+        const requestBody = JSON.parse(JSON.stringify(requests[requestName]));
+        requestBody.id = requestBody.id.replace('blockchain', blockchain);
+        requestBody.hashFunctionId = hashFunctionId;
+
+        try {
+            const result = await httpApiHelper.get(
+                this.state.nodes[node - 1].nodeRpcUrl,
+                requestBody,
+            );
+            const { operationId } = result.data;
+            this.state.latestGetData = {
+                nodeId: node - 1,
+                operationId,
+            };
+        } catch (error) {
+            this.state.latestError = error;
+        }
+    },
+);

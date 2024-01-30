@@ -12,6 +12,10 @@ export const UINT256_MAX_BN = BigNumber.from(2).pow(256).sub(1);
 
 export const UINT128_MAX_BN = BigNumber.from(2).pow(128).sub(1);
 
+export const UINT64_MAX_BN = BigNumber.from(2).pow(64).sub(1);
+
+export const UINT40_MAX_BN = BigNumber.from(2).pow(40).sub(1);
+
 export const UINT32_MAX_BN = BigNumber.from(2).pow(32).sub(1);
 
 export const HASH_RING_SIZE = BigNumber.from(2).pow(256);
@@ -556,10 +560,12 @@ export const CONTRACTS = {
     STAKING_CONTRACT: 'StakingContract',
     PROFILE_CONTRACT: 'ProfileContract',
     HUB_CONTRACT: 'HubContract',
+    // TODO: Update with new commit Managers
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
     SERVICE_AGREEMENT_V1_CONTRACT: 'ServiceAgreementV1Contract',
     PARAMETERS_STORAGE_CONTRACT: 'ParametersStorageContract',
     IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
+    Log2PLDSF: 'Log2PLDSF',
 };
 
 export const CONTRACT_EVENTS = {
@@ -596,6 +602,7 @@ export const TRANSACTION_CONFIRMATIONS = 1;
 
 export const CACHE_DATA_TYPES = {
     NUMBER: 'number',
+    ANY: 'any',
 };
 
 /**
@@ -615,8 +622,13 @@ export const CACHED_FUNCTIONS = {
         commitWindowDurationPerc: CACHE_DATA_TYPES.NUMBER,
         proofWindowDurationPerc: CACHE_DATA_TYPES.NUMBER,
         epochLength: CACHE_DATA_TYPES.NUMBER,
+        minimumStake: CACHE_DATA_TYPES.ANY,
+        maximumStake: CACHE_DATA_TYPES.ANY,
     },
     IdentityStorageContract: {
         getIdentityId: CACHE_DATA_TYPES.NUMBER,
+    },
+    Log2PLDSF: {
+        getParameters: CACHE_DATA_TYPES.ANY,
     },
 };

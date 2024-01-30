@@ -124,3 +124,54 @@ When(
         );
     },
 );
+
+When(
+    /^I call Publish on the node (\d+) with ([^"]*) on blockchain ([^"]*) with hashFunctionId (\d+) and scoreFunctionId (\d+)/,
+    { timeout: 120000 },
+    async function publish(node, assertionName, blockchain, hashFunctionId, scoreFunctionId) {
+        this.logger.log(`I call publish route on the node ${node} on blockchain ${blockchain}`);
+
+        expect(
+            !!this.state.localBlockchains[blockchain],
+            `Blockchain with name ${blockchain} not found`,
+        ).to.be.equal(true);
+
+        expect(
+            !!assertions[assertionName],
+            `Assertion with name: ${assertionName} not found!`,
+        ).to.be.equal(true);
+
+        expect(
+            !Number.isInteger(hashFunctionId),
+            `hashFunctionId value: ${hashFunctionId} is not an integer!`,
+        ).to.be.equal(true);
+
+        expect(
+            !Number.isInteger(scoreFunctionId),
+            `scoreFunctionId value: ${scoreFunctionId} not an integer!`,
+        ).to.be.equal(true);
+
+        const assertion = assertions[assertionName];
+        const options = {
+            blockchain: this.state.nodes[node - 1].clientBlockchainOptions[blockchain],
+            hashFunctionId,
+            scoreFunctionId,
+        };
+        const result = await this.state.nodes[node - 1].client
+            .publish(assertion, options)
+            .catch((error) => {
+                assert.fail(`Error while trying to publish assertion. ${error}`);
+            });
+        const { operationId } = result.operation;
+        this.state.latestPublishData = {
+            nodeId: node - 1,
+            UAL: result.UAL,
+            assertionId: result.assertionId,
+            operationId,
+            assertion: assertions[assertionName],
+            status: result.operation.status,
+            errorType: result.operation.errorType,
+            result,
+        };
+    },
+);
