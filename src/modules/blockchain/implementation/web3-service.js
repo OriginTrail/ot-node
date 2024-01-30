@@ -41,18 +41,20 @@ const ABIs = {
     ProfileStorage: require('dkg-evm-module/abi/ProfileStorage.json'),
     ScoringProxy: require('dkg-evm-module/abi/ScoringProxy.json'),
     ServiceAgreementV1: require('dkg-evm-module/abi/ServiceAgreementV1.json'),
-    CommitManagerV1: require('dkg-evm-module/abi/CommitManagerV1.json'),
-    CommitManagerV1U1: require('dkg-evm-module/abi/CommitManagerV1U1.json'),
+    CommitManagerV1: require('dkg-evm-module/abi/CommitManagerV2.json'),
+    CommitManagerV1U1: require('dkg-evm-module/abi/CommitManagerV2U1.json'),
     ProofManagerV1: require('dkg-evm-module/abi/ProofManagerV1.json'),
     ProofManagerV1U1: require('dkg-evm-module/abi/ProofManagerV1U1.json'),
-    ShardingTable: require('dkg-evm-module/abi/ShardingTable.json'),
-    ShardingTableStorage: require('dkg-evm-module/abi/ShardingTableStorage.json'),
+    ShardingTable: require('dkg-evm-module/abi/ShardingTableV2.json'),
+    ShardingTableStorage: require('dkg-evm-module/abi/ShardingTableStorageV2.json'),
     ServiceAgreementStorageProxy: require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json'),
     UnfinalizedStateStorage: require('dkg-evm-module/abi/UnfinalizedStateStorage.json'),
+    LinearSum: require('dkg-evm-module/abi/LinearSum.json'),
 };
 
 const SCORING_FUNCTIONS = {
     1: 'Log2PLDSF',
+    2: 'LinearSum',
 };
 
 class Web3Service {
@@ -479,6 +481,12 @@ class Web3Service {
             gasLimit = await contractInstance.estimateGas[functionName](...args);
         } catch (error) {
             const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
+
+            if (error.transaction === undefined) {
+                throw new Error(
+                    `Gas estimation for ${functionName} has failed, reason: ${decodedErrorData}`,
+                );
+            }
 
             const functionFragment = contractInstance.interface.getFunction(
                 error.transaction.data.slice(0, 10),
@@ -927,6 +935,28 @@ class Web3Service {
             }));
     }
 
+    async getMinimumStake() {
+        const minimumStake = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'minimumStake',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
+
+        return Number(ethers.utils.formatEther(minimumStake));
+    }
+
+    async getMaximumStake() {
+        const maximumStake = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'maximumStake',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
+
+        return Number(ethers.utils.formatEther(maximumStake));
+    }
+
     async getR2() {
         const r2 = await this.callContractFunction(
             this.ParametersStorageContract,
@@ -972,15 +1002,29 @@ class Web3Service {
         tokenId,
         keyword,
         hashFunctionId,
+        closestNode,
+        leftNeighborhoodEdge,
+        rightNeighborhoodEdge,
         epoch,
         latestStateIndex,
         callback,
         gasPrice,
     ) {
+        const submitCommitArgs = [assetContractAddress, tokenId, keyword, hashFunctionId, epoch];
+        let functionName = 'submitCommit((address,uint256,bytes,uint8,uint16))';
+        if (
+            closestNode !== undefined &&
+            leftNeighborhoodEdge !== undefined &&
+            rightNeighborhoodEdge !== undefined
+        ) {
+            submitCommitArgs.push(closestNode, leftNeighborhoodEdge, rightNeighborhoodEdge);
+            functionName =
+                'submitCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))';
+        }
         return this.queueTransaction(
             this.selectCommitManagerContract(latestStateIndex),
-            'submitCommit',
-            [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch]],
+            functionName,
+            [submitCommitArgs],
             callback,
             gasPrice,
         );
@@ -991,14 +1035,28 @@ class Web3Service {
         tokenId,
         keyword,
         hashFunctionId,
+        closestNode,
+        leftNeighborhoodEdge,
+        rightNeighborhoodEdge,
         epoch,
         callback,
         gasPrice,
     ) {
+        const submitCommitArgs = [assetContractAddress, tokenId, keyword, hashFunctionId, epoch];
+        let functionName = 'submitUpdateCommit((address,uint256,bytes,uint8,uint16))';
+        if (
+            closestNode !== undefined &&
+            leftNeighborhoodEdge !== undefined &&
+            rightNeighborhoodEdge !== undefined
+        ) {
+            submitCommitArgs.push(closestNode, leftNeighborhoodEdge, rightNeighborhoodEdge);
+            functionName =
+                'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))';
+        }
         return this.queueTransaction(
             this.CommitManagerV1U1Contract,
-            'submitUpdateCommit',
-            [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch]],
+            functionName,
+            [submitCommitArgs],
             callback,
             gasPrice,
         );
@@ -1093,8 +1151,12 @@ class Web3Service {
         return ethers.utils.solidityPack(types, values);
     }
 
+    convertUint8ArrayToHex(uint8Array) {
+        return ethers.utils.hexlify(uint8Array);
+    }
+
     convertAsciiToHex(string) {
-        return ethers.utils.hexlify(ethers.utils.toUtf8Bytes(string));
+        return this.convertUint8ArrayToHex(ethers.utils.toUtf8Bytes(string));
     }
 
     convertHexToAscii(hexString) {
@@ -1179,6 +1241,7 @@ class Web3Service {
             this.scoringFunctionsContracts[1],
             'getParameters',
             [],
+            CONTRACTS.Log2PLDSF,
         );
 
         const params = {};
@@ -1216,6 +1279,28 @@ class Web3Service {
         return this.callContractFunction(this.UnfinalizedStateStorageContract, 'hasPendingUpdate', [
             tokenId,
         ]);
+    }
+
+    async getAgreementScoreFunctionId(agreementId) {
+        return this.callContractFunction(
+            this.ServiceAgreementStorageProxyContract,
+            'getAgreementScoreFunctionId',
+            [agreementId],
+        );
+    }
+
+    async getLinearSumParams() {
+        const linearSumParams = await this.callContractFunction(
+            this.scoringFunctionsContracts[2],
+            'getParameters',
+            [],
+        );
+        return {
+            distanceScaleFactor: BigNumber.from(linearSumParams[0]),
+            stakeScaleFactor: BigNumber.from(linearSumParams[1]),
+            w1: Number(linearSumParams[2]),
+            w2: Number(linearSumParams[3]),
+        };
     }
 }
 

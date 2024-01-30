@@ -15,6 +15,7 @@ import ServiceAgreementsInvalidDataMigration from './service-agreements-invalid-
 import UalExtensionUserConfigurationMigration from './ual-extension-user-configuration-migration.js';
 import UalExtensionTripleStoreMigration from './ual-extension-triple-store-migration.js';
 import MarkStakingEventsAsProcessedMigration from './mark-staking-events-as-processed-migration.js';
+import RemoveServiceAgreementsForChiadoDevnetMigration from './remove-service-agreements-for-chiado-devnet-migration.js';
 
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
@@ -360,6 +361,29 @@ class MigrationExecutor {
                     `Unable to execute mark staking events as processed migration. Error: ${error.message}`,
                 );
                 this.exitNode(1);
+            }
+        }
+    }
+
+    static async executeRemoveServiceAgreementsForChiadoDevnetMigration(container, logger, config) {
+        if (process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVNET) {
+            const repositoryModuleManager = container.resolve('repositoryModuleManager');
+
+            const migration = new RemoveServiceAgreementsForChiadoDevnetMigration(
+                'removeServiceAgreementsForChiadoDevnetMigration',
+                logger,
+                config,
+                repositoryModuleManager,
+            );
+            if (!(await migration.migrationAlreadyExecuted())) {
+                try {
+                    await migration.migrate();
+                } catch (error) {
+                    logger.error(
+                        `Unable to execute remove service agreements for Chiado Devnet migration. Error: ${error.message}`,
+                    );
+                    this.exitNode(1);
+                }
             }
         }
     }
