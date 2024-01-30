@@ -147,8 +147,6 @@ class ShardRepository {
             where: blockchainId ? { blockchainId } : {},
         });
     }
-
-    async;
 }
 
 export default ShardRepository;
