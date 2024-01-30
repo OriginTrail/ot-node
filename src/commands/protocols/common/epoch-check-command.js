@@ -74,9 +74,12 @@ class EpochCheckCommand extends Command {
 
                 totalTransactions -= transactionQueueLength;
 
-                const [r0, r2] = await Promise.all([
+                const [r0, r2, totalNodesNumber, minStake, maxStake] = await Promise.all([
                     this.blockchainModuleManager.getR0(blockchain),
                     this.blockchainModuleManager.getR2(blockchain),
+                    this.blockchainModuleManager.getShardingTableLength(blockchain),
+                    this.blockchainModuleManager.getMinimumStake(blockchain),
+                    this.blockchainModuleManager.getMaximumStake(blockchain),
                 ]);
 
                 await Promise.all([
@@ -86,6 +89,9 @@ class EpochCheckCommand extends Command {
                         commitWindowDurationPerc,
                         r0,
                         r2,
+                        totalNodesNumber,
+                        minStake,
+                        maxStake,
                     ),
                     this.scheduleCalculateProofsCommands(
                         blockchain,
@@ -112,6 +118,9 @@ class EpochCheckCommand extends Command {
         commitWindowDurationPerc,
         r0,
         r2,
+        totalNodesNumber,
+        minStake,
+        maxStake,
     ) {
         const timestamp = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
         const eligibleAgreementForSubmitCommit =
@@ -159,6 +168,9 @@ class EpochCheckCommand extends Command {
                     r2,
                     neighbourhood,
                     neighbourhoodEdges,
+                    totalNodesNumber,
+                    minStake,
+                    maxStake,
                 );
 
                 updateServiceAgreementsLastCommitEpoch.push(

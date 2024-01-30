@@ -1283,8 +1283,9 @@ class Web3Service {
         );
         return {
             distanceScaleFactor: linearSumParams[0],
-            w1: linearSumParams[1],
-            w2: linearSumParams[2],
+            stakeScaleFactor: linearSumParams[1],
+            w1: linearSumParams[2],
+            w2: linearSumParams[3],
         };
     }
 }

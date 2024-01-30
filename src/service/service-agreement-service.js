@@ -33,6 +33,9 @@ class ServiceAgreementService {
         r2,
         neighbourhood,
         neighbourhoodEdges,
+        totalNodesNumber,
+        minStake,
+        maxStake,
     ) {
         const peerId = this.networkModuleManager.getPeerId().toB58String();
         if (!neighbourhood.some((node) => node.peerId === peerId)) {
@@ -48,6 +51,10 @@ class ServiceAgreementService {
                     hashFunctionId,
                     proximityScoreFunctionsPairId,
                     neighbourhoodEdges,
+                    r2,
+                    totalNodesNumber,
+                    minStake,
+                    maxStake,
                 ),
                 peerId: node.peerId,
             })),
@@ -65,6 +72,10 @@ class ServiceAgreementService {
         hashFunctionId,
         proximityScoreFunctionsPairId,
         neighbourhoodEdges,
+        r2,
+        totalNodesNumber,
+        minStake,
+        maxStake,
     ) {
         const peerRecord = await this.repositoryModuleManager.getPeerRecord(peerId, blockchainId);
         const keyHash = await this.hashingService.callHashFunction(hashFunctionId, keyword);
@@ -93,6 +104,10 @@ class ServiceAgreementService {
             distance,
             peerRecord.stake,
             maxNeighborhoodDistance,
+            r2,
+            totalNodesNumber,
+            minStake,
+            maxStake,
         );
     }
 }

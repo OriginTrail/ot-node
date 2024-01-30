@@ -96,6 +96,12 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             throw Error('Unable to find neighbourhood edges for asset');
         }
 
+        const totalNodesNumber = await this.blockchainModuleManager.getShardingTableLength(
+            blockchain,
+        );
+        const minStake = await this.blockchainModuleManager.getMinimumStake(blockchain);
+        const maxStake = await this.blockchainModuleManager.getMaximumStake(blockchain);
+
         const rank = await this.serviceAgreementService.calculateRank(
             blockchain,
             keyword,
@@ -104,6 +110,9 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             r2,
             neighbourhood,
             neighbourhoodEdges,
+            totalNodesNumber,
+            minStake,
+            maxStake,
         );
         if (rank != null) {
             this.logger.trace(`Calculated rank: ${rank + 1} for agreement id:  ${agreementId}`);
