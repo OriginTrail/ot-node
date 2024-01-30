@@ -122,8 +122,17 @@ class SubmitCommitCommand extends Command {
             );
         });
 
+        const sendSubmitCommitTransactionOperationId = this.operationIdService.generateId();
         let txSuccess;
         try {
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_START,
+                sendSubmitCommitTransactionOperationId,
+                blockchain,
+                agreementId,
+                epoch,
+                operationId,
+            );
             txSuccess = await transactionCompletePromise;
         } catch (error) {
             this.logger.warn(
@@ -135,7 +144,13 @@ class SubmitCommitCommand extends Command {
                     `Right neighborhood edge: ${rightNeighborhoodEdge}, ` +
                     `Retry number: ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}.`,
             );
-
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.FAILED,
+                sendSubmitCommitTransactionOperationId,
+                blockchain,
+                error.message,
+                ERROR_TYPE.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_ERROR,
+            );
             let newGasPrice;
             if (
                 error.message.includes(`timeout exceeded`) ||
@@ -156,6 +171,14 @@ class SubmitCommitCommand extends Command {
 
         let msgBase;
         if (txSuccess) {
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_END,
+                sendSubmitCommitTransactionOperationId,
+                blockchain,
+                agreementId,
+                epoch,
+                operationId,
+            );
             msgBase = 'Successfully executed';
 
             this.operationIdService.emitChangeEvent(
@@ -167,6 +190,13 @@ class SubmitCommitCommand extends Command {
             );
         } else {
             msgBase = 'Node has already submitted commit. Finishing';
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.FAILED,
+                sendSubmitCommitTransactionOperationId,
+                blockchain,
+                msgBase,
+                ERROR_TYPE.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_ERROR,
+            );
         }
 
         this.logger.trace(

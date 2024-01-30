@@ -182,7 +182,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         // wait for 5 blocks for first batch to send commits
         const commitsBlockDuration = blockTime * COMMIT_BLOCK_DURATION_IN_BLOCKS;
         const commitBlock = Math.floor(rank / finalizationCommitsNumber);
-        // put 2 blocks delay between nodes if they are not in first batch
+        // put 5 blocks delay between nodes if they are not in first batch
         const nextNodeDelay =
             commitBlock === 0
                 ? 0

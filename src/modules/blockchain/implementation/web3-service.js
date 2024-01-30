@@ -879,6 +879,20 @@ class Web3Service {
         return Number(assertionChunksNumber);
     }
 
+    async getAssertionData(assertionId) {
+        const assertionData = await this.callContractFunction(
+            this.AssertionStorageContract,
+            'getAssertion',
+            [assertionId],
+        );
+        return {
+            timestamp: Number(assertionData.timestamp),
+            size: Number(assertionData.size),
+            triplesNumber: Number(assertionData.triplesNumber),
+            chunksNumber: Number(assertionData.chunksNumber),
+        };
+    }
+
     selectCommitManagerContract(latestStateIndex) {
         return latestStateIndex === 0
             ? this.CommitManagerV1Contract

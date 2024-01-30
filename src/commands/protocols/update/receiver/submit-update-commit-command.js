@@ -99,8 +99,23 @@ class SubmitUpdateCommitCommand extends Command {
             );
         });
 
+        const sendSubmitUpdateCommitTransactionOperationId = this.operationIdService.generateId();
         try {
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_SEND_TX_START,
+                sendSubmitUpdateCommitTransactionOperationId,
+                blockchain,
+                agreementId,
+                epoch,
+            );
             await transactionCompletePromise;
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_SEND_TX_END,
+                sendSubmitUpdateCommitTransactionOperationId,
+                blockchain,
+                agreementId,
+                epoch,
+            );
         } catch (error) {
             this.logger.warn(
                 `Failed to execute ${command.name}, Error Message: ${error.message} for the Service Agreement ` +
@@ -112,7 +127,13 @@ class SubmitUpdateCommitCommand extends Command {
                     COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1
                 }.`,
             );
-
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.FAILED,
+                sendSubmitUpdateCommitTransactionOperationId,
+                blockchain,
+                error.message,
+                ERROR_TYPE.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_SEND_TX_ERROR,
+            );
             let newGasPrice;
             if (
                 error.message.includes(`timeout exceeded`) ||
