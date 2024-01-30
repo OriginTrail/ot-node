@@ -43,8 +43,6 @@ const ABIs = {
     ServiceAgreementV1: require('dkg-evm-module/abi/ServiceAgreementV1.json'),
     CommitManagerV1: require('dkg-evm-module/abi/CommitManagerV2.json'),
     CommitManagerV1U1: require('dkg-evm-module/abi/CommitManagerV2U1.json'),
-    CommitManagerV2: require('dkg-evm-module/abi/CommitManagerV2.json'),
-    CommitManagerV2U1: require('dkg-evm-module/abi/CommitManagerV2U1.json'),
     ProofManagerV1: require('dkg-evm-module/abi/ProofManagerV1.json'),
     ProofManagerV1U1: require('dkg-evm-module/abi/ProofManagerV1U1.json'),
     ShardingTable: require('dkg-evm-module/abi/ShardingTableV2.json'),
@@ -1079,7 +1077,7 @@ class Web3Service {
     }
 
     async getShardingTableHead() {
-        return this.callContractFunction(this.ShardingTableStorageContract, 'getNodeByIndex', [0]);
+        return this.callContractFunction(this.ShardingTableStorageContract, 'head', []);
     }
 
     async getShardingTableLength() {

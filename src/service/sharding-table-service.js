@@ -72,12 +72,12 @@ class ShardingTableService {
             // eslint-disable-next-line no-await-in-loop
             const nodes = await this.blockchainModuleManager.getShardingTablePage(
                 blockchainId,
-                Number(startingIdentityId.identityId),
+                startingIdentityId,
                 pageSize,
             );
             shardingTable.push(...nodes.slice(sliceIndex).filter((node) => node.nodeId !== '0x'));
             sliceIndex = 1;
-            startingIdentityId = nodes[nodes.length - 1];
+            startingIdentityId = nodes[nodes.length - 1].identityId;
         }
 
         this.logger.debug(
