@@ -22,6 +22,7 @@ class FindNodesCommand extends Command {
             networkProtocols,
             hashFunctionId,
             minAckResponses,
+            proximityScoreFunctionsPairId,
         } = command.data;
 
         this.errorType = errorType;
@@ -29,7 +30,13 @@ class FindNodesCommand extends Command {
 
         // TODO: protocol selection
         const closestNodes = [];
-        const foundNodes = await this.findNodes(blockchain, keyword, operationId, hashFunctionId);
+        const foundNodes = await this.findNodes(
+            blockchain,
+            keyword,
+            operationId,
+            hashFunctionId,
+            proximityScoreFunctionsPairId,
+        );
         for (const node of foundNodes) {
             if (node.id !== this.networkModuleManager.getPeerId().toB58String()) {
                 closestNodes.push({ id: node.id, protocol: networkProtocols[0] });
@@ -66,7 +73,13 @@ class FindNodesCommand extends Command {
         );
     }
 
-    async findNodes(blockchainId, keyword, operationId, hashFunctionId) {
+    async findNodes(
+        blockchainId,
+        keyword,
+        operationId,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+    ) {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchainId,
@@ -78,6 +91,7 @@ class FindNodesCommand extends Command {
             keyword,
             r2,
             hashFunctionId,
+            proximityScoreFunctionsPairId,
             true,
         );
 

@@ -6,6 +6,7 @@ class BidSuggestionController extends BaseController {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.shardingTableService = ctx.shardingTableService;
+        this.serviceAgreementService = ctx.serviceAgreementService;
     }
 
     async handleRequest(req, res) {
@@ -49,7 +50,16 @@ class BidSuggestionController extends BaseController {
             firstAssertionId,
             hashFunctionId,
         } = req.query;
+        let { proximityScoreFunctionsPairId } = req.query;
         try {
+            // TODO: ADD-DOCS
+            if (!proximityScoreFunctionsPairId) {
+                if (blockchain.startsWith('otp') || blockchain.startsWith('hardhat1'))
+                    proximityScoreFunctionsPairId = 1;
+                else if (blockchain.startsWith('gnosis') || blockchain.startsWith('hardhat2'))
+                    proximityScoreFunctionsPairId = 2;
+            }
+
             const bidSuggestion = await this.shardingTableService.getBidSuggestion(
                 blockchain,
                 epochsNumber,
@@ -57,6 +67,7 @@ class BidSuggestionController extends BaseController {
                 contentAssetStorageAddress,
                 firstAssertionId,
                 hashFunctionId,
+                proximityScoreFunctionsPairId,
             );
 
             this.returnResponse(res, 200, { bidSuggestion });

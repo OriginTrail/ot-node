@@ -20,6 +20,8 @@ class EpochCheckCommand extends Command {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.fileService = ctx.fileService;
+        this.proximityScoringService = ctx.proximityScoringService;
+        this.hashingService = ctx.hashingService;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.EPOCH_CHECK_ERROR;
     }
@@ -72,9 +74,12 @@ class EpochCheckCommand extends Command {
 
                 totalTransactions -= transactionQueueLength;
 
-                const [r0, r2] = await Promise.all([
+                const [r0, r2, totalNodesNumber, minStake, maxStake] = await Promise.all([
                     this.blockchainModuleManager.getR0(blockchain),
                     this.blockchainModuleManager.getR2(blockchain),
+                    this.blockchainModuleManager.getShardingTableLength(blockchain),
+                    this.blockchainModuleManager.getMinimumStake(blockchain),
+                    this.blockchainModuleManager.getMaximumStake(blockchain),
                 ]);
 
                 await Promise.all([
@@ -84,6 +89,9 @@ class EpochCheckCommand extends Command {
                         commitWindowDurationPerc,
                         r0,
                         r2,
+                        totalNodesNumber,
+                        minStake,
+                        maxStake,
                     ),
                     this.scheduleCalculateProofsCommands(
                         blockchain,
@@ -110,6 +118,9 @@ class EpochCheckCommand extends Command {
         commitWindowDurationPerc,
         r0,
         r2,
+        totalNodesNumber,
+        minStake,
+        maxStake,
     ) {
         const timestamp = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
         const eligibleAgreementForSubmitCommit =
@@ -124,12 +135,42 @@ class EpochCheckCommand extends Command {
         for (const serviceAgreement of eligibleAgreementForSubmitCommit) {
             if (scheduleSubmitCommitCommands.length >= maxTransactions) break;
 
+            const neighbourhood = await this.shardingTableService.findNeighbourhood(
+                blockchain,
+                serviceAgreement.keyword,
+                r2,
+                serviceAgreement.hashFunctionId,
+                serviceAgreement.scoreFunctionId,
+                true,
+            );
+
+            let neighbourhoodEdges = null;
+            if (serviceAgreement.scoreFunctionId === 2) {
+                neighbourhoodEdges = await this.shardingTableService.getNeighboorhoodEdgeNodes(
+                    neighbourhood,
+                    blockchain,
+                    serviceAgreement.hashFunctionId,
+                    serviceAgreement.scoreFunctionId,
+                    serviceAgreement.keyword,
+                );
+            }
+
+            if (!neighbourhoodEdges && serviceAgreement.scoreFunctionId === 2) {
+                throw Error('Unable to find neighbourhood edges for asset');
+            }
+
             try {
-                const rank = await this.calculateRank(
+                const rank = await this.serviceAgreementService.calculateRank(
                     blockchain,
                     serviceAgreement.keyword,
                     serviceAgreement.hashFunctionId,
+                    serviceAgreement.scoreFunctionId,
                     r2,
+                    neighbourhood,
+                    neighbourhoodEdges,
+                    totalNodesNumber,
+                    minStake,
+                    maxStake,
                 );
 
                 updateServiceAgreementsLastCommitEpoch.push(
@@ -164,9 +205,13 @@ class EpochCheckCommand extends Command {
                         serviceAgreement.agreementId
                     }. Scheduling submitCommitCommand.`,
                 );
-
+                const closestNode = neighbourhood[0];
                 scheduleSubmitCommitCommands.push(
-                    this.scheduleSubmitCommitCommand(serviceAgreement),
+                    this.scheduleSubmitCommitCommand(
+                        serviceAgreement,
+                        neighbourhoodEdges,
+                        closestNode,
+                    ),
                 );
             } catch (error) {
                 this.logger.warn(
@@ -239,37 +284,6 @@ class EpochCheckCommand extends Command {
         ]);
     }
 
-    async calculateRank(blockchain, keyword, hashFunctionId, r2) {
-        const neighbourhood = await this.shardingTableService.findNeighbourhood(
-            blockchain,
-            keyword,
-            r2,
-            hashFunctionId,
-            true,
-        );
-
-        const peerId = this.networkModuleManager.getPeerId().toB58String();
-        if (!neighbourhood.some((node) => node.peerId === peerId)) {
-            return;
-        }
-
-        const scores = await Promise.all(
-            neighbourhood.map(async (node) => ({
-                score: await this.serviceAgreementService.calculateScore(
-                    node.peerId,
-                    blockchain,
-                    keyword,
-                    hashFunctionId,
-                ),
-                peerId: node.peerId,
-            })),
-        );
-
-        scores.sort((a, b) => b.score - a.score);
-
-        return scores.findIndex((node) => node.peerId === peerId);
-    }
-
     async isEligibleForRewards(blockchain, agreementId, epoch, stateIndex, r0) {
         const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
         const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
@@ -288,7 +302,7 @@ class EpochCheckCommand extends Command {
         return false;
     }
 
-    async scheduleSubmitCommitCommand(agreement) {
+    async scheduleSubmitCommitCommand(agreement, neighbourhoodEdges, closestNode) {
         const commandData = {
             operationId: this.operationIdService.generateId(),
             blockchain: agreement.blockchainId,
@@ -299,6 +313,9 @@ class EpochCheckCommand extends Command {
             epoch: agreement.currentEpoch,
             agreementId: agreement.agreementId,
             stateIndex: agreement.stateIndex,
+            closestNode: closestNode.index,
+            leftNeighborhoodEdge: neighbourhoodEdges?.leftEdge.index,
+            rightNeighborhoodEdge: neighbourhoodEdges?.rightEdge.index,
         };
 
         await this.commandExecutor.add({
