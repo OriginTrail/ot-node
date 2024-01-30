@@ -1,7 +1,11 @@
 export async function up({ context: { queryInterface, Sequelize } }) {
-    await queryInterface.addColumn('shard', 'sha256_blob', {
-        type: Sequelize.BLOB,
-    });
+    const tableInfo = await queryInterface.describeTable('shard');
+
+    if (!tableInfo.sha256_blob) {
+        await queryInterface.addColumn('shard', 'sha256_blob', {
+            type: Sequelize.BLOB,
+        });
+    }
 
     const shards = await queryInterface.sequelize.query(
         'SELECT peer_id, blockchain_id, sha256 FROM shard',
