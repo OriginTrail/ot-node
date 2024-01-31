@@ -370,7 +370,7 @@ class MigrationExecutor {
             const repositoryModuleManager = container.resolve('repositoryModuleManager');
 
             const migration = new RemoveServiceAgreementsForChiadoDevnetMigration(
-                'removeServiceAgreementsForChiadoDevnetMigration',
+                'removeServiceAgreementsForChiadoDevnetMigrationV2',
                 logger,
                 config,
                 repositoryModuleManager,
