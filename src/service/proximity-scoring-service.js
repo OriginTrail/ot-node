@@ -164,10 +164,22 @@ class ProximityScoringService {
             '1000000000000000000',
         );
 
-        const proximityScore = oneEther.sub(normalizedDistance).mul(w1);
+        const isProximityScorePositive = oneEther.gte(normalizedDistance);
+
+        const proximityScore = isProximityScorePositive
+            ? oneEther.sub(normalizedDistance).mul(w1)
+            : normalizedDistance.sub(oneEther).mul(w1);
         const stakeScore = normalizedStake.mul(w2);
 
-        let finalScore = proximityScore.add(stakeScore);
+        let finalScore;
+        if (isProximityScorePositive) {
+            finalScore = proximityScore.add(stakeScore);
+        } else if (stakeScore.gte(proximityScore)) {
+            finalScore = stakeScore.sub(proximityScore);
+        } else {
+            finalScore = await this.blockchainModuleManager.toBigNumber(blockchain, 0);
+        }
+
         if (finalScore.gt(UINT40_MAX_BN)) {
             finalScore = finalScore.mod(UINT40_MAX_BN.add(1));
         }
