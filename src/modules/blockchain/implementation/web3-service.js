@@ -1294,6 +1294,7 @@ class Web3Service {
             this.scoringFunctionsContracts[2],
             'getParameters',
             [],
+            CONTRACTS.LINEAR_SUM,
         );
         return {
             distanceScaleFactor: BigNumber.from(linearSumParams[0]),
