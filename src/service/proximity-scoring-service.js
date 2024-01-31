@@ -127,6 +127,18 @@ class ProximityScoringService {
     ) {
         const linearSumParams = await this.blockchainModuleManager.getLinearSumParams(blockchain);
         const { distanceScaleFactor, stakeScaleFactor, w1, w2 } = linearSumParams;
+        const mappedStake = this.blockchainModuleManager.toBigNumber(
+            blockchain,
+            this.blockchainModuleManager.convertToWei(blockchain, stake),
+        );
+        const mappedMinStake = this.blockchainModuleManager.toBigNumber(
+            blockchain,
+            this.blockchainModuleManager.convertToWei(blockchain, minStake),
+        );
+        const mappedMaxStake = this.blockchainModuleManager.toBigNumber(
+            blockchain,
+            this.blockchainModuleManager.convertToWei(blockchain, maxStake),
+        );
 
         const idealMaxDistanceInNeighborhood = HASH_RING_SIZE.div(nodesNumber).mul(
             Math.ceil(r2 / 2),
@@ -154,7 +166,9 @@ class ProximityScoringService {
             normalizedDistance = normalizedDistance.mod(UINT64_MAX_BN.add(1));
         }
 
-        let normalizedStake = stakeScaleFactor.mul(stake - minStake).div(maxStake - minStake);
+        let normalizedStake = stakeScaleFactor
+            .mul(mappedStake.sub(mappedMinStake))
+            .div(mappedMaxStake.sub(mappedMinStake));
         if (normalizedStake.gt(UINT64_MAX_BN)) {
             normalizedStake = normalizedStake.mod(UINT64_MAX_BN.add(1));
         }
