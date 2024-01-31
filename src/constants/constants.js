@@ -577,6 +577,7 @@ export const CONTRACTS = {
     PARAMETERS_STORAGE_CONTRACT: 'ParametersStorageContract',
     IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
     Log2PLDSF: 'Log2PLDSF',
+    LINEAR_SUM: 'LinearSum',
 };
 
 export const CONTRACT_EVENTS = {
@@ -644,6 +645,9 @@ export const CACHED_FUNCTIONS = {
         getIdentityId: CACHE_DATA_TYPES.NUMBER,
     },
     Log2PLDSF: {
+        getParameters: CACHE_DATA_TYPES.ANY,
+    },
+    LinearSum: {
         getParameters: CACHE_DATA_TYPES.ANY,
     },
 };

@@ -30,7 +30,7 @@ class MigrationExecutor {
         const validationModuleManager = container.resolve('validationModuleManager');
 
         const migration = new PullBlockchainShardingTableMigration(
-            'pullShardingTableMigrationV611',
+            'pullShardingTableMigrationV612',
             logger,
             config,
             repositoryModuleManager,
