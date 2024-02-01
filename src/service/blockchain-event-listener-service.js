@@ -255,6 +255,8 @@ class BlockchainEventListenerService {
             const { parameterName, parameterValue } = JSON.parse(data);
             switch (contract) {
                 case CONTRACTS.Log2PLDSF_CONTRACT:
+                    // This invalidates contracts parameter
+                    // TODO: Create function for contract call cache invalidation
                     this.blockchainModuleManager.setContractCallCache(
                         blockchainId,
                         CONTRACTS.Log2PLDSF_CONTRACT,
