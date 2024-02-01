@@ -576,8 +576,8 @@ export const CONTRACTS = {
     SERVICE_AGREEMENT_V1_CONTRACT: 'ServiceAgreementV1Contract',
     PARAMETERS_STORAGE_CONTRACT: 'ParametersStorageContract',
     IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
-    Log2PLDSF: 'Log2PLDSF',
-    LINEAR_SUM: 'LinearSum',
+    Log2PLDSF_CONTRACT: 'Log2PLDSFContract',
+    LINEAR_SUM_CONTRACT: 'LinearSumContract',
 };
 
 export const CONTRACT_EVENTS = {
@@ -588,6 +588,8 @@ export const CONTRACT_EVENTS = {
     COMMIT_MANAGER_V1: ['StateFinalized'],
     SERVICE_AGREEMENT_V1: ['ServiceAgreementV1Extended', 'ServiceAgreementV1Terminated'],
     PARAMETERS_STORAGE: ['ParameterChanged'],
+    Log2PLDSF: ['ParameterChanged'],
+    LINEAR_SUM: ['ParameterChanged'],
 };
 
 export const NODE_ENVIRONMENTS = {

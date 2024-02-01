@@ -37,11 +37,11 @@ class EpochCheckCommand extends Command {
             !migrationExecuted
         ) {
             this.logger.info(
-                'Epoch check command will be postponed until ual extension triple store migration is completed',
+                'Epoch check: command will be postponed until ual extension triple store migration is completed',
             );
             return Command.repeat();
         }
-        this.logger.info('Starting epoch check command');
+        this.logger.info('Epoch check: Starting epoch check command');
         const operationId = this.operationIdService.generateId();
 
         await Promise.all(
@@ -77,7 +77,7 @@ class EpochCheckCommand extends Command {
                 const [r0, r2, totalNodesNumber, minStake, maxStake] = await Promise.all([
                     this.blockchainModuleManager.getR0(blockchain),
                     this.blockchainModuleManager.getR2(blockchain),
-                    this.blockchainModuleManager.getShardingTableLength(blockchain),
+                    this.repositoryModuleManager.getPeersCount(blockchain),
                     this.blockchainModuleManager.getMinimumStake(blockchain),
                     this.blockchainModuleManager.getMaximumStake(blockchain),
                 ]);
@@ -129,11 +129,18 @@ class EpochCheckCommand extends Command {
                 blockchain,
                 commitWindowDurationPerc,
             );
-
+        this.logger.info(
+            `Epoch check: Found ${eligibleAgreementForSubmitCommit.length} eligible agreements for submit commit for blockchain: ${blockchain}`,
+        );
         const scheduleSubmitCommitCommands = [];
         const updateServiceAgreementsLastCommitEpoch = [];
         for (const serviceAgreement of eligibleAgreementForSubmitCommit) {
-            if (scheduleSubmitCommitCommands.length >= maxTransactions) break;
+            if (scheduleSubmitCommitCommands.length >= maxTransactions) {
+                this.logger.warn(
+                    `Epoch check: not scheduling new commits. Submit commit command length: ${scheduleSubmitCommitCommands.length}, max number of transactions: ${maxTransactions} for blockchain: ${blockchain}`,
+                );
+                break;
+            }
 
             const neighbourhood = await this.shardingTableService.findNeighbourhood(
                 blockchain,
@@ -156,7 +163,10 @@ class EpochCheckCommand extends Command {
             }
 
             if (!neighbourhoodEdges && serviceAgreement.scoreFunctionId === 2) {
-                throw Error('Unable to find neighbourhood edges for asset');
+                this.logger.warn(
+                    `Epoch check: unable to find neighbourhood edges for agreement id: ${serviceAgreement.agreementId} for blockchain: ${blockchain}`,
+                );
+                continue;
             }
 
             try {
@@ -182,28 +192,28 @@ class EpochCheckCommand extends Command {
 
                 if (rank == null) {
                     this.logger.trace(
-                        `Node not in R2: ${r2} for the Service Agreement with the ID: ${serviceAgreement.agreementId}. Skipping scheduling submitCommitCommand.`,
+                        `Epoch check: Node not in R2: ${r2} for the Service Agreement with the ID: ${serviceAgreement.agreementId}. Skipping scheduling submitCommitCommand for blockchain: ${blockchain}`,
                     );
                     continue;
                 }
 
                 if (rank >= r0) {
                     this.logger.trace(
-                        `Calculated rank: ${
+                        `Epoch check: Calculated rank: ${
                             rank + 1
                         }. Node not in R0: ${r0} for the Service Agreement with the ID: ${
                             serviceAgreement.agreementId
-                        }. Skipping scheduling submitCommitCommand.`,
+                        }. Skipping scheduling submitCommitCommand for blockchain: ${blockchain}`,
                     );
                     continue;
                 }
 
                 this.logger.trace(
-                    `Calculated rank: ${
+                    `Epoch check: Calculated rank: ${
                         rank + 1
                     }. Node in R0: ${r0} for the Service Agreement with the ID: ${
                         serviceAgreement.agreementId
-                    }. Scheduling submitCommitCommand.`,
+                    }. Scheduling submitCommitCommand for blockchain: ${blockchain}`,
                 );
                 const closestNode = neighbourhood[0];
                 scheduleSubmitCommitCommands.push(
@@ -215,7 +225,7 @@ class EpochCheckCommand extends Command {
                 );
             } catch (error) {
                 this.logger.warn(
-                    `Failed to schedule submitCommitCommand for the Service Agreement with the ID: ${serviceAgreement.agreementId}. Error message: ${error.message}.`,
+                    `Epoch check: Failed to schedule submitCommitCommand for the Service Agreement with the ID: ${serviceAgreement.agreementId} for blockchain: ${blockchain}. Error message: ${error.message}.`,
                 );
                 continue;
             }
@@ -239,10 +249,18 @@ class EpochCheckCommand extends Command {
                 blockchain,
                 proofWindowDurationPerc,
             );
+        this.logger.info(
+            `Epoch check: Found ${eligibleAgreementsForSubmitProofs.length} eligible agreements for submit proof for blockchain: ${blockchain}`,
+        );
         const scheduleSubmitProofCommands = [];
         const updateServiceAgreementsLastProofEpoch = [];
         for (const serviceAgreement of eligibleAgreementsForSubmitProofs) {
-            if (scheduleSubmitProofCommands.length >= maxTransactions) break;
+            if (scheduleSubmitProofCommands.length >= maxTransactions) {
+                this.logger.warn(
+                    `Epoch check: not scheduling new proofs. Submit proofs command length: ${scheduleSubmitProofCommands.length}, max number of transactions: ${maxTransactions} for blockchain: ${blockchain}`,
+                );
+                break;
+            }
 
             try {
                 const eligibleForReward = await this.isEligibleForRewards(
@@ -254,7 +272,7 @@ class EpochCheckCommand extends Command {
                 );
                 if (eligibleForReward) {
                     this.logger.trace(
-                        `Node is eligible for rewards for the Service Agreement with the ID: ${serviceAgreement.agreementId}. Scheduling submitProofsCommand.`,
+                        `Epoch check: Node is eligible for rewards for the Service Agreement with the ID: ${serviceAgreement.agreementId} for blockchain: ${blockchain}. Scheduling submitProofsCommand.`,
                     );
 
                     scheduleSubmitProofCommands.push(
@@ -262,7 +280,7 @@ class EpochCheckCommand extends Command {
                     );
                 } else {
                     this.logger.trace(
-                        `Node is not eligible for rewards for the Service Agreement with the ID: ${serviceAgreement.agreementId}. Skipping scheduling submitProofsCommand.`,
+                        `Epoch check: Node is not eligible for rewards for the Service Agreement with the ID: ${serviceAgreement.agreementId}. Skipping scheduling submitProofsCommand for blockchain: ${blockchain}`,
                     );
                 }
                 updateServiceAgreementsLastProofEpoch.push(
@@ -273,7 +291,7 @@ class EpochCheckCommand extends Command {
                 );
             } catch (error) {
                 this.logger.warn(
-                    `Failed to schedule submitProofsCommand for the Service Agreement with the ID: ${serviceAgreement.agreementId}. Error message: ${error.message}.`,
+                    `Epoch check: Failed to schedule submitProofsCommand for the Service Agreement with the ID: ${serviceAgreement.agreementId} for blockchain: ${blockchain}. Error message: ${error.message}.`,
                 );
                 continue;
             }
