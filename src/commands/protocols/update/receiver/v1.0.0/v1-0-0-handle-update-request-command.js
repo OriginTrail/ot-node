@@ -96,9 +96,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             throw Error('Unable to find neighbourhood edges for asset');
         }
 
-        const totalNodesNumber = await this.blockchainModuleManager.getShardingTableLength(
-            blockchain,
-        );
+        const totalNodesNumber = await this.repositoryModuleManager.getPeersCount(blockchain);
         const minStake = await this.blockchainModuleManager.getMinimumStake(blockchain);
         const maxStake = await this.blockchainModuleManager.getMaximumStake(blockchain);
 

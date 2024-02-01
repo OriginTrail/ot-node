@@ -88,6 +88,18 @@ class BlockchainEventListenerService {
                 currentBlock,
                 CONTRACT_EVENTS.PARAMETERS_STORAGE,
             ),
+            this.getContractEvents(
+                blockchainId,
+                CONTRACTS.Log2PLDSF_CONTRACT,
+                currentBlock,
+                CONTRACT_EVENTS.Log2PLDSF,
+            ),
+            this.getContractEvents(
+                blockchainId,
+                CONTRACTS.LINEAR_SUM_CONTRACT,
+                currentBlock,
+                CONTRACT_EVENTS.LINEAR_SUM,
+            ),
         ];
 
         if (!devEnvironment) {
@@ -239,13 +251,40 @@ class BlockchainEventListenerService {
 
     async handleParameterChangedEvents(blockEvents) {
         for (const event of blockEvents) {
-            const { parameterName, parameterValue } = JSON.parse(event.data);
-            this.blockchainModuleManager.setContractCallCache(
-                event.blockchainId,
-                CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
-                parameterName,
-                parameterValue,
-            );
+            const { blockchainId, contract, data } = event;
+            const { parameterName, parameterValue } = JSON.parse(data);
+            switch (contract) {
+                case CONTRACTS.Log2PLDSF_CONTRACT:
+                    // This invalidates contracts parameter
+                    // TODO: Create function for contract call cache invalidation
+                    this.blockchainModuleManager.setContractCallCache(
+                        blockchainId,
+                        CONTRACTS.Log2PLDSF_CONTRACT,
+                        parameterName,
+                        null,
+                    );
+                    break;
+                case CONTRACTS.LINEAR_SUM_CONTRACT:
+                    this.blockchainModuleManager.setContractCallCache(
+                        blockchainId,
+                        CONTRACTS.LINEAR_SUM_CONTRACT,
+                        parameterName,
+                        null,
+                    );
+                    break;
+                case CONTRACTS.PARAMETERS_STORAGE_CONTRACT:
+                    this.blockchainModuleManager.setContractCallCache(
+                        blockchainId,
+                        CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+                        parameterName,
+                        parameterValue,
+                    );
+                    break;
+                default:
+                    this.logger.warn(
+                        `Unable to handle parameter changed event. Unknown contract name ${event.contract}`,
+                    );
+            }
         }
     }
 
@@ -312,9 +351,6 @@ class BlockchainEventListenerService {
                     nodeId,
                 );
 
-                const cleanHexString = sha256.startsWith('0x') ? sha256.slice(2) : sha256;
-                const sha256Blob = Buffer.from(cleanHexString, 'hex');
-
                 this.logger.trace(`Adding peer id: ${nodeId} to sharding table.`);
                 return {
                     peerId: nodeId,
@@ -329,7 +365,6 @@ class BlockchainEventListenerService {
                     ),
                     lastSeen: new Date(0),
                     sha256,
-                    sha256Blob,
                 };
             }),
         );
