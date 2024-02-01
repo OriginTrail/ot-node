@@ -26,9 +26,6 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
-            sha256Blob: {
-                type: DataTypes.BLOB,
-            },
         },
         { underscored: true },
     );

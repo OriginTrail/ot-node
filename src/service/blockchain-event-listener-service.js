@@ -312,9 +312,6 @@ class BlockchainEventListenerService {
                     nodeId,
                 );
 
-                const cleanHexString = sha256.startsWith('0x') ? sha256.slice(2) : sha256;
-                const sha256Blob = Buffer.from(cleanHexString, 'hex');
-
                 this.logger.trace(`Adding peer id: ${nodeId} to sharding table.`);
                 return {
                     peerId: nodeId,
@@ -329,7 +326,6 @@ class BlockchainEventListenerService {
                     ),
                     lastSeen: new Date(0),
                     sha256,
-                    sha256Blob,
                 };
             }),
         );
