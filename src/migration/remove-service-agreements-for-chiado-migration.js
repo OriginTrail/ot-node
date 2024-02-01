@@ -2,7 +2,7 @@ import BaseMigration from './base-migration.js';
 
 const GNOSIS_DEVNET_CHAIN_ID = 'gnosis:10200';
 
-class RemoveServiceAgreementsForChiadoDevnetMigration extends BaseMigration {
+class RemoveServiceAgreementsForChiadoMigration extends BaseMigration {
     constructor(migrationName, logger, config, repositoryModuleManager) {
         super(migrationName, logger, config);
         this.repositoryModuleManager = repositoryModuleManager;
@@ -15,4 +15,4 @@ class RemoveServiceAgreementsForChiadoDevnetMigration extends BaseMigration {
     }
 }
 
-export default RemoveServiceAgreementsForChiadoDevnetMigration;
+export default RemoveServiceAgreementsForChiadoMigration;
