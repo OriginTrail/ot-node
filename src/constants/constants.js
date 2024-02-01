@@ -18,7 +18,7 @@ export const UINT40_MAX_BN = BigNumber.from(2).pow(40).sub(1);
 
 export const UINT32_MAX_BN = BigNumber.from(2).pow(32).sub(1);
 
-export const HASH_RING_SIZE = BigNumber.from(2).pow(256);
+export const HASH_RING_SIZE = BigNumber.from(2).pow(256).sub(1);
 
 export const STAKE_UINT256_MULTIPLIER_BN = UINT256_MAX_BN.div(500000000);
 
