@@ -710,9 +710,10 @@ class Web3Service {
     ) {
         const contract = this[contractName];
         if (!contract) {
-            throw new Error(
-                `Error while getting all past events. Unknown contract: ${contractName}`,
-            );
+            // this will happen when we have different set of contracts on different blockchains
+            // eg LinearSum contract is available on gnosis but not on NeuroWeb, so the node should not fetch events
+            // from LinearSum contract on NeuroWeb blockchain
+            return [];
         }
 
         let fromBlock;
@@ -1294,7 +1295,7 @@ class Web3Service {
             this.scoringFunctionsContracts[2],
             'getParameters',
             [],
-            CONTRACTS.LINEAR_SUM,
+            CONTRACTS.LINEAR_SUM_CONTRACT,
         );
         return {
             distanceScaleFactor: BigNumber.from(linearSumParams[0]),

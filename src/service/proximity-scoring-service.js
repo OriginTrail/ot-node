@@ -143,10 +143,9 @@ class ProximityScoringService {
         const idealMaxDistanceInNeighborhood = HASH_RING_SIZE.div(nodesNumber).mul(
             Math.ceil(r2 / 2),
         );
-        const divisor =
-            maxNeighborhoodDistance <= idealMaxDistanceInNeighborhood
-                ? maxNeighborhoodDistance
-                : idealMaxDistanceInNeighborhood;
+        const divisor = maxNeighborhoodDistance.lte(idealMaxDistanceInNeighborhood)
+            ? maxNeighborhoodDistance
+            : idealMaxDistanceInNeighborhood;
 
         const maxMultiplier = UINT256_MAX_BN.div(distance);
 

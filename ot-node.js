@@ -49,7 +49,7 @@ class OTNode {
 
         await this.initializeModules();
 
-        await MigrationExecutor.executeRemoveServiceAgreementsForChiadoDevnetMigration(
+        await MigrationExecutor.executeRemoveServiceAgreementsForChiadoMigration(
             this.container,
             this.logger,
             this.config,
