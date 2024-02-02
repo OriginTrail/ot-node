@@ -57,16 +57,16 @@ The first node will be named `bootstrap`, while subsequent nodes will be named `
 ### MacOS
 
 ```bash
-bash ./tools/local-network-setup/setup-macos-environment.sh --nodes=6
+bash ./tools/local-network-setup/setup-macos-environment.sh --nodes=12
 ```
 
 ### Linux
 
 ```bash
-./tools/local-network-setup/setup-linux-environment.sh --nodes=6
+./tools/local-network-setup/setup-linux-environment.sh --nodes=12
 ```
 
-**Note:** With the above command, we will start two hardhat instances, deploy contracts, deploy a 6 nodes network (1 bootstrap and 5 subsequent nodes)<br/>
+**Note:** With the above commands, we will start two hardhat instances, deploy contracts, deploy a 12 node network (1 bootstrap and 11 subsequent nodes)<br/>
 
 ## Specifying the blockchain network
 
