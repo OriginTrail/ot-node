@@ -265,29 +265,33 @@ install_node() {
     done
     echo "NODE_ENV=$nodeEnv" >> $OTNODE_DIR/.env
 
-        # Blockchains prompt based on the selected environment
-        if [ "$nodeEnv" == "mainnet" ]; then
-            blockchain_prompt=("OriginTrail Parachain")
-        elif [ "$nodeEnv" == "testnet" ]; then
-            blockchain_prompt=("OriginTrail Parachain")
-        fi
+# Blockchains prompt based on the selected environment
+if [ "$nodeEnv" == "mainnet" ]; then
+    blockchain_prompt=("OriginTrail Parachain")
+elif [ "$nodeEnv" == "testnet" ]; then
+    blockchain_prompt=("OriginTrail Parachain" "Gnosis" "Both")
+fi
 
-        # Ask user which blockchain to connect to with strict input validation
-        while true; do
-            read -p "Please select the blockchain you want to connect your node to:
-            1. ${blockchain_prompt[0]}
-            Your choice: " blockchain_choice
+# Ask user which blockchain to connect to with strict input validation
+while true; do
+    read -p "Please select the blockchain you want to connect your node to:
+    1. ${blockchain_prompt[0]}
+    2. ${blockchain_prompt[1]}
+    3. ${blockchain_prompt[2]}
+    Your choice: " blockchain_choice
 
-            case "$blockchain_choice" in
-                [1]* ) blockchain="${blockchain_prompt[0]}"; break;;
-                [eE]* ) text_color $RED "Installer stopped by user"; exit;;
-                * ) text_color $RED "Invalid choice. Please enter a valid number."; continue;;
-            esac
-        done
+    case "$blockchain_choice" in
+        [1]* ) blockchain="${blockchain_prompt[0]}"; break;;
+        [2]* ) blockchain="${blockchain_prompt[1]}"; break;;
+        [3]* ) blockchain="${blockchain_prompt[2]}"; break;;
+        [eE]* ) text_color $RED "Installer stopped by user"; exit;;
+        * ) text_color $RED "Invalid choice. Please enter a valid number."; continue;;
+    esac
+done
 
-        # Case statement to handle blockchain-specific configurations
-        case "$blockchain" in
-    "OriginTrail Parachain")
+# Case statement to handle blockchain-specific configurations
+case "$blockchain" in
+    "OriginTrail Parachain" | "Gnosis" )
         # Input wallets for the selected blockchain
         read -p "Enter your EVM operational wallet address for $blockchain: " EVM_OPERATIONAL_WALLET
         text_color $GREEN "EVM operational wallet address for $blockchain: $EVM_OPERATIONAL_WALLET"
@@ -303,17 +307,69 @@ install_node() {
 
         read -p "Enter your profile shares token symbol for $blockchain: " SHARES_TOKEN_SYMBOL
         text_color $GREEN "Profile shares token symbol for $blockchain: $SHARES_TOKEN_SYMBOL"
+
+        if [ "$blockchain" == "Gnosis" ]; then
+            read -p "Enter your Gnosis RPC endpoint: "  GNOSIS_RPC_ENDPOINT
+            text_color $GREEN "Gnosis RPC endpoint: $GNOSIS_RPC_ENDPOINT" 
+        fi
+
+
+        ;;
+    "Both" )
+        if [ "$nodeEnv" == "mainnet" ]; then
+            blockchain1="OTP"
+        elif [ "$nodeEnv" == "testnet" ]; then
+            blockchain1="OTP"
+            blockchain2="Gnosis"
+        fi
+
+        # Input wallets for the first blockchain
+        read -p "Enter your EVM operational wallet address for $blockchain1: " EVM_OPERATIONAL_WALLET
+        text_color $GREEN "EVM operational wallet address for $blockchain1: $EVM_OPERATIONAL_WALLET"
+
+        read -p "Enter your EVM operational wallet private key for $blockchain1: " EVM_OPERATIONAL_PRIVATE_KEY
+        text_color $GREEN "EVM operational wallet private key for $blockchain1: $EVM_OPERATIONAL_PRIVATE_KEY"
+
+        read -p "Enter your EVM management wallet address for $blockchain1: " EVM_MANAGEMENT_WALLET
+        text_color $GREEN "EVM management wallet address for $blockchain1: $EVM_MANAGEMENT_WALLET"
+
+        read -p "Enter your profile shares token name for $blockchain1: " SHARES_TOKEN_NAME
+        text_color $GREEN "Profile shares token name for $blockchain1: $SHARES_TOKEN_NAME"
+
+        read -p "Enter your profile shares token symbol for $blockchain1: " SHARES_TOKEN_SYMBOL
+        text_color $GREEN "Profile shares token symbol for $blockchain1: $SHARES_TOKEN_SYMBOL"
+
+        # Input wallets for the second blockchain
+        read -p "Enter your EVM operational wallet address for $blockchain2: " EVM_OPERATIONAL_WALLET_2
+        text_color $GREEN "EVM operational wallet address for $blockchain2: $EVM_OPERATIONAL_WALLET_2"
+
+        read -p "Enter your EVM operational wallet private key for $blockchain2: " EVM_OPERATIONAL_PRIVATE_KEY_2
+        text_color $GREEN "EVM operational wallet private key for $blockchain2: $EVM_OPERATIONAL_PRIVATE_KEY_2"
+
+        read -p "Enter your EVM management wallet address for $blockchain2: " EVM_MANAGEMENT_WALLET_2
+        text_color $GREEN "EVM management wallet address for $blockchain2: $EVM_MANAGEMENT_WALLET_2"
+
+        read -p "Enter your profile shares token name for $blockchain2: " SHARES_TOKEN_NAME_2
+        text_color $GREEN "Profile shares token name for $blockchain2: $SHARES_TOKEN_NAME_2"
+
+        read -p "Enter your profile shares token symbol for $blockchain2: " SHARES_TOKEN_SYMBOL_2
+        text_color $GREEN "Profile shares token symbol for $blockchain2: $SHARES_TOKEN_SYMBOL_2"
+
+        read -p "Enter your Gnosis RPC endpoint: "  GNOSIS_RPC_ENDPOINT
+        text_color $GREEN "Gnosis RPC endpoint: $GNOSIS_RPC_ENDPOINT"
+
         ;;
     * )
         text_color $RED "Invalid blockchain choice. Exiting installer."
         exit;;
-        esac
+esac
 
-        perform_step npm ci --omit=dev --ignore-scripts "Executing npm install"
+perform_step npm ci --omit=dev --ignore-scripts "Executing npm install"
 
-        CONFIG_DIR=$OTNODE_DIR/..
-        perform_step touch $CONFIG_DIR/.origintrail_noderc "Configuring node config file"
-        perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}}' > $CONFIG_DIR/.origintrail_noderc) "Adding loglevel and auth values to node config file"
+CONFIG_DIR=$OTNODE_DIR/..
+perform_step touch $CONFIG_DIR/.origintrail_noderc "Configuring node config file"
+perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}}' > $CONFIG_DIR/.origintrail_noderc) "Adding loglevel and auth values to node config file"
+
 
     perform_step $(jq --arg tripleStore "$tripleStore" --arg tripleStoreUrl "$tripleStoreUrl" '.modules.tripleStore.implementation[$tripleStore] |=
         {
@@ -350,39 +406,83 @@ install_node() {
 
     perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
 
-        # Set blockchain IDs based on the environment
-        if [ "$nodeEnv" == "mainnet" ]; then
-            otp_blockchain_id=2043
-        else
-            otp_blockchain_id=20430
-        fi
+# Set blockchain IDs based on the environment
+if [ "$nodeEnv" == "mainnet" ]; then
+    otp_blockchain_id=2043
+else
+    otp_blockchain_id=20430
+    gnosis_blockchain_id=10200
+fi
+
+# Check if "Both" blockchains are selected
+if [ "$blockchain" == "Both" ]; then
+  perform_step $(jq --arg otp_blockchain_id "$otp_blockchain_id" --arg EVM_OPERATIONAL_WALLET "$EVM_OPERATIONAL_WALLET" --arg EVM_OPERATIONAL_PRIVATE_KEY "$EVM_OPERATIONAL_PRIVATE_KEY" --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" --arg gnosis_blockchain_id "$gnosis_blockchain_id" --arg EVM_OPERATIONAL_WALLET_2 "$EVM_OPERATIONAL_WALLET_2" --arg EVM_OPERATIONAL_PRIVATE_KEY_2 "$EVM_OPERATIONAL_PRIVATE_KEY_2" --arg EVM_MANAGEMENT_WALLET_2 "$EVM_MANAGEMENT_WALLET_2" --arg SHARES_TOKEN_NAME_2 "$SHARES_TOKEN_NAME_2" --arg SHARES_TOKEN_SYMBOL_2 "$SHARES_TOKEN_SYMBOL_2" --arg GNOSIS_RPC_ENDPOINT "$GNOSIS_RPC_ENDPOINT" '
+    .modules.blockchain.implementation += {
+      "otp:'$otp_blockchain_id'": {
+        "enabled": true,
+        "config": {
+          "evmOperationalWalletPublicKey": $EVM_OPERATIONAL_WALLET,
+          "evmOperationalWalletPrivateKey": $EVM_OPERATIONAL_PRIVATE_KEY,
+          "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET,
+          "sharesTokenName": $SHARES_TOKEN_NAME,
+          "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL
+        }
+      },
+      "gnosis:'$gnosis_blockchain_id'": {
+        "enabled": true,
+        "config": {
+          "evmOperationalWalletPublicKey": $EVM_OPERATIONAL_WALLET_2,
+          "evmOperationalWalletPrivateKey": $EVM_OPERATIONAL_PRIVATE_KEY_2,
+          "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET_2,
+          "sharesTokenName": $SHARES_TOKEN_NAME_2,
+          "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL_2,
+          "rpcEndpoints": [$GNOSIS_RPC_ENDPOINT]
+        }
+      }
+    }' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2 for Both"
+
+else
+  # Single blockchain selected
+  if [ "$blockchain" = "OriginTrail Parachain" ]; then
+    blockchain="otp"
+    blockchain_id="$otp_blockchain_id"
+  elif [ "$blockchain" = "Gnosis" ]; then
+    blockchain="gnosis"
+    blockchain_id="$gnosis_blockchain_id"
+  fi
+  ADD_GNOSIS_RPC="false"
+  if [ "$blockchain" = "gnosis" ]; then
+    ADD_GNOSIS_RPC="true"
+  fi
 
 
+  blockchain_arg="$blockchain:$blockchain_id"
 
-          # Single blockchain selected
-          if [ "$blockchain" = "OriginTrail Parachain" ]; then
-            blockchain="otp"
-            blockchain_id="$otp_blockchain_id"
-          fi
+jq --arg blockchain_arg "$blockchain_arg" \
+   --arg EVM_OPERATIONAL_WALLET "$EVM_OPERATIONAL_WALLET" \
+   --arg EVM_OPERATIONAL_PRIVATE_KEY "$EVM_OPERATIONAL_PRIVATE_KEY" \
+   --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" \
+   --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" \
+   --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" \
+   --argjson ADD_GNOSIS_RPC "$ADD_GNOSIS_RPC" \
+   --arg GNOSIS_RPC_ENDPOINT "$GNOSIS_RPC_ENDPOINT" '
+(.modules.blockchain.implementation += {
+  ($blockchain_arg): {
+    "enabled": true,
+    "config": {
+      "evmOperationalWalletPublicKey": $EVM_OPERATIONAL_WALLET,
+      "evmOperationalWalletPrivateKey": $EVM_OPERATIONAL_PRIVATE_KEY,
+      "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET,
+      "sharesTokenName": $SHARES_TOKEN_NAME,
+      "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL
+    }
+  }
+}) | if $ADD_GNOSIS_RPC then .blockchain.implementation[$blockchain_arg].config += {"rpcEndpoints": [$GNOSIS_RPC_ENDPOINT]} else . end
+' "$CONFIG_DIR/.origintrail_noderc" > "$CONFIG_DIR/origintrail_noderc_tmp"
 
-        blockchain_arg="$blockchain:$blockchain_id"
+fi
 
-        perform_step $(jq --arg blockchain_arg "$blockchain_arg" --arg EVM_OPERATIONAL_WALLET "$EVM_OPERATIONAL_WALLET" --arg EVM_OPERATIONAL_PRIVATE_KEY "$EVM_OPERATIONAL_PRIVATE_KEY" --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" '
-          .modules.blockchain.implementation += {
-            ($blockchain_arg): {
-            "enabled": true,
-              "config": {
-                "evmOperationalWalletPublicKey": $EVM_OPERATIONAL_WALLET,
-                "evmOperationalWalletPrivateKey": $EVM_OPERATIONAL_PRIVATE_KEY,
-                "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET,
-                "sharesTokenName": $SHARES_TOKEN_NAME,
-                "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL
-              }
-            }
-          }' "$CONFIG_DIR/.origintrail_noderc" > "$CONFIG_DIR/origintrail_noderc_tmp") "Adding node wallets to node config file 1/2"
-
-        perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
-
+    perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
     perform_step cp $OTNODE_DIR/installer/data/otnode.service /lib/systemd/system/ "Copying otnode service file"
 
     systemctl daemon-reload
@@ -478,7 +578,6 @@ install_node
 
 header_color $BGREEN"INSTALLATION COMPLETE !"
 
-rm -r /root/ot-node-6-release-testnet
 journalctl -u otnode --output cat -fn 200
 
 text_color $GREEN "
