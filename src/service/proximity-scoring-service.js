@@ -188,10 +188,15 @@ class ProximityScoringService {
         }
 
         if (finalScore.gt(UINT40_MAX_BN)) {
-            finalScore = finalScore.mod(UINT40_MAX_BN.add(1));
+            finalScore = this.toUint40(finalScore, UINT256_MAX_BN);
         }
 
         return finalScore.toNumber();
+    }
+
+    toUint40(value, maxValue) {
+        const result = (value * UINT40_MAX_BN) / maxValue;
+        return result;
     }
 }
 
