@@ -1,7 +1,7 @@
 #/lib/systemd/system/otnode.service
 
 [Unit]
-Description=OriginTrail V6 Stage 1 Beta Node
+Description=OriginTrail V6 Node
 Documentation=https://github.com/OriginTrail/ot-node/
 After=network.target graphdb.service blazegraph.service
 
