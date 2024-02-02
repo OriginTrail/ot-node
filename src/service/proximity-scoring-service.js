@@ -187,7 +187,7 @@ class ProximityScoringService {
             finalScore = await this.blockchainModuleManager.toBigNumber(blockchain, 0);
         }
 
-        finalScore = this.toUint40(finalScore, w1.add(w2).mul(oneEther));
+        finalScore = this.toUint40(finalScore, oneEther.mul(w1 + w2));
 
         return finalScore.toNumber();
     }

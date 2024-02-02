@@ -1300,8 +1300,8 @@ class Web3Service {
         return {
             distanceScaleFactor: BigNumber.from(linearSumParams[0]),
             stakeScaleFactor: BigNumber.from(linearSumParams[1]),
-            w1: BigNumber.from(linearSumParams[2]),
-            w2: BigNumber.from(linearSumParams[3]),
+            w1: Number(linearSumParams[2]),
+            w2: Number(linearSumParams[3]),
         };
     }
 }
