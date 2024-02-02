@@ -9,7 +9,6 @@ import { MIN_NODE_VERSION } from './src/constants/constants.js';
 import FileService from './src/service/file-service.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
-import MigrationExecutor from './src/migration/migration-executor.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -28,10 +27,6 @@ class OTNode {
         await this.checkForUpdate();
         await this.removeUpdateFile();
 
-        await MigrationExecutor.executeUalExtensionUserConfigurationMigration(
-            this.logger,
-            this.config,
-        );
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
         this.logger.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
@@ -54,14 +49,7 @@ class OTNode {
         await this.initializeCommandExecutor();
         await this.initializeShardingTableService();
 
-        MigrationExecutor.executeUalExtensionTripleStoreMigration(
-            this.container,
-            this.logger,
-            this.config,
-        ).then(async () => {
-            await this.initializeBlockchainEventListenerService();
-        });
-
+        await this.initializeBlockchainEventListenerService();
         await this.initializeRouters();
         await this.startNetworkModule();
         this.startTelemetryModule();
