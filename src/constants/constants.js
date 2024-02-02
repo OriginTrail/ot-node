@@ -646,10 +646,10 @@ export const CACHED_FUNCTIONS = {
     IdentityStorageContract: {
         getIdentityId: CACHE_DATA_TYPES.NUMBER,
     },
-    Log2PLDSF: {
+    Log2PLDSFContract: {
         getParameters: CACHE_DATA_TYPES.ANY,
     },
-    LinearSum: {
+    LinearSumContract: {
         getParameters: CACHE_DATA_TYPES.ANY,
     },
 };
