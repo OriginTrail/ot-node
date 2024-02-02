@@ -267,7 +267,7 @@ install_node() {
 
 # Blockchains prompt based on the selected environment
 if [ "$nodeEnv" == "mainnet" ]; then
-    blockchain_prompt=("OriginTrail Parachain" "Gnosis" "Both")
+    blockchain_prompt=("OriginTrail Parachain")
 elif [ "$nodeEnv" == "testnet" ]; then
     blockchain_prompt=("OriginTrail Parachain" "Gnosis" "Both")
 fi
@@ -311,7 +311,6 @@ case "$blockchain" in
     "Both" )
         if [ "$nodeEnv" == "mainnet" ]; then
             blockchain1="OTP"
-            blockchain2="Gnosis"
         elif [ "$nodeEnv" == "testnet" ]; then
             blockchain1="OTP"
             blockchain2="Gnosis"
