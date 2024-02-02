@@ -417,7 +417,7 @@ fi
 # Check if "Both" blockchains are selected
 if [ "$blockchain" == "Both" ]; then
   perform_step $(jq --arg otp_blockchain_id "$otp_blockchain_id" --arg EVM_OPERATIONAL_WALLET "$EVM_OPERATIONAL_WALLET" --arg EVM_OPERATIONAL_PRIVATE_KEY "$EVM_OPERATIONAL_PRIVATE_KEY" --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" --arg gnosis_blockchain_id "$gnosis_blockchain_id" --arg EVM_OPERATIONAL_WALLET_2 "$EVM_OPERATIONAL_WALLET_2" --arg EVM_OPERATIONAL_PRIVATE_KEY_2 "$EVM_OPERATIONAL_PRIVATE_KEY_2" --arg EVM_MANAGEMENT_WALLET_2 "$EVM_MANAGEMENT_WALLET_2" --arg SHARES_TOKEN_NAME_2 "$SHARES_TOKEN_NAME_2" --arg SHARES_TOKEN_SYMBOL_2 "$SHARES_TOKEN_SYMBOL_2" --arg GNOSIS_RPC_ENDPOINT "$GNOSIS_RPC_ENDPOINT" '
-    .blockchain.implementation += {
+    .modules.blockchain.implementation += {
       "otp:'$otp_blockchain_id'": {
         "enabled": true,
         "config": {
@@ -466,7 +466,7 @@ jq --arg blockchain_arg "$blockchain_arg" \
    --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" \
    --argjson ADD_GNOSIS_RPC "$ADD_GNOSIS_RPC" \
    --arg GNOSIS_RPC_ENDPOINT "$GNOSIS_RPC_ENDPOINT" '
-(.blockchain.implementation += {
+(.modules.blockchain.implementation += {
   ($blockchain_arg): {
     "enabled": true,
     "config": {
