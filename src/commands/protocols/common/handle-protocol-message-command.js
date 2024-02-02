@@ -47,12 +47,19 @@ class HandleProtocolMessageCommand extends Command {
         throw Error('prepareMessage not implemented');
     }
 
-    async validateNeighborhood(blockchain, keyword, hashFunctionId, ual) {
+    async validateNeighborhood(
+        blockchain,
+        keyword,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+        ual,
+    ) {
         const closestNodes = await this.shardingTableService.findNeighbourhood(
             blockchain,
             keyword,
             await this.blockchainModuleManager.getR2(blockchain),
             hashFunctionId,
+            proximityScoreFunctionsPairId,
             true,
         );
         const peerId = this.networkModuleManager.getPeerId().toB58String();
@@ -179,11 +186,20 @@ class HandleProtocolMessageCommand extends Command {
         tokenId,
         keyword,
         hashFunctionId,
+        proximityScoreFunctionsPairId,
     ) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.trace(`Validating neighborhood for ual: ${ual}`);
-        if (!(await this.validateNeighborhood(blockchain, keyword, hashFunctionId, ual))) {
+        if (
+            !(await this.validateNeighborhood(
+                blockchain,
+                keyword,
+                hashFunctionId,
+                proximityScoreFunctionsPairId,
+                ual,
+            ))
+        ) {
             return {
                 messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
                 messageData: { errorMessage: 'Invalid neighbourhood' },

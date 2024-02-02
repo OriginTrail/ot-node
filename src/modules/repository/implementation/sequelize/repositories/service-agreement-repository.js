@@ -21,6 +21,14 @@ class ServiceAgreementRepository {
         });
     }
 
+    async removeServiceAgreementsForBlockchain(blockchainId) {
+        await this.model.destroy({
+            where: {
+                blockchainId,
+            },
+        });
+    }
+
     async updateServiceAgreementRecord(
         blockchainId,
         assetStorageContractAddress,

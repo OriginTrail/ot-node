@@ -484,6 +484,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('service_agreement').removeServiceAgreements(agreementIds);
     }
 
+    async removeServiceAgreementsForBlockchain(blockchainId) {
+        return this.getRepository('service_agreement').removeServiceAgreementsForBlockchain(
+            blockchainId,
+        );
+    }
+
     async updateServiceAgreementEpochsNumber(agreementId, epochsNumber) {
         return this.getRepository('service_agreement').updateServiceAgreementEpochsNumber(
             agreementId,

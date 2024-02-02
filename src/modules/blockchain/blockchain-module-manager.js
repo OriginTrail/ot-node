@@ -242,12 +242,19 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
+    async getAssertionData(blockchain, assertionid) {
+        return this.callImplementationFunction(blockchain, 'getAssertionData', [assertionid]);
+    }
+
     submitCommit(
         blockchain,
         assetContractAddress,
         tokenId,
         keyword,
         hashFunctionId,
+        closestNode,
+        leftNeighborhoodEdge,
+        rightNeighborhoodEdge,
         epoch,
         latestStateIndex,
         callback,
@@ -258,6 +265,9 @@ class BlockchainModuleManager extends BaseModuleManager {
             tokenId,
             keyword,
             hashFunctionId,
+            closestNode,
+            leftNeighborhoodEdge,
+            rightNeighborhoodEdge,
             epoch,
             latestStateIndex,
             callback,
@@ -271,6 +281,9 @@ class BlockchainModuleManager extends BaseModuleManager {
         tokenId,
         keyword,
         hashFunctionId,
+        closestNode,
+        leftNeighborhoodEdge,
+        rightNeighborhoodEdge,
         epoch,
         callback,
         gasPrice,
@@ -280,6 +293,9 @@ class BlockchainModuleManager extends BaseModuleManager {
             tokenId,
             keyword,
             hashFunctionId,
+            closestNode,
+            leftNeighborhoodEdge,
+            rightNeighborhoodEdge,
             epoch,
             callback,
             gasPrice,
@@ -328,6 +344,14 @@ class BlockchainModuleManager extends BaseModuleManager {
             callback,
             gasPrice,
         ]);
+    }
+
+    async getMinimumStake(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getMinimumStake');
+    }
+
+    async getMaximumStake(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getMaximumStake');
     }
 
     async getR2(blockchain) {
@@ -394,6 +418,20 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     async hasPendingUpdate(blockchain, tokenId) {
         return this.callImplementationFunction(blockchain, 'hasPendingUpdate', [tokenId]);
+    }
+
+    async getAgreementScoreFunctionId(blockchain, agreementId) {
+        return this.callImplementationFunction(blockchain, 'getAgreementScoreFunctionId', [
+            agreementId,
+        ]);
+    }
+
+    convertUint8ArrayToHex(blockchain, uint8Array) {
+        return this.callImplementationFunction(blockchain, 'convertUint8ArrayToHex', [uint8Array]);
+    }
+
+    getLinearSumParams(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getLinearSumParams');
     }
 }
 

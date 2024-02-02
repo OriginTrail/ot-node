@@ -1,6 +1,6 @@
 import axios from 'axios';
 import Web3Service from '../web3-service.js';
-import { BLOCK_TIME_MILLIS } from '../../../../constants/constants.js';
+import { BLOCK_TIME_MILLIS, GNOSIS_DEFAULT_GAS_PRICE } from '../../../../constants/constants.js';
 
 class GnosisService extends Web3Service {
     constructor(ctx) {
@@ -26,7 +26,10 @@ class GnosisService extends Web3Service {
             this.logger.debug(`Gas price on Gnosis: ${gasPrice}`);
             return gasPrice;
         } catch (error) {
-            return undefined;
+            this.logger.warn(
+                `Failed to fetch the gas price from the Gnosis: ${error}. Using default value: ${GNOSIS_DEFAULT_GAS_PRICE} Gwei.`,
+            );
+            this.convertToWei(GNOSIS_DEFAULT_GAS_PRICE, 'gwei');
         }
     }
 
@@ -42,6 +45,17 @@ class GnosisService extends Web3Service {
             [],
         );
         return lastTokenId;
+    }
+
+    async healthCheck() {
+        try {
+            const blockNumber = await this.getBlockNumber();
+            if (blockNumber) return true;
+        } catch (e) {
+            this.logger.error(`Error on checking Gnosis blockchain. ${e}`);
+            return false;
+        }
+        return false;
     }
 }
 

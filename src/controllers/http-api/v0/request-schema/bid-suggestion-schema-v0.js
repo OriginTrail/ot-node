@@ -35,5 +35,10 @@ export default (argumentsObject) => ({
             minimum: 1,
             maximum: 1,
         },
+        proximityScoreFunctionsPairId: {
+            type: 'number',
+            minimum: 1,
+            maximum: 2,
+        },
     },
 });
