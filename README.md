@@ -164,7 +164,7 @@ By their nature, Knowledge Assets are semantic resources (following the W3C Sema
 
 <br/>
 
--   **NodeJS** >= 16.0.0
+-   **NodeJS** 16.x (ideally, 16.16)
 -   **npm** >= 8.0.0
 
 ---
