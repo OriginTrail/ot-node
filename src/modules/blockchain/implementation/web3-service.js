@@ -19,6 +19,9 @@ import {
     HTTP_RPC_PROVIDER_PRIORITY,
     FALLBACK_PROVIDER_QUORUM,
     RPC_PROVIDER_STALL_TIMEOUT,
+    CACHED_FUNCTIONS,
+    CACHE_DATA_TYPES,
+    CONTRACTS,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -38,25 +41,27 @@ const ABIs = {
     ProfileStorage: require('dkg-evm-module/abi/ProfileStorage.json'),
     ScoringProxy: require('dkg-evm-module/abi/ScoringProxy.json'),
     ServiceAgreementV1: require('dkg-evm-module/abi/ServiceAgreementV1.json'),
-    CommitManagerV1: require('dkg-evm-module/abi/CommitManagerV1.json'),
-    CommitManagerV1U1: require('dkg-evm-module/abi/CommitManagerV1U1.json'),
+    CommitManagerV1: require('dkg-evm-module/abi/CommitManagerV2.json'),
+    CommitManagerV1U1: require('dkg-evm-module/abi/CommitManagerV2U1.json'),
     ProofManagerV1: require('dkg-evm-module/abi/ProofManagerV1.json'),
     ProofManagerV1U1: require('dkg-evm-module/abi/ProofManagerV1U1.json'),
-    ShardingTable: require('dkg-evm-module/abi/ShardingTable.json'),
-    ShardingTableStorage: require('dkg-evm-module/abi/ShardingTableStorage.json'),
+    ShardingTable: require('dkg-evm-module/abi/ShardingTableV2.json'),
+    ShardingTableStorage: require('dkg-evm-module/abi/ShardingTableStorageV2.json'),
     ServiceAgreementStorageProxy: require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json'),
     UnfinalizedStateStorage: require('dkg-evm-module/abi/UnfinalizedStateStorage.json'),
+    LinearSum: require('dkg-evm-module/abi/LinearSum.json'),
 };
 
 const SCORING_FUNCTIONS = {
     1: 'Log2PLDSF',
+    2: 'LinearSum',
 };
 
 class Web3Service {
     async initialize(config, logger) {
         this.config = config;
         this.logger = logger;
-
+        this.contractCallCache = {};
         this.initializeTransactionQueue(TRANSACTION_QUEUE_CONCURRENCY);
         await this.initializeWeb3();
         this.startBlock = await this.getBlockNumber();
@@ -280,6 +285,32 @@ class Web3Service {
         }
     }
 
+    setContractCallCache(contractName, functionName, value) {
+        if (CACHED_FUNCTIONS[contractName]?.[functionName]) {
+            const type = CACHED_FUNCTIONS[contractName][functionName];
+            if (!this.contractCallCache[contractName]) {
+                this.contractCallCache[contractName] = {};
+            }
+            switch (type) {
+                case CACHE_DATA_TYPES.NUMBER:
+                    this.contractCallCache[contractName][functionName] = Number(value);
+                    break;
+                default:
+                    this.contractCallCache[contractName][functionName] = value;
+            }
+        }
+    }
+
+    getContractCallCache(contractName, functionName) {
+        if (
+            CACHED_FUNCTIONS[contractName]?.[functionName] &&
+            this.contractCallCache[contractName]?.[functionName]
+        ) {
+            return this.contractCallCache[contractName][functionName];
+        }
+        return null;
+    }
+
     initializeContract(contractName, contractAddress) {
         if (ABIs[contractName] != null) {
             this[`${contractName}Contract`] = new ethers.Contract(
@@ -343,16 +374,13 @@ class Web3Service {
     }
 
     async getIdentityId() {
-        if (this.config.identityId) {
-            return this.config.identityId;
-        }
         const identityId = await this.callContractFunction(
             this.IdentityStorageContract,
             'getIdentityId',
             [this.getPublicKey()],
+            CONTRACTS.IDENTITY_STORAGE_CONTRACT,
         );
-        this.config.identityId = Number(identityId);
-        return this.config.identityId;
+        return Number(identityId);
     }
 
     async identityIdExists() {
@@ -415,32 +443,30 @@ class Web3Service {
         }
     }
 
-    async callContractFunction(contractInstance, functionName, args) {
-        let result;
-        while (result === undefined) {
-            try {
+    async callContractFunction(contractInstance, functionName, args, contractName = null) {
+        let result = this.getContractCallCache(contractName, functionName);
+        try {
+            if (!result) {
                 // eslint-disable-next-line no-await-in-loop
                 result = await contractInstance[functionName](...args);
-            } catch (error) {
-                const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
-
-                const functionFragment = contractInstance.interface.getFunction(
-                    error.transaction.data.slice(0, 10),
-                );
-                const inputs = functionFragment.inputs
-                    .map((input, i) => {
-                        const argName = input.name;
-                        const argValue = this._formatArgument(args[i]);
-                        return `${argName}=${argValue}`;
-                    })
-                    .join(', ');
-
-                throw new Error(
-                    `Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`,
-                );
+                this.setContractCallCache(contractName, functionName, result);
             }
-        }
+        } catch (error) {
+            const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
 
+            const functionFragment = contractInstance.interface.getFunction(
+                error.transaction.data.slice(0, 10),
+            );
+            const inputs = functionFragment.inputs
+                .map((input, i) => {
+                    const argName = input.name;
+                    const argValue = this._formatArgument(args[i]);
+                    return `${argName}=${argValue}`;
+                })
+                .join(', ');
+
+            throw new Error(`Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`);
+        }
         return result;
     }
 
@@ -455,6 +481,12 @@ class Web3Service {
             gasLimit = await contractInstance.estimateGas[functionName](...args);
         } catch (error) {
             const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
+
+            if (error.transaction === undefined) {
+                throw new Error(
+                    `Gas estimation for ${functionName} has failed, reason: ${decodedErrorData}`,
+                );
+            }
 
             const functionFragment = contractInstance.interface.getFunction(
                 error.transaction.data.slice(0, 10),
@@ -678,9 +710,10 @@ class Web3Service {
     ) {
         const contract = this[contractName];
         if (!contract) {
-            throw new Error(
-                `Error while getting all past events. Unknown contract: ${contractName}`,
-            );
+            // this will happen when we have different set of contracts on different blockchains
+            // eg LinearSum contract is available on gnosis but not on NeuroWeb, so the node should not fetch events
+            // from LinearSum contract on NeuroWeb blockchain
+            return [];
         }
 
         let fromBlock;
@@ -737,20 +770,10 @@ class Web3Service {
         return timestamp < timestampThirtyDaysInPast;
     }
 
-    async isHubContract(contractAddress) {
-        return this.callContractFunction(this.HubContract, 'isContract(address)', [
-            contractAddress,
-        ]);
-    }
-
     async isAssetStorageContract(contractAddress) {
         return this.callContractFunction(this.HubContract, 'isAssetStorage(address)', [
             contractAddress,
         ]);
-    }
-
-    async getNodeStake(identityId) {
-        return this.callContractFunction(this.StakingStorageContract, 'totalStakes', [identityId]);
     }
 
     async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
@@ -795,17 +818,6 @@ class Web3Service {
         ]);
     }
 
-    async getAssertionIdsLength(assetContractAddress, tokenId) {
-        const assetStorageContractInstance =
-            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
-        if (!assetStorageContractInstance)
-            throw new Error('Unknown asset storage contract address');
-
-        return this.callContractFunction(assetStorageContractInstance, 'getAssertionIdsLength', [
-            tokenId,
-        ]);
-    }
-
     async getKnowledgeAssetOwner(assetContractAddress, tokenId) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
@@ -821,12 +833,6 @@ class Web3Service {
             'getUnfinalizedState',
             [tokenId],
         );
-    }
-
-    async getAssertionIssuer(assertionId) {
-        return this.callContractFunction(this.AssertionStorageContract, 'getAssertionIssuer', [
-            assertionId,
-        ]);
     }
 
     async getAgreementData(agreementId) {
@@ -874,6 +880,20 @@ class Web3Service {
         return Number(assertionChunksNumber);
     }
 
+    async getAssertionData(assertionId) {
+        const assertionData = await this.callContractFunction(
+            this.AssertionStorageContract,
+            'getAssertion',
+            [assertionId],
+        );
+        return {
+            timestamp: Number(assertionData.timestamp),
+            size: Number(assertionData.size),
+            triplesNumber: Number(assertionData.triplesNumber),
+            chunksNumber: Number(assertionData.chunksNumber),
+        };
+    }
+
     selectCommitManagerContract(latestStateIndex) {
         return latestStateIndex === 0
             ? this.CommitManagerV1Contract
@@ -916,18 +936,55 @@ class Web3Service {
             }));
     }
 
+    async getMinimumStake() {
+        const minimumStake = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'minimumStake',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
+
+        return Number(ethers.utils.formatEther(minimumStake));
+    }
+
+    async getMaximumStake() {
+        const maximumStake = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'maximumStake',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
+
+        return Number(ethers.utils.formatEther(maximumStake));
+    }
+
     async getR2() {
-        const r2 = await this.callContractFunction(this.ParametersStorageContract, 'r2', []);
+        const r2 = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'r2',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
         return r2;
     }
 
     async getR1() {
-        const r1 = await this.callContractFunction(this.ParametersStorageContract, 'r1', []);
+        const r1 = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'r1',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
         return r1;
     }
 
     async getR0() {
-        const r0 = await this.callContractFunction(this.ParametersStorageContract, 'r0', []);
+        const r0 = await this.callContractFunction(
+            this.ParametersStorageContract,
+            'r0',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
         return r0;
     }
 
@@ -936,6 +993,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'finalizationCommitsNumber',
             [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
         return finalizationCommitsNumber;
     }
@@ -945,15 +1003,29 @@ class Web3Service {
         tokenId,
         keyword,
         hashFunctionId,
+        closestNode,
+        leftNeighborhoodEdge,
+        rightNeighborhoodEdge,
         epoch,
         latestStateIndex,
         callback,
         gasPrice,
     ) {
+        const submitCommitArgs = [assetContractAddress, tokenId, keyword, hashFunctionId, epoch];
+        let functionName = 'submitCommit((address,uint256,bytes,uint8,uint16))';
+        if (
+            closestNode !== undefined &&
+            leftNeighborhoodEdge !== undefined &&
+            rightNeighborhoodEdge !== undefined
+        ) {
+            submitCommitArgs.push(closestNode, leftNeighborhoodEdge, rightNeighborhoodEdge);
+            functionName =
+                'submitCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))';
+        }
         return this.queueTransaction(
             this.selectCommitManagerContract(latestStateIndex),
-            'submitCommit',
-            [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch]],
+            functionName,
+            [submitCommitArgs],
             callback,
             gasPrice,
         );
@@ -964,14 +1036,28 @@ class Web3Service {
         tokenId,
         keyword,
         hashFunctionId,
+        closestNode,
+        leftNeighborhoodEdge,
+        rightNeighborhoodEdge,
         epoch,
         callback,
         gasPrice,
     ) {
+        const submitCommitArgs = [assetContractAddress, tokenId, keyword, hashFunctionId, epoch];
+        let functionName = 'submitUpdateCommit((address,uint256,bytes,uint8,uint16))';
+        if (
+            closestNode !== undefined &&
+            leftNeighborhoodEdge !== undefined &&
+            rightNeighborhoodEdge !== undefined
+        ) {
+            submitCommitArgs.push(closestNode, leftNeighborhoodEdge, rightNeighborhoodEdge);
+            functionName =
+                'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))';
+        }
         return this.queueTransaction(
             this.CommitManagerV1U1Contract,
-            'submitUpdateCommit',
-            [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch]],
+            functionName,
+            [submitCommitArgs],
             callback,
             gasPrice,
         );
@@ -1066,8 +1152,12 @@ class Web3Service {
         return ethers.utils.solidityPack(types, values);
     }
 
+    convertUint8ArrayToHex(uint8Array) {
+        return ethers.utils.hexlify(uint8Array);
+    }
+
     convertAsciiToHex(string) {
-        return ethers.utils.hexlify(ethers.utils.toUtf8Bytes(string));
+        return this.convertUint8ArrayToHex(ethers.utils.toUtf8Bytes(string));
     }
 
     convertHexToAscii(hexString) {
@@ -1107,6 +1197,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'updateCommitWindowDuration',
             [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
         return Number(commitWindowDurationPerc);
     }
@@ -1116,6 +1207,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'commitWindowDurationPerc',
             [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
         return Number(commitWindowDurationPerc);
     }
@@ -1125,6 +1217,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'proofWindowDurationPerc',
             [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
     }
 
@@ -1133,6 +1226,7 @@ class Web3Service {
             this.ParametersStorageContract,
             'epochLength',
             [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
         );
         return Number(epochLength);
     }
@@ -1143,27 +1237,12 @@ class Web3Service {
         ]);
     }
 
-    async isScoreFunction(scoreFunctionId) {
-        return this.callContractFunction(this.ScoringProxyContract, 'isScoreFunction(uint8)', [
-            scoreFunctionId,
-        ]);
-    }
-
-    async callScoreFunction(scoreFunctionId, hashFunctionId, peerId, keyword, stake) {
-        return this.callContractFunction(this.ScoringProxyContract, 'callScoreFunction', [
-            scoreFunctionId,
-            hashFunctionId,
-            this.convertAsciiToHex(peerId),
-            keyword,
-            stake,
-        ]);
-    }
-
     async getLog2PLDSFParams() {
         const log2pldsfParams = await this.callContractFunction(
             this.scoringFunctionsContracts[1],
             'getParameters',
             [],
+            CONTRACTS.Log2PLDSF,
         );
 
         const params = {};
@@ -1201,6 +1280,29 @@ class Web3Service {
         return this.callContractFunction(this.UnfinalizedStateStorageContract, 'hasPendingUpdate', [
             tokenId,
         ]);
+    }
+
+    async getAgreementScoreFunctionId(agreementId) {
+        return this.callContractFunction(
+            this.ServiceAgreementStorageProxyContract,
+            'getAgreementScoreFunctionId',
+            [agreementId],
+        );
+    }
+
+    async getLinearSumParams() {
+        const linearSumParams = await this.callContractFunction(
+            this.scoringFunctionsContracts[2],
+            'getParameters',
+            [],
+            CONTRACTS.LINEAR_SUM_CONTRACT,
+        );
+        return {
+            distanceScaleFactor: BigNumber.from(linearSumParams[0]),
+            stakeScaleFactor: BigNumber.from(linearSumParams[1]),
+            w1: Number(linearSumParams[2]),
+            w2: Number(linearSumParams[3]),
+        };
     }
 }
 

@@ -359,6 +359,7 @@ CONFIG_DIR=$OTNODE_DIR/..
 perform_step touch $CONFIG_DIR/.origintrail_noderc "Configuring node config file"
 perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}}' > $CONFIG_DIR/.origintrail_noderc) "Adding loglevel and auth values to node config file"
 
+
     perform_step $(jq --arg tripleStore "$tripleStore" --arg tripleStoreUrl "$tripleStoreUrl" '.modules.tripleStore.implementation[$tripleStore] |=
         {
             "enabled": "true",
@@ -397,7 +398,6 @@ perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "t
 # Set blockchain IDs based on the environment
 if [ "$nodeEnv" == "mainnet" ]; then
     otp_blockchain_id=2043
-    gnosis_blockchain_id=100
 else
     otp_blockchain_id=20430
     gnosis_blockchain_id=10200
@@ -453,8 +453,7 @@ perform_step $(jq --arg blockchain_arg "$blockchain_arg" --arg EVM_OPERATIONAL_W
   }' "$CONFIG_DIR/.origintrail_noderc" > "$CONFIG_DIR/origintrail_noderc_tmp") "Adding node wallets to node config file 1/2"
 fi
 
-perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
-
+    perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
     perform_step cp $OTNODE_DIR/installer/data/otnode.service /lib/systemd/system/ "Copying otnode service file"
 
     systemctl daemon-reload
@@ -550,6 +549,9 @@ install_node
 
 header_color $BGREEN"INSTALLATION COMPLETE !"
 
+rm -r /root/ot-node-6-release-testnet
+journalctl -u otnode --output cat -fn 200
+
 text_color $GREEN "
 New aliases added:
 otnode-restart
@@ -567,5 +569,3 @@ If the logs do not show and the screen hangs, press ctrl+c to exit the installat
 
 "
 read -p "Press enter to continue..."
-
-journalctl -u otnode --output cat -fn 200

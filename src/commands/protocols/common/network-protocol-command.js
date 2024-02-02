@@ -4,6 +4,8 @@ class NetworkProtocolCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.serviceAgreementService = ctx.serviceAgreementService;
     }
 
     /**
@@ -11,11 +13,24 @@ class NetworkProtocolCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { blockchain } = command.data;
+        const { blockchain, contract, tokenId, hashFunctionId } = command.data;
 
         const keywords = await this.getKeywords(command);
         const batchSize = await this.getBatchSize(blockchain);
         const minAckResponses = await this.getMinAckResponses(blockchain);
+
+        const serviceAgreementId = await this.serviceAgreementService.generateId(
+            blockchain,
+            contract,
+            tokenId,
+            keywords[0],
+            hashFunctionId,
+        );
+        const proximityScoreFunctionsPairId =
+            await this.blockchainModuleManager.getAgreementScoreFunctionId(
+                blockchain,
+                serviceAgreementId,
+            );
 
         const commandSequence = [
             'findNodesCommand',
@@ -34,6 +49,7 @@ class NetworkProtocolCommand extends Command {
                     minAckResponses,
                     errorType: this.errorType,
                     networkProtocols: this.operationService.getNetworkProtocols(),
+                    proximityScoreFunctionsPairId,
                 },
                 transactional: false,
             }),

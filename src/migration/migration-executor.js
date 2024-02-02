@@ -14,6 +14,8 @@ import ServiceAgreementsDataInspector from './service-agreements-data-inspector.
 import ServiceAgreementsInvalidDataMigration from './service-agreements-invalid-data-migration.js';
 import UalExtensionUserConfigurationMigration from './ual-extension-user-configuration-migration.js';
 import UalExtensionTripleStoreMigration from './ual-extension-triple-store-migration.js';
+import MarkStakingEventsAsProcessedMigration from './mark-staking-events-as-processed-migration.js';
+import RemoveServiceAgreementsForChiadoMigration from './remove-service-agreements-for-chiado-migration.js';
 
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
@@ -28,7 +30,7 @@ class MigrationExecutor {
         const validationModuleManager = container.resolve('validationModuleManager');
 
         const migration = new PullBlockchainShardingTableMigration(
-            'pullShardingTableMigrationV613',
+            'pullShardingTableMigrationV620',
             logger,
             config,
             repositoryModuleManager,
@@ -334,6 +336,57 @@ class MigrationExecutor {
                     `Unable to execute ual extension triple store migration. Error: ${error.message}`,
                 );
                 this.exitNode(1);
+            }
+        }
+    }
+
+    static async executeMarkStakingEventsAsProcessedMigration(container, logger, config) {
+        if (process.env.NODE_ENV !== NODE_ENVIRONMENTS.MAINNET) return;
+
+        const repositoryModuleManager = container.resolve('repositoryModuleManager');
+        const blockchainModuleManager = container.resolve('blockchainModuleManager');
+
+        const migration = new MarkStakingEventsAsProcessedMigration(
+            'markStakingEventsAsProcessedMigration',
+            logger,
+            config,
+            repositoryModuleManager,
+            blockchainModuleManager,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            try {
+                await migration.migrate();
+            } catch (error) {
+                logger.error(
+                    `Unable to execute mark staking events as processed migration. Error: ${error.message}`,
+                );
+                this.exitNode(1);
+            }
+        }
+    }
+
+    static async executeRemoveServiceAgreementsForChiadoMigration(container, logger, config) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVNET ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TESTNET
+        ) {
+            const repositoryModuleManager = container.resolve('repositoryModuleManager');
+
+            const migration = new RemoveServiceAgreementsForChiadoMigration(
+                'removeServiceAgreementsForChiadoMigrationV2',
+                logger,
+                config,
+                repositoryModuleManager,
+            );
+            if (!(await migration.migrationAlreadyExecuted())) {
+                try {
+                    await migration.migrate();
+                } catch (error) {
+                    logger.error(
+                        `Unable to execute remove service agreements for Chiado migration. Error: ${error.message}`,
+                    );
+                    this.exitNode(1);
+                }
             }
         }
     }

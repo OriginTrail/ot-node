@@ -38,11 +38,11 @@ async function getGasPrice(gasPriceOracleLink) {
         if (
             gasPriceOracleLink === 'https://api.gnosisscan.io/api?module=proxy&action=eth_gasPrice'
         ) {
-            gasPrice = Number(response.result, 10);
+            gasPrice = Number(response.data.result, 10);
         } else if (
             gasPriceOracleLink === 'https://blockscout.chiadochain.net/api/v1/gas-price-oracle'
         ) {
-            gasPrice = Math.round(response.average * 1e9);
+            gasPrice = Math.round(response.data.average * 1e9);
         } else {
             gasPrice = Math.round(response.result * 1e9);
         }
@@ -95,7 +95,7 @@ async function setStake(
     // TODO: Add ABI instead of hard-coded function definition
     tx = await stakingContract['addStake(uint72,uint96)'](identityId, stakeWei, {
         gasPrice: gasPrice ? gasPrice * 100 : undefined,
-        gasLimit: 500_000,
+        gasLimit: 3_000_000,
     });
     await provider.waitForTransaction(
         tx.hash,
