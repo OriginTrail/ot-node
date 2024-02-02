@@ -191,7 +191,7 @@ class ProximityScoringService {
             finalScore = finalScore.mod(UINT40_MAX_BN.add(1));
         }
 
-        return finalScore;
+        return finalScore.toNumber();
     }
 }
 
