@@ -307,6 +307,13 @@ case "$blockchain" in
 
         read -p "Enter your profile shares token symbol for $blockchain: " SHARES_TOKEN_SYMBOL
         text_color $GREEN "Profile shares token symbol for $blockchain: $SHARES_TOKEN_SYMBOL"
+
+        if [ "$blockchain" == "Gnosis" ]; then
+            read -p "Enter your Gnosis RPC endpoint: "  GNOSIS_RPC_ENDPOINT
+            text_color $GREEN "Gnosis RPC endpoint: $GNOSIS_RPC_ENDPOINT" 
+        fi
+
+
         ;;
     "Both" )
         if [ "$nodeEnv" == "mainnet" ]; then
@@ -347,6 +354,10 @@ case "$blockchain" in
 
         read -p "Enter your profile shares token symbol for $blockchain2: " SHARES_TOKEN_SYMBOL_2
         text_color $GREEN "Profile shares token symbol for $blockchain2: $SHARES_TOKEN_SYMBOL_2"
+
+        read -p "Enter your Gnosis RPC endpoint: "  GNOSIS_RPC_ENDPOINT
+        text_color $GREEN "Gnosis RPC endpoint: $GNOSIS_RPC_ENDPOINT"
+
         ;;
     * )
         text_color $RED "Invalid blockchain choice. Exiting installer."
@@ -405,9 +416,10 @@ fi
 
 # Check if "Both" blockchains are selected
 if [ "$blockchain" == "Both" ]; then
-  perform_step $(jq --arg otp_blockchain_id "$otp_blockchain_id" --arg EVM_OPERATIONAL_WALLET "$EVM_OPERATIONAL_WALLET" --arg EVM_OPERATIONAL_PRIVATE_KEY "$EVM_OPERATIONAL_PRIVATE_KEY" --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" --arg gnosis_blockchain_id "$gnosis_blockchain_id" --arg EVM_OPERATIONAL_WALLET_2 "$EVM_OPERATIONAL_WALLET_2" --arg EVM_OPERATIONAL_PRIVATE_KEY_2 "$EVM_OPERATIONAL_PRIVATE_KEY_2" --arg EVM_MANAGEMENT_WALLET_2 "$EVM_MANAGEMENT_WALLET_2" --arg SHARES_TOKEN_NAME_2 "$SHARES_TOKEN_NAME_2" --arg SHARES_TOKEN_SYMBOL_2 "$SHARES_TOKEN_SYMBOL_2" '
+  perform_step $(jq --arg otp_blockchain_id "$otp_blockchain_id" --arg EVM_OPERATIONAL_WALLET "$EVM_OPERATIONAL_WALLET" --arg EVM_OPERATIONAL_PRIVATE_KEY "$EVM_OPERATIONAL_PRIVATE_KEY" --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" --arg gnosis_blockchain_id "$gnosis_blockchain_id" --arg EVM_OPERATIONAL_WALLET_2 "$EVM_OPERATIONAL_WALLET_2" --arg EVM_OPERATIONAL_PRIVATE_KEY_2 "$EVM_OPERATIONAL_PRIVATE_KEY_2" --arg EVM_MANAGEMENT_WALLET_2 "$EVM_MANAGEMENT_WALLET_2" --arg SHARES_TOKEN_NAME_2 "$SHARES_TOKEN_NAME_2" --arg SHARES_TOKEN_SYMBOL_2 "$SHARES_TOKEN_SYMBOL_2" --arg GNOSIS_RPC_ENDPOINT "$GNOSIS_RPC_ENDPOINT" '
     .blockchain.implementation += {
       "otp:'$otp_blockchain_id'": {
+        "enabled": true,
         "config": {
           "evmOperationalWalletPublicKey": $EVM_OPERATIONAL_WALLET,
           "evmOperationalWalletPrivateKey": $EVM_OPERATIONAL_PRIVATE_KEY,
@@ -417,12 +429,14 @@ if [ "$blockchain" == "Both" ]; then
         }
       },
       "gnosis:'$gnosis_blockchain_id'": {
+        "enabled": true,
         "config": {
           "evmOperationalWalletPublicKey": $EVM_OPERATIONAL_WALLET_2,
           "evmOperationalWalletPrivateKey": $EVM_OPERATIONAL_PRIVATE_KEY_2,
           "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET_2,
           "sharesTokenName": $SHARES_TOKEN_NAME_2,
-          "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL_2
+          "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL_2,
+          "rpcEndpoints": [$GNOSIS_RPC_ENDPOINT]
         }
       }
     }' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2 for Both"
@@ -436,21 +450,36 @@ else
     blockchain="gnosis"
     blockchain_id="$gnosis_blockchain_id"
   fi
+  ADD_GNOSIS_RPC="false"
+  if [ "$blockchain" = "gnosis" ]; then
+    ADD_GNOSIS_RPC="true"
+  fi
 
-blockchain_arg="$blockchain:$blockchain_id"
 
-perform_step $(jq --arg blockchain_arg "$blockchain_arg" --arg EVM_OPERATIONAL_WALLET "$EVM_OPERATIONAL_WALLET" --arg EVM_OPERATIONAL_PRIVATE_KEY "$EVM_OPERATIONAL_PRIVATE_KEY" --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" '
-  .blockchain.implementation += {
-    ($blockchain_arg): {
-      "config": {
-        "evmOperationalWalletPublicKey": $EVM_OPERATIONAL_WALLET,
-        "evmOperationalWalletPrivateKey": $EVM_OPERATIONAL_PRIVATE_KEY,
-        "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET,
-        "sharesTokenName": $SHARES_TOKEN_NAME,
-        "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL
-      }
+  blockchain_arg="$blockchain:$blockchain_id"
+
+jq --arg blockchain_arg "$blockchain_arg" \
+   --arg EVM_OPERATIONAL_WALLET "$EVM_OPERATIONAL_WALLET" \
+   --arg EVM_OPERATIONAL_PRIVATE_KEY "$EVM_OPERATIONAL_PRIVATE_KEY" \
+   --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" \
+   --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" \
+   --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" \
+   --argjson ADD_GNOSIS_RPC "$ADD_GNOSIS_RPC" \
+   --arg GNOSIS_RPC_ENDPOINT "$GNOSIS_RPC_ENDPOINT" '
+(.blockchain.implementation += {
+  ($blockchain_arg): {
+    "enabled": true,
+    "config": {
+      "evmOperationalWalletPublicKey": $EVM_OPERATIONAL_WALLET,
+      "evmOperationalWalletPrivateKey": $EVM_OPERATIONAL_PRIVATE_KEY,
+      "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET,
+      "sharesTokenName": $SHARES_TOKEN_NAME,
+      "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL
     }
-  }' "$CONFIG_DIR/.origintrail_noderc" > "$CONFIG_DIR/origintrail_noderc_tmp") "Adding node wallets to node config file 1/2"
+  }
+}) | if $ADD_GNOSIS_RPC then .blockchain.implementation[$blockchain_arg].config += {"rpcEndpoints": [$GNOSIS_RPC_ENDPOINT]} else . end
+' "$CONFIG_DIR/.origintrail_noderc" > "$CONFIG_DIR/origintrail_noderc_tmp"
+
 fi
 
     perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
@@ -549,7 +578,6 @@ install_node
 
 header_color $BGREEN"INSTALLATION COMPLETE !"
 
-rm -r /root/ot-node-6-release-testnet
 journalctl -u otnode --output cat -fn 200
 
 text_color $GREEN "
