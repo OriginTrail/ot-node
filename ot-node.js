@@ -28,10 +28,6 @@ class OTNode {
         await this.checkForUpdate();
         await this.removeUpdateFile();
 
-        await MigrationExecutor.executeUalExtensionUserConfigurationMigration(
-            this.logger,
-            this.config,
-        );
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
         this.logger.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
@@ -66,13 +62,7 @@ class OTNode {
             this.config,
         );
 
-        MigrationExecutor.executeUalExtensionTripleStoreMigration(
-            this.container,
-            this.logger,
-            this.config,
-        ).then(async () => {
-            await this.initializeBlockchainEventListenerService();
-        });
+        await this.initializeBlockchainEventListenerService();
 
         await MigrationExecutor.executePullShardingTableMigration(
             this.container,
