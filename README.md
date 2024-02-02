@@ -218,6 +218,12 @@ Then, depending on the OS, use one of the scripts in order to run the local netw
 bash ./tools/local-network-setup/setup-macos-environment.sh --nodes=12
 ```
 
+**Linux**
+
+```bash
+./tools/local-network-setup/setup-linux-environment.sh --nodes=12
+```
+
 ---
 
 <br/>
