@@ -445,15 +445,13 @@ async function runSimulation(
     let IDEAL_MAX_DISTANCE_IN_NEIGHBORHOOD;
 
     if (proximityScoreFunctionsPairId === 2) {
-        IDEAL_MAX_DISTANCE_IN_NEIGHBORHOOD = HASH_RING_SIZE.div(nodesNumber).mul(20);
-    } else if (proximityScoreFunctionsPairId === 3) {
         IDEAL_MAX_DISTANCE_IN_NEIGHBORHOOD = HASH_RING_SIZE.div(nodesNumber).mul(10);
     }
 
-    const linearSumParams = await blockchainModuleManagerMock.getLinearSumParams(blockchain);
+    const linearSumParams = blockchainModuleManagerMock.getLinearSumParams(blockchain);
     const { distanceScaleFactor } = linearSumParams;
-    const minimumStake = await blockchainModuleManagerMock.getMinimumStake(blockchain);
-    const maximumStake = await blockchainModuleManagerMock.getMaximumStake(blockchain);
+    const minimumStake = blockchainModuleManagerMock.getMinimumStake(blockchain);
+    const maximumStake = blockchainModuleManagerMock.getMaximumStake(blockchain);
 
     for (const key of knowledgeAssets) {
         const nodesWithDistances = await Promise.all(
@@ -492,6 +490,10 @@ async function runSimulation(
                     node.distance,
                     node.stake,
                     maxDistance,
+                    nodesNumber,
+                    r2,
+                    minimumStake,
+                    maximumStake,
                 );
 
                 let dividend = node.distance;

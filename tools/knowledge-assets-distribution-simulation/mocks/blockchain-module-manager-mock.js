@@ -47,7 +47,8 @@ class BlockchainModuleManagerMock {
 
     getLinearSumParams(blockchain) {
         return {
-            distanceScaleFactor: '1000000000000000000',
+            distanceScaleFactor: ethers.BigNumber.from('1000000000000000000'),
+            stakeScaleFactor: ethers.BigNumber.from('1000000000000000000'),
             w1: 1,
             w2: 1,
         };
