@@ -1,3 +1,4 @@
+import { setTimeout } from 'timers/promises';
 import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
     CONTRACTS,
@@ -6,9 +7,10 @@ import {
     NODE_ENVIRONMENTS,
     PENDING_STORAGE_REPOSITORIES,
     CONTRACT_EVENTS,
+    MAXIMUM_FETCH_EVENTS_FAILED_COUNT,
+    DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS,
 } from '../constants/constants.js';
 
-const MAXIMUM_FETCH_EVENTS_FAILED_COUNT = 5;
 const fetchEventsFailedCount = {};
 
 const eventNames = Object.values(CONTRACT_EVENTS).flatMap((e) => e);
@@ -18,10 +20,10 @@ class BlockchainEventListenerService {
         this.logger = ctx.logger;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.validationModuleManager = ctx.validationModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
         this.pendingStorageService = ctx.pendingStorageService;
         this.ualService = ctx.ualService;
+        this.hashingService = ctx.hashingService;
     }
 
     async initialize() {
@@ -67,6 +69,7 @@ class BlockchainEventListenerService {
                 currentBlock,
                 CONTRACT_EVENTS.PROFILE,
             ),
+            // TODO: Update with new commit managers
             this.getContractEvents(
                 blockchainId,
                 CONTRACTS.COMMIT_MANAGER_V1_U1_CONTRACT,
@@ -78,6 +81,24 @@ class BlockchainEventListenerService {
                 CONTRACTS.SERVICE_AGREEMENT_V1_CONTRACT,
                 currentBlock,
                 CONTRACT_EVENTS.SERVICE_AGREEMENT_V1,
+            ),
+            this.getContractEvents(
+                blockchainId,
+                CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+                currentBlock,
+                CONTRACT_EVENTS.PARAMETERS_STORAGE,
+            ),
+            this.getContractEvents(
+                blockchainId,
+                CONTRACTS.Log2PLDSF_CONTRACT,
+                currentBlock,
+                CONTRACT_EVENTS.Log2PLDSF,
+            ),
+            this.getContractEvents(
+                blockchainId,
+                CONTRACTS.LINEAR_SUM_CONTRACT,
+                currentBlock,
+                CONTRACT_EVENTS.LINEAR_SUM,
             ),
         ];
 
@@ -134,6 +155,7 @@ class BlockchainEventListenerService {
                     `Failed to get and process blockchain events for blockchain: ${blockchainId}. Error: ${e}`,
                 );
                 fetchEventsFailedCount[blockchainId] += 1;
+                await setTimeout(DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS);
             } finally {
                 working = false;
             }
@@ -227,6 +249,45 @@ class BlockchainEventListenerService {
         }
     }
 
+    async handleParameterChangedEvents(blockEvents) {
+        for (const event of blockEvents) {
+            const { blockchainId, contract, data } = event;
+            const { parameterName, parameterValue } = JSON.parse(data);
+            switch (contract) {
+                case CONTRACTS.Log2PLDSF_CONTRACT:
+                    // This invalidates contracts parameter
+                    // TODO: Create function for contract call cache invalidation
+                    this.blockchainModuleManager.setContractCallCache(
+                        blockchainId,
+                        CONTRACTS.Log2PLDSF_CONTRACT,
+                        parameterName,
+                        null,
+                    );
+                    break;
+                case CONTRACTS.LINEAR_SUM_CONTRACT:
+                    this.blockchainModuleManager.setContractCallCache(
+                        blockchainId,
+                        CONTRACTS.LINEAR_SUM_CONTRACT,
+                        parameterName,
+                        null,
+                    );
+                    break;
+                case CONTRACTS.PARAMETERS_STORAGE_CONTRACT:
+                    this.blockchainModuleManager.setContractCallCache(
+                        blockchainId,
+                        CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+                        parameterName,
+                        parameterValue,
+                    );
+                    break;
+                default:
+                    this.logger.warn(
+                        `Unable to handle parameter changed event. Unknown contract name ${event.contract}`,
+                    );
+            }
+        }
+    }
+
     handleNewContractEvents(blockEvents) {
         for (const event of blockEvents) {
             const { contractName, newContractAddress } = JSON.parse(event.data);
@@ -285,8 +346,7 @@ class BlockchainEventListenerService {
                     eventData.nodeId,
                 );
 
-                const nodeIdSha256 = await this.validationModuleManager.callHashFunction(
-                    // TODO: How to add more hashes?
+                const sha256 = await this.hashingService.callHashFunction(
                     CONTENT_ASSET_HASH_FUNCTION_ID,
                     nodeId,
                 );
@@ -304,7 +364,7 @@ class BlockchainEventListenerService {
                         eventData.stake,
                     ),
                     lastSeen: new Date(0),
-                    sha256: nodeIdSha256,
+                    sha256,
                 };
             }),
         );

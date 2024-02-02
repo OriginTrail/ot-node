@@ -21,6 +21,9 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         this.tripleStoreService = ctx.tripleStoreService;
         this.ualService = ctx.ualService;
         this.pendingStorageService = ctx.pendingStorageService;
+        this.shardingTableService = ctx.shardingTableService;
+        this.hashingService = ctx.hashingService;
+        this.proximityScoringService = ctx.proximityScoringService;
 
         this.errorType = ERROR_TYPE.UPDATE.UPDATE_LOCAL_STORE_REMOTE_ERROR;
     }
@@ -34,6 +37,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             agreementId,
             keyword,
             hashFunctionId,
+            proximityScoreFunctionsPairId,
             agreementData,
         } = commandData;
 
@@ -66,7 +70,48 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         const r2 = await this.blockchainModuleManager.getR2(blockchain);
         const scheduleCommandsPromises = [];
 
-        const rank = await this.calculateRank(blockchain, keyword, hashFunctionId, r2);
+        const neighbourhood = await this.shardingTableService.findNeighbourhood(
+            blockchain,
+            keyword,
+            r2,
+            hashFunctionId,
+            proximityScoreFunctionsPairId,
+            true,
+        );
+
+        const closestNode = neighbourhood[0];
+
+        let neighbourhoodEdges = null;
+        if (proximityScoreFunctionsPairId === 2) {
+            neighbourhoodEdges = await this.shardingTableService.getNeighboorhoodEdgeNodes(
+                neighbourhood,
+                blockchain,
+                hashFunctionId,
+                proximityScoreFunctionsPairId,
+                keyword,
+            );
+        }
+
+        if (!neighbourhoodEdges && proximityScoreFunctionsPairId === 2) {
+            throw Error('Unable to find neighbourhood edges for asset');
+        }
+
+        const totalNodesNumber = await this.repositoryModuleManager.getPeersCount(blockchain);
+        const minStake = await this.blockchainModuleManager.getMinimumStake(blockchain);
+        const maxStake = await this.blockchainModuleManager.getMaximumStake(blockchain);
+
+        const rank = await this.serviceAgreementService.calculateRank(
+            blockchain,
+            keyword,
+            hashFunctionId,
+            proximityScoreFunctionsPairId,
+            r2,
+            neighbourhood,
+            neighbourhoodEdges,
+            totalNodesNumber,
+            minStake,
+            maxStake,
+        );
         if (rank != null) {
             this.logger.trace(`Calculated rank: ${rank + 1} for agreement id:  ${agreementId}`);
             const finalizationCommitsNumber =
@@ -91,6 +136,10 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
                         r0,
                         r2,
                         updateCommitWindowDuration,
+                        proximityScoreFunctionsPairId,
+                        closestNode: closestNode?.index,
+                        leftNeighborhoodEdge: neighbourhoodEdges?.leftEdge?.index,
+                        rightNeighborhoodEdge: neighbourhoodEdges?.rightEdge?.index,
                     },
                     transactional: false,
                 }),
@@ -131,7 +180,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         // wait for 5 blocks for first batch to send commits
         const commitsBlockDuration = blockTime * COMMIT_BLOCK_DURATION_IN_BLOCKS;
         const commitBlock = Math.floor(rank / finalizationCommitsNumber);
-        // put 2 blocks delay between nodes if they are not in first batch
+        // put 5 blocks delay between nodes if they are not in first batch
         const nextNodeDelay =
             commitBlock === 0
                 ? 0
@@ -146,37 +195,6 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         );
 
         return delay;
-    }
-
-    async calculateRank(blockchain, keyword, hashFunctionId, r2) {
-        const neighbourhood = await this.shardingTableService.findNeighbourhood(
-            blockchain,
-            keyword,
-            r2,
-            hashFunctionId,
-            true,
-        );
-
-        const peerId = this.networkModuleManager.getPeerId().toB58String();
-        if (!neighbourhood.some((node) => node.peerId === peerId)) {
-            return;
-        }
-
-        const scores = await Promise.all(
-            neighbourhood.map(async (node) => ({
-                score: await this.serviceAgreementService.calculateScore(
-                    node.peerId,
-                    blockchain,
-                    keyword,
-                    hashFunctionId,
-                ),
-                peerId: node.peerId,
-            })),
-        );
-
-        scores.sort((a, b) => b.score - a.score);
-
-        return scores.findIndex((node) => node.peerId === peerId);
     }
 
     /**

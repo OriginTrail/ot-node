@@ -9,6 +9,7 @@ import { MIN_NODE_VERSION } from './src/constants/constants.js';
 import FileService from './src/service/file-service.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
+import MigrationExecutor from './src/migration/migration-executor.js';
 
 const require = createRequire(import.meta.url);
 const pjson = require('./package.json');
@@ -44,12 +45,31 @@ class OTNode {
 
         await this.initializeModules();
 
+        await MigrationExecutor.executeRemoveServiceAgreementsForChiadoMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
         await this.initializeShardingTableService();
 
+        await MigrationExecutor.executeMarkStakingEventsAsProcessedMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         await this.initializeBlockchainEventListenerService();
+
+        await MigrationExecutor.executePullShardingTableMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         await this.initializeRouters();
         await this.startNetworkModule();
         this.startTelemetryModule();

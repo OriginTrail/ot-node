@@ -46,6 +46,24 @@ class DkgClientHelper {
     async query(query) {
         return this.client.query(query);
     }
+
+    async getBidSuggestion(publicAssertionId, sizeInBytes, userOptions = {}) {
+        const defaultOptions = {
+            epochsNum: 2,
+        };
+
+        const options = { ...defaultOptions, ...userOptions };
+
+        return this.client.network.getBidSuggestion(publicAssertionId, sizeInBytes, options);
+    }
+
+    async getPublicAssertionId(content) {
+        return this.client.assertion.getPublicAssertionId(content);
+    }
+
+    async getSizeInBytes(content) {
+        return this.client.assertion.getSizeInBytes(content);
+    }
 }
 
 export default DkgClientHelper;

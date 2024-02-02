@@ -1,6 +1,6 @@
 import { formatAssertion } from 'assertion-tools';
 
-import { SCHEMA_CONTEXT, TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
+import { SCHEMA_CONTEXT, TRIPLE_STORE_REPOSITORIES, MEDIA_TYPES } from '../constants/constants.js';
 
 class TripleStoreService {
     constructor(ctx) {
@@ -87,7 +87,14 @@ class TripleStoreService {
         tokenId,
         keyword,
     ) {
-        const assertion = await this.getAssertion(fromRepository, assertionId);
+        let assertion;
+        // Try-catch to prevent infinite processing loop when unexpected error is thrown while getting KA
+        try {
+            assertion = await this.getAssertion(fromRepository, assertionId);
+        } catch (e) {
+            this.logger.error(`Error while getting assertion for moving asset: ${e.message}`);
+            return;
+        }
 
         // copy metadata and assertion
         await this.localStoreAsset(
@@ -246,7 +253,7 @@ class TripleStoreService {
             repository,
             assertionId,
         );
-        nquads = await this.dataService.toNQuads(nquads, 'application/n-quads');
+        nquads = await this.dataService.toNQuads(nquads, MEDIA_TYPES.N_QUADS);
 
         this.logger.debug(
             `Assertion: ${assertionId} ${
