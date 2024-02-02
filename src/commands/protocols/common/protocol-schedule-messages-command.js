@@ -69,8 +69,22 @@ class ProtocolScheduleMessagesCommand extends Command {
     }
 
     getNextCommandData(command) {
-        const { assertionId, blockchain, contract, tokenId, hashFunctionId } = command.data;
-        return { assertionId, blockchain, contract, tokenId, hashFunctionId };
+        const {
+            assertionId,
+            blockchain,
+            contract,
+            tokenId,
+            hashFunctionId,
+            proximityScoreFunctionsPairId,
+        } = command.data;
+        return {
+            assertionId,
+            blockchain,
+            contract,
+            tokenId,
+            hashFunctionId,
+            proximityScoreFunctionsPairId,
+        };
     }
 
     /**

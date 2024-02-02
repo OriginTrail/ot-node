@@ -14,6 +14,9 @@ class PublishController extends BaseController {
         this.commandExecutor = ctx.commandExecutor;
         this.operationIdService = ctx.operationIdService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.ualService = ctx.ualService;
+        this.serviceAgreementService = ctx.serviceAgreementService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
     }
 
     async handleRequest(req, res) {

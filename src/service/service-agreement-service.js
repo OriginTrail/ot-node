@@ -2,15 +2,16 @@ class ServiceAgreementService {
     constructor(ctx) {
         this.logger = ctx.logger;
 
-        this.validationModuleManager = ctx.validationModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.shardingTableService = ctx.shardingTableService;
         this.networkModuleManager = ctx.networkModuleManager;
+        this.hashingService = ctx.hashingService;
+        this.proximityScoringService = ctx.proximityScoringService;
     }
 
     async generateId(blockchain, assetTypeContract, tokenId, keyword, hashFunctionId) {
-        return this.validationModuleManager.callHashFunction(
+        return this.hashingService.callHashFunction(
             hashFunctionId,
             this.blockchainModuleManager.encodePacked(
                 blockchain,
@@ -24,60 +25,89 @@ class ServiceAgreementService {
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
-    async calculateScore(peerId, blockchainId, keyword, hashFunctionId) {
-        const peerRecord = await this.repositoryModuleManager.getPeerRecord(peerId, blockchainId);
-        const keyHash = await this.validationModuleManager.callHashFunction(
-            hashFunctionId,
-            keyword,
+    async calculateRank(
+        blockchain,
+        keyword,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+        r2,
+        neighbourhood,
+        neighbourhoodEdges,
+        totalNodesNumber,
+        minStake,
+        maxStake,
+    ) {
+        const peerId = this.networkModuleManager.getPeerId().toB58String();
+        if (!neighbourhood.some((node) => node.peerId === peerId)) {
+            return;
+        }
+
+        const scores = await Promise.all(
+            neighbourhood.map(async (node) => ({
+                score: await this.calculateScore(
+                    node.peerId,
+                    blockchain,
+                    keyword,
+                    hashFunctionId,
+                    proximityScoreFunctionsPairId,
+                    neighbourhoodEdges,
+                    r2,
+                    totalNodesNumber,
+                    minStake,
+                    maxStake,
+                ),
+                peerId: node.peerId,
+            })),
         );
 
-        const hashFunctionName = this.validationModuleManager.getHashFunctionName(hashFunctionId);
+        scores.sort((a, b) => b.score - a.score);
 
-        const distanceUint8Array = this.shardingTableService.calculateDistance(
+        return scores.findIndex((node) => node.peerId === peerId);
+    }
+
+    async calculateScore(
+        peerId,
+        blockchainId,
+        keyword,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+        neighbourhoodEdges,
+        r2,
+        totalNodesNumber,
+        minStake,
+        maxStake,
+    ) {
+        const peerRecord = await this.repositoryModuleManager.getPeerRecord(peerId, blockchainId);
+        const keyHash = await this.hashingService.callHashFunction(hashFunctionId, keyword);
+
+        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
+
+        const distance = await this.proximityScoringService.callProximityFunction(
             blockchainId,
+            proximityScoreFunctionsPairId,
             peerRecord[hashFunctionName],
             keyHash,
         );
-
-        // todo: store this in a more appropriate way
-        if (!this.log2PLDSFParams) {
-            this.log2PLDSFParams = await this.blockchainModuleManager.getLog2PLDSFParams(
+        let maxNeighborhoodDistance;
+        if (neighbourhoodEdges) {
+            maxNeighborhoodDistance = await this.proximityScoringService.callProximityFunction(
                 blockchainId,
+                proximityScoreFunctionsPairId,
+                neighbourhoodEdges.leftEdge[hashFunctionName],
+                neighbourhoodEdges.rightEdge[hashFunctionName],
             );
         }
 
-        const {
-            distanceMappingCoefficient,
-            stakeMappingCoefficient,
-            multiplier,
-            logArgumentConstant,
-            a,
-            stakeExponent,
-            b,
-            c,
-            distanceExponent,
-            d,
-        } = this.log2PLDSFParams;
-
-        const distanceUint256BN = this.blockchainModuleManager.toBigNumber(
+        return this.proximityScoringService.callScoreFunction(
             blockchainId,
-            distanceUint8Array,
-        );
-
-        const mappedStake = this.blockchainModuleManager
-            .toBigNumber(
-                blockchainId,
-                this.blockchainModuleManager.convertToWei(blockchainId, peerRecord.stake),
-            )
-            .div(stakeMappingCoefficient);
-        const mappedDistance = distanceUint256BN.div(distanceMappingCoefficient);
-
-        const dividend = mappedStake.pow(stakeExponent).mul(a).add(b);
-        const divisor = mappedDistance.pow(distanceExponent).mul(c).add(d);
-
-        return Math.floor(
-            Number(multiplier) *
-                Math.log2(Number(logArgumentConstant) + dividend.toNumber() / divisor.toNumber()),
+            proximityScoreFunctionsPairId,
+            distance,
+            peerRecord.stake,
+            maxNeighborhoodDistance,
+            r2,
+            totalNodesNumber,
+            minStake,
+            maxStake,
         );
     }
 }
