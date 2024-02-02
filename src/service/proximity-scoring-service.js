@@ -1,10 +1,5 @@
 import { xor as uint8ArrayXor } from 'uint8arrays/xor';
-import {
-    HASH_RING_SIZE,
-    UINT40_MAX_BN,
-    UINT64_MAX_BN,
-    UINT256_MAX_BN,
-} from '../constants/constants.js';
+import { HASH_RING_SIZE, UINT256_MAX_BN } from '../constants/constants.js';
 
 class ProximityScoringService {
     constructor(ctx) {
@@ -154,44 +149,23 @@ class ProximityScoringService {
         const scaledDistance = distance.mul(scaledDistanceScaleFactor);
         const adjustedDivisor = divisor.div(compensationFactor);
 
-        let normalizedDistance = scaledDistance.div(adjustedDivisor);
-        if (normalizedDistance.gt(UINT64_MAX_BN)) {
-            normalizedDistance = normalizedDistance.mod(UINT64_MAX_BN.add(1));
-        }
+        const normalizedDistance = scaledDistance.div(adjustedDivisor);
 
-        let normalizedStake = stakeScaleFactor
+        const normalizedStake = stakeScaleFactor
             .mul(mappedStake.sub(mappedMinStake))
             .div(mappedMaxStake.sub(mappedMinStake));
-        if (normalizedStake.gt(UINT64_MAX_BN)) {
-            normalizedStake = normalizedStake.mod(UINT64_MAX_BN.add(1));
-        }
 
         const oneEther = await this.blockchainModuleManager.toBigNumber(
             blockchain,
             '1000000000000000000',
         );
 
-        const isProximityScorePositive = oneEther.gte(normalizedDistance);
-
-        const proximityScore = isProximityScorePositive
-            ? oneEther.sub(normalizedDistance).mul(w1)
-            : normalizedDistance.sub(oneEther).mul(w1);
+        const proximityScore = oneEther.sub(normalizedDistance).mul(w1);
         const stakeScore = normalizedStake.mul(w2);
 
-        let finalScore;
-        if (isProximityScorePositive) {
-            finalScore = proximityScore.add(stakeScore);
-        } else if (stakeScore.gte(proximityScore)) {
-            finalScore = stakeScore.sub(proximityScore);
-        } else {
-            finalScore = await this.blockchainModuleManager.toBigNumber(blockchain, 0);
-        }
+        const finalScore = proximityScore.add(stakeScore);
 
-        if (finalScore.gt(UINT40_MAX_BN)) {
-            finalScore = finalScore.mod(UINT40_MAX_BN.add(1));
-        }
-
-        return finalScore.toNumber();
+        return finalScore;
     }
 }
 
