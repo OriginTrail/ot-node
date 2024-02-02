@@ -19,7 +19,7 @@ class ShardRepository {
         });
     }
 
-    async createPeerRecord(peerId, blockchainId, ask, stake, lastSeen, sha256, sha256Blob) {
+    async createPeerRecord(peerId, blockchainId, ask, stake, lastSeen, sha256) {
         return this.model.create(
             {
                 peerId,
@@ -28,7 +28,6 @@ class ShardRepository {
                 stake,
                 lastSeen,
                 sha256,
-                sha256Blob,
             },
             {
                 ignoreDuplicates: true,
@@ -42,7 +41,7 @@ class ShardRepository {
                 blockchainId,
             },
             attributes: ['peerId', 'blockchainId', 'ask', 'stake', 'lastSeen', 'sha256'],
-            order: [['sha256Blob', 'ASC']],
+            order: [['sha256', 'asc']],
         };
 
         if (filterLastSeen) {

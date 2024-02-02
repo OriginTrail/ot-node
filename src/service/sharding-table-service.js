@@ -93,8 +93,6 @@ class ShardingTableService {
                     );
                     const sha256 = await this.hashingService.callHashFunction(1, nodeId);
 
-                    const cleanHexString = sha256.startsWith('0x') ? sha256.slice(2) : sha256;
-                    const sha256Blob = Buffer.from(cleanHexString, 'hex');
                     return {
                         peerId: nodeId,
                         blockchainId,
@@ -109,7 +107,6 @@ class ShardingTableService {
                             'ether',
                         ),
                         sha256,
-                        sha256Blob,
                     };
                 }),
             ),
