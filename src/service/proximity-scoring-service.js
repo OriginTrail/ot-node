@@ -103,16 +103,10 @@ class ProximityScoringService {
         const dividend = mappedStake.pow(stakeExponent).mul(a).add(b);
         const divisor = mappedDistance.pow(distanceExponent).mul(c).add(d);
 
-        return {
-            mappedDistance,
-            mappedStake,
-            score: Math.floor(
-                Number(multiplier) *
-                    Math.log2(
-                        Number(logArgumentConstant) + dividend.toNumber() / divisor.toNumber(),
-                    ),
-            ),
-        };
+        return Math.floor(
+            Number(multiplier) *
+                Math.log2(Number(logArgumentConstant) + dividend.toNumber() / divisor.toNumber()),
+        );
     }
 
     async linearSum(
@@ -197,7 +191,7 @@ class ProximityScoringService {
             finalScore = finalScore.mod(UINT40_MAX_BN.add(1));
         }
 
-        return finalScore;
+        return finalScore.toNumber();
     }
 }
 
