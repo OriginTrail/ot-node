@@ -36,7 +36,7 @@ class SubmitUpdateCommitCommand extends Command {
             `Started ${command.name} for the Service Agreement with the ID: ${agreementId}, ` +
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Operation ID: ${operationId}, ` +
-                `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
                 `Right neighborhood edge: ${rightNeighborhoodEdge}, `,
             `Retry number: ${COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1}`,
         );
@@ -67,7 +67,7 @@ class SubmitUpdateCommitCommand extends Command {
                 `Not submitting update commit as state has been already finalized for the Service Agreement ` +
                     `with the ID: ${agreementId}, Blockchain: ${blockchain}, Contract: ${contract}, ` +
                     `Token ID: ${tokenId}, Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, ` +
-                    `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                    `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
                     `Right neighborhood edge: ${rightNeighborhoodEdge}, `,
                 +`Epoch: ${epoch}, Operation ID: ${operationId}`,
             );
@@ -121,7 +121,7 @@ class SubmitUpdateCommitCommand extends Command {
                 `Failed to execute ${command.name}, Error Message: ${error.message} for the Service Agreement ` +
                     `with the ID: ${agreementId}, Blockchain: ${blockchain}, Contract: ${contract}, ` +
                     `Token ID: ${tokenId}, Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, ` +
-                    `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                    `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
                     `Right neighborhood edge: ${rightNeighborhoodEdge}, `,
                 +`Epoch: ${epoch}, Operation ID: ${operationId}, Retry number: ${
                     COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1
@@ -158,7 +158,7 @@ class SubmitUpdateCommitCommand extends Command {
             `Successfully executed ${command.name} for the Service Agreement with the ID: ${agreementId}, ` +
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
-                `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
                 `Right neighborhood edge: ${rightNeighborhoodEdge}, `,
             +`Operation ID: ${operationId}, Retry number: ${
                 COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1
