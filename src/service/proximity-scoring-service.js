@@ -118,6 +118,7 @@ class ProximityScoringService {
         nodesNumber,
         minStake,
         maxStake,
+        returnIntermediateValues = false,
     ) {
         const linearSumParams = await this.blockchainModuleManager.getLinearSumParams(blockchain);
         const { distanceScaleFactor, stakeScaleFactor, w1, w2 } = linearSumParams;
@@ -154,9 +155,11 @@ class ProximityScoringService {
         const scaledDistance = distance.mul(scaledDistanceScaleFactor);
         const adjustedDivisor = divisor.div(compensationFactor);
 
-        let normalizedDistance = scaledDistance.div(adjustedDivisor);
+        const normalizedDistance = scaledDistance.div(adjustedDivisor);
         if (normalizedDistance.gt(UINT64_MAX_BN)) {
-            normalizedDistance = normalizedDistance.mod(UINT64_MAX_BN.add(1));
+            throw new Error(
+                `Invalid normalized distance: ${normalizedDistance.toString()}. Max value: ${UINT64_MAX_BN.toString()}`,
+            );
         }
 
         let normalizedStake = stakeScaleFactor
@@ -187,14 +190,23 @@ class ProximityScoringService {
             finalScore = await this.blockchainModuleManager.toBigNumber(blockchain, 0);
         }
 
-        finalScore = this.toUint40(finalScore, oneEther.mul(w1 + w2));
+        finalScore = this._toUint40(finalScore, oneEther.mul(w1 + w2));
+
+        if (returnIntermediateValues) {
+            return {
+                normalizedDistance,
+                normalizedStake,
+                proximityScore,
+                stakeScore,
+                finalScore,
+            };
+        }
 
         return finalScore.toNumber();
     }
 
-    toUint40(value, maxValue) {
-        const result = value.mul(UINT40_MAX_BN).div(maxValue);
-        return result;
+    _toUint40(value, maxValue) {
+        return value.mul(UINT40_MAX_BN).div(maxValue);
     }
 }
 
