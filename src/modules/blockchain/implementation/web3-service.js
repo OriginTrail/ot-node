@@ -480,28 +480,7 @@ class Web3Service {
             /* eslint-disable no-await-in-loop */
             gasLimit = await contractInstance.estimateGas[functionName](...args);
         } catch (error) {
-            const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
-
-            if (error.transaction === undefined) {
-                throw new Error(
-                    `Gas estimation for ${functionName} has failed, reason: ${decodedErrorData}`,
-                );
-            }
-
-            const functionFragment = contractInstance.interface.getFunction(
-                error.transaction.data.slice(0, 10),
-            );
-            const inputs = functionFragment.inputs
-                .map((input, i) => {
-                    const argName = input.name;
-                    const argValue = this._formatArgument(args[i]);
-                    return `${argName}=${argValue}`;
-                })
-                .join(', ');
-
-            throw new Error(
-                `Gas estimation for ${functionName}(${inputs}) has failed, reason: ${decodedErrorData}`,
-            );
+            this._decodeEstimateGasError(contractInstance, functionName, error, args);
         }
 
         gasLimit = gasLimit ?? this.convertToWei(900, 'kwei');
@@ -528,6 +507,43 @@ class Web3Service {
                 await this.provider.call(tx, tx.blockNumber);
             }
         } catch (error) {
+            this._decodeWaitForTxError(contractInstance, functionName, error, args);
+        }
+        return result;
+    }
+
+    _decodeEstimateGasError(contractInstance, functionName, error, args) {
+        try {
+            const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
+
+            if (error.transaction === undefined) {
+                throw new Error(
+                    `Gas estimation for ${functionName} has failed, reason: ${decodedErrorData}`,
+                );
+            }
+
+            const functionFragment = contractInstance.interface.getFunction(
+                error.transaction.data.slice(0, 10),
+            );
+            const inputs = functionFragment.inputs
+                .map((input, i) => {
+                    const argName = input.name;
+                    const argValue = this._formatArgument(args[i]);
+                    return `${argName}=${argValue}`;
+                })
+                .join(', ');
+
+            throw new Error(
+                `Gas estimation for ${functionName}(${inputs}) has failed, reason: ${decodedErrorData}`,
+            );
+        } catch (decodeError) {
+            this.logger.warn(`Unable to decode estimate gas error: ${decodeError}`);
+            throw error;
+        }
+    }
+
+    _decodeWaitForTxError(contractInstance, functionName, error, args) {
+        try {
             const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
 
             let sigHash;
@@ -549,8 +565,10 @@ class Web3Service {
             throw new Error(
                 `Transaction ${functionName}(${inputs}) has been reverted, reason: ${decodedErrorData}`,
             );
+        } catch (decodeError) {
+            this.logger.warn(`Unable to decode wait for transaction error: ${decodeError}`);
+            throw error;
         }
-        return result;
     }
 
     _getFunctionSighash(contractInstance, functionName, args) {
