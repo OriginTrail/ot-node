@@ -60,7 +60,7 @@ class HandleProtocolMessageCommand extends Command {
             await this.blockchainModuleManager.getR2(blockchain),
             hashFunctionId,
             proximityScoreFunctionsPairId,
-            true,
+            false,
         );
         const peerId = this.networkModuleManager.getPeerId().toB58String();
         for (const { peerId: otherPeerId } of closestNodes) {
