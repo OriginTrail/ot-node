@@ -38,8 +38,8 @@ class SubmitCommitCommand extends Command {
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                 `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
-                `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
-                `Right neighborhood edge: ${rightNeighborhoodEdge}` +
+                `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                `Right neighborhood edge: ${rightNeighborhoodEdge}, ` +
                 `Retry number: ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}`,
         );
 
@@ -66,7 +66,7 @@ class SubmitCommitCommand extends Command {
                     `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                     `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                     `State Index: ${stateIndex}, Operation ID: ${operationId}` +
-                    `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                    `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
                     `Right neighborhood edge: ${rightNeighborhoodEdge}`,
             );
 
@@ -86,7 +86,7 @@ class SubmitCommitCommand extends Command {
                     `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                     `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                     `State Index: ${stateIndex}, Operation ID: ${operationId}` +
-                    `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                    `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
                     `Right neighborhood edge: ${rightNeighborhoodEdge}`,
             );
 
@@ -140,7 +140,7 @@ class SubmitCommitCommand extends Command {
                     `with the ID: ${agreementId}, Blockchain: ${blockchain}, Contract: ${contract}, ` +
                     `Token ID: ${tokenId}, Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, ` +
                     `Epoch: ${epoch}, State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
-                    `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                    `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
                     `Right neighborhood edge: ${rightNeighborhoodEdge}, ` +
                     `Retry number: ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}.`,
             );
@@ -204,8 +204,8 @@ class SubmitCommitCommand extends Command {
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                 `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
-                `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
-                `Right neighborhood edge: ${rightNeighborhoodEdge}` +
+                `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                `Right neighborhood edge: ${rightNeighborhoodEdge}, ` +
                 `Retry number: ${COMMAND_RETRIES.SUBMIT_COMMIT - command.retries + 1}`,
         );
 
