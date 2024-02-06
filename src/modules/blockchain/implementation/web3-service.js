@@ -1264,7 +1264,7 @@ class Web3Service {
             this.scoringFunctionsContracts[1],
             'getParameters',
             [],
-            CONTRACTS.Log2PLDSF,
+            CONTRACTS.Log2PLDSF_CONTRACT,
         );
 
         const params = {};
