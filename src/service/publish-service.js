@@ -6,7 +6,6 @@ import {
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     OPERATIONS,
-    OPERATION_REQUEST_STATUS,
 } from '../constants/constants.js';
 
 class PublishService extends OperationService {
@@ -47,7 +46,7 @@ class PublishService extends OperationService {
         this.logger.debug(
             `Processing ${
                 this.operationName
-            } response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
+            } response with status: ${responseStatus} for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
                 numberOfFoundNodes,
                 batchSize,
             )} number of leftover nodes: ${
@@ -60,10 +59,7 @@ class PublishService extends OperationService {
             );
         }
 
-        if (
-            responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
-            completedNumber === minAckResponses
-        ) {
+        if (completedNumber === minAckResponses) {
             let allCompleted = true;
             for (const key in keywordsStatuses) {
                 if (keywordsStatuses[key].completedNumber < minAckResponses) {
