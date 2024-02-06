@@ -26,7 +26,9 @@ class FindNodesCommand extends Command {
         } = command.data;
 
         this.errorType = errorType;
-        this.logger.debug(`Searching for closest node(s) for keyword ${keyword}`);
+        this.logger.debug(
+            `Searching for closest node(s) for operationId: ${operationId}, keyword: ${keyword}`,
+        );
 
         // TODO: protocol selection
         const closestNodes = [];
@@ -43,7 +45,9 @@ class FindNodesCommand extends Command {
             }
         }
 
-        this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${keyword}`);
+        this.logger.debug(
+            `Found ${closestNodes.length} node(s) for operationId: ${operationId}, keyword: ${keyword}`,
+        );
         this.logger.trace(
             `Found neighbourhood: ${JSON.stringify(
                 closestNodes.map((node) => node.id),
@@ -56,7 +60,7 @@ class FindNodesCommand extends Command {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Unable to find enough nodes for ${operationId}. Minimum number of nodes required: ${minAckResponses}`,
+                `Unable to find enough nodes for operationId: ${operationId}, keyword: ${keyword}. Minimum number of nodes required: ${minAckResponses}`,
                 this.errorType,
                 true,
             );
