@@ -3,7 +3,7 @@
 This tool will help you set up a local DKG v6 network running with the Hardhat blockchain. It is useful for development and testing purposes and is used internally by the OriginTrail core developers.
 <br/>
 
-**Note: This tool is an internal tool used by the OriginTrail team and thus is developed for our workflow, meaning that it currently only supports MacOS**, but we encourage you to adapt it for your workflow as well.
+**Note: This tool is an internal tool used by the OriginTrail team and thus is developed for our workflow, meaning that it currently only supports MacOS and Linux**, but we encourage you to adapt it for your workflow as well.
 
 # Prerequisites
 
@@ -54,11 +54,19 @@ You can specify to run anywhere between one and twenty nodes with the `--nodes` 
 
 The first node will be named `bootstrap`, while subsequent nodes will be named `dh1, dh2, ...`. <br/>
 
+### MacOS
+
 ```bash
-bash ./tools/local-network-setup/setup-macos-environment.sh --nodes=6
+bash ./tools/local-network-setup/setup-macos-environment.sh --nodes=12
 ```
 
-**Note:** With the above command, we will start two hardhat instances, deploy contracts, deploy a 6 nodes network (1 bootstrap and 5 subsequent nodes)<br/>
+### Linux
+
+```bash
+./tools/local-network-setup/setup-linux-environment.sh --nodes=12
+```
+
+**Note:** With the above commands, we will start two hardhat instances, deploy contracts, deploy a 12 node network (1 bootstrap and 11 subsequent nodes)<br/>
 
 ## Specifying the blockchain network
 

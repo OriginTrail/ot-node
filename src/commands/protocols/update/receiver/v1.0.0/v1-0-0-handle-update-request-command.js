@@ -76,7 +76,6 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             r2,
             hashFunctionId,
             proximityScoreFunctionsPairId,
-            false,
         );
 
         const closestNode = neighbourhood[0];
