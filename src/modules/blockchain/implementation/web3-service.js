@@ -146,6 +146,10 @@ class Web3Service {
         this.wallet = new ethers.Wallet(this.getPrivateKey(), this.provider);
     }
 
+    getABIs() {
+        return ABIs;
+    }
+
     async initializeContracts() {
         this.contractAddresses = {};
 
@@ -154,7 +158,7 @@ class Web3Service {
         );
         this.HubContract = new ethers.Contract(
             this.config.hubContractAddress,
-            ABIs.Hub,
+            this.getABIs().Hub,
             this.wallet,
         );
         this.contractAddresses[this.config.hubContractAddress] = this.HubContract;
@@ -261,7 +265,7 @@ class Web3Service {
     initializeAssetStorageContract(assetStorageAddress) {
         this.assetStorageContracts[assetStorageAddress.toLowerCase()] = new ethers.Contract(
             assetStorageAddress,
-            ABIs.ContentAssetStorage,
+            this.getABIs().ContentAssetStorage,
             this.wallet,
         );
         this.contractAddresses[assetStorageAddress] =
@@ -271,10 +275,10 @@ class Web3Service {
     initializeScoringContract(id, contractAddress) {
         const contractName = SCORING_FUNCTIONS[id];
 
-        if (ABIs[contractName] != null) {
+        if (this.getABIs()[contractName] != null) {
             this.scoringFunctionsContracts[id] = new ethers.Contract(
                 contractAddress,
-                ABIs[contractName],
+                this.getABIs()[contractName],
                 this.wallet,
             );
             this.contractAddresses[contractAddress] = this.scoringFunctionsContracts[id];
@@ -312,10 +316,10 @@ class Web3Service {
     }
 
     initializeContract(contractName, contractAddress) {
-        if (ABIs[contractName] != null) {
+        if (this.getABIs()[contractName] != null) {
             this[`${contractName}Contract`] = new ethers.Contract(
                 contractAddress,
-                ABIs[contractName],
+                this.getABIs()[contractName],
                 this.wallet,
             );
             this.contractAddresses[contractAddress] = this[`${contractName}Contract`];
