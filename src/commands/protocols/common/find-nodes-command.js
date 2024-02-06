@@ -94,7 +94,7 @@ class FindNodesCommand extends Command {
             proximityScoreFunctionsPairId,
         );
 
-        const availableNodes = closestNodes.map((node) => node.lastSeen >= node.lastDialed);
+        const availableNodes = closestNodes.filter((node) => node.lastSeen >= node.lastDialed);
 
         const nodesFound = await Promise.all(
             availableNodes.map(({ peerId }) =>
