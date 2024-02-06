@@ -113,18 +113,8 @@ class ShardingTableService {
         );
     }
 
-    async findNeighbourhood(
-        blockchainId,
-        key,
-        r2,
-        hashFunctionId,
-        proximityScoreFunctionsPairId,
-        filterLastSeen,
-    ) {
-        let peers = await this.repositoryModuleManager.getAllPeerRecords(
-            blockchainId,
-            filterLastSeen,
-        );
+    async findNeighbourhood(blockchainId, key, r2, hashFunctionId, proximityScoreFunctionsPairId) {
+        let peers = await this.repositoryModuleManager.getAllPeerRecords(blockchainId);
         peers = peers.map((peer, index) => ({ ...peer.dataValues, index }));
         const keyHash = await this.hashingService.callHashFunction(hashFunctionId, key);
 
@@ -192,7 +182,6 @@ class ShardingTableService {
             await this.blockchainModuleManager.getR2(blockchainId),
             hashFunctionId,
             proximityScoreFunctionsPairId,
-            true,
         );
         const r1 = await this.blockchainModuleManager.getR1(blockchainId);
         // todo remove this line once we implement logic for storing assertion in publish node if it's in neighbourhood
