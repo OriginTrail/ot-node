@@ -3,7 +3,6 @@ import OperationService from './operation-service.js';
 
 import {
     OPERATION_ID_STATUS,
-    OPERATION_REQUEST_STATUS,
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     OPERATIONS,
@@ -47,7 +46,7 @@ class UpdateService extends OperationService {
         this.logger.debug(
             `Processing ${
                 this.operationName
-            } response for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
+            } response with status: ${responseStatus} for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
                 numberOfFoundNodes,
                 batchSize,
             )} number of leftover nodes: ${
@@ -60,10 +59,7 @@ class UpdateService extends OperationService {
             );
         }
 
-        if (
-            responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
-            completedNumber === minAckResponses
-        ) {
+        if (completedNumber === minAckResponses) {
             let allCompleted = true;
             for (const key in keywordsStatuses) {
                 if (keywordsStatuses[key].completedNumber < minAckResponses) {
