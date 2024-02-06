@@ -5,6 +5,7 @@ import {
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     OPERATIONS,
+    OPERATION_REQUEST_STATUS,
 } from '../constants/constants.js';
 
 class GetService extends OperationService {
@@ -58,7 +59,10 @@ class GetService extends OperationService {
             );
         }
 
-        if (completedNumber === minAckResponses) {
+        if (
+            responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
+            completedNumber === minAckResponses
+        ) {
             await this.markOperationAsCompleted(
                 operationId,
                 blockchain,

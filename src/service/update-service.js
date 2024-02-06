@@ -6,6 +6,7 @@ import {
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     OPERATIONS,
+    OPERATION_REQUEST_STATUS,
 } from '../constants/constants.js';
 
 class UpdateService extends OperationService {
@@ -59,7 +60,10 @@ class UpdateService extends OperationService {
             );
         }
 
-        if (completedNumber === minAckResponses) {
+        if (
+            responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
+            completedNumber === minAckResponses
+        ) {
             let allCompleted = true;
             for (const key in keywordsStatuses) {
                 if (keywordsStatuses[key].completedNumber < minAckResponses) {
