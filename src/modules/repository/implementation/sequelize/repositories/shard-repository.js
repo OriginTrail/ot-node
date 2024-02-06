@@ -46,7 +46,7 @@ class ShardRepository {
                 'ask',
                 'stake',
                 'lastSeen',
-                'last_dialed',
+                'lastDialed',
                 'sha256',
             ],
             order: [['sha256', 'asc']],
