@@ -148,7 +148,6 @@ class EpochCheckCommand extends Command {
                 r2,
                 serviceAgreement.hashFunctionId,
                 serviceAgreement.scoreFunctionId,
-                false,
             );
 
             let neighbourhoodEdges = null;

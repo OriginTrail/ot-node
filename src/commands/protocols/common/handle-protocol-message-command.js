@@ -60,7 +60,6 @@ class HandleProtocolMessageCommand extends Command {
             await this.blockchainModuleManager.getR2(blockchain),
             hashFunctionId,
             proximityScoreFunctionsPairId,
-            false,
         );
         const peerId = this.networkModuleManager.getPeerId().toB58String();
         for (const { peerId: otherPeerId } of closestNodes) {
@@ -68,7 +67,9 @@ class HandleProtocolMessageCommand extends Command {
                 return true;
             }
         }
-        this.logger.warn(`Invalid neighborhood for ual: ${ual}`);
+        this.logger.warn(
+            `Invalid neighborhood for ual: ${ual} on blockchain: ${blockchain} with hashFunctionId: ${hashFunctionId}, proximityScoreFunctionsPairId: ${proximityScoreFunctionsPairId}`,
+        );
 
         return false;
     }
