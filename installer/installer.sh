@@ -267,9 +267,9 @@ install_node() {
 
 # Blockchains prompt based on the selected environment
 if [ "$nodeEnv" == "mainnet" ]; then
-    blockchain_prompt=("OriginTrail Parachain is now NeuroWeb" "Gnosis" "Both")
+    blockchain_prompt=("OriginTrail Parachain" "Gnosis" "Both")
 elif [ "$nodeEnv" == "testnet" ]; then
-    blockchain_prompt=("OriginTrail Parachain is now NeuroWeb" "Gnosis" "Both")
+    blockchain_prompt=("OriginTrail Parachain" "Gnosis" "Both")
 fi
 
 # Ask user which blockchain to connect to with strict input validation
