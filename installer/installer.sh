@@ -267,9 +267,9 @@ install_node() {
 
 # Blockchains prompt based on the selected environment
 if [ "$nodeEnv" == "mainnet" ]; then
-    blockchain_prompt=("OriginTrail Parachain")
+    blockchain_prompt=("OriginTrail Parachain is now NeuroWeb" "Gnosis" "Both")
 elif [ "$nodeEnv" == "testnet" ]; then
-    blockchain_prompt=("OriginTrail Parachain" "Gnosis" "Both")
+    blockchain_prompt=("OriginTrail Parachain is now NeuroWeb" "Gnosis" "Both")
 fi
 
 # Ask user which blockchain to connect to with strict input validation
@@ -318,6 +318,7 @@ case "$blockchain" in
     "Both" )
         if [ "$nodeEnv" == "mainnet" ]; then
             blockchain1="OTP"
+            blockchain2="Gnosis"
         elif [ "$nodeEnv" == "testnet" ]; then
             blockchain1="OTP"
             blockchain2="Gnosis"
@@ -409,6 +410,7 @@ perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "t
 # Set blockchain IDs based on the environment
 if [ "$nodeEnv" == "mainnet" ]; then
     otp_blockchain_id=2043
+    gnosis_blockchain_id=100
 else
     otp_blockchain_id=20430
     gnosis_blockchain_id=10200
