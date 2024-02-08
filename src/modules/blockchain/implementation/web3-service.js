@@ -62,12 +62,6 @@ class Web3Service {
         this.config = config;
         this.logger = logger;
         this.contractCallCache = {};
-        this.operationalWallets = this.getValidOperationalWallets();
-        if (this.operationalWallets.length === 0) {
-            throw Error(
-                'Unable to initialize web3 service, all operational wallets provided are invalid',
-            );
-        }
         await this.initializeWeb3();
         this.startBlock = await this.getBlockNumber();
         await this.initializeContracts();
@@ -198,6 +192,13 @@ class Web3Service {
         } catch (e) {
             throw new Error(
                 `RPC Fallback Provider initialization failed. Fallback Provider quorum: ${FALLBACK_PROVIDER_QUORUM}. Error: ${e.message}.`,
+            );
+        }
+
+        this.operationalWallets = this.getValidOperationalWallets();
+        if (this.operationalWallets.length === 0) {
+            throw Error(
+                'Unable to initialize web3 service, all operational wallets provided are invalid',
             );
         }
     }
@@ -576,20 +577,7 @@ class Web3Service {
                 this.setContractCallCache(contractName, functionName, result);
             }
         } catch (error) {
-            const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
-
-            const functionFragment = contractInstance.interface.getFunction(
-                error.transaction.data.slice(0, 10),
-            );
-            const inputs = functionFragment.inputs
-                .map((input, i) => {
-                    const argName = input.name;
-                    const argValue = this._formatArgument(args[i]);
-                    return `${argName}=${argValue}`;
-                })
-                .join(', ');
-
-            throw new Error(`Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`);
+            this._decodeContractCallError(contractInstance, functionName, error, args);
         }
         return result;
     }
@@ -698,6 +686,28 @@ class Web3Service {
             throw new Error(
                 `Transaction ${functionName}(${inputs}) has been reverted, reason: ${decodedErrorData}`,
             );
+        } catch (decodeError) {
+            this.logger.warn(`Unable to decode wait for transaction error: ${decodeError}`);
+            throw error;
+        }
+    }
+
+    _decodeContractCallError(contractInstance, functionName, error, args) {
+        try {
+            const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
+
+            const functionFragment = contractInstance.interface.getFunction(
+                error.transaction.data.slice(0, 10),
+            );
+            const inputs = functionFragment.inputs
+                .map((input, i) => {
+                    const argName = input.name;
+                    const argValue = this._formatArgument(args[i]);
+                    return `${argName}=${argValue}`;
+                })
+                .join(', ');
+
+            throw new Error(`Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`);
         } catch (decodeError) {
             this.logger.warn(`Unable to decode wait for transaction error: ${decodeError}`);
             throw error;
