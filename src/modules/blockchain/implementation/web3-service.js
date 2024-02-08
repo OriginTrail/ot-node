@@ -523,6 +523,7 @@ class Web3Service {
                         this.convertAsciiToHex(peerId),
                         this.config.sharesTokenName,
                         this.config.sharesTokenSymbol,
+                        this.config.operatorFee,
                     ],
                     this.operationalWallets[0],
                 );
