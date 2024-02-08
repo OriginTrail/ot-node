@@ -249,6 +249,36 @@ install_sql() {
     perform_step systemctl restart $sql "Restarting $sql"
 }
 
+request_operational_wallet_keys() {
+    WALLET_ADDRESSES=()
+    WALLET_PRIVATE_KEYS=()
+    
+    echo "You'll now be asked to input addresses and private keys of your operational wallets for $1. Input an empty value to stop."
+    wallet_no=1
+    while true; do
+        read -p "Please input the address for your $1 operational wallet no. $wallet_no:" address
+        [[ -z $address ]] && break
+        text_color $GREEN "EVM operational wallet address for $blockchain wallet no. $wallet_no: $address"
+
+        read -p "Please input the private key for your $1 operational wallet no. $wallet_no:" private_key
+        [[ -z $private_key ]] && break
+        text_color $GREEN "EVM operational wallet private key for $blockchain wallet no. $wallet_no: $private_key"
+        
+        WALLET_ADDRESSES+=($address)
+        WALLET_PRIVATE_KEYS+=($private_key)
+        wallet_no=$((wallet_no + 1))
+    done
+
+    OP_WALLET_KEYS_JSON=$(jq -n '
+        [
+        $ARGS.positional as $args 
+        | ($args | length / 2) as $upto
+        | range(0; $upto) as $start
+        | [{ evmAddress: $args[$start], privateKey: $args[$start + $upto] }]
+        ] | add
+        ' --args "${WALLET_ADDRESSES[@]}" "${WALLET_PRIVATE_KEYS[@]}")
+}
+
 install_node() {
     # Change directory to ot-node/current
     cd $OTNODE_DIR
