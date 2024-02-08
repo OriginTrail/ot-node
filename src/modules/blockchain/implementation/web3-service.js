@@ -535,6 +535,7 @@ class Web3Service {
                         this.config.sharesTokenSymbol,
                         this.config.operatorFee,
                     ],
+                    null,
                     this.operationalWallets[0],
                 );
                 this.logger.info(
@@ -620,10 +621,9 @@ class Web3Service {
                 }`,
         );
 
-        const tx = await contractInstance[functionName](...args, {
+        const tx = await contractInstance.connect(operationalWallet)[functionName](...args, {
             gasPrice,
             gasLimit,
-            from: operationalWallet,
         });
 
         try {
