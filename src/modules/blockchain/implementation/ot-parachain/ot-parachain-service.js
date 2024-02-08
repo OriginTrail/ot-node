@@ -1,5 +1,6 @@
 import { ApiPromise, WsProvider, HttpProvider } from '@polkadot/api';
 import { createRequire } from 'module';
+import { ethers } from 'ethers';
 import { BLOCK_TIME_MILLIS } from '../../../../constants/constants.js';
 import Web3Service from '../web3-service.js';
 
@@ -55,21 +56,40 @@ class OtParachainService extends Web3Service {
         return ABIs;
     }
 
-    async checkEvmAccountsMapping() {
-        const { evmOperationalWalletPublicKey, evmManagementWalletPublicKey } = this.config;
-        const operationalAccount = await this.queryParachainState('evmAccounts', 'accounts', [
-            evmOperationalWalletPublicKey,
-        ]);
-        if (!operationalAccount || operationalAccount.toHex() === '0x') {
-            throw Error('Missing account mapping for operational wallet');
+    async checkEvmWallets() {
+        for (const wallet in this.config.operationalWallets) {
+            this.invalidWallets = [];
+            // eslint-disable-next-line no-await-in-loop
+            const walletMapped = await this.checkEvmAccountMapping(wallet.evmAddress);
+            if (!walletMapped) {
+                this.invalidWallets.push(wallet);
+            }
         }
-
-        const managementAccount = await this.queryParachainState('evmAccounts', 'accounts', [
+        if (this.invalidWallets.length === Object.entries(this.config.operationalWallets).length) {
+            throw Error('Unable to find mappings for operational wallets');
+        }
+        this.invalidWallets.forEach((wallet) =>
+            this.logger.warn(
+                `Unable to find account mapping for wallet: ${wallet.evmAddress}, wallet removed from the list`,
+            ),
+        );
+        const { evmManagementWalletPublicKey } = this.config;
+        const managementWalletMapped = await this.checkEvmAccountMapping(
             evmManagementWalletPublicKey,
-        ]);
-        if (!managementAccount || managementAccount.toHex() === '0x') {
+        );
+        if (!managementWalletMapped) {
             throw Error('Missing account mapping for management wallet');
         }
+    }
+
+    async checkEvmAccountMapping(walletPublicKey) {
+        const account = await this.queryParachainState('evmAccounts', 'accounts', [
+            walletPublicKey,
+        ]);
+        if (!account || account.toHex() === '0x') {
+            return true;
+        }
+        return false;
     }
 
     async callParachainExtrinsic(keyring, extrinsic, method, args) {
@@ -177,6 +197,30 @@ class OtParachainService extends Web3Service {
 
     getBlockTimeMillis() {
         return BLOCK_TIME_MILLIS.OTP;
+    }
+
+    getValidOperationalWallets() {
+        const wallets = [];
+        this.config.operationalWallets.forEach((wallet) => {
+            if (
+                this.invalidWallets?.find(
+                    (invalidWallet) => invalidWallet.privateKey === wallet.privateKey,
+                )
+            ) {
+                this.logger.warn(
+                    `Skipping initialization of wallet. Wallet public key: ${wallet.evmAddress}`,
+                );
+            } else {
+                try {
+                    wallets.push(new ethers.Wallet(wallet.privateKey, this.provider));
+                } catch (error) {
+                    this.logger.warn(
+                        `Invalid evm private key, unable to create wallet instance. Wallet public key: ${wallet.evmAddress}. Error: ${error.message}`,
+                    );
+                }
+            }
+        });
+        return wallets;
     }
 }
 
