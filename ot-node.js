@@ -228,6 +228,7 @@ class OTNode {
                         }
                     }
                     const identityId = await blockchainModuleManager.getIdentityId(blockchain);
+                    await blockchainModuleManager.initializeTransactionQueues(blockchain);
                     this.logger.info(`Identity ID: ${identityId}`);
                 } catch (error) {
                     this.logger.warn(

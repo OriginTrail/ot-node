@@ -1,5 +1,6 @@
 import { ApiPromise, WsProvider, HttpProvider } from '@polkadot/api';
 import { createRequire } from 'module';
+import { ethers } from 'ethers';
 import { BLOCK_TIME_MILLIS } from '../../../../constants/constants.js';
 import Web3Service from '../web3-service.js';
 
@@ -177,6 +178,30 @@ class OtParachainService extends Web3Service {
 
     getBlockTimeMillis() {
         return BLOCK_TIME_MILLIS.OTP;
+    }
+
+    getValidOperationalWallets() {
+        const wallets = [];
+        this.config.operationalWallets.forEach((wallet) => {
+            if (
+                this.invalidWallets?.find(
+                    (invalidWallet) => invalidWallet.evmPrivateKey === wallet.evmPrivateKey,
+                )
+            ) {
+                this.logger.warn(
+                    `Skipping initialization of wallet. Wallet public key: ${wallet.evmPublicKey}`,
+                );
+            } else {
+                try {
+                    wallets.push(new ethers.Wallet(wallet.evmPrivateKey, this.provider));
+                } catch (error) {
+                    this.logger.warn(
+                        `Invalid evm private key, unable to create wallet instance. Wallet public key: ${wallet.evmPublicKey}. Error: ${error.message}`,
+                    );
+                }
+            }
+        });
+        return wallets;
     }
 }
 
