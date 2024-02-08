@@ -393,6 +393,12 @@ class MigrationExecutor {
     }
 
     static async executeMultipleOpWalletsUserConfigurationMigration(container, logger, config) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
         const migration = new MultipleOpWalletsUserConfigurationMigration(
             'multipleOpWalletsUserConfigurationMigration',
             logger,
