@@ -488,9 +488,9 @@ class Web3Service {
                 );
                 this.operationalWallets.splice(index, 1);
                 this.logger.warn(
-                    `Operational wallet: ${publicKey} has not profile connected to it, expected identity id: ${
+                    `Operational wallet: ${publicKey} don't have profile connected to it, expected identity id: ${
                         this.identityId
-                    } on blockchain ${this.getIdentityId()}`,
+                    } on blockchain ${this.getBlockchainId()}`,
                 );
             });
         }
