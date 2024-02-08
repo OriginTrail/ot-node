@@ -557,7 +557,7 @@ class Web3Service {
                     this.logger.warn(
                         `Unable to create profile. Will retry in ${retryDelayInSec}s. Retries left: ${
                             maxNumberOfRetries - retryCount
-                        } on blockchain ${this.getBlockchainId()}.`,
+                        } on blockchain ${this.getBlockchainId()}. Error: ${error}`,
                     );
                     // eslint-disable-next-line no-await-in-loop
                     await sleep(retryDelayInSec * 1000);
@@ -614,7 +614,7 @@ class Web3Service {
         gasLimit = gasLimit ?? this.convertToWei(900, 'kwei');
 
         this.logger.debug(
-            `Sending signed transaction ${functionName} to the blockchain ` +
+            `Sending signed transaction ${functionName} to the blockchain ${this.getBlockchainId()}` +
                 `with gas limit: ${gasLimit.toString()} and gasPrice ${gasPrice.toString()}. ` +
                 `Transaction queue length: ${this.getTotalTransactionQueueLength()}. Wallet used: ${
                     operationalWallet.address

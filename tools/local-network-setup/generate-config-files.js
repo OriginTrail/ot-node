@@ -16,6 +16,15 @@ const privateKeysFile = await readFile('test/bdd/steps/api/datasets/privateKeys.
 const publicKeysFile = await readFile('test/bdd/steps/api/datasets/publicKeys.json');
 const privateKeys = JSON.parse(privateKeysFile.toString());
 const publicKeys = JSON.parse(publicKeysFile.toString());
+// todo update this logic
+const privateKeysManagementWalletFile = await readFile(
+    'test/bdd/steps/api/datasets/privateKeys-management-wallets.json',
+);
+const publicKeysManagementWalletFile = await readFile(
+    'test/bdd/steps/api/datasets/publicKeys-management-wallets.json',
+);
+const privateKeysManagementWallet = JSON.parse(privateKeysManagementWalletFile.toString());
+const publicKeysManagementWallet = JSON.parse(publicKeysManagementWalletFile.toString());
 
 const logger = new Logger(generalConfig.development.logLevel);
 
@@ -98,21 +107,23 @@ function generateTripleStoreConfig(templateTripleStoreConfig, nodeIndex) {
 
 function generateBlockchainConfig(templateBlockchainConfig, nodeIndex) {
     const blockchainConfig = JSON.parse(JSON.stringify(templateBlockchainConfig));
-
+    // console.log('************************');
+    // console.log(publicKeys[nodeIndex]);
+    // console.log('************************');
     blockchainConfig.implementation['hardhat1:31337'].config = {
         ...blockchainConfig.implementation['hardhat1:31337'].config,
         hubContractAddress,
         rpcEndpoints: [process.env.RPC_ENDPOINT_BC1],
         operationalWallets: [
             {
-                evmAddress: publicKeys[nodeIndex],
-                privateKey: privateKeys[nodeIndex],
+                evmAddress: publicKeys[nodeIndex + 1],
+                privateKey: privateKeys[nodeIndex + 1],
             },
         ],
-        evmManagementWalletPublicKey: publicKeys[publicKeys.length - 1 - nodeIndex],
-        evmManagementWalletPrivateKey: privateKeys[privateKeys.length - 1 - nodeIndex],
-        sharesTokenName: `LocalNode${nodeIndex}`,
-        sharesTokenSymbol: `LN${nodeIndex}`,
+        evmManagementWalletPublicKey: publicKeysManagementWallet[nodeIndex + 1],
+        evmManagementWalletPrivateKey: privateKeysManagementWallet[nodeIndex + 1],
+        sharesTokenName: `LocalNode${nodeIndex + 1}`,
+        sharesTokenSymbol: `LN${nodeIndex + 1}`,
     };
 
     // TODO: Don't use string
@@ -122,14 +133,14 @@ function generateBlockchainConfig(templateBlockchainConfig, nodeIndex) {
         rpcEndpoints: [process.env.RPC_ENDPOINT_BC2],
         operationalWallets: [
             {
-                evmAddress: publicKeys[nodeIndex],
-                privateKey: privateKeys[nodeIndex],
+                evmAddress: publicKeys[nodeIndex + 1],
+                privateKey: privateKeys[nodeIndex + 1],
             },
         ],
-        evmManagementWalletPublicKey: publicKeys[publicKeys.length - 1 - nodeIndex],
-        evmManagementWalletPrivateKey: privateKeys[privateKeys.length - 1 - nodeIndex],
-        sharesTokenName: `LocalNode${nodeIndex}`,
-        sharesTokenSymbol: `LN${nodeIndex}`,
+        evmManagementWalletPublicKey: publicKeysManagementWallet[nodeIndex + 1],
+        evmManagementWalletPrivateKey: privateKeysManagementWallet[nodeIndex + 1],
+        sharesTokenName: `LocalNode${nodeIndex + 1}`,
+        sharesTokenSymbol: `LN${nodeIndex + 1}`,
     };
 
     // Used for testing, add a few more wallets to later nodes
