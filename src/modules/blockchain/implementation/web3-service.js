@@ -709,7 +709,7 @@ class Web3Service {
 
             throw new Error(`Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`);
         } catch (decodeError) {
-            this.logger.warn(`Unable to decode wait for transaction error: ${decodeError}`);
+            this.logger.warn(`Unable to decode contract call error: ${decodeError}`);
             throw error;
         }
     }
