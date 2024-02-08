@@ -63,7 +63,7 @@ class Web3Service {
         this.logger = logger;
         this.contractCallCache = {};
         await this.initializeWeb3();
-        await this.initializeTransactionQueues();
+        this.initializeTransactionQueues();
         this.startBlock = await this.getBlockNumber();
         await this.initializeContracts();
 
