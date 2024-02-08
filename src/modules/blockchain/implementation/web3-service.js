@@ -113,7 +113,7 @@ class Web3Service {
 
     getTotalTransactionQueueLength() {
         let totalLength = 0;
-        this.transactionQueues.forEach((queue) => {
+        Object.values(this.transactionQueues).forEach((queue) => {
             totalLength += queue.length();
         });
         return totalLength;
