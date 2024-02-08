@@ -398,7 +398,7 @@ class Web3Service {
 
         const publicKeyWithNonZeroIdentityId =
             Object.keys(publicKeyIdentityIdPairs).find(
-                (publicKey) => publicKeyIdentityIdPairs[publicKey] !== '0',
+                (publicKey) => publicKeyIdentityIdPairs[publicKey] !== 0,
             ) || publicKeyIdentityIdPairs[0];
         if (publicKeyIdentityIdPairs[publicKeyWithNonZeroIdentityId] !== 0) {
             for (const publicKey in publicKeyIdentityIdPairs) {
