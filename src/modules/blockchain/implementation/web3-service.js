@@ -379,10 +379,10 @@ class Web3Service {
 
     async getIdentityId() {
         // TODO: use getter
-        const operationalWalletsPublickKeys = [];
+        const operationalWalletspublicKeys = [];
         const publicKeyIdentityIdPairs = {};
 
-        const promises = operationalWalletsPublickKeys.map((publicKey) =>
+        const promises = operationalWalletspublicKeys.map((publicKey) =>
             this.callContractFunction(
                 this.IdentityStorageContract,
                 'getIdentityId',
@@ -401,16 +401,16 @@ class Web3Service {
                 (publicKey) => publicKeyIdentityIdPairs[publicKey] !== '0',
             ) || publicKeyIdentityIdPairs[0];
         if (publicKeyIdentityIdPairs[publicKeyWithNonZeroIdentityId] !== 0) {
-            for (const publickKey in publicKeyIdentityIdPairs) {
+            for (const publicKey in publicKeyIdentityIdPairs) {
                 if (
-                    publicKeyIdentityIdPairs[publickKey] !== 0 &&
+                    publicKeyIdentityIdPairs[publicKey] !== 0 &&
                     publicKeyIdentityIdPairs[publicKeyWithNonZeroIdentityId] !==
-                        publicKeyIdentityIdPairs[publickKey]
+                        publicKeyIdentityIdPairs[publicKey]
                 ) {
                     throw new Error(
                         `All operational wallets must be connected to same identity! ` +
-                            `Operational wallet with publick key: ${publickKey} is` +
-                            ` connected to identyId: ${publicKeyIdentityIdPairs[publickKey]} and Operational wallet with publick key:` +
+                            `Operational wallet with public key: ${publicKey} is` +
+                            ` connected to identyId: ${publicKeyIdentityIdPairs[publicKey]} and Operational wallet with public key:` +
                             `${publicKeyWithNonZeroIdentityId} is connected to identyId: ${publicKeyIdentityIdPairs[publicKeyWithNonZeroIdentityId]}.`,
                     );
                 }
@@ -1364,10 +1364,10 @@ class Web3Service {
 
     async checkAllOperationalWallets() {
         // TODO: Use getter
-        const operationalWalletsPublickKeys = [];
+        const operationalWalletspublicKeys = [];
         const publicKeyIdentityIdPairs = {};
 
-        const promises = operationalWalletsPublickKeys.map((publicKey) =>
+        const promises = operationalWalletspublicKeys.map((publicKey) =>
             this.callContractFunction(
                 this.IdentityStorageContract,
                 'getIdentityId',
@@ -1386,22 +1386,22 @@ class Web3Service {
                 (publicKey) => publicKeyIdentityIdPairs[publicKey] !== '0',
             ) || publicKeyIdentityIdPairs[0];
 
-        for (const publickKey in publicKeyIdentityIdPairs) {
-            if (publicKeyIdentityIdPairs[publickKey] === 0) {
+        for (const publicKey in publicKeyIdentityIdPairs) {
+            if (publicKeyIdentityIdPairs[publicKey] === 0) {
                 // TODO: remove it's implementation of queue
                 // How to console on what blockchain
                 this.logger.warn(
-                    `Operational wallet with publick key: ${publickKey}` +
+                    `Operational wallet with public key: ${publicKey}` +
                         `has no profile connected to iteself on blockchai: .`,
                 );
             } else if (
                 publicKeyIdentityIdPairs[publicKeyWithNonZeroIdentityId] !==
-                publicKeyIdentityIdPairs[publickKey]
+                publicKeyIdentityIdPairs[publicKey]
             ) {
                 throw new Error(
                     `All operational wallets must be connected to same identity! ` +
-                        `Operational wallet with publick key: ${publickKey} is` +
-                        ` connected to identyId: ${publicKeyIdentityIdPairs[publickKey]} and Operational wallet with publick key:` +
+                        `Operational wallet with public key: ${publicKey} is` +
+                        ` connected to identyId: ${publicKeyIdentityIdPairs[publicKey]} and Operational wallet with public key:` +
                         `${publicKeyWithNonZeroIdentityId} is connected to identyId: ${publicKeyIdentityIdPairs[publicKeyWithNonZeroIdentityId]}.`,
                 );
             }
