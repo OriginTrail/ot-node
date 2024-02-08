@@ -47,7 +47,7 @@ class OtParachainService extends Web3Service {
         this.logger = logger;
         this.rpcNumber = 0;
         await this.initializeParachainProvider();
-        await this.checkEvmAccountsMapping();
+        await this.checkEvmWallets();
         await this.parachainProvider.disconnect();
         await super.initialize(config, logger);
     }
