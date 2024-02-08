@@ -1,5 +1,6 @@
 import { ApiPromise, WsProvider, HttpProvider } from '@polkadot/api';
 import { createRequire } from 'module';
+import { setTimeout as sleep } from 'timers/promises';
 import { BLOCK_TIME_MILLIS } from '../../../../constants/constants.js';
 import Web3Service from '../web3-service.js';
 
@@ -177,6 +178,50 @@ class OtParachainService extends Web3Service {
 
     getBlockTimeMillis() {
         return BLOCK_TIME_MILLIS.OTP;
+    }
+
+    async createProfile(peerId) {
+        if (!this.config.sharesTokenName || !this.config.sharesTokenSymbol) {
+            throw new Error(
+                'Missing sharesTokenName and sharesTokenSymbol in blockchain configuration. Please add it and start the node again.',
+            );
+        }
+
+        const maxNumberOfRetries = 3;
+        let retryCount = 0;
+        let profileCreated = false;
+        const retryDelayInSec = 12;
+        while (retryCount + 1 <= maxNumberOfRetries && !profileCreated) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                await this._executeContractFunction(this.ProfileContract, 'createProfile', [
+                    this.getManagementKey(),
+                    this.convertAsciiToHex(peerId),
+                    this.config.sharesTokenName,
+                    this.config.sharesTokenSymbol,
+                ]);
+                this.logger.info(
+                    `Profile created with name: ${this.config.sharesTokenName} and symbol: ${this.config.sharesTokenSymbol}`,
+                );
+                profileCreated = true;
+            } catch (error) {
+                if (error.message.includes('Profile already exists')) {
+                    this.logger.info(`Skipping profile creation, already exists on blockchain.`);
+                    profileCreated = true;
+                } else if (retryCount + 1 < maxNumberOfRetries) {
+                    retryCount += 1;
+                    this.logger.warn(
+                        `Unable to create profile. Will retry in ${retryDelayInSec}s. Retries left: ${
+                            maxNumberOfRetries - retryCount
+                        }`,
+                    );
+                    // eslint-disable-next-line no-await-in-loop
+                    await sleep(retryDelayInSec * 1000);
+                } else {
+                    throw error;
+                }
+            }
+        }
     }
 }
 
