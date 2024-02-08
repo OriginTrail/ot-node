@@ -57,16 +57,16 @@ class OtParachainService extends Web3Service {
     }
 
     async checkEvmWallets() {
-        for (const wallet in this.config.operationalWallets) {
-            this.invalidWallets = [];
+        this.invalidWallets = [];
+        for (const wallet of this.config.operationalWallets) {
             // eslint-disable-next-line no-await-in-loop
             const walletMapped = await this.checkEvmAccountMapping(wallet.evmAddress);
             if (!walletMapped) {
                 this.invalidWallets.push(wallet);
             }
         }
-        if (this.invalidWallets.length === Object.entries(this.config.operationalWallets).length) {
-            throw Error('Unable to find mappings for operational wallets');
+        if (this.invalidWallets.length === this.config.operationalWallets.length) {
+            throw Error('Unable to find mappings for all operational wallets');
         }
         this.invalidWallets.forEach((wallet) =>
             this.logger.warn(
@@ -87,9 +87,9 @@ class OtParachainService extends Web3Service {
             walletPublicKey,
         ]);
         if (!account || account.toHex() === '0x') {
-            return true;
+            return false;
         }
-        return false;
+        return true;
     }
 
     async callParachainExtrinsic(keyring, extrinsic, method, args) {
@@ -190,8 +190,8 @@ class OtParachainService extends Web3Service {
         await this.initializeParachainProvider();
     }
 
-    async getNativeTokenBalance() {
-        const nativeBalance = await this.wallet.getBalance();
+    async getNativeTokenBalance(wallet) {
+        const nativeBalance = await wallet.getBalance();
         return nativeBalance / 10 ** NATIVE_TOKEN_DECIMALS;
     }
 
