@@ -377,7 +377,7 @@ class Web3Service {
             this[`${contractName}Contract`] = new ethers.Contract(
                 contractAddress,
                 this.getABIs()[contractName],
-                this.wallet,
+                this.operationalWallets[0],
             );
             this.contractAddresses[contractAddress] = this[`${contractName}Contract`];
         } else {
