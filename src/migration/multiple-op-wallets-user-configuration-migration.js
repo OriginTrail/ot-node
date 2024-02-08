@@ -24,8 +24,8 @@ class MultipleOpWalletsUserConfigurationMigration extends BaseMigration {
                 try {
                     blockchain.config.operationalWallets = [
                         {
-                            evmPublicKey: blockchain.config.evmOperationalWalletPublicKey ?? '',
-                            evmPrivateKey: blockchain.config.evmOperationalWalletPrivateKey ?? '',
+                            evmAddress: blockchain.config.evmOperationalWalletPublicKey ?? '',
+                            privateKey: blockchain.config.evmOperationalWalletPrivateKey ?? '',
                         },
                     ];
                     delete blockchain.config.evmOperationalWalletPublicKey;

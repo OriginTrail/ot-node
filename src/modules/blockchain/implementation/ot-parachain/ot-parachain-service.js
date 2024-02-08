@@ -60,7 +60,7 @@ class OtParachainService extends Web3Service {
         for (const wallet in this.config.operationalWallets) {
             this.invalidWallets = [];
             // eslint-disable-next-line no-await-in-loop
-            const walletMapped = await this.checkEvmAccountMapping(wallet.evmPublicKey);
+            const walletMapped = await this.checkEvmAccountMapping(wallet.evmAddress);
             if (!walletMapped) {
                 this.invalidWallets.push(wallet);
             }
@@ -70,7 +70,7 @@ class OtParachainService extends Web3Service {
         }
         this.invalidWallets.forEach((wallet) =>
             this.logger.warn(
-                `Unable to find account mapping for wallet: ${wallet.evmPublicKey}, wallet removed from the list`,
+                `Unable to find account mapping for wallet: ${wallet.evmAddress}, wallet removed from the list`,
             ),
         );
         const { evmManagementWalletPublicKey } = this.config;
@@ -204,18 +204,18 @@ class OtParachainService extends Web3Service {
         this.config.operationalWallets.forEach((wallet) => {
             if (
                 this.invalidWallets?.find(
-                    (invalidWallet) => invalidWallet.evmPrivateKey === wallet.evmPrivateKey,
+                    (invalidWallet) => invalidWallet.privateKey === wallet.privateKey,
                 )
             ) {
                 this.logger.warn(
-                    `Skipping initialization of wallet. Wallet public key: ${wallet.evmPublicKey}`,
+                    `Skipping initialization of wallet. Wallet public key: ${wallet.evmAddress}`,
                 );
             } else {
                 try {
-                    wallets.push(new ethers.Wallet(wallet.evmPrivateKey, this.provider));
+                    wallets.push(new ethers.Wallet(wallet.privateKey, this.provider));
                 } catch (error) {
                     this.logger.warn(
-                        `Invalid evm private key, unable to create wallet instance. Wallet public key: ${wallet.evmPublicKey}. Error: ${error.message}`,
+                        `Invalid evm private key, unable to create wallet instance. Wallet public key: ${wallet.evmAddress}. Error: ${error.message}`,
                     );
                 }
             }

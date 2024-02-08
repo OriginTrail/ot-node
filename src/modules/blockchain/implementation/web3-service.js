@@ -146,10 +146,10 @@ class Web3Service {
         const wallets = [];
         this.config.operationalWallets.forEach((wallet) => {
             try {
-                wallets.push(new ethers.Wallet(wallet.evmPrivateKey, this.provider));
+                wallets.push(new ethers.Wallet(wallet.privateKey, this.provider));
             } catch (error) {
                 this.logger.warn(
-                    `Invalid evm private key, unable to create wallet instance. Wallet public key: ${wallet.evmPublicKey}. Error: ${error.message}`,
+                    `Invalid evm private key, unable to create wallet instance. Wallet public key: ${wallet.evmAddress}. Error: ${error.message}`,
                 );
             }
         });
