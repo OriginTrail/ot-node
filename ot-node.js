@@ -28,6 +28,12 @@ class OTNode {
         await this.checkForUpdate();
         await this.removeUpdateFile();
 
+        await MigrationExecutor.executeMultipleOpWalletsUserConfigurationMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
         this.logger.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
