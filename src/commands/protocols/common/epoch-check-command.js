@@ -69,7 +69,7 @@ class EpochCheckCommand extends Command {
                 totalTransactions = Math.min(totalTransactions, COMMAND_QUEUE_PARALLELISM * 0.3);
 
                 const transactionQueueLength =
-                    this.blockchainModuleManager.getTransactionQueueLength(blockchain);
+                    this.blockchainModuleManager.getTotalTransactionQueueLength(blockchain);
                 if (transactionQueueLength >= totalTransactions) return;
 
                 totalTransactions -= transactionQueueLength;
@@ -148,7 +148,6 @@ class EpochCheckCommand extends Command {
                 r2,
                 serviceAgreement.hashFunctionId,
                 serviceAgreement.scoreFunctionId,
-                false,
             );
 
             let neighbourhoodEdges = null;
@@ -390,7 +389,9 @@ class EpochCheckCommand extends Command {
 
         const transactionsPerEpochCheck = Math.floor(totalTransactions / epochChecksInWindow);
 
-        return transactionsPerEpochCheck;
+        const numberOfWallets = this.blockchainModuleManager.getPublicKeys().length;
+
+        return transactionsPerEpochCheck * numberOfWallets;
     }
 
     calculateCommandPeriod() {

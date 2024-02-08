@@ -196,7 +196,10 @@ export const COMMAND_TX_GAS_INCREASE_FACTORS = {
     SUBMIT_PROOFS: 1.2,
 };
 
-export const GNOSIS_DEFAULT_GAS_PRICE = 2;
+export const GNOSIS_DEFAULT_GAS_PRICE = {
+    TESTNET: 25,
+    MAINNET: 5,
+};
 
 export const WEBSOCKET_PROVIDER_OPTIONS = {
     reconnect: {
@@ -646,10 +649,10 @@ export const CACHED_FUNCTIONS = {
     IdentityStorageContract: {
         getIdentityId: CACHE_DATA_TYPES.NUMBER,
     },
-    Log2PLDSF: {
+    Log2PLDSFContract: {
         getParameters: CACHE_DATA_TYPES.ANY,
     },
-    LinearSum: {
+    LinearSumContract: {
         getParameters: CACHE_DATA_TYPES.ANY,
     },
 };
