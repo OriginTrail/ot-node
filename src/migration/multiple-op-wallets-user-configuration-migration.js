@@ -17,10 +17,10 @@ class MultipleOpWalletsUserConfigurationMigration extends BaseMigration {
 
         const userConfiguration = await this.fileService.readFile(configurationFilePath, true);
 
-        for (const blockchainId in userConfiguration?.modules?.blockchain) {
-            const blockchain = userConfiguration?.modules?.blockchain[blockchainId];
+        for (const blockchainId in userConfiguration?.modules?.blockchain?.implementation) {
+            const blockchain = userConfiguration.modules.blockchain.implementation[blockchainId];
 
-            if (blockchain?.config.operationalWallets) {
+            if (!blockchain?.config.operationalWallets) {
                 try {
                     blockchain.config.operationalWallets = [
                         {
