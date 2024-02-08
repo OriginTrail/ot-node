@@ -606,7 +606,7 @@ class Web3Service {
         this.logger.debug(
             `Sending signed transaction ${functionName} to the blockchain ` +
                 `with gas limit: ${gasLimit.toString()} and gasPrice ${gasPrice.toString()}. ` +
-                `Transaction queue length: ${this.getTransactionQueueLength()}. Wallet used: ${
+                `Transaction queue length: ${this.getTotalTransactionQueueLength()}. Wallet used: ${
                     operationalWallet.address
                 }`,
         );
