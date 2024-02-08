@@ -63,13 +63,15 @@ class Web3Service {
         this.logger = logger;
         this.contractCallCache = {};
         await this.initializeWeb3();
+        await this.initializeTransactionQueues();
         this.startBlock = await this.getBlockNumber();
         await this.initializeContracts();
+
         this.initializeProviderDebugging();
     }
 
     initializeTransactionQueues(concurrency = TRANSACTION_QUEUE_CONCURRENCY) {
-        this.transactionQueues = [];
+        this.transactionQueues = {};
         for (const operationalWallet of this.operationalWallets) {
             const transactionQueue = async.queue((args, cb) => {
                 const { contractInstance, functionName, transactionArgs, gasPrice } = args;
@@ -87,7 +89,7 @@ class Web3Service {
                         cb({ error });
                     });
             }, concurrency);
-            this.transactionQueues.push(transactionQueue);
+            this.transactionQueues[operationalWallet.address] = transactionQueue;
         }
     }
 
@@ -105,6 +107,10 @@ class Web3Service {
         );
     }
 
+    removeTransactionQueue(walletAddress) {
+        delete this.transactionQueues[walletAddress];
+    }
+
     getTotalTransactionQueueLength() {
         let totalLength = 0;
         this.transactionQueues.forEach((queue) => {
@@ -114,17 +120,19 @@ class Web3Service {
     }
 
     selectTransactionQueue() {
+        const walletAddresses = Object.keys(this.transactionQueues);
         let selectedQueue = {
-            queue: this.transactionQueues[0],
-            length: this.transactionQueues[0].length(),
+            queue: this.transactionQueues[walletAddresses[0]],
+            length: this.transactionQueues[walletAddresses[0]].length(),
         };
         if (selectedQueue.length === 0) {
             return selectedQueue;
         }
-        for (let i = 1; i < this.transactionQueues.length; i += 1) {
+        for (let i = 1; i < walletAddresses.length; i += 1) {
+            const transactionQueue = this.transactionQueues[walletAddresses[i]];
             const currentQueue = {
-                queue: this.transactionQueues[i],
-                length: this.transactionQueues[i].length(),
+                queue: transactionQueue,
+                length: transactionQueue.length(),
             };
             if (currentQueue.length === 0) {
                 return currentQueue;
@@ -464,6 +472,7 @@ class Web3Service {
                             this.identityId
                         } on blockchain: ${this.getBlockchainId()}. Operational wallet will not be used for transactions.`,
                     );
+                    this.removeTransactionQueue(publicKey);
                 } else {
                     this.identityId = identityId;
                 }
