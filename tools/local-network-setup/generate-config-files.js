@@ -103,8 +103,12 @@ function generateBlockchainConfig(templateBlockchainConfig, nodeIndex) {
         ...blockchainConfig.implementation['hardhat1:31337'].config,
         hubContractAddress,
         rpcEndpoints: [process.env.RPC_ENDPOINT_BC1],
-        evmOperationalWalletPublicKey: publicKeys[nodeIndex],
-        evmOperationalWalletPrivateKey: privateKeys[nodeIndex],
+        operationalWallets: [
+            {
+                evmAddress: publicKeys[nodeIndex],
+                privateKey: privateKeys[nodeIndex],
+            },
+        ],
         evmManagementWalletPublicKey: publicKeys[publicKeys.length - 1 - nodeIndex],
         evmManagementWalletPrivateKey: privateKeys[privateKeys.length - 1 - nodeIndex],
         sharesTokenName: `LocalNode${nodeIndex}`,
@@ -116,8 +120,12 @@ function generateBlockchainConfig(templateBlockchainConfig, nodeIndex) {
         ...blockchainConfig.implementation['hardhat2:31337'].config,
         hubContractAddress,
         rpcEndpoints: [process.env.RPC_ENDPOINT_BC2],
-        evmOperationalWalletPublicKey: publicKeys[nodeIndex],
-        evmOperationalWalletPrivateKey: privateKeys[nodeIndex],
+        operationalWallets: [
+            {
+                evmAddress: publicKeys[nodeIndex],
+                privateKey: privateKeys[nodeIndex],
+            },
+        ],
         evmManagementWalletPublicKey: publicKeys[publicKeys.length - 1 - nodeIndex],
         evmManagementWalletPrivateKey: privateKeys[privateKeys.length - 1 - nodeIndex],
         sharesTokenName: `LocalNode${nodeIndex}`,
