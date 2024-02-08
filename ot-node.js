@@ -227,6 +227,7 @@ class OTNode {
                             );
                         }
                     }
+                    await this.blockchainModuleManager.checkOperationalWallets(blockchain);
                     const identityId = await blockchainModuleManager.getIdentityId(blockchain);
                     this.logger.info(`Identity ID: ${identityId}`);
                 } catch (error) {

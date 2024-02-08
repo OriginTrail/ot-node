@@ -378,13 +378,19 @@ class Web3Service {
     }
 
     async getIdentityId() {
-        const identityId = await this.callContractFunction(
-            this.IdentityStorageContract,
-            'getIdentityId',
-            [this.getPublicKey()],
-            CONTRACTS.IDENTITY_STORAGE_CONTRACT,
-        );
-        return Number(identityId);
+        const operationalWalletsPublickKeys = [];
+        for (const publicKey of operationalWalletsPublickKeys) {
+            // eslint-disable-next-line no-await-in-loop
+            const identityId = await this.callContractFunction(
+                this.IdentityStorageContract,
+                'getIdentityId',
+                [publicKey],
+                CONTRACTS.IDENTITY_STORAGE_CONTRACT,
+            );
+            if (Number(identityId) !== 0) {
+                return Number(identityId);
+            }
+        }
     }
 
     async identityIdExists() {
@@ -409,6 +415,8 @@ class Web3Service {
                 // eslint-disable-next-line no-await-in-loop
                 await this._executeContractFunction(this.ProfileContract, 'createProfile', [
                     this.getManagementKey(),
+                    // TODO: Add getOperationalKeys()
+                    this.getOperationalKeys(),
                     this.convertAsciiToHex(peerId),
                     this.config.sharesTokenName,
                     this.config.sharesTokenSymbol,
@@ -1325,6 +1333,31 @@ class Web3Service {
             w1: Number(linearSumParams[2]),
             w2: Number(linearSumParams[3]),
         };
+    }
+
+    async checkOperationalWallets() {
+        const operationalWalletsPublickKeys = [];
+        const identityIds = [];
+        for (const publicKey of operationalWalletsPublickKeys) {
+            // eslint-disable-next-line no-await-in-loop
+            const identityId = await this.callContractFunction(
+                this.IdentityStorageContract,
+                'getIdentityId',
+                [publicKey],
+                CONTRACTS.IDENTITY_STORAGE_CONTRACT,
+            );
+            identityIds.push(Number(identityId));
+        }
+
+        for (let i = 0; i < identityIds.length; i += 1) {
+            if (identityIds[i] === 0) {
+                // TODO: remove it's implementation
+                // How to console on what blockchain
+                this.logger.warn(
+                    `Wallet with publick key: ${operationalWalletsPublickKeys[i]} has no profile connected to itesel on blockchai: `,
+                );
+            }
+        }
     }
 }
 
