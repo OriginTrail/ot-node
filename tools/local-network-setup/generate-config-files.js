@@ -132,6 +132,31 @@ function generateBlockchainConfig(templateBlockchainConfig, nodeIndex) {
         sharesTokenSymbol: `LN${nodeIndex}`,
     };
 
+    // Used for testing, add a few more wallets to later nodes
+    if (nodeIndex == 3) {
+        blockchainConfig.implementation['hardhat1:31337'].config.operationalWallets.push({
+            evmAddress: publicKeys[publicKeys.length - 1 - 1],
+            privateKey: privateKeys[privateKeys.length - 1 - 1],
+        });
+
+        blockchainConfig.implementation['hardhat2:31337'].config.operationalWallets.push({
+            evmAddress: publicKeys[publicKeys.length - 1 - 2],
+            privateKey: privateKeys[privateKeys.length - 1 - 2],
+        });
+    }
+
+    if (nodeIndex == 4) {
+        blockchainConfig.implementation['hardhat1:31337'].config.operationalWallets.push({
+            evmAddress: publicKeys[publicKeys.length - 1 - 3],
+            privateKey: privateKeys[privateKeys.length - 1 - 3],
+        });
+
+        blockchainConfig.implementation['hardhat2:31337'].config.operationalWallets.push({
+            evmAddress: publicKeys[publicKeys.length - 1 - 4],
+            privateKey: privateKeys[privateKeys.length - 1 - 4],
+        });
+    }
+
     return blockchainConfig;
 }
 
