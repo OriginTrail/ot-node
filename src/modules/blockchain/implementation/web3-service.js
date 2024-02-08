@@ -378,19 +378,46 @@ class Web3Service {
     }
 
     async getIdentityId() {
+        // TODO: use getter
         const operationalWalletsPublickKeys = [];
-        for (const publicKey of operationalWalletsPublickKeys) {
-            // eslint-disable-next-line no-await-in-loop
-            const identityId = await this.callContractFunction(
+        const publicKeyIdentityIdPairs = {};
+
+        const promises = operationalWalletsPublickKeys.map((publicKey) =>
+            this.callContractFunction(
                 this.IdentityStorageContract,
                 'getIdentityId',
                 [publicKey],
                 CONTRACTS.IDENTITY_STORAGE_CONTRACT,
-            );
-            if (Number(identityId) !== 0) {
-                return Number(identityId);
+            ).then((identityId) => [publicKey, Number(identityId)]),
+        );
+
+        const results = await Promise.all(promises);
+        results.forEach(([publicKey, identityId]) => {
+            publicKeyIdentityIdPairs[publicKey] = identityId;
+        });
+
+        const publicKeyWithNonZeroIdentityId =
+            Object.keys(publicKeyIdentityIdPairs).find(
+                (publicKey) => publicKeyIdentityIdPairs[publicKey] !== '0',
+            ) || publicKeyIdentityIdPairs[0];
+        if (publicKeyIdentityIdPairs[publicKeyWithNonZeroIdentityId] !== 0) {
+            for (const publickKey in publicKeyIdentityIdPairs) {
+                if (
+                    publicKeyIdentityIdPairs[publickKey] !== 0 &&
+                    publicKeyIdentityIdPairs[publicKeyWithNonZeroIdentityId] !==
+                        publicKeyIdentityIdPairs[publickKey]
+                ) {
+                    throw new Error(
+                        `All operational wallets must be connected to same identity! ` +
+                            `Operational wallet with publick key: ${publickKey} is` +
+                            ` connected to identyId: ${publicKeyIdentityIdPairs[publickKey]} and Operational wallet with publick key:` +
+                            `${publicKeyWithNonZeroIdentityId} is connected to identyId: ${publicKeyIdentityIdPairs[publicKeyWithNonZeroIdentityId]}.`,
+                    );
+                }
             }
         }
+
+        return publicKeyIdentityIdPairs[publicKeyWithNonZeroIdentityId];
     }
 
     async identityIdExists() {
@@ -1336,25 +1363,46 @@ class Web3Service {
     }
 
     async checkAllOperationalWallets() {
+        // TODO: Use getter
         const operationalWalletsPublickKeys = [];
-        const identityIds = [];
-        for (const publicKey of operationalWalletsPublickKeys) {
-            // eslint-disable-next-line no-await-in-loop
-            const identityId = await this.callContractFunction(
+        const publicKeyIdentityIdPairs = {};
+
+        const promises = operationalWalletsPublickKeys.map((publicKey) =>
+            this.callContractFunction(
                 this.IdentityStorageContract,
                 'getIdentityId',
                 [publicKey],
                 CONTRACTS.IDENTITY_STORAGE_CONTRACT,
-            );
-            identityIds.push(Number(identityId));
-        }
+            ).then((identityId) => [publicKey, Number(identityId)]),
+        );
 
-        for (let i = 0; i < identityIds.length; i += 1) {
-            if (identityIds[i] === 0) {
-                // TODO: remove it's implementation
+        const results = await Promise.all(promises);
+        results.forEach(([publicKey, identityId]) => {
+            publicKeyIdentityIdPairs[publicKey] = identityId;
+        });
+
+        const publicKeyWithNonZeroIdentityId =
+            Object.keys(publicKeyIdentityIdPairs).find(
+                (publicKey) => publicKeyIdentityIdPairs[publicKey] !== '0',
+            ) || publicKeyIdentityIdPairs[0];
+
+        for (const publickKey in publicKeyIdentityIdPairs) {
+            if (publicKeyIdentityIdPairs[publickKey] === 0) {
+                // TODO: remove it's implementation of queue
                 // How to console on what blockchain
                 this.logger.warn(
-                    `Wallet with publick key: ${operationalWalletsPublickKeys[i]} has no profile connected to itesel on blockchai: .`,
+                    `Operational wallet with publick key: ${publickKey}` +
+                        `has no profile connected to iteself on blockchai: .`,
+                );
+            } else if (
+                publicKeyIdentityIdPairs[publicKeyWithNonZeroIdentityId] !==
+                publicKeyIdentityIdPairs[publickKey]
+            ) {
+                throw new Error(
+                    `All operational wallets must be connected to same identity! ` +
+                        `Operational wallet with publick key: ${publickKey} is` +
+                        ` connected to identyId: ${publicKeyIdentityIdPairs[publickKey]} and Operational wallet with publick key:` +
+                        `${publicKeyWithNonZeroIdentityId} is connected to identyId: ${publicKeyIdentityIdPairs[publicKeyWithNonZeroIdentityId]}.`,
                 );
             }
         }
