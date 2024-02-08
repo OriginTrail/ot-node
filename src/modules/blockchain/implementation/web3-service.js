@@ -514,26 +514,38 @@ class Web3Service {
         while (retryCount + 1 <= maxNumberOfRetries && !profileCreated) {
             try {
                 // eslint-disable-next-line no-await-in-loop
-                await this._executeContractFunction(this.ProfileContract, 'createProfile', [
-                    this.getManagementKey(),
-                    this.convertAsciiToHex(peerId),
-                    this.config.sharesTokenName,
-                    this.config.sharesTokenSymbol,
-                ]);
+                await this._executeContractFunction(
+                    this.ProfileContract,
+                    'createProfile',
+                    [
+                        this.getManagementKey(),
+                        this.getPublicKeys().slice(1),
+                        this.convertAsciiToHex(peerId),
+                        this.config.sharesTokenName,
+                        this.config.sharesTokenSymbol,
+                    ],
+                    this.operationalWallets[0],
+                );
                 this.logger.info(
-                    `Profile created with name: ${this.config.sharesTokenName} and symbol: ${this.config.sharesTokenSymbol}`,
+                    `Profile created with name: ${this.config.sharesTokenName} and symbol: ${
+                        this.config.sharesTokenSymbol
+                    }, wallet: ${
+                        this.operationalWallets[0].address
+                    }, on blockchain ${this.getBlockchainId()}`,
                 );
                 profileCreated = true;
             } catch (error) {
                 if (error.message.includes('Profile already exists')) {
-                    this.logger.info(`Skipping profile creation, already exists on blockchain.`);
+                    this.logger.info(
+                        `Skipping profile creation, already exists on blockchain ${this.getBlockchainId()}.`,
+                    );
                     profileCreated = true;
                 } else if (retryCount + 1 < maxNumberOfRetries) {
                     retryCount += 1;
                     this.logger.warn(
                         `Unable to create profile. Will retry in ${retryDelayInSec}s. Retries left: ${
                             maxNumberOfRetries - retryCount
-                        }`,
+                        } on blockchain ${this.getBlockchainId()}.`,
                     );
                     // eslint-disable-next-line no-await-in-loop
                     await sleep(retryDelayInSec * 1000);
