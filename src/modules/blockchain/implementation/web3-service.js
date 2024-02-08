@@ -1335,7 +1335,7 @@ class Web3Service {
         };
     }
 
-    async checkOperationalWallets() {
+    async checkAllOperationalWallets() {
         const operationalWalletsPublickKeys = [];
         const identityIds = [];
         for (const publicKey of operationalWalletsPublickKeys) {
@@ -1354,7 +1354,7 @@ class Web3Service {
                 // TODO: remove it's implementation
                 // How to console on what blockchain
                 this.logger.warn(
-                    `Wallet with publick key: ${operationalWalletsPublickKeys[i]} has no profile connected to itesel on blockchai: `,
+                    `Wallet with publick key: ${operationalWalletsPublickKeys[i]} has no profile connected to itesel on blockchai: .`,
                 );
             }
         }

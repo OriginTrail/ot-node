@@ -430,8 +430,8 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'getLinearSumParams');
     }
 
-    async checkOperationalWallets(blockchain) {
-        return this.callImplementationFunction(blockchain, 'checkOperationalWallets');
+    async checkAllOperationalWallets(blockchain) {
+        return this.callImplementationFunction(blockchain, 'checkAllOperationalWallets');
     }
 }
 
