@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { setTimeout as sleep } from 'timers/promises';
 import Web3Service from '../web3-service.js';
 import {
     BLOCK_TIME_MILLIS,
@@ -51,51 +50,6 @@ class GnosisService extends Web3Service {
             return false;
         }
         return false;
-    }
-
-    async createProfile(peerId) {
-        if (!this.config.sharesTokenName || !this.config.sharesTokenSymbol) {
-            throw new Error(
-                'Missing sharesTokenName and sharesTokenSymbol in blockchain configuration. Please add it and start the node again.',
-            );
-        }
-
-        const maxNumberOfRetries = 3;
-        let retryCount = 0;
-        let profileCreated = false;
-        const retryDelayInSec = 12;
-        while (retryCount + 1 <= maxNumberOfRetries && !profileCreated) {
-            try {
-                // eslint-disable-next-line no-await-in-loop
-                await this._executeContractFunction(this.ProfileContract, 'createProfile', [
-                    this.getManagementKey(),
-                    this.convertAsciiToHex(peerId),
-                    this.config.sharesTokenName,
-                    this.config.sharesTokenSymbol,
-                    this.config.operatorFee,
-                ]);
-                this.logger.info(
-                    `Profile created with name: ${this.config.sharesTokenName} and symbol: ${this.config.sharesTokenSymbol}`,
-                );
-                profileCreated = true;
-            } catch (error) {
-                if (error.message.includes('Profile already exists')) {
-                    this.logger.info(`Skipping profile creation, already exists on blockchain.`);
-                    profileCreated = true;
-                } else if (retryCount + 1 < maxNumberOfRetries) {
-                    retryCount += 1;
-                    this.logger.warn(
-                        `Unable to create profile. Will retry in ${retryDelayInSec}s. Retries left: ${
-                            maxNumberOfRetries - retryCount
-                        }`,
-                    );
-                    // eslint-disable-next-line no-await-in-loop
-                    await sleep(retryDelayInSec * 1000);
-                } else {
-                    throw error;
-                }
-            }
-        }
     }
 }
 

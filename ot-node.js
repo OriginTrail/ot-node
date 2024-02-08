@@ -217,7 +217,7 @@ class OTNode {
                             const blockchainConfig =
                                 blockchainModuleManager.getModuleConfiguration(blockchain);
                             execSync(
-                                `npm run set-stake -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --stake=${blockchainConfig.initialStakeAmount} --operationalWalletPrivateKey=${blockchainConfig.evmOperationalWalletPrivateKey} --managementWalletPrivateKey=${blockchainConfig.evmManagementWalletPrivateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
+                                `npm run set-stake -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --stake=${blockchainConfig.initialStakeAmount} --operationalWalletPrivateKey=${blockchainConfig.operationalWallet[0].privateKey} --managementWalletPrivateKey=${blockchainConfig.evmManagementWalletPrivateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
                                 { stdio: 'inherit' },
                             );
                             execSync(
@@ -227,7 +227,7 @@ class OTNode {
                                     blockchainConfig.initialAskAmount +
                                     (Math.random() - 0.5) * blockchainConfig.initialAskAmount
                                 } --privateKey=${
-                                    blockchainConfig.evmOperationalWalletPrivateKey
+                                    blockchainConfig.operationalWallet[0].privateKey
                                 } --hubContractAddress=${blockchainConfig.hubContractAddress}`,
                                 { stdio: 'inherit' },
                             );
