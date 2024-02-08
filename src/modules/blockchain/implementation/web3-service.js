@@ -120,27 +120,23 @@ class Web3Service {
     }
 
     selectTransactionQueue() {
-        const walletAddresses = Object.keys(this.transactionQueues);
-        let selectedQueue = {
-            queue: this.transactionQueues[walletAddresses[0]],
-            length: this.transactionQueues[walletAddresses[0]].length(),
-        };
-        if (selectedQueue.length === 0) {
-            return selectedQueue;
-        }
-        for (let i = 1; i < walletAddresses.length; i += 1) {
-            const transactionQueue = this.transactionQueues[walletAddresses[i]];
-            const currentQueue = {
-                queue: transactionQueue,
-                length: transactionQueue.length(),
-            };
-            if (currentQueue.length === 0) {
-                return currentQueue;
+        let selectedQueue = null;
+        let minLength = Infinity;
+
+        for (const walletAddress of Object.keys(this.transactionQueues)) {
+            const queue = this.transactionQueues[walletAddress];
+            const length = queue.length();
+
+            if (length === 0) {
+                return queue;
             }
-            if (selectedQueue.length > currentQueue.length) {
-                selectedQueue = currentQueue;
+
+            if (length < minLength) {
+                selectedQueue = queue;
+                minLength = length;
             }
         }
+
         return selectedQueue;
     }
 
