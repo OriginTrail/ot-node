@@ -71,7 +71,7 @@ echo ====== Generating configs ======
 echo ================================
 
 node $pathToOtNode/tools/local-network-setup/generate-config-files.js $numberOfNodes $network $tripleStore $hubContractAddress
-sleep 30
+sleep 5
 echo ================================
 echo ======== Starting nodes ========
 echo ================================

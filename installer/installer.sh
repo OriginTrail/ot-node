@@ -249,36 +249,6 @@ install_sql() {
     perform_step systemctl restart $sql "Restarting $sql"
 }
 
-request_operational_wallet_keys() {
-    WALLET_ADDRESSES=()
-    WALLET_PRIVATE_KEYS=()
-    
-    echo "You'll now be asked to input addresses and private keys of your operational wallets for $1. Input an empty value to stop."
-    wallet_no=1
-    while true; do
-        read -p "Please input the address for your $1 operational wallet no. $wallet_no:" address
-        [[ -z $address ]] && break
-        text_color $GREEN "EVM operational wallet address for $blockchain wallet no. $wallet_no: $address"
-
-        read -p "Please input the private key for your $1 operational wallet no. $wallet_no:" private_key
-        [[ -z $private_key ]] && break
-        text_color $GREEN "EVM operational wallet private key for $blockchain wallet no. $wallet_no: $private_key"
-        
-        WALLET_ADDRESSES+=($address)
-        WALLET_PRIVATE_KEYS+=($private_key)
-        wallet_no=$((wallet_no + 1))
-    done
-
-    OP_WALLET_KEYS_JSON=$(jq -n '
-        [
-        $ARGS.positional as $args 
-        | ($args | length / 2) as $upto
-        | range(0; $upto) as $start
-        | [{ evmAddress: $args[$start], privateKey: $args[$start + $upto] }]
-        ] | add
-        ' --args "${WALLET_ADDRESSES[@]}" "${WALLET_PRIVATE_KEYS[@]}")
-}
-
 install_node() {
     # Change directory to ot-node/current
     cd $OTNODE_DIR
@@ -297,7 +267,7 @@ install_node() {
 
 # Blockchains prompt based on the selected environment
 if [ "$nodeEnv" == "mainnet" ]; then
-    blockchain_prompt=("OriginTrail Parachain" "Gnosis" "Both")
+    blockchain_prompt=("OriginTrail Parachain")
 elif [ "$nodeEnv" == "testnet" ]; then
     blockchain_prompt=("OriginTrail Parachain" "Gnosis" "Both")
 fi
@@ -323,8 +293,11 @@ done
 case "$blockchain" in
     "OriginTrail Parachain" | "Gnosis" )
         # Input wallets for the selected blockchain
-        request_operational_wallet_keys $blockchain
-        EVM_OP_WALLET_KEYS_BLOCKCHAIN=$OP_WALLET_KEYS_JSON
+        read -p "Enter your EVM operational wallet address for $blockchain: " EVM_OPERATIONAL_WALLET
+        text_color $GREEN "EVM operational wallet address for $blockchain: $EVM_OPERATIONAL_WALLET"
+
+        read -p "Enter your EVM operational wallet private key for $blockchain: " EVM_OPERATIONAL_PRIVATE_KEY
+        text_color $GREEN "EVM operational wallet private key for $blockchain: $EVM_OPERATIONAL_PRIVATE_KEY"
 
         read -p "Enter your EVM management wallet address for $blockchain: " EVM_MANAGEMENT_WALLET
         text_color $GREEN "EVM management wallet address for $blockchain: $EVM_MANAGEMENT_WALLET"
@@ -345,15 +318,17 @@ case "$blockchain" in
     "Both" )
         if [ "$nodeEnv" == "mainnet" ]; then
             blockchain1="OTP"
-            blockchain2="Gnosis"
         elif [ "$nodeEnv" == "testnet" ]; then
             blockchain1="OTP"
             blockchain2="Gnosis"
         fi
 
         # Input wallets for the first blockchain
-        request_operational_wallet_keys $blockchain1
-        EVM_OP_WALLET_KEYS_BLOCKCHAIN1=$OP_WALLET_KEYS_JSON
+        read -p "Enter your EVM operational wallet address for $blockchain1: " EVM_OPERATIONAL_WALLET
+        text_color $GREEN "EVM operational wallet address for $blockchain1: $EVM_OPERATIONAL_WALLET"
+
+        read -p "Enter your EVM operational wallet private key for $blockchain1: " EVM_OPERATIONAL_PRIVATE_KEY
+        text_color $GREEN "EVM operational wallet private key for $blockchain1: $EVM_OPERATIONAL_PRIVATE_KEY"
 
         read -p "Enter your EVM management wallet address for $blockchain1: " EVM_MANAGEMENT_WALLET
         text_color $GREEN "EVM management wallet address for $blockchain1: $EVM_MANAGEMENT_WALLET"
@@ -365,8 +340,11 @@ case "$blockchain" in
         text_color $GREEN "Profile shares token symbol for $blockchain1: $SHARES_TOKEN_SYMBOL"
 
         # Input wallets for the second blockchain
-        request_operational_wallet_keys $blockchain2
-        EVM_OP_WALLET_KEYS_BLOCKCHAIN2=$OP_WALLET_KEYS_JSON
+        read -p "Enter your EVM operational wallet address for $blockchain2: " EVM_OPERATIONAL_WALLET_2
+        text_color $GREEN "EVM operational wallet address for $blockchain2: $EVM_OPERATIONAL_WALLET_2"
+
+        read -p "Enter your EVM operational wallet private key for $blockchain2: " EVM_OPERATIONAL_PRIVATE_KEY_2
+        text_color $GREEN "EVM operational wallet private key for $blockchain2: $EVM_OPERATIONAL_PRIVATE_KEY_2"
 
         read -p "Enter your EVM management wallet address for $blockchain2: " EVM_MANAGEMENT_WALLET_2
         text_color $GREEN "EVM management wallet address for $blockchain2: $EVM_MANAGEMENT_WALLET_2"
@@ -431,7 +409,6 @@ perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "t
 # Set blockchain IDs based on the environment
 if [ "$nodeEnv" == "mainnet" ]; then
     otp_blockchain_id=2043
-    gnosis_blockchain_id=100
 else
     otp_blockchain_id=20430
     gnosis_blockchain_id=10200
@@ -439,12 +416,13 @@ fi
 
 # Check if "Both" blockchains are selected
 if [ "$blockchain" == "Both" ]; then
-  perform_step $(jq --arg otp_blockchain_id "$otp_blockchain_id" --argjson EVM_OP_WALLET_KEYS_BLOCKCHAIN1 "$EVM_OP_WALLET_KEYS_BLOCKCHAIN1" --argjson EVM_OP_WALLET_KEYS_BLOCKCHAIN2 "$EVM_OP_WALLET_KEYS_BLOCKCHAIN2" --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" --arg gnosis_blockchain_id "$gnosis_blockchain_id" --arg EVM_OPERATIONAL_WALLET_2 "$EVM_OPERATIONAL_WALLET_2" --arg EVM_OPERATIONAL_PRIVATE_KEY_2 "$EVM_OPERATIONAL_PRIVATE_KEY_2" --arg EVM_MANAGEMENT_WALLET_2 "$EVM_MANAGEMENT_WALLET_2" --arg SHARES_TOKEN_NAME_2 "$SHARES_TOKEN_NAME_2" --arg SHARES_TOKEN_SYMBOL_2 "$SHARES_TOKEN_SYMBOL_2" --arg GNOSIS_RPC_ENDPOINT "$GNOSIS_RPC_ENDPOINT" '
+  perform_step $(jq --arg otp_blockchain_id "$otp_blockchain_id" --arg EVM_OPERATIONAL_WALLET "$EVM_OPERATIONAL_WALLET" --arg EVM_OPERATIONAL_PRIVATE_KEY "$EVM_OPERATIONAL_PRIVATE_KEY" --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" --arg gnosis_blockchain_id "$gnosis_blockchain_id" --arg EVM_OPERATIONAL_WALLET_2 "$EVM_OPERATIONAL_WALLET_2" --arg EVM_OPERATIONAL_PRIVATE_KEY_2 "$EVM_OPERATIONAL_PRIVATE_KEY_2" --arg EVM_MANAGEMENT_WALLET_2 "$EVM_MANAGEMENT_WALLET_2" --arg SHARES_TOKEN_NAME_2 "$SHARES_TOKEN_NAME_2" --arg SHARES_TOKEN_SYMBOL_2 "$SHARES_TOKEN_SYMBOL_2" --arg GNOSIS_RPC_ENDPOINT "$GNOSIS_RPC_ENDPOINT" '
     .modules.blockchain.implementation += {
       "otp:'$otp_blockchain_id'": {
         "enabled": true,
         "config": {
-          "operationalWallets": $EVM_OP_WALLET_KEYS_BLOCKCHAIN1,
+          "evmOperationalWalletPublicKey": $EVM_OPERATIONAL_WALLET,
+          "evmOperationalWalletPrivateKey": $EVM_OPERATIONAL_PRIVATE_KEY,
           "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET,
           "sharesTokenName": $SHARES_TOKEN_NAME,
           "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL
@@ -453,7 +431,8 @@ if [ "$blockchain" == "Both" ]; then
       "gnosis:'$gnosis_blockchain_id'": {
         "enabled": true,
         "config": {
-          "operationalWallets": $EVM_OP_WALLET_KEYS_BLOCKCHAIN2,
+          "evmOperationalWalletPublicKey": $EVM_OPERATIONAL_WALLET_2,
+          "evmOperationalWalletPrivateKey": $EVM_OPERATIONAL_PRIVATE_KEY_2,
           "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET_2,
           "sharesTokenName": $SHARES_TOKEN_NAME_2,
           "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL_2,
@@ -480,7 +459,8 @@ else
   blockchain_arg="$blockchain:$blockchain_id"
 
 jq --arg blockchain_arg "$blockchain_arg" \
-   --argjson EVM_OP_WALLET_KEYS_BLOCKCHAIN "$EVM_OP_WALLET_KEYS_BLOCKCHAIN" \
+   --arg EVM_OPERATIONAL_WALLET "$EVM_OPERATIONAL_WALLET" \
+   --arg EVM_OPERATIONAL_PRIVATE_KEY "$EVM_OPERATIONAL_PRIVATE_KEY" \
    --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" \
    --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" \
    --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" \
@@ -490,7 +470,8 @@ jq --arg blockchain_arg "$blockchain_arg" \
   ($blockchain_arg): {
     "enabled": true,
     "config": {
-      "operationalWallets": $EVM_OP_WALLET_KEYS_BLOCKCHAIN,
+      "evmOperationalWalletPublicKey": $EVM_OPERATIONAL_WALLET,
+      "evmOperationalWalletPrivateKey": $EVM_OPERATIONAL_PRIVATE_KEY,
       "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET,
       "sharesTokenName": $SHARES_TOKEN_NAME,
       "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL

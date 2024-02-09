@@ -38,8 +38,7 @@ class SendTelemetryCommand extends Command {
                     blockchain_id: implementation,
                     // eslint-disable-next-line no-await-in-loop
                     identity_id: await this.blockchainModuleManager.getIdentityId(implementation),
-                    operational_wallet:
-                        this.blockchainModuleManager.getPublicKeys(implementation)[0],
+                    operational_wallet: this.blockchainModuleManager.getPublicKey(implementation),
                     management_wallet:
                         this.blockchainModuleManager.getManagementKey(implementation),
                 };
