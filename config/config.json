@@ -120,7 +120,8 @@
                             "rpcEndpoints": ["http://localhost:8545"],
                             "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
                             "initialStakeAmount": 50000,
-                            "initialAskAmount": 0.2
+                            "initialAskAmount": 0.2,
+                            "operatorFee": 0
                         }
                     },
                     "hardhat2:31337": {
@@ -131,7 +132,8 @@
                             "rpcEndpoints": ["http://localhost:9545"],
                             "evmManagementPublicKey": "0x1B420da5f7Be66567526E32bc68ab29F1A63765A",
                             "initialStakeAmount": 50000,
-                            "initialAskAmount": 0.2
+                            "initialAskAmount": 0.2,
+                            "operatorFee": 0
                         }
                     }
                 }
@@ -262,7 +264,8 @@
                             "hubContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
                             "rpcEndpoints": ["http://localhost:8545"],
                             "initialStakeAmount": 50000,
-                            "initialAskAmount": 0.2
+                            "initialAskAmount": 0.2,
+                            "operatorFee": 0
                         }
                     },
                     "hardhat2:31337": {
@@ -272,7 +275,8 @@
                             "hubContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
                             "rpcEndpoints": ["http://localhost:9545"],
                             "initialStakeAmount": 50000,
-                            "initialAskAmount": 0.2
+                            "initialAskAmount": 0.2,
+                            "operatorFee": 0
                         }
                     }
                 }
@@ -406,7 +410,8 @@
                             "rpcEndpoints": [
                                 "https://lofar-testnet.origin-trail.network",
                                 "https://lofar-testnet.origintrail.network"
-                            ]
+                            ],
+                            "operatorFee": 0
                         }
                     },
                     "gnosis:10200": {
@@ -416,7 +421,8 @@
                         "config": {
                             "hubContractAddress": "0xC06210312C9217A0EdF67453618F5eB96668679A",
                             "gasPriceOracleLink": "https://blockscout.chiadochain.net/api/v1/gas-price-oracle",
-                            "rpcEndpoints": ["https://rpc.chiadochain.net"]
+                            "rpcEndpoints": ["https://rpc.chiadochain.net"],
+                            "operatorFee": 0
                         }
                     }
                 }
@@ -570,7 +576,8 @@
                             "rpcEndpoints": [
                                 "https://lofar-tm-rpc.origin-trail.network",
                                 "https://lofar.origintrail.network"
-                            ]
+                            ],
+                            "operatorFee": 0
                         }
                     },
                     "gnosis:10200": {
@@ -580,7 +587,8 @@
                         "config": {
                             "hubContractAddress": "0xD2bA102A0b11944d00180eE8136208ccF87bC39A",
                             "gasPriceOracleLink": "https://blockscout.chiadochain.net/api/v1/gas-price-oracle",
-                            "rpcEndpoints": ["https://rpc.chiadochain.net"]
+                            "rpcEndpoints": ["https://rpc.chiadochain.net"],
+                            "operatorFee": 0
                         }
                     }
                 }
@@ -736,7 +744,8 @@
                                 "https://astrosat-parachain-rpc.origin-trail.network",
                                 "https://astrosat.origintrail.network/",
                                 "https://astrosat-2.origintrail.network/"
-                            ]
+                            ],
+                            "operatorFee": 0
                         }
                     },
                     "gnosis:100": {
@@ -745,7 +754,8 @@
                         "config": {
                             "hubContractAddress": "0xbEF14fc04F870c2dD65c13Df4faB6ba01A9c746b",
                             "gasPriceOracleLink": "https://api.gnosisscan.io/api?module=proxy&action=eth_gasPrice",
-                            "rpcEndpoints": ["https://rpc.gnosischain.com/"]
+                            "rpcEndpoints": ["https://rpc.gnosischain.com/"],
+                            "operatorFee": 0
                         }
                     }
                 }
