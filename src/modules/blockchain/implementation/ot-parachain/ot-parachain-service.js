@@ -1,7 +1,35 @@
 import { ApiPromise, WsProvider, HttpProvider } from '@polkadot/api';
-import { ethers } from 'ethers';
+import { createRequire } from 'module';
 import { BLOCK_TIME_MILLIS } from '../../../../constants/constants.js';
 import Web3Service from '../web3-service.js';
+
+const require = createRequire(import.meta.url);
+
+const ABIs = {
+    ContentAssetStorage: require('dkg-evm-module/abi/ContentAssetStorage.json'),
+    AssertionStorage: require('dkg-evm-module/abi/AssertionStorage.json'),
+    Staking: require('dkg-evm-module/abi/Staking.json'),
+    StakingStorage: require('dkg-evm-module/abi/StakingStorage.json'),
+    Token: require('dkg-evm-module/abi/Token.json'),
+    HashingProxy: require('dkg-evm-module/abi/HashingProxy.json'),
+    Hub: require('dkg-evm-module/abi/Hub.json'),
+    IdentityStorage: require('dkg-evm-module/abi/IdentityStorage.json'),
+    Log2PLDSF: require('dkg-evm-module/abi/Log2PLDSF.json'),
+    ParametersStorage: require('dkg-evm-module/abi/ParametersStorage.json'),
+    Profile: require('dkg-evm-module/abi/Profile.json'),
+    ProfileStorage: require('dkg-evm-module/abi/ProfileStorage.json'),
+    ScoringProxy: require('dkg-evm-module/abi/ScoringProxy.json'),
+    ServiceAgreementV1: require('dkg-evm-module/abi/ServiceAgreementV1.json'),
+    CommitManagerV1: require('dkg-evm-module/abi/CommitManagerV1.json'),
+    CommitManagerV1U1: require('dkg-evm-module/abi/CommitManagerV1U1.json'),
+    ProofManagerV1: require('dkg-evm-module/abi/ProofManagerV1.json'),
+    ProofManagerV1U1: require('dkg-evm-module/abi/ProofManagerV1U1.json'),
+    ShardingTable: require('dkg-evm-module/abi/ShardingTableV2.json'),
+    ShardingTableStorage: require('dkg-evm-module/abi/ShardingTableStorageV2.json'),
+    ServiceAgreementStorageProxy: require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json'),
+    UnfinalizedStateStorage: require('dkg-evm-module/abi/UnfinalizedStateStorage.json'),
+    LinearSum: require('dkg-evm-module/abi/LinearSum.json'),
+};
 
 const NATIVE_TOKEN_DECIMALS = 12;
 
@@ -18,45 +46,30 @@ class OtParachainService extends Web3Service {
         this.logger = logger;
         this.rpcNumber = 0;
         await this.initializeParachainProvider();
-        await this.checkEvmWallets();
+        await this.checkEvmAccountsMapping();
         await this.parachainProvider.disconnect();
         await super.initialize(config, logger);
     }
 
-    async checkEvmWallets() {
-        this.invalidWallets = [];
-        for (const wallet of this.config.operationalWallets) {
-            // eslint-disable-next-line no-await-in-loop
-            const walletMapped = await this.checkEvmAccountMapping(wallet.evmAddress);
-            if (!walletMapped) {
-                this.invalidWallets.push(wallet);
-            }
-        }
-        if (this.invalidWallets.length === this.config.operationalWallets.length) {
-            throw Error('Unable to find mappings for all operational wallets');
-        }
-        this.invalidWallets.forEach((wallet) =>
-            this.logger.warn(
-                `Unable to find account mapping for wallet: ${wallet.evmAddress}, wallet removed from the list`,
-            ),
-        );
-        const { evmManagementWalletPublicKey } = this.config;
-        const managementWalletMapped = await this.checkEvmAccountMapping(
-            evmManagementWalletPublicKey,
-        );
-        if (!managementWalletMapped) {
-            throw Error('Missing account mapping for management wallet');
-        }
+    getABIs() {
+        return ABIs;
     }
 
-    async checkEvmAccountMapping(walletPublicKey) {
-        const account = await this.queryParachainState('evmAccounts', 'accounts', [
-            walletPublicKey,
+    async checkEvmAccountsMapping() {
+        const { evmOperationalWalletPublicKey, evmManagementWalletPublicKey } = this.config;
+        const operationalAccount = await this.queryParachainState('evmAccounts', 'accounts', [
+            evmOperationalWalletPublicKey,
         ]);
-        if (!account || account.toHex() === '0x') {
-            return false;
+        if (!operationalAccount || operationalAccount.toHex() === '0x') {
+            throw Error('Missing account mapping for operational wallet');
         }
-        return true;
+
+        const managementAccount = await this.queryParachainState('evmAccounts', 'accounts', [
+            evmManagementWalletPublicKey,
+        ]);
+        if (!managementAccount || managementAccount.toHex() === '0x') {
+            throw Error('Missing account mapping for management wallet');
+        }
     }
 
     async callParachainExtrinsic(keyring, extrinsic, method, args) {
@@ -157,37 +170,13 @@ class OtParachainService extends Web3Service {
         await this.initializeParachainProvider();
     }
 
-    async getNativeTokenBalance(wallet) {
-        const nativeBalance = await wallet.getBalance();
+    async getNativeTokenBalance() {
+        const nativeBalance = await this.wallet.getBalance();
         return nativeBalance / 10 ** NATIVE_TOKEN_DECIMALS;
     }
 
     getBlockTimeMillis() {
         return BLOCK_TIME_MILLIS.OTP;
-    }
-
-    getValidOperationalWallets() {
-        const wallets = [];
-        this.config.operationalWallets.forEach((wallet) => {
-            if (
-                this.invalidWallets?.find(
-                    (invalidWallet) => invalidWallet.privateKey === wallet.privateKey,
-                )
-            ) {
-                this.logger.warn(
-                    `Skipping initialization of wallet. Wallet public key: ${wallet.evmAddress}`,
-                );
-            } else {
-                try {
-                    wallets.push(new ethers.Wallet(wallet.privateKey, this.provider));
-                } catch (error) {
-                    this.logger.warn(
-                        `Invalid evm private key, unable to create wallet instance. Wallet public key: ${wallet.evmAddress}. Error: ${error.message}`,
-                    );
-                }
-            }
-        });
-        return wallets;
     }
 }
 

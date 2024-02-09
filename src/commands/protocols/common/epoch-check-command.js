@@ -69,7 +69,7 @@ class EpochCheckCommand extends Command {
                 totalTransactions = Math.min(totalTransactions, COMMAND_QUEUE_PARALLELISM * 0.3);
 
                 const transactionQueueLength =
-                    this.blockchainModuleManager.getTotalTransactionQueueLength(blockchain);
+                    this.blockchainModuleManager.getTransactionQueueLength(blockchain);
                 if (transactionQueueLength >= totalTransactions) return;
 
                 totalTransactions -= transactionQueueLength;
@@ -389,9 +389,7 @@ class EpochCheckCommand extends Command {
 
         const transactionsPerEpochCheck = Math.floor(totalTransactions / epochChecksInWindow);
 
-        const numberOfWallets = this.blockchainModuleManager.getPublicKeys().length;
-
-        return transactionsPerEpochCheck * numberOfWallets;
+        return transactionsPerEpochCheck;
     }
 
     calculateCommandPeriod() {

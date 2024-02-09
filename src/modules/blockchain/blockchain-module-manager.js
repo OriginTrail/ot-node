@@ -5,14 +5,8 @@ class BlockchainModuleManager extends BaseModuleManager {
         return 'blockchain';
     }
 
-    initializeTransactionQueues(blockchain, concurrency) {
-        return this.callImplementationFunction(blockchain, 'getTotalTransactionQueueLength', [
-            concurrency,
-        ]);
-    }
-
-    getTotalTransactionQueueLength(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getTotalTransactionQueueLength');
+    getTransactionQueueLength(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getTransactionQueueLength');
     }
 
     async initializeContracts(blockchain) {
@@ -40,8 +34,12 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    getPublicKeys(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getPublicKeys');
+    getPrivateKey(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getPrivateKey');
+    }
+
+    getPublicKey(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getPublicKey');
     }
 
     getManagementKey(blockchain) {

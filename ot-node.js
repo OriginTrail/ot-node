@@ -28,12 +28,6 @@ class OTNode {
         await this.checkForUpdate();
         await this.removeUpdateFile();
 
-        await MigrationExecutor.executeMultipleOpWalletsUserConfigurationMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
         this.logger.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
@@ -217,7 +211,7 @@ class OTNode {
                             const blockchainConfig =
                                 blockchainModuleManager.getModuleConfiguration(blockchain);
                             execSync(
-                                `npm run set-stake -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --stake=${blockchainConfig.initialStakeAmount} --operationalWalletPrivateKey=${blockchainConfig.operationalWallets[0].privateKey} --managementWalletPrivateKey=${blockchainConfig.evmManagementWalletPrivateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
+                                `npm run set-stake -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --stake=${blockchainConfig.initialStakeAmount} --operationalWalletPrivateKey=${blockchainConfig.evmOperationalWalletPrivateKey} --managementWalletPrivateKey=${blockchainConfig.evmManagementWalletPrivateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
                                 { stdio: 'inherit' },
                             );
                             execSync(
@@ -227,14 +221,13 @@ class OTNode {
                                     blockchainConfig.initialAskAmount +
                                     (Math.random() - 0.5) * blockchainConfig.initialAskAmount
                                 } --privateKey=${
-                                    blockchainConfig.operationalWallets[0].privateKey
+                                    blockchainConfig.evmOperationalWalletPrivateKey
                                 } --hubContractAddress=${blockchainConfig.hubContractAddress}`,
                                 { stdio: 'inherit' },
                             );
                         }
                     }
                     const identityId = await blockchainModuleManager.getIdentityId(blockchain);
-
                     this.logger.info(`Identity ID: ${identityId}`);
                 } catch (error) {
                     this.logger.warn(
