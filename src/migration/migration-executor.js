@@ -31,7 +31,7 @@ class MigrationExecutor {
         const validationModuleManager = container.resolve('validationModuleManager');
 
         const migration = new PullBlockchainShardingTableMigration(
-            'pullShardingTableMigrationV620RC',
+            'pullShardingTableMigrationV620Hotfix11',
             logger,
             config,
             repositoryModuleManager,
@@ -374,7 +374,7 @@ class MigrationExecutor {
             const repositoryModuleManager = container.resolve('repositoryModuleManager');
 
             const migration = new RemoveServiceAgreementsForChiadoMigration(
-                'removeServiceAgreementsForChiadoMigrationV6.2.0RC',
+                'removeServiceAgreementsForChiadoMigrationV6.2.0.Hotfix11',
                 logger,
                 config,
                 repositoryModuleManager,
