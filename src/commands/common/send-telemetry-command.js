@@ -88,7 +88,7 @@ class SendTelemetryCommand extends Command {
     }
 
     /**
-     * Builds default otnodeUpdateCommand
+     * Builds default sendTelemetryCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
