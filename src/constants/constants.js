@@ -146,6 +146,8 @@ export const NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
 
 export const HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 16000;
 
+export const SHARDING_TABLE_CHECK_COMMAND_FREQUENCY_MINUTES = 30;
+
 export const SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES = 15;
 
 export const PEER_RECORD_UPDATE_DELAY = 30 * 60 * 1000; // 30 minutes
@@ -165,6 +167,7 @@ export const MIN_DIAL_FREQUENCY_MILLIS = 60 * 60 * 1000;
 export const PERMANENT_COMMANDS = [
     'otnodeUpdateCommand',
     'sendTelemetryCommand',
+    'shardingTableCheckCommand',
     'operationIdCleanerCommand',
     'commandsCleanerCommand',
     'dialPeersCommand',
