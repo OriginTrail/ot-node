@@ -49,7 +49,6 @@ class PullBlockchainShardingTableMigration extends BaseMigration {
                         ...nodes.slice(sliceIndex).filter((node) => node.nodeId !== '0x'),
                     );
                     sliceIndex = 1;
-                    // TODO: Should we fix it here also
                     startingIdentityId = nodes[nodes.length - 1].identityId;
                 }
 
