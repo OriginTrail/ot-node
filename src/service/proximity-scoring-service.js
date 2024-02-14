@@ -156,6 +156,9 @@ class ProximityScoringService {
 
         let normalizedDistance = scaledDistance.div(adjustedDivisor);
         if (normalizedDistance.gt(UINT64_MAX_BN)) {
+            this.logger.warn(
+                `Invalid normalized distance: ${normalizedDistance.toString()}. Max value: ${UINT64_MAX_BN.toString()}`,
+            );
             normalizedDistance = normalizedDistance.mod(UINT64_MAX_BN.add(1));
         }
 
@@ -163,6 +166,9 @@ class ProximityScoringService {
             .mul(mappedStake.sub(mappedMinStake))
             .div(mappedMaxStake.sub(mappedMinStake));
         if (normalizedStake.gt(UINT64_MAX_BN)) {
+            this.logger.warn(
+                `Invalid normalized stake: ${normalizedDistance.toString()}. Max value: ${UINT64_MAX_BN.toString()}`,
+            );
             normalizedStake = normalizedStake.mod(UINT64_MAX_BN.add(1));
         }
 
