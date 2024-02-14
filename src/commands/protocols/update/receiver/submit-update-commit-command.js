@@ -27,13 +27,18 @@ class SubmitUpdateCommitCommand extends Command {
             agreementId,
             operationId,
             gasPrice,
+            closestNode,
+            leftNeighborhoodEdge,
+            rightNeighborhoodEdge,
         } = command.data;
 
         this.logger.trace(
             `Started ${command.name} for the Service Agreement with the ID: ${agreementId}, ` +
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Operation ID: ${operationId}, ` +
-                `Retry number: ${COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1}`,
+                `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                `Right neighborhood edge: ${rightNeighborhoodEdge}, `,
+            `Retry number: ${COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1}`,
         );
 
         const epoch = await this.calculateCurrentEpoch(
@@ -62,7 +67,9 @@ class SubmitUpdateCommitCommand extends Command {
                 `Not submitting update commit as state has been already finalized for the Service Agreement ` +
                     `with the ID: ${agreementId}, Blockchain: ${blockchain}, Contract: ${contract}, ` +
                     `Token ID: ${tokenId}, Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, ` +
-                    `Epoch: ${epoch}, Operation ID: ${operationId}`,
+                    `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                    `Right neighborhood edge: ${rightNeighborhoodEdge}, `,
+                +`Epoch: ${epoch}, Operation ID: ${operationId}`,
             );
 
             return Command.empty();
@@ -77,6 +84,9 @@ class SubmitUpdateCommitCommand extends Command {
                 tokenId,
                 keyword,
                 hashFunctionId,
+                closestNode,
+                leftNeighborhoodEdge,
+                rightNeighborhoodEdge,
                 epoch,
                 (result) => {
                     if (result?.error) {
@@ -111,9 +121,11 @@ class SubmitUpdateCommitCommand extends Command {
                 `Failed to execute ${command.name}, Error Message: ${error.message} for the Service Agreement ` +
                     `with the ID: ${agreementId}, Blockchain: ${blockchain}, Contract: ${contract}, ` +
                     `Token ID: ${tokenId}, Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, ` +
-                    `Epoch: ${epoch}, Operation ID: ${operationId}, Retry number: ${
-                        COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1
-                    }.`,
+                    `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                    `Right neighborhood edge: ${rightNeighborhoodEdge}, `,
+                +`Epoch: ${epoch}, Operation ID: ${operationId}, Retry number: ${
+                    COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1
+                }.`,
             );
             this.operationIdService.emitChangeEvent(
                 OPERATION_ID_STATUS.FAILED,
@@ -146,9 +158,11 @@ class SubmitUpdateCommitCommand extends Command {
             `Successfully executed ${command.name} for the Service Agreement with the ID: ${agreementId}, ` +
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
-                `Operation ID: ${operationId}, Retry number: ${
-                    COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1
-                }`,
+                `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                `Right neighborhood edge: ${rightNeighborhoodEdge}, `,
+            +`Operation ID: ${operationId}, Retry number: ${
+                COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1
+            }`,
         );
 
         this.operationIdService.emitChangeEvent(

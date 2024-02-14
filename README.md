@@ -164,7 +164,7 @@ By their nature, Knowledge Assets are semantic resources (following the W3C Sema
 
 <br/>
 
--   **NodeJS** >= 16.0.0
+-   **NodeJS** 16.x (ideally, 16.16)
 -   **npm** >= 8.0.0
 
 ---
@@ -216,6 +216,12 @@ Then, depending on the OS, use one of the scripts in order to run the local netw
 
 ```bash
 bash ./tools/local-network-setup/setup-macos-environment.sh --nodes=12
+```
+
+**Linux**
+
+```bash
+./tools/local-network-setup/setup-linux-environment.sh --nodes=12
 ```
 
 ---

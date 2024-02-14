@@ -1,6 +1,6 @@
 #!/bin/sh
 pathToOtNode=$(pwd)
-numberOfNodes=4
+numberOfNodes=12
 network="hardhat1:31337"
 tripleStore="ot-blazegraph"
 availableNetworks=("hardhat1:31337")
@@ -71,7 +71,7 @@ echo ====== Generating configs ======
 echo ================================
 
 node $pathToOtNode/tools/local-network-setup/generate-config-files.js $numberOfNodes $network $tripleStore $hubContractAddress
-sleep 5
+sleep 30
 echo ================================
 echo ======== Starting nodes ========
 echo ================================

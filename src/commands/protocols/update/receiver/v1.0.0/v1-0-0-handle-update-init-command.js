@@ -16,6 +16,7 @@ class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
     async prepareMessage(commandData) {
         const { operationId, assertionId, blockchain, contract, tokenId, keyword, hashFunctionId } =
             commandData;
+        const proximityScoreFunctionsPairId = commandData.proximityScoreFunctionsPairId ?? 1;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -39,6 +40,7 @@ class HandleUpdateInitCommand extends HandleProtocolMessageCommand {
             tokenId,
             keyword,
             hashFunctionId,
+            proximityScoreFunctionsPairId,
         );
 
         await this.operationIdService.updateOperationIdStatus(

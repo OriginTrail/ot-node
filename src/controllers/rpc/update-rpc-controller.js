@@ -24,7 +24,8 @@ class UpdateController extends BaseController {
                 command.name = handleInitCommand;
                 command.period = 5000;
                 command.retries = 3;
-
+                command.data.proximityScoreFunctionsPairId =
+                    dataSource.proximityScoreFunctionsPairId ?? 1;
                 break;
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
                 // eslint-disable-next-line no-case-declarations
@@ -37,6 +38,8 @@ class UpdateController extends BaseController {
                 command.data.keyword = message.data.keyword;
                 command.data.agreementId = dataSource.agreementId;
                 command.data.agreementData = dataSource.agreementData;
+                command.data.proximityScoreFunctionsPairId =
+                    dataSource.agreementData.scoreFunctionId ?? 1;
                 break;
             default:
                 throw Error('unknown message type');

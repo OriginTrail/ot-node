@@ -140,8 +140,10 @@ class StepsUtils {
                     rpcEndpoints: [`http://localhost:${blockchain.port}`],
                     initialStakeAmount: 50000,
                     initialAskAmount: 0.2,
-                    evmOperationalWalletPublicKey: blockchain.operationalWallet.address,
-                    evmOperationalWalletPrivateKey: blockchain.operationalWallet.privateKey,
+                    operationalWallets: [{
+                        privateKey: blockchain.operationalWallet.privateKey,
+                        evmAddress: blockchain.operationalWallet.address,
+                    }],
                     evmManagementWalletPublicKey: blockchain.managementWallet.address,
                     evmManagementWalletPrivateKey: blockchain.managementWallet.privateKey,
                     sharesTokenName,

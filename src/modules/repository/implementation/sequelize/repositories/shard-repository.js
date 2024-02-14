@@ -35,18 +35,22 @@ class ShardRepository {
         );
     }
 
-    async getAllPeerRecords(blockchainId, filterLastSeen) {
+    async getAllPeerRecords(blockchainId) {
         const query = {
             where: {
                 blockchainId,
             },
+            attributes: [
+                'peerId',
+                'blockchainId',
+                'ask',
+                'stake',
+                'lastSeen',
+                'lastDialed',
+                'sha256',
+            ],
+            order: [['sha256', 'asc']],
         };
-
-        if (filterLastSeen) {
-            query.where.lastSeen = {
-                [Sequelize.Op.gte]: Sequelize.col('last_dialed'),
-            };
-        }
 
         return this.model.findAll(query);
     }
