@@ -140,7 +140,7 @@ class ShardingTableService {
         const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
         const peersWithDistance = await Promise.all(
             peers.map(async (peer) => ({
-                peer,
+                ...peer,
                 distance: await this.proximityScoringService.callProximityFunction(
                     blockchainId,
                     proximityScoreFunctionsPairId,
@@ -158,8 +158,7 @@ class ShardingTableService {
             }
             return 0;
         });
-        const result = peersWithDistance.slice(0, count).map((pd) => pd.peer);
-        return result;
+        return peersWithDistance.slice(0, count);
     }
 
     async getBidSuggestion(

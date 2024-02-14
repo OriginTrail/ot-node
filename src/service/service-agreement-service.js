@@ -90,12 +90,11 @@ class ServiceAgreementService {
         );
         let maxNeighborhoodDistance;
         if (neighbourhoodEdges) {
-            maxNeighborhoodDistance = await this.proximityScoringService.callProximityFunction(
-                blockchainId,
-                proximityScoreFunctionsPairId,
-                neighbourhoodEdges.leftEdge[hashFunctionName],
-                neighbourhoodEdges.rightEdge[hashFunctionName],
-            );
+            maxNeighborhoodDistance = neighbourhoodEdges.leftEdge.distance.gt(
+                neighbourhoodEdges.rightEdge.distance,
+            )
+                ? neighbourhoodEdges.leftEdge.distance
+                : neighbourhoodEdges.rightEdge.distance;
         }
 
         return this.proximityScoringService.callScoreFunction(
