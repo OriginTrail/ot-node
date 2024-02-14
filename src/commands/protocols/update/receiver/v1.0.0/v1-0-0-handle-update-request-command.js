@@ -37,9 +37,10 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             agreementId,
             keyword,
             hashFunctionId,
-            proximityScoreFunctionsPairId,
             agreementData,
         } = commandData;
+
+        const proximityScoreFunctionsPairId = commandData.proximityScoreFunctionsPairId ?? 1;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
