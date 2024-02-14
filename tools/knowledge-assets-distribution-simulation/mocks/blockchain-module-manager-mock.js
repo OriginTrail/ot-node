@@ -1,12 +1,13 @@
-import { ethers } from 'ethers';
+import { arrayify, hexlify } from '@ethersproject/bytes';
+import { BigNumber, ethers } from 'ethers';
 
 class BlockchainModuleManagerMock {
     convertBytesToUint8Array(blockchain, bytesLikeData) {
-        return ethers.utils.arrayify(bytesLikeData);
+        return arrayify(bytesLikeData);
     }
 
     convertUint8ArrayToHex(blockchain, uint8Array) {
-        return ethers.utils.hexlify(uint8Array);
+        return hexlify(uint8Array);
     }
 
     convertFromWei(value, toUnit = 'ether') {
@@ -18,7 +19,7 @@ class BlockchainModuleManagerMock {
     }
 
     toBigNumber(blockchain, value) {
-        return ethers.BigNumber.from(value);
+        return BigNumber.from(value);
     }
 
     getMinimumStake(blockchain) {
@@ -26,7 +27,7 @@ class BlockchainModuleManagerMock {
     }
 
     getMaximumStake(blockchain) {
-        return 1000000;
+        return 2000000;
     }
 
     getLog2PLDSFParams(blockchain) {
@@ -47,7 +48,8 @@ class BlockchainModuleManagerMock {
 
     getLinearSumParams(blockchain) {
         return {
-            distanceScaleFactor: '1000000000000000000',
+            distanceScaleFactor: BigNumber.from('1000000000000000000'),
+            stakeScaleFactor: BigNumber.from('1000000000000000000'),
             w1: 1,
             w2: 1,
         };

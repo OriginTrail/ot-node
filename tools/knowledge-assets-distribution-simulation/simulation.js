@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-await-in-loop */
 import 'dotenv/config';
@@ -11,7 +12,7 @@ import sharp from 'sharp';
 import { readFile } from 'fs/promises';
 import { createRequire } from 'module';
 import { create as createLibP2PKey, createFromPrivKey } from 'peer-id';
-import { HASH_RING_SIZE, UINT128_MAX_BN } from '../../src/constants/constants.js';
+import { HASH_RING_SIZE } from '../../src/constants/constants.js';
 import BlockchainModuleManagerMock from './mocks/blockchain-module-manager-mock.js';
 import HashingService from '../../src/service/hashing-service.js';
 import ProximityScoringService from '../../src/service/proximity-scoring-service.js';
@@ -401,35 +402,46 @@ function generateBoxPlot(data, metric, outputImageName) {
 }
 
 async function runSimulation(
-    mode,
-    filePath,
+    nodesMode,
+    knowledgeAssetsMode,
+    nodesFilePath,
+    knowledgeAssetsFilePath,
     numberOfNodes,
     numberOfKAs,
     proximityScoreFunctionsPairId,
     r0 = 3,
     r2 = 20,
 ) {
-    let nodes = [];
-
-    if (mode === 'load') {
-        nodes = await readJsonFromFile(filePath);
-    } else if (mode === 'generate') {
+    let nodes;
+    if (nodesMode === 'load') {
+        nodes = await readJsonFromFile(nodesFilePath);
+    } else if (nodesMode === 'generate') {
         nodes = await generateRandomNodes(numberOfNodes);
     } else {
-        logger.error(`Invalid mode: ${mode}. Use "load" or "generate".`);
+        logger.error(`Invalid nodes mode: ${nodesMode}. Use "load" or "generate".`);
+        return;
+    }
+
+    let knowledgeAssets;
+    if (knowledgeAssetsMode === 'load') {
+        knowledgeAssets = await readJsonFromFile(knowledgeAssetsFilePath);
+    } else if (knowledgeAssetsMode === 'generate') {
+        knowledgeAssets = generateRandomHashes(numberOfKAs);
+    } else {
+        logger.error(`Invalid KAs mode: ${knowledgeAssetsMode}. Use "load" or "generate".`);
         return;
     }
 
     logger.info(
-        `Running simulation in '${mode}' mode with ${nodes.length} nodes and ${numberOfKAs} KAs.`,
+        `Running simulation in '${nodesMode}' nodes mode and '${knowledgeAssetsMode}' KAs mode ` +
+            `with ${nodes.length} nodes and ${numberOfKAs} KAs.`,
     );
 
     generateStakeDistributionPlot(
         nodes.map((node) => ({ ...node, stake: Number(node.stake) })),
-        `${mode}-${nodes.length}-${numberOfKAs}-${proximityScoreFunctionsPairId}-nodes-stake-distribution`,
+        `${nodesMode}-${knowledgeAssetsMode}-${nodes.length}-${numberOfKAs}-${proximityScoreFunctionsPairId}-nodes-stake-distribution`,
     );
 
-    const knowledgeAssets = await generateRandomHashes(numberOfKAs);
     const metrics = [];
     const replicas = {};
 
@@ -441,20 +453,7 @@ async function runSimulation(
         };
     }
 
-    const nodesNumber = nodes.length;
-    let IDEAL_MAX_DISTANCE_IN_NEIGHBORHOOD;
-
-    if (proximityScoreFunctionsPairId === 2) {
-        IDEAL_MAX_DISTANCE_IN_NEIGHBORHOOD = HASH_RING_SIZE.div(nodesNumber).mul(20);
-    } else if (proximityScoreFunctionsPairId === 3) {
-        IDEAL_MAX_DISTANCE_IN_NEIGHBORHOOD = HASH_RING_SIZE.div(nodesNumber).mul(10);
-    }
-
-    const linearSumParams = await blockchainModuleManagerMock.getLinearSumParams(blockchain);
-    const { distanceScaleFactor } = linearSumParams;
-    const minimumStake = await blockchainModuleManagerMock.getMinimumStake(blockchain);
-    const maximumStake = await blockchainModuleManagerMock.getMaximumStake(blockchain);
-
+    const idealMaxDistanceInNeighborhood = HASH_RING_SIZE.div(nodes.length).mul(Math.ceil(r2 / 2));
     for (const key of knowledgeAssets) {
         const nodesWithDistances = await Promise.all(
             nodes.map(async (node) => {
@@ -476,9 +475,9 @@ async function runSimulation(
         const maxDistanceInNeighborhood =
             nodesSortedByDistance[nodesSortedByDistance.length - 1].distance;
         const maxDistance =
-            maxDistanceInNeighborhood > IDEAL_MAX_DISTANCE_IN_NEIGHBORHOOD
-                ? IDEAL_MAX_DISTANCE_IN_NEIGHBORHOOD
-                : maxDistanceInNeighborhood;
+            maxDistanceInNeighborhood <= idealMaxDistanceInNeighborhood
+                ? maxDistanceInNeighborhood
+                : idealMaxDistanceInNeighborhood;
 
         for (const node of nodesSortedByDistance) {
             replicas[node.nodeId].replicated += 1;
@@ -486,30 +485,23 @@ async function runSimulation(
 
         const nodesWithScores = await Promise.all(
             nodesSortedByDistance.map(async (node) => {
-                const score = await proximityScoringService.callScoreFunction(
-                    blockchain,
-                    proximityScoreFunctionsPairId,
-                    node.distance,
-                    node.stake,
-                    maxDistance,
-                );
+                const { normalizedDistance, finalScore } =
+                    await proximityScoringService.callScoreFunction(
+                        blockchain,
+                        proximityScoreFunctionsPairId,
+                        node.distance,
+                        node.stake,
+                        maxDistance,
+                        r2,
+                        nodes.length,
+                        blockchainModuleManagerMock.getMinimumStake(),
+                        blockchainModuleManagerMock.getMaximumStake(),
+                        true,
+                    );
 
-                let dividend = node.distance;
-                let divisor = maxDistance;
-                if (dividend.gt(UINT128_MAX_BN) || divisor.gt(UINT128_MAX_BN)) {
-                    dividend = dividend.div(distanceScaleFactor);
-                    divisor = divisor.div(distanceScaleFactor);
-                }
+                metrics.push({ nodeId: node.nodeId, normalizedDistance, score: finalScore });
 
-                const divResult = dividend.mul(distanceScaleFactor).div(divisor);
-
-                const mappedDistance =
-                    parseFloat(divResult.toString()) / parseFloat(distanceScaleFactor.toString());
-                const mappedStake = (node.stake - minimumStake) / (maximumStake - minimumStake);
-
-                metrics.push({ nodeId: node.nodeId, mappedDistance, mappedStake, score });
-
-                return { ...node, score };
+                return { ...node, score: finalScore };
             }),
         );
 
@@ -527,48 +519,85 @@ async function runSimulation(
     generateScatterPlot(
         Object.values(replicas),
         'replicated',
-        `${mode}-${nodes.length}-${numberOfKAs}-${proximityScoreFunctionsPairId}-stake-replications-relation`,
+        `${nodesMode}-${knowledgeAssetsMode}-${nodes.length}-${numberOfKAs}-${proximityScoreFunctionsPairId}-stake-replications-relation`,
     );
     generateScatterPlot(
         Object.values(replicas),
         'won',
-        `${mode}-${nodes.length}-${numberOfKAs}-${proximityScoreFunctionsPairId}-stake-wins-relation`,
+        `${nodesMode}-${knowledgeAssetsMode}-${nodes.length}-${numberOfKAs}-${proximityScoreFunctionsPairId}-stake-wins-relation`,
     );
 
     generateBoxPlot(
         metrics,
-        'mappedDistance',
-        `${mode}-${nodes.length}-${numberOfKAs}-${proximityScoreFunctionsPairId}-mapped-distances-distribution`,
+        'normalizedDistance',
+        `${nodesMode}-${knowledgeAssetsMode}-${nodes.length}-${numberOfKAs}-${proximityScoreFunctionsPairId}-mapped-distances-distribution`,
     );
     generateBoxPlot(
         metrics,
         'score',
-        `${mode}-${nodes.length}-${numberOfKAs}-${proximityScoreFunctionsPairId}-scores-distribution`,
+        `${nodesMode}-${knowledgeAssetsMode}-${nodes.length}-${numberOfKAs}-${proximityScoreFunctionsPairId}-scores-distribution`,
     );
 }
 
 const args = process.argv.slice(2);
-const mode = args[0];
-const filePath = mode === 'load' ? args[1] : undefined;
-const numberOfNodes = mode === 'generate' ? parseInt(args[1], 10) : undefined;
-const numberOfKAs = parseInt(args[2], 10);
-const proximityScoreFunctionsPairId = parseInt(args[3], 10);
+const nodesMode = args[0];
+const knowledgeAssetsMode = args[1];
+const nodesFilePath = nodesMode === 'load' ? args[2] : undefined;
+const knowledgeAssetsFilePath =
+    knowledgeAssetsMode === 'load' ? (nodesMode === 'load' ? args[3] : args[2]) : undefined;
+const numberOfNodes =
+    nodesMode === 'generate' ? parseInt(nodesMode === 'load' ? args[3] : args[2], 10) : undefined;
+const numberOfKAs =
+    knowledgeAssetsMode === 'generate'
+        ? parseInt(
+              knowledgeAssetsMode === 'load'
+                  ? nodesMode === 'load'
+                      ? args[4]
+                      : args[3]
+                  : nodesMode === 'generate'
+                  ? args[3]
+                  : args[2],
+              10,
+          )
+        : undefined;
+const proximityScoreFunctionsPairId = parseInt(args[args.length - 1], 10);
 
 if (
-    (mode === 'load' && !filePath) ||
-    (mode === 'generate' && numberOfNodes === undefined) ||
-    numberOfKAs === undefined ||
-    proximityScoreFunctionsPairId === undefined
+    (nodesMode === 'load' && !nodesFilePath) ||
+    (nodesMode === 'generate' && Number.isNaN(numberOfNodes)) ||
+    (knowledgeAssetsMode === 'load' && !knowledgeAssetsFilePath) ||
+    (knowledgeAssetsMode === 'generate' && Number.isNaN(numberOfKAs)) ||
+    Number.isNaN(proximityScoreFunctionsPairId)
 ) {
     logger.error('Incorrect arguments. Please provide the correct format.');
+    if (nodesMode === 'load') {
+        logger.error('For loading nodes, a file path must be provided.');
+    }
+    if (knowledgeAssetsMode === 'load') {
+        logger.error('For loading knowledge assets, a file path must be provided.');
+    }
+    if (nodesMode === 'generate') {
+        logger.error('For generating nodes, the number of nodes must be specified.');
+    }
+    if (knowledgeAssetsMode === 'generate') {
+        logger.error('For generating knowledge assets, the number of KAs must be specified.');
+    }
+    logger.error('A proximity score functions pair ID must always be provided.');
     logger.error(
-        'To load nodes list from the JSON file: node simulate.js load <filePath> <numberOfKAs> <proximityScoreFunctionsPairId>',
-    );
-    logger.error(
-        'To generate random nodes: node simulate.js generate <numberOfNodes> <numberOfKAs> <proximityScoreFunctionsPairId>',
+        'Usage examples:\n' +
+            'node simulate.js load load <nodesFilePath> <knowledgeAssetsFilePath> <proximityScoreFunctionsPairId>\n' +
+            'node simulate.js generate generate <numberOfNodes> <numberOfKAs> <proximityScoreFunctionsPairId>\n' +
+            'node simulate.js load generate <nodesFilePath> <numberOfKAs> <proximityScoreFunctionsPairId>\n' +
+            'node simulate.js generate load <numberOfNodes> <knowledgeAssetsFilePath> <proximityScoreFunctionsPairId>',
     );
 } else {
-    runSimulation(mode, filePath, numberOfNodes, numberOfKAs, proximityScoreFunctionsPairId).catch(
-        (error) => logger.error(`Simulation error: ${error.stack}`),
-    );
+    runSimulation(
+        nodesMode,
+        knowledgeAssetsMode,
+        nodesFilePath,
+        knowledgeAssetsFilePath,
+        numberOfNodes,
+        numberOfKAs,
+        proximityScoreFunctionsPairId,
+    ).catch((error) => logger.error(`Simulation error: ${error.stack}`));
 }
