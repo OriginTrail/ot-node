@@ -15,6 +15,8 @@ import ServiceAgreementsInvalidDataMigration from './service-agreements-invalid-
 import UalExtensionUserConfigurationMigration from './ual-extension-user-configuration-migration.js';
 import UalExtensionTripleStoreMigration from './ual-extension-triple-store-migration.js';
 import MarkStakingEventsAsProcessedMigration from './mark-staking-events-as-processed-migration.js';
+import RemoveServiceAgreementsForChiadoMigration from './remove-service-agreements-for-chiado-migration.js';
+import MultipleOpWalletsUserConfigurationMigration from './multiple-op-wallets-user-configuration-migration.js';
 
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
@@ -29,7 +31,7 @@ class MigrationExecutor {
         const validationModuleManager = container.resolve('validationModuleManager');
 
         const migration = new PullBlockchainShardingTableMigration(
-            'pullShardingTableMigrationV611',
+            'pullShardingTableMigrationV620Hotfix11',
             logger,
             config,
             repositoryModuleManager,
@@ -360,6 +362,55 @@ class MigrationExecutor {
                     `Unable to execute mark staking events as processed migration. Error: ${error.message}`,
                 );
                 this.exitNode(1);
+            }
+        }
+    }
+
+    static async executeRemoveServiceAgreementsForChiadoMigration(container, logger, config) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVNET ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TESTNET
+        ) {
+            const repositoryModuleManager = container.resolve('repositoryModuleManager');
+
+            const migration = new RemoveServiceAgreementsForChiadoMigration(
+                'removeServiceAgreementsForChiadoMigrationV6.2.0.Hotfix11',
+                logger,
+                config,
+                repositoryModuleManager,
+            );
+            if (!(await migration.migrationAlreadyExecuted())) {
+                try {
+                    await migration.migrate();
+                } catch (error) {
+                    logger.error(
+                        `Unable to execute remove service agreements for Chiado migration. Error: ${error.message}`,
+                    );
+                    this.exitNode(1);
+                }
+            }
+        }
+    }
+
+    static async executeMultipleOpWalletsUserConfigurationMigration(container, logger, config) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const migration = new MultipleOpWalletsUserConfigurationMigration(
+            'multipleOpWalletsUserConfigurationMigration',
+            logger,
+            config,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            try {
+                await migration.migrate();
+            } catch (error) {
+                logger.error(
+                    `Unable to execute multiple op wallets user configuration migration. Error: ${error.message}`,
+                );
             }
         }
     }
