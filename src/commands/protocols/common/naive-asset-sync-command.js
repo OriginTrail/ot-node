@@ -9,7 +9,7 @@ import {
     NAIVE_ASSET_SYNC_PARAMETERS,
 } from '../../../constants/constants.js';
 
-class NaiveSyncAssetCommand extends Command {
+class NaiveAssetSyncCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.tripleStoreService = ctx.tripleStoreService;
@@ -199,4 +199,4 @@ class NaiveSyncAssetCommand extends Command {
     }
 }
 
-export default NaiveSyncAssetCommand;
+export default NaiveAssetSyncCommand;
