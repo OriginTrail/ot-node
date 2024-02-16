@@ -67,10 +67,15 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
             hashFunctionId,
         );
 
-        const agreementData = await this.blockchainModuleManager.getAgreementData(
-            blockchain,
+        let serviceAgreementData = await this.repositoryModuleManager.getServiceAgreementRecord(
             agreementId,
         );
+        if (!serviceAgreementData) {
+            serviceAgreementData = await this.blockchainModuleManager.getAgreementData(
+                blockchain,
+                agreementId,
+            );
+        }
 
         const r0 = await this.blockchainModuleManager.getR0(blockchain);
 
@@ -81,12 +86,12 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
 
         const divisor = this.blockchainModuleManager
             .toBigNumber(blockchain, r0)
-            .mul(Number(agreementData.epochsNumber))
+            .mul(Number(serviceAgreementData.epochsNumber))
             .mul(blockchainAssertionSize);
 
         const serviceAgreementBid = this.blockchainModuleManager
-            .toBigNumber(blockchain, agreementData.tokenAmount)
-            .add(agreementData.updateTokenAmount)
+            .toBigNumber(blockchain, serviceAgreementData.tokenAmount)
+            .add(serviceAgreementData.updateTokenAmount)
             .mul(1024)
             .div(divisor)
             .add(1); // add 1 wei because of the precision loss

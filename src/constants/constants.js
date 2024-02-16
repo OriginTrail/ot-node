@@ -188,9 +188,15 @@ export const DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 export const DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
 
 export const COMMAND_RETRIES = {
+    NAIVE_ASSET_SYNC: 1,
     SUBMIT_COMMIT: 5,
     SUBMIT_UPDATE_COMMIT: 5,
     SUBMIT_PROOFS: 5,
+};
+
+export const NAIVE_ASSET_SYNC_PARAMETERS = {
+    GET_RESULT_POLLING_INTERVAL_MILLIS: 1 * 1000,
+    GET_RESULT_POLLING_MAX_ATTEMPTS: 30,
 };
 
 export const COMMAND_TX_GAS_INCREASE_FACTORS = {
@@ -298,6 +304,7 @@ export const ERROR_TYPE = {
     COMMIT_PROOF: {
         CALCULATE_PROOFS_ERROR: 'CalculateProofsError',
         EPOCH_CHECK_ERROR: 'EpochCheckError',
+        NAIVE_ASSET_SYNC_ERROR: 'NaiveAssetSyncError',
         SUBMIT_COMMIT_ERROR: 'SubmitCommitError',
         SUBMIT_COMMIT_SEND_TX_ERROR: 'SubmitCommitSendTxError',
         SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
@@ -361,6 +368,8 @@ export const OPERATION_ID_STATUS = {
     COMMIT_PROOF: {
         EPOCH_CHECK_START: 'EPOCH_CHECK_START',
         EPOCH_CHECK_END: 'EPOCH_CHECK_END',
+        NAIVE_ASSET_SYNC_START: 'NAIVE_ASSET_SYNC_START',
+        NAIVE_ASSET_SYNC_END: 'NAIVE_ASSET_SYNC_END',
         SUBMIT_COMMIT_START: 'SUBMIT_COMMIT_START',
         SUBMIT_COMMIT_END: 'SUBMIT_COMMIT_END',
         SUBMIT_COMMIT_SEND_TX_START: 'SUBMIT_COMMIT_SEND_TX_START',
@@ -577,12 +586,12 @@ export const CONTRACTS = {
     STAKING_CONTRACT: 'StakingContract',
     PROFILE_CONTRACT: 'ProfileContract',
     HUB_CONTRACT: 'HubContract',
-    // TODO: Update with new commit Managers
+    CONTENT_ASSET: 'ContentAssetContract',
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
     SERVICE_AGREEMENT_V1_CONTRACT: 'ServiceAgreementV1Contract',
     PARAMETERS_STORAGE_CONTRACT: 'ParametersStorageContract',
     IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
-    Log2PLDSF_CONTRACT: 'Log2PLDSFContract',
+    LOG2PLDSF_CONTRACT: 'Log2PLDSFContract',
     LINEAR_SUM_CONTRACT: 'LinearSumContract',
 };
 
@@ -591,12 +600,34 @@ export const CONTRACT_EVENTS = {
     SHARDING_TABLE: ['NodeAdded', 'NodeRemoved'],
     STAKING: ['StakeIncreased', 'StakeWithdrawalStarted'],
     PROFILE: ['AskUpdated'],
+    CONTENT_ASSET: ['AssetMinted'],
     COMMIT_MANAGER_V1: ['StateFinalized'],
-    SERVICE_AGREEMENT_V1: ['ServiceAgreementV1Extended', 'ServiceAgreementV1Terminated'],
+    SERVICE_AGREEMENT_V1: [
+        'ServiceAgreementV1Created',
+        'ServiceAgreementV1Extended',
+        'ServiceAgreementV1Terminated',
+    ],
     PARAMETERS_STORAGE: ['ParameterChanged'],
     Log2PLDSF: ['ParameterChanged'],
     LINEAR_SUM: ['ParameterChanged'],
 };
+
+export const GROUPED_CONTRACT_EVENTS = {
+    AssetCreatedGroup: {
+        events: ['AssetMinted', 'ServiceAgreementV1Created'],
+        groupingKey: 'tokenId',
+    },
+};
+
+export const CONTRACT_EVENT_TO_GROUP_MAPPING = (() => {
+    const mapping = {};
+    Object.entries(GROUPED_CONTRACT_EVENTS).forEach(([groupName, { events }]) => {
+        events.forEach((eventName) => {
+            mapping[eventName] = groupName;
+        });
+    });
+    return mapping;
+})();
 
 export const NODE_ENVIRONMENTS = {
     DEVELOPMENT: 'development',

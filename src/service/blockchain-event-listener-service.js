@@ -9,6 +9,8 @@ import {
     CONTRACT_EVENTS,
     MAXIMUM_FETCH_EVENTS_FAILED_COUNT,
     DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS,
+    CONTRACT_EVENT_TO_GROUP_MAPPING,
+    GROUPED_CONTRACT_EVENTS,
 } from '../constants/constants.js';
 
 const fetchEventsFailedCount = {};
@@ -53,6 +55,12 @@ class BlockchainEventListenerService {
         const syncContractEventsPromises = [
             this.getContractEvents(
                 blockchainId,
+                CONTRACTS.CONTENT_ASSET,
+                currentBlock,
+                CONTRACT_EVENTS.CONTENT_ASSET,
+            ),
+            this.getContractEvents(
+                blockchainId,
                 CONTRACTS.SHARDING_TABLE_CONTRACT,
                 currentBlock,
                 CONTRACT_EVENTS.SHARDING_TABLE,
@@ -69,7 +77,6 @@ class BlockchainEventListenerService {
                 currentBlock,
                 CONTRACT_EVENTS.PROFILE,
             ),
-            // TODO: Update with new commit managers
             this.getContractEvents(
                 blockchainId,
                 CONTRACTS.COMMIT_MANAGER_V1_U1_CONTRACT,
@@ -90,7 +97,7 @@ class BlockchainEventListenerService {
             ),
             this.getContractEvents(
                 blockchainId,
-                CONTRACTS.Log2PLDSF_CONTRACT,
+                CONTRACTS.LOG2PLDSF_CONTRACT,
                 currentBlock,
                 CONTRACT_EVENTS.Log2PLDSF,
             ),
@@ -206,29 +213,67 @@ class BlockchainEventListenerService {
             this.logger.trace(
                 `Processing ${unprocessedEvents.length} blockchain events on blockchain ${blockchainId}.`,
             );
-            let groupedEvents = {};
+            let batchedEvents = {};
+            const eventGroupsBuffer = {};
             let currentBlock = 0;
             for (const event of unprocessedEvents) {
                 if (event.block !== currentBlock) {
                     // eslint-disable-next-line no-await-in-loop
-                    await this.handleBlockGroupedEvents(groupedEvents);
-                    groupedEvents = {};
+                    await this.handleBlockBatchedEvents(batchedEvents);
+                    batchedEvents = {};
                     currentBlock = event.block;
                 }
-                if (groupedEvents[event.event]) {
-                    groupedEvents[event.event].push(event);
+
+                // Check if event should be grouped with other event
+                const eventsGroupName = CONTRACT_EVENT_TO_GROUP_MAPPING[event.eventName];
+                if (eventsGroupName) {
+                    // Get Events Group object containing predefined events and Grouping Key (Event Argument)
+                    const eventsGroup = GROUPED_CONTRACT_EVENTS[eventsGroupName];
+                    // Get value of the Grouping Key from the Event
+                    const groupingKeyValue = event[eventsGroup.groupingKey];
+
+                    if (!eventGroupsBuffer[eventsGroupName]) {
+                        eventGroupsBuffer[eventsGroupName] = {};
+                    }
+
+                    if (!eventGroupsBuffer[eventsGroupName][groupingKeyValue]) {
+                        eventGroupsBuffer[eventsGroupName][groupingKeyValue] = [];
+                    }
+
+                    // Push event to the buffer until Events Group is not full
+                    eventGroupsBuffer[eventsGroupName][groupingKeyValue].push(event);
+
+                    // When all expected Events from the Event Group are collected
+                    if (
+                        eventGroupsBuffer[eventsGroupName][groupingKeyValue] ===
+                        eventsGroup.events.length
+                    ) {
+                        if (!batchedEvents[eventsGroupName]) {
+                            batchedEvents[eventsGroupName] = [];
+                        }
+
+                        // Add Events Group to the Processing Queue
+                        batchedEvents[eventsGroupName].push(
+                            eventGroupsBuffer[eventsGroupName][groupingKeyValue],
+                        );
+
+                        // Remove Events Group from the Buffer
+                        delete eventGroupsBuffer[eventsGroupName][groupingKeyValue];
+                    }
+                } else if (batchedEvents[event.event]) {
+                    batchedEvents[event.event].push(event);
                 } else {
-                    groupedEvents[event.event] = [event];
+                    batchedEvents[event.event] = [event];
                 }
             }
 
-            await this.handleBlockGroupedEvents(groupedEvents);
+            await this.handleBlockBatchedEvents(batchedEvents);
         }
     }
 
-    async handleBlockGroupedEvents(groupedEvents) {
+    async handleBlockBatchedEvents(batchedEvents) {
         const handleBlockEventsPromises = [];
-        for (const [eventName, blockEvents] of Object.entries(groupedEvents)) {
+        for (const [eventName, blockEvents] of Object.entries(batchedEvents)) {
             handleBlockEventsPromises.push(this.handleBlockEvents(eventName, blockEvents));
         }
         // eslint-disable-next-line no-await-in-loop
@@ -254,12 +299,12 @@ class BlockchainEventListenerService {
             const { blockchainId, contract, data } = event;
             const { parameterName, parameterValue } = JSON.parse(data);
             switch (contract) {
-                case CONTRACTS.Log2PLDSF_CONTRACT:
+                case CONTRACTS.LOG2PLDSF_CONTRACT:
                     // This invalidates contracts parameter
                     // TODO: Create function for contract call cache invalidation
                     this.blockchainModuleManager.setContractCallCache(
                         blockchainId,
-                        CONTRACTS.Log2PLDSF_CONTRACT,
+                        CONTRACTS.LOG2PLDSF_CONTRACT,
                         parameterName,
                         null,
                     );
@@ -437,15 +482,65 @@ class BlockchainEventListenerService {
         );
     }
 
+    async handleAssetCreatedGroupEvents(blockGroupEvents) {
+        await Promise.all(
+            blockGroupEvents.map(async (eventsGroup) => {
+                // Parse and combine Arguments of both AssetMinted and ServiceAgreementCreated Events
+                const combinedData = eventsGroup.reduce((acc, event) => {
+                    try {
+                        const eventData = JSON.parse(event.data);
+                        return { ...acc, ...eventData, blockchainId: event.blockchainId };
+                    } catch (error) {
+                        this.logger.error(`Error parsing event data: ${error}`);
+                        return acc;
+                    }
+                }, {});
+
+                const {
+                    blockchainId,
+                    assetContract: contract,
+                    tokenId,
+                    keyword,
+                    hashFunctionId,
+                    state: assertionId,
+                    startTime,
+                    epochsNumber,
+                    epochLength,
+                    scoreFunctionId, // NOTE: Not available in the event now
+                    proofWindowOffsetPerc, // NOTE: Not available in the event now
+                } = combinedData;
+
+                const agreementId = await this.serviceAgreementService.generateId(
+                    blockchainId,
+                    contract,
+                    tokenId,
+                    keyword,
+                    hashFunctionId,
+                );
+
+                await this.repositoryModuleManager.updateServiceAgreementRecord(
+                    blockchainId,
+                    contract,
+                    tokenId,
+                    agreementId,
+                    startTime,
+                    epochsNumber,
+                    epochLength,
+                    scoreFunctionId,
+                    proofWindowOffsetPerc,
+                    hashFunctionId,
+                    keyword,
+                    assertionId,
+                    0,
+                );
+            }),
+        );
+    }
+
     async handleServiceAgreementV1ExtendedEvents(blockEvents) {
         await Promise.all(
             blockEvents.map(async (event) => {
-                const { agreementId } = JSON.parse(event.data);
-
-                const { epochsNumber } = await this.blockchainModuleManager.getAgreementData(
-                    event.blockchainId,
-                    agreementId,
-                );
+                const { agreementId, epochsNumber } = JSON.parse(event.data);
 
                 return this.repositoryModuleManager.updateServiceAgreementEpochsNumber(
                     agreementId,
@@ -466,7 +561,7 @@ class BlockchainEventListenerService {
         for (const event of blockEvents) {
             const eventData = JSON.parse(event.data);
 
-            const { tokenId, keyword, state, stateIndex } = eventData;
+            const { tokenId, keyword, hashFunctionId, state, stateIndex } = eventData;
             const blockchain = event.blockchainId;
             const contract = eventData.assetContract;
             this.logger.trace(
@@ -487,6 +582,7 @@ class BlockchainEventListenerService {
                     contract,
                     tokenId,
                     keyword,
+                    hashFunctionId,
                     state,
                     stateIndex,
                 ),
@@ -498,6 +594,7 @@ class BlockchainEventListenerService {
                     contract,
                     tokenId,
                     keyword,
+                    hashFunctionId,
                     state,
                     stateIndex,
                 ),
@@ -513,9 +610,46 @@ class BlockchainEventListenerService {
         contract,
         tokenId,
         keyword,
+        hashFunctionId,
         assertionId,
         stateIndex,
     ) {
+        const agreementId = await this.serviceAgreementService.generateId(
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+            hashFunctionId,
+        );
+
+        let serviceAgreementData = await this.repositoryModuleManager.getServiceAgreementRecord(
+            agreementId,
+        );
+        if (!serviceAgreementData) {
+            serviceAgreementData = await this.blockchainModuleManager.getAgreementData(
+                blockchain,
+                agreementId,
+            );
+        }
+
+        await this.repositoryModuleManager.updateServiceAgreementRecord(
+            blockchain,
+            contract,
+            tokenId,
+            serviceAgreementData.agreementId,
+            serviceAgreementData.startTime,
+            serviceAgreementData.epochsNumber,
+            serviceAgreementData.epochLength,
+            serviceAgreementData.scoreFunctionId,
+            serviceAgreementData.proofWindowOffsetPerc,
+            CONTENT_ASSET_HASH_FUNCTION_ID,
+            keyword,
+            assertionId,
+            stateIndex,
+            serviceAgreementData?.lastCommitEpoch,
+            serviceAgreementData?.lastProofEpoch,
+        );
+
         const assertionLinks = await this.tripleStoreService.getAssetAssertionLinks(
             currentRepository,
             blockchain,
@@ -574,41 +708,6 @@ class BlockchainEventListenerService {
                     tokenId,
                     keyword,
                 ),
-            );
-
-            if (
-                currentRepository === TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT &&
-                cachedData.agreementId &&
-                cachedData.agreementData
-            ) {
-                const serviceAgreement =
-                    await this.repositoryModuleManager.getServiceAgreementRecord(
-                        cachedData.agreementId,
-                    );
-
-                await this.repositoryModuleManager.updateServiceAgreementRecord(
-                    blockchain,
-                    contract,
-                    tokenId,
-                    cachedData.agreementId,
-                    cachedData.agreementData.startTime,
-                    cachedData.agreementData.epochsNumber,
-                    cachedData.agreementData.epochLength,
-                    cachedData.agreementData.scoreFunctionId,
-                    cachedData.agreementData.proofWindowOffsetPerc,
-                    CONTENT_ASSET_HASH_FUNCTION_ID,
-                    keyword,
-                    assertionId,
-                    stateIndex,
-                    serviceAgreement?.lastCommitEpoch,
-                    serviceAgreement?.lastProofEpoch,
-                );
-            }
-        } else if (currentRepository === TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT) {
-            await this.repositoryModuleManager.removeServiceAgreementRecord(
-                blockchain,
-                contract,
-                tokenId,
             );
         }
 

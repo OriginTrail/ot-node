@@ -108,12 +108,19 @@ class HandleProtocolMessageCommand extends Command {
                 `Calculated agreement id: ${agreementId} for contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}, operationId: ${operationId}`,
             );
 
-            return {
+            let agreementData = await this.repositoryModuleManager.getServiceAgreementRecord(
                 agreementId,
-                agreementData: await this.blockchainModuleManager.getAgreementData(
+            );
+            if (!agreementData) {
+                agreementData = await this.blockchainModuleManager.getAgreementData(
                     blockchain,
                     agreementId,
-                ),
+                );
+            }
+
+            return {
+                agreementId,
+                agreementData,
             };
         };
 

@@ -329,6 +329,7 @@ class EpochCheckCommand extends Command {
             hashFunctionId: agreement.hashFunctionId,
             epoch: agreement.currentEpoch,
             agreementId: agreement.agreementId,
+            assertionId: agreement.assertionId,
             stateIndex: agreement.stateIndex,
             closestNode: closestNode.index,
             leftNeighborhoodEdge: neighbourhoodEdges?.leftEdge.index,
@@ -336,9 +337,9 @@ class EpochCheckCommand extends Command {
         };
 
         await this.commandExecutor.add({
-            name: 'submitCommitCommand',
-            sequence: [],
-            retries: COMMAND_RETRIES.SUBMIT_COMMIT,
+            name: 'naiveAssetSyncCommand',
+            sequence: ['submitCommitCommand'],
+            retries: COMMAND_RETRIES.NAIVE_ASSET_SYNC,
             data: commandData,
             transactional: false,
         });
