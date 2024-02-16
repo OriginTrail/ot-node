@@ -1,3 +1,4 @@
+import { setTimeout } from 'timers/promises';
 import Command from '../../command.js';
 import {
     COMMAND_RETRIES,
@@ -104,7 +105,7 @@ class NaiveSyncAssetCommand extends Command {
                     sequence: [],
                     delay: 0,
                     data: {
-                        operationId,
+                        getOperationId,
                         id: ual,
                         blockchain,
                         contract,
@@ -128,11 +129,11 @@ class NaiveSyncAssetCommand extends Command {
                 do {
                     // eslint-disable-next-line no-await-in-loop
                     await setTimeout(
-                        NAIVE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_INFTERVAL_MILLIS,
+                        NAIVE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS,
                     );
 
                     // eslint-disable-next-line no-await-in-loop
-                    getResult = await this.operationIdService.getOperationIdRecord(operationId);
+                    getResult = await this.operationIdService.getOperationIdRecord(getOperationId);
                     attempt += 1;
                 } while (
                     attempt < NAIVE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_MAX_ATTEMPTS &&
