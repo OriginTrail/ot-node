@@ -6,10 +6,10 @@ import {
     OPERATION_ID_STATUS,
     OPERATION_STATUS,
     TRIPLE_STORE_REPOSITORIES,
-    NAIVE_ASSET_SYNC_PARAMETERS,
+    SIMPLE_ASSET_SYNC_PARAMETERS,
 } from '../../../constants/constants.js';
 
-class NaiveAssetSyncCommand extends Command {
+class SimpleAssetSyncCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.tripleStoreService = ctx.tripleStoreService;
@@ -17,7 +17,7 @@ class NaiveAssetSyncCommand extends Command {
         this.operationIdService = ctx.operationIdService;
         this.getService = ctx.getService;
 
-        this.errorType = ERROR_TYPE.COMMIT_PROOF.NAIVE_ASSET_SYNC_ERROR;
+        this.errorType = ERROR_TYPE.COMMIT_PROOF.SIMPLE_ASSET_SYNC_ERROR;
     }
 
     /**
@@ -40,19 +40,19 @@ class NaiveAssetSyncCommand extends Command {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.COMMIT_PROOF.NAIVE_ASSET_SYNC_START,
+            OPERATION_ID_STATUS.COMMIT_PROOF.SIMPLE_ASSET_SYNC_START,
         );
 
         this.logger.info(
-            `[NAIVE_ASSET_SYNC] (${operationId}): Started command for the ` +
+            `[SIMPLE_ASSET_SYNC] (${operationId}): Started command for the ` +
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                 `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
-                `Retry number: ${COMMAND_RETRIES.NAIVE_ASSET_SYNC - command.retries + 1}`,
+                `Retry number: ${COMMAND_RETRIES.SIMPLE_ASSET_SYNC - command.retries + 1}`,
         );
 
         this.logger.debug(
-            `[NAIVE_ASSET_SYNC] (${operationId}): Checking if Knowledge Asset is synced for the ` +
+            `[SIMPLE_ASSET_SYNC] (${operationId}): Checking if Knowledge Asset is synced for the ` +
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                 `State Index: ${stateIndex}, Operation ID: ${operationId}`,
@@ -68,14 +68,14 @@ class NaiveAssetSyncCommand extends Command {
 
             if (isAssetSynced) {
                 this.logger.info(
-                    `[NAIVE_ASSET_SYNC] (${operationId}): Knowledge Asset is already synced, finishing command for the ` +
+                    `[SIMPLE_ASSET_SYNC] (${operationId}): Knowledge Asset is already synced, finishing command for the ` +
                         `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                         `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                         `State Index: ${stateIndex}, Operation ID: ${operationId}`,
                 );
             } else {
                 this.logger.debug(
-                    `[NAIVE_ASSET_SYNC] (${operationId}): Fetching Knowledge Asset from the network for the ` +
+                    `[SIMPLE_ASSET_SYNC] (${operationId}): Fetching Knowledge Asset from the network for the ` +
                         `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                         `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                         `State Index: ${stateIndex}, Operation ID: ${operationId}`,
@@ -129,21 +129,21 @@ class NaiveAssetSyncCommand extends Command {
                 do {
                     // eslint-disable-next-line no-await-in-loop
                     await setTimeout(
-                        NAIVE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS,
+                        SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS,
                     );
 
                     // eslint-disable-next-line no-await-in-loop
                     getResult = await this.operationIdService.getOperationIdRecord(getOperationId);
                     attempt += 1;
                 } while (
-                    attempt < NAIVE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_MAX_ATTEMPTS &&
+                    attempt < SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_MAX_ATTEMPTS &&
                     getResult?.status !== OPERATION_ID_STATUS.FAILED &&
                     getResult?.status !== OPERATION_ID_STATUS.COMPLETED
                 );
             }
         } catch (error) {
             this.logger.warn(
-                `[NAIVE_ASSET_SYNC] (${operationId}): Unable to sync Knowledge Asset for the ` +
+                `[SIMPLE_ASSET_SYNC] (${operationId}): Unable to sync Knowledge Asset for the ` +
                     `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                     `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                     `State Index: ${stateIndex}, Operation ID: ${operationId}, `,
@@ -155,11 +155,11 @@ class NaiveAssetSyncCommand extends Command {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.COMMIT_PROOF.NAIVE_ASSET_SYNC_END,
+            OPERATION_ID_STATUS.COMMIT_PROOF.SIMPLE_ASSET_SYNC_END,
         );
 
         this.logger.info(
-            `[NAIVE_ASSET_SYNC] (${operationId}): Successfully executed command for the ` +
+            `[SIMPLE_ASSET_SYNC] (${operationId}): Successfully executed command for the ` +
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                 `State Index: ${stateIndex}, Operation ID: ${operationId}, `,
@@ -184,13 +184,13 @@ class NaiveAssetSyncCommand extends Command {
     }
 
     /**
-     * Builds default naiveAssetSyncCommand
+     * Builds default simpleAssetSyncCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'naiveAssetSyncCommand',
+            name: 'simpleAssetSyncCommand',
             delay: 0,
             transactional: false,
         };
@@ -199,4 +199,4 @@ class NaiveAssetSyncCommand extends Command {
     }
 }
 
-export default NaiveAssetSyncCommand;
+export default SimpleAssetSyncCommand;

@@ -337,9 +337,9 @@ class EpochCheckCommand extends Command {
         };
 
         await this.commandExecutor.add({
-            name: 'naiveAssetSyncCommand',
+            name: 'simpleAssetSyncCommand',
             sequence: ['submitCommitCommand'],
-            retries: COMMAND_RETRIES.NAIVE_ASSET_SYNC,
+            retries: COMMAND_RETRIES.SIMPLE_ASSET_SYNC,
             data: commandData,
             transactional: false,
         });
