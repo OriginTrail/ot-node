@@ -26,9 +26,7 @@ class GnosisService extends Web3Service {
                     : GNOSIS_DEFAULT_GAS_PRICE.TESTNET;
         try {
             const response = await axios.get(this.config.gasPriceOracleLink);
-            if (response?.data?.average) {
-                gasPrice = response?.data?.average;
-            }
+            gasPrice = response?.data?.average;
             this.logger.debug(`Gas price from Gnosis oracle link: ${gasPrice} gwei`);
         } catch (error) {
             this.logger.warn(
