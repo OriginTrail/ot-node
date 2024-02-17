@@ -19,26 +19,22 @@ class GnosisService extends Web3Service {
     }
 
     async getGasPrice() {
-        try {
-            const response = await axios.get(this.config.gasPriceOracleLink);
-            let gasPrice;
-            if (this.config.name.split(':')[1] === '100') {
-                gasPrice = Number(response.data.result, 10);
-            } else if (this.config.name.split(':')[1] === '10200') {
-                gasPrice = Math.round(response.data.average * 1e9);
-            }
-            this.logger.debug(`Gas price on Gnosis: ${gasPrice}`);
-            return gasPrice;
-        } catch (error) {
-            const defaultGasPrice =
+        let gasPrice;
+        const defaultGasPrice =
                 process.env.NODE_ENV === NODE_ENVIRONMENTS.MAINNET
                     ? GNOSIS_DEFAULT_GAS_PRICE.MAINNET
                     : GNOSIS_DEFAULT_GAS_PRICE.TESTNET;
+        try {
+            const response = await axios.get(this.config.gasPriceOracleLink);
+            gasPrice = response?.data?.average;
+            this.logger.debug(`Gas price from Gnosis oracle link: ${gasPrice} gwei`);
+        } catch (error) {
             this.logger.warn(
                 `Failed to fetch the gas price from the Gnosis: ${error}. Using default value: ${defaultGasPrice} Gwei.`,
             );
-            this.convertToWei(defaultGasPrice, 'gwei');
         }
+
+        return this.convertToWei(gasPrice ?? defaultGasPrice, 'gwei');
     }
 
     async healthCheck() {
