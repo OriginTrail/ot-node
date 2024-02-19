@@ -23,20 +23,31 @@ class FindNodesCommand extends Command {
             hashFunctionId,
             minAckResponses,
         } = command.data;
+        const proximityScoreFunctionsPairId = command.data.proximityScoreFunctionsPairId ?? 1;
 
         this.errorType = errorType;
-        this.logger.debug(`Searching for closest node(s) for keyword ${keyword}`);
+        this.logger.debug(
+            `Searching for closest node(s) for operationId: ${operationId}, keyword: ${keyword}`,
+        );
 
         // TODO: protocol selection
         const closestNodes = [];
-        const foundNodes = await this.findNodes(blockchain, keyword, operationId, hashFunctionId);
+        const foundNodes = await this.findNodes(
+            blockchain,
+            keyword,
+            operationId,
+            hashFunctionId,
+            proximityScoreFunctionsPairId,
+        );
         for (const node of foundNodes) {
             if (node.id !== this.networkModuleManager.getPeerId().toB58String()) {
                 closestNodes.push({ id: node.id, protocol: networkProtocols[0] });
             }
         }
 
-        this.logger.debug(`Found ${closestNodes.length} node(s) for keyword ${keyword}`);
+        this.logger.debug(
+            `Found ${closestNodes.length} node(s) for operationId: ${operationId}, keyword: ${keyword}`,
+        );
         this.logger.trace(
             `Found neighbourhood: ${JSON.stringify(
                 closestNodes.map((node) => node.id),
@@ -49,7 +60,7 @@ class FindNodesCommand extends Command {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Unable to find enough nodes for ${operationId}. Minimum number of nodes required: ${minAckResponses}`,
+                `Unable to find enough nodes for operationId: ${operationId}, keyword: ${keyword}. Minimum number of nodes required: ${minAckResponses}`,
                 this.errorType,
                 true,
             );
@@ -66,7 +77,13 @@ class FindNodesCommand extends Command {
         );
     }
 
-    async findNodes(blockchainId, keyword, operationId, hashFunctionId) {
+    async findNodes(
+        blockchainId,
+        keyword,
+        operationId,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+    ) {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchainId,
@@ -78,11 +95,13 @@ class FindNodesCommand extends Command {
             keyword,
             r2,
             hashFunctionId,
-            true,
+            proximityScoreFunctionsPairId,
         );
 
+        const availableNodes = closestNodes.filter((node) => node.lastSeen >= node.lastDialed);
+
         const nodesFound = await Promise.all(
-            closestNodes.map(({ peerId }) =>
+            availableNodes.map(({ peerId }) =>
                 this.shardingTableService.findPeerAddressAndProtocols(peerId),
             ),
         );

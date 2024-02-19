@@ -62,15 +62,10 @@ class AuthService {
             return false;
         }
 
-        const lowerCaseOperationName = operationName.toLowerCase();
-
-        return this._authConfig.publicOperations.some((publicOperation) => {
-            const lowerCasePublicOperation = publicOperation.toLowerCase();
-            return (
-                lowerCasePublicOperation === `v0/${lowerCaseOperationName}` ||
-                lowerCasePublicOperation === lowerCaseOperationName
-            );
-        });
+        return this._authConfig.publicOperations.some(
+            (publicOperation) =>
+                publicOperation === `V0/${operationName}` || publicOperation === operationName,
+        );
     }
 
     /**

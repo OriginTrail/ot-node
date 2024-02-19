@@ -1,6 +1,3 @@
-import { xor as uint8ArrayXor } from 'uint8arrays/xor';
-import { compare as uint8ArrayCompare } from 'uint8arrays/compare';
-
 import {
     BYTES_IN_KILOBYTE,
     CONTRACTS,
@@ -14,7 +11,8 @@ class ShardingTableService {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.networkModuleManager = ctx.networkModuleManager;
-        this.validationModuleManager = ctx.validationModuleManager;
+        this.hashingService = ctx.hashingService;
+        this.proximityScoringService = ctx.proximityScoringService;
 
         this.memoryCachedPeerIds = {};
     }
@@ -93,6 +91,7 @@ class ShardingTableService {
                         blockchainId,
                         peer.nodeId,
                     );
+                    const sha256 = await this.hashingService.callHashFunction(1, nodeId);
 
                     return {
                         peerId: nodeId,
@@ -107,41 +106,59 @@ class ShardingTableService {
                             peer.stake,
                             'ether',
                         ),
-                        sha256: await this.validationModuleManager.callHashFunction(1, nodeId),
+                        sha256,
                     };
                 }),
             ),
         );
     }
 
-    async findNeighbourhood(blockchainId, key, r2, hashFunctionId, filterLastSeen) {
-        const peers = await this.repositoryModuleManager.getAllPeerRecords(
+    async findNeighbourhood(blockchainId, key, r2, hashFunctionId, proximityScoreFunctionsPairId) {
+        let peers = await this.repositoryModuleManager.getAllPeerRecords(blockchainId);
+        peers = peers.map((peer, index) => ({ ...peer.dataValues, index }));
+        const keyHash = await this.hashingService.callHashFunction(hashFunctionId, key);
+
+        const soretedPeers = this.sortPeers(
             blockchainId,
-            filterLastSeen,
+            keyHash,
+            peers,
+            r2,
+            hashFunctionId,
+            proximityScoreFunctionsPairId,
         );
-        const keyHash = await this.validationModuleManager.callHashFunction(hashFunctionId, key);
-
-        return this.sortPeers(blockchainId, keyHash, peers, r2, hashFunctionId);
+        return soretedPeers;
     }
 
-    async sortPeers(blockchainId, keyHash, peers, count, hashFunctionId) {
-        const hashFunctionName = this.validationModuleManager.getHashFunctionName(hashFunctionId);
-
-        return peers
-            .map((peer) => ({
-                peer,
-                distance: this.calculateDistance(blockchainId, keyHash, peer[hashFunctionName]),
-            }))
-            .sort((a, b) => uint8ArrayCompare(a.distance, b.distance))
-            .slice(0, count)
-            .map((pd) => pd.peer);
-    }
-
-    calculateDistance(blockchain, peerHash, keyHash) {
-        return uint8ArrayXor(
-            this.blockchainModuleManager.convertBytesToUint8Array(blockchain, peerHash),
-            this.blockchainModuleManager.convertBytesToUint8Array(blockchain, keyHash),
+    async sortPeers(
+        blockchainId,
+        keyHash,
+        peers,
+        count,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+    ) {
+        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
+        const peersWithDistance = await Promise.all(
+            peers.map(async (peer) => ({
+                ...peer,
+                distance: await this.proximityScoringService.callProximityFunction(
+                    blockchainId,
+                    proximityScoreFunctionsPairId,
+                    peer[hashFunctionName],
+                    keyHash,
+                ),
+            })),
         );
+        peersWithDistance.sort((a, b) => {
+            if (a.distance.lt(b.distance)) {
+                return -1;
+            }
+            if (a.distance.gt(b.distance)) {
+                return 1;
+            }
+            return 0;
+        });
+        return peersWithDistance.slice(0, count);
     }
 
     async getBidSuggestion(
@@ -151,6 +168,7 @@ class ShardingTableService {
         contentAssetStorageAddress,
         firstAssertionId,
         hashFunctionId,
+        proximityScoreFunctionsPairId,
     ) {
         const kbSize = assertionSize < BYTES_IN_KILOBYTE ? BYTES_IN_KILOBYTE : assertionSize;
         const peerRecords = await this.findNeighbourhood(
@@ -162,7 +180,7 @@ class ShardingTableService {
             ),
             await this.blockchainModuleManager.getR2(blockchainId),
             hashFunctionId,
-            true,
+            proximityScoreFunctionsPairId,
         );
         const r1 = await this.blockchainModuleManager.getR1(blockchainId);
         // todo remove this line once we implement logic for storing assertion in publish node if it's in neighbourhood
@@ -276,6 +294,56 @@ class ShardingTableService {
             id: peerId,
             addresses: peerInfo?.addresses ?? [],
             protocols: peerInfo?.protocols ?? [],
+        };
+    }
+
+    async getNeighboorhoodEdgeNodes(
+        neighbourhood,
+        blockchainId,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+        key,
+    ) {
+        const keyHash = await this.hashingService.callHashFunction(hashFunctionId, key);
+
+        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
+        const assetPositionOnHashRing = await this.blockchainModuleManager.toBigNumber(
+            blockchainId,
+            keyHash,
+        );
+        const hashRing = [];
+
+        const maxDistance = await this.proximityScoringService.callProximityFunction(
+            blockchainId,
+            proximityScoreFunctionsPairId,
+            neighbourhood[neighbourhood.length - 1][hashFunctionName],
+            keyHash,
+        );
+
+        for (const neighbour of neighbourhood) {
+            // eslint-disable-next-line no-await-in-loop
+            const neighbourPositionOnHashRing = await this.blockchainModuleManager.toBigNumber(
+                blockchainId,
+                neighbour[hashFunctionName],
+            );
+            if (assetPositionOnHashRing.lte(neighbourPositionOnHashRing)) {
+                if (neighbourPositionOnHashRing.sub(assetPositionOnHashRing).lte(maxDistance)) {
+                    hashRing.push(neighbour);
+                } else {
+                    hashRing.unshift(neighbour);
+                }
+            } else if (assetPositionOnHashRing.gt(neighbourPositionOnHashRing)) {
+                if (assetPositionOnHashRing.sub(neighbourPositionOnHashRing).lte(maxDistance)) {
+                    hashRing.unshift(neighbour);
+                } else {
+                    hashRing.push(neighbour);
+                }
+            }
+        }
+
+        return {
+            leftEdge: hashRing[0],
+            rightEdge: hashRing[hashRing.length - 1],
         };
     }
 }

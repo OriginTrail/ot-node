@@ -8,9 +8,17 @@ export const FALLBACK_PROVIDER_QUORUM = 1;
 
 export const RPC_PROVIDER_STALL_TIMEOUT = 60 * 1000;
 
-export const UINT256_MAX_BN = BigNumber.from(2).pow(256).sub(1);
+export const UINT256_MAX_BN = ethers.constants.MaxUint256;
+
+export const UINT128_MAX_BN = BigNumber.from(2).pow(128).sub(1);
+
+export const UINT64_MAX_BN = BigNumber.from(2).pow(64).sub(1);
+
+export const UINT40_MAX_BN = BigNumber.from(2).pow(40).sub(1);
 
 export const UINT32_MAX_BN = BigNumber.from(2).pow(32).sub(1);
+
+export const HASH_RING_SIZE = ethers.constants.MaxUint256;
 
 export const STAKE_UINT256_MULTIPLIER_BN = UINT256_MAX_BN.div(500000000);
 
@@ -29,7 +37,7 @@ export const PRIVATE_ASSERTION_PREDICATE =
 
 export const COMMIT_BLOCK_DURATION_IN_BLOCKS = 5;
 
-export const COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS = 2;
+export const COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS = 5;
 
 export const TRANSACTION_POLLING_TIMEOUT_MILLIS = 300 * 1000;
 
@@ -138,6 +146,8 @@ export const NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
 
 export const HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 16000;
 
+export const SHARDING_TABLE_CHECK_COMMAND_FREQUENCY_MINUTES = 30;
+
 export const SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES = 15;
 
 export const PEER_RECORD_UPDATE_DELAY = 30 * 60 * 1000; // 30 minutes
@@ -171,6 +181,7 @@ export const MIN_DIAL_FREQUENCY_MILLIS = 60 * 60 * 1000;
 export const PERMANENT_COMMANDS = [
     'otnodeUpdateCommand',
     'sendTelemetryCommand',
+    'shardingTableCheckCommand',
     'operationIdCleanerCommand',
     'commandsCleanerCommand',
     'dialPeersCommand',
@@ -201,6 +212,11 @@ export const COMMAND_TX_GAS_INCREASE_FACTORS = {
     SUBMIT_COMMIT: 1.2,
     SUBMIT_UPDATE_COMMIT: 1.2,
     SUBMIT_PROOFS: 1.2,
+};
+
+export const GNOSIS_DEFAULT_GAS_PRICE = {
+    TESTNET: 25,
+    MAINNET: 5,
 };
 
 export const WEBSOCKET_PROVIDER_OPTIONS = {
@@ -298,8 +314,11 @@ export const ERROR_TYPE = {
         CALCULATE_PROOFS_ERROR: 'CalculateProofsError',
         EPOCH_CHECK_ERROR: 'EpochCheckError',
         SUBMIT_COMMIT_ERROR: 'SubmitCommitError',
+        SUBMIT_COMMIT_SEND_TX_ERROR: 'SubmitCommitSendTxError',
         SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
+        SUBMIT_PROOFS_SEND_TX_ERROR: 'SubmitProofsSendTxError',
         SUBMIT_UPDATE_COMMIT_ERROR: 'SubmitUpdateCommitError',
+        SUBMIT_UPDATE_COMMIT_SEND_TX_ERROR: 'SubmitUpdateCommitSendTxError',
     },
 };
 export const OPERATION_ID_STATUS = {
@@ -359,12 +378,18 @@ export const OPERATION_ID_STATUS = {
         EPOCH_CHECK_END: 'EPOCH_CHECK_END',
         SUBMIT_COMMIT_START: 'SUBMIT_COMMIT_START',
         SUBMIT_COMMIT_END: 'SUBMIT_COMMIT_END',
+        SUBMIT_COMMIT_SEND_TX_START: 'SUBMIT_COMMIT_SEND_TX_START',
+        SUBMIT_COMMIT_SEND_TX_END: 'SUBMIT_COMMIT_SEND_TX_END',
         CALCULATE_PROOFS_START: 'CALCULATE_PROOFS_START',
         CALCULATE_PROOFS_END: 'CALCULATE_PROOFS_END',
         SUBMIT_PROOFS_START: 'SUBMIT_PROOFS_START',
         SUBMIT_PROOFS_END: 'SUBMIT_PROOFS_END',
+        SUBMIT_PROOFS_SEND_TX_START: 'SUBMIT_PROOFS_START',
+        SUBMIT_PROOFS_SEND_TX_END: 'SUBMIT_PROOFS_END',
         SUBMIT_UPDATE_COMMIT_START: 'SUBMIT_UPDATE_COMMIT_START',
         SUBMIT_UPDATE_COMMIT_END: 'SUBMIT_UPDATE_COMMIT_END',
+        SUBMIT_UPDATE_COMMIT_SEND_TX_START: 'SUBMIT_UPDATE_COMMIT_START',
+        SUBMIT_UPDATE_COMMIT_SEND_TX_END: 'SUBMIT_UPDATE_COMMIT_END',
     },
     QUERY: {
         QUERY_INIT_START: 'QUERY_INIT_START',
@@ -567,10 +592,13 @@ export const CONTRACTS = {
     STAKING_CONTRACT: 'StakingContract',
     PROFILE_CONTRACT: 'ProfileContract',
     HUB_CONTRACT: 'HubContract',
+    // TODO: Update with new commit Managers
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
     SERVICE_AGREEMENT_V1_CONTRACT: 'ServiceAgreementV1Contract',
     PARAMETERS_STORAGE_CONTRACT: 'ParametersStorageContract',
     IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
+    Log2PLDSF_CONTRACT: 'Log2PLDSFContract',
+    LINEAR_SUM_CONTRACT: 'LinearSumContract',
 };
 
 export const CONTRACT_EVENTS = {
@@ -581,6 +609,8 @@ export const CONTRACT_EVENTS = {
     COMMIT_MANAGER_V1: ['StateFinalized'],
     SERVICE_AGREEMENT_V1: ['ServiceAgreementV1Extended', 'ServiceAgreementV1Terminated'],
     PARAMETERS_STORAGE: ['ParameterChanged'],
+    Log2PLDSF: ['ParameterChanged'],
+    LINEAR_SUM: ['ParameterChanged'],
 };
 
 export const NODE_ENVIRONMENTS = {
@@ -590,6 +620,10 @@ export const NODE_ENVIRONMENTS = {
     TESTNET: 'testnet',
     MAINNET: 'mainnet',
 };
+
+export const MAXIMUM_FETCH_EVENTS_FAILED_COUNT = 1000;
+
+export const DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS = 10 * 1000;
 
 export const CONTRACT_EVENT_FETCH_INTERVALS = {
     MAINNET: 10 * 1000,
@@ -607,6 +641,7 @@ export const TRANSACTION_CONFIRMATIONS = 1;
 
 export const CACHE_DATA_TYPES = {
     NUMBER: 'number',
+    ANY: 'any',
 };
 
 /**
@@ -626,8 +661,16 @@ export const CACHED_FUNCTIONS = {
         commitWindowDurationPerc: CACHE_DATA_TYPES.NUMBER,
         proofWindowDurationPerc: CACHE_DATA_TYPES.NUMBER,
         epochLength: CACHE_DATA_TYPES.NUMBER,
+        minimumStake: CACHE_DATA_TYPES.ANY,
+        maximumStake: CACHE_DATA_TYPES.ANY,
     },
     IdentityStorageContract: {
         getIdentityId: CACHE_DATA_TYPES.NUMBER,
+    },
+    Log2PLDSFContract: {
+        getParameters: CACHE_DATA_TYPES.ANY,
+    },
+    LinearSumContract: {
+        getParameters: CACHE_DATA_TYPES.ANY,
     },
 };

@@ -12,6 +12,7 @@ class SendTelemetryCommand extends Command {
         this.config = ctx.config;
         this.networkModuleManager = ctx.networkModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.telemetryModuleManager = ctx.telemetryModuleManager;
     }
@@ -31,23 +32,34 @@ class SendTelemetryCommand extends Command {
         try {
             const events = (await this.getUnpublishedEvents()) || [];
             const blockchainsNodeInfo = [];
-            const implementations = this.blockchainModuleManager.getImplementationNames();
-            for (const implementation of implementations) {
+            const blockchainImplementations = this.blockchainModuleManager.getImplementationNames();
+            for (const implementation of blockchainImplementations) {
                 const blockchainInfo = {
                     blockchain_id: implementation,
                     // eslint-disable-next-line no-await-in-loop
                     identity_id: await this.blockchainModuleManager.getIdentityId(implementation),
-                    operational_wallet: this.blockchainModuleManager.getPublicKey(implementation),
+                    operational_wallet:
+                        this.blockchainModuleManager.getPublicKeys(implementation)[0],
                     management_wallet:
                         this.blockchainModuleManager.getManagementKey(implementation),
                 };
                 blockchainsNodeInfo.push(blockchainInfo);
             }
+
+            const tripleStoreNodeInfo = [];
+            const tripleStoreImplementations =
+                this.tripleStoreModuleManager.getImplementationNames();
+            for (const implementation of tripleStoreImplementations) {
+                const tripleStoreInfo = {
+                    implementationName: implementation,
+                };
+                tripleStoreNodeInfo.push(tripleStoreInfo);
+            }
             const nodeData = {
                 version: pjson.version,
                 identity: this.networkModuleManager.getPeerId().toB58String(),
                 hostname: this.config.hostname,
-                triple_store: this.config.modules.tripleStore.defaultImplementation,
+                triple_stores: tripleStoreNodeInfo,
                 auto_update_enabled: this.config.modules.autoUpdater.enabled,
                 multiaddresses: this.networkModuleManager.getMultiaddrs(),
                 blockchains: blockchainsNodeInfo,
@@ -76,7 +88,7 @@ class SendTelemetryCommand extends Command {
     }
 
     /**
-     * Builds default otnodeUpdateCommand
+     * Builds default sendTelemetryCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

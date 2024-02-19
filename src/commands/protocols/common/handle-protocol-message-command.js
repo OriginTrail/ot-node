@@ -47,13 +47,19 @@ class HandleProtocolMessageCommand extends Command {
         throw Error('prepareMessage not implemented');
     }
 
-    async validateNeighborhood(blockchain, keyword, hashFunctionId, ual) {
+    async validateNeighborhood(
+        blockchain,
+        keyword,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+        ual,
+    ) {
         const closestNodes = await this.shardingTableService.findNeighbourhood(
             blockchain,
             keyword,
             await this.blockchainModuleManager.getR2(blockchain),
             hashFunctionId,
-            true,
+            proximityScoreFunctionsPairId,
         );
         const peerId = this.networkModuleManager.getPeerId().toB58String();
         for (const { peerId: otherPeerId } of closestNodes) {
@@ -61,7 +67,9 @@ class HandleProtocolMessageCommand extends Command {
                 return true;
             }
         }
-        this.logger.warn(`Invalid neighborhood for ual: ${ual}`);
+        this.logger.warn(
+            `Invalid neighborhood for ual: ${ual} on blockchain: ${blockchain} with hashFunctionId: ${hashFunctionId}, proximityScoreFunctionsPairId: ${proximityScoreFunctionsPairId}`,
+        );
 
         return false;
     }
@@ -179,11 +187,20 @@ class HandleProtocolMessageCommand extends Command {
         tokenId,
         keyword,
         hashFunctionId,
+        proximityScoreFunctionsPairId,
     ) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.trace(`Validating neighborhood for ual: ${ual}`);
-        if (!(await this.validateNeighborhood(blockchain, keyword, hashFunctionId, ual))) {
+        if (
+            !(await this.validateNeighborhood(
+                blockchain,
+                keyword,
+                hashFunctionId,
+                proximityScoreFunctionsPairId,
+                ual,
+            ))
+        ) {
             return {
                 messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
                 messageData: { errorMessage: 'Invalid neighbourhood' },

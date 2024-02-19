@@ -164,8 +164,8 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('shard').getPeerRecord(peerId, blockchain);
     }
 
-    async getAllPeerRecords(blockchain, filterLastSeen) {
-        return this.getRepository('shard').getAllPeerRecords(blockchain, filterLastSeen);
+    async getAllPeerRecords(blockchain) {
+        return this.getRepository('shard').getAllPeerRecords(blockchain);
     }
 
     async getPeersCount(blockchain) {
@@ -482,6 +482,12 @@ class RepositoryModuleManager extends BaseModuleManager {
 
     async removeServiceAgreements(agreementIds) {
         return this.getRepository('service_agreement').removeServiceAgreements(agreementIds);
+    }
+
+    async removeServiceAgreementsForBlockchain(blockchainId) {
+        return this.getRepository('service_agreement').removeServiceAgreementsForBlockchain(
+            blockchainId,
+        );
     }
 
     async updateServiceAgreementEpochsNumber(agreementId, epochsNumber) {
