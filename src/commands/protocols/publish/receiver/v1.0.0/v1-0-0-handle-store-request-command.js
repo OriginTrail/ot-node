@@ -70,6 +70,8 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             keyword,
         );
 
+        const r0 = await this.blockchainModuleManager.getR0();
+
         await this.repositoryModuleManager.updateServiceAgreementRecord(
             blockchain,
             contract,
@@ -84,6 +86,22 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             keyword,
             assertionId,
             stateIndex,
+            this.blockchainModuleManager.convertFromWei(
+                blockchain,
+                agreementData.tokenAmount,
+                'ether',
+            ),
+            this.blockchainModuleManager.convertFromWei(
+                blockchain,
+                agreementData.updateTokenAmount,
+                'ether',
+            ),
+            this.serviceAgreementService.calculateBid(
+                blockchain,
+                agreementData.tokenAmount,
+                agreementData.epochsNumber,
+                r0,
+            ),
         );
 
         await this.operationIdService.updateOperationIdStatus(

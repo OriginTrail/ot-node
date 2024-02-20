@@ -208,6 +208,8 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
             }
         }
 
+        const r0 = await this.blockchainModuleManager.getR0();
+
         // store in service_agreement table
         await this.repositoryModuleManager.updateServiceAgreementRecord(
             blockchain,
@@ -223,6 +225,22 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
             keyword,
             assertionId,
             stateIndex,
+            this.blockchainModuleManager.convertFromWei(
+                blockchain,
+                agreementData.tokenAmount,
+                'ether',
+            ),
+            this.blockchainModuleManager.convertFromWei(
+                blockchain,
+                agreementData.updateTokenAmount,
+                'ether',
+            ),
+            this.serviceAgreementService.calculateBid(
+                blockchain,
+                agreementData.tokenAmount,
+                agreementData.epochsNumber,
+                r0,
+            ),
             lastCommitEpoch,
             lastProofEpoch,
         );

@@ -25,6 +25,16 @@ class ServiceAgreementService {
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
+    calculateBid(blockchain, tokenAmount, epochsNumber, r0) {
+        return this.blockchainModuleManager.convertFromWei(
+            blockchain,
+            this.blockchainModuleManager
+                .toBigNumber(blockchain, tokenAmount)
+                .div(epochsNumber)
+                .div(r0),
+        );
+    }
+
     async calculateRank(
         blockchain,
         keyword,

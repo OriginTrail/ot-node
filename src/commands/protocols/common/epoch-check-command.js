@@ -7,6 +7,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     NODE_ENVIRONMENTS,
+    SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS,
 } from '../../../constants/constants.js';
 import MigrationExecutor from '../../../migration/migration-executor.js';
 
@@ -122,12 +123,18 @@ class EpochCheckCommand extends Command {
         minStake,
         maxStake,
     ) {
+        const peerRecord = await this.repositoryModuleManager.getPeerRecord(
+            this.networkModuleManager.getPeerId().toB58String(),
+            blockchain,
+        );
         const timestamp = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
         const eligibleAgreementForSubmitCommit =
             await this.repositoryModuleManager.getEligibleAgreementsForSubmitCommit(
                 timestamp,
                 blockchain,
                 commitWindowDurationPerc,
+                peerRecord.ask,
+                SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS,
             );
         this.logger.info(
             `Epoch check: Found ${eligibleAgreementForSubmitCommit.length} eligible agreements for submit commit for blockchain: ${blockchain}`,

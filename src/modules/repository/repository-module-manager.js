@@ -306,6 +306,9 @@ class RepositoryModuleManager extends BaseModuleManager {
         keyword,
         assertionId,
         stateIndex,
+        tokenAmount,
+        updateTokenAmount,
+        bid,
         lastCommitEpoch,
         lastProofEpoch,
     ) {
@@ -324,6 +327,9 @@ class RepositoryModuleManager extends BaseModuleManager {
                 keyword,
                 assertionId,
                 stateIndex,
+                tokenAmount,
+                updateTokenAmount,
+                bid,
                 lastCommitEpoch,
                 lastProofEpoch,
             );
@@ -365,6 +371,33 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async updateServiceAgreementTokenAmount(agreementId, tokenAmount) {
+        if (this.initialized) {
+            return this.getRepository('service_agreement').updateServiceAgreementTokenAmount(
+                agreementId,
+                tokenAmount,
+            );
+        }
+    }
+
+    async updateServiceAgreementUpdateTokenAmount(agreementId, updateTokenAmount) {
+        if (this.initialized) {
+            return this.getRepository('service_agreement').updateServiceAgreementUpdateTokenAmount(
+                agreementId,
+                updateTokenAmount,
+            );
+        }
+    }
+
+    async decreaseServiceAgreementTokenAmount(agreementId, deltaTokenAmount) {
+        if (this.initialized) {
+            return this.getRepository('service_agreement').decreaseServiceAgreementTokenAmount(
+                agreementId,
+                deltaTokenAmount,
+            );
+        }
+    }
+
     async updateServiceAgreementLastProofEpoch(agreementId, lastProofEpoch) {
         if (this.initialized) {
             return this.getRepository('service_agreement').updateServiceAgreementLastProofEpoch(
@@ -388,12 +421,16 @@ class RepositoryModuleManager extends BaseModuleManager {
         timestampSeconds,
         blockchain,
         commitWindowDurationPerc,
+        ask,
+        startTimeDelay,
     ) {
         if (this.initialized) {
             return this.getRepository('service_agreement').getEligibleAgreementsForSubmitCommit(
                 timestampSeconds,
                 blockchain,
                 commitWindowDurationPerc,
+                ask,
+                startTimeDelay,
             );
         }
     }

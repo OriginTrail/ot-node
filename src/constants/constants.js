@@ -405,6 +405,8 @@ export const OPERATIONS = {
     GET: 'get',
 };
 
+export const SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS = 5 * 60;
+
 /**
  * @constant {number} OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS -
  * operation id command cleanup interval time 24h
@@ -588,6 +590,7 @@ export const CONTRACTS = {
     HUB_CONTRACT: 'HubContract',
     CONTENT_ASSET: 'ContentAssetContract',
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
+    PROOF_MANAGER_V1_U1_CONTRACT: 'ProofManagerV1U1Contract',
     SERVICE_AGREEMENT_V1_CONTRACT: 'ServiceAgreementV1Contract',
     PARAMETERS_STORAGE_CONTRACT: 'ParametersStorageContract',
     IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
@@ -602,13 +605,16 @@ export const CONTRACT_EVENTS = {
     PROFILE: ['AskUpdated'],
     CONTENT_ASSET: ['AssetMinted'],
     COMMIT_MANAGER_V1: ['StateFinalized'],
+    PROOF_MANAGER_V1: ['ProofSubmitted'],
     SERVICE_AGREEMENT_V1: [
         'ServiceAgreementV1Created',
         'ServiceAgreementV1Extended',
         'ServiceAgreementV1Terminated',
+        'ServiceAgreementV1RewardRaised',
+        'ServiceAgreementV1UpdateRewardRaised',
     ],
     PARAMETERS_STORAGE: ['ParameterChanged'],
-    Log2PLDSF: ['ParameterChanged'],
+    LOG2PLDSF: ['ParameterChanged'],
     LINEAR_SUM: ['ParameterChanged'],
 };
 
@@ -679,6 +685,8 @@ export const CACHED_FUNCTIONS = {
         epochLength: CACHE_DATA_TYPES.NUMBER,
         minimumStake: CACHE_DATA_TYPES.ANY,
         maximumStake: CACHE_DATA_TYPES.ANY,
+        minProofWindowOffsetPerc: CACHE_DATA_TYPES.NUMBER,
+        maxProofWindowOffsetPerc: CACHE_DATA_TYPES.NUMBER,
     },
     IdentityStorageContract: {
         getIdentityId: CACHE_DATA_TYPES.NUMBER,

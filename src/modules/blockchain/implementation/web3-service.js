@@ -866,6 +866,10 @@ class Web3Service {
         return value.toString();
     }
 
+    async getTransaction(transactionHash) {
+        return this.provider.getTransaction(transactionHash);
+    }
+
     async getAllPastEvents(
         blockchainId,
         contractName,
@@ -918,7 +922,8 @@ class Web3Service {
                     ]),
                 ),
             ),
-            block: event.blockNumber,
+            transactionHash: event.transactionHash,
+            blockNumber: event.blockNumber,
             blockchainId,
         }));
     }
@@ -940,6 +945,36 @@ class Web3Service {
         return this.callContractFunction(this.HubContract, 'isAssetStorage(address)', [
             contractAddress,
         ]);
+    }
+
+    async getMinProofWindowOffsetPerc() {
+        return this.callContractFunction(
+            this.ParametersStorageContract,
+            'minProofWindowOffsetPerc',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
+    }
+
+    async getMaxProofWindowOffsetPerc() {
+        return this.callContractFunction(
+            this.ParametersStorageContract,
+            'maxProofWindowOffsetPerc',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
+    }
+
+    async generatePseudorandomUint8(assetCreator, blockNumber, blockTimestamp, limit) {
+        const encodedData = ethers.utils.encodePacked(
+            ['uint256', 'address', 'uint256'],
+            [blockTimestamp, assetCreator, blockNumber],
+        );
+        const hash = ethers.utils.keccak256(encodedData);
+        const hashBigNumber = BigNumber.from(hash);
+        const hashModulo = hashBigNumber.mod(limit);
+
+        return hashModulo.mod(256);
     }
 
     async getAssertionIdByIndex(assetContractAddress, tokenId, index) {

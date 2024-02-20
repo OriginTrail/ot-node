@@ -26,6 +26,7 @@ class BlockchainEventListenerService {
         this.pendingStorageService = ctx.pendingStorageService;
         this.ualService = ctx.ualService;
         this.hashingService = ctx.hashingService;
+        this.serviceAgreementService = ctx.serviceAgreementService;
     }
 
     async initialize() {
@@ -85,6 +86,12 @@ class BlockchainEventListenerService {
             ),
             this.getContractEvents(
                 blockchainId,
+                CONTRACTS.PROOF_MANAGER_V1_U1_CONTRACT,
+                currentBlock,
+                CONTRACT_EVENTS.PROOF_MANAGER_V1,
+            ),
+            this.getContractEvents(
+                blockchainId,
                 CONTRACTS.SERVICE_AGREEMENT_V1_CONTRACT,
                 currentBlock,
                 CONTRACT_EVENTS.SERVICE_AGREEMENT_V1,
@@ -99,7 +106,7 @@ class BlockchainEventListenerService {
                 blockchainId,
                 CONTRACTS.LOG2PLDSF_CONTRACT,
                 currentBlock,
-                CONTRACT_EVENTS.Log2PLDSF,
+                CONTRACT_EVENTS.LOG2PLDSF,
             ),
             this.getContractEvents(
                 blockchainId,
@@ -215,13 +222,13 @@ class BlockchainEventListenerService {
             );
             let batchedEvents = {};
             const eventGroupsBuffer = {};
-            let currentBlock = 0;
+            let currentBlockNumber = 0;
             for (const event of unprocessedEvents) {
-                if (event.block !== currentBlock) {
+                if (event.blockNumber !== currentBlockNumber) {
                     // eslint-disable-next-line no-await-in-loop
                     await this.handleBlockBatchedEvents(batchedEvents);
                     batchedEvents = {};
-                    currentBlock = event.block;
+                    currentBlockNumber = event.blockNumber;
                 }
 
                 // Check if event should be grouped with other event
@@ -483,13 +490,19 @@ class BlockchainEventListenerService {
     }
 
     async handleAssetCreatedGroupEvents(blockGroupEvents) {
+        const r0 = await this.blockchainModuleManager.getR0();
+
         await Promise.all(
             blockGroupEvents.map(async (eventsGroup) => {
                 // Parse and combine Arguments of both AssetMinted and ServiceAgreementCreated Events
                 const combinedData = eventsGroup.reduce((acc, event) => {
                     try {
                         const eventData = JSON.parse(event.data);
-                        return { ...acc, ...eventData, blockchainId: event.blockchainId };
+                        return {
+                            ...acc,
+                            ...eventData,
+                            blockchainId: event.blockchainId,
+                        };
                     } catch (error) {
                         this.logger.error(`Error parsing event data: ${error}`);
                         return acc;
@@ -506,9 +519,38 @@ class BlockchainEventListenerService {
                     startTime,
                     epochsNumber,
                     epochLength,
-                    scoreFunctionId, // NOTE: Not available in the event now
-                    proofWindowOffsetPerc, // NOTE: Not available in the event now
+                    tokenAmount,
+                    // TODO: Uncomment when these arguments are added to the ServiceAgreementV1Created event
+                    // scoreFunctionId,
+                    // proofWindowOffsetPerc,
                 } = combinedData;
+
+                let scoreFunctionId;
+                if (blockchainId.startsWith('otp')) {
+                    scoreFunctionId = 1;
+                } else if (blockchainId.startsWith('gnosis')) {
+                    scoreFunctionId = 2;
+                }
+
+                const tx = await this.blockchainModuleManager.getTransaction(
+                    blockchainId,
+                    eventsGroup[0].transactionHash,
+                );
+                const assetCreator = tx.from;
+                const minProofWindowOffsetPerc =
+                    await this.blockchainModuleManager.getMinProofWindowOffsetPerc(blockchainId);
+                const maxProofWindowOffsetPerc =
+                    await this.blockchainModuleManager.getMaxProofWindowOffsetPerc(blockchainId);
+
+                const proofWindowOffsetPerc =
+                    minProofWindowOffsetPerc +
+                    (await this.blockchainModuleManager.generatePseudorandomUint8(
+                        blockchainId,
+                        assetCreator,
+                        tx.blockNumber,
+                        tx.timestamp,
+                        maxProofWindowOffsetPerc - minProofWindowOffsetPerc + 1,
+                    ));
 
                 const agreementId = await this.serviceAgreementService.generateId(
                     blockchainId,
@@ -532,6 +574,14 @@ class BlockchainEventListenerService {
                     keyword,
                     assertionId,
                     0,
+                    this.blockchainModuleManager.convertFromWei(blockchainId, tokenAmount, 'ether'),
+                    0,
+                    this.serviceAgreementService.calculateBid(
+                        blockchainId,
+                        tokenAmount,
+                        epochsNumber,
+                        r0,
+                    ),
                 );
             }),
         );
@@ -550,6 +600,44 @@ class BlockchainEventListenerService {
         );
     }
 
+    async handleServiceAgreementV1RewardRaisedEvents(blockEvents) {
+        await Promise.all(
+            blockEvents.map(async (event) => {
+                const eventData = JSON.parse(event.data);
+
+                const { agreementId, tokenAmount } = eventData;
+
+                await this.repositoryModuleManager.updateServiceAgreementTokenAmount(
+                    agreementId,
+                    this.blockchainModuleManager.convertFromWei(
+                        event.blockchainId,
+                        tokenAmount,
+                        'ether',
+                    ),
+                );
+            }),
+        );
+    }
+
+    async handleServiceAgreementV1UpdateRewardRaisedEvents(blockEvents) {
+        await Promise.all(
+            blockEvents.map(async (event) => {
+                const eventData = JSON.parse(event.data);
+
+                const { agreementId, updateTokenAmount } = eventData;
+
+                await this.repositoryModuleManager.updateServiceAgreementUpdateTokenAmount(
+                    agreementId,
+                    this.blockchainModuleManager.convertFromWei(
+                        event.blockchainId,
+                        updateTokenAmount,
+                        'ether',
+                    ),
+                );
+            }),
+        );
+    }
+
     async handleServiceAgreementV1TerminatedEvents(blockEvents) {
         await this.repositoryModuleManager.removeServiceAgreements(
             blockEvents.map((event) => JSON.parse(event.data).agreementId),
@@ -557,6 +645,8 @@ class BlockchainEventListenerService {
     }
 
     async handleStateFinalizedEvents(blockEvents) {
+        const r0 = await this.blockchainModuleManager.getR0();
+
         // todo: find a way to safely parallelize this
         for (const event of blockEvents) {
             const eventData = JSON.parse(event.data);
@@ -585,6 +675,7 @@ class BlockchainEventListenerService {
                     hashFunctionId,
                     state,
                     stateIndex,
+                    r0,
                 ),
                 this._handleStateFinalizedEvent(
                     TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
@@ -597,9 +688,45 @@ class BlockchainEventListenerService {
                     hashFunctionId,
                     state,
                     stateIndex,
+                    r0,
                 ),
             ]);
         }
+    }
+
+    async handleProofSubmittedEvent(blockEvents) {
+        await Promise.all(
+            blockEvents.map(async (event) => {
+                const eventData = JSON.parse(event.data);
+
+                const {
+                    assetContract: contract,
+                    tokenId,
+                    keyword,
+                    hashFunctionId,
+                    reward,
+                } = eventData;
+
+                // eslint-disable-next-line no-await-in-loop
+                const agreementId = await this.serviceAgreementService.generateId(
+                    event.blockchainId,
+                    contract,
+                    tokenId,
+                    keyword,
+                    hashFunctionId,
+                );
+
+                // eslint-disable-next-line no-await-in-loop
+                await this.repositoryModuleManager.decreaseServiceAgreementTokenAmount(
+                    agreementId,
+                    this.blockchainModuleManager.convertFromWei(
+                        event.blockchainId,
+                        reward,
+                        'ether',
+                    ),
+                );
+            }),
+        );
     }
 
     async _handleStateFinalizedEvent(
@@ -613,6 +740,7 @@ class BlockchainEventListenerService {
         hashFunctionId,
         assertionId,
         stateIndex,
+        r0,
     ) {
         const agreementId = await this.serviceAgreementService.generateId(
             blockchain,
@@ -622,15 +750,14 @@ class BlockchainEventListenerService {
             hashFunctionId,
         );
 
-        let serviceAgreementData = await this.repositoryModuleManager.getServiceAgreementRecord(
+        // TODO: Uncomment when we have tokenAmount and updateTokenAmount in the StateFinalized event
+        // let serviceAgreementData = await this.repositoryModuleManager.getServiceAgreementRecord(
+        //     agreementId,
+        // );
+        const serviceAgreementData = await this.blockchainModuleManager.getAgreementData(
+            blockchain,
             agreementId,
         );
-        if (!serviceAgreementData) {
-            serviceAgreementData = await this.blockchainModuleManager.getAgreementData(
-                blockchain,
-                agreementId,
-            );
-        }
 
         await this.repositoryModuleManager.updateServiceAgreementRecord(
             blockchain,
@@ -646,6 +773,20 @@ class BlockchainEventListenerService {
             keyword,
             assertionId,
             stateIndex,
+            this.blockchainModuleManager.convertFromWei(
+                blockchain,
+                this.blockchainModuleManager
+                    .toBigNumber(blockchain, serviceAgreementData.tokenAmount)
+                    .add(serviceAgreementData.updateTokenAmount),
+                'ether',
+            ),
+            0,
+            this.serviceAgreementService.calculateBid(
+                blockchain,
+                serviceAgreementData.tokenAmount + serviceAgreementData.updateTokenAmount,
+                serviceAgreementData.epochsNumber,
+                r0,
+            ),
             serviceAgreementData?.lastCommitEpoch,
             serviceAgreementData?.lastProofEpoch,
         );

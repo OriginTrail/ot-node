@@ -43,6 +43,9 @@ class ServiceAgreementRepository {
         keyword,
         assertionId,
         stateIndex,
+        tokenAmount,
+        updateTokenAmount,
+        bid,
         lastCommitEpoch,
         lastProofEpoch,
     ) {
@@ -60,6 +63,9 @@ class ServiceAgreementRepository {
             keyword,
             assertionId,
             stateIndex,
+            tokenAmount,
+            updateTokenAmount,
+            bid,
             lastCommitEpoch,
             lastProofEpoch,
         });
@@ -89,6 +95,37 @@ class ServiceAgreementRepository {
 
     async getServiceAgreementRecord(agreementId) {
         return this.model.findOne({
+            where: {
+                agreementId,
+            },
+        });
+    }
+
+    async updateServiceAgreementTokenAmount(agreementId, tokenAmount) {
+        return this.model.update(
+            { tokenAmount },
+            {
+                where: {
+                    agreementId,
+                },
+            },
+        );
+    }
+
+    async updateServiceAgreementUpdateTokenAmount(agreementId, updateTokenAmount) {
+        return this.model.update(
+            { updateTokenAmount },
+            {
+                where: {
+                    agreementId,
+                },
+            },
+        );
+    }
+
+    async decreaseServiceAgreementTokenAmount(agreementId, deltaTokenAmount) {
+        return this.model.increment('tokenAmount', {
+            by: -deltaTokenAmount,
             where: {
                 agreementId,
             },
@@ -127,7 +164,13 @@ class ServiceAgreementRepository {
         });
     }
 
-    getEligibleAgreementsForSubmitCommit(timestampSeconds, blockchain, commitWindowDurationPerc) {
+    getEligibleAgreementsForSubmitCommit(
+        timestampSeconds,
+        blockchain,
+        commitWindowDurationPerc,
+        ask,
+        startTimeDelay,
+    ) {
         const currentEpoch = `FLOOR((${timestampSeconds} - start_time) / epoch_length)`;
         const currentEpochPerc = `((${timestampSeconds} - start_time) % epoch_length) / epoch_length * 100`;
 
@@ -146,6 +189,9 @@ class ServiceAgreementRepository {
             },
             where: {
                 blockchainId: blockchain,
+                [Sequelize.Op.and]: Sequelize.literal(
+                    `start_time + ${startTimeDelay} < ${timestampSeconds}`,
+                ),
                 [Sequelize.Op.or]: [
                     {
                         lastCommitEpoch: {
@@ -163,6 +209,9 @@ class ServiceAgreementRepository {
                 ),
                 epochsNumber: {
                     [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
+                },
+                bid: {
+                    [Sequelize.Op.gte]: Sequelize.literal(ask),
                 },
             },
             order: [[Sequelize.col('timeLeftInSubmitCommitWindow'), 'ASC']],
