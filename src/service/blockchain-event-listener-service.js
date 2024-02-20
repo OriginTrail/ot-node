@@ -519,11 +519,14 @@ class BlockchainEventListenerService {
                     startTime,
                     epochsNumber,
                     epochLength,
-                    tokenAmount,
+                    tokenAmount: tokenAmountBN,
                     // TODO: Uncomment when these arguments are added to the ServiceAgreementV1Created event
                     // scoreFunctionId,
                     // proofWindowOffsetPerc,
                 } = combinedData;
+                const tokenAmount = Number(
+                    this.blockchainModuleManager.convertFromWei(blockchainId, tokenAmountBN),
+                );
 
                 let scoreFunctionId;
                 if (blockchainId.startsWith('otp')) {
@@ -574,7 +577,7 @@ class BlockchainEventListenerService {
                     keyword,
                     assertionId,
                     0,
-                    this.blockchainModuleManager.convertFromWei(blockchainId, tokenAmount, 'ether'),
+                    tokenAmount,
                     0,
                     this.serviceAgreementService.calculateBid(
                         blockchainId,
@@ -609,11 +612,7 @@ class BlockchainEventListenerService {
 
                 await this.repositoryModuleManager.updateServiceAgreementTokenAmount(
                     agreementId,
-                    this.blockchainModuleManager.convertFromWei(
-                        event.blockchainId,
-                        tokenAmount,
-                        'ether',
-                    ),
+                    this.blockchainModuleManager.convertFromWei(event.blockchainId, tokenAmount),
                 );
             }),
         );
@@ -631,7 +630,6 @@ class BlockchainEventListenerService {
                     this.blockchainModuleManager.convertFromWei(
                         event.blockchainId,
                         updateTokenAmount,
-                        'ether',
                     ),
                 );
             }),
@@ -719,11 +717,7 @@ class BlockchainEventListenerService {
                 // eslint-disable-next-line no-await-in-loop
                 await this.repositoryModuleManager.decreaseServiceAgreementTokenAmount(
                     agreementId,
-                    this.blockchainModuleManager.convertFromWei(
-                        event.blockchainId,
-                        reward,
-                        'ether',
-                    ),
+                    this.blockchainModuleManager.convertFromWei(event.blockchainId, reward),
                 );
             }),
         );
@@ -773,13 +767,7 @@ class BlockchainEventListenerService {
             keyword,
             assertionId,
             stateIndex,
-            this.blockchainModuleManager.convertFromWei(
-                blockchain,
-                this.blockchainModuleManager
-                    .toBigNumber(blockchain, serviceAgreementData.tokenAmount)
-                    .add(serviceAgreementData.updateTokenAmount),
-                'ether',
-            ),
+            serviceAgreementData.tokenAmount + serviceAgreementData.updateTokenAmount,
             0,
             this.serviceAgreementService.calculateBid(
                 blockchain,

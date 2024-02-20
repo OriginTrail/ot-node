@@ -130,9 +130,7 @@ class HandleProtocolMessageCommand extends Command {
                 blockchain,
             );
 
-            const ask = this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
-
-            return this.blockchainModuleManager.toBigNumber(blockchain, ask);
+            return this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
         };
 
         const [{ agreementId, agreementData }, blockchainAssertionSize, r0, ask] =
@@ -170,7 +168,8 @@ class HandleProtocolMessageCommand extends Command {
             .mul(epochsLeft)
             .mul(blockchainAssertionSize);
 
-        const serviceAgreementBid = agreementData.tokenAmount
+        const serviceAgreementBid = this.blockchainModuleManager
+            .convertToWei(blockchain, agreementData.tokenAmount)
             .add(agreementData.updateTokenAmount)
             .mul(1024)
             .div(divisor)

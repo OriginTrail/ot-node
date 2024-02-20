@@ -86,16 +86,8 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             keyword,
             assertionId,
             stateIndex,
-            this.blockchainModuleManager.convertFromWei(
-                blockchain,
-                agreementData.tokenAmount,
-                'ether',
-            ),
-            this.blockchainModuleManager.convertFromWei(
-                blockchain,
-                agreementData.updateTokenAmount,
-                'ether',
-            ),
+            agreementData.tokenAmount,
+            agreementData.updateTokenAmount,
             this.serviceAgreementService.calculateBid(
                 blockchain,
                 agreementData.tokenAmount,

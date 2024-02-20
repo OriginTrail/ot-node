@@ -1047,8 +1047,8 @@ class Web3Service {
             startTime: result['0'].toNumber(),
             epochsNumber: result['1'],
             epochLength: result['2'].toNumber(),
-            tokenAmount: result['3'][0],
-            updateTokenAmount: result['3'][1],
+            tokenAmount: Number(ethers.utils.formatEther(result['3'][0])),
+            updateTokenAmount: Number(ethers.utils.formatEther(result['3'][1])),
             scoreFunctionId: result['4'][0],
             proofWindowOffsetPerc: result['4'][1],
         };
@@ -1370,7 +1370,7 @@ class Web3Service {
     }
 
     convertToWei(value, fromUnit = 'ether') {
-        return ethers.utils.parseUnits(value.toString(), fromUnit).toString();
+        return ethers.utils.parseUnits(value.toString(), fromUnit);
     }
 
     convertFromWei(value, toUnit = 'ether') {

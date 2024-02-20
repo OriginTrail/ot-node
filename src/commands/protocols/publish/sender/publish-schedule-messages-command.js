@@ -90,7 +90,7 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
             .mul(blockchainAssertionSize);
 
         const serviceAgreementBid = this.blockchainModuleManager
-            .toBigNumber(blockchain, serviceAgreementData.tokenAmount)
+            .convertToWei(blockchain, serviceAgreementData.tokenAmount)
             .add(serviceAgreementData.updateTokenAmount)
             .mul(1024)
             .div(divisor)
@@ -121,9 +121,8 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
 
     async getAsk(blockchain, nodeId) {
         const peerRecord = await this.repositoryModuleManager.getPeerRecord(nodeId, blockchain);
-        const ask = this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
 
-        return this.blockchainModuleManager.toBigNumber(blockchain, ask);
+        return this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
     }
 
     /**

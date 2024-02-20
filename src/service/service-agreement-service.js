@@ -29,7 +29,7 @@ class ServiceAgreementService {
         return this.blockchainModuleManager.convertFromWei(
             blockchain,
             this.blockchainModuleManager
-                .toBigNumber(blockchain, tokenAmount)
+                .convertToWei(blockchain, tokenAmount)
                 .div(epochsNumber)
                 .div(r0),
         );
