@@ -616,8 +616,7 @@ class Web3Service {
         operationalWallet,
     ) {
         let result;
-        const gasPrice =
-            predefinedGasPrice ?? (await this.getGasPrice()) ?? this.convertToWei(20, 'wei');
+        const gasPrice = predefinedGasPrice ?? (await this.getGasPrice());
         let gasLimit;
 
         try {

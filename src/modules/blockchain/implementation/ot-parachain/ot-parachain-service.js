@@ -127,7 +127,7 @@ class OtParachainService extends Web3Service {
         try {
             return this.provider.getGasPrice();
         } catch (error) {
-            return undefined;
+            return this.convertToWei(20, 'wei');
         }
     }
 
