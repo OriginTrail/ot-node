@@ -148,7 +148,7 @@ class HandleProtocolMessageCommand extends Command {
             };
         }
 
-        const currentEpoch = this.serviceAgreementService.calculateCurrentEpoch(
+        const currentEpoch = await this.serviceAgreementService.calculateCurrentEpoch(
             agreementData.startTime,
             agreementData.epochLength,
             blockchain,
