@@ -101,10 +101,6 @@ class EpochCheckCommand extends Command {
 
     async scheduleSubmitCommitCommands(
         blockchain,
-        contract,
-        tokenId,
-        keyword,
-        hashFunctionId,
         maxTransactions,
         commitWindowDurationPerc,
         r0,
@@ -228,11 +224,11 @@ class EpochCheckCommand extends Command {
 
                     const serviceAgreementBid = await this.serviceAgreementService.calculateBid(
                         blockchain,
-                        contract,
-                        tokenId,
+                        agreementData.assetStorageContractAddress,
+                        agreementData.tokenId,
                         agreementData.assertionId,
-                        keyword,
-                        hashFunctionId,
+                        agreementData.keyword,
+                        agreementData.hashFunctionId,
                         r0,
                     );
 
