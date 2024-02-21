@@ -148,7 +148,7 @@ class HandleProtocolMessageCommand extends Command {
             };
         }
 
-        const serviceAgreementBid = this.serviceAgreementService.calculateBid(
+        const serviceAgreementBid = await this.serviceAgreementService.calculateBid(
             blockchain,
             blockchainAssertionSize,
             agreementData,
