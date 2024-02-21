@@ -132,7 +132,7 @@ class GetAssertionIdCommand extends Command {
             agreementId,
         );
 
-        const epoch = this.serviceAgreementService.calculateCurrentEpoch(
+        const epoch = await this.serviceAgreementService.calculateCurrentEpoch(
             agreementData.startTime,
             agreementData.epochLength,
             blockchain,
