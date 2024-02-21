@@ -26,7 +26,7 @@ class ServiceAgreementService {
     }
 
     async calculateBid(blockchain, contract, tokenId, assertionId, keyword, hashFunctionId, r0) {
-        const agreementId = await this.serviceAgreementService.generateId(
+        const agreementId = await this.generateId(
             blockchain,
             contract,
             tokenId,
