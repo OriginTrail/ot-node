@@ -25,14 +25,36 @@ class ServiceAgreementService {
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
-    calculateBid(blockchain, tokenAmount, epochsNumber, r0) {
-        return this.blockchainModuleManager.convertFromWei(
+    async calculateBid(blockchain, contract, tokenId, assertionId, keyword, hashFunctionId, r0) {
+        const agreementId = await this.serviceAgreementService.generateId(
             blockchain,
-            this.blockchainModuleManager
-                .convertToWei(blockchain, tokenAmount)
-                .div(epochsNumber)
-                .div(r0),
+            contract,
+            tokenId,
+            keyword,
+            hashFunctionId,
         );
+
+        const serviceAgreementData = await this.blockchainModuleManager.getAgreementData(
+            blockchain,
+            agreementId,
+        );
+
+        const blockchainAssertionSize = await this.blockchainModuleManager.getAssertionSize(
+            blockchain,
+            assertionId,
+        );
+
+        const divisor = this.blockchainModuleManager
+            .toBigNumber(blockchain, r0)
+            .mul(Number(serviceAgreementData.epochsNumber))
+            .mul(blockchainAssertionSize);
+
+        return this.blockchainModuleManager
+            .convertToWei(blockchain, serviceAgreementData.tokenAmount)
+            .add(serviceAgreementData.updateTokenAmount)
+            .mul(1024)
+            .div(divisor)
+            .add(1); // add 1 wei because of the precision loss
     }
 
     async calculateRank(

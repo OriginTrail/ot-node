@@ -5,7 +5,6 @@ import {
     ERROR_TYPE,
     OPERATION_ID_STATUS,
     OPERATION_STATUS,
-    TRIPLE_STORE_REPOSITORIES,
     SIMPLE_ASSET_SYNC_PARAMETERS,
 } from '../../../constants/constants.js';
 
@@ -51,96 +50,71 @@ class SimpleAssetSyncCommand extends Command {
                 `Retry number: ${COMMAND_RETRIES.SIMPLE_ASSET_SYNC - command.retries + 1}`,
         );
 
-        this.logger.debug(
-            `[SIMPLE_ASSET_SYNC] (${operationId}): Checking if Knowledge Asset is synced for the ` +
-                `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
-                `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
-                `State Index: ${stateIndex}, Operation ID: ${operationId}`,
-        );
-
         try {
-            // Q: Potentially we can also add a boolean to the service_agreement in the operationaldb
-            // to track synced KAs in order not to check the repository on every commit
-            const isAssetSynced = await this.tripleStoreService.assertionExists(
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                assertionId,
+            this.logger.debug(
+                `[SIMPLE_ASSET_SYNC] (${operationId}): Fetching Knowledge Asset from the network for the ` +
+                    `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
+                    `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                    `State Index: ${stateIndex}, Operation ID: ${operationId}`,
             );
 
-            if (isAssetSynced) {
-                this.logger.info(
-                    `[SIMPLE_ASSET_SYNC] (${operationId}): Knowledge Asset is already synced, finishing command for the ` +
-                        `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
-                        `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
-                        `State Index: ${stateIndex}, Operation ID: ${operationId}`,
-                );
-            } else {
-                this.logger.debug(
-                    `[SIMPLE_ASSET_SYNC] (${operationId}): Fetching Knowledge Asset from the network for the ` +
-                        `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
-                        `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
-                        `State Index: ${stateIndex}, Operation ID: ${operationId}`,
-                );
+            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
-                const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+            const getOperationId = await this.operationIdService.generateOperationId(
+                OPERATION_ID_STATUS.GET.GET_START,
+            );
 
-                const getOperationId = await this.operationIdService.generateOperationId(
-                    OPERATION_ID_STATUS.GET.GET_START,
-                );
-
-                await Promise.all([
-                    this.operationIdService.updateOperationIdStatus(
-                        getOperationId,
-                        blockchain,
-                        OPERATION_ID_STATUS.GET.GET_INIT_START,
-                    ),
-                    this.repositoryModuleManager.createOperationRecord(
-                        this.getService.getOperationName(),
-                        getOperationId,
-                        OPERATION_STATUS.IN_PROGRESS,
-                    ),
-                ]);
-
-                await this.commandExecutor.add({
-                    name: 'networkGetCommand',
-                    sequence: [],
-                    delay: 0,
-                    data: {
-                        getOperationId,
-                        id: ual,
-                        blockchain,
-                        contract,
-                        tokenId,
-                        state: assertionId,
-                        hashFunctionId,
-                        assertionId,
-                        stateIndex,
-                    },
-                    transactional: false,
-                });
-
-                await this.operationIdService.updateOperationIdStatus(
+            await Promise.all([
+                this.operationIdService.updateOperationIdStatus(
                     getOperationId,
                     blockchain,
-                    OPERATION_ID_STATUS.GET.GET_INIT_END,
-                );
+                    OPERATION_ID_STATUS.GET.GET_INIT_START,
+                ),
+                this.repositoryModuleManager.createOperationRecord(
+                    this.getService.getOperationName(),
+                    getOperationId,
+                    OPERATION_STATUS.IN_PROGRESS,
+                ),
+            ]);
 
-                let attempt = 0;
-                let getResult;
-                do {
-                    // eslint-disable-next-line no-await-in-loop
-                    await setTimeout(
-                        SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS,
-                    );
+            await this.commandExecutor.add({
+                name: 'networkGetCommand',
+                sequence: [],
+                delay: 0,
+                data: {
+                    getOperationId,
+                    id: ual,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    state: assertionId,
+                    hashFunctionId,
+                    assertionId,
+                    stateIndex,
+                },
+                transactional: false,
+            });
 
-                    // eslint-disable-next-line no-await-in-loop
-                    getResult = await this.operationIdService.getOperationIdRecord(getOperationId);
-                    attempt += 1;
-                } while (
-                    attempt < SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_MAX_ATTEMPTS &&
-                    getResult?.status !== OPERATION_ID_STATUS.FAILED &&
-                    getResult?.status !== OPERATION_ID_STATUS.COMPLETED
-                );
-            }
+            await this.operationIdService.updateOperationIdStatus(
+                getOperationId,
+                blockchain,
+                OPERATION_ID_STATUS.GET.GET_INIT_END,
+            );
+
+            let attempt = 0;
+            let getResult;
+            do {
+                // eslint-disable-next-line no-await-in-loop
+                await setTimeout(SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS);
+
+                // eslint-disable-next-line no-await-in-loop
+                getResult = await this.operationIdService.getOperationIdRecord(getOperationId);
+                attempt += 1;
+            } while (
+                attempt < SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_MAX_ATTEMPTS &&
+                getResult?.status !== OPERATION_ID_STATUS.FAILED &&
+                getResult?.status !== OPERATION_ID_STATUS.COMPLETED
+            );
         } catch (error) {
             this.logger.warn(
                 `[SIMPLE_ASSET_SYNC] (${operationId}): Unable to sync Knowledge Asset for the ` +

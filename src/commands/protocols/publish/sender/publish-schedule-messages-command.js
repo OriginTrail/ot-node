@@ -59,42 +59,16 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         minAckResponses,
         operationId,
     ) {
-        const agreementId = await this.serviceAgreementService.generateId(
+        const r0 = await this.blockchainModuleManager.getR0();
+        const serviceAgreementBid = await this.serviceAgreementService.calculateBid(
             blockchain,
             contract,
             tokenId,
+            assertionId,
             keyword,
             hashFunctionId,
+            r0,
         );
-
-        let serviceAgreementData = await this.repositoryModuleManager.getServiceAgreementRecord(
-            agreementId,
-        );
-        if (!serviceAgreementData) {
-            serviceAgreementData = await this.blockchainModuleManager.getAgreementData(
-                blockchain,
-                agreementId,
-            );
-        }
-
-        const r0 = await this.blockchainModuleManager.getR0(blockchain);
-
-        const blockchainAssertionSize = await this.blockchainModuleManager.getAssertionSize(
-            blockchain,
-            assertionId,
-        );
-
-        const divisor = this.blockchainModuleManager
-            .toBigNumber(blockchain, r0)
-            .mul(Number(serviceAgreementData.epochsNumber))
-            .mul(blockchainAssertionSize);
-
-        const serviceAgreementBid = this.blockchainModuleManager
-            .convertToWei(blockchain, serviceAgreementData.tokenAmount)
-            .add(serviceAgreementData.updateTokenAmount)
-            .mul(1024)
-            .div(divisor)
-            .add(1); // add 1 wei because of the precision loss
 
         let validBids = 0;
 

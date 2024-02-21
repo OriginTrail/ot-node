@@ -306,9 +306,6 @@ class RepositoryModuleManager extends BaseModuleManager {
         keyword,
         assertionId,
         stateIndex,
-        tokenAmount,
-        updateTokenAmount,
-        bid,
         lastCommitEpoch,
         lastProofEpoch,
     ) {
@@ -327,9 +324,6 @@ class RepositoryModuleManager extends BaseModuleManager {
                 keyword,
                 assertionId,
                 stateIndex,
-                tokenAmount,
-                updateTokenAmount,
-                bid,
                 lastCommitEpoch,
                 lastProofEpoch,
             );
@@ -367,33 +361,6 @@ class RepositoryModuleManager extends BaseModuleManager {
             return this.getRepository('service_agreement').updateServiceAgreementLastCommitEpoch(
                 agreementId,
                 lastCommitEpoch,
-            );
-        }
-    }
-
-    async updateServiceAgreementTokenAmount(agreementId, tokenAmount) {
-        if (this.initialized) {
-            return this.getRepository('service_agreement').updateServiceAgreementTokenAmount(
-                agreementId,
-                tokenAmount,
-            );
-        }
-    }
-
-    async updateServiceAgreementUpdateTokenAmount(agreementId, updateTokenAmount) {
-        if (this.initialized) {
-            return this.getRepository('service_agreement').updateServiceAgreementUpdateTokenAmount(
-                agreementId,
-                updateTokenAmount,
-            );
-        }
-    }
-
-    async decreaseServiceAgreementTokenAmount(agreementId, deltaTokenAmount) {
-        if (this.initialized) {
-            return this.getRepository('service_agreement').decreaseServiceAgreementTokenAmount(
-                agreementId,
-                deltaTokenAmount,
             );
         }
     }
