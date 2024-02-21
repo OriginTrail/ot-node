@@ -516,13 +516,10 @@ class BlockchainEventListenerService {
                     // proofWindowOffsetPerc,
                 } = combinedData;
 
-                let scoreFunctionId;
-                if (blockchainId.startsWith('otp')) {
-                    scoreFunctionId = 1;
-                } else if (blockchainId.startsWith('gnosis')) {
-                    scoreFunctionId = 2;
-                }
+                // TODO: Remove when added to the event
+                const scoreFunctionId = this.blockchainModuleManager.getScoreFunctionIds()[0];
 
+                // TODO: Remove when added to the event
                 const tx = await this.blockchainModuleManager.getTransaction(
                     blockchainId,
                     eventsGroup[0].transactionHash,

@@ -1438,6 +1438,10 @@ class Web3Service {
         ]);
     }
 
+    getScoreFunctionIds() {
+        return Object.keys(this.scoringFunctionsContracts);
+    }
+
     async getLog2PLDSFParams() {
         const log2pldsfParams = await this.callContractFunction(
             this.scoringFunctionsContracts[1],
