@@ -4,6 +4,7 @@ import {
     ERROR_TYPE,
     COMMAND_RETRIES,
     COMMAND_TX_GAS_INCREASE_FACTORS,
+    CONTRACT_FUNCTION_FIXED_GAS_PRICE,
 } from '../../../../constants/constants.js';
 
 class SubmitUpdateCommitCommand extends Command {
@@ -75,8 +76,8 @@ class SubmitUpdateCommitCommand extends Command {
 
             return Command.empty();
         }
-
-        const txGasPrice = gasPrice ?? (await this.blockchainModuleManager.getGasPrice(blockchain));
+        const txGasPrice =
+            gasPrice ?? CONTRACT_FUNCTION_FIXED_GAS_PRICE[blockchain].SUBMIT_UPDATE_COMMIT;
 
         const transactionCompletePromise = new Promise((resolve, reject) => {
             this.blockchainModuleManager.submitUpdateCommit(
