@@ -141,6 +141,11 @@ class ServiceAgreementService {
             maxStake,
         );
     }
+
+    async calculateCurrentEpoch(startTime, epochLength, blockchain) {
+        const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
+        return Math.floor((Number(now) - Number(startTime)) / Number(epochLength));
+    }
 }
 
 export default ServiceAgreementService;

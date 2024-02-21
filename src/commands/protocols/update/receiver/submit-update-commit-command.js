@@ -12,6 +12,7 @@ class SubmitUpdateCommitCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.operationIdService = ctx.operationIdService;
+        this.serviceAgreementService = ctx.serviceAgreementService;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_ERROR;
     }
@@ -41,9 +42,9 @@ class SubmitUpdateCommitCommand extends Command {
             `Retry number: ${COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1}`,
         );
 
-        const epoch = await this.calculateCurrentEpoch(
-            Number(agreementData.startTime),
-            Number(agreementData.epochLength),
+        const epoch = await this.serviceAgreementService.calculateCurrentEpoch(
+            agreementData.startTime,
+            agreementData.epochLength,
             blockchain,
         );
 
@@ -174,11 +175,6 @@ class SubmitUpdateCommitCommand extends Command {
         );
 
         return Command.empty();
-    }
-
-    async calculateCurrentEpoch(startTime, epochLength, blockchain) {
-        const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
-        return Math.floor((Number(now) - Number(startTime)) / Number(epochLength));
     }
 
     async retryFinished(command) {
