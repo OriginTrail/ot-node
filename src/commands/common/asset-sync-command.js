@@ -110,7 +110,7 @@ class AssetSyncCommand extends Command {
                 }
             }
 
-            for (let tokenId = latestSyncedTokenId; tokenId < latestTokenId; tokenId += 1) {
+            for (let tokenId = latestSyncedTokenId; tokenId <= latestTokenId; tokenId += 1) {
                 tokenIdsForSync.push({ tokenId, blockchain, contract });
             }
 
