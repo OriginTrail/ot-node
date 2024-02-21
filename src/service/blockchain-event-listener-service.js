@@ -86,12 +86,6 @@ class BlockchainEventListenerService {
             ),
             this.getContractEvents(
                 blockchainId,
-                CONTRACTS.PROOF_MANAGER_V1_U1_CONTRACT,
-                currentBlock,
-                CONTRACT_EVENTS.PROOF_MANAGER_V1,
-            ),
-            this.getContractEvents(
-                blockchainId,
                 CONTRACTS.SERVICE_AGREEMENT_V1_CONTRACT,
                 currentBlock,
                 CONTRACT_EVENTS.SERVICE_AGREEMENT_V1,
