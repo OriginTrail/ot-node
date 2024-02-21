@@ -224,6 +224,11 @@ export const GNOSIS_DEFAULT_GAS_PRICE = {
     MAINNET: 5,
 };
 
+export const NEURO_DEFAULT_GAS_PRICE = {
+    TESTNET: 8,
+    MAINNET: 8,
+};
+
 export const WEBSOCKET_PROVIDER_OPTIONS = {
     reconnect: {
         auto: true,
