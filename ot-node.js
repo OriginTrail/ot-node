@@ -68,12 +68,6 @@ class OTNode {
             this.config,
         );
 
-        await MigrationExecutor.executeUalExtensionTripleStoreMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
         await this.initializeBlockchainEventListenerService();
 
         await MigrationExecutor.executePullShardingTableMigration(
