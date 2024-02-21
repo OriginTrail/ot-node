@@ -669,7 +669,7 @@ class BlockchainEventListenerService {
             blockchain,
             contract,
             tokenId,
-            serviceAgreementData.agreementId,
+            agreementId,
             serviceAgreementData.startTime,
             serviceAgreementData.epochsNumber,
             serviceAgreementData.epochLength,
