@@ -109,6 +109,13 @@ class EpochCheckCommand extends Command {
         minStake,
         maxStake,
     ) {
+        const peerRecord = await this.repositoryModuleManager.getPeerRecord(
+            this.networkModuleManager.getPeerId().toB58String(),
+            blockchain,
+        );
+
+        const ask = this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
+
         const timestamp = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
         const eligibleAgreementForSubmitCommit =
             await this.repositoryModuleManager.getEligibleAgreementsForSubmitCommit(
@@ -211,24 +218,16 @@ class EpochCheckCommand extends Command {
                         blockchain,
                         serviceAgreement.agreementId,
                     );
-
-                    const peerRecord = await this.repositoryModuleManager.getPeerRecord(
-                        this.networkModuleManager.getPeerId().toB58String(),
-                        blockchain,
-                    );
-
-                    const ask = this.blockchainModuleManager.convertToWei(
-                        blockchain,
-                        peerRecord.ask,
-                    );
+                    const blockchainAssertionSize =
+                        await this.blockchainModuleManager.getAssetionSize(
+                            blockchain,
+                            agreementData.assertionId,
+                        );
 
                     const serviceAgreementBid = await this.serviceAgreementService.calculateBid(
                         blockchain,
-                        agreementData.assetStorageContractAddress,
-                        agreementData.tokenId,
-                        agreementData.assertionId,
-                        agreementData.keyword,
-                        agreementData.hashFunctionId,
+                        blockchainAssertionSize,
+                        agreementData,
                         r0,
                     );
 

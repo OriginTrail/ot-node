@@ -11,6 +11,7 @@ import {
     DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS,
     CONTRACT_EVENT_TO_GROUP_MAPPING,
     GROUPED_CONTRACT_EVENTS,
+    SERVICE_AGREEMENT_SOURCES,
 } from '../constants/constants.js';
 
 const fetchEventsFailedCount = {};
@@ -487,17 +488,17 @@ class BlockchainEventListenerService {
         await Promise.all(
             blockGroupEvents.map(async (eventsGroup) => {
                 // Parse and combine Arguments of both AssetMinted and ServiceAgreementCreated Events
-                const combinedData = eventsGroup.reduce((acc, event) => {
+                const combinedData = eventsGroup.reduce((accumulator, event) => {
                     try {
                         const eventData = JSON.parse(event.data);
                         return {
-                            ...acc,
+                            ...accumulator,
                             ...eventData,
                             blockchainId: event.blockchainId,
                         };
                     } catch (error) {
                         this.logger.error(`Error parsing event data: ${error}`);
-                        return acc;
+                        return accumulator;
                     }
                 }, {});
 
@@ -540,7 +541,7 @@ class BlockchainEventListenerService {
                         maxProofWindowOffsetPerc - minProofWindowOffsetPerc + 1,
                     ));
 
-                const agreementId = await this.serviceAgreementService.generateId(
+                const agreementId = this.serviceAgreementService.generateId(
                     blockchainId,
                     contract,
                     tokenId,
@@ -562,6 +563,7 @@ class BlockchainEventListenerService {
                     keyword,
                     assertionId,
                     0,
+                    SERVICE_AGREEMENT_SOURCES.EVENT,
                 );
             }),
         );
@@ -644,7 +646,7 @@ class BlockchainEventListenerService {
         assertionId,
         stateIndex,
     ) {
-        const agreementId = await this.serviceAgreementService.generateId(
+        const agreementId = this.serviceAgreementService.generateId(
             blockchain,
             contract,
             tokenId,
@@ -676,6 +678,7 @@ class BlockchainEventListenerService {
             keyword,
             assertionId,
             stateIndex,
+            serviceAgreementData.dataSource ?? SERVICE_AGREEMENT_SOURCES.BLOCKCHAIN,
             serviceAgreementData?.lastCommitEpoch,
             serviceAgreementData?.lastProofEpoch,
         );

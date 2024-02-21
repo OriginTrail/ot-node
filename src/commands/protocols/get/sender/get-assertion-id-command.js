@@ -118,14 +118,14 @@ class GetAssertionIdCommand extends Command {
             assertionIds[0],
         );
 
-        const agreementId = await this.serviceAgreementService.generateId(
+        const agreementId = this.serviceAgreementService.generateId(
             blockchain,
             contract,
             tokenId,
             keyword,
             hashFunctionId,
         );
-        const lastestStateIndex = assertionIds.length;
+        const latestStateIndex = assertionIds.length;
 
         const agreementData = await this.blockchainModuleManager.getAgreementData(
             blockchain,
@@ -142,7 +142,7 @@ class GetAssertionIdCommand extends Command {
             blockchain,
             agreementId,
             epoch,
-            lastestStateIndex,
+            latestStateIndex,
         );
     }
 

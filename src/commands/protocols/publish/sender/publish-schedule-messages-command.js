@@ -59,14 +59,29 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         minAckResponses,
         operationId,
     ) {
-        const r0 = await this.blockchainModuleManager.getR0();
-        const serviceAgreementBid = await this.serviceAgreementService.calculateBid(
+        const blockchainAssertionSize = await this.blockchainModuleManager.getAssertionSize(
+            blockchain,
+            assertionId,
+        );
+
+        const agreementId = this.serviceAgreementService.generateId(
             blockchain,
             contract,
             tokenId,
-            assertionId,
             keyword,
             hashFunctionId,
+        );
+        const agreementData = await this.blockchainModuleManager.getAgreementData(
+            blockchain,
+            agreementId,
+        );
+
+        const r0 = await this.blockchainModuleManager.getR0();
+
+        const serviceAgreementBid = await this.serviceAgreementService.calculateBid(
+            blockchain,
+            blockchainAssertionSize,
+            agreementData,
             r0,
         );
 

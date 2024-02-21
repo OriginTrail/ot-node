@@ -306,6 +306,7 @@ class RepositoryModuleManager extends BaseModuleManager {
         keyword,
         assertionId,
         stateIndex,
+        dataSource,
         lastCommitEpoch,
         lastProofEpoch,
     ) {
@@ -324,6 +325,7 @@ class RepositoryModuleManager extends BaseModuleManager {
                 keyword,
                 assertionId,
                 stateIndex,
+                dataSource,
                 lastCommitEpoch,
                 lastProofEpoch,
             );

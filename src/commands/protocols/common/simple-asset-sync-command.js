@@ -46,37 +46,38 @@ class SimpleAssetSyncCommand extends Command {
             `[SIMPLE_ASSET_SYNC] (${operationId}): Started command for the ` +
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
-                `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
-                `Retry number: ${COMMAND_RETRIES.SIMPLE_ASSET_SYNC - command.retries + 1}`,
+                `State Index: ${stateIndex}, Retry number: ${
+                    COMMAND_RETRIES.SIMPLE_ASSET_SYNC - command.retries + 1
+                }`,
         );
 
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+        const getOperationId = await this.operationIdService.generateOperationId(
+            OPERATION_ID_STATUS.GET.GET_START,
+        );
+
+        this.logger.debug(
+            `[SIMPLE_ASSET_SYNC] (${operationId}): Fetching Knowledge Asset from the network for the ` +
+                `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
+                `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                `State Index: ${stateIndex}, Network Get Operation ID: ${getOperationId}`,
+        );
+
+        await Promise.all([
+            this.operationIdService.updateOperationIdStatus(
+                getOperationId,
+                blockchain,
+                OPERATION_ID_STATUS.GET.GET_INIT_START,
+            ),
+            this.repositoryModuleManager.createOperationRecord(
+                this.getService.getOperationName(),
+                getOperationId,
+                OPERATION_STATUS.IN_PROGRESS,
+            ),
+        ]);
+
         try {
-            this.logger.debug(
-                `[SIMPLE_ASSET_SYNC] (${operationId}): Fetching Knowledge Asset from the network for the ` +
-                    `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
-                    `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
-                    `State Index: ${stateIndex}, Operation ID: ${operationId}`,
-            );
-
-            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
-            const getOperationId = await this.operationIdService.generateOperationId(
-                OPERATION_ID_STATUS.GET.GET_START,
-            );
-
-            await Promise.all([
-                this.operationIdService.updateOperationIdStatus(
-                    getOperationId,
-                    blockchain,
-                    OPERATION_ID_STATUS.GET.GET_INIT_START,
-                ),
-                this.repositoryModuleManager.createOperationRecord(
-                    this.getService.getOperationName(),
-                    getOperationId,
-                    OPERATION_STATUS.IN_PROGRESS,
-                ),
-            ]);
-
             await this.commandExecutor.add({
                 name: 'networkGetCommand',
                 sequence: [],
@@ -120,7 +121,7 @@ class SimpleAssetSyncCommand extends Command {
                 `[SIMPLE_ASSET_SYNC] (${operationId}): Unable to sync Knowledge Asset for the ` +
                     `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                     `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
-                    `State Index: ${stateIndex}, Operation ID: ${operationId}, `,
+                    `State Index: ${stateIndex}, Network Get Operation ID: ${getOperationId}, `,
             );
 
             return Command.retry();
@@ -136,7 +137,7 @@ class SimpleAssetSyncCommand extends Command {
             `[SIMPLE_ASSET_SYNC] (${operationId}): Successfully executed command for the ` +
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
-                `State Index: ${stateIndex}, Operation ID: ${operationId}, `,
+                `State Index: ${stateIndex}, Network Get Operation ID: ${getOperationId}, `,
         );
 
         return this.continueSequence(command.data, command.sequence, {

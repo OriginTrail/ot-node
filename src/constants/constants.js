@@ -657,6 +657,13 @@ export const BLOCK_TIME_MILLIS = {
 
 export const TRANSACTION_CONFIRMATIONS = 1;
 
+export const SERVICE_AGREEMENT_SOURCES = {
+    BLOCKCHAIN: 'blockchain',
+    EVENT: 'event',
+    CLIENT: 'client',
+    NODE: 'node',
+};
+
 export const CACHE_DATA_TYPES = {
     NUMBER: 'number',
     ANY: 'any',

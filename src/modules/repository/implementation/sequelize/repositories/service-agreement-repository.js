@@ -43,6 +43,7 @@ class ServiceAgreementRepository {
         keyword,
         assertionId,
         stateIndex,
+        dataSource,
         lastCommitEpoch,
         lastProofEpoch,
     ) {
@@ -60,6 +61,7 @@ class ServiceAgreementRepository {
             keyword,
             assertionId,
             stateIndex,
+            dataSource,
             lastCommitEpoch,
             lastProofEpoch,
         });
