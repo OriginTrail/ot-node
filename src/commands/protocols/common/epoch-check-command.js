@@ -22,6 +22,7 @@ class EpochCheckCommand extends Command {
         this.fileService = ctx.fileService;
         this.proximityScoringService = ctx.proximityScoringService;
         this.hashingService = ctx.hashingService;
+        this.tripleStoreService = ctx.tripleStoreService;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.EPOCH_CHECK_ERROR;
     }
