@@ -6,9 +6,7 @@ import {
     TRANSACTION_CONFIRMATIONS,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
-    NODE_ENVIRONMENTS,
 } from '../../../constants/constants.js';
-import MigrationExecutor from '../../../migration/migration-executor.js';
 
 class EpochCheckCommand extends Command {
     constructor(ctx) {
@@ -27,20 +25,6 @@ class EpochCheckCommand extends Command {
     }
 
     async execute(command) {
-        const migrationExecuted = await MigrationExecutor.migrationAlreadyExecuted(
-            'ualExtensionTripleStoreMigration',
-            this.fileService,
-        );
-        if (
-            process.env.NODE_ENV !== NODE_ENVIRONMENTS.DEVELOPMENT &&
-            process.env.NODE_ENV !== NODE_ENVIRONMENTS.TEST &&
-            !migrationExecuted
-        ) {
-            this.logger.info(
-                'Epoch check: command will be postponed until ual extension triple store migration is completed',
-            );
-            return Command.repeat();
-        }
         this.logger.info('Epoch check: Starting epoch check command');
         const operationId = this.operationIdService.generateId();
 
