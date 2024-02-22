@@ -248,7 +248,7 @@ class BlockchainEventListenerService {
                     // Get Events Group object containing predefined events and Grouping Key (Event Argument)
                     const eventsGroup = GROUPED_CONTRACT_EVENTS[eventsGroupName];
                     // Get value of the Grouping Key from the Event
-                    const groupingKeyValue = event[eventsGroup.groupingKey];
+                    const groupingKeyValue = JSON.parse(event.data)[eventsGroup.groupingKey];
 
                     if (!this.eventGroupsBuffer[blockchainId][eventsGroupName]) {
                         this.eventGroupsBuffer[blockchainId][eventsGroupName] = {};
