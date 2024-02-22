@@ -1,3 +1,5 @@
+import { SERVICE_AGREEMENT_SOURCES } from '../../../../../constants/constants.js';
+
 export default (sequelize, DataTypes) => {
     const serviceAgreement = sequelize.define(
         'service_agreement',
@@ -53,6 +55,9 @@ export default (sequelize, DataTypes) => {
             proofWindowOffsetPerc: {
                 type: DataTypes.TINYINT.UNSIGNED,
                 allowNull: false,
+            },
+            dataSource: {
+                type: DataTypes.ENUM(...Object.values(SERVICE_AGREEMENT_SOURCES)),
             },
             lastCommitEpoch: {
                 type: DataTypes.SMALLINT.UNSIGNED,
