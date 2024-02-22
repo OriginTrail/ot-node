@@ -80,7 +80,7 @@ class GetAssertionIdCommand extends Command {
                         tokenId,
                     );
                 if (
-                    unfinalizedAssertionId &&
+                    unfinalizedAssertionId !== ZERO_BYTES32 &&
                     !(await this.isUpdateCommitWindowOpen(
                         blockchain,
                         contract,
