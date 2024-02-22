@@ -270,8 +270,8 @@ class BlockchainEventListenerService {
 
                     // When all expected Events from the Event Group are collected
                     if (
-                        this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue] ===
-                        eventsGroup.events.length
+                        this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue]
+                            .length === eventsGroup.events.length
                     ) {
                         if (!batchedEvents[eventsGroupName]) {
                             batchedEvents[eventsGroupName] = [];
