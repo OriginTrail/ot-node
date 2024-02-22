@@ -30,6 +30,7 @@ import {
 const require = createRequire(import.meta.url);
 
 const ABIs = {
+    ContentAsset: require('dkg-evm-module/abi/ContentAsset.json'),
     ContentAssetStorage: require('dkg-evm-module/abi/ContentAssetStorage.json'),
     AssertionStorage: require('dkg-evm-module/abi/AssertionStorage.json'),
     Staking: require('dkg-evm-module/abi/Staking.json'),
