@@ -6,6 +6,7 @@ import {
     ERROR_TYPE,
     OPERATIONS,
     OPERATION_REQUEST_STATUS,
+    TRIPLE_STORE_REPOSITORIES,
 } from '../constants/constants.js';
 
 class GetService extends OperationService {
@@ -20,6 +21,9 @@ class GetService extends OperationService {
             OPERATION_ID_STATUS.GET.GET_END,
             OPERATION_ID_STATUS.COMPLETED,
         ];
+        this.ualService = ctx.ualService;
+        this.tripleStoreService = ctx.tripleStoreService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.operationMutex = new Mutex();
     }
 
@@ -32,6 +36,11 @@ class GetService extends OperationService {
             keyword,
             batchSize,
             minAckResponses,
+            contract,
+            tokenId,
+            assertionId,
+            assetSync,
+            stateIndex,
         } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
@@ -70,6 +79,24 @@ class GetService extends OperationService {
                 this.completedStatuses,
             );
             this.logResponsesSummary(completedNumber, failedNumber);
+
+            if (assetSync) {
+                const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+                this.logger.debug(
+                    `ASSET_SYNC: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                );
+
+                await this.tripleStoreService.localStoreAsset(
+                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                    assertionId,
+                    responseData.nquads,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    keyword,
+                );
+            }
         }
 
         if (
@@ -89,6 +116,12 @@ class GetService extends OperationService {
                     this.completedStatuses,
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);
+                if (assetSync) {
+                    const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+                    this.logger.debug(
+                        `ASSET_SYNC: No nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                    );
+                }
             } else {
                 await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
             }
