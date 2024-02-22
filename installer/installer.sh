@@ -340,6 +340,13 @@ validate_operator_fees() {
 # Case statement to handle blockchain-specific configurations
 case "$blockchain" in
     "OriginTrail Parachain" | "Gnosis" )
+
+
+        if [ "$blockchain" == "OriginTrail Parachain" ]; then
+                blockchain="OTP"
+        fi
+
+
         # Input wallets for the selected blockchain
         request_operational_wallet_keys $blockchain
         EVM_OP_WALLET_KEYS_BLOCKCHAIN=$OP_WALLET_KEYS_JSON
@@ -355,8 +362,7 @@ case "$blockchain" in
 
         # Prompt and validate Operator Fees for the first blockchain
         validate_operator_fees $blockchain
-        OPERATOR_FEE=$blockchain_OPERATOR_FEES
-
+        eval "OPERATOR_FEE=\$${blockchain}_OPERATOR_FEES"
 
         if [ "$blockchain" == "Gnosis" ]; then
             read -p "Enter your Gnosis RPC endpoint: "  GNOSIS_RPC_ENDPOINT
@@ -499,7 +505,7 @@ if [ "$blockchain" == "Both" ]; then
 
 else
   # Single blockchain selected
-  if [ "$blockchain" = "OriginTrail Parachain" ]; then
+    if [ "$blockchain" = "OriginTrail Parachain" ] || [ "$blockchain" = "OTP" ]; then
     blockchain="otp"
     blockchain_id="$otp_blockchain_id"
   elif [ "$blockchain" = "Gnosis" ]; then
