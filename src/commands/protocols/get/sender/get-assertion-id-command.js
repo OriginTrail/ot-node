@@ -100,7 +100,7 @@ class GetAssertionIdCommand extends Command {
                     }
                 }
             }
-            if (assertionId === null || assertionId === ZERO_BYTES32) {
+            if (assertionId === null || assertionId === ZERO_BYTES32 || assertionId === undefined) {
                 assertionId = latestFinalizedAssertionId;
             }
         }
