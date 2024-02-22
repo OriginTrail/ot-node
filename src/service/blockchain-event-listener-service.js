@@ -54,6 +54,20 @@ class BlockchainEventListenerService {
             process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
 
         const currentBlock = await this.blockchainModuleManager.getBlockNumber(blockchainId);
+
+        if (devEnvironment) {
+            // handling sharding table node added events first for tests and local network setup
+            // because of race condition for node added and ask updated events
+            const shardingTableEvents = await this.getContractEvents(
+                blockchainId,
+                CONTRACTS.SHARDING_TABLE_CONTRACT,
+                currentBlock,
+                CONTRACT_EVENTS.SHARDING_TABLE,
+            );
+
+            await this.handleBlockchainEvents(shardingTableEvents, blockchainId);
+        }
+
         const syncContractEventsPromises = [
             this.getContractEvents(
                 blockchainId,
