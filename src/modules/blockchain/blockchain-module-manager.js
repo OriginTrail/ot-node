@@ -158,7 +158,7 @@ class BlockchainModuleManager extends BaseModuleManager {
     }
 
     async getTransaction(blockchain, transactionHash) {
-        return this.callImplementationFunction(blockchain, 'getTransactionHash', [transactionHash]);
+        return this.callImplementationFunction(blockchain, 'getTransaction', [transactionHash]);
     }
 
     async getAllPastEvents(
