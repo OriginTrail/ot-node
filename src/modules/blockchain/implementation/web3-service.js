@@ -30,6 +30,7 @@ import {
 const require = createRequire(import.meta.url);
 
 const ABIs = {
+    ContentAsset: require('dkg-evm-module/abi/ContentAsset.json'),
     ContentAssetStorage: require('dkg-evm-module/abi/ContentAssetStorage.json'),
     AssertionStorage: require('dkg-evm-module/abi/AssertionStorage.json'),
     Staking: require('dkg-evm-module/abi/Staking.json'),
@@ -889,6 +890,10 @@ class Web3Service {
         return value.toString();
     }
 
+    async getTransaction(transactionHash) {
+        return this.provider.getTransaction(transactionHash);
+    }
+
     async getAllPastEvents(
         blockchainId,
         contractName,
@@ -965,6 +970,36 @@ class Web3Service {
         ]);
     }
 
+    async getMinProofWindowOffsetPerc() {
+        return this.callContractFunction(
+            this.ParametersStorageContract,
+            'minProofWindowOffsetPerc',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
+    }
+
+    async getMaxProofWindowOffsetPerc() {
+        return this.callContractFunction(
+            this.ParametersStorageContract,
+            'maxProofWindowOffsetPerc',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
+    }
+
+    async generatePseudorandomUint8(assetCreator, blockNumber, blockTimestamp, limit) {
+        const encodedData = ethers.utils.encodePacked(
+            ['uint256', 'address', 'uint256'],
+            [blockTimestamp, assetCreator, blockNumber],
+        );
+        const hash = ethers.utils.keccak256(encodedData);
+        const hashBigNumber = BigNumber.from(hash);
+        const hashModulo = hashBigNumber.mod(limit);
+
+        return hashModulo.mod(256);
+    }
+
     async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toLowerCase()];
@@ -1035,8 +1070,8 @@ class Web3Service {
             startTime: result['0'].toNumber(),
             epochsNumber: result['1'],
             epochLength: result['2'].toNumber(),
-            tokenAmount: result['3'][0],
-            updateTokenAmount: result['3'][1],
+            tokenAmount: Number(ethers.utils.formatEther(result['3'][0])),
+            updateTokenAmount: Number(ethers.utils.formatEther(result['3'][1])),
             scoreFunctionId: result['4'][0],
             proofWindowOffsetPerc: result['4'][1],
         };
@@ -1358,7 +1393,7 @@ class Web3Service {
     }
 
     convertToWei(value, fromUnit = 'ether') {
-        return ethers.utils.parseUnits(value.toString(), fromUnit).toString();
+        return ethers.utils.parseUnits(value.toString(), fromUnit);
     }
 
     convertFromWei(value, toUnit = 'ether') {
@@ -1426,12 +1461,16 @@ class Web3Service {
         ]);
     }
 
+    getScoreFunctionIds() {
+        return Object.keys(this.scoringFunctionsContracts);
+    }
+
     async getLog2PLDSFParams() {
         const log2pldsfParams = await this.callContractFunction(
             this.scoringFunctionsContracts[1],
             'getParameters',
             [],
-            CONTRACTS.Log2PLDSF_CONTRACT,
+            CONTRACTS.LOG2PLDSF_CONTRACT,
         );
 
         const params = {};

@@ -203,9 +203,15 @@ export const CONTRACT_FUNCTION_PRIORITY = {
 };
 
 export const COMMAND_RETRIES = {
+    SIMPLE_ASSET_SYNC: 1,
     SUBMIT_COMMIT: 5,
     SUBMIT_UPDATE_COMMIT: 5,
     SUBMIT_PROOFS: 5,
+};
+
+export const SIMPLE_ASSET_SYNC_PARAMETERS = {
+    GET_RESULT_POLLING_INTERVAL_MILLIS: 1 * 1000,
+    GET_RESULT_POLLING_MAX_ATTEMPTS: 30,
 };
 
 export const COMMAND_TX_GAS_INCREASE_FACTORS = {
@@ -329,6 +335,7 @@ export const ERROR_TYPE = {
     COMMIT_PROOF: {
         CALCULATE_PROOFS_ERROR: 'CalculateProofsError',
         EPOCH_CHECK_ERROR: 'EpochCheckError',
+        SIMPLE_ASSET_SYNC_ERROR: 'SimpleAssetSyncError',
         SUBMIT_COMMIT_ERROR: 'SubmitCommitError',
         SUBMIT_COMMIT_SEND_TX_ERROR: 'SubmitCommitSendTxError',
         SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
@@ -392,6 +399,8 @@ export const OPERATION_ID_STATUS = {
     COMMIT_PROOF: {
         EPOCH_CHECK_START: 'EPOCH_CHECK_START',
         EPOCH_CHECK_END: 'EPOCH_CHECK_END',
+        SIMPLE_ASSET_SYNC_START: 'SIMPLE_ASSET_SYNC_START',
+        SIMPLE_ASSET_SYNC_END: 'SIMPLE_ASSET_SYNC_END',
         SUBMIT_COMMIT_START: 'SUBMIT_COMMIT_START',
         SUBMIT_COMMIT_END: 'SUBMIT_COMMIT_END',
         SUBMIT_COMMIT_SEND_TX_START: 'SUBMIT_COMMIT_SEND_TX_START',
@@ -426,6 +435,8 @@ export const OPERATIONS = {
     UPDATE: 'update',
     GET: 'get',
 };
+
+export const SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS = 5 * 60;
 
 /**
  * @constant {number} OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS -
@@ -608,12 +619,12 @@ export const CONTRACTS = {
     STAKING_CONTRACT: 'StakingContract',
     PROFILE_CONTRACT: 'ProfileContract',
     HUB_CONTRACT: 'HubContract',
-    // TODO: Update with new commit Managers
+    CONTENT_ASSET: 'ContentAssetContract',
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
     SERVICE_AGREEMENT_V1_CONTRACT: 'ServiceAgreementV1Contract',
     PARAMETERS_STORAGE_CONTRACT: 'ParametersStorageContract',
     IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
-    Log2PLDSF_CONTRACT: 'Log2PLDSFContract',
+    LOG2PLDSF_CONTRACT: 'Log2PLDSFContract',
     LINEAR_SUM_CONTRACT: 'LinearSumContract',
 };
 
@@ -622,12 +633,34 @@ export const CONTRACT_EVENTS = {
     SHARDING_TABLE: ['NodeAdded', 'NodeRemoved'],
     STAKING: ['StakeIncreased', 'StakeWithdrawalStarted'],
     PROFILE: ['AskUpdated'],
+    CONTENT_ASSET: ['AssetMinted'],
     COMMIT_MANAGER_V1: ['StateFinalized'],
-    SERVICE_AGREEMENT_V1: ['ServiceAgreementV1Extended', 'ServiceAgreementV1Terminated'],
+    SERVICE_AGREEMENT_V1: [
+        'ServiceAgreementV1Created',
+        'ServiceAgreementV1Extended',
+        'ServiceAgreementV1Terminated',
+    ],
     PARAMETERS_STORAGE: ['ParameterChanged'],
-    Log2PLDSF: ['ParameterChanged'],
+    LOG2PLDSF: ['ParameterChanged'],
     LINEAR_SUM: ['ParameterChanged'],
 };
+
+export const GROUPED_CONTRACT_EVENTS = {
+    AssetCreatedGroup: {
+        events: ['AssetMinted', 'ServiceAgreementV1Created'],
+        groupingKey: 'tokenId',
+    },
+};
+
+export const CONTRACT_EVENT_TO_GROUP_MAPPING = (() => {
+    const mapping = {};
+    Object.entries(GROUPED_CONTRACT_EVENTS).forEach(([groupName, { events }]) => {
+        events.forEach((eventName) => {
+            mapping[eventName] = groupName;
+        });
+    });
+    return mapping;
+})();
 
 export const NODE_ENVIRONMENTS = {
     DEVELOPMENT: 'development',
@@ -655,6 +688,13 @@ export const BLOCK_TIME_MILLIS = {
 
 export const TRANSACTION_CONFIRMATIONS = 1;
 
+export const SERVICE_AGREEMENT_SOURCES = {
+    BLOCKCHAIN: 'blockchain',
+    EVENT: 'event',
+    CLIENT: 'client',
+    NODE: 'node',
+};
+
 export const CACHE_DATA_TYPES = {
     NUMBER: 'number',
     ANY: 'any',
@@ -679,6 +719,8 @@ export const CACHED_FUNCTIONS = {
         epochLength: CACHE_DATA_TYPES.NUMBER,
         minimumStake: CACHE_DATA_TYPES.ANY,
         maximumStake: CACHE_DATA_TYPES.ANY,
+        minProofWindowOffsetPerc: CACHE_DATA_TYPES.NUMBER,
+        maxProofWindowOffsetPerc: CACHE_DATA_TYPES.NUMBER,
     },
     IdentityStorageContract: {
         getIdentityId: CACHE_DATA_TYPES.NUMBER,

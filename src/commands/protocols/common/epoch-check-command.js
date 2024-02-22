@@ -6,6 +6,8 @@ import {
     TRANSACTION_CONFIRMATIONS,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
+    TRIPLE_STORE_REPOSITORIES,
+    SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS,
 } from '../../../constants/constants.js';
 
 class EpochCheckCommand extends Command {
@@ -20,6 +22,7 @@ class EpochCheckCommand extends Command {
         this.fileService = ctx.fileService;
         this.proximityScoringService = ctx.proximityScoringService;
         this.hashingService = ctx.hashingService;
+        this.tripleStoreService = ctx.tripleStoreService;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.EPOCH_CHECK_ERROR;
     }
@@ -106,12 +109,20 @@ class EpochCheckCommand extends Command {
         minStake,
         maxStake,
     ) {
+        const peerRecord = await this.repositoryModuleManager.getPeerRecord(
+            this.networkModuleManager.getPeerId().toB58String(),
+            blockchain,
+        );
+
+        const ask = this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
+
         const timestamp = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
         const eligibleAgreementForSubmitCommit =
             await this.repositoryModuleManager.getEligibleAgreementsForSubmitCommit(
                 timestamp,
                 blockchain,
                 commitWindowDurationPerc,
+                SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS,
             );
         this.logger.info(
             `Epoch check: Found ${eligibleAgreementForSubmitCommit.length} eligible agreements for submit commit for blockchain: ${blockchain}`,
@@ -191,6 +202,45 @@ class EpochCheckCommand extends Command {
                     continue;
                 }
 
+                // If proof was ever sent = data is present in the Triple Store
+                let isAssetSynced = Boolean(serviceAgreement.lastProofEpoch);
+                if (!isAssetSynced) {
+                    // Else: check Public Current Repository
+                    isAssetSynced = await this.tripleStoreService.assertionExists(
+                        TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                        serviceAgreement.assertionId,
+                    );
+                }
+
+                // If data is not in the Triple Store, check if ask satisfied
+                if (!isAssetSynced) {
+                    const agreementData = await this.blockchainModuleManager.getAgreementData(
+                        blockchain,
+                        serviceAgreement.agreementId,
+                    );
+                    const blockchainAssertionSize =
+                        await this.blockchainModuleManager.getAssertionSize(
+                            blockchain,
+                            agreementData.assertionId,
+                        );
+
+                    const serviceAgreementBid = await this.serviceAgreementService.calculateBid(
+                        blockchain,
+                        blockchainAssertionSize,
+                        agreementData,
+                        r0,
+                    );
+
+                    if (serviceAgreementBid.lt(ask)) {
+                        this.logger.trace(
+                            `Epoch check: Ask (${ask.toString()} wei) isn't satisfied by the bid (${serviceAgreementBid.toString()} wei) for the Service Agreement with the ID: ${
+                                serviceAgreement.agreementId
+                            }. Skipping scheduling submitCommitCommand for blockchain: ${blockchain}`,
+                        );
+                        continue;
+                    }
+                }
+
                 this.logger.trace(
                     `Epoch check: Calculated rank: ${
                         rank + 1
@@ -204,6 +254,7 @@ class EpochCheckCommand extends Command {
                         serviceAgreement,
                         neighbourhoodEdges,
                         closestNode,
+                        isAssetSynced,
                     ),
                 );
             } catch (error) {
@@ -303,7 +354,7 @@ class EpochCheckCommand extends Command {
         return false;
     }
 
-    async scheduleSubmitCommitCommand(agreement, neighbourhoodEdges, closestNode) {
+    async scheduleSubmitCommitCommand(agreement, neighbourhoodEdges, closestNode, isAssetSynced) {
         const commandData = {
             operationId: this.operationIdService.generateId(),
             blockchain: agreement.blockchainId,
@@ -313,19 +364,30 @@ class EpochCheckCommand extends Command {
             hashFunctionId: agreement.hashFunctionId,
             epoch: agreement.currentEpoch,
             agreementId: agreement.agreementId,
+            assertionId: agreement.assertionId,
             stateIndex: agreement.stateIndex,
             closestNode: closestNode.index,
             leftNeighborhoodEdge: neighbourhoodEdges?.leftEdge.index,
             rightNeighborhoodEdge: neighbourhoodEdges?.rightEdge.index,
         };
 
-        await this.commandExecutor.add({
-            name: 'submitCommitCommand',
-            sequence: [],
-            retries: COMMAND_RETRIES.SUBMIT_COMMIT,
-            data: commandData,
-            transactional: false,
-        });
+        if (isAssetSynced) {
+            await this.commandExecutor.add({
+                name: 'submitCommitCommand',
+                sequence: [],
+                retries: COMMAND_RETRIES.SUBMIT_COMMIT,
+                data: commandData,
+                transactional: false,
+            });
+        } else {
+            await this.commandExecutor.add({
+                name: 'simpleAssetSyncCommand',
+                sequence: ['submitCommitCommand'],
+                retries: COMMAND_RETRIES.SIMPLE_ASSET_SYNC,
+                data: commandData,
+                transactional: false,
+            });
+        }
     }
 
     async scheduleSubmitProofsCommand(agreement) {

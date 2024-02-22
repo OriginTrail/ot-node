@@ -10,7 +10,7 @@ class ServiceAgreementService {
         this.proximityScoringService = ctx.proximityScoringService;
     }
 
-    async generateId(blockchain, assetTypeContract, tokenId, keyword, hashFunctionId) {
+    generateId(blockchain, assetTypeContract, tokenId, keyword, hashFunctionId) {
         return this.hashingService.callHashFunction(
             hashFunctionId,
             this.blockchainModuleManager.encodePacked(
@@ -23,6 +23,29 @@ class ServiceAgreementService {
 
     randomIntFromInterval(min, max) {
         return Math.floor(Math.random() * (max - min + 1) + min);
+    }
+
+    async calculateBid(blockchain, blockchainAssertionSize, agreementData, r0) {
+        const currentEpoch = await this.calculateCurrentEpoch(
+            agreementData.startTime,
+            agreementData.epochLength,
+            blockchain,
+        );
+
+        // todo: consider optimizing to take into account cases where some proofs have already been submitted
+        const epochsLeft = Number(agreementData.epochsNumber) - currentEpoch;
+
+        const divisor = this.blockchainModuleManager
+            .toBigNumber(blockchain, r0)
+            .mul(epochsLeft)
+            .mul(blockchainAssertionSize);
+
+        return this.blockchainModuleManager
+            .convertToWei(blockchain, agreementData.tokenAmount)
+            .add(agreementData.updateTokenAmount)
+            .mul(1024)
+            .div(divisor)
+            .add(1); // add 1 wei because of the precision loss
     }
 
     async calculateRank(

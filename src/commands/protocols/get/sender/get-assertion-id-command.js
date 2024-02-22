@@ -1,5 +1,10 @@
 import Command from '../../../command.js';
-import { ERROR_TYPE, GET_STATES, ZERO_BYTES32 } from '../../../../constants/constants.js';
+import {
+    ERROR_TYPE,
+    GET_STATES,
+    PENDING_STORAGE_REPOSITORIES,
+    ZERO_BYTES32,
+} from '../../../../constants/constants.js';
 
 class GetAssertionIdCommand extends Command {
     constructor(ctx) {
@@ -8,6 +13,8 @@ class GetAssertionIdCommand extends Command {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.ualService = ctx.ualService;
         this.serviceAgreementService = ctx.serviceAgreementService;
+        this.pendingStorageService = ctx.pendingStorageService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.GET.GET_ASSERTION_ID_ERROR;
     }
@@ -34,10 +41,19 @@ class GetAssertionIdCommand extends Command {
                 return Command.empty();
             }
 
-            const pendingState = await this.blockchainModuleManager.getUnfinalizedAssertionId(
+            let pendingState;
+            pendingState = await this.pendingStorageService.getPendingState(
+                PENDING_STORAGE_REPOSITORIES.PUBLIC,
                 blockchain,
+                contract,
                 tokenId,
             );
+            if (!pendingState) {
+                pendingState = await this.blockchainModuleManager.getUnfinalizedAssertionId(
+                    blockchain,
+                    tokenId,
+                );
+            }
 
             if (
                 state !== pendingState &&
@@ -71,36 +87,45 @@ class GetAssertionIdCommand extends Command {
                 tokenId,
             );
 
-            const latestFinalizedAssertionId = assertionIds[0];
+            const latestFinalizedAssertionId = assertionIds[assertionIds.length - 1];
 
             if (state === GET_STATES.LATEST) {
-                const unfinalizedAssertionId =
-                    await this.blockchainModuleManager.getUnfinalizedAssertionId(
-                        blockchain,
-                        tokenId,
-                    );
-                if (
-                    unfinalizedAssertionId &&
-                    !(await this.isUpdateCommitWindowOpen(
+                let unfinalizedAssertionId;
+                unfinalizedAssertionId = await this.pendingStorageService.getPendingState(
+                    PENDING_STORAGE_REPOSITORIES.PUBLIC,
+                    blockchain,
+                    contract,
+                    tokenId,
+                );
+                if (!unfinalizedAssertionId) {
+                    unfinalizedAssertionId =
+                        await this.blockchainModuleManager.getUnfinalizedAssertionId(
+                            blockchain,
+                            tokenId,
+                        );
+                }
+                if (unfinalizedAssertionId !== ZERO_BYTES32) {
+                    const updateCommitWindowOpen = await this.isUpdateCommitWindowOpen(
                         blockchain,
                         contract,
                         tokenId,
                         hashFunctionId,
                         assertionIds,
-                    ))
-                ) {
-                    this.logger.warn(
-                        `Commit update window closed for tokenId: ${tokenId}, latest assertion id will be used instead of unfinalized for operation id: ${operationId}`,
                     );
-                    assertionId = latestFinalizedAssertionId;
-                } else {
-                    this.logger.warn(
-                        `Commit update window open for tokenId: ${tokenId}, using unfinalized assertion id: ${assertionId} for operation id: ${operationId}`,
-                    );
-                    assertionId = unfinalizedAssertionId;
+                    if (updateCommitWindowOpen) {
+                        assertionId = unfinalizedAssertionId;
+                        this.logger.warn(
+                            `Commit update window open for tokenId: ${tokenId}, using unfinalized assertion id: ${assertionId} for operation id: ${operationId}`,
+                        );
+                    } else {
+                        assertionId = latestFinalizedAssertionId;
+                        this.logger.warn(
+                            `Commit update window closed for tokenId: ${tokenId}, latest assertion id will be used instead of unfinalized for operation id: ${operationId}`,
+                        );
+                    }
                 }
             }
-            if (assertionId === null || assertionId === ZERO_BYTES32) {
+            if (assertionId === null || assertionId === ZERO_BYTES32 || assertionId === undefined) {
                 assertionId = latestFinalizedAssertionId;
             }
         }
@@ -118,19 +143,23 @@ class GetAssertionIdCommand extends Command {
             assertionIds[0],
         );
 
-        const agreementId = await this.serviceAgreementService.generateId(
+        const agreementId = this.serviceAgreementService.generateId(
             blockchain,
             contract,
             tokenId,
             keyword,
             hashFunctionId,
         );
-        const lastestStateIndex = assertionIds.length;
+        const latestStateIndex = assertionIds.length;
 
-        const agreementData = await this.blockchainModuleManager.getAgreementData(
-            blockchain,
-            agreementId,
-        );
+        let agreementData;
+        agreementData = await this.repositoryModuleManager.getServiceAgreementRecord(agreementId);
+        if (!agreementData) {
+            agreementData = await this.blockchainModuleManager.getAgreementData(
+                blockchain,
+                agreementId,
+            );
+        }
 
         const epoch = await this.serviceAgreementService.calculateCurrentEpoch(
             agreementData.startTime,
@@ -142,7 +171,7 @@ class GetAssertionIdCommand extends Command {
             blockchain,
             agreementId,
             epoch,
-            lastestStateIndex,
+            latestStateIndex,
         );
     }
 
