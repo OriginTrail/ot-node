@@ -543,7 +543,8 @@ class BlockchainEventListenerService {
                 } = combinedData;
 
                 // TODO: Remove when added to the event
-                const scoreFunctionId = this.blockchainModuleManager.getScoreFunctionIds()[0];
+                const scoreFunctionId =
+                    this.blockchainModuleManager.getScoreFunctionIds(blockchainId)[0];
 
                 // TODO: Remove when added to the event
                 const tx = await this.blockchainModuleManager.getTransaction(
