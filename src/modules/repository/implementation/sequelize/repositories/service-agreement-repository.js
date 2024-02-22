@@ -135,6 +135,7 @@ class ServiceAgreementRepository {
         commitWindowDurationPerc,
         startTimeDelay,
     ) {
+        const cutoffTimestamp = timestampSeconds - startTimeDelay;
         const currentEpoch = `FLOOR((${timestampSeconds} - start_time) / epoch_length)`;
         const currentEpochPerc = `((${timestampSeconds} - start_time) % epoch_length) / epoch_length * 100`;
 
@@ -153,9 +154,9 @@ class ServiceAgreementRepository {
             },
             where: {
                 blockchainId: blockchain,
-                [Sequelize.Op.and]: Sequelize.literal(
-                    `start_time + ${startTimeDelay} < ${timestampSeconds}`,
-                ),
+                start_time: {
+                    [Sequelize.Op.lt]: cutoffTimestamp,
+                },
                 [Sequelize.Op.or]: [
                     {
                         lastCommitEpoch: {
