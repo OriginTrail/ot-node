@@ -28,6 +28,8 @@ class BlockchainEventListenerService {
         this.ualService = ctx.ualService;
         this.hashingService = ctx.hashingService;
         this.serviceAgreementService = ctx.serviceAgreementService;
+
+        this.eventGroupsBuffer = {};
     }
 
     async initialize() {
@@ -36,6 +38,7 @@ class BlockchainEventListenerService {
             this.logger.info(
                 `Initializing blockchain event listener for blockchain ${blockchainId}, handling missed events`,
             );
+            this.eventGroupsBuffer[blockchainId] = {};
             promises.push(this.fetchAndHandleBlockchainEvents(blockchainId));
         }
         await Promise.all(promises);
@@ -230,7 +233,6 @@ class BlockchainEventListenerService {
                 `Processing ${unprocessedEvents.length} blockchain events on blockchain ${blockchainId}.`,
             );
             let batchedEvents = {};
-            const eventGroupsBuffer = {};
             let currentBlockNumber = 0;
             for (const event of unprocessedEvents) {
                 if (event.blockNumber !== currentBlockNumber) {
@@ -241,27 +243,30 @@ class BlockchainEventListenerService {
                 }
 
                 // Check if event should be grouped with other event
-                const eventsGroupName = CONTRACT_EVENT_TO_GROUP_MAPPING[event.eventName];
+                const eventsGroupName = CONTRACT_EVENT_TO_GROUP_MAPPING[event.event];
                 if (eventsGroupName) {
                     // Get Events Group object containing predefined events and Grouping Key (Event Argument)
                     const eventsGroup = GROUPED_CONTRACT_EVENTS[eventsGroupName];
                     // Get value of the Grouping Key from the Event
                     const groupingKeyValue = event[eventsGroup.groupingKey];
 
-                    if (!eventGroupsBuffer[eventsGroupName]) {
-                        eventGroupsBuffer[eventsGroupName] = {};
+                    if (!this.eventGroupsBuffer[blockchainId][eventsGroupName]) {
+                        this.eventGroupsBuffer[blockchainId][eventsGroupName] = {};
                     }
 
-                    if (!eventGroupsBuffer[eventsGroupName][groupingKeyValue]) {
-                        eventGroupsBuffer[eventsGroupName][groupingKeyValue] = [];
+                    if (!this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue]) {
+                        this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue] =
+                            [];
                     }
 
                     // Push event to the buffer until Events Group is not full
-                    eventGroupsBuffer[eventsGroupName][groupingKeyValue].push(event);
+                    this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue].push(
+                        event,
+                    );
 
                     // When all expected Events from the Event Group are collected
                     if (
-                        eventGroupsBuffer[eventsGroupName][groupingKeyValue] ===
+                        this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue] ===
                         eventsGroup.events.length
                     ) {
                         if (!batchedEvents[eventsGroupName]) {
@@ -270,11 +275,13 @@ class BlockchainEventListenerService {
 
                         // Add Events Group to the Processing Queue
                         batchedEvents[eventsGroupName].push(
-                            eventGroupsBuffer[eventsGroupName][groupingKeyValue],
+                            this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue],
                         );
 
                         // Remove Events Group from the Buffer
-                        delete eventGroupsBuffer[eventsGroupName][groupingKeyValue];
+                        delete this.eventGroupsBuffer[blockchainId][eventsGroupName][
+                            groupingKeyValue
+                        ];
                     }
                 } else if (batchedEvents[event.event]) {
                     batchedEvents[event.event].push(event);
