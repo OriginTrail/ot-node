@@ -187,6 +187,21 @@ export const DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 
 export const DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
 
+export const TRANSACTION_PRIORITY = {
+    HIGH: 1,
+    REGULAR: 2,
+};
+
+export const CONTRACT_FUNCTION_PRIORITY = {
+    'submitCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
+        TRANSACTION_PRIORITY.REGULAR,
+    'submitCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.REGULAR,
+    'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
+        TRANSACTION_PRIORITY.HIGH,
+    'submitUpdateCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.HIGH,
+    sendProof: TRANSACTION_PRIORITY.REGULAR,
+};
+
 export const COMMAND_RETRIES = {
     SUBMIT_COMMIT: 5,
     SUBMIT_UPDATE_COMMIT: 5,
@@ -199,9 +214,25 @@ export const COMMAND_TX_GAS_INCREASE_FACTORS = {
     SUBMIT_PROOFS: 1.2,
 };
 
+export const CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS = {
+    'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))': 1.2,
+    'submitUpdateCommit((address,uint256,bytes,uint8,uint16))': 1.2,
+};
+
 export const GNOSIS_DEFAULT_GAS_PRICE = {
     TESTNET: 25,
     MAINNET: 5,
+};
+
+export const NEURO_DEFAULT_GAS_PRICE = {
+    TESTNET: 8,
+    MAINNET: 8,
+};
+
+export const CONTRACT_FUNCTION_FIXED_GAS_PRICE = {
+    'otp:2043': {
+        SUBMIT_UPDATE_COMMIT: 15,
+    },
 };
 
 export const WEBSOCKET_PROVIDER_OPTIONS = {

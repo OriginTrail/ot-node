@@ -20,6 +20,10 @@ class HardhatService extends Web3Service {
     async providerReady() {
         return this.provider.ready;
     }
+
+    async getGasPrice() {
+        return this.convertToWei(20, 'wei');
+    }
 }
 
 export default HardhatService;
