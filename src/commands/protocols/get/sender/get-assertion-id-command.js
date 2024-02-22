@@ -1,5 +1,10 @@
 import Command from '../../../command.js';
-import { ERROR_TYPE, GET_STATES, ZERO_BYTES32 } from '../../../../constants/constants.js';
+import {
+    ERROR_TYPE,
+    GET_STATES,
+    PENDING_STORAGE_REPOSITORIES,
+    ZERO_BYTES32,
+} from '../../../../constants/constants.js';
 
 class GetAssertionIdCommand extends Command {
     constructor(ctx) {
@@ -8,6 +13,8 @@ class GetAssertionIdCommand extends Command {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.ualService = ctx.ualService;
         this.serviceAgreementService = ctx.serviceAgreementService;
+        this.pendingStorageService = ctx.pendingStorageService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.GET.GET_ASSERTION_ID_ERROR;
     }
@@ -34,10 +41,19 @@ class GetAssertionIdCommand extends Command {
                 return Command.empty();
             }
 
-            const pendingState = await this.blockchainModuleManager.getUnfinalizedAssertionId(
+            let pendingState;
+            pendingState = await this.pendingStorageService.getPendingState(
+                PENDING_STORAGE_REPOSITORIES.PUBLIC,
                 blockchain,
+                contract,
                 tokenId,
             );
+            if (pendingState === null) {
+                pendingState = await this.blockchainModuleManager.getUnfinalizedAssertionId(
+                    blockchain,
+                    tokenId,
+                );
+            }
 
             if (
                 state !== pendingState &&
@@ -71,14 +87,23 @@ class GetAssertionIdCommand extends Command {
                 tokenId,
             );
 
-            const latestFinalizedAssertionId = assertionIds[0];
+            const latestFinalizedAssertionId = assertionIds[assertionIds.length - 1];
 
             if (state === GET_STATES.LATEST) {
-                const unfinalizedAssertionId =
-                    await this.blockchainModuleManager.getUnfinalizedAssertionId(
-                        blockchain,
-                        tokenId,
-                    );
+                let unfinalizedAssertionId;
+                unfinalizedAssertionId = await this.pendingStorageService.getPendingState(
+                    PENDING_STORAGE_REPOSITORIES.PUBLIC,
+                    blockchain,
+                    contract,
+                    tokenId,
+                );
+                if (unfinalizedAssertionId === null) {
+                    unfinalizedAssertionId =
+                        await this.blockchainModuleManager.getUnfinalizedAssertionId(
+                            blockchain,
+                            tokenId,
+                        );
+                }
                 if (unfinalizedAssertionId !== ZERO_BYTES32) {
                     const updateCommitWindowOpen = await this.isUpdateCommitWindowOpen(
                         blockchain,
@@ -127,10 +152,14 @@ class GetAssertionIdCommand extends Command {
         );
         const latestStateIndex = assertionIds.length;
 
-        const agreementData = await this.blockchainModuleManager.getAgreementData(
-            blockchain,
-            agreementId,
-        );
+        let agreementData;
+        agreementData = await this.repositoryModuleManager.getServiceAgreementRecord(agreementId);
+        if (!agreementData) {
+            agreementData = await this.blockchainModuleManager.getAgreementData(
+                blockchain,
+                agreementId,
+            );
+        }
 
         const epoch = await this.serviceAgreementService.calculateCurrentEpoch(
             agreementData.startTime,

@@ -141,6 +141,32 @@ class FileService {
         );
     }
 
+    async getPendingStorageLatestDocument(repository, blockchain, contract, tokenId) {
+        const pendingStorageFolder = this.getPendingStorageFolderPath(
+            repository,
+            blockchain,
+            contract,
+            tokenId,
+        );
+
+        const files = await readdir(pendingStorageFolder);
+        let latestFile;
+        let latestMtime = 0;
+
+        for (const file of files) {
+            const filePath = path.join(pendingStorageFolder, file);
+            // eslint-disable-next-line no-await-in-loop
+            const stats = await stat(filePath);
+
+            if (stats.mtimeMs > latestMtime) {
+                latestFile = file;
+                latestMtime = stats.mtimeMs;
+            }
+        }
+
+        return latestFile ?? null;
+    }
+
     async getPendingStorageDocumentPath(repository, blockchain, contract, tokenId, assertionId) {
         const pendingStorageFolder = this.getPendingStorageFolderPath(
             repository,
