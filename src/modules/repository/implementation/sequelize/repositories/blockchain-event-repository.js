@@ -58,7 +58,7 @@ class BlockchainEventRepository {
     }
 
     async markBlockchainEventsAsProcessed(events) {
-        const idsForUpdate = events.map((event) => event.id);
+        const idsForUpdate = events.flatMap((event) => event.id);
         return this.model.update(
             { processed: true },
             {
