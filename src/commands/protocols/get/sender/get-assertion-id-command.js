@@ -79,25 +79,25 @@ class GetAssertionIdCommand extends Command {
                         blockchain,
                         tokenId,
                     );
-                if (
-                    unfinalizedAssertionId &&
-                    !(await this.isUpdateCommitWindowOpen(
+                if (unfinalizedAssertionId !== ZERO_BYTES32) {
+                    const updateCommitWindowOpen = await this.isUpdateCommitWindowOpen(
                         blockchain,
                         contract,
                         tokenId,
                         hashFunctionId,
                         assertionIds,
-                    ))
-                ) {
-                    this.logger.warn(
-                        `Commit update window closed for tokenId: ${tokenId}, latest assertion id will be used instead of unfinalized for operation id: ${operationId}`,
                     );
-                    assertionId = latestFinalizedAssertionId;
-                } else {
-                    this.logger.warn(
-                        `Commit update window open for tokenId: ${tokenId}, using unfinalized assertion id: ${assertionId} for operation id: ${operationId}`,
-                    );
-                    assertionId = unfinalizedAssertionId;
+                    if (updateCommitWindowOpen) {
+                        assertionId = unfinalizedAssertionId;
+                        this.logger.warn(
+                            `Commit update window open for tokenId: ${tokenId}, using unfinalized assertion id: ${assertionId} for operation id: ${operationId}`,
+                        );
+                    } else {
+                        assertionId = latestFinalizedAssertionId;
+                        this.logger.warn(
+                            `Commit update window closed for tokenId: ${tokenId}, latest assertion id will be used instead of unfinalized for operation id: ${operationId}`,
+                        );
+                    }
                 }
             }
             if (assertionId === null || assertionId === ZERO_BYTES32) {
