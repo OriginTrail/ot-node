@@ -22,6 +22,9 @@ import {
     CACHED_FUNCTIONS,
     CACHE_DATA_TYPES,
     CONTRACTS,
+    CONTRACT_FUNCTION_PRIORITY,
+    TRANSACTION_PRIORITY,
+    CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -95,16 +98,33 @@ class Web3Service {
 
     queueTransaction(contractInstance, functionName, transactionArgs, callback, gasPrice) {
         const selectedQueue = this.selectTransactionQueue();
-
-        selectedQueue.push(
-            {
-                contractInstance,
-                functionName,
-                transactionArgs,
-                gasPrice,
-            },
-            callback,
-        );
+        const priority = CONTRACT_FUNCTION_PRIORITY[functionName] ?? TRANSACTION_PRIORITY.REGULAR;
+        this.logger.info(`Calling ${functionName} with priority: ${priority}`);
+        switch (priority) {
+            case TRANSACTION_PRIORITY.HIGH:
+                selectedQueue.unshift(
+                    {
+                        contractInstance,
+                        functionName,
+                        transactionArgs,
+                        gasPrice,
+                    },
+                    callback,
+                );
+                break;
+            case TRANSACTION_PRIORITY.REGULAR:
+            default:
+                selectedQueue.push(
+                    {
+                        contractInstance,
+                        functionName,
+                        transactionArgs,
+                        gasPrice,
+                    },
+                    callback,
+                );
+                break;
+        }
     }
 
     removeTransactionQueue(walletAddress) {
@@ -596,8 +616,7 @@ class Web3Service {
         operationalWallet,
     ) {
         let result;
-        const gasPrice =
-            predefinedGasPrice ?? (await this.getGasPrice()) ?? this.convertToWei(20, 'gwei');
+        const gasPrice = predefinedGasPrice ?? (await this.getGasPrice());
         let gasLimit;
 
         try {
@@ -608,6 +627,10 @@ class Web3Service {
         }
 
         gasLimit = gasLimit ?? this.convertToWei(900, 'kwei');
+
+        const gasLimitMultiplier = CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS[functionName] ?? 1;
+
+        gasLimit = gasLimit.mul(gasLimitMultiplier * 100).div(100);
 
         this.logger.debug(
             `Sending signed transaction ${functionName} to the blockchain ${this.getBlockchainId()}` +
