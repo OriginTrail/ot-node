@@ -235,11 +235,11 @@ class BlockchainEventListenerService {
             let batchedEvents = {};
             let currentBlockNumber = 0;
             for (const event of unprocessedEvents) {
-                if (event.blockNumber !== currentBlockNumber) {
+                if (event.block !== currentBlockNumber) {
                     // eslint-disable-next-line no-await-in-loop
                     await this.handleBlockBatchedEvents(batchedEvents);
                     batchedEvents = {};
-                    currentBlockNumber = event.blockNumber;
+                    currentBlockNumber = event.block;
                 }
 
                 // Check if event should be grouped with other event
@@ -542,31 +542,6 @@ class BlockchainEventListenerService {
                     // proofWindowOffsetPerc,
                 } = combinedData;
 
-                // TODO: Remove when added to the event
-                const scoreFunctionId =
-                    this.blockchainModuleManager.getScoreFunctionIds(blockchainId)[0];
-
-                // TODO: Remove when added to the event
-                const tx = await this.blockchainModuleManager.getTransaction(
-                    blockchainId,
-                    eventsGroup[0].transactionHash,
-                );
-                const assetCreator = tx.from;
-                const minProofWindowOffsetPerc =
-                    await this.blockchainModuleManager.getMinProofWindowOffsetPerc(blockchainId);
-                const maxProofWindowOffsetPerc =
-                    await this.blockchainModuleManager.getMaxProofWindowOffsetPerc(blockchainId);
-
-                const proofWindowOffsetPerc =
-                    minProofWindowOffsetPerc +
-                    (await this.blockchainModuleManager.generatePseudorandomUint8(
-                        blockchainId,
-                        assetCreator,
-                        tx.blockNumber,
-                        tx.timestamp,
-                        maxProofWindowOffsetPerc - minProofWindowOffsetPerc + 1,
-                    ));
-
                 const agreementId = this.serviceAgreementService.generateId(
                     blockchainId,
                     contract,
@@ -574,6 +549,10 @@ class BlockchainEventListenerService {
                     keyword,
                     hashFunctionId,
                 );
+
+                // TODO: Remove when added to the event
+                const { scoreFunctionId, proofWindowOffsetPerc } =
+                    await this.blockchainModuleManager.getAgreementData(blockchainId, agreementId);
 
                 await this.repositoryModuleManager.updateServiceAgreementRecord(
                     blockchainId,

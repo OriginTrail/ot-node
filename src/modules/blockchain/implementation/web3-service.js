@@ -946,8 +946,7 @@ class Web3Service {
                     ]),
                 ),
             ),
-            transactionHash: event.transactionHash,
-            blockNumber: event.blockNumber,
+            block: event.blockNumber,
             blockchainId,
         }));
     }
