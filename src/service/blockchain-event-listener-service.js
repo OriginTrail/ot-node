@@ -241,7 +241,7 @@ class BlockchainEventListenerService {
                 }
 
                 // Check if event should be grouped with other event
-                const eventsGroupName = CONTRACT_EVENT_TO_GROUP_MAPPING[event.eventName];
+                const eventsGroupName = CONTRACT_EVENT_TO_GROUP_MAPPING[event.event];
                 if (eventsGroupName) {
                     // Get Events Group object containing predefined events and Grouping Key (Event Argument)
                     const eventsGroup = GROUPED_CONTRACT_EVENTS[eventsGroupName];
