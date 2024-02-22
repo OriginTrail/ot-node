@@ -265,6 +265,9 @@ class BlockchainEventListenerService {
                     );
 
                     // Mark event as processed
+                    // TODO: There should be a smarter way to do this, because it will cause troubles
+                    // in case node goes offline while only catched some of the events from the group
+                    // and not all of them. Buffer will be cleared and event is already marked as processed.
                     // eslint-disable-next-line no-await-in-loop
                     await this.repositoryModuleManager.markBlockchainEventsAsProcessed([event]);
 
