@@ -48,7 +48,7 @@ class GetAssertionIdCommand extends Command {
                 contract,
                 tokenId,
             );
-            if (pendingState === null) {
+            if (!pendingState) {
                 pendingState = await this.blockchainModuleManager.getUnfinalizedAssertionId(
                     blockchain,
                     tokenId,
@@ -97,7 +97,7 @@ class GetAssertionIdCommand extends Command {
                     contract,
                     tokenId,
                 );
-                if (unfinalizedAssertionId === null) {
+                if (!unfinalizedAssertionId) {
                     unfinalizedAssertionId =
                         await this.blockchainModuleManager.getUnfinalizedAssertionId(
                             blockchain,

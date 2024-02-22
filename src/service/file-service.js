@@ -149,22 +149,30 @@ class FileService {
             tokenId,
         );
 
-        const files = await readdir(pendingStorageFolder);
         let latestFile;
         let latestMtime = 0;
+        try {
+            const files = await readdir(pendingStorageFolder);
 
-        for (const file of files) {
-            const filePath = path.join(pendingStorageFolder, file);
-            // eslint-disable-next-line no-await-in-loop
-            const stats = await stat(filePath);
+            for (const file of files) {
+                const filePath = path.join(pendingStorageFolder, file);
+                // eslint-disable-next-line no-await-in-loop
+                const stats = await stat(filePath);
 
-            if (stats.mtimeMs > latestMtime) {
-                latestFile = file;
-                latestMtime = stats.mtimeMs;
+                if (stats.mtimeMs > latestMtime) {
+                    latestFile = file;
+                    latestMtime = stats.mtimeMs;
+                }
             }
+        } catch (error) {
+            if (error.code === 'ENOENT') {
+                this.logger.debug(`Folder not found at path: ${pendingStorageFolder}`);
+                return false;
+            }
+            throw error;
         }
 
-        return latestFile ?? null;
+        return latestFile ?? false;
     }
 
     async getPendingStorageDocumentPath(repository, blockchain, contract, tokenId, assertionId) {
