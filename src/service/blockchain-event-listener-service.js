@@ -264,6 +264,10 @@ class BlockchainEventListenerService {
                         event,
                     );
 
+                    // Mark event as processed
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.repositoryModuleManager.markBlockchainEventsAsProcessed([event]);
+
                     // When all expected Events from the Event Group are collected
                     if (
                         this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue] ===
