@@ -92,6 +92,7 @@ class SimpleAssetSyncCommand extends Command {
                     hashFunctionId,
                     assertionId,
                     stateIndex,
+                    assetSync: true,
                 },
                 transactional: false,
             });
