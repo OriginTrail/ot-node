@@ -78,7 +78,7 @@ class SubmitUpdateCommitCommand extends Command {
         }
         const txGasPrice =
             gasPrice ??
-            CONTRACT_FUNCTION_FIXED_GAS_PRICE[blockchain].SUBMIT_UPDATE_COMMIT ??
+            CONTRACT_FUNCTION_FIXED_GAS_PRICE[blockchain]?.SUBMIT_UPDATE_COMMIT ??
             (await this.blockchainModuleManager.getGasPrice(blockchain));
 
         const transactionCompletePromise = new Promise((resolve, reject) => {
