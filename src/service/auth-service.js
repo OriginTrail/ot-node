@@ -42,7 +42,10 @@ class AuthService {
             return true;
         }
 
-        const tokenId = jwtUtil.getPayload(token).jti;
+        const tokenId = jwtUtil.getPayload(token)?.jti;
+        if (!tokenId) {
+            return false;
+        }
         const abilities = await this._repository.getTokenAbilities(tokenId);
 
         const isAuthorized = abilities.includes(systemOperation);
