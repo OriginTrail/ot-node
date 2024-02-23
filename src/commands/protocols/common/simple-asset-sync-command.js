@@ -77,6 +77,8 @@ class SimpleAssetSyncCommand extends Command {
             ),
         ]);
 
+        let getResult;
+
         try {
             await this.commandExecutor.add({
                 name: 'networkGetCommand',
@@ -104,7 +106,6 @@ class SimpleAssetSyncCommand extends Command {
             );
 
             let attempt = 0;
-            let getResult;
             do {
                 // eslint-disable-next-line no-await-in-loop
                 await setTimeout(SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS);
@@ -134,16 +135,26 @@ class SimpleAssetSyncCommand extends Command {
             OPERATION_ID_STATUS.COMMIT_PROOF.SIMPLE_ASSET_SYNC_END,
         );
 
-        this.logger.info(
-            `[SIMPLE_ASSET_SYNC] (${operationId}): Successfully executed command for the ` +
+        if (getResult?.status === OPERATION_ID_STATUS.COMPLETED) {
+            this.logger.info(
+                `[SIMPLE_ASSET_SYNC] (${operationId}): Successfully executed command for the ` +
+                    `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
+                    `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                    `State Index: ${stateIndex}, Network Get Operation ID: ${getOperationId}, `,
+            );
+
+            return this.continueSequence(command.data, command.sequence, {
+                retries: COMMAND_RETRIES.SUBMIT_COMMIT,
+            });
+        }
+
+        this.repositoryModuleManager.removeServiceAgreementRecord(blockchain, contract, tokenId);
+        this.logger.log(
+            `[SIMPLE_ASSET_SYNC] (${operationId}): Couldn't finde asset on the network for the ` +
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                 `State Index: ${stateIndex}, Network Get Operation ID: ${getOperationId}, `,
         );
-
-        return this.continueSequence(command.data, command.sequence, {
-            retries: COMMAND_RETRIES.SUBMIT_COMMIT,
-        });
     }
 
     async retryFinished(command) {
