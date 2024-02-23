@@ -907,7 +907,11 @@ class Web3Service {
             // this will happen when we have different set of contracts on different blockchains
             // eg LinearSum contract is available on gnosis but not on NeuroWeb, so the node should not fetch events
             // from LinearSum contract on NeuroWeb blockchain
-            return [];
+            return {
+                events: [],
+                lastCheckedBlock: currentBlock,
+                eventsMissed: false,
+            };
         }
 
         let fromBlock;
@@ -927,7 +931,7 @@ class Web3Service {
         }
 
         const events = [];
-        let toBlock;
+        let toBlock = currentBlock;
         try {
             while (fromBlock <= currentBlock) {
                 toBlock = Math.min(
