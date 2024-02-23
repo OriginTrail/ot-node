@@ -16,10 +16,12 @@ export default (authService) => async (req, res, next) => {
     }
 
     const token = getToken(req);
-    const isAuthorized = await authService.isAuthorized(token, operation);
+    if (token) {
+        const isAuthorized = await authService.isAuthorized(token, operation);
 
-    if (!isAuthorized) {
-        return res.status(403).send('Forbidden.');
+        if (!isAuthorized) {
+            return res.status(403).send('Forbidden.');
+        }
     }
 
     next();
