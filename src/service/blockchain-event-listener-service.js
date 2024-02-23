@@ -561,26 +561,38 @@ class BlockchainEventListenerService {
                     hashFunctionId,
                 );
 
-                // TODO: Remove when added to the event
-                const { scoreFunctionId, proofWindowOffsetPerc } =
-                    await this.blockchainModuleManager.getAgreementData(blockchainId, agreementId);
+                const agreementRecord =
+                    this.repositoryModuleManager.getServiceAgreementRecord(agreementId);
 
-                await this.repositoryModuleManager.updateServiceAgreementRecord(
-                    blockchainId,
-                    contract,
-                    tokenId,
-                    agreementId,
-                    startTime,
-                    epochsNumber,
-                    epochLength,
-                    scoreFunctionId,
-                    proofWindowOffsetPerc,
-                    hashFunctionId,
-                    keyword,
-                    assertionId,
-                    0,
-                    SERVICE_AGREEMENT_SOURCES.EVENT,
-                );
+                if (agreementRecord) {
+                    this.logger.trace(
+                        `Skipping processing of asset created event, agreement data present in database for agreement id: ${agreementId} on blockchain ${blockchainId}`,
+                    );
+                } else {
+                    // TODO: Remove when added to the event
+                    const { scoreFunctionId, proofWindowOffsetPerc } =
+                        await this.blockchainModuleManager.getAgreementData(
+                            blockchainId,
+                            agreementId,
+                        );
+
+                    await this.repositoryModuleManager.updateServiceAgreementRecord(
+                        blockchainId,
+                        contract,
+                        tokenId,
+                        agreementId,
+                        startTime,
+                        epochsNumber,
+                        epochLength,
+                        scoreFunctionId,
+                        proofWindowOffsetPerc,
+                        hashFunctionId,
+                        keyword,
+                        assertionId,
+                        0,
+                        SERVICE_AGREEMENT_SOURCES.EVENT,
+                    );
+                }
             }),
         );
     }
