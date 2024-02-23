@@ -24,7 +24,7 @@ import {
     CONTRACT_FUNCTION_PRIORITY,
     TRANSACTION_PRIORITY,
     CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS,
-    MAX_NUMBER_OF_HISTORICAL_BLOCKS_FOR_SYNC,
+    MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -916,7 +916,7 @@ class Web3Service {
 
         let fromBlock;
         let eventsMissed = false;
-        if (this.startBlock - lastCheckedBlock > MAX_NUMBER_OF_HISTORICAL_BLOCKS_FOR_SYNC) {
+        if (this.startBlock - lastCheckedBlock > this.getMaxNumberOfHistoricalBlocksForSync()) {
             fromBlock = this.startBlock;
             eventsMissed = true;
         } else {
@@ -971,6 +971,12 @@ class Web3Service {
             lastCheckedBlock: toBlock,
             eventsMissed,
         };
+    }
+
+    getMaxNumberOfHistoricalBlocksForSync() {
+        return Math.round(
+            MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS / this.getBlockTimeMillis(),
+        );
     }
 
     async processBlockRange(fromBlock, toBlock, contract, topics) {
