@@ -35,16 +35,17 @@ class ShardingTableService {
         });
     }
 
-    async pullBlockchainShardingTable(blockchainId) {
+    async pullBlockchainShardingTable(blockchainId, force = false) {
         const lastCheckedBlock = await this.repositoryModuleManager.getLastCheckedBlock(
             blockchainId,
             CONTRACTS.SHARDING_TABLE_CONTRACT,
         );
 
         if (
-            lastCheckedBlock?.lastCheckedTimestamp &&
-            Date.now() - lastCheckedBlock.lastCheckedTimestamp <
-                DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS
+            force ||
+            (lastCheckedBlock?.lastCheckedTimestamp &&
+                Date.now() - lastCheckedBlock.lastCheckedTimestamp <
+                    DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS)
         ) {
             return;
         }

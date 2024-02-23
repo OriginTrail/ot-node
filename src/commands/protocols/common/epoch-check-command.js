@@ -221,7 +221,7 @@ class EpochCheckCommand extends Command {
                     const blockchainAssertionSize =
                         await this.blockchainModuleManager.getAssertionSize(
                             blockchain,
-                            agreementData.assertionId,
+                            serviceAgreement.assertionId,
                         );
 
                     const serviceAgreementBid = await this.serviceAgreementService.calculateBid(
