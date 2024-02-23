@@ -562,8 +562,7 @@ class BlockchainEventListenerService {
                 );
 
                 const agreementRecord =
-                    this.repositoryModuleManager.getServiceAgreementRecord(agreementId);
-
+                    await this.repositoryModuleManager.getServiceAgreementRecord(agreementId);
                 if (agreementRecord) {
                     this.logger.trace(
                         `Skipping processing of asset created event, agreement data present in database for agreement id: ${agreementId} on blockchain ${blockchainId}`,
