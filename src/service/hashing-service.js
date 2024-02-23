@@ -10,7 +10,7 @@ class HashingService {
         };
     }
 
-    async callHashFunction(hashFunctionId, data) {
+    callHashFunction(hashFunctionId, data) {
         const hashFunctionName = this.getHashFunctionName(hashFunctionId);
         return this[hashFunctionName](data);
     }
@@ -19,7 +19,7 @@ class HashingService {
         return this.hashFunctions[hashFunctionId];
     }
 
-    async sha256(data) {
+    sha256(data) {
         if (!ethers.utils.isBytesLike(data)) {
             const bytesLikeData = ethers.utils.toUtf8Bytes(data);
             return ethers.utils.sha256(bytesLikeData);
