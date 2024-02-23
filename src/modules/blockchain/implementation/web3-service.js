@@ -974,9 +974,12 @@ class Web3Service {
     }
 
     getMaxNumberOfHistoricalBlocksForSync() {
-        return Math.round(
-            MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS / this.getBlockTimeMillis(),
-        );
+        if (!this.maxNumberOfHistoricalBlocksForSync) {
+            this.maxNumberOfHistoricalBlocksForSync = Math.round(
+                MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS / this.getBlockTimeMillis(),
+            );
+        }
+        return this.maxNumberOfHistoricalBlocksForSync;
     }
 
     async processBlockRange(fromBlock, toBlock, contract, topics) {
