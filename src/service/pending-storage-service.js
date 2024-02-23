@@ -116,6 +116,15 @@ class PendingStorageService {
             return false;
         }
     }
+
+    async getPendingState(repository, blockchain, contract, tokenId) {
+        return this.fileService.getPendingStorageLatestDocument(
+            repository,
+            blockchain,
+            contract,
+            tokenId,
+        );
+    }
 }
 
 export default PendingStorageService;

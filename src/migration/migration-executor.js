@@ -16,6 +16,7 @@ import UalExtensionUserConfigurationMigration from './ual-extension-user-configu
 import UalExtensionTripleStoreMigration from './ual-extension-triple-store-migration.js';
 import MarkStakingEventsAsProcessedMigration from './mark-staking-events-as-processed-migration.js';
 import RemoveServiceAgreementsForChiadoMigration from './remove-service-agreements-for-chiado-migration.js';
+import MultipleOpWalletsUserConfigurationMigration from './multiple-op-wallets-user-configuration-migration.js';
 
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
@@ -30,7 +31,7 @@ class MigrationExecutor {
         const validationModuleManager = container.resolve('validationModuleManager');
 
         const migration = new PullBlockchainShardingTableMigration(
-            'pullShardingTableMigrationV620',
+            'pullShardingTableMigrationV620Hotfix11',
             logger,
             config,
             repositoryModuleManager,
@@ -373,7 +374,7 @@ class MigrationExecutor {
             const repositoryModuleManager = container.resolve('repositoryModuleManager');
 
             const migration = new RemoveServiceAgreementsForChiadoMigration(
-                'removeServiceAgreementsForChiadoMigrationV2',
+                'removeServiceAgreementsForChiadoMigrationV6.2.0.Hotfix11',
                 logger,
                 config,
                 repositoryModuleManager,
@@ -387,6 +388,29 @@ class MigrationExecutor {
                     );
                     this.exitNode(1);
                 }
+            }
+        }
+    }
+
+    static async executeMultipleOpWalletsUserConfigurationMigration(container, logger, config) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const migration = new MultipleOpWalletsUserConfigurationMigration(
+            'multipleOpWalletsUserConfigurationMigration',
+            logger,
+            config,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            try {
+                await migration.migrate();
+            } catch (error) {
+                logger.error(
+                    `Unable to execute multiple op wallets user configuration migration. Error: ${error.message}`,
+                );
             }
         }
     }

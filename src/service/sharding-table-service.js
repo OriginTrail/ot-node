@@ -113,18 +113,8 @@ class ShardingTableService {
         );
     }
 
-    async findNeighbourhood(
-        blockchainId,
-        key,
-        r2,
-        hashFunctionId,
-        proximityScoreFunctionsPairId,
-        filterLastSeen,
-    ) {
-        let peers = await this.repositoryModuleManager.getAllPeerRecords(
-            blockchainId,
-            filterLastSeen,
-        );
+    async findNeighbourhood(blockchainId, key, r2, hashFunctionId, proximityScoreFunctionsPairId) {
+        let peers = await this.repositoryModuleManager.getAllPeerRecords(blockchainId);
         peers = peers.map((peer, index) => ({ ...peer.dataValues, index }));
         const keyHash = await this.hashingService.callHashFunction(hashFunctionId, key);
 
@@ -150,7 +140,7 @@ class ShardingTableService {
         const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
         const peersWithDistance = await Promise.all(
             peers.map(async (peer) => ({
-                peer,
+                ...peer,
                 distance: await this.proximityScoringService.callProximityFunction(
                     blockchainId,
                     proximityScoreFunctionsPairId,
@@ -168,8 +158,7 @@ class ShardingTableService {
             }
             return 0;
         });
-        const result = peersWithDistance.slice(0, count).map((pd) => pd.peer);
-        return result;
+        return peersWithDistance.slice(0, count);
     }
 
     async getBidSuggestion(
@@ -192,13 +181,13 @@ class ShardingTableService {
             await this.blockchainModuleManager.getR2(blockchainId),
             hashFunctionId,
             proximityScoreFunctionsPairId,
-            true,
         );
         const r1 = await this.blockchainModuleManager.getR1(blockchainId);
         // todo remove this line once we implement logic for storing assertion in publish node if it's in neighbourhood
         const myPeerId = this.networkModuleManager.getPeerId().toB58String();
         const filteredPeerRecords = peerRecords.filter((peer) => peer.peerId !== myPeerId);
         const sorted = filteredPeerRecords.sort((a, b) => a.ask - b.ask);
+
         let ask;
         if (sorted.length > r1 + 1) {
             ask = sorted[r1].ask;
@@ -209,7 +198,7 @@ class ShardingTableService {
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);
 
         const bidSuggestion = this.blockchainModuleManager
-            .toBigNumber(blockchainId, this.blockchainModuleManager.convertToWei(blockchainId, ask))
+            .convertToWei(blockchainId, ask)
             .mul(kbSize)
             .mul(epochsNumber)
             .mul(r0)

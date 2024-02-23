@@ -146,6 +146,8 @@ export const NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
 
 export const HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 16000;
 
+export const SHARDING_TABLE_CHECK_COMMAND_FREQUENCY_MINUTES = 30;
+
 export const SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES = 15;
 
 export const PEER_RECORD_UPDATE_DELAY = 30 * 60 * 1000; // 30 minutes
@@ -179,6 +181,7 @@ export const MIN_DIAL_FREQUENCY_MILLIS = 60 * 60 * 1000;
 export const PERMANENT_COMMANDS = [
     'otnodeUpdateCommand',
     'sendTelemetryCommand',
+    'shardingTableCheckCommand',
     'operationIdCleanerCommand',
     'commandsCleanerCommand',
     'dialPeersCommand',
@@ -199,10 +202,31 @@ export const DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 
 export const DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
 
+export const TRANSACTION_PRIORITY = {
+    HIGH: 1,
+    REGULAR: 2,
+};
+
+export const CONTRACT_FUNCTION_PRIORITY = {
+    'submitCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
+        TRANSACTION_PRIORITY.REGULAR,
+    'submitCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.REGULAR,
+    'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
+        TRANSACTION_PRIORITY.HIGH,
+    'submitUpdateCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.HIGH,
+    sendProof: TRANSACTION_PRIORITY.REGULAR,
+};
+
 export const COMMAND_RETRIES = {
+    SIMPLE_ASSET_SYNC: 1,
     SUBMIT_COMMIT: 5,
     SUBMIT_UPDATE_COMMIT: 5,
     SUBMIT_PROOFS: 5,
+};
+
+export const SIMPLE_ASSET_SYNC_PARAMETERS = {
+    GET_RESULT_POLLING_INTERVAL_MILLIS: 1 * 1000,
+    GET_RESULT_POLLING_MAX_ATTEMPTS: 30,
 };
 
 export const COMMAND_TX_GAS_INCREASE_FACTORS = {
@@ -211,7 +235,26 @@ export const COMMAND_TX_GAS_INCREASE_FACTORS = {
     SUBMIT_PROOFS: 1.2,
 };
 
-export const GNOSIS_DEFAULT_GAS_PRICE = 2;
+export const CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS = {
+    'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))': 1.2,
+    'submitUpdateCommit((address,uint256,bytes,uint8,uint16))': 1.2,
+};
+
+export const GNOSIS_DEFAULT_GAS_PRICE = {
+    TESTNET: 25,
+    MAINNET: 5,
+};
+
+export const NEURO_DEFAULT_GAS_PRICE = {
+    TESTNET: 8,
+    MAINNET: 8,
+};
+
+export const CONTRACT_FUNCTION_FIXED_GAS_PRICE = {
+    'otp:2043': {
+        SUBMIT_UPDATE_COMMIT: 15,
+    },
+};
 
 export const WEBSOCKET_PROVIDER_OPTIONS = {
     reconnect: {
@@ -307,6 +350,7 @@ export const ERROR_TYPE = {
     COMMIT_PROOF: {
         CALCULATE_PROOFS_ERROR: 'CalculateProofsError',
         EPOCH_CHECK_ERROR: 'EpochCheckError',
+        SIMPLE_ASSET_SYNC_ERROR: 'SimpleAssetSyncError',
         SUBMIT_COMMIT_ERROR: 'SubmitCommitError',
         SUBMIT_COMMIT_SEND_TX_ERROR: 'SubmitCommitSendTxError',
         SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
@@ -370,6 +414,8 @@ export const OPERATION_ID_STATUS = {
     COMMIT_PROOF: {
         EPOCH_CHECK_START: 'EPOCH_CHECK_START',
         EPOCH_CHECK_END: 'EPOCH_CHECK_END',
+        SIMPLE_ASSET_SYNC_START: 'SIMPLE_ASSET_SYNC_START',
+        SIMPLE_ASSET_SYNC_END: 'SIMPLE_ASSET_SYNC_END',
         SUBMIT_COMMIT_START: 'SUBMIT_COMMIT_START',
         SUBMIT_COMMIT_END: 'SUBMIT_COMMIT_END',
         SUBMIT_COMMIT_SEND_TX_START: 'SUBMIT_COMMIT_SEND_TX_START',
@@ -404,6 +450,8 @@ export const OPERATIONS = {
     UPDATE: 'update',
     GET: 'get',
 };
+
+export const SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS = 5 * 60;
 
 /**
  * @constant {number} OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS -
@@ -586,12 +634,12 @@ export const CONTRACTS = {
     STAKING_CONTRACT: 'StakingContract',
     PROFILE_CONTRACT: 'ProfileContract',
     HUB_CONTRACT: 'HubContract',
-    // TODO: Update with new commit Managers
+    CONTENT_ASSET: 'ContentAssetContract',
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
     SERVICE_AGREEMENT_V1_CONTRACT: 'ServiceAgreementV1Contract',
     PARAMETERS_STORAGE_CONTRACT: 'ParametersStorageContract',
     IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
-    Log2PLDSF_CONTRACT: 'Log2PLDSFContract',
+    LOG2PLDSF_CONTRACT: 'Log2PLDSFContract',
     LINEAR_SUM_CONTRACT: 'LinearSumContract',
 };
 
@@ -603,9 +651,26 @@ export const CONTRACT_EVENTS = {
     COMMIT_MANAGER_V1: ['StateFinalized'],
     SERVICE_AGREEMENT_V1: ['ServiceAgreementV1Extended', 'ServiceAgreementV1Terminated'],
     PARAMETERS_STORAGE: ['ParameterChanged'],
-    Log2PLDSF: ['ParameterChanged'],
+    LOG2PLDSF: ['ParameterChanged'],
     LINEAR_SUM: ['ParameterChanged'],
 };
+
+export const GROUPED_CONTRACT_EVENTS = {
+    AssetCreatedGroup: {
+        events: ['AssetMinted', 'ServiceAgreementV1Created'],
+        groupingKey: 'tokenId',
+    },
+};
+
+export const CONTRACT_EVENT_TO_GROUP_MAPPING = (() => {
+    const mapping = {};
+    Object.entries(GROUPED_CONTRACT_EVENTS).forEach(([groupName, { events }]) => {
+        events.forEach((eventName) => {
+            mapping[eventName] = groupName;
+        });
+    });
+    return mapping;
+})();
 
 export const NODE_ENVIRONMENTS = {
     DEVELOPMENT: 'development',
@@ -633,6 +698,13 @@ export const BLOCK_TIME_MILLIS = {
 
 export const TRANSACTION_CONFIRMATIONS = 1;
 
+export const SERVICE_AGREEMENT_SOURCES = {
+    BLOCKCHAIN: 'blockchain',
+    EVENT: 'event',
+    CLIENT: 'client',
+    NODE: 'node',
+};
+
 export const CACHE_DATA_TYPES = {
     NUMBER: 'number',
     ANY: 'any',
@@ -657,14 +729,16 @@ export const CACHED_FUNCTIONS = {
         epochLength: CACHE_DATA_TYPES.NUMBER,
         minimumStake: CACHE_DATA_TYPES.ANY,
         maximumStake: CACHE_DATA_TYPES.ANY,
+        minProofWindowOffsetPerc: CACHE_DATA_TYPES.NUMBER,
+        maxProofWindowOffsetPerc: CACHE_DATA_TYPES.NUMBER,
     },
     IdentityStorageContract: {
         getIdentityId: CACHE_DATA_TYPES.NUMBER,
     },
-    Log2PLDSF: {
+    Log2PLDSFContract: {
         getParameters: CACHE_DATA_TYPES.ANY,
     },
-    LinearSum: {
+    LinearSumContract: {
         getParameters: CACHE_DATA_TYPES.ANY,
     },
 };
