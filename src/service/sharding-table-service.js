@@ -35,16 +35,17 @@ class ShardingTableService {
         });
     }
 
-    async pullBlockchainShardingTable(blockchainId) {
+    async pullBlockchainShardingTable(blockchainId, force = false) {
         const lastCheckedBlock = await this.repositoryModuleManager.getLastCheckedBlock(
             blockchainId,
             CONTRACTS.SHARDING_TABLE_CONTRACT,
         );
 
         if (
-            lastCheckedBlock?.lastCheckedTimestamp &&
-            Date.now() - lastCheckedBlock.lastCheckedTimestamp <
-                DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS
+            force ||
+            (lastCheckedBlock?.lastCheckedTimestamp &&
+                Date.now() - lastCheckedBlock.lastCheckedTimestamp <
+                    DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS)
         ) {
             return;
         }
@@ -187,6 +188,7 @@ class ShardingTableService {
         const myPeerId = this.networkModuleManager.getPeerId().toB58String();
         const filteredPeerRecords = peerRecords.filter((peer) => peer.peerId !== myPeerId);
         const sorted = filteredPeerRecords.sort((a, b) => a.ask - b.ask);
+
         let ask;
         if (sorted.length > r1) {
             ask = sorted[r1 - 1].ask;
@@ -197,7 +199,7 @@ class ShardingTableService {
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);
 
         const bidSuggestion = this.blockchainModuleManager
-            .toBigNumber(blockchainId, this.blockchainModuleManager.convertToWei(blockchainId, ask))
+            .convertToWei(blockchainId, ask)
             .mul(kbSize)
             .mul(epochsNumber)
             .mul(r0)

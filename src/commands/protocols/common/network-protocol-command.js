@@ -19,7 +19,7 @@ class NetworkProtocolCommand extends Command {
         const batchSize = await this.getBatchSize(blockchain);
         const minAckResponses = await this.getMinAckResponses(blockchain);
 
-        const serviceAgreementId = await this.serviceAgreementService.generateId(
+        const serviceAgreementId = this.serviceAgreementService.generateId(
             blockchain,
             contract,
             tokenId,
