@@ -9,7 +9,6 @@ import {
     SOLIDITY_PANIC_CODE_PREFIX,
     SOLIDITY_PANIC_REASONS,
     ZERO_PREFIX,
-    DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
     TRANSACTION_QUEUE_CONCURRENCY,
     TRANSACTION_POLLING_TIMEOUT_MILLIS,
@@ -25,6 +24,7 @@ import {
     CONTRACT_FUNCTION_PRIORITY,
     TRANSACTION_PRIORITY,
     CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS,
+    MAX_NUMBER_OF_HISTORICAL_BLOCKS_FOR_SYNC,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -911,8 +911,10 @@ class Web3Service {
         }
 
         let fromBlock;
-        if (this.isOlderThan(lastCheckedTimestamp, DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS)) {
+        let eventsMissed = false;
+        if (this.startBlock - lastCheckedBlock > MAX_NUMBER_OF_HISTORICAL_BLOCKS_FOR_SYNC) {
             fromBlock = this.startBlock;
+            eventsMissed = true;
         } else {
             fromBlock = lastCheckedBlock + 1;
         }
@@ -925,30 +927,46 @@ class Web3Service {
         }
 
         const events = [];
-        while (fromBlock <= currentBlock) {
-            const toBlock = Math.min(
-                fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH - 1,
-                currentBlock,
+        let toBlock;
+        try {
+            while (fromBlock <= currentBlock) {
+                toBlock = Math.min(
+                    fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH - 1,
+                    currentBlock,
+                );
+                const newEvents = await this.processBlockRange(
+                    fromBlock,
+                    toBlock,
+                    contract,
+                    topics,
+                );
+                newEvents.forEach((e) => events.push(...e));
+                fromBlock = toBlock + 1;
+            }
+        } catch (error) {
+            this.logger.warn(
+                `Unable to process block range from: ${fromBlock} to: ${toBlock} for contract ${contractName} on blockchain: ${blockchainId}. Error: ${error.message}`,
             );
-            const newEvents = await this.processBlockRange(fromBlock, toBlock, contract, topics);
-            newEvents.forEach((e) => events.push(...e));
-            fromBlock = toBlock + 1;
         }
 
-        return events.map((event) => ({
-            contract: contractName,
-            event: event.event,
-            data: JSON.stringify(
-                Object.fromEntries(
-                    Object.entries(event.args).map(([k, v]) => [
-                        k,
-                        ethers.BigNumber.isBigNumber(v) ? v.toString() : v,
-                    ]),
+        return {
+            events: events.map((event) => ({
+                contract: contractName,
+                event: event.event,
+                data: JSON.stringify(
+                    Object.fromEntries(
+                        Object.entries(event.args).map(([k, v]) => [
+                            k,
+                            ethers.BigNumber.isBigNumber(v) ? v.toString() : v,
+                        ]),
+                    ),
                 ),
-            ),
-            block: event.blockNumber,
-            blockchainId,
-        }));
+                block: event.blockNumber,
+                blockchainId,
+            })),
+            lastCheckedBlock: toBlock,
+            eventsMissed,
+        };
     }
 
     async processBlockRange(fromBlock, toBlock, contract, topics) {
