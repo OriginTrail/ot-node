@@ -23,7 +23,7 @@ class DeletePendingStateCommand extends Command {
                 `token id: ${tokenId}, assertion id: ${assertionId}`,
         );
 
-        const pendingStateExists = this.pendingStateExists(
+        const pendingStateExists = await this.pendingStateExists(
             blockchain,
             contract,
             tokenId,
@@ -31,6 +31,9 @@ class DeletePendingStateCommand extends Command {
         );
 
         if (pendingStateExists) {
+            this.logger.trace(
+                `Pending state exists for token id: ${tokenId}, assertion id: ${assertionId}, blockchain: ${blockchain} and operationId: ${operationId}`,
+            );
             const assetStates = await this.blockchainModuleManager.getAssertionIds(
                 blockchain,
                 contract,
@@ -38,7 +41,9 @@ class DeletePendingStateCommand extends Command {
             );
             if (assetStates.includes(assertionId)) {
                 const stateIndex = assetStates.indexOf(assertionId);
-                // node did not react on state finalized event
+                this.logger.trace(
+                    `Node missed state finalized event for token id: ${tokenId}, assertion id: ${assertionId}, blockchain: ${blockchain} and operationId: ${operationId}. Node will now move data from pending storage to triple store`,
+                );
                 await Promise.all([
                     this.pendingStorageService.moveAndDeletePendingState(
                         TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
