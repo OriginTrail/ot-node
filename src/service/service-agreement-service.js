@@ -40,8 +40,7 @@ class ServiceAgreementService {
             .mul(epochsLeft)
             .mul(blockchainAssertionSize);
 
-        return this.blockchainModuleManager
-            .convertToWei(blockchain, agreementData.tokenAmount)
+        return agreementData.tokenAmount
             .add(agreementData.updateTokenAmount)
             .mul(1024)
             .div(divisor)
