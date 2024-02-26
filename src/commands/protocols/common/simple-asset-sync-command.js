@@ -148,9 +148,8 @@ class SimpleAssetSyncCommand extends Command {
             });
         }
 
-        this.repositoryModuleManager.removeServiceAgreementRecord(blockchain, contract, tokenId);
         this.logger.log(
-            `[SIMPLE_ASSET_SYNC] (${operationId}): Couldn't finde asset on the network for the ` +
+            `[SIMPLE_ASSET_SYNC] (${operationId}): Failed to executed command. Couldn't finde asset on the network for the ` +
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                 `State Index: ${stateIndex}, Network Get Operation ID: ${getOperationId}, `,
