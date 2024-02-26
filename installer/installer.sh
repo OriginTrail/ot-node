@@ -526,7 +526,7 @@ else
      --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" \
      --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" \
      --argjson ADD_GNOSIS_RPC "$ADD_GNOSIS_RPC" \
-     --arg OPERATOR_FEE "$OPERATOR_FEE" \
+     --argjson OPERATOR_FEE $OPERATOR_FEE \
      --arg GNOSIS_RPC_ENDPOINT "$GNOSIS_RPC_ENDPOINT" '
     (.modules.blockchain.implementation += {
       ($blockchain_arg): {
