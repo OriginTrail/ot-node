@@ -1097,6 +1097,17 @@ class Web3Service {
             [agreementId],
         );
 
+        console.log(
+            `tokenAmount: ${result['3'][0]}, converted: ${ethers.utils.formatEther(
+                result['3'][0],
+            )}`,
+        );
+        console.log(
+            `updateTokenAmount: ${result['3'][1]}, converted: ${ethers.utils.formatEther(
+                result['3'][1],
+            )}`,
+        );
+
         return {
             startTime: result['0'].toNumber(),
             epochsNumber: result['1'],
@@ -1424,7 +1435,10 @@ class Web3Service {
     }
 
     convertToWei(value, fromUnit = 'ether') {
-        return ethers.utils.parseUnits(value.toString(), fromUnit);
+        return ethers.utils.parseUnits(
+            value.toLocaleString('fullwide', { useGrouping: false, maximumFractionDigits: 18 }),
+            fromUnit,
+        );
     }
 
     convertFromWei(value, toUnit = 'ether') {
