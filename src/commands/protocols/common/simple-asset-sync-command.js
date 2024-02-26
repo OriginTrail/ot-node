@@ -15,6 +15,8 @@ class SimpleAssetSyncCommand extends Command {
         this.ualService = ctx.ualService;
         this.operationIdService = ctx.operationIdService;
         this.getService = ctx.getService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.commandExecutor = ctx.commandExecutor;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.SIMPLE_ASSET_SYNC_ERROR;
     }
@@ -85,7 +87,7 @@ class SimpleAssetSyncCommand extends Command {
                 sequence: [],
                 delay: 0,
                 data: {
-                    getOperationId,
+                    operationId: getOperationId,
                     id: ual,
                     blockchain,
                     contract,
@@ -123,7 +125,8 @@ class SimpleAssetSyncCommand extends Command {
                 `[SIMPLE_ASSET_SYNC] (${operationId}): Unable to sync Knowledge Asset for the ` +
                     `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                     `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
-                    `State Index: ${stateIndex}, Network Get Operation ID: ${getOperationId}, `,
+                    `State Index: ${stateIndex}, Network Get Operation ID: ${getOperationId}, ` +
+                    `Operation failed with error: ${error}.`,
             );
 
             return Command.retry();
