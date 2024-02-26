@@ -478,7 +478,7 @@ fi
 
 # Check if "Both" blockchains are selected
 if [ "$blockchain" == "Both" ]; then
-  perform_step $(jq --arg otp_blockchain_id "$otp_blockchain_id" --argjson EVM_OP_WALLET_KEYS_BLOCKCHAIN1 "$EVM_OP_WALLET_KEYS_BLOCKCHAIN1" --argjson EVM_OP_WALLET_KEYS_BLOCKCHAIN2 "$EVM_OP_WALLET_KEYS_BLOCKCHAIN2" --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" --arg OPERATOR_FEES_1 "$OPERATOR_FEES_1" --arg OPERATOR_FEES_2 "$OPERATOR_FEES_2" --arg gnosis_blockchain_id "$gnosis_blockchain_id" --arg EVM_OPERATIONAL_WALLET_2 "$EVM_OPERATIONAL_WALLET_2" --arg EVM_OPERATIONAL_PRIVATE_KEY_2 "$EVM_OPERATIONAL_PRIVATE_KEY_2" --arg EVM_MANAGEMENT_WALLET_2 "$EVM_MANAGEMENT_WALLET_2" --arg SHARES_TOKEN_NAME_2 "$SHARES_TOKEN_NAME_2" --arg SHARES_TOKEN_SYMBOL_2 "$SHARES_TOKEN_SYMBOL_2" --arg GNOSIS_RPC_ENDPOINT "$GNOSIS_RPC_ENDPOINT" '
+  perform_step $(jq --arg otp_blockchain_id "$otp_blockchain_id" --argjson EVM_OP_WALLET_KEYS_BLOCKCHAIN1 "$EVM_OP_WALLET_KEYS_BLOCKCHAIN1" --argjson EVM_OP_WALLET_KEYS_BLOCKCHAIN2 "$EVM_OP_WALLET_KEYS_BLOCKCHAIN2" --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" --argjson OPERATOR_FEES_1 "$OPERATOR_FEES_1" --argjson OPERATOR_FEES_2 "$OPERATOR_FEES_2" --arg gnosis_blockchain_id "$gnosis_blockchain_id" --arg EVM_OPERATIONAL_WALLET_2 "$EVM_OPERATIONAL_WALLET_2" --arg EVM_OPERATIONAL_PRIVATE_KEY_2 "$EVM_OPERATIONAL_PRIVATE_KEY_2" --arg EVM_MANAGEMENT_WALLET_2 "$EVM_MANAGEMENT_WALLET_2" --arg SHARES_TOKEN_NAME_2 "$SHARES_TOKEN_NAME_2" --arg SHARES_TOKEN_SYMBOL_2 "$SHARES_TOKEN_SYMBOL_2" --arg GNOSIS_RPC_ENDPOINT "$GNOSIS_RPC_ENDPOINT" '
     .modules.blockchain.implementation += {
       "otp:'$otp_blockchain_id'": {
         "enabled": true,
@@ -498,14 +498,15 @@ if [ "$blockchain" == "Both" ]; then
           "sharesTokenName": $SHARES_TOKEN_NAME_2,
           "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL_2,
           "operatorFee": $OPERATOR_FEES_2,
-          "rpcEndpoints": [$GNOSIS_RPC_ENDPOINT]
+	  "rpcEndpoints": [$GNOSIS_RPC_ENDPOINT]
         }
       }
     }' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2 for Both"
-
 else
+
+
   # Single blockchain selected
-    if [ "$blockchain" = "OriginTrail Parachain" ] || [ "$blockchain" = "OTP" ]; then
+  if [ "$blockchain" = "OriginTrail Parachain" ] || [ "$blockchain" = "OTP" ]; then
     blockchain="otp"
     blockchain_id="$otp_blockchain_id"
   elif [ "$blockchain" = "Gnosis" ]; then
@@ -517,31 +518,30 @@ else
     ADD_GNOSIS_RPC="true"
   fi
 
-
   blockchain_arg="$blockchain:$blockchain_id"
 
-jq --arg blockchain_arg "$blockchain_arg" \
-   --argjson EVM_OP_WALLET_KEYS_BLOCKCHAIN "$EVM_OP_WALLET_KEYS_BLOCKCHAIN" \
-   --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" \
-   --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" \
-   --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" \
-   --argjson ADD_GNOSIS_RPC "$ADD_GNOSIS_RPC" \
-   --arg OPERATOR_FEE "$OPERATOR_FEE" \
-   --arg GNOSIS_RPC_ENDPOINT "$GNOSIS_RPC_ENDPOINT" '
-(.modules.blockchain.implementation += {
-  ($blockchain_arg): {
-    "enabled": true,
-    "config": {
-      "operationalWallets": $EVM_OP_WALLET_KEYS_BLOCKCHAIN,
-      "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET,
-      "sharesTokenName": $SHARES_TOKEN_NAME,
-      "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL,
-      "operatorFee": $OPERATOR_FEE
-    }
-  }
-}) | if $ADD_GNOSIS_RPC then .blockchain.implementation[$blockchain_arg].config += {"rpcEndpoints": [$GNOSIS_RPC_ENDPOINT]} else . end
-' "$CONFIG_DIR/.origintrail_noderc" > "$CONFIG_DIR/origintrail_noderc_tmp"
+  jq --arg blockchain_arg "$blockchain_arg" \
+     --argjson EVM_OP_WALLET_KEYS_BLOCKCHAIN "$EVM_OP_WALLET_KEYS_BLOCKCHAIN" \
+     --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" \
+     --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" \
+     --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" \
+     --argjson ADD_GNOSIS_RPC "$ADD_GNOSIS_RPC" \
+     --arg OPERATOR_FEE "$OPERATOR_FEE" \
+     --arg GNOSIS_RPC_ENDPOINT "$GNOSIS_RPC_ENDPOINT" '
+    (.modules.blockchain.implementation += {
+      ($blockchain_arg): {
+        "enabled": true,
+        "config": {
+          "operationalWallets": $EVM_OP_WALLET_KEYS_BLOCKCHAIN,
+          "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET,
+          "sharesTokenName": $SHARES_TOKEN_NAME,
+          "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL,
+          "operatorFee": $OPERATOR_FEE
 
+        }
+      }
+    }) | if $ADD_GNOSIS_RPC then .modules.blockchain.implementation[$blockchain_arg].config += {"rpcEndpoints": [$GNOSIS_RPC_ENDPOINT]} else . end
+  ' "$CONFIG_DIR/.origintrail_noderc" > "$CONFIG_DIR/origintrail_noderc_tmp"
 fi
 
     perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
