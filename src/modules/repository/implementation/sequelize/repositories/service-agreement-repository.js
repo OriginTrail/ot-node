@@ -43,6 +43,7 @@ class ServiceAgreementRepository {
         keyword,
         assertionId,
         stateIndex,
+        dataSource,
         lastCommitEpoch,
         lastProofEpoch,
     ) {
@@ -60,6 +61,7 @@ class ServiceAgreementRepository {
             keyword,
             assertionId,
             stateIndex,
+            dataSource,
             lastCommitEpoch,
             lastProofEpoch,
         });
@@ -127,7 +129,13 @@ class ServiceAgreementRepository {
         });
     }
 
-    getEligibleAgreementsForSubmitCommit(timestampSeconds, blockchain, commitWindowDurationPerc) {
+    getEligibleAgreementsForSubmitCommit(
+        timestampSeconds,
+        blockchain,
+        commitWindowDurationPerc,
+        startTimeDelay,
+    ) {
+        const cutoffTimestamp = timestampSeconds - startTimeDelay;
         const currentEpoch = `FLOOR((${timestampSeconds} - start_time) / epoch_length)`;
         const currentEpochPerc = `((${timestampSeconds} - start_time) % epoch_length) / epoch_length * 100`;
 
@@ -146,6 +154,9 @@ class ServiceAgreementRepository {
             },
             where: {
                 blockchainId: blockchain,
+                start_time: {
+                    [Sequelize.Op.lt]: cutoffTimestamp,
+                },
                 [Sequelize.Op.or]: [
                     {
                         lastCommitEpoch: {

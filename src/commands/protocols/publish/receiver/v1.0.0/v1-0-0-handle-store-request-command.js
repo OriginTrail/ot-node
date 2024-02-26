@@ -5,6 +5,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     TRIPLE_STORE_REPOSITORIES,
+    SERVICE_AGREEMENT_SOURCES,
 } from '../../../../../constants/constants.js';
 
 class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
@@ -84,6 +85,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             keyword,
             assertionId,
             stateIndex,
+            SERVICE_AGREEMENT_SOURCES.NODE,
         );
 
         await this.operationIdService.updateOperationIdStatus(

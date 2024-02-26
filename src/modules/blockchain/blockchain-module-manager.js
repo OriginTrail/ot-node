@@ -82,6 +82,23 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'restartService');
     }
 
+    async getMinProofWindowOffsetPerc(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getMinProofWindowOffsetPerc');
+    }
+
+    async getMaxProofWindowOffsetPerc(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getMaxProofWindowOffsetPerc');
+    }
+
+    async generatePseudorandomUint8(blockchain, assetCreator, blockNumber, blockTimestamp, limit) {
+        return this.callImplementationFunction(blockchain, 'generatePseudorandomUint8', [
+            assetCreator,
+            blockNumber,
+            blockTimestamp,
+            limit,
+        ]);
+    }
+
     async getAssertionIdByIndex(blockchain, assetContractAddress, tokenId, index) {
         return this.callImplementationFunction(blockchain, 'getAssertionIdByIndex', [
             assetContractAddress,
@@ -138,6 +155,10 @@ class BlockchainModuleManager extends BaseModuleManager {
             startingIdentityId,
             nodesNum,
         ]);
+    }
+
+    async getTransaction(blockchain, transactionHash) {
+        return this.callImplementationFunction(blockchain, 'getTransaction', [transactionHash]);
     }
 
     async getAllPastEvents(
@@ -386,6 +407,10 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     async isHashFunction(blockchain, hashFunctionId) {
         return this.callImplementationFunction(blockchain, 'isHashFunction', [hashFunctionId]);
+    }
+
+    getScoreFunctionIds(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getScoreFunctionIds');
     }
 
     async getLog2PLDSFParams(blockchain) {

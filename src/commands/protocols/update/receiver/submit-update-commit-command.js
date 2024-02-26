@@ -4,6 +4,7 @@ import {
     ERROR_TYPE,
     COMMAND_RETRIES,
     COMMAND_TX_GAS_INCREASE_FACTORS,
+    CONTRACT_FUNCTION_FIXED_GAS_PRICE,
 } from '../../../../constants/constants.js';
 
 class SubmitUpdateCommitCommand extends Command {
@@ -12,6 +13,7 @@ class SubmitUpdateCommitCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.operationIdService = ctx.operationIdService;
+        this.serviceAgreementService = ctx.serviceAgreementService;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_ERROR;
     }
@@ -41,9 +43,9 @@ class SubmitUpdateCommitCommand extends Command {
             `Retry number: ${COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1}`,
         );
 
-        const epoch = await this.calculateCurrentEpoch(
-            Number(agreementData.startTime),
-            Number(agreementData.epochLength),
+        const epoch = await this.serviceAgreementService.calculateCurrentEpoch(
+            agreementData.startTime,
+            agreementData.epochLength,
             blockchain,
         );
 
@@ -74,8 +76,10 @@ class SubmitUpdateCommitCommand extends Command {
 
             return Command.empty();
         }
-
-        const txGasPrice = gasPrice ?? (await this.blockchainModuleManager.getGasPrice(blockchain));
+        const txGasPrice =
+            gasPrice ??
+            CONTRACT_FUNCTION_FIXED_GAS_PRICE[blockchain]?.SUBMIT_UPDATE_COMMIT ??
+            (await this.blockchainModuleManager.getGasPrice(blockchain));
 
         const transactionCompletePromise = new Promise((resolve, reject) => {
             this.blockchainModuleManager.submitUpdateCommit(
@@ -174,11 +178,6 @@ class SubmitUpdateCommitCommand extends Command {
         );
 
         return Command.empty();
-    }
-
-    async calculateCurrentEpoch(startTime, epochLength, blockchain) {
-        const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
-        return Math.floor((Number(now) - Number(startTime)) / Number(epochLength));
     }
 
     async retryFinished(command) {

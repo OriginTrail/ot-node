@@ -6,6 +6,7 @@ import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
     SCHEMA_CONTEXT,
     TRIPLE_STORE_REPOSITORIES,
+    SERVICE_AGREEMENT_SOURCES,
 } from '../constants/constants.js';
 
 class ServiceAgreementsMetadataMigration extends BaseMigration {
@@ -131,7 +132,7 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
         );
 
         // generate agreement id
-        const agreementId = await this.serviceAgreementService.generateId(
+        const agreementId = this.serviceAgreementService.generateId(
             blockchain,
             contract,
             tokenId,
@@ -223,6 +224,7 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
             keyword,
             assertionId,
             stateIndex,
+            SERVICE_AGREEMENT_SOURCES.BLOCKCHAIN,
             lastCommitEpoch,
             lastProofEpoch,
         );
