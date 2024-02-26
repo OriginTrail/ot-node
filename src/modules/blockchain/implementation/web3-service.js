@@ -22,6 +22,9 @@ import {
     CACHED_FUNCTIONS,
     CACHE_DATA_TYPES,
     CONTRACTS,
+    CONTRACT_FUNCTION_PRIORITY,
+    TRANSACTION_PRIORITY,
+    CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS,
 } from '../../../constants/constants.js';
 
 const require = createRequire(import.meta.url);
@@ -62,40 +65,113 @@ class Web3Service {
         this.config = config;
         this.logger = logger;
         this.contractCallCache = {};
-        this.initializeTransactionQueue(TRANSACTION_QUEUE_CONCURRENCY);
         await this.initializeWeb3();
+        this.initializeTransactionQueues();
         this.startBlock = await this.getBlockNumber();
         await this.initializeContracts();
+
         this.initializeProviderDebugging();
     }
 
-    initializeTransactionQueue(concurrency) {
-        this.transactionQueue = async.queue((args, cb) => {
-            const { contractInstance, functionName, transactionArgs, gasPrice } = args;
-            this._executeContractFunction(contractInstance, functionName, transactionArgs, gasPrice)
-                .then((result) => {
-                    cb({ result });
-                })
-                .catch((error) => {
-                    cb({ error });
-                });
-        }, concurrency);
+    initializeTransactionQueues(concurrency = TRANSACTION_QUEUE_CONCURRENCY) {
+        this.transactionQueues = {};
+        for (const operationalWallet of this.operationalWallets) {
+            const transactionQueue = async.queue((args, cb) => {
+                const { contractInstance, functionName, transactionArgs, gasPrice } = args;
+                this._executeContractFunction(
+                    contractInstance,
+                    functionName,
+                    transactionArgs,
+                    gasPrice,
+                    operationalWallet,
+                )
+                    .then((result) => {
+                        cb({ result });
+                    })
+                    .catch((error) => {
+                        cb({ error });
+                    });
+            }, concurrency);
+            this.transactionQueues[operationalWallet.address] = transactionQueue;
+        }
     }
 
     queueTransaction(contractInstance, functionName, transactionArgs, callback, gasPrice) {
-        this.transactionQueue.push(
-            {
-                contractInstance,
-                functionName,
-                transactionArgs,
-                gasPrice,
-            },
-            callback,
-        );
+        const selectedQueue = this.selectTransactionQueue();
+        const priority = CONTRACT_FUNCTION_PRIORITY[functionName] ?? TRANSACTION_PRIORITY.REGULAR;
+        this.logger.info(`Calling ${functionName} with priority: ${priority}`);
+        switch (priority) {
+            case TRANSACTION_PRIORITY.HIGH:
+                selectedQueue.unshift(
+                    {
+                        contractInstance,
+                        functionName,
+                        transactionArgs,
+                        gasPrice,
+                    },
+                    callback,
+                );
+                break;
+            case TRANSACTION_PRIORITY.REGULAR:
+            default:
+                selectedQueue.push(
+                    {
+                        contractInstance,
+                        functionName,
+                        transactionArgs,
+                        gasPrice,
+                    },
+                    callback,
+                );
+                break;
+        }
     }
 
-    getTransactionQueueLength() {
-        return this.transactionQueue.length();
+    removeTransactionQueue(walletAddress) {
+        delete this.transactionQueues[walletAddress];
+    }
+
+    getTotalTransactionQueueLength() {
+        let totalLength = 0;
+        Object.values(this.transactionQueues).forEach((queue) => {
+            totalLength += queue.length();
+        });
+        return totalLength;
+    }
+
+    selectTransactionQueue() {
+        let selectedQueue = null;
+        let minLength = Infinity;
+
+        for (const walletAddress of Object.keys(this.transactionQueues)) {
+            const queue = this.transactionQueues[walletAddress];
+            const length = queue.length();
+
+            if (length === 0) {
+                return queue;
+            }
+
+            if (length < minLength) {
+                selectedQueue = queue;
+                minLength = length;
+            }
+        }
+
+        return selectedQueue;
+    }
+
+    getValidOperationalWallets() {
+        const wallets = [];
+        this.config.operationalWallets.forEach((wallet) => {
+            try {
+                wallets.push(new ethers.Wallet(wallet.privateKey, this.provider));
+            } catch (error) {
+                this.logger.warn(
+                    `Invalid evm private key, unable to create wallet instance. Wallet public key: ${wallet.evmAddress}. Error: ${error.message}`,
+                );
+            }
+        });
+        return wallets;
     }
 
     async initializeWeb3() {
@@ -143,7 +219,16 @@ class Web3Service {
             );
         }
 
-        this.wallet = new ethers.Wallet(this.getPrivateKey(), this.provider);
+        this.operationalWallets = this.getValidOperationalWallets();
+        if (this.operationalWallets.length === 0) {
+            throw Error(
+                'Unable to initialize web3 service, all operational wallets provided are invalid',
+            );
+        }
+    }
+
+    getABIs() {
+        return ABIs;
     }
 
     async initializeContracts() {
@@ -154,8 +239,8 @@ class Web3Service {
         );
         this.HubContract = new ethers.Contract(
             this.config.hubContractAddress,
-            ABIs.Hub,
-            this.wallet,
+            this.getABIs().Hub,
+            this.operationalWallets[0],
         );
         this.contractAddresses[this.config.hubContractAddress] = this.HubContract;
 
@@ -261,8 +346,8 @@ class Web3Service {
     initializeAssetStorageContract(assetStorageAddress) {
         this.assetStorageContracts[assetStorageAddress.toLowerCase()] = new ethers.Contract(
             assetStorageAddress,
-            ABIs.ContentAssetStorage,
-            this.wallet,
+            this.getABIs().ContentAssetStorage,
+            this.operationalWallets[0],
         );
         this.contractAddresses[assetStorageAddress] =
             this.assetStorageContracts[assetStorageAddress.toLowerCase()];
@@ -271,11 +356,11 @@ class Web3Service {
     initializeScoringContract(id, contractAddress) {
         const contractName = SCORING_FUNCTIONS[id];
 
-        if (ABIs[contractName] != null) {
+        if (this.getABIs()[contractName] != null) {
             this.scoringFunctionsContracts[id] = new ethers.Contract(
                 contractAddress,
-                ABIs[contractName],
-                this.wallet,
+                this.getABIs()[contractName],
+                this.operationalWallets[0],
             );
             this.contractAddresses[contractAddress] = this.scoringFunctionsContracts[id];
         } else {
@@ -312,11 +397,11 @@ class Web3Service {
     }
 
     initializeContract(contractName, contractAddress) {
-        if (ABIs[contractName] != null) {
+        if (this.getABIs()[contractName] != null) {
             this[`${contractName}Contract`] = new ethers.Contract(
                 contractAddress,
-                ABIs[contractName],
-                this.wallet,
+                this.getABIs()[contractName],
+                this.operationalWallets[0],
             );
             this.contractAddresses[contractAddress] = this[`${contractName}Contract`];
         } else {
@@ -330,12 +415,8 @@ class Web3Service {
         return this.provider.getNetwork();
     }
 
-    getPrivateKey() {
-        return this.config.evmOperationalWalletPrivateKey;
-    }
-
-    getPublicKey() {
-        return this.wallet.address;
+    getPublicKeys() {
+        return this.operationalWallets.map((wallet) => wallet.address);
     }
 
     getManagementKey() {
@@ -347,23 +428,25 @@ class Web3Service {
     }
 
     async logBalances() {
-        const nativeBalance = await this.getNativeTokenBalance();
-        const tokenBalance = await this.getTokenBalance();
-        this.logger.info(
-            `Balance of ${this.getPublicKey()} is ${nativeBalance} ${
-                this.baseTokenTicker
-            } and ${tokenBalance} ${this.tracTicker}.`,
-        );
+        for (const wallet of this.operationalWallets) {
+            // eslint-disable-next-line no-await-in-loop
+            const nativeBalance = await this.getNativeTokenBalance(wallet);
+            // eslint-disable-next-line no-await-in-loop
+            const tokenBalance = await this.getTokenBalance(wallet.address);
+            this.logger.info(
+                `Balance of ${wallet.address} is ${nativeBalance} ${this.baseTokenTicker} and ${tokenBalance} ${this.tracTicker}.`,
+            );
+        }
     }
 
-    async getNativeTokenBalance() {
-        const nativeBalance = await this.wallet.getBalance();
+    async getNativeTokenBalance(wallet) {
+        const nativeBalance = await wallet.getBalance();
         return Number(ethers.utils.formatEther(nativeBalance));
     }
 
-    async getTokenBalance() {
+    async getTokenBalance(publicKey) {
         const tokenBalance = await this.callContractFunction(this.TokenContract, 'balanceOf', [
-            this.getPublicKey(),
+            publicKey,
         ]);
         return Number(ethers.utils.formatEther(tokenBalance));
     }
@@ -378,13 +461,67 @@ class Web3Service {
     }
 
     async getIdentityId() {
-        const identityId = await this.callContractFunction(
-            this.IdentityStorageContract,
-            'getIdentityId',
-            [this.getPublicKey()],
-            CONTRACTS.IDENTITY_STORAGE_CONTRACT,
+        if (this.identityId) {
+            return this.identityId;
+        }
+
+        const promises = this.operationalWallets.map((wallet) =>
+            this.callContractFunction(
+                this.IdentityStorageContract,
+                'getIdentityId',
+                [wallet.address],
+                CONTRACTS.IDENTITY_STORAGE_CONTRACT,
+            ).then((identityId) => [wallet.address, Number(identityId)]),
         );
-        return Number(identityId);
+        const results = await Promise.all(promises);
+
+        this.identityId = 0;
+        const walletWithIdentityZero = [];
+        results.forEach(([publicKey, identityId]) => {
+            this.logger.trace(
+                `Identity id: ${identityId} found for wallet: ${publicKey} on blockchain: ${this.getBlockchainId()}`,
+            );
+            if (identityId !== 0) {
+                if (this.identityId !== identityId && this.identityId !== 0) {
+                    const index = this.operationalWallets.find(
+                        (wallet) => wallet.address === publicKey,
+                    );
+                    this.operationalWallets.splice(index, 1);
+                    this.logger.warn(
+                        `Found invalid identity id. Identity id: ${identityId} found for wallet: ${publicKey}, expected identity id: ${
+                            this.identityId
+                        } on blockchain: ${this.getBlockchainId()}. Operational wallet will not be used for transactions.`,
+                    );
+                    this.removeTransactionQueue(publicKey);
+                } else {
+                    this.identityId = identityId;
+                }
+            } else {
+                walletWithIdentityZero.push(publicKey);
+            }
+        });
+
+        if (this.identityId !== 0) {
+            walletWithIdentityZero.forEach((publicKey) => {
+                const index = this.operationalWallets.find(
+                    (wallet) => wallet.address === publicKey,
+                );
+                this.operationalWallets.splice(index, 1);
+                this.logger.warn(
+                    `Operational wallet: ${publicKey} don't have profile connected to it, expected identity id: ${
+                        this.identityId
+                    } on blockchain ${this.getBlockchainId()}`,
+                );
+            });
+        }
+
+        if (this.operationalWallets.length === 0) {
+            throw new Error(
+                `Unable to find valid operational wallets for blockchain implementation: ${this.getBlockchainId()}`,
+            );
+        }
+
+        return this.identityId;
     }
 
     async identityIdExists() {
@@ -407,26 +544,40 @@ class Web3Service {
         while (retryCount + 1 <= maxNumberOfRetries && !profileCreated) {
             try {
                 // eslint-disable-next-line no-await-in-loop
-                await this._executeContractFunction(this.ProfileContract, 'createProfile', [
-                    this.getManagementKey(),
-                    this.convertAsciiToHex(peerId),
-                    this.config.sharesTokenName,
-                    this.config.sharesTokenSymbol,
-                ]);
+                await this._executeContractFunction(
+                    this.ProfileContract,
+                    'createProfile',
+                    [
+                        this.getManagementKey(),
+                        this.getPublicKeys().slice(1),
+                        this.convertAsciiToHex(peerId),
+                        this.config.sharesTokenName,
+                        this.config.sharesTokenSymbol,
+                        this.config.operatorFee,
+                    ],
+                    null,
+                    this.operationalWallets[0],
+                );
                 this.logger.info(
-                    `Profile created with name: ${this.config.sharesTokenName} and symbol: ${this.config.sharesTokenSymbol}`,
+                    `Profile created with name: ${this.config.sharesTokenName} and symbol: ${
+                        this.config.sharesTokenSymbol
+                    }, wallet: ${
+                        this.operationalWallets[0].address
+                    }, on blockchain ${this.getBlockchainId()}`,
                 );
                 profileCreated = true;
             } catch (error) {
                 if (error.message.includes('Profile already exists')) {
-                    this.logger.info(`Skipping profile creation, already exists on blockchain.`);
+                    this.logger.info(
+                        `Skipping profile creation, already exists on blockchain ${this.getBlockchainId()}.`,
+                    );
                     profileCreated = true;
                 } else if (retryCount + 1 < maxNumberOfRetries) {
                     retryCount += 1;
                     this.logger.warn(
                         `Unable to create profile. Will retry in ${retryDelayInSec}s. Retries left: ${
                             maxNumberOfRetries - retryCount
-                        }`,
+                        } on blockchain ${this.getBlockchainId()}. Error: ${error}`,
                     );
                     // eslint-disable-next-line no-await-in-loop
                     await sleep(retryDelayInSec * 1000);
@@ -456,34 +607,66 @@ class Web3Service {
                 this.setContractCallCache(contractName, functionName, result);
             }
         } catch (error) {
-            const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
-
-            const functionFragment = contractInstance.interface.getFunction(
-                error.transaction.data.slice(0, 10),
-            );
-            const inputs = functionFragment.inputs
-                .map((input, i) => {
-                    const argName = input.name;
-                    const argValue = this._formatArgument(args[i]);
-                    return `${argName}=${argValue}`;
-                })
-                .join(', ');
-
-            throw new Error(`Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`);
+            this._decodeContractCallError(contractInstance, functionName, error, args);
         }
         return result;
     }
 
-    async _executeContractFunction(contractInstance, functionName, args, predefinedGasPrice) {
+    async _executeContractFunction(
+        contractInstance,
+        functionName,
+        args,
+        predefinedGasPrice,
+        operationalWallet,
+    ) {
         let result;
-        const gasPrice =
-            predefinedGasPrice ?? (await this.getGasPrice()) ?? this.convertToWei(20, 'gwei');
+        const gasPrice = predefinedGasPrice ?? (await this.getGasPrice());
         let gasLimit;
 
         try {
             /* eslint-disable no-await-in-loop */
             gasLimit = await contractInstance.estimateGas[functionName](...args);
         } catch (error) {
+            this._decodeEstimateGasError(contractInstance, functionName, error, args);
+        }
+
+        gasLimit = gasLimit ?? this.convertToWei(900, 'kwei');
+
+        const gasLimitMultiplier = CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS[functionName] ?? 1;
+
+        gasLimit = gasLimit.mul(gasLimitMultiplier * 100).div(100);
+
+        this.logger.debug(
+            `Sending signed transaction ${functionName} to the blockchain ${this.getBlockchainId()}` +
+                ` with gas limit: ${gasLimit.toString()} and gasPrice ${gasPrice.toString()}. ` +
+                `Transaction queue length: ${this.getTotalTransactionQueueLength()}. Wallet used: ${
+                    operationalWallet.address
+                }`,
+        );
+
+        const tx = await contractInstance.connect(operationalWallet)[functionName](...args, {
+            gasPrice,
+            gasLimit,
+        });
+
+        try {
+            result = await this.provider.waitForTransaction(
+                tx.hash,
+                TRANSACTION_CONFIRMATIONS,
+                TRANSACTION_POLLING_TIMEOUT_MILLIS,
+            );
+
+            if (result.status === 0) {
+                await this.provider.call(tx, tx.blockNumber);
+            }
+        } catch (error) {
+            this._decodeWaitForTxError(contractInstance, functionName, error, args);
+        }
+        return result;
+    }
+
+    _decodeEstimateGasError(contractInstance, functionName, error, args) {
+        try {
             const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
 
             if (error.transaction === undefined) {
@@ -506,32 +689,14 @@ class Web3Service {
             throw new Error(
                 `Gas estimation for ${functionName}(${inputs}) has failed, reason: ${decodedErrorData}`,
             );
+        } catch (decodeError) {
+            this.logger.warn(`Unable to decode estimate gas error: ${decodeError}`);
+            throw error;
         }
+    }
 
-        gasLimit = gasLimit ?? this.convertToWei(900, 'kwei');
-
-        this.logger.debug(
-            `Sending signed transaction ${functionName} to the blockchain ` +
-                `with gas limit: ${gasLimit.toString()} and gasPrice ${gasPrice.toString()}. ` +
-                `Transaction queue length: ${this.getTransactionQueueLength()}.`,
-        );
-
-        const tx = await contractInstance[functionName](...args, {
-            gasPrice,
-            gasLimit,
-        });
-
+    _decodeWaitForTxError(contractInstance, functionName, error, args) {
         try {
-            result = await this.provider.waitForTransaction(
-                tx.hash,
-                TRANSACTION_CONFIRMATIONS,
-                TRANSACTION_POLLING_TIMEOUT_MILLIS,
-            );
-
-            if (result.status === 0) {
-                await this.provider.call(tx, tx.blockNumber);
-            }
-        } catch (error) {
             const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
 
             let sigHash;
@@ -553,8 +718,32 @@ class Web3Service {
             throw new Error(
                 `Transaction ${functionName}(${inputs}) has been reverted, reason: ${decodedErrorData}`,
             );
+        } catch (decodeError) {
+            this.logger.warn(`Unable to decode wait for transaction error: ${decodeError}`);
+            throw error;
         }
-        return result;
+    }
+
+    _decodeContractCallError(contractInstance, functionName, error, args) {
+        try {
+            const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
+
+            const functionFragment = contractInstance.interface.getFunction(
+                error.transaction.data.slice(0, 10),
+            );
+            const inputs = functionFragment.inputs
+                .map((input, i) => {
+                    const argName = input.name;
+                    const argValue = this._formatArgument(args[i]);
+                    return `${argName}=${argValue}`;
+                })
+                .join(', ');
+
+            throw new Error(`Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`);
+        } catch (decodeError) {
+            this.logger.warn(`Unable to decode contract call error: ${decodeError}`);
+            throw error;
+        }
     }
 
     _getFunctionSighash(contractInstance, functionName, args) {
@@ -704,6 +893,10 @@ class Web3Service {
         return value.toString();
     }
 
+    async getTransaction(transactionHash) {
+        return this.provider.getTransaction(transactionHash);
+    }
+
     async getAllPastEvents(
         blockchainId,
         contractName,
@@ -780,6 +973,36 @@ class Web3Service {
         ]);
     }
 
+    async getMinProofWindowOffsetPerc() {
+        return this.callContractFunction(
+            this.ParametersStorageContract,
+            'minProofWindowOffsetPerc',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
+    }
+
+    async getMaxProofWindowOffsetPerc() {
+        return this.callContractFunction(
+            this.ParametersStorageContract,
+            'maxProofWindowOffsetPerc',
+            [],
+            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+        );
+    }
+
+    async generatePseudorandomUint8(assetCreator, blockNumber, blockTimestamp, limit) {
+        const encodedData = ethers.utils.encodePacked(
+            ['uint256', 'address', 'uint256'],
+            [blockTimestamp, assetCreator, blockNumber],
+        );
+        const hash = ethers.utils.keccak256(encodedData);
+        const hashBigNumber = BigNumber.from(hash);
+        const hashModulo = hashBigNumber.mod(limit);
+
+        return hashModulo.mod(256);
+    }
+
     async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toLowerCase()];
@@ -850,8 +1073,8 @@ class Web3Service {
             startTime: result['0'].toNumber(),
             epochsNumber: result['1'],
             epochLength: result['2'].toNumber(),
-            tokenAmount: result['3'][0],
-            updateTokenAmount: result['3'][1],
+            tokenAmount: Number(ethers.utils.formatEther(result['3'][0])),
+            updateTokenAmount: Number(ethers.utils.formatEther(result['3'][1])),
             scoreFunctionId: result['4'][0],
             proofWindowOffsetPerc: result['4'][1],
         };
@@ -1082,7 +1305,7 @@ class Web3Service {
     async getChallenge(assetContractAddress, tokenId, epoch, latestStateIndex) {
         const args =
             latestStateIndex === 0
-                ? [this.getPublicKey(), assetContractAddress, tokenId, epoch]
+                ? [this.getPublicKeys()[0], assetContractAddress, tokenId, epoch]
                 : [assetContractAddress, tokenId, epoch];
 
         const result = await this.callContractFunction(
@@ -1173,7 +1396,7 @@ class Web3Service {
     }
 
     convertToWei(value, fromUnit = 'ether') {
-        return ethers.utils.parseUnits(value.toString(), fromUnit).toString();
+        return ethers.utils.parseUnits(value.toString(), fromUnit);
     }
 
     convertFromWei(value, toUnit = 'ether') {
@@ -1182,7 +1405,7 @@ class Web3Service {
 
     async healthCheck() {
         try {
-            const gasPrice = await this.wallet.getGasPrice();
+            const gasPrice = await this.operationalWallets[0].getGasPrice();
             if (gasPrice) return true;
         } catch (e) {
             this.logger.error(`Error on checking blockchain. ${e}`);
@@ -1241,12 +1464,16 @@ class Web3Service {
         ]);
     }
 
+    getScoreFunctionIds() {
+        return Object.keys(this.scoringFunctionsContracts);
+    }
+
     async getLog2PLDSFParams() {
         const log2pldsfParams = await this.callContractFunction(
             this.scoringFunctionsContracts[1],
             'getParameters',
             [],
-            CONTRACTS.Log2PLDSF,
+            CONTRACTS.LOG2PLDSF_CONTRACT,
         );
 
         const params = {};

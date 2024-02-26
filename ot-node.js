@@ -12,6 +12,7 @@ import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-upd
 import MigrationExecutor from './src/migration/migration-executor.js';
 
 const require = createRequire(import.meta.url);
+const { setTimeout } = require('timers/promises');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
 
@@ -28,10 +29,12 @@ class OTNode {
         await this.checkForUpdate();
         await this.removeUpdateFile();
 
-        await MigrationExecutor.executeUalExtensionUserConfigurationMigration(
+        await MigrationExecutor.executeMultipleOpWalletsUserConfigurationMigration(
+            this.container,
             this.logger,
             this.config,
         );
+
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
         this.logger.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
@@ -73,13 +76,7 @@ class OTNode {
             this.config,
         );
 
-        MigrationExecutor.executeUalExtensionTripleStoreMigration(
-            this.container,
-            this.logger,
-            this.config,
-        ).then(async () => {
-            await this.initializeBlockchainEventListenerService();
-        });
+        await this.initializeBlockchainEventListenerService();
 
         await this.initializeRouters();
         await this.startNetworkModule();
@@ -223,9 +220,10 @@ class OTNode {
                             const blockchainConfig =
                                 blockchainModuleManager.getModuleConfiguration(blockchain);
                             execSync(
-                                `npm run set-stake -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --stake=${blockchainConfig.initialStakeAmount} --operationalWalletPrivateKey=${blockchainConfig.evmOperationalWalletPrivateKey} --managementWalletPrivateKey=${blockchainConfig.evmManagementWalletPrivateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
+                                `npm run set-stake -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --stake=${blockchainConfig.initialStakeAmount} --operationalWalletPrivateKey=${blockchainConfig.operationalWallets[0].privateKey} --managementWalletPrivateKey=${blockchainConfig.evmManagementWalletPrivateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
                                 { stdio: 'inherit' },
                             );
+                            await setTimeout(10000);
                             execSync(
                                 `npm run set-ask -- --rpcEndpoint=${
                                     blockchainConfig.rpcEndpoints[0]
@@ -233,13 +231,14 @@ class OTNode {
                                     blockchainConfig.initialAskAmount +
                                     (Math.random() - 0.5) * blockchainConfig.initialAskAmount
                                 } --privateKey=${
-                                    blockchainConfig.evmOperationalWalletPrivateKey
+                                    blockchainConfig.operationalWallets[0].privateKey
                                 } --hubContractAddress=${blockchainConfig.hubContractAddress}`,
                                 { stdio: 'inherit' },
                             );
                         }
                     }
                     const identityId = await blockchainModuleManager.getIdentityId(blockchain);
+
                     this.logger.info(`Identity ID: ${identityId}`);
                 } catch (error) {
                     this.logger.warn(

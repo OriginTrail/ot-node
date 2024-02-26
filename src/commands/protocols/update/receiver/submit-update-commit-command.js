@@ -4,6 +4,7 @@ import {
     ERROR_TYPE,
     COMMAND_RETRIES,
     COMMAND_TX_GAS_INCREASE_FACTORS,
+    CONTRACT_FUNCTION_FIXED_GAS_PRICE,
 } from '../../../../constants/constants.js';
 
 class SubmitUpdateCommitCommand extends Command {
@@ -12,6 +13,7 @@ class SubmitUpdateCommitCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.operationIdService = ctx.operationIdService;
+        this.serviceAgreementService = ctx.serviceAgreementService;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.SUBMIT_UPDATE_COMMIT_ERROR;
     }
@@ -36,14 +38,14 @@ class SubmitUpdateCommitCommand extends Command {
             `Started ${command.name} for the Service Agreement with the ID: ${agreementId}, ` +
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Operation ID: ${operationId}, ` +
-                `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
                 `Right neighborhood edge: ${rightNeighborhoodEdge}, `,
             `Retry number: ${COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1}`,
         );
 
-        const epoch = await this.calculateCurrentEpoch(
-            Number(agreementData.startTime),
-            Number(agreementData.epochLength),
+        const epoch = await this.serviceAgreementService.calculateCurrentEpoch(
+            agreementData.startTime,
+            agreementData.epochLength,
             blockchain,
         );
 
@@ -67,15 +69,17 @@ class SubmitUpdateCommitCommand extends Command {
                 `Not submitting update commit as state has been already finalized for the Service Agreement ` +
                     `with the ID: ${agreementId}, Blockchain: ${blockchain}, Contract: ${contract}, ` +
                     `Token ID: ${tokenId}, Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, ` +
-                    `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                    `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
                     `Right neighborhood edge: ${rightNeighborhoodEdge}, `,
                 +`Epoch: ${epoch}, Operation ID: ${operationId}`,
             );
 
             return Command.empty();
         }
-
-        const txGasPrice = gasPrice ?? (await this.blockchainModuleManager.getGasPrice(blockchain));
+        const txGasPrice =
+            gasPrice ??
+            CONTRACT_FUNCTION_FIXED_GAS_PRICE[blockchain]?.SUBMIT_UPDATE_COMMIT ??
+            (await this.blockchainModuleManager.getGasPrice(blockchain));
 
         const transactionCompletePromise = new Promise((resolve, reject) => {
             this.blockchainModuleManager.submitUpdateCommit(
@@ -121,7 +125,7 @@ class SubmitUpdateCommitCommand extends Command {
                 `Failed to execute ${command.name}, Error Message: ${error.message} for the Service Agreement ` +
                     `with the ID: ${agreementId}, Blockchain: ${blockchain}, Contract: ${contract}, ` +
                     `Token ID: ${tokenId}, Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, ` +
-                    `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                    `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
                     `Right neighborhood edge: ${rightNeighborhoodEdge}, `,
                 +`Epoch: ${epoch}, Operation ID: ${operationId}, Retry number: ${
                     COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1
@@ -158,7 +162,7 @@ class SubmitUpdateCommitCommand extends Command {
             `Successfully executed ${command.name} for the Service Agreement with the ID: ${agreementId}, ` +
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
-                `Clossest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
+                `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
                 `Right neighborhood edge: ${rightNeighborhoodEdge}, `,
             +`Operation ID: ${operationId}, Retry number: ${
                 COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT - command.retries + 1
@@ -174,11 +178,6 @@ class SubmitUpdateCommitCommand extends Command {
         );
 
         return Command.empty();
-    }
-
-    async calculateCurrentEpoch(startTime, epochLength, blockchain) {
-        const now = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
-        return Math.floor((Number(now) - Number(startTime)) / Number(epochLength));
     }
 
     async retryFinished(command) {

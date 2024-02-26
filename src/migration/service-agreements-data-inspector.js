@@ -176,7 +176,7 @@ class ServiceAgreementsDataInspector extends BaseMigration {
             isInvalid = true;
         }
 
-        const agreementId = await this.serviceAgreementService.generateId(
+        const agreementId = this.serviceAgreementService.generateId(
             serviceAgreement.blockchainId,
             serviceAgreement.assetStorageContractAddress,
             serviceAgreement.tokenId,
