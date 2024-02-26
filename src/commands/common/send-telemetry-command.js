@@ -38,7 +38,8 @@ class SendTelemetryCommand extends Command {
                     blockchain_id: implementation,
                     // eslint-disable-next-line no-await-in-loop
                     identity_id: await this.blockchainModuleManager.getIdentityId(implementation),
-                    operational_wallet: this.blockchainModuleManager.getPublicKey(implementation),
+                    operational_wallet:
+                        this.blockchainModuleManager.getPublicKeys(implementation)[0],
                     management_wallet:
                         this.blockchainModuleManager.getManagementKey(implementation),
                 };
@@ -87,7 +88,7 @@ class SendTelemetryCommand extends Command {
     }
 
     /**
-     * Builds default otnodeUpdateCommand
+     * Builds default sendTelemetryCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
