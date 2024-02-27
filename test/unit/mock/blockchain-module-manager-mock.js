@@ -22,7 +22,7 @@ class BlockchainModuleManagerMock {
     }
 
     convertToWei(blockchainId, value) {
-        return ethers.utils.parseUnits(value.toString(), 'ether').toString();
+        return ethers.utils.parseUnits(value.toString(), 'ether');
     }
 
     toBigNumber(blockchain, value) {
