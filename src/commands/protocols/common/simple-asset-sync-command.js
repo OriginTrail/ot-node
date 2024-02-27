@@ -147,7 +147,8 @@ class SimpleAssetSyncCommand extends Command {
                     `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                     `State Index: ${stateIndex}, Network Get Operation ID: ${getOperationId}, `,
             );
-            return;
+
+            return Command.empty();
         }
         this.logger.info(
             `[SIMPLE_ASSET_SYNC] (${operationId}): Successfully executed command for the ` +
