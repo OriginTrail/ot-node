@@ -22,8 +22,8 @@ class FindNodesCommand extends Command {
             networkProtocols,
             hashFunctionId,
             minAckResponses,
-            proximityScoreFunctionsPairId,
         } = command.data;
+        const proximityScoreFunctionsPairId = command.data.proximityScoreFunctionsPairId ?? 1;
 
         this.errorType = errorType;
         this.logger.debug(
