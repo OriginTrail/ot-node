@@ -1055,7 +1055,17 @@ class Web3Service {
     }
 
     async getLatestTokenId(assetContractAddress) {
-        return this.provider.getStorageAt(assetContractAddress.toString().toLowerCase(), 7);
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
+
+        const lastTokenId = await this.callContractFunction(
+            assetStorageContractInstance,
+            'lastTokenId',
+            [],
+        );
+        return lastTokenId;
     }
 
     getAssetStorageContractAddresses() {
