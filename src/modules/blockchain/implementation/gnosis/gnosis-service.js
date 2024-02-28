@@ -59,6 +59,20 @@ class GnosisService extends Web3Service {
         }
         return false;
     }
+
+    async getLatestTokenId(assetContractAddress) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
+
+        const lastTokenId = await this.callContractFunction(
+            assetStorageContractInstance,
+            'lastTokenId',
+            [],
+        );
+        return lastTokenId;
+    }
 }
 
 export default GnosisService;
