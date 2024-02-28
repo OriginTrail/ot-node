@@ -19,18 +19,18 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
     }
 
     async executeMigration() {
-        if (
-            process.env.NODE_ENV !== NODE_ENVIRONMENTS.DEVELOPMENT &&
-            process.env.NODE_ENV !== NODE_ENVIRONMENTS.TEST
-        ) {
+        if (process.env.NODE_ENV === NODE_ENVIRONMENTS.MAINNET) {
             const gnosisBlockchainImplementation = this.blockchainModuleManager
                 .getImplementationNames()
-                .find((s) => s.startsWith('gnosis'));
+                .find((s) => s === 'gnosis:100');
             // This migration is only preforemed on Gnosis blockchain
             if (gnosisBlockchainImplementation) {
+                // Handle this is array
                 const contract = this.blockchainModuleManager.getAssetStorageContractAddresses(
                     gnosisBlockchainImplementation,
                 );
+                // This should be hardcoded for mainent
+                // const contractAddress =
 
                 const existingServiceAgreements =
                     this.repositoryModuleManager.getServiceAgreementsByBlockchanId(
@@ -71,7 +71,7 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
                     const missingAgreements = [];
                     for (
                         let i = batchNumber * BATCH_SIZE;
-                        i < existingServiceAgreements.lenght || i < (batchNumber + 1) * BATCH_SIZE;
+                        i < missingTokenIds.lenght || i < (batchNumber + 1) * BATCH_SIZE;
                         i += 1
                     ) {
                         const tokenIdToBeFetched = missingTokenIds[i];
