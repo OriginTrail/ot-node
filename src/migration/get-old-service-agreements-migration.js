@@ -3,7 +3,7 @@ import { SERVICE_AGREEMENT_SOURCES } from '../constants/constants.js';
 
 const BATCH_SIZE = 50;
 const GNOSIS_MAINNET_CHAIN_ID = 'gnosis:100';
-const GNOSIS_MAINNET_ASSET_STORAGE_CONTRACT_ADDRESS = '0x9157595f26F6069A7c29e988c4249bA98A53c697';
+const GNOSIS_MAINNET_ASSET_STORAGE_CONTRACT_ADDRESS = '0xf81a8c0008de2dcdb73366cf78f2b178616d11dd';
 
 class GetOldServiceAgreementsMigration extends BaseMigration {
     constructor(
