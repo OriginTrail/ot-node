@@ -251,6 +251,16 @@ class ServiceAgreementRepository {
             order: [['token_id', 'asc']],
         });
     }
+
+    async getServiceAgreementsByBlockchanId(fromTokenId, blockchainId) {
+        return this.model.findAll({
+            where: {
+                tokenId: { [Sequelize.Op.gte]: fromTokenId },
+                blockchainId,
+            },
+            order: [['token_id', 'asc']],
+        });
+    }
 }
 
 export default ServiceAgreementRepository;
