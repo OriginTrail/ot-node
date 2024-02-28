@@ -4,18 +4,11 @@ import { NODE_ENVIRONMENTS, SERVICE_AGREEMENT_SOURCES } from '../constants/const
 const BATCH_SIZE = 50;
 
 class GetOldServiceAgreementsMigration extends BaseMigration {
-    constructor(
-        migrationName,
-        logger,
-        config,
-        repositoryModuleManager,
-        blockchainModuleManager,
-        serviceAgreementService,
-    ) {
+    constructor(migrationName, container, logger, config) {
         super(migrationName, logger, config);
-        this.repositoryModuleManager = repositoryModuleManager;
-        this.blockchainModuleManager = blockchainModuleManager;
-        this.serviceAgreementService = serviceAgreementService;
+        this.repositoryModuleManager = container.repositoryModuleManager;
+        this.blockchainModuleManager = container.blockchainModuleManager;
+        this.serviceAgreementService = container.serviceAgreementService;
     }
 
     async executeMigration() {

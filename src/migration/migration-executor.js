@@ -17,6 +17,7 @@ import UalExtensionTripleStoreMigration from './ual-extension-triple-store-migra
 import MarkStakingEventsAsProcessedMigration from './mark-staking-events-as-processed-migration.js';
 import RemoveServiceAgreementsForChiadoMigration from './remove-service-agreements-for-chiado-migration.js';
 import MultipleOpWalletsUserConfigurationMigration from './multiple-op-wallets-user-configuration-migration.js';
+import GetOldServiceAgreementsMigration from './get-old-service-agreements-migration.js';
 
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
@@ -404,6 +405,31 @@ class MigrationExecutor {
             logger,
             config,
         );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            try {
+                await migration.migrate();
+            } catch (error) {
+                logger.error(
+                    `Unable to execute multiple op wallets user configuration migration. Error: ${error.message}`,
+                );
+            }
+        }
+    }
+
+    static async executeGetOldServiceAgreementsMigration(container, logger, config) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const migration = new GetOldServiceAgreementsMigration(
+            'getOldServiceAgreementsMigration',
+            container,
+            logger,
+            config,
+        );
+
         if (!(await migration.migrationAlreadyExecuted())) {
             try {
                 await migration.migrate();
