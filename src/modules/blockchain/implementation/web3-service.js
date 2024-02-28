@@ -31,7 +31,7 @@ const require = createRequire(import.meta.url);
 
 const ABIs = {
     ContentAsset: require('dkg-evm-module/abi/ContentAsset.json'),
-    ContentAssetStorage: require('dkg-evm-module/abi/ContentAssetStorage.json'),
+    ContentAssetStorage: require('dkg-evm-module/abi/ContentAssetStorageV2.json'),
     AssertionStorage: require('dkg-evm-module/abi/AssertionStorage.json'),
     Staking: require('dkg-evm-module/abi/Staking.json'),
     StakingStorage: require('dkg-evm-module/abi/StakingStorage.json'),
@@ -1106,7 +1106,6 @@ class Web3Service {
             'getAgreementData',
             [agreementId],
         );
-
         return {
             startTime: result['0'].toNumber(),
             epochsNumber: result['1'],
