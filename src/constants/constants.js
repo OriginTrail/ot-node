@@ -337,6 +337,7 @@ export const ERROR_TYPE = {
     COMMIT_PROOF: {
         CALCULATE_PROOFS_ERROR: 'CalculateProofsError',
         EPOCH_CHECK_ERROR: 'EpochCheckError',
+        BLOCKCHAIN_EPOCH_CHECK_ERROR: 'BlockchainEpochCheckError',
         SIMPLE_ASSET_SYNC_ERROR: 'SimpleAssetSyncError',
         SUBMIT_COMMIT_ERROR: 'SubmitCommitError',
         SUBMIT_COMMIT_SEND_TX_ERROR: 'SubmitCommitSendTxError',

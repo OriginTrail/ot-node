@@ -24,7 +24,7 @@ class BlockchainEpochCheckCommand extends Command {
         this.hashingService = ctx.hashingService;
         this.tripleStoreService = ctx.tripleStoreService;
 
-        this.errorType = ERROR_TYPE.COMMIT_PROOF.EPOCH_CHECK_ERROR;
+        this.errorType = ERROR_TYPE.COMMIT_PROOF.BLOCKCHAIN_EPOCH_CHECK_ERROR;
     }
 
     async execute(command) {
