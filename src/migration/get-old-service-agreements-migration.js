@@ -28,7 +28,10 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
                 .find((s) => s.startsWith('gnosis'));
             // This migration is only preforemed on Gnosis blockchain
             if (gnosisBlockchainImplementation) {
-                const contract = '0x';
+                const contract = this.blockchainModuleManager.getAssetStorageContractAddresses(
+                    gnosisBlockchainImplementation,
+                );
+
                 const existingServiceAgreements =
                     this.repositoryModuleManager.getServiceAgreementsByBlockchanId(
                         0,
@@ -36,6 +39,11 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
                     );
                 const existinTokenIds = existingServiceAgreements.map(
                     (serviceAgreement) => serviceAgreement.tokenId,
+                );
+
+                const lastTokenId = await this.blockchainModuleManager.getLatestTokenId(
+                    gnosisBlockchainImplementation,
+                    contract,
                 );
 
                 const missingTokenIds = [];
@@ -48,6 +56,14 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
                     expectedTokenId += 1;
                 });
 
+                for (
+                    let i = existinTokenIds[existinTokenIds.lenght - 1] + 1;
+                    i <= lastTokenId;
+                    i += 1
+                ) {
+                    missingTokenIds.push(i);
+                }
+
                 let batchNumber = 0;
                 // Check < or <= condition
                 while (batchNumber * BATCH_SIZE < existingServiceAgreements.lenght) {
@@ -55,7 +71,7 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
                     const missingAgreements = [];
                     for (
                         let i = batchNumber * BATCH_SIZE;
-                        i < (batchNumber + 1) * BATCH_SIZE;
+                        i < existingServiceAgreements.lenght || i < (batchNumber + 1) * BATCH_SIZE;
                         i += 1
                     ) {
                         const tokenIdToBeFetched = missingTokenIds[i];
@@ -90,7 +106,6 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
     ) {
         const assertionIds = await this.blockchainModuleManager.getAssertionIds(
             gnosisBlockchainImplementation,
-            // TODO: Add contract
             contract,
             tokenIdToBeFetched,
         );
@@ -111,6 +126,7 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
             gnosisBlockchainImplementation,
             agreementId,
         );
+
         // TODO: Use ...agreementData
         missingAgreements.push({
             blockchainId: gnosisBlockchainImplementation,
