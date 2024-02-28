@@ -436,7 +436,7 @@ class MigrationExecutor {
                 await migration.migrate();
             } catch (error) {
                 logger.error(
-                    `Unable to execute multiple op wallets user configuration migration. Error: ${error.message}`,
+                    `Unable to execute get old service agreements migration. Error: ${error.message}`,
                 );
             }
         }

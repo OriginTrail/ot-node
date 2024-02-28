@@ -28,14 +28,11 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
         if (blockchainId) {
             const contract = GNOSIS_MAINNET_ASSET_STORAGE_CONTRACT_ADDRESS;
 
-            const existingTokenIds = this.repositoryModuleManager.getServiceAgreementsTokenIds(
-                0,
-                blockchainId,
-            );
+            const existingTokenIds =
+                await this.repositoryModuleManager.getServiceAgreementsTokenIds(0, blockchainId);
 
-            const latestTokenId = await this.blockchainModuleManager.getLatestTokenId(
-                blockchainId,
-                contract,
+            const latestTokenId = Number(
+                await this.blockchainModuleManager.getLatestTokenId(blockchainId, contract),
             );
 
             const missingTokenIds = [];
@@ -49,7 +46,7 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
             });
 
             for (
-                let i = existingTokenIds[existingTokenIds.length - 1] + 1;
+                let i = (existingTokenIds[existingTokenIds.length - 1] ?? -1) + 1;
                 i <= latestTokenId;
                 i += 1
             ) {
