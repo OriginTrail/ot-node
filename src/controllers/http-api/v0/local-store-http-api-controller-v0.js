@@ -1,5 +1,5 @@
 import BaseController from '../base-http-api-controller.js';
-import { OPERATION_ID_STATUS } from '../../../constants/constants.js';
+import { ERROR_TYPE, OPERATION_ID_STATUS } from '../../../constants/constants.js';
 
 class LocalStoreController extends BaseController {
     constructor(ctx) {
@@ -65,7 +65,18 @@ class LocalStoreController extends BaseController {
             )}. Operation id: ${operationId}`,
         );
 
-        await this.operationIdService.cacheOperationIdData(operationId, cachedAssertions);
+        try {
+            await this.operationIdService.cacheOperationIdData(operationId, cachedAssertions);
+        } catch (err) {
+            this.operationIdService.updateOperationIdStatus(
+                operationId,
+                null,
+                OPERATION_ID_STATUS.FAILED,
+                err.message,
+                ERROR_TYPE.LOCAL_STORE.LOCAL_STORE_ERROR,
+            );
+            this.logger.warn(`Error caching operationId: ${operationId} data, ${err}`);
+        }
 
         const commandSequence = ['validateAssetCommand', 'localStoreCommand'];
 
