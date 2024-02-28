@@ -82,6 +82,12 @@ class OTNode {
         this.startTelemetryModule();
         this.resumeCommandExecutor();
         this.logger.info('Node is up and running!');
+
+        MigrationExecutor.executeGetOldServiceAgreementsMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
     }
 
     checkNodeVersion() {

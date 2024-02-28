@@ -239,7 +239,7 @@ export const NEURO_DEFAULT_GAS_PRICE = {
 
 export const CONTRACT_FUNCTION_FIXED_GAS_PRICE = {
     'otp:2043': {
-        SUBMIT_UPDATE_COMMIT: 15,
+        SUBMIT_UPDATE_COMMIT: 30,
     },
 };
 
@@ -337,6 +337,7 @@ export const ERROR_TYPE = {
     COMMIT_PROOF: {
         CALCULATE_PROOFS_ERROR: 'CalculateProofsError',
         EPOCH_CHECK_ERROR: 'EpochCheckError',
+        BLOCKCHAIN_EPOCH_CHECK_ERROR: 'BlockchainEpochCheckError',
         SIMPLE_ASSET_SYNC_ERROR: 'SimpleAssetSyncError',
         SUBMIT_COMMIT_ERROR: 'SubmitCommitError',
         SUBMIT_COMMIT_SEND_TX_ERROR: 'SubmitCommitSendTxError',
