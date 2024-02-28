@@ -25,12 +25,7 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
                 .find((s) => s === 'gnosis:100');
             // This migration is only preforemed on Gnosis blockchain
             if (gnosisBlockchainImplementation) {
-                // Handle this is array
-                const contract = this.blockchainModuleManager.getAssetStorageContractAddresses(
-                    gnosisBlockchainImplementation,
-                );
-                // This should be hardcoded for mainent
-                // const contractAddress =
+                const contract = '0x9157595f26F6069A7c29e988c4249bA98A53c697';
 
                 const existingServiceAgreements =
                     this.repositoryModuleManager.getServiceAgreementsByBlockchanId(
