@@ -2,6 +2,8 @@ import BaseMigration from './base-migration.js';
 import { NODE_ENVIRONMENTS, SERVICE_AGREEMENT_SOURCES } from '../constants/constants.js';
 
 const BATCH_SIZE = 50;
+const GNOSIS_MAINNET_CHAIN_ID = 'gnosis:100';
+const GNOSIS_MAINNET_ASSET_STORAGE_CONTRACT_ADDRESS = '0x9157595f26F6069A7c29e988c4249bA98A53c697';
 
 class GetOldServiceAgreementsMigration extends BaseMigration {
     constructor(migrationName, container, logger, config) {
@@ -13,30 +15,26 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
 
     async executeMigration() {
         if (process.env.NODE_ENV === NODE_ENVIRONMENTS.MAINNET) {
-            const gnosisBlockchainImplementation = this.blockchainModuleManager
+            const blockchainId = this.blockchainModuleManager
                 .getImplementationNames()
-                .find((s) => s === 'gnosis:100');
-            // This migration is only preforemed on Gnosis blockchain
-            if (gnosisBlockchainImplementation) {
-                const contract = '0x9157595f26F6069A7c29e988c4249bA98A53c697';
+                .find((s) => s === GNOSIS_MAINNET_CHAIN_ID);
 
-                const existingServiceAgreements =
-                    this.repositoryModuleManager.getServiceAgreementsByBlockchanId(
-                        0,
-                        gnosisBlockchainImplementation,
-                    );
-                const existinTokenIds = existingServiceAgreements.map(
-                    (serviceAgreement) => serviceAgreement.tokenId,
+            if (blockchainId) {
+                const contract = GNOSIS_MAINNET_ASSET_STORAGE_CONTRACT_ADDRESS;
+
+                const existingTokenIds = this.repositoryModuleManager.getServiceAgreementsTokenIds(
+                    0,
+                    blockchainId,
                 );
 
-                const lastTokenId = await this.blockchainModuleManager.getLatestTokenId(
-                    gnosisBlockchainImplementation,
+                const latestTokenId = await this.blockchainModuleManager.getLatestTokenId(
+                    blockchainId,
                     contract,
                 );
 
                 const missingTokenIds = [];
                 let expectedTokenId = 0;
-                existinTokenIds.forEach((tokenId) => {
+                existingTokenIds.forEach((tokenId) => {
                     while (tokenId > expectedTokenId) {
                         missingTokenIds.push(expectedTokenId);
                         expectedTokenId += 1;
@@ -45,8 +43,8 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
                 });
 
                 for (
-                    let i = existinTokenIds[existinTokenIds.lenght - 1] + 1;
-                    i <= lastTokenId;
+                    let i = existingTokenIds[existingTokenIds.length - 1] + 1;
+                    i <= latestTokenId;
                     i += 1
                 ) {
                     missingTokenIds.push(i);
@@ -54,27 +52,25 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
 
                 let batchNumber = 0;
                 // Check < or <= condition
-                while (batchNumber * BATCH_SIZE < existingServiceAgreements.lenght) {
+                while (batchNumber * BATCH_SIZE < missingTokenIds.length) {
                     const promises = [];
-                    const missingAgreements = [];
                     for (
                         let i = batchNumber * BATCH_SIZE;
-                        i < missingTokenIds.lenght || i < (batchNumber + 1) * BATCH_SIZE;
+                        i < missingTokenIds.length && i < (batchNumber + 1) * BATCH_SIZE;
                         i += 1
                     ) {
                         const tokenIdToBeFetched = missingTokenIds[i];
                         promises.push(
-                            this.getAndProccessMisingServiceAgreement(
+                            this.getAndProcessMissingServiceAgreement(
                                 tokenIdToBeFetched,
-                                gnosisBlockchainImplementation,
+                                blockchainId,
                                 contract,
-                                missingAgreements,
                             ),
                         );
                     }
 
                     // eslint-disable-next-line no-await-in-loop
-                    await Promise.all(promises);
+                    const missingAgreements = await Promise.all(promises);
 
                     // eslint-disable-next-line no-await-in-loop
                     await this.repositoryModuleManager.bulkCreateServiceAgreementRecords(
@@ -86,24 +82,19 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
         }
     }
 
-    async getAndProccessMisingServiceAgreement(
-        tokenIdToBeFetched,
-        gnosisBlockchainImplementation,
-        contract,
-        missingAgreements,
-    ) {
+    async getAndProcessMissingServiceAgreement(tokenIdToBeFetched, blockchainId, contract) {
         const assertionIds = await this.blockchainModuleManager.getAssertionIds(
-            gnosisBlockchainImplementation,
+            blockchainId,
             contract,
             tokenIdToBeFetched,
         );
         const keyword = this.blockchainModuleManager.encodePacked(
-            gnosisBlockchainImplementation,
+            blockchainId,
             ['address', 'bytes32'],
             [contract, assertionIds[0]],
         );
         const agreementId = this.serviceAgreementService.generateId(
-            gnosisBlockchainImplementation,
+            blockchainId,
             contract,
             tokenIdToBeFetched,
             keyword,
@@ -111,13 +102,12 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
         );
 
         const agreementData = await this.blockchainModuleManager.getAgreementData(
-            gnosisBlockchainImplementation,
+            blockchainId,
             agreementId,
         );
 
-        // TODO: Use ...agreementData
-        missingAgreements.push({
-            blockchainId: gnosisBlockchainImplementation,
+        return {
+            blockchainId,
             assetStorageContractAddress: contract,
             tokenId: tokenIdToBeFetched,
             agreementId,
@@ -131,7 +121,7 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
             keyword,
             proofWindowOffsetPerc: agreementData.proofWindowOffsetPerc,
             dataSource: SERVICE_AGREEMENT_SOURCES.BLOCKCHAIN,
-        });
+        };
     }
 }
 

@@ -239,7 +239,7 @@ export const NEURO_DEFAULT_GAS_PRICE = {
 
 export const CONTRACT_FUNCTION_FIXED_GAS_PRICE = {
     'otp:2043': {
-        SUBMIT_UPDATE_COMMIT: 15,
+        SUBMIT_UPDATE_COMMIT: 30,
     },
 };
 
