@@ -1,83 +1,88 @@
 import BaseMigration from './base-migration.js';
-import { NODE_ENVIRONMENTS, SERVICE_AGREEMENT_SOURCES } from '../constants/constants.js';
+import { SERVICE_AGREEMENT_SOURCES } from '../constants/constants.js';
 
 const BATCH_SIZE = 50;
 const GNOSIS_MAINNET_CHAIN_ID = 'gnosis:100';
 const GNOSIS_MAINNET_ASSET_STORAGE_CONTRACT_ADDRESS = '0x9157595f26F6069A7c29e988c4249bA98A53c697';
 
 class GetOldServiceAgreementsMigration extends BaseMigration {
-    constructor(migrationName, container, logger, config) {
+    constructor(
+        migrationName,
+        logger,
+        config,
+        repositoryModuleManager,
+        blockchainModuleManager,
+        serviceAgreementService,
+    ) {
         super(migrationName, logger, config);
-        this.repositoryModuleManager = container.repositoryModuleManager;
-        this.blockchainModuleManager = container.blockchainModuleManager;
-        this.serviceAgreementService = container.serviceAgreementService;
+        this.repositoryModuleManager = repositoryModuleManager;
+        this.blockchainModuleManager = blockchainModuleManager;
+        this.serviceAgreementService = serviceAgreementService;
     }
 
     async executeMigration() {
-        if (process.env.NODE_ENV === NODE_ENVIRONMENTS.MAINNET) {
-            const blockchainId = this.blockchainModuleManager
-                .getImplementationNames()
-                .find((s) => s === GNOSIS_MAINNET_CHAIN_ID);
+        const blockchainId = this.blockchainModuleManager
+            .getImplementationNames()
+            .find((s) => s === GNOSIS_MAINNET_CHAIN_ID);
 
-            if (blockchainId) {
-                const contract = GNOSIS_MAINNET_ASSET_STORAGE_CONTRACT_ADDRESS;
+        if (blockchainId) {
+            const contract = GNOSIS_MAINNET_ASSET_STORAGE_CONTRACT_ADDRESS;
 
-                const existingTokenIds = this.repositoryModuleManager.getServiceAgreementsTokenIds(
-                    0,
-                    blockchainId,
-                );
+            const existingTokenIds = this.repositoryModuleManager.getServiceAgreementsTokenIds(
+                0,
+                blockchainId,
+            );
 
-                const latestTokenId = await this.blockchainModuleManager.getLatestTokenId(
-                    blockchainId,
-                    contract,
-                );
+            const latestTokenId = await this.blockchainModuleManager.getLatestTokenId(
+                blockchainId,
+                contract,
+            );
 
-                const missingTokenIds = [];
-                let expectedTokenId = 0;
-                existingTokenIds.forEach((tokenId) => {
-                    while (tokenId > expectedTokenId) {
-                        missingTokenIds.push(expectedTokenId);
-                        expectedTokenId += 1;
-                    }
+            const missingTokenIds = [];
+            let expectedTokenId = 0;
+            existingTokenIds.forEach((tokenId) => {
+                while (tokenId > expectedTokenId) {
+                    missingTokenIds.push(expectedTokenId);
                     expectedTokenId += 1;
-                });
+                }
+                expectedTokenId += 1;
+            });
 
+            for (
+                let i = existingTokenIds[existingTokenIds.length - 1] + 1;
+                i <= latestTokenId;
+                i += 1
+            ) {
+                missingTokenIds.push(i);
+            }
+
+            let batchNumber = 0;
+            // Check < or <= condition
+            while (batchNumber * BATCH_SIZE < missingTokenIds.length) {
+                const promises = [];
                 for (
-                    let i = existingTokenIds[existingTokenIds.length - 1] + 1;
-                    i <= latestTokenId;
+                    let i = batchNumber * BATCH_SIZE;
+                    i < missingTokenIds.length && i < (batchNumber + 1) * BATCH_SIZE;
                     i += 1
                 ) {
-                    missingTokenIds.push(i);
-                }
-
-                let batchNumber = 0;
-                // Check < or <= condition
-                while (batchNumber * BATCH_SIZE < missingTokenIds.length) {
-                    const promises = [];
-                    for (
-                        let i = batchNumber * BATCH_SIZE;
-                        i < missingTokenIds.length && i < (batchNumber + 1) * BATCH_SIZE;
-                        i += 1
-                    ) {
-                        const tokenIdToBeFetched = missingTokenIds[i];
-                        promises.push(
-                            this.getAndProcessMissingServiceAgreement(
-                                tokenIdToBeFetched,
-                                blockchainId,
-                                contract,
-                            ),
-                        );
-                    }
-
-                    // eslint-disable-next-line no-await-in-loop
-                    const missingAgreements = await Promise.all(promises);
-
-                    // eslint-disable-next-line no-await-in-loop
-                    await this.repositoryModuleManager.bulkCreateServiceAgreementRecords(
-                        missingAgreements,
+                    const tokenIdToBeFetched = missingTokenIds[i];
+                    promises.push(
+                        this.getAndProcessMissingServiceAgreement(
+                            tokenIdToBeFetched,
+                            blockchainId,
+                            contract,
+                        ),
                     );
-                    batchNumber += 1;
                 }
+
+                // eslint-disable-next-line no-await-in-loop
+                const missingAgreements = await Promise.all(promises);
+
+                // eslint-disable-next-line no-await-in-loop
+                await this.repositoryModuleManager.bulkCreateServiceAgreementRecords(
+                    missingAgreements,
+                );
+                batchNumber += 1;
             }
         }
     }

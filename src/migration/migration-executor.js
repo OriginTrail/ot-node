@@ -419,13 +419,18 @@ class MigrationExecutor {
     static async executeGetOldServiceAgreementsMigration(container, logger, config) {
         if (process.env.NODE_ENV !== NODE_ENVIRONMENTS.MAINNET) return;
 
+        const repositoryModuleManager = container.resolve('repositoryModuleManager');
+        const blockchainModuleManager = container.resolve('blockchainModuleManager');
+        const serviceAgreementService = container.resolve('serviceAgreementService');
+
         const migration = new GetOldServiceAgreementsMigration(
             'getOldServiceAgreementsMigration',
-            container,
             logger,
             config,
+            repositoryModuleManager,
+            blockchainModuleManager,
+            serviceAgreementService,
         );
-
         if (!(await migration.migrationAlreadyExecuted())) {
             try {
                 await migration.migrate();
