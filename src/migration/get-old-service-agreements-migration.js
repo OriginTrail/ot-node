@@ -37,7 +37,7 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
                 let i = 0;
                 const missingAgreement = [];
                 while (i < existingServiceAgreements.lenght) {
-                    if (tokenIdToBeFetched < i) {
+                    if (tokenIdToBeFetched < existingServiceAgreements[i].tokenId) {
                         // eslint-disable-next-line no-await-in-loop
                         const assertionIds = await this.blockchainModuleManager.getAssertionIds(
                             gnosisBlockchainImplementation,
@@ -86,6 +86,8 @@ class GetOldServiceAgreementsMigration extends BaseMigration {
                         i += 1;
                     }
                 }
+
+                this.repositoryModuleManager.bulkCreateServiceAgreementRecords(missingAgreement);
             }
         }
     }
