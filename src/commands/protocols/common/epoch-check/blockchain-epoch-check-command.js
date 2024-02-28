@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import Command from '../../command.js';
+import Command from '../../../command.js';
 import {
     COMMAND_QUEUE_PARALLELISM,
     COMMAND_RETRIES,
@@ -8,9 +8,9 @@ import {
     ERROR_TYPE,
     TRIPLE_STORE_REPOSITORIES,
     SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS,
-} from '../../../constants/constants.js';
+} from '../../../../constants/constants.js';
 
-class EpochCheckCommand extends Command {
+class BlockchainEpochCheckCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
@@ -24,76 +24,74 @@ class EpochCheckCommand extends Command {
         this.hashingService = ctx.hashingService;
         this.tripleStoreService = ctx.tripleStoreService;
 
-        this.errorType = ERROR_TYPE.COMMIT_PROOF.EPOCH_CHECK_ERROR;
+        this.errorType = ERROR_TYPE.COMMIT_PROOF.BLOCKCHAIN_EPOCH_CHECK_ERROR;
     }
 
     async execute(command) {
-        this.logger.info('Epoch check: Starting epoch check command');
-        const operationId = this.operationIdService.generateId();
+        const { operationId, blockchain } = command.data;
+        this.logger.info(
+            `Epoch check: Starting blockchain epoch check command for ${blockchain} with operation id: ${operationId}`,
+        );
 
-        await Promise.all(
-            this.blockchainModuleManager.getImplementationNames().map(async (blockchain) => {
-                this.operationIdService.emitChangeEvent(
-                    OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_START,
-                    operationId,
-                    blockchain,
-                );
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_START,
+            operationId,
+            blockchain,
+        );
 
-                const commitWindowDurationPerc =
-                    await this.blockchainModuleManager.getCommitWindowDurationPerc(blockchain);
-                const proofWindowDurationPerc =
-                    await this.blockchainModuleManager.getProofWindowDurationPerc(blockchain);
-                let totalTransactions = await this.calculateTotalTransactions(
-                    blockchain,
-                    commitWindowDurationPerc,
-                    proofWindowDurationPerc,
-                    command.period,
-                );
+        const commitWindowDurationPerc =
+            await this.blockchainModuleManager.getCommitWindowDurationPerc(blockchain);
+        const proofWindowDurationPerc =
+            await this.blockchainModuleManager.getProofWindowDurationPerc(blockchain);
+        let totalTransactions = await this.calculateTotalTransactions(
+            blockchain,
+            commitWindowDurationPerc,
+            proofWindowDurationPerc,
+            command.period,
+        );
 
-                // We don't expect to have this many transactions in one epoch check window.
-                // This is just to make sure we don't schedule too many commands and block the queue
-                // TODO: find general solution for all commands scheduling blockchain transactions
-                totalTransactions = Math.min(totalTransactions, COMMAND_QUEUE_PARALLELISM * 0.3);
+        // We don't expect to have this many transactions in one epoch check window.
+        // This is just to make sure we don't schedule too many commands and block the queue
+        // TODO: find general solution for all commands scheduling blockchain transactions
+        totalTransactions = Math.min(totalTransactions, COMMAND_QUEUE_PARALLELISM * 0.3);
 
-                const transactionQueueLength =
-                    this.blockchainModuleManager.getTotalTransactionQueueLength(blockchain);
-                if (transactionQueueLength >= totalTransactions) return;
+        const transactionQueueLength =
+            this.blockchainModuleManager.getTotalTransactionQueueLength(blockchain);
+        if (transactionQueueLength >= totalTransactions) return;
 
-                totalTransactions -= transactionQueueLength;
+        totalTransactions -= transactionQueueLength;
 
-                const [r0, r2, totalNodesNumber, minStake, maxStake] = await Promise.all([
-                    this.blockchainModuleManager.getR0(blockchain),
-                    this.blockchainModuleManager.getR2(blockchain),
-                    this.repositoryModuleManager.getPeersCount(blockchain),
-                    this.blockchainModuleManager.getMinimumStake(blockchain),
-                    this.blockchainModuleManager.getMaximumStake(blockchain),
-                ]);
+        const [r0, r2, totalNodesNumber, minStake, maxStake] = await Promise.all([
+            this.blockchainModuleManager.getR0(blockchain),
+            this.blockchainModuleManager.getR2(blockchain),
+            this.repositoryModuleManager.getPeersCount(blockchain),
+            this.blockchainModuleManager.getMinimumStake(blockchain),
+            this.blockchainModuleManager.getMaximumStake(blockchain),
+        ]);
 
-                await Promise.all([
-                    this.scheduleSubmitCommitCommands(
-                        blockchain,
-                        Math.floor(totalTransactions / 2),
-                        commitWindowDurationPerc,
-                        r0,
-                        r2,
-                        totalNodesNumber,
-                        minStake,
-                        maxStake,
-                    ),
-                    this.scheduleCalculateProofsCommands(
-                        blockchain,
-                        Math.ceil(totalTransactions / 2),
-                        proofWindowDurationPerc,
-                        r0,
-                    ),
-                ]);
+        await Promise.all([
+            this.scheduleSubmitCommitCommands(
+                blockchain,
+                Math.floor(totalTransactions / 2),
+                commitWindowDurationPerc,
+                r0,
+                r2,
+                totalNodesNumber,
+                minStake,
+                maxStake,
+            ),
+            this.scheduleCalculateProofsCommands(
+                blockchain,
+                Math.ceil(totalTransactions / 2),
+                proofWindowDurationPerc,
+                r0,
+            ),
+        ]);
 
-                this.operationIdService.emitChangeEvent(
-                    OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_END,
-                    operationId,
-                    blockchain,
-                );
-            }),
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.COMMIT_PROOF.EPOCH_CHECK_END,
+            operationId,
+            blockchain,
         );
 
         return Command.repeat();
@@ -465,7 +463,7 @@ class EpochCheckCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'epochCheckCommand',
+            name: 'blockchainEpochCheckCommand',
             data: {},
             transactional: false,
             period: this.calculateCommandPeriod(),
@@ -475,4 +473,4 @@ class EpochCheckCommand extends Command {
     }
 }
 
-export default EpochCheckCommand;
+export default BlockchainEpochCheckCommand;

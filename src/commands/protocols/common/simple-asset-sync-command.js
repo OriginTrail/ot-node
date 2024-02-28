@@ -137,26 +137,29 @@ class SimpleAssetSyncCommand extends Command {
             blockchain,
             OPERATION_ID_STATUS.COMMIT_PROOF.SIMPLE_ASSET_SYNC_END,
         );
-
-        if (getResult?.status === OPERATION_ID_STATUS.COMPLETED) {
+        const getOperationCachedData = await this.operationIdService.getCachedOperationIdData(
+            getOperationId,
+        );
+        if (getOperationCachedData.message === 'Unable to find assertion on the network!') {
             this.logger.info(
-                `[SIMPLE_ASSET_SYNC] (${operationId}): Successfully executed command for the ` +
+                `[SIMPLE_ASSET_SYNC] (${operationId}): Failed to executed command. Couldn't find asset on the network for the ` +
                     `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                     `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                     `State Index: ${stateIndex}, Network Get Operation ID: ${getOperationId}, `,
             );
 
-            return this.continueSequence(command.data, command.sequence, {
-                retries: COMMAND_RETRIES.SUBMIT_COMMIT,
-            });
+            return Command.empty();
         }
-
-        this.logger.log(
-            `[SIMPLE_ASSET_SYNC] (${operationId}): Failed to executed command. Couldn't find asset on the network for the ` +
+        this.logger.info(
+            `[SIMPLE_ASSET_SYNC] (${operationId}): Successfully executed command for the ` +
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                 `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
                 `State Index: ${stateIndex}, Network Get Operation ID: ${getOperationId}, `,
         );
+
+        return this.continueSequence(command.data, command.sequence, {
+            retries: COMMAND_RETRIES.SUBMIT_COMMIT,
+        });
     }
 
     async retryFinished(command) {
