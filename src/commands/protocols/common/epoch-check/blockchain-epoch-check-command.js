@@ -438,13 +438,6 @@ class BlockchainEpochCheckCommand extends Command {
         return transactionsPerEpochCheck * numberOfWallets;
     }
 
-    calculateCommandPeriod() {
-        const devEnvironment =
-            process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
-
-        return devEnvironment ? 30_000 : 120_000;
-    }
-
     /**
      * Recover system from failure
      * @param command
@@ -466,7 +459,6 @@ class BlockchainEpochCheckCommand extends Command {
             name: 'blockchainEpochCheckCommand',
             data: {},
             transactional: false,
-            period: this.calculateCommandPeriod(),
         };
         Object.assign(command, map);
         return command;
