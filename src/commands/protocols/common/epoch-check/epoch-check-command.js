@@ -33,6 +33,7 @@ class EpochCheckCommand extends Command {
                 return this.commandExecutor.add({
                     name: 'blockchainEpochCheckCommand',
                     data: commandData,
+                    period: this.calculateCommandPeriod(),
                 });
             }),
         );
