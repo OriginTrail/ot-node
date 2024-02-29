@@ -442,6 +442,13 @@ class RepositoryModuleManager extends BaseModuleManager {
     async getServiceAgreements(fromTokenId, batchSize) {
         return this.getRepository('service_agreement').getServiceAgreements(fromTokenId, batchSize);
     }
+
+    async getServiceAgreementsTokenIds(fromTokenId, blockchainId) {
+        return this.getRepository('service_agreement').getServiceAgreementsTokenIds(
+            fromTokenId,
+            blockchainId,
+        );
+    }
 }
 
 export default RepositoryModuleManager;
