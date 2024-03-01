@@ -24,6 +24,8 @@ class EpochCheckCommand extends Command {
             `Epoch check: Starting epoch check command for operation id: ${operationId}`,
         );
 
+        await this.commandExecutor.delete('blockchainEpochCheckCommand');
+
         await Promise.all(
             this.blockchainModuleManager.getImplementationNames().map(async (blockchain) => {
                 const commandData = {
