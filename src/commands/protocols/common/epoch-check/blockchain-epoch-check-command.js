@@ -57,7 +57,14 @@ class BlockchainEpochCheckCommand extends Command {
 
         const transactionQueueLength =
             this.blockchainModuleManager.getTotalTransactionQueueLength(blockchain);
-        if (transactionQueueLength >= totalTransactions) return;
+        if (transactionQueueLength >= totalTransactions) {
+            this.logger.debug(
+                `Epoch check: Current transaction queue length is ${transactionQueueLength}, ` +
+                    `exceeding the maximum total transactions: ${totalTransactions} for ${blockchain}` +
+                    `with operation id: ${operationId}`,
+            );
+            return Command.repeat();
+        }
 
         totalTransactions -= transactionQueueLength;
 
