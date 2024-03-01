@@ -31,7 +31,7 @@ const require = createRequire(import.meta.url);
 
 const ABIs = {
     ContentAsset: require('dkg-evm-module/abi/ContentAsset.json'),
-    ContentAssetStorage: require('dkg-evm-module/abi/ContentAssetStorage.json'),
+    ContentAssetStorage: require('dkg-evm-module/abi/ContentAssetStorageV2.json'),
     AssertionStorage: require('dkg-evm-module/abi/AssertionStorage.json'),
     Staking: require('dkg-evm-module/abi/Staking.json'),
     StakingStorage: require('dkg-evm-module/abi/StakingStorage.json'),
@@ -1055,7 +1055,17 @@ class Web3Service {
     }
 
     async getLatestTokenId(assetContractAddress) {
-        return this.provider.getStorageAt(assetContractAddress.toString().toLowerCase(), 7);
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
+
+        const lastTokenId = await this.callContractFunction(
+            assetStorageContractInstance,
+            'lastTokenId',
+            [],
+        );
+        return lastTokenId;
     }
 
     getAssetStorageContractAddresses() {
@@ -1096,7 +1106,6 @@ class Web3Service {
             'getAgreementData',
             [agreementId],
         );
-
         return {
             startTime: result['0'].toNumber(),
             epochsNumber: result['1'],
