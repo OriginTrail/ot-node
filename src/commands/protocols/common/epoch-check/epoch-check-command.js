@@ -32,11 +32,17 @@ class EpochCheckCommand extends Command {
                     blockchain,
                     operationId,
                 };
-                return this.commandExecutor.add({
-                    name: 'blockchainEpochCheckCommand',
-                    data: commandData,
-                    period: this.calculateCommandPeriod(),
-                });
+                const peerRecord = await this.repositoryModuleManager.getPeerRecord(
+                    this.networkModuleManager.getPeerId().toB58String(),
+                    blockchain,
+                );
+                if (peerRecord != null) {
+                    return this.commandExecutor.add({
+                        name: 'blockchainEpochCheckCommand',
+                        data: commandData,
+                        period: this.calculateCommandPeriod(),
+                    });
+                }
             }),
         );
 
