@@ -6,8 +6,6 @@ class EpochCheckCommand extends Command {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.networkModuleManager = ctx.networkModuleManager;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.EPOCH_CHECK_ERROR;
     }
@@ -34,17 +32,12 @@ class EpochCheckCommand extends Command {
                     blockchain,
                     operationId,
                 };
-                const peerRecord = await this.repositoryModuleManager.getPeerRecord(
-                    this.networkModuleManager.getPeerId().toB58String(),
-                    blockchain,
-                );
-                if (peerRecord != null) {
-                    return this.commandExecutor.add({
-                        name: 'blockchainEpochCheckCommand',
-                        data: commandData,
-                        period: this.calculateCommandPeriod(),
-                    });
-                }
+
+                return this.commandExecutor.add({
+                    name: 'blockchainEpochCheckCommand',
+                    data: commandData,
+                    period: this.calculateCommandPeriod(),
+                });
             }),
         );
 

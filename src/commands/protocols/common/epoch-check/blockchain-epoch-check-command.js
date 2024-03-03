@@ -119,6 +119,8 @@ class BlockchainEpochCheckCommand extends Command {
             blockchain,
         );
 
+        if (peerRecord == null) return;
+
         const ask = this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
 
         const timestamp = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
