@@ -7,6 +7,7 @@ class EpochCheckCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.networkModuleManager = ctx.networkModuleManager;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.EPOCH_CHECK_ERROR;
     }
