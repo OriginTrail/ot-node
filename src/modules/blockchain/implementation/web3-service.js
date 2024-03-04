@@ -1101,20 +1101,58 @@ class Web3Service {
     }
 
     async getAgreementData(agreementId) {
-        const result = await this.callContractFunction(
-            this.ServiceAgreementStorageProxyContract,
-            'getAgreementData',
+        const serviceAgreementExists = await this.serviceAgreementExists(agreementId);
+
+        if (serviceAgreementExists) {
+            const maxNumberOfRetries = 3;
+            const retryDelayInSec = 12;
+            let retryCount = 0;
+            while (retryCount < maxNumberOfRetries) {
+                const result = await this.callContractFunction(
+                    this.ServiceAgreementStorageProxyContract,
+                    'getAgreementData',
+                    [agreementId],
+                );
+                const agreementData = {
+                    startTime: result['0'].toNumber(),
+                    epochsNumber: result['1'],
+                    epochLength: result['2'].toNumber(),
+                    tokenAmount: result['3'][0],
+                    updateTokenAmount: result['3'][1],
+                    scoreFunctionId: result['4'][0],
+                    proofWindowOffsetPerc: result['4'][1],
+                };
+                if (
+                    agreementData.startTime === 0 &&
+                    agreementData.epochsNumber === 0 &&
+                    agreementData.epochLength === 0 &&
+                    agreementData.tokenAmount.eq(this.toBigNumber(0)) &&
+                    agreementData.updateTokenAmount.eq(this.toBigNumber(0)) &&
+                    agreementData.scoreFunctionId === 0 &&
+                    agreementData.proofWindowOffsetPerc === 0
+                ) {
+                    retryCount += 1;
+                    await sleep(retryDelayInSec * 1000);
+                } else {
+                    return agreementData;
+                }
+            }
+            throw Error(
+                `Can't get valid agreement data for service agreement id: ${agreementId} doesn't exist on blockchain: ${this.getBlockchainId()}`,
+            );
+        } else {
+            throw Error(
+                `Service agreement with agreement id: ${agreementId} doesn't exist on blockchain: ${this.getBlockchainId()}`,
+            );
+        }
+    }
+
+    async serviceAgreementExists(agreementId) {
+        return this.callContractFunction(
+            this.ServiceAgreementStorageProxy,
+            'serviceAgreementExists',
             [agreementId],
         );
-        return {
-            startTime: result['0'].toNumber(),
-            epochsNumber: result['1'],
-            epochLength: result['2'].toNumber(),
-            tokenAmount: result['3'][0],
-            updateTokenAmount: result['3'][1],
-            scoreFunctionId: result['4'][0],
-            proofWindowOffsetPerc: result['4'][1],
-        };
     }
 
     async getAssertionSize(assertionId) {
