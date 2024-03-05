@@ -128,7 +128,7 @@ class BlockchainEpochCheckCommand extends Command {
                 timestamp,
                 blockchain,
                 commitWindowDurationPerc,
-                SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS,
+                SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS[process.env.NODE_ENV],
             );
         this.logger.info(
             `Epoch check: Found ${eligibleAgreementForSubmitCommit.length} eligible agreements for submit commit for blockchain: ${blockchain}`,

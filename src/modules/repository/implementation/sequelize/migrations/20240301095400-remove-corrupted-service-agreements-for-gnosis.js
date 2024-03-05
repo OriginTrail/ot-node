@@ -1,12 +1,12 @@
 const GNOSIS_BLOCKCHAIN_ID = {
-    MAINNET: 'gnosis:100',
-    TESTNET: 'gnosis:10200',
-    DEVNET: 'gnosis:10200',
-    DEVELOPMENT: 'hardhat2:31337',
+    mainnet: 'gnosis:100',
+    testnet: 'gnosis:10200',
+    devnet: 'gnosis:10200',
+    development: 'hardhat2:31337',
 };
 
 const BLOCKCHAIN_ID =
-    GNOSIS_BLOCKCHAIN_ID[process.env.NODE_ENV] ?? GNOSIS_BLOCKCHAIN_ID.DEVELOPMENT;
+    GNOSIS_BLOCKCHAIN_ID[process.env.NODE_ENV] ?? GNOSIS_BLOCKCHAIN_ID.development;
 
 // eslint-disable-next-line import/prefer-default-export
 export async function up({ context: { queryInterface } }) {

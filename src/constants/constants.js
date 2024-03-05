@@ -439,7 +439,13 @@ export const OPERATIONS = {
     GET: 'get',
 };
 
-export const SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS = 5 * 60;
+export const SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS = {
+    mainnet: 5 * 60,
+    testnet: 5 * 60,
+    devnet: 3 * 60,
+    test: 10,
+    development: 10,
+};
 
 /**
  * @constant {number} OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS -
