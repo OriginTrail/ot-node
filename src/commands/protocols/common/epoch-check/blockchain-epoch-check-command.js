@@ -135,7 +135,7 @@ class BlockchainEpochCheckCommand extends Command {
         );
         const scheduleSubmitCommitCommands = [];
         const updateServiceAgreementsLastCommitEpoch = [];
-        for (let serviceAgreement of eligibleAgreementForSubmitCommit) {
+        for (const serviceAgreement of eligibleAgreementForSubmitCommit) {
             if (scheduleSubmitCommitCommands.length >= maxTransactions) {
                 this.logger.warn(
                     `Epoch check: not scheduling new commits. Submit commit command length: ${scheduleSubmitCommitCommands.length}, max number of transactions: ${maxTransactions} for blockchain: ${blockchain}`,
@@ -157,7 +157,7 @@ class BlockchainEpochCheckCommand extends Command {
                 }
                 await this.repositoryModuleManager.updateServiceAgreementRecord(
                     blockchain,
-                    serviceAgreement.contract,
+                    serviceAgreement.assetStorageContractAddress,
                     serviceAgreement.tokenId,
                     serviceAgreement.agreementId,
                     blockchainAgreementData.startTime,
@@ -168,10 +168,15 @@ class BlockchainEpochCheckCommand extends Command {
                     serviceAgreement.hashFunctionId,
                     serviceAgreement.keyword,
                     serviceAgreement.assertionId,
-                    serviceAgreement.lastCommitEpoch,
+                    serviceAgreement.stateIndex,
                     SERVICE_AGREEMENT_SOURCES.BLOCKCHAIN,
+                    serviceAgreement.lastCommitEpoch,
+                    serviceAgreement.lastProofEpoch,
                 );
-                serviceAgreement = blockchainAgreementData;
+                serviceAgreement.startTime = blockchainAgreementData.startTime;
+                serviceAgreement.scoreFunctionId = blockchainAgreementData.scoreFunctionId;
+                serviceAgreement.proofWindowOffsetPerc =
+                    blockchainAgreementData.proofWindowOffsetPerc;
             }
 
             const neighbourhood = await this.shardingTableService.findNeighbourhood(
