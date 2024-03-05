@@ -262,16 +262,6 @@ class ServiceAgreementRepository {
             order: [['token_id', 'asc']],
         });
     }
-
-    async getCorruptedServiceAgreementTokenIds(blockchainId) {
-        return this.module.findAll({
-            attributes: ['tokenId'],
-            where: {
-                [Sequelize.Op.or]: [{ scoreFunctionId: 0 }, { proofWindowOffsetPerc: 0 }],
-                blockchainId,
-            },
-        });
-    }
 }
 
 export default ServiceAgreementRepository;
