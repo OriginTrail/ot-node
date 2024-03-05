@@ -8,6 +8,7 @@ import {
     ERROR_TYPE,
     TRIPLE_STORE_REPOSITORIES,
     SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS,
+    SERVICE_AGREEMENT_SOURCES,
 } from '../../../../constants/constants.js';
 
 class BlockchainEpochCheckCommand extends Command {
@@ -134,12 +135,43 @@ class BlockchainEpochCheckCommand extends Command {
         );
         const scheduleSubmitCommitCommands = [];
         const updateServiceAgreementsLastCommitEpoch = [];
-        for (const serviceAgreement of eligibleAgreementForSubmitCommit) {
+        for (let serviceAgreement of eligibleAgreementForSubmitCommit) {
             if (scheduleSubmitCommitCommands.length >= maxTransactions) {
                 this.logger.warn(
                     `Epoch check: not scheduling new commits. Submit commit command length: ${scheduleSubmitCommitCommands.length}, max number of transactions: ${maxTransactions} for blockchain: ${blockchain}`,
                 );
                 break;
+            }
+
+            if (serviceAgreement.scoreFunctionId === 0) {
+                // corrupted service agreement data fetch new and store
+                const blockchainAgreementData = await this.blockchainModuleManager.getAgreementData(
+                    blockchain,
+                    serviceAgreement.agreementId,
+                );
+                if (!blockchainAgreementData) {
+                    this.logger.warn(
+                        `Epoch check: Unable to fetch agreement data for agreement id: ${serviceAgreement.agreementId}, blockchain id: ${blockchain}. Agreement will be retried in next epoch check command.`,
+                    );
+                    continue;
+                }
+                await this.repositoryModuleManager.updateServiceAgreementRecord(
+                    blockchain,
+                    serviceAgreement.contract,
+                    serviceAgreement.tokenId,
+                    serviceAgreement.agreementId,
+                    blockchainAgreementData.startTime,
+                    serviceAgreement.epochsNumber,
+                    serviceAgreement.epochLength,
+                    blockchainAgreementData.scoreFunctionId,
+                    blockchainAgreementData.proofWindowOffsetPerc,
+                    serviceAgreement.hashFunctionId,
+                    serviceAgreement.keyword,
+                    serviceAgreement.assertionId,
+                    serviceAgreement.lastCommitEpoch,
+                    SERVICE_AGREEMENT_SOURCES.BLOCKCHAIN,
+                );
+                serviceAgreement = blockchainAgreementData;
             }
 
             const neighbourhood = await this.shardingTableService.findNeighbourhood(
@@ -223,6 +255,12 @@ class BlockchainEpochCheckCommand extends Command {
                         blockchain,
                         serviceAgreement.agreementId,
                     );
+                    if (!agreementData) {
+                        this.logger.warn(
+                            `Unable to fetch agreement data in blockchain epoch check command for agreement id: ${serviceAgreement.agreementId}. Skipping scheduling submit commit command for blockchain: ${blockchain}`,
+                        );
+                        continue;
+                    }
                     const blockchainAssertionSize =
                         await this.blockchainModuleManager.getAssertionSize(
                             blockchain,

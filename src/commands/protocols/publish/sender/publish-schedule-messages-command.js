@@ -76,6 +76,16 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
             agreementId,
         );
 
+        if (!agreementData) {
+            await this.operationService.markOperationAsFailed(
+                operationId,
+                blockchain,
+                'Unable to fetch agreement data.',
+                ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR,
+            );
+            return false;
+        }
+
         const r0 = await this.blockchainModuleManager.getR0();
 
         const serviceAgreementBid = await this.serviceAgreementService.calculateBid(
