@@ -142,10 +142,26 @@ class Web3Service {
     }
 
     selectTransactionQueue() {
-        const selectedQueue = this.transactionQueues[this.transactionQueueOrder[0]];
-        this.transactionQueueOrder.push(this.transactionQueueOrder.shift());
+        const queues = Object.keys(this.transactionQueues).map((wallet) => ({
+            wallet,
+            length: this.transactionQueues[wallet].length(),
+        }));
+        const minLength = Math.min(...queues.map((queue) => queue.length));
+        const shortestQueues = queues.filter((queue) => queue.length === minLength);
+        if (shortestQueues.length === 1) {
+            return this.transactionQueues[shortestQueues[0]];
+        }
 
-        return selectedQueue;
+        const selectedQueueWallet = this.transactionQueueOrder.find((roundRobinNext) =>
+            shortestQueues.some((shortestQueue) => shortestQueue.wallet === roundRobinNext),
+        );
+
+        this.transactionQueueOrder.push(
+            this.transactionQueueOrder
+                .splice(this.transactionQueueOrder.indexOf(selectedQueueWallet), 1)
+                .pop(),
+        );
+        return this.transactionQueues[selectedQueueWallet];
     }
 
     getValidOperationalWallets() {
