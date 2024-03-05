@@ -10,6 +10,9 @@ class Web3ServiceValidator {
     }
 
     static getAgreementDataValidator(result) {
+        if (!result) {
+            return false;
+        }
         const agreementData = {
             startTime: result['0'].toNumber(),
             epochsNumber: result['1'],

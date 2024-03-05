@@ -616,7 +616,7 @@ class Web3Service {
                         this.setContractCallCache(contractName, functionName, result);
                         return result;
                     }
-                    if (retryCount === maxNumberOfRetries) {
+                    if (retryCount === maxNumberOfRetries - 1) {
                         return null;
                     }
                     await sleep(retryDelayInSec * 1000);
@@ -1126,6 +1126,9 @@ class Web3Service {
             'getAgreementData',
             [agreementId],
         );
+        if (!result) {
+            return null;
+        }
         return {
             startTime: result['0'].toNumber(),
             epochsNumber: result['1'],
