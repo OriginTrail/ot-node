@@ -20,33 +20,40 @@ class GnosisService extends Web3Service {
 
     async getGasPrice() {
         let gasPrice;
+        if (!this.defaultGasPrice) {
+            this.defaultGasPrice = this.convertToWei(
+                process.env.NODE_ENV === NODE_ENVIRONMENTS.MAINNET
+                    ? GNOSIS_DEFAULT_GAS_PRICE.MAINNET
+                    : GNOSIS_DEFAULT_GAS_PRICE.TESTNET,
+                'gwei',
+            );
+        }
+
         try {
             const response = await axios.get(this.config.gasPriceOracleLink);
             if (response?.data?.average) {
-                // Returnts gwei
+                // returns gwei
                 gasPrice = Number(response.data.average);
                 this.logger.debug(`Gas price from Gnosis oracle link: ${gasPrice} gwei`);
+                gasPrice = this.convertToWei(gasPrice, 'gwei');
             } else if (response?.data?.result) {
-                // Returns wei
+                // returns wei
                 gasPrice = Number(response.data.result, 10);
                 this.logger.debug(`Gas price from Gnosis oracle link: ${gasPrice} wei`);
-                return gasPrice;
             } else {
-                throw Error(
-                    `Gas price oracle: ${this.config.gasPriceOracleLink} returns gas price in unsupported format.`,
+                this.logger.warn(
+                    `Gas price oracle: ${this.config.gasPriceOracleLink} returns gas price in unsupported format. Using default value: ${this.defaultGasPrice} Gwei.`,
                 );
             }
         } catch (error) {
-            const defaultGasPrice =
-                process.NODE_ENV === NODE_ENVIRONMENTS.MAINNET
-                    ? GNOSIS_DEFAULT_GAS_PRICE.MAINNET
-                    : GNOSIS_DEFAULT_GAS_PRICE.TESTNET;
             this.logger.warn(
-                `Failed to fetch the gas price from the Gnosis: ${error}. Using default value: ${defaultGasPrice} Gwei.`,
+                `Failed to fetch the gas price from the Gnosis: ${error}. Using default value: ${this.defaultGasPrice} Gwei.`,
             );
-            gasPrice = defaultGasPrice;
         }
-        return this.convertToWei(gasPrice, 'gwei');
+        if (gasPrice) {
+            return gasPrice;
+        }
+        return this.defaultGasPrice;
     }
 
     async healthCheck() {
