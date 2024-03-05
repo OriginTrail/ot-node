@@ -95,6 +95,7 @@ class Web3Service {
             }, concurrency);
             this.transactionQueues[operationalWallet.address] = transactionQueue;
         }
+        this.transactionQueueOrder = Object.keys(this.transactionQueues);
     }
 
     queueTransaction(contractInstance, functionName, transactionArgs, callback, gasPrice) {
@@ -141,22 +142,8 @@ class Web3Service {
     }
 
     selectTransactionQueue() {
-        let selectedQueue = null;
-        let minLength = Infinity;
-
-        for (const walletAddress of Object.keys(this.transactionQueues)) {
-            const queue = this.transactionQueues[walletAddress];
-            const length = queue.length();
-
-            if (length === 0) {
-                return queue;
-            }
-
-            if (length < minLength) {
-                selectedQueue = queue;
-                minLength = length;
-            }
-        }
+        const selectedQueue = this.transactionQueues[this.transactionQueueOrder[0]];
+        this.transactionQueueOrder.push(this.transactionQueueOrder.shift());
 
         return selectedQueue;
     }
