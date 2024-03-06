@@ -53,6 +53,9 @@ class Libp2pService {
                 enabled: true,
                 ...this.config.dht,
             },
+            nat: {
+                ...this.config.nat,
+            },
         };
         initializationObject.dialer = this.config.connectionManager;
 
@@ -67,8 +70,10 @@ class Libp2pService {
             };
         }
         initializationObject.addresses = {
-            listen: [`/ip4/0.0.0.0/tcp/${this.config.port}`], // for production
-            // announce: ['/dns4/auto-relay.libp2p.io/tcp/443/wss/p2p/QmWDn2LY8nannvSWJzruUYoLZ4vV83vfCBwd8DipvdgQc3']
+            listen: [`/ip4/0.0.0.0/tcp/${this.config.port}`],
+            announce: ip.isPublic(this.config.nat.externalIp)
+                ? [`/ip4/${this.config.nat.externalIp}/tcp/${this.config.port}`]
+                : [],
         };
         let id;
         if (!this.config.peerId) {
