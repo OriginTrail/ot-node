@@ -48,6 +48,18 @@ class Libp2pService {
         this.logger = logger;
 
         initializationObject.peerRouting = this.config.peerRouting;
+
+        const externalIp =
+            ip.isV4Format(this.config.nat.externalIp) && ip.isPublic(this.config.nat.externalIp)
+                ? this.config.nat.externalIp
+                : undefined;
+
+        if (this.config.nat.externalIp != null && externalIp == null) {
+            this.logger.warn(
+                `Invalid external ip defined in configuration: ${this.config.nat.externalIp}. External ip must be in V4 format, and public.`,
+            );
+        }
+
         initializationObject.config = {
             dht: {
                 enabled: true,
@@ -55,6 +67,7 @@ class Libp2pService {
             },
             nat: {
                 ...this.config.nat,
+                externalIp,
             },
         };
         initializationObject.dialer = this.config.connectionManager;
@@ -71,10 +84,7 @@ class Libp2pService {
         }
         initializationObject.addresses = {
             listen: [`/ip4/0.0.0.0/tcp/${this.config.port}`],
-            announce:
-                ip.isV4Format(this.config.nat.externalIp) && ip.isPublic(this.config.nat.externalIp)
-                    ? [`/ip4/${this.config.nat.externalIp}/tcp/${this.config.port}`]
-                    : [],
+            announce: externalIp ? [`/ip4/${externalIp}/tcp/${this.config.port}`] : [],
         };
         let id;
         if (!this.config.peerId) {
