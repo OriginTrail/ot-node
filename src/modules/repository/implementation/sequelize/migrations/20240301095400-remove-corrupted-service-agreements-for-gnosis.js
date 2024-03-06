@@ -13,4 +13,8 @@ export async function up({ context: { queryInterface } }) {
     await queryInterface.sequelize.query(`
         delete from service_agreement where score_function_id=0 and blockchain_id='${BLOCKCHAIN_ID}'
     `);
+
+    await queryInterface.sequelize.query(`
+        update service_agreement set last_commit_epoch = NULL where blockchain_id='${BLOCKCHAIN_ID}'
+    `);
 }
