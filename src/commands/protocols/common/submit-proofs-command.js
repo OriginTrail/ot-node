@@ -19,6 +19,13 @@ class SubmitProofsCommand extends Command {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.SUBMIT_PROOFS_ERROR;
+
+        this.TX_START = OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_SEND_TX_START;
+        this.TX_END = OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_SEND_TX_END;
+        this.TX_ERROR = ERROR_TYPE.COMMIT_PROOF.SUBMIT_PROOFS_SEND_TX_ERROR;
+        this.TX_GAS_INCREASE_FACTOR = COMMAND_TX_GAS_INCREASE_FACTORS.SUBMIT_PROOFS;
+        this.END_STATUS = OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END;
+        this.RETRY_NUMBER = COMMAND_RETRIES.SUBMIT_PROOFS;
     }
 
     async execute(command) {
@@ -149,11 +156,7 @@ class SubmitProofsCommand extends Command {
                 stateIndex,
                 (result) => {
                     if (result?.error) {
-                        if (result.error.message.includes('NodeAlreadyRewarded')) {
-                            resolve(false);
-                        } else {
-                            reject(result.error);
-                        }
+                        reject(result.error);
                     }
 
                     resolve(true);
@@ -161,88 +164,22 @@ class SubmitProofsCommand extends Command {
                 txGasPrice,
             );
         });
-        const sendSubmitProofsTransactionOperationId = this.operationIdService.generateId();
-        let txSuccess;
-        try {
-            this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_SEND_TX_START,
-                sendSubmitProofsTransactionOperationId,
+        return this.sendTransactionAndHandleResult(
+            transactionCompletePromise,
+            {
                 blockchain,
                 agreementId,
                 epoch,
-            );
-            txSuccess = await transactionCompletePromise;
-        } catch (error) {
-            this.logger.warn(
-                `Failed to execute ${command.name}, Error Message: ${error.message} for the Service Agreement ` +
-                    `with the ID: ${agreementId}, Blockchain: ${blockchain}, Contract: ${contract}, ` +
-                    `Token ID: ${tokenId}, Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, ` +
-                    `Epoch: ${epoch}, State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
-                    `Retry number: ${COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1}.`,
-            );
-            this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.FAILED,
-                sendSubmitProofsTransactionOperationId,
-                blockchain,
-                error.message,
-                ERROR_TYPE.COMMIT_PROOF.SUBMIT_PROOFS_SEND_TX_ERROR,
-            );
-            let newGasPrice;
-            if (
-                error.message.includes(`timeout exceeded`) ||
-                error.message.includes(`Pool(TooLowPriority`)
-            ) {
-                newGasPrice = Math.ceil(txGasPrice * COMMAND_TX_GAS_INCREASE_FACTORS.SUBMIT_PROOFS);
-            } else {
-                newGasPrice = null;
-            }
-
-            Object.assign(command, {
-                data: { ...command.data, gasPrice: newGasPrice },
-                message: error.message,
-            });
-
-            return Command.retry();
-        }
-
-        let msgBase;
-        if (txSuccess) {
-            this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_SEND_TX_START,
-                sendSubmitProofsTransactionOperationId,
-                blockchain,
-                agreementId,
-                epoch,
-            );
-            msgBase = 'Successfully executed';
-
-            this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.COMMIT_PROOF.SUBMIT_PROOFS_END,
                 operationId,
-                blockchain,
-                agreementId,
-                epoch,
-            );
-        } else {
-            msgBase = 'Node has already sent proof. Finishing';
-            this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.FAILED,
-                sendSubmitProofsTransactionOperationId,
-                blockchain,
-                msgBase,
-                ERROR_TYPE.COMMIT_PROOF.SUBMIT_COMMIT_SEND_TX_ERROR,
-            );
-        }
-
-        this.logger.trace(
-            `${msgBase} ${command.name} for the Service Agreement with the ID: ${agreementId}, ` +
-                `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
-                `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
-                `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
-                `Retry number: ${COMMAND_RETRIES.SUBMIT_PROOFS - command.retries + 1}`,
+                contract,
+                tokenId,
+                keyword,
+                hashFunctionId,
+                stateIndex,
+                txGasPrice,
+            },
+            command,
         );
-
-        return Command.empty();
     }
 
     async proofAlreadySubmitted(blockchain, agreementId, epoch, stateIndex) {
@@ -261,6 +198,13 @@ class SubmitProofsCommand extends Command {
         }
 
         return false;
+    }
+
+    async insufficientFundsErrorReceived(commandData) {
+        await this.repositoryModuleManager.updateServiceAgreementLastCommitEpoch(
+            commandData.agreementId,
+            commandData.epoch - 1,
+        );
     }
 
     async retryFinished(command) {
