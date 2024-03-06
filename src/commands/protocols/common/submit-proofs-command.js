@@ -201,7 +201,7 @@ class SubmitProofsCommand extends Command {
     }
 
     async insufficientFundsErrorReceived(commandData) {
-        await this.repositoryModuleManager.updateServiceAgreementLastCommitEpoch(
+        await this.repositoryModuleManager.updateServiceAgreementLastProofEpoch(
             commandData.agreementId,
             commandData.epoch - 1 < 0 ? null : commandData.epoch - 1,
         );
