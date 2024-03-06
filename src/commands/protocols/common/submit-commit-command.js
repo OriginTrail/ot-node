@@ -150,7 +150,7 @@ class SubmitCommitCommand extends SendTransactionCommand {
     async insufficientFundsErrorReceived(commandData) {
         await this.repositoryModuleManager.updateServiceAgreementLastCommitEpoch(
             commandData.agreementId,
-            commandData.epoch - 1,
+            commandData.epoch - 1 < 0 ? null : commandData.epoch - 1,
         );
     }
 
