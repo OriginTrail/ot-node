@@ -450,18 +450,26 @@ async function runSimulation(
             stake: Number(node.stake),
             replicated: 0,
             won: 0,
+            tokenIds: [],
+            expectedAward: 0,
         };
     }
 
     const idealMaxDistanceInNeighborhood = HASH_RING_SIZE.div(nodes.length).mul(Math.ceil(r2 / 2));
-    for (const key of knowledgeAssets) {
+    knowledgeAssets = await Promise.all(
+        knowledgeAssets.map(async (knowledgeAsset) => ({
+            ...knowledgeAsset,
+            key: await hashingService.callHashFunction(1, knowledgeAsset.keyword),
+        })),
+    );
+    for (const knowledgeAsset of knowledgeAssets) {
         const nodesWithDistances = await Promise.all(
             nodes.map(async (node) => {
                 const distance = await proximityScoringService.callProximityFunction(
                     blockchain,
                     proximityScoreFunctionsPairId,
                     node.sha256,
-                    key,
+                    knowledgeAsset.key,
                 );
 
                 return { ...node, distance };
@@ -510,12 +518,16 @@ async function runSimulation(
         for (const [index, node] of nodesSortedByScore.entries()) {
             if (index < r0) {
                 replicas[node.nodeId].won += 1;
+                replicas[node.nodeId].tokenIds.push(knowledgeAsset.tokenId);
+                replicas[node.nodeId].expectedAward +=
+                    knowledgeAsset.tokens / (knowledgeAsset.epochs * 3);
             } else {
                 break;
             }
         }
     }
-
+    const outputPath = '/Users/mihajlopavlovic/Documents/simulationData/simulationJSON.json';
+    fs.writeFileSync(outputPath, JSON.stringify(replicas, null, 2));
     generateScatterPlot(
         Object.values(replicas),
         'replicated',
