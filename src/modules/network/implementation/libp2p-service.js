@@ -71,9 +71,10 @@ class Libp2pService {
         }
         initializationObject.addresses = {
             listen: [`/ip4/0.0.0.0/tcp/${this.config.port}`],
-            announce: ip.isPublic(this.config.nat.externalIp)
-                ? [`/ip4/${this.config.nat.externalIp}/tcp/${this.config.port}`]
-                : [],
+            announce:
+                ip.isV4Format(this.config.nat.externalIp) && ip.isPublic(this.config.nat.externalIp)
+                    ? [`/ip4/${this.config.nat.externalIp}/tcp/${this.config.port}`]
+                    : [],
         };
         let id;
         if (!this.config.peerId) {
