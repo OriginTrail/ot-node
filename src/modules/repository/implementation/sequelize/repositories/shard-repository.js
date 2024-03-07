@@ -81,6 +81,7 @@ class ShardRepository {
                 },
             },
             order: [['last_dialed', 'asc']],
+            group: ['peer_id', 'last_dialed'],
             limit,
             raw: true,
         });
