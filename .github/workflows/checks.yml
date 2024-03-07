@@ -13,6 +13,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  spelling-check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check Spelling
+      uses: check-spelling/check-spelling@v0.0.22
+
   lint:
     runs-on: ubuntu-latest
     steps:
