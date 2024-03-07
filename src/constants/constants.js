@@ -447,12 +447,20 @@ export const SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS = {
     development: 10,
 };
 
-export const KNOWN_TRANSACTION_ERRORS = {
+export const EXPECTED_TRANSACTION_ERRORS = {
     INSUFFICIENT_FUNDS: 'InsufficientFunds',
     NODE_ALREADY_SUBMITTED_COMMIT: 'NodeAlreadySubmittedCommit',
     TIMEOUT_EXCEEDED: 'timeout exceeded',
     TOO_LOW_PRIORITY: 'TooLowPriority',
     NODE_ALREADY_REWARDED: 'NodeAlreadyRewarded',
+    SERVICE_AGREEMENT_DOESNT_EXIST: 'ServiceAgreementDoesntExist',
+    INVALID_PROXIMITY_SCORE_FUNCTIONS_PAIR_ID: 'InvalidProximityScoreFunctionsPairId',
+    INVALID_SCORE_FUNCTION_ID: 'InvalidScoreFunctionId',
+    COMMIT_WINDOW_CLOSED: 'CommitWindowClosed',
+    NODE_NOT_IN_SHARDING_TABLE: 'NodeNotInShardingTable',
+    PROOF_WINDOW_CLOSED: 'ProofWindowClosed',
+    NODE_NOT_AWARDED: 'NodeNotAwarded',
+    WRONG_MERKLE_PROOF: 'WrongMerkleProof',
 };
 
 /**

@@ -1,5 +1,5 @@
 import Command from '../command.js';
-import { KNOWN_TRANSACTION_ERRORS, OPERATION_ID_STATUS } from '../../constants/constants.js';
+import { EXPECTED_TRANSACTION_ERRORS, OPERATION_ID_STATUS } from '../../constants/constants.js';
 
 class SendTransactionCommand extends Command {
     async sendTransactionAndHandleResult(transactionCompletePromise, data, command) {
@@ -49,11 +49,37 @@ class SendTransactionCommand extends Command {
                 this.txErrorType,
             );
             txSuccess = false;
-            if (error.message.includes(KNOWN_TRANSACTION_ERRORS.NODE_ALREADY_SUBMITTED_COMMIT)) {
+            if (error.message.includes(EXPECTED_TRANSACTION_ERRORS.NODE_ALREADY_SUBMITTED_COMMIT)) {
                 msgBase = 'Node has already submitted commit. Finishing';
-            } else if (error.message.includes(KNOWN_TRANSACTION_ERRORS.NODE_ALREADY_REWARDED)) {
-                msgBase = 'Node has already sent proof. Finishing';
-            } else if (error.message.includes(KNOWN_TRANSACTION_ERRORS.INSUFFICIENT_FUNDS)) {
+            } else if (error.message.includes(EXPECTED_TRANSACTION_ERRORS.NODE_ALREADY_REWARDED)) {
+                msgBase = 'Node already rewarded. Finishing';
+            } else if (
+                error.message.includes(EXPECTED_TRANSACTION_ERRORS.SERVICE_AGREEMENT_DOESNT_EXIST)
+            ) {
+                msgBase = 'Service agreement doesnt exist. Finishing';
+            } else if (
+                error.message.includes(
+                    EXPECTED_TRANSACTION_ERRORS.INVALID_PROXIMITY_SCORE_FUNCTIONS_PAIR_ID,
+                )
+            ) {
+                msgBase = 'Invalid proximity score functions pair id. Finishing';
+            } else if (
+                error.message.includes(EXPECTED_TRANSACTION_ERRORS.INVALID_SCORE_FUNCTION_ID)
+            ) {
+                msgBase = 'Invalid score function id. Finishing';
+            } else if (error.message.includes(EXPECTED_TRANSACTION_ERRORS.COMMIT_WINDOW_CLOSED)) {
+                msgBase = 'Commit window closed. Finishing';
+            } else if (
+                error.message.includes(EXPECTED_TRANSACTION_ERRORS.NODE_NOT_IN_SHARDING_TABLE)
+            ) {
+                msgBase = 'Node not in sharding table. Finishing';
+            } else if (error.message.includes(EXPECTED_TRANSACTION_ERRORS.PROOF_WINDOW_CLOSED)) {
+                msgBase = 'Proof window closed. Finishing';
+            } else if (error.message.includes(EXPECTED_TRANSACTION_ERRORS.NODE_NOT_AWARDED)) {
+                msgBase = 'Node not awarded. Finishing';
+            } else if (error.message.includes(EXPECTED_TRANSACTION_ERRORS.WRONG_MERKLE_PROOF)) {
+                msgBase = 'Wrong merkle proof. Finishing';
+            } else if (error.message.includes(EXPECTED_TRANSACTION_ERRORS.INSUFFICIENT_FUNDS)) {
                 msgBase = 'Insufficient funds. Finishing';
                 if (this.insufficientFundsErrorReceived) {
                     await this.insufficientFundsErrorReceived(command.data);
@@ -61,8 +87,8 @@ class SendTransactionCommand extends Command {
             } else {
                 let newGasPrice;
                 if (
-                    error.message.includes(KNOWN_TRANSACTION_ERRORS.TIMEOUT_EXCEEDED) ||
-                    error.message.includes(KNOWN_TRANSACTION_ERRORS.TOO_LOW_PRIORITY)
+                    error.message.includes(EXPECTED_TRANSACTION_ERRORS.TIMEOUT_EXCEEDED) ||
+                    error.message.includes(EXPECTED_TRANSACTION_ERRORS.TOO_LOW_PRIORITY)
                 ) {
                     newGasPrice = Math.ceil(txGasPrice * this.txGasIncreaseFactor);
                 } else {
