@@ -95,6 +95,7 @@ class Web3Service {
             }, concurrency);
             this.transactionQueues[operationalWallet.address] = transactionQueue;
         }
+        this.transactionQueueOrder = Object.keys(this.transactionQueues);
     }
 
     queueTransaction(contractInstance, functionName, transactionArgs, callback, gasPrice) {
@@ -141,24 +142,26 @@ class Web3Service {
     }
 
     selectTransactionQueue() {
-        let selectedQueue = null;
-        let minLength = Infinity;
-
-        for (const walletAddress of Object.keys(this.transactionQueues)) {
-            const queue = this.transactionQueues[walletAddress];
-            const length = queue.length();
-
-            if (length === 0) {
-                return queue;
-            }
-
-            if (length < minLength) {
-                selectedQueue = queue;
-                minLength = length;
-            }
+        const queues = Object.keys(this.transactionQueues).map((wallet) => ({
+            wallet,
+            length: this.transactionQueues[wallet].length(),
+        }));
+        const minLength = Math.min(...queues.map((queue) => queue.length));
+        const shortestQueues = queues.filter((queue) => queue.length === minLength);
+        if (shortestQueues.length === 1) {
+            return this.transactionQueues[shortestQueues[0]];
         }
 
-        return selectedQueue;
+        const selectedQueueWallet = this.transactionQueueOrder.find((roundRobinNext) =>
+            shortestQueues.some((shortestQueue) => shortestQueue.wallet === roundRobinNext),
+        );
+
+        this.transactionQueueOrder.push(
+            this.transactionQueueOrder
+                .splice(this.transactionQueueOrder.indexOf(selectedQueueWallet), 1)
+                .pop(),
+        );
+        return this.transactionQueues[selectedQueueWallet];
     }
 
     getValidOperationalWallets() {
