@@ -6,8 +6,9 @@ import {
     TRIPLE_STORE_REPOSITORIES,
 } from '../../../constants/constants.js';
 import Command from '../../command.js';
+import SendTransactionCommand from '../../common/send-transaction-command.js';
 
-class SubmitProofsCommand extends Command {
+class SubmitProofsCommand extends SendTransactionCommand {
     constructor(ctx) {
         super(ctx);
 
