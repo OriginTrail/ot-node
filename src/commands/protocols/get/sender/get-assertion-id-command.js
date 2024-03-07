@@ -154,11 +154,18 @@ class GetAssertionIdCommand extends Command {
 
         let agreementData;
         agreementData = await this.repositoryModuleManager.getServiceAgreementRecord(agreementId);
-        if (!agreementData) {
+        if (!agreementData || agreementData.scoreFunctionId === 0) {
             agreementData = await this.blockchainModuleManager.getAgreementData(
                 blockchain,
                 agreementId,
             );
+        }
+
+        if (!agreementData || agreementData.scoreFunctionId === 0) {
+            this.logger.warn(
+                `Unable to fetch agreement data in get assertion id command ${agreementId}, blockchain id: ${blockchain}`,
+            );
+            throw Error(`Unable to get agreement data`);
         }
 
         const epoch = await this.serviceAgreementService.calculateCurrentEpoch(
