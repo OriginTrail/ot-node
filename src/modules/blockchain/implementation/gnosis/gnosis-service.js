@@ -12,6 +12,13 @@ class GnosisService extends Web3Service {
 
         this.baseTokenTicker = 'GNO';
         this.tracTicker = 'TRAC';
+
+        this.defaultGasPrice = this.convertToWei(
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.MAINNET
+                ? GNOSIS_DEFAULT_GAS_PRICE.MAINNET
+                : GNOSIS_DEFAULT_GAS_PRICE.TESTNET,
+            'gwei',
+        );
     }
 
     getBlockTimeMillis() {
@@ -20,14 +27,6 @@ class GnosisService extends Web3Service {
 
     async getGasPrice() {
         let gasPrice;
-        if (!this.defaultGasPrice) {
-            this.defaultGasPrice = this.convertToWei(
-                process.env.NODE_ENV === NODE_ENVIRONMENTS.MAINNET
-                    ? GNOSIS_DEFAULT_GAS_PRICE.MAINNET
-                    : GNOSIS_DEFAULT_GAS_PRICE.TESTNET,
-                'gwei',
-            );
-        }
 
         try {
             const response = await axios.get(this.config.gasPriceOracleLink);
