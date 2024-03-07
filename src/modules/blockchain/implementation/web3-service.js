@@ -151,7 +151,7 @@ class Web3Service {
         const minLength = Math.min(...queues.map((queue) => queue.length));
         const shortestQueues = queues.filter((queue) => queue.length === minLength);
         if (shortestQueues.length === 1) {
-            return this.transactionQueues[shortestQueues[0]];
+            return this.transactionQueues[shortestQueues[0].wallet];
         }
 
         const selectedQueueWallet = this.transactionQueueOrder.find((roundRobinNext) =>

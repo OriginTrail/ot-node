@@ -104,7 +104,7 @@ class SubmitUpdateCommitCommand extends SendTransactionCommand {
                     if (result?.error) {
                         reject(result.error);
                     }
-                    resolve();
+                    resolve(true);
                 },
                 txGasPrice,
             );
