@@ -23,7 +23,7 @@ class SendTransactionCommand extends Command {
         let msgBase;
         try {
             this.operationIdService.emitChangeEvent(
-                this.TX_START,
+                this.txStartStatus,
                 sendTransactionOperationId,
                 blockchain,
                 agreementId,
@@ -39,14 +39,14 @@ class SendTransactionCommand extends Command {
                     `Epoch: ${epoch}, State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
                     `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
                     `Right neighborhood edge: ${rightNeighborhoodEdge}, ` +
-                    `Retry number: ${this.RETRY_NUMBER - command.retries + 1}.`,
+                    `Retry number: ${this.commandRetryNumber - command.retries + 1}.`,
             );
             this.operationIdService.emitChangeEvent(
                 OPERATION_ID_STATUS.FAILED,
                 sendTransactionOperationId,
                 blockchain,
                 error.message,
-                this.TX_ERROR,
+                this.txErrorType,
             );
             txSuccess = false;
             if (error.message.includes(KNOWN_TRANSACTION_ERRORS.NODE_ALREADY_SUBMITTED_COMMIT)) {
@@ -64,7 +64,7 @@ class SendTransactionCommand extends Command {
                     error.message.includes(KNOWN_TRANSACTION_ERRORS.TIMEOUT_EXCEEDED) ||
                     error.message.includes(KNOWN_TRANSACTION_ERRORS.TOO_LOW_PRIORITY)
                 ) {
-                    newGasPrice = Math.ceil(txGasPrice * this.TX_GAS_INCREASE_FACTOR);
+                    newGasPrice = Math.ceil(txGasPrice * this.txGasIncreaseFactor);
                 } else {
                     newGasPrice = null;
                 }
@@ -80,7 +80,7 @@ class SendTransactionCommand extends Command {
 
         if (txSuccess) {
             this.operationIdService.emitChangeEvent(
-                this.TX_END,
+                this.txEndStatus,
                 sendTransactionOperationId,
                 blockchain,
                 agreementId,
@@ -90,7 +90,7 @@ class SendTransactionCommand extends Command {
             msgBase = 'Successfully executed';
 
             this.operationIdService.emitChangeEvent(
-                this.END_STATUS,
+                this.operationEndStatus,
                 operationId,
                 blockchain,
                 agreementId,
@@ -105,7 +105,7 @@ class SendTransactionCommand extends Command {
                 `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
                 `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
                 `Right neighborhood edge: ${rightNeighborhoodEdge}, ` +
-                `Retry number: ${this.RETRY_NUMBER - command.retries + 1}`,
+                `Retry number: ${this.commandRetryNumber - command.retries + 1}`,
         );
 
         return Command.empty();
