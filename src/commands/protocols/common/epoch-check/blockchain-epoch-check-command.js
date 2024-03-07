@@ -119,6 +119,8 @@ class BlockchainEpochCheckCommand extends Command {
             blockchain,
         );
 
+        if (peerRecord == null) return;
+
         const ask = this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
 
         const timestamp = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
@@ -135,40 +137,40 @@ class BlockchainEpochCheckCommand extends Command {
         const scheduleSubmitCommitCommands = [];
         const updateServiceAgreementsLastCommitEpoch = [];
         for (const serviceAgreement of eligibleAgreementForSubmitCommit) {
-            if (scheduleSubmitCommitCommands.length >= maxTransactions) {
-                this.logger.warn(
-                    `Epoch check: not scheduling new commits. Submit commit command length: ${scheduleSubmitCommitCommands.length}, max number of transactions: ${maxTransactions} for blockchain: ${blockchain}`,
-                );
-                break;
-            }
+            try {
+                if (scheduleSubmitCommitCommands.length >= maxTransactions) {
+                    this.logger.warn(
+                        `Epoch check: not scheduling new commits. Submit commit command length: ${scheduleSubmitCommitCommands.length}, max number of transactions: ${maxTransactions} for blockchain: ${blockchain}`,
+                    );
+                    break;
+                }
 
-            const neighbourhood = await this.shardingTableService.findNeighbourhood(
-                blockchain,
-                serviceAgreement.keyword,
-                r2,
-                serviceAgreement.hashFunctionId,
-                serviceAgreement.scoreFunctionId,
-            );
-
-            let neighbourhoodEdges = null;
-            if (serviceAgreement.scoreFunctionId === 2) {
-                neighbourhoodEdges = await this.shardingTableService.getNeighboorhoodEdgeNodes(
-                    neighbourhood,
+                const neighbourhood = await this.shardingTableService.findNeighbourhood(
                     blockchain,
+                    serviceAgreement.keyword,
+                    r2,
                     serviceAgreement.hashFunctionId,
                     serviceAgreement.scoreFunctionId,
-                    serviceAgreement.keyword,
                 );
-            }
 
-            if (!neighbourhoodEdges && serviceAgreement.scoreFunctionId === 2) {
-                this.logger.warn(
-                    `Epoch check: unable to find neighbourhood edges for agreement id: ${serviceAgreement.agreementId} for blockchain: ${blockchain}`,
-                );
-                continue;
-            }
+                let neighbourhoodEdges = null;
+                if (serviceAgreement.scoreFunctionId === 2) {
+                    neighbourhoodEdges = await this.shardingTableService.getNeighboorhoodEdgeNodes(
+                        neighbourhood,
+                        blockchain,
+                        serviceAgreement.hashFunctionId,
+                        serviceAgreement.scoreFunctionId,
+                        serviceAgreement.keyword,
+                    );
+                }
 
-            try {
+                if (!neighbourhoodEdges && serviceAgreement.scoreFunctionId === 2) {
+                    this.logger.warn(
+                        `Epoch check: unable to find neighbourhood edges for agreement id: ${serviceAgreement.agreementId} for blockchain: ${blockchain}`,
+                    );
+                    continue;
+                }
+
                 const rank = await this.serviceAgreementService.calculateRank(
                     blockchain,
                     serviceAgreement.keyword,
