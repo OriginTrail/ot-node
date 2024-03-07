@@ -447,6 +447,14 @@ export const SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS = {
     development: 10,
 };
 
+export const KNOWN_TRANSACTION_ERRORS = {
+    INSUFFICIENT_FUNDS: 'InsufficientFunds',
+    NODE_ALREADY_SUBMITTED_COMMIT: 'NodeAlreadySubmittedCommit',
+    TIMEOUT_EXCEEDED: 'timeout exceeded',
+    TOO_LOW_PRIORITY: 'TooLowPriority',
+    NODE_ALREADY_REWARDED: 'NodeAlreadyRewarded',
+};
+
 /**
  * @constant {number} OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS -
  * operation id command cleanup interval time 24h
