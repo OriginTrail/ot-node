@@ -1,6 +1,6 @@
 import appRootPath from 'app-root-path';
 import libp2p from 'libp2p';
-import ShardDHT from 'libp2p-kad-dht';
+import ShardDHT from 'shard-dht';
 import { join } from 'path';
 import Bootstrap, { tag } from 'libp2p-bootstrap';
 import { NOISE } from 'libp2p-noise';
