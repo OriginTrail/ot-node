@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import { ethers, BigNumber } from 'ethers';
 import axios from 'axios';
 import async from 'async';
@@ -9,7 +10,6 @@ import {
     SOLIDITY_PANIC_CODE_PREFIX,
     SOLIDITY_PANIC_REASONS,
     ZERO_PREFIX,
-    DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
     TRANSACTION_QUEUE_CONCURRENCY,
     TRANSACTION_POLLING_TIMEOUT_MILLIS,
@@ -25,11 +25,14 @@ import {
     CONTRACT_FUNCTION_PRIORITY,
     TRANSACTION_PRIORITY,
     CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS,
+    MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS,
 } from '../../../constants/constants.js';
+import Web3ServiceValidator from './web3-service-validator.js';
 
 const require = createRequire(import.meta.url);
 
 const ABIs = {
+    ContentAsset: require('dkg-evm-module/abi/ContentAsset.json'),
     ContentAssetStorage: require('dkg-evm-module/abi/ContentAssetStorageV2.json'),
     AssertionStorage: require('dkg-evm-module/abi/AssertionStorage.json'),
     Staking: require('dkg-evm-module/abi/Staking.json'),
@@ -94,6 +97,7 @@ class Web3Service {
             }, concurrency);
             this.transactionQueues[operationalWallet.address] = transactionQueue;
         }
+        this.transactionQueueOrder = Object.keys(this.transactionQueues);
     }
 
     queueTransaction(contractInstance, functionName, transactionArgs, callback, gasPrice) {
@@ -140,24 +144,26 @@ class Web3Service {
     }
 
     selectTransactionQueue() {
-        let selectedQueue = null;
-        let minLength = Infinity;
-
-        for (const walletAddress of Object.keys(this.transactionQueues)) {
-            const queue = this.transactionQueues[walletAddress];
-            const length = queue.length();
-
-            if (length === 0) {
-                return queue;
-            }
-
-            if (length < minLength) {
-                selectedQueue = queue;
-                minLength = length;
-            }
+        const queues = Object.keys(this.transactionQueues).map((wallet) => ({
+            wallet,
+            length: this.transactionQueues[wallet].length(),
+        }));
+        const minLength = Math.min(...queues.map((queue) => queue.length));
+        const shortestQueues = queues.filter((queue) => queue.length === minLength);
+        if (shortestQueues.length === 1) {
+            return this.transactionQueues[shortestQueues[0].wallet];
         }
 
-        return selectedQueue;
+        const selectedQueueWallet = this.transactionQueueOrder.find((roundRobinNext) =>
+            shortestQueues.some((shortestQueue) => shortestQueue.wallet === roundRobinNext),
+        );
+
+        this.transactionQueueOrder.push(
+            this.transactionQueueOrder
+                .splice(this.transactionQueueOrder.indexOf(selectedQueueWallet), 1)
+                .pop(),
+        );
+        return this.transactionQueues[selectedQueueWallet];
     }
 
     getValidOperationalWallets() {
@@ -599,12 +605,30 @@ class Web3Service {
     }
 
     async callContractFunction(contractInstance, functionName, args, contractName = null) {
+        const maxNumberOfRetries = 3;
+        const retryDelayInSec = 12;
+        let retryCount = 0;
         let result = this.getContractCallCache(contractName, functionName);
         try {
             if (!result) {
-                // eslint-disable-next-line no-await-in-loop
-                result = await contractInstance[functionName](...args);
-                this.setContractCallCache(contractName, functionName, result);
+                while (retryCount < maxNumberOfRetries) {
+                    result = await contractInstance[functionName](...args);
+                    const resultIsValid = Web3ServiceValidator.validateResult(
+                        functionName,
+                        contractName,
+                        result,
+                        this.logger,
+                    );
+                    if (resultIsValid) {
+                        this.setContractCallCache(contractName, functionName, result);
+                        return result;
+                    }
+                    if (retryCount === maxNumberOfRetries - 1) {
+                        return null;
+                    }
+                    await sleep(retryDelayInSec * 1000);
+                    retryCount += 1;
+                }
             }
         } catch (error) {
             this._decodeContractCallError(contractInstance, functionName, error, args);
@@ -910,12 +934,18 @@ class Web3Service {
             // this will happen when we have different set of contracts on different blockchains
             // eg LinearSum contract is available on gnosis but not on NeuroWeb, so the node should not fetch events
             // from LinearSum contract on NeuroWeb blockchain
-            return [];
+            return {
+                events: [],
+                lastCheckedBlock: currentBlock,
+                eventsMissed: false,
+            };
         }
 
         let fromBlock;
-        if (this.isOlderThan(lastCheckedTimestamp, DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS)) {
+        let eventsMissed = false;
+        if (this.startBlock - lastCheckedBlock > this.getMaxNumberOfHistoricalBlocksForSync()) {
             fromBlock = this.startBlock;
+            eventsMissed = true;
         } else {
             fromBlock = lastCheckedBlock + 1;
         }
@@ -928,30 +958,55 @@ class Web3Service {
         }
 
         const events = [];
-        while (fromBlock <= currentBlock) {
-            const toBlock = Math.min(
-                fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH - 1,
-                currentBlock,
+        let toBlock = currentBlock;
+        try {
+            while (fromBlock <= currentBlock) {
+                toBlock = Math.min(
+                    fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH - 1,
+                    currentBlock,
+                );
+                const newEvents = await this.processBlockRange(
+                    fromBlock,
+                    toBlock,
+                    contract,
+                    topics,
+                );
+                newEvents.forEach((e) => events.push(...e));
+                fromBlock = toBlock + 1;
+            }
+        } catch (error) {
+            this.logger.warn(
+                `Unable to process block range from: ${fromBlock} to: ${toBlock} for contract ${contractName} on blockchain: ${blockchainId}. Error: ${error.message}`,
             );
-            const newEvents = await this.processBlockRange(fromBlock, toBlock, contract, topics);
-            newEvents.forEach((e) => events.push(...e));
-            fromBlock = toBlock + 1;
         }
 
-        return events.map((event) => ({
-            contract: contractName,
-            event: event.event,
-            data: JSON.stringify(
-                Object.fromEntries(
-                    Object.entries(event.args).map(([k, v]) => [
-                        k,
-                        ethers.BigNumber.isBigNumber(v) ? v.toString() : v,
-                    ]),
+        return {
+            events: events.map((event) => ({
+                contract: contractName,
+                event: event.event,
+                data: JSON.stringify(
+                    Object.fromEntries(
+                        Object.entries(event.args).map(([k, v]) => [
+                            k,
+                            ethers.BigNumber.isBigNumber(v) ? v.toString() : v,
+                        ]),
+                    ),
                 ),
-            ),
-            block: event.blockNumber,
-            blockchainId,
-        }));
+                block: event.blockNumber,
+                blockchainId,
+            })),
+            lastCheckedBlock: toBlock,
+            eventsMissed,
+        };
+    }
+
+    getMaxNumberOfHistoricalBlocksForSync() {
+        if (!this.maxNumberOfHistoricalBlocksForSync) {
+            this.maxNumberOfHistoricalBlocksForSync = Math.round(
+                MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS / this.getBlockTimeMillis(),
+            );
+        }
+        return this.maxNumberOfHistoricalBlocksForSync;
     }
 
     async processBlockRange(fromBlock, toBlock, contract, topics) {
@@ -1027,7 +1082,17 @@ class Web3Service {
     }
 
     async getLatestTokenId(assetContractAddress) {
-        return this.provider.getStorageAt(assetContractAddress.toString().toLowerCase(), 7);
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
+
+        const lastTokenId = await this.callContractFunction(
+            assetStorageContractInstance,
+            'lastTokenId',
+            [],
+        );
+        return lastTokenId;
     }
 
     getAssetStorageContractAddresses() {
@@ -1068,13 +1133,15 @@ class Web3Service {
             'getAgreementData',
             [agreementId],
         );
-
+        if (!result) {
+            return null;
+        }
         return {
             startTime: result['0'].toNumber(),
             epochsNumber: result['1'],
             epochLength: result['2'].toNumber(),
-            tokenAmount: Number(ethers.utils.formatEther(result['3'][0])),
-            updateTokenAmount: Number(ethers.utils.formatEther(result['3'][1])),
+            tokenAmount: result['3'][0],
+            updateTokenAmount: result['3'][1],
             scoreFunctionId: result['4'][0],
             proofWindowOffsetPerc: result['4'][1],
         };

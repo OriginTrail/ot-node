@@ -54,7 +54,7 @@ class PublishController extends BaseController {
             tokenId: dataSource.tokenId,
             keyword: dataSource.keyword,
             hashFunctionId: message.data.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID,
-            proximityScoreFunctionsPairId: dataSource.proximityScoreFunctionsPairId,
+            proximityScoreFunctionsPairId: dataSource.proximityScoreFunctionsPairId ?? 1,
         };
 
         await this.commandExecutor.add(command);

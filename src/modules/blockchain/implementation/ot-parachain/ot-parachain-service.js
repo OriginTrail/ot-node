@@ -155,6 +155,10 @@ class OtParachainService extends Web3Service {
         if (!isRpcError) throw error;
     }
 
+    async getLatestTokenId(assetContractAddress) {
+        return this.provider.getStorageAt(assetContractAddress.toString().toLowerCase(), 7);
+    }
+
     async restartParachainProvider() {
         this.rpcNumber = (this.rpcNumber + 1) % this.config.rpcEndpoints.length;
         this.logger.warn(
@@ -196,6 +200,10 @@ class OtParachainService extends Web3Service {
             }
         });
         return wallets;
+    }
+
+    async getAgreementScoreFunctionId() {
+        return 1;
     }
 }
 

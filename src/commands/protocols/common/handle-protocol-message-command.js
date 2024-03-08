@@ -96,7 +96,7 @@ class HandleProtocolMessageCommand extends Command {
         assertionId,
         operationId,
     ) {
-        const geAgreementData = async () => {
+        const getAgreementData = async () => {
             const agreementId = this.serviceAgreementService.generateId(
                 blockchain,
                 contract,
@@ -130,12 +130,22 @@ class HandleProtocolMessageCommand extends Command {
 
         const [{ agreementId, agreementData }, blockchainAssertionSize, r0, ask] =
             await Promise.all([
-                geAgreementData(),
+                getAgreementData(),
                 this.blockchainModuleManager.getAssertionSize(blockchain, assertionId),
                 this.blockchainModuleManager.getR0(blockchain),
                 getAsk(),
             ]);
         const blockchainAssertionSizeInKb = blockchainAssertionSize / BYTES_IN_KILOBYTE;
+        if (!agreementData) {
+            this.logger.warn(
+                `Unable to fetch agreement data in handle protocol messsage command for agreement id: ${agreementId}, blockchain id: ${blockchain}`,
+            );
+            return {
+                errorMessage: 'Unable to fetch agreement data.',
+                agreementId,
+                agreementData,
+            };
+        }
         if (blockchainAssertionSizeInKb > this.config.maximumAssertionSizeInKb) {
             this.logger.warn(
                 `The size of the received assertion exceeds the maximum limit allowed.. Maximum allowed assertion size in kb: ${this.config.maximumAssertionSizeInKb}, assertion size read from blockchain in kb: ${blockchainAssertionSizeInKb}`,
