@@ -8,6 +8,7 @@ import {
     ERROR_TYPE,
     TRIPLE_STORE_REPOSITORIES,
     SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS,
+    SERVICE_AGREEMENT_SOURCES,
 } from '../../../../constants/constants.js';
 
 class BlockchainEpochCheckCommand extends Command {
@@ -119,6 +120,8 @@ class BlockchainEpochCheckCommand extends Command {
             blockchain,
         );
 
+        if (peerRecord == null) return;
+
         const ask = this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
 
         const timestamp = await this.blockchainModuleManager.getBlockchainTimestamp(blockchain);
@@ -127,7 +130,7 @@ class BlockchainEpochCheckCommand extends Command {
                 timestamp,
                 blockchain,
                 commitWindowDurationPerc,
-                SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS,
+                SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS[process.env.NODE_ENV],
             );
         this.logger.info(
             `Epoch check: Found ${eligibleAgreementForSubmitCommit.length} eligible agreements for submit commit for blockchain: ${blockchain}`,
@@ -135,40 +138,77 @@ class BlockchainEpochCheckCommand extends Command {
         const scheduleSubmitCommitCommands = [];
         const updateServiceAgreementsLastCommitEpoch = [];
         for (const serviceAgreement of eligibleAgreementForSubmitCommit) {
-            if (scheduleSubmitCommitCommands.length >= maxTransactions) {
-                this.logger.warn(
-                    `Epoch check: not scheduling new commits. Submit commit command length: ${scheduleSubmitCommitCommands.length}, max number of transactions: ${maxTransactions} for blockchain: ${blockchain}`,
-                );
-                break;
-            }
+            try {
+                if (scheduleSubmitCommitCommands.length >= maxTransactions) {
+                    this.logger.warn(
+                        `Epoch check: not scheduling new commits. Submit commit command length: ${scheduleSubmitCommitCommands.length}, max number of transactions: ${maxTransactions} for blockchain: ${blockchain}`,
+                    );
+                    break;
+                }
 
-            const neighbourhood = await this.shardingTableService.findNeighbourhood(
-                blockchain,
-                serviceAgreement.keyword,
-                r2,
-                serviceAgreement.hashFunctionId,
-                serviceAgreement.scoreFunctionId,
-            );
+                if (serviceAgreement.scoreFunctionId === 0) {
+                    // corrupted service agreement data fetch new and store
+                    const blockchainAgreementData =
+                        await this.blockchainModuleManager.getAgreementData(
+                            blockchain,
+                            serviceAgreement.agreementId,
+                        );
+                    if (!blockchainAgreementData) {
+                        this.logger.warn(
+                            `Epoch check: Unable to fetch agreement data for agreement id: ${serviceAgreement.agreementId}, blockchain id: ${blockchain}. Agreement will be retried in next epoch check command.`,
+                        );
+                        continue;
+                    }
+                    await this.repositoryModuleManager.updateServiceAgreementRecord(
+                        blockchain,
+                        serviceAgreement.assetStorageContractAddress,
+                        serviceAgreement.tokenId,
+                        serviceAgreement.agreementId,
+                        blockchainAgreementData.startTime,
+                        serviceAgreement.epochsNumber,
+                        serviceAgreement.epochLength,
+                        blockchainAgreementData.scoreFunctionId,
+                        blockchainAgreementData.proofWindowOffsetPerc,
+                        serviceAgreement.hashFunctionId,
+                        serviceAgreement.keyword,
+                        serviceAgreement.assertionId,
+                        serviceAgreement.stateIndex,
+                        SERVICE_AGREEMENT_SOURCES.BLOCKCHAIN,
+                        serviceAgreement.lastCommitEpoch,
+                        serviceAgreement.lastProofEpoch,
+                    );
+                    serviceAgreement.startTime = blockchainAgreementData.startTime;
+                    serviceAgreement.scoreFunctionId = blockchainAgreementData.scoreFunctionId;
+                    serviceAgreement.proofWindowOffsetPerc =
+                        blockchainAgreementData.proofWindowOffsetPerc;
+                }
 
-            let neighbourhoodEdges = null;
-            if (serviceAgreement.scoreFunctionId === 2) {
-                neighbourhoodEdges = await this.shardingTableService.getNeighboorhoodEdgeNodes(
-                    neighbourhood,
+                const neighbourhood = await this.shardingTableService.findNeighbourhood(
                     blockchain,
+                    serviceAgreement.keyword,
+                    r2,
                     serviceAgreement.hashFunctionId,
                     serviceAgreement.scoreFunctionId,
-                    serviceAgreement.keyword,
                 );
-            }
 
-            if (!neighbourhoodEdges && serviceAgreement.scoreFunctionId === 2) {
-                this.logger.warn(
-                    `Epoch check: unable to find neighbourhood edges for agreement id: ${serviceAgreement.agreementId} for blockchain: ${blockchain}`,
-                );
-                continue;
-            }
+                let neighbourhoodEdges = null;
+                if (serviceAgreement.scoreFunctionId === 2) {
+                    neighbourhoodEdges = await this.shardingTableService.getNeighboorhoodEdgeNodes(
+                        neighbourhood,
+                        blockchain,
+                        serviceAgreement.hashFunctionId,
+                        serviceAgreement.scoreFunctionId,
+                        serviceAgreement.keyword,
+                    );
+                }
 
-            try {
+                if (!neighbourhoodEdges && serviceAgreement.scoreFunctionId === 2) {
+                    this.logger.warn(
+                        `Epoch check: unable to find neighbourhood edges for agreement id: ${serviceAgreement.agreementId} for blockchain: ${blockchain}`,
+                    );
+                    continue;
+                }
+
                 const rank = await this.serviceAgreementService.calculateRank(
                     blockchain,
                     serviceAgreement.keyword,
@@ -223,6 +263,12 @@ class BlockchainEpochCheckCommand extends Command {
                         blockchain,
                         serviceAgreement.agreementId,
                     );
+                    if (!agreementData) {
+                        this.logger.warn(
+                            `Unable to fetch agreement data in blockchain epoch check command for agreement id: ${serviceAgreement.agreementId}. Skipping scheduling submit commit command for blockchain: ${blockchain}`,
+                        );
+                        continue;
+                    }
                     const blockchainAssertionSize =
                         await this.blockchainModuleManager.getAssertionSize(
                             blockchain,
