@@ -31,14 +31,8 @@ class GetRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const {
-            contract,
-            tokenId,
-            assertionId,
-            state,
-            hashFunctionId,
-            proximityScoreFunctionsPairId,
-        } = command.data;
+        const { contract, tokenId, assertionId, state, hashFunctionId } = command.data;
+        const proximityScoreFunctionsPairId = command.data.proximityScoreFunctionsPairId ?? 1;
 
         // TODO: Backwards compatibility, send blockchain without chainId
         const blockchain = command.data.blockchain.split(':')[0];
