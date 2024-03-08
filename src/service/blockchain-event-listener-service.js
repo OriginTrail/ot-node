@@ -568,12 +568,16 @@ class BlockchainEventListenerService {
                         `Skipping processing of asset created event, agreement data present in database for agreement id: ${agreementId} on blockchain ${blockchainId}`,
                     );
                 } else {
-                    // TODO: Remove when added to the event
-                    const { scoreFunctionId, proofWindowOffsetPerc } =
-                        await this.blockchainModuleManager.getAgreementData(
-                            blockchainId,
-                            agreementId,
+                    const agreementData = await this.blockchainModuleManager.getAgreementData(
+                        blockchainId,
+                        agreementId,
+                    );
+
+                    if (!agreementData) {
+                        this.logger.warn(
+                            `Unable to fetch agreement data while processing asset created event for agreement id: ${agreementId}, blockchain id: ${blockchainId}`,
                         );
+                    }
 
                     await this.repositoryModuleManager.updateServiceAgreementRecord(
                         blockchainId,
@@ -583,8 +587,8 @@ class BlockchainEventListenerService {
                         startTime,
                         epochsNumber,
                         epochLength,
-                        scoreFunctionId,
-                        proofWindowOffsetPerc,
+                        agreementData?.scoreFunctionId ?? 0,
+                        agreementData?.proofWindowOffsetPerc ?? 0,
                         hashFunctionId,
                         keyword,
                         assertionId,
