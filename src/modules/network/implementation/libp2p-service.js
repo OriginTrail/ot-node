@@ -1,10 +1,11 @@
 import appRootPath from 'app-root-path';
 import libp2p from 'libp2p';
-import KadDHT from 'libp2p-kad-dht';
+import ShardDHT from 'libp2p-kad-dht';
 import { join } from 'path';
 import Bootstrap, { tag } from 'libp2p-bootstrap';
 import { NOISE } from 'libp2p-noise';
 import MPLEX from 'libp2p-mplex';
+import { Multiaddr } from 'multiaddr';
 import TCP from 'libp2p-tcp';
 import pipe from 'it-pipe';
 import map from 'it-map';
@@ -31,14 +32,11 @@ const devEnvironment =
     process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
 
 const initializationObject = {
-    addresses: {
-        listen: ['/ip4/0.0.0.0/tcp/9000'],
-    },
     modules: {
         transport: [TCP],
         streamMuxer: [MPLEX],
         connEncryption: [NOISE],
-        dht: KadDHT,
+        dht: ShardDHT,
     },
 };
 
@@ -65,6 +63,9 @@ class Libp2pService {
                     list: this.config.bootstrap,
                 },
             };
+            initializationObject.config.dht.allowedPeers = this.config.bootstrap.map((b) =>
+                new Multiaddr(b).getPeerId(),
+            );
         }
         initializationObject.addresses = {
             listen: [`/ip4/0.0.0.0/tcp/${this.config.port}`], // for production
@@ -192,6 +193,18 @@ class Libp2pService {
 
     getPeerId() {
         return this.node.peerId;
+    }
+
+    addAllowedPeer(peerIdString) {
+        return this.node._dht.addAllowedPeer(peerIdString);
+    }
+
+    removeAllowedPeer(peerIdString) {
+        return this.node._dht.removeAllowedPeer(peerIdString);
+    }
+
+    hasAllowedPeer(peerIdString) {
+        return this.node._dht.hasAllowedPeer(peerIdString);
     }
 
     handleMessage(protocol, handler) {

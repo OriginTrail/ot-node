@@ -29,6 +29,24 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
+    addAllowedPeer(peerIdString) {
+        if (this.initialized) {
+            return this.getImplementation().module.addAllowedPeer(peerIdString);
+        }
+    }
+
+    removeAllowedPeer(peerIdString) {
+        if (this.initialized) {
+            return this.getImplementation().module.removeAllowedPeer(peerIdString);
+        }
+    }
+
+    hasAllowedPeer(peerIdString) {
+        if (this.initialized) {
+            return this.getImplementation().module.hasAllowedPeer(peerIdString);
+        }
+    }
+
     async sendMessage(
         protocol,
         remotePeerId,

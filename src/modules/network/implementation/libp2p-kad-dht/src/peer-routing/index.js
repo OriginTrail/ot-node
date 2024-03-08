@@ -210,7 +210,9 @@ module.exports = (dht) => {
             result.paths.forEach((res) => {
                 if (res.success && result.peer) {
                     success = true;
-                    dht.peerStore.addressBook.add(res.peer.id, res.peer.multiaddrs);
+                    if (dht.allowedPeers.has(res.peer.id.toB58String())) {
+                        dht.peerStore.addressBook.add(res.peer.id, res.peer.multiaddrs);
+                    }
                 }
             });
             dht._log('findPeer %s: %s', id.toB58String(), success);
@@ -265,7 +267,10 @@ module.exports = (dht) => {
                 return [];
             }
 
-            const sorted = await utils.sortClosestPeers(Array.from(res.finalSet), id);
+            const sorted = await utils.sortClosestPeers(
+                Array.from(res.finalSet).filter((p) => dht.allowedPeers.has(p.toB58String())),
+                id,
+            );
 
             for (const pId of sorted.slice(0, dht.kBucketSize)) {
                 yield pId;

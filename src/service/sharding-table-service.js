@@ -20,18 +20,23 @@ class ShardingTableService {
     async initialize() {
         const pullBlockchainShardingTables = this.blockchainModuleManager
             .getImplementationNames()
-            .map((blockchainId) => this.pullBlockchainShardingTable(blockchainId));
+            .map(async (blockchainId) => {
+                await this.pullBlockchainShardingTable(blockchainId);
+                const peers = await this.repositoryModuleManager.getAllPeerRecords(blockchainId);
+                peers.forEach((pr) => this.networkModuleManager.addAllowedPeer(pr.peerId));
+            });
         await Promise.all(pullBlockchainShardingTables);
 
         await this.networkModuleManager.onPeerConnected((connection) => {
+            const peerIdString = connection.remotePeer.toB58String();
+            if (!this.networkModuleManager.hasAllowedPeer(peerIdString)) return;
+
             this.logger.trace(
-                `Node connected to ${connection.remotePeer.toB58String()}, updating sharding table last seen and last dialed.`,
+                `Node connected to ${peerIdString}, updating sharding table last seen and last dialed.`,
             );
-            this.updatePeerRecordLastSeenAndLastDialed(connection.remotePeer.toB58String()).catch(
-                (error) => {
-                    this.logger.warn(`Unable to update connected peer, error: ${error.message}`);
-                },
-            );
+            this.updatePeerRecordLastSeenAndLastDialed(peerIdString).catch((error) => {
+                this.logger.warn(`Unable to update connected peer, error: ${error.message}`);
+            });
         });
     }
 

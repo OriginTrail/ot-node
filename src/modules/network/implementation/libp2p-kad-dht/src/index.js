@@ -2,6 +2,7 @@
 const { EventEmitter } = require('events');
 
 const { equals: uint8ArrayEquals } = require('uint8arrays/equals');
+const { createFromB58String } = require('peer-id');
 
 const RoutingTable = require('./routing-table');
 const utils = require('./utils');
@@ -23,15 +24,12 @@ const QueryManager = require('./query-manager');
  * @property {Multiaddr[]} multiaddrs
  */
 
-/**
- * A DHT implementation modeled after Kademlia with S/Kademlia modifications.
- * Original implementation in go: https://github.com/libp2p/go-libp2p-kad-dht.
- */
-class KadDHT extends EventEmitter {
+class ShardDHT extends EventEmitter {
     /**
-     * Create a new KadDHT.
+     * Create a new ShardDHT.
      *
      * @param {Object} props
+     * @param {Array} props.allowedPeers - the peers in the node's sharding table
      * @param {Libp2p} props.libp2p - the libp2p instance
      * @param {Dialer} props.dialer - libp2p dialer instance
      * @param {PeerId} props.peerId - peer's peerId
@@ -44,6 +42,7 @@ class KadDHT extends EventEmitter {
      * @param {number} props.concurrency - alpha concurrency of queries (default 3)
      */
     constructor({
+        allowedPeers,
         libp2p,
         dialer,
         peerId,
@@ -60,6 +59,8 @@ class KadDHT extends EventEmitter {
         if (!dialer) {
             throw new Error('libp2p-kad-dht requires an instance of Dialer');
         }
+
+        this.allowedPeers = new Set(allowedPeers);
 
         /**
          * Local reference to the libp2p instance. May be undefined.
@@ -184,6 +185,20 @@ class KadDHT extends EventEmitter {
         ]);
     }
 
+    addAllowedPeer(peerIdString) {
+        return this.allowedPeers.add(peerIdString);
+    }
+
+    removeAllowedPeer(peerIdString) {
+        this.routingTable.remove(createFromB58String(peerIdString));
+
+        return this.allowedPeers.remove(peerIdString);
+    }
+
+    hasAllowedPeer(peerIdString) {
+        return this.allowedPeers.has(peerIdString);
+    }
+
     // ----------- Peer Routing -----------
 
     /**
@@ -226,6 +241,8 @@ class KadDHT extends EventEmitter {
      * @param {Multiaddr[]} multiaddrs
      */
     _peerDiscovered(peerId, multiaddrs) {
+        if (!this.allowedPeers.has(peerId.toB58String())) return;
+
         this.emit('peer', {
             id: peerId,
             multiaddrs,
@@ -282,6 +299,8 @@ class KadDHT extends EventEmitter {
      * @param {PeerId} peerId
      */
     async _add(peerId) {
+        if (!this.allowedPeers.has(peerId.toB58String())) return;
+
         await this.routingTable.add(peerId);
     }
 
@@ -295,5 +314,5 @@ class KadDHT extends EventEmitter {
     }
 }
 
-module.exports = KadDHT;
+module.exports = ShardDHT;
 module.exports.multicodec = `/ipfs + ${c.PROTOCOL_DHT}`;
