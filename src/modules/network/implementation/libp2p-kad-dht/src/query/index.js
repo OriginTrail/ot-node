@@ -1,9 +1,7 @@
-'use strict'
+const { base58btc } = require('multiformats/bases/base58');
 
-const { base58btc } = require('multiformats/bases/base58')
-
-const utils = require('../utils')
-const Run = require('./run')
+const utils = require('../utils');
+const Run = require('./run');
 
 /**
  * @typedef {import('peer-id')} PeerId
@@ -36,96 +34,106 @@ const Run = require('./run')
  * Within each path, query peers from closest to farthest away.
  */
 class Query {
-  /**
-   * Create a new query. The makePath function is called once per disjoint path, so that per-path
-   * variables can be created in that scope. makePath then returns the actual query function (queryFunc) to
-   * use when on that path.
-   *
-   * @param {import('../index')} dht - DHT instance
-   * @param {Uint8Array} key
-   * @param {MakeQueryFunc} makePath - Called to set up each disjoint path. Must return the query function.
-   */
-  constructor (dht, key, makePath) {
-    this.dht = dht
-    this.key = key
-    this.makePath = makePath
-    this._log = utils.logger(this.dht.peerId, 'query:' + base58btc.baseEncode(key))
+    /**
+     * Create a new query. The makePath function is called once per disjoint path, so that per-path
+     * variables can be created in that scope. makePath then returns the actual query function (queryFunc) to
+     * use when on that path.
+     *
+     * @param {import('../index')} dht - DHT instance
+     * @param {Uint8Array} key
+     * @param {MakeQueryFunc} makePath - Called to set up each disjoint path. Must return the query function.
+     */
+    constructor(dht, key, makePath) {
+        this.dht = dht;
+        this.key = key;
+        this.makePath = makePath;
+        this._log = utils.logger(this.dht.peerId, `query: ${base58btc.baseEncode(key)}`);
 
-    this.running = false
+        this.running = false;
 
-    this._onStart = this._onStart.bind(this)
-    this._onComplete = this._onComplete.bind(this)
-  }
-
-  /**
-   * Run this query, start with the given list of peers first.
-   *
-   * @param {PeerId[]} peers
-   */
-  async run (peers) { // eslint-disable-line require-await
-    if (!this.dht._queryManager.running) {
-      this._log.error('Attempt to run query after shutdown')
-      return { finalSet: new Set(), paths: [] }
+        this._onStart = this._onStart.bind(this);
+        this._onComplete = this._onComplete.bind(this);
     }
 
-    if (peers.length === 0) {
-      this._log.error('Running query with no peers')
-      return { finalSet: new Set(), paths: [] }
+    /**
+     * Run this query, start with the given list of peers first.
+     *
+     * @param {PeerId[]} peers
+     */
+    async run(peers) {
+        // eslint-disable-line require-await
+        if (!this.dht._queryManager.running) {
+            this._log.error('Attempt to run query after shutdown');
+            return { finalSet: new Set(), paths: [] };
+        }
+
+        if (peers.length === 0) {
+            this._log.error('Running query with no peers');
+            return { finalSet: new Set(), paths: [] };
+        }
+
+        this._run = new Run(this);
+
+        this._log(
+            `query running with K=${this.dht.kBucketSize}, A=${this.dht.concurrency}, D=${Math.min(
+                this.dht.disjointPaths,
+                peers.length,
+            )}`,
+        );
+        this._run.once('start', this._onStart);
+        this._run.once('complete', this._onComplete);
+
+        return this._run.execute(peers);
     }
 
-    this._run = new Run(this)
+    /**
+     * Called when the run starts.
+     */
+    _onStart() {
+        this.running = true;
+        this._startTime = Date.now();
+        this._log('query:start');
 
-    this._log(`query running with K=${this.dht.kBucketSize}, A=${this.dht.concurrency}, D=${Math.min(this.dht.disjointPaths, peers.length)}`)
-    this._run.once('start', this._onStart)
-    this._run.once('complete', this._onComplete)
-
-    return this._run.execute(peers)
-  }
-
-  /**
-   * Called when the run starts.
-   */
-  _onStart () {
-    this.running = true
-    this._startTime = Date.now()
-    this._log('query:start')
-
-    // Register this query so we can stop it if the DHT stops
-    this.dht._queryManager.queryStarted(this)
-  }
-
-  /**
-   * Called when the run completes (even if there's an error).
-   */
-  _onComplete () {
-    // Ensure worker queues for all paths are stopped at the end of the query
-    this.stop()
-  }
-
-  /**
-   * Stop the query.
-   */
-  stop () {
-    this._log(`query:done in ${Date.now() - (this._startTime || 0)}ms`)
-
-    if (this._run) {
-      this._log(`${this._run.errors.length} of ${this._run.peersSeen.size} peers errored (${this._run.errors.length / this._run.peersSeen.size * 100}% fail rate)`)
+        // Register this query so we can stop it if the DHT stops
+        this.dht._queryManager.queryStarted(this);
     }
 
-    if (!this.running) {
-      return
+    /**
+     * Called when the run completes (even if there's an error).
+     */
+    _onComplete() {
+        // Ensure worker queues for all paths are stopped at the end of the query
+        this.stop();
     }
 
-    this.running = false
+    /**
+     * Stop the query.
+     */
+    stop() {
+        this._log(`query:done in ${Date.now() - (this._startTime || 0)}ms`);
 
-    if (this._run) {
-      this._run.removeListener('start', this._onStart)
-      this._run.removeListener('complete', this._onComplete)
-      this._run.stop()
+        if (this._run) {
+            this._log(
+                `${this._run.errors.length} of ${this._run.peersSeen.size} peers errored (${
+                    (this._run.errors.length / this._run.peersSeen.size) * 100
+                }% fail rate)`,
+            );
+        }
+
+        if (!this.running) {
+            return;
+        }
+
+        this.running = false;
+
+        if (this._run) {
+            this._run.removeListener('start', this._onStart);
+            this._run.removeListener('complete', this._onComplete);
+            this._run.stop();
+        }
+
+        this.dht._queryManager.queryCompleted(this);
     }
-
-    this.dht._queryManager.queryCompleted(this)
-  }
 }
 
-module.exports = Query
+module.exports = Query;

@@ -1,16 +1,17 @@
 /*eslint-disable*/
-"use strict";
+'use strict';
 
-var $protobuf = require("protobufjs/minimal");
+var $protobuf = require('protobufjs/minimal');
 
 // Common aliases
-var $Reader = $protobuf.Reader, $Writer = $protobuf.Writer, $util = $protobuf.util;
+var $Reader = $protobuf.Reader,
+    $Writer = $protobuf.Writer,
+    $util = $protobuf.util;
 
 // Exported root namespace
-var $root = $protobuf.roots["libp2p-dht-message"] || ($protobuf.roots["libp2p-dht-message"] = {});
+var $root = $protobuf.roots['libp2p-dht-message'] || ($protobuf.roots['libp2p-dht-message'] = {});
 
-$root.Record = (function() {
-
+$root.Record = (function () {
     /**
      * Properties of a Record.
      * @exports IRecord
@@ -33,8 +34,7 @@ $root.Record = (function() {
     function Record(p) {
         if (p)
             for (var ks = Object.keys(p), i = 0; i < ks.length; ++i)
-                if (p[ks[i]] != null)
-                    this[ks[i]] = p[ks[i]];
+                if (p[ks[i]] != null) this[ks[i]] = p[ks[i]];
     }
 
     /**
@@ -86,9 +86,9 @@ $root.Record = (function() {
      * @memberof Record
      * @instance
      */
-    Object.defineProperty(Record.prototype, "_key", {
-        get: $util.oneOfGetter($oneOfFields = ["key"]),
-        set: $util.oneOfSetter($oneOfFields)
+    Object.defineProperty(Record.prototype, '_key', {
+        get: $util.oneOfGetter(($oneOfFields = ['key'])),
+        set: $util.oneOfSetter($oneOfFields),
     });
 
     /**
@@ -97,9 +97,9 @@ $root.Record = (function() {
      * @memberof Record
      * @instance
      */
-    Object.defineProperty(Record.prototype, "_value", {
-        get: $util.oneOfGetter($oneOfFields = ["value"]),
-        set: $util.oneOfSetter($oneOfFields)
+    Object.defineProperty(Record.prototype, '_value', {
+        get: $util.oneOfGetter(($oneOfFields = ['value'])),
+        set: $util.oneOfSetter($oneOfFields),
     });
 
     /**
@@ -108,9 +108,9 @@ $root.Record = (function() {
      * @memberof Record
      * @instance
      */
-    Object.defineProperty(Record.prototype, "_author", {
-        get: $util.oneOfGetter($oneOfFields = ["author"]),
-        set: $util.oneOfSetter($oneOfFields)
+    Object.defineProperty(Record.prototype, '_author', {
+        get: $util.oneOfGetter(($oneOfFields = ['author'])),
+        set: $util.oneOfSetter($oneOfFields),
     });
 
     /**
@@ -119,9 +119,9 @@ $root.Record = (function() {
      * @memberof Record
      * @instance
      */
-    Object.defineProperty(Record.prototype, "_signature", {
-        get: $util.oneOfGetter($oneOfFields = ["signature"]),
-        set: $util.oneOfSetter($oneOfFields)
+    Object.defineProperty(Record.prototype, '_signature', {
+        get: $util.oneOfGetter(($oneOfFields = ['signature'])),
+        set: $util.oneOfSetter($oneOfFields),
     });
 
     /**
@@ -130,9 +130,9 @@ $root.Record = (function() {
      * @memberof Record
      * @instance
      */
-    Object.defineProperty(Record.prototype, "_timeReceived", {
-        get: $util.oneOfGetter($oneOfFields = ["timeReceived"]),
-        set: $util.oneOfSetter($oneOfFields)
+    Object.defineProperty(Record.prototype, '_timeReceived', {
+        get: $util.oneOfGetter(($oneOfFields = ['timeReceived'])),
+        set: $util.oneOfSetter($oneOfFields),
     });
 
     /**
@@ -145,17 +145,14 @@ $root.Record = (function() {
      * @returns {$protobuf.Writer} Writer
      */
     Record.encode = function encode(m, w) {
-        if (!w)
-            w = $Writer.create();
-        if (m.key != null && Object.hasOwnProperty.call(m, "key"))
-            w.uint32(10).bytes(m.key);
-        if (m.value != null && Object.hasOwnProperty.call(m, "value"))
-            w.uint32(18).bytes(m.value);
-        if (m.author != null && Object.hasOwnProperty.call(m, "author"))
+        if (!w) w = $Writer.create();
+        if (m.key != null && Object.hasOwnProperty.call(m, 'key')) w.uint32(10).bytes(m.key);
+        if (m.value != null && Object.hasOwnProperty.call(m, 'value')) w.uint32(18).bytes(m.value);
+        if (m.author != null && Object.hasOwnProperty.call(m, 'author'))
             w.uint32(26).bytes(m.author);
-        if (m.signature != null && Object.hasOwnProperty.call(m, "signature"))
+        if (m.signature != null && Object.hasOwnProperty.call(m, 'signature'))
             w.uint32(34).bytes(m.signature);
-        if (m.timeReceived != null && Object.hasOwnProperty.call(m, "timeReceived"))
+        if (m.timeReceived != null && Object.hasOwnProperty.call(m, 'timeReceived'))
             w.uint32(42).string(m.timeReceived);
         return w;
     };
@@ -172,30 +169,30 @@ $root.Record = (function() {
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
     Record.decode = function decode(r, l) {
-        if (!(r instanceof $Reader))
-            r = $Reader.create(r);
-        var c = l === undefined ? r.len : r.pos + l, m = new $root.Record();
+        if (!(r instanceof $Reader)) r = $Reader.create(r);
+        var c = l === undefined ? r.len : r.pos + l,
+            m = new $root.Record();
         while (r.pos < c) {
             var t = r.uint32();
             switch (t >>> 3) {
-            case 1:
-                m.key = r.bytes();
-                break;
-            case 2:
-                m.value = r.bytes();
-                break;
-            case 3:
-                m.author = r.bytes();
-                break;
-            case 4:
-                m.signature = r.bytes();
-                break;
-            case 5:
-                m.timeReceived = r.string();
-                break;
-            default:
-                r.skipType(t & 7);
-                break;
+                case 1:
+                    m.key = r.bytes();
+                    break;
+                case 2:
+                    m.value = r.bytes();
+                    break;
+                case 3:
+                    m.author = r.bytes();
+                    break;
+                case 4:
+                    m.signature = r.bytes();
+                    break;
+                case 5:
+                    m.timeReceived = r.string();
+                    break;
+                default:
+                    r.skipType(t & 7);
+                    break;
             }
         }
         return m;
@@ -210,32 +207,43 @@ $root.Record = (function() {
      * @returns {Record} Record
      */
     Record.fromObject = function fromObject(d) {
-        if (d instanceof $root.Record)
-            return d;
+        if (d instanceof $root.Record) return d;
         var m = new $root.Record();
         if (d.key != null) {
-            if (typeof d.key === "string")
-                $util.base64.decode(d.key, m.key = $util.newBuffer($util.base64.length(d.key)), 0);
-            else if (d.key.length)
-                m.key = d.key;
+            if (typeof d.key === 'string')
+                $util.base64.decode(
+                    d.key,
+                    (m.key = $util.newBuffer($util.base64.length(d.key))),
+                    0,
+                );
+            else if (d.key.length) m.key = d.key;
         }
         if (d.value != null) {
-            if (typeof d.value === "string")
-                $util.base64.decode(d.value, m.value = $util.newBuffer($util.base64.length(d.value)), 0);
-            else if (d.value.length)
-                m.value = d.value;
+            if (typeof d.value === 'string')
+                $util.base64.decode(
+                    d.value,
+                    (m.value = $util.newBuffer($util.base64.length(d.value))),
+                    0,
+                );
+            else if (d.value.length) m.value = d.value;
         }
         if (d.author != null) {
-            if (typeof d.author === "string")
-                $util.base64.decode(d.author, m.author = $util.newBuffer($util.base64.length(d.author)), 0);
-            else if (d.author.length)
-                m.author = d.author;
+            if (typeof d.author === 'string')
+                $util.base64.decode(
+                    d.author,
+                    (m.author = $util.newBuffer($util.base64.length(d.author))),
+                    0,
+                );
+            else if (d.author.length) m.author = d.author;
         }
         if (d.signature != null) {
-            if (typeof d.signature === "string")
-                $util.base64.decode(d.signature, m.signature = $util.newBuffer($util.base64.length(d.signature)), 0);
-            else if (d.signature.length)
-                m.signature = d.signature;
+            if (typeof d.signature === 'string')
+                $util.base64.decode(
+                    d.signature,
+                    (m.signature = $util.newBuffer($util.base64.length(d.signature))),
+                    0,
+                );
+            else if (d.signature.length) m.signature = d.signature;
         }
         if (d.timeReceived != null) {
             m.timeReceived = String(d.timeReceived);
@@ -253,33 +261,47 @@ $root.Record = (function() {
      * @returns {Object.<string,*>} Plain object
      */
     Record.toObject = function toObject(m, o) {
-        if (!o)
-            o = {};
+        if (!o) o = {};
         var d = {};
-        if (m.key != null && m.hasOwnProperty("key")) {
-            d.key = o.bytes === String ? $util.base64.encode(m.key, 0, m.key.length) : o.bytes === Array ? Array.prototype.slice.call(m.key) : m.key;
-            if (o.oneofs)
-                d._key = "key";
+        if (m.key != null && m.hasOwnProperty('key')) {
+            d.key =
+                o.bytes === String
+                    ? $util.base64.encode(m.key, 0, m.key.length)
+                    : o.bytes === Array
+                    ? Array.prototype.slice.call(m.key)
+                    : m.key;
+            if (o.oneofs) d._key = 'key';
         }
-        if (m.value != null && m.hasOwnProperty("value")) {
-            d.value = o.bytes === String ? $util.base64.encode(m.value, 0, m.value.length) : o.bytes === Array ? Array.prototype.slice.call(m.value) : m.value;
-            if (o.oneofs)
-                d._value = "value";
+        if (m.value != null && m.hasOwnProperty('value')) {
+            d.value =
+                o.bytes === String
+                    ? $util.base64.encode(m.value, 0, m.value.length)
+                    : o.bytes === Array
+                    ? Array.prototype.slice.call(m.value)
+                    : m.value;
+            if (o.oneofs) d._value = 'value';
         }
-        if (m.author != null && m.hasOwnProperty("author")) {
-            d.author = o.bytes === String ? $util.base64.encode(m.author, 0, m.author.length) : o.bytes === Array ? Array.prototype.slice.call(m.author) : m.author;
-            if (o.oneofs)
-                d._author = "author";
+        if (m.author != null && m.hasOwnProperty('author')) {
+            d.author =
+                o.bytes === String
+                    ? $util.base64.encode(m.author, 0, m.author.length)
+                    : o.bytes === Array
+                    ? Array.prototype.slice.call(m.author)
+                    : m.author;
+            if (o.oneofs) d._author = 'author';
         }
-        if (m.signature != null && m.hasOwnProperty("signature")) {
-            d.signature = o.bytes === String ? $util.base64.encode(m.signature, 0, m.signature.length) : o.bytes === Array ? Array.prototype.slice.call(m.signature) : m.signature;
-            if (o.oneofs)
-                d._signature = "signature";
+        if (m.signature != null && m.hasOwnProperty('signature')) {
+            d.signature =
+                o.bytes === String
+                    ? $util.base64.encode(m.signature, 0, m.signature.length)
+                    : o.bytes === Array
+                    ? Array.prototype.slice.call(m.signature)
+                    : m.signature;
+            if (o.oneofs) d._signature = 'signature';
         }
-        if (m.timeReceived != null && m.hasOwnProperty("timeReceived")) {
+        if (m.timeReceived != null && m.hasOwnProperty('timeReceived')) {
             d.timeReceived = m.timeReceived;
-            if (o.oneofs)
-                d._timeReceived = "timeReceived";
+            if (o.oneofs) d._timeReceived = 'timeReceived';
         }
         return d;
     };
@@ -298,8 +320,7 @@ $root.Record = (function() {
     return Record;
 })();
 
-$root.Message = (function() {
-
+$root.Message = (function () {
     /**
      * Properties of a Message.
      * @exports IMessage
@@ -325,8 +346,7 @@ $root.Message = (function() {
         this.providerPeers = [];
         if (p)
             for (var ks = Object.keys(p), i = 0; i < ks.length; ++i)
-                if (p[ks[i]] != null)
-                    this[ks[i]] = p[ks[i]];
+                if (p[ks[i]] != null) this[ks[i]] = p[ks[i]];
     }
 
     /**
@@ -386,9 +406,9 @@ $root.Message = (function() {
      * @memberof Message
      * @instance
      */
-    Object.defineProperty(Message.prototype, "_type", {
-        get: $util.oneOfGetter($oneOfFields = ["type"]),
-        set: $util.oneOfSetter($oneOfFields)
+    Object.defineProperty(Message.prototype, '_type', {
+        get: $util.oneOfGetter(($oneOfFields = ['type'])),
+        set: $util.oneOfSetter($oneOfFields),
     });
 
     /**
@@ -397,9 +417,9 @@ $root.Message = (function() {
      * @memberof Message
      * @instance
      */
-    Object.defineProperty(Message.prototype, "_clusterLevelRaw", {
-        get: $util.oneOfGetter($oneOfFields = ["clusterLevelRaw"]),
-        set: $util.oneOfSetter($oneOfFields)
+    Object.defineProperty(Message.prototype, '_clusterLevelRaw', {
+        get: $util.oneOfGetter(($oneOfFields = ['clusterLevelRaw'])),
+        set: $util.oneOfSetter($oneOfFields),
     });
 
     /**
@@ -408,9 +428,9 @@ $root.Message = (function() {
      * @memberof Message
      * @instance
      */
-    Object.defineProperty(Message.prototype, "_key", {
-        get: $util.oneOfGetter($oneOfFields = ["key"]),
-        set: $util.oneOfSetter($oneOfFields)
+    Object.defineProperty(Message.prototype, '_key', {
+        get: $util.oneOfGetter(($oneOfFields = ['key'])),
+        set: $util.oneOfSetter($oneOfFields),
     });
 
     /**
@@ -419,9 +439,9 @@ $root.Message = (function() {
      * @memberof Message
      * @instance
      */
-    Object.defineProperty(Message.prototype, "_record", {
-        get: $util.oneOfGetter($oneOfFields = ["record"]),
-        set: $util.oneOfSetter($oneOfFields)
+    Object.defineProperty(Message.prototype, '_record', {
+        get: $util.oneOfGetter(($oneOfFields = ['record'])),
+        set: $util.oneOfSetter($oneOfFields),
     });
 
     /**
@@ -434,13 +454,10 @@ $root.Message = (function() {
      * @returns {$protobuf.Writer} Writer
      */
     Message.encode = function encode(m, w) {
-        if (!w)
-            w = $Writer.create();
-        if (m.type != null && Object.hasOwnProperty.call(m, "type"))
-            w.uint32(8).int32(m.type);
-        if (m.key != null && Object.hasOwnProperty.call(m, "key"))
-            w.uint32(18).bytes(m.key);
-        if (m.record != null && Object.hasOwnProperty.call(m, "record"))
+        if (!w) w = $Writer.create();
+        if (m.type != null && Object.hasOwnProperty.call(m, 'type')) w.uint32(8).int32(m.type);
+        if (m.key != null && Object.hasOwnProperty.call(m, 'key')) w.uint32(18).bytes(m.key);
+        if (m.record != null && Object.hasOwnProperty.call(m, 'record'))
             w.uint32(26).bytes(m.record);
         if (m.closerPeers != null && m.closerPeers.length) {
             for (var i = 0; i < m.closerPeers.length; ++i)
@@ -450,7 +467,7 @@ $root.Message = (function() {
             for (var i = 0; i < m.providerPeers.length; ++i)
                 $root.Message.Peer.encode(m.providerPeers[i], w.uint32(74).fork()).ldelim();
         }
-        if (m.clusterLevelRaw != null && Object.hasOwnProperty.call(m, "clusterLevelRaw"))
+        if (m.clusterLevelRaw != null && Object.hasOwnProperty.call(m, 'clusterLevelRaw'))
             w.uint32(80).int32(m.clusterLevelRaw);
         return w;
     };
@@ -467,37 +484,35 @@ $root.Message = (function() {
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
     Message.decode = function decode(r, l) {
-        if (!(r instanceof $Reader))
-            r = $Reader.create(r);
-        var c = l === undefined ? r.len : r.pos + l, m = new $root.Message();
+        if (!(r instanceof $Reader)) r = $Reader.create(r);
+        var c = l === undefined ? r.len : r.pos + l,
+            m = new $root.Message();
         while (r.pos < c) {
             var t = r.uint32();
             switch (t >>> 3) {
-            case 1:
-                m.type = r.int32();
-                break;
-            case 10:
-                m.clusterLevelRaw = r.int32();
-                break;
-            case 2:
-                m.key = r.bytes();
-                break;
-            case 3:
-                m.record = r.bytes();
-                break;
-            case 8:
-                if (!(m.closerPeers && m.closerPeers.length))
-                    m.closerPeers = [];
-                m.closerPeers.push($root.Message.Peer.decode(r, r.uint32()));
-                break;
-            case 9:
-                if (!(m.providerPeers && m.providerPeers.length))
-                    m.providerPeers = [];
-                m.providerPeers.push($root.Message.Peer.decode(r, r.uint32()));
-                break;
-            default:
-                r.skipType(t & 7);
-                break;
+                case 1:
+                    m.type = r.int32();
+                    break;
+                case 10:
+                    m.clusterLevelRaw = r.int32();
+                    break;
+                case 2:
+                    m.key = r.bytes();
+                    break;
+                case 3:
+                    m.record = r.bytes();
+                    break;
+                case 8:
+                    if (!(m.closerPeers && m.closerPeers.length)) m.closerPeers = [];
+                    m.closerPeers.push($root.Message.Peer.decode(r, r.uint32()));
+                    break;
+                case 9:
+                    if (!(m.providerPeers && m.providerPeers.length)) m.providerPeers = [];
+                    m.providerPeers.push($root.Message.Peer.decode(r, r.uint32()));
+                    break;
+                default:
+                    r.skipType(t & 7);
+                    break;
             }
         }
         return m;
@@ -512,67 +527,72 @@ $root.Message = (function() {
      * @returns {Message} Message
      */
     Message.fromObject = function fromObject(d) {
-        if (d instanceof $root.Message)
-            return d;
+        if (d instanceof $root.Message) return d;
         var m = new $root.Message();
         switch (d.type) {
-        case "PUT_VALUE":
-        case 0:
-            m.type = 0;
-            break;
-        case "GET_VALUE":
-        case 1:
-            m.type = 1;
-            break;
-        case "ADD_PROVIDER":
-        case 2:
-            m.type = 2;
-            break;
-        case "GET_PROVIDERS":
-        case 3:
-            m.type = 3;
-            break;
-        case "FIND_NODE":
-        case 4:
-            m.type = 4;
-            break;
-        case "PING":
-        case 5:
-            m.type = 5;
-            break;
+            case 'PUT_VALUE':
+            case 0:
+                m.type = 0;
+                break;
+            case 'GET_VALUE':
+            case 1:
+                m.type = 1;
+                break;
+            case 'ADD_PROVIDER':
+            case 2:
+                m.type = 2;
+                break;
+            case 'GET_PROVIDERS':
+            case 3:
+                m.type = 3;
+                break;
+            case 'FIND_NODE':
+            case 4:
+                m.type = 4;
+                break;
+            case 'PING':
+            case 5:
+                m.type = 5;
+                break;
         }
         if (d.clusterLevelRaw != null) {
             m.clusterLevelRaw = d.clusterLevelRaw | 0;
         }
         if (d.key != null) {
-            if (typeof d.key === "string")
-                $util.base64.decode(d.key, m.key = $util.newBuffer($util.base64.length(d.key)), 0);
-            else if (d.key.length)
-                m.key = d.key;
+            if (typeof d.key === 'string')
+                $util.base64.decode(
+                    d.key,
+                    (m.key = $util.newBuffer($util.base64.length(d.key))),
+                    0,
+                );
+            else if (d.key.length) m.key = d.key;
         }
         if (d.record != null) {
-            if (typeof d.record === "string")
-                $util.base64.decode(d.record, m.record = $util.newBuffer($util.base64.length(d.record)), 0);
-            else if (d.record.length)
-                m.record = d.record;
+            if (typeof d.record === 'string')
+                $util.base64.decode(
+                    d.record,
+                    (m.record = $util.newBuffer($util.base64.length(d.record))),
+                    0,
+                );
+            else if (d.record.length) m.record = d.record;
         }
         if (d.closerPeers) {
             if (!Array.isArray(d.closerPeers))
-                throw TypeError(".Message.closerPeers: array expected");
+                throw TypeError('.Message.closerPeers: array expected');
             m.closerPeers = [];
             for (var i = 0; i < d.closerPeers.length; ++i) {
-                if (typeof d.closerPeers[i] !== "object")
-                    throw TypeError(".Message.closerPeers: object expected");
+                if (typeof d.closerPeers[i] !== 'object')
+                    throw TypeError('.Message.closerPeers: object expected');
                 m.closerPeers[i] = $root.Message.Peer.fromObject(d.closerPeers[i]);
             }
         }
         if (d.providerPeers) {
             if (!Array.isArray(d.providerPeers))
-                throw TypeError(".Message.providerPeers: array expected");
+                throw TypeError('.Message.providerPeers: array expected');
             m.providerPeers = [];
             for (var i = 0; i < d.providerPeers.length; ++i) {
-                if (typeof d.providerPeers[i] !== "object")
-                    throw TypeError(".Message.providerPeers: object expected");
+                if (typeof d.providerPeers[i] !== 'object')
+                    throw TypeError('.Message.providerPeers: object expected');
                 m.providerPeers[i] = $root.Message.Peer.fromObject(d.providerPeers[i]);
             }
         }
@@ -589,27 +609,33 @@ $root.Message = (function() {
      * @returns {Object.<string,*>} Plain object
      */
     Message.toObject = function toObject(m, o) {
-        if (!o)
-            o = {};
+        if (!o) o = {};
         var d = {};
         if (o.arrays || o.defaults) {
             d.closerPeers = [];
             d.providerPeers = [];
         }
-        if (m.type != null && m.hasOwnProperty("type")) {
+        if (m.type != null && m.hasOwnProperty('type')) {
             d.type = o.enums === String ? $root.Message.MessageType[m.type] : m.type;
-            if (o.oneofs)
-                d._type = "type";
+            if (o.oneofs) d._type = 'type';
         }
-        if (m.key != null && m.hasOwnProperty("key")) {
-            d.key = o.bytes === String ? $util.base64.encode(m.key, 0, m.key.length) : o.bytes === Array ? Array.prototype.slice.call(m.key) : m.key;
-            if (o.oneofs)
-                d._key = "key";
+        if (m.key != null && m.hasOwnProperty('key')) {
+            d.key =
+                o.bytes === String
+                    ? $util.base64.encode(m.key, 0, m.key.length)
+                    : o.bytes === Array
+                    ? Array.prototype.slice.call(m.key)
+                    : m.key;
+            if (o.oneofs) d._key = 'key';
         }
-        if (m.record != null && m.hasOwnProperty("record")) {
-            d.record = o.bytes === String ? $util.base64.encode(m.record, 0, m.record.length) : o.bytes === Array ? Array.prototype.slice.call(m.record) : m.record;
-            if (o.oneofs)
-                d._record = "record";
+        if (m.record != null && m.hasOwnProperty('record')) {
+            d.record =
+                o.bytes === String
+                    ? $util.base64.encode(m.record, 0, m.record.length)
+                    : o.bytes === Array
+                    ? Array.prototype.slice.call(m.record)
+                    : m.record;
+            if (o.oneofs) d._record = 'record';
         }
         if (m.closerPeers && m.closerPeers.length) {
             d.closerPeers = [];
@@ -623,10 +649,9 @@ $root.Message = (function() {
                 d.providerPeers[j] = $root.Message.Peer.toObject(m.providerPeers[j], o);
             }
         }
-        if (m.clusterLevelRaw != null && m.hasOwnProperty("clusterLevelRaw")) {
+        if (m.clusterLevelRaw != null && m.hasOwnProperty('clusterLevelRaw')) {
             d.clusterLevelRaw = m.clusterLevelRaw;
-            if (o.oneofs)
-                d._clusterLevelRaw = "clusterLevelRaw";
+            if (o.oneofs) d._clusterLevelRaw = 'clusterLevelRaw';
         }
         return d;
     };
@@ -653,14 +678,15 @@ $root.Message = (function() {
      * @property {number} FIND_NODE=4 FIND_NODE value
      * @property {number} PING=5 PING value
      */
-    Message.MessageType = (function() {
-        var valuesById = {}, values = Object.create(valuesById);
-        values[valuesById[0] = "PUT_VALUE"] = 0;
-        values[valuesById[1] = "GET_VALUE"] = 1;
-        values[valuesById[2] = "ADD_PROVIDER"] = 2;
-        values[valuesById[3] = "GET_PROVIDERS"] = 3;
-        values[valuesById[4] = "FIND_NODE"] = 4;
-        values[valuesById[5] = "PING"] = 5;
+    Message.MessageType = (function () {
+        var valuesById = {},
+            values = Object.create(valuesById);
+        values[(valuesById[0] = 'PUT_VALUE')] = 0;
+        values[(valuesById[1] = 'GET_VALUE')] = 1;
+        values[(valuesById[2] = 'ADD_PROVIDER')] = 2;
+        values[(valuesById[3] = 'GET_PROVIDERS')] = 3;
+        values[(valuesById[4] = 'FIND_NODE')] = 4;
+        values[(valuesById[5] = 'PING')] = 5;
         return values;
     })();
 
@@ -673,17 +699,17 @@ $root.Message = (function() {
      * @property {number} CAN_CONNECT=2 CAN_CONNECT value
      * @property {number} CANNOT_CONNECT=3 CANNOT_CONNECT value
      */
-    Message.ConnectionType = (function() {
-        var valuesById = {}, values = Object.create(valuesById);
-        values[valuesById[0] = "NOT_CONNECTED"] = 0;
-        values[valuesById[1] = "CONNECTED"] = 1;
-        values[valuesById[2] = "CAN_CONNECT"] = 2;
-        values[valuesById[3] = "CANNOT_CONNECT"] = 3;
+    Message.ConnectionType = (function () {
+        var valuesById = {},
+            values = Object.create(valuesById);
+        values[(valuesById[0] = 'NOT_CONNECTED')] = 0;
+        values[(valuesById[1] = 'CONNECTED')] = 1;
+        values[(valuesById[2] = 'CAN_CONNECT')] = 2;
+        values[(valuesById[3] = 'CANNOT_CONNECT')] = 3;
         return values;
     })();
 
-    Message.Peer = (function() {
-
+    Message.Peer = (function () {
         /**
          * Properties of a Peer.
          * @memberof Message
@@ -705,8 +731,7 @@ $root.Message = (function() {
             this.addrs = [];
             if (p)
                 for (var ks = Object.keys(p), i = 0; i < ks.length; ++i)
-                    if (p[ks[i]] != null)
-                        this[ks[i]] = p[ks[i]];
+                    if (p[ks[i]] != null) this[ks[i]] = p[ks[i]];
         }
 
         /**
@@ -742,9 +767,9 @@ $root.Message = (function() {
          * @memberof Message.Peer
          * @instance
          */
-        Object.defineProperty(Peer.prototype, "_id", {
-            get: $util.oneOfGetter($oneOfFields = ["id"]),
-            set: $util.oneOfSetter($oneOfFields)
+        Object.defineProperty(Peer.prototype, '_id', {
+            get: $util.oneOfGetter(($oneOfFields = ['id'])),
+            set: $util.oneOfSetter($oneOfFields),
         });
 
         /**
@@ -753,9 +778,9 @@ $root.Message = (function() {
          * @memberof Message.Peer
          * @instance
          */
-        Object.defineProperty(Peer.prototype, "_connection", {
-            get: $util.oneOfGetter($oneOfFields = ["connection"]),
-            set: $util.oneOfSetter($oneOfFields)
+        Object.defineProperty(Peer.prototype, '_connection', {
+            get: $util.oneOfGetter(($oneOfFields = ['connection'])),
+            set: $util.oneOfSetter($oneOfFields),
         });
 
         /**
@@ -768,15 +793,12 @@ $root.Message = (function() {
          * @returns {$protobuf.Writer} Writer
          */
         Peer.encode = function encode(m, w) {
-            if (!w)
-                w = $Writer.create();
-            if (m.id != null && Object.hasOwnProperty.call(m, "id"))
-                w.uint32(10).bytes(m.id);
+            if (!w) w = $Writer.create();
+            if (m.id != null && Object.hasOwnProperty.call(m, 'id')) w.uint32(10).bytes(m.id);
             if (m.addrs != null && m.addrs.length) {
-                for (var i = 0; i < m.addrs.length; ++i)
-                    w.uint32(18).bytes(m.addrs[i]);
+                for (var i = 0; i < m.addrs.length; ++i) w.uint32(18).bytes(m.addrs[i]);
             }
-            if (m.connection != null && Object.hasOwnProperty.call(m, "connection"))
+            if (m.connection != null && Object.hasOwnProperty.call(m, 'connection'))
                 w.uint32(24).int32(m.connection);
             return w;
         };
@@ -793,26 +815,25 @@ $root.Message = (function() {
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
         Peer.decode = function decode(r, l) {
-            if (!(r instanceof $Reader))
-                r = $Reader.create(r);
-            var c = l === undefined ? r.len : r.pos + l, m = new $root.Message.Peer();
+            if (!(r instanceof $Reader)) r = $Reader.create(r);
+            var c = l === undefined ? r.len : r.pos + l,
+                m = new $root.Message.Peer();
             while (r.pos < c) {
                 var t = r.uint32();
                 switch (t >>> 3) {
-                case 1:
-                    m.id = r.bytes();
-                    break;
-                case 2:
-                    if (!(m.addrs && m.addrs.length))
-                        m.addrs = [];
-                    m.addrs.push(r.bytes());
-                    break;
-                case 3:
-                    m.connection = r.int32();
-                    break;
-                default:
-                    r.skipType(t & 7);
-                    break;
+                    case 1:
+                        m.id = r.bytes();
+                        break;
+                    case 2:
+                        if (!(m.addrs && m.addrs.length)) m.addrs = [];
+                        m.addrs.push(r.bytes());
+                        break;
+                    case 3:
+                        m.connection = r.int32();
+                        break;
+                    default:
+                        r.skipType(t & 7);
+                        break;
                 }
             }
             return m;
@@ -827,43 +848,47 @@ $root.Message = (function() {
          * @returns {Message.Peer} Peer
          */
         Peer.fromObject = function fromObject(d) {
-            if (d instanceof $root.Message.Peer)
-                return d;
+            if (d instanceof $root.Message.Peer) return d;
             var m = new $root.Message.Peer();
             if (d.id != null) {
-                if (typeof d.id === "string")
-                    $util.base64.decode(d.id, m.id = $util.newBuffer($util.base64.length(d.id)), 0);
-                else if (d.id.length)
-                    m.id = d.id;
+                if (typeof d.id === 'string')
+                    $util.base64.decode(
+                        d.id,
+                        (m.id = $util.newBuffer($util.base64.length(d.id))),
+                        0,
+                    );
+                else if (d.id.length) m.id = d.id;
             }
             if (d.addrs) {
-                if (!Array.isArray(d.addrs))
-                    throw TypeError(".Message.Peer.addrs: array expected");
+                if (!Array.isArray(d.addrs)) throw TypeError('.Message.Peer.addrs: array expected');
                 m.addrs = [];
                 for (var i = 0; i < d.addrs.length; ++i) {
-                    if (typeof d.addrs[i] === "string")
-                        $util.base64.decode(d.addrs[i], m.addrs[i] = $util.newBuffer($util.base64.length(d.addrs[i])), 0);
-                    else if (d.addrs[i].length)
-                        m.addrs[i] = d.addrs[i];
+                    if (typeof d.addrs[i] === 'string')
+                        $util.base64.decode(
+                            d.addrs[i],
+                            (m.addrs[i] = $util.newBuffer($util.base64.length(d.addrs[i]))),
+                            0,
+                        );
+                    else if (d.addrs[i].length) m.addrs[i] = d.addrs[i];
                 }
             }
             switch (d.connection) {
-            case "NOT_CONNECTED":
-            case 0:
-                m.connection = 0;
-                break;
-            case "CONNECTED":
-            case 1:
-                m.connection = 1;
-                break;
-            case "CAN_CONNECT":
-            case 2:
-                m.connection = 2;
-                break;
-            case "CANNOT_CONNECT":
-            case 3:
-                m.connection = 3;
-                break;
+                case 'NOT_CONNECTED':
+                case 0:
+                    m.connection = 0;
+                    break;
+                case 'CONNECTED':
+                case 1:
+                    m.connection = 1;
+                    break;
+                case 'CAN_CONNECT':
+                case 2:
+                    m.connection = 2;
+                    break;
+                case 'CANNOT_CONNECT':
+                case 3:
+                    m.connection = 3;
+                    break;
             }
             return m;
         };
@@ -878,27 +903,35 @@ $root.Message = (function() {
          * @returns {Object.<string,*>} Plain object
          */
         Peer.toObject = function toObject(m, o) {
-            if (!o)
-                o = {};
+            if (!o) o = {};
             var d = {};
             if (o.arrays || o.defaults) {
                 d.addrs = [];
             }
-            if (m.id != null && m.hasOwnProperty("id")) {
-                d.id = o.bytes === String ? $util.base64.encode(m.id, 0, m.id.length) : o.bytes === Array ? Array.prototype.slice.call(m.id) : m.id;
-                if (o.oneofs)
-                    d._id = "id";
+            if (m.id != null && m.hasOwnProperty('id')) {
+                d.id =
+                    o.bytes === String
+                        ? $util.base64.encode(m.id, 0, m.id.length)
+                        : o.bytes === Array
+                        ? Array.prototype.slice.call(m.id)
+                        : m.id;
+                if (o.oneofs) d._id = 'id';
             }
             if (m.addrs && m.addrs.length) {
                 d.addrs = [];
                 for (var j = 0; j < m.addrs.length; ++j) {
-                    d.addrs[j] = o.bytes === String ? $util.base64.encode(m.addrs[j], 0, m.addrs[j].length) : o.bytes === Array ? Array.prototype.slice.call(m.addrs[j]) : m.addrs[j];
+                    d.addrs[j] =
+                        o.bytes === String
+                            ? $util.base64.encode(m.addrs[j], 0, m.addrs[j].length)
+                            : o.bytes === Array
+                            ? Array.prototype.slice.call(m.addrs[j])
+                            : m.addrs[j];
                 }
             }
-            if (m.connection != null && m.hasOwnProperty("connection")) {
-                d.connection = o.enums === String ? $root.Message.ConnectionType[m.connection] : m.connection;
-                if (o.oneofs)
-                    d._connection = "connection";
+            if (m.connection != null && m.hasOwnProperty('connection')) {
+                d.connection =
+                    o.enums === String ? $root.Message.ConnectionType[m.connection] : m.connection;
+                if (o.oneofs) d._connection = 'connection';
             }
             return d;
         };

@@ -1,295 +1,217 @@
-'use strict'
+/* eslint-disable import/no-extraneous-dependencies */
+const errcode = require('err-code');
 
-const cache = require('hashlru')
-// @ts-ignore
-const varint = require('varint')
-const PeerId = require('peer-id')
-const { Key } = require('interface-datastore')
-const { default: Queue } = require('p-queue')
-const c = require('./constants')
-const utils = require('./utils')
+const { pipe } = require('it-pipe');
+const lp = require('it-length-prefixed');
+const pTimeout = require('p-timeout');
+const { consume } = require('streaming-iterables');
+const first = require('it-first');
+
+const MulticodecTopology = require('libp2p-interfaces/src/topology/multicodec-topology');
+
+const rpc = require('./rpc');
+const c = require('./constants');
+const Message = require('./message');
+const utils = require('./utils');
 
 /**
- * @typedef {import('multiformats/cid').CID} CID
- * @typedef {import('interface-datastore').Datastore} Datastore
+ * @param {MuxedStream} stream
+ * @param {Uint8Array} msg
+ */
+async function writeReadMessage(stream, msg) {
+    const res = await pipe(
+        [msg],
+        lp.encode(),
+        stream,
+        lp.decode(),
+        /**
+         * @param {AsyncIterable<Uint8Array>} source
+         */
+        async (source) => {
+            const buf = await first(source);
+
+            if (buf) {
+                return buf.slice();
+            }
+        },
+    );
+
+    if (res.length === 0) {
+        throw errcode(new Error('No message received'), 'ERR_NO_MESSAGE_RECEIVED');
+    }
+
+    return Message.deserialize(res);
+}
+
+/**
+ * @typedef {import('peer-id')} PeerId
+ * @typedef {import('libp2p-interfaces/src/stream-muxer/types').MuxedStream} MuxedStream
  */
 
 /**
- * This class manages known providers.
- * A provider is a peer that we know to have the content for a given CID.
- *
- * Every `cleanupInterval` providers are checked if they
- * are still valid, i.e. younger than the `provideValidity`.
- * If they are not, they are deleted.
- *
- * To ensure the list survives restarts of the daemon,
- * providers are stored in the datastore, but to ensure
- * access is fast there is an LRU cache in front of that.
+ * Handle network operations for the dht
  */
-class Providers {
-  /**
-   * @param {Datastore} datastore
-   * @param {PeerId} [self]
-   * @param {number} [cacheSize=256]
-   */
-  constructor (datastore, self, cacheSize) {
-    this.datastore = datastore
-
-    this._log = utils.logger(self, 'providers')
-
+class Network {
     /**
-     * How often invalid records are cleaned. (in seconds)
+     * Create a new network
      *
-     * @type {number}
+     * @param {import('./index')} dht
      */
-    this.cleanupInterval = c.PROVIDERS_CLEANUP_INTERVAL
-
-    /**
-     * How long is a provider valid for. (in seconds)
-     *
-     * @type {number}
-     */
-    this.provideValidity = c.PROVIDERS_VALIDITY
-
-    /**
-     * LRU cache size
-     *
-     * @type {number}
-     */
-    this.lruCacheSize = cacheSize || c.PROVIDERS_LRU_CACHE_SIZE
-
-    // @ts-ignore hashlru types are wrong
-    this.providers = cache(this.lruCacheSize)
-
-    this.syncQueue = new Queue({ concurrency: 1 })
-  }
-
-  /**
-   * Start the provider cleanup service
-   */
-  start () {
-    if (this._started) {
-      return
+    constructor(dht) {
+        this.dht = dht;
+        this.readMessageTimeout = c.READ_MESSAGE_TIMEOUT;
+        this._log = utils.logger(this.dht.peerId, 'net');
+        this._rpc = rpc(this.dht);
+        this._onPeerConnected = this._onPeerConnected.bind(this);
+        this._running = false;
     }
 
-    this._started = true
-
-    this._cleaner = setInterval(
-      () => this._cleanup(),
-      this.cleanupInterval
-    )
-  }
-
-  /**
-   * Release any resources.
-   */
-  stop () {
-    this._started = false
-
-    if (this._cleaner) {
-      clearInterval(this._cleaner)
-      this._cleaner = null
-    }
-  }
-
-  /**
-   * Check all providers if they are still valid, and if not delete them.
-   *
-   * @returns {Promise<void>}
-   * @private
-   */
-  _cleanup () {
-    return this.syncQueue.add(async () => {
-      this._log('start cleanup')
-      const start = Date.now()
-
-      let count = 0
-      let deleteCount = 0
-      const deleted = new Map()
-      const batch = this.datastore.batch()
-
-      // Get all provider entries from the datastore
-      const query = this.datastore.query({ prefix: c.PROVIDERS_KEY_PREFIX })
-      for await (const entry of query) {
-        try {
-          // Add a delete to the batch for each expired entry
-          const { cid, peerId } = parseProviderKey(entry.key)
-          const time = readTime(entry.value)
-          const now = Date.now()
-          const delta = now - time
-          const expired = delta > this.provideValidity
-          this._log('comparing: %d - %d = %d > %d %s',
-            now, time, delta, this.provideValidity, expired ? '(expired)' : '')
-          if (expired) {
-            deleteCount++
-            batch.delete(entry.key)
-            const peers = deleted.get(cid) || new Set()
-            peers.add(peerId)
-            deleted.set(cid, peers)
-          }
-          count++
-        } catch (err) {
-          this._log.error(err.message)
+    /**
+     * Start the network
+     */
+    start() {
+        if (this._running) {
+            return;
         }
-      }
-      this._log('deleting %d / %d entries', deleteCount, count)
 
-      // Commit the deletes to the datastore
-      if (deleted.size) {
-        await batch.commit()
-      }
-
-      // Clear expired entries from the cache
-      for (const [cid, peers] of deleted) {
-        const key = makeProviderKey(cid)
-        const provs = this.providers.get(key)
-        if (provs) {
-          for (const peerId of peers) {
-            provs.delete(peerId)
-          }
-          if (provs.size === 0) {
-            this.providers.remove(key)
-          } else {
-            this.providers.set(key, provs)
-          }
+        if (!this.dht.isStarted) {
+            throw errcode(new Error('Can not start network'), 'ERR_CANNOT_START_NETWORK');
         }
-      }
 
-      this._log('Cleanup successful (%dms)', Date.now() - start)
-    })
-  }
+        this._running = true;
 
-  /**
-   * Get the currently known provider peer ids for a given CID.
-   *
-   * @param {CID} cid
-   * @returns {Promise<Map<string, Date>>}
-   *
-   * @private
-   */
-  async _getProvidersMap (cid) {
-    const cacheKey = makeProviderKey(cid)
-    let provs = this.providers.get(cacheKey)
-    if (!provs) {
-      provs = await loadProviders(this.datastore, cid)
-      this.providers.set(cacheKey, provs)
+        // Only respond to queries when not in client mode
+        if (this.dht._clientMode === false) {
+            // Incoming streams
+            this.dht.registrar.handle(this.dht.protocol, this._rpc);
+        }
+
+        // register protocol with topology
+        const topology = new MulticodecTopology({
+            multicodecs: [this.dht.protocol],
+            handlers: {
+                onConnect: this._onPeerConnected,
+                onDisconnect: () => {},
+            },
+        });
+        this._registrarId = this.dht.registrar.register(topology);
     }
-    return provs
-  }
 
-  /**
-   * Add a new provider for the given CID.
-   *
-   * @param {CID} cid
-   * @param {PeerId} provider
-   * @returns {Promise<void>}
-   */
-  async addProvider (cid, provider) { // eslint-disable-line require-await
-    return this.syncQueue.add(async () => {
-      this._log('addProvider %s', cid.toString())
-      const provs = await this._getProvidersMap(cid)
+    /**
+     * Stop all network activity
+     */
+    stop() {
+        if (!this.dht.isStarted && !this.isStarted) {
+            return;
+        }
+        this._running = false;
 
-      this._log('loaded %s provs', provs.size)
-      const now = new Date()
-      provs.set(utils.encodeBase32(provider.id), now)
+        // unregister protocol and handlers
+        if (this._registrarId) {
+            this.dht.registrar.unregister(this._registrarId);
+        }
+    }
 
-      const dsKey = makeProviderKey(cid)
-      this.providers.set(dsKey, provs)
-      return writeProviderEntry(this.datastore, cid, provider, now)
-    })
-  }
+    /**
+     * Is the network online?
+     *
+     * @type {boolean}
+     */
+    get isStarted() {
+        return this._running;
+    }
 
-  /**
-   * Get a list of providers for the given CID.
-   *
-   * @param {CID} cid
-   * @returns {Promise<Array<PeerId>>}
-   */
-  async getProviders (cid) { // eslint-disable-line require-await
-    return this.syncQueue.add(async () => {
-      this._log('getProviders %s', cid.toString())
-      const provs = await this._getProvidersMap(cid)
-      return [...provs.keys()].map((base32PeerId) => {
-        return new PeerId(utils.decodeBase32(base32PeerId))
-      })
-    })
-  }
+    /**
+     * Are all network components there?
+     *
+     * @type {boolean}
+     */
+    get isConnected() {
+        // TODO add a way to check if switch has started or not
+        return this.dht.isStarted && this.isStarted;
+    }
+
+    /**
+     * Registrar notifies a connection successfully with dht protocol.
+     *
+     * @param {PeerId} peerId - remote peer id
+     */
+    async _onPeerConnected(peerId) {
+        await this.dht._add(peerId);
+        this._log('added to the routing table: %s', peerId.toB58String());
+    }
+
+    /**
+     * Send a request and record RTT for latency measurements.
+     *
+     * @async
+     * @param {PeerId} to - The peer that should receive a message
+     * @param {Message} msg - The message to send.
+     */
+    async sendRequest(to, msg) {
+        // TODO: record latency
+        if (!this.isConnected) {
+            throw errcode(new Error('Network is offline'), 'ERR_NETWORK_OFFLINE');
+        }
+
+        const id = to.toB58String();
+        this._log('sending to: %s', id);
+
+        let conn = this.dht.registrar.connectionManager.get(to);
+        if (!conn) {
+            conn = await this.dht.dialer.connectToPeer(to);
+        }
+
+        const { stream } = await conn.newStream(this.dht.protocol);
+
+        return this._writeReadMessage(stream, msg.serialize());
+    }
+
+    /**
+     * Sends a message without expecting an answer.
+     *
+     * @param {PeerId} to
+     * @param {Message} msg
+     */
+    async sendMessage(to, msg) {
+        if (!this.isConnected) {
+            throw errcode(new Error('Network is offline'), 'ERR_NETWORK_OFFLINE');
+        }
+
+        const id = to.toB58String();
+        this._log('sending to: %s', id);
+
+        let conn = this.dht.registrar.connectionManager.get(to);
+        if (!conn) {
+            conn = await this.dht.dialer.connectToPeer(to);
+        }
+        const { stream } = await conn.newStream(this.dht.protocol);
+
+        return this._writeMessage(stream, msg.serialize());
+    }
+
+    /**
+     * Write a message and read its response.
+     * If no response is received after the specified timeout
+     * this will error out.
+     *
+     * @param {MuxedStream} stream - the stream to use
+     * @param {Uint8Array} msg - the message to send
+     */
+    async _writeReadMessage(stream, msg) {
+        // eslint-disable-line require-await
+        return pTimeout(writeReadMessage(stream, msg), this.readMessageTimeout);
+    }
+
+    /**
+     * Write a message to the given stream.
+     *
+     * @param {MuxedStream} stream - the stream to use
+     * @param {Uint8Array} msg - the message to send
+     */
+    _writeMessage(stream, msg) {
+        return pipe([msg], lp.encode(), stream, consume);
+    }
 }
 
-/**
- * Encode the given key its matching datastore key.
- *
- * @param {CID|string} cid - cid or base32 encoded string
- * @returns {string}
- *
- * @private
- */
-function makeProviderKey (cid) {
-  cid = typeof cid === 'string' ? cid : utils.encodeBase32(cid.bytes)
-  return c.PROVIDERS_KEY_PREFIX + cid
-}
-
-/**
- * Write a provider into the given store.
- *
- * @param {Datastore} store
- * @param {CID} cid
- * @param {PeerId} peer
- * @param {Date} time
- */
-async function writeProviderEntry (store, cid, peer, time) { // eslint-disable-line require-await
-  const dsKey = [
-    makeProviderKey(cid),
-    '/',
-    utils.encodeBase32(peer.id)
-  ].join('')
-
-  const key = new Key(dsKey)
-  const buffer = Uint8Array.from(varint.encode(time.getTime()))
-  return store.put(key, buffer)
-}
-
-/**
- * Parse the CID and provider peer id from the key
- *
- * @param {import('interface-datastore').Key} key
- */
-function parseProviderKey (key) {
-  const parts = key.toString().split('/')
-  if (parts.length !== 4) {
-    throw new Error('incorrectly formatted provider entry key in datastore: ' + key)
-  }
-
-  return {
-    cid: parts[2],
-    peerId: parts[3]
-  }
-}
-
-/**
- * Load providers for the given CID from the store.
- *
- * @param {Datastore} store
- * @param {CID} cid
- * @returns {Promise<Map<PeerId, Date>>}
- *
- * @private
- */
-async function loadProviders (store, cid) {
-  const providers = new Map()
-  const query = store.query({ prefix: makeProviderKey(cid) })
-  for await (const entry of query) {
-    const { peerId } = parseProviderKey(entry.key)
-    providers.set(peerId, readTime(entry.value))
-  }
-  return providers
-}
-
-/**
- * @param {Uint8Array} buf
- */
-function readTime (buf) {
-  return varint.decode(buf)
-}
-
-module.exports = Providers
+module.exports = Network;

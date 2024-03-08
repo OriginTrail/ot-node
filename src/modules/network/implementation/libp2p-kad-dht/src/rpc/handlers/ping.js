@@ -1,6 +1,4 @@
-'use strict'
-
-const utils = require('../../utils')
+const utils = require('../../utils');
 
 /**
  * @typedef {import('peer-id')} PeerId
@@ -11,18 +9,18 @@ const utils = require('../../utils')
  * @param {import('../../index')} dht
  */
 module.exports = (dht) => {
-  const log = utils.logger(dht.peerId, 'rpc:ping')
+    const log = utils.logger(dht.peerId, 'rpc:ping');
 
-  /**
-   * Process `Ping` DHT messages.
-   *
-   * @param {PeerId} peerId
-   * @param {Message} msg
-   */
-  function ping (peerId, msg) {
-    log('from %s', peerId.toB58String())
-    return msg
-  }
+    /**
+     * Process `Ping` DHT messages.
+     *
+     * @param {PeerId} peerId
+     * @param {Message} msg
+     */
+    function ping(peerId, msg) {
+        log('from %s', peerId.toB58String());
+        return msg;
+    }
 
-  return ping
-}
+    return ping;
+};
