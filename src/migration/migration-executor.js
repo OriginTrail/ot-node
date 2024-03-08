@@ -17,6 +17,7 @@ import UalExtensionTripleStoreMigration from './ual-extension-triple-store-migra
 import MarkStakingEventsAsProcessedMigration from './mark-staking-events-as-processed-migration.js';
 import RemoveServiceAgreementsForChiadoMigration from './remove-service-agreements-for-chiado-migration.js';
 import MultipleOpWalletsUserConfigurationMigration from './multiple-op-wallets-user-configuration-migration.js';
+import GetOldServiceAgreementsMigration from './get-old-service-agreements-migration.js';
 
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
@@ -410,6 +411,32 @@ class MigrationExecutor {
             } catch (error) {
                 logger.error(
                     `Unable to execute multiple op wallets user configuration migration. Error: ${error.message}`,
+                );
+            }
+        }
+    }
+
+    static async executeGetOldServiceAgreementsMigration(container, logger, config) {
+        if (process.env.NODE_ENV !== NODE_ENVIRONMENTS.MAINNET) return;
+
+        const repositoryModuleManager = container.resolve('repositoryModuleManager');
+        const blockchainModuleManager = container.resolve('blockchainModuleManager');
+        const serviceAgreementService = container.resolve('serviceAgreementService');
+
+        const migration = new GetOldServiceAgreementsMigration(
+            'getOldServiceAgreementsMigrationv623',
+            logger,
+            config,
+            repositoryModuleManager,
+            blockchainModuleManager,
+            serviceAgreementService,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            try {
+                await migration.migrate();
+            } catch (error) {
+                logger.error(
+                    `Unable to execute get old service agreements migration. Error: ${error.message}`,
                 );
             }
         }

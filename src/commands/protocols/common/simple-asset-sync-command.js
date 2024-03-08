@@ -15,6 +15,8 @@ class SimpleAssetSyncCommand extends Command {
         this.ualService = ctx.ualService;
         this.operationIdService = ctx.operationIdService;
         this.getService = ctx.getService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.commandExecutor = ctx.commandExecutor;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.SIMPLE_ASSET_SYNC_ERROR;
     }
@@ -77,13 +79,15 @@ class SimpleAssetSyncCommand extends Command {
             ),
         ]);
 
+        let getResult;
+
         try {
             await this.commandExecutor.add({
                 name: 'networkGetCommand',
                 sequence: [],
                 delay: 0,
                 data: {
-                    getOperationId,
+                    operationId: getOperationId,
                     id: ual,
                     blockchain,
                     contract,
@@ -104,7 +108,6 @@ class SimpleAssetSyncCommand extends Command {
             );
 
             let attempt = 0;
-            let getResult;
             do {
                 // eslint-disable-next-line no-await-in-loop
                 await setTimeout(SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS);
@@ -122,7 +125,8 @@ class SimpleAssetSyncCommand extends Command {
                 `[SIMPLE_ASSET_SYNC] (${operationId}): Unable to sync Knowledge Asset for the ` +
                     `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
                     `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
-                    `State Index: ${stateIndex}, Network Get Operation ID: ${getOperationId}, `,
+                    `State Index: ${stateIndex}, Network Get Operation ID: ${getOperationId}, ` +
+                    `Operation failed with error: ${error}.`,
             );
 
             return Command.retry();
@@ -133,7 +137,19 @@ class SimpleAssetSyncCommand extends Command {
             blockchain,
             OPERATION_ID_STATUS.COMMIT_PROOF.SIMPLE_ASSET_SYNC_END,
         );
+        const getOperationCachedData = await this.operationIdService.getCachedOperationIdData(
+            getOperationId,
+        );
+        if (getOperationCachedData.message === 'Unable to find assertion on the network!') {
+            this.logger.info(
+                `[SIMPLE_ASSET_SYNC] (${operationId}): Failed to executed command. Couldn't find asset on the network for the ` +
+                    `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
+                    `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                    `State Index: ${stateIndex}, Network Get Operation ID: ${getOperationId}, `,
+            );
 
+            return Command.empty();
+        }
         this.logger.info(
             `[SIMPLE_ASSET_SYNC] (${operationId}): Successfully executed command for the ` +
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +

@@ -65,13 +65,15 @@ export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 
 export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000; // 15 days
 
+export const MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS = 60 * 60 * 1000; // 1 hour
+
 export const MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH = 50;
 
 export const TRANSACTION_QUEUE_CONCURRENCY = 1;
 
 export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
 
-export const MAX_FILE_SIZE = 2621440;
+export const MAX_FILE_SIZE = 10000000;
 
 export const GET_STATES = { LATEST: 'LATEST', FINALIZED: 'LATEST_FINALIZED' };
 
@@ -252,7 +254,7 @@ export const NEURO_DEFAULT_GAS_PRICE = {
 
 export const CONTRACT_FUNCTION_FIXED_GAS_PRICE = {
     'otp:2043': {
-        SUBMIT_UPDATE_COMMIT: 15,
+        SUBMIT_UPDATE_COMMIT: 30,
     },
 };
 
@@ -350,6 +352,7 @@ export const ERROR_TYPE = {
     COMMIT_PROOF: {
         CALCULATE_PROOFS_ERROR: 'CalculateProofsError',
         EPOCH_CHECK_ERROR: 'EpochCheckError',
+        BLOCKCHAIN_EPOCH_CHECK_ERROR: 'BlockchainEpochCheckError',
         SIMPLE_ASSET_SYNC_ERROR: 'SimpleAssetSyncError',
         SUBMIT_COMMIT_ERROR: 'SubmitCommitError',
         SUBMIT_COMMIT_SEND_TX_ERROR: 'SubmitCommitSendTxError',
@@ -451,7 +454,29 @@ export const OPERATIONS = {
     GET: 'get',
 };
 
-export const SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS = 5 * 60;
+export const SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS = {
+    mainnet: 5 * 60,
+    testnet: 5 * 60,
+    devnet: 3 * 60,
+    test: 10,
+    development: 10,
+};
+
+export const EXPECTED_TRANSACTION_ERRORS = {
+    INSUFFICIENT_FUNDS: 'InsufficientFunds',
+    NODE_ALREADY_SUBMITTED_COMMIT: 'NodeAlreadySubmittedCommit',
+    TIMEOUT_EXCEEDED: 'timeout exceeded',
+    TOO_LOW_PRIORITY: 'TooLowPriority',
+    NODE_ALREADY_REWARDED: 'NodeAlreadyRewarded',
+    SERVICE_AGREEMENT_DOESNT_EXIST: 'ServiceAgreementDoesntExist',
+    INVALID_PROXIMITY_SCORE_FUNCTIONS_PAIR_ID: 'InvalidProximityScoreFunctionsPairId',
+    INVALID_SCORE_FUNCTION_ID: 'InvalidScoreFunctionId',
+    COMMIT_WINDOW_CLOSED: 'CommitWindowClosed',
+    NODE_NOT_IN_SHARDING_TABLE: 'NodeNotInShardingTable',
+    PROOF_WINDOW_CLOSED: 'ProofWindowClosed',
+    NODE_NOT_AWARDED: 'NodeNotAwarded',
+    WRONG_MERKLE_PROOF: 'WrongMerkleProof',
+};
 
 /**
  * @constant {number} OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS -
