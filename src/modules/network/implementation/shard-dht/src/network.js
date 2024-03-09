@@ -62,7 +62,6 @@ class Network {
         this.readMessageTimeout = c.READ_MESSAGE_TIMEOUT;
         this._log = utils.logger(this.dht.peerId, 'net');
         this._rpc = rpc(this.dht);
-        this._onPeerConnected = this._onPeerConnected.bind(this);
         this._running = false;
     }
 
@@ -90,7 +89,7 @@ class Network {
         const topology = new MulticodecTopology({
             multicodecs: [this.dht.protocol],
             handlers: {
-                onConnect: this._onPeerConnected,
+                onConnect: () => {},
                 onDisconnect: () => {},
             },
         });
@@ -129,16 +128,6 @@ class Network {
     get isConnected() {
         // TODO add a way to check if switch has started or not
         return this.dht.isStarted && this.isStarted;
-    }
-
-    /**
-     * Registrar notifies a connection successfully with dht protocol.
-     *
-     * @param {PeerId} peerId - remote peer id
-     */
-    async _onPeerConnected(peerId) {
-        await this.dht._add(peerId);
-        this._log('added to the routing table: %s', peerId.toB58String());
     }
 
     /**

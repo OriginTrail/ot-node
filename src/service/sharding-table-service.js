@@ -23,13 +23,17 @@ class ShardingTableService {
             .map(async (blockchainId) => {
                 await this.pullBlockchainShardingTable(blockchainId);
                 const peers = await this.repositoryModuleManager.getAllPeerRecords(blockchainId);
-                peers.forEach((pr) => this.networkModuleManager.addAllowedPeer(pr.peerId));
+                await Promise.all(
+                    peers.map((pr) =>
+                        this.networkModuleManager.addRoutingTablePeer(pr.peerId, blockchainId),
+                    ),
+                );
             });
         await Promise.all(pullBlockchainShardingTables);
 
         await this.networkModuleManager.onPeerConnected((connection) => {
             const peerIdString = connection.remotePeer.toB58String();
-            if (!this.networkModuleManager.hasAllowedPeer(peerIdString)) return;
+            if (!this.networkModuleManager.hasRoutingTablePeer(peerIdString)) return;
 
             this.logger.trace(
                 `Node connected to ${peerIdString}, updating sharding table last seen and last dialed.`,

@@ -63,7 +63,7 @@ class Libp2pService {
                     list: this.config.bootstrap,
                 },
             };
-            initializationObject.config.dht.allowedPeers = this.config.bootstrap.map((b) =>
+            initializationObject.config.dht.bootstrap = this.config.bootstrap.map((b) =>
                 new Multiaddr(b).getPeerId(),
             );
         }
@@ -195,16 +195,16 @@ class Libp2pService {
         return this.node.peerId;
     }
 
-    addAllowedPeer(peerIdString) {
-        return this.node._dht.addAllowedPeer(peerIdString);
+    async addRoutingTablePeer(peerIdString, blockchainId) {
+        return this.node._dht.add(createFromB58String(peerIdString), blockchainId);
     }
 
-    removeAllowedPeer(peerIdString) {
-        return this.node._dht.removeAllowedPeer(peerIdString);
+    removeRoutingTablePeer(peerIdString, blockchainId) {
+        return this.node._dht.remove(createFromB58String(peerIdString), blockchainId);
     }
 
-    hasAllowedPeer(peerIdString) {
-        return this.node._dht.hasAllowedPeer(peerIdString);
+    hasRoutingTablePeer(peerIdString) {
+        return this.node._dht.has(createFromB58String(peerIdString));
     }
 
     handleMessage(protocol, handler) {

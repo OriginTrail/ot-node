@@ -454,7 +454,11 @@ class BlockchainEventListenerService {
         );
 
         await this.repositoryModuleManager.createManyPeerRecords(peerRecords);
-        peerRecords.forEach((pr) => this.networkModuleManager.addAllowedPeer(pr.peerId));
+        await Promise.all(
+            peerRecords.map((pr) =>
+                this.networkModuleManager.addRoutingTablePeer(pr.peerId, pr.blockchainId),
+            ),
+        );
     }
 
     async handleNodeRemovedEvents(blockEvents) {
@@ -470,7 +474,7 @@ class BlockchainEventListenerService {
                 this.logger.trace(`Removing peer id: ${nodeId} from sharding table.`);
 
                 await this.repositoryModuleManager.removePeerRecord(event.blockchainId, nodeId);
-                this.networkModuleManager.removeAllowedPeer(nodeId);
+                this.networkModuleManager.removeRoutingTablePeer(nodeId);
             }),
         );
     }

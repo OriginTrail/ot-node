@@ -148,15 +148,19 @@ module.exports = (dht) => {
                 return pi;
             }
 
-            const key = await utils.convertPeerId(id);
-            const peers = dht.routingTable.closestPeers(key, dht.kBucketSize);
+            const peers = await dht.routingTable.closestPeers(id, dht.kBucketSize);
+
+            for (const bootstrap of dht.bootstrap.values()) {
+                if (peers.length >= dht.kBucketSize) break;
+                peers.push(PeerId.createFromB58String(bootstrap));
+            }
 
             if (peers.length === 0) {
                 throw errcode(new Error('Peer lookup failed'), 'ERR_LOOKUP_FAILED');
             }
 
             // sanity check
-            const match = peers.find((p) => p.isEqual(id));
+            const match = peers.find((p) => p.equals(id));
             if (match) {
                 /** @type {{ id: PeerId, addresses: { multiaddr: Multiaddr }[] }} */
                 const peer = dht.peerStore.get(id);
@@ -181,7 +185,7 @@ module.exports = (dht) => {
                 const queryFn = async (peer) => {
                     const msg = await this._findPeerSingle(peer, id);
 
-                    const m = msg.closerPeers.find((p) => p.id.isEqual(id));
+                    const m = msg.closerPeers.find((p) => p.id.equals(id.id));
 
                     // found it
                     if (m) {
@@ -208,9 +212,9 @@ module.exports = (dht) => {
 
             let success = false;
             result.paths.forEach((res) => {
-                if (res.success && result.peer) {
+                if (res.success && res.peer) {
                     success = true;
-                    if (dht.allowedPeers.has(res.peer.id.toB58String())) {
+                    if (dht.has(res.peer.id)) {
                         dht.peerStore.addressBook.add(res.peer.id, res.peer.multiaddrs);
                     }
                 }
@@ -246,7 +250,8 @@ module.exports = (dht) => {
             dht._log('getClosestPeers to %b', key);
 
             const id = await utils.convertBuffer(key);
-            const tablePeers = dht.routingTable.closestPeers(id, dht.kBucketSize);
+            const peerId = PeerId.createFromBytes(key);
+            const tablePeers = await dht.routingTable.closestPeers(peerId, dht.kBucketSize);
 
             const q = new Query(dht, key, () =>
                 // There is no distinction between the disjoint paths,
@@ -268,7 +273,7 @@ module.exports = (dht) => {
             }
 
             const sorted = await utils.sortClosestPeers(
-                Array.from(res.finalSet).filter((p) => dht.allowedPeers.has(p.toB58String())),
+                Array.from(res.finalSet).filter((p) => dht.has(p.id)),
                 id,
             );
 

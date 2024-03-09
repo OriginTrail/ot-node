@@ -2,7 +2,7 @@
 const { EventEmitter } = require('events');
 
 const { equals: uint8ArrayEquals } = require('uint8arrays/equals');
-const { createFromB58String } = require('peer-id');
+const PeerId = require('peer-id');
 
 const RoutingTable = require('./routing-table');
 const utils = require('./utils');
@@ -29,7 +29,7 @@ class ShardDHT extends EventEmitter {
      * Create a new ShardDHT.
      *
      * @param {Object} props
-     * @param {Array} props.allowedPeers - the peers in the node's sharding table
+     * @param {Array} props.bootstrap - bootstrap nodes
      * @param {Libp2p} props.libp2p - the libp2p instance
      * @param {Dialer} props.dialer - libp2p dialer instance
      * @param {PeerId} props.peerId - peer's peerId
@@ -42,7 +42,7 @@ class ShardDHT extends EventEmitter {
      * @param {number} props.concurrency - alpha concurrency of queries (default 3)
      */
     constructor({
-        allowedPeers,
+        bootstrap,
         libp2p,
         dialer,
         peerId,
@@ -60,7 +60,7 @@ class ShardDHT extends EventEmitter {
             throw new Error('libp2p-kad-dht requires an instance of Dialer');
         }
 
-        this.allowedPeers = new Set(allowedPeers);
+        this.bootstrap = new Set(bootstrap);
 
         /**
          * Local reference to the libp2p instance. May be undefined.
@@ -185,20 +185,6 @@ class ShardDHT extends EventEmitter {
         ]);
     }
 
-    addAllowedPeer(peerIdString) {
-        return this.allowedPeers.add(peerIdString);
-    }
-
-    removeAllowedPeer(peerIdString) {
-        this.routingTable.remove(createFromB58String(peerIdString));
-
-        return this.allowedPeers.remove(peerIdString);
-    }
-
-    hasAllowedPeer(peerIdString) {
-        return this.allowedPeers.has(peerIdString);
-    }
-
     // ----------- Peer Routing -----------
 
     /**
@@ -234,6 +220,35 @@ class ShardDHT extends EventEmitter {
         return this.peerRouting.getPublicKey(peer);
     }
 
+    /**
+     * Add the peer to the routing table and update it in the peerStore.
+     *
+     * @param {PeerId} peerId
+     * @param {String} BlockchainId
+     */
+    async add(peerId, blockchainId) {
+        return this.routingTable.add(peerId, blockchainId);
+    }
+
+    /**
+     * Remove the peer from the routing table.
+     *
+     * @param {PeerId} peerId
+     * @param {String} BlockchainId
+     */
+    remove(peerId, blockchainId) {
+        return this.routingTable.remove(peerId, blockchainId);
+    }
+
+    /**
+     * Checks wether the peer exists in the routing table.
+     *
+     * @param {PeerId} peerId
+     */
+    has(peerId) {
+        return this.bootstrap.has(peerId.toB58String()) || this.routingTable.has(peerId);
+    }
+
     // ----------- Discovery -----------
 
     /**
@@ -241,7 +256,7 @@ class ShardDHT extends EventEmitter {
      * @param {Multiaddr[]} multiaddrs
      */
     _peerDiscovered(peerId, multiaddrs) {
-        if (!this.allowedPeers.has(peerId.toB58String())) return;
+        if (!this.has(peerId)) return;
 
         this.emit('peer', {
             id: peerId,
@@ -258,8 +273,10 @@ class ShardDHT extends EventEmitter {
      * @param {Message} msg
      */
     async _nearestPeersToQuery(msg) {
-        const key = await utils.convertBuffer(msg.key);
-        const ids = this.routingTable.closestPeers(key, this.kBucketSize);
+        const ids = await this.routingTable.closestPeers(
+            PeerId.createFromBytes(msg.key),
+            this.kBucketSize,
+        );
 
         return ids.map((p) => {
             /** @type {{ id: PeerId, addresses: { multiaddr: Multiaddr }[] }} */
@@ -289,19 +306,8 @@ class ShardDHT extends EventEmitter {
                 return false;
             }
 
-            return !closer.id.isEqual(peerId);
+            return !closer.id.equals(peerId);
         });
-    }
-
-    /**
-     * Add the peer to the routing table and update it in the peerStore.
-     *
-     * @param {PeerId} peerId
-     */
-    async _add(peerId) {
-        if (!this.allowedPeers.has(peerId.toB58String())) return;
-
-        await this.routingTable.add(peerId);
     }
 
     /**

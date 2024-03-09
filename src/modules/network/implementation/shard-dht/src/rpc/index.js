@@ -28,12 +28,6 @@ module.exports = (dht) => {
         // get handler & execute it
         const handler = getMessageHandler(msg.type);
 
-        try {
-            await dht._add(peerId);
-        } catch (err) {
-            log.error('Failed to update the kbucket store', err);
-        }
-
         if (!handler) {
             log.error(`no handler found for message type: ${msg.type}`);
             return;
