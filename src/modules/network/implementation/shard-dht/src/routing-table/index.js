@@ -67,6 +67,7 @@ class RoutingTable {
         return distances
             .sort((a, b) => uint8ArrayCompare(a.distance, b.distance))
             .map((d) => d.peerId)
+            .filter((p) => this.dht.peerStore.addressBook.getMultiaddrsForPeer(p)?.length)
             .slice(0, count);
     }
 
