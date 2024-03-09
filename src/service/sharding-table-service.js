@@ -244,23 +244,24 @@ class ShardingTableService {
 
         if (!this.memoryCachedPeerIds[peerId]) {
             this.memoryCachedPeerIds[peerId] = {
-                lastUpdated: 0,
                 lastDialed: 0,
                 lastSeen: 0,
             };
         }
-        if (this.memoryCachedPeerIds[peerId].lastUpdated < timestampThreshold) {
+        if (
+            this.memoryCachedPeerIds[peerId].lastSeen < timestampThreshold ||
+            this.memoryCachedPeerIds[peerId].lastDialed < timestampThreshold
+        ) {
             const [rowsUpdated] =
                 await this.repositoryModuleManager.updatePeerRecordLastSeenAndLastDialed(
                     peerId,
                     now,
                 );
             if (rowsUpdated) {
-                this.memoryCachedPeerIds[peerId].lastUpdated = now;
+                this.memoryCachedPeerIds[peerId].lastDialed = now;
+                this.memoryCachedPeerIds[peerId].lastSeen = now;
             }
         }
-        this.memoryCachedPeerIds[peerId].lastDialed = now;
-        this.memoryCachedPeerIds[peerId].lastSeen = now;
     }
 
     async updatePeerRecordLastDialed(peerId) {
@@ -268,21 +269,19 @@ class ShardingTableService {
         const timestampThreshold = now - PEER_RECORD_UPDATE_DELAY;
         if (!this.memoryCachedPeerIds[peerId]) {
             this.memoryCachedPeerIds[peerId] = {
-                lastUpdated: 0,
                 lastDialed: 0,
                 lastSeen: 0,
             };
         }
-        if (this.memoryCachedPeerIds[peerId].lastUpdated < timestampThreshold) {
+        if (this.memoryCachedPeerIds[peerId].lastDialed < timestampThreshold) {
             const [rowsUpdated] = await this.repositoryModuleManager.updatePeerRecordLastDialed(
                 peerId,
                 now,
             );
             if (rowsUpdated) {
-                this.memoryCachedPeerIds[peerId].lastUpdated = now;
+                this.memoryCachedPeerIds[peerId].lastDialed = now;
             }
         }
-        this.memoryCachedPeerIds[peerId].lastDialed = now;
     }
 
     async findPeerAddressAndProtocols(peerId) {
