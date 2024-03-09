@@ -32,6 +32,7 @@ class EpochCheckCommand extends Command {
                     blockchain,
                     operationId,
                 };
+
                 return this.commandExecutor.add({
                     name: 'blockchainEpochCheckCommand',
                     data: commandData,

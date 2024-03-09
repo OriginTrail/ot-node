@@ -424,7 +424,7 @@ class MigrationExecutor {
         const serviceAgreementService = container.resolve('serviceAgreementService');
 
         const migration = new GetOldServiceAgreementsMigration(
-            'getOldServiceAgreementsMigration',
+            'getOldServiceAgreementsMigrationv623',
             logger,
             config,
             repositoryModuleManager,
