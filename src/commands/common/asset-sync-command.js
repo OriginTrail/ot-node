@@ -245,7 +245,7 @@ class AssetSyncCommand extends Command {
                 let attempt = 0;
                 let getResult;
                 do {
-                    await setTimeout(ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_INFTERVAL_MILLIS);
+                    await setTimeout(ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS);
 
                     getResult = await this.operationIdService.getOperationIdRecord(operationId);
                     attempt += 1;

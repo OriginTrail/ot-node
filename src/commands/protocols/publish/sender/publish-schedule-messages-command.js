@@ -59,37 +59,41 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         minAckResponses,
         operationId,
     ) {
-        const agreementId = await this.serviceAgreementService.generateId(
+        const blockchainAssertionSize = await this.blockchainModuleManager.getAssertionSize(
+            blockchain,
+            assertionId,
+        );
+
+        const agreementId = this.serviceAgreementService.generateId(
             blockchain,
             contract,
             tokenId,
             keyword,
             hashFunctionId,
         );
-
         const agreementData = await this.blockchainModuleManager.getAgreementData(
             blockchain,
             agreementId,
         );
 
-        const r0 = await this.blockchainModuleManager.getR0(blockchain);
+        if (!agreementData) {
+            await this.operationService.markOperationAsFailed(
+                operationId,
+                blockchain,
+                'Unable to fetch agreement data.',
+                ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR,
+            );
+            return false;
+        }
 
-        const blockchainAssertionSize = await this.blockchainModuleManager.getAssertionSize(
+        const r0 = await this.blockchainModuleManager.getR0();
+
+        const serviceAgreementBid = await this.serviceAgreementService.calculateBid(
             blockchain,
-            assertionId,
+            blockchainAssertionSize,
+            agreementData,
+            r0,
         );
-
-        const divisor = this.blockchainModuleManager
-            .toBigNumber(blockchain, r0)
-            .mul(Number(agreementData.epochsNumber))
-            .mul(blockchainAssertionSize);
-
-        const serviceAgreementBid = this.blockchainModuleManager
-            .toBigNumber(blockchain, agreementData.tokenAmount)
-            .add(agreementData.updateTokenAmount)
-            .mul(1024)
-            .div(divisor)
-            .add(1); // add 1 wei because of the precision loss
 
         let validBids = 0;
 
@@ -116,9 +120,8 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
 
     async getAsk(blockchain, nodeId) {
         const peerRecord = await this.repositoryModuleManager.getPeerRecord(nodeId, blockchain);
-        const ask = this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
 
-        return this.blockchainModuleManager.toBigNumber(blockchain, ask);
+        return this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
     }
 
     /**

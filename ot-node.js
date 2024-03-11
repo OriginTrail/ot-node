@@ -12,6 +12,7 @@ import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-upd
 import MigrationExecutor from './src/migration/migration-executor.js';
 
 const require = createRequire(import.meta.url);
+const { setTimeout } = require('timers/promises');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
 
@@ -84,6 +85,12 @@ class OTNode {
         this.startTelemetryModule();
         this.resumeCommandExecutor();
         this.logger.info('Node is up and running!');
+
+        MigrationExecutor.executeGetOldServiceAgreementsMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
     }
 
     checkNodeVersion() {
@@ -223,6 +230,7 @@ class OTNode {
                                 `npm run set-stake -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --stake=${blockchainConfig.initialStakeAmount} --operationalWalletPrivateKey=${blockchainConfig.operationalWallets[0].privateKey} --managementWalletPrivateKey=${blockchainConfig.evmManagementWalletPrivateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
                                 { stdio: 'inherit' },
                             );
+                            await setTimeout(10000);
                             execSync(
                                 `npm run set-ask -- --rpcEndpoint=${
                                     blockchainConfig.rpcEndpoints[0]

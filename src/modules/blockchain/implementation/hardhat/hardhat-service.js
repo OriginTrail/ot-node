@@ -20,6 +20,17 @@ class HardhatService extends Web3Service {
     async providerReady() {
         return this.provider.ready;
     }
+
+    async getGasPrice() {
+        return this.convertToWei(20, 'wei');
+    }
+
+    async getAgreementScoreFunctionId() {
+        if (this.getBlockchainId() === 'hardhat1:31337') {
+            return 1;
+        }
+        return 2;
+    }
 }
 
 export default HardhatService;

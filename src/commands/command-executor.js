@@ -233,7 +233,7 @@ class CommandExecutor {
      * @private
      */
     async _addDefaultCommand(name) {
-        await this._delete(name);
+        await this.delete(name);
         const handler = this.commandResolver.resolve(name);
         if (!handler) {
             this.logger.warn(`Command '${name}' will not be executed.`);
@@ -378,9 +378,8 @@ class CommandExecutor {
      * Delete command from database
      * @param name
      * @returns {Promise<void>}
-     * @private
      */
-    async _delete(name) {
+    async delete(name) {
         await this.repositoryModuleManager.destroyCommand(name);
     }
 

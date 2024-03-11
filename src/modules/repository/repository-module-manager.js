@@ -374,6 +374,7 @@ class RepositoryModuleManager extends BaseModuleManager {
         keyword,
         assertionId,
         stateIndex,
+        dataSource,
         lastCommitEpoch,
         lastProofEpoch,
     ) {
@@ -392,6 +393,7 @@ class RepositoryModuleManager extends BaseModuleManager {
                 keyword,
                 assertionId,
                 stateIndex,
+                dataSource,
                 lastCommitEpoch,
                 lastProofEpoch,
             );
@@ -456,12 +458,16 @@ class RepositoryModuleManager extends BaseModuleManager {
         timestampSeconds,
         blockchain,
         commitWindowDurationPerc,
+        ask,
+        startTimeDelay,
     ) {
         if (this.initialized) {
             return this.getRepository('service_agreement').getEligibleAgreementsForSubmitCommit(
                 timestampSeconds,
                 blockchain,
                 commitWindowDurationPerc,
+                ask,
+                startTimeDelay,
             );
         }
     }
@@ -503,6 +509,13 @@ class RepositoryModuleManager extends BaseModuleManager {
 
     async getServiceAgreements(fromTokenId, batchSize) {
         return this.getRepository('service_agreement').getServiceAgreements(fromTokenId, batchSize);
+    }
+
+    async getServiceAgreementsTokenIds(fromTokenId, blockchainId) {
+        return this.getRepository('service_agreement').getServiceAgreementsTokenIds(
+            fromTokenId,
+            blockchainId,
+        );
     }
 }
 

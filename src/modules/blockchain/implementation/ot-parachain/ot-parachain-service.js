@@ -1,6 +1,10 @@
 import { ApiPromise, WsProvider, HttpProvider } from '@polkadot/api';
 import { ethers } from 'ethers';
-import { BLOCK_TIME_MILLIS } from '../../../../constants/constants.js';
+import {
+    BLOCK_TIME_MILLIS,
+    NEURO_DEFAULT_GAS_PRICE,
+    NODE_ENVIRONMENTS,
+} from '../../../../constants/constants.js';
 import Web3Service from '../web3-service.js';
 
 const NATIVE_TOKEN_DECIMALS = 12;
@@ -127,7 +131,11 @@ class OtParachainService extends Web3Service {
         try {
             return this.provider.getGasPrice();
         } catch (error) {
-            return undefined;
+            const defaultGasPrice =
+                process.env.NODE_ENV === NODE_ENVIRONMENTS.MAINNET
+                    ? NEURO_DEFAULT_GAS_PRICE.MAINNET
+                    : NEURO_DEFAULT_GAS_PRICE.TESTNET;
+            return this.convertToWei(defaultGasPrice, 'wei');
         }
     }
 
@@ -145,6 +153,10 @@ class OtParachainService extends Web3Service {
             await this.restartParachainProvider();
         }
         if (!isRpcError) throw error;
+    }
+
+    async getLatestTokenId(assetContractAddress) {
+        return this.provider.getStorageAt(assetContractAddress.toString().toLowerCase(), 7);
     }
 
     async restartParachainProvider() {
@@ -188,6 +200,10 @@ class OtParachainService extends Web3Service {
             }
         });
         return wallets;
+    }
+
+    async getAgreementScoreFunctionId() {
+        return 1;
     }
 }
 
