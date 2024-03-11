@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import { ethers, BigNumber } from 'ethers';
 import axios from 'axios';
 import async from 'async';
@@ -26,6 +27,7 @@ import {
     CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS,
     MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS,
 } from '../../../constants/constants.js';
+import Web3ServiceValidator from './web3-service-validator.js';
 
 const require = createRequire(import.meta.url);
 
@@ -95,6 +97,7 @@ class Web3Service {
             }, concurrency);
             this.transactionQueues[operationalWallet.address] = transactionQueue;
         }
+        this.transactionQueueOrder = Object.keys(this.transactionQueues);
     }
 
     queueTransaction(contractInstance, functionName, transactionArgs, callback, gasPrice) {
@@ -141,24 +144,26 @@ class Web3Service {
     }
 
     selectTransactionQueue() {
-        let selectedQueue = null;
-        let minLength = Infinity;
-
-        for (const walletAddress of Object.keys(this.transactionQueues)) {
-            const queue = this.transactionQueues[walletAddress];
-            const length = queue.length();
-
-            if (length === 0) {
-                return queue;
-            }
-
-            if (length < minLength) {
-                selectedQueue = queue;
-                minLength = length;
-            }
+        const queues = Object.keys(this.transactionQueues).map((wallet) => ({
+            wallet,
+            length: this.transactionQueues[wallet].length(),
+        }));
+        const minLength = Math.min(...queues.map((queue) => queue.length));
+        const shortestQueues = queues.filter((queue) => queue.length === minLength);
+        if (shortestQueues.length === 1) {
+            return this.transactionQueues[shortestQueues[0].wallet];
         }
 
-        return selectedQueue;
+        const selectedQueueWallet = this.transactionQueueOrder.find((roundRobinNext) =>
+            shortestQueues.some((shortestQueue) => shortestQueue.wallet === roundRobinNext),
+        );
+
+        this.transactionQueueOrder.push(
+            this.transactionQueueOrder
+                .splice(this.transactionQueueOrder.indexOf(selectedQueueWallet), 1)
+                .pop(),
+        );
+        return this.transactionQueues[selectedQueueWallet];
     }
 
     getValidOperationalWallets() {
@@ -596,12 +601,30 @@ class Web3Service {
     }
 
     async callContractFunction(contractInstance, functionName, args, contractName = null) {
+        const maxNumberOfRetries = 3;
+        const retryDelayInSec = 12;
+        let retryCount = 0;
         let result = this.getContractCallCache(contractName, functionName);
         try {
             if (!result) {
-                // eslint-disable-next-line no-await-in-loop
-                result = await contractInstance[functionName](...args);
-                this.setContractCallCache(contractName, functionName, result);
+                while (retryCount < maxNumberOfRetries) {
+                    result = await contractInstance[functionName](...args);
+                    const resultIsValid = Web3ServiceValidator.validateResult(
+                        functionName,
+                        contractName,
+                        result,
+                        this.logger,
+                    );
+                    if (resultIsValid) {
+                        this.setContractCallCache(contractName, functionName, result);
+                        return result;
+                    }
+                    if (retryCount === maxNumberOfRetries - 1) {
+                        return null;
+                    }
+                    await sleep(retryDelayInSec * 1000);
+                    retryCount += 1;
+                }
             }
         } catch (error) {
             this._decodeContractCallError(contractInstance, functionName, error, args);
@@ -1106,6 +1129,9 @@ class Web3Service {
             'getAgreementData',
             [agreementId],
         );
+        if (!result) {
+            return null;
+        }
         return {
             startTime: result['0'].toNumber(),
             epochsNumber: result['1'],
