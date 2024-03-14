@@ -169,13 +169,16 @@ class ServiceAgreementRepository {
                         },
                     },
                 ],
-                [Sequelize.Op.and]: Sequelize.literal(
-                    `${currentEpochPerc} < ${commitWindowDurationPerc}`,
-                ),
-                epochsNumber: {
-                    [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
-                },
+                [Sequelize.Op.and]: [
+                    Sequelize.literal(`${currentEpochPerc} < ${commitWindowDurationPerc}`),
+                    {
+                        epochsNumber: {
+                            [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
+                        },
+                    },
+                ],
             },
+
             order: [[Sequelize.col('timeLeftInSubmitCommitWindow'), 'ASC']],
             limit: 100,
             raw: true,
@@ -222,15 +225,17 @@ class ServiceAgreementRepository {
                         },
                     },
                 ],
-                proofWindowOffsetPerc: {
-                    [Sequelize.Op.lte]: Sequelize.literal(`${currentEpochPerc}`),
-                    [Sequelize.Op.gt]: Sequelize.literal(
-                        `${currentEpochPerc} - ${proofWindowDurationPerc}`,
+                [Sequelize.Op.and]: [
+                    Sequelize.literal(`${currentEpochPerc} >= proofWindowOffsetPerc`),
+                    Sequelize.literal(
+                        `${currentEpochPerc} < proofWindowOffsetPerc + ${proofWindowDurationPerc}`,
                     ),
-                },
-                epochsNumber: {
-                    [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
-                },
+                    {
+                        epochsNumber: {
+                            [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
+                        },
+                    },
+                ],
             },
             order: [[Sequelize.col('timeLeftInSubmitProofWindow'), 'ASC']],
             limit: 100,
