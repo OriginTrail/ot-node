@@ -323,10 +323,6 @@ class Libp2pService {
             .map((addr) => addr.toString().split('/'))
             .filter((splittedAddr) => !ip.isPrivate(splittedAddr[2]))[0]?.[2];
 
-        this.logger.trace(
-            `Dialing remotePeerId: ${peerIdString} with public ip: ${publicIp}: protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}`,
-        );
-
         const timeoutSignal = AbortSignal.timeout(timeout);
         const abortError = new Error('Message timed out');
         let stream;
@@ -342,7 +338,11 @@ class Libp2pService {
         timeoutSignal.addEventListener('abort', onAbort, { once: true });
 
         try {
-            errorMessage = `Unable to dial peer: ${peerIdString}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}.`;
+            this.logger.trace(
+                `Dialing remotePeerId: ${peerIdString} with public ip: ${publicIp}: protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}`,
+            );
+
+            errorMessage = `dial`;
             operationStart = Date.now();
             const dialResult = await this.node.dialProtocol(peerIdObject, protocol, {
                 signal: timeoutSignal,
@@ -373,7 +373,7 @@ class Libp2pService {
                 `Sending message to ${peerIdString}. protocol: ${protocol}, messageType: ${messageType}, operationId: ${operationId}`,
             );
 
-            errorMessage = `Unable to send message to peer: ${peerIdString}. protocol: ${protocol}, messageType: ${messageType}, operationId: ${operationId}.`;
+            errorMessage = `send message`;
             operationStart = Date.now();
             await this._sendMessageToStream(stream, streamMessage);
             operationEnd = Date.now();
@@ -381,7 +381,7 @@ class Libp2pService {
                 throw abortError;
             }
 
-            errorMessage = `Unable to read response from peer ${peerIdString}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}`;
+            errorMessage = `read response`;
             operationStart = Date.now();
             response = await this._readMessageFromStream(
                 stream,
@@ -406,7 +406,7 @@ class Libp2pService {
                 return nackMessage;
             }
         } catch (error) {
-            nackMessage.data.errorMessage = `${errorMessage} Execution time: ${
+            nackMessage.data.errorMessage = `Unable to ${errorMessage} from peer ${peerIdString}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}. Execution time: ${
                 (operationEnd ?? Date.now()) - operationStart
             } ms. Error: ${error.message.slice(0, 145)}`;
             return nackMessage;
