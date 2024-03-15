@@ -325,6 +325,10 @@ class Libp2pService {
 
         const timeoutSignal = AbortSignal.timeout(timeout);
         const abortError = new Error('Message timed out');
+
+        const abortPromise = new Promise((_, reject) => {
+            timeoutSignal.onabort = () => reject(abortError);
+        });
         let stream;
         let response;
         let errorMessage;
@@ -335,18 +339,18 @@ class Libp2pService {
             response = null;
         };
 
-        timeoutSignal.addEventListener('abort', onAbort, { once: true });
-
         try {
+            timeoutSignal.addEventListener('abort', onAbort, { once: true });
             this.logger.trace(
                 `Dialing remotePeerId: ${peerIdString} with public ip: ${publicIp}: protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}`,
             );
 
             errorMessage = `dial`;
             operationStart = Date.now();
-            const dialResult = await this.node.dialProtocol(peerIdObject, protocol, {
+            const dialPromise = this.node.dialProtocol(peerIdObject, protocol, {
                 signal: timeoutSignal,
             });
+            const dialResult = await Promise.race([dialPromise, abortPromise]);
             operationEnd = Date.now();
             if (timeoutSignal.aborted) {
                 throw abortError;
