@@ -14,7 +14,6 @@ import { InMemoryRateLimiter } from 'rolling-rate-limiter';
 import toobusy from 'toobusy-js';
 import { mkdir, writeFile, readFile, stat } from 'fs/promises';
 import ip from 'ip';
-import { TimeoutController } from 'timeout-abort-controller';
 import {
     NETWORK_API_RATE_LIMIT,
     NETWORK_API_SPAM_DETECTION,
@@ -327,113 +326,93 @@ class Libp2pService {
         this.logger.trace(
             `Dialing remotePeerId: ${peerIdString} with public ip: ${publicIp}: protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}`,
         );
-        let dialResult;
-        let dialStart;
-        let dialEnd;
-        try {
-            dialStart = Date.now();
-            dialResult = await this.node.dialProtocol(peerIdObject, protocol);
-            dialEnd = Date.now();
-        } catch (error) {
-            dialEnd = Date.now();
-            nackMessage.data.errorMessage = `Unable to dial peer: ${peerIdString}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, dial execution time: ${
-                dialEnd - dialStart
-            } ms. Error: ${error.message}`;
 
-            return nackMessage;
-        }
-        this.logger.trace(
-            `Created stream for peer: ${peerIdString}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, dial execution time: ${
-                dialEnd - dialStart
-            } ms.`,
-        );
-
-        const { stream } = dialResult;
-
-        this.updateSessionStream(operationId, keywordUuid, peerIdString, stream);
-
-        const streamMessage = this.createStreamMessage(
-            message,
-            operationId,
-            keywordUuid,
-            messageType,
-        );
-
-        this.logger.trace(
-            `Sending message to ${peerIdString}. protocol: ${protocol}, messageType: ${messageType}, operationId: ${operationId}`,
-        );
-
-        let sendMessageStart;
-        let sendMessageEnd;
-        try {
-            sendMessageStart = Date.now();
-            await this._sendMessageToStream(stream, streamMessage);
-            sendMessageEnd = Date.now();
-        } catch (error) {
-            sendMessageEnd = Date.now();
-            nackMessage.data.errorMessage = `Unable to send message to peer: ${peerIdString}. protocol: ${protocol}, messageType: ${messageType}, operationId: ${operationId}, execution time: ${
-                sendMessageEnd - sendMessageStart
-            } ms. Error: ${error.message}`;
-
-            return nackMessage;
-        }
-
-        let readResponseStart;
-        let readResponseEnd;
+        const timeoutSignal = AbortSignal.timeout(timeout);
+        const abortError = new Error('Message timed out');
+        let stream;
         let response;
-        const timeoutController = new TimeoutController(timeout);
-        try {
-            readResponseStart = Date.now();
+        let errorMessage;
+        let operationStart;
+        let operationEnd;
+        const onAbort = () => {
+            if (stream) stream.abort(abortError);
+            response = null;
+        };
 
-            timeoutController.signal.addEventListener(
-                'abort',
-                async () => {
-                    stream.abort();
-                    response = null;
-                },
-                { once: true },
+        timeoutSignal.addEventListener('abort', onAbort, { once: true });
+
+        try {
+            errorMessage = `Unable to dial peer: ${peerIdString}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}.`;
+            operationStart = Date.now();
+            const dialResult = await this.node.dialProtocol(peerIdObject, protocol, {
+                signal: timeoutSignal,
+            });
+            operationEnd = Date.now();
+            if (timeoutSignal.aborted) {
+                throw abortError;
+            }
+
+            this.logger.trace(
+                `Created stream for peer: ${peerIdString}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, dial execution time: ${
+                    operationEnd - operationStart
+                } ms.`,
             );
 
+            stream = dialResult.stream;
+
+            this.updateSessionStream(operationId, keywordUuid, peerIdString, stream);
+
+            const streamMessage = this.createStreamMessage(
+                message,
+                operationId,
+                keywordUuid,
+                messageType,
+            );
+
+            this.logger.trace(
+                `Sending message to ${peerIdString}. protocol: ${protocol}, messageType: ${messageType}, operationId: ${operationId}`,
+            );
+
+            errorMessage = `Unable to send message to peer: ${peerIdString}. protocol: ${protocol}, messageType: ${messageType}, operationId: ${operationId}.`;
+            operationStart = Date.now();
+            await this._sendMessageToStream(stream, streamMessage);
+            operationEnd = Date.now();
+            if (timeoutSignal.aborted) {
+                throw abortError;
+            }
+
+            errorMessage = `Unable to read response from peer ${peerIdString}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}`;
+            operationStart = Date.now();
             response = await this._readMessageFromStream(
                 stream,
                 this.isResponseValid.bind(this),
                 peerIdString,
             );
-
-            if (timeoutController.signal.aborted) {
-                throw Error('Message timed out!');
+            operationEnd = Date.now();
+            if (timeoutSignal.aborted) {
+                throw abortError;
             }
 
-            timeoutController.signal.removeEventListener('abort');
-            timeoutController.clear();
+            this.logger.trace(
+                `Receiving response from ${peerIdString}. protocol: ${protocol}, messageType: ${
+                    response.message?.header?.messageType
+                }, operationId: ${operationId}, execution time: ${
+                    operationEnd - operationStart
+                } ms.`,
+            );
 
-            readResponseEnd = Date.now();
+            if (!response.valid) {
+                nackMessage.data.errorMessage = 'Invalid response';
+                return nackMessage;
+            }
         } catch (error) {
-            timeoutController.signal.removeEventListener('abort');
-            timeoutController.clear();
-
-            readResponseEnd = Date.now();
-            nackMessage.data.errorMessage = `Unable to read response from peer ${peerIdString}. protocol: ${protocol}, messageType: ${messageType} , operationId: ${operationId}, execution time: ${
-                readResponseEnd - readResponseStart
-            } ms. Error: ${error.message}`;
-
+            nackMessage.data.errorMessage = `${errorMessage} Execution time: ${
+                (operationEnd ?? Date.now()) - operationStart
+            } ms. Error: ${error.message.slice(0, 145)}`;
             return nackMessage;
+        } finally {
+            timeoutSignal.removeEventListener('abort', onAbort);
         }
-
-        this.logger.trace(
-            `Receiving response from ${peerIdString}. protocol: ${protocol}, messageType: ${
-                response.message?.header?.messageType
-            }, operationId: ${operationId}, execution time: ${
-                readResponseEnd - readResponseStart
-            } ms.`,
-        );
-
-        if (!response.valid) {
-            nackMessage.data.errorMessage = 'Invalid response';
-
-            return nackMessage;
-        }
-
         return response.message;
     }
 
