@@ -18,7 +18,18 @@ class AuthService {
         const isWhitelisted = this._isIpWhitelisted(ip);
         const isTokenValid = await this._isTokenValid(token);
 
-        const isAuthenticated = isWhitelisted && isTokenValid;
+        const tokenAuthEnabled = this._authConfig.tokenBasedAuthEnabled;
+        const ipAuthEnabled = this._authConfig.ipBasedAuthEnabled;
+        const requiresBoth = this._authConfig.bothIpAndTokenAuthRequired;
+
+        let isAuthenticated = false;
+        if (tokenAuthEnabled && ipAuthEnabled) {
+            isAuthenticated = requiresBoth
+                ? isWhitelisted && isTokenValid
+                : isWhitelisted || isTokenValid;
+        } else {
+            isAuthenticated = isWhitelisted && isTokenValid;
+        }
 
         if (!isAuthenticated) {
             this._logMessage('Received unauthenticated request.');
