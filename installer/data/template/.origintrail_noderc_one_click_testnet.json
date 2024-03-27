@@ -1,18 +1,6 @@
 {
   "modules":{
-    "autoUpdater":{
-      "enabled":true,
-      "implementation":{
-        "ot-auto-updater":{
-          "package":"./auto-updater/implementation/ot-auto-updater.js",
-          "config":{
-            "branch":"v6/release/mainnet"
-          }
-        }
-      }
-    },
     "blockchain":{
-      "defaultImplementation":"otp:20430",
       "implementation":{
         "otp:20430":{
           "enabled":true,
