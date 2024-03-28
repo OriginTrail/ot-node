@@ -40,8 +40,11 @@
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
                             "dht": {
-                                "kBucketSize": 20,
-                                "type": "dual"
+                                "kBucketSize": 20
+                            },
+                            "nat": {
+                                "enabled": false,
+                                "externalIp": null
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -206,6 +209,10 @@
                             "dht": {
                                 "kBucketSize": 20
                             },
+                            "nat": {
+                                "enabled": false,
+                                "externalIp": null
+                            },
                             "connectionManager": {
                                 "autoDial": true,
                                 "autoDialInterval": 10e3,
@@ -340,6 +347,10 @@
                         "config": {
                             "dht": {
                                 "kBucketSize": 20
+                            },
+                            "nat": {
+                                "enabled": true,
+                                "externalIp": null
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -507,6 +518,10 @@
                             "dht": {
                                 "kBucketSize": 20
                             },
+                            "nat": {
+                                "enabled": true,
+                                "externalIp": null
+                            },
                             "connectionManager": {
                                 "autoDial": true,
                                 "autoDialInterval": 10e3,
@@ -672,6 +687,10 @@
                         "config": {
                             "dht": {
                                 "kBucketSize": 20
+                            },
+                            "nat": {
+                                "enabled": true,
+                                "externalIp": null
                             },
                             "connectionManager": {
                                 "autoDial": true,
