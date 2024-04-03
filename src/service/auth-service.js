@@ -49,6 +49,20 @@ class AuthService {
             return true;
         }
 
+        /* 
+            If IP is whitelisted and both IP and Token Auth is NOT required pass authorization check.
+            Authentication middleware checks if IP is white listed before authorization middleware.
+        */
+        if (!(await this._isTokenValid(token))) {
+            if (
+                !this._authConfig.bothIpAndTokenAuthRequired &&
+                this._authConfig.ipBasedAuthEnabled
+            ) {
+                return true;
+            }
+            return false;
+        }
+
         const tokenId = jwtUtil.getPayload(token).jti;
         const abilities = await this._repository.getTokenAbilities(tokenId);
 
@@ -89,6 +103,10 @@ class AuthService {
     async _isTokenValid(token) {
         if (!this._authConfig.tokenBasedAuthEnabled) {
             return true;
+        }
+
+        if (!token) {
+            return false;
         }
 
         if (!jwtUtil.validateJWT(token)) {
