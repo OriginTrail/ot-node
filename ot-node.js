@@ -35,8 +35,6 @@ class OTNode {
             this.config,
         );
 
-        await MigrationExecutor.executeOperationIdStorageMigration(this.logger, this.config);
-
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
         this.logger.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
@@ -53,6 +51,12 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
+
+        await MigrationExecutor.executeOperationIdStorageMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
 
         await MigrationExecutor.executeRemoveServiceAgreementsForChiadoMigration(
             this.container,

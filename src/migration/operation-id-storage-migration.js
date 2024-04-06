@@ -2,6 +2,11 @@ import { path } from 'app-root-path';
 import BaseMigration from './base-migration.js';
 
 class OperationIdStorageMigration extends BaseMigration {
+    constructor(migrationName, logger, config, operationIdService) {
+        super(migrationName, logger, config);
+        this.operationIdService = operationIdService;
+    }
+
     async executeMigration() {
         const cacheFolderPath = path.join(
             this.fileService.getDataFolderPath(),

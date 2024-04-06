@@ -429,11 +429,14 @@ class MigrationExecutor {
         }
     }
 
-    static async executeOperationIdStorageMigration(logger, config) {
+    static async executeOperationIdStorageMigration(container, logger, config) {
+        const operationIdService = container.resolve('operationIdService');
+
         const migration = new OperationIdStorageMigration(
             'operationIdStorageMigration',
             logger,
             config,
+            operationIdService,
         );
         if (!(await migration.migrationAlreadyExecuted())) {
             try {
