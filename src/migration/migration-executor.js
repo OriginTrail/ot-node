@@ -17,6 +17,7 @@ import MarkStakingEventsAsProcessedMigration from './mark-staking-events-as-proc
 import RemoveServiceAgreementsForChiadoMigration from './remove-service-agreements-for-chiado-migration.js';
 import MultipleOpWalletsUserConfigurationMigration from './multiple-op-wallets-user-configuration-migration.js';
 import GetOldServiceAgreementsMigration from './get-old-service-agreements-migration.js';
+import OperationIdStorageMigration from './operation-id-storage-migration.js';
 
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
@@ -423,6 +424,23 @@ class MigrationExecutor {
             } catch (error) {
                 logger.error(
                     `Unable to execute get old service agreements migration. Error: ${error.message}`,
+                );
+            }
+        }
+    }
+
+    static async executeOperationIdStorageMigration(logger, config) {
+        const migration = new OperationIdStorageMigration(
+            'operationIdStorageMigration',
+            logger,
+            config,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            try {
+                await migration.migrate();
+            } catch (error) {
+                logger.error(
+                    `Unable to execute operationIdStorageMigration. Error: ${error.message}`,
                 );
             }
         }

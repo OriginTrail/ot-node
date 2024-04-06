@@ -35,6 +35,8 @@ class OTNode {
             this.config,
         );
 
+        await MigrationExecutor.executeOperationIdStorageMigration(this.logger, this.config);
+
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
         this.logger.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');

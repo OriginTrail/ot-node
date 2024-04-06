@@ -122,14 +122,6 @@ class FileService {
         return path.join(this.getDataFolderPath(), MIGRATION_FOLDER_NAME);
     }
 
-    getOperationIdCachePath() {
-        return path.join(this.getDataFolderPath(), 'operation_id_cache');
-    }
-
-    getOperationIdDocumentPath(operationId) {
-        return path.join(this.getOperationIdCachePath(), operationId);
-    }
-
     getArchiveFolderPath(subFolder) {
         return path.join(this.getDataFolderPath(), ARCHIVE_FOLDER_NAME, subFolder);
     }
