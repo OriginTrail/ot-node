@@ -28,6 +28,7 @@ class DeletePendingStateCommand extends Command {
             contract,
             tokenId,
             assertionId,
+            operationId,
         );
 
         if (pendingStateExists) {
@@ -93,21 +94,22 @@ class DeletePendingStateCommand extends Command {
         }
     }
 
-    async pendingStateExists(blockchain, contract, tokenId, assertionId) {
+    async pendingStateExists(blockchain, contract, tokenId, assertionId, operationId) {
         for (const repository of [
             PENDING_STORAGE_REPOSITORIES.PUBLIC,
             PENDING_STORAGE_REPOSITORIES.PRIVATE,
         ]) {
             // eslint-disable-next-line no-await-in-loop
-            const pendingStateExists = await this.pendingStorageService.assetHasPendingState(
+            const cachedAssertion = await this.pendingStorageService.getCachedAssertionData(
                 repository,
                 blockchain,
                 contract,
                 tokenId,
                 assertionId,
+                operationId,
             );
 
-            if (pendingStateExists) {
+            if (cachedAssertion != null) {
                 return true;
             }
         }

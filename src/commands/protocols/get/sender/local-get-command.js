@@ -44,32 +44,21 @@ class LocalGetCommand extends Command {
                 PENDING_STORAGE_REPOSITORIES.PUBLIC,
             ]) {
                 // eslint-disable-next-line no-await-in-loop
-                const stateIsPending = await this.pendingStorageService.assetHasPendingState(
+                const cachedAssertion = await this.pendingStorageService.getCachedAssertionData(
                     repository,
                     blockchain,
                     contract,
                     tokenId,
                     assertionId,
+                    operationId,
                 );
 
-                if (stateIsPending) {
-                    // eslint-disable-next-line no-await-in-loop
-                    const cachedAssertion = await this.pendingStorageService.getCachedAssertion(
-                        repository,
-                        blockchain,
-                        contract,
-                        tokenId,
-                        assertionId,
-                        operationId,
-                    );
-
-                    if (cachedAssertion?.public?.assertion?.length) {
-                        response.assertion = cachedAssertion.public.assertion;
-                        if (cachedAssertion?.private?.assertion?.length) {
-                            response.privateAssertion = cachedAssertion.private.assertion;
-                        }
-                        break;
+                if (cachedAssertion?.public?.assertion?.length) {
+                    response.assertion = cachedAssertion.public.assertion;
+                    if (cachedAssertion?.private?.assertion?.length) {
+                        response.privateAssertion = cachedAssertion.private.assertion;
                     }
+                    break;
                 }
             }
         }

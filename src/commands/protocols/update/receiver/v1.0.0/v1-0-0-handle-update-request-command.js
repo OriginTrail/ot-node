@@ -48,7 +48,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         );
 
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
-        await this.pendingStorageService.cacheAssertion(
+        await this.pendingStorageService.cacheAssertionData(
             PENDING_STORAGE_REPOSITORIES.PUBLIC,
             blockchain,
             contract,

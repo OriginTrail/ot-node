@@ -38,13 +38,15 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
             contract != null &&
             tokenId != null
         ) {
-            assertionExists = await this.pendingStorageService.assetHasPendingState(
+            const assertion = await this.pendingStorageService.getCachedAssertionData(
                 PENDING_STORAGE_REPOSITORIES.PUBLIC,
                 blockchain,
                 contract,
                 tokenId,
                 assertionId,
+                operationId,
             );
+            assertionExists = assertion != null;
         }
 
         if (!assertionExists) {

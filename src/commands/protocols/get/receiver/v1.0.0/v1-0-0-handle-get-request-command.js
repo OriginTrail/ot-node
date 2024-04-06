@@ -34,7 +34,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             contract != null &&
             tokenId != null
         ) {
-            const cachedAssertion = await this.pendingStorageService.getCachedAssertion(
+            const cachedAssertion = await this.pendingStorageService.getCachedAssertionData(
                 PENDING_STORAGE_REPOSITORIES.PUBLIC,
                 blockchain,
                 contract,

@@ -79,6 +79,16 @@
                     }
                 }
             },
+            "keyValueStore": {
+                "enabled": true,
+                "implementation": {
+                    "lmdb": {
+                        "enabled": true,
+                        "package": "./key-value-store/implementation/lmdb-service.js",
+                        "config": {}
+                    }
+                }
+            },
             "tripleStore": {
                 "enabled": true,
                 "implementation": {
@@ -281,6 +291,16 @@
                     }
                 }
             },
+            "keyValueStore": {
+                "enabled": true,
+                "implementation": {
+                    "lmdb": {
+                        "enabled": true,
+                        "package": "./key-value-store/implementation/lmdb-service.js",
+                        "config": {}
+                    }
+                }
+            },
             "tripleStore": {
                 "enabled": true,
                 "implementation": {
@@ -433,6 +453,16 @@
                     "merkle-validation": {
                         "enabled": true,
                         "package": "./validation/implementation/merkle-validation.js",
+                        "config": {}
+                    }
+                }
+            },
+            "keyValueStore": {
+                "enabled": true,
+                "implementation": {
+                    "lmdb": {
+                        "enabled": true,
+                        "package": "./key-value-store/implementation/lmdb-service.js",
                         "config": {}
                     }
                 }
@@ -603,6 +633,16 @@
                     }
                 }
             },
+            "keyValueStore": {
+                "enabled": true,
+                "implementation": {
+                    "lmdb": {
+                        "enabled": true,
+                        "package": "./key-value-store/implementation/lmdb-service.js",
+                        "config": {}
+                    }
+                }
+            },
             "tripleStore": {
                 "enabled": true,
                 "implementation": {
@@ -756,6 +796,16 @@
                             "gasPriceOracleLink": "https://api.gnosisscan.io/api?module=proxy&action=eth_gasPrice",
                             "operatorFee": 0
                         }
+                    }
+                }
+            },
+            "keyValueStore": {
+                "enabled": true,
+                "implementation": {
+                    "lmdb": {
+                        "enabled": true,
+                        "package": "./key-value-store/implementation/lmdb-service.js",
+                        "config": {}
                     }
                 }
             },

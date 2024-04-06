@@ -9,60 +9,59 @@ class PendingStorageService {
         this.fileService = ctx.fileService;
         this.ualService = ctx.ualService;
         this.serviceAgreementService = ctx.serviceAgreementService;
+        this.keyValueStoreModuleManager = ctx.keyValueStoreModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
     }
 
-    async cacheAssertion(
+    async cacheAssertionData(
         repository,
         blockchain,
         contract,
         tokenId,
         assertionId,
-        assertion,
+        assertionData,
         operationId,
     ) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.debug(
-            `Caching ${assertionId} assertion for ual: ${ual}, operation id: ${operationId} in file in ${repository} pending storage`,
+            `Caching assertion data for ual: ${ual}, assertion id: ${assertionId}, operation id: ${operationId} in ${repository} pending storage`,
         );
 
-        const pendingStorageFolderPath = this.fileService.getPendingStorageFolderPath(
+        await this.keyValueStoreModuleManager.cacheAssertionData(
             repository,
-            blockchain,
-            contract,
-            tokenId,
-        );
-
-        await this.fileService.writeContentsToFile(
-            pendingStorageFolderPath,
+            ual,
             assertionId,
-            JSON.stringify(assertion),
+            assertionData,
         );
     }
 
-    async getCachedAssertion(repository, blockchain, contract, tokenId, assertionId, operationId) {
+    async getCachedAssertionData(
+        repository,
+        blockchain,
+        contract,
+        tokenId,
+        assertionId,
+        operationId,
+    ) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.debug(
-            `Reading cached assertion for ual: ${ual}, assertion id: ${assertionId}, operation id: ${operationId} from file in ${repository} pending storage`,
+            `Reading cached assertion data for ual: ${ual}, assertion id: ${assertionId}, operation id: ${operationId} in ${repository} pending storage`,
         );
         try {
-            const documentPath = await this.fileService.getPendingStorageDocumentPath(
+            const assertionData = await this.keyValueStoreModuleManager.getCachedAssertionData(
                 repository,
-                blockchain,
-                contract,
-                tokenId,
+                ual,
                 assertionId,
             );
 
-            const data = await this.fileService.readFile(documentPath, true);
-            return data;
+            return assertionData;
         } catch (error) {
             this.logger.debug(
-                `Assertion not found in ${repository} pending storage. Error message: ${error.message}, ${error.stackTrace}`,
+                `Assertion data not found in ${repository} pending storage. Error message: ${error.message}, ${error.stackTrace}`,
             );
             return null;
         }
@@ -79,60 +78,24 @@ class PendingStorageService {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.debug(
-            `Removing cached assertion for ual: ${ual} operation id: ${operationId} from file in ${repository} pending storage`,
+            `Removing cached assertion data for ual: ${ual}, assertion id: ${assertionId}, operation id: ${operationId} in ${repository} pending storage`,
         );
 
-        const pendingAssertionPath = await this.fileService.getPendingStorageDocumentPath(
+        await this.keyValueStoreModuleManager.removeCachedAssertionData(
             repository,
-            blockchain,
-            contract,
-            tokenId,
+            ual,
             assertionId,
         );
-        await this.fileService.removeFile(pendingAssertionPath);
-
-        const pendingStorageFolderPath = this.fileService.getParentDirectory(pendingAssertionPath);
-
-        try {
-            const otherPendingAssertions = await this.fileService.readDirectory(
-                pendingStorageFolderPath,
-            );
-            if (otherPendingAssertions.length === 0) {
-                await this.fileService.removeFolder(pendingStorageFolderPath);
-            }
-        } catch (error) {
-            this.logger.debug(
-                `Assertions folder not found in ${repository} pending storage. ` +
-                    `Error message: ${error.message}, ${error.stackTrace}`,
-            );
-        }
     }
 
-    async assetHasPendingState(repository, blockchain, contract, tokenId, assertionId) {
-        try {
-            const documentPath = await this.fileService.getPendingStorageDocumentPath(
-                repository,
-                blockchain,
-                contract,
-                tokenId,
-                assertionId,
-            );
-            this.logger.trace(
-                `Checking if assertion exists in pending storage at path: ${documentPath}`,
-            );
-            return this.fileService.pathExists(documentPath);
-        } catch (error) {
-            return false;
-        }
-    }
+    async getPendingState(repository, blockchain, contract, tokenId, operationId) {
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
-    async getPendingState(repository, blockchain, contract, tokenId) {
-        return this.fileService.getPendingStorageLatestDocument(
-            repository,
-            blockchain,
-            contract,
-            tokenId,
+        this.logger.debug(
+            `Getting latest cached assertion data for ual: ${ual}, operation id: ${operationId} in ${repository} pending storage`,
         );
+
+        await this.keyValueStoreModuleManager.getLatestCachedAssertionData(repository, ual);
     }
 
     async moveAndDeletePendingState(
@@ -221,7 +184,7 @@ class PendingStorageService {
             tokenId,
         );
 
-        const cachedData = await this.getCachedAssertion(
+        const cachedData = await this.getCachedAssertionData(
             pendingRepository,
             blockchain,
             contract,

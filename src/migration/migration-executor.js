@@ -8,7 +8,6 @@ import ServiceAgreementsMetadataMigration from './service-agreements-metadata-mi
 import RemoveAgreementStartEndTimeMigration from './remove-agreement-start-end-time-migration.js';
 import TripleStoreMetadataMigration from './triple-store-metadata-migration.js';
 import RemoveOldEpochCommandsMigration from './remove-old-epoch-commands-migration.js';
-import PendingStorageMigration from './pending-storage-migration.js';
 import MarkOldBlockchainEventsAsProcessedMigration from './mark-old-blockchain-events-as-processed-migration.js';
 import ServiceAgreementsDataInspector from './service-agreements-data-inspector.js';
 import ServiceAgreementsInvalidDataMigration from './service-agreements-invalid-data-migration.js';
@@ -203,19 +202,6 @@ class MigrationExecutor {
             config,
             repositoryModuleManager,
         );
-        if (!(await migration.migrationAlreadyExecuted())) {
-            await migration.migrate();
-        }
-    }
-
-    static async executePendingStorageMigration(logger, config) {
-        if (
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
-        )
-            return;
-
-        const migration = new PendingStorageMigration('pendingStorageMigration', logger, config);
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();
         }
