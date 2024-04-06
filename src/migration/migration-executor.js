@@ -18,6 +18,7 @@ import RemoveServiceAgreementsForChiadoMigration from './remove-service-agreemen
 import MultipleOpWalletsUserConfigurationMigration from './multiple-op-wallets-user-configuration-migration.js';
 import GetOldServiceAgreementsMigration from './get-old-service-agreements-migration.js';
 import OperationIdStorageMigration from './operation-id-storage-migration.js';
+import PendingStorageMigration from './pending-storage-migration.js';
 
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
@@ -445,6 +446,24 @@ class MigrationExecutor {
                 logger.error(
                     `Unable to execute operationIdStorageMigration. Error: ${error.message}`,
                 );
+            }
+        }
+    }
+
+    static async executePendingStorageMigration(container, logger, config) {
+        const pendingStorageService = container.resolve('pendingStorageService');
+
+        const migration = new PendingStorageMigration(
+            'pendingStorageMigration',
+            logger,
+            config,
+            pendingStorageService,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            try {
+                await migration.migrate();
+            } catch (error) {
+                logger.error(`Unable to execute pendingStorageMigration. Error: ${error.message}`);
             }
         }
     }

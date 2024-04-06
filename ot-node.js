@@ -58,6 +58,12 @@ class OTNode {
             this.config,
         );
 
+        await MigrationExecutor.executePendingStorageMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         await MigrationExecutor.executeRemoveServiceAgreementsForChiadoMigration(
             this.container,
             this.logger,
