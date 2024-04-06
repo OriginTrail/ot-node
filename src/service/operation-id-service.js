@@ -1,11 +1,11 @@
 import { validate, v4 as uuidv4 } from 'uuid';
-import path from 'path';
 
 class OperationIdService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.fileService = ctx.fileService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.keyValueStoreModuleManager = ctx.keyValueStoreModuleManager;
         this.eventEmitter = ctx.eventEmitter;
 
         this.memoryCachedHandlersData = {};
@@ -69,7 +69,7 @@ class OperationIdService {
         if (errorMessage !== null) {
             this.logger.debug(`Marking operation id ${operationId} as failed`);
             response.data = JSON.stringify({ errorMessage, errorType });
-            await this.removeOperationIdCache(operationId);
+            await this.removeCachedOperationIdData(operationId);
         }
 
         this.emitChangeEvent(status, operationId, blockchain, errorMessage, errorType);
@@ -102,84 +102,35 @@ class OperationIdService {
     }
 
     async cacheOperationIdData(operationId, data) {
-        this.logger.debug(`Caching data for operation id: ${operationId} in file`);
-        const operationIdCachePath = this.fileService.getOperationIdCachePath();
+        this.logger.debug(`Caching data for operation id: ${operationId} in key value store`);
 
-        await this.fileService.writeContentsToFile(
-            operationIdCachePath,
-            operationId,
-            JSON.stringify(data),
-        );
-
-        this.memoryCachedHandlersData[operationId] = { data, timestamp: Date.now() };
+        await this.keyValueStoreModuleManager.cacheOperationIdData(operationId, data);
     }
 
     async getCachedOperationIdData(operationId) {
-        if (this.memoryCachedHandlersData[operationId]) {
-            this.logger.debug(`Reading operation id: ${operationId} cached data from memory`);
-            return this.memoryCachedHandlersData[operationId].data;
-        }
+        this.logger.debug(`Reading operation id: ${operationId} cached data from key value store`);
 
-        this.logger.debug(`Reading operation id: ${operationId} cached data from file`);
-        const documentPath = this.fileService.getOperationIdDocumentPath(operationId);
-        let data;
-        if (await this.fileService.pathExists(documentPath)) {
-            data = await this.fileService.readFile(documentPath, true);
-        }
-        return data;
+        return this.keyValueStoreModuleManager.getCachedOperationIdData(operationId);
     }
 
-    async removeOperationIdCache(operationId) {
-        this.logger.debug(`Removing operation id: ${operationId} cached data`);
-        const operationIdCachePath = this.fileService.getOperationIdDocumentPath(operationId);
-        await this.fileService.removeFile(operationIdCachePath);
-        this.removeOperationIdMemoryCache(operationId);
+    async removeCachedOperationIdData(operationId) {
+        this.logger.debug(`Removing operation id: ${operationId} cached data from key value store`);
+
+        return this.keyValueStoreModuleManager.removeCachedOperationIdData(operationId);
     }
 
-    removeOperationIdMemoryCache(operationId) {
-        this.logger.debug(`Removing operation id: ${operationId} cached data from memory`);
-        delete this.memoryCachedHandlersData[operationId];
-    }
+    async removeExpiredOperationIdFileCache(expiredTimeout) {
+        const operationIdsDataIterable =
+            await this.keyValueStoreModuleManager.getAllCachedOperationIdsDataIterable();
 
-    async removeExpiredOperationIdMemoryCache(expiredTimeout) {
-        const now = Date.now();
-        let deleted = 0;
-        for (const operationId in this.memoryCachedHandlersData) {
-            const { data, timestamp } = this.memoryCachedHandlersData[operationId];
-            if (timestamp + expiredTimeout < now) {
-                delete this.memoryCachedHandlersData[operationId];
-                deleted += Buffer.from(JSON.stringify(data)).byteLength;
-            }
-        }
-        return deleted;
-    }
-
-    async removeExpiredOperationIdFileCache(expiredTimeout, batchSize) {
-        const cacheFolderPath = this.fileService.getOperationIdCachePath();
-        const cacheFolderExists = await this.fileService.pathExists(cacheFolderPath);
-        if (!cacheFolderExists) {
-            return;
-        }
-        const fileList = await this.fileService.readDirectory(cacheFolderPath);
-
-        const now = new Date();
-        const deleteFile = async (fileName) => {
-            const filePath = path.join(cacheFolderPath, fileName);
-            const createdDate = (await this.fileService.stat(filePath)).mtime;
-            if (createdDate.getTime() + expiredTimeout < now.getTime()) {
-                await this.fileService.removeFile(filePath);
-                return true;
-            }
-            return false;
-        };
         let totalDeleted = 0;
-        for (let i = 0; i < fileList.length; i += batchSize) {
-            const batch = fileList.slice(i, i + batchSize);
-            // eslint-disable-next-line no-await-in-loop
-            const deletionResults = await Promise.allSettled(batch.map(deleteFile));
-            totalDeleted += deletionResults.filter(
-                (result) => result.status === 'fulfilled' && result.value,
-            ).length;
+        const now = Date.now();
+        for (const { key, value } of operationIdsDataIterable) {
+            if (value.timestamp + expiredTimeout < now) {
+                // eslint-disable-next-line no-await-in-loop
+                const removed = await this.removeCachedOperationIdData(key);
+                if (removed) totalDeleted += 1;
+            }
         }
 
         return totalDeleted;

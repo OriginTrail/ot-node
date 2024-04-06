@@ -43,6 +43,31 @@ class KeyValueStoreModuleManager extends BaseModuleManager {
             ual,
         );
     }
+
+    async cacheOperationIdData(operationId, data) {
+        return this.getPendingStorageDatabase('operation_id_storage').cacheOperationIdData(
+            operationId,
+            data,
+        );
+    }
+
+    async getCachedOperationIdData(operationId) {
+        return this.getPendingStorageDatabase('operation_id_storage').getCachedOperationIdData(
+            operationId,
+        );
+    }
+
+    async removeCachedOperationIdData(operationId) {
+        return this.getPendingStorageDatabase('operation_id_storage').removeCachedOperationIdData(
+            operationId,
+        );
+    }
+
+    async getAllCachedOperationIdsDataIterable() {
+        return this.getPendingStorageDatabase(
+            'operation_id_storage',
+        ).getAllCachedOperationIdsDataIterable();
+    }
 }
 
 export default KeyValueStoreModuleManager;

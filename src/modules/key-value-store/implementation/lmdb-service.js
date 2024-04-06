@@ -1,5 +1,6 @@
 import { open } from 'lmdb';
-import PendingStorageDatabase from './repositories/pending-storage.js';
+import PendingStorageDatabase from './databases/pending-storage.js';
+import OperationIdStorageDatabase from './databases/operation-id-storage.js';
 
 class LMDBService {
     async initialize(config, logger) {
@@ -13,6 +14,7 @@ class LMDBService {
         });
         this.databases = {
             pending_storage: new PendingStorageDatabase(this.rootDatabase),
+            operation_id_storage: new OperationIdStorageDatabase(this.rootDatabase)
         };
     }
 
