@@ -1,4 +1,4 @@
-import { path } from 'app-root-path';
+import path from 'path';
 import BaseMigration from './base-migration.js';
 
 class OperationIdStorageMigration extends BaseMigration {

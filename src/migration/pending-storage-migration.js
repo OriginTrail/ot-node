@@ -1,5 +1,5 @@
-import { path } from 'app-root-path';
-import { fs } from 'fs/promises';
+import path from 'path';
+import { readdir } from 'fs/promises';
 import BaseMigration from './base-migration.js';
 import { PENDING_STORAGE_REPOSITORIES } from '../constants/constants.js';
 
@@ -23,7 +23,8 @@ class PendingStorageMigration extends BaseMigration {
             // eslint-disable-next-line no-await-in-loop
             const assetFolderNames = await this.getFolders(cachePath);
             for (const assetFolderName of assetFolderNames) {
-                const [blockchain, contract, tokenId] = assetFolderName.split(':');
+                const [blockchainName, blockchainId, contract, tokenId] =
+                    assetFolderName.split(':');
                 const assetFolderPath = path.join(cachePath, assetFolderName);
                 // eslint-disable-next-line no-await-in-loop
                 const assertionIds = await this.fileService.readDirectory(assetFolderPath);
@@ -34,7 +35,7 @@ class PendingStorageMigration extends BaseMigration {
                     // eslint-disable-next-line no-await-in-loop
                     await this.pendingStorageService.cacheAssertionData(
                         repository,
-                        blockchain,
+                        `${blockchainName}:${blockchainId}`,
                         contract,
                         tokenId,
                         assertionId,
@@ -49,10 +50,10 @@ class PendingStorageMigration extends BaseMigration {
 
     async getFolders(directoryPath) {
         try {
-            const files = await fs.readdir(directoryPath, { withFileTypes: true });
+            const files = await readdir(directoryPath, { withFileTypes: true });
             return files.filter((dirent) => dirent.isDirectory()).map((dirent) => dirent.name);
         } catch (error) {
-            throw new Error('Unable to get folders:', error);
+            return [];
         }
     }
 }
