@@ -46,6 +46,8 @@ class ProtocolService {
 
         const prefix = `${version}${capitalizedOperation}`;
 
+        if (protocol === NETWORK_PROTOCOLS.GET[0]) return [`${prefix}RequestCommand`];
+
         return [`${prefix}InitCommand`, `${prefix}RequestCommand`];
     }
 }
