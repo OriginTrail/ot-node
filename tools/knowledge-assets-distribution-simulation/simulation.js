@@ -9,6 +9,7 @@ import fs from 'fs-extra';
 import D3Node from 'd3-node';
 import * as d3 from 'd3';
 import sharp from 'sharp';
+import csv from 'csv-parser';
 import { readFile } from 'fs/promises';
 import { createRequire } from 'module';
 import { create as createLibP2PKey, createFromPrivKey } from 'peer-id';
@@ -99,7 +100,7 @@ async function generateRandomNodes(
     return nodes;
 }
 
-async function readJsonFromFile(filePath) {
+async function readJsonFromJsonFile(filePath) {
     try {
         const data = await readFile(filePath, 'utf8');
         return JSON.parse(data);
@@ -107,6 +108,42 @@ async function readJsonFromFile(filePath) {
         logger.error(`Error reading file: ${error.stack}`);
         throw error;
     }
+}
+
+async function readJsonFromCsvFile(flePath) {
+    const results = [];
+    try {
+        fs.createReadStream(flePath)
+            .pipe(csv())
+            .on('data', (data) => results.push(data));
+    } catch (error) {
+        logger.error(`Error reading file: ${error.stack}`);
+        throw error;
+    }
+    return results;
+}
+
+async function readJsonFromFile(filePath) {
+    if (filePath.endsWith('.json')) {
+        return readJsonFromJsonFile(filePath);
+    }
+    if (filePath.endsWith('.csv')) {
+        return readJsonFromCsvFile(filePath);
+    }
+    throw Error(`Unsupported file format: ${filePath}}`);
+}
+
+function getCurrentDateTime() {
+    const now = new Date();
+
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+
+    return `${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
 }
 
 function convertSvgToJpg(svgString, outputImageName) {
@@ -526,7 +563,7 @@ async function runSimulation(
             }
         }
     }
-    const outputPath = '/Users/mihajlopavlovic/Documents/simulationData/simulationJSON.json';
+    const outputPath = `./${getCurrentDateTime}-simulation-result.json`;
     fs.writeFileSync(outputPath, JSON.stringify(replicas, null, 2));
     generateScatterPlot(
         Object.values(replicas),
