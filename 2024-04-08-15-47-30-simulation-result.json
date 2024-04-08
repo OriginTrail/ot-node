@@ -1,0 +1,53 @@
+{
+  "1": {
+    "stake": 43892345,
+    "replicated": 16,
+    "won": 6,
+    "tokenIds": [
+      "1",
+      "1",
+      "2",
+      "3",
+      "4",
+      "4"
+    ],
+    "expectedAward": null
+  },
+  "2": {
+    "stake": 43892345,
+    "replicated": 4,
+    "won": 2,
+    "tokenIds": [
+      "2",
+      "3"
+    ],
+    "expectedAward": null
+  },
+  "3": {
+    "stake": 43892345,
+    "replicated": 4,
+    "won": 0,
+    "tokenIds": [],
+    "expectedAward": 0
+  },
+  "4": {
+    "stake": 43892345,
+    "replicated": 4,
+    "won": 2,
+    "tokenIds": [
+      "2",
+      "3"
+    ],
+    "expectedAward": null
+  },
+  "5": {
+    "stake": 43892345,
+    "replicated": 4,
+    "won": 2,
+    "tokenIds": [
+      "1",
+      "4"
+    ],
+    "expectedAward": null
+  }
+}

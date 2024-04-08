@@ -110,17 +110,19 @@ async function readJsonFromJsonFile(filePath) {
     }
 }
 
-async function readJsonFromCsvFile(flePath) {
-    const results = [];
-    try {
-        fs.createReadStream(flePath)
+async function readJsonFromCsvFile(filePath) {
+    return new Promise((resolve, reject) => {
+        const results = [];
+        fs.createReadStream(filePath)
             .pipe(csv())
-            .on('data', (data) => results.push(data));
-    } catch (error) {
-        logger.error(`Error reading file: ${error.stack}`);
-        throw error;
-    }
-    return results;
+            .on('data', (data) => results.push(data))
+            .on('end', () => {
+                resolve(results);
+            })
+            .on('error', (error) => {
+                reject(error);
+            });
+    });
 }
 
 async function readJsonFromFile(filePath) {
@@ -563,8 +565,9 @@ async function runSimulation(
             }
         }
     }
-    const outputPath = `./${getCurrentDateTime}-simulation-result.json`;
+    const outputPath = `./${getCurrentDateTime()}-simulation-result.json`;
     fs.writeFileSync(outputPath, JSON.stringify(replicas, null, 2));
+    logger.info(`Simulation output writtent to ${outputPath}`);
     generateScatterPlot(
         Object.values(replicas),
         'replicated',
