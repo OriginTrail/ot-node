@@ -485,8 +485,10 @@ async function runSimulation(
     const replicas = {};
 
     for (const node of nodes) {
+        const stake = Number(node.stake) / 10 ** 18;
+        node.stake = stake > 2_000_000 ? 2_000_000 : stake;
         replicas[node.nodeId] = {
-            stake: Number(node.stake),
+            stake: node.stake,
             replicated: 0,
             won: 0,
             tokenIds: [],
@@ -565,7 +567,10 @@ async function runSimulation(
             }
         }
     }
-    const outputPath = `./${getCurrentDateTime()}-simulation-result.json`;
+    for (const nodeId in replicas) {
+        replicas[nodeId].expectedAward /= 10 ** 18;
+    }
+    const outputPath = `${getCurrentDateTime()}-simulation-result.json`;
     fs.writeFileSync(outputPath, JSON.stringify(replicas, null, 2));
     logger.info(`Simulation output writtent to ${outputPath}`);
     generateScatterPlot(
