@@ -1,3 +1,5 @@
+import { BID_SUGGESTION_RANGE_ENUM } from '../../../../constants/constants.js';
+
 export default (argumentsObject) => ({
     type: 'object',
     required: [
@@ -39,6 +41,10 @@ export default (argumentsObject) => ({
             type: 'number',
             minimum: 1,
             maximum: 2,
+        },
+        bidSuggestionRange: {
+            type: 'string',
+            enum: BID_SUGGESTION_RANGE_ENUM,
         },
     },
 });
