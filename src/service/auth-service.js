@@ -18,7 +18,18 @@ class AuthService {
         const isWhitelisted = this._isIpWhitelisted(ip);
         const isTokenValid = await this._isTokenValid(token);
 
-        const isAuthenticated = isWhitelisted && isTokenValid;
+        const tokenAuthEnabled = this._authConfig.tokenBasedAuthEnabled;
+        const ipAuthEnabled = this._authConfig.ipBasedAuthEnabled;
+        const requiresBoth = this._authConfig.bothIpAndTokenAuthRequired;
+
+        let isAuthenticated = false;
+        if (tokenAuthEnabled && ipAuthEnabled) {
+            isAuthenticated = requiresBoth
+                ? isWhitelisted && isTokenValid
+                : isWhitelisted || isTokenValid;
+        } else {
+            isAuthenticated = isWhitelisted && isTokenValid;
+        }
 
         if (!isAuthenticated) {
             this._logMessage('Received unauthenticated request.');
@@ -36,6 +47,20 @@ class AuthService {
     async isAuthorized(token, systemOperation) {
         if (!this._authConfig.tokenBasedAuthEnabled) {
             return true;
+        }
+
+        /* 
+            If IP is whitelisted and both IP and Token Auth is NOT required pass authorization check.
+            Authentication middleware checks if IP is white listed before authorization middleware.
+        */
+        if (!(await this._isTokenValid(token))) {
+            if (
+                !this._authConfig.bothIpAndTokenAuthRequired &&
+                this._authConfig.ipBasedAuthEnabled
+            ) {
+                return true;
+            }
+            return false;
         }
 
         const tokenId = jwtUtil.getPayload(token).jti;
@@ -78,6 +103,10 @@ class AuthService {
     async _isTokenValid(token) {
         if (!this._authConfig.tokenBasedAuthEnabled) {
             return true;
+        }
+
+        if (!token) {
+            return false;
         }
 
         if (!jwtUtil.validateJWT(token)) {
