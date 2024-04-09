@@ -1,4 +1,4 @@
-import { BID_SUGGESTION_RANGE_ENUM } from '../../../../constants/constants';
+import { BID_SUGGESTION_RANGE_ENUM } from '../../../../constants/constants.js';
 
 export default (argumentsObject) => ({
     type: 'object',
