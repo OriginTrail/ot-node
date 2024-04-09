@@ -164,7 +164,8 @@
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
-            "publicOperations": []
+            "publicOperations": [],
+            "bothIpAndTokenAuthRequired": false
         }
     },
     "test": {
@@ -321,7 +322,8 @@
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
-            "publicOperations": []
+            "publicOperations": [],
+            "bothIpAndTokenAuthRequired": false
         }
     },
     "testnet": {
@@ -491,7 +493,8 @@
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
-            "publicOperations": []
+            "publicOperations": [],
+            "bothIpAndTokenAuthRequired": false
         }
     },
     "devnet": {
@@ -661,7 +664,8 @@
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
-            "publicOperations": []
+            "publicOperations": [],
+            "bothIpAndTokenAuthRequired": false
         }
     },
     "mainnet": {
@@ -831,7 +835,8 @@
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
-            "publicOperations": []
+            "publicOperations": [],
+            "bothIpAndTokenAuthRequired": false
         }
     }
 }
