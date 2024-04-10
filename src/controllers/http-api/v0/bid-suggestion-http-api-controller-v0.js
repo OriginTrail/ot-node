@@ -1,4 +1,5 @@
 import BaseController from '../base-http-api-controller.js';
+import { LOW_BID_SUGGESTION } from '../../../constants/constants.js';
 
 class BidSuggestionController extends BaseController {
     constructor(ctx) {
@@ -50,7 +51,7 @@ class BidSuggestionController extends BaseController {
             firstAssertionId,
             hashFunctionId,
         } = req.query;
-        let { proximityScoreFunctionsPairId } = req.query;
+        let { proximityScoreFunctionsPairId, bidSuggestionRange } = req.query;
         try {
             // TODO: ADD-DOCS
             if (!proximityScoreFunctionsPairId) {
@@ -58,6 +59,9 @@ class BidSuggestionController extends BaseController {
                     proximityScoreFunctionsPairId = 1;
                 else if (blockchain.startsWith('gnosis') || blockchain.startsWith('hardhat2'))
                     proximityScoreFunctionsPairId = 2;
+            }
+            if (!bidSuggestionRange) {
+                bidSuggestionRange = LOW_BID_SUGGESTION;
             }
 
             const bidSuggestion = await this.shardingTableService.getBidSuggestion(
@@ -68,6 +72,7 @@ class BidSuggestionController extends BaseController {
                 firstAssertionId,
                 hashFunctionId,
                 proximityScoreFunctionsPairId,
+                bidSuggestionRange,
             );
 
             this.returnResponse(res, 200, { bidSuggestion });
