@@ -11,7 +11,6 @@ import {
     DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS,
     CONTRACT_EVENT_TO_GROUP_MAPPING,
     GROUPED_CONTRACT_EVENTS,
-    SERVICE_AGREEMENT_SOURCES,
 } from '../constants/constants.js';
 
 const fetchEventsFailedCount = {};
@@ -516,86 +515,6 @@ class BlockchainEventListenerService {
                     event.blockchainId,
                     this.blockchainModuleManager.convertFromWei(event.blockchainId, eventData.ask),
                 );
-            }),
-        );
-    }
-
-    async handleAssetCreatedGroupEvents(blockGroupEvents) {
-        await Promise.all(
-            blockGroupEvents.map(async (eventsGroup) => {
-                // Parse and combine Arguments of both AssetMinted and ServiceAgreementCreated Events
-                const combinedData = eventsGroup.reduce((accumulator, event) => {
-                    try {
-                        const eventData = JSON.parse(event.data);
-                        return {
-                            ...accumulator,
-                            ...eventData,
-                            blockchainId: event.blockchainId,
-                        };
-                    } catch (error) {
-                        this.logger.error(`Error parsing event data: ${error}`);
-                        return accumulator;
-                    }
-                }, {});
-
-                const {
-                    blockchainId,
-                    assetContract: contract,
-                    tokenId,
-                    keyword,
-                    hashFunctionId,
-                    state: assertionId,
-                    startTime,
-                    epochsNumber,
-                    epochLength,
-                    // TODO: Uncomment when these arguments are added to the ServiceAgreementV1Created event
-                    // scoreFunctionId,
-                    // proofWindowOffsetPerc,
-                } = combinedData;
-
-                const agreementId = this.serviceAgreementService.generateId(
-                    blockchainId,
-                    contract,
-                    tokenId,
-                    keyword,
-                    hashFunctionId,
-                );
-
-                const agreementRecord =
-                    await this.repositoryModuleManager.getServiceAgreementRecord(agreementId);
-                if (agreementRecord) {
-                    this.logger.trace(
-                        `Skipping processing of asset created event, agreement data present in database for agreement id: ${agreementId} on blockchain ${blockchainId}`,
-                    );
-                } else {
-                    const agreementData = await this.blockchainModuleManager.getAgreementData(
-                        blockchainId,
-                        agreementId,
-                    );
-
-                    if (!agreementData) {
-                        this.logger.warn(
-                            `Unable to fetch agreement data while processing asset created event for agreement id: ${agreementId}, blockchain id: ${blockchainId}`,
-                        );
-                    }
-
-                    await this.repositoryModuleManager.updateServiceAgreementRecord(
-                        blockchainId,
-                        contract,
-                        tokenId,
-                        agreementId,
-                        startTime,
-                        epochsNumber,
-                        epochLength,
-                        agreementData?.scoreFunctionId ?? 0,
-                        agreementData?.proofWindowOffsetPerc ?? 0,
-                        hashFunctionId,
-                        keyword,
-                        assertionId,
-                        0,
-                        SERVICE_AGREEMENT_SOURCES.EVENT,
-                    );
-                }
             }),
         );
     }

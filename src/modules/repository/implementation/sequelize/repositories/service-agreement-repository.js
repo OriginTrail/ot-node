@@ -262,6 +262,14 @@ class ServiceAgreementRepository {
             order: [['token_id', 'asc']],
         });
     }
+
+    async getLatestServiceAgreementTokenId(blockchainId) {
+        return this.model.max('tokenId', {
+            where: {
+                blockchainId,
+            },
+        });
+    }
 }
 
 export default ServiceAgreementRepository;
