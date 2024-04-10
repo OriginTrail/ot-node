@@ -20,7 +20,15 @@ class BidSuggestionController extends BaseController {
             });
             return;
         }
-
+        if (req.query.blockchain.startsWith('otp')) {
+            const message = `Unable to get bid suggestion. Blockchain: ${req.query.blockchain} unavailable.`;
+            this.logger.error(message);
+            this.returnResponse(res, 400, {
+                code: 400,
+                message,
+            });
+            return;
+        }
         // Uncomment when switch to ethers.js
         // if (
         //     !(await this.blockchainModuleManager.isAssetStorageContract(

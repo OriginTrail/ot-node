@@ -53,6 +53,12 @@ class BlockchainEventListenerService {
     }
 
     async fetchAndHandleBlockchainEvents(blockchainId) {
+        if (blockchainId.startsWith('otp')) {
+            this.logger.warn(
+                `Event listener not started. Blockchain: '${blockchainId}' unavailable.`,
+            );
+            return;
+        }
         const devEnvironment =
             process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
             process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;

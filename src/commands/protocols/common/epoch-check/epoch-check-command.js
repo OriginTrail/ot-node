@@ -28,16 +28,21 @@ class EpochCheckCommand extends Command {
 
         await Promise.all(
             this.blockchainModuleManager.getImplementationNames().map(async (blockchain) => {
-                const commandData = {
-                    blockchain,
-                    operationId,
-                };
+                if (!blockchain.startsWith('otp')) {
+                    const commandData = {
+                        blockchain,
+                        operationId,
+                    };
 
-                return this.commandExecutor.add({
-                    name: 'blockchainEpochCheckCommand',
-                    data: commandData,
-                    period: this.calculateCommandPeriod(),
-                });
+                    return this.commandExecutor.add({
+                        name: 'blockchainEpochCheckCommand',
+                        data: commandData,
+                        period: this.calculateCommandPeriod(),
+                    });
+                }
+                this.logger.warn(
+                    `Epoch check command not started. Blockchain: ${blockchain} unavailable.`,
+                );
             }),
         );
 
