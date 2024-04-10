@@ -2,7 +2,7 @@
   "modules":{
     "blockchain":{
       "implementation":{
-        "otp:20430":{
+        "otp:2043":{
           "enabled":true,
           "config":{
             "sharesTokenSymbol":"<shares_token_symbol>",
@@ -16,7 +16,7 @@
             ]
           }
         },
-        "gnosis:10200":{
+        "gnosis:100":{
           "enabled":true,
           "config":{
             "operatorFee": <node_operator_fee>,

@@ -346,6 +346,9 @@ export const ERROR_TYPE = {
         SUBMIT_UPDATE_COMMIT_ERROR: 'SubmitUpdateCommitError',
         SUBMIT_UPDATE_COMMIT_SEND_TX_ERROR: 'SubmitUpdateCommitSendTxError',
     },
+    GET_BID_SUGGESTION: {
+        UNSUPPORTED_BID_SUGGESTION_RANGE_ERROR: 'UnsupportedBidSuggestionRangeError',
+    },
 };
 export const OPERATION_ID_STATUS = {
     PENDING: 'PENDING',
@@ -757,3 +760,17 @@ export const CACHED_FUNCTIONS = {
         getParameters: CACHE_DATA_TYPES.ANY,
     },
 };
+
+export const LOW_BID_SUGGESTION = 'low';
+export const MED_BID_SUGGESTION = 'med';
+export const HIGH_BID_SUGGESTION = 'high';
+export const ALL_BID_SUGGESTION = 'all';
+export const BID_SUGGESTION_RANGE_ENUM = [
+    LOW_BID_SUGGESTION,
+    MED_BID_SUGGESTION,
+    HIGH_BID_SUGGESTION,
+    ALL_BID_SUGGESTION,
+];
+export const LOW_BID_SUGGESTION_OFFSET = 9;
+export const MED_BID_SUGGESTION_OFFSET = 11;
+export const HIGH_BID_SUGGESTION_OFFSET = 14;
