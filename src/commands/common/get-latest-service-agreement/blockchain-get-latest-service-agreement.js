@@ -1,5 +1,6 @@
 import Command from '../../command.js';
 import {
+    CONTENT_ASSET_HASH_FUNCTION_ID,
     GET_LATEST_SERVICE_AGREEMENT_FREQUENCY_MILLS,
     SERVICE_AGREEMENT_SOURCES,
 } from '../../../constants/constants.js';
@@ -72,7 +73,12 @@ class BlockchainGetLatestServiceAgreement extends Command {
         }
     }
 
-    async getAgreementDataForToken(tokenId, blockchain, contract, hashFunctionId) {
+    async getAgreementDataForToken(
+        tokenId,
+        blockchain,
+        contract,
+        hashFunctionId = CONTENT_ASSET_HASH_FUNCTION_ID,
+    ) {
         const assertionIds = await this.blockchainModuleManager.getAssertionIds(
             blockchain,
             contract,
