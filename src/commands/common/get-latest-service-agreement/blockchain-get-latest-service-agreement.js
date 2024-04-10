@@ -10,8 +10,9 @@ const BATCH_SIZE = 50;
 class BlockchainGetLatestServiceAgreement extends Command {
     constructor(ctx) {
         super(ctx);
-        this.serviceAgreementService = ctx.serviceAgreementService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.serviceAgreementService = ctx.serviceAgreementService;
         this.ualService = ctx.ualService;
     }
 
@@ -45,7 +46,7 @@ class BlockchainGetLatestServiceAgreement extends Command {
 
         const missingTokenIds = Array.from(
             { length: latestBlockchainTokenId - latestDbTokenId },
-            (_, index) => latestDbTokenId + index,
+            (_, index) => latestDbTokenId + index + 1,
         );
 
         let batchNumber = 0;

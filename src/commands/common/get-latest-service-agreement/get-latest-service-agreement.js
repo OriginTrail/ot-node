@@ -4,8 +4,10 @@ import { GET_LATEST_SERVICE_AGREEMENT_FREQUENCY_MILLS } from '../../../constants
 class GetLatestServiceAgreement extends Command {
     constructor(ctx) {
         super(ctx);
+        this.commandExecutor = ctx.commandExecutor;
         this.shardingTableService = ctx.shardingTableService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
     }
 
     /**
