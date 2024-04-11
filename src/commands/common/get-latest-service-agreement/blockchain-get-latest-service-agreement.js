@@ -1,6 +1,7 @@
 import Command from '../../command.js';
 import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
+    EXPECTED_TRANSACTION_ERRORS,
     GET_LATEST_SERVICE_AGREEMENT_FREQUENCY_MILLS,
     SERVICE_AGREEMENT_SOURCES,
 } from '../../../constants/constants.js';
@@ -36,19 +37,39 @@ class BlockchainGetLatestServiceAgreement extends Command {
     }
 
     async updateAgreementDataForAssetContract(contract, blockchain) {
-        const latestBlockchainTokenId = await this.blockchainModuleManager.getLatestTokenId(
-            blockchain,
-            contract,
+        this.logger.info(
+            `Get latest service agreement: Starting get latest service agreement command for blockchain: ${blockchain}`,
         );
-        const latestDbTokenId = await this.repositoryModuleManager.getLatestServiceAgreementTokenId(
-            blockchain,
+        let latestBlockchainTokenId;
+        try {
+            latestBlockchainTokenId = await this.blockchainModuleManager.getLatestTokenId(
+                blockchain,
+                contract,
+            );
+        } catch (error) {
+            if (error.message.includes(EXPECTED_TRANSACTION_ERRORS.NO_MINTED_ASSETS)) {
+                this.logger.info(
+                    `Get latest service agreement: No minted assets on blockchain: ${blockchain}`,
+                );
+                return;
+            }
+            throw error;
+        }
+
+        const latestDbTokenId =
+            (await this.repositoryModuleManager.getLatestServiceAgreementTokenId(blockchain)) ?? 0;
+
+        this.logger.debug(
+            `Get latest service agreement: Latest token id on chain: ${latestBlockchainTokenId}, latest token id in database: ${latestDbTokenId} on blockchain: ${blockchain}`,
         );
 
         const missingTokenIds = Array.from(
             { length: latestBlockchainTokenId - latestDbTokenId },
             (_, index) => latestDbTokenId + index + 1,
         );
-
+        this.logger.debug(
+            `Get latest service agreement: Found ${missingTokenIds.length} on blockchain: ${blockchain}`,
+        );
         let batchNumber = 0;
         while (batchNumber * BATCH_SIZE < missingTokenIds.length) {
             const promises = [];
@@ -72,6 +93,9 @@ class BlockchainGetLatestServiceAgreement extends Command {
             );
             batchNumber += 1;
         }
+        this.logger.debug(
+            `Get latest service agreement: Successfully fetched ${missingTokenIds.length} on blockchain: ${blockchain}`,
+        );
     }
 
     async getAgreementDataForToken(
@@ -80,27 +104,27 @@ class BlockchainGetLatestServiceAgreement extends Command {
         contract,
         hashFunctionId = CONTENT_ASSET_HASH_FUNCTION_ID,
     ) {
+        this.logger.debug(
+            `Get latest service agreement: Getting agreement data for token id: ${tokenId} on blockchain: ${blockchain}`,
+        );
         const assertionIds = await this.blockchainModuleManager.getAssertionIds(
             blockchain,
             contract,
             tokenId,
         );
-
-        const keyword = this.ualService.calculateLocationKeyword(
+        const keyword = await this.ualService.calculateLocationKeyword(
             blockchain,
             contract,
             tokenId,
             assertionIds[0],
         );
-
-        const agreementId = this.serviceAgreementService.generateId(
+        const agreementId = await this.serviceAgreementService.generateId(
             blockchain,
             contract,
             tokenId,
             keyword,
             hashFunctionId,
         );
-
         const agreementData = await this.blockchainModuleManager.getAgreementData(
             blockchain,
             agreementId,
@@ -134,11 +158,9 @@ class BlockchainGetLatestServiceAgreement extends Command {
 
     /**
      * Recover system from failure
-     * @param command
      * @param error
      */
-    async recover(command) {
-        this.logger.warn(`Failed to execute ${command.name}. Error: ${command.message}`);
+    async recover() {
         return Command.repeat();
     }
 

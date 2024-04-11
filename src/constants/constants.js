@@ -467,6 +467,7 @@ export const EXPECTED_TRANSACTION_ERRORS = {
     PROOF_WINDOW_CLOSED: 'ProofWindowClosed',
     NODE_NOT_AWARDED: 'NodeNotAwarded',
     WRONG_MERKLE_PROOF: 'WrongMerkleProof',
+    NO_MINTED_ASSETS: 'NoMintedAssets',
 };
 
 /**
