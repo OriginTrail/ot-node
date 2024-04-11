@@ -93,9 +93,11 @@ class BlockchainGetLatestServiceAgreement extends Command {
             );
             batchNumber += 1;
         }
-        this.logger.debug(
-            `Get latest service agreement: Successfully fetched ${missingTokenIds.length} on blockchain: ${blockchain}`,
-        );
+        if (missingTokenIds.length !== 0) {
+            this.logger.debug(
+                `Get latest service agreement: Successfully fetched ${missingTokenIds.length} on blockchain: ${blockchain}`,
+            );
+        }
     }
 
     async getAgreementDataForToken(

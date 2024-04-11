@@ -72,12 +72,6 @@ class BlockchainEventListenerService {
         }
 
         const syncContractEventsPromises = [
-            // this.getContractEvents(
-            //     blockchainId,
-            //     CONTRACTS.CONTENT_ASSET,
-            //     currentBlock,
-            //     CONTRACT_EVENTS.CONTENT_ASSET,
-            // ),
             this.getContractEvents(
                 blockchainId,
                 CONTRACTS.SHARDING_TABLE_CONTRACT,
