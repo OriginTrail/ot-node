@@ -70,7 +70,33 @@ class BlockchainGetLatestServiceAgreement extends Command {
         this.logger.debug(
             `Get latest service agreement: Found ${missingTokenIds.length} on blockchain: ${blockchain}`,
         );
+        let tokenIdDifference = latestBlockchainTokenId - latestDbTokenId;
         let batchNumber = 0;
+        let getAgreementDataPromise = [];
+        for (
+            let tokenIdToBeFetched = latestDbTokenId + 1;
+            tokenIdToBeFetched <= latestBlockchainTokenId;
+            tokenIdToBeFetched += 1
+        ) {
+            getAgreementDataPromise.push(
+                this.getAgreementDataForToken(tokenIdToBeFetched, blockchain, contract),
+            );
+            if (
+                getAgreementDataPromise.length === tokenIdDifference ||
+                getAgreementDataPromise.length === BATCH_SIZE
+            ) {
+                // eslint-disable-next-line no-await-in-loop
+                const missingAgreements = await Promise.all(getAgreementDataPromise);
+
+                // eslint-disable-next-line no-await-in-loop
+                await this.repositoryModuleManager.bulkCreateServiceAgreementRecords(
+                    missingAgreements.filter((agreement) => agreement != null),
+                );
+                batchNumber += 1;
+                getAgreementDataPromise = [];
+                tokenIdDifference -= BATCH_SIZE;
+            }
+        }
         while (batchNumber * BATCH_SIZE < missingTokenIds.length) {
             const promises = [];
             for (
