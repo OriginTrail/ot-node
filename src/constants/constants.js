@@ -160,6 +160,8 @@ export const REMOVE_SESSION_COMMAND_DELAY = 2 * 60 * 1000;
 
 export const OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
+export const GET_LATEST_SERVICE_AGREEMENT_FREQUENCY_MILLS = 30 * 1000;
+
 export const DIAL_PEERS_COMMAND_FREQUENCY_MILLS = 30 * 1000;
 
 export const DIAL_PEERS_CONCURRENCY = 10;
@@ -174,6 +176,7 @@ export const PERMANENT_COMMANDS = [
     'commandsCleanerCommand',
     'dialPeersCommand',
     'epochCheckCommand',
+    'getLatestServiceAgreement',
     'blockchainEventCleanerCommand',
     'getCleanerCommand',
     'getResponseCleanerCommand',
@@ -464,6 +467,7 @@ export const EXPECTED_TRANSACTION_ERRORS = {
     PROOF_WINDOW_CLOSED: 'ProofWindowClosed',
     NODE_NOT_AWARDED: 'NodeNotAwarded',
     WRONG_MERKLE_PROOF: 'WrongMerkleProof',
+    NO_MINTED_ASSETS: 'NoMintedAssets',
 };
 
 /**
@@ -661,24 +665,14 @@ export const CONTRACT_EVENTS = {
     SHARDING_TABLE: ['NodeAdded', 'NodeRemoved'],
     STAKING: ['StakeIncreased', 'StakeWithdrawalStarted'],
     PROFILE: ['AskUpdated'],
-    CONTENT_ASSET: ['AssetMinted'],
     COMMIT_MANAGER_V1: ['StateFinalized'],
-    SERVICE_AGREEMENT_V1: [
-        'ServiceAgreementV1Created',
-        'ServiceAgreementV1Extended',
-        'ServiceAgreementV1Terminated',
-    ],
+    SERVICE_AGREEMENT_V1: ['ServiceAgreementV1Extended', 'ServiceAgreementV1Terminated'],
     PARAMETERS_STORAGE: ['ParameterChanged'],
     LOG2PLDSF: ['ParameterChanged'],
     LINEAR_SUM: ['ParameterChanged'],
 };
 
-export const GROUPED_CONTRACT_EVENTS = {
-    AssetCreatedGroup: {
-        events: ['AssetMinted', 'ServiceAgreementV1Created'],
-        groupingKey: 'tokenId',
-    },
-};
+export const GROUPED_CONTRACT_EVENTS = {};
 
 export const CONTRACT_EVENT_TO_GROUP_MAPPING = (() => {
     const mapping = {};
