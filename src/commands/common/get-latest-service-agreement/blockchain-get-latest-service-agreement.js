@@ -70,28 +70,30 @@ class BlockchainGetLatestServiceAgreement extends Command {
         this.logger.debug(
             `Get latest service agreement: Found ${missingTokenIds.length} on blockchain: ${blockchain}`,
         );
-        let batchNumber = 0;
-        while (batchNumber * BATCH_SIZE < missingTokenIds.length) {
-            const promises = [];
-            for (
-                let i = batchNumber * BATCH_SIZE;
-                i < missingTokenIds.length && i < (batchNumber + 1) * BATCH_SIZE;
-                i += 1
-            ) {
-                const tokenIdToBeFetched = missingTokenIds[i];
-                promises.push(
-                    this.getAgreementDataForToken(tokenIdToBeFetched, blockchain, contract),
-                );
-            }
-
-            // eslint-disable-next-line no-await-in-loop
-            const missingAgreements = await Promise.all(promises);
-
-            // eslint-disable-next-line no-await-in-loop
-            await this.repositoryModuleManager.bulkCreateServiceAgreementRecords(
-                missingAgreements.filter((agreement) => agreement != null),
+        let tokenIdDifference = latestBlockchainTokenId - latestDbTokenId;
+        let getAgreementDataPromise = [];
+        for (
+            let tokenIdToBeFetched = latestDbTokenId + 1;
+            tokenIdToBeFetched <= latestBlockchainTokenId;
+            tokenIdToBeFetched += 1
+        ) {
+            getAgreementDataPromise.push(
+                this.getAgreementDataForToken(tokenIdToBeFetched, blockchain, contract),
             );
-            batchNumber += 1;
+            if (
+                getAgreementDataPromise.length === tokenIdDifference ||
+                getAgreementDataPromise.length === BATCH_SIZE
+            ) {
+                // eslint-disable-next-line no-await-in-loop
+                const missingAgreements = await Promise.all(getAgreementDataPromise);
+
+                // eslint-disable-next-line no-await-in-loop
+                await this.repositoryModuleManager.bulkCreateServiceAgreementRecords(
+                    missingAgreements.filter((agreement) => agreement != null),
+                );
+                getAgreementDataPromise = [];
+                tokenIdDifference -= BATCH_SIZE;
+            }
         }
         if (missingTokenIds.length !== 0) {
             this.logger.debug(
