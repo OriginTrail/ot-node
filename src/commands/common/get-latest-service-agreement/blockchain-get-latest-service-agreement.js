@@ -63,13 +63,6 @@ class BlockchainGetLatestServiceAgreement extends Command {
             `Get latest service agreement: Latest token id on chain: ${latestBlockchainTokenId}, latest token id in database: ${latestDbTokenId} on blockchain: ${blockchain}`,
         );
 
-        const missingTokenIds = Array.from(
-            { length: latestBlockchainTokenId - latestDbTokenId },
-            (_, index) => latestDbTokenId + index + 1,
-        );
-        this.logger.debug(
-            `Get latest service agreement: Found ${missingTokenIds.length} on blockchain: ${blockchain}`,
-        );
         let tokenIdDifference = latestBlockchainTokenId - latestDbTokenId;
         let getAgreementDataPromise = [];
         for (
@@ -95,9 +88,11 @@ class BlockchainGetLatestServiceAgreement extends Command {
                 tokenIdDifference -= BATCH_SIZE;
             }
         }
-        if (missingTokenIds.length !== 0) {
+        if (latestBlockchainTokenId - latestDbTokenId !== 0) {
             this.logger.debug(
-                `Get latest service agreement: Successfully fetched ${missingTokenIds.length} on blockchain: ${blockchain}`,
+                `Get latest service agreement: Successfully fetched ${
+                    latestBlockchainTokenId - latestDbTokenId
+                } on blockchain: ${blockchain}`,
             );
         }
     }
