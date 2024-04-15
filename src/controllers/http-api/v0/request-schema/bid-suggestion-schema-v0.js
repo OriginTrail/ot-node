@@ -39,8 +39,7 @@ export default (argumentsObject) => ({
         },
         proximityScoreFunctionsPairId: {
             type: 'number',
-            minimum: 1,
-            maximum: 2,
+            const: 2,
         },
         bidSuggestionRange: {
             type: 'string',
