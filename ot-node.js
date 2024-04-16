@@ -341,6 +341,34 @@ class OTNode {
         await autoUpdaterCommand.execute();
     }
 
+    initializeParanets() {
+        const paranetIdService = this.container.resolve('paranetIdService');
+        const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        const tripleStoreService = this.container.resolve('tripleStoreService');
+        const tripleStoreModuleManager = this.container.resolve('tripleStoreModuleManager');
+        const invalidParanets = [];
+        const validParanets = [];
+        this.config.assetSync?.syncParanets.forEach((paranetId) => {
+            if (!paranetIdService.isUAL(paranetId)) {
+                invalidParanets.push(paranetId);
+                this.logger.warn('');
+            } else {
+                const { blockchainId } = paranetIdService.resolveUAL(paranetId);
+                if (!blockchainModuleManager.getImplementationNames().includes(blockchainId)) {
+                    invalidParanets.push(paranetId);
+                    this.logger.warn('');
+                } else {
+                    validParanets.push(paranetId);
+                    const repository = paranetIdService.getParanetRepositoryName(paranetId);
+                    tripleStoreModuleManager.initializeRepository(repository);
+                }
+            }
+        });
+        this.config.assetSync.syncParanets = validParanets;
+
+        tripleStoreService.initializeRepositories();
+    }
+
     stop(code = 0) {
         this.logger.info('Stopping node...');
         process.exit(code);

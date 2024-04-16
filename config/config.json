@@ -156,6 +156,9 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "info",
+        "assetSync": {
+            "syncParanets": []
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
@@ -309,6 +312,9 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
+        "assetSync": {
+            "syncParanets": []
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
@@ -475,6 +481,9 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
+        "assetSync": {
+            "syncParanets": []
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
@@ -641,6 +650,9 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
+        "assetSync": {
+            "syncParanets": []
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
@@ -807,6 +819,9 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
+        "assetSync": {
+            "syncParanets": []
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,

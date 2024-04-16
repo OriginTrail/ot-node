@@ -150,6 +150,8 @@ export const HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 16000;
 
 export const SHARDING_TABLE_CHECK_COMMAND_FREQUENCY_MINUTES = 30;
 
+export const PARANET_SYNC_FREQUENCY_MILLS = 5 * 1000;
+
 export const SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES = 15;
 
 export const PEER_RECORD_UPDATE_DELAY = 30 * 60 * 1000; // 30 minutes
@@ -345,6 +347,10 @@ export const ERROR_TYPE = {
         SUBMIT_PROOFS_SEND_TX_ERROR: 'SubmitProofsSendTxError',
         SUBMIT_UPDATE_COMMIT_ERROR: 'SubmitUpdateCommitError',
         SUBMIT_UPDATE_COMMIT_SEND_TX_ERROR: 'SubmitUpdateCommitSendTxError',
+    },
+    PARANET: {
+        START_PARANET_SYNC_ERROR: 'StartParanetSyncError',
+        PARANET_SYNC_ERROR: 'ParanetSyncError',
     },
 };
 export const OPERATION_ID_STATUS = {

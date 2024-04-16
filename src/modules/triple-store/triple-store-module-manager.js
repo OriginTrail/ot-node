@@ -1,6 +1,10 @@
 import BaseModuleManager from '../base-module-manager.js';
 
 class TripleStoreModuleManager extends BaseModuleManager {
+    initializeRepository(repository) {
+        return this.getImplementation().module.initializeRepository(repository);
+    }
+
     async insertAssetAssertionMetadata(implementationName, repository, assetNquads) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.insertAssetAssertionMetadata(
