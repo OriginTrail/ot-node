@@ -10,7 +10,10 @@ class TripleStoreService {
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.ualService = ctx.ualService;
         this.dataService = ctx.dataService;
+        this.paranetIdService = ctx.paranetIdService;
+    }
 
+    initializeRepositories() {
         this.repositoryImplementations = {};
         for (const implementationName of this.tripleStoreModuleManager.getImplementationNames()) {
             for (const repository in this.tripleStoreModuleManager.getImplementation(
@@ -276,6 +279,11 @@ class TripleStoreService {
             repository,
             this.ualService.deriveUAL(blockchain, contract, tokenId),
         );
+    }
+
+    async paranetAssetExists(paranetId, blockchain, contract, tokenId) {
+        const repository = this.paranetIdService.getParanetRepositoryName(paranetId);
+        return this.assetExists(repository, blockchain, contract, tokenId);
     }
 
     async insertAssetAssertionLink(repository, blockchain, contract, tokenId, assertionId) {
