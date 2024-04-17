@@ -449,6 +449,12 @@ class RepositoryModuleManager extends BaseModuleManager {
             blockchainId,
         );
     }
+
+    async getLatestServiceAgreementTokenId(blockchainId) {
+        return this.getRepository('service_agreement').getLatestServiceAgreementTokenId(
+            blockchainId,
+        );
+    }
 }
 
 export default RepositoryModuleManager;
