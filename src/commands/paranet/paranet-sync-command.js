@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-await-in-loop */
 import Command from '../command.js';
-import { ERROR_TYPE, PARANET_SYNC_FREQUENCY_MILLS, OPERATION_ID_STATUS, CONTENT_ASSET_HASH_FUNCTION_ID } from '../../constants/constants.js';
+import { ERROR_TYPE, PARANET_SYNC_FREQUENCY_MILLS, OPERATION_ID_STATUS, CONTENT_ASSET_HASH_FUNCTION_ID, SIMPLE_ASSET_SYNC_PARAMETERS } from '../../constants/constants.js';
 
 class StartParanetSyncCommands extends Command {
     constructor(ctx) {
@@ -24,7 +24,6 @@ class StartParanetSyncCommands extends Command {
         // schedule get commands for each asset
         // store in paranet repository
 
-
         // TODO: How do I get the params?
         let blockchain = '';
         let contract = '';
@@ -38,8 +37,8 @@ class StartParanetSyncCommands extends Command {
 
         // Go through all except the last one
         for (let stateIndex = assertionIds.length - 2; stateIndex > 0; stateIndex -= 1) {
-            // TODO: Also pass in where to which repo to move it
-            await this.syncAsset(blockchain, contract, tokenId, assertionIds, stateIndex);
+            // TODO: Also pass in where to which repo to move it?
+            await this.syncAsset(blockchain, contract, tokenId, assertionIds, stateIndex, paranetId);
         }
 
         // Then sync the last one, but put it in 'current' repo
@@ -47,7 +46,7 @@ class StartParanetSyncCommands extends Command {
         return Command.repeat();
     }
 
-    async syncAsset(blockchain, contract, tokenId, assertionIds, stateIndex) {
+    async syncAsset(blockchain, contract, tokenId, assertionIds, stateIndex, paranetId) {
         try {
             if (
                 await this.repositoryModuleManager.isStateSynced(
@@ -65,7 +64,7 @@ class StartParanetSyncCommands extends Command {
                     contract,
                     tokenId,
                     stateIndex,
-                    ASSET_SYNC_PARAMETERS.STATUS.COMPLETED,
+                    SIMPLE_ASSET_SYNC_PARAMETERS.STATUS.COMPLETED,
                     true,
                 );
                 return;
@@ -87,7 +86,7 @@ class StartParanetSyncCommands extends Command {
                     contract,
                     tokenId,
                     stateIndex,
-                    ASSET_SYNC_PARAMETERS.STATUS.COMPLETED,
+                    SIMPLE_ASSET_SYNC_PARAMETERS.STATUS.COMPLETED,
                     true,
                 );
                 return;
@@ -117,13 +116,13 @@ class StartParanetSyncCommands extends Command {
                     contract,
                     tokenId,
                     stateIndex,
-                    ASSET_SYNC_PARAMETERS.STATUS.IN_PROGRESS,
+                    SIMPLE_ASSET_SYNC_PARAMETERS.STATUS.IN_PROGRESS,
                 ),
 
                 this.repositoryModuleManager.createOperationRecord(
                     this.getService.getOperationName(),
                     operationId,
-                    OPERATION_STATUS.IN_PROGRESS,
+                    OPERATION_ID_STATUS.IN_PROGRESS,
                 ),
             ]);
 
@@ -162,12 +161,16 @@ class StartParanetSyncCommands extends Command {
             let attempt = 0;
             let getResult;
             do {
-                await setTimeout(ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS);
+                await setTimeout(SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS);
 
                 getResult = await this.operationIdService.getOperationIdRecord(operationId);
+                if (getResult?.status === OPERATION_ID_STATUS.COMPLETED) {
+                    // TODO: Move repos after? this.pendingStorageService.moveAndDeletePendingState()? this.tripleStoreService.moveAsset()?
+                }
+
                 attempt += 1;
             } while (
-                attempt < ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_MAX_ATTEMPTS &&
+                attempt < SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_MAX_ATTEMPTS &&
                 getResult?.status !== OPERATION_ID_STATUS.FAILED &&
                 getResult?.status !== OPERATION_ID_STATUS.COMPLETED
             );
@@ -180,7 +183,7 @@ class StartParanetSyncCommands extends Command {
                 contract,
                 tokenId,
                 stateIndex,
-                ASSET_SYNC_PARAMETERS.STATUS.FAILED,
+                SIMPLE_ASSET_SYNC_PARAMETERS.STATUS.FAILED,
                 true,
             );
         }
