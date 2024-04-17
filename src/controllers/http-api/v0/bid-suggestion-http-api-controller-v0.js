@@ -51,9 +51,9 @@ class BidSuggestionController extends BaseController {
             firstAssertionId,
             hashFunctionId,
         } = req.query;
-        let { proximityScoreFunctionsPairId, bidSuggestionRange } = req.query;
+        let { bidSuggestionRange } = req.query;
         try {
-            proximityScoreFunctionsPairId = proximityScoreFunctionsPairId ?? 2;
+            const proximityScoreFunctionsPairId = 2;
 
             if (!bidSuggestionRange) {
                 bidSuggestionRange = LOW_BID_SUGGESTION;
