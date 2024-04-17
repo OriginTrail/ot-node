@@ -14,7 +14,7 @@ class StartParanetSyncCommands extends Command {
     }
 
     async execute(command) {
-        const { commandOperationId, paranetId } = command.data;
+        const { commandOperationId, paranetId, blockchain, contract, tokenId } = command.data;
 
         this.logger.info(
             `Paranet sync: Starting paranet sync command for ${paranetId} with operation id: ${commandOperationId}`,
@@ -23,11 +23,6 @@ class StartParanetSyncCommands extends Command {
         // get missed token ids for paranet
         // schedule get commands for each asset
         // store in paranet repository
-
-        // TODO: How do I get the params?
-        let blockchain = '';
-        let contract = '';
-        let tokenId = '';
 
         const assertionIds = await this.blockchainModuleManager.getLatestAssertionId(
             blockchain,
