@@ -201,10 +201,6 @@ class OtParachainService extends Web3Service {
         });
         return wallets;
     }
-
-    async getAgreementScoreFunctionId() {
-        return 1;
-    }
 }
 
 export default OtParachainService;

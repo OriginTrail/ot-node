@@ -176,7 +176,10 @@ class ServiceAgreementRepository {
                     [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
                 },
             },
-            order: [[Sequelize.col('timeLeftInSubmitCommitWindow'), 'ASC']],
+            order: [
+                ['scoreFunctionId', 'DESC'],
+                [Sequelize.col('timeLeftInSubmitCommitWindow'), 'ASC'],
+            ],
             limit: 100,
             raw: true,
         });
@@ -232,7 +235,10 @@ class ServiceAgreementRepository {
                     [Sequelize.Op.gt]: Sequelize.literal(currentEpoch),
                 },
             },
-            order: [[Sequelize.col('timeLeftInSubmitProofWindow'), 'ASC']],
+            order: [
+                ['scoreFunctionId', 'DESC'],
+                [Sequelize.col('timeLeftInSubmitProofWindow'), 'ASC'],
+            ],
             limit: 100,
             raw: true,
         });
@@ -260,6 +266,14 @@ class ServiceAgreementRepository {
                 blockchainId,
             },
             order: [['token_id', 'asc']],
+        });
+    }
+
+    async getLatestServiceAgreementTokenId(blockchainId) {
+        return this.model.max('tokenId', {
+            where: {
+                blockchainId,
+            },
         });
     }
 }
