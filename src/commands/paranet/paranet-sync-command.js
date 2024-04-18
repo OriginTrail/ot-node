@@ -143,6 +143,9 @@ class StartParanetSyncCommands extends Command {
                     assetSync: true,
                     stateIndex,
                     assetSyncInsertedByCommand: true,
+                    paranetSync: true,
+                    paranetId
+                    // paranetRepo: 'currentHistory'
                 },
                 transactional: false,
             });

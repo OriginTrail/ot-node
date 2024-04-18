@@ -41,6 +41,8 @@ class GetService extends OperationService {
             assertionId,
             assetSync,
             stateIndex,
+            parachainSync,
+            parachainId
         } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
@@ -80,9 +82,8 @@ class GetService extends OperationService {
             );
             this.logResponsesSummary(completedNumber, failedNumber);
 
+            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
             if (assetSync) {
-                const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
                 this.logger.debug(
                     `ASSET_SYNC: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
                 );
@@ -96,7 +97,25 @@ class GetService extends OperationService {
                     tokenId,
                     keyword,
                 );
+
+                if (parachainSync) {
+                    this.logger.debug(
+                        `PARACHAIN_ASSET_SYNC: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                    );
+    
+                    // TODO: How to target the parachain repo?
+                    await this.tripleStoreService.localStoreAsset(
+                        TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                        assertionId,
+                        responseData.nquads,
+                        blockchain,
+                        contract,
+                        tokenId,
+                        keyword,
+                    );
+                }
             }
+
         }
 
         if (
