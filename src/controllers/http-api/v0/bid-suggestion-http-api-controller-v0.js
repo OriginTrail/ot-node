@@ -51,15 +51,10 @@ class BidSuggestionController extends BaseController {
             firstAssertionId,
             hashFunctionId,
         } = req.query;
-        let { proximityScoreFunctionsPairId, bidSuggestionRange } = req.query;
+        let { bidSuggestionRange } = req.query;
         try {
-            // TODO: ADD-DOCS
-            if (!proximityScoreFunctionsPairId) {
-                if (blockchain.startsWith('otp') || blockchain.startsWith('hardhat1'))
-                    proximityScoreFunctionsPairId = 1;
-                else if (blockchain.startsWith('gnosis') || blockchain.startsWith('hardhat2'))
-                    proximityScoreFunctionsPairId = 2;
-            }
+            const proximityScoreFunctionsPairId = 2;
+
             if (!bidSuggestionRange) {
                 bidSuggestionRange = LOW_BID_SUGGESTION;
             }
