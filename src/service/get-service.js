@@ -41,8 +41,8 @@ class GetService extends OperationService {
             assertionId,
             assetSync,
             stateIndex,
-            parachainSync,
-            parachainId
+            paranetSync,
+            paranetId
         } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
@@ -98,7 +98,7 @@ class GetService extends OperationService {
                     keyword,
                 );
 
-                if (parachainSync) {
+                if (paranetSync) {
                     this.logger.debug(
                         `PARACHAIN_ASSET_SYNC: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
                     );
