@@ -1,12 +1,16 @@
+/* eslint-disable no-await-in-loop */
+import { setTimeout as sleep } from 'timers/promises';
 import Command from '../../command.js';
 import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
     EXPECTED_TRANSACTION_ERRORS,
+    GET_ASSERTION_IDS_MAX_RETRY_COUNT,
+    GET_ASSERTION_IDS_RETRY_DELAY_IN_SECONDS,
+    GET_LATEST_SERVICE_AGREEMENT_BATCH_SIZE,
+    GET_LATEST_SERVICE_AGREEMENT_EXCLUDE_LATEST_TOKEN_ID,
     GET_LATEST_SERVICE_AGREEMENT_FREQUENCY_MILLS,
     SERVICE_AGREEMENT_SOURCES,
 } from '../../../constants/constants.js';
-
-const BATCH_SIZE = 50;
 
 class BlockchainGetLatestServiceAgreement extends Command {
     constructor(ctx) {
@@ -42,10 +46,9 @@ class BlockchainGetLatestServiceAgreement extends Command {
         );
         let latestBlockchainTokenId;
         try {
-            latestBlockchainTokenId = await this.blockchainModuleManager.getLatestTokenId(
-                blockchain,
-                contract,
-            );
+            latestBlockchainTokenId =
+                Number(await this.blockchainModuleManager.getLatestTokenId(blockchain, contract)) -
+                GET_LATEST_SERVICE_AGREEMENT_EXCLUDE_LATEST_TOKEN_ID;
         } catch (error) {
             if (error.message.includes(EXPECTED_TRANSACTION_ERRORS.NO_MINTED_ASSETS)) {
                 this.logger.info(
@@ -53,11 +56,21 @@ class BlockchainGetLatestServiceAgreement extends Command {
                 );
                 return;
             }
-            throw error;
+            this.logger.error(
+                `Unable to process agreement data for asset contract ${contract}. Error: ${error}`,
+            );
+            return;
         }
 
         const latestDbTokenId =
             (await this.repositoryModuleManager.getLatestServiceAgreementTokenId(blockchain)) ?? 0;
+
+        if (latestBlockchainTokenId < latestDbTokenId) {
+            this.logger.debug(
+                `Get latest service agreement: No new agreements found on blockchain: ${blockchain}.`,
+            );
+            return;
+        }
 
         this.logger.debug(
             `Get latest service agreement: Latest token id on chain: ${latestBlockchainTokenId}, latest token id in database: ${latestDbTokenId} on blockchain: ${blockchain}`,
@@ -75,17 +88,15 @@ class BlockchainGetLatestServiceAgreement extends Command {
             );
             if (
                 getAgreementDataPromise.length === tokenIdDifference ||
-                getAgreementDataPromise.length === BATCH_SIZE
+                getAgreementDataPromise.length === GET_LATEST_SERVICE_AGREEMENT_BATCH_SIZE
             ) {
-                // eslint-disable-next-line no-await-in-loop
                 const missingAgreements = await Promise.all(getAgreementDataPromise);
 
-                // eslint-disable-next-line no-await-in-loop
                 await this.repositoryModuleManager.bulkCreateServiceAgreementRecords(
                     missingAgreements.filter((agreement) => agreement != null),
                 );
                 getAgreementDataPromise = [];
-                tokenIdDifference -= BATCH_SIZE;
+                tokenIdDifference -= GET_LATEST_SERVICE_AGREEMENT_BATCH_SIZE;
             }
         }
         if (latestBlockchainTokenId - latestDbTokenId !== 0) {
@@ -103,56 +114,76 @@ class BlockchainGetLatestServiceAgreement extends Command {
         contract,
         hashFunctionId = CONTENT_ASSET_HASH_FUNCTION_ID,
     ) {
-        this.logger.debug(
-            `Get latest service agreement: Getting agreement data for token id: ${tokenId} on blockchain: ${blockchain}`,
-        );
-        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
-            blockchain,
-            contract,
-            tokenId,
-        );
-        const keyword = await this.ualService.calculateLocationKeyword(
-            blockchain,
-            contract,
-            tokenId,
-            assertionIds[0],
-        );
-        const agreementId = await this.serviceAgreementService.generateId(
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-            hashFunctionId,
-        );
-        const agreementData = await this.blockchainModuleManager.getAgreementData(
-            blockchain,
-            agreementId,
-        );
-
-        if (!agreementData) {
-            this.logger.warn(
-                `Unable to fetch agreement data while processing asset created event for agreement id: ${agreementId}, blockchain id: ${blockchain}`,
+        try {
+            this.logger.debug(
+                `Get latest service agreement: Getting agreement data for token id: ${tokenId} on blockchain: ${blockchain}`,
             );
+            let assertionIds = [];
+            let retryCount = 0;
+
+            while (assertionIds.length === 0) {
+                if (retryCount === GET_ASSERTION_IDS_MAX_RETRY_COUNT) {
+                    throw Error(
+                        `Get latest service agreement: Unable to get assertion ids for token id: ${tokenId} on blockchain: ${blockchain}`,
+                    );
+                }
+                this.logger.debug(
+                    `Get latest service agreement: getting assertion ids retry ${retryCount} for token id: ${tokenId} on blockchain: ${blockchain}`,
+                );
+                assertionIds = await this.blockchainModuleManager.getAssertionIds(
+                    blockchain,
+                    contract,
+                    tokenId,
+                );
+                retryCount += 1;
+                await sleep(GET_ASSERTION_IDS_RETRY_DELAY_IN_SECONDS * 1000);
+            }
+
+            const keyword = await this.ualService.calculateLocationKeyword(
+                blockchain,
+                contract,
+                tokenId,
+                assertionIds[0],
+            );
+            const agreementId = await this.serviceAgreementService.generateId(
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+                hashFunctionId,
+            );
+            const agreementData = await this.blockchainModuleManager.getAgreementData(
+                blockchain,
+                agreementId,
+            );
+
+            if (!agreementData) {
+                throw Error(
+                    `Get latest service agreement: Unable to fetch agreement data while processing asset created event for agreement id: ${agreementId}, blockchain id: ${blockchain}`,
+                );
+            }
+
+            const latestStateIndex = assertionIds.length - 1;
+
+            return {
+                blockchainId: blockchain,
+                assetStorageContractAddress: contract,
+                tokenId,
+                agreementId,
+                startTime: agreementData.startTime,
+                epochsNumber: agreementData.epochsNumber,
+                epochLength: agreementData.epochLength,
+                scoreFunctionId: agreementData.scoreFunctionId,
+                stateIndex: latestStateIndex,
+                assertionId: assertionIds[latestStateIndex],
+                hashFunctionId,
+                keyword,
+                proofWindowOffsetPerc: agreementData.proofWindowOffsetPerc,
+                dataSource: SERVICE_AGREEMENT_SOURCES.NODE,
+            };
+        } catch (error) {
+            this.logger.error(error.message);
         }
-
-        const latestStateIndex = assertionIds.length - 1;
-
-        return {
-            blockchainId: blockchain,
-            assetStorageContractAddress: contract,
-            tokenId,
-            agreementId,
-            startTime: agreementData.startTime,
-            epochsNumber: agreementData.epochsNumber,
-            epochLength: agreementData.epochLength,
-            scoreFunctionId: agreementData.scoreFunctionId,
-            stateIndex: latestStateIndex,
-            assertionId: assertionIds[latestStateIndex],
-            hashFunctionId,
-            keyword,
-            proofWindowOffsetPerc: agreementData.proofWindowOffsetPerc,
-            dataSource: SERVICE_AGREEMENT_SOURCES.NODE,
-        };
     }
 
     /**
