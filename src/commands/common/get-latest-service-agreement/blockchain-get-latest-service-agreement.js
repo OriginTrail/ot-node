@@ -88,6 +88,13 @@ class BlockchainGetLatestServiceAgreement extends Command {
             };
         }
 
+        if (latestBlockchainTokenId < latestDbTokenId) {
+            this.logger.debug(
+                `Get latest service agreement: No new agreements found on blockchain: ${blockchain}.`,
+            );
+            return;
+        }
+
         this.logger.debug(
             `Get latest service agreement: Latest token id on chain: ${latestBlockchainTokenId}, latest token id in database: ${latestDbTokenId} on blockchain: ${blockchain}`,
         );
