@@ -31,18 +31,29 @@ class BlockchainGetLatestServiceAgreement extends Command {
         const assetStorageContractAddresses =
             this.blockchainModuleManager.getAssetStorageContractAddresses(blockchain);
 
-        await Promise.all(
+        const results = await Promise.all(
             assetStorageContractAddresses.map((contract) =>
-                this.updateAgreementDataForAssetContract(contract, blockchain),
+                this.updateAgreementDataForAssetContract(
+                    contract,
+                    blockchain,
+                    command.data[contract],
+                ),
             ),
         );
+
+        results.forEach((result) => {
+            if (result) {
+                // eslint-disable-next-line no-param-reassign
+                command.data[result.contract] = result.lastProcessedTokenId;
+            }
+        });
 
         return Command.repeat();
     }
 
-    async updateAgreementDataForAssetContract(contract, blockchain) {
+    async updateAgreementDataForAssetContract(contract, blockchain, lastProcessedTokenId) {
         this.logger.info(
-            `Get latest service agreement: Starting get latest service agreement command for blockchain: ${blockchain}`,
+            `Get latest service agreement: Starting get latest service agreement command, last processed token id: ${lastProcessedTokenId} for blockchain: ${blockchain}`,
         );
         let latestBlockchainTokenId;
         try {
@@ -63,13 +74,18 @@ class BlockchainGetLatestServiceAgreement extends Command {
         }
 
         const latestDbTokenId =
-            (await this.repositoryModuleManager.getLatestServiceAgreementTokenId(blockchain)) ?? 0;
+            lastProcessedTokenId ??
+            (await this.repositoryModuleManager.getLatestServiceAgreementTokenId(blockchain)) ??
+            0;
 
         if (latestBlockchainTokenId < latestDbTokenId) {
             this.logger.debug(
                 `Get latest service agreement: No new agreements found on blockchain: ${blockchain}.`,
             );
-            return;
+            return {
+                contract,
+                lastProcessedTokenId: latestDbTokenId,
+            };
         }
 
         this.logger.debug(
@@ -99,13 +115,17 @@ class BlockchainGetLatestServiceAgreement extends Command {
                 tokenIdDifference -= GET_LATEST_SERVICE_AGREEMENT_BATCH_SIZE;
             }
         }
-        if (latestBlockchainTokenId - latestDbTokenId !== 0) {
+        if (latestBlockchainTokenId - latestDbTokenId > 0) {
             this.logger.debug(
                 `Get latest service agreement: Successfully fetched ${
                     latestBlockchainTokenId - latestDbTokenId
                 } on blockchain: ${blockchain}`,
             );
         }
+        return {
+            contract,
+            lastProcessedTokenId: latestDbTokenId,
+        };
     }
 
     async getAgreementDataForToken(
