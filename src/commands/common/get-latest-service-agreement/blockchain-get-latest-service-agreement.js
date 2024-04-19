@@ -4,13 +4,13 @@ import Command from '../../command.js';
 import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
     EXPECTED_TRANSACTION_ERRORS,
+    GET_ASSERTION_IDS_MAX_RETRY_COUNT,
+    GET_ASSERTION_IDS_RETRY_DELAY_IN_SECONDS,
+    GET_LATEST_SERVICE_AGREEMENT_BATCH_SIZE,
+    GET_LATEST_SERVICE_AGREEMENT_EXCLUDE_LATEST_TOKEN_ID,
     GET_LATEST_SERVICE_AGREEMENT_FREQUENCY_MILLS,
     SERVICE_AGREEMENT_SOURCES,
 } from '../../../constants/constants.js';
-
-const BATCH_SIZE = 50;
-const MAX_RETRY_COUNT = 5;
-const RETRY_DELAY_IN_SECONDS = 2;
 
 class BlockchainGetLatestServiceAgreement extends Command {
     constructor(ctx) {
@@ -46,9 +46,9 @@ class BlockchainGetLatestServiceAgreement extends Command {
         );
         let latestBlockchainTokenId;
         try {
-            latestBlockchainTokenId = Number(
-                await this.blockchainModuleManager.getLatestTokenId(blockchain, contract),
-            );
+            latestBlockchainTokenId =
+                Number(await this.blockchainModuleManager.getLatestTokenId(blockchain, contract)) -
+                GET_LATEST_SERVICE_AGREEMENT_EXCLUDE_LATEST_TOKEN_ID;
         } catch (error) {
             if (error.message.includes(EXPECTED_TRANSACTION_ERRORS.NO_MINTED_ASSETS)) {
                 this.logger.info(
@@ -64,6 +64,13 @@ class BlockchainGetLatestServiceAgreement extends Command {
 
         const latestDbTokenId =
             (await this.repositoryModuleManager.getLatestServiceAgreementTokenId(blockchain)) ?? 0;
+
+        if (latestBlockchainTokenId < latestDbTokenId) {
+            this.logger.debug(
+                `Get latest service agreement: No new agreements found on blockchain: ${blockchain}.`,
+            );
+            return;
+        }
 
         this.logger.debug(
             `Get latest service agreement: Latest token id on chain: ${latestBlockchainTokenId}, latest token id in database: ${latestDbTokenId} on blockchain: ${blockchain}`,
@@ -81,7 +88,7 @@ class BlockchainGetLatestServiceAgreement extends Command {
             );
             if (
                 getAgreementDataPromise.length === tokenIdDifference ||
-                getAgreementDataPromise.length === BATCH_SIZE
+                getAgreementDataPromise.length === GET_LATEST_SERVICE_AGREEMENT_BATCH_SIZE
             ) {
                 const missingAgreements = await Promise.all(getAgreementDataPromise);
 
@@ -89,7 +96,7 @@ class BlockchainGetLatestServiceAgreement extends Command {
                     missingAgreements.filter((agreement) => agreement != null),
                 );
                 getAgreementDataPromise = [];
-                tokenIdDifference -= BATCH_SIZE;
+                tokenIdDifference -= GET_LATEST_SERVICE_AGREEMENT_BATCH_SIZE;
             }
         }
         if (latestBlockchainTokenId - latestDbTokenId !== 0) {
@@ -115,7 +122,7 @@ class BlockchainGetLatestServiceAgreement extends Command {
             let retryCount = 0;
 
             while (assertionIds.length === 0) {
-                if (retryCount === MAX_RETRY_COUNT) {
+                if (retryCount === GET_ASSERTION_IDS_MAX_RETRY_COUNT) {
                     throw Error(
                         `Get latest service agreement: Unable to get assertion ids for token id: ${tokenId} on blockchain: ${blockchain}`,
                     );
@@ -129,7 +136,7 @@ class BlockchainGetLatestServiceAgreement extends Command {
                     tokenId,
                 );
                 retryCount += 1;
-                await sleep(RETRY_DELAY_IN_SECONDS * 1000);
+                await sleep(GET_ASSERTION_IDS_RETRY_DELAY_IN_SECONDS * 1000);
             }
 
             const keyword = await this.ualService.calculateLocationKeyword(
