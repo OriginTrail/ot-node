@@ -85,7 +85,7 @@ class ServiceAgreementRepository {
 
     async bulkCreateServiceAgreementRecords(serviceAgreements) {
         return this.model.bulkCreate(serviceAgreements, {
-            validate: true,
+            ignoreDuplicates: true,
         });
     }
 
