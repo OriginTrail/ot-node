@@ -32,16 +32,16 @@ class StartParanetSyncCommands extends Command {
 
         // Go through all except the last one
         for (let stateIndex = assertionIds.length - 2; stateIndex > 0; stateIndex -= 1) {
-            // TODO: Also pass in where to which repo to move it?
-            await this.syncAsset(blockchain, contract, tokenId, assertionIds, stateIndex, paranetId);
+            await this.syncAsset(blockchain, contract, tokenId, assertionIds, stateIndex, paranetId, 'currentHistory');
         }
 
         // Then sync the last one, but put it in 'current' repo
+        await this.syncAsset(blockchain, contract, tokenId, assertionIds, assertionIds.length - 1, paranetId, null);
 
         return Command.repeat();
     }
 
-    async syncAsset(blockchain, contract, tokenId, assertionIds, stateIndex, paranetId) {
+    async syncAsset(blockchain, contract, tokenId, assertionIds, stateIndex, paranetId, newRepoId) {
         try {
             if (
                 await this.repositoryModuleManager.isStateSynced(
@@ -144,8 +144,8 @@ class StartParanetSyncCommands extends Command {
                     stateIndex,
                     assetSyncInsertedByCommand: true,
                     paranetSync: true,
-                    paranetId
-                    // paranetRepo: 'currentHistory'
+                    paranetId,
+                    paranetRepoId: newRepoId
                 },
                 transactional: false,
             });
