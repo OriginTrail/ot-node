@@ -113,6 +113,8 @@ class GetService extends OperationService {
                         tokenId,
                         keyword,
                     );
+
+                    // TODO: Move to history if needed?
                 }
             }
 

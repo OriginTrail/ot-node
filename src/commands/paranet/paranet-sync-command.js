@@ -160,18 +160,15 @@ class StartParanetSyncCommands extends Command {
             let getResult;
             do {
                 await setTimeout(SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS);
-
                 getResult = await this.operationIdService.getOperationIdRecord(operationId);
-                if (getResult?.status === OPERATION_ID_STATUS.COMPLETED) {
-                    // TODO: Move repos after? this.pendingStorageService.moveAndDeletePendingState()? this.tripleStoreService.moveAsset()?
-                }
-
                 attempt += 1;
             } while (
                 attempt < SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_MAX_ATTEMPTS &&
                 getResult?.status !== OPERATION_ID_STATUS.FAILED &&
                 getResult?.status !== OPERATION_ID_STATUS.COMPLETED
             );
+
+            // TODO: Move repos after? this.pendingStorageService.moveAndDeletePendingState()? this.tripleStoreService.moveAsset()?
         } catch (error) {
             this.logger.warn(
                 `ASSET_SYNC: Unable to sync tokenId: ${tokenId}, for contract: ${contract} state index: ${stateIndex} blockchain: ${blockchain}, error: ${error}`,
