@@ -168,7 +168,7 @@ class StartParanetSyncCommands extends Command {
                 getResult?.status !== OPERATION_ID_STATUS.COMPLETED
             );
 
-            // TODO: Move repos after? this.pendingStorageService.moveAndDeletePendingState()? this.tripleStoreService.moveAsset()?
+            // TODO: If moving asset to different repo here, what is the 'keyword' parameter?
         } catch (error) {
             this.logger.warn(
                 `ASSET_SYNC: Unable to sync tokenId: ${tokenId}, for contract: ${contract} state index: ${stateIndex} blockchain: ${blockchain}, error: ${error}`,

@@ -105,7 +105,7 @@ class GetService extends OperationService {
                     );
 
                     await this.tripleStoreService.localStoreAsset(
-                        paranetId + TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT, // TODO: Work out the actual repo name
+                        paranetId + TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT, // TODO: Work out the actual repo name and create it if needed
                         assertionId,
                         responseData.nquads,
                         blockchain,
@@ -114,16 +114,16 @@ class GetService extends OperationService {
                         keyword,
                     );
 
+                    // Move to other repo, if needed
                     if (paranetRepoId) {
-                        const newRepoName = paranetId + paranetRepoId;
+                        const newRepoName = paranetId + paranetRepoId; // TODO: Work out the actual repo name and create it if needed
 
                         this.logger.debug(
                             `PARACHAIN_ASSET_SYNC: Moving asset to repo ${newRepoName}, with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
                         );    
 
-                        // Move to other repo if needed
                         await this.tripleStoreService.moveAsset(
-                            newRepoName, // TODO: Work out the actual repo name
+                            newRepoName,
                             assertionId,
                             blockchain,
                             contract,

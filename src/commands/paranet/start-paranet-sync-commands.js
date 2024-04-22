@@ -26,6 +26,7 @@ class StartParanetSyncCommands extends Command {
                 const commandData = {
                     paranetId,
                     operationId,
+                    // TODO: Pass in blockchain, contract and token ID
                 };
 
                 return this.commandExecutor.add({
