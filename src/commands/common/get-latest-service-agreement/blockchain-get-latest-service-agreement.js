@@ -45,6 +45,9 @@ class BlockchainGetLatestServiceAgreement extends Command {
             if (result) {
                 // eslint-disable-next-line no-param-reassign
                 command.data[result.contract] = result.lastProcessedTokenId;
+                this.logger.debug(
+                    `Get latest service agreement: updating last processed token id: ${result.lastProcessedTokenId} for blockchain ${blockchain}`,
+                );
             }
         });
 
@@ -131,7 +134,7 @@ class BlockchainGetLatestServiceAgreement extends Command {
         }
         return {
             contract,
-            lastProcessedTokenId: latestDbTokenId,
+            lastProcessedTokenId: latestBlockchainTokenId,
         };
     }
 
@@ -142,6 +145,12 @@ class BlockchainGetLatestServiceAgreement extends Command {
         hashFunctionId = CONTENT_ASSET_HASH_FUNCTION_ID,
     ) {
         try {
+            if (await this.repositoryModuleManager.serviceAgreementExists(blockchain, tokenId)) {
+                this.logger.debug(
+                    `Get latest service agreement: data exists in repository for token id: ${tokenId} on blockchain: ${blockchain}`,
+                );
+                return;
+            }
             this.logger.debug(
                 `Get latest service agreement: Getting agreement data for token id: ${tokenId} on blockchain: ${blockchain}`,
             );
