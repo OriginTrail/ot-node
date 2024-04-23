@@ -344,6 +344,15 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async serviceAgreementExists(blockchain, tokenId) {
+        if (this.initialized) {
+            return this.getRepository('service_agreement').serviceAgreementExists(
+                blockchain,
+                tokenId,
+            );
+        }
+    }
+
     async bulkCreateServiceAgreementRecords(records) {
         if (this.initialized) {
             return this.getRepository('service_agreement').bulkCreateServiceAgreementRecords(
