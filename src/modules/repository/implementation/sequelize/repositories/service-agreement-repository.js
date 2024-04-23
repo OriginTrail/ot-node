@@ -83,6 +83,16 @@ class ServiceAgreementRepository {
         );
     }
 
+    async serviceAgreementExists(blockchainId, tokenId) {
+        const agreementRecord = await this.model.findOne({
+            where: {
+                blockchainId,
+                tokenId,
+            },
+        });
+        return !!agreementRecord;
+    }
+
     async bulkCreateServiceAgreementRecords(serviceAgreements) {
         return this.model.bulkCreate(serviceAgreements, {
             ignoreDuplicates: true,
