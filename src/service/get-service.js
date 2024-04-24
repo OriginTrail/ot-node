@@ -24,6 +24,7 @@ class GetService extends OperationService {
         this.ualService = ctx.ualService;
         this.tripleStoreService = ctx.tripleStoreService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.paranetIdService = ctx.paranetIdService;
         this.operationMutex = new Mutex();
     }
 
@@ -105,7 +106,7 @@ class GetService extends OperationService {
                     );
 
                     await this.tripleStoreService.localStoreAsset(
-                        paranetId + TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT, // TODO: Work out the actual repo name and create it if needed
+                        `${this.paranetIdService.getParanetRepositoryName(paranetId)}-${TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT}`,
                         assertionId,
                         responseData.nquads,
                         blockchain,
@@ -116,7 +117,7 @@ class GetService extends OperationService {
 
                     // Move to other repo, if needed
                     if (paranetRepoId) {
-                        const newRepoName = paranetId + paranetRepoId; // TODO: Work out the actual repo name and create it if needed
+                        const newRepoName = `${this.paranetIdService.getParanetRepositoryName(paranetId)}-${paranetRepoId}`;
 
                         this.logger.debug(
                             `PARACHAIN_ASSET_SYNC: Moving asset to repo ${newRepoName}, with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
@@ -131,6 +132,9 @@ class GetService extends OperationService {
                             keyword,
                         );
                     }
+
+                    // Delete from existing repo, if needed
+                    
                 }
             }
         }
