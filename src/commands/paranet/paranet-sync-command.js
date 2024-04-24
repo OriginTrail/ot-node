@@ -9,16 +9,19 @@ class StartParanetSyncCommands extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
+        this.ualService = ctx.ualService;
 
         this.errorType = ERROR_TYPE.PARANET.PARANET_SYNC_ERROR;
     }
 
     async execute(command) {
-        const { commandOperationId, paranetId, blockchain, contract, tokenId } = command.data;
+        const { commandOperationId, paranetId, tokenId } = command.data;
 
         this.logger.info(
             `Paranet sync: Starting paranet sync command for ${paranetId} with operation id: ${commandOperationId}`,
         );
+
+        const { blockchain, contract } = this.ualService.resolveUal(paranetId);
 
         // get missed token ids for paranet
         // schedule get commands for each asset
@@ -167,8 +170,6 @@ class StartParanetSyncCommands extends Command {
                 getResult?.status !== OPERATION_ID_STATUS.FAILED &&
                 getResult?.status !== OPERATION_ID_STATUS.COMPLETED
             );
-
-            // TODO: If moving asset to different repo here, what is the 'keyword' parameter?
         } catch (error) {
             this.logger.warn(
                 `ASSET_SYNC: Unable to sync tokenId: ${tokenId}, for contract: ${contract} state index: ${stateIndex} blockchain: ${blockchain}, error: ${error}`,
