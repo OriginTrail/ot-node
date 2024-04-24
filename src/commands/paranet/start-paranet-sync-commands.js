@@ -5,6 +5,7 @@ class StartParanetSyncCommands extends Command {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
+        this.ualService = ctx.ualService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
 
         this.errorType = ERROR_TYPE.PARANET.START_PARANET_SYNC_ERROR;
@@ -21,12 +22,17 @@ class StartParanetSyncCommands extends Command {
 
         await Promise.all(
             this.config.assetSync?.syncParanets.map(async (paranetId) => {
-                // validate paranet id before scheduling paranet sync command
+                if (!this.ualService.isUal(paranetId)) {
+                    this.logger.info(
+                        `Paranet sync: paranetId ${paranetId} is not a valid UAL!`,
+                    );
+                    return Command.empty();
+                }
 
                 const commandData = {
                     paranetId,
                     operationId,
-                    // TODO: Pass in blockchain, contract and token ID
+                    // TODO: Pass in token ID (for now, just a mock)
                 };
 
                 return this.commandExecutor.add({
