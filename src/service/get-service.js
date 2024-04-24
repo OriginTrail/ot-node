@@ -45,6 +45,8 @@ class GetService extends OperationService {
             paranetSync,
             paranetId,
             paranetRepoId,
+            paranetLatestAsset,
+            paranetDeleteFromEarlier
         } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
@@ -105,36 +107,53 @@ class GetService extends OperationService {
                         `PARACHAIN_ASSET_SYNC: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
                     );
 
-                    await this.tripleStoreService.localStoreAsset(
-                        `${this.paranetIdService.getParanetRepositoryName(paranetId)}-${TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT}`,
-                        assertionId,
-                        responseData.nquads,
-                        blockchain,
-                        contract,
-                        tokenId,
-                        keyword,
-                    );
-
-                    // Move to other repo, if needed
-                    if (paranetRepoId) {
-                        const newRepoName = `${this.paranetIdService.getParanetRepositoryName(paranetId)}-${paranetRepoId}`;
-
-                        this.logger.debug(
-                            `PARACHAIN_ASSET_SYNC: Moving asset to repo ${newRepoName}, with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
-                        );    
-
-                        await this.tripleStoreService.moveAsset(
-                            newRepoName,
+                    if (paranetLatestAsset) {
+                        await this.tripleStoreService.localStoreAsset(
+                            `${this.paranetIdService.getParanetRepositoryName(paranetId)}-${TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT}`,
                             assertionId,
+                            responseData.nquads,
                             blockchain,
                             contract,
                             tokenId,
                             keyword,
                         );
                     }
+                    else if (paranetRepoId) {
+                        const newRepoName = `${this.paranetIdService.getParanetRepositoryName(paranetId)}-${paranetRepoId}`;
 
-                    // Delete from existing repo, if needed
-                    
+                        if (paranetDeleteFromEarlier) {
+                            // This was the previous latest one, move it to currentHistory
+                            this.logger.debug(
+                                `PARACHAIN_ASSET_SYNC: Moving asset to repo ${newRepoName}, with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                            );    
+    
+                            await this.tripleStoreService.moveAsset(
+                                newRepoName,
+                                assertionId,
+                                blockchain,
+                                contract,
+                                tokenId,
+                                keyword,
+                            );
+                        }
+                        else {
+                            // This is one of the older assets, just update it
+
+                            this.logger.debug(
+                                `PARACHAIN_ASSET_SYNC: Updating asset in repo ${newRepoName}, with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                            );   
+
+                            await this.tripleStoreService.localStoreAsset(
+                                newRepoName,
+                                assertionId,
+                                responseData.nquads,
+                                blockchain,
+                                contract,
+                                tokenId,
+                                keyword,
+                            );
+                        }
+                    }
                 }
             }
         }

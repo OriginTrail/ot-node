@@ -35,16 +35,16 @@ class StartParanetSyncCommands extends Command {
 
         // Go through all except the last one
         for (let stateIndex = assertionIds.length - 2; stateIndex > 0; stateIndex -= 1) {
-            await this.syncAsset(blockchain, contract, tokenId, assertionIds, stateIndex, paranetId, 'currentHistory');
+            await this.syncAsset(blockchain, contract, tokenId, assertionIds, stateIndex, paranetId, 'currentHistory', false, stateIndex === assertionIds.length - 2);
         }
 
-        // Then sync the last one, but put it in 'current' repo
-        await this.syncAsset(blockchain, contract, tokenId, assertionIds, assertionIds.length - 1, paranetId, null);
+        // Then sync the last one, but put it in the current repo
+        await this.syncAsset(blockchain, contract, tokenId, assertionIds, assertionIds.length - 1, paranetId, null, false);
 
         return Command.repeat();
     }
 
-    async syncAsset(blockchain, contract, tokenId, assertionIds, stateIndex, paranetId, newRepoId) {
+    async syncAsset(blockchain, contract, tokenId, assertionIds, stateIndex, paranetId, newRepoId, latestAsset, deleteFromEarlier) {
         try {
             if (
                 await this.repositoryModuleManager.isStateSynced(
@@ -148,7 +148,9 @@ class StartParanetSyncCommands extends Command {
                     assetSyncInsertedByCommand: true,
                     paranetSync: true,
                     paranetId,
-                    paranetRepoId: newRepoId
+                    paranetRepoId: newRepoId,
+                    paranetLatestAsset: latestAsset,
+                    paranetDeleteFromEarlier: deleteFromEarlier
                 },
                 transactional: false,
             });
