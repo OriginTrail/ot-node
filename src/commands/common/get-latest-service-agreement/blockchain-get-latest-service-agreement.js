@@ -79,7 +79,7 @@ class BlockchainGetLatestServiceAgreement extends Command {
         const latestDbTokenId =
             lastProcessedTokenId ??
             (await this.repositoryModuleManager.getLatestServiceAgreementTokenId(blockchain)) ??
-            0;
+            latestBlockchainTokenId;
 
         if (latestBlockchainTokenId < latestDbTokenId) {
             this.logger.debug(
