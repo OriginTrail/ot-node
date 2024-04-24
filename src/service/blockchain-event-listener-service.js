@@ -140,6 +140,10 @@ class BlockchainEventListenerService {
         );
     }
 
+    fetchTokenIdsForParanet(paranetId) {
+        return ["test1", "test2"];
+    }
+
     listenOnBlockchainEvents(blockchainId) {
         const devEnvironment =
             process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||

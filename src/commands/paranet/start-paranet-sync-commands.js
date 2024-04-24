@@ -19,29 +19,31 @@ class StartParanetSyncCommands extends Command {
         );
 
         await this.commandExecutor.delete('paranetSyncCommand');
+        
+        const promises = [];
+        this.config.assetSync?.syncParanets.forEach(async (paranetId) => {
+            if (!this.ualService.isUal(paranetId)) {
+                this.logger.info(`Paranet sync: paranetId ${paranetId} is not a valid UAL!`);
+                return Command.empty();
+            }
 
-        await Promise.all(
-            this.config.assetSync?.syncParanets.map(async (paranetId) => {
-                if (!this.ualService.isUal(paranetId)) {
-                    this.logger.info(
-                        `Paranet sync: paranetId ${paranetId} is not a valid UAL!`,
-                    );
-                    return Command.empty();
-                }
-
+            const tokenIds = this.blockchainModuleManager.fetchTokenIdsForParanet(paranetId);
+            tokenIds.forEach((tokenId) => {
                 const commandData = {
                     paranetId,
                     operationId,
-                    // TODO: Pass in token ID (for now, just a mock)
+                    tokenId,
                 };
 
-                return this.commandExecutor.add({
+                promises.append(this.commandExecutor.add({
                     name: 'paranetSyncCommand',
                     data: commandData,
                     period: PARANET_SYNC_FREQUENCY_MILLS,
-                });
-            }),
-        );
+                }));
+            });
+        });
+
+        await Promise.all(promises);
 
         return Command.empty();
     }
