@@ -672,6 +672,7 @@ export const CONTRACTS = {
     IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
     LOG2PLDSF_CONTRACT: 'Log2PLDSFContract',
     LINEAR_SUM_CONTRACT: 'LinearSumContract',
+    PARANETS_REGISTRY_CONTRACT: 'ParanetsRegistry'
 };
 
 export const CONTRACT_EVENTS = {
