@@ -145,12 +145,6 @@ class BlockchainGetLatestServiceAgreement extends Command {
         hashFunctionId = CONTENT_ASSET_HASH_FUNCTION_ID,
     ) {
         try {
-            if (await this.repositoryModuleManager.serviceAgreementExists(blockchain, tokenId)) {
-                this.logger.debug(
-                    `Get latest service agreement: data exists in repository for token id: ${tokenId} on blockchain: ${blockchain}`,
-                );
-                return;
-            }
             this.logger.debug(
                 `Get latest service agreement: Getting agreement data for token id: ${tokenId} on blockchain: ${blockchain}`,
             );
