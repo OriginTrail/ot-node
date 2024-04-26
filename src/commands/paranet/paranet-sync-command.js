@@ -63,7 +63,7 @@ class StartParanetSyncCommands extends Command {
                 return;
             }
 
-            const statePresentInParanetRepository = await this.tripleStoreService.assetExists(
+            const statePresentInParanetRepository = await this.tripleStoreService.paranetAssetExists(
                 paranetId,
                 tokenId,
                 stateIndex,
