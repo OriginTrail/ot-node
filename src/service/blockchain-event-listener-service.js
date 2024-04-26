@@ -140,8 +140,18 @@ class BlockchainEventListenerService {
         );
     }
 
-    fetchTokenIdsForParanet(paranetId) {
-        return ["test1", "test2"];
+    async fetchTokenIdsForParanet(blockchainId, paranetId) {
+        const currentBlock = await this.blockchainModuleManager.getBlockNumber(blockchainId);
+
+        // TODO: Iterate over events, how to pass in parameters?
+        const paranetKaEvents = await this.getContractEvents(
+            blockchainId,
+            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+            currentBlock,
+            CONTRACT_EVENTS., // TODO: What goes here?
+        );
+
+        await this.handleBlockchainEvents(paranetKaEvents, blockchainId);
     }
 
     listenOnBlockchainEvents(blockchainId) {
