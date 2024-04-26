@@ -26,9 +26,6 @@ class HardhatService extends Web3Service {
     }
 
     async getAgreementScoreFunctionId() {
-        if (this.getBlockchainId() === 'hardhat1:31337') {
-            return 1;
-        }
         return 2;
     }
 }
