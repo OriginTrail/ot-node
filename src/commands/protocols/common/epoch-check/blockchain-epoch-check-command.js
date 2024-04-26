@@ -493,12 +493,9 @@ class BlockchainEpochCheckCommand extends Command {
 
     /**
      * Recover system from failure
-     * @param command
      * @param error
      */
-    async recover(command) {
-        this.logger.warn(`Failed to execute ${command.name}. Error: ${command.message}`);
-
+    async recover() {
         return Command.repeat();
     }
 
