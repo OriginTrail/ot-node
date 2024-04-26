@@ -39,7 +39,7 @@ class StartParanetSyncCommands extends Command {
         return Command.repeat();
     }
 
-    async syncAsset(blockchain, contract, tokenId, assertionIds, stateIndex, paranetId, newRepoId, latestAsset, deleteFromEarlier) {
+    async syncAsset(blockchain, contract, tokenId, assertionIds, stateIndex, paranetId, paranetRepository, latestAsset, deleteFromEarlier) {
         try {
             if (
                 await this.repositoryModuleManager.isStateSynced(
@@ -143,7 +143,7 @@ class StartParanetSyncCommands extends Command {
                     assetSyncInsertedByCommand: true,
                     paranetSync: true,
                     paranetId,
-                    paranetRepoId: newRepoId,
+                    paranetRepoId: paranetRepository,
                     paranetLatestAsset: latestAsset,
                     paranetDeleteFromEarlier: deleteFromEarlier
                 },
