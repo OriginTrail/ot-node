@@ -18,7 +18,7 @@ class StartParanetSyncCommands extends Command {
         const { commandOperationId, paranetId, tokenId } = command.data;
 
         this.logger.info(
-            `Paranet sync: Starting paranet sync command for ${paranetId} with operation id: ${commandOperationId}`,
+            `Paranet sync: Starting paranet sync command for ${paranetId} with operation id: ${commandOperationId}, token id: ${tokenId}`,
         );
 
         const { blockchain, contract } = this.ualService.resolveUal(paranetId);
@@ -50,7 +50,7 @@ class StartParanetSyncCommands extends Command {
                 )
             ) {
                 this.logger.trace(
-                    `ASSET_SYNC: StateIndex: ${stateIndex} for tokenId: ${tokenId} already synced blockchain: ${blockchain}`,
+                    `PARANET_SYNC: StateIndex: ${stateIndex} for tokenId: ${tokenId} already synced blockchain: ${blockchain}`,
                 );
                 await this.repositoryModuleManager.updateAssetSyncRecord(
                     blockchain,
@@ -72,7 +72,7 @@ class StartParanetSyncCommands extends Command {
 
             if (statePresentInParanetRepository) {
                 this.logger.trace(
-                    `ASSET_SYNC: StateIndex: ${stateIndex} for tokenId: ${tokenId} found in triple store blockchain: ${blockchain}`,
+                    `PARANET_SYNC: StateIndex: ${stateIndex} for tokenId: ${tokenId} found in triple store blockchain: ${blockchain}`,
                 );
                 await this.repositoryModuleManager.createAssetSyncRecord(
                     blockchain,
@@ -87,7 +87,7 @@ class StartParanetSyncCommands extends Command {
 
             const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
             this.logger.debug(
-                `ASSET_SYNC: Fetching state index: ${stateIndex + 1} of ${
+                `PARANET_SYNC: Fetching state index: ${stateIndex + 1} of ${
                     assertionIds.length
                 } for asset with ual: ${ual}. blockchain: ${blockchain}`,
             );
