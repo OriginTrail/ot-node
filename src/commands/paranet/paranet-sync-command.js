@@ -22,11 +22,6 @@ class StartParanetSyncCommands extends Command {
         );
 
         const { blockchain, contract } = this.ualService.resolveUal(paranetId);
-
-        // get missed token ids for paranet
-        // schedule get commands for each asset
-        // store in paranet repository
-
         const assertionIds = await this.blockchainModuleManager.getLatestAssertionId(
             blockchain,
             contract,
