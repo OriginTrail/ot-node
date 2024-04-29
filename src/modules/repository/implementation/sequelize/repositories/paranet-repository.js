@@ -5,9 +5,13 @@ class ParanetRepository {
     }
 
     async getParanet(paranetId) {
-        return this.model.findOne({
+        return this.model.findOrCreate({
             where: {
                 paranetId,
+            },
+            defaults: {
+                paranetId,
+                kaCount: 0,
             },
         });
     }
