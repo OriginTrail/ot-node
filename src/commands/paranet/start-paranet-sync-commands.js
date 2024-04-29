@@ -31,8 +31,7 @@ class StartParanetSyncCommands extends Command {
             const contractKaCount = await this.blockchainModuleManager.getKnowledgeAssetsCount(
                 paranetId,
             );
-            const cachedKaCount =
-                (await this.repositoryModuleManager.getParanetById(paranetId)?.kaCount) ?? 0;
+            const [cachedKaCount] = await this.repositoryModuleManager.getParanetById(paranetId);
 
             if (cachedKaCount === contractKaCount) {
                 this.logger.info(
