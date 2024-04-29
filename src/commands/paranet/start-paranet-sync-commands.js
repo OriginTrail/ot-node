@@ -34,7 +34,16 @@ class StartParanetSyncCommands extends Command {
             const cachedKaCount =
                 (await this.repositoryModuleManager.getParanetById(paranetId)?.kaCount) ?? 0;
 
-            if (cachedKaCount === contractKaCount) return Command.empty();
+            if (cachedKaCount === contractKaCount) {
+                this.logger.info(
+                    `Paranet sync: KA count from contract and in DB is the same, nothing to sync!`,
+                );
+                return Command.empty();
+            }
+
+            this.logger.info(
+                `Paranet sync: Syncing ${contractKaCount - cachedKaCount + 1} assets...`,
+            );
 
             const kaToUpdate = [];
             for (let i = cachedKaCount; i <= contractKaCount; i += 50) {
