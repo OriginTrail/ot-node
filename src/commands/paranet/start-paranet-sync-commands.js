@@ -23,11 +23,6 @@ class StartParanetSyncCommands extends Command {
 
         const promises = [];
         this.config.assetSync?.syncParanets.forEach(async (paranetId) => {
-            if (!this.ualService.isUal(paranetId)) {
-                this.logger.info(`Paranet sync: paranetId ${paranetId} is not a valid UAL!`);
-                return Command.empty();
-            }
-
             const contractKaCount = await this.blockchainModuleManager.getKnowledgeAssetsCount(
                 paranetId,
             );
