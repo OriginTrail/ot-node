@@ -89,6 +89,8 @@ export const PEER_OFFLINE_LIMIT = 24 * 60 * 60 * 1000;
 
 export const CONTENT_ASSET_HASH_FUNCTION_ID = 1;
 
+export const PARANET_SYNC_KA_COUNT = 50;
+
 export const TRIPLE_STORE_REPOSITORIES = {
     PUBLIC_CURRENT: 'publicCurrent',
     PUBLIC_HISTORY: 'publicHistory',
@@ -672,7 +674,7 @@ export const CONTRACTS = {
     IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
     LOG2PLDSF_CONTRACT: 'Log2PLDSFContract',
     LINEAR_SUM_CONTRACT: 'LinearSumContract',
-    PARANETS_REGISTRY_CONTRACT: 'ParanetsRegistry'
+    PARANETS_REGISTRY_CONTRACT: 'ParanetsRegistry',
 };
 
 export const CONTRACT_EVENTS = {

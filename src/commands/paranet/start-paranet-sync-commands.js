@@ -1,5 +1,9 @@
 import Command from '../command.js';
-import { ERROR_TYPE, PARANET_SYNC_FREQUENCY_MILLS } from '../../constants/constants.js';
+import {
+    ERROR_TYPE,
+    PARANET_SYNC_FREQUENCY_MILLS,
+    PARANET_SYNC_KA_COUNT,
+} from '../../constants/constants.js';
 
 class StartParanetSyncCommands extends Command {
     constructor(ctx) {
@@ -42,11 +46,11 @@ class StartParanetSyncCommands extends Command {
             );
 
             const kaToUpdate = [];
-            for (let i = cachedKaCount; i <= contractKaCount; i += 50) {
+            for (let i = cachedKaCount; i <= contractKaCount; i += PARANET_SYNC_KA_COUNT) {
                 const nextKaArray = this.blockchainModuleManager.getKnowledgeAssetsWithPagination(
                     paranetId,
                     i,
-                    50,
+                    PARANET_SYNC_KA_COUNT,
                 );
                 if (!nextKaArray.length) break;
                 kaToUpdate.push(...nextKaArray);
