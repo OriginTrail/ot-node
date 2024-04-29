@@ -1,7 +1,14 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-await-in-loop */
 import Command from '../command.js';
-import { ERROR_TYPE, PARANET_SYNC_FREQUENCY_MILLS, OPERATION_ID_STATUS, CONTENT_ASSET_HASH_FUNCTION_ID, SIMPLE_ASSET_SYNC_PARAMETERS } from '../../constants/constants.js';
+import {
+    ERROR_TYPE,
+    PARANET_SYNC_FREQUENCY_MILLS,
+    OPERATION_ID_STATUS,
+    CONTENT_ASSET_HASH_FUNCTION_ID,
+    SIMPLE_ASSET_SYNC_PARAMETERS,
+    TRIPLE_STORE_REPOSITORIES,
+} from '../../constants/constants.js';
 
 class StartParanetSyncCommands extends Command {
     constructor(ctx) {
@@ -30,16 +37,45 @@ class StartParanetSyncCommands extends Command {
 
         // Go through all except the last one
         for (let stateIndex = assertionIds.length - 2; stateIndex > 0; stateIndex -= 1) {
-            await this.syncAsset(blockchain, contract, tokenId, assertionIds, stateIndex, paranetId, 'currentHistory', false, stateIndex === assertionIds.length - 2);
+            await this.syncAsset(
+                blockchain,
+                contract,
+                tokenId,
+                assertionIds,
+                stateIndex,
+                paranetId,
+                TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                false,
+                stateIndex === assertionIds.length - 2,
+            );
         }
 
         // Then sync the last one, but put it in the current repo
-        await this.syncAsset(blockchain, contract, tokenId, assertionIds, assertionIds.length - 1, paranetId, null, false);
+        await this.syncAsset(
+            blockchain,
+            contract,
+            tokenId,
+            assertionIds,
+            assertionIds.length - 1,
+            paranetId,
+            null,
+            false,
+        );
 
         return Command.repeat();
     }
 
-    async syncAsset(blockchain, contract, tokenId, assertionIds, stateIndex, paranetId, paranetRepository, latestAsset, deleteFromEarlier) {
+    async syncAsset(
+        blockchain,
+        contract,
+        tokenId,
+        assertionIds,
+        stateIndex,
+        paranetId,
+        paranetRepository,
+        latestAsset,
+        deleteFromEarlier,
+    ) {
         try {
             if (
                 await this.repositoryModuleManager.isStateSynced(
@@ -63,12 +99,13 @@ class StartParanetSyncCommands extends Command {
                 return;
             }
 
-            const statePresentInParanetRepository = await this.tripleStoreService.paranetAssetExists(
-                paranetId,
-                tokenId,
-                stateIndex,
-                assertionIds,
-            );
+            const statePresentInParanetRepository =
+                await this.tripleStoreService.paranetAssetExists(
+                    paranetId,
+                    tokenId,
+                    stateIndex,
+                    assertionIds,
+                );
 
             if (statePresentInParanetRepository) {
                 this.logger.trace(
@@ -145,7 +182,7 @@ class StartParanetSyncCommands extends Command {
                     paranetId,
                     paranetRepoId: paranetRepository,
                     paranetLatestAsset: latestAsset,
-                    paranetDeleteFromEarlier: deleteFromEarlier
+                    paranetDeleteFromEarlier: deleteFromEarlier,
                 },
                 transactional: false,
             });
