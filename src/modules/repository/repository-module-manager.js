@@ -296,6 +296,10 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('paranet').getParanet(paranetId);
     }
 
+    async updateParanetKaCount(paranetId, kaCount) {
+        return this.getRepository('paranet').updateParanetKaCount(paranetId, kaCount);
+    }
+
     async updateServiceAgreementRecord(
         blockchainId,
         contract,

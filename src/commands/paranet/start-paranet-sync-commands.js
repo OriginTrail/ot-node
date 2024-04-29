@@ -28,9 +28,11 @@ class StartParanetSyncCommands extends Command {
                 return Command.empty();
             }
 
-            const contractKaCount = this.blockchainModuleManager.getKnowledgeAssetsCount(paranetId);
+            const contractKaCount = await this.blockchainModuleManager.getKnowledgeAssetsCount(
+                paranetId,
+            );
             const cachedKaCount =
-                this.repositoryModuleManager.getParanetById(paranetId)?.kaCount ?? 0;
+                (await this.repositoryModuleManager.getParanetById(paranetId)?.kaCount) ?? 0;
 
             if (cachedKaCount === contractKaCount) return Command.empty();
 
@@ -44,8 +46,6 @@ class StartParanetSyncCommands extends Command {
                 if (!nextKaArray.length) break;
                 kaToUpdate.push(...nextKaArray);
             }
-
-            // TODO: Update the kaCount in DB
 
             kaToUpdate
                 .map((ka) => ka.tokenId)
@@ -64,6 +64,8 @@ class StartParanetSyncCommands extends Command {
                         }),
                     );
                 });
+
+            await this.repositoryModuleManager.updateParanetKaCount(paranetId, contractKaCount);
         });
 
         await Promise.all(promises);

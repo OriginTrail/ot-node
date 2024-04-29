@@ -11,6 +11,17 @@ class ParanetRepository {
             },
         });
     }
+
+    async updateParanetKaCount(paranetId, kaCount) {
+        await this.model.update(
+            { kaCount },
+            {
+                where: {
+                    paranetId,
+                },
+            },
+        );
+    }
 }
 
 export default ParanetRepository;
