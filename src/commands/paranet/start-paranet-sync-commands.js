@@ -27,23 +27,39 @@ class StartParanetSyncCommands extends Command {
                 return Command.empty();
             }
 
-            // TODO: Fetch token IDs here
-            const tokenIds = [];
-            tokenIds.forEach((tokenId) => {
-                const commandData = {
-                    paranetId,
-                    operationId,
-                    tokenId,
-                };
+            const contractKaCount = this.blockchainModuleManager.getKnowledgeAssetsCount(paranetId);
+            const cachedKaCount = 0; // TODO: Fetch from db
 
-                promises.append(
-                    this.commandExecutor.add({
-                        name: 'paranetSyncCommand',
-                        data: commandData,
-                        period: PARANET_SYNC_FREQUENCY_MILLS,
-                    }),
+            if (cachedKaCount === contractKaCount) return Command.empty();
+
+            const kaToUpdate = [];
+            for (let i = cachedKaCount; i <= contractKaCount; i += 50) {
+                const nextKaArray = this.blockchainModuleManager.getKnowledgeAssetsWithPagination(
+                    paranetId,
+                    i,
+                    50,
                 );
-            });
+                if (!nextKaArray.length) break;
+                kaToUpdate.push(...nextKaArray);
+            }
+
+            kaToUpdate
+                .map((ka) => ka.tokenId)
+                .forEach((tokenId) => {
+                    const commandData = {
+                        paranetId,
+                        operationId,
+                        tokenId,
+                    };
+
+                    promises.append(
+                        this.commandExecutor.add({
+                            name: 'paranetSyncCommand',
+                            data: commandData,
+                            period: PARANET_SYNC_FREQUENCY_MILLS,
+                        }),
+                    );
+                });
         });
 
         await Promise.all(promises);
