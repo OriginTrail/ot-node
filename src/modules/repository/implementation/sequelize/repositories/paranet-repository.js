@@ -4,7 +4,7 @@ class ParanetRepository {
         this.model = models.paranet;
     }
 
-    async getParanet(paranetId) {
+    async getOrCreateParanet(paranetId) {
         return this.model.findOrCreate({
             where: {
                 paranetId,
