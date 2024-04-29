@@ -7,6 +7,7 @@ class StartParanetSyncCommands extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.ualService = ctx.ualService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.PARANET.START_PARANET_SYNC_ERROR;
     }
@@ -28,7 +29,7 @@ class StartParanetSyncCommands extends Command {
             }
 
             const contractKaCount = this.blockchainModuleManager.getKnowledgeAssetsCount(paranetId);
-            const cachedKaCount = 0; // TODO: Fetch from db
+            const cachedKaCount = this.repositoryModuleManager.getParanetById(paranetId).kaCount;
 
             if (cachedKaCount === contractKaCount) return Command.empty();
 
@@ -42,6 +43,8 @@ class StartParanetSyncCommands extends Command {
                 if (!nextKaArray.length) break;
                 kaToUpdate.push(...nextKaArray);
             }
+
+            // TODO: Update the kaCount in DB
 
             kaToUpdate
                 .map((ka) => ka.tokenId)
