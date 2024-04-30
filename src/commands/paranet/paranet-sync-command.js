@@ -71,7 +71,7 @@ class StartParanetSyncCommands extends Command {
                 );
 
                 // Go through all except the last one
-                for (let stateIndex = assertionIds.length - 2; stateIndex > 0; stateIndex -= 1) {
+                for (let stateIndex = assertionIds.length - 2; stateIndex >= 0; stateIndex -= 1) {
                     await this.syncAsset(
                         blockchain,
                         contract,
@@ -99,7 +99,7 @@ class StartParanetSyncCommands extends Command {
                 );
             });
 
-        // TODO: Save only successfull ones
+        // TODO: Save only successful ones
         await this.repositoryModuleManager.updateParanetKaCount(paranetId, contractKaCount);
 
         return Command.repeat();
