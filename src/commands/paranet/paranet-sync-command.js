@@ -95,6 +95,7 @@ class StartParanetSyncCommands extends Command {
                     paranetId,
                     null,
                     false,
+                    false,
                 );
             });
 
