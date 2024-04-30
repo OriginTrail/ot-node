@@ -1,8 +1,10 @@
-import UalService from './ual-service.js';
+class ParanetIdService {
+    constructor(ctx) {
+        this.ualService = ctx.ualService;
+    }
 
-class ParanetIdService extends UalService {
     getParanetRepositoryName(paranetId) {
-        if (this.isUAL(paranetId)) {
+        if (this.ualService.isUAL(paranetId)) {
             return paranetId.replace('/', '-');
         }
         throw new Error(
