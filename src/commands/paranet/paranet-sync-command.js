@@ -8,6 +8,7 @@ import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
     SIMPLE_ASSET_SYNC_PARAMETERS,
     TRIPLE_STORE_REPOSITORIES,
+    PARANET_SYNC_KA_COUNT,
 } from '../../constants/constants.js';
 
 class StartParanetSyncCommands extends Command {
@@ -22,45 +23,83 @@ class StartParanetSyncCommands extends Command {
     }
 
     async execute(command) {
-        const { commandOperationId, paranetId, tokenId } = command.data;
+        const { commandOperationId, paranetId } = command.data;
 
         this.logger.info(
-            `Paranet sync: Starting paranet sync command for ${paranetId} with operation id: ${commandOperationId}, token id: ${tokenId}`,
+            `Paranet sync: Starting paranet sync for operation ID: ${commandOperationId}`,
         );
 
-        const { blockchain, contract } = this.ualService.resolveUal(paranetId);
-        const assertionIds = await this.blockchainModuleManager.getLatestAssertionId(
-            blockchain,
-            contract,
-            tokenId,
+        const contractKaCount = await this.blockchainModuleManager.getKnowledgeAssetsCount(
+            paranetId,
+        );
+        const [cachedKaCount] = await this.repositoryModuleManager.getOrCreateParanetById(
+            paranetId,
         );
 
-        // Go through all except the last one
-        for (let stateIndex = assertionIds.length - 2; stateIndex > 0; stateIndex -= 1) {
-            await this.syncAsset(
-                blockchain,
-                contract,
-                tokenId,
-                assertionIds,
-                stateIndex,
-                paranetId,
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
-                false,
-                stateIndex === assertionIds.length - 2,
+        if (cachedKaCount === contractKaCount) {
+            this.logger.info(
+                `Paranet sync: KA count from contract and in DB is the same, nothing to sync!`,
             );
+            return Command.empty();
         }
 
-        // Then sync the last one, but put it in the current repo
-        await this.syncAsset(
-            blockchain,
-            contract,
-            tokenId,
-            assertionIds,
-            assertionIds.length - 1,
-            paranetId,
-            null,
-            false,
-        );
+        this.logger.info(`Paranet sync: Syncing ${contractKaCount - cachedKaCount + 1} assets...`);
+
+        const kaToUpdate = [];
+        for (let i = cachedKaCount; i <= contractKaCount; i += PARANET_SYNC_KA_COUNT) {
+            const nextKaArray = this.blockchainModuleManager.getKnowledgeAssetsWithPagination(
+                paranetId,
+                i,
+                PARANET_SYNC_KA_COUNT,
+            );
+            if (!nextKaArray.length) break;
+            kaToUpdate.push(...nextKaArray);
+        }
+
+        kaToUpdate
+            .map((ka) => ka.tokenId)
+            .forEach(async (tokenId) => {
+                this.logger.info(
+                    `Paranet sync: Syncing token id: ${tokenId} for ${paranetId} with operation id: ${commandOperationId}`,
+                );
+
+                const { blockchain, contract } = this.ualService.resolveUal(paranetId);
+                const assertionIds = await this.blockchainModuleManager.getLatestAssertionId(
+                    blockchain,
+                    contract,
+                    tokenId,
+                );
+
+                // Go through all except the last one
+                for (let stateIndex = assertionIds.length - 2; stateIndex > 0; stateIndex -= 1) {
+                    await this.syncAsset(
+                        blockchain,
+                        contract,
+                        tokenId,
+                        assertionIds,
+                        stateIndex,
+                        paranetId,
+                        TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                        false,
+                        stateIndex === assertionIds.length - 2,
+                    );
+                }
+
+                // Then sync the last one, but put it in the current repo
+                await this.syncAsset(
+                    blockchain,
+                    contract,
+                    tokenId,
+                    assertionIds,
+                    assertionIds.length - 1,
+                    paranetId,
+                    null,
+                    false,
+                );
+            });
+
+        // TODO: Save only successfull ones
+        await this.repositoryModuleManager.updateParanetKaCount(paranetId, contractKaCount);
 
         return Command.repeat();
     }

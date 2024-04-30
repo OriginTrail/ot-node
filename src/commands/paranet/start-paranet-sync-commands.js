@@ -1,9 +1,5 @@
 import Command from '../command.js';
-import {
-    ERROR_TYPE,
-    PARANET_SYNC_FREQUENCY_MILLS,
-    PARANET_SYNC_KA_COUNT,
-} from '../../constants/constants.js';
+import { ERROR_TYPE, PARANET_SYNC_FREQUENCY_MILLS } from '../../constants/constants.js';
 
 class StartParanetSyncCommands extends Command {
     constructor(ctx) {
@@ -27,54 +23,18 @@ class StartParanetSyncCommands extends Command {
 
         const promises = [];
         this.config.assetSync?.syncParanets.forEach(async (paranetId) => {
-            const contractKaCount = await this.blockchainModuleManager.getKnowledgeAssetsCount(
+            const commandData = {
                 paranetId,
+                operationId,
+            };
+
+            promises.append(
+                this.commandExecutor.add({
+                    name: 'paranetSyncCommand',
+                    data: commandData,
+                    period: PARANET_SYNC_FREQUENCY_MILLS,
+                }),
             );
-            const [cachedKaCount] = await this.repositoryModuleManager.getOrCreateParanetById(
-                paranetId,
-            );
-
-            if (cachedKaCount === contractKaCount) {
-                this.logger.info(
-                    `Paranet sync: KA count from contract and in DB is the same, nothing to sync!`,
-                );
-                return Command.empty();
-            }
-
-            this.logger.info(
-                `Paranet sync: Syncing ${contractKaCount - cachedKaCount + 1} assets...`,
-            );
-
-            const kaToUpdate = [];
-            for (let i = cachedKaCount; i <= contractKaCount; i += PARANET_SYNC_KA_COUNT) {
-                const nextKaArray = this.blockchainModuleManager.getKnowledgeAssetsWithPagination(
-                    paranetId,
-                    i,
-                    PARANET_SYNC_KA_COUNT,
-                );
-                if (!nextKaArray.length) break;
-                kaToUpdate.push(...nextKaArray);
-            }
-
-            kaToUpdate
-                .map((ka) => ka.tokenId)
-                .forEach((tokenId) => {
-                    const commandData = {
-                        paranetId,
-                        operationId,
-                        tokenId,
-                    };
-
-                    promises.append(
-                        this.commandExecutor.add({
-                            name: 'paranetSyncCommand',
-                            data: commandData,
-                            period: PARANET_SYNC_FREQUENCY_MILLS,
-                        }),
-                    );
-                });
-
-            await this.repositoryModuleManager.updateParanetKaCount(paranetId, contractKaCount);
         });
 
         await Promise.all(promises);
