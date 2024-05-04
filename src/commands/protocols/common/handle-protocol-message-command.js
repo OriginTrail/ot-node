@@ -138,7 +138,7 @@ class HandleProtocolMessageCommand extends Command {
         const blockchainAssertionSizeInKb = blockchainAssertionSize / BYTES_IN_KILOBYTE;
         if (!agreementData) {
             this.logger.warn(
-                `Unable to fetch agreement data in handle protocol messsage command for agreement id: ${agreementId}, blockchain id: ${blockchain}`,
+                `Unable to fetch agreement data in handle protocol message command for agreement id: ${agreementId}, blockchain id: ${blockchain}`,
             );
             return {
                 errorMessage: 'Unable to fetch agreement data.',

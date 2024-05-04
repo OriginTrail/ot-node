@@ -101,7 +101,7 @@ After(function afterMethod(testCase, done) {
                 testCase.result.status,
                 ' and duration: ',
                 testCase.result.duration,
-                ' miliseconds.',
+                ' milliseconds.',
             );
             done();
         });
