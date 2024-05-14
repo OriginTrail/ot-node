@@ -24,6 +24,7 @@ class GetService extends OperationService {
         this.ualService = ctx.ualService;
         this.tripleStoreService = ctx.tripleStoreService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.paranetIdService = ctx.paranetIdService;
         this.operationMutex = new Mutex();
     }
 
@@ -41,6 +42,11 @@ class GetService extends OperationService {
             assertionId,
             assetSync,
             stateIndex,
+            paranetSync,
+            paranetId,
+            paranetRepoId,
+            paranetLatestAsset,
+            paranetDeleteFromEarlier,
         } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
@@ -80,9 +86,8 @@ class GetService extends OperationService {
             );
             this.logResponsesSummary(completedNumber, failedNumber);
 
+            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
             if (assetSync) {
-                const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
                 this.logger.debug(
                     `ASSET_SYNC: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
                 );
@@ -96,6 +101,62 @@ class GetService extends OperationService {
                     tokenId,
                     keyword,
                 );
+
+                if (paranetSync) {
+                    this.logger.debug(
+                        `PARANET_ASSET_SYNC: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                    );
+
+                    if (paranetLatestAsset) {
+                        await this.tripleStoreService.localStoreAsset(
+                            `${this.paranetIdService.getParanetRepositoryName(paranetId)}-${
+                                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT
+                            }`,
+                            assertionId,
+                            responseData.nquads,
+                            blockchain,
+                            contract,
+                            tokenId,
+                            keyword,
+                        );
+                    } else if (paranetRepoId) {
+                        const newRepoName = `${this.paranetIdService.getParanetRepositoryName(
+                            paranetId,
+                        )}-${paranetRepoId}`;
+
+                        if (paranetDeleteFromEarlier) {
+                            // This was the previous latest one, move it to currentHistory
+                            this.logger.debug(
+                                `PARANET_ASSET_SYNC: Moving asset to repo ${newRepoName}, with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                            );
+
+                            await this.tripleStoreService.moveAsset(
+                                newRepoName,
+                                assertionId,
+                                blockchain,
+                                contract,
+                                tokenId,
+                                keyword,
+                            );
+                        } else {
+                            // This is one of the older assets, just update it
+
+                            this.logger.debug(
+                                `PARANET_ASSET_SYNC: Updating asset in repo ${newRepoName}, with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                            );
+
+                            await this.tripleStoreService.localStoreAsset(
+                                newRepoName,
+                                assertionId,
+                                responseData.nquads,
+                                blockchain,
+                                contract,
+                                tokenId,
+                                keyword,
+                            );
+                        }
+                    }
+                }
             }
         }
 

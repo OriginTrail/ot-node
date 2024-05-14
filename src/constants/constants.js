@@ -89,6 +89,8 @@ export const PEER_OFFLINE_LIMIT = 24 * 60 * 60 * 1000;
 
 export const CONTENT_ASSET_HASH_FUNCTION_ID = 1;
 
+export const PARANET_SYNC_KA_COUNT = 50;
+
 export const TRIPLE_STORE_REPOSITORIES = {
     PUBLIC_CURRENT: 'publicCurrent',
     PUBLIC_HISTORY: 'publicHistory',
@@ -149,6 +151,8 @@ export const NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
 export const HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 16000;
 
 export const SHARDING_TABLE_CHECK_COMMAND_FREQUENCY_MINUTES = 30;
+
+export const PARANET_SYNC_FREQUENCY_MILLS = 5 * 1000;
 
 export const SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES = 15;
 
@@ -351,6 +355,10 @@ export const ERROR_TYPE = {
     },
     GET_BID_SUGGESTION: {
         UNSUPPORTED_BID_SUGGESTION_RANGE_ERROR: 'UnsupportedBidSuggestionRangeError',
+    },
+    PARANET: {
+        START_PARANET_SYNC_ERROR: 'StartParanetSyncError',
+        PARANET_SYNC_ERROR: 'ParanetSyncError',
     },
 };
 export const OPERATION_ID_STATUS = {
@@ -666,6 +674,7 @@ export const CONTRACTS = {
     IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
     LOG2PLDSF_CONTRACT: 'Log2PLDSFContract',
     LINEAR_SUM_CONTRACT: 'LinearSumContract',
+    PARANETS_REGISTRY_CONTRACT: 'ParanetsRegistry',
 };
 
 export const CONTRACT_EVENTS = {

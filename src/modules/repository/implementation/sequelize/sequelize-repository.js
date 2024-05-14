@@ -8,6 +8,7 @@ import BlockchainEventRepository from './repositories/blockchain-event-repositor
 import BlockchainRepository from './repositories/blockchain-repository.js';
 import CommandRepository from './repositories/command-repository.js';
 import EventRepository from './repositories/event-repository.js';
+import ParanetRepository from './repositories/paranet-repository.js';
 import OperationIdRepository from './repositories/operation-id-repository.js';
 import OperationRepository from './repositories/operation-repository.js';
 import OperationResponseRepository from './repositories/operation-response.js';
@@ -34,6 +35,7 @@ class SequelizeRepository {
             blockchain: new BlockchainRepository(this.models),
             command: new CommandRepository(this.models),
             event: new EventRepository(this.models),
+            paranet: new ParanetRepository(this.models),
             operation_id: new OperationIdRepository(this.models),
             operation: new OperationRepository(this.models),
             operation_response: new OperationResponseRepository(this.models),

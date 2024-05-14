@@ -261,6 +261,18 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
+    async getKnowledgeAssetsCount(blockchain, paranetId) {
+        return this.callImplementationFunction(blockchain, 'getKnowledgeAssetsCount', [paranetId]);
+    }
+
+    async getKnowledgeAssetsWithPagination(blockchain, paranetId, offset, limit) {
+        return this.callImplementationFunction(blockchain, 'getKnowledgeAssetsWithPagination', [
+            paranetId,
+            offset,
+            limit,
+        ]);
+    }
+
     async getAssertionData(blockchain, assertionid) {
         return this.callImplementationFunction(blockchain, 'getAssertionData', [assertionid]);
     }

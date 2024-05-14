@@ -19,8 +19,12 @@ class OtTripleStore {
 
     initializeRepositories() {
         for (const repository of Object.keys(this.repositories)) {
-            this.initializeSparqlEndpoints(repository);
+            this.initializeRepository(repository);
         }
+    }
+
+    initializeRepository(repository) {
+        this.initializeSparqlEndpoints(repository);
     }
 
     initializeSparqlEndpoints() {
