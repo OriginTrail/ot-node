@@ -465,8 +465,22 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'convertUint8ArrayToHex', [uint8Array]);
     }
 
-    getLinearSumParams(blockchain) {
+    async getLinearSumParams(blockchain) {
         return this.callImplementationFunction(blockchain, 'getLinearSumParams');
+    }
+
+    async getParanetMetadata(blockchain, paranetId) {
+        return this.callImplementationFunction(blockchain, 'getParanetMetadata', [paranetId]);
+    }
+
+    async getKnowledgeAssetLocator(blockchain, knowledgeAssetId) {
+        return this.callImplementationFunction(blockchain, 'getKnowledgeAssetLocator', [
+            knowledgeAssetId,
+        ]);
+    }
+
+    async paranetExists(blockchain, paranetId) {
+        return this.callImplementationFunction(blockchain, 'paranetExists', [paranetId]);
     }
 }
 

@@ -1,27 +1,45 @@
-import { Model } from 'sequelize';
-
 export default (sequelize, DataTypes) => {
-    class Paranet extends Model {
-        /**
-         * Helper method for defining associations.
-         * This method is not a part of Sequelize lifecycle.
-         * The `models/index` file will call this method automatically.
-         */
-        static associate() {
-            // define association here
-        }
-    }
-    Paranet.init(
+    const paranet = sequelize.define(
+        'paranet',
         {
-            name: DataTypes.STRING,
-            description: DataTypes.STRING,
-            paranetId: DataTypes.STRING,
-            kaCount: DataTypes.INTEGER,
+            id: {
+                allowNull: false,
+                autoIncrement: true,
+                primaryKey: true,
+                type: DataTypes.INTEGER,
+            },
+            name: {
+                allowNull: false,
+                type: DataTypes.STRING,
+            },
+            description: {
+                type: DataTypes.STRING,
+            },
+            paranetId: {
+                allowNull: false,
+                type: DataTypes.STRING,
+            },
+            kaCount: {
+                allowNull: false,
+                type: DataTypes.INTEGER,
+            },
+            blockchainId: {
+                allowNull: false,
+                type: DataTypes.STRING,
+            },
+            createdAt: {
+                allowNull: false,
+                type: DataTypes.DATE,
+            },
+            updatedAt: {
+                allowNull: false,
+                type: DataTypes.DATE,
+            },
         },
-        {
-            sequelize,
-            modelName: 'Paranet',
-        },
+        { underscored: true },
     );
-    return Paranet;
+    paranet.associate = () => {
+        // associations can be defined here
+    };
+    return paranet;
 };

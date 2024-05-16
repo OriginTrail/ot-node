@@ -56,6 +56,8 @@ const ABIs = {
     ServiceAgreementStorageProxy: require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json'),
     UnfinalizedStateStorage: require('dkg-evm-module/abi/UnfinalizedStateStorage.json'),
     LinearSum: require('dkg-evm-module/abi/LinearSum.json'),
+    ParanetsRegistry: require('dkg-evm-module/abi/ParanetsRegistry.json'),
+    ParanetKnowledgeAssetsRegistry: require('dkg-evm-module/abi/ParanetKnowledgeAssetsRegistry.json'),
 };
 
 const SCORING_FUNCTIONS = {
@@ -1597,6 +1599,39 @@ class Web3Service {
             w1: Number(linearSumParams[2]),
             w2: Number(linearSumParams[3]),
         };
+    }
+
+    async getKnowledgeAssetsCount(paranetId) {
+        return this.callContractFunction(this.ParanetsRegistry, 'getKnowledgeAssetsCount', [
+            paranetId,
+        ]);
+    }
+
+    async getKnowledgeAssetsWithPagination(paranetId, offset, limit) {
+        return this.callContractFunction(
+            this.ParanetsRegistry,
+            'getKnowledgeAssetsWithPagination',
+            [paranetId, offset, limit],
+        );
+    }
+
+    async getParanetMetadata(paranetId) {
+        return this.callContractFunction(this.ParanetsRegistry, 'getParanetMetadata', [paranetId]);
+    }
+
+    async getKnowledgeAssetLocator(knowledgeAssetId) {
+        const [knowledgeAssetStorageContract, tokenId] = await this.allContractFunction(
+            this.ParanetKnowledgeAssetsRegistry,
+            'getKnowledgeAssetLocator',
+            [knowledgeAssetId],
+        );
+
+        const knowledgeAssetLocator = { knowledgeAssetStorageContract, tokenId };
+        return knowledgeAssetLocator;
+    }
+
+    async paranetExists(paranetId) {
+        return this.allContractFunction(this.ParanetsRegistry, 'paranetExists', [paranetId]);
     }
 }
 

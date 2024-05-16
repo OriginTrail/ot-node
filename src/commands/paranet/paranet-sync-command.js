@@ -11,43 +11,54 @@ import {
     PARANET_SYNC_KA_COUNT,
 } from '../../constants/constants.js';
 
-class StartParanetSyncCommands extends Command {
+class ParanetSyncCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
         this.ualService = ctx.ualService;
+        this.paranetService = ctx.paranetService;
 
         this.errorType = ERROR_TYPE.PARANET.PARANET_SYNC_ERROR;
     }
 
     async execute(command) {
-        const { commandOperationId, paranetId } = command.data;
+        const { commandOperationId, paranetUAL } = command.data;
+
+        const { blockchain, contract, tokenId } = this.ualService.resolveUAL(paranetUAL);
+        const paranetId = this.paranetService.constructParanetId(blockchain, contract, tokenId);
 
         this.logger.info(
-            `Paranet sync: Starting paranet sync for operation ID: ${commandOperationId}`,
+            `Paranet sync: Starting paranet sync for paranetId: ${paranetId}, operation ID: ${commandOperationId}`,
         );
 
         const contractKaCount = await this.blockchainModuleManager.getKnowledgeAssetsCount(
+            blockchain,
             paranetId,
         );
-        const [cachedKaCount] = await this.repositoryModuleManager.getOrCreateParanetById(
+        const [cachedKaCount] = await this.repositoryModuleManager.getKACount(
             paranetId,
+            blockchain,
         );
 
         if (cachedKaCount === contractKaCount) {
             this.logger.info(
-                `Paranet sync: KA count from contract and in DB is the same, nothing to sync!`,
+                `Paranet sync: KA count from contract and in DB is the same, nothing to sync, for paranetId: ${paranetId}, operation ID: ${commandOperationId}!`,
             );
             return Command.empty();
         }
 
-        this.logger.info(`Paranet sync: Syncing ${contractKaCount - cachedKaCount + 1} assets...`);
-
+        this.logger.info(
+            `Paranet sync: Syncing ${
+                contractKaCount - cachedKaCount + 1
+            } assets for paranetId: ${paranetId}, operation ID: ${commandOperationId}`,
+        );
+        // TODO: Rename i, should it be cachedKaCount + 1 as cachedKaCount is already in, but count is index
         const kaToUpdate = [];
         for (let i = cachedKaCount; i <= contractKaCount; i += PARANET_SYNC_KA_COUNT) {
             const nextKaArray = this.blockchainModuleManager.getKnowledgeAssetsWithPagination(
+                blockchain,
                 paranetId,
                 i,
                 PARANET_SYNC_KA_COUNT,
@@ -55,32 +66,42 @@ class StartParanetSyncCommands extends Command {
             if (!nextKaArray.length) break;
             kaToUpdate.push(...nextKaArray);
         }
-
+        // To this as batch of promises
+        // Wrapt it in try catch with retry
         kaToUpdate
-            .map((ka) => ka.tokenId)
-            .forEach(async (tokenId) => {
+            // It's array of keywords not tokenId
+            // .map((ka) => ka.tokenId)
+            .forEach(async (knowledgeAssetId) => {
                 this.logger.info(
-                    `Paranet sync: Syncing token id: ${tokenId} for ${paranetId} with operation id: ${commandOperationId}`,
+                    `Paranet sync: Syncing token id: ${knowledgeAssetId} for ${paranetId} with operation id: ${commandOperationId}`,
                 );
 
-                const { blockchain, contract } = this.ualService.resolveUal(paranetId);
+                const { kaContract } = this.blockchainModuleManager.getKnowledgeAssetLocator(
+                    blockchain,
+                    knowledgeAssetId,
+                );
+
+                // Does this return unfainalized changes
                 const assertionIds = await this.blockchainModuleManager.getLatestAssertionId(
                     blockchain,
-                    contract,
+                    kaContract,
                     tokenId,
                 );
 
                 // Go through all except the last one
+                // TODO: Do it in promises as a batch
                 for (let stateIndex = assertionIds.length - 2; stateIndex >= 0; stateIndex -= 1) {
                     await this.syncAsset(
                         blockchain,
-                        contract,
+                        kaContract,
                         tokenId,
                         assertionIds,
                         stateIndex,
                         paranetId,
                         TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
                         false,
+                        // It should never delete as it never was in storage
+                        // But maybe will becouse this is unfainalized
                         stateIndex === assertionIds.length - 2,
                     );
                 }
@@ -88,7 +109,7 @@ class StartParanetSyncCommands extends Command {
                 // Then sync the last one, but put it in the current repo
                 await this.syncAsset(
                     blockchain,
-                    contract,
+                    kaContract,
                     tokenId,
                     assertionIds,
                     assertionIds.length - 1,
@@ -100,6 +121,7 @@ class StartParanetSyncCommands extends Command {
             });
 
         // TODO: Save only successful ones
+        // Here is the problme if one missed count will be false and we will always try to get it again
         await this.repositoryModuleManager.updateParanetKaCount(paranetId, contractKaCount);
 
         return Command.repeat();
@@ -117,28 +139,6 @@ class StartParanetSyncCommands extends Command {
         deleteFromEarlier,
     ) {
         try {
-            if (
-                await this.repositoryModuleManager.isStateSynced(
-                    blockchain,
-                    contract,
-                    tokenId,
-                    stateIndex,
-                )
-            ) {
-                this.logger.trace(
-                    `PARANET_SYNC: StateIndex: ${stateIndex} for tokenId: ${tokenId} already synced blockchain: ${blockchain}`,
-                );
-                await this.repositoryModuleManager.updateAssetSyncRecord(
-                    blockchain,
-                    contract,
-                    tokenId,
-                    stateIndex,
-                    SIMPLE_ASSET_SYNC_PARAMETERS.STATUS.COMPLETED,
-                    true,
-                );
-                return;
-            }
-
             const statePresentInParanetRepository =
                 await this.tripleStoreService.paranetAssetExists(
                     paranetId,
@@ -151,14 +151,14 @@ class StartParanetSyncCommands extends Command {
                 this.logger.trace(
                     `PARANET_SYNC: StateIndex: ${stateIndex} for tokenId: ${tokenId} found in triple store blockchain: ${blockchain}`,
                 );
-                await this.repositoryModuleManager.createAssetSyncRecord(
-                    blockchain,
-                    contract,
-                    tokenId,
-                    stateIndex,
-                    SIMPLE_ASSET_SYNC_PARAMETERS.STATUS.COMPLETED,
-                    true,
-                );
+                // await this.repositoryModuleManager.createAssetSyncRecord(
+                //     blockchain,
+                //     contract,
+                //     tokenId,
+                //     stateIndex,
+                //     SIMPLE_ASSET_SYNC_PARAMETERS.STATUS.COMPLETED,
+                //     true,
+                // );
                 return;
             }
 
@@ -181,13 +181,13 @@ class StartParanetSyncCommands extends Command {
                     OPERATION_ID_STATUS.GET.GET_INIT_START,
                 ),
 
-                this.repositoryModuleManager.createAssetSyncRecord(
-                    blockchain,
-                    contract,
-                    tokenId,
-                    stateIndex,
-                    SIMPLE_ASSET_SYNC_PARAMETERS.STATUS.IN_PROGRESS,
-                ),
+                // this.repositoryModuleManager.createAssetSyncRecord(
+                //     blockchain,
+                //     contract,
+                //     tokenId,
+                //     stateIndex,
+                //     SIMPLE_ASSET_SYNC_PARAMETERS.STATUS.IN_PROGRESS,
+                // ),
 
                 this.repositoryModuleManager.createOperationRecord(
                     this.getService.getOperationName(),
@@ -236,6 +236,7 @@ class StartParanetSyncCommands extends Command {
             let attempt = 0;
             let getResult;
             do {
+                // TODO: Import timeout
                 await setTimeout(SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS);
                 getResult = await this.operationIdService.getOperationIdRecord(operationId);
                 attempt += 1;
@@ -248,14 +249,14 @@ class StartParanetSyncCommands extends Command {
             this.logger.warn(
                 `ASSET_SYNC: Unable to sync tokenId: ${tokenId}, for contract: ${contract} state index: ${stateIndex} blockchain: ${blockchain}, error: ${error}`,
             );
-            await this.repositoryModuleManager.updateAssetSyncRecord(
-                blockchain,
-                contract,
-                tokenId,
-                stateIndex,
-                SIMPLE_ASSET_SYNC_PARAMETERS.STATUS.FAILED,
-                true,
-            );
+            // await this.repositoryModuleManager.updateAssetSyncRecord(
+            //     blockchain,
+            //     contract,
+            //     tokenId,
+            //     stateIndex,
+            //     SIMPLE_ASSET_SYNC_PARAMETERS.STATUS.FAILED,
+            //     true,
+            // );
         }
     }
 
@@ -287,4 +288,4 @@ class StartParanetSyncCommands extends Command {
     }
 }
 
-export default StartParanetSyncCommands;
+export default ParanetSyncCommand;

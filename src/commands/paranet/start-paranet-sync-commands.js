@@ -22,9 +22,9 @@ class StartParanetSyncCommands extends Command {
         await this.commandExecutor.delete('paranetSyncCommand');
 
         const promises = [];
-        this.config.assetSync?.syncParanets.forEach(async (paranetId) => {
+        this.config.assetSync?.syncParanets.forEach(async (paranetUAL) => {
             const commandData = {
-                paranetId,
+                paranetUAL,
                 operationId,
             };
 

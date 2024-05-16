@@ -341,23 +341,43 @@ class OTNode {
         await autoUpdaterCommand.execute();
     }
 
-    initializeParanets() {
+    async initializeParanets() {
         const paranetIdService = this.container.resolve('paranetIdService');
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const tripleStoreService = this.container.resolve('tripleStoreService');
         const tripleStoreModuleManager = this.container.resolve('tripleStoreModuleManager');
+        const paranetService = this.container.resolve('paranetService');
         const validParanets = [];
-        this.config.assetSync?.syncParanets.forEach((paranetId) => {
-            if (!paranetIdService.isUAL(paranetId)) {
-                this.logger.warn(`Unable to initialize Paranet with id ${paranetId} because of invalid UAL format`);
+        // Do this in promises
+        this.config.assetSync?.syncParanets.forEach(async (paranetUAL) => {
+            // Not this service
+            if (!paranetIdService.isUAL(paranetUAL)) {
+                this.logger.warn(
+                    `Unable to initialize Paranet with id ${paranetUAL} because of invalid UAL format`,
+                );
             } else {
-                const { blockchainId } = paranetIdService.resolveUAL(paranetId);
-                if (!blockchainModuleManager.getImplementationNames().includes(blockchainId)) {
-                    this.logger.warn(`Unable to initialize Paranet with id ${paranetId} because of unsupported blockchain implementation`);
+                const { blockchain, contract, tokenId } = this.ualService.resolveUAL(paranetUAL);
+                if (!blockchainModuleManager.getImplementationNames().includes(blockchain)) {
+                    this.logger.warn(
+                        `Unable to initialize Paranet with id ${paranetUAL} because of unsupported blockchain implementation`,
+                    );
                 } else {
-                    validParanets.push(paranetId);
-                    const repository = paranetIdService.getParanetRepositoryName(paranetId);
-                    tripleStoreModuleManager.initializeRepository(repository);
+                    const paranetId = paranetService.constructParanetId(
+                        blockchain,
+                        contract,
+                        tokenId,
+                    );
+                    const paranetExists = await blockchainModuleManager.paranetExists(paranetId);
+                    if (!paranetExists) {
+                        this.logger.warn(
+                            `Unable to initialize Paranet with id ${paranetUAL} because it doesn't exist`,
+                        );
+                    } else {
+                        validParanets.push(paranetUAL);
+                        const repository = paranetIdService.getParanetRepositoryName(paranetUAL);
+                        tripleStoreModuleManager.initializeRepository(repository);
+                        paranetService.initializeParanetRecord(blockchain, paranetId);
+                    }
                 }
             }
         });
