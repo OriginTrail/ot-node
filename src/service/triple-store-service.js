@@ -121,6 +121,36 @@ class TripleStoreService {
         }
     }
 
+    async moveAssetWithoutDelete(
+        fromRepository,
+        toRepository,
+        assertionId,
+        blockchain,
+        contract,
+        tokenId,
+        keyword,
+    ) {
+        let assertion;
+        // Try-catch to prevent infinite processing loop when unexpected error is thrown while getting KA
+        try {
+            assertion = await this.getAssertion(fromRepository, assertionId);
+        } catch (e) {
+            this.logger.error(`Error while getting assertion for moving asset: ${e.message}`);
+            return;
+        }
+
+        // copy metadata and assertion
+        await this.localStoreAsset(
+            toRepository,
+            assertionId,
+            assertion,
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+        );
+    }
+
     async insertAssetAssertionMetadata(
         repository,
         blockchain,
