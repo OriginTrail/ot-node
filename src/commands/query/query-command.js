@@ -91,6 +91,7 @@ class QueryCommand extends Command {
             } else if (query[i] === '}') {
                 curlyBracesCounter -= 1;
                 if (curlyBracesCounter === 0) {
+                    // This is place where } ended of where, it should be inserted before it
                     let positionToInsert = i;
                     for (let j = 0; j < services.length; j += 1) {
                         const serviceString = this.buildServiceFilter(services[i], filters[i]);
