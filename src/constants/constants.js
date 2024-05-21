@@ -647,6 +647,7 @@ export const OPERATION_REQUEST_STATUS = {
 export const QUERY_TYPES = {
     SELECT: 'SELECT',
     CONSTRUCT: 'CONSTRUCT',
+    FEDERATED_QUERY: 'FEDERATED_QUERY',
 };
 
 /**

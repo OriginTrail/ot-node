@@ -174,6 +174,14 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
+    async getRepositorySparqlEndpoint(implementationName, repository) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.getRepositorySparqlEndpoint(
+                repository,
+            );
+        }
+    }
+
     getName() {
         return 'tripleStore';
     }

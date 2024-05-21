@@ -15,7 +15,6 @@ class QueryController extends BaseController {
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.QUERY.QUERY_INIT_START,
         );
-
         this.returnResponse(res, 202, {
             operationId,
         });
@@ -30,7 +29,14 @@ class QueryController extends BaseController {
             name: 'queryCommand',
             sequence: [],
             delay: 0,
-            data: { query, queryType, repository: req.body.repository, operationId },
+            data: {
+                query,
+                queryType,
+                repository: req.body.repository,
+                operationId,
+                repositories: req.body?.repositories,
+                filters: req.body?.filters,
+            },
             transactional: false,
         });
     }

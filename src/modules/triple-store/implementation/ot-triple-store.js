@@ -31,6 +31,10 @@ class OtTripleStore {
         throw Error('initializeSparqlEndpoints not implemented');
     }
 
+    getRepositorySparqlEndpoint() {
+        throw Error('getRepositorySparqlEndpoint not implemented');
+    }
+
     async deleteRepository() {
         throw Error('deleteRepository not implemented');
     }

@@ -21,6 +21,8 @@ class QueryCommand extends Command {
             queryType,
             operationId,
             repository = TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+            repositories,
+            filters,
         } = command.data;
 
         let data;
@@ -39,6 +41,18 @@ class QueryCommand extends Command {
                 case QUERY_TYPES.SELECT: {
                     data = await this.dataService.parseBindings(
                         await this.tripleStoreService.select(repository, query),
+                    );
+                    break;
+                }
+                case QUERY_TYPES.FEDERATED_QUERY: {
+                    if (repositories.length !== filters.length) {
+                        throw new Error(
+                            `For federated query repositories and filters need to be of same length`,
+                        );
+                    }
+                    const federatedQuery = this.buildFederatedQuery(query, repositories, filters);
+                    data = await this.dataService.parseBindings(
+                        await this.tripleStoreService.select(repository, federatedQuery),
                     );
                     break;
                 }
@@ -64,6 +78,57 @@ class QueryCommand extends Command {
         }
 
         return Command.empty();
+    }
+
+    buildFederatedQuery(query, services, filters) {
+        let federatedQuery = query;
+        const indexOfWhere = query.indexOf('WHERE');
+        const firstBraceOfWhereIndex = query.indexOf('{', indexOfWhere);
+        let curlyBracesCounter = 0;
+        for (let i = firstBraceOfWhereIndex; i < query.length; i += 1) {
+            if (query[i] === '{') {
+                curlyBracesCounter += 1;
+            } else if (query[i] === '}') {
+                curlyBracesCounter -= 1;
+                if (curlyBracesCounter === 0) {
+                    let positionToInsert = i;
+                    for (let j = 0; j < services.length; j += 1) {
+                        const serviceString = this.buildServiceFilter(services[i], filters[i]);
+                        federatedQuery = this.insertStringAtPosition(
+                            federatedQuery,
+                            serviceString,
+                            positionToInsert,
+                        );
+                        positionToInsert += serviceString.length;
+                    }
+                }
+            }
+        }
+    }
+
+    buildServiceFilter(repository, filter) {
+        // http://192.168.206.131:9999/blazegraph/namespace/second_namespace/sparql endpoint
+        const paranetRepo = this.tripleStoreService.getRepositorySparqlEndpoint(repository);
+        return `
+        SERVICE <${paranetRepo}> {
+            ${filter}
+        }`;
+    }
+
+    insertStringAtPosition(originalString, stringToInsert, position) {
+        let positionToBeUsed = position;
+        if (position < 0) {
+            positionToBeUsed = 0;
+        } else if (position > originalString.length) {
+            positionToBeUsed = originalString.length;
+        }
+
+        // Use slice to divide the original string and insert the new string
+        return (
+            originalString.slice(0, positionToBeUsed) +
+            stringToInsert +
+            originalString.slice(positionToBeUsed)
+        );
     }
 
     /**

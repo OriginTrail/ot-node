@@ -13,5 +13,17 @@ export default () => ({
         repository: {
             enum: Object.values(TRIPLE_STORE_REPOSITORIES),
         },
+        repositories: {
+            type: 'array',
+            items: {
+                type: 'string',
+            },
+        },
+        filters: {
+            type: 'array',
+            items: {
+                type: 'string',
+            },
+        },
     },
 });

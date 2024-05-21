@@ -455,6 +455,13 @@ class TripleStoreService {
 
         return Promise.all(queryPromises);
     }
+
+    getRepositorySparqlEndpoint(repository) {
+        return this.tripleStoreModuleManager.getRepositorySparqlEndpoint(
+            this.repositoryImplementations[repository],
+            repository,
+        );
+    }
 }
 
 export default TripleStoreService;
