@@ -1433,7 +1433,7 @@ class Web3Service {
     }
 
     keccak256(bytesLikeData) {
-        return ethers.keccak256(bytesLikeData);
+        return ethers.utils.keccak256(bytesLikeData);
     }
 
     sha256(bytesLikeData) {
@@ -1602,26 +1602,32 @@ class Web3Service {
     }
 
     async getKnowledgeAssetsCount(paranetId) {
-        return this.callContractFunction(this.ParanetsRegistry, 'getKnowledgeAssetsCount', [
+        return this.callContractFunction(this.ParanetsRegistryContract, 'getKnowledgeAssetsCount', [
             paranetId,
         ]);
     }
 
     async getKnowledgeAssetsWithPagination(paranetId, offset, limit) {
         return this.callContractFunction(
-            this.ParanetsRegistry,
+            this.ParanetsRegistryContract,
             'getKnowledgeAssetsWithPagination',
             [paranetId, offset, limit],
+            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
         );
     }
 
     async getParanetMetadata(paranetId) {
-        return this.callContractFunction(this.ParanetsRegistry, 'getParanetMetadata', [paranetId]);
+        return this.callContractFunction(
+            this.ParanetsRegistryContract,
+            'getParanetMetadata',
+            [paranetId],
+            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+        );
     }
 
     async getKnowledgeAssetLocator(knowledgeAssetId) {
-        const [knowledgeAssetStorageContract, tokenId] = await this.allContractFunction(
-            this.ParanetKnowledgeAssetsRegistry,
+        const [knowledgeAssetStorageContract, tokenId] = await this.callContractFunction(
+            this.ParanetKnowledgeAssetsRegistryContract,
             'getKnowledgeAssetLocator',
             [knowledgeAssetId],
         );
@@ -1631,7 +1637,12 @@ class Web3Service {
     }
 
     async paranetExists(paranetId) {
-        return this.callContractFunction(this.ParanetsRegistry, 'paranetExists', [paranetId]);
+        return this.callContractFunction(
+            this.ParanetsRegistryContract,
+            'paranetExists',
+            [paranetId],
+            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+        );
     }
 }
 

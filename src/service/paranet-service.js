@@ -10,17 +10,19 @@ class ParanetService {
             blockchain,
             paranetId,
         );
-        if (await this.repositoryModuleManager.paranetExists(paranetId, blockchain))
+        if (!(await this.repositoryModuleManager.paranetExists(paranetId, blockchain))) {
             await this.repositoryModuleManager.createParanetRecord(
                 paranetMetadata.name,
                 paranetMetadata.description,
                 paranetId,
                 blockchain,
             );
-        // TODO: Write proper Error msg
-        throw new Error(
-            `Unable to get Paranet repository name. Paranet id doesn't have correct format: ${paranetId}`,
-        );
+        } else {
+            // TODO: Write proper Error msg
+            throw new Error(
+                `Unable to get Paranet repository name. Paranet id doesn't have correct format: ${paranetId}`,
+            );
+        }
     }
 
     constructParanetId(blockchain, contract, tokenId) {
