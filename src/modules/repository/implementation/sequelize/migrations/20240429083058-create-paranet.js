@@ -1,5 +1,5 @@
 export const up = async ({ context: { queryInterface, Sequelize } }) => {
-    await queryInterface.createTable('Paranet', {
+    await queryInterface.createTable('paranet', {
         id: {
             allowNull: false,
             autoIncrement: true,
