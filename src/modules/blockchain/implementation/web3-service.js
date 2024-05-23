@@ -1633,12 +1633,6 @@ class Web3Service {
     async paranetExists(paranetId) {
         return this.callContractFunction(this.ParanetsRegistry, 'paranetExists', [paranetId]);
     }
-
-    async getParanetId(knowledgeAssetId) {
-        return this.callContractFunction(this.ParanetKnowledgeAssetsRegistry, 'paranetExists', [
-            knowledgeAssetId,
-        ]);
-    }
 }
 
 export default Web3Service;
