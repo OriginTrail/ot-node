@@ -10,7 +10,7 @@ class TripleStoreService {
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.ualService = ctx.ualService;
         this.dataService = ctx.dataService;
-        this.paranetIdService = ctx.paranetIdService;
+        this.paranetService = ctx.paranetService;
     }
 
     initializeRepositories() {
@@ -312,7 +312,7 @@ class TripleStoreService {
     }
 
     async paranetAssetExists(paranetId, blockchain, contract, tokenId) {
-        const repository = this.paranetIdService.getParanetRepositoryName(paranetId);
+        const repository = this.paranetService.getParanetRepositoryName(paranetId);
         return this.assetExists(repository, blockchain, contract, tokenId);
     }
 

@@ -28,6 +28,7 @@ class BlockchainEventListenerService {
         this.hashingService = ctx.hashingService;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.shardingTableService = ctx.shardingTableService;
+        this.paranetService = ctx.paranetService;
 
         this.eventGroupsBuffer = {};
     }
@@ -574,18 +575,15 @@ class BlockchainEventListenerService {
                     stateIndex,
                 ),
             ]);
-            const knowledgeAssetId = this.blockchainModuleManager.encodePacked(
-                blockchain,
-                ['address', 'bytes32'],
-                [contract, tokenId],
-            );
 
             // eslint-disable-next-line no-await-in-loop
-            const paranetId = await this.blockchainModuleManager.getParanetId(
+            const paranetId = await this.paranetService.constructParanetId(
                 blockchain,
-                knowledgeAssetId,
+                contract,
+                tokenId,
             );
-            // Chack if this asset is in paranet we are syncing
+
+            // Check if this asset is in paranet we are syncing
             // eslint-disable-next-line no-await-in-loop
             const paranetAssetExists = await this.tripleStoreService.paranetAssetExists(
                 paranetId,
@@ -595,7 +593,7 @@ class BlockchainEventListenerService {
             );
             if (paranetAssetExists) {
                 const paranetRepositoryName =
-                    this.paranetIdService.getParanetRepositoryName(paranetId);
+                    this.paranetService.getParanetRepositoryName(paranetId);
                 // eslint-disable-next-line no-await-in-loop
                 const assertionIds = await this.blockchainModuleManager.getAssertionIds(
                     blockchain,

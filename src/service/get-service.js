@@ -24,7 +24,7 @@ class GetService extends OperationService {
         this.ualService = ctx.ualService;
         this.tripleStoreService = ctx.tripleStoreService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.paranetIdService = ctx.paranetIdService;
+        this.paranetService = ctx.paranetService;
         this.operationMutex = new Mutex();
     }
 
@@ -109,7 +109,7 @@ class GetService extends OperationService {
 
                     if (paranetLatestAsset) {
                         await this.tripleStoreService.localStoreAsset(
-                            `${this.paranetIdService.getParanetRepositoryName(paranetId)}-${
+                            `${this.paranetService.getParanetRepositoryName(paranetId)}-${
                                 TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT
                             }`,
                             assertionId,
@@ -120,7 +120,7 @@ class GetService extends OperationService {
                             keyword,
                         );
                     } else if (paranetRepoId) {
-                        const newRepoName = `${this.paranetIdService.getParanetRepositoryName(
+                        const newRepoName = `${this.paranetService.getParanetRepositoryName(
                             paranetId,
                         )}-${paranetRepoId}`;
 

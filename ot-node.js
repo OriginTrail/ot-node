@@ -342,7 +342,6 @@ class OTNode {
     }
 
     async initializeParanets() {
-        const paranetIdService = this.container.resolve('paranetIdService');
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const tripleStoreService = this.container.resolve('tripleStoreService');
         const tripleStoreModuleManager = this.container.resolve('tripleStoreModuleManager');
@@ -351,7 +350,7 @@ class OTNode {
         // Do this in promises
         this.config.assetSync?.syncParanets.forEach(async (paranetUAL) => {
             // Not this service
-            if (!paranetIdService.isUAL(paranetUAL)) {
+            if (!paranetService.isUAL(paranetUAL)) {
                 this.logger.warn(
                     `Unable to initialize Paranet with id ${paranetUAL} because of invalid UAL format`,
                 );
@@ -374,7 +373,7 @@ class OTNode {
                         );
                     } else {
                         validParanets.push(paranetUAL);
-                        const repository = paranetIdService.getParanetRepositoryName(paranetUAL);
+                        const repository = paranetService.getParanetRepositoryName(paranetUAL);
                         tripleStoreModuleManager.initializeRepository(repository);
                         paranetService.initializeParanetRecord(blockchain, paranetId);
                     }

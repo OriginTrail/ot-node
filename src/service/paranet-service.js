@@ -2,7 +2,7 @@ class ParanetService {
     constructor(ctx) {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.this.ualService = ctx.ualService;
+        this.ualService = ctx.ualService;
     }
 
     async initializeParanetRecord(blockchain, paranetId) {
