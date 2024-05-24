@@ -9,21 +9,24 @@ class OtBlazegraph extends OtTripleStore {
 
         await Promise.all(
             Object.keys(this.repositories).map(async (repository) => {
-                const { url, name } = this.repositories[repository];
-
-                if (!(await this.repositoryExists(repository))) {
-                    await axios.post(
-                        `${url}/blazegraph/namespace`,
-                        `com.bigdata.rdf.sail.truthMaintenance=false\ncom.bigdata.namespace.${name}.lex.com.bigdata.btree.BTree.branchingFactor=400\ncom.bigdata.rdf.store.AbstractTripleStore.textIndex=false\ncom.bigdata.rdf.store.AbstractTripleStore.justify=false\ncom.bigdata.namespace.${name}.spo.com.bigdata.btree.BTree.branchingFactor=1024\ncom.bigdata.rdf.store.AbstractTripleStore.statementIdentifiers=false\ncom.bigdata.rdf.store.AbstractTripleStore.axiomsClass=com.bigdata.rdf.axioms.NoAxioms\ncom.bigdata.rdf.sail.namespace=${name}\ncom.bigdata.rdf.store.AbstractTripleStore.quads=true\ncom.bigdata.rdf.store.AbstractTripleStore.geoSpatial=false\ncom.bigdata.journal.Journal.groupCommit=false\ncom.bigdata.rdf.sail.isolatableIndices=false\n`,
-                        {
-                            headers: {
-                                'Content-Type': 'text/plain',
-                            },
-                        },
-                    );
-                }
+                await this.createRepository(repository);
             }),
         );
+    }
+
+    async createRepository(repository) {
+        const { url, name } = this.repositories[repository];
+        if (!(await this.repositoryExists(repository))) {
+            await axios.post(
+                `${url}/blazegraph/namespace`,
+                `com.bigdata.rdf.sail.truthMaintenance=false\ncom.bigdata.namespace.${name}.lex.com.bigdata.btree.BTree.branchingFactor=400\ncom.bigdata.rdf.store.AbstractTripleStore.textIndex=false\ncom.bigdata.rdf.store.AbstractTripleStore.justify=false\ncom.bigdata.namespace.${name}.spo.com.bigdata.btree.BTree.branchingFactor=1024\ncom.bigdata.rdf.store.AbstractTripleStore.statementIdentifiers=false\ncom.bigdata.rdf.store.AbstractTripleStore.axiomsClass=com.bigdata.rdf.axioms.NoAxioms\ncom.bigdata.rdf.sail.namespace=${name}\ncom.bigdata.rdf.store.AbstractTripleStore.quads=true\ncom.bigdata.rdf.store.AbstractTripleStore.geoSpatial=false\ncom.bigdata.journal.Journal.groupCommit=false\ncom.bigdata.rdf.sail.isolatableIndices=false\n`,
+                {
+                    headers: {
+                        'Content-Type': 'text/plain',
+                    },
+                },
+            );
+        }
     }
 
     initializeSparqlEndpoints(repository) {

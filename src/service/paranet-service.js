@@ -17,11 +17,6 @@ class ParanetService {
                 paranetId,
                 blockchain,
             );
-        } else {
-            // TODO: Write proper Error msg
-            throw new Error(
-                `Unable to get Paranet repository name. Paranet id doesn't have correct format: ${paranetId}`,
-            );
         }
     }
 
@@ -37,7 +32,8 @@ class ParanetService {
 
     getParanetRepositoryName(paranetId) {
         if (this.ualService.isUAL(paranetId)) {
-            return paranetId.replace('/', '-');
+            // Replace : and / with -
+            return paranetId.replace(/[/:]/g, '-');
         }
         throw new Error(
             `Unable to get Paranet repository name. Paranet id doesn't have correct format: ${paranetId}`,
