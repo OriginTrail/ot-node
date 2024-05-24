@@ -11,17 +11,20 @@ class QueryCommand extends Command {
         super(ctx);
         this.dataService = ctx.dataService;
         this.tripleStoreService = ctx.tripleStoreService;
+        this.paranetService = ctx.paranetService;
 
         this.errorType = ERROR_TYPE.QUERY.LOCAL_QUERY_ERROR;
     }
 
     async execute(command) {
         const {
-            query,
             queryType,
             operationId,
             repository = TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+            paranetUAL,
         } = command.data;
+
+        let { query } = command.data;
 
         let data;
 
@@ -30,6 +33,26 @@ class QueryCommand extends Command {
             null,
             OPERATION_ID_STATUS.QUERY.QUERY_START,
         );
+        // check if it's federated query
+        const pattern = /SERVICE\s+<[^>]+>/g;
+        const matches = query.match(pattern);
+        if (matches) {
+            for (const paranetName in matches) {
+                // TODO: Is name gotten from paraneUAL of paranetName
+                const paranetRepositoryName =
+                    this.paranetService.getParanetRepositoryByParanetName(paranetName);
+                if (!paranetRepositoryName) {
+                    throw Error(`Query failed! Paranet with UAL: ${paranetName} doesn't exist`);
+                }
+                query = query.replace(paranetName, paranetRepositoryName);
+            }
+        }
+        if (paranetUAL) {
+            const paranetRepositoryName = this.paranetService.getParanetRepositoryName(paranetUAL);
+            if (!paranetRepositoryName) {
+                throw Error(`Query failed! Paranet with UAL: ${paranetUAL} doesn't exist`);
+            }
+        }
         try {
             switch (queryType) {
                 case QUERY_TYPES.CONSTRUCT: {

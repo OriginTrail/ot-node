@@ -13,5 +13,8 @@ export default () => ({
         repository: {
             enum: Object.values(TRIPLE_STORE_REPOSITORIES),
         },
+        paranetUAL: {
+            type: 'string',
+        },
     },
 });
