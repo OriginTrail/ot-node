@@ -1601,13 +1601,16 @@ class Web3Service {
         };
     }
 
-    async getKnowledgeAssetsCount(paranetId) {
-        return this.callContractFunction(this.ParanetsRegistryContract, 'getKnowledgeAssetsCount', [
-            paranetId,
-        ]);
+    async getParanetKnowledgeAssetsCount(paranetId) {
+        return this.callContractFunction(
+            this.ParanetsRegistryContract,
+            'getKnowledgeAssetsCount',
+            [paranetId],
+            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+        );
     }
 
-    async getKnowledgeAssetsWithPagination(paranetId, offset, limit) {
+    async getParanetKnowledgeAssetsWithPagination(paranetId, offset, limit) {
         return this.callContractFunction(
             this.ParanetsRegistryContract,
             'getKnowledgeAssetsWithPagination',
@@ -1625,7 +1628,7 @@ class Web3Service {
         );
     }
 
-    async getKnowledgeAssetLocator(knowledgeAssetId) {
+    async getParanetKnowledgeAssetLocator(knowledgeAssetId) {
         const [knowledgeAssetStorageContract, tokenId] = await this.callContractFunction(
             this.ParanetKnowledgeAssetsRegistryContract,
             'getKnowledgeAssetLocator',
