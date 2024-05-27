@@ -28,7 +28,7 @@ class StartParanetSyncCommands extends Command {
                 operationId,
             };
 
-            promises.append(
+            promises.push(
                 this.commandExecutor.add({
                     name: 'paranetSyncCommand',
                     data: commandData,

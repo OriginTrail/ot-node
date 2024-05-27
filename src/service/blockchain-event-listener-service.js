@@ -28,6 +28,7 @@ class BlockchainEventListenerService {
         this.hashingService = ctx.hashingService;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.shardingTableService = ctx.shardingTableService;
+        this.paranetService = ctx.paranetService;
 
         this.eventGroupsBuffer = {};
     }
@@ -547,7 +548,6 @@ class BlockchainEventListenerService {
                     tokenId,
                 )} with keyword: ${keyword}, assertion id: ${state}.`,
             );
-
             // eslint-disable-next-line no-await-in-loop
             await Promise.all([
                 this.pendingStorageService.moveAndDeletePendingState(
@@ -575,6 +575,52 @@ class BlockchainEventListenerService {
                     stateIndex,
                 ),
             ]);
+
+            // eslint-disable-next-line no-await-in-loop
+            const paranetId = await this.paranetService.constructParanetId(
+                blockchain,
+                contract,
+                tokenId,
+            );
+
+            // Check if this asset is in paranet we are syncing
+            // eslint-disable-next-line no-await-in-loop
+            const paranetAssetExists = await this.tripleStoreService.paranetAssetExists(
+                paranetId,
+                blockchain,
+                contract,
+                tokenId,
+            );
+            if (paranetAssetExists) {
+                const paranetRepositoryName =
+                    this.paranetService.getParanetRepositoryName(paranetId);
+                // eslint-disable-next-line no-await-in-loop
+                const assertionIds = await this.blockchainModuleManager.getAssertionIds(
+                    blockchain,
+                    contract,
+                    tokenId,
+                );
+                // Delete old asset from paranet repository
+                // Missing assertionId for old asset, how to get
+                // Penultimat assertion id is one before update that needs to be delted
+                // eslint-disable-next-line no-await-in-loop
+                await this.tripleStoreService.deleteAssertion(
+                    paranetRepositoryName,
+                    assertionIds[assertionIds.length - 2],
+                );
+
+                // Insert in paranet registry
+                // eslint-disable-next-line no-await-in-loop
+                await this.tripleStoreService.moveAssetWithoutDelete(
+                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                    paranetRepositoryName,
+                    state,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    keyword,
+                );
+            }
         }
     }
 }

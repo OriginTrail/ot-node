@@ -10,7 +10,7 @@ class TripleStoreService {
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.ualService = ctx.ualService;
         this.dataService = ctx.dataService;
-        this.paranetIdService = ctx.paranetIdService;
+        this.paranetService = ctx.paranetService;
     }
 
     initializeRepositories() {
@@ -119,6 +119,36 @@ class TripleStoreService {
         if (assetsWithAssertionIdCount?.count <= 1) {
             await this.deleteAssertion(fromRepository, assertionId);
         }
+    }
+
+    async moveAssetWithoutDelete(
+        fromRepository,
+        toRepository,
+        assertionId,
+        blockchain,
+        contract,
+        tokenId,
+        keyword,
+    ) {
+        let assertion;
+        // Try-catch to prevent infinite processing loop when unexpected error is thrown while getting KA
+        try {
+            assertion = await this.getAssertion(fromRepository, assertionId);
+        } catch (e) {
+            this.logger.error(`Error while getting assertion for moving asset: ${e.message}`);
+            return;
+        }
+
+        // copy metadata and assertion
+        await this.localStoreAsset(
+            toRepository,
+            assertionId,
+            assertion,
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+        );
     }
 
     async insertAssetAssertionMetadata(
@@ -282,7 +312,7 @@ class TripleStoreService {
     }
 
     async paranetAssetExists(paranetId, blockchain, contract, tokenId) {
-        const repository = this.paranetIdService.getParanetRepositoryName(paranetId);
+        const repository = this.paranetService.getParanetRepositoryName(paranetId);
         return this.assetExists(repository, blockchain, contract, tokenId);
     }
 

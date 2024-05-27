@@ -49,6 +49,16 @@ class ParanetRepository {
         });
         return !!paranetRecord;
     }
+
+    async getParanetKnowledgeAssetsCount(paranetId, blockchainId) {
+        return this.model.findAll({
+            attributes: ['ka_count'],
+            where: {
+                paranetId,
+                blockchainId,
+            },
+        });
+    }
 }
 
 export default ParanetRepository;

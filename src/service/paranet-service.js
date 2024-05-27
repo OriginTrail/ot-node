@@ -2,7 +2,7 @@ class ParanetService {
     constructor(ctx) {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.this.ualService = ctx.ualService;
+        this.ualService = ctx.ualService;
     }
 
     async initializeParanetRecord(blockchain, paranetId) {
@@ -10,17 +10,14 @@ class ParanetService {
             blockchain,
             paranetId,
         );
-        if (await this.repositoryModuleManager.paranetExists(paranetId, blockchain))
+        if (!(await this.repositoryModuleManager.paranetExists(paranetId, blockchain))) {
             await this.repositoryModuleManager.createParanetRecord(
                 paranetMetadata.name,
                 paranetMetadata.description,
                 paranetId,
                 blockchain,
             );
-        // TODO: Write proper Error msg
-        throw new Error(
-            `Unable to get Paranet repository name. Paranet id doesn't have correct format: ${paranetId}`,
-        );
+        }
     }
 
     constructParanetId(blockchain, contract, tokenId) {
@@ -35,7 +32,8 @@ class ParanetService {
 
     getParanetRepositoryName(paranetId) {
         if (this.ualService.isUAL(paranetId)) {
-            return paranetId.replace('/', '-');
+            // Replace : and / with -
+            return paranetId.replace(/[/:]/g, '-');
         }
         throw new Error(
             `Unable to get Paranet repository name. Paranet id doesn't have correct format: ${paranetId}`,

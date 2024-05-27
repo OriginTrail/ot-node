@@ -19,64 +19,67 @@ class ParanetSyncCommand extends Command {
         this.tripleStoreService = ctx.tripleStoreService;
         this.ualService = ctx.ualService;
         this.paranetService = ctx.paranetService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.PARANET.PARANET_SYNC_ERROR;
     }
 
     async execute(command) {
-        const { commandOperationId, paranetUAL } = command.data;
+        const { operationId, paranetUAL } = command.data;
 
         const { blockchain, contract, tokenId } = this.ualService.resolveUAL(paranetUAL);
         const paranetId = this.paranetService.constructParanetId(blockchain, contract, tokenId);
 
         this.logger.info(
-            `Paranet sync: Starting paranet sync for paranetId: ${paranetId}, operation ID: ${commandOperationId}`,
+            `Paranet sync: Starting paranet sync for paranetId: ${paranetId}, operation ID: ${operationId}`,
         );
 
-        const contractKaCount = await this.blockchainModuleManager.getKnowledgeAssetsCount(
+        let contractKaCount = await this.blockchainModuleManager.getParanetKnowledgeAssetsCount(
             blockchain,
             paranetId,
         );
-        const [cachedKaCount] = await this.repositoryModuleManager.getKACount(
-            paranetId,
-            blockchain,
-        );
+        contractKaCount = contractKaCount.toNumber();
+
+        const cachedKaCount = (
+            await this.repositoryModuleManager.getParanetKnowledgeAssetsCount(paranetId, blockchain)
+        )[0].dataValues.ka_count;
 
         if (cachedKaCount === contractKaCount) {
             this.logger.info(
-                `Paranet sync: KA count from contract and in DB is the same, nothing to sync, for paranetId: ${paranetId}, operation ID: ${commandOperationId}!`,
+                `Paranet sync: KA count from contract and in DB is the same, nothing to sync, for paranetId: ${paranetId}, operation ID: ${operationId}!`,
             );
             return Command.empty();
         }
 
         this.logger.info(
             `Paranet sync: Syncing ${
-                contractKaCount - cachedKaCount + 1
-            } assets for paranetId: ${paranetId}, operation ID: ${commandOperationId}`,
+                contractKaCount - cachedKaCount
+            } assets for paranetId: ${paranetId}, operation ID: ${operationId}`,
         );
         // TODO: Rename i, should it be cachedKaCount + 1 as cachedKaCount is already in, but count is index
         const kaToUpdate = [];
         for (let i = cachedKaCount; i <= contractKaCount; i += PARANET_SYNC_KA_COUNT) {
-            const nextKaArray = this.blockchainModuleManager.getKnowledgeAssetsWithPagination(
-                blockchain,
-                paranetId,
-                i,
-                PARANET_SYNC_KA_COUNT,
-            );
+            const nextKaArray =
+                await this.blockchainModuleManager.getParanetKnowledgeAssetsWithPagination(
+                    blockchain,
+                    paranetId,
+                    i,
+                    PARANET_SYNC_KA_COUNT,
+                );
             if (!nextKaArray.length) break;
             kaToUpdate.push(...nextKaArray);
         }
         // To this as batch of promises
-        // Wrapt it in try catch with retry
+        // Wrap it in try catch with retry
         kaToUpdate
             // It's array of keywords not tokenId
             // .map((ka) => ka.tokenId)
             .forEach(async (knowledgeAssetId) => {
                 this.logger.info(
-                    `Paranet sync: Syncing token id: ${knowledgeAssetId} for ${paranetId} with operation id: ${commandOperationId}`,
+                    `Paranet sync: Syncing token id: ${knowledgeAssetId} for ${paranetId} with operation id: ${operationId}`,
                 );
 
-                const { kaContract } = this.blockchainModuleManager.getKnowledgeAssetLocator(
+                const { kaContract } = this.blockchainModuleManager.getParanetKnowledgeAssetLocator(
                     blockchain,
                     knowledgeAssetId,
                 );

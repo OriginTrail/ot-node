@@ -19,12 +19,24 @@ class OtTripleStore {
 
     initializeRepositories() {
         for (const repository of Object.keys(this.repositories)) {
-            this.initializeRepository(repository);
+            this.initializeSparqlEndpoints(repository);
         }
     }
 
-    initializeRepository(repository) {
+    async initializeParanetRepository(repository) {
+        const publicCurrent = 'publicCurrent';
+        this.repositories[repository] = {
+            url: this.repositories[publicCurrent].url,
+            name: repository,
+            username: this.repositories[publicCurrent].username,
+            password: this.repositories[publicCurrent].password,
+        };
         this.initializeSparqlEndpoints(repository);
+        await this.createRepository(repository);
+    }
+
+    async createRepository() {
+        throw Error('CreateRepository not implemented');
     }
 
     initializeSparqlEndpoints() {
