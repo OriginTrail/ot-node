@@ -32,6 +32,8 @@ class OtTripleStore {
             password: this.repositories[publicCurrent].password,
         };
         this.initializeSparqlEndpoints(repository);
+        this.initializeContexts();
+        await this.ensureConnections();
         await this.createRepository(repository);
     }
 

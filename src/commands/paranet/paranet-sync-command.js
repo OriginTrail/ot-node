@@ -75,52 +75,58 @@ class ParanetSyncCommand extends Command {
         // It's array of keywords not tokenId
         // .map((ka) => ka.tokenId)
         kaToUpdate.forEach((knowledgeAssetId) => {
-            promises.push(async () => {
-                this.logger.info(
-                    `Paranet sync: Syncing token id: ${knowledgeAssetId} for ${paranetId} with operation id: ${operationId}`,
-                );
-
-                const { knowledgeAssetStorageContract, tokenId: kaTokenId } =
-                    this.blockchainModuleManager.getParanetKnowledgeAssetLocator(
-                        blockchain,
-                        knowledgeAssetId,
+            promises.push(
+                (async () => {
+                    this.logger.info(
+                        `Paranet sync: Syncing token id: ${knowledgeAssetId} for ${paranetId} with operation id: ${operationId}`,
                     );
 
-                const assertionIds = await this.blockchainModuleManager.getAssertionIds(
-                    blockchain,
-                    knowledgeAssetStorageContract,
-                    kaTokenId,
-                );
+                    const { knowledgeAssetStorageContract, tokenId: kaTokenId } =
+                        await this.blockchainModuleManager.getParanetKnowledgeAssetLocator(
+                            blockchain,
+                            knowledgeAssetId,
+                        );
 
-                for (let stateIndex = assertionIds.length - 2; stateIndex >= 0; stateIndex -= 1) {
+                    const assertionIds = await this.blockchainModuleManager.getAssertionIds(
+                        blockchain,
+                        knowledgeAssetStorageContract,
+                        kaTokenId,
+                    );
+
+                    for (
+                        let stateIndex = assertionIds.length - 2;
+                        stateIndex >= 0;
+                        stateIndex -= 1
+                    ) {
+                        await this.syncAsset(
+                            blockchain,
+                            knowledgeAssetStorageContract,
+                            kaTokenId,
+                            assertionIds,
+                            stateIndex,
+                            paranetId,
+                            TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                            false,
+                            // It should never delete as it never was in storage
+                            // But maybe will becouse this is unfainalized
+                            stateIndex === assertionIds.length - 2,
+                        );
+                    }
+
+                    // Then sync the last one, but put it in the current repo
                     await this.syncAsset(
                         blockchain,
                         knowledgeAssetStorageContract,
                         kaTokenId,
                         assertionIds,
-                        stateIndex,
+                        assertionIds.length - 1,
                         paranetId,
-                        TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                        TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                        true,
                         false,
-                        // It should never delete as it never was in storage
-                        // But maybe will becouse this is unfainalized
-                        stateIndex === assertionIds.length - 2,
                     );
-                }
-
-                // Then sync the last one, but put it in the current repo
-                await this.syncAsset(
-                    blockchain,
-                    knowledgeAssetStorageContract,
-                    kaTokenId,
-                    assertionIds,
-                    assertionIds.length - 1,
-                    paranetId,
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                    true,
-                    false,
-                );
-            });
+                })(),
+            ); // Immediately invoke the async function
         });
 
         await Promise.all(promises);
@@ -148,12 +154,7 @@ class ParanetSyncCommand extends Command {
     ) {
         try {
             const statePresentInParanetRepository =
-                await this.tripleStoreService.paranetAssetExists(
-                    paranetId,
-                    blockchain,
-                    contract,
-                    tokenId,
-                );
+                await this.tripleStoreService.paranetAssetExists(blockchain, contract, tokenId);
 
             if (statePresentInParanetRepository) {
                 this.logger.trace(
