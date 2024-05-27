@@ -28,13 +28,13 @@ class ParanetRepository {
         });
     }
 
-    async updateParanetKaCount(paranetId, blockchain, kaCount) {
-        await this.model.update(
+    async updateParanetKaCount(paranetId, blockchainId, kaCount) {
+        return this.model.update(
             { kaCount },
             {
                 where: {
                     paranetId,
-                    blockchain,
+                    blockchainId,
                 },
             },
         );
