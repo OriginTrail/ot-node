@@ -10,6 +10,7 @@ import {
     SIMPLE_ASSET_SYNC_PARAMETERS,
     TRIPLE_STORE_REPOSITORIES,
     PARANET_SYNC_KA_COUNT,
+    OPERATION_STATUS,
 } from '../../constants/constants.js';
 
 class ParanetSyncCommand extends Command {
@@ -209,7 +210,7 @@ class ParanetSyncCommand extends Command {
                 this.repositoryModuleManager.createOperationRecord(
                     this.getService.getOperationName(),
                     operationId,
-                    OPERATION_ID_STATUS.PENDING,
+                    OPERATION_STATUS.IN_PROGRESS,
                 ),
             ]);
 
