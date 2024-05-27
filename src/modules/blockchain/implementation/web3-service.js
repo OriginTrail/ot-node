@@ -1629,12 +1629,12 @@ class Web3Service {
     }
 
     async getParanetKnowledgeAssetLocator(knowledgeAssetId) {
-        const [knowledgeAssetStorageContract, tokenId] = await this.callContractFunction(
+        const [knowledgeAssetStorageContract, kaTokenId] = await this.callContractFunction(
             this.ParanetKnowledgeAssetsRegistryContract,
             'getKnowledgeAssetLocator',
             [knowledgeAssetId],
         );
-
+        const tokenId = kaTokenId.toNumber();
         const knowledgeAssetLocator = { knowledgeAssetStorageContract, tokenId };
         return knowledgeAssetLocator;
     }
