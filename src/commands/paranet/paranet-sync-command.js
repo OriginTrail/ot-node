@@ -20,6 +20,7 @@ class ParanetSyncCommand extends Command {
         this.tripleStoreService = ctx.tripleStoreService;
         this.ualService = ctx.ualService;
         this.paranetService = ctx.paranetService;
+        this.getService = ctx.getService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.PARANET.PARANET_SYNC_ERROR;
@@ -49,7 +50,7 @@ class ParanetSyncCommand extends Command {
             this.logger.info(
                 `Paranet sync: KA count from contract and in DB is the same, nothing to sync, for paranetId: ${paranetId}, operation ID: ${operationId}!`,
             );
-            return Command.empty();
+            return Command.repeat();
         }
 
         this.logger.info(
@@ -105,6 +106,7 @@ class ParanetSyncCommand extends Command {
                             assertionIds,
                             stateIndex,
                             paranetId,
+                            tokenId,
                             TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
                             false,
                             // It should never delete as it never was in storage
@@ -121,6 +123,7 @@ class ParanetSyncCommand extends Command {
                         assertionIds,
                         assertionIds.length - 1,
                         paranetId,
+                        tokenId,
                         TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
                         true,
                         false,
@@ -133,11 +136,11 @@ class ParanetSyncCommand extends Command {
 
         // TODO: Save only successful ones
         // Here is the problem if one missed count will be false and we will always try to get it again
-        await this.repositoryModuleManager.updateParanetKaCount(
-            paranetId,
-            blockchain,
-            contractKaCount,
-        );
+        // await this.repositoryModuleManager.updateParanetKaCount(
+        //     paranetId,
+        //     blockchain,
+        //     contractKaCount,
+        // );
         return Command.repeat();
     }
 
@@ -148,13 +151,18 @@ class ParanetSyncCommand extends Command {
         assertionIds,
         stateIndex,
         paranetId,
+        paranetTokenId,
         paranetRepository,
         latestAsset,
         deleteFromEarlier,
     ) {
         try {
             const statePresentInParanetRepository =
-                await this.tripleStoreService.paranetAssetExists(blockchain, contract, tokenId);
+                await this.tripleStoreService.paranetAssetExists(
+                    blockchain,
+                    contract,
+                    paranetTokenId,
+                );
 
             if (statePresentInParanetRepository) {
                 this.logger.trace(
