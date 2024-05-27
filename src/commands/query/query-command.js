@@ -21,7 +21,6 @@ class QueryCommand extends Command {
             queryType,
             operationId,
             repository = TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-            paranetUAL,
         } = command.data;
 
         let { query } = command.data;
@@ -33,24 +32,18 @@ class QueryCommand extends Command {
             null,
             OPERATION_ID_STATUS.QUERY.QUERY_START,
         );
+        this.validateRepositoryName(repository);
         // check if it's federated query
         const pattern = /SERVICE\s+<[^>]+>/g;
         const matches = query.match(pattern);
         if (matches) {
-            for (const paranetName in matches) {
-                // TODO: Is name gotten from paraneUAL of paranetName
-                const paranetRepositoryName =
-                    this.paranetService.getParanetRepositoryByParanetName(paranetName);
-                if (!paranetRepositoryName) {
-                    throw Error(`Query failed! Paranet with UAL: ${paranetName} doesn't exist`);
-                }
-                query = query.replace(paranetName, paranetRepositoryName);
-            }
-        }
-        if (paranetUAL) {
-            const paranetRepositoryName = this.paranetService.getParanetRepositoryName(paranetUAL);
-            if (!paranetRepositoryName) {
-                throw Error(`Query failed! Paranet with UAL: ${paranetUAL} doesn't exist`);
+            for (const repositoryInOriginalQuery in matches) {
+                const federatedQueryRepositoryName =
+                    this.paranetService.getParanetRepositoryByParanetName(
+                        repositoryInOriginalQuery,
+                    );
+                this.validateRepositoryName(federatedQueryRepositoryName);
+                query = query.replace(repositoryInOriginalQuery, federatedQueryRepositoryName);
             }
         }
         try {
@@ -87,6 +80,17 @@ class QueryCommand extends Command {
         }
 
         return Command.empty();
+    }
+
+    validateRepositoryName(repository) {
+        if (
+            this.config.assetSync?.syncParanets.indexOf(
+                this.paranetService.getParanetRepositoryByParanetName(repository),
+            ) === -1 &&
+            TRIPLE_STORE_REPOSITORIES.indexOf(repository) === -1
+        ) {
+            throw Error(`Query failed! Repository with name: ${repository} doesn't exist`);
+        }
     }
 
     /**
