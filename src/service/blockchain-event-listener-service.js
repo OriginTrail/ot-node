@@ -586,7 +586,6 @@ class BlockchainEventListenerService {
             // Check if this asset is in paranet we are syncing
             // eslint-disable-next-line no-await-in-loop
             const paranetAssetExists = await this.tripleStoreService.paranetAssetExists(
-                paranetId,
                 blockchain,
                 contract,
                 tokenId,

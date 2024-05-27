@@ -36,7 +36,7 @@ class ParanetService {
             return paranetId.replace(/[/:]/g, '-');
         }
         throw new Error(
-            `Unable to get Paranet repository name. Paranet id doesn't have correct format: ${paranetId}`,
+            `Unable to get Paranet repository name. Paranet id doesn't have UAL format: ${paranetId}`,
         );
     }
 }
