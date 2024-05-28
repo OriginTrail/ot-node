@@ -235,7 +235,6 @@ class ParanetSyncCommand extends Command {
                     assertionId,
                     assetSync: true,
                     stateIndex,
-                    assetSyncInsertedByCommand: true,
                     paranetSync: true,
                     paranetId,
                     paranetRepoId: paranetRepository,
