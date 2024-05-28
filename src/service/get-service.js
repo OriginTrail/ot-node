@@ -89,7 +89,7 @@ class GetService extends OperationService {
             const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
             if (assetSync) {
                 this.logger.debug(
-                    `ASSET_SYNC: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                    `Asset sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
                 );
 
                 await this.tripleStoreService.localStoreAsset(
@@ -101,17 +101,52 @@ class GetService extends OperationService {
                     tokenId,
                     keyword,
                 );
+            }
 
-                if (paranetSync) {
-                    this.logger.debug(
-                        `PARANET_ASSET_SYNC: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+            if (paranetSync) {
+                this.logger.debug(
+                    `Paranet sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                );
+                const paranetUAL = this.ualService.deriveUAL(blockchain, contract, paranetId);
+                const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
+                if (paranetLatestAsset) {
+                    await this.tripleStoreService.localStoreAsset(
+                        paranetRepository,
+                        assertionId,
+                        responseData.nquads,
+                        blockchain,
+                        contract,
+                        tokenId,
+                        keyword,
                     );
+                } else if (paranetRepoId) {
+                    const newRepoName = `${this.paranetService.getParanetRepositoryName(
+                        paranetId,
+                    )}-${paranetRepoId}`;
 
-                    if (paranetLatestAsset) {
+                    if (paranetDeleteFromEarlier) {
+                        // This was the previous latest one, move it to currentHistory
+                        this.logger.debug(
+                            `Paranet sync: Moving asset to repo ${newRepoName}, with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                        );
+
+                        await this.tripleStoreService.moveAsset(
+                            paranetRepository,
+                            assertionId,
+                            blockchain,
+                            contract,
+                            tokenId,
+                            keyword,
+                        );
+                    } else {
+                        // This is one of the older assets, just update it
+
+                        this.logger.debug(
+                            `Paranet sync: Updating asset in repo ${newRepoName}, with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                        );
+
                         await this.tripleStoreService.localStoreAsset(
-                            `${this.paranetService.getParanetRepositoryName(paranetId)}-${
-                                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT
-                            }`,
+                            paranetRepository,
                             assertionId,
                             responseData.nquads,
                             blockchain,
@@ -119,42 +154,6 @@ class GetService extends OperationService {
                             tokenId,
                             keyword,
                         );
-                    } else if (paranetRepoId) {
-                        const newRepoName = `${this.paranetService.getParanetRepositoryName(
-                            paranetId,
-                        )}-${paranetRepoId}`;
-
-                        if (paranetDeleteFromEarlier) {
-                            // This was the previous latest one, move it to currentHistory
-                            this.logger.debug(
-                                `PARANET_ASSET_SYNC: Moving asset to repo ${newRepoName}, with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
-                            );
-
-                            await this.tripleStoreService.moveAsset(
-                                newRepoName,
-                                assertionId,
-                                blockchain,
-                                contract,
-                                tokenId,
-                                keyword,
-                            );
-                        } else {
-                            // This is one of the older assets, just update it
-
-                            this.logger.debug(
-                                `PARANET_ASSET_SYNC: Updating asset in repo ${newRepoName}, with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
-                            );
-
-                            await this.tripleStoreService.localStoreAsset(
-                                newRepoName,
-                                assertionId,
-                                responseData.nquads,
-                                blockchain,
-                                contract,
-                                tokenId,
-                                keyword,
-                            );
-                        }
                     }
                 }
             }

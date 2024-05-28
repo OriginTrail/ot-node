@@ -236,7 +236,7 @@ class ParanetSyncCommand extends Command {
                     assetSync: true,
                     stateIndex,
                     paranetSync: true,
-                    paranetId,
+                    paranetId: paranetTokenId,
                     paranetRepoId: paranetRepository,
                     paranetLatestAsset: latestAsset,
                     paranetDeleteFromEarlier: deleteFromEarlier,
