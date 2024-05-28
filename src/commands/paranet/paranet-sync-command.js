@@ -169,14 +169,6 @@ class ParanetSyncCommand extends Command {
                 this.logger.trace(
                     `PARANET_SYNC: StateIndex: ${stateIndex} for tokenId: ${tokenId} found in triple store blockchain: ${blockchain}`,
                 );
-                // await this.repositoryModuleManager.createAssetSyncRecord(
-                //     blockchain,
-                //     contract,
-                //     tokenId,
-                //     stateIndex,
-                //     SIMPLE_ASSET_SYNC_PARAMETERS.STATUS.COMPLETED,
-                //     true,
-                // );
                 return;
             }
 
@@ -198,14 +190,6 @@ class ParanetSyncCommand extends Command {
                     blockchain,
                     OPERATION_ID_STATUS.GET.GET_INIT_START,
                 ),
-
-                // this.repositoryModuleManager.createAssetSyncRecord(
-                //     blockchain,
-                //     contract,
-                //     tokenId,
-                //     stateIndex,
-                //     SIMPLE_ASSET_SYNC_PARAMETERS.STATUS.IN_PROGRESS,
-                // ),
 
                 this.repositoryModuleManager.createOperationRecord(
                     this.getService.getOperationName(),
@@ -236,10 +220,8 @@ class ParanetSyncCommand extends Command {
                     assetSync: true,
                     stateIndex,
                     paranetSync: true,
-                    paranetId: paranetTokenId,
-                    paranetRepoId: paranetRepository,
+                    paranetTokenId,
                     paranetLatestAsset: latestAsset,
-                    paranetDeleteFromEarlier: deleteFromEarlier,
                 },
                 transactional: false,
             });
