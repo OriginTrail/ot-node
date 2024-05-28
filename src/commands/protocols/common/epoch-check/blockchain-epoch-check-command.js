@@ -431,13 +431,13 @@ class BlockchainEpochCheckCommand extends Command {
                 transactional: false,
             });
         } else {
-            await this.commandExecutor.add({
-                name: 'simpleAssetSyncCommand',
-                sequence: ['submitCommitCommand'],
-                retries: COMMAND_RETRIES.SIMPLE_ASSET_SYNC,
-                data: commandData,
-                transactional: false,
-            });
+            // await this.commandExecutor.add({
+            //     name: 'simpleAssetSyncCommand',
+            //     sequence: ['submitCommitCommand'],
+            //     retries: COMMAND_RETRIES.SIMPLE_ASSET_SYNC,
+            //     data: commandData,
+            //     transactional: false,
+            // });
         }
     }
 
