@@ -5,7 +5,7 @@ export const up = async ({ context: { queryInterface, Sequelize } }) => {
             primaryKey: true,
             type: Sequelize.INTEGER,
         },
-        blockchainId: {
+        blockchain_id: {
             allowNull: false,
             type: Sequelize.STRING,
         },
@@ -13,13 +13,23 @@ export const up = async ({ context: { queryInterface, Sequelize } }) => {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        paranetUal: {
+        paranet_ual: {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        knowledgeAssetId: {
+        knowledge_asset_id: {
             allowNull: false,
             type: Sequelize.STRING,
+        },
+        created_at: {
+            allowNull: false,
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.literal('NOW()'),
+        },
+        updated_at: {
+            allowNull: false,
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.literal('NOW()'),
         },
     });
 };

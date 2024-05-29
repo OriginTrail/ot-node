@@ -1,11 +1,11 @@
 class MissedParanetAssetRepository {
     constructor(models) {
         this.sequelize = models.sequelize;
-        this.model = models.operation_ids;
+        this.model = models.missed_paranet_asset;
     }
 
-    async createMissedParanetAssetRecord(missedParanetAssset) {
-        return this.model.create(missedParanetAssset);
+    async createMissedParanetAssetRecord(missedParanetAsset) {
+        return this.model.create(missedParanetAsset);
     }
 
     async getMissedParanetAssetsRecords(paranetUal, count = null) {

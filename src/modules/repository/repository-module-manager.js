@@ -519,6 +519,10 @@ class RepositoryModuleManager extends BaseModuleManager {
             count,
         );
     }
+
+    async getCountOfMissedAssetsOfParanet(ual) {
+        return this.getRepository('missed_paranet_asset').getCountOfMissedAssetsOfParanet(ual);
+    }
 }
 
 export default RepositoryModuleManager;
