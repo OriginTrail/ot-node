@@ -496,6 +496,22 @@ class RepositoryModuleManager extends BaseModuleManager {
             blockchainId,
         );
     }
+
+    async createMissedParanetAssetRecord(missedParanetAssset) {
+        return this.getRepository('missed_paranet_asset').createMissedParanetAssetRecord(
+            missedParanetAssset,
+        );
+    }
+
+    async getMissedParanetAssetRecords(blockchainId) {
+        return this.getRepository('missed_paranet_asset').getMissedParanetAssetRecords(
+            blockchainId,
+        );
+    }
+
+    async removeMissedParanetAssetRecord(ual) {
+        return this.getRepository('missed_paranet_asset').removeMissedParanetAssetRecord(ual);
+    }
 }
 
 export default RepositoryModuleManager;

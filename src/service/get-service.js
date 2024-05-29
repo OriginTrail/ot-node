@@ -88,6 +88,9 @@ class GetService extends OperationService {
 
             // Fetched old state - store it in public history repo
             if (paranetSync && !paranetLatestAsset) {
+                this.logger.debug(
+                    `Paranet sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                );
                 await this.tripleStoreService.localStoreAsset(
                     TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
                     assertionId,
