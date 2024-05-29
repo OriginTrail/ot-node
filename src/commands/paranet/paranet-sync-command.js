@@ -47,9 +47,8 @@ class ParanetSyncCommand extends Command {
             await this.repositoryModuleManager.getParanetKnowledgeAssetsCount(paranetId, blockchain)
         )[0].dataValues.ka_count;
 
-        const cachedMissedKaCount = (
-            await this.repositoryModuleManager.getCountOfMissedAssetsOfParanet(paranetUAL)
-        )[0].dataValues.ka_count;
+        const cachedMissedKaCount =
+            await this.repositoryModuleManager.getCountOfMissedAssetsOfParanet(paranetUAL);
 
         if (cachedKaCount + cachedMissedKaCount === contractKaCount) {
             this.logger.info(
@@ -72,10 +71,10 @@ class ParanetSyncCommand extends Command {
                 const promises = [];
                 // It's array of keywords not tokenId
                 // .map((ka) => ka.tokenId)
-                missedPararnetAssets.forEach((missedPararnetAsset) => {
+                missedPararnetAssets.forEach((missedParanetAsset) => {
                     promises.push(
                         (async () => {
-                            const { knowledgeAssetId } = missedPararnetAssets;
+                            const { knowledgeAssetId } = missedParanetAsset;
                             this.logger.info(
                                 `Paranet sync: Syncing missed token id: ${knowledgeAssetId} for ${paranetId} with operation id: ${operationId}`,
                             );
@@ -104,7 +103,7 @@ class ParanetSyncCommand extends Command {
                                     assertionIds,
                                     stateIndex,
                                     paranetId,
-                                    kaTokenId,
+                                    tokenId,
                                     TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
                                     false,
                                     // It should never delete as it never was in storage
@@ -122,12 +121,14 @@ class ParanetSyncCommand extends Command {
                                 assertionIds,
                                 assertionIds.length - 1,
                                 paranetId,
-                                kaTokenId,
+                                tokenId,
                                 TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
                                 true,
                                 false,
                                 paranetUAL,
                             );
+
+                            return true;
                         })(),
                     ); // Immediately invoke the async function
                 });
@@ -135,7 +136,7 @@ class ParanetSyncCommand extends Command {
                 const promisesResolution = await Promise.all(promises);
 
                 const successfulCount = promisesResolution.reduce((count, value) => {
-                    if (value === true) {
+                    if (value) {
                         return count + 1;
                     }
                     return count;
@@ -159,7 +160,7 @@ class ParanetSyncCommand extends Command {
         // TODO: Rename i, should it be cachedKaCount + 1 as cachedKaCount is already in, but count is index
         const kaToUpdate = [];
         for (
-            let i = contractKaCount + cachedMissedKaCount;
+            let i = cachedKaCount + cachedMissedKaCount;
             i <= contractKaCount;
             i += PARANET_SYNC_KA_COUNT
         ) {
@@ -208,11 +209,11 @@ class ParanetSyncCommand extends Command {
                             assertionIds,
                             stateIndex,
                             paranetId,
-                            kaTokenId,
+                            tokenId,
                             TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
                             false,
                             // It should never delete as it never was in storage
-                            // But maybe will becouse this is unfainalized
+                            // But maybe will because this is not finalized
                             stateIndex === assertionIds.length - 2,
                             paranetUAL,
                             knowledgeAssetId,
@@ -227,13 +228,15 @@ class ParanetSyncCommand extends Command {
                         assertionIds,
                         assertionIds.length - 1,
                         paranetId,
-                        kaTokenId,
+                        tokenId,
                         TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
                         true,
                         false,
                         paranetUAL,
                         knowledgeAssetId,
                     );
+
+                    return true;
                 })(),
             ); // Immediately invoke the async function
         });
@@ -241,7 +244,7 @@ class ParanetSyncCommand extends Command {
         const promisesResolution = await Promise.all(promises);
 
         const successfulCount = promisesResolution.reduce((count, value) => {
-            if (value === true) {
+            if (value) {
                 return count + 1;
             }
             return count;
@@ -280,7 +283,7 @@ class ParanetSyncCommand extends Command {
 
             if (statePresentInParanetRepository) {
                 this.logger.trace(
-                    `PARANET_SYNC: StateIndex: ${stateIndex} for tokenId: ${tokenId} found in triple store blockchain: ${blockchain}`,
+                    `Paranet sync: StateIndex: ${stateIndex} for tokenId: ${tokenId} found in triple store blockchain: ${blockchain}`,
                 );
                 return;
             }
@@ -302,7 +305,6 @@ class ParanetSyncCommand extends Command {
                     blockchain,
                     OPERATION_ID_STATUS.GET.GET_INIT_START,
                 ),
-
                 this.repositoryModuleManager.createOperationRecord(
                     this.getService.getOperationName(),
                     operationId,
