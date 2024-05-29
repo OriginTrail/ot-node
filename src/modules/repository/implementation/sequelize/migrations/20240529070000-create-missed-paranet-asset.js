@@ -17,6 +17,10 @@ export const up = async ({ context: { queryInterface, Sequelize } }) => {
             allowNull: false,
             type: Sequelize.STRING,
         },
+        knowledgeAssetId: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
     });
 };
 

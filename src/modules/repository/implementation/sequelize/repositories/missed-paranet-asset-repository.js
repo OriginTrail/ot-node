@@ -8,12 +8,18 @@ class MissedParanetAssetRepository {
         return this.model.create(missedParanetAssset);
     }
 
-    async getMissedParanetAssetsRecords(blockchainId) {
-        return this.model.findOne({
+    async getMissedParanetAssetsRecords(paranetUal, count = null) {
+        const queryOptions = {
             where: {
-                blockchainId,
+                paranetUal,
             },
-        });
+        };
+
+        if (count !== null) {
+            queryOptions.limit = count;
+        }
+
+        return this.model.findAll(queryOptions);
     }
 
     async removeMissedParanetAssetRecord(ual) {

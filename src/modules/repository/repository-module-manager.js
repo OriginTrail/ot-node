@@ -512,6 +512,13 @@ class RepositoryModuleManager extends BaseModuleManager {
     async removeMissedParanetAssetRecord(ual) {
         return this.getRepository('missed_paranet_asset').removeMissedParanetAssetRecord(ual);
     }
+
+    async getMissedParanetAssetsRecords(paranetUal, count) {
+        return this.getRepository('missed_paranet_asset').getMissedParanetAssetsRecords(
+            paranetUal,
+            count,
+        );
+    }
 }
 
 export default RepositoryModuleManager;
