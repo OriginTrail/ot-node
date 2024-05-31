@@ -12,6 +12,7 @@ class QueryCommand extends Command {
         this.dataService = ctx.dataService;
         this.tripleStoreService = ctx.tripleStoreService;
         this.paranetService = ctx.paranetService;
+        this.ualService = ctx.ualService;
 
         this.errorType = ERROR_TYPE.QUERY.LOCAL_QUERY_ERROR;
     }
@@ -39,9 +40,7 @@ class QueryCommand extends Command {
         if (matches) {
             for (const repositoryInOriginalQuery in matches) {
                 const federatedQueryRepositoryName =
-                    this.paranetService.getParanetRepositoryByParanetName(
-                        repositoryInOriginalQuery,
-                    );
+                    this.paranetService.getParanetRepositoryName(repositoryInOriginalQuery);
                 this.validateRepositoryName(federatedQueryRepositoryName);
                 query = query.replace(repositoryInOriginalQuery, federatedQueryRepositoryName);
             }
@@ -83,13 +82,16 @@ class QueryCommand extends Command {
     }
 
     validateRepositoryName(repository) {
-        if (
-            this.config.assetSync?.syncParanets.indexOf(
-                this.paranetService.getParanetRepositoryByParanetName(repository),
-            ) === -1 &&
-            TRIPLE_STORE_REPOSITORIES.indexOf(repository) === -1
-        ) {
-            throw Error(`Query failed! Repository with name: ${repository} doesn't exist`);
+        let isParanetRepoValid = false;
+        if (this.ualService.isUAL(repository)) {
+            const paranetRepoName = this.paranetService.getParanetRepositoryName(repository);
+            isParanetRepoValid = this.config.assetSync?.syncParanets.includes(paranetRepoName);
+        }
+        const isTripleStoreRepoValid =
+            Object.values(TRIPLE_STORE_REPOSITORIES).includes(repository);
+
+        if (!isParanetRepoValid && !isTripleStoreRepoValid) {
+            throw new Error(`Query failed! Repository with name: ${repository} doesn't exist`);
         }
     }
 
