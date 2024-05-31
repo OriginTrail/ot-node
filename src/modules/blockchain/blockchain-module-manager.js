@@ -261,6 +261,20 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
+    async getParanetKnowledgeAssetsCount(blockchain, paranetId) {
+        return this.callImplementationFunction(blockchain, 'getParanetKnowledgeAssetsCount', [
+            paranetId,
+        ]);
+    }
+
+    async getParanetKnowledgeAssetsWithPagination(blockchain, paranetId, offset, limit) {
+        return this.callImplementationFunction(
+            blockchain,
+            'getParanetKnowledgeAssetsWithPagination',
+            [paranetId, offset, limit],
+        );
+    }
+
     async getAssertionData(blockchain, assertionid) {
         return this.callImplementationFunction(blockchain, 'getAssertionData', [assertionid]);
     }
@@ -453,8 +467,40 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'convertUint8ArrayToHex', [uint8Array]);
     }
 
-    getLinearSumParams(blockchain) {
+    async getLinearSumParams(blockchain) {
         return this.callImplementationFunction(blockchain, 'getLinearSumParams');
+    }
+
+    async getParanetMetadata(blockchain, paranetId) {
+        return this.callImplementationFunction(blockchain, 'getParanetMetadata', [paranetId]);
+    }
+
+    async getParanetKnowledgeAssetLocator(blockchain, knowledgeAssetId) {
+        return this.callImplementationFunction(blockchain, 'getParanetKnowledgeAssetLocator', [
+            knowledgeAssetId,
+        ]);
+    }
+
+    async getKnowledgeAssetLocatorFromParanetId(blockchain, paranetId) {
+        return this.callImplementationFunction(
+            blockchain,
+            'getKnowledgeAssetLocatorFromParanetId',
+            [paranetId],
+        );
+    }
+
+    async paranetExists(blockchain, paranetId) {
+        return this.callImplementationFunction(blockchain, 'paranetExists', [paranetId]);
+    }
+
+    async isParanetKnowledgeAsset(blockchain, knowledgeAssetId) {
+        return this.callImplementationFunction(blockchain, 'isParanetKnowledgeAsset', [
+            knowledgeAssetId,
+        ]);
+    }
+
+    async getParanetId(blockchain, knowledgeAssetId) {
+        return this.callImplementationFunction(blockchain, 'getParanetId', [knowledgeAssetId]);
     }
 }
 
