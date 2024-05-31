@@ -1,4 +1,3 @@
-/* eslint-disable no-await-in-loop */
 import { setTimeout } from 'timers/promises';
 import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
@@ -588,10 +587,10 @@ class BlockchainEventListenerService {
             // eslint-disable-next-line no-await-in-loop
             const paranetId = await this.blockchainModuleManager.getParanetId(knowledgeAssetId);
             if (paranetId) {
-                // eslint-disable-next-line no-await-in-loop
                 const {
                     knowledgeAssetStorageContract: paranetKasContract,
                     tokenId: paranetTokenId,
+                    // eslint-disable-next-line no-await-in-loop
                 } = await this.blockchainModuleManager.getKnowledgeAssetLocatorFromParanetId(
                     paranetId,
                 );
