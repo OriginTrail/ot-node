@@ -15,6 +15,9 @@ class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
             ...super.getNextCommandData(command),
             state: command.data.state,
             assetSync: command.data.assetSync,
+            paranetSync: command.data.paranetSync,
+            paranetTokenId: command.data.paranetTokenId,
+            paranetLatestAsset: command.data.paranetLatestAsset,
         };
     }
 

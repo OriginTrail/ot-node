@@ -28,6 +28,7 @@ class BlockchainEventListenerService {
         this.hashingService = ctx.hashingService;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.shardingTableService = ctx.shardingTableService;
+        this.paranetService = ctx.paranetService;
 
         this.eventGroupsBuffer = {};
     }
@@ -575,6 +576,53 @@ class BlockchainEventListenerService {
                     stateIndex,
                 ),
             ]);
+
+            // eslint-disable-next-line no-await-in-loop
+            const knowledgeAssetId = await this.paranetService.constructKnowledgeAssetId(
+                blockchain,
+                contract,
+                tokenId,
+            );
+
+            // eslint-disable-next-line no-await-in-loop
+            const paranetId = await this.blockchainModuleManager.getParanetId(knowledgeAssetId);
+            if (paranetId) {
+                const {
+                    knowledgeAssetStorageContract: paranetKasContract,
+                    tokenId: paranetTokenId,
+                    // eslint-disable-next-line no-await-in-loop
+                } = await this.blockchainModuleManager.getKnowledgeAssetLocatorFromParanetId(
+                    paranetId,
+                );
+                const paranetUAL = this.ualService.deriveUAL(
+                    blockchain,
+                    paranetKasContract,
+                    paranetTokenId,
+                );
+
+                // eslint-disable-next-line no-await-in-loop
+                const paranetAssetExists = await this.tripleStoreService.paranetAssetExists(
+                    blockchain,
+                    contract,
+                    tokenId,
+                    paranetKasContract,
+                    paranetTokenId,
+                );
+
+                if (paranetAssetExists) {
+                    const kaUAL = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+                    // Create a record for missing Paranet KA
+                    // Paranet sync command will get it from network
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.repositoryModuleManager.createMissedParanetAssetRecord({
+                        blockchainId: blockchain,
+                        ual: kaUAL,
+                        paranetUal: paranetUAL,
+                        knowledgeAssetId,
+                    });
+                }
+            }
         }
     }
 }

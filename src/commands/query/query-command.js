@@ -11,17 +11,19 @@ class QueryCommand extends Command {
         super(ctx);
         this.dataService = ctx.dataService;
         this.tripleStoreService = ctx.tripleStoreService;
+        this.paranetService = ctx.paranetService;
 
         this.errorType = ERROR_TYPE.QUERY.LOCAL_QUERY_ERROR;
     }
 
     async execute(command) {
         const {
-            query,
             queryType,
             operationId,
             repository = TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
         } = command.data;
+
+        let { query } = command.data;
 
         let data;
 
@@ -30,6 +32,20 @@ class QueryCommand extends Command {
             null,
             OPERATION_ID_STATUS.QUERY.QUERY_START,
         );
+        this.validateRepositoryName(repository);
+        // check if it's federated query
+        const pattern = /SERVICE\s+<[^>]+>/g;
+        const matches = query.match(pattern);
+        if (matches) {
+            for (const repositoryInOriginalQuery in matches) {
+                const federatedQueryRepositoryName =
+                    this.paranetService.getParanetRepositoryByParanetName(
+                        repositoryInOriginalQuery,
+                    );
+                this.validateRepositoryName(federatedQueryRepositoryName);
+                query = query.replace(repositoryInOriginalQuery, federatedQueryRepositoryName);
+            }
+        }
         try {
             switch (queryType) {
                 case QUERY_TYPES.CONSTRUCT: {
@@ -64,6 +80,17 @@ class QueryCommand extends Command {
         }
 
         return Command.empty();
+    }
+
+    validateRepositoryName(repository) {
+        if (
+            this.config.assetSync?.syncParanets.indexOf(
+                this.paranetService.getParanetRepositoryByParanetName(repository),
+            ) === -1 &&
+            TRIPLE_STORE_REPOSITORIES.indexOf(repository) === -1
+        ) {
+            throw Error(`Query failed! Repository with name: ${repository} doesn't exist`);
+        }
     }
 
     /**

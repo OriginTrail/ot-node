@@ -1,6 +1,10 @@
 import BaseModuleManager from '../base-module-manager.js';
 
 class TripleStoreModuleManager extends BaseModuleManager {
+    initializeParanetRepository(repository) {
+        return this.getImplementation().module.initializeParanetRepository(repository);
+    }
+
     async insertAssetAssertionMetadata(implementationName, repository, assetNquads) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.insertAssetAssertionMetadata(
