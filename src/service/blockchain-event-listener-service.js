@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import { setTimeout } from 'timers/promises';
 import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
@@ -548,6 +549,7 @@ class BlockchainEventListenerService {
                     tokenId,
                 )} with keyword: ${keyword}, assertion id: ${state}.`,
             );
+
             // eslint-disable-next-line no-await-in-loop
             await Promise.all([
                 this.pendingStorageService.moveAndDeletePendingState(
@@ -577,48 +579,49 @@ class BlockchainEventListenerService {
             ]);
 
             // eslint-disable-next-line no-await-in-loop
-            const paranetId = await this.paranetService.constructParanetId(
+            const knowledgeAssetId = await this.paranetService.constructKnowledgeAssetId(
                 blockchain,
                 contract,
                 tokenId,
             );
 
-            // Check if this asset is in paranet we are syncing
             // eslint-disable-next-line no-await-in-loop
-            const paranetAssetExists = await this.tripleStoreService.paranetAssetExists(
-                blockchain,
-                contract,
-                tokenId,
-            );
-            if (paranetAssetExists) {
-                const paranetRepositoryName =
-                    this.paranetService.getParanetRepositoryName(paranetId);
+            const paranetId = await this.blockchainModuleManager.getParanetId(knowledgeAssetId);
+            if (paranetId) {
                 // eslint-disable-next-line no-await-in-loop
-                const assertionIds = await this.blockchainModuleManager.getAssertionIds(
+                const {
+                    knowledgeAssetStorageContract: paranetKasContract,
+                    tokenId: paranetTokenId,
+                } = await this.blockchainModuleManager.getKnowledgeAssetLocatorFromParanetId(
+                    paranetId,
+                );
+                const paranetUAL = this.ualService.deriveUAL(
+                    blockchain,
+                    paranetKasContract,
+                    paranetTokenId,
+                );
+                /* eslint-disable-next-line no-await-in-loop */
+                const paranetAssetExists = await this.tripleStoreService.paranetAssetExists(
                     blockchain,
                     contract,
                     tokenId,
-                );
-                // Delete old asset from paranet repository
-                // Missing assertionId for old asset, how to get
-                // Penultimat assertion id is one before update that needs to be delted
-                // eslint-disable-next-line no-await-in-loop
-                await this.tripleStoreService.deleteAssertion(
-                    paranetRepositoryName,
-                    assertionIds[assertionIds.length - 2],
+                    paranetKasContract,
+                    paranetTokenId,
                 );
 
-                // Insert in paranet registry
-                // eslint-disable-next-line no-await-in-loop
-                await this.tripleStoreService.moveAssetWithoutDelete(
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                    paranetRepositoryName,
-                    state,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    keyword,
-                );
+                if (paranetAssetExists) {
+                    const kaUAL = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+                    // Create a record for missing Paranet KA
+                    // Paranet sync command will get it from network
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.repositoryModuleManager.createMissedParanetAssetRecord({
+                        blockchainId: blockchain,
+                        ual: kaUAL,
+                        paranetUal: paranetUAL,
+                        knowledgeAssetId,
+                    });
+                }
             }
         }
     }
