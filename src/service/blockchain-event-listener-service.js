@@ -599,7 +599,8 @@ class BlockchainEventListenerService {
                     paranetKasContract,
                     paranetTokenId,
                 );
-                /* eslint-disable-next-line no-await-in-loop */
+
+                // eslint-disable-next-line no-await-in-loop
                 const paranetAssetExists = await this.tripleStoreService.paranetAssetExists(
                     blockchain,
                     contract,
