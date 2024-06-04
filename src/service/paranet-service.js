@@ -6,14 +6,18 @@ class ParanetService {
     }
 
     async initializeParanetRecord(blockchain, paranetId) {
-        const paranetMetadata = await this.blockchainModuleManager.getParanetMetadata(
+        const paranetName = await this.blockchainModuleManager.getParanetName(
+            blockchain,
+            paranetId,
+        );
+        const paranetDescription = await this.blockchainModuleManager.getDescription(
             blockchain,
             paranetId,
         );
         if (!(await this.repositoryModuleManager.paranetExists(paranetId, blockchain))) {
             await this.repositoryModuleManager.createParanetRecord(
-                paranetMetadata.name,
-                paranetMetadata.description,
+                paranetName,
+                paranetDescription,
                 paranetId,
                 blockchain,
             );
@@ -43,7 +47,7 @@ class ParanetService {
     getParanetRepositoryName(paranetId) {
         if (this.ualService.isUAL(paranetId)) {
             // Replace : and / with -
-            return paranetId.replace(/[/:]/g, '-');
+            return paranetId.replace(/[/:]/g, '-').toLowerCase();
         }
         throw new Error(
             `Unable to get Paranet repository name. Paranet id doesn't have UAL format: ${paranetId}`,
