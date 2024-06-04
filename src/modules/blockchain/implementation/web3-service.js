@@ -1628,6 +1628,24 @@ class Web3Service {
         );
     }
 
+    async getName(paranetId) {
+        return this.callContractFunction(
+            this.ParanetsRegistryContract,
+            'getName',
+            [paranetId],
+            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+        );
+    }
+
+    async getDescription(paranetId) {
+        return this.callContractFunction(
+            this.ParanetsRegistryContract,
+            'getDescription',
+            [paranetId],
+            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+        );
+    }
+
     async getParanetKnowledgeAssetLocator(knowledgeAssetId) {
         const [knowledgeAssetStorageContract, kaTokenId] = await this.callContractFunction(
             this.ParanetKnowledgeAssetsRegistryContract,

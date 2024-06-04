@@ -6,14 +6,18 @@ class ParanetService {
     }
 
     async initializeParanetRecord(blockchain, paranetId) {
-        const paranetMetadata = await this.blockchainModuleManager.getParanetMetadata(
+        const paranetName = await this.blockchainModuleManager.getParanetName(
+            blockchain,
+            paranetId,
+        );
+        const paranetDescription = await this.blockchainModuleManager.getDescription(
             blockchain,
             paranetId,
         );
         if (!(await this.repositoryModuleManager.paranetExists(paranetId, blockchain))) {
             await this.repositoryModuleManager.createParanetRecord(
-                paranetMetadata.name,
-                paranetMetadata.description,
+                paranetName,
+                paranetDescription,
                 paranetId,
                 blockchain,
             );
