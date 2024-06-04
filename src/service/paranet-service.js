@@ -30,6 +30,16 @@ class ParanetService {
         return this.blockchainModuleManager.keccak256(blockchain, keyword);
     }
 
+    constructKnowledgeAssetId(blockchain, contract, tokenId) {
+        const keyword = this.blockchainModuleManager.encodePacked(
+            blockchain,
+            ['address', 'uint256'],
+            [contract, tokenId],
+        );
+
+        return this.blockchainModuleManager.keccak256(blockchain, keyword);
+    }
+
     getParanetRepositoryName(paranetId) {
         if (this.ualService.isUAL(paranetId)) {
             // Replace : and / with -

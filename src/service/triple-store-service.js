@@ -311,10 +311,10 @@ class TripleStoreService {
         );
     }
 
-    async paranetAssetExists(blockchain, contract, tokenId) {
-        const paranetUAL = this.ualService.deriveUAL(blockchain, contract, tokenId);
+    async paranetAssetExists(blockchain, kaContract, kaTokenId, paranetContract, paranetTokenId) {
+        const paranetUAL = this.ualService.deriveUAL(blockchain, paranetContract, paranetTokenId);
         const repository = this.paranetService.getParanetRepositoryName(paranetUAL);
-        return this.assetExists(repository, blockchain, contract, tokenId);
+        return this.assetExists(repository, blockchain, kaContract, kaTokenId);
     }
 
     async insertAssetAssertionLink(repository, blockchain, contract, tokenId, assertionId) {

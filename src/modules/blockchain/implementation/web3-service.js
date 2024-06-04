@@ -1639,12 +1639,39 @@ class Web3Service {
         return knowledgeAssetLocator;
     }
 
+    async getKnowledgeAssetLocatorFromParanetId(paranetId) {
+        const [paranetKAStorageContract, paranetKATokenId] = await this.callContractFunction(
+            this.ParanetRegistryContract,
+            'getKnowledgeAssetLocator',
+            [paranetId],
+        );
+        const tokenId = paranetKATokenId.toNumber();
+        const knowledgeAssetLocator = { paranetKAStorageContract, tokenId };
+        return knowledgeAssetLocator;
+    }
+
     async paranetExists(paranetId) {
         return this.callContractFunction(
             this.ParanetsRegistryContract,
             'paranetExists',
             [paranetId],
             CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+        );
+    }
+
+    async getParanetId(knowledgeAssetId) {
+        return this.callContractFunction(
+            this.ParanetKnowledgeAssetsRegistryContract,
+            'getParanetId',
+            [knowledgeAssetId],
+        );
+    }
+
+    async isParanetKnowledgeAsset(knowledgeAssetId) {
+        return this.callContractFunction(
+            this.ParanetKnowledgeAssetsRegistryContract,
+            'isParanetKnowledgeAsset',
+            [knowledgeAssetId],
         );
     }
 }

@@ -481,8 +481,26 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
+    async getKnowledgeAssetLocatorFromParanetId(blockchain, paranetId) {
+        return this.callImplementationFunction(
+            blockchain,
+            'getKnowledgeAssetLocatorFromParanetId',
+            [paranetId],
+        );
+    }
+
     async paranetExists(blockchain, paranetId) {
         return this.callImplementationFunction(blockchain, 'paranetExists', [paranetId]);
+    }
+
+    async isParanetKnowledgeAsset(blockchain, knowledgeAssetId) {
+        return this.callImplementationFunction(blockchain, 'isParanetKnowledgeAsset', [
+            knowledgeAssetId,
+        ]);
+    }
+
+    async getParanetId(blockchain, knowledgeAssetId) {
+        return this.callImplementationFunction(blockchain, 'getParanetId', [knowledgeAssetId]);
     }
 }
 

@@ -297,6 +297,8 @@ class ParanetSyncCommand extends Command {
                 await this.tripleStoreService.paranetAssetExists(
                     blockchain,
                     contract,
+                    tokenId,
+                    contract,
                     paranetTokenId,
                 );
 
