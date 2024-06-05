@@ -128,7 +128,7 @@ class ShardingTableService {
         peers = peers.map((peer, index) => ({ ...peer.dataValues, index }));
         const keyHash = await this.hashingService.callHashFunction(hashFunctionId, key);
 
-        const soretedPeers = this.sortPeers(
+        const sortedPeers = this.sortPeers(
             blockchainId,
             keyHash,
             peers,
@@ -136,7 +136,7 @@ class ShardingTableService {
             hashFunctionId,
             proximityScoreFunctionsPairId,
         );
-        return soretedPeers;
+        return sortedPeers;
     }
 
     async sortPeers(
