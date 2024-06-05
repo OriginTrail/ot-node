@@ -56,6 +56,8 @@ const ABIs = {
     ServiceAgreementStorageProxy: require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json'),
     UnfinalizedStateStorage: require('dkg-evm-module/abi/UnfinalizedStateStorage.json'),
     LinearSum: require('dkg-evm-module/abi/LinearSum.json'),
+    ParanetsRegistry: require('dkg-evm-module/abi/ParanetsRegistry.json'),
+    ParanetKnowledgeAssetsRegistry: require('dkg-evm-module/abi/ParanetKnowledgeAssetsRegistry.json'),
 };
 
 const SCORING_FUNCTIONS = {
@@ -1431,7 +1433,7 @@ class Web3Service {
     }
 
     keccak256(bytesLikeData) {
-        return ethers.keccak256(bytesLikeData);
+        return ethers.utils.keccak256(bytesLikeData);
     }
 
     sha256(bytesLikeData) {
@@ -1597,6 +1599,98 @@ class Web3Service {
             w1: Number(linearSumParams[2]),
             w2: Number(linearSumParams[3]),
         };
+    }
+
+    async getParanetKnowledgeAssetsCount(paranetId) {
+        return this.callContractFunction(
+            this.ParanetsRegistryContract,
+            'getKnowledgeAssetsCount',
+            [paranetId],
+            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+        );
+    }
+
+    async getParanetKnowledgeAssetsWithPagination(paranetId, offset, limit) {
+        return this.callContractFunction(
+            this.ParanetsRegistryContract,
+            'getKnowledgeAssetsWithPagination',
+            [paranetId, offset, limit],
+            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+        );
+    }
+
+    async getParanetMetadata(paranetId) {
+        return this.callContractFunction(
+            this.ParanetsRegistryContract,
+            'getParanetMetadata',
+            [paranetId],
+            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+        );
+    }
+
+    async getName(paranetId) {
+        return this.callContractFunction(
+            this.ParanetsRegistryContract,
+            'getName',
+            [paranetId],
+            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+        );
+    }
+
+    async getDescription(paranetId) {
+        return this.callContractFunction(
+            this.ParanetsRegistryContract,
+            'getDescription',
+            [paranetId],
+            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+        );
+    }
+
+    async getParanetKnowledgeAssetLocator(knowledgeAssetId) {
+        const [knowledgeAssetStorageContract, kaTokenId] = await this.callContractFunction(
+            this.ParanetKnowledgeAssetsRegistryContract,
+            'getKnowledgeAssetLocator',
+            [knowledgeAssetId],
+        );
+        const tokenId = kaTokenId.toNumber();
+        const knowledgeAssetLocator = { knowledgeAssetStorageContract, tokenId };
+        return knowledgeAssetLocator;
+    }
+
+    async getKnowledgeAssetLocatorFromParanetId(paranetId) {
+        const [paranetKAStorageContract, paranetKATokenId] = await this.callContractFunction(
+            this.ParanetRegistryContract,
+            'getKnowledgeAssetLocator',
+            [paranetId],
+        );
+        const tokenId = paranetKATokenId.toNumber();
+        const knowledgeAssetLocator = { paranetKAStorageContract, tokenId };
+        return knowledgeAssetLocator;
+    }
+
+    async paranetExists(paranetId) {
+        return this.callContractFunction(
+            this.ParanetsRegistryContract,
+            'paranetExists',
+            [paranetId],
+            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+        );
+    }
+
+    async getParanetId(knowledgeAssetId) {
+        return this.callContractFunction(
+            this.ParanetKnowledgeAssetsRegistryContract,
+            'getParanetId',
+            [knowledgeAssetId],
+        );
+    }
+
+    async isParanetKnowledgeAsset(knowledgeAssetId) {
+        return this.callContractFunction(
+            this.ParanetKnowledgeAssetsRegistryContract,
+            'isParanetKnowledgeAsset',
+            [knowledgeAssetId],
+        );
     }
 }
 

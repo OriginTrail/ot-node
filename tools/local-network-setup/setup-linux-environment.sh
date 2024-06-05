@@ -48,7 +48,7 @@ then
   echo ================================
   echo ====== Starting hardhat1 ======
   echo ================================
-  sh -c "cd $pathToOtNode && node tools/local-network-setup/run-local-blockchain.js 8545 :v1" &
+  sh -c "cd $pathToOtNode && node tools/local-network-setup/run-local-blockchain.js 8545 :v2" &
   echo Waiting for hardhat to start and contracts deployment
 
   echo ================================
