@@ -11,6 +11,7 @@ import {
     DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS,
     CONTRACT_EVENT_TO_GROUP_MAPPING,
     GROUPED_CONTRACT_EVENTS,
+    ZERO_BYTES32
 } from '../constants/constants.js';
 
 const fetchEventsFailedCount = {};
@@ -585,8 +586,8 @@ class BlockchainEventListenerService {
             );
 
             // eslint-disable-next-line no-await-in-loop
-            const paranetId = await this.blockchainModuleManager.getParanetId(knowledgeAssetId);
-            if (paranetId) {
+            const paranetId = await this.blockchainModuleManager.getParanetId(blockchain, knowledgeAssetId);
+            if (paranetId && paranetId !== ZERO_BYTES32) {
                 const {
                     knowledgeAssetStorageContract: paranetKasContract,
                     tokenId: paranetTokenId,
