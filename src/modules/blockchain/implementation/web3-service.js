@@ -1659,7 +1659,7 @@ class Web3Service {
 
     async getKnowledgeAssetLocatorFromParanetId(paranetId) {
         const [paranetKAStorageContract, paranetKATokenId] = await this.callContractFunction(
-            this.ParanetRegistryContract,
+            this.ParanetsRegistryContract,
             'getKnowledgeAssetLocator',
             [paranetId],
         );
