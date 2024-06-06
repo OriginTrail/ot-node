@@ -598,7 +598,7 @@ class BlockchainEventListenerService {
                 );
                 if (paranetExists) {
                     const {
-                        knowledgeAssetStorageContract: paranetKasContract,
+                        paranetKAStorageContract: paranetKasContract,
                         tokenId: paranetTokenId,
                         // eslint-disable-next-line no-await-in-loop
                     } = await this.blockchainModuleManager.getKnowledgeAssetLocatorFromParanetId(
