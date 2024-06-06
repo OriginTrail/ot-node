@@ -592,6 +592,7 @@ class BlockchainEventListenerService {
                     tokenId: paranetTokenId,
                     // eslint-disable-next-line no-await-in-loop
                 } = await this.blockchainModuleManager.getKnowledgeAssetLocatorFromParanetId(
+                    blockchain,
                     paranetId,
                 );
                 const paranetUAL = this.ualService.deriveUAL(
