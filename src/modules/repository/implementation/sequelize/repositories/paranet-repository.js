@@ -1,3 +1,5 @@
+import { Sequelize } from 'sequelize';
+
 class ParanetRepository {
     constructor(models) {
         this.sequelize = models.sequelize;
@@ -57,6 +59,14 @@ class ParanetRepository {
                 paranetId,
                 blockchainId,
             },
+        });
+    }
+
+    async getParanetsBlockchains() {
+        return this.model.findAll({
+            attributes: [
+                [Sequelize.fn('DISTINCT', Sequelize.col('blockchain_id')), 'blockchain_id'],
+            ],
         });
     }
 }
