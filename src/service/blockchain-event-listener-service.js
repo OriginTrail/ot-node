@@ -579,59 +579,65 @@ class BlockchainEventListenerService {
             ]);
 
             // eslint-disable-next-line no-await-in-loop
-            const knowledgeAssetId = await this.paranetService.constructKnowledgeAssetId(
-                blockchain,
-                contract,
-                tokenId,
-            );
+            const paranetsBlockchains = await this.repositoryModuleManager.getParanetsBlockchains();
 
-            // eslint-disable-next-line no-await-in-loop
-            const paranetId = await this.blockchainModuleManager.getParanetId(
-                blockchain,
-                knowledgeAssetId,
-            );
-            if (paranetId && paranetId !== ZERO_BYTES32) {
+            if (paranetsBlockchains.includes(blockchain)) {
                 // eslint-disable-next-line no-await-in-loop
-                const paranetExists = await this.repositoryModuleManager.paranetExists(
-                    paranetId,
+                const knowledgeAssetId = await this.paranetService.constructKnowledgeAssetId(
                     blockchain,
+                    contract,
+                    tokenId,
                 );
-                if (paranetExists) {
-                    const {
-                        paranetKAStorageContract: paranetKasContract,
-                        tokenId: paranetTokenId,
-                        // eslint-disable-next-line no-await-in-loop
-                    } = await this.blockchainModuleManager.getKnowledgeAssetLocatorFromParanetId(
-                        blockchain,
-                        paranetId,
-                    );
-                    const paranetUAL = this.ualService.deriveUAL(
-                        blockchain,
-                        paranetKasContract,
-                        paranetTokenId,
-                    );
 
+                // eslint-disable-next-line no-await-in-loop
+                const paranetId = await this.blockchainModuleManager.getParanetId(
+                    blockchain,
+                    knowledgeAssetId,
+                );
+                if (paranetId && paranetId !== ZERO_BYTES32) {
                     // eslint-disable-next-line no-await-in-loop
-                    const paranetAssetExists = await this.tripleStoreService.paranetAssetExists(
+                    const paranetExists = await this.repositoryModuleManager.paranetExists(
+                        paranetId,
                         blockchain,
-                        contract,
-                        tokenId,
-                        paranetKasContract,
-                        paranetTokenId,
                     );
+                    if (paranetExists) {
+                        const {
+                            paranetKAStorageContract: paranetKasContract,
+                            tokenId: paranetTokenId,
+                        } =
+                            // eslint-disable-next-line no-await-in-loop
+                            await this.blockchainModuleManager.getKnowledgeAssetLocatorFromParanetId(
+                                blockchain,
+                                paranetId,
+                            );
+                        const paranetUAL = this.ualService.deriveUAL(
+                            blockchain,
+                            paranetKasContract,
+                            paranetTokenId,
+                        );
 
-                    if (paranetAssetExists) {
-                        const kaUAL = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
-                        // Create a record for missing Paranet KA
-                        // Paranet sync command will get it from network
                         // eslint-disable-next-line no-await-in-loop
-                        await this.repositoryModuleManager.createMissedParanetAssetRecord({
-                            blockchainId: blockchain,
-                            ual: kaUAL,
-                            paranetUal: paranetUAL,
-                            knowledgeAssetId,
-                        });
+                        const paranetAssetExists = await this.tripleStoreService.paranetAssetExists(
+                            blockchain,
+                            contract,
+                            tokenId,
+                            paranetKasContract,
+                            paranetTokenId,
+                        );
+
+                        if (paranetAssetExists) {
+                            const kaUAL = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+                            // Create a record for missing Paranet KA
+                            // Paranet sync command will get it from network
+                            // eslint-disable-next-line no-await-in-loop
+                            await this.repositoryModuleManager.createMissedParanetAssetRecord({
+                                blockchainId: blockchain,
+                                ual: kaUAL,
+                                paranetUal: paranetUAL,
+                                knowledgeAssetId,
+                            });
+                        }
                     }
                 }
             }
