@@ -50,7 +50,7 @@ class ParanetSyncCommand extends Command {
         const cachedMissedKaCount =
             await this.repositoryModuleManager.getCountOfMissedAssetsOfParanet(paranetUAL);
 
-        if (cachedKaCount + cachedMissedKaCount === contractKaCount) {
+        if (cachedKaCount + cachedMissedKaCount >= contractKaCount) {
             this.logger.info(
                 `Paranet sync: KA count from contract and in DB is the same, nothing new to sync, for paranetId: ${paranetId}, operation ID: ${operationId}!`,
             );
