@@ -8,7 +8,6 @@ import ServiceAgreementsMetadataMigration from './service-agreements-metadata-mi
 import RemoveAgreementStartEndTimeMigration from './remove-agreement-start-end-time-migration.js';
 import TripleStoreMetadataMigration from './triple-store-metadata-migration.js';
 import RemoveOldEpochCommandsMigration from './remove-old-epoch-commands-migration.js';
-import PendingStorageMigration from './pending-storage-migration.js';
 import MarkOldBlockchainEventsAsProcessedMigration from './mark-old-blockchain-events-as-processed-migration.js';
 import ServiceAgreementsDataInspector from './service-agreements-data-inspector.js';
 import ServiceAgreementsInvalidDataMigration from './service-agreements-invalid-data-migration.js';
@@ -18,6 +17,8 @@ import MarkStakingEventsAsProcessedMigration from './mark-staking-events-as-proc
 import RemoveServiceAgreementsForChiadoMigration from './remove-service-agreements-for-chiado-migration.js';
 import MultipleOpWalletsUserConfigurationMigration from './multiple-op-wallets-user-configuration-migration.js';
 import GetOldServiceAgreementsMigration from './get-old-service-agreements-migration.js';
+import OperationIdStorageMigration from './operation-id-storage-migration.js';
+import PendingStorageMigration from './pending-storage-migration.js';
 
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
@@ -203,19 +204,6 @@ class MigrationExecutor {
             config,
             repositoryModuleManager,
         );
-        if (!(await migration.migrationAlreadyExecuted())) {
-            await migration.migrate();
-        }
-    }
-
-    static async executePendingStorageMigration(logger, config) {
-        if (
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
-        )
-            return;
-
-        const migration = new PendingStorageMigration('pendingStorageMigration', logger, config);
         if (!(await migration.migrationAlreadyExecuted())) {
             await migration.migrate();
         }
@@ -438,6 +426,44 @@ class MigrationExecutor {
                 logger.error(
                     `Unable to execute get old service agreements migration. Error: ${error.message}`,
                 );
+            }
+        }
+    }
+
+    static async executeOperationIdStorageMigration(container, logger, config) {
+        const operationIdService = container.resolve('operationIdService');
+
+        const migration = new OperationIdStorageMigration(
+            'operationIdStorageMigration',
+            logger,
+            config,
+            operationIdService,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            try {
+                await migration.migrate();
+            } catch (error) {
+                logger.error(
+                    `Unable to execute operationIdStorageMigration. Error: ${error.message}`,
+                );
+            }
+        }
+    }
+
+    static async executePendingStorageMigration(container, logger, config) {
+        const pendingStorageService = container.resolve('pendingStorageService');
+
+        const migration = new PendingStorageMigration(
+            'pendingStorageMigration',
+            logger,
+            config,
+            pendingStorageService,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            try {
+                await migration.migrate();
+            } catch (error) {
+                logger.error(`Unable to execute pendingStorageMigration. Error: ${error.message}`);
             }
         }
     }

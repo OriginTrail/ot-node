@@ -111,7 +111,7 @@ dist
 test-data*
 
 # Data folders
-data*
+/data*
 
 # VS code files
 .vscode/launch.json

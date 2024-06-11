@@ -1,37 +1,60 @@
 import path from 'path';
-import { calculateRoot } from 'assertion-tools';
-import { PENDING_STORAGE_REPOSITORIES } from '../constants/constants.js';
+import { readdir } from 'fs/promises';
 import BaseMigration from './base-migration.js';
+import { PENDING_STORAGE_REPOSITORIES } from '../constants/constants.js';
 
 class PendingStorageMigration extends BaseMigration {
+    constructor(migrationName, logger, config, pendingStorageService) {
+        super(migrationName, logger, config);
+        this.pendingStorageService = pendingStorageService;
+    }
+
     async executeMigration() {
-        const promises = Object.values(PENDING_STORAGE_REPOSITORIES).map(async (repository) => {
-            let fileNames;
-            const repositoryPath = this.fileService.getPendingStorageCachePath(repository);
-            try {
-                fileNames = await this.fileService.readDirectory(repositoryPath);
-            } catch (error) {
-                return false;
-            }
-
-            await Promise.all(
-                fileNames.map(async (fileName) => {
-                    const newDirectoryPath = path.join(repositoryPath, fileName);
-                    const cachedData = await this.fileService.readFile(newDirectoryPath, true);
-                    await this.fileService.removeFile(newDirectoryPath);
-                    if (cachedData?.public?.assertion) {
-                        const newDocumentName = calculateRoot(cachedData.public.assertion);
-                        await this.fileService.writeContentsToFile(
-                            newDirectoryPath,
-                            newDocumentName,
-                            JSON.stringify(cachedData),
-                        );
-                    }
-                }),
+        for (const repository of [
+            PENDING_STORAGE_REPOSITORIES.PRIVATE,
+            PENDING_STORAGE_REPOSITORIES.PUBLIC,
+        ]) {
+            const cachePath = path.join(
+                this.fileService.getDataFolderPath(),
+                'pending_storage_cache',
+                repository,
             );
-        });
 
-        await Promise.all(promises);
+            // eslint-disable-next-line no-await-in-loop
+            const assetFolderNames = await this.getFolders(cachePath);
+            for (const assetFolderName of assetFolderNames) {
+                const [blockchainName, blockchainId, contract, tokenId] =
+                    assetFolderName.split(':');
+                const assetFolderPath = path.join(cachePath, assetFolderName);
+                // eslint-disable-next-line no-await-in-loop
+                const assertionIds = await this.fileService.readDirectory(assetFolderPath);
+                for (const assertionId of assertionIds) {
+                    const filePath = path.join(assetFolderPath, assertionId);
+                    // eslint-disable-next-line no-await-in-loop
+                    const data = await this.fileService.readFile(filePath);
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.pendingStorageService.cacheAssertionData(
+                        repository,
+                        `${blockchainName}:${blockchainId}`,
+                        contract,
+                        tokenId,
+                        assertionId,
+                        data,
+                    );
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.fileService.removeFile(filePath);
+                }
+            }
+        }
+    }
+
+    async getFolders(directoryPath) {
+        try {
+            const files = await readdir(directoryPath, { withFileTypes: true });
+            return files.filter((dirent) => dirent.isDirectory()).map((dirent) => dirent.name);
+        } catch (error) {
+            return [];
+        }
     }
 }
 

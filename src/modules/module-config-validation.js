@@ -75,6 +75,10 @@ class ModuleConfigValidation {
     validateTelemetry() {
         return true;
     }
+
+    validateKeyValueStore() {
+        return true;
+    }
 }
 
 export default ModuleConfigValidation;

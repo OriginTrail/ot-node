@@ -76,7 +76,7 @@ class LocalStoreCommand extends Command {
                 }
                 await Promise.all(storePromises);
             } else {
-                await this.pendingStorageService.cacheAssertion(
+                await this.pendingStorageService.cacheAssertionData(
                     PENDING_STORAGE_REPOSITORIES.PRIVATE,
                     blockchain,
                     contract,

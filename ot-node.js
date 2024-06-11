@@ -53,6 +53,18 @@ class OTNode {
         await this.initializeModules();
         await this.initializeParanets();
 
+        await MigrationExecutor.executeOperationIdStorageMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
+        await MigrationExecutor.executePendingStorageMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         await MigrationExecutor.executeRemoveServiceAgreementsForChiadoMigration(
             this.container,
             this.logger,
