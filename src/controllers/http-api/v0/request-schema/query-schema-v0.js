@@ -1,4 +1,4 @@
-import { QUERY_TYPES, TRIPLE_STORE_REPOSITORIES } from '../../../../constants/constants.js';
+import { QUERY_TYPES } from '../../../../constants/constants.js';
 
 export default () => ({
     type: 'object',
@@ -11,7 +11,7 @@ export default () => ({
             type: 'string',
         },
         repository: {
-            enum: Object.values(TRIPLE_STORE_REPOSITORIES),
+            type: 'string',
         },
     },
 });
