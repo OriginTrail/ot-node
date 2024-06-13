@@ -34,7 +34,7 @@ class ParanetSyncCommand extends Command {
         const paranetId = this.paranetService.constructParanetId(blockchain, contract, tokenId);
 
         this.logger.info(
-            `Paranet sync: Starting paranet sync for paranetId: ${paranetId}, operation ID: ${operationId}`,
+            `Paranet sync: Starting paranet sync for paranet: ${paranetUAL}, operation ID: ${operationId}`,
         );
 
         let contractKaCount = await this.blockchainModuleManager.getParanetKnowledgeAssetsCount(
@@ -50,9 +50,9 @@ class ParanetSyncCommand extends Command {
         const cachedMissedKaCount =
             await this.repositoryModuleManager.getCountOfMissedAssetsOfParanet(paranetUAL);
 
-        if (cachedKaCount + cachedMissedKaCount === contractKaCount) {
+        if (cachedKaCount + cachedMissedKaCount >= contractKaCount) {
             this.logger.info(
-                `Paranet sync: KA count from contract and in DB is the same, nothing new to sync, for paranetId: ${paranetId}, operation ID: ${operationId}!`,
+                `Paranet sync: KA count from contract and in DB is the same, nothing new to sync, for paranet: ${paranetUAL}, operation ID: ${operationId}!`,
             );
             if (cachedMissedKaCount > 0) {
                 this.logger.info(
@@ -60,7 +60,7 @@ class ParanetSyncCommand extends Command {
                         cachedMissedKaCount > PARANET_SYNC_KA_COUNT
                             ? PARANET_SYNC_KA_COUNT
                             : cachedMissedKaCount
-                    } assets, for paranetId: ${paranetId}, operation ID: ${operationId}!`,
+                    } assets, for paranet: ${paranetUAL}, operation ID: ${operationId}!`,
                 );
                 const missedParanetAssets =
                     await this.repositoryModuleManager.getMissedParanetAssetsRecords(
@@ -76,7 +76,7 @@ class ParanetSyncCommand extends Command {
                         (async () => {
                             const { knowledgeAssetId } = missedParanetAsset;
                             this.logger.info(
-                                `Paranet sync: Syncing missed token id: ${knowledgeAssetId} for ${paranetId} with operation id: ${operationId}`,
+                                `Paranet sync: Syncing missed token id: ${knowledgeAssetId} for ${paranetUAL} with operation id: ${operationId}`,
                             );
 
                             const { knowledgeAssetStorageContract, tokenId: kaTokenId } =
@@ -172,7 +172,7 @@ class ParanetSyncCommand extends Command {
         this.logger.info(
             `Paranet sync: Syncing ${
                 contractKaCount + cachedMissedKaCount - cachedKaCount
-            } new assets for paranetId: ${paranetId}, operation ID: ${operationId}`,
+            } new assets for paranet: ${paranetUAL}, operation ID: ${operationId}`,
         );
         // TODO: Rename i, should it be cachedKaCount + 1 as cachedKaCount is already in, but count is index
         const kaToUpdate = [];
@@ -199,7 +199,7 @@ class ParanetSyncCommand extends Command {
             promises.push(
                 (async () => {
                     this.logger.info(
-                        `Paranet sync: Syncing token id: ${knowledgeAssetId} for ${paranetId} with operation id: ${operationId}`,
+                        `Paranet sync: Syncing token id: ${knowledgeAssetId} for ${paranetUAL} with operation id: ${operationId}`,
                     );
 
                     const { knowledgeAssetStorageContract, tokenId: kaTokenId } =
