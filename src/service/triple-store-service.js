@@ -10,7 +10,10 @@ class TripleStoreService {
         this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
         this.ualService = ctx.ualService;
         this.dataService = ctx.dataService;
+        this.paranetService = ctx.paranetService;
+    }
 
+    initializeRepositories() {
         this.repositoryImplementations = {};
         for (const implementationName of this.tripleStoreModuleManager.getImplementationNames()) {
             for (const repository in this.tripleStoreModuleManager.getImplementation(
@@ -116,6 +119,36 @@ class TripleStoreService {
         if (assetsWithAssertionIdCount?.count <= 1) {
             await this.deleteAssertion(fromRepository, assertionId);
         }
+    }
+
+    async moveAssetWithoutDelete(
+        fromRepository,
+        toRepository,
+        assertionId,
+        blockchain,
+        contract,
+        tokenId,
+        keyword,
+    ) {
+        let assertion;
+        // Try-catch to prevent infinite processing loop when unexpected error is thrown while getting KA
+        try {
+            assertion = await this.getAssertion(fromRepository, assertionId);
+        } catch (e) {
+            this.logger.error(`Error while getting assertion for moving asset: ${e.message}`);
+            return;
+        }
+
+        // copy metadata and assertion
+        await this.localStoreAsset(
+            toRepository,
+            assertionId,
+            assertion,
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+        );
     }
 
     async insertAssetAssertionMetadata(
@@ -276,6 +309,12 @@ class TripleStoreService {
             repository,
             this.ualService.deriveUAL(blockchain, contract, tokenId),
         );
+    }
+
+    async paranetAssetExists(blockchain, kaContract, kaTokenId, paranetContract, paranetTokenId) {
+        const paranetUAL = this.ualService.deriveUAL(blockchain, paranetContract, paranetTokenId);
+        const repository = this.paranetService.getParanetRepositoryName(paranetUAL);
+        return this.assetExists(repository, blockchain, kaContract, kaTokenId);
     }
 
     async insertAssetAssertionLink(repository, blockchain, contract, tokenId, assertionId) {

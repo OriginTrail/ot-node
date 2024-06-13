@@ -292,6 +292,14 @@ class RepositoryModuleManager extends BaseModuleManager {
         );
     }
 
+    async getOrCreateParanetById(paranetId) {
+        return this.getRepository('paranet').getOrCreateParanet(paranetId);
+    }
+
+    async updateParanetKaCount(paranetId, blockchainId, kaCount) {
+        return this.getRepository('paranet').updateParanetKaCount(paranetId, blockchainId, kaCount);
+    }
+
     async updateServiceAgreementRecord(
         blockchainId,
         contract,
@@ -463,6 +471,61 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('service_agreement').getLatestServiceAgreementTokenId(
             blockchainId,
         );
+    }
+
+    async createParanetRecord(name, description, paranetId, blockchainId) {
+        this.getRepository('paranet').createParanetRecord(
+            name,
+            description,
+            paranetId,
+            blockchainId,
+        );
+    }
+
+    async paranetExists(paranetId, blockchainId) {
+        return this.getRepository('paranet').paranetExists(paranetId, blockchainId);
+    }
+
+    async getParanet(paranetId, blockchainId) {
+        return this.getRepository('paranet').getParanet(paranetId, blockchainId);
+    }
+
+    async getParanetKnowledgeAssetsCount(paranetId, blockchainId) {
+        return this.getRepository('paranet').getParanetKnowledgeAssetsCount(
+            paranetId,
+            blockchainId,
+        );
+    }
+
+    async createMissedParanetAssetRecord(missedParanetAssset) {
+        return this.getRepository('missed_paranet_asset').createMissedParanetAssetRecord(
+            missedParanetAssset,
+        );
+    }
+
+    async getMissedParanetAssetRecords(blockchainId) {
+        return this.getRepository('missed_paranet_asset').getMissedParanetAssetRecords(
+            blockchainId,
+        );
+    }
+
+    async removeMissedParanetAssetRecord(ual) {
+        return this.getRepository('missed_paranet_asset').removeMissedParanetAssetRecord(ual);
+    }
+
+    async getMissedParanetAssetsRecords(paranetUal, count) {
+        return this.getRepository('missed_paranet_asset').getMissedParanetAssetsRecords(
+            paranetUal,
+            count,
+        );
+    }
+
+    async getCountOfMissedAssetsOfParanet(ual) {
+        return this.getRepository('missed_paranet_asset').getCountOfMissedAssetsOfParanet(ual);
+    }
+
+    async getParanetsBlockchains() {
+        return this.getRepository('paranet').getParanetsBlockchains();
     }
 }
 
