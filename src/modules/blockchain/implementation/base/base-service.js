@@ -5,7 +5,7 @@ class BaseService extends Web3Service {
     constructor(ctx) {
         super(ctx);
 
-        this.baseTokenTicker = 'BASE';
+        this.baseTokenTicker = 'ETH';
         this.tracTicker = 'TRAC';
     }
 
