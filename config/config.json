@@ -443,6 +443,16 @@
                             "rpcEndpoints": ["https://rpc.chiadochain.net"],
                             "operatorFee": 0
                         }
+                    },
+                    "base:84532": {
+                        "enabled": false,
+                        "package": "./blockchain/implementation/gnosis/base-service.js",
+
+                        "config": {
+                            "hubContractAddress": "",
+                            "rpcEndpoints": ["https://sepolia.base.org"],
+                            "operatorFee": 0
+                        }
                     }
                 }
             },
@@ -617,6 +627,16 @@
                             "rpcEndpoints": ["https://rpc.chiadochain.net"],
                             "operatorFee": 0
                         }
+                    },
+                    "base:84532": {
+                        "enabled": false,
+                        "package": "./blockchain/implementation/gnosis/base-service.js",
+
+                        "config": {
+                            "hubContractAddress": "",
+                            "rpcEndpoints": ["https://sepolia.base.org"],
+                            "operatorFee": 0
+                        }
                     }
                 }
             },
@@ -789,6 +809,15 @@
                         "config": {
                             "hubContractAddress": "0xbEF14fc04F870c2dD65c13Df4faB6ba01A9c746b",
                             "gasPriceOracleLink": "https://api.gnosisscan.io/api?module=proxy&action=eth_gasPrice",
+                            "operatorFee": 0
+                        }
+                    },
+                    "base:8453": {
+                        "enabled": false,
+                        "package": "./blockchain/implementation/gnosis/base-service.js",
+
+                        "config": {
+                            "hubContractAddress": "",
                             "operatorFee": 0
                         }
                     }
