@@ -28,29 +28,30 @@ const devEnvironment =
     process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
     process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
 
-async function getGasPrice(gasPriceOracleLink, hubContractAddress) {
+async function getGasPrice(gasPriceOracleLink, hubContractAddress, provider) {
     if (!gasPriceOracleLink) {
         return devEnvironment ? undefined : 8;
     }
     try {
-        let gasPrice;
-        const response = await axios.get(gasPriceOracleLink);
         if (
             hubContractAddress === '0x6C861Cb69300C34DfeF674F7C00E734e840C29C0' ||
             hubContractAddress === '0x144eDa5cbf8926327cb2cceef168A121F0E4A299'
-        )
-            if (
-                gasPriceOracleLink ===
-                'https://api.gnosisscan.io/api?module=proxy&action=eth_gasPrice'
-            ) {
-                gasPrice = Number(response.data.result, 10);
-            } else if (
-                gasPriceOracleLink === 'https://blockscout.chiadochain.net/api/v1/gas-price-oracle'
-            ) {
-                gasPrice = Math.round(response.data.average * 1e9);
-            } else {
-                gasPrice = Math.round(response.result * 1e9);
-            }
+        ) {
+            return provider.getGasPrice();
+        }
+        let gasPrice;
+        const response = await axios.get(gasPriceOracleLink);
+        if (
+            gasPriceOracleLink === 'https://api.gnosisscan.io/api?module=proxy&action=eth_gasPrice'
+        ) {
+            gasPrice = Number(response.data.result, 10);
+        } else if (
+            gasPriceOracleLink === 'https://blockscout.chiadochain.net/api/v1/gas-price-oracle'
+        ) {
+            gasPrice = Math.round(response.data.average * 1e9);
+        } else {
+            gasPrice = Math.round(response.result * 1e9);
+        }
         this.logger.debug(`Gas price: ${gasPrice}`);
         return gasPrice;
     } catch (error) {
@@ -85,7 +86,7 @@ async function setStake(
 
     const stakeWei = ethers.utils.parseEther(stake);
 
-    const gasPrice = await getGasPrice(gasPriceOracleLink, hubContractAddress);
+    const gasPrice = await getGasPrice(gasPriceOracleLink, hubContractAddress, provider);
 
     let tx = await tokenContract.increaseAllowance(stakingContractAddress, stakeWei, {
         gasPrice,
