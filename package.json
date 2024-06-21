@@ -1,6 +1,6 @@
 {
     "name": "origintrail_node",
-    "version": "6.4.1",
+    "version": "6.5.0",
     "description": "OTNode V6",
     "main": "index.js",
     "type": "module",
@@ -61,8 +61,7 @@
         "prettier": "^2.7.1",
         "sharp": "^0.32.6",
         "sinon": "^14.0.0",
-        "slugify": "^1.6.5",
-        "typescript": "^5.5.2"
+        "slugify": "^1.6.5"
     },
     "dependencies": {
         "@comunica/query-sparql": "^2.4.3",
