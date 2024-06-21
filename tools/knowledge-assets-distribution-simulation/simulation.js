@@ -80,7 +80,7 @@ function generateRandomHashes(numberOfHashes) {
 async function generateRandomNodes(
     numberOfNodes,
     stakeMin = 50000,
-    stakeMax = 1000000,
+    stakeMax = 2000000,
     hashFunctionId = 1,
 ) {
     const nodes = [];
@@ -429,7 +429,7 @@ async function runSimulation(
         `${mode}-${nodes.length}-${numberOfKAs}-${proximityScoreFunctionsPairId}-nodes-stake-distribution`,
     );
 
-    const knowledgeAssets = await generateRandomHashes(numberOfKAs);
+    const knowledgeAssets = generateRandomHashes(numberOfKAs);
     const metrics = [];
     const replicas = {};
 
@@ -445,15 +445,13 @@ async function runSimulation(
     let IDEAL_MAX_DISTANCE_IN_NEIGHBORHOOD;
 
     if (proximityScoreFunctionsPairId === 2) {
-        IDEAL_MAX_DISTANCE_IN_NEIGHBORHOOD = HASH_RING_SIZE.div(nodesNumber).mul(20);
-    } else if (proximityScoreFunctionsPairId === 3) {
         IDEAL_MAX_DISTANCE_IN_NEIGHBORHOOD = HASH_RING_SIZE.div(nodesNumber).mul(10);
     }
 
-    const linearSumParams = await blockchainModuleManagerMock.getLinearSumParams(blockchain);
+    const linearSumParams = blockchainModuleManagerMock.getLinearSumParams(blockchain);
     const { distanceScaleFactor } = linearSumParams;
-    const minimumStake = await blockchainModuleManagerMock.getMinimumStake(blockchain);
-    const maximumStake = await blockchainModuleManagerMock.getMaximumStake(blockchain);
+    const minimumStake = blockchainModuleManagerMock.getMinimumStake(blockchain);
+    const maximumStake = blockchainModuleManagerMock.getMaximumStake(blockchain);
 
     for (const key of knowledgeAssets) {
         const nodesWithDistances = await Promise.all(
@@ -492,6 +490,10 @@ async function runSimulation(
                     node.distance,
                     node.stake,
                     maxDistance,
+                    r2,
+                    nodesNumber,
+                    minimumStake,
+                    maximumStake,
                 );
 
                 let dividend = node.distance;
@@ -553,6 +555,12 @@ const filePath = mode === 'load' ? args[1] : undefined;
 const numberOfNodes = mode === 'generate' ? parseInt(args[1], 10) : undefined;
 const numberOfKAs = parseInt(args[2], 10);
 const proximityScoreFunctionsPairId = parseInt(args[3], 10);
+
+logger.info(`mode: ${mode}`);
+logger.info(`filePath: ${filePath}`);
+logger.info(`numberOfNodes: ${numberOfNodes}`);
+logger.info(`numberOfKAs: ${numberOfKAs}`);
+logger.info(`proximityScoreFunctionsPairId: ${proximityScoreFunctionsPairId}`);
 
 if (
     (mode === 'load' && !filePath) ||
