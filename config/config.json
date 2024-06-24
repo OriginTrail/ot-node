@@ -40,8 +40,11 @@
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
                             "dht": {
-                                "kBucketSize": 20,
-                                "type": "dual"
+                                "kBucketSize": 20
+                            },
+                            "nat": {
+                                "enabled": false,
+                                "externalIp": null
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -156,15 +159,16 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "info",
+        "assetSync": {
+            "syncParanets": []
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
-            "publicOperations": []
-        },
-        "assetSync": {
-            "enabled": false
+            "publicOperations": [],
+            "bothIpAndTokenAuthRequired": false
         }
     },
     "test": {
@@ -208,6 +212,10 @@
                         "config": {
                             "dht": {
                                 "kBucketSize": 20
+                            },
+                            "nat": {
+                                "enabled": false,
+                                "externalIp": null
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -312,15 +320,16 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
+        "assetSync": {
+            "syncParanets": []
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
-            "publicOperations": []
-        },
-         "assetSync": {
-            "enabled": false
+            "publicOperations": [],
+            "bothIpAndTokenAuthRequired": false
         }
     },
     "testnet": {
@@ -346,6 +355,10 @@
                         "config": {
                             "dht": {
                                 "kBucketSize": 20
+                            },
+                            "nat": {
+                                "enabled": true,
+                                "externalIp": null
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -481,12 +494,16 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
+        "assetSync": {
+            "syncParanets": []
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
-            "publicOperations": []
+            "publicOperations": [],
+            "bothIpAndTokenAuthRequired": false
         }
     },
     "devnet": {
@@ -512,6 +529,10 @@
                         "config": {
                             "dht": {
                                 "kBucketSize": 20
+                            },
+                            "nat": {
+                                "enabled": true,
+                                "externalIp": null
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -647,15 +668,16 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
+        "assetSync": {
+            "syncParanets": []
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
-            "publicOperations": []
-        },
-        "assetSync": {
-            "enabled": false
+            "publicOperations": [],
+            "bothIpAndTokenAuthRequired": false
         }
     },
     "mainnet": {
@@ -681,6 +703,10 @@
                         "config": {
                             "dht": {
                                 "kBucketSize": 20
+                            },
+                            "nat": {
+                                "enabled": true,
+                                "externalIp": null
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -816,15 +842,16 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
+        "assetSync": {
+            "syncParanets": []
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
-            "publicOperations": []
-        },
-        "assetSync": {
-            "enabled": false
+            "publicOperations": [],
+            "bothIpAndTokenAuthRequired": false
         }
     }
 }
