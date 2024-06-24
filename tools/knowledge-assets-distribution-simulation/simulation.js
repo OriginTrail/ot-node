@@ -11,6 +11,7 @@ import sharp from 'sharp';
 import { readFile } from 'fs/promises';
 import { createRequire } from 'module';
 import { create as createLibP2PKey, createFromPrivKey } from 'peer-id';
+import { BigNumber } from 'ethers';
 import { HASH_RING_SIZE, UINT128_MAX_BN } from '../../src/constants/constants.js';
 import BlockchainModuleManagerMock from './mocks/blockchain-module-manager-mock.js';
 import HashingService from '../../src/service/hashing-service.js';
@@ -400,6 +401,88 @@ function generateBoxPlot(data, metric, outputImageName) {
     convertSvgToJpg(d3n.svgString(), outputImageName);
 }
 
+function generateHashRingPlot(data, outputImageName) {
+    logger.info('Generating Hash Ring Plot with Wins.');
+
+    const d3n = new D3Node();
+    const margin = { top: 60, right: 30, bottom: 60, left: 90 };
+    const width = 2000 - margin.left - margin.right;
+    const height = 2000 - margin.top - margin.bottom;
+    const outerRadius = Math.min(width, height) / 2;
+    const innerRadius = outerRadius / 3; // Increase the inner radius to make bars more straight
+
+    data.sort((a, b) => a.nodeId.localeCompare(b.nodeId));
+
+    const svg = d3n
+        .createSVG(width + margin.left + margin.right, height + margin.top + margin.bottom)
+        .append('g')
+        .attr(
+            'transform',
+            `translate(${(width + margin.left + margin.right) / 2}, ${
+                (height + margin.top + margin.bottom) / 2
+            })`,
+        );
+
+    svg.append('text')
+        .attr('x', 0)
+        .attr('y', 0 - outerRadius - margin.top / 2)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '20px')
+        .style('text-decoration', 'underline')
+        .text('Hash Ring Wins Distribution');
+
+    const angleScale = d3
+        .scaleBand()
+        .range([0, 2 * Math.PI])
+        .domain(data.map((_, i) => i));
+
+    const radiusScale = d3
+        .scaleLinear()
+        .domain([0, d3.max(data, (d) => d.won)])
+        .range([innerRadius, outerRadius]); // Adjust range to start from innerRadius
+
+    svg.selectAll('path')
+        .data(data)
+        .enter()
+        .append('path')
+        .attr(
+            'd',
+            d3
+                .arc()
+                .innerRadius(innerRadius) // Set the inner radius
+                .outerRadius((d) => radiusScale(d.won))
+                .startAngle((_, i) => angleScale(i))
+                .endAngle((_, i) => angleScale(i) + angleScale.bandwidth())
+                .padAngle(0.01)
+                .padRadius(innerRadius),
+        )
+        .attr('fill', 'steelblue');
+
+    svg.selectAll('text')
+        .data(data)
+        .enter()
+        .append('text')
+        .attr('transform', (d, i) => {
+            const angle = angleScale(i) + angleScale.bandwidth() / 2;
+            const x = Math.sin(angle) * (radiusScale(d.won) + 10);
+            const y = -Math.cos(angle) * (radiusScale(d.won) + 10);
+            return `translate(${x}, ${y})`;
+        })
+        .attr('text-anchor', 'middle')
+        .style('font-size', '10px')
+        .style('fill', '#333')
+        .style('font-weight', 'bold')
+        .text((d) => `${d.identityId}, Stake: ${d.stake}, Wins: ${d.won}`)
+        .each((d, i) => {
+            const angle = angleScale(i) + angleScale.bandwidth() / 2;
+            const x = Math.sin(angle) * (radiusScale(d.won) + 30);
+            const y = -Math.cos(angle) * (radiusScale(d.won) + 30);
+            d3.select(this).attr('transform', `translate(${x}, ${y})`);
+        });
+
+    convertSvgToJpg(d3n.svgString(), outputImageName);
+}
+
 async function runSimulation(
     mode,
     filePath,
@@ -435,6 +518,10 @@ async function runSimulation(
 
     for (const node of nodes) {
         replicas[node.nodeId] = {
+            identityId: node.identityId ?? null,
+            nodeId: BigNumber.from(
+                blockchainModuleManagerMock.convertAsciiToHex(blockchain, node.nodeId),
+            ).toString(),
             stake: Number(node.stake),
             replicated: 0,
             won: 0,
@@ -546,6 +633,10 @@ async function runSimulation(
         metrics,
         'score',
         `${mode}-${nodes.length}-${numberOfKAs}-${proximityScoreFunctionsPairId}-scores-distribution`,
+    );
+    generateHashRingPlot(
+        Object.values(replicas),
+        `${mode}-${nodes.length}-${numberOfKAs}-${proximityScoreFunctionsPairId}-hash-ring-wins`,
     );
 }
 

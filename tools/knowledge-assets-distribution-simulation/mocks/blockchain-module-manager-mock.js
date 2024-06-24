@@ -9,6 +9,14 @@ class BlockchainModuleManagerMock {
         return ethers.utils.hexlify(uint8Array);
     }
 
+    convertAsciiToHex(blockchain, string) {
+        return this.convertUint8ArrayToHex(blockchain, ethers.utils.toUtf8Bytes(string));
+    }
+
+    convertHexToAscii(blockchain, hexString) {
+        return ethers.utils.toUtf8String(hexString);
+    }
+
     convertFromWei(value, toUnit = 'ether') {
         return ethers.utils.formatUnits(value, toUnit);
     }
