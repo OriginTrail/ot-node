@@ -724,6 +724,7 @@ export const BLOCK_TIME_MILLIS = {
     HARDHAT: 5_000,
     GNOSIS: 5_000,
     DEFAULT: 12_000,
+    BASE: 2_000,
 };
 
 export const TRANSACTION_CONFIRMATIONS = 1;
