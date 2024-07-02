@@ -81,6 +81,27 @@ class TripleStoreService {
         );
     }
 
+    async localStoreCollection(repository, knowledgeAssets, blockchain, contract, tokenId) {
+        const collectionUAL = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+        this.logger.info(
+            `Inserting Knowledge Collection (${knowledgeAssets.length} Knowledge Assets) with the UAL: ${collectionUAL}.`,
+        );
+
+        await this.tripleStoreModuleManager.insertManyAssertions(
+            this.repositoryImplementations[repository],
+            repository,
+            knowledgeAssets.map(({ assertionId, assertion }) => ({
+                assertionId,
+                assertionNquads: assertion.join('\n'),
+            })),
+        );
+
+        this.logger.info(
+            `Knowledge Collection (${knowledgeAssets.length} Knowledge Assets) with the UAL: ${collectionUAL} has been successfully inserted to the Triple Store's ${repository} repository.`,
+        );
+    }
+
     async moveAsset(
         fromRepository,
         toRepository,

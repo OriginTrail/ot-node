@@ -105,6 +105,15 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
+    async insertManyAssertions(implementationName, repository, assertions) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.insertManyAssertions(
+                repository,
+                assertions,
+            );
+        }
+    }
+
     async assertionExists(implementationName, repository, uri) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.assertionExists(

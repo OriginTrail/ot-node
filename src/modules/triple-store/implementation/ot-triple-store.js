@@ -265,6 +265,36 @@ class OtTripleStore {
         }
     }
 
+    async insertManyAssertions(repository, assertions) {
+        const assertionsToInsert = [];
+
+        for (const assertion of assertions) {
+            const { assertionId, assertionNquads } = assertion;
+            const exists = await this.assertionExists(repository, assertionId);
+            if (!exists) {
+                assertionsToInsert.push({ assertionId, assertionNquads });
+            }
+        }
+
+        if (assertionsToInsert.length > 0) {
+            let query = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            INSERT DATA {`;
+
+            for (const { assertionId, assertionNquads } of assertionsToInsert) {
+                query += `
+                GRAPH <assertion:${assertionId}> { 
+                    ${assertionNquads} 
+                }`;
+            }
+
+            query += `
+            }`;
+
+            await this.queryVoid(repository, query);
+        }
+    }
+
     async construct(repository, query) {
         return this._executeQuery(repository, query, MEDIA_TYPES.N_QUADS);
     }

@@ -175,12 +175,12 @@ export const MIN_DIAL_FREQUENCY_MILLIS = 60 * 60 * 1000;
 export const PERMANENT_COMMANDS = [
     'otnodeUpdateCommand',
     'sendTelemetryCommand',
-    'shardingTableCheckCommand',
-    'operationIdCleanerCommand',
+    // 'shardingTableCheckCommand',
+    // 'operationIdCleanerCommand',
     'commandsCleanerCommand',
     'dialPeersCommand',
-    'epochCheckCommand',
-    'getLatestServiceAgreement',
+    // 'epochCheckCommand',
+    // 'getLatestServiceAgreement',
     'blockchainEventCleanerCommand',
     'getCleanerCommand',
     'getResponseCleanerCommand',
@@ -188,7 +188,7 @@ export const PERMANENT_COMMANDS = [
     'publishResponseCleanerCommand',
     'updateCleanerCommand',
     'updateResponseCleanerCommand',
-    'startParanetSyncCommands',
+    // 'startParanetSyncCommands',
 ];
 
 export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
@@ -446,6 +446,12 @@ export const OPERATION_ID_STATUS = {
         LOCAL_STORE_START: 'LOCAL_STORE_START',
         LOCAL_STORE_END: 'LOCAL_STORE_END',
     },
+    COLLECTION_LOCAL_STORE: {
+        COLLECTION_LOCAL_STORE_INIT_START: 'COLLECTION_LOCAL_STORE_INIT_START',
+        COLLECTION_LOCAL_STORE_INIT_END: 'COLLECTION_LOCAL_STORE_INIT_END',
+        COLLECTION_LOCAL_STORE_START: 'COLLECTION_LOCAL_STORE_START',
+        COLLECTION_LOCAL_STORE_END: 'COLLECTION_LOCAL_STORE_END',
+    },
 };
 
 export const OPERATIONS = {
@@ -589,6 +595,11 @@ export const HTTP_API_ROUTES = {
         'local-store': {
             method: 'post',
             path: '/local-store',
+            options: {},
+        },
+        'collection-local-store': {
+            method: 'post',
+            path: '/collection/local-store',
             options: {},
         },
         get: {
