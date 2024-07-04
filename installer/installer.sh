@@ -283,7 +283,7 @@ install_node() {
     # Change directory to ot-node/current
     cd $OTNODE_DIR
 
-    # Request node env with strict input validation
+    # Request node environment with strict input validation
     while true; do
         read -p "Please select node environment: (Default: Mainnet) [T]estnet [M]ainnet [E]xit " choice
         case "$choice" in
@@ -295,142 +295,79 @@ install_node() {
     done
     echo "NODE_ENV=$nodeEnv" >> $OTNODE_DIR/.env
 
-# Blockchains prompt based on the selected environment
-if [ "$nodeEnv" == "mainnet" ]; then
-    blockchain_prompt=("OriginTrail Parachain" "Gnosis" "Both")
-elif [ "$nodeEnv" == "testnet" ]; then
-    blockchain_prompt=("OriginTrail Parachain" "Gnosis" "Both")
-fi
-
-
-# Ask user which blockchain to connect to with strict input validation
-while true; do
-    read -p "Please select the blockchain you want to connect your node to:
-    1. ${blockchain_prompt[0]}
-    2. ${blockchain_prompt[1]}
-    3. ${blockchain_prompt[2]}
-    Your choice: " blockchain_choice
-
-    case "$blockchain_choice" in
-        [1]* ) blockchain="${blockchain_prompt[0]}"; break;;
-        [2]* ) blockchain="${blockchain_prompt[1]}"; break;;
-        [3]* ) blockchain="${blockchain_prompt[2]}"; break;;
-        [eE]* ) text_color $RED "Installer stopped by user"; exit;;
-        * ) text_color $RED "Invalid choice. Please enter a valid number."; continue;;
-    esac
-done
-
-
-# Function to validate Operator Fees input
-validate_operator_fees() {
-    local blockchain=$1
-    local operator_fee_variable="${blockchain}_OPERATOR_FEES"
-
-    read -p "Enter Operator Fees (0% - 100%) for $blockchain: " OPERATOR_FEES
-    if (( OPERATOR_FEES >= 0 && OPERATOR_FEES <= 100 )); then
-        text_color $GREEN "Operator Fees for $blockchain: $OPERATOR_FEES"
-        eval "${operator_fee_variable}=$OPERATOR_FEES"
+    # Set blockchain options based on the selected environment
+    if [ "$nodeEnv" == "mainnet" ]; then
+        blockchain_options=("OriginTrail Parachain" "Gnosis" "Base")
+        otp_blockchain_id=2043
+        gnosis_blockchain_id=100
+        base_blockchain_id=8453
     else
-        text_color $RED "Please enter Operator Fees in the range of 0% - 100%. Try again."
-        validate_operator_fees $blockchain
+        blockchain_options=("OriginTrail Parachain" "Gnosis" "Base-Sepolia")
+        otp_blockchain_id=20430
+        gnosis_blockchain_id=10200
+        base_blockchain_id=84532
     fi
-}
 
+    # Ask user which blockchains to connect to
+    selected_blockchains=()
+    checkbox_states=()
+    for _ in "${blockchain_options[@]}"; do
+        checkbox_states+=("[ ]")
+    done
 
-# Case statement to handle blockchain-specific configurations
-case "$blockchain" in
-    "OriginTrail Parachain" | "Gnosis" )
+    while true; do
+        clear  # Clear the screen for a cleaner display
+        echo "Please select the blockchains you want to connect your node to:"
+        for i in "${!blockchain_options[@]}"; do
+            echo "    ${checkbox_states[$i]} $((i+1)). ${blockchain_options[$i]}"
+        done
+        echo "    [ ] $((${#blockchain_options[@]}+1)). All Blockchains"
+        echo "    Enter 'd' to finish selection"
 
+        # Use read -n 1 to read a single character without requiring Enter
+        read -n 1 -p "Enter the number to toggle selection (1-$((${#blockchain_options[@]}+1))): " choice
+        echo  # Add a newline after the selection
 
-        if [ "$blockchain" == "OriginTrail Parachain" ]; then
-                blockchain="OTP"
+        if [[ "$choice" == "d" ]]; then
+            if [ ${#selected_blockchains[@]} -eq 0 ]; then
+                text_color $RED "You must select at least one blockchain. Please try again."
+                read -n 1 -p "Press any key to continue..."
+                continue
+            else
+                break
+            fi
+        elif [[ "$choice" =~ ^[1-${#blockchain_options[@]}]$ ]]; then
+            index=$((choice-1))
+            if [[ "${checkbox_states[$index]}" == "[ ]" ]]; then
+                checkbox_states[$index]="[x]"
+                selected_blockchains+=("${blockchain_options[$index]}")
+            else
+                checkbox_states[$index]="[ ]"
+                selected_blockchains=(${selected_blockchains[@]/${blockchain_options[$index]}})
+            fi
+        elif [[ "$choice" == "$((${#blockchain_options[@]}+1))" ]]; then
+            if [[ "${checkbox_states[-1]}" == "[ ]" ]]; then
+                for i in "${!checkbox_states[@]}"; do
+                    checkbox_states[$i]="[x]"
+                done
+                selected_blockchains=("${blockchain_options[@]}")
+            else
+                for i in "${!checkbox_states[@]}"; do
+                    checkbox_states[$i]="[ ]"
+                done
+                selected_blockchains=()
+            fi
+        else
+            text_color $RED "Invalid choice. Please enter a number between 1 and $((${#blockchain_options[@]}+1))."
+            read -n 1 -p "Press any key to continue..."
         fi
+    done
 
+    text_color $GREEN "Final blockchain selection: ${selected_blockchains[*]}"
 
-        # Input wallets for the selected blockchain
-        request_operational_wallet_keys $blockchain
-        EVM_OP_WALLET_KEYS_BLOCKCHAIN=$OP_WALLET_KEYS_JSON
-
-        read -p "Enter your EVM management wallet address for $blockchain: " EVM_MANAGEMENT_WALLET
-        text_color $GREEN "EVM management wallet address for $blockchain: $EVM_MANAGEMENT_WALLET"
-
-        read -p "Enter your profile shares token name for $blockchain: " SHARES_TOKEN_NAME
-        text_color $GREEN "Profile shares token name for $blockchain: $SHARES_TOKEN_NAME"
-
-        read -p "Enter your profile shares token symbol for $blockchain: " SHARES_TOKEN_SYMBOL
-        text_color $GREEN "Profile shares token symbol for $blockchain: $SHARES_TOKEN_SYMBOL"
-
-        # Prompt and validate Operator Fees for the first blockchain
-        validate_operator_fees $blockchain
-        eval "OPERATOR_FEE=\$${blockchain}_OPERATOR_FEES"
-
-        if [ "$blockchain" == "Gnosis" ]; then
-            read -p "Enter your Gnosis RPC endpoint: "  GNOSIS_RPC_ENDPOINT
-            text_color $GREEN "Gnosis RPC endpoint: $GNOSIS_RPC_ENDPOINT"
-        fi
-
-
-        ;;
-    "Both" )
-        if [ "$nodeEnv" == "mainnet" ]; then
-            blockchain1="OTP"
-            blockchain2="Gnosis"
-        elif [ "$nodeEnv" == "testnet" ]; then
-            blockchain1="OTP"
-            blockchain2="Gnosis"
-        fi
-
-        # Input wallets for the first blockchain
-        request_operational_wallet_keys $blockchain1
-        EVM_OP_WALLET_KEYS_BLOCKCHAIN1=$OP_WALLET_KEYS_JSON
-
-        read -p "Enter your EVM management wallet address for $blockchain1: " EVM_MANAGEMENT_WALLET
-        text_color $GREEN "EVM management wallet address for $blockchain1: $EVM_MANAGEMENT_WALLET"
-
-        read -p "Enter your profile shares token name for $blockchain1: " SHARES_TOKEN_NAME
-        text_color $GREEN "Profile shares token name for $blockchain1: $SHARES_TOKEN_NAME"
-
-        read -p "Enter your profile shares token symbol for $blockchain1: " SHARES_TOKEN_SYMBOL
-        text_color $GREEN "Profile shares token symbol for $blockchain1: $SHARES_TOKEN_SYMBOL"
-
-        # Prompt and validate Operator Fees for the first blockchain
-        validate_operator_fees $blockchain1
-        OPERATOR_FEES_1=$OTP_OPERATOR_FEES
-
-        # Input wallets for the second blockchain
-        request_operational_wallet_keys $blockchain2
-        EVM_OP_WALLET_KEYS_BLOCKCHAIN2=$OP_WALLET_KEYS_JSON
-
-        read -p "Enter your EVM management wallet address for $blockchain2: " EVM_MANAGEMENT_WALLET_2
-        text_color $GREEN "EVM management wallet address for $blockchain2: $EVM_MANAGEMENT_WALLET_2"
-
-        read -p "Enter your profile shares token name for $blockchain2: " SHARES_TOKEN_NAME_2
-        text_color $GREEN "Profile shares token name for $blockchain2: $SHARES_TOKEN_NAME_2"
-
-        read -p "Enter your profile shares token symbol for $blockchain2: " SHARES_TOKEN_SYMBOL_2
-        text_color $GREEN "Profile shares token symbol for $blockchain2: $SHARES_TOKEN_SYMBOL_2"
-
-        # Prompt and validate Operator Fees for the second blockchain
-        validate_operator_fees $blockchain2
-        OPERATOR_FEES_2=$Gnosis_OPERATOR_FEES
-
-
-        read -p "Enter your Gnosis RPC endpoint: "  GNOSIS_RPC_ENDPOINT
-        text_color $GREEN "Gnosis RPC endpoint: $GNOSIS_RPC_ENDPOINT"
-
-        ;;
-    * )
-        text_color $RED "Invalid blockchain choice. Exiting installer."
-        exit;;
-esac
-
-
-perform_step npm ci --omit=dev --ignore-scripts "Executing npm install"
-
-CONFIG_DIR=$OTNODE_DIR/..
-perform_step touch $CONFIG_DIR/.origintrail_noderc "Configuring node config file"
-perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}}' > $CONFIG_DIR/.origintrail_noderc) "Adding loglevel and auth values to node config file"
-
+    CONFIG_DIR=$OTNODE_DIR/..
+    perform_step touch $CONFIG_DIR/.origintrail_noderc "Configuring node config file"
+    perform_step $(jq --null-input '{"logLevel": "trace", "auth": {"ipWhitelist": ["::1", "127.0.0.1"]}, "modules": {"blockchain": {"implementation": {}}}}' > $CONFIG_DIR/.origintrail_noderc) "Adding initial config to node config file"
 
     perform_step $(jq --arg tripleStore "$tripleStore" --arg tripleStoreUrl "$tripleStoreUrl" '.modules.tripleStore.implementation[$tripleStore] |=
         {
@@ -463,88 +400,89 @@ perform_step $(jq --null-input --arg tripleStore "$tripleStore" '{"logLevel": "t
                     }
                 }
             }
-        } + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2"
+        } + .' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding triple store config to node config file"
 
-    perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
+    perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Finalizing initial node config file"
 
-# Set blockchain IDs based on the environment
-if [ "$nodeEnv" == "mainnet" ]; then
-    otp_blockchain_id=2043
-    gnosis_blockchain_id=100
-else
-    otp_blockchain_id=20430
-    gnosis_blockchain_id=10200
-fi
+    # Function to validate operator fees
+    validate_operator_fees() {
+        local blockchain=$1
+        while true; do
+            read -p "Enter your operator fee for $blockchain (0-100): " OPERATOR_FEE
+            if [[ "$OPERATOR_FEE" =~ ^[0-9]+$ ]] && [ "$OPERATOR_FEE" -ge 0 ] && [ "$OPERATOR_FEE" -le 100 ]; then
+                text_color $GREEN "Operator fee for $blockchain: $OPERATOR_FEE"
+                break
+            else
+                text_color $RED "Invalid input. Please enter a number between 0 and 100."
+            fi
+        done
+    }
 
-# Check if "Both" blockchains are selected
-if [ "$blockchain" == "Both" ]; then
-  perform_step $(jq --arg otp_blockchain_id "$otp_blockchain_id" --argjson EVM_OP_WALLET_KEYS_BLOCKCHAIN1 "$EVM_OP_WALLET_KEYS_BLOCKCHAIN1" --argjson EVM_OP_WALLET_KEYS_BLOCKCHAIN2 "$EVM_OP_WALLET_KEYS_BLOCKCHAIN2" --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" --argjson OPERATOR_FEES_1 "$OPERATOR_FEES_1" --argjson OPERATOR_FEES_2 "$OPERATOR_FEES_2" --arg gnosis_blockchain_id "$gnosis_blockchain_id" --arg EVM_OPERATIONAL_WALLET_2 "$EVM_OPERATIONAL_WALLET_2" --arg EVM_OPERATIONAL_PRIVATE_KEY_2 "$EVM_OPERATIONAL_PRIVATE_KEY_2" --arg EVM_MANAGEMENT_WALLET_2 "$EVM_MANAGEMENT_WALLET_2" --arg SHARES_TOKEN_NAME_2 "$SHARES_TOKEN_NAME_2" --arg SHARES_TOKEN_SYMBOL_2 "$SHARES_TOKEN_SYMBOL_2" --arg GNOSIS_RPC_ENDPOINT "$GNOSIS_RPC_ENDPOINT" '
-    .modules.blockchain.implementation += {
-      "otp:'$otp_blockchain_id'": {
-        "enabled": true,
-        "config": {
-          "operationalWallets": $EVM_OP_WALLET_KEYS_BLOCKCHAIN1,
-          "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET,
-          "sharesTokenName": $SHARES_TOKEN_NAME,
-          "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL,
-          "operatorFee": $OPERATOR_FEES_1
+    # Function to configure a blockchain
+    configure_blockchain() {
+        local blockchain=$1
+        local blockchain_id=$2
+
+        request_operational_wallet_keys $blockchain
+        local EVM_OP_WALLET_KEYS=$OP_WALLET_KEYS_JSON
+
+        read -p "Enter your EVM management wallet address for $blockchain: " EVM_MANAGEMENT_WALLET
+        text_color $GREEN "EVM management wallet address for $blockchain: $EVM_MANAGEMENT_WALLET"
+
+        read -p "Enter your profile shares token name for $blockchain: " SHARES_TOKEN_NAME
+        text_color $GREEN "Profile shares token name for $blockchain: $SHARES_TOKEN_NAME"
+
+        read -p "Enter your profile shares token symbol for $blockchain: " SHARES_TOKEN_SYMBOL
+        text_color $GREEN "Profile shares token symbol for $blockchain: $SHARES_TOKEN_SYMBOL"
+
+        validate_operator_fees $blockchain
+
+        local RPC_ENDPOINT=""
+        if [ "$blockchain" == "gnosis" ] || [ "$blockchain" == "base" ]; then
+            read -p "Enter your $blockchain RPC endpoint: " RPC_ENDPOINT
+            text_color $GREEN "$blockchain RPC endpoint: $RPC_ENDPOINT"
+        fi
+
+        local jq_filter=$(cat <<EOF
+        .modules.blockchain.implementation["$blockchain:$blockchain_id"] = {
+            "enabled": true,
+            "config": {
+                "operationalWallets": $EVM_OP_WALLET_KEYS,
+                "evmManagementWalletPublicKey": "$EVM_MANAGEMENT_WALLET",
+                "sharesTokenName": "$SHARES_TOKEN_NAME",
+                "sharesTokenSymbol": "$SHARES_TOKEN_SYMBOL",
+                "operatorFee": $OPERATOR_FEE
+            }
         }
-      },
-      "gnosis:'$gnosis_blockchain_id'": {
-        "enabled": true,
-        "config": {
-          "operationalWallets": $EVM_OP_WALLET_KEYS_BLOCKCHAIN2,
-          "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET_2,
-          "sharesTokenName": $SHARES_TOKEN_NAME_2,
-          "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL_2,
-          "operatorFee": $OPERATOR_FEES_2,
-	  "rpcEndpoints": [$GNOSIS_RPC_ENDPOINT]
-        }
-      }
-    }' $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp) "Adding node wallets to node config file 1/2 for Both"
-else
+EOF
+        )
 
+        if [ -n "$RPC_ENDPOINT" ]; then
+            jq_filter+=" | .modules.blockchain.implementation[\"$blockchain:$blockchain_id\"].config.rpcEndpoints = [\"$RPC_ENDPOINT\"]"
+        fi
 
-  # Single blockchain selected
-  if [ "$blockchain" = "OriginTrail Parachain" ] || [ "$blockchain" = "OTP" ]; then
-    blockchain="otp"
-    blockchain_id="$otp_blockchain_id"
-  elif [ "$blockchain" = "Gnosis" ]; then
-    blockchain="gnosis"
-    blockchain_id="$gnosis_blockchain_id"
-  fi
-  ADD_GNOSIS_RPC="false"
-  if [ "$blockchain" = "gnosis" ]; then
-    ADD_GNOSIS_RPC="true"
-  fi
+        jq "$jq_filter" $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
+        mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc
+    }
 
-  blockchain_arg="$blockchain:$blockchain_id"
+    # Configure selected blockchains
+    for blockchain in "${selected_blockchains[@]}"; do
+        case "$blockchain" in
+            "OriginTrail Parachain")
+                configure_blockchain "otp" $otp_blockchain_id
+                ;;
+            "Gnosis")
+                configure_blockchain "gnosis" $gnosis_blockchain_id
+                ;;
+            "Base" | "Base-Sepolia")
+                configure_blockchain "base" $base_blockchain_id
+                ;;
+        esac
+    done
 
-  jq --arg blockchain_arg "$blockchain_arg" \
-     --argjson EVM_OP_WALLET_KEYS_BLOCKCHAIN "$EVM_OP_WALLET_KEYS_BLOCKCHAIN" \
-     --arg EVM_MANAGEMENT_WALLET "$EVM_MANAGEMENT_WALLET" \
-     --arg SHARES_TOKEN_NAME "$SHARES_TOKEN_NAME" \
-     --arg SHARES_TOKEN_SYMBOL "$SHARES_TOKEN_SYMBOL" \
-     --argjson ADD_GNOSIS_RPC "$ADD_GNOSIS_RPC" \
-     --argjson OPERATOR_FEE $OPERATOR_FEE \
-     --arg GNOSIS_RPC_ENDPOINT "$GNOSIS_RPC_ENDPOINT" '
-    (.modules.blockchain.implementation += {
-      ($blockchain_arg): {
-        "enabled": true,
-        "config": {
-          "operationalWallets": $EVM_OP_WALLET_KEYS_BLOCKCHAIN,
-          "evmManagementWalletPublicKey": $EVM_MANAGEMENT_WALLET,
-          "sharesTokenName": $SHARES_TOKEN_NAME,
-          "sharesTokenSymbol": $SHARES_TOKEN_SYMBOL,
-          "operatorFee": $OPERATOR_FEE
+    # Now execute npm install after configuring wallets
+    perform_step npm ci --omit=dev --ignore-scripts "Executing npm install"
 
-        }
-      }
-    }) | if $ADD_GNOSIS_RPC then .modules.blockchain.implementation[$blockchain_arg].config += {"rpcEndpoints": [$GNOSIS_RPC_ENDPOINT]} else . end
-  ' "$CONFIG_DIR/.origintrail_noderc" > "$CONFIG_DIR/origintrail_noderc_tmp"
-fi
-
-    perform_step mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc "Adding node wallets to node config file 2/2"
     perform_step cp $OTNODE_DIR/installer/data/otnode.service /lib/systemd/system/ "Copying otnode service file"
 
     systemctl daemon-reload
