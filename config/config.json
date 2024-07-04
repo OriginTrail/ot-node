@@ -811,15 +811,6 @@
                             "gasPriceOracleLink": "https://api.gnosisscan.io/api?module=proxy&action=eth_gasPrice",
                             "operatorFee": 0
                         }
-                    },
-                    "base:8453": {
-                        "enabled": false,
-                        "package": "./blockchain/implementation/base/base-service.js",
-
-                        "config": {
-                            "hubContractAddress": "0xaBfcf2ad1718828E7D3ec20435b0d0b5EAfbDf2c",
-                            "operatorFee": 0
-                        }
                     }
                 }
             },
