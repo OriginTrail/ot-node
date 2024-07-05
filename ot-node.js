@@ -63,6 +63,7 @@ class OTNode {
             this.config,
         );
 
+        // Profile creation disabled for the Asset sync nodes at the moment
         if (!this.config.assetSync.enabled) {
             await this.createProfiles();
         }
