@@ -40,8 +40,11 @@
                         "package": "./network/implementation/libp2p-service.js",
                         "config": {
                             "dht": {
-                                "kBucketSize": 20,
-                                "type": "dual"
+                                "kBucketSize": 20
+                            },
+                            "nat": {
+                                "enabled": false,
+                                "externalIp": null
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -156,15 +159,16 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "info",
+        "assetSync": {
+            "syncParanets": []
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
-            "publicOperations": []
-        },
-        "assetSync": {
-            "enabled": false
+            "publicOperations": [],
+            "bothIpAndTokenAuthRequired": false
         }
     },
     "test": {
@@ -208,6 +212,10 @@
                         "config": {
                             "dht": {
                                 "kBucketSize": 20
+                            },
+                            "nat": {
+                                "enabled": false,
+                                "externalIp": null
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -312,15 +320,16 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
+        "assetSync": {
+            "syncParanets": []
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
-            "publicOperations": []
-        },
-         "assetSync": {
-            "enabled": false
+            "publicOperations": [],
+            "bothIpAndTokenAuthRequired": false
         }
     },
     "testnet": {
@@ -346,6 +355,10 @@
                         "config": {
                             "dht": {
                                 "kBucketSize": 20
+                            },
+                            "nat": {
+                                "enabled": true,
+                                "externalIp": null
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -430,6 +443,16 @@
                             "rpcEndpoints": ["https://rpc.chiadochain.net"],
                             "operatorFee": 0
                         }
+                    },
+                    "base:84532": {
+                        "enabled": false,
+                        "package": "./blockchain/implementation/base/base-service.js",
+
+                        "config": {
+                            "hubContractAddress": "0x144eDa5cbf8926327cb2cceef168A121F0E4A299",
+                            "rpcEndpoints": ["https://sepolia.base.org"],
+                            "operatorFee": 0
+                        }
                     }
                 }
             },
@@ -481,12 +504,16 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
+        "assetSync": {
+            "syncParanets": []
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
-            "publicOperations": []
+            "publicOperations": [],
+            "bothIpAndTokenAuthRequired": false
         }
     },
     "devnet": {
@@ -512,6 +539,10 @@
                         "config": {
                             "dht": {
                                 "kBucketSize": 20
+                            },
+                            "nat": {
+                                "enabled": true,
+                                "externalIp": null
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -596,6 +627,16 @@
                             "rpcEndpoints": ["https://rpc.chiadochain.net"],
                             "operatorFee": 0
                         }
+                    },
+                    "base:84532": {
+                        "enabled": false,
+                        "package": "./blockchain/implementation/base/base-service.js",
+
+                        "config": {
+                            "hubContractAddress": "0x6C861Cb69300C34DfeF674F7C00E734e840C29C0",
+                            "rpcEndpoints": ["https://sepolia.base.org"],
+                            "operatorFee": 0
+                        }
                     }
                 }
             },
@@ -647,15 +688,16 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
+        "assetSync": {
+            "syncParanets": []
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
-            "publicOperations": []
-        },
-        "assetSync": {
-            "enabled": false
+            "publicOperations": [],
+            "bothIpAndTokenAuthRequired": false
         }
     },
     "mainnet": {
@@ -681,6 +723,10 @@
                         "config": {
                             "dht": {
                                 "kBucketSize": 20
+                            },
+                            "nat": {
+                                "enabled": true,
+                                "externalIp": null
                             },
                             "connectionManager": {
                                 "autoDial": true,
@@ -765,6 +811,15 @@
                             "gasPriceOracleLink": "https://api.gnosisscan.io/api?module=proxy&action=eth_gasPrice",
                             "operatorFee": 0
                         }
+                    },
+                    "base:8453": {
+                        "enabled": false,
+                        "package": "./blockchain/implementation/base/base-service.js",
+
+                        "config": {
+                            "hubContractAddress": "0xaBfcf2ad1718828E7D3ec20435b0d0b5EAfbDf2c",
+                            "operatorFee": 0
+                        }
                     }
                 }
             },
@@ -816,15 +871,16 @@
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
+        "assetSync": {
+            "syncParanets": []
+        },
         "auth": {
             "ipBasedAuthEnabled": true,
             "tokenBasedAuthEnabled": false,
             "loggingEnabled": true,
             "ipWhitelist": ["::1", "127.0.0.1"],
-            "publicOperations": []
-        },
-        "assetSync": {
-            "enabled": false
+            "publicOperations": [],
+            "bothIpAndTokenAuthRequired": false
         }
     }
 }
