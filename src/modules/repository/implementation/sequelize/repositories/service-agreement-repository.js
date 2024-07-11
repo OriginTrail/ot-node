@@ -286,6 +286,15 @@ class ServiceAgreementRepository {
             },
         });
     }
+
+    async removeServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
+        await this.model.destroy({
+            where: {
+                blockchainId,
+                assetStorageContractAddress: contract,
+            },
+        });
+    }
 }
 
 export default ServiceAgreementRepository;
