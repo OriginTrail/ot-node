@@ -291,7 +291,9 @@ class ServiceAgreementRepository {
         await this.model.destroy({
             where: {
                 blockchainId,
-                assetStorageContractAddress: contract,
+                assetStorageContractAddress: {
+                    [Sequelize.Op.ne]: contract,
+                },
             },
         });
     }
