@@ -555,7 +555,7 @@ export const ARCHIVE_UPDATE_RESPONSES_FOLDER = 'update_responses';
  * How many commands will run in parallel
  * @type {number}
  */
-export const COMMAND_QUEUE_PARALLELISM = 100;
+export const COMMAND_QUEUE_PARALLELISM = 250;
 
 export const GET_LATEST_SERVICE_AGREEMENT_BATCH_SIZE = 50;
 
