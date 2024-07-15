@@ -286,6 +286,17 @@ class ServiceAgreementRepository {
             },
         });
     }
+
+    async findDuplicateServiceAgreement(blockchainId) {
+        return this.model.findAll({
+            attributes: ['token_id', [Sequelize.fn('COUNT', Sequelize.col('*')), 'count']],
+            where: {
+                blockchain_id: `${blockchainId}`,
+            },
+            group: ['token_id'],
+            having: Sequelize.literal('count > 1'),
+        });
+    }
 }
 
 export default ServiceAgreementRepository;

@@ -473,6 +473,10 @@ class RepositoryModuleManager extends BaseModuleManager {
         );
     }
 
+    async findDuplicateServiceAgreement(blockchainId) {
+        return this.getRepository('service_agreement').findDuplicateServiceAgreement(blockchainId);
+    }
+
     async createParanetRecord(name, description, paranetId, blockchainId) {
         this.getRepository('paranet').createParanetRecord(
             name,
