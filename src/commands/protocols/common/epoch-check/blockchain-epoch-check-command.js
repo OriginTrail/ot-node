@@ -54,7 +54,7 @@ class BlockchainEpochCheckCommand extends Command {
         // We don't expect to have this many transactions in one epoch check window.
         // This is just to make sure we don't schedule too many commands and block the queue
         // TODO: find general solution for all commands scheduling blockchain transactions
-        totalTransactions = Math.min(totalTransactions, COMMAND_QUEUE_PARALLELISM * 0.3);
+        totalTransactions = Math.min(totalTransactions, COMMAND_QUEUE_PARALLELISM);
 
         const transactionQueueLength =
             this.blockchainModuleManager.getTotalTransactionQueueLength(blockchain);
@@ -159,6 +159,7 @@ class BlockchainEpochCheckCommand extends Command {
                         );
                         continue;
                     }
+
                     await this.repositoryModuleManager.updateServiceAgreementRecord(
                         blockchain,
                         serviceAgreement.assetStorageContractAddress,
@@ -221,7 +222,6 @@ class BlockchainEpochCheckCommand extends Command {
                     minStake,
                     maxStake,
                 );
-
                 updateServiceAgreementsLastCommitEpoch.push(
                     this.repositoryModuleManager.updateServiceAgreementLastCommitEpoch(
                         serviceAgreement.agreementId,
@@ -470,20 +470,37 @@ class BlockchainEpochCheckCommand extends Command {
         proofWindowDurationPerc,
         commandPeriod,
     ) {
+        // 7776000
         const epochLength = await this.blockchainModuleManager.getEpochLength(blockchain);
-
+        // 25 * 7776000 / 100 = 1944000
         const commitWindowDuration = (epochLength * commitWindowDurationPerc) / 100;
         const proofWindowDuration = (epochLength * proofWindowDurationPerc) / 100;
-
+        // 1944000
         const totalTransactionTime = Math.min(commitWindowDuration, proofWindowDuration);
-
+        /*
+        NEURO: 12
+        GNOSIS: 5
+        */
         const blockTime = this.blockchainModuleManager.getBlockTimeMillis(blockchain) / 1000;
+        /*
+        NEURO: 12 * 1
+        GNOSIS: 5 * 1
+        */
         const timePerTransaction = blockTime * TRANSACTION_CONFIRMATIONS;
-
+        /*
+        NEURO: 1944000 / 12 = 162000
+        GNOSIS: 1944000/ 5 = 388800
+        */
         const totalTransactions = Math.floor(totalTransactionTime / timePerTransaction);
-
+        /*
+        NEURO: 162000 / (120000 / 1000) = 1350
+        GNOSIS: 388800 / (120000 / 1000) = 3240
+        */
         const epochChecksInWindow = Math.floor(totalTransactionTime / (commandPeriod / 1000));
-
+        /*
+        NEURO: 162000 / 1350 = 120
+        GNOSIS: 388800 / 3240 = 120
+        */
         const transactionsPerEpochCheck = Math.floor(totalTransactions / epochChecksInWindow);
 
         const numberOfWallets = this.blockchainModuleManager.getPublicKeys().length;
