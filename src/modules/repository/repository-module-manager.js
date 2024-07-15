@@ -473,7 +473,7 @@ class RepositoryModuleManager extends BaseModuleManager {
         );
     }
 
-    async findDuplicateServiceAgreement(blockchainId) {
+    async findDuplicateServiceAgreements(blockchainId) {
         return this.getRepository('service_agreement').findDuplicateServiceAgreement(blockchainId);
     }
 

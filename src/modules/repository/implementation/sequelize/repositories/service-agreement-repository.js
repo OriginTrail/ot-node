@@ -287,9 +287,15 @@ class ServiceAgreementRepository {
         });
     }
 
-    async findDuplicateServiceAgreement(blockchainId) {
+    async findDuplicateServiceAgreements(blockchainId) {
         return this.model.findAll({
-            attributes: ['token_id', [Sequelize.fn('COUNT', Sequelize.col('*')), 'count']],
+            attributes: [
+                'token_id',
+                'asset_storage_contract_address',
+                'agreement_id',
+                'assertion_id',
+                [Sequelize.fn('COUNT', Sequelize.col('*')), 'count'],
+            ],
             where: {
                 blockchain_id: `${blockchainId}`,
             },
