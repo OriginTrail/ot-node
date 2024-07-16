@@ -249,7 +249,7 @@ class ServiceAgreementRepository {
                 ['scoreFunctionId', 'DESC'],
                 [Sequelize.col('timeLeftInSubmitProofWindow'), 'ASC'],
             ],
-            limit: 100,
+            limit: 500,
             raw: true,
         });
     }
