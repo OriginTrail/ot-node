@@ -54,7 +54,7 @@ class BlockchainEpochCheckCommand extends Command {
         // We don't expect to have this many transactions in one epoch check window.
         // This is just to make sure we don't schedule too many commands and block the queue
         // TODO: find general solution for all commands scheduling blockchain transactions
-        totalTransactions = Math.min(totalTransactions, COMMAND_QUEUE_PARALLELISM * 0.3);
+        totalTransactions = Math.min(totalTransactions, Math.floor(COMMAND_QUEUE_PARALLELISM / 3));
 
         const transactionQueueLength =
             this.blockchainModuleManager.getTotalTransactionQueueLength(blockchain);
