@@ -51,7 +51,7 @@ class BlockchainEpochCheckCommand extends Command {
             command.period,
         );
 
-        const numberOfBlockchains = this.blockchainModuleManager.getImplementations().length();
+        const numberOfBlockchains = this.blockchainModuleManager.getImplementationNames().length;
 
         // We don't expect to have this many transactions in one epoch check window.
         // This is just to make sure we don't schedule too many commands and block the queue

@@ -21,7 +21,6 @@ import GetOldServiceAgreementsMigration from './get-old-service-agreements-migra
 import ServiceAgreementPruningMigration from './service-agreement-pruning-migration.js';
 import RemoveDuplicateServiceAgreementMigration from './remove-duplicate-service-agreement-migration.js';
 
-
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
         if (
@@ -474,7 +473,7 @@ class MigrationExecutor {
             }
         }
     }
-  
+
     static async executeRemoveDuplicateServiceAgreementMigration(container, logger, config) {
         if (
             process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
