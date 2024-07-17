@@ -89,6 +89,19 @@ class OTNode {
             this.logger,
             this.config,
         );
+
+
+        MigrationExecutor.executeServiceAgreementPruningMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
+        MigrationExecutor.executeRemoveDuplicateServiceAgreementMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
     }
 
     checkNodeVersion() {
