@@ -403,6 +403,14 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async removeServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
+        if (this.initialized) {
+            return this.getRepository(
+                'service_agreement',
+            ).removeServiceAgreementsByBlockchainAndContract(blockchainId, contract);
+        }
+    }
+
     async getEligibleAgreementsForSubmitCommit(
         timestampSeconds,
         blockchain,

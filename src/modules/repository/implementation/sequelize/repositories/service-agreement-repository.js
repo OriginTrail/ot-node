@@ -287,6 +287,18 @@ class ServiceAgreementRepository {
         });
     }
 
+
+    async removeServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
+        await this.model.destroy({
+            where: {
+                blockchainId,
+                assetStorageContractAddress: {
+                    [Sequelize.Op.ne]: contract,
+                },
+            },
+        });
+    }
+             
     async findDuplicateServiceAgreements(blockchainId) {
         return this.model.findAll({
             attributes: ['token_id', [Sequelize.fn('COUNT', Sequelize.col('*')), 'count']],
