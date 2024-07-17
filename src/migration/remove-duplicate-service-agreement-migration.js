@@ -15,7 +15,13 @@ class RemoveDuplicateServiceAgreementMigration extends BaseMigration {
             const duplicateTokenIds =
                 // eslint-disable-next-line no-await-in-loop
                 await this.repositoryModuleManager.findDuplicateServiceAgreements(blockchainId);
-            for (const serviceAgreement of duplicateTokenIds) {
+            const findDuplicateServiceAgreements =
+                // eslint-disable-next-line no-await-in-loop
+                await this.repositoryModuleManager.findServiceAgreementsByTokenIds(
+                    duplicateTokenIds,
+                    blockchainId,
+                );
+            for (const serviceAgreement of findDuplicateServiceAgreements) {
                 const blockchainAssertionId =
                     // eslint-disable-next-line no-await-in-loop
                     await this.blockchainModuleManager.getAssertionIdByIndex(
