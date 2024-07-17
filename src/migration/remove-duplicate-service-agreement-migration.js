@@ -12,9 +12,10 @@ class RemoveDuplicateServiceAgreementMigration extends BaseMigration {
 
         for (const blockchainId of blockchainIds) {
             const incorrectServiceAgreementId = [];
-            const duplicateTokenIds =
+            const duplicateTokenIdsRestult =
                 // eslint-disable-next-line no-await-in-loop
                 await this.repositoryModuleManager.findDuplicateServiceAgreements(blockchainId);
+            const duplicateTokenIds = duplicateTokenIdsRestult.map((t) => t.dataValues.token_id);
             const findDuplicateServiceAgreements =
                 // eslint-disable-next-line no-await-in-loop
                 await this.repositoryModuleManager.findServiceAgreementsByTokenIds(
@@ -26,12 +27,12 @@ class RemoveDuplicateServiceAgreementMigration extends BaseMigration {
                     // eslint-disable-next-line no-await-in-loop
                     await this.blockchainModuleManager.getAssertionIdByIndex(
                         blockchainId,
-                        serviceAgreement.asset_storage_contract_address,
-                        serviceAgreement.token_id,
-                        0,
+                        serviceAgreement.assetStorageContractAddress,
+                        serviceAgreement.tokenId,
+                        serviceAgreement.stateIndex,
                     );
-                if (serviceAgreement.assertion_id !== blockchainAssertionId) {
-                    incorrectServiceAgreementId.push(serviceAgreement.agreement_id);
+                if (serviceAgreement.assertionId !== blockchainAssertionId) {
+                    incorrectServiceAgreementId.push(serviceAgreement.agreementId);
                 }
             }
             // eslint-disable-next-line no-await-in-loop
