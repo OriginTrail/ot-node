@@ -403,6 +403,14 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async getCountOfServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
+        if (this.initialized) {
+            return this.getRepository(
+                'service_agreement',
+            ).getCountOfServiceAgreementsByBlockchainAndContract(blockchainId, contract);
+        }
+    }
+
     async removeServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
         if (this.initialized) {
             return this.getRepository(
