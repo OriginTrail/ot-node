@@ -298,6 +298,7 @@ class ServiceAgreementRepository {
         });
     }
 
+    // Sequelize destroy method doesn't support limit
     async removeServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
         const query = `
             DELETE FROM service_agreement
