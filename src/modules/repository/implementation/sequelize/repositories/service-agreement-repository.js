@@ -288,7 +288,7 @@ class ServiceAgreementRepository {
     }
 
     async getCountOfServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
-        await this.model.count({
+        return this.model.count({
             where: {
                 blockchainId,
                 assetStorageContractAddress: {
