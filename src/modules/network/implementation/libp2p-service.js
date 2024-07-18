@@ -397,18 +397,17 @@ class Libp2pService {
         let readResponseStart;
         let readResponseEnd;
         let response;
+        const abortSignalEventListener = async () => {
+            stream.abort();
+            response = null;
+        };
         const timeoutController = new TimeoutController(timeout);
         try {
             readResponseStart = Date.now();
 
-            timeoutController.signal.addEventListener(
-                'abort',
-                async () => {
-                    stream.abort();
-                    response = null;
-                },
-                { once: true },
-            );
+            timeoutController.signal.addEventListener('abort', abortSignalEventListener, {
+                once: true,
+            });
 
             response = await this._readMessageFromStream(
                 stream,
@@ -420,12 +419,12 @@ class Libp2pService {
                 throw Error('Message timed out!');
             }
 
-            timeoutController.signal.removeEventListener('abort');
+            timeoutController.signal.removeEventListener('abort', abortSignalEventListener);
             timeoutController.clear();
 
             readResponseEnd = Date.now();
         } catch (error) {
-            timeoutController.signal.removeEventListener('abort');
+            timeoutController.signal.removeEventListener('abort', abortSignalEventListener);
             timeoutController.clear();
 
             readResponseEnd = Date.now();
