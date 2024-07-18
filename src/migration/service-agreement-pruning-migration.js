@@ -24,11 +24,22 @@ class ServiceAgreementPruningMigration extends BaseMigration {
                 // eslint-disable-next-line no-await-in-loop
                 await this.blockchainModuleManager.getAssetStorageContractAddresses(blockchainId);
 
-            // eslint-disable-next-line no-await-in-loop
-            await this.repositoryModuleManager.removeServiceAgreementsByBlockchainAndContract(
-                blockchainId,
-                assetStorageContractAddresses[0],
-            );
+            const countOfServiceAgreementsToBeRemoved =
+                // eslint-disable-next-line no-await-in-loop
+                await this.repositoryModuleManager.getCountOfServiceAgreementsByBlockchainAndContract(
+                    blockchainId,
+                    assetStorageContractAddresses[0],
+                );
+
+            // removeServiceAgreementsByBlockchainAndContract deletes in batches od 100_000
+            const numberOfIteration = Math.ceil(countOfServiceAgreementsToBeRemoved / 100_000);
+            for (let i = 0; i < numberOfIteration; i += 1) {
+                // eslint-disable-next-line no-await-in-loop
+                await this.repositoryModuleManager.removeServiceAgreementsByBlockchainAndContract(
+                    blockchainId,
+                    assetStorageContractAddresses[0],
+                );
+            }
         }
     }
 }

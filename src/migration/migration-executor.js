@@ -496,7 +496,7 @@ class MigrationExecutor {
                 await migration.migrate();
             } catch (error) {
                 logger.error(
-                    `Unable to execute service agreement pruning migration. Error: ${error.message}`,
+                    `Unable to execute remove duplicate service agreement migration. Error: ${error.message}`,
                 );
             }
         }
