@@ -287,9 +287,8 @@ class ServiceAgreementRepository {
         });
     }
 
-
-    async removeServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
-        await this.model.destroy({
+    async getCountOfServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
+        await this.model.count({
             where: {
                 blockchainId,
                 assetStorageContractAddress: {
@@ -298,7 +297,19 @@ class ServiceAgreementRepository {
             },
         });
     }
-             
+
+    async removeServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
+        const query = `
+            DELETE FROM service_agreement
+            WHERE blockchain_id = '${blockchainId}'
+            AND asset_storage_contract_address = '${contract}'
+            LIMIT 100000;
+            `;
+        await this.model.query(query, {
+            type: Sequelize.QueryTypes.DELETE,
+        });
+    }
+
     async findDuplicateServiceAgreements(blockchainId) {
         return this.model.findAll({
             attributes: ['token_id', [Sequelize.fn('COUNT', Sequelize.col('*')), 'count']],
