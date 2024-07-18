@@ -78,6 +78,12 @@ class OTNode {
             this.config,
         );
 
+        await MigrationExecutor.executeServiceAgreementPruningMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         await this.initializeRouters();
         await this.startNetworkModule();
         this.startTelemetryModule();
@@ -85,13 +91,6 @@ class OTNode {
         this.logger.info('Node is up and running!');
 
         MigrationExecutor.executeGetOldServiceAgreementsMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-
-        MigrationExecutor.executeServiceAgreementPruningMigration(
             this.container,
             this.logger,
             this.config,
