@@ -303,10 +303,10 @@ class ServiceAgreementRepository {
         const query = `
             DELETE FROM service_agreement
             WHERE blockchain_id = '${blockchainId}'
-            AND asset_storage_contract_address = '${contract}'
+            AND asset_storage_contract_address != '${contract}'
             LIMIT 100000;
             `;
-        await this.model.query(query, {
+        await this.sequelize.query(query, {
             type: Sequelize.QueryTypes.DELETE,
         });
     }
