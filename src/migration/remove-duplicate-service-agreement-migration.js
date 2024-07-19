@@ -23,15 +23,19 @@ class RemoveDuplicateServiceAgreementMigration extends BaseMigration {
                     blockchainId,
                 );
             for (const serviceAgreement of findDuplicateServiceAgreements) {
-                const blockchainAssertionId =
-                    // eslint-disable-next-line no-await-in-loop
-                    await this.blockchainModuleManager.getAssertionIdByIndex(
-                        blockchainId,
-                        serviceAgreement.assetStorageContractAddress,
-                        serviceAgreement.tokenId,
-                        serviceAgreement.stateIndex,
-                    );
-                if (serviceAgreement.assertionId !== blockchainAssertionId) {
+                try {
+                    const blockchainAssertionId =
+                        // eslint-disable-next-line no-await-in-loop
+                        await this.blockchainModuleManager.getAssertionIdByIndex(
+                            blockchainId,
+                            serviceAgreement.assetStorageContractAddress,
+                            serviceAgreement.tokenId,
+                            serviceAgreement.stateIndex,
+                        );
+                    if (serviceAgreement.assertionId !== blockchainAssertionId) {
+                        incorrectServiceAgreementId.push(serviceAgreement.agreementId);
+                    }
+                } catch (error) {
                     incorrectServiceAgreementId.push(serviceAgreement.agreementId);
                 }
             }
