@@ -288,7 +288,7 @@ class ServiceAgreementRepository {
     }
 
     async getCountOfServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
-        await this.model.count({
+        return this.model.count({
             where: {
                 blockchainId,
                 assetStorageContractAddress: {
@@ -298,6 +298,7 @@ class ServiceAgreementRepository {
         });
     }
 
+    // Sequelize destroy method doesn't support limit
     async removeServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
         const query = `
             DELETE FROM service_agreement
