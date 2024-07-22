@@ -403,6 +403,22 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
+    async getCountOfServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
+        if (this.initialized) {
+            return this.getRepository(
+                'service_agreement',
+            ).getCountOfServiceAgreementsByBlockchainAndContract(blockchainId, contract);
+        }
+    }
+
+    async removeServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
+        if (this.initialized) {
+            return this.getRepository(
+                'service_agreement',
+            ).removeServiceAgreementsByBlockchainAndContract(blockchainId, contract);
+        }
+    }
+
     async getEligibleAgreementsForSubmitCommit(
         timestampSeconds,
         blockchain,
@@ -469,6 +485,17 @@ class RepositoryModuleManager extends BaseModuleManager {
 
     async getLatestServiceAgreementTokenId(blockchainId) {
         return this.getRepository('service_agreement').getLatestServiceAgreementTokenId(
+            blockchainId,
+        );
+    }
+
+    async findDuplicateServiceAgreements(blockchainId) {
+        return this.getRepository('service_agreement').findDuplicateServiceAgreements(blockchainId);
+    }
+
+    async findServiceAgreementsByTokenIds(tokenIds, blockchainId) {
+        return this.getRepository('service_agreement').findServiceAgreementsByTokenIds(
+            tokenIds,
             blockchainId,
         );
     }

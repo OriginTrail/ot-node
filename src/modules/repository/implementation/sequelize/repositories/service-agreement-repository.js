@@ -190,7 +190,7 @@ class ServiceAgreementRepository {
                 ['scoreFunctionId', 'DESC'],
                 [Sequelize.col('timeLeftInSubmitCommitWindow'), 'ASC'],
             ],
-            limit: 100,
+            limit: 500,
             raw: true,
         });
     }
@@ -249,7 +249,7 @@ class ServiceAgreementRepository {
                 ['scoreFunctionId', 'DESC'],
                 [Sequelize.col('timeLeftInSubmitProofWindow'), 'ASC'],
             ],
-            limit: 100,
+            limit: 500,
             raw: true,
         });
     }
@@ -284,6 +284,51 @@ class ServiceAgreementRepository {
             where: {
                 blockchainId,
             },
+        });
+    }
+
+    async getCountOfServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
+        return this.model.count({
+            where: {
+                blockchainId,
+                assetStorageContractAddress: {
+                    [Sequelize.Op.ne]: contract,
+                },
+            },
+        });
+    }
+
+    // Sequelize destroy method doesn't support limit
+    async removeServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
+        const query = `
+            DELETE FROM service_agreement
+            WHERE blockchain_id = '${blockchainId}'
+            AND asset_storage_contract_address != '${contract}'
+            LIMIT 100000;
+            `;
+        await this.sequelize.query(query, {
+            type: Sequelize.QueryTypes.DELETE,
+        });
+    }
+
+    async findDuplicateServiceAgreements(blockchainId) {
+        return this.model.findAll({
+            attributes: ['token_id', [Sequelize.fn('COUNT', Sequelize.col('*')), 'count']],
+            where: {
+                blockchain_id: `${blockchainId}`,
+            },
+            group: ['token_id'],
+            having: Sequelize.literal('count > 1'),
+        });
+    }
+
+    async findServiceAgreementsByTokenIds(tokenIds, blockchainId) {
+        return this.model.findAll({
+            where: {
+                tokenId: { [Sequelize.Op.in]: tokenIds },
+                blockchainId,
+            },
+            order: [['token_id']],
         });
     }
 }

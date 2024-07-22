@@ -18,6 +18,8 @@ import MarkStakingEventsAsProcessedMigration from './mark-staking-events-as-proc
 import RemoveServiceAgreementsForChiadoMigration from './remove-service-agreements-for-chiado-migration.js';
 import MultipleOpWalletsUserConfigurationMigration from './multiple-op-wallets-user-configuration-migration.js';
 import GetOldServiceAgreementsMigration from './get-old-service-agreements-migration.js';
+import ServiceAgreementPruningMigration from './service-agreement-pruning-migration.js';
+import RemoveDuplicateServiceAgreementMigration from './remove-duplicate-service-agreement-migration.js';
 
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
@@ -437,6 +439,64 @@ class MigrationExecutor {
             } catch (error) {
                 logger.error(
                     `Unable to execute get old service agreements migration. Error: ${error.message}`,
+                );
+            }
+        }
+    }
+
+    static async executeServiceAgreementPruningMigration(container, logger, config) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const repositoryModuleManager = container.resolve('repositoryModuleManager');
+        const blockchainModuleManager = container.resolve('blockchainModuleManager');
+        const serviceAgreementService = container.resolve('serviceAgreementService');
+
+        const migration = new ServiceAgreementPruningMigration(
+            'serviceAgreementPruningMigration',
+            logger,
+            config,
+            repositoryModuleManager,
+            blockchainModuleManager,
+            serviceAgreementService,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            try {
+                await migration.migrate();
+            } catch (error) {
+                logger.error(
+                    `Unable to execute service agreement pruning migration. Error: ${error.message}`,
+                );
+            }
+        }
+    }
+
+    static async executeRemoveDuplicateServiceAgreementMigration(container, logger, config) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const repositoryModuleManager = container.resolve('repositoryModuleManager');
+        const blockchainModuleManager = container.resolve('blockchainModuleManager');
+
+        const migration = new RemoveDuplicateServiceAgreementMigration(
+            'removeDuplicateServiceAgreementMigration',
+            logger,
+            config,
+            repositoryModuleManager,
+            blockchainModuleManager,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            try {
+                await migration.migrate();
+            } catch (error) {
+                logger.error(
+                    `Unable to execute remove duplicate service agreement migration. Error: ${error.message}`,
                 );
             }
         }
