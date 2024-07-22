@@ -77,7 +77,14 @@
                             "port": "3306",
                             "host": "localhost",
                             "dialect": "mysql",
-                            "logging": false
+                            "logging": false,
+                            "pool": {
+                                "max": 120,
+                                "min": 0,
+                                "acquire": 60000,
+                                "idle": 10000,
+                                "evict": 1000
+                            }
                         }
                     }
                 }
@@ -260,7 +267,14 @@
                             "port": "3306",
                             "host": "localhost",
                             "dialect": "mysql",
-                            "logging": false
+                            "logging": false,
+                            "pool": {
+                                "max": 120,
+                                "min": 0,
+                                "acquire": 60000,
+                                "idle": 10000,
+                                "evict": 1000
+                            }
                         }
                     }
                 }
@@ -413,7 +427,14 @@
                             "port": "3306",
                             "host": "localhost",
                             "dialect": "mysql",
-                            "logging": false
+                            "logging": false,
+                            "pool": {
+                                "max": 120,
+                                "min": 0,
+                                "acquire": 60000,
+                                "idle": 10000,
+                                "evict": 1000
+                            }
                         }
                     }
                 }
@@ -597,7 +618,14 @@
                             "port": "3306",
                             "host": "localhost",
                             "dialect": "mysql",
-                            "logging": false
+                            "logging": false,
+                            "pool": {
+                                "max": 120,
+                                "min": 0,
+                                "acquire": 60000,
+                                "idle": 10000,
+                                "evict": 1000
+                            }
                         }
                     }
                 }
@@ -781,7 +809,14 @@
                             "port": "3306",
                             "host": "localhost",
                             "dialect": "mysql",
-                            "logging": false
+                            "logging": false,
+                            "pool": {
+                                "max": 120,
+                                "min": 0,
+                                "acquire": 60000,
+                                "idle": 10000,
+                                "evict": 1000
+                            }
                         }
                     }
                 }
