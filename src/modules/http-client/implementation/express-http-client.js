@@ -67,9 +67,26 @@ class ExpressHttpClient {
         return middlewares;
     }
 
+    conditionalMiddleware(middleware) {
+        return (req, res, next) => {
+            if (this.routeMatcher(req)) {
+                return next();
+            }
+            middleware(req, res, next);
+        };
+    }
+
+    routeMatcher(req) {
+        const { path } = req;
+        const isQueryRoute = path === '/query';
+        const isQueryWithIdRoute = /^\/query\/[^/]+$/.test(path);
+        return !isQueryRoute && isQueryWithIdRoute;
+    }
+
     initializeBeforeMiddlewares(authService, blockchainImplementations) {
+        this.app.use(express.json({ limit: `${MAX_FILE_SIZE / BYTES_IN_MEGABYTE}mb` }));
         this._initializeCorsMiddleware();
-        this.app.use(authenticationMiddleware(authService));
+        this.app.use(this.conditionalMiddleware(authenticationMiddleware(authService)));
         this.app.use(authorizationMiddleware(authService));
         this._initializeBaseMiddlewares();
         this.app.use(blockchainIdMiddleware(blockchainImplementations));
@@ -95,8 +112,6 @@ class ExpressHttpClient {
                 createParentPath: true,
             }),
         );
-
-        this.app.use(express.json({ limit: `${MAX_FILE_SIZE / BYTES_IN_MEGABYTE}mb` }));
         this.app.use((req, res, next) => {
             this.logger.api(`${req.method}: ${req.url} request received`);
             return next();

@@ -1,4 +1,5 @@
 import ipLib from 'ip';
+import ethers from 'ethers';
 import jwtUtil from './util/jwt-util.js';
 
 class AuthService {
@@ -12,18 +13,27 @@ class AuthService {
      * Authenticate users based on provided ip and token
      * @param ip
      * @param token
+     * @param credential
      * @returns {boolean}
      */
-    async authenticate(ip, token) {
+    async authenticate(ip, token, credential = null) {
         const isWhitelisted = this._isIpWhitelisted(ip);
         const isTokenValid = await this._isTokenValid(token);
+        const isVPValid = await this._isVerifiablePresentationValid(
+            credential,
+            this._authConfig.vcBasedAuthEnabled,
+        );
 
         const tokenAuthEnabled = this._authConfig.tokenBasedAuthEnabled;
         const ipAuthEnabled = this._authConfig.ipBasedAuthEnabled;
         const requiresBoth = this._authConfig.bothIpAndTokenAuthRequired;
+        const vcAuthEnabled = this._authConfig.vcBasedAuthEnabled;
 
         let isAuthenticated = false;
-        if (tokenAuthEnabled && ipAuthEnabled) {
+
+        if (vcAuthEnabled) {
+            isAuthenticated = isVPValid;
+        } else if (tokenAuthEnabled && ipAuthEnabled) {
             isAuthenticated = requiresBoth
                 ? isWhitelisted && isTokenValid
                 : isWhitelisted || isTokenValid;
@@ -49,7 +59,7 @@ class AuthService {
             return true;
         }
 
-        /* 
+        /*
             If IP is whitelisted and both IP and Token Auth is NOT required pass authorization check.
             Authentication middleware checks if IP is white listed before authorization middleware.
         */
@@ -116,6 +126,64 @@ class AuthService {
         const isRevoked = await this._isTokenRevoked(token);
 
         return isRevoked !== null && !isRevoked;
+    }
+
+    async _isVerifiablePresentationValid(presentation, vcBasedAuthEnabled) {
+        if (presentation === null || vcBasedAuthEnabled === undefined) {
+            return null;
+        }
+        try {
+            if (typeof presentation === 'string') {
+                // eslint-disable-next-line no-param-reassign
+                presentation = JSON.parse(presentation);
+            }
+            const verifiablePresentationContent = { ...presentation };
+
+            const { holder } = verifiablePresentationContent;
+            const holderWallet = holder.match(/0x[a-fA-F0-9]{40}$/)[0];
+
+            const credentials = presentation.verifiableCredential;
+            for (let i = 0; i < credentials.length; i += 1) {
+                if (
+                    !this._isVerifiableCredentialValid(
+                        JSON.parse(credentials[i]),
+                        vcBasedAuthEnabled.issuers,
+                    )
+                ) {
+                    return false;
+                }
+            }
+            return this._isVerifiableCredentialValid(verifiablePresentationContent, [holderWallet]);
+        } catch (e) {
+            console.error(e);
+            return false;
+        }
+    }
+
+    _isVerifiableCredentialValid(credential, wallets) {
+        const verifiableCredentialContent = { ...credential };
+
+        const proof = verifiableCredentialContent.proof.proofValue;
+        delete verifiableCredentialContent.proof.eip712.types.EIP712Domain;
+        const { domain } = verifiableCredentialContent.proof.eip712;
+        const { types } = verifiableCredentialContent.proof.eip712;
+        delete verifiableCredentialContent.proof.eip712;
+        try {
+            const recoveredAddress = ethers.utils.verifyTypedData(
+                domain,
+                types,
+                verifiableCredentialContent,
+                proof,
+            );
+            return (
+                wallets.includes(recoveredAddress) ||
+                wallets.includes(recoveredAddress.toLowerCase()) ||
+                wallets.includes(recoveredAddress.toUpperCase())
+            );
+        } catch (e) {
+            console.error(e);
+            return false;
+        }
     }
 
     /**

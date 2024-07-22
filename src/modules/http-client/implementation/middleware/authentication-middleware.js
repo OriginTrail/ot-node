@@ -26,12 +26,14 @@ export default (authService) => async (req, res, next) => {
 
     const ip = parseIp(req);
 
+    const { credential } = req.body;
+
     const token =
         req.headers.authorization &&
         req.headers.authorization.startsWith('Bearer ') &&
         req.headers.authorization.split(' ')[1];
 
-    const isAuthenticated = await authService.authenticate(ip, token);
+    const isAuthenticated = await authService.authenticate(ip, token, credential);
 
     if (!isAuthenticated) {
         return res.status(401).send('Unauthenticated.');
