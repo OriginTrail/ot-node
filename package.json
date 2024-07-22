@@ -1,6 +1,6 @@
 {
     "name": "origintrail_node",
-    "version": "6.5.1.vc-poc.1",
+    "version": "6.5.1.vc.1",
     "description": "OTNode V6",
     "main": "index.js",
     "type": "module",
