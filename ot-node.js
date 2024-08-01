@@ -84,6 +84,12 @@ class OTNode {
             this.config,
         );
 
+        await MigrationExecutor.executeDevnetNeuroPruningMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         await this.initializeRouters();
         await this.startNetworkModule();
         this.startTelemetryModule();

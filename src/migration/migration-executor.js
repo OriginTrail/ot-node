@@ -20,6 +20,7 @@ import MultipleOpWalletsUserConfigurationMigration from './multiple-op-wallets-u
 import GetOldServiceAgreementsMigration from './get-old-service-agreements-migration.js';
 import ServiceAgreementPruningMigration from './service-agreement-pruning-migration.js';
 import RemoveDuplicateServiceAgreementMigration from './remove-duplicate-service-agreement-migration.js';
+import DevnetNeuroPruningMigration from './devnet-neuro-pruning-migration.js';
 
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
@@ -497,6 +498,32 @@ class MigrationExecutor {
             } catch (error) {
                 logger.error(
                     `Unable to execute remove duplicate service agreement migration. Error: ${error.message}`,
+                );
+            }
+        }
+    }
+
+    static async executeDevnetNeuroPruningMigration(container, logger, config) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const repositoryModuleManager = container.resolve('repositoryModuleManager');
+
+        const migration = new DevnetNeuroPruningMigration(
+            'devnetNeuroPruningMigration',
+            logger,
+            config,
+            repositoryModuleManager,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            try {
+                await migration.migrate();
+            } catch (error) {
+                logger.error(
+                    `Unable to execute devnet neuro pruning migration. Error: ${error.message}`,
                 );
             }
         }
