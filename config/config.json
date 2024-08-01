@@ -637,7 +637,7 @@
                         "enabled": false,
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
-                            "hubContractAddress": "0x833048F6e6BEa78E0AAdedeCd2Dc2231dda443FB",
+                            "hubContractAddress": "0x0425d8717a9c63345a26C7885CF8c0fEAbcE7bC9",
                             "rpcEndpoints": [
                                 "https://lofar-tm-rpc.origin-trail.network",
                                 "https://lofar.origintrail.network"
