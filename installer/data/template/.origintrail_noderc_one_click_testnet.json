@@ -1,5 +1,17 @@
 {
   "modules":{
+    "network": {
+      "implementation": {
+        "libp2p-service": {
+          "config": {
+            "nat": {
+              "enabled": true,
+              "externalIp": "<node_static_ip_address>"
+            }
+          }
+        }
+      }
+    },
     "blockchain":{
       "implementation":{
         "otp:20430":{
