@@ -212,7 +212,6 @@ class Libp2pService {
 
     handleMessage(protocol, handler) {
         this.logger.info(`Enabling network protocol: ${protocol}`);
-
         this.node.handle(protocol, async (handlerProps) => {
             const { stream } = handlerProps;
             const peerIdString = handlerProps.connection.remotePeer.toB58String();
@@ -221,7 +220,6 @@ class Libp2pService {
                 this.isRequestValid.bind(this),
                 peerIdString,
             );
-
             this.updateSessionStream(
                 message.header.operationId,
                 message.header.keywordUuid,
@@ -230,28 +228,41 @@ class Libp2pService {
             );
 
             if (!valid) {
-                await this.sendMessageResponse(
-                    protocol,
-                    peerIdString,
-                    NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                    message.header.operationId,
-                    message.header.keywordUuid,
-                    { errorMessage: 'Invalid request message' },
-                );
+                try {
+                    await this.sendMessageResponse(
+                        protocol,
+                        peerIdString,
+                        NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                        message.header.operationId,
+                        message.header.keywordUuid,
+                        { errorMessage: 'Invalid request message' },
+                    );
+                } catch (error) {
+                    this.logger.warn(
+                        `Request message is not valid with operationId: ${message.header.operationId}, peerId: ${peerIdString}, keyword: ${message.header.keywordUuid}, Error: ${error}`,
+                    );
+                }
+
                 this.removeCachedSession(
                     message.header.operationId,
                     message.header.keywordUuid,
                     peerIdString,
                 );
             } else if (busy) {
-                await this.sendMessageResponse(
-                    protocol,
-                    peerIdString,
-                    NETWORK_MESSAGE_TYPES.RESPONSES.BUSY,
-                    message.header.operationId,
-                    message.header.keywordUuid,
-                    {},
-                );
+                try {
+                    await this.sendMessageResponse(
+                        protocol,
+                        peerIdString,
+                        NETWORK_MESSAGE_TYPES.RESPONSES.BUSY,
+                        message.header.operationId,
+                        message.header.keywordUuid,
+                        {},
+                    );
+                } catch (error) {
+                    this.logger.warn(
+                        `Peer is busy, operationId: ${message.header.operationId}, peerId: ${peerIdString}, keyword: ${message.header.keywordUuid}, Error: ${error}`,
+                    );
+                }
                 this.removeCachedSession(
                     message.header.operationId,
                     message.header.keywordUuid,
@@ -259,9 +270,23 @@ class Libp2pService {
                 );
             } else {
                 this.logger.debug(
-                    `Receiving message from ${peerIdString} to ${this.config.id}: protocol: ${protocol}, messageType: ${message.header.messageType};`,
+                    `Receiving message from peerId: ${peerIdString} to ${this.config.id} protocol: ${protocol} with operationId: ${message.header.operationId} and keyword: ${message.header.keywordUuid}, messageType: ${message.header.messageType};`,
                 );
-                await handler(message, peerIdString);
+                try {
+                    await handler(message, peerIdString);
+                } catch (error) {
+                    await this.sendMessageResponse(
+                        protocol,
+                        peerIdString,
+                        NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                        message.header.operationId,
+                        message.header.keywordUuid,
+                        { errorMessage: 'Unable to handle request' },
+                    );
+                    this.logger.error(
+                        `Error handling message from peerId: ${peerIdString} to ${this.config.id} protocol : ${protocol} with operationId: ${message.header.operationId} and keyword: ${message.header.keywordUuid}, Error: ${error} `,
+                    );
+                }
             }
         });
     }
@@ -648,7 +673,13 @@ class Libp2pService {
 
     removeCachedSession(operationId, keywordUuid, peerIdString) {
         if (this.sessions[peerIdString]?.[operationId]?.[keywordUuid]?.stream) {
-            this.sessions[peerIdString][operationId][keywordUuid].stream.close();
+            try {
+                this.sessions[peerIdString][operationId][keywordUuid].stream.close();
+            } catch (error) {
+                this.logger.error(
+                    `Error closing session stream. OperationId: ${operationId}, peerId: ${peerIdString} Error: ${error.message}`,
+                );
+            }
             delete this.sessions[peerIdString][operationId];
             this.logger.trace(
                 `Removed session for remotePeerId: ${peerIdString}, operationId: ${operationId}.`,
