@@ -89,7 +89,7 @@ class OTNode {
             this.logger,
             this.config,
         );
-
+      
         await this.initializeRouters();
         await this.startNetworkModule();
         this.startTelemetryModule();
