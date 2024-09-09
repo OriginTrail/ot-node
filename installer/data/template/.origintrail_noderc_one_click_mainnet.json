@@ -1,17 +1,30 @@
 {
   "modules":{
+    "network": {
+      "implementation": {
+        "libp2p-service": {
+          "config": {
+            "nat": {
+              "enabled": true,
+              "externalIp": "<node_static_ip_address>"
+            }
+          }
+        }
+      }
+    },
     "blockchain":{
       "implementation":{
         "otp:2043":{
           "enabled":true,
           "config":{
-            "sharesTokenSymbol":"<shares_token_symbol>",
-            "sharesTokenName":"<shares_token_name>",
-            "evmManagementWalletPublicKey":"<emv_management_key_public_key>",
+            "sharesTokenName":"<node_name>",
+            "sharesTokenSymbol":"<node_symbol>",
+            "operatorFee":"<operator_fee>",
+            "evmManagementWalletPublicKey":"<management_wallet_public_key>",
             "operationalWallets":[
               {
-                "evmAddress":"<evm_operational_key_public_key>",
-                "privateKey":"<evm_operational_key_private_key>"
+                "evmAddress":"<operational_wallet_public_key>",
+                "privateKey":"<operational_wallet_private_key>"
               }
             ]
           }
@@ -19,18 +32,36 @@
         "gnosis:100":{
           "enabled":true,
           "config":{
-            "operatorFee": <node_operator_fee>,
-            "sharesTokenSymbol":"<shares_token_symbol>",
-            "sharesTokenName":"<shares_token_name>",
+            "sharesTokenName":"<node_name>",
+            "sharesTokenSymbol":"<node_symbol>",
+            "operatorFee":"<operator_fee>",
             "rpcEndpoints":[
               "<gnosis_rpc_endpoint>"
             ],
-            "evmManagementWalletPublicKey":"<emv_management_key_public_key>",
+            "evmManagementWalletPublicKey":"<management_wallet_public_key>",
             "operationalWallets":[
               {
-                "evmAddress":"<evm_operational_key_public_key>",
-                "privateKey":"<evm_operational_key_private_key>"
+                "evmAddress":"<operational_wallet_public_key>",
+                "privateKey":"<operational_wallet_private_key>"
               }
+            ]
+          }
+        },
+        "base:8453":{
+          "enabled":true,
+          "config":{
+            "evmManagementWalletPublicKey":"<management_wallet_public_key>",
+            "operationalWallets":[
+              {
+                "evmAddress":"<operational_wallet_public_key>",
+                "privateKey":"<operational_wallet_private_key>"
+              }
+            ],
+            "sharesTokenName":"<node_name>",
+            "sharesTokenSymbol":"<node_symbol>",
+            "operatorFee":"<operator_fee>",
+            "rpcEndpoints":[
+              "<base_rpc_endpoint>"
             ]
           }
         }
