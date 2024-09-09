@@ -78,6 +78,12 @@ class OTNode {
             this.config,
         );
 
+        await MigrationExecutor.executeServiceAgreementPruningMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         await this.initializeRouters();
         await this.startNetworkModule();
         this.startTelemetryModule();
