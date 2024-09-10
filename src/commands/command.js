@@ -116,7 +116,9 @@ class Command {
      * @returns {*}
      */
     async handleError(operationId, blockchain, errorMessage, errorName, markFailed) {
-        this.logger.error(`Command error (${errorName}): ${errorMessage}`);
+        this.logger.error(
+            `Command with operationId: ${operationId}, error (${errorName}): ${errorMessage}`,
+        );
         if (markFailed) {
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
