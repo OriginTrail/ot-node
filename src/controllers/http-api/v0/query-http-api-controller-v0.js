@@ -10,10 +10,14 @@ class QueryController extends BaseController {
     }
 
     async handleRequest(req, res) {
-        const { query, type: queryType } = req.body;
+        const { query, type: queryType, repository } = req.body;
 
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.QUERY.QUERY_INIT_START,
+        );
+
+        this.logger.info(
+            `Received query request, query: ${query}, queryType: ${queryType},  repository: ${repository}, operationId: ${operationId}`,
         );
 
         this.returnResponse(res, 202, {
