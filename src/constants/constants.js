@@ -179,7 +179,6 @@ export const PERMANENT_COMMANDS = [
     'operationIdCleanerCommand',
     'commandsCleanerCommand',
     'dialPeersCommand',
-    'getLatestServiceAgreement',
     'blockchainEventCleanerCommand',
     'getCleanerCommand',
     'getResponseCleanerCommand',
