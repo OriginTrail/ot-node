@@ -671,7 +671,6 @@ export const CONTRACTS = {
     HUB_CONTRACT: 'HubContract',
     CONTENT_ASSET: 'ContentAssetContract',
     COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
-    SERVICE_AGREEMENT_V1_CONTRACT: 'ServiceAgreementV1Contract',
     PARAMETERS_STORAGE_CONTRACT: 'ParametersStorageContract',
     IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
     LOG2PLDSF_CONTRACT: 'Log2PLDSFContract',

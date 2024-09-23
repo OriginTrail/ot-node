@@ -100,12 +100,6 @@ class BlockchainEventListenerService {
             ),
             this.getContractEvents(
                 blockchainId,
-                CONTRACTS.SERVICE_AGREEMENT_V1_CONTRACT,
-                currentBlock,
-                CONTRACT_EVENTS.SERVICE_AGREEMENT_V1,
-            ),
-            this.getContractEvents(
-                blockchainId,
                 CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
                 currentBlock,
                 CONTRACT_EVENTS.PARAMETERS_STORAGE,
@@ -512,25 +506,6 @@ class BlockchainEventListenerService {
                     this.blockchainModuleManager.convertFromWei(event.blockchainId, eventData.ask),
                 );
             }),
-        );
-    }
-
-    async handleServiceAgreementV1ExtendedEvents(blockEvents) {
-        await Promise.all(
-            blockEvents.map(async (event) => {
-                const { agreementId, epochsNumber } = JSON.parse(event.data);
-
-                return this.repositoryModuleManager.updateServiceAgreementEpochsNumber(
-                    agreementId,
-                    epochsNumber,
-                );
-            }),
-        );
-    }
-
-    async handleServiceAgreementV1TerminatedEvents(blockEvents) {
-        await this.repositoryModuleManager.removeServiceAgreements(
-            blockEvents.map((event) => JSON.parse(event.data).agreementId),
         );
     }
 
