@@ -3,7 +3,12 @@ import { Sequelize } from 'sequelize';
 class OperationRepository {
     constructor(models) {
         this.sequelize = models.sequelize;
-        this.models = { get: models.get, publish: models.publish, update: models.update };
+        this.models = {
+            get: models.get,
+            publish: models.publish,
+            update: models.update,
+            publish_paranet: models.publish_paranet,
+        };
     }
 
     async createOperationRecord(operation, operationId, status) {
