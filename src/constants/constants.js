@@ -685,7 +685,6 @@ export const CONTRACT_EVENTS = {
     STAKING: ['StakeIncreased', 'StakeWithdrawalStarted'],
     PROFILE: ['AskUpdated'],
     COMMIT_MANAGER_V1: ['StateFinalized'],
-    SERVICE_AGREEMENT_V1: ['ServiceAgreementV1Extended', 'ServiceAgreementV1Terminated'],
     PARAMETERS_STORAGE: ['ParameterChanged'],
     LOG2PLDSF: ['ParameterChanged'],
     LINEAR_SUM: ['ParameterChanged'],
