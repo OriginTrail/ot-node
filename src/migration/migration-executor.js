@@ -21,6 +21,7 @@ import GetOldServiceAgreementsMigration from './get-old-service-agreements-migra
 import ServiceAgreementPruningMigration from './service-agreement-pruning-migration.js';
 import RemoveDuplicateServiceAgreementMigration from './remove-duplicate-service-agreement-migration.js';
 import DevnetNeuroPruningMigration from './devnet-neuro-pruning-migration.js';
+import DevnetPruningMigration from './devnet-pruning-migration.js';
 
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
@@ -525,6 +526,30 @@ class MigrationExecutor {
                 logger.error(
                     `Unable to execute devnet neuro pruning migration. Error: ${error.message}`,
                 );
+            }
+        }
+    }
+
+    static async executeDevnetPruningMigration(container, logger, config) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const repositoryModuleManager = container.resolve('repositoryModuleManager');
+
+        const migration = new DevnetPruningMigration(
+            'devnetPruningMigration',
+            logger,
+            config,
+            repositoryModuleManager,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            try {
+                await migration.migrate();
+            } catch (error) {
+                logger.error(`Unable to execute devnet pruning migration. Error: ${error.message}`);
             }
         }
     }
