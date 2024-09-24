@@ -4,7 +4,7 @@ import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants
 class UpdateParanetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.updateService;
+        this.operationService = ctx.updateParanetService;
 
         this.startEvent = OPERATION_ID_STATUS.UPDATE_PARANET.UPDATE_PARANET_REPLICATE_START;
         this.errorType = ERROR_TYPE.UPDATE_PARANET.UPDATE_PARANET_START_ERROR;
