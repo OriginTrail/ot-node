@@ -1,12 +1,7 @@
 export default (argumentsObject) => ({
     type: 'object',
-    required: ['assertionId', 'assertions', 'blockchain', 'contract', 'tokenId', 'paranetId'],
+    required: ['assertions', 'blockchain', 'contract', 'tokenId', 'paranetId'],
     properties: {
-        assertionId: {
-            type: 'string',
-            minLength: 66,
-            maxLength: 66,
-        },
         assertions: {
             type: 'array',
             items: {

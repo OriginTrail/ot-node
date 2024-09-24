@@ -113,7 +113,6 @@ class PublishController extends BaseController {
                 period: 5000,
                 retries: 3,
                 data: {
-                    // assertionId,
                     blockchain,
                     contract,
                     tokenId,
