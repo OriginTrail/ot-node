@@ -62,7 +62,7 @@ class PublishParanetService extends OperationService {
 
         if (
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
-            completedNumber === minAckResponses
+            completedNumber > minAckResponses
         ) {
             let allCompleted = true;
             for (const key in keywordsStatuses) {

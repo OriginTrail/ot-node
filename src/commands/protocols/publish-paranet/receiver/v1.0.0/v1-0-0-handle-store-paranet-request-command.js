@@ -16,6 +16,7 @@ class HandleParanetStoreRequestCommand extends HandleProtocolMessageCommand {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
         this.ualService = ctx.ualService;
+        this.paranetService = ctx.paranetService;
 
         this.errorType = ERROR_TYPE.PUBLISH_PARANET.PUBLISH_PARANET_LOCAL_STORE_REMOTE_ERROR;
     }
@@ -23,12 +24,11 @@ class HandleParanetStoreRequestCommand extends HandleProtocolMessageCommand {
     async prepareMessage(commandData) {
         const {
             blockchain,
-            // keyword,
-            // contract,
-            // tokenId,
+            contract,
+            tokenId,
             operationId,
             publicAssertionId,
-            // privateAssertioId,
+            privateAssertionId,
         } = commandData;
 
         await this.operationIdService.updateOperationIdStatus(
@@ -36,18 +36,28 @@ class HandleParanetStoreRequestCommand extends HandleProtocolMessageCommand {
             blockchain,
             OPERATION_ID_STATUS.PUBLISH_PARANET.VALIDATING_PUBLISH_PARANET_ASSERTION_REMOTE_START,
         );
+
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         // const assertionIds = await this.blockchainModuleManager.getAssertionIds(
         //     blockchain,
         //     contract,
         //     tokenId,
         // );
 
-        const constCachedData = await this.operationIdService.getCachedOperationIdData(operationId);
+        const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
+
+        const { paranetUAL, sender, txHash } = cachedData;
+
+        const keyword = await this.ualService.calculateLocationKeyword(
+            blockchain,
+            contract,
+            tokenId,
+        );
 
         await this.validationService.validateAssertion(
             publicAssertionId,
             blockchain,
-            constCachedData.assertions.public.assertion,
+            cachedData.assertions.public.assertion,
         );
 
         await this.operationIdService.updateOperationIdStatus(
@@ -63,46 +73,38 @@ class HandleParanetStoreRequestCommand extends HandleProtocolMessageCommand {
         );
 
         // TODO: Validate assertion is part of paranet
+        const paranetRepositoryName = this.paranetService.getParanetRepositoryName(paranetUAL);
 
         // TODO: this to paranet repo
-        // await this.tripleStoreService.localStoreAsset(
-        //     TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-        //     publicAssertionId,
-        //     assertion,
-        //     blockchain,
-        //     contract,
-        //     tokenId,
-        //     keyword,
-        // );
+        await this.tripleStoreService.localStoreAsset(
+            paranetRepositoryName,
+            publicAssertionId,
+            cachedData.assertions.public.assertion,
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+        );
 
-        // await this.tripleStoreService.localStoreAsset(
-        //     TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-        //     privateAssertioId,
-        //     assertion,
-        //     blockchain,
-        //     contract,
-        //     tokenId,
-        //     keyword,
-        // );
+        await this.tripleStoreService.localStoreAsset(
+            paranetRepositoryName,
+            privateAssertionId,
+            cachedData.assertions.private.assertion,
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+        );
 
-        // Change thi to be paranet_synced_table
-        // await this.repositoryModuleManager.updateServiceAgreementRecord(
-        //     blockchain,
-        //     contract,
-        //     tokenId,
-        //     agreementId,
-        //     agreementData.startTime,
-        //     agreementData.epochsNumber,
-        //     agreementData.epochLength,
-        //     agreementData.scoreFunctionId,
-        //     agreementData.proofWindowOffsetPerc,
-        //     hashFunctionId,
-        //     keyword,
-        //     assertionId,
-        //     stateIndex,
-        //     SERVICE_AGREEMENT_SOURCES.NODE,
-        // );
-
+        await this.repositoryModuleManager.createParanetSyncedAssetRecord(
+            blockchain,
+            ual,
+            paranetUAL,
+            publicAssertionId,
+            privateAssertionId,
+            sender,
+            txHash,
+        );
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,

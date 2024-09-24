@@ -21,7 +21,7 @@ class PublishController extends BaseController {
     }
 
     async handleRequest(req, res) {
-        const { assertions, blockchain, contract, tokenId, paranetUAL } = req.body;
+        const { assertions, blockchain, contract, tokenId, paranetUAL, sender, txHash } = req.body;
         const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
         const operationId = await this.operationIdService.generateOperationId(
@@ -92,16 +92,15 @@ class PublishController extends BaseController {
                 contract,
                 tokenId,
                 paranetUAL,
+                sender,
+                txHash,
             });
 
             // Expand publishValidateAssetCommand to check if paranetPublish and do additional validations
             // Or just create publishParanetValidateAssetCommand
             const commandSequence = ['publishParanetValidateAssetCommand'];
 
-            // Backwards compatibility check - true for older clients
-            if (req.body.localStore) {
-                commandSequence.push('localStoreCommand');
-            }
+            commandSequence.push('localStoreParanetCommand');
 
             // Use different publish command
             commandSequence.push('networkPublishParanetCommand');

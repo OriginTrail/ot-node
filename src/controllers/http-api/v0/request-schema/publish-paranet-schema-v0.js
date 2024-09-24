@@ -25,7 +25,10 @@ export default (argumentsObject) => ({
             type: 'number',
             minimum: 1,
         },
-        paranetId: {
+        sender: {
+            type: 'string',
+        },
+        txHash: {
             type: 'string',
         },
     },

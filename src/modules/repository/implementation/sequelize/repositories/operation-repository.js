@@ -20,7 +20,8 @@ class OperationRepository {
     }
 
     async removeOperationRecords(operation, ids) {
-        return this.models[operation].destroy({
+        const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+        return this.models[operationModel].destroy({
             where: {
                 id: { [Sequelize.Op.in]: ids },
             },
@@ -28,7 +29,8 @@ class OperationRepository {
     }
 
     async findProcessedOperations(operation, timestamp, limit) {
-        return this.models[`${operation}`].findAll({
+        const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+        return this.models[`${operationModel}`].findAll({
             where: {
                 createdAt: { [Sequelize.Op.lte]: timestamp },
             },
@@ -39,7 +41,8 @@ class OperationRepository {
     }
 
     async getOperationStatus(operation, operationId) {
-        return this.models[operation].findOne({
+        const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+        return this.models[operationModel].findOne({
             attributes: ['status'],
             where: {
                 operationId,
@@ -48,7 +51,8 @@ class OperationRepository {
     }
 
     async updateOperationStatus(operation, operationId, status) {
-        await this.models[operation].update(
+        const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+        await this.models[operationModel].update(
             { status },
             {
                 where: {

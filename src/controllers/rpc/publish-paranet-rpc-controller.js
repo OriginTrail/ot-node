@@ -33,6 +33,9 @@ class PublishParanetController extends BaseController {
                     publicAssertionId: dataSource.publicAssertionId,
                     privateAssertionId: dataSource.privateAssertionId,
                     assertions: message.data.assertions,
+                    paranetUAL: message.data.paranetUAL,
+                    sender: message.data.sender,
+                    txHash: message.data.txHash,
                 });
                 command.name = handleRequestCommand;
                 break;

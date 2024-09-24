@@ -4,7 +4,7 @@ import { NETWORK_MESSAGE_TIMEOUT_MILLS, ERROR_TYPE } from '../../../../../consta
 class PublishParanetRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.publishService;
+        this.operationService = ctx.publishParanetService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_REQUEST_ERROR;
     }
@@ -16,6 +16,9 @@ class PublishParanetRequestCommand extends ProtocolRequestCommand {
 
         return {
             assertions: cachedData.cachedAssertions,
+            paranetUAL: cachedData.paranetUAL,
+            sender: cachedData.sender,
+            txHash: cachedData.txHash,
         };
     }
 
