@@ -21,7 +21,7 @@ class PublishController extends BaseController {
     }
 
     async handleRequest(req, res) {
-        const { assertions, blockchain, contract, tokenId, paranetId } = req.body;
+        const { assertions, blockchain, contract, tokenId, paranetUAL } = req.body;
         const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
         const operationId = await this.operationIdService.generateOperationId(
@@ -91,7 +91,7 @@ class PublishController extends BaseController {
                 blockchain,
                 contract,
                 tokenId,
-                paranetId,
+                paranetUAL,
             });
 
             // Expand publishValidateAssetCommand to check if paranetPublish and do additional validations

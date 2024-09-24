@@ -7,7 +7,7 @@ import {
 class PublishParanetController extends BaseController {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.publishService;
+        this.operationService = ctx.publishParanetService;
         this.commandExecutor = ctx.commandExecutor;
         this.operationIdService = ctx.operationIdService;
     }
@@ -30,13 +30,11 @@ class PublishParanetController extends BaseController {
                 // eslint-disable-next-line no-case-declarations
                 dataSource = await this.operationIdService.getCachedOperationIdData(operationId);
                 await this.operationIdService.cacheOperationIdData(operationId, {
-                    assertionId: dataSource.assertionId,
-                    assertion: message.data.assertion,
+                    publicAssertionId: dataSource.publicAssertionId,
+                    privateAssertionId: dataSource.privateAssertionId,
+                    assertions: message.data.assertions,
                 });
                 command.name = handleRequestCommand;
-                command.data.keyword = message.data.keyword;
-                command.data.agreementId = dataSource.agreementId;
-                command.data.agreementData = dataSource.agreementData;
                 break;
             default:
                 throw Error('unknown message type');
@@ -48,11 +46,11 @@ class PublishParanetController extends BaseController {
             operationId,
             keywordUuid,
             protocol,
-            assertionId: dataSource.assertionId,
+            publicAssertionId: dataSource.publicAssertionId,
+            privateAssertionId: dataSource.privateAssertionId,
             blockchain: dataSource.blockchain,
             contract: dataSource.contract,
             tokenId: dataSource.tokenId,
-            keyword: dataSource.keyword,
             hashFunctionId: message.data.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID,
             proximityScoreFunctionsPairId: dataSource.proximityScoreFunctionsPairId ?? 1,
         };

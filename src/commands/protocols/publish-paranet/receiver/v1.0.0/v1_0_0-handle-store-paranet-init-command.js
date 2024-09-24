@@ -1,5 +1,9 @@
 import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
-import { ERROR_TYPE, OPERATION_ID_STATUS } from '../../../../../constants/constants.js';
+import {
+    ERROR_TYPE,
+    OPERATION_ID_STATUS,
+    NETWORK_MESSAGE_TYPES,
+} from '../../../../../constants/constants.js';
 
 class HandleStoreParanetInitCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
@@ -11,8 +15,16 @@ class HandleStoreParanetInitCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { operationId, assertionId, blockchain, contract, tokenId, keyword, hashFunctionId } =
-            commandData;
+        const {
+            operationId,
+            publicAssertionId,
+            privateAssertionId,
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+            hashFunctionId,
+        } = commandData;
         const proximityScoreFunctionsPairId = commandData.proximityScoreFunctionsPairId ?? 1;
 
         await this.operationIdService.updateOperationIdStatus(
@@ -23,7 +35,8 @@ class HandleStoreParanetInitCommand extends HandleProtocolMessageCommand {
 
         const validationResult = await this.validateReceivedData(
             operationId,
-            assertionId,
+            publicAssertionId,
+            privateAssertionId,
             blockchain,
             contract,
             tokenId,
@@ -39,6 +52,34 @@ class HandleStoreParanetInitCommand extends HandleProtocolMessageCommand {
         );
 
         return validationResult;
+    }
+
+    async validateReceivedData(
+        operationId,
+        publicAssertionId,
+        privateAssertionId,
+        blockchain,
+        contract,
+        tokenId,
+        keyword,
+        hashFunctionId,
+    ) {
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+        this.logger.trace(`Validating assertion with ual: ${ual}`);
+        await this.validateAssertionId(blockchain, contract, tokenId, publicAssertionId, ual);
+
+        await this.operationIdService.cacheOperationIdData(operationId, {
+            publicAssertionId,
+            privateAssertionId,
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+            hashFunctionId,
+        });
+
+        return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
     }
 
     async retryFinished(command) {

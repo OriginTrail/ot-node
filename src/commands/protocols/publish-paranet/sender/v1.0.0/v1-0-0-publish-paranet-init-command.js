@@ -6,13 +6,14 @@ class PublishParanetInitCommand extends ProtocolInitCommand {
         super(ctx);
         this.operationService = ctx.publishService;
 
-        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_INIT_ERROR;
+        this.errorType = ERROR_TYPE.PUBLISH_PARANET.PUBLISH_PARANET_STORE_INIT_ERROR;
     }
 
     async prepareMessage(command) {
-        const { assertions, contract, tokenId, keyword, hashFunctionId } = command.data;
-        const publicAssertionId = assertions[0]?.assertionId;
-        const privateAssertionId = assertions[0]?.assertionId;
+        const { contract, tokenId, keyword, hashFunctionId, operationId } = command.data;
+        const assertions = await this.operationIdService.getCachedOperationIdData(operationId);
+        const publicAssertionId = assertions.cachedAssertions.public.assertionId;
+        const privateAssertionId = assertions.cachedAssertions.private.assertionId;
         const proximityScoreFunctionsPairId = command.data.proximityScoreFunctionsPairId ?? 1;
 
         // TODO: Backwards compatibility, send blockchain without chainId
