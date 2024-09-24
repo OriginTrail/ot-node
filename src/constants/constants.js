@@ -362,6 +362,14 @@ export const ERROR_TYPE = {
         START_PARANET_SYNC_ERROR: 'StartParanetSyncError',
         PARANET_SYNC_ERROR: 'ParanetSyncError',
     },
+    UPDATE_PARANET: {
+        UPDATE_PARANET_ERROR: 'UpdateParanetError',
+        UPDATE_PARANET_STORE_INIT_ERROR: 'UpdateParanetStoreInitError',
+        UPDATE_PARANET_REQUEST_ERROR: 'UpdateParanetRequestError',
+        UPDATE_PARANET_START_ERROR: 'UpdateParanetStartError',
+        UPDATE_PARANET_REMOTE_ERROR: 'UpdateParanetRemoteError',
+        UPDATE_PARANET_LOCAL_STORE_REMOTE_ERROR: 'UpdateParanetLocalStoreRemoteError',
+    },
 };
 export const OPERATION_ID_STATUS = {
     PENDING: 'PENDING',
@@ -447,11 +455,24 @@ export const OPERATION_ID_STATUS = {
         LOCAL_STORE_START: 'LOCAL_STORE_START',
         LOCAL_STORE_END: 'LOCAL_STORE_END',
     },
+    UPDATE_PARANET: {
+        UPDATE_PARANET_INIT_START: 'UPDATE_PARANET_INIT_START',
+        UPDATE_PARANET_INIT_END: 'UPDATE_PARANET_INIT_END',
+        UPDATE_PARANET_REPLICATE_END: 'UPDATE_PARANET_REPLICATE_END',
+        UPDATE_PARANET_END: 'UPDATE_PARANET_END',
+        UPDATE_PARANET_REPLICATE_START: 'UPDATE_PARANET_REPLICATE_START',
+        UPDATE_PARANET_START_ERROR: 'UPDATE_PARANET_START_ERROR',
+        VALIDATING_UPDATE_PARANET_ASSERTION_REMOTE_START:
+            'VALIDATING_UPDATE_PARANET_ASSERTION_REMOTE_START',
+        VALIDATING_UPDATE_PARANET_ASSERTION_REMOTE_END:
+            'VALIDATING_UPDATE_PARANET_ASSERTION_REMOTE_END',
+    },
 };
 
 export const OPERATIONS = {
     PUBLISH: 'publish',
     UPDATE: 'update',
+    UPDATE_PARANET: 'update_paranet',
     GET: 'get',
 };
 
@@ -612,6 +633,11 @@ export const HTTP_API_ROUTES = {
             path: '/bid-suggestion',
             options: {},
         },
+        'update-paranet': {
+            method: 'post',
+            path: '/update-paranet',
+            options: { rateLimit: true },
+        },
     },
     v1: {},
 };
@@ -622,6 +648,7 @@ export const HTTP_API_ROUTES = {
  */
 export const NETWORK_PROTOCOLS = {
     STORE: ['/store/1.0.0'],
+    STORE_PARANET: ['/store_paranet/1.0.0'],
     UPDATE: ['/update/1.0.0'],
     GET: ['/get/1.0.0'],
 };
