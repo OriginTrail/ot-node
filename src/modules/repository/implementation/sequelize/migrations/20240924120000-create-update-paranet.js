@@ -1,5 +1,5 @@
 export async function up({ context: { queryInterface, Sequelize } }) {
-    await queryInterface.createTable('publish_paranet', {
+    await queryInterface.createTable('updateParanet', {
         id: {
             type: Sequelize.INTEGER,
             primaryKey: true,
@@ -26,5 +26,5 @@ export async function up({ context: { queryInterface, Sequelize } }) {
     });
 }
 export async function down({ context: { queryInterface } }) {
-    await queryInterface.dropTable('publish_paranet');
+    await queryInterface.dropTable('updateParanet');
 }
