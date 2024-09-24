@@ -29,7 +29,7 @@ class PublishController extends BaseController {
         );
 
         this.logger.info(
-            `[PARANET PUBLISH] Received asset with public assertion id: ${assertions.public.assertionId}, private assertion id: ${assertions.private.assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}, operation id: ${operationId}`,
+            `[PARANET PUBLISH] Received asset with public assertion id: ${assertions[0]?.assertionId}, private assertion id: ${assertions[1]?.assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}, operation id: ${operationId}`,
         );
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -104,7 +104,7 @@ class PublishController extends BaseController {
             }
 
             // Use different publish command
-            commandSequence.push('networkPublishCommand');
+            commandSequence.push('networkPublishParanetCommand');
 
             await this.commandExecutor.add({
                 name: commandSequence[0],

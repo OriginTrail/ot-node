@@ -1,11 +1,11 @@
-import Command from '../../command.js';
-import ValidateAssetCommand from '../../common/validate-asset-command.js';
+import Command from '../../../command.js';
+import ValidateAssetCommand from '../../../common/validate-asset-command.js';
 import {
     // ERROR_TYPE,
     OPERATION_ID_STATUS,
     LOCAL_STORE_TYPES,
     ZERO_BYTES32,
-} from '../../../constants/constants.js';
+} from '../../../../constants/constants.js';
 
 class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
     constructor(ctx) {

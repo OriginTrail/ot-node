@@ -12,7 +12,8 @@ class OperationRepository {
     }
 
     async createOperationRecord(operation, operationId, status) {
-        return this.models[operation].create({
+        const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+        return this.models[operationModel].create({
             operationId,
             status,
         });

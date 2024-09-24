@@ -362,7 +362,10 @@ export const ERROR_TYPE = {
         START_PARANET_SYNC_ERROR: 'StartParanetSyncError',
         PARANET_SYNC_ERROR: 'ParanetSyncError',
     },
-    PUBLISH_PARANET: { PUBLISH_PARANET_ERROR: 'PublishParanetError' },
+    PUBLISH_PARANET: {
+        PUBLISH_PARANET_ERROR: 'PublishParanetError',
+        PUBLISH_PARANET_START_ERROR: 'PublishParanetStartError;',
+    },
 };
 export const OPERATION_ID_STATUS = {
     PENDING: 'PENDING',
@@ -458,7 +461,7 @@ export const OPERATION_ID_STATUS = {
 
 export const OPERATIONS = {
     PUBLISH: 'publish',
-    PUBLISH_PARANET: 'publish_paranet',
+    PUBLISH_PARANET: 'publishParanet',
     UPDATE: 'update',
     GET: 'get',
 };
