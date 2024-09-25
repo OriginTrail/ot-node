@@ -30,8 +30,9 @@ class DevnetPruningMigration extends BaseMigration {
             ];
             for (const table of tables) {
                 const query = `
-                  TRUNCATE TABLE ${table}
-                `;
+                TRUNCATE TABLE \`${table}\`;
+              `;
+
                 // eslint-disable-next-line no-await-in-loop
                 await this.repositoryModuleManager.query(query);
             }
