@@ -6,7 +6,7 @@ import {
     ERROR_TYPE,
 } from '../../../../../constants/constants.js';
 
-class HandleParanetStoreRequestCommand extends HandleProtocolMessageCommand {
+class HandleStoreParanetRequestCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
         this.validationService = ctx.validationService;
@@ -115,13 +115,13 @@ class HandleParanetStoreRequestCommand extends HandleProtocolMessageCommand {
     }
 
     /**
-     * Builds default handleParanetStoreRequestCommand
+     * Builds default handleStoreParanetRequestCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'v1_0_0HandleParanetStoreRequestCommand',
+            name: 'v1_0_0HandleStoreParanetRequestCommand',
             delay: 0,
             transactional: false,
         };
@@ -130,4 +130,4 @@ class HandleParanetStoreRequestCommand extends HandleProtocolMessageCommand {
     }
 }
 
-export default HandleParanetStoreRequestCommand;
+export default HandleStoreParanetRequestCommand;
