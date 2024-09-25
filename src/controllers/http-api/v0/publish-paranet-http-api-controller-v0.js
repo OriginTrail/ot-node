@@ -96,13 +96,10 @@ class PublishParanetController extends BaseController {
                 txHash,
             });
 
-            // Expand publishValidateAssetCommand to check if paranetPublish and do additional validations
-            // Or just create publishParanetValidateAssetCommand
             const commandSequence = ['publishParanetValidateAssetCommand'];
 
             commandSequence.push('localStoreParanetCommand');
 
-            // Use different publish command
             commandSequence.push('networkPublishParanetCommand');
 
             await this.commandExecutor.add({

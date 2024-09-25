@@ -373,7 +373,7 @@ export const ERROR_TYPE = {
         PUBLISH_PARANET_ERROR: 'PublishParanetError',
         PUBLISH_PARANET_REMOTE_ERROR: 'PublishParanetRemoteError',
     },
-    LOCAL_PARANET_STORE: {
+    LOCAL_STORE_PARANET: {
         LOCAL_STORE_PARANET_ERROR: 'LocalStoreParanetError',
     },
 };

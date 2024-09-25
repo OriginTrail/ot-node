@@ -54,6 +54,7 @@ class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
         this.logger.info(
             `Validating asset's public assertion with id: ${cachedData.cachedAssertions.public.assertionId} ual: ${ual}`,
         );
+
         if (blockchainAssertionId !== cachedData.cachedAssertions.public.assertionId) {
             await this.handleError(
                 operationId,
