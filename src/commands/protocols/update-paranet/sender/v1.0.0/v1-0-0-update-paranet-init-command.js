@@ -11,8 +11,8 @@ class UpdateParanetInitCommand extends ProtocolInitCommand {
 
     async prepareMessage(command) {
         const { assertions, contract, tokenId, keyword, hashFunctionId } = command.data;
-        const publicAssertionId = assertions[0]?.assertionId;
-        const privateAssertionId = assertions[0]?.assertionId;
+        const publicAssertionId = assertions[0].assertionId;
+        const privateAssertionId = assertions[1]?.assertionId;
         const proximityScoreFunctionsPairId = command.data.proximityScoreFunctionsPairId ?? 1;
 
         // TODO: Backwards compatibility, send blockchain without chainId

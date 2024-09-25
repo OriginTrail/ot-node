@@ -25,21 +25,7 @@ class NetworkUpdateParanetCommand extends NetworkProtocolCommand {
 
         const keywords = await this.getKeywords(command);
         const batchSize = await this.getBatchSize(blockchain);
-        const minAckResponses = await this.getMinAckResponses(blockchain);
-
-        const serviceAgreementId = this.serviceAgreementService.generateId(
-            blockchain,
-            contract,
-            tokenId,
-            keywords[0],
-            hashFunctionId,
-        );
-
-        const proximityScoreFunctionsPairId =
-            await this.blockchainModuleManager.getAgreementScoreFunctionId(
-                blockchain,
-                serviceAgreementId,
-            );
+        const minAckResponses = 0;
 
         const commandSequence = [
             // TODO: Create new findeParanetNodesCommand

@@ -17,11 +17,11 @@ class UpdateController extends BaseController {
     }
 
     async handleRequest(req, res) {
-        const { assertions, blockchain, contract, tokenId, paranetId } = req.body;
+        const { assertions, blockchain, contract, tokenId, paranetUAL, sender, txHash } = req.body;
         const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
         const operationId = await this.operationIdService.generateOperationId(
-            OPERATION_ID_STATUS.UPDATE.UPDATE_START,
+            OPERATION_ID_STATUS.UPDATE_PARANET.UPDATE_PARANET_START,
         );
 
         this.logger.info(
@@ -53,14 +53,12 @@ class UpdateController extends BaseController {
         try {
             const cachedAssertions = {
                 public: {},
-
                 private: {},
             };
 
             switch (assertions.length) {
                 case 1: {
                     const { assertion, assertionId } = assertions[0];
-
                     cachedAssertions.public = { assertion, assertionId };
 
                     break;
@@ -71,18 +69,15 @@ class UpdateController extends BaseController {
                         this.dataService.getPrivateAssertionId(assertions[0].assertion) != null;
 
                     const publicAssertionData = isFirstPublic ? assertions[0] : assertions[1];
-
                     const privateAssertionData = isFirstPublic ? assertions[1] : assertions[0];
 
                     cachedAssertions.public = {
                         assertion: publicAssertionData.assertion,
-
                         assertionId: publicAssertionData.assertionId,
                     };
 
                     cachedAssertions.private = {
                         assertion: privateAssertionData.assertion,
-
                         assertionId: privateAssertionData.assertionId,
                     };
 
@@ -100,12 +95,13 @@ class UpdateController extends BaseController {
                 blockchain,
                 contract,
                 tokenId,
-                paranetId,
+                paranetUAL,    
+                sender,
+                txHash,
+
             });
 
-            // Expand updateValidateAssetCommand to check if paranetUpdate and do additional validations
-            // Or just create updateParanetValidateAssetCommand
-            const commandSequence = ['updateParanetValidateAssetCommand', 'networkUpdateCommand'];
+            const commandSequence = ['updateParanetValidateAssetCommand', 'networkUpdateParanetCommand'];
 
             await this.commandExecutor.add({
                 name: commandSequence[0],

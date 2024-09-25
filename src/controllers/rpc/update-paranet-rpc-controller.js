@@ -31,15 +31,14 @@ class UpdateParanetController extends BaseController {
                 // eslint-disable-next-line no-case-declarations
                 dataSource = await this.operationIdService.getCachedOperationIdData(operationId);
                 await this.operationIdService.cacheOperationIdData(operationId, {
-                    assertionId: dataSource.assertionId,
-                    assertion: message.data.assertion,
+                    publicAssertionId: dataSource.publicAssertionId,
+                    privateAssertionId: dataSource.privateAssertionId,
+                    assertions: message.data.assertions,
+                    paranetUAL: message.data.paranetUAL,
+                    sender: message.data.sender,
+                    txHash: message.data.txHash,
                 });
                 command.name = handleRequestCommand;
-                command.data.keyword = message.data.keyword;
-                command.data.agreementId = dataSource.agreementId;
-                command.data.agreementData = dataSource.agreementData;
-                command.data.proximityScoreFunctionsPairId =
-                    dataSource.agreementData.scoreFunctionId ?? 1;
                 break;
             default:
                 throw Error('unknown message type');
@@ -51,7 +50,8 @@ class UpdateParanetController extends BaseController {
             operationId,
             keywordUuid,
             protocol,
-            assertionId: dataSource.assertionId,
+            publicAssertionId: dataSource.publicAssertionId,
+            privateAssertionId: dataSource.privateAssertionId,
             blockchain: dataSource.blockchain,
             contract: dataSource.contract,
             tokenId: dataSource.tokenId,

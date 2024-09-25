@@ -10,17 +10,20 @@ class UpdateParanetRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const {
-            public: { assertion },
-        } = await this.operationIdService.getCachedOperationIdData(command.data.operationId);
+        const cachedData = await this.operationIdService.getCachedOperationIdData(
+            command.data.operationId,
+        );
 
         return {
-            assertion,
+            assertions: cachedData.cachedAssertions,
+            paranetUAL: cachedData.paranetUAL,
+            sender: cachedData.sender,
+            txHash: cachedData.txHash,
         };
     }
 
     messageTimeout() {
-        return NETWORK_MESSAGE_TIMEOUT_MILLS.UPDATE.REQUEST;
+        return NETWORK_MESSAGE_TIMEOUT_MILLS.UPDATE_PARANET.REQUEST;
     }
 
     /**

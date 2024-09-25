@@ -1,6 +1,6 @@
 export default (argumentsObject) => ({
     type: 'object',
-    required: ['assertions', 'blockchain', 'contract', 'tokenId', 'paranetId'],
+    required: ['assertions', 'blockchain', 'contract', 'tokenId', 'paranetUAL'],
     properties: {
         assertions: {
             type: 'array',
@@ -25,8 +25,13 @@ export default (argumentsObject) => ({
             type: 'number',
             minimum: 1,
         },
-        // TODO: Check if this is fixed lenght
-        paranetId: {
+        paranetUAL: {
+            type: 'string',
+        },
+        sender: {
+            type: 'string',
+        },
+        txHash: {
             type: 'string',
         },
     },
