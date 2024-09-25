@@ -8,10 +8,10 @@ import {
 class HandleStoreParanetInitCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
-        this.publishService = ctx.publishService;
+        this.publishService = ctx.publishParanetService;
         this.ualService = ctx.ualService;
 
-        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_REMOTE_ERROR;
+        this.errorType = ERROR_TYPE.PUBLISH_PARANET.PUBLISH_PARANET_REMOTE_ERROR;
     }
 
     async prepareMessage(commandData) {

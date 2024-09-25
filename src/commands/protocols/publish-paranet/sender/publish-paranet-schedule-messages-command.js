@@ -9,8 +9,8 @@ class PublishParanetScheduleMessagesCommand extends ProtocolScheduleMessagesComm
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
 
-        this.startEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_START;
-        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR;
+        this.startEvent = OPERATION_ID_STATUS.PUBLISH_PARANET.PUBLISH_PARANET_REPLICATE_START;
+        this.errorType = ERROR_TYPE.PUBLISH_PARANET.PUBLISH_PARANET_START_ERROR;
     }
 
     async execute(command) {
