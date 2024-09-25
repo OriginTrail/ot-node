@@ -4,7 +4,7 @@ import { NETWORK_MESSAGE_TIMEOUT_MILLS, ERROR_TYPE } from '../../../../../consta
 class PublishParanetInitCommand extends ProtocolInitCommand {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.publishService;
+        this.operationService = ctx.publishParanetService;
 
         this.errorType = ERROR_TYPE.PUBLISH_PARANET.PUBLISH_PARANET_STORE_INIT_ERROR;
     }

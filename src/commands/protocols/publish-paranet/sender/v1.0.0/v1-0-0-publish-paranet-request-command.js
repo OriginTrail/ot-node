@@ -6,7 +6,7 @@ class PublishParanetRequestCommand extends ProtocolRequestCommand {
         super(ctx);
         this.operationService = ctx.publishParanetService;
 
-        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_REQUEST_ERROR;
+        this.errorType = ERROR_TYPE.PUBLISH_PARANET.PUBLISH_PARANET_STORE_REQUEST_ERROR;
     }
 
     async prepareMessage(command) {

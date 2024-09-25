@@ -10,7 +10,7 @@ import {
 class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.publishService;
+        this.operationService = ctx.publishParanetService;
     }
 
     /**

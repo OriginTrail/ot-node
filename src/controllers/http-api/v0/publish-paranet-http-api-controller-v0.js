@@ -7,7 +7,7 @@ import {
     LOCAL_STORE_TYPES,
 } from '../../../constants/constants.js';
 
-class PublishController extends BaseController {
+class PublishParanetController extends BaseController {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishParanetService;
@@ -25,7 +25,7 @@ class PublishController extends BaseController {
         const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
         const operationId = await this.operationIdService.generateOperationId(
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_START,
+            OPERATION_ID_STATUS.PUBLISH_PARANET.PUBLISH_PARANET_START,
         );
 
         this.logger.info(
@@ -130,10 +130,10 @@ class PublishController extends BaseController {
                 operationId,
                 blockchain,
                 'Unable to publish paranet data, Failed to process input data!',
-                ERROR_TYPE.PUBLISH.PUBLISH_ROUTE_ERROR,
+                ERROR_TYPE.PUBLISH_PARANET.PUBLISH_PARANET_ROUTE_ERROR,
             );
         }
     }
 }
 
-export default PublishController;
+export default PublishParanetController;
