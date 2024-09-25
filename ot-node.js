@@ -366,6 +366,7 @@ class OTNode {
         await autoUpdaterCommand.execute();
     }
 
+    // TODO: add validation for node being a part of paranet
     async initializeParanets() {
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const tripleStoreService = this.container.resolve('tripleStoreService');
@@ -380,37 +381,59 @@ class OTNode {
                 this.logger.warn(
                     `Unable to initialize Paranet with id ${paranetUAL} because of invalid UAL format`,
                 );
-            } else {
-                const { blockchain, contract, tokenId } = ualService.resolveUAL(paranetUAL);
-                if (!blockchainModuleManager.getImplementationNames().includes(blockchain)) {
+                continue;
+            }
+
+            const { blockchain, contract, tokenId } = ualService.resolveUAL(paranetUAL);
+            if (!blockchainModuleManager.getImplementationNames().includes(blockchain)) {
+                this.logger.warn(
+                    `Unable to initialize Paranet with id ${paranetUAL} because of unsupported blockchain implementation`,
+                );
+                continue;
+            }
+
+            const paranetId = paranetService.constructParanetId(blockchain, contract, tokenId);
+            // eslint-disable-next-line no-await-in-loop
+            const paranetExists = await blockchainModuleManager.paranetExists(
+                blockchain,
+                paranetId,
+            );
+            if (!paranetExists) {
+                this.logger.warn(
+                    `Unable to initialize Paranet with id ${paranetUAL} because it doesn't exist`,
+                );
+                continue;
+            }
+
+            // 0 - OPEN, 1 - CURATED
+            // eslint-disable-next-line no-await-in-loop
+            const nodesAccessPolicy = await blockchainModuleManager.getNodesAccessPolicy(
+                blockchain,
+                paranetId,
+            );
+            if (nodesAccessPolicy === 1) {
+                // eslint-disable-next-line no-await-in-loop
+                const identityId = await blockchainModuleManager.getIdentityId(blockchain);
+                // eslint-disable-next-line no-await-in-loop
+                const isCuratedNode = await blockchainModuleManager.isCuratedNode(
+                    blockchain,
+                    paranetId,
+                    identityId,
+                );
+                if (!isCuratedNode) {
                     this.logger.warn(
-                        `Unable to initialize Paranet with id ${paranetUAL} because of unsupported blockchain implementation`,
+                        `Unable to initialize Paranet with id ${paranetUAL} because node with id ${identityId} is not a curated node`,
                     );
-                } else {
-                    const paranetId = paranetService.constructParanetId(
-                        blockchain,
-                        contract,
-                        tokenId,
-                    );
-                    // eslint-disable-next-line no-await-in-loop
-                    const paranetExists = await blockchainModuleManager.paranetExists(
-                        blockchain,
-                        paranetId,
-                    );
-                    if (!paranetExists) {
-                        this.logger.warn(
-                            `Unable to initialize Paranet with id ${paranetUAL} because it doesn't exist`,
-                        );
-                    } else {
-                        validParanets.push(paranetUAL);
-                        const repository = paranetService.getParanetRepositoryName(paranetUAL);
-                        // eslint-disable-next-line no-await-in-loop
-                        await tripleStoreModuleManager.initializeParanetRepository(repository);
-                        // eslint-disable-next-line no-await-in-loop
-                        await paranetService.initializeParanetRecord(blockchain, paranetId);
-                    }
+                    continue;
                 }
             }
+
+            validParanets.push(paranetUAL);
+            const repository = paranetService.getParanetRepositoryName(paranetUAL);
+            // eslint-disable-next-line no-await-in-loop
+            await tripleStoreModuleManager.initializeParanetRepository(repository);
+            // eslint-disable-next-line no-await-in-loop
+            await paranetService.initializeParanetRecord(blockchain, paranetId);
         }
         const repository = paranetService.getParanetRepositoryName(
             'did:dkg:hardhat1:31337/0x8aafc28174bb6c3bdc7be92f18c2f134e876c05e/7',
