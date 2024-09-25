@@ -11,6 +11,7 @@ class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishParanetService;
+        this.paranetService = ctx.paranetService;
     }
 
     /**
@@ -18,7 +19,6 @@ class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
      * @param command
      */
     async execute(command) {
-        // TODO: Validate this node is in paranet, validate this asset is in paranet
         const {
             operationId,
             blockchain,
@@ -26,6 +26,66 @@ class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
             tokenId,
             storeType = LOCAL_STORE_TYPES.TRIPLE,
         } = command.data;
+
+        // Validate node is in paranet
+        const paranetId = this.paranetService.constructParanetId(blockchain, contract, tokenId);
+        const nodesAccessPolicy = await this.blockchainModuleManager.getNodesAccessPolicy(
+            blockchain,
+            paranetId,
+        );
+        if (nodesAccessPolicy === 1) {
+            const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
+            const isCuratedNode = await this.blockchainModuleManager.isCuratedNode(
+                blockchain,
+                paranetId,
+                identityId,
+            );
+            if (!isCuratedNode) {
+                await this.handleError(
+                    operationId,
+                    blockchain,
+                    `node with identity id ${identityId} is not a curated node in paranet with paranetid ${paranetId}`,
+                    this.errorType,
+                    true,
+                );
+                return Command.empty();
+            }
+        }
+
+        // Validate asset is in paranet
+        const knowledgeAssetId = await this.paranetService.constructKnowledgeAssetId(
+            blockchain,
+            contract,
+            tokenId,
+        );
+        const isParanetKnowledgeAsset = await this.blockchainModuleManager.isParanetKnowledgeAsset(
+            blockchain,
+            knowledgeAssetId,
+        );
+        if (!isParanetKnowledgeAsset) {
+            await this.handleError(
+                operationId,
+                blockchain,
+                `Asset with id ${knowledgeAssetId} is not a paranet knowledge asset`,
+                this.errorType,
+                true,
+            );
+            return Command.empty();
+        }
+        const knowledgeAssetParanetId = await this.blockchainModuleManager.getParanetId(
+            blockchain,
+            knowledgeAssetId,
+        );
+        if (knowledgeAssetParanetId !== paranetId) {
+            await this.handleError(
+                operationId,
+                blockchain,
+                `Knowledge asset with id ${knowledgeAssetId} is not in paranet with id ${paranetId}. It is in paranet with id ${knowledgeAssetParanetId}`,
+                this.errorType,
+                true,
+            );
+            return Command.empty();
+        }
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
