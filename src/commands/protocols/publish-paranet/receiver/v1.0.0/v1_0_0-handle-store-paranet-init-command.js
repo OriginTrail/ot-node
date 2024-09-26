@@ -32,11 +32,12 @@ class HandleStoreParanetInitCommand extends HandleProtocolMessageCommand {
 
         const { paranetBlockchain, paranetContract, paranetTokenId } =
             this.ualService.resolveUAL(paranetUAL);
+        const assetUAL = this.ualService.deriveUAL(blockchain, contract, tokenId);
         if (paranetBlockchain !== blockchain) {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Paranet blockchain ${paranetBlockchain} does not match asset blockchain ${blockchain}`,
+                `Paranet blockchain ${paranetBlockchain} does not match asset blockchain ${blockchain} for asset with UAL ${assetUAL}`,
                 this.errorType,
                 true,
             );
@@ -64,7 +65,7 @@ class HandleStoreParanetInitCommand extends HandleProtocolMessageCommand {
                 await this.handleError(
                     operationId,
                     blockchain,
-                    `node with identity id ${identityId} is not a curated node in paranet with paranetid ${paranetId}`,
+                    `Node with identity id ${identityId} is not a curated node in paranet with paranetid ${paranetId}. Asset UAL: ${assetUAL}`,
                     this.errorType,
                     true,
                 );

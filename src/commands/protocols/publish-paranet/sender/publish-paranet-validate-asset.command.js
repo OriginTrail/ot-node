@@ -37,7 +37,7 @@ class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Paranet blockchain ${paranetBlockchain} does not match asset blockchain ${blockchain}`,
+                `Paranet blockchain ${paranetBlockchain} does not match asset blockchain ${blockchain} for asset with UAL ${ual}`,
                 this.errorType,
                 true,
             );
@@ -65,7 +65,7 @@ class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
                 await this.handleError(
                     operationId,
                     blockchain,
-                    `node with identity id ${identityId} is not a curated node in paranet with paranetid ${paranetId}`,
+                    `node with identity id ${identityId} is not a curated node in paranet with paranetid ${paranetId}. Asset UAL: ${ual}`,
                     this.errorType,
                     true,
                 );
