@@ -5,6 +5,7 @@ import {
     OPERATION_ID_STATUS,
     LOCAL_STORE_TYPES,
     ZERO_BYTES32,
+    PARANET_ACCESS_POLICY,
 } from '../../../../constants/constants.js';
 
 class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
@@ -27,13 +28,33 @@ class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
             storeType = LOCAL_STORE_TYPES.TRIPLE,
         } = command.data;
 
+        const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+        const { paranetBlockchain, paranetContract, paranetTokenId } = this.ualService.resolveUAL(
+            cachedData.paranetUAL,
+        );
+        if (paranetBlockchain !== blockchain) {
+            await this.handleError(
+                operationId,
+                blockchain,
+                `Paranet blockchain ${paranetBlockchain} does not match asset blockchain ${blockchain}`,
+                this.errorType,
+                true,
+            );
+            return Command.empty();
+        }
+
         // Validate node is in paranet
-        const paranetId = this.paranetService.constructParanetId(blockchain, contract, tokenId);
+        const paranetId = this.paranetService.constructParanetId(
+            paranetBlockchain,
+            paranetContract,
+            paranetTokenId,
+        );
         const nodesAccessPolicy = await this.blockchainModuleManager.getNodesAccessPolicy(
             blockchain,
             paranetId,
         );
-        if (nodesAccessPolicy === 1) {
+        if (nodesAccessPolicy === PARANET_ACCESS_POLICY.CURATED) {
             const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
             const isCuratedNode = await this.blockchainModuleManager.isCuratedNode(
                 blockchain,
@@ -58,20 +79,6 @@ class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
             contract,
             tokenId,
         );
-        const isParanetKnowledgeAsset = await this.blockchainModuleManager.isParanetKnowledgeAsset(
-            blockchain,
-            knowledgeAssetId,
-        );
-        if (!isParanetKnowledgeAsset) {
-            await this.handleError(
-                operationId,
-                blockchain,
-                `Asset with id ${knowledgeAssetId} is not a paranet knowledge asset`,
-                this.errorType,
-                true,
-            );
-            return Command.empty();
-        }
         const knowledgeAssetParanetId = await this.blockchainModuleManager.getParanetId(
             blockchain,
             knowledgeAssetId,
@@ -80,7 +87,7 @@ class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Knowledge asset with id ${knowledgeAssetId} is not in paranet with id ${paranetId}. It is in paranet with id ${knowledgeAssetParanetId}`,
+                `Knowledge asset with id ${knowledgeAssetId} is not in paranet with UAL ${cachedData.paranetUAL}`,
                 this.errorType,
                 true,
             );
@@ -109,8 +116,6 @@ class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
         if (!blockchainAssertionId || blockchainAssertionId === ZERO_BYTES32) {
             return Command.retry();
         }
-        const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
-        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         this.logger.info(
             `Validating asset's public assertion with id: ${cachedData.cachedAssertions.public.assertionId} ual: ${ual}`,
         );

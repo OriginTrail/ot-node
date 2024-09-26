@@ -91,6 +91,11 @@ export const CONTENT_ASSET_HASH_FUNCTION_ID = 1;
 
 export const PARANET_SYNC_KA_COUNT = 50;
 
+export const PARANET_ACCESS_POLICY = {
+    OPEN: 0,
+    CURATED: 1,
+};
+
 export const TRIPLE_STORE_REPOSITORIES = {
     PUBLIC_CURRENT: 'publicCurrent',
     PUBLIC_HISTORY: 'publicHistory',
