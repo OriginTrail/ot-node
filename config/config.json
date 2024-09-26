@@ -637,7 +637,7 @@
                         "package": "./blockchain/implementation/base/base-service.js",
 
                         "config": {
-                            "hubContractAddress": "",
+                            "hubContractAddress": "0xaA849CAC4FA86f6b7484503f3c7a314772AED6d4",
                             "rpcEndpoints": ["https://sepolia.base.org"],
                             "operatorFee": 0
                         }

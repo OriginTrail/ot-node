@@ -37,8 +37,7 @@ class NetworkPublishParanetCommand extends NetworkProtocolCommand {
             );
 
         const commandSequence = [
-            // TODO: Create new findeParanetNodesCommand
-            'findNodesCommand',
+            'findCuratedParanetNodesCommand',
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
         ];
 
