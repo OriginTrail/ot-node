@@ -30,9 +30,12 @@ class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
 
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-        const { paranetBlockchain, paranetContract, paranetTokenId } = this.ualService.resolveUAL(
-            cachedData.paranetUAL,
-        );
+        const {
+            blockchain: paranetBlockchain,
+            contract: paranetContract,
+            tokenId: paranetTokenId,
+        } = this.ualService.resolveUAL(cachedData.paranetUAL);
+
         if (paranetBlockchain !== blockchain) {
             await this.handleError(
                 operationId,

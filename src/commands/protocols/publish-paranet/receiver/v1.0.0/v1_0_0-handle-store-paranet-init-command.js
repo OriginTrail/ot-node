@@ -30,8 +30,11 @@ class HandleStoreParanetInitCommand extends HandleProtocolMessageCommand {
         } = commandData;
         const proximityScoreFunctionsPairId = commandData.proximityScoreFunctionsPairId ?? 1;
 
-        const { paranetBlockchain, paranetContract, paranetTokenId } =
-            this.ualService.resolveUAL(paranetUAL);
+        const {
+            blockchain: paranetBlockchain,
+            contract: paranetContract,
+            tokenId: paranetTokenId,
+        } = this.ualService.resolveUAL(paranetUAL);
         const assetUAL = this.ualService.deriveUAL(blockchain, contract, tokenId);
         if (paranetBlockchain !== blockchain) {
             await this.handleError(
