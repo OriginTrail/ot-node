@@ -1693,7 +1693,6 @@ class Web3Service {
         );
     }
 
-
     async isCuratedNode(paranetId, identityId) {
         return this.callContractFunction(this.ParanetsRegistryContract, 'isCuratedNode', [
             paranetId,
@@ -1705,6 +1704,7 @@ class Web3Service {
         return this.callContractFunction(this.ParanetsRegistryContract, 'getNodesAccessPolicy', [
             paranetId,
         ]);
+    }
 
     async getParanetCuratedNodes(paranetId) {
         return this.callContractFunction(
