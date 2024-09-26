@@ -1,8 +1,10 @@
+import Command from '../../../../command.js';
 import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
 import {
     ERROR_TYPE,
     OPERATION_ID_STATUS,
     NETWORK_MESSAGE_TYPES,
+    PARANET_ACCESS_POLICY,
 } from '../../../../../constants/constants.js';
 
 class HandleStoreParanetInitCommand extends HandleProtocolMessageCommand {
@@ -24,9 +26,72 @@ class HandleStoreParanetInitCommand extends HandleProtocolMessageCommand {
             tokenId,
             keyword,
             hashFunctionId,
-            // paranetUAL,
+            paranetUAL,
         } = commandData;
         const proximityScoreFunctionsPairId = commandData.proximityScoreFunctionsPairId ?? 1;
+
+        const { paranetBlockchain, paranetContract, paranetTokenId } =
+            this.ualService.resolveUAL(paranetUAL);
+        if (paranetBlockchain !== blockchain) {
+            await this.handleError(
+                operationId,
+                blockchain,
+                `Paranet blockchain ${paranetBlockchain} does not match asset blockchain ${blockchain}`,
+                this.errorType,
+                true,
+            );
+            return Command.empty();
+        }
+
+        // Validate node is in paranet
+        const paranetId = this.paranetService.constructParanetId(
+            paranetBlockchain,
+            paranetContract,
+            paranetTokenId,
+        );
+        const nodesAccessPolicy = await this.blockchainModuleManager.getNodesAccessPolicy(
+            blockchain,
+            paranetId,
+        );
+        if (nodesAccessPolicy === PARANET_ACCESS_POLICY.CURATED) {
+            const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
+            const isCuratedNode = await this.blockchainModuleManager.isCuratedNode(
+                blockchain,
+                paranetId,
+                identityId,
+            );
+            if (!isCuratedNode) {
+                await this.handleError(
+                    operationId,
+                    blockchain,
+                    `node with identity id ${identityId} is not a curated node in paranet with paranetid ${paranetId}`,
+                    this.errorType,
+                    true,
+                );
+                return Command.empty();
+            }
+        }
+
+        // Validate asset is in paranet
+        const knowledgeAssetId = await this.paranetService.constructKnowledgeAssetId(
+            blockchain,
+            contract,
+            tokenId,
+        );
+        const knowledgeAssetParanetId = await this.blockchainModuleManager.getParanetId(
+            blockchain,
+            knowledgeAssetId,
+        );
+        if (knowledgeAssetParanetId !== paranetId) {
+            await this.handleError(
+                operationId,
+                blockchain,
+                `Knowledge asset with id ${knowledgeAssetId} is not in paranet with UAL ${paranetUAL}`,
+                this.errorType,
+                true,
+            );
+            return Command.empty();
+        }
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
