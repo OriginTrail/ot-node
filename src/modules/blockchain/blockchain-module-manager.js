@@ -510,6 +510,21 @@ class BlockchainModuleManager extends BaseModuleManager {
     async getParanetId(blockchain, knowledgeAssetId) {
         return this.callImplementationFunction(blockchain, 'getParanetId', [knowledgeAssetId]);
     }
+
+    async isCuratedNode(blockchain, paranetId, identityId) {
+        return this.callImplementationFunction(blockchain, 'isCuratedNode', [
+            paranetId,
+            identityId,
+        ]);
+    }
+
+    async getNodesAccessPolicy(blockchain, paranetId) {
+        return this.callImplementationFunction(blockchain, 'getNodesAccessPolicy', [paranetId]);
+    }
+
+    async getParanetCuratedNodes(blockchain, paranetId) {
+        return this.callImplementationFunction(blockchain, 'getParanetCuratedNodes', [paranetId]);
+    }
 }
 
 export default BlockchainModuleManager;

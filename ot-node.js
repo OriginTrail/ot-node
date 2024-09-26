@@ -5,7 +5,7 @@ import { createRequire } from 'module';
 import { execSync } from 'child_process';
 import DependencyInjection from './src/service/dependency-injection.js';
 import Logger from './src/logger/logger.js';
-import { MIN_NODE_VERSION } from './src/constants/constants.js';
+import { MIN_NODE_VERSION, PARANET_ACCESS_POLICY } from './src/constants/constants.js';
 import FileService from './src/service/file-service.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
@@ -372,6 +372,7 @@ class OTNode {
         await autoUpdaterCommand.execute();
     }
 
+    // TODO: add validation for node being a part of paranet
     async initializeParanets() {
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const tripleStoreService = this.container.resolve('tripleStoreService');
@@ -386,39 +387,63 @@ class OTNode {
                 this.logger.warn(
                     `Unable to initialize Paranet with id ${paranetUAL} because of invalid UAL format`,
                 );
-            } else {
-                const { blockchain, contract, tokenId } = ualService.resolveUAL(paranetUAL);
-                if (!blockchainModuleManager.getImplementationNames().includes(blockchain)) {
+                continue;
+            }
+
+            const { blockchain, contract, tokenId } = ualService.resolveUAL(paranetUAL);
+            if (!blockchainModuleManager.getImplementationNames().includes(blockchain)) {
+                this.logger.warn(
+                    `Unable to initialize Paranet with id ${paranetUAL} because of unsupported blockchain implementation`,
+                );
+                continue;
+            }
+
+            const paranetId = paranetService.constructParanetId(blockchain, contract, tokenId);
+            // eslint-disable-next-line no-await-in-loop
+            const paranetExists = await blockchainModuleManager.paranetExists(
+                blockchain,
+                paranetId,
+            );
+            if (!paranetExists) {
+                this.logger.warn(
+                    `Unable to initialize Paranet with id ${paranetUAL} because it doesn't exist`,
+                );
+                continue;
+            }
+
+            // eslint-disable-next-line no-await-in-loop
+            const nodesAccessPolicy = await blockchainModuleManager.getNodesAccessPolicy(
+                blockchain,
+                paranetId,
+            );
+            if (nodesAccessPolicy === PARANET_ACCESS_POLICY.CURATED) {
+                // eslint-disable-next-line no-await-in-loop
+                const identityId = await blockchainModuleManager.getIdentityId(blockchain);
+                // eslint-disable-next-line no-await-in-loop
+                const isCuratedNode = await blockchainModuleManager.isCuratedNode(
+                    blockchain,
+                    paranetId,
+                    identityId,
+                );
+                if (!isCuratedNode) {
                     this.logger.warn(
-                        `Unable to initialize Paranet with id ${paranetUAL} because of unsupported blockchain implementation`,
+                        `Unable to initialize Paranet with id ${paranetUAL} because node with id ${identityId} is not a curated node`,
                     );
-                } else {
-                    const paranetId = paranetService.constructParanetId(
-                        blockchain,
-                        contract,
-                        tokenId,
-                    );
-                    // eslint-disable-next-line no-await-in-loop
-                    const paranetExists = await blockchainModuleManager.paranetExists(
-                        blockchain,
-                        paranetId,
-                    );
-                    if (!paranetExists) {
-                        this.logger.warn(
-                            `Unable to initialize Paranet with id ${paranetUAL} because it doesn't exist`,
-                        );
-                    } else {
-                        validParanets.push(paranetUAL);
-                        const repository = paranetService.getParanetRepositoryName(paranetUAL);
-                        // eslint-disable-next-line no-await-in-loop
-                        await tripleStoreModuleManager.initializeParanetRepository(repository);
-                        // eslint-disable-next-line no-await-in-loop
-                        await paranetService.initializeParanetRecord(blockchain, paranetId);
-                    }
+                    continue;
                 }
             }
-        }
 
+            validParanets.push(paranetUAL);
+            const repository = paranetService.getParanetRepositoryName(paranetUAL);
+            // eslint-disable-next-line no-await-in-loop
+            await tripleStoreModuleManager.initializeParanetRepository(repository);
+            // eslint-disable-next-line no-await-in-loop
+            await paranetService.initializeParanetRecord(blockchain, paranetId);
+        }
+        const repository = paranetService.getParanetRepositoryName(
+            'did:dkg:hardhat1:31337/0x8aafc28174bb6c3bdc7be92f18c2f134e876c05e/7',
+        );
+        await tripleStoreModuleManager.initializeParanetRepository(repository);
         this.config.assetSync.syncParanets = validParanets;
         tripleStoreService.initializeRepositories();
     }

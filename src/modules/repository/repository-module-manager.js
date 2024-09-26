@@ -168,6 +168,10 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('shard').getAllPeerRecords(blockchain);
     }
 
+    async getPeerRecordsByIds(blockchain, peerIds) {
+        return this.getRepository('shard').getPeerRecordsByIds(blockchain, peerIds);
+    }
+
     async getPeersCount(blockchain) {
         return this.getRepository('shard').getPeersCount(blockchain);
     }
@@ -553,6 +557,26 @@ class RepositoryModuleManager extends BaseModuleManager {
 
     async getParanetsBlockchains() {
         return this.getRepository('paranet').getParanetsBlockchains();
+    }
+
+    async createParanetSyncedAssetRecord(
+        blockchainId,
+        ual,
+        paranetUal,
+        publicAssertionId,
+        privateAssertionId,
+        sender,
+        transactionHash,
+    ) {
+        return this.getRepository('paranet_synced_asset').createParanetSyncedAssetRecord(
+            blockchainId,
+            ual,
+            paranetUal,
+            publicAssertionId,
+            privateAssertionId,
+            sender,
+            transactionHash,
+        );
     }
 }
 
