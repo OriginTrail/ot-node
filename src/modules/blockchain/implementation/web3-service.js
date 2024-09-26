@@ -1693,6 +1693,19 @@ class Web3Service {
         );
     }
 
+
+    async isCuratedNode(paranetId, identityId) {
+        return this.callContractFunction(this.ParanetsRegistryContract, 'isCuratedNode', [
+            paranetId,
+            identityId,
+        ]);
+    }
+
+    async getNodesAccessPolicy(paranetId) {
+        return this.callContractFunction(this.ParanetsRegistryContract, 'getNodesAccessPolicy', [
+            paranetId,
+        ]);
+
     async getParanetCuratedNodes(paranetId) {
         return this.callContractFunction(
             this.ParanetsRegistryContract,

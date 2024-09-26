@@ -5,12 +5,14 @@ import {
     OPERATION_ID_STATUS,
     LOCAL_STORE_TYPES,
     ZERO_BYTES32,
+    PARANET_ACCESS_POLICY,
 } from '../../../../constants/constants.js';
 
 class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishParanetService;
+        this.paranetService = ctx.paranetService;
     }
 
     /**
@@ -18,7 +20,6 @@ class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
      * @param command
      */
     async execute(command) {
-        // TODO: Validate this node is in paranet, validate this asset is in paranet
         const {
             operationId,
             blockchain,
@@ -26,6 +27,72 @@ class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
             tokenId,
             storeType = LOCAL_STORE_TYPES.TRIPLE,
         } = command.data;
+
+        const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+        const { paranetBlockchain, paranetContract, paranetTokenId } = this.ualService.resolveUAL(
+            cachedData.paranetUAL,
+        );
+        if (paranetBlockchain !== blockchain) {
+            await this.handleError(
+                operationId,
+                blockchain,
+                `Paranet blockchain ${paranetBlockchain} does not match asset blockchain ${blockchain} for asset with UAL ${ual}`,
+                this.errorType,
+                true,
+            );
+            return Command.empty();
+        }
+
+        // Validate node is in paranet
+        const paranetId = this.paranetService.constructParanetId(
+            paranetBlockchain,
+            paranetContract,
+            paranetTokenId,
+        );
+        const nodesAccessPolicy = await this.blockchainModuleManager.getNodesAccessPolicy(
+            blockchain,
+            paranetId,
+        );
+        if (nodesAccessPolicy === PARANET_ACCESS_POLICY.CURATED) {
+            const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
+            const isCuratedNode = await this.blockchainModuleManager.isCuratedNode(
+                blockchain,
+                paranetId,
+                identityId,
+            );
+            if (!isCuratedNode) {
+                await this.handleError(
+                    operationId,
+                    blockchain,
+                    `node with identity id ${identityId} is not a curated node in paranet with paranetid ${paranetId}. Asset UAL: ${ual}`,
+                    this.errorType,
+                    true,
+                );
+                return Command.empty();
+            }
+        }
+
+        // Validate asset is in paranet
+        const knowledgeAssetId = await this.paranetService.constructKnowledgeAssetId(
+            blockchain,
+            contract,
+            tokenId,
+        );
+        const knowledgeAssetParanetId = await this.blockchainModuleManager.getParanetId(
+            blockchain,
+            knowledgeAssetId,
+        );
+        if (knowledgeAssetParanetId !== paranetId) {
+            await this.handleError(
+                operationId,
+                blockchain,
+                `Knowledge asset with id ${knowledgeAssetId} is not in paranet with UAL ${cachedData.paranetUAL}`,
+                this.errorType,
+                true,
+            );
+            return Command.empty();
+        }
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -49,8 +116,6 @@ class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
         if (!blockchainAssertionId || blockchainAssertionId === ZERO_BYTES32) {
             return Command.retry();
         }
-        const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
-        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         this.logger.info(
             `Validating asset's public assertion with id: ${cachedData.cachedAssertions.public.assertionId} ual: ${ual}`,
         );
