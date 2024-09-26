@@ -24,6 +24,7 @@ class HandleStoreParanetInitCommand extends HandleProtocolMessageCommand {
             tokenId,
             keyword,
             hashFunctionId,
+            // paranetUAL,
         } = commandData;
         const proximityScoreFunctionsPairId = commandData.proximityScoreFunctionsPairId ?? 1;
 

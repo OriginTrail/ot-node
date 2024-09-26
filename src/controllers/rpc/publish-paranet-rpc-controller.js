@@ -56,6 +56,7 @@ class PublishParanetController extends BaseController {
             tokenId: dataSource.tokenId,
             hashFunctionId: message.data.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID,
             proximityScoreFunctionsPairId: dataSource.proximityScoreFunctionsPairId ?? 1,
+            paranetUAL: dataSource.paranetUAL,
         };
 
         await this.commandExecutor.add(command);
