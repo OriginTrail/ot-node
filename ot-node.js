@@ -59,6 +59,12 @@ class OTNode {
             this.config,
         );
 
+        await MigrationExecutor.executeDevnetPruningMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
