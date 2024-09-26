@@ -1692,6 +1692,15 @@ class Web3Service {
             [knowledgeAssetId],
         );
     }
+
+    async getParanetCuratedNodes(paranetId) {
+        return this.callContractFunction(
+            this.ParanetsRegistryContract,
+            'getCuratedNodes',
+            [paranetId],
+            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+        );
+    }
 }
 
 export default Web3Service;

@@ -55,6 +55,17 @@ class ShardRepository {
         return this.model.findAll(query);
     }
 
+    async getPeerRecordsByIds(blockchainId, peerIds) {
+        return this.model.findAll({
+            where: {
+                blockchainId,
+                peerId: {
+                    [Sequelize.Op.in]: peerIds,
+                },
+            },
+        });
+    }
+
     async getPeerRecord(peerId, blockchainId) {
         return this.model.findOne({
             where: {

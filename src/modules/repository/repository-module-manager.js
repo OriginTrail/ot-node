@@ -168,6 +168,10 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('shard').getAllPeerRecords(blockchain);
     }
 
+    async getPeerRecordsByIds(blockchain, peerIds) {
+        return this.getRepository('shard').getPeerRecordsByIds(blockchain, peerIds);
+    }
+
     async getPeersCount(blockchain) {
         return this.getRepository('shard').getPeersCount(blockchain);
     }
