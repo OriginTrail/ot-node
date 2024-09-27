@@ -18,6 +18,7 @@ class PublishParanetController extends BaseController {
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.dataService = ctx.dataService;
+        this.paranetService = ctx.paranetService;
     }
 
     async handleRequest(req, res) {
@@ -29,7 +30,7 @@ class PublishParanetController extends BaseController {
         );
 
         this.logger.info(
-            `[PARANET PUBLISH] Received asset with public assertion id: ${assertions[0]?.assertionId}, private assertion id: ${assertions[1]?.assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}, operation id: ${operationId}`,
+            `[PARANET PUBLISH] Received asset with public assertion id: ${assertions[0]?.assertionId}, private assertion id: ${assertions[1]?.assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}, paranetUAL: ${paranetUAL}, operation id: ${operationId}`,
         );
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -85,7 +86,18 @@ class PublishParanetController extends BaseController {
                 default:
                     throw Error('Unexpected number of assertions in local store');
             }
-            // Expand this to hold both private and publish assertion like in local store
+            const {
+                blockchain: paranetBlockchain,
+                contract: paranetContract,
+                tokenId: paranetTokenId,
+            } = this.ualService.resolveUAL(paranetUAL);
+
+            const paranetId = this.paranetService.constructParanetId(
+                paranetBlockchain,
+                paranetContract,
+                paranetTokenId,
+            );
+
             await this.operationIdService.cacheOperationIdData(operationId, {
                 cachedAssertions,
                 blockchain,
@@ -115,6 +127,7 @@ class PublishParanetController extends BaseController {
                     hashFunctionId,
                     operationId,
                     storeType: LOCAL_STORE_TYPES.TRIPLE,
+                    paranetId,
                 },
                 transactional: false,
             });

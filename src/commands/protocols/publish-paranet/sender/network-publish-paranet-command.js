@@ -17,7 +17,7 @@ class NetworkPublishParanetCommand extends NetworkProtocolCommand {
      * @param command
      */
     async execute(command) {
-        const { blockchain, contract, tokenId, hashFunctionId } = command.data;
+        const { blockchain, contract, tokenId, hashFunctionId, paranetId } = command.data;
 
         const keywords = await this.getKeywords(command);
         const batchSize = await this.getBatchSize(blockchain);
@@ -54,6 +54,7 @@ class NetworkPublishParanetCommand extends NetworkProtocolCommand {
                     errorType: this.errorType,
                     networkProtocols: this.operationService.getNetworkProtocols(),
                     proximityScoreFunctionsPairId,
+                    paranetId,
                 },
                 transactional: false,
             }),
