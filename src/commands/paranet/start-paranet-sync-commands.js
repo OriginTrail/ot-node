@@ -8,6 +8,7 @@ class StartParanetSyncCommands extends Command {
         this.ualService = ctx.ualService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.paranetService = ctx.paranetService;
 
         this.errorType = ERROR_TYPE.PARANET.START_PARANET_SYNC_ERROR;
     }
