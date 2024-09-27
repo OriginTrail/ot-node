@@ -1,7 +1,8 @@
 import Command from '../../../command.js';
+import NetworkProtocolCommand from '../../common/network-protocol-command.js';
 import { ERROR_TYPE } from '../../../../constants/constants.js';
 
-class CuratedParanetNetworkGetCommand extends Command {
+class CuratedParanetNetworkGetCommand extends NetworkProtocolCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.getService;
@@ -16,6 +17,7 @@ class CuratedParanetNetworkGetCommand extends Command {
     async execute(command) {
         const { blockchain } = command.data;
 
+        const keywords = await this.getKeywords(command);
         const batchSize = await this.getBatchSize(blockchain);
         const minAckResponses = await this.getMinAckResponses(blockchain);
 
@@ -24,21 +26,37 @@ class CuratedParanetNetworkGetCommand extends Command {
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
         ];
 
-        await this.commandExecutor.add({
-            name: commandSequence[0],
-            sequence: commandSequence.slice(1),
-            delay: 0,
-            data: {
-                ...command.data,
-                batchSize,
-                minAckResponses,
-                errorType: this.errorType,
-                networkProtocols: this.operationService.getNetworkProtocols(),
-            },
-            transactional: false,
-        });
+        const addCommandPromises = keywords.map((keyword) =>
+            this.commandExecutor.add({
+                name: commandSequence[0],
+                sequence: commandSequence.slice(1),
+                delay: 0,
+                data: {
+                    ...command.data,
+                    keyword,
+                    batchSize,
+                    minAckResponses,
+                    errorType: this.errorType,
+                    networkProtocols: this.operationService.getNetworkProtocols(),
+                },
+                transactional: false,
+            }),
+        );
+
+        await Promise.all(addCommandPromises);
 
         return Command.empty();
+    }
+
+    async getKeywords(command) {
+        const { blockchain, contract, tokenId } = command.data;
+        const locationKeyword = await this.ualService.calculateLocationKeyword(
+            blockchain,
+            contract,
+            tokenId,
+        );
+
+        return [locationKeyword];
     }
 
     async getBatchSize() {
