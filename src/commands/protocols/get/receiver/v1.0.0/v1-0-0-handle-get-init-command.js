@@ -68,6 +68,15 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
             const syncedAssetRecord =
                 await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
 
+            if (!syncedAssetRecord) {
+                return {
+                    messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                    messageData: {
+                        errorMessage: `Synced record is missing in 'paranet_synced_asset' table for Assertion: ${assertionId}, Paranet (${paranetId}) with UAL: ${paranetUAL}`,
+                    },
+                };
+            }
+
             const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
             assertionExists = await this.tripleStoreService.assertionExists(
                 paranetRepository,
