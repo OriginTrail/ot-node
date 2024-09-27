@@ -23,6 +23,12 @@ class ParanetSyncedAssetRepository {
             transactionHash,
         });
     }
+
+    async getParanetSyncedAssetRecordByUAL(ual) {
+        return this.model.findOne({
+            where: { ual },
+        });
+    }
 }
 
 export default ParanetSyncedAssetRepository;

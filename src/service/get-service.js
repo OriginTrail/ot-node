@@ -42,7 +42,6 @@ class GetService extends OperationService {
             contract,
             tokenId,
             assertionId,
-            privateAssertionId,
             assetSync,
             stateIndex,
             paranetSync,
@@ -166,8 +165,8 @@ class GetService extends OperationService {
                         blockchain,
                         ual,
                         paranetUAL,
-                        assertionId,
-                        privateAssertionId,
+                        responseData.syncedAssetRecord.publicAssertionId,
+                        responseData.syncedAssetRecord.privateAssertionId,
                         sender,
                         txHash,
                     );

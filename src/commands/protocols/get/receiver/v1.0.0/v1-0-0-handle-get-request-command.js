@@ -26,7 +26,6 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             contract,
             tokenId,
             assertionId,
-            privateAssertionId,
             state,
             paranetUAL,
             paranetId,
@@ -57,24 +56,36 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
                 };
             }
 
+            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+            const syncedAssetRecord =
+                await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
+
             const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
-            if (privateAssertionId) {
+            if (syncedAssetRecord.privateAssertionId) {
                 nquads = await this.tripleStoreService.getAssertion(
                     paranetRepository,
-                    privateAssertionId,
+                    syncedAssetRecord.privateAssertionId,
                 );
             } else {
-                nquads = await this.tripleStoreService.getAssertion(paranetRepository, assertionId);
+                nquads = await this.tripleStoreService.getAssertion(
+                    paranetRepository,
+                    syncedAssetRecord.publicAssertionId,
+                );
             }
 
-            if (!nquads?.length) {
+            if (nquads?.length) {
                 return {
-                    messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                    messageData: {
-                        errorMessage: `Unable to find assertion ${assertionId} for Paranet ${paranetId} with UAL: ${paranetUAL}`,
-                    },
+                    messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
+                    messageData: { nquads, syncedAssetRecord },
                 };
             }
+
+            return {
+                messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                messageData: {
+                    errorMessage: `Unable to find assertion ${assertionId} for Paranet ${paranetId} with UAL: ${paranetUAL}`,
+                },
+            };
         }
 
         if (

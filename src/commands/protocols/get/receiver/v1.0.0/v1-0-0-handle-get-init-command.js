@@ -12,6 +12,7 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
         this.tripleStoreService = ctx.tripleStoreService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.operationService = ctx.getService;
         this.pendingStorageService = ctx.pendingStorageService;
         this.ualService = ctx.ualService;
@@ -26,7 +27,6 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
             contract,
             tokenId,
             assertionId,
-            privateAssertionId,
             state,
             paranetUAL,
             paranetId,
@@ -62,16 +62,20 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
                 };
             }
 
+            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+            const syncedAssetRecord =
+                await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
+
             const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
-            if (privateAssertionId) {
+            if (syncedAssetRecord.privateAssertionId) {
                 assertionExists = await this.tripleStoreService.assertionExists(
                     paranetRepository,
-                    privateAssertionId,
+                    syncedAssetRecord.privateAssertionId,
                 );
             } else {
                 assertionExists = await this.tripleStoreService.assertionExists(
                     paranetRepository,
-                    assertionId,
+                    syncedAssetRecord.publicAssertionId,
                 );
             }
 

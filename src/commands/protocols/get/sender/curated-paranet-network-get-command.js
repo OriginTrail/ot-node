@@ -21,7 +21,6 @@ class CuratedParanetNetworkGetCommand extends Command {
 
         const commandSequence = [
             'findCuratedParanetNodesCommand',
-            'getPrivateAssertionIdCommand',
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
         ];
 
