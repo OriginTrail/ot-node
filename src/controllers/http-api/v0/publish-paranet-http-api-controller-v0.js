@@ -108,11 +108,11 @@ class PublishParanetController extends BaseController {
                 txHash,
             });
 
-            const commandSequence = ['publishParanetValidateAssetCommand'];
-
-            commandSequence.push('localStoreParanetCommand');
-
-            commandSequence.push('networkPublishParanetCommand');
+            const commandSequence = [
+                'publishParanetValidateAssetCommand',
+                'localStoreParanetCommand',
+                'networkPublishParanetCommand',
+            ];
 
             await this.commandExecutor.add({
                 name: commandSequence[0],
