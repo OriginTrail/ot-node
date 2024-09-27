@@ -47,6 +47,7 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
 
         if (paranetUAL) {
             const paranetCuratedNodes = await this.blockchainModuleManager.getParanetCuratedNodes(
+                blockchain,
                 paranetId,
             );
             const paranetCuratedPeerIds = paranetCuratedNodes.map((node) =>
