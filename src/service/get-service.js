@@ -153,13 +153,25 @@ class GetService extends OperationService {
                         this.paranetService.getParanetRepositoryName(paranetUAL);
                     await this.tripleStoreService.localStoreAsset(
                         paranetRepository,
-                        assertionId,
+                        responseData.syncedAssetRecord.publicAssertionId,
                         responseData.nquads,
                         blockchain,
                         contract,
                         tokenId,
                         keyword,
                     );
+
+                    if (responseData.privateNquads) {
+                        await this.tripleStoreService.localStoreAsset(
+                            paranetRepository,
+                            responseData.syncedAssetRecord.privateAssertionId,
+                            responseData.privateNquads,
+                            blockchain,
+                            contract,
+                            tokenId,
+                            keyword,
+                        );
+                    }
 
                     await this.repositoryModuleManager.createParanetSyncedAssetRecord(
                         blockchain,

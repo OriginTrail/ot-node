@@ -67,16 +67,18 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
                 await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
 
             const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
+            assertionExists = await this.tripleStoreService.assertionExists(
+                paranetRepository,
+                syncedAssetRecord.publicAssertionId,
+            );
+
             if (syncedAssetRecord.privateAssertionId) {
-                assertionExists = await this.tripleStoreService.assertionExists(
-                    paranetRepository,
-                    syncedAssetRecord.privateAssertionId,
-                );
-            } else {
-                assertionExists = await this.tripleStoreService.assertionExists(
-                    paranetRepository,
-                    syncedAssetRecord.publicAssertionId,
-                );
+                assertionExists =
+                    assertionExists &&
+                    (await this.tripleStoreService.assertionExists(
+                        paranetRepository,
+                        syncedAssetRecord.privateAssertionId,
+                    ));
             }
 
             if (!assertionExists) {
