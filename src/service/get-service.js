@@ -7,6 +7,7 @@ import {
     OPERATIONS,
     OPERATION_REQUEST_STATUS,
     TRIPLE_STORE_REPOSITORIES,
+    PARANET_NODES_ACCESS_POLICIES,
 } from '../constants/constants.js';
 
 class GetService extends OperationService {
@@ -23,6 +24,7 @@ class GetService extends OperationService {
         ];
         this.ualService = ctx.ualService;
         this.tripleStoreService = ctx.tripleStoreService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.paranetService = ctx.paranetService;
         this.operationMutex = new Mutex();
@@ -40,12 +42,19 @@ class GetService extends OperationService {
             contract,
             tokenId,
             assertionId,
+            privateAssertionId,
             assetSync,
             stateIndex,
             paranetSync,
             paranetTokenId,
             paranetLatestAsset,
+            paranetMetadata,
+            sender,
+            txHash,
         } = command.data;
+
+        const paranetNodesAccessPolicy =
+            PARANET_NODES_ACCESS_POLICIES[paranetMetadata.nodesAccessPolicy];
 
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
@@ -91,15 +100,28 @@ class GetService extends OperationService {
                 this.logger.debug(
                     `Paranet sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
                 );
-                await this.tripleStoreService.localStoreAsset(
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
-                    assertionId,
-                    responseData.nquads,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    keyword,
-                );
+
+                if (paranetNodesAccessPolicy === 'OPEN') {
+                    await this.tripleStoreService.localStoreAsset(
+                        TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                        assertionId,
+                        responseData.nquads,
+                        blockchain,
+                        contract,
+                        tokenId,
+                        keyword,
+                    );
+                } else if (paranetNodesAccessPolicy === 'CURATED') {
+                    await this.tripleStoreService.localStoreAsset(
+                        TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+                        assertionId,
+                        responseData.nquads,
+                        blockchain,
+                        contract,
+                        tokenId,
+                        keyword,
+                    );
+                }
             } else if (assetSync) {
                 this.logger.debug(
                     `Asset sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
@@ -135,6 +157,16 @@ class GetService extends OperationService {
                         contract,
                         tokenId,
                         keyword,
+                    );
+
+                    await this.repositoryModuleManager.createParanetSyncedAssetRecord(
+                        blockchain,
+                        ual,
+                        paranetUAL,
+                        assertionId,
+                        privateAssertionId,
+                        sender,
+                        txHash,
                     );
                 }
             }

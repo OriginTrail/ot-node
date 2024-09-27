@@ -73,12 +73,14 @@ class FindCuratedParanetNodesCommand extends Command {
         const paranetCuratedNodes = await this.blockchainModuleManager.getParanetCuratedNodes(
             paranetId,
         );
-        const paranetCuratedNodeIds = paranetCuratedNodes.map((node) => node.nodeId);
+        const paranetCuratedPeerIds = paranetCuratedNodes.map((node) =>
+            this.blockchainModuleManager.convertHexToAscii(blockchainId, node.nodeId),
+        );
 
         const paranetCuratedNodePeerRecords =
             await this.repositoryModuleManager.getPeerRecordsByIds(
                 blockchainId,
-                paranetCuratedNodeIds,
+                paranetCuratedPeerIds,
             );
         const availableParanetNodes = paranetCuratedNodePeerRecords.filter(
             (node) => node.lastSeen >= node.lastDialed,

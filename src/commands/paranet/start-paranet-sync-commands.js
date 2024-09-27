@@ -23,8 +23,21 @@ class StartParanetSyncCommands extends Command {
 
         const promises = [];
         this.config.assetSync?.syncParanets.forEach(async (paranetUAL) => {
+            const { blockchain, contract, tokenId } = this.ualService.resolveUAL(paranetUAL);
+            const paranetId = this.paranetService.constructParanetId(blockchain, contract, tokenId);
+
+            const paranetMetadata = await this.blockchainModuleManager.getParanetMetadata(
+                blockchain,
+                paranetId,
+            );
+
             const commandData = {
+                blockchain,
+                contract,
+                tokenId,
                 paranetUAL,
+                paranetId,
+                paranetMetadata,
                 operationId,
             };
 
