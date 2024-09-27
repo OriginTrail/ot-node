@@ -91,6 +91,11 @@ export const CONTENT_ASSET_HASH_FUNCTION_ID = 1;
 
 export const PARANET_SYNC_KA_COUNT = 50;
 
+export const PARANET_ACCESS_POLICY = {
+    OPEN: 0,
+    CURATED: 1,
+};
+
 export const TRIPLE_STORE_REPOSITORIES = {
     PUBLIC_CURRENT: 'publicCurrent',
     PUBLIC_HISTORY: 'publicHistory',
@@ -365,6 +370,20 @@ export const ERROR_TYPE = {
         START_PARANET_SYNC_ERROR: 'StartParanetSyncError',
         PARANET_SYNC_ERROR: 'ParanetSyncError',
     },
+    PUBLISH_PARANET: {
+        PUBLISH_PARANET_START_ERROR: 'PublishParanetStartError',
+        PUBLISH_PARANET_ROUTE_ERROR: 'PublishParanetRouteError',
+        PUBLISH_PARANET_LOCAL_STORE_ERROR: 'PublishParanetLocalStoreError',
+        PUBLISH_PARANET_LOCAL_STORE_REMOTE_ERROR: 'PublishParanetLocalStoreRemoteError',
+        PUBLISH_PARANET_FIND_NODES_ERROR: 'PublishParanetFindNodesError',
+        PUBLISH_PARANET_STORE_INIT_ERROR: 'PublishParanetStoreInitError',
+        PUBLISH_PARANET_STORE_REQUEST_ERROR: 'PublishParanetStoreRequestError',
+        PUBLISH_PARANET_ERROR: 'PublishParanetError',
+        PUBLISH_PARANET_REMOTE_ERROR: 'PublishParanetRemoteError',
+    },
+    LOCAL_STORE_PARANET: {
+        LOCAL_STORE_PARANET_ERROR: 'LocalStoreParanetError',
+    },
 };
 export const OPERATION_ID_STATUS = {
     PENDING: 'PENDING',
@@ -450,10 +469,33 @@ export const OPERATION_ID_STATUS = {
         LOCAL_STORE_START: 'LOCAL_STORE_START',
         LOCAL_STORE_END: 'LOCAL_STORE_END',
     },
+    LOCAL_STORE_PARANET: {
+        LOCAL_STORE_PARANET_INIT_START: 'LOCAL_STORE__PARANET_INIT_START',
+        LOCAL_STORE_PARANET_INIT_END: 'LOCAL_STORE__PARANET_INIT_END',
+        LOCAL_STORE_PARANET_START: 'LOCAL_STORE__PARANET_START',
+        LOCAL_STORE_PARANET_END: 'LOCAL_STORE__PARANET_END',
+    },
+    PUBLISH_PARANET: {
+        VALIDATING_PUBLISH_PARANET_ASSERTION_REMOTE_START:
+            'VALIDATING_PUBLISH_PARANET_ASSERTION_REMOTE_START',
+        VALIDATING_PUBLISH_PARANET_ASSERTION_REMOTE_END:
+            'VALIDATING_PUBLISH_PARANET_ASSERTION_REMOTE_END',
+        INSERTING_ASSERTION: 'INSERTING_ASSERTION',
+        PUBLISHING_PARANET_ASSERTION: 'PUBLISHING_PARANET_ASSERTION',
+        PUBLISH_PARANET_START: 'PUBLISH_PARANET_START',
+        PUBLISH_PARANET_INIT_START: 'PUBLISH_PARANET_INIT_START',
+        PUBLISH_PARANET_INIT_END: 'PUBLISH_PARANET_INIT_END',
+        PUBLISH_PARANET_LOCAL_STORE_START: 'PUBLISH_PARANET_LOCAL_STORE_START',
+        PUBLISH_PARANET_LOCAL_STORE_END: 'PUBLISH_PARANET_LOCAL_STORE_END',
+        PUBLISH_PARANET_REPLICATE_START: 'PUBLISH_PARANET_REPLICATE_START',
+        PUBLISH_PARANET_REPLICATE_END: 'PUBLISH_PARANET_REPLICATE_END',
+        PUBLISH_PARANET_END: 'PUBLISH_PARANET_END',
+    },
 };
 
 export const OPERATIONS = {
     PUBLISH: 'publish',
+    PUBLISH_PARANET: 'publishParanet',
     UPDATE: 'update',
     GET: 'get',
 };
@@ -615,6 +657,11 @@ export const HTTP_API_ROUTES = {
             path: '/bid-suggestion',
             options: {},
         },
+        'publish-paranet': {
+            method: 'post',
+            path: '/publish-paranet',
+            options: { rateLimit: true },
+        },
     },
     v1: {},
 };
@@ -625,6 +672,7 @@ export const HTTP_API_ROUTES = {
  */
 export const NETWORK_PROTOCOLS = {
     STORE: ['/store/1.0.0'],
+    STORE_PARANET: ['/storeParanet/1.0.0'],
     UPDATE: ['/update/1.0.0'],
     GET: ['/get/1.0.0'],
 };

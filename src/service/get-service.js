@@ -137,6 +137,9 @@ class GetService extends OperationService {
                     keyword,
                 );
 
+                // paranet_synced_record insert for new asset
+                // get returns sender & txHash
+
                 // Paranet sync for latest state
                 if (paranetSync) {
                     this.logger.debug(
