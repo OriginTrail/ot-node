@@ -44,13 +44,15 @@ class ParanetSyncCommand extends Command {
             paranetId,
         );
         contractKaCount = contractKaCount.toNumber();
-
         const cachedKaCount = (
             await this.repositoryModuleManager.getParanetKnowledgeAssetsCount(paranetId, blockchain)
         )[0].dataValues.ka_count;
 
         const cachedMissedKaCount =
             await this.repositoryModuleManager.getCountOfMissedAssetsOfParanet(paranetUAL);
+        console.log(
+            `contractKaCount ${contractKaCount}, cachedKaCount ${cachedKaCount}, cachedMissedKaCount ${cachedMissedKaCount}`,
+        );
         if (cachedKaCount + cachedMissedKaCount >= contractKaCount) {
             this.logger.info(
                 `Paranet sync: KA count from contract and in DB is the same, nothing new to sync, for paranet: ${paranetUAL} (${paranetId}), operation ID: ${operationId}!`,
