@@ -424,6 +424,7 @@ class ParanetSyncCommand extends Command {
             const getOperationCachedData = await this.operationIdService.getCachedOperationIdData(
                 operationId,
             );
+            console.log(getOperationCachedData);
             if (getOperationCachedData?.message === 'Unable to find assertion on the network!') {
                 await this.repositoryModuleManager.createMissedParanetAssetRecord({
                     blockchainId: blockchain,
