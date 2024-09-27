@@ -578,6 +578,10 @@ class RepositoryModuleManager extends BaseModuleManager {
             transactionHash,
         );
     }
+
+    async getParanetSyncedAssetRecordByUAL(ual) {
+        return this.getRepository('paranet_synced_asset').getParanetSyncedAssetRecordByUAL(ual);
+    }
 }
 
 export default RepositoryModuleManager;

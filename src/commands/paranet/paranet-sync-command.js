@@ -11,6 +11,7 @@ import {
     TRIPLE_STORE_REPOSITORIES,
     PARANET_SYNC_KA_COUNT,
     OPERATION_STATUS,
+    PARANET_NODES_ACCESS_POLICIES,
 } from '../../constants/constants.js';
 
 class ParanetSyncCommand extends Command {
@@ -28,13 +29,14 @@ class ParanetSyncCommand extends Command {
     }
 
     async execute(command) {
-        const { operationId, paranetUAL } = command.data;
+        const { blockchain, tokenId, operationId, paranetUAL, paranetId, paranetMetadata } =
+            command.data;
 
-        const { blockchain, contract, tokenId } = this.ualService.resolveUAL(paranetUAL);
-        const paranetId = this.paranetService.constructParanetId(blockchain, contract, tokenId);
+        const paranetNodesAccessPolicy =
+            PARANET_NODES_ACCESS_POLICIES[paranetMetadata.nodesAccessPolicy];
 
         this.logger.info(
-            `Paranet sync: Starting paranet sync for paranet: ${paranetUAL}, operation ID: ${operationId}`,
+            `Paranet sync: Starting paranet sync for paranet: ${paranetUAL} (${paranetId}), operation ID: ${operationId}`,
         );
 
         let contractKaCount = await this.blockchainModuleManager.getParanetKnowledgeAssetsCount(
@@ -51,7 +53,7 @@ class ParanetSyncCommand extends Command {
             await this.repositoryModuleManager.getCountOfMissedAssetsOfParanet(paranetUAL);
         if (cachedKaCount + cachedMissedKaCount >= contractKaCount) {
             this.logger.info(
-                `Paranet sync: KA count from contract and in DB is the same, nothing new to sync, for paranet: ${paranetUAL}, operation ID: ${operationId}!`,
+                `Paranet sync: KA count from contract and in DB is the same, nothing new to sync, for paranet: ${paranetUAL} (${paranetId}), operation ID: ${operationId}!`,
             );
             if (cachedMissedKaCount > 0) {
                 this.logger.info(
@@ -75,7 +77,7 @@ class ParanetSyncCommand extends Command {
                         (async () => {
                             const { knowledgeAssetId } = missedParanetAsset;
                             this.logger.info(
-                                `Paranet sync: Syncing missed token id: ${knowledgeAssetId} for ${paranetUAL} with operation id: ${operationId}`,
+                                `Paranet sync: Syncing missed token id: ${knowledgeAssetId} for ${paranetUAL} (${paranetId}) with operation id: ${operationId}`,
                             );
 
                             const { knowledgeAssetStorageContract, tokenId: kaTokenId } =
@@ -113,6 +115,8 @@ class ParanetSyncCommand extends Command {
                                         stateIndex === assertionIds.length - 2,
                                         paranetUAL,
                                         knowledgeAssetId,
+                                        paranetNodesAccessPolicy,
+                                        paranetMetadata,
                                     ));
                             }
                             // Then sync the last one, but put it in the current repo
@@ -131,6 +135,8 @@ class ParanetSyncCommand extends Command {
                                     false,
                                     paranetUAL,
                                     knowledgeAssetId,
+                                    paranetNodesAccessPolicy,
+                                    paranetMetadata,
                                 ));
 
                             if (isSuccessful) {
@@ -171,7 +177,7 @@ class ParanetSyncCommand extends Command {
         this.logger.info(
             `Paranet sync: Syncing ${
                 contractKaCount + cachedMissedKaCount - cachedKaCount
-            } new assets for paranet: ${paranetUAL}, operation ID: ${operationId}`,
+            } new assets for paranet: ${paranetUAL} (${paranetId}), operation ID: ${operationId}`,
         );
         // TODO: Rename i, should it be cachedKaCount + 1 as cachedKaCount is already in, but count is index
         const kaToUpdate = [];
@@ -198,7 +204,7 @@ class ParanetSyncCommand extends Command {
             promises.push(
                 (async () => {
                     this.logger.info(
-                        `Paranet sync: Syncing token id: ${knowledgeAssetId} for ${paranetUAL} with operation id: ${operationId}`,
+                        `Paranet sync: Syncing token id: ${knowledgeAssetId} for ${paranetUAL} (${paranetId}) with operation id: ${operationId}`,
                     );
 
                     const { knowledgeAssetStorageContract, tokenId: kaTokenId } =
@@ -236,6 +242,8 @@ class ParanetSyncCommand extends Command {
                                 stateIndex === assertionIds.length - 2,
                                 paranetUAL,
                                 knowledgeAssetId,
+                                paranetNodesAccessPolicy,
+                                paranetMetadata,
                             ));
                     }
 
@@ -255,6 +263,8 @@ class ParanetSyncCommand extends Command {
                             false,
                             paranetUAL,
                             knowledgeAssetId,
+                            paranetNodesAccessPolicy,
+                            paranetMetadata,
                         ));
 
                     return isSuccessful;
@@ -292,6 +302,8 @@ class ParanetSyncCommand extends Command {
         deleteFromEarlier,
         paranetUAL,
         knowledgeAssetId,
+        paranetNodesAccessPolicy,
+        paranetMetadata,
     ) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         try {
@@ -335,33 +347,59 @@ class ParanetSyncCommand extends Command {
                 ),
             ]);
 
-            const hashFunctionId = CONTENT_ASSET_HASH_FUNCTION_ID;
-
             this.logger.debug(
                 `Paranet sync: Get for ${ual} with operation id ${operationId} initiated. blockchain: ${blockchain}`,
             );
 
-            await this.commandExecutor.add({
-                name: 'networkGetCommand',
-                sequence: [],
-                delay: 0,
-                data: {
-                    operationId,
-                    id: ual,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    state: assertionId,
-                    hashFunctionId,
-                    assertionId,
-                    assetSync: true,
-                    stateIndex,
-                    paranetSync: true,
-                    paranetTokenId,
-                    paranetLatestAsset: latestAsset,
-                },
-                transactional: false,
-            });
+            if (paranetNodesAccessPolicy === 'OPEN') {
+                await this.commandExecutor.add({
+                    name: 'networkGetCommand',
+                    sequence: [],
+                    delay: 0,
+                    data: {
+                        operationId,
+                        id: ual,
+                        blockchain,
+                        contract,
+                        tokenId,
+                        state: assertionId,
+                        hashFunctionId: CONTENT_ASSET_HASH_FUNCTION_ID,
+                        assertionId,
+                        assetSync: true,
+                        stateIndex,
+                        paranetSync: true,
+                        paranetTokenId,
+                        paranetLatestAsset: latestAsset,
+                        paranetMetadata,
+                    },
+                    transactional: false,
+                });
+            } else if (paranetNodesAccessPolicy === 'CURATED') {
+                await this.commandExecutor.add({
+                    name: 'curatedParanetNetworkGetCommand',
+                    sequence: [],
+                    delay: 0,
+                    data: {
+                        operationId,
+                        id: ual,
+                        blockchain,
+                        contract,
+                        tokenId,
+                        state: assertionId,
+                        hashFunctionId: CONTENT_ASSET_HASH_FUNCTION_ID,
+                        assertionId,
+                        assetSync: true,
+                        stateIndex,
+                        paranetSync: true,
+                        paranetTokenId,
+                        paranetLatestAsset: latestAsset,
+                        paranetUAL,
+                        paranetId,
+                        paranetMetadata,
+                    },
+                    transactional: false,
+                });
+            }
 
             await this.operationIdService.updateOperationIdStatus(
                 operationId,

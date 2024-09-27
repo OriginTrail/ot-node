@@ -287,7 +287,7 @@ export const NETWORK_MESSAGE_TYPES = {
     },
 };
 
-export const MINERS_ACCESS_POLICIES = ['OPEN', 'CURATED'];
+export const PARANET_NODES_ACCESS_POLICIES = ['OPEN', 'CURATED'];
 
 export const NETWORK_MESSAGE_TIMEOUT_MILLS = {
     PUBLISH: {
@@ -335,6 +335,7 @@ export const ERROR_TYPE = {
     GET: {
         GET_ROUTE_ERROR: 'GetRouteError',
         GET_ASSERTION_ID_ERROR: 'GetAssertionIdError',
+        GET_PRIVATE_ASSERTION_ID_ERROR: 'GetPrivateAssertionIdError',
         GET_LOCAL_ERROR: 'GetLocalError',
         GET_NETWORK_ERROR: 'GetNetworkError',
         GET_START_ERROR: 'GetStartError',

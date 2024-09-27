@@ -12,14 +12,26 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
         this.tripleStoreService = ctx.tripleStoreService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.operationService = ctx.getService;
         this.pendingStorageService = ctx.pendingStorageService;
+        this.ualService = ctx.ualService;
 
         this.errorType = ERROR_TYPE.GET.GET_INIT_REMOTE_ERROR;
     }
 
     async prepareMessage(commandData) {
-        const { operationId, blockchain, contract, tokenId, assertionId, state } = commandData;
+        const {
+            operationId,
+            blockchain,
+            contract,
+            tokenId,
+            assertionId,
+            state,
+            paranetUAL,
+            paranetId,
+            remotePeerId,
+        } = commandData;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -31,8 +43,54 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
             `Checking if assertion ${assertionId} exists for state ${state}, on blockchain: ${blockchain}, contract: ${contract}, and tokenId: ${tokenId}`,
         );
 
-        let assertionExists;
+        let assertionExists = false;
+
+        if (paranetUAL) {
+            const paranetCuratedNodes = await this.blockchainModuleManager.getParanetCuratedNodes(
+                paranetId,
+            );
+            const paranetCuratedPeerIds = paranetCuratedNodes.map((node) =>
+                this.blockchainModuleManager.convertHexToAscii(blockchain, node.nodeId),
+            );
+
+            if (!paranetCuratedPeerIds.includes(remotePeerId)) {
+                return {
+                    messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                    messageData: {
+                        errorMessage: `Remote peer ${remotePeerId} is not a part of the Paranet (${paranetId}) with UAL: ${paranetUAL}`,
+                    },
+                };
+            }
+
+            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+            const syncedAssetRecord =
+                await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
+
+            const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
+            if (syncedAssetRecord.privateAssertionId) {
+                assertionExists = await this.tripleStoreService.assertionExists(
+                    paranetRepository,
+                    syncedAssetRecord.privateAssertionId,
+                );
+            } else {
+                assertionExists = await this.tripleStoreService.assertionExists(
+                    paranetRepository,
+                    syncedAssetRecord.publicAssertionId,
+                );
+            }
+
+            if (!assertionExists) {
+                return {
+                    messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                    messageData: {
+                        errorMessage: `Assertion ${assertionId} not found for Paranet (${paranetId}) with UAL: ${paranetUAL}`,
+                    },
+                };
+            }
+        }
+
         if (
+            !assertionExists &&
             state !== GET_STATES.FINALIZED &&
             blockchain != null &&
             contract != null &&
@@ -77,7 +135,7 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
         }
         return {
             messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-            messageData: { errorMessage: 'Assertion not found' },
+            messageData: { errorMessage: `Assertion ${assertionId} not found` },
         };
     }
 
