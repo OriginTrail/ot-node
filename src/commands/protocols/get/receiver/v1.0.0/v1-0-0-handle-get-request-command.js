@@ -61,23 +61,30 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
                 await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
 
             const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
+            nquads = await this.tripleStoreService.getAssertion(
+                paranetRepository,
+                syncedAssetRecord.publicAssertionId,
+            );
+
+            let privateNquads;
             if (syncedAssetRecord.privateAssertionId) {
-                nquads = await this.tripleStoreService.getAssertion(
+                privateNquads = await this.tripleStoreService.getAssertion(
                     paranetRepository,
                     syncedAssetRecord.privateAssertionId,
-                );
-            } else {
-                nquads = await this.tripleStoreService.getAssertion(
-                    paranetRepository,
-                    syncedAssetRecord.publicAssertionId,
                 );
             }
 
             if (nquads?.length) {
-                return {
+                const response = {
                     messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
                     messageData: { nquads, syncedAssetRecord },
                 };
+
+                if (privateNquads?.length) {
+                    response.messageData.privateNquads = privateNquads;
+                }
+
+                return response;
             }
 
             return {

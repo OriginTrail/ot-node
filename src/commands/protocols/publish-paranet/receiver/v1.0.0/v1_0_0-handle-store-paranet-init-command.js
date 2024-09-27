@@ -12,6 +12,7 @@ class HandleStoreParanetInitCommand extends HandleProtocolMessageCommand {
         super(ctx);
         this.publishService = ctx.publishParanetService;
         this.ualService = ctx.ualService;
+        this.paranetService = ctx.paranetService;
 
         this.errorType = ERROR_TYPE.PUBLISH_PARANET.PUBLISH_PARANET_REMOTE_ERROR;
     }
