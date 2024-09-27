@@ -94,76 +94,38 @@ class GetService extends OperationService {
 
             const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
-            // Fetched old state - store it in public history repo
-            if (paranetSync && !paranetLatestAsset) {
+            this.logger.debug(`Is Paranet Sync: ${paranetSync}`);
+            this.logger.debug(`Is Latest Asset: ${paranetLatestAsset}`);
+            this.logger.debug(`Is Asset Sync: ${assetSync}`);
+            this.logger.debug(`Response Data: ${JSON.stringify(responseData)}`);
+
+            if (paranetSync) {
                 this.logger.debug(
                     `Paranet sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
                 );
 
-                if (paranetNodesAccessPolicy === 'OPEN') {
-                    await this.tripleStoreService.localStoreAsset(
-                        TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
-                        assertionId,
-                        responseData.nquads,
-                        blockchain,
-                        contract,
-                        tokenId,
-                        keyword,
-                    );
-                } else if (paranetNodesAccessPolicy === 'CURATED') {
-                    await this.tripleStoreService.localStoreAsset(
-                        TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
-                        assertionId,
-                        responseData.nquads,
-                        blockchain,
-                        contract,
-                        tokenId,
-                        keyword,
-                    );
-                }
-            } else if (assetSync) {
-                this.logger.debug(
-                    `Asset sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
-                );
+                let repository;
+                let publicAssertionId;
 
-                await this.tripleStoreService.localStoreAsset(
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                    assertionId,
-                    responseData.nquads,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    keyword,
-                );
-
-                // paranet_synced_record insert for new asset
-                // get returns sender & txHash
-
-                // Paranet sync for latest state
-                if (paranetSync) {
-                    this.logger.debug(
-                        `Paranet sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
-                    );
+                if (!paranetLatestAsset) {
+                    repository =
+                        paranetNodesAccessPolicy === 'OPEN'
+                            ? TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY
+                            : TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY;
+                    publicAssertionId = assertionId;
+                } else {
                     const paranetUAL = this.ualService.deriveUAL(
                         blockchain,
                         contract,
                         paranetTokenId,
                     );
-                    const paranetRepository =
-                        this.paranetService.getParanetRepositoryName(paranetUAL);
-                    await this.tripleStoreService.localStoreAsset(
-                        paranetRepository,
-                        responseData.syncedAssetRecord.publicAssertionId,
-                        responseData.nquads,
-                        blockchain,
-                        contract,
-                        tokenId,
-                        keyword,
-                    );
+
+                    repository = this.paranetService.getParanetRepositoryName(paranetUAL);
+                    publicAssertionId = responseData.syncedAssetRecord.publicAssertionId;
 
                     if (responseData.privateNquads) {
                         await this.tripleStoreService.localStoreAsset(
-                            paranetRepository,
+                            repository,
                             responseData.syncedAssetRecord.privateAssertionId,
                             responseData.privateNquads,
                             blockchain,
@@ -183,6 +145,30 @@ class GetService extends OperationService {
                         txHash,
                     );
                 }
+
+                await this.tripleStoreService.localStoreAsset(
+                    repository,
+                    publicAssertionId,
+                    responseData.nquads,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    keyword,
+                );
+            } else if (assetSync) {
+                this.logger.debug(
+                    `Asset sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                );
+
+                await this.tripleStoreService.localStoreAsset(
+                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                    assertionId,
+                    responseData.nquads,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    keyword,
+                );
             }
         }
 

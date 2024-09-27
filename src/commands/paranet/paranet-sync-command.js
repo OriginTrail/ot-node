@@ -160,17 +160,19 @@ class ParanetSyncCommand extends Command {
                 const promisesResolution = await Promise.all(promises);
 
                 const successfulCount = promisesResolution.reduce((count, value) => {
-                    if (value) {
+                    if (value.assertion) {
                         return count + 1;
                     }
                     return count;
                 }, 0);
 
-                await this.repositoryModuleManager.updateParanetKaCount(
-                    paranetId,
-                    blockchain,
-                    cachedKaCount + successfulCount,
-                );
+                if (successfulCount > 0) {
+                    await this.repositoryModuleManager.updateParanetKaCount(
+                        paranetId,
+                        blockchain,
+                        cachedKaCount + successfulCount,
+                    );
+                }
                 return Command.repeat();
             }
             return Command.repeat();
