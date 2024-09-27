@@ -16,6 +16,7 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
         this.operationService = ctx.getService;
         this.pendingStorageService = ctx.pendingStorageService;
         this.ualService = ctx.ualService;
+        this.paranetService = ctx.paranetService;
 
         this.errorType = ERROR_TYPE.GET.GET_INIT_REMOTE_ERROR;
     }

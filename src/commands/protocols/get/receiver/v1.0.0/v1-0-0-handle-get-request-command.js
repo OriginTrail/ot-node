@@ -15,6 +15,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         this.operationService = ctx.getService;
         this.tripleStoreService = ctx.tripleStoreService;
         this.pendingStorageService = ctx.pendingStorageService;
+        this.paranetService = ctx.paranetService;
 
         this.errorType = ERROR_TYPE.GET.GET_REQUEST_REMOTE_ERROR;
     }
