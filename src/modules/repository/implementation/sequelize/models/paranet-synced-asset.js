@@ -20,11 +20,11 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
             },
             publicAssertionId: {
-                allowNull: false,
+                allowNull: true,
                 type: DataTypes.STRING,
             },
             privateAssertionId: {
-                allowNull: true,
+                allowNull: false,
                 type: DataTypes.STRING,
             },
             sender: {
