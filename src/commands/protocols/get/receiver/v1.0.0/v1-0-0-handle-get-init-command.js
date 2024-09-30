@@ -16,6 +16,7 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
         this.operationService = ctx.getService;
         this.pendingStorageService = ctx.pendingStorageService;
         this.ualService = ctx.ualService;
+        this.paranetService = ctx.paranetService;
 
         this.errorType = ERROR_TYPE.GET.GET_INIT_REMOTE_ERROR;
     }
@@ -47,6 +48,7 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
 
         if (paranetUAL) {
             const paranetCuratedNodes = await this.blockchainModuleManager.getParanetCuratedNodes(
+                blockchain,
                 paranetId,
             );
             const paranetCuratedPeerIds = paranetCuratedNodes.map((node) =>
@@ -65,6 +67,15 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
             const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
             const syncedAssetRecord =
                 await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
+
+            if (!syncedAssetRecord) {
+                return {
+                    messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                    messageData: {
+                        errorMessage: `Synced record is missing in 'paranet_synced_asset' table for Assertion: ${assertionId}, Paranet (${paranetId}) with UAL: ${paranetUAL}`,
+                    },
+                };
+            }
 
             const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
             assertionExists = await this.tripleStoreService.assertionExists(

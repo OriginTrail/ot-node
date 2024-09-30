@@ -50,9 +50,6 @@ class ParanetSyncCommand extends Command {
 
         const cachedMissedKaCount =
             await this.repositoryModuleManager.getCountOfMissedAssetsOfParanet(paranetUAL);
-        console.log(
-            `contractKaCount ${contractKaCount}, cachedKaCount ${cachedKaCount}, cachedMissedKaCount ${cachedMissedKaCount}`,
-        );
         if (cachedKaCount + cachedMissedKaCount >= contractKaCount) {
             this.logger.info(
                 `Paranet sync: KA count from contract and in DB is the same, nothing new to sync, for paranet: ${paranetUAL} (${paranetId}), operation ID: ${operationId}!`,
@@ -426,7 +423,6 @@ class ParanetSyncCommand extends Command {
             const getOperationCachedData = await this.operationIdService.getCachedOperationIdData(
                 operationId,
             );
-            console.log(getOperationCachedData);
             if (getOperationCachedData?.message === 'Unable to find assertion on the network!') {
                 await this.repositoryModuleManager.createMissedParanetAssetRecord({
                     blockchainId: blockchain,

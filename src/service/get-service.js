@@ -48,8 +48,6 @@ class GetService extends OperationService {
             paranetTokenId,
             paranetLatestAsset,
             paranetMetadata,
-            sender,
-            txHash,
         } = command.data;
 
         const paranetNodesAccessPolicy =
@@ -94,11 +92,6 @@ class GetService extends OperationService {
 
             const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
-            this.logger.debug(`Is Paranet Sync: ${paranetSync}`);
-            this.logger.debug(`Is Latest Asset: ${paranetLatestAsset}`);
-            this.logger.debug(`Is Asset Sync: ${assetSync}`);
-            this.logger.debug(`Response Data: ${JSON.stringify(responseData)}`);
-
             if (paranetSync) {
                 this.logger.debug(
                     `Paranet sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
@@ -141,8 +134,8 @@ class GetService extends OperationService {
                         paranetUAL,
                         responseData.syncedAssetRecord.publicAssertionId,
                         responseData.syncedAssetRecord.privateAssertionId,
-                        sender,
-                        txHash,
+                        responseData.syncedAssetRecord.sender,
+                        responseData.syncedAssetRecord.transactionHash,
                     );
                 }
 

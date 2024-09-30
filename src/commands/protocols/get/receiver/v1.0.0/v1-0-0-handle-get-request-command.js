@@ -15,6 +15,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         this.operationService = ctx.getService;
         this.tripleStoreService = ctx.tripleStoreService;
         this.pendingStorageService = ctx.pendingStorageService;
+        this.paranetService = ctx.paranetService;
 
         this.errorType = ERROR_TYPE.GET.GET_REQUEST_REMOTE_ERROR;
     }
@@ -41,6 +42,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
 
         if (paranetUAL) {
             const paranetCuratedNodes = await this.blockchainModuleManager.getParanetCuratedNodes(
+                blockchain,
                 paranetId,
             );
             const paranetCuratedPeerIds = paranetCuratedNodes.map((node) =>
