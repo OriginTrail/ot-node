@@ -22,7 +22,6 @@ export default () => ({
         },
         paranetaUAL: {
             type: 'string',
-            pattern: '^did:dkg:[^/]+/0x[0-9a-fA-F]{40}/[1-9][0-9]*$',
         },
     },
 });
