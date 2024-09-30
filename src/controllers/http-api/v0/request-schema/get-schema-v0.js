@@ -20,5 +20,8 @@ export default () => ({
             type: 'number',
             minimum: 1,
         },
+        paranetaUAL: {
+            type: 'string',
+        },
     },
 });

@@ -43,7 +43,7 @@ class GetController extends BaseController {
         let contract;
         let tokenId;
         try {
-            const { id } = req.body;
+            const { id, paranetUAL } = req.body;
 
             if (!this.ualService.isUAL(id)) {
                 throw Error('Requested id is not a UAL.');
@@ -82,6 +82,7 @@ class GetController extends BaseController {
                     operationId,
                     state,
                     hashFunctionId,
+                    paranetUAL,
                 },
                 transactional: false,
             });
