@@ -18,6 +18,7 @@ class LocalGetCommand extends Command {
         this.pendingStorageService = ctx.pendingStorageService;
         this.paranetService = ctx.paranetService;
         this.ualService = ctx.ualService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.GET.GET_LOCAL_ERROR;
     }
