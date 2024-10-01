@@ -20,7 +20,8 @@ class DeletePendingStateCommand extends Command {
 
         this.logger.trace(
             `Started ${command.name} for blockchain: ${blockchain} contract: ${contract}, ` +
-                `token id: ${tokenId}, assertion id: ${assertionId}`,
+                `token id: ${tokenId}, assertion id: ${assertionId}, operation id: ${operationId}` +
+                `keyword: ${keyword}, hash function id: ${hashFunctionId}`,
         );
 
         const pendingStateExists = await this.pendingStateExists(
@@ -73,6 +74,7 @@ class DeletePendingStateCommand extends Command {
             }
             await this.deletePendingState(blockchain, contract, tokenId, assertionId, operationId);
         }
+        this.logger.trace(`No pending state found`);
         return Command.empty();
     }
 
@@ -111,6 +113,7 @@ class DeletePendingStateCommand extends Command {
                 return true;
             }
         }
+        this.logger.debug(`No pending state exists for assertion id: ${assertionId}`);
         return false;
     }
 

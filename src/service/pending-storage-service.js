@@ -36,6 +36,8 @@ class PendingStorageService {
             tokenId,
         );
 
+        this.logger.debug(`Pending storage folder path: ${pendingStorageFolderPath}`);
+
         await this.fileService.writeContentsToFile(
             pendingStorageFolderPath,
             assertionId,

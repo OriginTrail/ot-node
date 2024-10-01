@@ -74,6 +74,10 @@ class OperationIdService {
 
         this.emitChangeEvent(status, operationId, blockchain, errorMessage, errorType);
 
+        this.logger.debug(
+            `Updated operation id status: ${status}. Operation id: ${operationId}, blockchain: ${blockchain}`,
+        );
+
         await this.repositoryModuleManager.updateOperationIdRecord(response, operationId);
     }
 
@@ -102,7 +106,9 @@ class OperationIdService {
     }
 
     async cacheOperationIdData(operationId, data) {
-        this.logger.debug(`Caching data for operation id: ${operationId} in file`);
+        this.logger.debug(
+            `Caching data for operation id: ${operationId} in file. Data to be cached: ${data}`,
+        );
         const operationIdCachePath = this.fileService.getOperationIdCachePath();
 
         await this.fileService.writeContentsToFile(

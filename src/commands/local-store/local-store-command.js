@@ -49,6 +49,10 @@ class LocalStoreCommand extends Command {
             if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
                 const storePromises = [];
                 if (cachedData.public.assertion && cachedData.public.assertionId) {
+                    this.logger.debug(
+                        `Storing public assertion id: ${cachedData.public.assertionId}`,
+                    );
+
                     storePromises.push(
                         this.tripleStoreService.localStoreAsset(
                             TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
@@ -62,6 +66,9 @@ class LocalStoreCommand extends Command {
                     );
                 }
                 if (cachedData.private.assertion && cachedData.private.assertionId) {
+                    this.logger.debug(
+                        `Storing private assertion id: ${cachedData.private.assertionId}`,
+                    );
                     storePromises.push(
                         this.tripleStoreService.localStoreAsset(
                             TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,

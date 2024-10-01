@@ -24,7 +24,7 @@ class PublishController extends BaseController {
         const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
         this.logger.info(
-            `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
+            `[PUBLISH] Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}. Hash function id: ${hashFunctionId}`,
         );
 
         const operationId = await this.operationIdService.generateOperationId(
