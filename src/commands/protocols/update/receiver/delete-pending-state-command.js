@@ -74,7 +74,9 @@ class DeletePendingStateCommand extends Command {
             }
             await this.deletePendingState(blockchain, contract, tokenId, assertionId, operationId);
         }
-        this.logger.trace(`No pending state found`);
+        this.logger.trace(
+            `No pending state found for operation id: ${operationId} and assertion id`,
+        );
         return Command.empty();
     }
 

@@ -191,7 +191,6 @@ class FileService {
     }
 
     getParentDirectory(filePath) {
-        this.logger.trace(`Parent directory: ${path.dirname(filePath)}`);
         return path.dirname(filePath);
     }
 }
