@@ -30,6 +30,10 @@ class ProtocolMessageCommand extends Command {
 
         const keywordUuid = uuidv5(keyword, uuidv5.URL);
 
+        this.logger.debug(
+            `Sending protocol message with operation id: ${operationId}, keyword uuidv5: ${keywordUuid}`,
+        );
+
         const response = await this.networkModuleManager.sendMessage(
             node.protocol,
             node.id,
@@ -52,7 +56,7 @@ class ProtocolMessageCommand extends Command {
             default:
                 await this.markResponseAsFailed(
                     command,
-                    `Received unknown message type from node during ${command.name}`,
+                    `Received unknown message type from node during ${command.name}. Unknown message type: ${response.header.messageType}`,
                 );
                 return Command.empty();
         }
