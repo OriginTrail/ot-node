@@ -50,9 +50,6 @@ class GetService extends OperationService {
             paranetMetadata,
         } = command.data;
 
-        const paranetNodesAccessPolicy =
-            PARANET_NODES_ACCESS_POLICIES[paranetMetadata.nodesAccessPolicy];
-
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
             responseData.errorMessage,
@@ -96,6 +93,9 @@ class GetService extends OperationService {
                 this.logger.debug(
                     `Paranet sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
                 );
+
+                const paranetNodesAccessPolicy =
+                    PARANET_NODES_ACCESS_POLICIES[paranetMetadata.nodesAccessPolicy];
 
                 let repository;
                 let publicAssertionId;

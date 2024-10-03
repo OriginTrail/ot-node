@@ -14,16 +14,12 @@ class StartParanetSyncCommands extends Command {
     }
 
     async execute() {
-        const operationId = this.operationIdService.generateId();
-
-        this.logger.info(
-            `Paranet sync: Starting Paranet sync command for operation id: ${operationId}`,
-        );
-
         await this.commandExecutor.delete('paranetSyncCommand');
 
         const promises = [];
         this.config.assetSync?.syncParanets.forEach(async (paranetUAL) => {
+            const operationId = this.operationIdService.generateId();
+
             const { blockchain, contract, tokenId } = this.ualService.resolveUAL(paranetUAL);
             const paranetId = this.paranetService.constructParanetId(blockchain, contract, tokenId);
 
