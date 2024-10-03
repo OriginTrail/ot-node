@@ -423,7 +423,6 @@ class BlockchainEventListenerService {
                     nodeId,
                 );
 
-                this.logger.trace(`Adding peer id: ${nodeId} to sharding table.`);
                 return {
                     peerId: nodeId,
                     blockchainId: event.blockchainId,
@@ -470,8 +469,6 @@ class BlockchainEventListenerService {
                     eventData.nodeId,
                 );
 
-                this.logger.trace(`Updating stake value for peer id: ${nodeId} in sharding table.`);
-
                 await this.repositoryModuleManager.updatePeerStake(
                     nodeId,
                     event.blockchainId,
@@ -497,8 +494,6 @@ class BlockchainEventListenerService {
                     event.blockchainId,
                     eventData.nodeId,
                 );
-
-                this.logger.trace(`Updating ask value for peer id: ${nodeId} in sharding table.`);
 
                 await this.repositoryModuleManager.updatePeerAsk(
                     nodeId,

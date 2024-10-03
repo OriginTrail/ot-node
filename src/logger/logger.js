@@ -15,7 +15,14 @@ class Logger {
                 translateTime: 'yyyy-mm-dd HH:MM:ss',
                 ignore: 'pid,hostname,Event_name,Operation_name,Id_operation',
                 hideObject: true,
-                messageFormat: (log, messageKey) => `${log[messageKey]}`,
+                messageFormat: (log, messageKey) => {
+                    const { commandId, commandName, operationId } = log;
+                    let context = '';
+                    if (operationId) context += `{Operation ID: ${operationId}} `;
+                    if (commandName) context += `[${commandName}] `;
+                    if (commandId) context += `(Command ID: ${commandId}) `;
+                    return `${context} ${log[messageKey]}`;
+                },
             });
             this.pinoLogger = pino(
                 {
@@ -31,6 +38,10 @@ class Logger {
             // eslint-disable-next-line no-console
             console.error(`Failed to create logger. Error message: ${e.message}`);
         }
+    }
+
+    child(bindings) {
+        return this.pinoLogger.child(bindings, {});
     }
 
     restart() {
