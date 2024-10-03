@@ -491,7 +491,7 @@
                         "package": "./telemetry/implementation/ot-telemetry.js",
                         "config": {
                             "sendTelemetryData": true,
-                            "signalingServerUrl": "https://v8-testnet-signaling.origin-trail.network"
+                            "signalingServerUrl": "https://v8-testnet-signaling.origin-trail.network/signal"
                         }
                     }
                 }
