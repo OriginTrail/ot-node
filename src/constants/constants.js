@@ -81,12 +81,9 @@ export const BYTES_IN_KILOBYTE = 1024;
 
 export const BYTES_IN_MEGABYTE = BYTES_IN_KILOBYTE * BYTES_IN_KILOBYTE;
 
-export const PUBLISH_TYPES = { ASSERTION: 'assertion', ASSET: 'asset', INDEX: 'index' };
-
 export const DEFAULT_GET_STATE = GET_STATES.LATEST;
 
-export const PEER_OFFLINE_LIMIT = 24 * 60 * 60 * 1000;
-
+// TODO: Fix this and whereve it is used
 export const CONTENT_ASSET_HASH_FUNCTION_ID = 1;
 
 export const PARANET_SYNC_KA_COUNT = 50;
@@ -127,18 +124,7 @@ export const MEDIA_TYPES = {
     SPARQL_RESULTS_JSON: 'application/sparql-results+json',
 };
 
-/**
- * XML data types
- * @type {{FLOAT: string, DECIMAL: string, DOUBLE: string, BOOLEAN: string, INTEGER: string}}
- */
-export const XML_DATA_TYPES = {
-    DECIMAL: 'http://www.w3.org/2001/XMLSchema#decimal',
-    FLOAT: 'http://www.w3.org/2001/XMLSchema#float',
-    DOUBLE: 'http://www.w3.org/2001/XMLSchema#double',
-    INTEGER: 'http://www.w3.org/2001/XMLSchema#integer',
-    BOOLEAN: 'http://www.w3.org/2001/XMLSchema#boolean',
-};
-
+// TODO: Make this 20 not only in const
 export const MIN_NODE_VERSION = 16;
 
 export const NETWORK_API_RATE_LIMIT = {
@@ -168,8 +154,6 @@ export const DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
 export const REMOVE_SESSION_COMMAND_DELAY = 2 * 60 * 1000;
 
 export const OPERATION_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
-
-export const GET_LATEST_SERVICE_AGREEMENT_FREQUENCY_MILLS = 30 * 1000;
 
 export const DIAL_PEERS_COMMAND_FREQUENCY_MILLS = 30 * 1000;
 
@@ -205,38 +189,20 @@ export const TRANSACTION_PRIORITY = {
     REGULAR: 2,
 };
 
-export const CONTRACT_FUNCTION_PRIORITY = {
-    'submitCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
-        TRANSACTION_PRIORITY.REGULAR,
-    'submitCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.REGULAR,
-    'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
-        TRANSACTION_PRIORITY.HIGH,
-    'submitUpdateCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.HIGH,
-    sendProof: TRANSACTION_PRIORITY.REGULAR,
-};
-
 export const COMMAND_RETRIES = {
-    SIMPLE_ASSET_SYNC: 1,
-    SUBMIT_COMMIT: 5,
     SUBMIT_UPDATE_COMMIT: 5,
-    SUBMIT_PROOFS: 5,
 };
 
-export const SIMPLE_ASSET_SYNC_PARAMETERS = {
+export const PARANET_SYNC_PARAMETERS = {
     GET_RESULT_POLLING_INTERVAL_MILLIS: 1 * 1000,
     GET_RESULT_POLLING_MAX_ATTEMPTS: 30,
 };
 
 export const COMMAND_TX_GAS_INCREASE_FACTORS = {
-    SUBMIT_COMMIT: 1.2,
     SUBMIT_UPDATE_COMMIT: 1.2,
-    SUBMIT_PROOFS: 1.2,
 };
 
 export const CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS = {
-    sendProof: 2,
-    'submitCommit((address,uint256,bytes,uint8,uint16))': 2,
-    'submitCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))': 2,
     'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))': 2,
     'submitUpdateCommit((address,uint256,bytes,uint8,uint16))': 2,
 };
@@ -351,18 +317,6 @@ export const ERROR_TYPE = {
     QUERY: {
         LOCAL_QUERY_ERROR: 'LocalQueryError',
     },
-    COMMIT_PROOF: {
-        CALCULATE_PROOFS_ERROR: 'CalculateProofsError',
-        EPOCH_CHECK_ERROR: 'EpochCheckError',
-        BLOCKCHAIN_EPOCH_CHECK_ERROR: 'BlockchainEpochCheckError',
-        SIMPLE_ASSET_SYNC_ERROR: 'SimpleAssetSyncError',
-        SUBMIT_COMMIT_ERROR: 'SubmitCommitError',
-        SUBMIT_COMMIT_SEND_TX_ERROR: 'SubmitCommitSendTxError',
-        SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
-        SUBMIT_PROOFS_SEND_TX_ERROR: 'SubmitProofsSendTxError',
-        SUBMIT_UPDATE_COMMIT_ERROR: 'SubmitUpdateCommitError',
-        SUBMIT_UPDATE_COMMIT_SEND_TX_ERROR: 'SubmitUpdateCommitSendTxError',
-    },
     GET_BID_SUGGESTION: {
         UNSUPPORTED_BID_SUGGESTION_RANGE_ERROR: 'UnsupportedBidSuggestionRangeError',
     },
@@ -437,26 +391,6 @@ export const OPERATION_ID_STATUS = {
         GET_FETCH_FROM_NODES_END: 'GET_FETCH_FROM_NODES_END',
         GET_END: 'GET_END',
     },
-    COMMIT_PROOF: {
-        EPOCH_CHECK_START: 'EPOCH_CHECK_START',
-        EPOCH_CHECK_END: 'EPOCH_CHECK_END',
-        SIMPLE_ASSET_SYNC_START: 'SIMPLE_ASSET_SYNC_START',
-        SIMPLE_ASSET_SYNC_END: 'SIMPLE_ASSET_SYNC_END',
-        SUBMIT_COMMIT_START: 'SUBMIT_COMMIT_START',
-        SUBMIT_COMMIT_END: 'SUBMIT_COMMIT_END',
-        SUBMIT_COMMIT_SEND_TX_START: 'SUBMIT_COMMIT_SEND_TX_START',
-        SUBMIT_COMMIT_SEND_TX_END: 'SUBMIT_COMMIT_SEND_TX_END',
-        CALCULATE_PROOFS_START: 'CALCULATE_PROOFS_START',
-        CALCULATE_PROOFS_END: 'CALCULATE_PROOFS_END',
-        SUBMIT_PROOFS_START: 'SUBMIT_PROOFS_START',
-        SUBMIT_PROOFS_END: 'SUBMIT_PROOFS_END',
-        SUBMIT_PROOFS_SEND_TX_START: 'SUBMIT_PROOFS_START',
-        SUBMIT_PROOFS_SEND_TX_END: 'SUBMIT_PROOFS_END',
-        SUBMIT_UPDATE_COMMIT_START: 'SUBMIT_UPDATE_COMMIT_START',
-        SUBMIT_UPDATE_COMMIT_END: 'SUBMIT_UPDATE_COMMIT_END',
-        SUBMIT_UPDATE_COMMIT_SEND_TX_START: 'SUBMIT_UPDATE_COMMIT_START',
-        SUBMIT_UPDATE_COMMIT_SEND_TX_END: 'SUBMIT_UPDATE_COMMIT_END',
-    },
     QUERY: {
         QUERY_INIT_START: 'QUERY_INIT_START',
         QUERY_INIT_END: 'QUERY_INIT_END',
@@ -498,14 +432,6 @@ export const OPERATIONS = {
     PUBLISH_PARANET: 'publishParanet',
     UPDATE: 'update',
     GET: 'get',
-};
-
-export const SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS = {
-    mainnet: 5 * 60,
-    testnet: 5 * 60,
-    devnet: 3 * 60,
-    test: 10,
-    development: 10,
 };
 
 export const EXPECTED_TRANSACTION_ERRORS = {
@@ -681,11 +607,6 @@ export const OPERATION_STATUS = {
     IN_PROGRESS: 'IN_PROGRESS',
     FAILED: 'FAILED',
     COMPLETED: 'COMPLETED',
-};
-
-export const AGREEMENT_STATUS = {
-    ACTIVE: 'ACTIVE',
-    EXPIRED: 'EXPIRED',
 };
 
 export const OPERATION_REQUEST_STATUS = {
