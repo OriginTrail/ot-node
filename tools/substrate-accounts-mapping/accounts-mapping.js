@@ -19,7 +19,7 @@ const ERC20Token = require('dkg-evm-module/abi/Token.json');
 
 const WALLETS_PATH = path.join(appRootPath.path, 'tools/substrate-accounts-mapping/wallets.json');
 
-const otpAccountWithTokens = {
+const neuroAccountWithTokens = {
     accountPublicKey: process.env.SUBSTRATE_ACCOUNT_PUBLIC_KEY,
     accountPrivateKey: process.env.SUBSTRATE_ACCOUNT_PRIVATE_KEY,
 };
@@ -33,9 +33,9 @@ const HTTPS_ENDPOINT = 'https://astrosat-parachain-rpc.origin-trail.network';
 
 const NUMBER_OF_ACCOUNTS = 32;
 
-const OTP_AMOUNT = 50 * 1e12; // 50 OTP <--- Check this!
-const OTP_CHAIN_ID = '2043';
-const OTP_GENESIS_HASH = '0xe7e0962324a3b86c83404dbea483f25fb5dab4c224791c81b756cfc948006174';
+const NEURO_AMOUNT = 50 * 1e12; // 50 NEURO <--- Check this!
+const NEURO_CHAIN_ID = '2043';
+const NEURO_GENESIS_HASH = '0xe7e0962324a3b86c83404dbea483f25fb5dab4c224791c81b756cfc948006174';
 
 const GAS_PRICE = 20;
 const GAS_LIMIT = 60000; // Estimation is 45260
@@ -70,11 +70,11 @@ class AccountsMapping {
         } = await this.generateWallets();
 
         // Fund management wallet
-        await this.fundAccountsWithOtp(substrateManagementWalletPublicKey);
+        await this.fundAccountsWithNeuro(substrateManagementWalletPublicKey);
 
         // Generate and fund all other wallets
         for (let i = 0; i < NUMBER_OF_ACCOUNTS; i += 1) {
-            console.log(`Generating and funding with OTP wallet #${i + 1}`);
+            console.log(`Generating and funding with NEURO wallet #${i + 1}`);
 
             const {
                 evmPublicKey: evmOperationalWalletPublicKey,
@@ -83,7 +83,7 @@ class AccountsMapping {
                 substratePrivateKey: substrateOperationalWalletPrivateKey,
             } = await this.generateWallets();
 
-            await this.fundAccountsWithOtp(substrateOperationalWalletPublicKey);
+            await this.fundAccountsWithNeuro(substrateOperationalWalletPublicKey);
 
             // Store new wallets
             currentWallets.push({
@@ -100,7 +100,7 @@ class AccountsMapping {
         }
         console.log('Waiting 35s for funding TXs to get into block!');
         await this.sleepForMilliseconds(35 * 1000);
-        console.log(`${NUMBER_OF_ACCOUNTS} wallets are generated and funded with OTP!`);
+        console.log(`${NUMBER_OF_ACCOUNTS} wallets are generated and funded with NEURO!`);
 
         console.log(`Executing mapping!`);
         // Map the management wallet
@@ -190,18 +190,18 @@ class AccountsMapping {
             'claimAccount',
             [evmPublicKey, signature],
         );
-        if (result.toHex() === '0x') throw Error('Unable to create account mapping for otp');
+        if (result.toHex() === '0x') throw Error('Unable to create account mapping for neuro');
         console.log(result.toString());
         console.log(`Account mapped for evm public key: ${evmPublicKey}`);
     }
 
-    async fundAccountsWithOtp(substratePublicKey) {
+    async fundAccountsWithNeuro(substratePublicKey) {
         const keyring = new Keyring({ type: 'sr25519' });
         keyring.setSS58Format(101);
-        const uriKeyring = keyring.addFromSeed(otpAccountWithTokens.accountPrivateKey);
+        const uriKeyring = keyring.addFromSeed(neuroAccountWithTokens.accountPrivateKey);
         return this.callParachainExtrinsic(uriKeyring, 'balances', 'transfer', [
             substratePublicKey,
-            OTP_AMOUNT,
+            NEURO_AMOUNT,
         ]);
     }
 
@@ -265,10 +265,10 @@ class AccountsMapping {
             },
             primaryType: 'Transaction',
             domain: {
-                name: 'OTP EVM claim',
+                name: 'NEURO EVM claim',
                 version: '1',
-                chainId: OTP_CHAIN_ID,
-                salt: OTP_GENESIS_HASH,
+                chainId: NEURO_CHAIN_ID,
+                salt: NEURO_GENESIS_HASH,
             },
             message: {
                 substrateAddress: hexPubKey,

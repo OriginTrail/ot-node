@@ -9,11 +9,11 @@ import Web3Service from '../web3-service.js';
 
 const NATIVE_TOKEN_DECIMALS = 12;
 
-class OtParachainService extends Web3Service {
+class NeurowebService extends Web3Service {
     constructor(ctx) {
         super(ctx);
 
-        this.baseTokenTicker = 'OTP';
+        this.baseTokenTicker = 'NEURO';
         this.tracTicker = 'TRAC';
     }
 
@@ -175,7 +175,7 @@ class OtParachainService extends Web3Service {
     }
 
     getBlockTimeMillis() {
-        return BLOCK_TIME_MILLIS.OTP;
+        return BLOCK_TIME_MILLIS.NEURO;
     }
 
     getValidOperationalWallets() {
@@ -203,4 +203,4 @@ class OtParachainService extends Web3Service {
     }
 }
 
-export default OtParachainService;
+export default NeurowebService;

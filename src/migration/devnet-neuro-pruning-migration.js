@@ -23,7 +23,7 @@ class DevnetNeuroPruningMigration extends BaseMigration {
             for (const table of tables) {
                 const query = `
                   DELETE FROM ${table} 
-                  WHERE blockchain_id = 'otp:2160'`;
+                  WHERE blockchain_id = 'neuro:2160'`;
                 // eslint-disable-next-line no-await-in-loop
                 await this.repositoryModuleManager.query(query);
             }

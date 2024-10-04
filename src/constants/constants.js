@@ -218,7 +218,7 @@ export const NEURO_DEFAULT_GAS_PRICE = {
 };
 
 export const CONTRACT_FUNCTION_FIXED_GAS_PRICE = {
-    'otp:2043': {
+    'neuro:2043': {
         SUBMIT_UPDATE_COMMIT: 30,
     },
 };
@@ -691,7 +691,7 @@ export const CONTRACT_EVENT_FETCH_INTERVALS = {
 };
 
 export const BLOCK_TIME_MILLIS = {
-    OTP: 12_000,
+    NEURO: 12_000,
     HARDHAT: 5_000,
     GNOSIS: 5_000,
     DEFAULT: 12_000,

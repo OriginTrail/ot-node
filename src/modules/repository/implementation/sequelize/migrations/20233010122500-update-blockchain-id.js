@@ -9,36 +9,36 @@ const chainId = CHAIN_IDS[process.env.NODE_ENV];
 
 export async function up({ context: { queryInterface } }) {
     await queryInterface.sequelize.query(`
-        update shard set blockchain_id='otp:${chainId}'
+        update shard set blockchain_id='neuro:${chainId}'
     `);
 
     await queryInterface.sequelize.query(`
-        update service_agreement set blockchain_id='otp:${chainId}'
+        update service_agreement set blockchain_id='neuro:${chainId}'
     `);
 
     await queryInterface.sequelize.query(`
-        update blockchain_event set blockchain_id='otp:${chainId}'
+        update blockchain_event set blockchain_id='neuro:${chainId}'
     `);
 
     await queryInterface.sequelize.query(`
-        update blockchain set blockchain_id='otp:${chainId}'
+        update blockchain set blockchain_id='neuro:${chainId}'
     `);
 }
 
 export async function down({ context: { queryInterface } }) {
     await queryInterface.sequelize.query(`
-        update shard set blockchain_id='otp'
+        update shard set blockchain_id='neuro'
     `);
 
     await queryInterface.sequelize.query(`
-        update service_agreement set blockchain_id='otp'
+        update service_agreement set blockchain_id='neuro'
     `);
 
     await queryInterface.sequelize.query(`
-        update blockchain_event set blockchain_id='otp'
+        update blockchain_event set blockchain_id='neuro'
     `);
 
     await queryInterface.sequelize.query(`
-        update blockchain set blockchain_id='otp'
+        update blockchain set blockchain_id='neuro'
     `);
 }

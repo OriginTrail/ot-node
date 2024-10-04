@@ -10,7 +10,7 @@ class UALService {
         return `did:dkg:${blockchain.toLowerCase()}/${contract.toLowerCase()}/${tokenId}`;
     }
 
-    // did:dkg:otp:2043/0x123231/5
+    // did:dkg:neuro:2043/0x123231/5
     isUAL(ual) {
         if (!ual.startsWith('did:dkg:')) return false;
         const parts = ual.replace('did:', '').replace('dkg:', '').split('/');
