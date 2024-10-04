@@ -4,7 +4,7 @@ import {
     OPERATIONS,
     PUBLISH_CLEANUP_TIME_DELAY,
     PUBLISH_CLEANUP_TIME_MILLS,
-    ARCHIVE_PUBLISH_FOLDER,
+    ARCHIVE,
 } from '../../constants/constants.js';
 
 class PublishCleanerCommand extends CleanerCommand {
@@ -17,7 +17,7 @@ class PublishCleanerCommand extends CleanerCommand {
     }
 
     getArchiveFolderName() {
-        return ARCHIVE_PUBLISH_FOLDER;
+        return ARCHIVE.PUBLISH_FOLDER;
     }
 
     async deleteRows(ids) {

@@ -4,7 +4,7 @@ import {
     OPERATIONS,
     PUBLISH_RESPONSE_CLEANUP_TIME_DELAY,
     PUBLISH_RESPONSE_CLEANUP_TIME_MILLS,
-    ARCHIVE_PUBLISH_RESPONSES_FOLDER,
+    ARCHIVE,
 } from '../../constants/constants.js';
 
 class PublishResponseCleanerCommand extends CleanerCommand {
@@ -17,7 +17,7 @@ class PublishResponseCleanerCommand extends CleanerCommand {
     }
 
     getArchiveFolderName() {
-        return ARCHIVE_PUBLISH_RESPONSES_FOLDER;
+        return ARCHIVE.PUBLISH_RESPONSES_FOLDER;
     }
 
     async deleteRows(ids) {

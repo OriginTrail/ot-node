@@ -4,7 +4,7 @@ import {
     OPERATIONS,
     UPDATE_RESPONSE_CLEANUP_TIME_DELAY,
     UPDATE_RESPONSE_CLEANUP_TIME_MILLS,
-    ARCHIVE_UPDATE_RESPONSES_FOLDER,
+    ARCHIVE,
 } from '../../constants/constants.js';
 
 class UpdateResponseCleanerCommand extends CleanerCommand {
@@ -17,7 +17,7 @@ class UpdateResponseCleanerCommand extends CleanerCommand {
     }
 
     getArchiveFolderName() {
-        return ARCHIVE_UPDATE_RESPONSES_FOLDER;
+        return ARCHIVE.UPDATE_RESPONSES_FOLDER;
     }
 
     async deleteRows(ids) {

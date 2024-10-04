@@ -516,22 +516,16 @@ export const OPERATION_ID_FILES_FOR_REMOVAL_MAX_NUMBER = 100;
 
 export const REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER = 1000;
 
-export const ARCHIVE_COMMANDS_FOLDER = 'commands';
-
-export const ARCHIVE_BLOCKCHAIN_EVENTS_FOLDER = 'blockchain_events';
-
-export const ARCHIVE_GET_FOLDER = 'get';
-
-export const ARCHIVE_GET_RESPONSES_FOLDER = 'get_responses';
-
-export const ARCHIVE_PUBLISH_FOLDER = 'publish';
-
-export const ARCHIVE_PUBLISH_RESPONSES_FOLDER = 'publish_responses';
-
-export const ARCHIVE_UPDATE_FOLDER = 'update';
-
-export const ARCHIVE_UPDATE_RESPONSES_FOLDER = 'update_responses';
-
+export const ARCHIVE = {
+    COMMANDS_FOLDER: 'commands',
+    BLOCKCHAIN_EVENTS_FOLDER: 'blockchain_events',
+    GET_FOLDER: 'get',
+    GET_RESPONSES_FOLDER: 'get_responses',
+    PUBLISH_FOLDER: 'publish',
+    PUBLISH_RESPONSES_FOLDER: 'publish_responses',
+    UPDATE_FOLDER: 'update',
+    UPDATE_RESPONSES_FOLDER: 'update_responses',
+};
 /**
  * How many commands will run in parallel
  * @type {number}
