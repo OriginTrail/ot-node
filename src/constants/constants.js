@@ -133,17 +133,17 @@ export const MEDIA_TYPES = {
 // TODO: Make this 20 not only in const
 export const MIN_NODE_VERSION = 16;
 
-export const NETWORK_API_RATE_LIMIT = {
-    TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    MAX_NUMBER: 100,
+export const NETWORK_API = {
+    RATE_LIMIT: {
+        TIME_WINDOW_MILLS: 1 * 60 * 1000,
+        MAX_NUMBER: 100,
+    },
+    SPAM_DETECTION: {
+        TIME_WINDOW_MILLS: 1 * 60 * 1000,
+        MAX_NUMBER: 150,
+    },
+    BLACK_LIST_TIME_WINDOW_MINUTES: 60,
 };
-
-export const NETWORK_API_SPAM_DETECTION = {
-    TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    MAX_NUMBER: 150,
-};
-
-export const NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
 
 export const HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 16000;
 
