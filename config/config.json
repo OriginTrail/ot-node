@@ -448,7 +448,8 @@
                         "config": {
                             "hubContractAddress": "0xCca0eA14540588A09c85cD6A6Fc53eA3A7010692",
                             "rpcEndpoints": ["https://sepolia.base.org"],
-                            "operatorFee": 0
+                            "operatorFee": 0,
+                            "initialAskAmount": 0.1
                         }
                     }
                 }
