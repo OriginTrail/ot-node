@@ -1,7 +1,7 @@
 import { join } from 'path';
 import appRootPath from 'app-root-path';
 import BaseMigration from './base-migration.js';
-import { LIBP2P_KEY_DIRECTORY, LIBP2P_KEY_FILENAME } from '../constants/constants.js';
+import { LIBP2P_KEY } from '../constants/constants.js';
 
 class NetworkPrivateKeyMigration extends BaseMigration {
     async executeMigration() {
@@ -19,18 +19,18 @@ class NetworkPrivateKeyMigration extends BaseMigration {
                     appRootPath.path,
                     '..',
                     this.config.appDataPath,
-                    LIBP2P_KEY_DIRECTORY,
+                    LIBP2P_KEY.DIRECTORY,
                 );
             } else {
                 directoryPath = join(
                     appRootPath.path,
                     this.config.appDataPath,
-                    LIBP2P_KEY_DIRECTORY,
+                    LIBP2P_KEY.DIRECTORY,
                 );
             }
             await this.fileService.writeContentsToFile(
                 directoryPath,
-                LIBP2P_KEY_FILENAME,
+                LIBP2P_KEY.FILENAME,
                 networkPrivateKey,
             );
         }

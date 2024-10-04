@@ -20,8 +20,7 @@ import {
     NETWORK_API_SPAM_DETECTION,
     NETWORK_MESSAGE_TYPES,
     NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES,
-    LIBP2P_KEY_DIRECTORY,
-    LIBP2P_KEY_FILENAME,
+    LIBP2P_KEY,
     NODE_ENVIRONMENTS,
     BYTES_IN_MEGABYTE,
 } from '../../../constants/constants.js';
@@ -144,13 +143,13 @@ class Libp2pService {
                 appRootPath.path,
                 '..',
                 this.config.appDataPath,
-                LIBP2P_KEY_DIRECTORY,
+                LIBP2P_KEY.DIRECTORY,
             );
         } else {
-            directoryPath = join(appRootPath.path, this.config.appDataPath, LIBP2P_KEY_DIRECTORY);
+            directoryPath = join(appRootPath.path, this.config.appDataPath, LIBP2P_KEY.DIRECTORY);
         }
 
-        const fullPath = join(directoryPath, LIBP2P_KEY_FILENAME);
+        const fullPath = join(directoryPath, LIBP2P_KEY.FILENAME);
         return { fullPath, directoryPath };
     }
 
