@@ -6,9 +6,7 @@ import { setTimeout as sleep } from 'timers/promises';
 import { createRequire } from 'module';
 
 import {
-    SOLIDITY_ERROR_STRING_PREFIX,
-    SOLIDITY_PANIC_CODE_PREFIX,
-    SOLIDITY_PANIC_REASONS,
+    SOLIDITY,
     EVM_ZERO,
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
     TRANSACTION_QUEUE_CONCURRENCY,
@@ -842,8 +840,8 @@ class Web3Service {
         }
 
         // Handle standard solidity string error
-        if (errorData.startsWith(SOLIDITY_ERROR_STRING_PREFIX)) {
-            const encodedReason = errorData.slice(SOLIDITY_ERROR_STRING_PREFIX.length);
+        if (errorData.startsWith(SOLIDITY.ERROR_STRING_PREFIX)) {
+            const encodedReason = errorData.slice(SOLIDITY.ERROR_STRING_PREFIX.length);
             try {
                 return ethers.utils.defaultAbiCoder.decode(['string'], `0x${encodedReason}`)[0];
             } catch (error) {
@@ -852,8 +850,8 @@ class Web3Service {
         }
 
         // Handle solidity panic code
-        if (errorData.startsWith(SOLIDITY_PANIC_CODE_PREFIX)) {
-            const encodedReason = errorData.slice(SOLIDITY_PANIC_CODE_PREFIX.length);
+        if (errorData.startsWith(SOLIDITY.PANIC_CODE_PREFIX)) {
+            const encodedReason = errorData.slice(SOLIDITY.PANIC_CODE_PREFIX.length);
             let code;
             try {
                 [code] = ethers.utils.defaultAbiCoder.decode(['uint256'], `0x${encodedReason}`);
@@ -861,7 +859,7 @@ class Web3Service {
                 return error.message;
             }
 
-            return SOLIDITY_PANIC_REASONS[code] ?? 'Unknown Solidity panic code.';
+            return SOLIDITY.PANIC_REASONS[code] ?? 'Unknown Solidity panic code.';
         }
 
         // Try parsing a custom error using the contract ABI
